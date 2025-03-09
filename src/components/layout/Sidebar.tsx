@@ -179,7 +179,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     stpPlant: "https://stp-plant.lovable.app/", 
     pumpingStation: "https://pumping-station.lovable.app/", 
     hvac: "https://hvac0.lovable.app/", 
-    contracts: "https://contracts-manager.lovable.app/", 
+    contracts: "https://contracts-tracker.lovable.app/", 
     projects: "https://projects-manager.lovable.app/", 
     security: "https://security-manager.lovable.app/", 
   };
