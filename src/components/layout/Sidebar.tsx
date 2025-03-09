@@ -13,7 +13,7 @@ import {
   Shield, 
   ChevronLeft,
   ChevronRight,
-  ExternalLink
+  Calendar
 } from 'lucide-react';
 
 // Custom SVG icons for elements not available in lucide-react
@@ -64,6 +64,7 @@ interface SidebarLinkProps {
   collapsed?: boolean;
   external?: boolean;
   openEmbedded?: (url: string, title: string) => void;
+  options?: { label: string; url: string }[];
 }
 
 const SidebarLink: React.FC<SidebarLinkProps> = ({ 
@@ -72,26 +73,66 @@ const SidebarLink: React.FC<SidebarLinkProps> = ({
   label, 
   collapsed, 
   external, 
-  openEmbedded 
+  openEmbedded,
+  options
 }) => {
+  const [showOptions, setShowOptions] = useState(false);
+  
   // Handle embedded application opening
-  const handleEmbeddedClick = (e: React.MouseEvent) => {
+  const handleEmbeddedClick = (e: React.MouseEvent, url: string = to, title: string = label) => {
     if (external && openEmbedded) {
       e.preventDefault();
-      openEmbedded(to, label);
+      openEmbedded(url, title);
+      if (options) {
+        setShowOptions(false);
+      }
+    }
+  };
+  
+  // Handle showing options
+  const toggleOptions = (e: React.MouseEvent) => {
+    if (options && options.length > 0) {
+      e.preventDefault();
+      e.stopPropagation();
+      setShowOptions(!showOptions);
     }
   };
 
   if (external) {
     return (
-      <a
-        href={to}
-        className={`sidebar-link ${collapsed ? 'justify-center px-0' : ''}`}
-        onClick={handleEmbeddedClick}
-      >
-        <Icon className="flex-shrink-0 w-5 h-5" />
-        {!collapsed && <span className="flex-1">{label}</span>}
-      </a>
+      <div className="relative">
+        <a
+          href={to}
+          className={`sidebar-link ${collapsed ? 'justify-center px-0' : ''}`}
+          onClick={options && options.length > 0 ? toggleOptions : (e) => handleEmbeddedClick(e)}
+        >
+          <Icon className="flex-shrink-0 w-5 h-5" />
+          {!collapsed && (
+            <>
+              <span className="flex-1">{label}</span>
+              {options && options.length > 0 && (
+                <ChevronRight className={`w-4 h-4 transition-transform ${showOptions ? 'rotate-90' : ''}`} />
+              )}
+            </>
+          )}
+        </a>
+        
+        {!collapsed && showOptions && options && options.length > 0 && (
+          <div className="pl-10 mt-1 space-y-1">
+            {options.map((option, index) => (
+              <a
+                key={index}
+                href={option.url}
+                className="flex items-center py-2 px-4 text-sm text-white/80 hover:text-white hover:bg-white/10 rounded-md transition-colors"
+                onClick={(e) => handleEmbeddedClick(e, option.url, option.label)}
+              >
+                <Calendar className="w-4 h-4 mr-2" />
+                <span>{option.label}</span>
+              </a>
+            ))}
+          </div>
+        )}
+      </div>
     );
   }
 
@@ -127,7 +168,13 @@ const Sidebar: React.FC<SidebarProps> = ({
   
   // External app URLs
   const externalApps = {
-    water: "https://water-management.lovable.app/", 
+    water: {
+      main: "https://water-management.lovable.app/",
+      options: [
+        { label: "Water Dashboard 2024", url: "https://water-dashboard-24.lovable.app" },
+        { label: "Water Dashboard 2025", url: "https://water-dashboard-25.lovable.app" }
+      ]
+    },
     electricity: "https://electricity-app.lovable.app/", 
     stpPlant: "https://stp-plant.lovable.app/", 
     pumpingStation: "https://pumping-station.lovable.app/", 
@@ -165,12 +212,13 @@ const Sidebar: React.FC<SidebarProps> = ({
           </div>
           <div className="space-y-1 mb-6">
             <SidebarLink 
-              to={externalApps.water} 
+              to={externalApps.water.main} 
               icon={Droplet} 
               label="Water Management" 
               collapsed={collapsed} 
               external={true} 
               openEmbedded={openEmbeddedApp}
+              options={externalApps.water.options}
             />
             <SidebarLink 
               to={externalApps.electricity} 
