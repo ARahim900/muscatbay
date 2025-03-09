@@ -63,24 +63,34 @@ interface SidebarLinkProps {
   label: string;
   collapsed?: boolean;
   external?: boolean;
+  openEmbedded?: (url: string, title: string) => void;
 }
 
-const SidebarLink: React.FC<SidebarLinkProps> = ({ to, icon: Icon, label, collapsed, external }) => {
+const SidebarLink: React.FC<SidebarLinkProps> = ({ 
+  to, 
+  icon: Icon, 
+  label, 
+  collapsed, 
+  external, 
+  openEmbedded 
+}) => {
+  // Handle embedded application opening
+  const handleEmbeddedClick = (e: React.MouseEvent) => {
+    if (external && openEmbedded) {
+      e.preventDefault();
+      openEmbedded(to, label);
+    }
+  };
+
   if (external) {
     return (
       <a
         href={to}
-        target="_blank"
-        rel="noopener noreferrer"
         className={`sidebar-link ${collapsed ? 'justify-center px-0' : ''}`}
+        onClick={handleEmbeddedClick}
       >
         <Icon className="flex-shrink-0 w-5 h-5" />
-        {!collapsed && (
-          <>
-            <span className="flex-1">{label}</span>
-            <ExternalLink className="w-3 h-3 opacity-70" />
-          </>
-        )}
+        {!collapsed && <span className="flex-1">{label}</span>}
       </a>
     );
   }
@@ -101,9 +111,14 @@ const SidebarLink: React.FC<SidebarLinkProps> = ({ to, icon: Icon, label, collap
 interface SidebarProps {
   collapsed?: boolean;
   setCollapsed?: (collapsed: boolean) => void;
+  openEmbeddedApp?: (url: string, title: string) => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ collapsed = false, setCollapsed }) => {
+const Sidebar: React.FC<SidebarProps> = ({ 
+  collapsed = false, 
+  setCollapsed,
+  openEmbeddedApp
+}) => {
   const toggleSidebar = () => {
     if (setCollapsed) {
       setCollapsed(!collapsed);
@@ -112,14 +127,14 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed = false, setCollapsed }) =>
   
   // External app URLs
   const externalApps = {
-    water: "https://water-management.lovable.app/", // Replace with your actual URL
-    electricity: "https://electricity-app.lovable.app/", // Replace with your actual URL
-    stpPlant: "https://stp-plant.lovable.app/", // Replace with your actual URL
-    pumpingStation: "https://pumping-station.lovable.app/", // Replace with your actual URL
-    hvac: "https://hvac0.lovable.app/", // Your actual HVAC URL
-    contracts: "https://contracts-manager.lovable.app/", // Replace with your actual URL
-    projects: "https://projects-manager.lovable.app/", // Replace with your actual URL
-    security: "https://security-manager.lovable.app/", // Replace with your actual URL
+    water: "https://water-management.lovable.app/", 
+    electricity: "https://electricity-app.lovable.app/", 
+    stpPlant: "https://stp-plant.lovable.app/", 
+    pumpingStation: "https://pumping-station.lovable.app/", 
+    hvac: "https://hvac0.lovable.app/", 
+    contracts: "https://contracts-manager.lovable.app/", 
+    projects: "https://projects-manager.lovable.app/", 
+    security: "https://security-manager.lovable.app/", 
   };
   
   return (
@@ -149,8 +164,22 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed = false, setCollapsed }) =>
             </h3>
           </div>
           <div className="space-y-1 mb-6">
-            <SidebarLink to={externalApps.water} icon={Droplet} label="Water Management" collapsed={collapsed} external={true} />
-            <SidebarLink to={externalApps.electricity} icon={Zap} label="Electricity" collapsed={collapsed} external={true} />
+            <SidebarLink 
+              to={externalApps.water} 
+              icon={Droplet} 
+              label="Water Management" 
+              collapsed={collapsed} 
+              external={true} 
+              openEmbedded={openEmbeddedApp}
+            />
+            <SidebarLink 
+              to={externalApps.electricity} 
+              icon={Zap} 
+              label="Electricity" 
+              collapsed={collapsed} 
+              external={true}
+              openEmbedded={openEmbeddedApp}
+            />
           </div>
           
           <div className="mb-2">
@@ -159,9 +188,30 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed = false, setCollapsed }) =>
             </h3>
           </div>
           <div className="space-y-1 mb-6">
-            <SidebarLink to={externalApps.stpPlant} icon={Factory} label="STP Plant" collapsed={collapsed} external={true} />
-            <SidebarLink to={externalApps.pumpingStation} icon={Wind} label="Pumping Stations" collapsed={collapsed} external={true} />
-            <SidebarLink to={externalApps.hvac} icon={Thermometer} label="HVAC/BMS" collapsed={collapsed} external={true} />
+            <SidebarLink 
+              to={externalApps.stpPlant} 
+              icon={Factory} 
+              label="STP Plant" 
+              collapsed={collapsed} 
+              external={true}
+              openEmbedded={openEmbeddedApp}
+            />
+            <SidebarLink 
+              to={externalApps.pumpingStation} 
+              icon={Wind} 
+              label="Pumping Stations" 
+              collapsed={collapsed} 
+              external={true}
+              openEmbedded={openEmbeddedApp}
+            />
+            <SidebarLink 
+              to={externalApps.hvac} 
+              icon={Thermometer} 
+              label="HVAC/BMS" 
+              collapsed={collapsed} 
+              external={true}
+              openEmbedded={openEmbeddedApp}
+            />
           </div>
           
           <div className="mb-2">
@@ -170,9 +220,30 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed = false, setCollapsed }) =>
             </h3>
           </div>
           <div className="space-y-1">
-            <SidebarLink to={externalApps.contracts} icon={FileText} label="Contracts" collapsed={collapsed} external={true} />
-            <SidebarLink to={externalApps.projects} icon={FolderKanban} label="Projects" collapsed={collapsed} external={true} />
-            <SidebarLink to={externalApps.security} icon={Shield} label="Security" collapsed={collapsed} external={true} />
+            <SidebarLink 
+              to={externalApps.contracts} 
+              icon={FileText} 
+              label="Contracts" 
+              collapsed={collapsed} 
+              external={true}
+              openEmbedded={openEmbeddedApp}
+            />
+            <SidebarLink 
+              to={externalApps.projects} 
+              icon={FolderKanban} 
+              label="Projects" 
+              collapsed={collapsed} 
+              external={true}
+              openEmbedded={openEmbeddedApp}
+            />
+            <SidebarLink 
+              to={externalApps.security} 
+              icon={Shield} 
+              label="Security" 
+              collapsed={collapsed} 
+              external={true}
+              openEmbedded={openEmbeddedApp}
+            />
           </div>
         </div>
         
