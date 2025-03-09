@@ -1,4 +1,3 @@
-
 import React from 'react';
 import Layout from '@/components/layout/Layout';
 import DashboardCard from '@/components/dashboard/DashboardCard';
@@ -7,7 +6,7 @@ import {
   Droplet, 
   Zap, 
   Factory, 
-  FileContract, 
+  FileText, 
   Thermometer, 
   ClipboardCheck, 
   AlertTriangle,
@@ -19,7 +18,6 @@ import {
 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
-// Sample data for charts
 const electricityData = [
   { name: 'Jan', usage: 4000 },
   { name: 'Feb', usage: 3000 },
@@ -76,7 +74,7 @@ const Index = () => {
         <StatCard 
           title="Active Contracts" 
           value="18" 
-          icon={FileContract} 
+          icon={FileText} 
           description="3 requiring attention"
           color="primary"
           delay={400}
@@ -303,7 +301,7 @@ const Index = () => {
               { name: 'Water Reports', icon: Droplet, color: 'bg-muscat-teal/10 text-muscat-teal' },
               { name: 'Energy Analytics', icon: AreaChart, color: 'bg-muscat-gold/10 text-muscat-gold' },
               { name: 'STP Management', icon: Factory, color: 'bg-muscat-primary/10 text-muscat-primary' },
-              { name: 'Contract List', icon: FileContract, color: 'bg-muscat-lavender/10 text-muscat-lavender' },
+              { name: 'Contract List', icon: FileText, color: 'bg-muscat-lavender/10 text-muscat-lavender' },
               { name: 'Inspection Forms', icon: ClipboardCheck, color: 'bg-green-100 text-green-700' },
               { name: 'Incident Reports', icon: AlertTriangle, color: 'bg-amber-100 text-amber-700' },
             ].map((item, index) => {

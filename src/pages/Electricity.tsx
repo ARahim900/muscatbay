@@ -1,4 +1,3 @@
-
 import React from 'react';
 import Layout from '@/components/layout/Layout';
 import DashboardCard from '@/components/dashboard/DashboardCard';
@@ -18,7 +17,7 @@ import {
   Search,
   SlidersHorizontal,
   ThermometerSun,
-  Wave
+  Waves
 } from 'lucide-react';
 import { 
   LineChart, 
@@ -123,7 +122,7 @@ const Electricity = () => {
         <StatCard 
           title="Peak Demand" 
           value="523 kW" 
-          icon={Wave} 
+          icon={Waves} 
           description="Recorded at 18:30"
           color="teal"
           delay={300}

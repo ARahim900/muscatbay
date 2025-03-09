@@ -6,8 +6,8 @@ import {
   Droplet, 
   Zap, 
   Factory, 
-  PumpingStation, 
-  FileContract, 
+  Wind, // Replacing PumpingStation
+  FileText, // Replacing FileContract
   Thermometer, 
   FolderKanban, 
   Shield, 
@@ -15,8 +15,8 @@ import {
   ChevronRight
 } from 'lucide-react';
 
-// Create a custom PumpingStation icon since it doesn't exist in lucide
-const PumpingStation = (props: React.SVGProps<SVGSVGElement>) => (
+// Custom SVG icons for elements not available in lucide-react
+const PumpStationIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     viewBox="0 0 24 24"
@@ -36,8 +36,8 @@ const PumpingStation = (props: React.SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
-// Create a FileContract icon since it doesn't exist in lucide
-const FileContract = (props: React.SVGProps<SVGSVGElement>) => (
+// Custom FileContract icon
+const ContractIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     viewBox="0 0 24 24"
@@ -127,7 +127,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed = false, setCollapsed }) =>
           </div>
           <div className="space-y-1 mb-6">
             <SidebarLink to="/stp-plant" icon={Factory} label="STP Plant" collapsed={collapsed} />
-            <SidebarLink to="/pumping-station" icon={PumpingStation} label="Pumping Stations" collapsed={collapsed} />
+            <SidebarLink to="/pumping-station" icon={Wind} label="Pumping Stations" collapsed={collapsed} />
             <SidebarLink to="/hvac" icon={Thermometer} label="HVAC/BMS" collapsed={collapsed} />
           </div>
           
@@ -137,7 +137,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed = false, setCollapsed }) =>
             </h3>
           </div>
           <div className="space-y-1">
-            <SidebarLink to="/contracts" icon={FileContract} label="Contracts" collapsed={collapsed} />
+            <SidebarLink to="/contracts" icon={FileText} label="Contracts" collapsed={collapsed} />
             <SidebarLink to="/projects" icon={FolderKanban} label="Projects" collapsed={collapsed} />
             <SidebarLink to="/security" icon={Shield} label="Security" collapsed={collapsed} />
           </div>
