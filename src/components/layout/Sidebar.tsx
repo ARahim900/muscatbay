@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { 
@@ -176,7 +175,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       ]
     },
     electricity: "https://electricity-app.lovable.app/", 
-    stpPlant: "https://stp-plant.lovable.app/", 
+    stpPlant: "https://stp.lovable.app/", 
     pumpingStation: "https://pumping-station.lovable.app/", 
     hvac: "https://hvac0.lovable.app/", 
     contracts: "https://contracts-tracker.lovable.app/", 
