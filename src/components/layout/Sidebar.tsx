@@ -6,13 +6,14 @@ import {
   Droplet, 
   Zap, 
   Factory, 
-  Wind, // Replacing PumpingStation
-  FileText, // Replacing FileContract
+  Wind, 
+  FileText, 
   Thermometer, 
   FolderKanban, 
   Shield, 
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  ExternalLink
 } from 'lucide-react';
 
 // Custom SVG icons for elements not available in lucide-react
@@ -61,9 +62,29 @@ interface SidebarLinkProps {
   icon: React.ElementType;
   label: string;
   collapsed?: boolean;
+  external?: boolean;
 }
 
-const SidebarLink: React.FC<SidebarLinkProps> = ({ to, icon: Icon, label, collapsed }) => {
+const SidebarLink: React.FC<SidebarLinkProps> = ({ to, icon: Icon, label, collapsed, external }) => {
+  if (external) {
+    return (
+      <a
+        href={to}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={`sidebar-link ${collapsed ? 'justify-center px-0' : ''}`}
+      >
+        <Icon className="flex-shrink-0 w-5 h-5" />
+        {!collapsed && (
+          <>
+            <span className="flex-1">{label}</span>
+            <ExternalLink className="w-3 h-3 opacity-70" />
+          </>
+        )}
+      </a>
+    );
+  }
+
   return (
     <NavLink
       to={to}
@@ -87,6 +108,18 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed = false, setCollapsed }) =>
     if (setCollapsed) {
       setCollapsed(!collapsed);
     }
+  };
+  
+  // External app URLs
+  const externalApps = {
+    water: "https://water-management.lovable.app/", // Replace with your actual URL
+    electricity: "https://electricity-app.lovable.app/", // Replace with your actual URL
+    stpPlant: "https://stp-plant.lovable.app/", // Replace with your actual URL
+    pumpingStation: "https://pumping-station.lovable.app/", // Replace with your actual URL
+    hvac: "https://hvac0.lovable.app/", // Your actual HVAC URL
+    contracts: "https://contracts-manager.lovable.app/", // Replace with your actual URL
+    projects: "https://projects-manager.lovable.app/", // Replace with your actual URL
+    security: "https://security-manager.lovable.app/", // Replace with your actual URL
   };
   
   return (
@@ -116,8 +149,8 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed = false, setCollapsed }) =>
             </h3>
           </div>
           <div className="space-y-1 mb-6">
-            <SidebarLink to="/water" icon={Droplet} label="Water Management" collapsed={collapsed} />
-            <SidebarLink to="/electricity" icon={Zap} label="Electricity" collapsed={collapsed} />
+            <SidebarLink to={externalApps.water} icon={Droplet} label="Water Management" collapsed={collapsed} external={true} />
+            <SidebarLink to={externalApps.electricity} icon={Zap} label="Electricity" collapsed={collapsed} external={true} />
           </div>
           
           <div className="mb-2">
@@ -126,9 +159,9 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed = false, setCollapsed }) =>
             </h3>
           </div>
           <div className="space-y-1 mb-6">
-            <SidebarLink to="/stp-plant" icon={Factory} label="STP Plant" collapsed={collapsed} />
-            <SidebarLink to="/pumping-station" icon={Wind} label="Pumping Stations" collapsed={collapsed} />
-            <SidebarLink to="/hvac" icon={Thermometer} label="HVAC/BMS" collapsed={collapsed} />
+            <SidebarLink to={externalApps.stpPlant} icon={Factory} label="STP Plant" collapsed={collapsed} external={true} />
+            <SidebarLink to={externalApps.pumpingStation} icon={Wind} label="Pumping Stations" collapsed={collapsed} external={true} />
+            <SidebarLink to={externalApps.hvac} icon={Thermometer} label="HVAC/BMS" collapsed={collapsed} external={true} />
           </div>
           
           <div className="mb-2">
@@ -137,9 +170,9 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed = false, setCollapsed }) =>
             </h3>
           </div>
           <div className="space-y-1">
-            <SidebarLink to="/contracts" icon={FileText} label="Contracts" collapsed={collapsed} />
-            <SidebarLink to="/projects" icon={FolderKanban} label="Projects" collapsed={collapsed} />
-            <SidebarLink to="/security" icon={Shield} label="Security" collapsed={collapsed} />
+            <SidebarLink to={externalApps.contracts} icon={FileText} label="Contracts" collapsed={collapsed} external={true} />
+            <SidebarLink to={externalApps.projects} icon={FolderKanban} label="Projects" collapsed={collapsed} external={true} />
+            <SidebarLink to={externalApps.security} icon={Shield} label="Security" collapsed={collapsed} external={true} />
           </div>
         </div>
         
