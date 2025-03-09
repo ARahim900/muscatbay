@@ -1,0 +1,903 @@
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
+
+export type Database = {
+  public: {
+    Tables: {
+      "Direct Connections": {
+        Row: {
+          "Acct #": number | null
+          "Apr-25": string | null
+          "Aug-25": string | null
+          "Dec-25": string | null
+          "Feb-25": number | null
+          "Jan-25": number | null
+          "Jul-25": string | null
+          "Jun-25": string | null
+          "Mar-25": string | null
+          "May-25": string | null
+          "Meter Label": string | null
+          "Nov-25": string | null
+          "Oct-25": string | null
+          "Parent Meter": string | null
+          "Sep-25": string | null
+          Total: number | null
+          Type: string | null
+          Zone: string | null
+        }
+        Insert: {
+          "Acct #"?: number | null
+          "Apr-25"?: string | null
+          "Aug-25"?: string | null
+          "Dec-25"?: string | null
+          "Feb-25"?: number | null
+          "Jan-25"?: number | null
+          "Jul-25"?: string | null
+          "Jun-25"?: string | null
+          "Mar-25"?: string | null
+          "May-25"?: string | null
+          "Meter Label"?: string | null
+          "Nov-25"?: string | null
+          "Oct-25"?: string | null
+          "Parent Meter"?: string | null
+          "Sep-25"?: string | null
+          Total?: number | null
+          Type?: string | null
+          Zone?: string | null
+        }
+        Update: {
+          "Acct #"?: number | null
+          "Apr-25"?: string | null
+          "Aug-25"?: string | null
+          "Dec-25"?: string | null
+          "Feb-25"?: number | null
+          "Jan-25"?: number | null
+          "Jul-25"?: string | null
+          "Jun-25"?: string | null
+          "Mar-25"?: string | null
+          "May-25"?: string | null
+          "Meter Label"?: string | null
+          "Nov-25"?: string | null
+          "Oct-25"?: string | null
+          "Parent Meter"?: string | null
+          "Sep-25"?: string | null
+          Total?: number | null
+          Type?: string | null
+          Zone?: string | null
+        }
+        Relationships: []
+      }
+      "IRR Tanks": {
+        Row: {
+          "Acct #": number | null
+          "Apr-25": string | null
+          "Aug-25": string | null
+          "Dec-25": string | null
+          "Feb-25": string | null
+          "Jan-25": string | null
+          "Jul-25": string | null
+          "Jun-25": string | null
+          "Mar-25": string | null
+          "May-25": string | null
+          "Meter Label": string | null
+          "Nov-25": string | null
+          "Oct-25": string | null
+          "Parent Meter": string | null
+          "Sep-25": string | null
+          Total: string | null
+          Type: string | null
+          Zone: string | null
+        }
+        Insert: {
+          "Acct #"?: number | null
+          "Apr-25"?: string | null
+          "Aug-25"?: string | null
+          "Dec-25"?: string | null
+          "Feb-25"?: string | null
+          "Jan-25"?: string | null
+          "Jul-25"?: string | null
+          "Jun-25"?: string | null
+          "Mar-25"?: string | null
+          "May-25"?: string | null
+          "Meter Label"?: string | null
+          "Nov-25"?: string | null
+          "Oct-25"?: string | null
+          "Parent Meter"?: string | null
+          "Sep-25"?: string | null
+          Total?: string | null
+          Type?: string | null
+          Zone?: string | null
+        }
+        Update: {
+          "Acct #"?: number | null
+          "Apr-25"?: string | null
+          "Aug-25"?: string | null
+          "Dec-25"?: string | null
+          "Feb-25"?: string | null
+          "Jan-25"?: string | null
+          "Jul-25"?: string | null
+          "Jun-25"?: string | null
+          "Mar-25"?: string | null
+          "May-25"?: string | null
+          "Meter Label"?: string | null
+          "Nov-25"?: string | null
+          "Oct-25"?: string | null
+          "Parent Meter"?: string | null
+          "Sep-25"?: string | null
+          Total?: string | null
+          Type?: string | null
+          Zone?: string | null
+        }
+        Relationships: []
+      }
+      "L1: Main Bulk Meter": {
+        Row: {
+          "Acct #": string | null
+          "Apr-25": string | null
+          "Aug-25": string | null
+          "Dec-25": string | null
+          "Feb-25": number | null
+          "Jan-25": number | null
+          "Jul-25": string | null
+          "Jun-25": string | null
+          "Mar-25": string | null
+          "May-25": string | null
+          "Meter Label": string | null
+          "Nov-25": string | null
+          "Oct-25": string | null
+          "Parent Meter": string | null
+          "Sep-25": string | null
+          Total: number | null
+          Type: string | null
+          Zone: string | null
+        }
+        Insert: {
+          "Acct #"?: string | null
+          "Apr-25"?: string | null
+          "Aug-25"?: string | null
+          "Dec-25"?: string | null
+          "Feb-25"?: number | null
+          "Jan-25"?: number | null
+          "Jul-25"?: string | null
+          "Jun-25"?: string | null
+          "Mar-25"?: string | null
+          "May-25"?: string | null
+          "Meter Label"?: string | null
+          "Nov-25"?: string | null
+          "Oct-25"?: string | null
+          "Parent Meter"?: string | null
+          "Sep-25"?: string | null
+          Total?: number | null
+          Type?: string | null
+          Zone?: string | null
+        }
+        Update: {
+          "Acct #"?: string | null
+          "Apr-25"?: string | null
+          "Aug-25"?: string | null
+          "Dec-25"?: string | null
+          "Feb-25"?: number | null
+          "Jan-25"?: number | null
+          "Jul-25"?: string | null
+          "Jun-25"?: string | null
+          "Mar-25"?: string | null
+          "May-25"?: string | null
+          "Meter Label"?: string | null
+          "Nov-25"?: string | null
+          "Oct-25"?: string | null
+          "Parent Meter"?: string | null
+          "Sep-25"?: string | null
+          Total?: number | null
+          Type?: string | null
+          Zone?: string | null
+        }
+        Relationships: []
+      }
+      "L2: Zones Bulk + Direct Connection": {
+        Row: {
+          "Acct #": number | null
+          "Apr-25": string | null
+          "Aug-25": string | null
+          "Dec-25": string | null
+          "Feb-25": number | null
+          "Jan-25": number | null
+          "Jul-25": string | null
+          "Jun-25": string | null
+          "Mar-25": string | null
+          "May-25": string | null
+          "Meter Label": string | null
+          "Nov-25": string | null
+          "Oct-25": string | null
+          "Parent Meter": string | null
+          "Sep-25": string | null
+          Total: number | null
+          Type: string | null
+          Zone: string | null
+        }
+        Insert: {
+          "Acct #"?: number | null
+          "Apr-25"?: string | null
+          "Aug-25"?: string | null
+          "Dec-25"?: string | null
+          "Feb-25"?: number | null
+          "Jan-25"?: number | null
+          "Jul-25"?: string | null
+          "Jun-25"?: string | null
+          "Mar-25"?: string | null
+          "May-25"?: string | null
+          "Meter Label"?: string | null
+          "Nov-25"?: string | null
+          "Oct-25"?: string | null
+          "Parent Meter"?: string | null
+          "Sep-25"?: string | null
+          Total?: number | null
+          Type?: string | null
+          Zone?: string | null
+        }
+        Update: {
+          "Acct #"?: number | null
+          "Apr-25"?: string | null
+          "Aug-25"?: string | null
+          "Dec-25"?: string | null
+          "Feb-25"?: number | null
+          "Jan-25"?: number | null
+          "Jul-25"?: string | null
+          "Jun-25"?: string | null
+          "Mar-25"?: string | null
+          "May-25"?: string | null
+          "Meter Label"?: string | null
+          "Nov-25"?: string | null
+          "Oct-25"?: string | null
+          "Parent Meter"?: string | null
+          "Sep-25"?: string | null
+          Total?: number | null
+          Type?: string | null
+          Zone?: string | null
+        }
+        Relationships: []
+      }
+      "L3: Indiv + Direct Connections": {
+        Row: {
+          "Acct #": number | null
+          "Apr-25": string | null
+          "Aug-25": string | null
+          "Dec-25": string | null
+          "Feb-25": number | null
+          "Jan-25": number | null
+          "Jul-25": string | null
+          "Jun-25": string | null
+          "Mar-25": string | null
+          "May-25": string | null
+          "Meter Label": string | null
+          "Nov-25": string | null
+          "Oct-25": string | null
+          "Parent Meter": string | null
+          "Sep-25": string | null
+          Total: number | null
+          Type: string | null
+          Zone: string | null
+        }
+        Insert: {
+          "Acct #"?: number | null
+          "Apr-25"?: string | null
+          "Aug-25"?: string | null
+          "Dec-25"?: string | null
+          "Feb-25"?: number | null
+          "Jan-25"?: number | null
+          "Jul-25"?: string | null
+          "Jun-25"?: string | null
+          "Mar-25"?: string | null
+          "May-25"?: string | null
+          "Meter Label"?: string | null
+          "Nov-25"?: string | null
+          "Oct-25"?: string | null
+          "Parent Meter"?: string | null
+          "Sep-25"?: string | null
+          Total?: number | null
+          Type?: string | null
+          Zone?: string | null
+        }
+        Update: {
+          "Acct #"?: number | null
+          "Apr-25"?: string | null
+          "Aug-25"?: string | null
+          "Dec-25"?: string | null
+          "Feb-25"?: number | null
+          "Jan-25"?: number | null
+          "Jul-25"?: string | null
+          "Jun-25"?: string | null
+          "Mar-25"?: string | null
+          "May-25"?: string | null
+          "Meter Label"?: string | null
+          "Nov-25"?: string | null
+          "Oct-25"?: string | null
+          "Parent Meter"?: string | null
+          "Sep-25"?: string | null
+          Total?: number | null
+          Type?: string | null
+          Zone?: string | null
+        }
+        Relationships: []
+      }
+      "MB-Electrical": {
+        Row: {
+          "April-24": string | null
+          "August-24": string | null
+          "December-24": string | null
+          "Electrical Meter Account No": string | null
+          "February-25": string | null
+          "January-25": string | null
+          "July-24": string | null
+          "June-24": string | null
+          "May-24": string | null
+          "Muscat Bay Number": string | null
+          "November-24": string | null
+          "October-24": string | null
+          "September-24": string | null
+          "SL:no.": number | null
+          Type: string | null
+          "Unit Number (Muncipality)": string | null
+          Zone: string | null
+        }
+        Insert: {
+          "April-24"?: string | null
+          "August-24"?: string | null
+          "December-24"?: string | null
+          "Electrical Meter Account No"?: string | null
+          "February-25"?: string | null
+          "January-25"?: string | null
+          "July-24"?: string | null
+          "June-24"?: string | null
+          "May-24"?: string | null
+          "Muscat Bay Number"?: string | null
+          "November-24"?: string | null
+          "October-24"?: string | null
+          "September-24"?: string | null
+          "SL:no."?: number | null
+          Type?: string | null
+          "Unit Number (Muncipality)"?: string | null
+          Zone?: string | null
+        }
+        Update: {
+          "April-24"?: string | null
+          "August-24"?: string | null
+          "December-24"?: string | null
+          "Electrical Meter Account No"?: string | null
+          "February-25"?: string | null
+          "January-25"?: string | null
+          "July-24"?: string | null
+          "June-24"?: string | null
+          "May-24"?: string | null
+          "Muscat Bay Number"?: string | null
+          "November-24"?: string | null
+          "October-24"?: string | null
+          "September-24"?: string | null
+          "SL:no."?: number | null
+          Type?: string | null
+          "Unit Number (Muncipality)"?: string | null
+          Zone?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          full_name: string | null
+          id: string
+          role: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          full_name?: string | null
+          id: string
+          role?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          full_name?: string | null
+          id?: string
+          role?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      "Zone 03(A)": {
+        Row: {
+          "Acct #": number | null
+          "Apr-25": string | null
+          "Aug-25": string | null
+          "Dec-25": string | null
+          "Feb-25": number | null
+          "Jan-25": number | null
+          "Jul-25": string | null
+          "Jun-25": string | null
+          "Mar-25": string | null
+          "May-25": string | null
+          "Meter Label": string | null
+          "Nov-25": string | null
+          "Oct-25": string | null
+          "Parent Meter": string | null
+          "Sep-25": string | null
+          Total: number | null
+          Type: string | null
+          Zone: string | null
+        }
+        Insert: {
+          "Acct #"?: number | null
+          "Apr-25"?: string | null
+          "Aug-25"?: string | null
+          "Dec-25"?: string | null
+          "Feb-25"?: number | null
+          "Jan-25"?: number | null
+          "Jul-25"?: string | null
+          "Jun-25"?: string | null
+          "Mar-25"?: string | null
+          "May-25"?: string | null
+          "Meter Label"?: string | null
+          "Nov-25"?: string | null
+          "Oct-25"?: string | null
+          "Parent Meter"?: string | null
+          "Sep-25"?: string | null
+          Total?: number | null
+          Type?: string | null
+          Zone?: string | null
+        }
+        Update: {
+          "Acct #"?: number | null
+          "Apr-25"?: string | null
+          "Aug-25"?: string | null
+          "Dec-25"?: string | null
+          "Feb-25"?: number | null
+          "Jan-25"?: number | null
+          "Jul-25"?: string | null
+          "Jun-25"?: string | null
+          "Mar-25"?: string | null
+          "May-25"?: string | null
+          "Meter Label"?: string | null
+          "Nov-25"?: string | null
+          "Oct-25"?: string | null
+          "Parent Meter"?: string | null
+          "Sep-25"?: string | null
+          Total?: number | null
+          Type?: string | null
+          Zone?: string | null
+        }
+        Relationships: []
+      }
+      "Zone 03(B)": {
+        Row: {
+          "Acct #": number | null
+          "Apr-25": string | null
+          "Aug-25": string | null
+          "Dec-25": string | null
+          "Feb-25": number | null
+          "Jan-25": number | null
+          "Jul-25": string | null
+          "Jun-25": string | null
+          "Mar-25": string | null
+          "May-25": string | null
+          "Meter Label": string | null
+          "Nov-25": string | null
+          "Oct-25": string | null
+          "Parent Meter": string | null
+          "Sep-25": string | null
+          Total: number | null
+          Type: string | null
+          Zone: string | null
+        }
+        Insert: {
+          "Acct #"?: number | null
+          "Apr-25"?: string | null
+          "Aug-25"?: string | null
+          "Dec-25"?: string | null
+          "Feb-25"?: number | null
+          "Jan-25"?: number | null
+          "Jul-25"?: string | null
+          "Jun-25"?: string | null
+          "Mar-25"?: string | null
+          "May-25"?: string | null
+          "Meter Label"?: string | null
+          "Nov-25"?: string | null
+          "Oct-25"?: string | null
+          "Parent Meter"?: string | null
+          "Sep-25"?: string | null
+          Total?: number | null
+          Type?: string | null
+          Zone?: string | null
+        }
+        Update: {
+          "Acct #"?: number | null
+          "Apr-25"?: string | null
+          "Aug-25"?: string | null
+          "Dec-25"?: string | null
+          "Feb-25"?: number | null
+          "Jan-25"?: number | null
+          "Jul-25"?: string | null
+          "Jun-25"?: string | null
+          "Mar-25"?: string | null
+          "May-25"?: string | null
+          "Meter Label"?: string | null
+          "Nov-25"?: string | null
+          "Oct-25"?: string | null
+          "Parent Meter"?: string | null
+          "Sep-25"?: string | null
+          Total?: number | null
+          Type?: string | null
+          Zone?: string | null
+        }
+        Relationships: []
+      }
+      "Zone 05": {
+        Row: {
+          "Acct #": number | null
+          "Apr-25": string | null
+          "Aug-25": string | null
+          "Dec-25": string | null
+          "Feb-25": string | null
+          "Jan-25": string | null
+          "Jul-25": string | null
+          "Jun-25": string | null
+          "Mar-25": string | null
+          "May-25": string | null
+          "Meter Label": string | null
+          "Nov-25": string | null
+          "Oct-25": string | null
+          "Parent Meter": string | null
+          "Sep-25": string | null
+          Total: string | null
+          Type: string | null
+          Zone: string | null
+        }
+        Insert: {
+          "Acct #"?: number | null
+          "Apr-25"?: string | null
+          "Aug-25"?: string | null
+          "Dec-25"?: string | null
+          "Feb-25"?: string | null
+          "Jan-25"?: string | null
+          "Jul-25"?: string | null
+          "Jun-25"?: string | null
+          "Mar-25"?: string | null
+          "May-25"?: string | null
+          "Meter Label"?: string | null
+          "Nov-25"?: string | null
+          "Oct-25"?: string | null
+          "Parent Meter"?: string | null
+          "Sep-25"?: string | null
+          Total?: string | null
+          Type?: string | null
+          Zone?: string | null
+        }
+        Update: {
+          "Acct #"?: number | null
+          "Apr-25"?: string | null
+          "Aug-25"?: string | null
+          "Dec-25"?: string | null
+          "Feb-25"?: string | null
+          "Jan-25"?: string | null
+          "Jul-25"?: string | null
+          "Jun-25"?: string | null
+          "Mar-25"?: string | null
+          "May-25"?: string | null
+          "Meter Label"?: string | null
+          "Nov-25"?: string | null
+          "Oct-25"?: string | null
+          "Parent Meter"?: string | null
+          "Sep-25"?: string | null
+          Total?: string | null
+          Type?: string | null
+          Zone?: string | null
+        }
+        Relationships: []
+      }
+      "Zone 08": {
+        Row: {
+          "Acct #": number | null
+          "Apr-25": string | null
+          "Aug-25": string | null
+          "Dec-25": string | null
+          "Feb-25": number | null
+          "Jan-25": number | null
+          "Jul-25": string | null
+          "Jun-25": string | null
+          "Mar-25": string | null
+          "May-25": string | null
+          "Meter Label": string | null
+          "Nov-25": string | null
+          "Oct-25": string | null
+          "Parent Meter": string | null
+          "Sep-25": string | null
+          Total: number | null
+          Type: string | null
+          Zone: string | null
+        }
+        Insert: {
+          "Acct #"?: number | null
+          "Apr-25"?: string | null
+          "Aug-25"?: string | null
+          "Dec-25"?: string | null
+          "Feb-25"?: number | null
+          "Jan-25"?: number | null
+          "Jul-25"?: string | null
+          "Jun-25"?: string | null
+          "Mar-25"?: string | null
+          "May-25"?: string | null
+          "Meter Label"?: string | null
+          "Nov-25"?: string | null
+          "Oct-25"?: string | null
+          "Parent Meter"?: string | null
+          "Sep-25"?: string | null
+          Total?: number | null
+          Type?: string | null
+          Zone?: string | null
+        }
+        Update: {
+          "Acct #"?: number | null
+          "Apr-25"?: string | null
+          "Aug-25"?: string | null
+          "Dec-25"?: string | null
+          "Feb-25"?: number | null
+          "Jan-25"?: number | null
+          "Jul-25"?: string | null
+          "Jun-25"?: string | null
+          "Mar-25"?: string | null
+          "May-25"?: string | null
+          "Meter Label"?: string | null
+          "Nov-25"?: string | null
+          "Oct-25"?: string | null
+          "Parent Meter"?: string | null
+          "Sep-25"?: string | null
+          Total?: number | null
+          Type?: string | null
+          Zone?: string | null
+        }
+        Relationships: []
+      }
+      "Zone FM": {
+        Row: {
+          "Acct #": number | null
+          "Apr-25": string | null
+          "Aug-25": string | null
+          "Dec-25": string | null
+          "Feb-25": number | null
+          "Jan-25": number | null
+          "Jul-25": string | null
+          "Jun-25": string | null
+          "Mar-25": string | null
+          "May-25": string | null
+          "Meter Label": string | null
+          "Nov-25": string | null
+          "Oct-25": string | null
+          "Parent Meter": string | null
+          "Sep-25": string | null
+          Total: number | null
+          Type: string | null
+          Zone: string | null
+        }
+        Insert: {
+          "Acct #"?: number | null
+          "Apr-25"?: string | null
+          "Aug-25"?: string | null
+          "Dec-25"?: string | null
+          "Feb-25"?: number | null
+          "Jan-25"?: number | null
+          "Jul-25"?: string | null
+          "Jun-25"?: string | null
+          "Mar-25"?: string | null
+          "May-25"?: string | null
+          "Meter Label"?: string | null
+          "Nov-25"?: string | null
+          "Oct-25"?: string | null
+          "Parent Meter"?: string | null
+          "Sep-25"?: string | null
+          Total?: number | null
+          Type?: string | null
+          Zone?: string | null
+        }
+        Update: {
+          "Acct #"?: number | null
+          "Apr-25"?: string | null
+          "Aug-25"?: string | null
+          "Dec-25"?: string | null
+          "Feb-25"?: number | null
+          "Jan-25"?: number | null
+          "Jul-25"?: string | null
+          "Jun-25"?: string | null
+          "Mar-25"?: string | null
+          "May-25"?: string | null
+          "Meter Label"?: string | null
+          "Nov-25"?: string | null
+          "Oct-25"?: string | null
+          "Parent Meter"?: string | null
+          "Sep-25"?: string | null
+          Total?: number | null
+          Type?: string | null
+          Zone?: string | null
+        }
+        Relationships: []
+      }
+      "Zone VS": {
+        Row: {
+          "Acct #": number | null
+          "Apr-25": string | null
+          "Aug-25": string | null
+          "Dec-25": string | null
+          "Feb-25": string | null
+          "Jan-25": string | null
+          "Jul-25": string | null
+          "Jun-25": string | null
+          "Mar-25": string | null
+          "May-25": string | null
+          "Meter Label": string | null
+          "Nov-25": string | null
+          "Oct-25": string | null
+          "Parent Meter": string | null
+          "Sep-25": string | null
+          Total: string | null
+          Type: string | null
+          Zone: string | null
+        }
+        Insert: {
+          "Acct #"?: number | null
+          "Apr-25"?: string | null
+          "Aug-25"?: string | null
+          "Dec-25"?: string | null
+          "Feb-25"?: string | null
+          "Jan-25"?: string | null
+          "Jul-25"?: string | null
+          "Jun-25"?: string | null
+          "Mar-25"?: string | null
+          "May-25"?: string | null
+          "Meter Label"?: string | null
+          "Nov-25"?: string | null
+          "Oct-25"?: string | null
+          "Parent Meter"?: string | null
+          "Sep-25"?: string | null
+          Total?: string | null
+          Type?: string | null
+          Zone?: string | null
+        }
+        Update: {
+          "Acct #"?: number | null
+          "Apr-25"?: string | null
+          "Aug-25"?: string | null
+          "Dec-25"?: string | null
+          "Feb-25"?: string | null
+          "Jan-25"?: string | null
+          "Jul-25"?: string | null
+          "Jun-25"?: string | null
+          "Mar-25"?: string | null
+          "May-25"?: string | null
+          "Meter Label"?: string | null
+          "Nov-25"?: string | null
+          "Oct-25"?: string | null
+          "Parent Meter"?: string | null
+          "Sep-25"?: string | null
+          Total?: string | null
+          Type?: string | null
+          Zone?: string | null
+        }
+        Relationships: []
+      }
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      [_ in never]: never
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
+}
+
+type PublicSchema = Database[Extract<keyof Database, "public">]
+
+export type Tables<
+  PublicTableNameOrOptions extends
+    | keyof (PublicSchema["Tables"] & PublicSchema["Views"])
+    | { schema: keyof Database },
+  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
+    ? keyof (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
+        Database[PublicTableNameOrOptions["schema"]]["Views"])
+    : never = never,
+> = PublicTableNameOrOptions extends { schema: keyof Database }
+  ? (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
+      Database[PublicTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : PublicTableNameOrOptions extends keyof (PublicSchema["Tables"] &
+        PublicSchema["Views"])
+    ? (PublicSchema["Tables"] &
+        PublicSchema["Views"])[PublicTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
+
+export type TablesInsert<
+  PublicTableNameOrOptions extends
+    | keyof PublicSchema["Tables"]
+    | { schema: keyof Database },
+  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
+    ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = PublicTableNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : PublicTableNameOrOptions extends keyof PublicSchema["Tables"]
+    ? PublicSchema["Tables"][PublicTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
+
+export type TablesUpdate<
+  PublicTableNameOrOptions extends
+    | keyof PublicSchema["Tables"]
+    | { schema: keyof Database },
+  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
+    ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = PublicTableNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : PublicTableNameOrOptions extends keyof PublicSchema["Tables"]
+    ? PublicSchema["Tables"][PublicTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
+
+export type Enums<
+  PublicEnumNameOrOptions extends
+    | keyof PublicSchema["Enums"]
+    | { schema: keyof Database },
+  EnumName extends PublicEnumNameOrOptions extends { schema: keyof Database }
+    ? keyof Database[PublicEnumNameOrOptions["schema"]]["Enums"]
+    : never = never,
+> = PublicEnumNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : PublicEnumNameOrOptions extends keyof PublicSchema["Enums"]
+    ? PublicSchema["Enums"][PublicEnumNameOrOptions]
+    : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof PublicSchema["CompositeTypes"]
+    | { schema: keyof Database },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof Database
+  }
+    ? keyof Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
+> = PublicCompositeTypeNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof PublicSchema["CompositeTypes"]
+    ? PublicSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
