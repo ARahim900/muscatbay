@@ -61,7 +61,7 @@ interface SidebarLinkProps {
   collapsed?: boolean;
   external?: boolean;
   openEmbedded?: (url: string, title: string) => void;
-  options?: { label: string; url: string }[];
+  options?: { label: string; url: string; isGitHub?: boolean }[];
 }
 
 const SidebarLink: React.FC<SidebarLinkProps> = ({ 
@@ -83,6 +83,17 @@ const SidebarLink: React.FC<SidebarLinkProps> = ({
         setShowOptions(false);
       }
     }
+  };
+
+  const handleOptionClick = (e: React.MouseEvent, option: { url: string; label: string; isGitHub?: boolean }) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (option.isGitHub) {
+      window.open(option.url, '_blank');
+    } else if (external && openEmbedded) {
+      openEmbedded(option.url, option.label);
+    }
+    setShowOptions(false);
   };
   
   const toggleOptions = (e: React.MouseEvent) => {
@@ -119,7 +130,7 @@ const SidebarLink: React.FC<SidebarLinkProps> = ({
                 key={index}
                 href={option.url}
                 className="flex items-center py-2 px-4 text-sm text-white/80 hover:text-white hover:bg-white/10 rounded-md transition-colors"
-                onClick={(e) => handleEmbeddedClick(e, option.url, option.label)}
+                onClick={(e) => handleOptionClick(e, option)}
               >
                 <Calendar className="w-4 h-4 mr-2" />
                 <span>{option.label}</span>
@@ -165,8 +176,8 @@ const Sidebar: React.FC<SidebarProps> = ({
     water: {
       main: "/water",
       options: [
-        { label: "Water Dashboard 2024", url: "/water2024" },
-        { label: "Water Dashboard 2025", url: "/water2025" }
+        { label: "Water Dashboard 2024", url: "https://github.com/ARahim900/water-dashboard-24.git", isGitHub: true },
+        { label: "Water Dashboard 2025", url: "https://github.com/ARahim900/water-dashboard-25.git", isGitHub: true }
       ]
     },
     electricity: "/electricity",
@@ -210,7 +221,8 @@ const Sidebar: React.FC<SidebarProps> = ({
               icon={Droplet} 
               label="Water Management" 
               collapsed={collapsed} 
-              external={false}
+              external={true}
+              openEmbedded={openEmbeddedApp}
               options={externalApps.water.options}
             />
             <SidebarLink 

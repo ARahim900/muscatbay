@@ -10,7 +10,7 @@ const Navbar = () => {
         <div className="flex items-center gap-2">
           <Link to="/" className="flex items-center">
             <h1 className="text-xl font-semibold text-muscat-primary">
-              Muscat Bay <span className="hidden ml-1 text-muscat-teal sm:inline">Asset Manager</span>
+              Muscat Bay <span className="hidden ml-1 text-muscat-primary sm:inline">Asset Manager</span>
             </h1>
           </Link>
         </div>
