@@ -168,14 +168,14 @@ const Sidebar: React.FC<SidebarProps> = ({
   // External app URLs
   const externalApps = {
     water: {
-      main: "https://water-management.lovable.app/",
+      main: "/water",
       options: [
-        { label: "Water Dashboard 2024", url: "https://water-dashboard-24.lovable.app" },
-        { label: "Water Dashboard 2025", url: "https://water-dashboard-25.lovable.app" }
+        { label: "Water Dashboard 2024", url: "/water2024" },
+        { label: "Water Dashboard 2025", url: "/water2025" }
       ]
     },
-    electricity: "/electricity", // Changed to internal route 
-    stpPlant: "https://stp.lovable.app/", 
+    electricity: "/electricity",
+    stpPlant: "/stp",
     pumpingStation: "https://pumping-station.lovable.app/", 
     hvac: "https://hvac0.lovable.app/", 
     contracts: "https://contracts-tracker.lovable.app/", 
@@ -215,8 +215,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               icon={Droplet} 
               label="Water Management" 
               collapsed={collapsed} 
-              external={true} 
-              openEmbedded={openEmbeddedApp}
+              external={false}
               options={externalApps.water.options}
             />
             <SidebarLink 
@@ -224,7 +223,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               icon={Zap} 
               label="Electricity" 
               collapsed={collapsed} 
-              external={false} // Changed to internal route
+              external={false}
             />
           </div>
           
@@ -239,8 +238,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               icon={Factory} 
               label="STP Plant" 
               collapsed={collapsed} 
-              external={true}
-              openEmbedded={openEmbeddedApp}
+              external={false}
             />
             <SidebarLink 
               to={externalApps.pumpingStation} 
