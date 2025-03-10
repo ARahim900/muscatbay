@@ -177,7 +177,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       main: "/water",
       options: [
         { label: "Water Dashboard 2024", url: "https://github.com/ARahim900/water-dashboard-24.git", isGitHub: true },
-        { label: "Water Dashboard 2025", url: "https://github.com/ARahim900/water-dashboard-25.git", isGitHub: true }
+        { label: "Water Dashboard 2025", url: "https://water-dashboard-25.lovable.app/", isGitHub: false }
       ]
     },
     electricity: "/electricity",
