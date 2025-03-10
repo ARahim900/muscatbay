@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, forwardRef } from 'react';
 import Layout from '@/components/layout/Layout';
 import DashboardCard from '@/components/dashboard/DashboardCard';
@@ -77,7 +76,7 @@ const currentAlerts = [
   { system: 'Pumping', title: 'Pump #3 Vibration Warning', description: 'Abnormal vibration detected at Hilltop Station', severity: 'low', timestamp: 'Yesterday, 22:10' },
 ];
 
-// Key performance insights
+// Key performance insights - Updated the status properties to use allowed values
 const kpiInsights = [
   { title: 'Water Usage Trend', value: '-4.3%', status: 'good', subtext: 'Below monthly average' },
   { title: 'Electricity Peak', value: '5,120 kWh', status: 'warning', subtext: '18:00-20:00 daily' },
