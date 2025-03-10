@@ -1,7 +1,9 @@
+
 import React, { useState, useEffect, forwardRef } from 'react';
 import Layout from '@/components/layout/Layout';
 import DashboardCard from '@/components/dashboard/DashboardCard';
 import StatCard from '@/components/dashboard/StatCard';
+import KpiIndicator from '@/components/dashboard/KpiIndicator';
 import { 
   Droplet, 
   Zap, 
@@ -16,6 +18,8 @@ import {
   Clock,
   Gauge,
   Waves,
+  TrendingUp,
+  TrendingDown,
   LucideProps
 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -73,6 +77,14 @@ const currentAlerts = [
   { system: 'Pumping', title: 'Pump #3 Vibration Warning', description: 'Abnormal vibration detected at Hilltop Station', severity: 'low', timestamp: 'Yesterday, 22:10' },
 ];
 
+// Key performance insights
+const kpiInsights = [
+  { title: 'Water Usage Trend', value: '-4.3%', status: 'good', subtext: 'Below monthly average' },
+  { title: 'Electricity Peak', value: '5,120 kWh', status: 'warning', subtext: '18:00-20:00 daily' },
+  { title: 'STP Efficiency', value: '93%', status: 'good', subtext: 'Within optimal range' },
+  { title: 'Critical Alerts', value: '1', status: 'critical', subtext: 'Requiring immediate attention' },
+];
+
 // Create a Lucide-compatible Pump icon using forwardRef
 const CustomPumpIcon = forwardRef<SVGSVGElement, LucideProps>((props, ref) => {
   return (
@@ -114,7 +126,7 @@ const Index = () => {
     day: 'numeric' 
   }));
   
-  const navigateToSection = (section) => {
+  const navigateToSection = (section: string) => {
     navigate(`/${section}`);
     toast({
       title: `Navigating to ${section.charAt(0).toUpperCase() + section.slice(1)}`,
@@ -124,11 +136,11 @@ const Index = () => {
 
   return (
     <Layout>
-      <div className="mb-8 animate-fade-in">
+      <div className="mb-6 md:mb-8 animate-fade-in">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-muscat-primary">Operations Dashboard</h1>
-            <p className="text-muscat-primary/60">{currentDate} • Daily Overview</p>
+            <h1 className="text-xl md:text-2xl font-bold text-muscat-primary">Operations Dashboard</h1>
+            <p className="text-sm md:text-base text-muscat-primary/60">{currentDate} • Daily Overview</p>
           </div>
           <div className="flex items-center gap-2 mt-4 md:mt-0">
             <Button variant="outline" onClick={() => toast({ title: "Refreshing data", description: "Dashboard data is being updated" })}>
@@ -139,7 +151,20 @@ const Index = () => {
         </div>
       </div>
       
-      <div className="grid grid-cols-1 gap-6 mb-8 sm:grid-cols-2 lg:grid-cols-4">
+      {/* KPI Insights Section */}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 mb-6">
+        {kpiInsights.map((kpi, index) => (
+          <KpiIndicator
+            key={index}
+            title={kpi.title}
+            value={kpi.value}
+            status={kpi.status}
+            subtext={kpi.subtext}
+          />
+        ))}
+      </div>
+      
+      <div className="grid grid-cols-1 gap-4 sm:gap-6 mb-6 sm:mb-8 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard 
           title="Water Consumption" 
           value="3,850 m³" 
@@ -174,7 +199,7 @@ const Index = () => {
         />
       </div>
       
-      <div className="grid grid-cols-1 gap-6 mb-8 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:gap-6 mb-6 sm:mb-8 lg:grid-cols-2">
         <DashboardCard delay={500}>
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-muscat-primary">Electricity Consumption</h3>
@@ -268,7 +293,7 @@ const Index = () => {
         </DashboardCard>
       </div>
       
-      <div className="grid grid-cols-1 gap-6 mb-8 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:gap-6 mb-6 sm:mb-8 md:grid-cols-2 lg:grid-cols-3">
         <DashboardCard delay={700}>
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-muscat-primary">STP Performance</h3>
@@ -328,7 +353,7 @@ const Index = () => {
         
         <DashboardCard delay={800}>
           <h3 className="mb-4 text-lg font-semibold text-muscat-primary">Critical Alerts</h3>
-          <div className="space-y-4">
+          <div className="space-y-3">
             {currentAlerts.map((alert, index) => (
               <div key={index} className={`
                 p-3 border rounded-lg border-l-4 hover:bg-muscat-light/50 transition-colors
@@ -344,7 +369,7 @@ const Index = () => {
                     <h4 className="text-sm font-medium text-muscat-primary">{alert.title}</h4>
                     <p className="text-xs text-muscat-primary/60">{alert.description}</p>
                   </div>
-                  <span className="text-xs text-muscat-primary/50">{alert.timestamp}</span>
+                  <span className="text-xs text-muscat-primary/50 ml-2">{alert.timestamp}</span>
                 </div>
                 <div className="flex items-center justify-between mt-2">
                   <span className="text-xs font-medium text-muscat-primary/70">{alert.system}</span>
@@ -411,13 +436,13 @@ const Index = () => {
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-muscat-primary">System Overview</h3>
           <div className="flex items-center gap-2">
-            <span className="text-sm text-muscat-primary/60">Last Updated: Today, 14:30</span>
+            <span className="hidden sm:inline text-sm text-muscat-primary/60">Last Updated: Today, 14:30</span>
             <button className="p-1 transition-all rounded-md hover:bg-muscat-light">
               <Calendar className="w-4 h-4 text-muscat-primary/60" />
             </button>
           </div>
         </div>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div className="p-4 transition-all border rounded-lg border-muscat-primary/5 hover:shadow-md">
             <div className="flex items-center gap-3 mb-3">
               <div className="p-2 rounded-lg bg-muscat-teal/10">
@@ -512,5 +537,3 @@ const Index = () => {
 };
 
 export default Index;
-
-import { cn } from '@/lib/utils';

@@ -49,28 +49,31 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       
       <main 
         className={`pt-16 min-h-screen transition-all duration-300 ${
-          collapsed ? 'pl-20' : 'pl-64'
+          collapsed ? 'pl-16 sm:pl-20' : 'pl-16 sm:pl-64'
         }`}
       >
         {embeddedApp.isOpen ? (
           <div className="relative w-full h-[calc(100vh-4rem)]">
-            <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-4 py-3 bg-white border-b shadow-sm">
-              <h2 className="text-lg font-medium text-muscat-primary">{embeddedApp.title}</h2>
+            <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-3 sm:px-4 py-2 sm:py-3 bg-white border-b shadow-sm">
+              <h2 className="text-base sm:text-lg font-medium text-muscat-primary truncate">{embeddedApp.title}</h2>
               <button 
                 onClick={closeEmbeddedApp}
-                className="px-4 py-1 text-sm font-medium text-white transition-all rounded-md bg-muscat-primary hover:bg-opacity-90"
+                className="px-3 sm:px-4 py-1 text-xs sm:text-sm font-medium text-white transition-all rounded-md bg-muscat-primary hover:bg-opacity-90 whitespace-nowrap ml-2"
               >
-                Return to Dashboard
+                Back to Dashboard
               </button>
             </div>
             <iframe 
               src={embeddedApp.url} 
               className="w-full h-full pt-12 border-none" 
               title={embeddedApp.title}
+              style={{ width: '100%', height: 'calc(100% - 3rem)', border: 'none', marginTop: '3rem' }}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
             />
           </div>
         ) : (
-          <div className="p-6">
+          <div className="p-3 sm:p-6">
             {children}
           </div>
         )}
