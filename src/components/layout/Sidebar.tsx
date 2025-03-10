@@ -103,7 +103,7 @@ const SidebarLink: React.FC<SidebarLinkProps> = ({
       setShowOptions(!showOptions);
     }
   };
-
+  
   if (external) {
     return (
       <div className="relative">
