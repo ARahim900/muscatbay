@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, forwardRef } from 'react';
 import Layout from '@/components/layout/Layout';
 import DashboardCard from '@/components/dashboard/DashboardCard';
 import StatCard from '@/components/dashboard/StatCard';
@@ -16,7 +15,8 @@ import {
   CheckCircle2,
   Clock,
   Gauge,
-  Waves
+  Waves,
+  LucideProps
 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useNavigate } from 'react-router-dom';
@@ -73,32 +73,37 @@ const currentAlerts = [
   { system: 'Pumping', title: 'Pump #3 Vibration Warning', description: 'Abnormal vibration detected at Hilltop Station', severity: 'low', timestamp: 'Yesterday, 22:10' },
 ];
 
-// Custom PumpIcon component
-const CustomPumpIcon = (props) => (
-  <svg 
-    xmlns="http://www.w3.org/2000/svg" 
-    width="24" 
-    height="24" 
-    viewBox="0 0 24 24" 
-    fill="none" 
-    stroke="currentColor" 
-    strokeWidth="2" 
-    strokeLinecap="round" 
-    strokeLinejoin="round" 
-    {...props}
-  >
-    <path d="M19 8.5l-4.5 7H19l-4.5 7H19"></path>
-    <path d="M12 12h1"></path>
-    <path d="M8 12h1"></path>
-    <path d="M4 12h1"></path>
-    <path d="M3 5v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-3"></path>
-    <path d="M13 5V3"></path>
-    <path d="M9 5V3"></path>
-    <path d="M5 5V3"></path>
-    <path d="M17 5V3"></path>
-    <path d="M3 5h18"></path>
-  </svg>
-);
+// Create a Lucide-compatible Pump icon using forwardRef
+const CustomPumpIcon = forwardRef<SVGSVGElement, LucideProps>((props, ref) => {
+  return (
+    <svg 
+      ref={ref}
+      xmlns="http://www.w3.org/2000/svg" 
+      width="24" 
+      height="24" 
+      viewBox="0 0 24 24" 
+      fill="none" 
+      stroke="currentColor" 
+      strokeWidth="2" 
+      strokeLinecap="round" 
+      strokeLinejoin="round" 
+      {...props}
+    >
+      <path d="M19 8.5l-4.5 7H19l-4.5 7H19"></path>
+      <path d="M12 12h1"></path>
+      <path d="M8 12h1"></path>
+      <path d="M4 12h1"></path>
+      <path d="M3 5v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-3"></path>
+      <path d="M13 5V3"></path>
+      <path d="M9 5V3"></path>
+      <path d="M5 5V3"></path>
+      <path d="M17 5V3"></path>
+      <path d="M3 5h18"></path>
+    </svg>
+  );
+});
+
+CustomPumpIcon.displayName = 'CustomPumpIcon';
 
 const Index = () => {
   const navigate = useNavigate();
