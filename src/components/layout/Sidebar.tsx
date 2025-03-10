@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { 
@@ -176,13 +177,13 @@ const Sidebar: React.FC<SidebarProps> = ({
     water: {
       main: "/water",
       options: [
-        { label: "Water Dashboard 2024", url: "https://github.com/ARahim900/water-dashboard-24.git", isGitHub: true },
+        { label: "Water Dashboard 2024", url: "https://water-dashboard-24.lovable.app/", isGitHub: false },
         { label: "Water Dashboard 2025", url: "https://water-dashboard-25.lovable.app/", isGitHub: false }
       ]
     },
-    electricity: "/electricity",
-    stpPlant: "/stp",
-    pumpingStation: "https://pumping-station.lovable.app/", 
+    electricity: "https://electrical-muscatbay.lovable.app/",
+    stpPlant: "https://stp.lovable.app/",
+    pumpingStation: "https://muscat-bay-pumping-stations.lovable.app/", 
     hvac: "https://hvac0.lovable.app/", 
     contracts: "https://contracts-tracker.lovable.app/", 
     projects: "https://projects-manager.lovable.app/", 
