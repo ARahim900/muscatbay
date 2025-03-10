@@ -76,12 +76,12 @@ const currentAlerts = [
   { system: 'Pumping', title: 'Pump #3 Vibration Warning', description: 'Abnormal vibration detected at Hilltop Station', severity: 'low', timestamp: 'Yesterday, 22:10' },
 ];
 
-// Key performance insights - Updated the status properties to use allowed values
+// Key performance insights - Fixed status values to match allowed types
 const kpiInsights = [
-  { title: 'Water Usage Trend', value: '-4.3%', status: 'good', subtext: 'Below monthly average' },
-  { title: 'Electricity Peak', value: '5,120 kWh', status: 'warning', subtext: '18:00-20:00 daily' },
-  { title: 'STP Efficiency', value: '93%', status: 'good', subtext: 'Within optimal range' },
-  { title: 'Critical Alerts', value: '1', status: 'critical', subtext: 'Requiring immediate attention' },
+  { title: 'Water Usage Trend', value: '-4.3%', status: 'good' as const, subtext: 'Below monthly average' },
+  { title: 'Electricity Peak', value: '5,120 kWh', status: 'warning' as const, subtext: '18:00-20:00 daily' },
+  { title: 'STP Efficiency', value: '93%', status: 'good' as const, subtext: 'Within optimal range' },
+  { title: 'Critical Alerts', value: '1', status: 'critical' as const, subtext: 'Requiring immediate attention' },
 ];
 
 // Create a Lucide-compatible Pump icon using forwardRef
