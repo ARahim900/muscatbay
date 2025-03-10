@@ -1,18 +1,12 @@
-
 import React from 'react';
 import { Bell, Search, Settings, User } from 'lucide-react';
 import { Link } from 'react-router-dom';
-
 const Navbar = () => {
   return <header className="fixed top-0 right-0 left-0 z-50 border-b bg-white/80 backdrop-blur-md border-muscat-primary/10 animate-fade-in">
       <div className="flex items-center justify-between h-16 px-4 md:px-6">
         <div className="flex items-center gap-2">
           <Link to="/" className="flex items-center">
-            <img 
-              src="/muscat-bay-logo.png" 
-              alt="Muscat Bay Logo" 
-              className="h-8 w-auto mr-2"
-            />
+            <img alt="Muscat Bay Logo" className="h-8 w-auto mr-2" src="/lovable-uploads/a4c6f994-ae31-40c5-a0c0-0314f091a04d.jpg" />
             <h1 className="text-lg md:text-xl font-semibold text-muscat-primary">
               Muscat Bay <span className="hidden ml-1 text-muscat-primary sm:inline">Asset Manager</span>
             </h1>
@@ -47,5 +41,4 @@ const Navbar = () => {
       </div>
     </header>;
 };
-
 export default Navbar;
