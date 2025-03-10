@@ -174,7 +174,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         { label: "Water Dashboard 2025", url: "https://water-dashboard-25.lovable.app" }
       ]
     },
-    electricity: "https://electricity-app.lovable.app/", 
+    electricity: "/electricity", // Changed to internal route 
     stpPlant: "https://stp.lovable.app/", 
     pumpingStation: "https://pumping-station.lovable.app/", 
     hvac: "https://hvac0.lovable.app/", 
@@ -224,8 +224,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               icon={Zap} 
               label="Electricity" 
               collapsed={collapsed} 
-              external={true}
-              openEmbedded={openEmbeddedApp}
+              external={false} // Changed to internal route
             />
           </div>
           
