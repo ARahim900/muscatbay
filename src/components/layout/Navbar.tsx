@@ -30,7 +30,7 @@ const Navbar = () => {
           <div className="flex items-center gap-3 pl-4 border-l border-muscat-primary/10">
             <div className="hidden text-right md:block">
               <p className="text-sm font-medium text-muscat-primary">Abdulrahim Al Balushi</p>
-              <p className="text-xs text-muscat-primary/60">Operations Manager</p>
+              <p className="text-xs text-muscat-primary/60">Assets & Operations</p>
             </div>
             <div className="flex items-center justify-center w-10 h-10 overflow-hidden transition-all bg-muscat-lavender/20 rounded-full hover:ring-2 hover:ring-muscat-primary/20">
               <User className="w-5 h-5 text-muscat-primary/80" />
