@@ -15,7 +15,6 @@ import {
   Calendar
 } from 'lucide-react';
 
-// Custom SVG icons for elements not available in lucide-react
 const PumpStationIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -36,7 +35,6 @@ const PumpStationIcon = (props: React.SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
-// Custom FileContract icon
 const ContractIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -77,7 +75,6 @@ const SidebarLink: React.FC<SidebarLinkProps> = ({
 }) => {
   const [showOptions, setShowOptions] = useState(false);
   
-  // Handle embedded application opening
   const handleEmbeddedClick = (e: React.MouseEvent, url: string = to, title: string = label) => {
     if (external && openEmbedded) {
       e.preventDefault();
@@ -88,7 +85,6 @@ const SidebarLink: React.FC<SidebarLinkProps> = ({
     }
   };
   
-  // Handle showing options
   const toggleOptions = (e: React.MouseEvent) => {
     if (options && options.length > 0) {
       e.preventDefault();
@@ -165,7 +161,6 @@ const Sidebar: React.FC<SidebarProps> = ({
     }
   };
   
-  // External app URLs
   const externalApps = {
     water: {
       main: "/water",
