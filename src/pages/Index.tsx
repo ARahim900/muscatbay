@@ -16,8 +16,7 @@ import {
   CheckCircle2,
   Clock,
   Gauge,
-  Waves,
-  PumpIcon
+  Waves
 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useNavigate } from 'react-router-dom';
@@ -74,7 +73,8 @@ const currentAlerts = [
   { system: 'Pumping', title: 'Pump #3 Vibration Warning', description: 'Abnormal vibration detected at Hilltop Station', severity: 'low', timestamp: 'Yesterday, 22:10' },
 ];
 
-const PumpIcon = (props) => (
+// Custom PumpIcon component
+const CustomPumpIcon = (props) => (
   <svg 
     xmlns="http://www.w3.org/2000/svg" 
     width="24" 
@@ -162,7 +162,7 @@ const Index = () => {
         <StatCard 
           title="Active Pumping Stations" 
           value="4/5" 
-          icon={PumpIcon} 
+          icon={CustomPumpIcon} 
           description="1 under maintenance"
           color="primary"
           delay={400}
@@ -482,7 +482,7 @@ const Index = () => {
           <div className="p-4 transition-all border rounded-lg border-muscat-primary/5 hover:shadow-md">
             <div className="flex items-center gap-3 mb-3">
               <div className="p-2 rounded-lg bg-muscat-primary/10">
-                <PumpIcon className="w-5 h-5 text-muscat-primary" />
+                <CustomPumpIcon className="w-5 h-5 text-muscat-primary" />
               </div>
               <div>
                 <h4 className="text-sm font-medium text-muscat-primary">Pumping Network</h4>
