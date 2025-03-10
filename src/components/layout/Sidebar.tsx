@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { 
@@ -175,7 +174,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   
   const externalApps = {
     water: {
-      main: "/water",
+      main: "https://water-dashboard-24.lovable.app/",
       options: [
         { label: "Water Dashboard 2024", url: "https://water-dashboard-24.lovable.app/", isGitHub: false },
         { label: "Water Dashboard 2025", url: "https://water-dashboard-25.lovable.app/", isGitHub: false }
@@ -231,7 +230,8 @@ const Sidebar: React.FC<SidebarProps> = ({
               icon={Zap} 
               label="Electricity" 
               collapsed={collapsed} 
-              external={false}
+              external={true}
+              openEmbedded={openEmbeddedApp}
             />
           </div>
           
@@ -246,7 +246,8 @@ const Sidebar: React.FC<SidebarProps> = ({
               icon={Factory} 
               label="STP Plant" 
               collapsed={collapsed} 
-              external={false}
+              external={true}
+              openEmbedded={openEmbeddedApp}
             />
             <SidebarLink 
               to={externalApps.pumpingStation} 
