@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from './Navbar';
 import Sidebar from './Sidebar';
 
@@ -20,6 +20,23 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     title: '',
     isOpen: false
   });
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Check if device is mobile
+  useEffect(() => {
+    const checkIfMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    // Initial check
+    checkIfMobile();
+    
+    // Add resize listener
+    window.addEventListener('resize', checkIfMobile);
+    
+    // Cleanup listener
+    return () => window.removeEventListener('resize', checkIfMobile);
+  }, []);
 
   // Function to open an embedded application
   const openEmbeddedApp = (url: string, title: string) => {
@@ -65,11 +82,19 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             </div>
             <iframe 
               src={embeddedApp.url} 
-              className="w-full h-full pt-12 border-none" 
+              className="w-full h-full border-none" 
               title={embeddedApp.title}
-              style={{ width: '100%', height: 'calc(100% - 3rem)', border: 'none', marginTop: '3rem' }}
+              style={{ 
+                width: '100%', 
+                height: 'calc(100% - 3rem)', 
+                border: 'none', 
+                marginTop: '3rem',
+                overflow: 'auto',
+                display: 'block'
+              }}
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
+              sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-downloads allow-modals"
             />
           </div>
         ) : (
