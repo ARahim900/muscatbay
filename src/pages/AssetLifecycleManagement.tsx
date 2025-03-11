@@ -113,7 +113,7 @@ const AssetLifecycleManagement = () => {
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
 
   // Handle update installation date
-  const handleUpdateData = (e: React.FormEvent) => {
+  const handleUpdateData = (e) => {
     e.preventDefault();
     toast({
       title: "Asset Updated",
@@ -123,7 +123,7 @@ const AssetLifecycleManagement = () => {
   };
 
   // Handle lifecycle update
-  const handleLifecycleUpdate = (e: React.FormEvent) => {
+  const handleLifecycleUpdate = (e) => {
     e.preventDefault();
     toast({
       title: "Lifecycle Status Updated",
@@ -671,70 +671,356 @@ const AssetLifecycleManagement = () => {
                         <td className="px-3 py-2 whitespace-nowrap text-sm">{asset.manufacturer}</td>
                         <td className="px-3 py-2 whitespace-nowrap text-sm">
                           <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
-                            ${asset.status === 'Operational' ? 'bg-green-100 text-green-800' :
-                            asset.status === 'Requires Maintenance' ? 'bg-yellow-100 text-yellow-800' :
-                            'bg-red-100 text-red-800'}`}>
+                            ${asset.status === 'Operational' ? 'bg-green-100 text-green-800' : 
+                              asset.status === 'Requires Maintenance' ? 'bg-yellow-100 text-yellow-800' : 
+                              'bg-red-100 text-red-800'}`}>
                             {asset.status}
                           </span>
                         </td>
                         <td className="px-3 py-2 whitespace-nowrap text-sm">{asset.nextMaintenanceDate}</td>
                         <td className="px-3 py-2 whitespace-nowrap text-sm">
-                          <button 
-                            className="text-blue-600 hover:text-blue-900"
-                            onClick={() => {
-                              toast({
-                                title: "Asset Details",
-                                description: `Viewing details for ${asset.name}`,
-                              });
-                            }}
-                          >
-                            View
-                          </button>
+                          <div className="flex items-center space-x-2">
+                            <button 
+                              className="text-blue-600 hover:text-blue-900"
+                              onClick={() => {
+                                toast({
+                                  title: "Asset Details",
+                                  description: `Viewing asset: ${asset.id} - ${asset.name}`,
+                                });
+                              }}
+                            >View</button>
+                            <button 
+                              className="text-blue-600 hover:text-blue-900"
+                              onClick={() => {
+                                setFormData({
+                                  assetId: asset.id,
+                                  installationDate: asset.installationDate || '',
+                                  maintenanceSchedule: ''
+                                });
+                                setActiveTab('update');
+                              }}
+                            >Edit</button>
+                            <button 
+                              className="text-blue-600 hover:text-blue-900"
+                              onClick={() => {
+                                toast({
+                                  title: "Maintenance History",
+                                  description: `Viewing history for asset: ${asset.id}`,
+                                });
+                              }}
+                            >History</button>
+                          </div>
                         </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
+                
+                {filteredData.length > itemsPerPage && (
+                  <div className="flex justify-between items-center mt-4">
+                    <div className="text-sm text-gray-500">
+                      Showing {Math.min((currentPage - 1) * itemsPerPage + 1, filteredData.length)}-
+                      {Math.min(currentPage * itemsPerPage, filteredData.length)} of {filteredData.length} assets
+                    </div>
+                    <div className="flex">
+                      <button 
+                        className={`px-3 py-1 border rounded-l-md ${currentPage === 1 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-gray-50 hover:bg-gray-100 cursor-pointer'}`}
+                        onClick={() => {
+                          if (currentPage > 1) {
+                            setCurrentPage(prevPage => prevPage - 1);
+                          }
+                        }}
+                      >
+                        Previous
+                      </button>
+                      
+                      {/* Generate page buttons */}
+                      {Array.from({ length: Math.min(5, totalPages) }).map((_, i) => {
+                        // Calculate page number
+                        const maxPage = totalPages;
+                        let startPage = Math.max(1, currentPage - 2);
+                        
+                        if (startPage + 4 > maxPage) {
+                          startPage = Math.max(1, maxPage - 4);
+                        }
+                        
+                        const pageNum = startPage + i;
+                        
+                        if (pageNum <= maxPage) {
+                          return (
+                            <button 
+                              key={pageNum}
+                              className={`px-3 py-1 border-t border-b border-r ${currentPage === pageNum ? 'bg-blue-50 text-blue-600' : 'hover:bg-gray-100'}`}
+                              onClick={() => setCurrentPage(pageNum)}
+                            >
+                              {pageNum}
+                            </button>
+                          );
+                        }
+                        return null;
+                      })}
+                      
+                      <button 
+                        className={`px-3 py-1 border-t border-b border-r rounded-r-md ${currentPage >= totalPages ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-gray-50 hover:bg-gray-100 cursor-pointer'}`}
+                        onClick={() => {
+                          if (currentPage < totalPages) {
+                            setCurrentPage(prevPage => prevPage + 1);
+                          }
+                        }}
+                      >
+                        Next
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Asset Reports</CardTitle>
+                <CardDescription>Generate reports to analyze your asset data</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <button 
+                    className="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 rounded-md"
+                    onClick={() => {
+                      setSelectedReport('inventory');
+                      setShowReportModal(true);
+                    }}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Download size={18} className="text-blue-600" />
+                      <span>Asset Inventory Report</span>
+                    </div>
+                    <span className="text-gray-500">→</span>
+                  </button>
+                  
+                  <button 
+                    className="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 rounded-md"
+                    onClick={() => {
+                      setSelectedReport('maintenance');
+                      setShowReportModal(true);
+                    }}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Download size={18} className="text-blue-600" />
+                      <span>Maintenance Schedule Report</span>
+                    </div>
+                    <span className="text-gray-500">→</span>
+                  </button>
+                  
+                  <button 
+                    className="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 rounded-md"
+                    onClick={() => {
+                      setSelectedReport('status');
+                      setShowReportModal(true);
+                    }}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Download size={18} className="text-blue-600" />
+                      <span>Asset Status Report</span>
+                    </div>
+                    <span className="text-gray-500">→</span>
+                  </button>
+                  
+                  <button 
+                    className="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 rounded-md"
+                    onClick={() => {
+                      setSelectedReport('lifecycle');
+                      setShowReportModal(true);
+                    }}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Download size={18} className="text-blue-600" />
+                      <span>Asset Lifecycle Analysis</span>
+                    </div>
+                    <span className="text-gray-500">→</span>
+                  </button>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader>
+                <CardTitle>Asset Insights</CardTitle>
+                <CardDescription>Quick statistics about your asset inventory</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-3 border rounded-md">
+                    <div className="text-sm text-gray-500">Assets Requiring Maintenance</div>
+                    <div className="text-2xl font-bold mt-1">{stats.requiresMaintenance}</div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      {((stats.requiresMaintenance / stats.totalAssets) * 100).toFixed(1)}% of total assets
+                    </div>
+                  </div>
+                  
+                  <div className="p-3 border rounded-md">
+                    <div className="text-sm text-gray-500">Maintenance Due (30 days)</div>
+                    <div className="text-2xl font-bold mt-1">{Math.round(stats.totalAssets * 0.23)}</div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      Scheduled for next month
+                    </div>
+                  </div>
+                  
+                  <div className="p-3 border rounded-md">
+                    <div className="text-sm text-gray-500">Missing Installation Dates</div>
+                    <div className="text-2xl font-bold mt-1">{stats.missingInstallationCount}</div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      {((stats.missingInstallationCount / stats.totalAssets) * 100).toFixed(1)}% of total assets
+                    </div>
+                  </div>
+                  
+                  <div className="p-3 border rounded-md">
+                    <div className="text-sm text-gray-500">Total Asset Value</div>
+                    <div className="text-2xl font-bold mt-1">$4.5M</div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      Estimated replacement value
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
-
-        {/* Categories Tab - Basic implementation */}
+        
+        {/* Categories Tab */}
         <TabsContent value="categories" className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">Filter by Category</label>
+              <select 
+                className="w-full p-2 border rounded-md"
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+              >
+                {categories.map(category => (
+                  <option key={category} value={category}>{category}</option>
+                ))}
+              </select>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium mb-1">Filter by Location</label>
+              <select 
+                className="w-full p-2 border rounded-md"
+                value={selectedLocation}
+                onChange={(e) => setSelectedLocation(e.target.value)}
+              >
+                {locations.map(location => (
+                  <option key={location} value={location}>{location}</option>
+                ))}
+              </select>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium mb-1">Search Assets</label>
+              <input
+                type="text"
+                className="w-full p-2 border rounded-md"
+                placeholder="Search by asset name or tag..."
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value.toLowerCase());
+                }}
+              />
+            </div>
+          </div>
+          
           <Card>
             <CardHeader>
-              <CardTitle>Asset Categories</CardTitle>
+              <CardTitle>Category Breakdown</CardTitle>
               <CardDescription>
-                Distribution of assets across categories
+                {selectedCategory === 'All' ? 'All categories' : `Category: ${selectedCategory}`}
+                {selectedLocation !== 'All' ? ` • Location: ${selectedLocation}` : ''}
               </CardDescription>
             </CardHeader>
-            <CardContent className="h-96">
+            <CardContent className={`${isMobileView ? "h-80" : "h-96"}`}>
               <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={categoryData}
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={120}
-                    fill={PRIMARY_COLOR}
-                    dataKey="value"
-                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                  >
-                    {categoryData.map((entry, index) => (
+                <BarChart
+                  data={[
+                    { name: 'Power Distribution', value: 23 },
+                    { name: 'Lighting', value: 18 },
+                    { name: 'Pumps', value: 15 },
+                    { name: 'Air Handlers', value: 12 },
+                    { name: 'Controls', value: 10 },
+                    { name: 'Fire Systems', value: 8 },
+                    { name: 'Water Treatment', value: 7 },
+                    { name: 'Chillers', value: 5 },
+                    { name: 'Generators', value: 4 }
+                  ]}
+                  layout="vertical"
+                  margin={{ 
+                    top: 5, 
+                    right: 30, 
+                    left: isMobileView ? 100 : 150, 
+                    bottom: 5 
+                  }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis type="number" />
+                  <YAxis 
+                    type="category" 
+                    dataKey="name" 
+                    width={isMobileView ? 100 : 150} 
+                    tick={{ fontSize: isMobileView ? 10 : 12 }}
+                  />
+                  <Tooltip formatter={(value) => [`${value} assets`, 'Quantity']} />
+                  <Bar dataKey="value">
+                    {[
+                      { name: 'Power Distribution', value: 23 },
+                      { name: 'Lighting', value: 18 },
+                      { name: 'Pumps', value: 15 },
+                      { name: 'Air Handlers', value: 12 },
+                      { name: 'Controls', value: 10 },
+                      { name: 'Fire Systems', value: 8 },
+                      { name: 'Water Treatment', value: 7 },
+                      { name: 'Chillers', value: 5 },
+                      { name: 'Generators', value: 4 }
+                    ].map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
-                  </Pie>
-                  <Tooltip />
-                  <Legend layout="vertical" align="right" verticalAlign="middle" />
-                </PieChart>
+                  </Bar>
+                </BarChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>
         </TabsContent>
 
-        {/* Locations Tab - Basic implementation */}
+        {/* Locations Tab */}
         <TabsContent value="locations" className="space-y-4">
+          <div className="flex flex-col md:flex-row md:space-x-4 space-y-4 md:space-y-0 mb-4">
+            <div className="w-full md:w-1/4">
+              <label className="block text-sm font-medium mb-1">Filter by Location</label>
+              <select 
+                className="w-full p-2 border rounded-md"
+                value={selectedLocation}
+                onChange={(e) => setSelectedLocation(e.target.value)}
+              >
+                {locations.map(location => (
+                  <option key={location} value={location}>{location}</option>
+                ))}
+              </select>
+            </div>
+            
+            <div className="w-full md:w-1/4">
+              <label className="block text-sm font-medium mb-1">Search</label>
+              <input
+                type="text"
+                className="w-full p-2 border rounded-md"
+                placeholder="Search locations..."
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value.toLowerCase());
+                }}
+              />
+            </div>
+          </div>
+          
           <Card>
             <CardHeader>
               <CardTitle>Assets by Location</CardTitle>
@@ -753,11 +1039,7 @@ const AssetLifecycleManagement = () => {
                   <XAxis type="number" />
                   <YAxis type="category" dataKey="name" width={120} />
                   <Tooltip />
-                  <Bar dataKey="value" fill="#0088FE">
-                    {locationData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Bar>
+                  <Bar dataKey="value" fill={PRIMARY_COLOR} />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
@@ -781,11 +1063,10 @@ const AssetLifecycleManagement = () => {
                     className="w-full p-2 border rounded-md"
                     value={formData.assetId}
                     onChange={(e) => {
-                      const selectedAsset = assetData.find(asset => asset.id === e.target.value);
                       setFormData({
                         ...formData,
                         assetId: e.target.value,
-                        installationDate: selectedAsset?.installationDate || '',
+                        installationDate: '',
                         maintenanceSchedule: ''
                       });
                     }}
@@ -832,7 +1113,9 @@ const AssetLifecycleManagement = () => {
                 </div>
                 
                 <div className="flex space-x-2">
-                  <Button type="submit">
+                  <Button
+                    type="submit"
+                  >
                     Update Asset Information
                   </Button>
                   
@@ -864,12 +1147,10 @@ const AssetLifecycleManagement = () => {
               </CardHeader>
               <CardContent>
                 <div className="text-4xl font-bold text-green-600">
-                  {assetData.filter(asset => asset.status === 'Operational').length}
+                  {stats.operationalAssets}
                 </div>
                 <div className="text-sm text-gray-500">
-                  {assetData.length > 0 ? 
-                    `${((assetData.filter(asset => asset.status === 'Operational').length / assetData.length) * 100).toFixed(1)}% of total assets` : 
-                    '0% of total assets'}
+                  {((stats.operationalAssets / stats.totalAssets) * 100).toFixed(1)}% of total assets
                 </div>
               </CardContent>
             </Card>
@@ -880,12 +1161,10 @@ const AssetLifecycleManagement = () => {
               </CardHeader>
               <CardContent>
                 <div className="text-4xl font-bold text-yellow-600">
-                  {assetData.filter(asset => asset.status === 'Requires Maintenance').length}
+                  {stats.requiresMaintenance}
                 </div>
                 <div className="text-sm text-gray-500">
-                  {assetData.length > 0 ? 
-                    `${((assetData.filter(asset => asset.status === 'Requires Maintenance').length / assetData.length) * 100).toFixed(1)}% of total assets` : 
-                    '0% of total assets'}
+                  {((stats.requiresMaintenance / stats.totalAssets) * 100).toFixed(1)}% of total assets
                 </div>
               </CardContent>
             </Card>
@@ -896,12 +1175,10 @@ const AssetLifecycleManagement = () => {
               </CardHeader>
               <CardContent>
                 <div className="text-4xl font-bold text-red-600">
-                  {assetData.filter(asset => asset.status === 'Under Maintenance').length}
+                  {stats.underMaintenance}
                 </div>
                 <div className="text-sm text-gray-500">
-                  {assetData.length > 0 ? 
-                    `${((assetData.filter(asset => asset.status === 'Under Maintenance').length / assetData.length) * 100).toFixed(1)}% of total assets` : 
-                    '0% of total assets'}
+                  {((stats.underMaintenance / stats.totalAssets) * 100).toFixed(1)}% of total assets
                 </div>
               </CardContent>
             </Card>
@@ -924,13 +1201,15 @@ const AssetLifecycleManagement = () => {
                       value={lifecycleAsset.assetId}
                       onChange={(e) => {
                         const selectedAsset = assetData.find(asset => asset.id === e.target.value);
-                        setLifecycleAsset({
-                          ...lifecycleAsset,
-                          assetId: e.target.value,
-                          status: selectedAsset?.status || 'Operational',
-                          nextMaintenance: selectedAsset?.nextMaintenanceDate || '',
-                          notes: ''
-                        });
+                        if (selectedAsset) {
+                          setLifecycleAsset({
+                            ...lifecycleAsset,
+                            assetId: e.target.value,
+                            status: selectedAsset.status || 'Operational',
+                            nextMaintenance: selectedAsset.nextMaintenanceDate || '',
+                            notes: ''
+                          });
+                        }
                       }}
                       required
                     >
@@ -974,7 +1253,7 @@ const AssetLifecycleManagement = () => {
                     <label className="block text-sm font-medium mb-1">Notes</label>
                     <textarea
                       className="w-full p-2 border rounded-md"
-                      rows={3}
+                      rows="3"
                       value={lifecycleAsset.notes}
                       onChange={(e) => setLifecycleAsset({...lifecycleAsset, notes: e.target.value})}
                       placeholder="Enter any relevant notes about this asset's status"
@@ -982,7 +1261,9 @@ const AssetLifecycleManagement = () => {
                   </div>
                   
                   <div className="flex space-x-2">
-                    <Button type="submit">
+                    <Button
+                      type="submit"
+                    >
                       Update Lifecycle Status
                     </Button>
                     
@@ -1004,6 +1285,139 @@ const AssetLifecycleManagement = () => {
                 </form>
               </CardContent>
             </Card>
+            
+            <Card>
+              <CardHeader>
+                <CardTitle>Lifecycle Actions</CardTitle>
+                <CardDescription>
+                  Key activities for each lifecycle stage
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="p-3 border rounded-md bg-blue-50">
+                    <h3 className="text-sm font-medium flex items-center">
+                      <PlusCircle size={16} className="mr-2 text-blue-600" />
+                      Planning & Acquisition
+                    </h3>
+                    <div className="mt-2 grid grid-cols-2 gap-2">
+                      <button 
+                        className="text-sm text-left px-3 py-2 bg-white border rounded hover:bg-gray-50"
+                        onClick={() => {
+                          toast({
+                            title: "Purchase Request",
+                            description: "Creating new purchase request form",
+                          });
+                        }}
+                      >
+                        Create Purchase Request
+                      </button>
+                      <button 
+                        className="text-sm text-left px-3 py-2 bg-white border rounded hover:bg-gray-50"
+                        onClick={() => {
+                          toast({
+                            title: "Procurement Tracking",
+                            description: "Opening procurement tracking dashboard",
+                          });
+                        }}
+                      >
+                        Track Procurement
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div className="p-3 border rounded-md bg-purple-50">
+                    <h3 className="text-sm font-medium flex items-center">
+                      <Database size={16} className="mr-2 text-purple-600" />
+                      Registration & Inventory
+                    </h3>
+                    <div className="mt-2 grid grid-cols-2 gap-2">
+                      <button 
+                        className="text-sm text-left px-3 py-2 bg-white border rounded hover:bg-gray-50"
+                        onClick={() => {
+                          toast({
+                            title: "Asset Registration",
+                            description: "Opening new asset registration form",
+                          });
+                        }}
+                      >
+                        Register New Asset
+                      </button>
+                      <button 
+                        className="text-sm text-left px-3 py-2 bg-white border rounded hover:bg-gray-50"
+                        onClick={() => {
+                          toast({
+                            title: "Asset Tags",
+                            description: "Generating asset tags for new items",
+                          });
+                        }}
+                      >
+                        Generate Asset Tags
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div className="p-3 border rounded-md bg-green-50">
+                    <h3 className="text-sm font-medium flex items-center">
+                      <Wrench size={16} className="mr-2 text-green-600" />
+                      Operation & Maintenance
+                    </h3>
+                    <div className="mt-2 grid grid-cols-2 gap-2">
+                      <button 
+                        className="text-sm text-left px-3 py-2 bg-white border rounded hover:bg-gray-50"
+                        onClick={() => {
+                          setActiveTab('workorders');
+                        }}
+                      >
+                        Schedule Maintenance
+                      </button>
+                      <button 
+                        className="text-sm text-left px-3 py-2 bg-white border rounded hover:bg-gray-50"
+                        onClick={() => {
+                          toast({
+                            title: "Issue Report",
+                            description: "Creating new issue report for an asset",
+                          });
+                        }}
+                      >
+                        Report Issue
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div className="p-3 border rounded-md bg-red-50">
+                    <h3 className="text-sm font-medium flex items-center">
+                      <Settings size={16} className="mr-2 text-red-600" />
+                      End of Life Management
+                    </h3>
+                    <div className="mt-2 grid grid-cols-2 gap-2">
+                      <button 
+                        className="text-sm text-left px-3 py-2 bg-white border rounded hover:bg-gray-50"
+                        onClick={() => {
+                          toast({
+                            title: "Asset Disposal",
+                            description: "Initiating asset disposal process",
+                          });
+                        }}
+                      >
+                        Initiate Disposal
+                      </button>
+                      <button 
+                        className="text-sm text-left px-3 py-2 bg-white border rounded hover:bg-gray-50"
+                        onClick={() => {
+                          toast({
+                            title: "Asset Replacement",
+                            description: "Creating asset replacement request",
+                          });
+                        }}
+                      >
+                        Request Replacement
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </TabsContent>
 
@@ -1013,17 +1427,26 @@ const AssetLifecycleManagement = () => {
             <h2 className="text-xl font-bold">Maintenance Work Orders</h2>
             
             <div className="flex space-x-2">
-              <Button
+              <Button 
+                className="flex items-center gap-2"
                 onClick={() => {
                   toast({
-                    title: "Create Work Order",
+                    title: "Work Order Creation",
                     description: "Opening work order creation form",
                   });
                 }}
               >
-                + Create Work Order
+                <span>+ Create Work Order</span>
               </Button>
-              <Button variant="outline">
+              <Button 
+                variant="outline"
+                onClick={() => {
+                  toast({
+                    title: "Export Started",
+                    description: "Exporting work orders to CSV file",
+                  });
+                }}
+              >
                 Export
               </Button>
             </div>
@@ -1084,7 +1507,7 @@ const AssetLifecycleManagement = () => {
                             className="text-blue-600 hover:text-blue-900"
                             onClick={() => {
                               toast({
-                                title: "View Work Order",
+                                title: "Work Order Details",
                                 description: `Viewing details for work order: ${workOrder.id}`,
                               });
                             }}
@@ -1099,15 +1522,160 @@ const AssetLifecycleManagement = () => {
               </div>
             </CardContent>
           </Card>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Create Work Order</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Asset</label>
+                    <select className="w-full p-2 border rounded-md">
+                      <option value="">Select an asset</option>
+                      {assetData.slice(0, 10).map((asset, index) => (
+                        <option key={index} value={asset.id}>
+                          {asset.id} - {asset.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Maintenance Type</label>
+                    <select className="w-full p-2 border rounded-md">
+                      <option value="preventive">Preventive Maintenance</option>
+                      <option value="corrective">Corrective Maintenance</option>
+                      <option value="inspection">Inspection</option>
+                      <option value="replacement">Component Replacement</option>
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Description</label>
+                    <textarea 
+                      className="w-full p-2 border rounded-md" 
+                      rows="3" 
+                      placeholder="Describe the work to be performed..."
+                    ></textarea>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Assign To</label>
+                      <select className="w-full p-2 border rounded-md">
+                        <option value="">Select technician</option>
+                        <option value="team1">Tech Team 1</option>
+                        <option value="team2">Tech Team 2</option>
+                        <option value="team3">Tech Team 3</option>
+                        <option value="john">John Smith</option>
+                      </select>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Due Date</label>
+                      <input type="date" className="w-full p-2 border rounded-md" />
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Priority</label>
+                    <select className="w-full p-2 border rounded-md">
+                      <option value="low">Low</option>
+                      <option value="medium">Medium</option>
+                      <option value="high">High</option>
+                      <option value="critical">Critical</option>
+                    </select>
+                  </div>
+                  
+                  <Button 
+                    type="button" 
+                    className="w-full"
+                    onClick={() => {
+                      toast({
+                        title: "Work Order Created",
+                        description: "Successfully created work order for asset",
+                      });
+                    }}
+                  >
+                    Create Work Order
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader>
+                <CardTitle>Work Order Statistics</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div className="bg-gray-50 p-4 rounded-md">
+                    <h3 className="text-sm font-medium text-gray-500">Open Work Orders</h3>
+                    <p className="text-2xl font-bold mt-1">{workOrders.filter(wo => wo.status !== 'Completed').length}</p>
+                  </div>
+                  
+                  <div className="bg-gray-50 p-4 rounded-md">
+                    <h3 className="text-sm font-medium text-gray-500">Completed This Month</h3>
+                    <p className="text-2xl font-bold mt-1">{workOrders.filter(wo => wo.status === 'Completed').length + 15}</p>
+                  </div>
+                </div>
+                
+                <div className="space-y-4 mt-6">
+                  <h3 className="font-medium">Work Order Status</h3>
+                  
+                  <div className="space-y-2">
+                    <div>
+                      <div className="flex justify-between text-sm mb-1">
+                        <span>Scheduled</span>
+                        <span>40%</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div className="bg-yellow-500 h-2 rounded-full" style={{ width: '40%' }}></div>
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <div className="flex justify-between text-sm mb-1">
+                        <span>In Progress</span>
+                        <span>25%</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div className="bg-blue-500 h-2 rounded-full" style={{ width: '25%' }}></div>
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <div className="flex justify-between text-sm mb-1">
+                        <span>Completed</span>
+                        <span>35%</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div className="bg-green-500 h-2 rounded-full" style={{ width: '35%' }}></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="mt-6 p-4 bg-blue-50 rounded-md">
+                  <h3 className="font-medium text-blue-800 mb-2">Scheduled Maintenance</h3>
+                  <p className="text-sm text-blue-700">Next 3 days: {Math.round(stats.totalAssets * 0.03)} assets</p>
+                  <p className="text-sm text-blue-700">Next week: {Math.round(stats.totalAssets * 0.09)} assets</p>
+                  <p className="text-sm text-blue-700">Next month: {Math.round(stats.totalAssets * 0.23)} assets</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
-
+        
         {/* Notifications/Alerts Tab */}
         <TabsContent value="notifications" className="space-y-4">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-bold">Maintenance Alerts & Notifications</h2>
             
             <div>
-              <Button
+              <Button 
                 variant="outline"
                 onClick={() => {
                   setNotifications([]);
@@ -1121,6 +1689,66 @@ const AssetLifecycleManagement = () => {
               </Button>
             </div>
           </div>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle>Alert Settings</CardTitle>
+              <CardDescription>
+                Configure when and how you receive asset maintenance alerts
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex justify-between items-center p-4 bg-gray-50 rounded-md">
+                  <div>
+                    <h3 className="font-medium">Maintenance Due Reminders</h3>
+                    <p className="text-sm text-gray-500">Get notified before scheduled maintenance is due</p>
+                  </div>
+                  <div className="flex items-center space-x-4">
+                    <div>
+                      <label className="text-sm block mb-1">Days before</label>
+                      <select className="p-1 border rounded">
+                        <option>1 day</option>
+                        <option>3 days</option>
+                        <option>7 days</option>
+                        <option>14 days</option>
+                        <option>30 days</option>
+                      </select>
+                    </div>
+                    <div className="relative">
+                      <input type="checkbox" id="toggle1" className="sr-only" defaultChecked />
+                      <div className="w-12 h-6 bg-gray-300 rounded-full"></div>
+                      <div className="dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition"></div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex justify-between items-center p-4 bg-gray-50 rounded-md">
+                  <div>
+                    <h3 className="font-medium">Work Order Updates</h3>
+                    <p className="text-sm text-gray-500">Get notified when work orders are created or updated</p>
+                  </div>
+                  <div className="relative">
+                    <input type="checkbox" id="toggle2" className="sr-only" defaultChecked />
+                    <div className="w-12 h-6 bg-gray-300 rounded-full"></div>
+                    <div className="dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition"></div>
+                  </div>
+                </div>
+                
+                <div className="flex justify-between items-center p-4 bg-gray-50 rounded-md">
+                  <div>
+                    <h3 className="font-medium">Asset Status Changes</h3>
+                    <p className="text-sm text-gray-500">Get notified when assets change operational status</p>
+                  </div>
+                  <div className="relative">
+                    <input type="checkbox" id="toggle3" className="sr-only" defaultChecked />
+                    <div className="w-12 h-6 bg-gray-300 rounded-full"></div>
+                    <div className="dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition"></div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
           
           <Card>
             <CardHeader>
@@ -1157,7 +1785,7 @@ const AssetLifecycleManagement = () => {
                           className="text-xs text-blue-600"
                           onClick={() => {
                             toast({
-                              title: "Take Action",
+                              title: "Action Taken",
                               description: `Taking action on notification: ${notification.title}`,
                             });
                           }}
@@ -1246,12 +1874,28 @@ const AssetLifecycleManagement = () => {
                       <div className="text-xs text-gray-500">Due: {workOrder.dueDate}</div>
                     </div>
                     <div className="mt-2 grid grid-cols-2 gap-1">
-                      <Button variant="default" size="sm" className="text-xs">
+                      <button 
+                        className="bg-blue-500 text-white text-xs py-1 px-2 rounded"
+                        onClick={() => {
+                          toast({
+                            title: "Work Started",
+                            description: `Starting work on: ${workOrder.id}`,
+                          });
+                        }}
+                      >
                         Start Work
-                      </Button>
-                      <Button variant="outline" size="sm" className="text-xs">
+                      </button>
+                      <button 
+                        className="bg-gray-200 text-gray-800 text-xs py-1 px-2 rounded"
+                        onClick={() => {
+                          toast({
+                            title: "Status Update",
+                            description: `Updating status for: ${workOrder.id}`,
+                          });
+                        }}
+                      >
                         Update Status
-                      </Button>
+                      </button>
                     </div>
                   </div>
                 ))}

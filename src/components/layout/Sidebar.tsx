@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { 
@@ -12,8 +13,7 @@ import {
   Shield, 
   ChevronLeft,
   ChevronRight,
-  Calendar,
-  LifeBuoy
+  Calendar
 } from 'lucide-react';
 
 const PumpStationIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -187,9 +187,8 @@ const Sidebar: React.FC<SidebarProps> = ({
     pumpingStation: "https://muscat-bay-pumping-stations.lovable.app/", 
     hvac: "https://hvac0.lovable.app/", 
     contracts: "https://contracts-tracker.lovable.app/", 
-    projects: "/projects", // Internal route
-    security: "https://security-manager.lovable.app/",
-    alm: "/alm", // Added ALM internal route
+    projects: "/projects", // Changed to internal route
+    security: "https://security-manager.lovable.app/", 
   };
   
   return (
@@ -290,15 +289,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               icon={FolderKanban} 
               label="Projects" 
               collapsed={collapsed} 
-              external={false}
-              openEmbedded={openEmbeddedApp}
-            />
-            <SidebarLink 
-              to={externalApps.alm} 
-              icon={LifeBuoy} 
-              label="Asset Lifecycle" 
-              collapsed={collapsed} 
-              external={false}
+              external={false} // Changed to internal
               openEmbedded={openEmbeddedApp}
             />
             <SidebarLink 
