@@ -25,17 +25,17 @@ const AssetLifecycleManagement = () => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   const [selectedReport, setSelectedReport] = useState('');
+  const [notifications, setNotifications] = useState([
+    { id: 1, title: 'Maintenance Due', message: 'HVAC system in FM BUILDING requires quarterly maintenance', priority: 'high', date: '2025-03-15' },
+    { id: 2, title: 'Installation Date Missing', message: '23 assets added this month are missing installation dates', priority: 'medium', date: '2025-03-12' },
+    { id: 3, title: 'Work Order Created', message: 'Work order #WO-2345 created for electrical maintenance', priority: 'normal', date: '2025-03-10' },
+  ]);
 
   // Mock data until connected to backend
   const assetData = generateMockAssetData();
   const categories = ['All', 'Electrical', 'Mechanical', 'Plumbing', 'HVAC', 'Infrastructure'];
   const locations = ['All', 'FM BUILDING', 'Main TRD', 'Zone 1', 'Zone 3', 'Zone 5', 'Zone 8', 'Technical Zone'];
-  const notifications = [
-    { id: 1, title: 'Maintenance Due', message: 'HVAC system in FM BUILDING requires quarterly maintenance', priority: 'high', date: '2025-03-15' },
-    { id: 2, title: 'Installation Date Missing', message: '23 assets added this month are missing installation dates', priority: 'medium', date: '2025-03-12' },
-    { id: 3, title: 'Work Order Created', message: 'Work order #WO-2345 created for electrical maintenance', priority: 'normal', date: '2025-03-10' },
-  ];
-
+  
   const workOrders = [
     { id: 'WO-2345', asset: 'SBJ-Z1-FM-GF-LVP-ELDB1', description: 'Quarterly electrical maintenance', status: 'Scheduled', assignedTo: 'Tech Team 3', dueDate: '2025-03-22' },
     { id: 'WO-2346', asset: 'SBJ-Z1-FM-GF-LVP-ELDB2', description: 'Repair power distribution panel', status: 'In Progress', assignedTo: 'John Smith', dueDate: '2025-03-15' },
@@ -468,7 +468,11 @@ const AssetLifecycleManagement = () => {
                     <XAxis type="number" />
                     <YAxis type="category" dataKey="name" tick={{ fontSize: isMobileView ? 8 : 10 }} width={isMobileView ? 80 : 100} />
                     <Tooltip />
-                    <Bar dataKey="value" fill={PRIMARY_COLOR} />
+                    <Bar dataKey="value" fill={PRIMARY_COLOR}>
+                      {locationData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Bar>
                   </BarChart>
                 </ResponsiveContainer>
               </CardContent>
@@ -966,7 +970,7 @@ const AssetLifecycleManagement = () => {
                     tick={{ fontSize: isMobileView ? 10 : 12 }}
                   />
                   <Tooltip formatter={(value) => [`${value} assets`, 'Quantity']} />
-                  <Bar dataKey="value" nameKey="name">
+                  <Bar dataKey="value">
                     {[
                       { name: 'Power Distribution', value: 23 },
                       { name: 'Lighting', value: 18 },
