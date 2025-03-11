@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { 
@@ -186,7 +187,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     pumpingStation: "https://muscat-bay-pumping-stations.lovable.app/", 
     hvac: "https://hvac0.lovable.app/", 
     contracts: "https://contracts-tracker.lovable.app/", 
-    projects: "https://projects-manager.lovable.app/", 
+    projects: "/projects", // Changed to internal route
     security: "https://security-manager.lovable.app/", 
   };
   
@@ -288,7 +289,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               icon={FolderKanban} 
               label="Projects" 
               collapsed={collapsed} 
-              external={true}
+              external={false} // Changed to internal
               openEmbedded={openEmbeddedApp}
             />
             <SidebarLink 
