@@ -10,6 +10,7 @@ import Electricity from "./pages/Electricity";
 import Water from "./pages/Water";
 import STP from "./pages/STP";
 import Projects from "./pages/Projects";
+import AssetLifecycleManagement from "./pages/AssetLifecycleManagement";
 
 const queryClient = new QueryClient();
 
@@ -25,6 +26,7 @@ const App = () => (
           <Route path="/stp" element={<STP />} />
           <Route path="/water" element={<Water />} />
           <Route path="/projects" element={<Projects />} />
+          <Route path="/alm" element={<AssetLifecycleManagement />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
