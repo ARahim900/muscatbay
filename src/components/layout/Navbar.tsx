@@ -7,7 +7,7 @@ const Navbar = () => {
   const [searchOpen, setSearchOpen] = useState(false);
 
   return (
-    <header className="fixed top-0 right-0 left-0 z-50 border-b bg-white/80 backdrop-blur-md border-muscat-primary/10 animate-fade-in">
+    <header className="fixed top-0 right-0 left-0 z-50 border-b bg-white/90 backdrop-blur-md border-muscat-primary/10 animate-fade-in">
       <div className="flex items-center justify-between h-16 px-4 md:px-6">
         <div className="flex items-center gap-2">
           <Link to="/" className="flex items-center">
@@ -29,13 +29,14 @@ const Navbar = () => {
               <Search className="absolute left-6 top-1/2 -translate-y-1/2 h-4 w-4 text-muscat-primary/50 md:left-3" />
               <input 
                 type="text" 
-                placeholder="Search..." 
-                className="w-full py-2 pl-10 pr-4 text-sm transition-all border rounded-full focus:outline-none focus:ring-2 focus:ring-muscat-primary/20 border-muscat-primary/10 bg-muscat-light md:w-56 md:w-64" 
+                placeholder="Search assets, systems, or documents..." 
+                className="w-full py-2 pl-10 pr-4 text-sm transition-all border rounded-full focus:outline-none focus:ring-2 focus:ring-muscat-primary/20 border-muscat-primary/10 bg-muscat-light md:w-64" 
                 autoFocus
               />
               <button 
                 onClick={() => setSearchOpen(false)} 
                 className="ml-2 p-2 md:hidden"
+                aria-label="Close search"
               >
                 <X className="w-5 h-5 text-muscat-primary/80" />
               </button>
@@ -45,6 +46,7 @@ const Navbar = () => {
               <button 
                 onClick={() => setSearchOpen(true)} 
                 className="p-2 transition-all rounded-full hover:bg-muscat-light md:hidden"
+                aria-label="Open search"
               >
                 <Search className="w-5 h-5 text-muscat-primary/80" />
               </button>
@@ -52,7 +54,7 @@ const Navbar = () => {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muscat-primary/50" />
                 <input 
                   type="text" 
-                  placeholder="Search..." 
+                  placeholder="Search assets, systems, or documents..." 
                   className="w-56 md:w-64 py-2 pl-10 pr-4 text-sm transition-all border rounded-full focus:outline-none focus:ring-2 focus:ring-muscat-primary/20 border-muscat-primary/10 bg-muscat-light" 
                 />
               </div>
@@ -61,12 +63,18 @@ const Navbar = () => {
           
           {!searchOpen && (
             <>
-              <button className="relative p-2 transition-all rounded-full hover:bg-muscat-light">
+              <button 
+                className="relative p-2 transition-all rounded-full hover:bg-muscat-light"
+                aria-label="Notifications"
+              >
                 <Bell className="w-5 h-5 text-muscat-primary/80" />
                 <span className="absolute top-1 right-1 w-2 h-2 bg-muscat-teal rounded-full"></span>
               </button>
               
-              <button className="p-2 transition-all rounded-full hover:bg-muscat-light">
+              <button 
+                className="p-2 transition-all rounded-full hover:bg-muscat-light"
+                aria-label="Settings"
+              >
                 <Settings className="w-5 h-5 text-muscat-primary/80" />
               </button>
               

@@ -111,6 +111,7 @@ const SidebarLink: React.FC<SidebarLinkProps> = ({
           href={to}
           className={`sidebar-link ${collapsed ? 'justify-center px-0' : ''}`}
           onClick={options && options.length > 0 ? toggleOptions : (e) => handleEmbeddedClick(e)}
+          aria-expanded={showOptions}
         >
           <Icon className="flex-shrink-0 w-5 h-5" />
           {!collapsed && (
@@ -181,7 +182,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       ]
     },
     electricity: "https://electrical-muscatbay.lovable.app/",
-    stpPlant: "https://stp.lovable.app/",
+    stpPlant: "https://stp.lovable.app/", 
     pumpingStation: "https://muscat-bay-pumping-stations.lovable.app/", 
     hvac: "https://hvac0.lovable.app/", 
     contracts: "https://contracts-tracker.lovable.app/", 
@@ -198,6 +199,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         <button 
           onClick={toggleSidebar}
           className="absolute top-2 -right-3 flex items-center justify-center w-6 h-6 text-white bg-muscat-primary rounded-full shadow-md"
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
           {collapsed ? 
             <ChevronRight className="w-4 h-4" /> : 
@@ -251,7 +253,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             />
             <SidebarLink 
               to={externalApps.pumpingStation} 
-              icon={Wind} 
+              icon={PumpStationIcon} 
               label="Pumping Stations" 
               collapsed={collapsed} 
               external={true}
@@ -275,7 +277,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           <div className="space-y-1">
             <SidebarLink 
               to={externalApps.contracts} 
-              icon={FileText} 
+              icon={ContractIcon} 
               label="Contracts" 
               collapsed={collapsed} 
               external={true}
