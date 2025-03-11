@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -112,7 +113,7 @@ const AssetLifecycleManagement = () => {
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
 
   // Handle update installation date
-  const handleUpdateData = (e) => {
+  const handleUpdateData = (e: React.FormEvent) => {
     e.preventDefault();
     toast({
       title: "Asset Updated",
@@ -122,7 +123,7 @@ const AssetLifecycleManagement = () => {
   };
 
   // Handle lifecycle update
-  const handleLifecycleUpdate = (e) => {
+  const handleLifecycleUpdate = (e: React.FormEvent) => {
     e.preventDefault();
     toast({
       title: "Lifecycle Status Updated",
@@ -670,4 +671,597 @@ const AssetLifecycleManagement = () => {
                         <td className="px-3 py-2 whitespace-nowrap text-sm">{asset.manufacturer}</td>
                         <td className="px-3 py-2 whitespace-nowrap text-sm">
                           <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
-                            ${asset.status === 'Operational' ? 'bg-green-100 text-green-800'
+                            ${asset.status === 'Operational' ? 'bg-green-100 text-green-800' :
+                            asset.status === 'Requires Maintenance' ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-red-100 text-red-800'}`}>
+                            {asset.status}
+                          </span>
+                        </td>
+                        <td className="px-3 py-2 whitespace-nowrap text-sm">{asset.nextMaintenanceDate}</td>
+                        <td className="px-3 py-2 whitespace-nowrap text-sm">
+                          <button 
+                            className="text-blue-600 hover:text-blue-900"
+                            onClick={() => {
+                              toast({
+                                title: "Asset Details",
+                                description: `Viewing details for ${asset.name}`,
+                              });
+                            }}
+                          >
+                            View
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Categories Tab - Basic implementation */}
+        <TabsContent value="categories" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Asset Categories</CardTitle>
+              <CardDescription>
+                Distribution of assets across categories
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="h-96">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={categoryData}
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={120}
+                    fill={PRIMARY_COLOR}
+                    dataKey="value"
+                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                  >
+                    {categoryData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                  <Legend layout="vertical" align="right" verticalAlign="middle" />
+                </PieChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Locations Tab - Basic implementation */}
+        <TabsContent value="locations" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Assets by Location</CardTitle>
+              <CardDescription>
+                {selectedLocation === 'All' ? 'All locations' : `Location: ${selectedLocation}`}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="h-96">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={locationData}
+                  margin={{ top: 5, right: 30, left: 120, bottom: 5 }}
+                  layout="vertical"
+                >
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis type="number" />
+                  <YAxis type="category" dataKey="name" width={120} />
+                  <Tooltip />
+                  <Bar dataKey="value" fill="#0088FE">
+                    {locationData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Update Data Tab */}
+        <TabsContent value="update" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Update Missing Installation Dates</CardTitle>
+              <CardDescription>
+                Enter installation date information for assets
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleUpdateData} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Asset ID/Tag</label>
+                  <select
+                    className="w-full p-2 border rounded-md"
+                    value={formData.assetId}
+                    onChange={(e) => {
+                      const selectedAsset = assetData.find(asset => asset.id === e.target.value);
+                      setFormData({
+                        ...formData,
+                        assetId: e.target.value,
+                        installationDate: selectedAsset?.installationDate || '',
+                        maintenanceSchedule: ''
+                      });
+                    }}
+                    required
+                  >
+                    <option value="">Select an asset</option>
+                    {assetData
+                      .filter(asset => !asset.installationDate)
+                      .map((asset, index) => (
+                        <option key={index} value={asset.id}>
+                          {asset.id} - {asset.name}
+                        </option>
+                      ))
+                    }
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium mb-1">Installation Date</label>
+                  <input
+                    type="date"
+                    className="w-full p-2 border rounded-md"
+                    value={formData.installationDate}
+                    onChange={(e) => setFormData({...formData, installationDate: e.target.value})}
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium mb-1">Maintenance Schedule</label>
+                  <select
+                    className="w-full p-2 border rounded-md"
+                    value={formData.maintenanceSchedule}
+                    onChange={(e) => setFormData({...formData, maintenanceSchedule: e.target.value})}
+                  >
+                    <option value="">Select schedule</option>
+                    <option value="QUARTERLY">QUARTERLY</option>
+                    <option value="HALF YEARLY">HALF YEARLY</option>
+                    <option value="YEARLY">YEARLY</option>
+                    <option value="MONTHLY">MONTHLY</option>
+                    <option value="ON CALL">ON CALL</option>
+                    <option value="THIRD PARTY">THIRD PARTY</option>
+                  </select>
+                </div>
+                
+                <div className="flex space-x-2">
+                  <Button type="submit">
+                    Update Asset Information
+                  </Button>
+                  
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    onClick={() => {
+                      setFormData({
+                        assetId: '',
+                        installationDate: '',
+                        maintenanceSchedule: ''
+                      });
+                    }}
+                  >
+                    Reset Form
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Lifecycle Management Tab */}
+        <TabsContent value="lifecycle" className="space-y-4">
+          <div className="grid grid-cols-3 gap-4 mb-4">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle>Operational Assets</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-4xl font-bold text-green-600">
+                  {assetData.filter(asset => asset.status === 'Operational').length}
+                </div>
+                <div className="text-sm text-gray-500">
+                  {assetData.length > 0 ? 
+                    `${((assetData.filter(asset => asset.status === 'Operational').length / assetData.length) * 100).toFixed(1)}% of total assets` : 
+                    '0% of total assets'}
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle>Maintenance Required</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-4xl font-bold text-yellow-600">
+                  {assetData.filter(asset => asset.status === 'Requires Maintenance').length}
+                </div>
+                <div className="text-sm text-gray-500">
+                  {assetData.length > 0 ? 
+                    `${((assetData.filter(asset => asset.status === 'Requires Maintenance').length / assetData.length) * 100).toFixed(1)}% of total assets` : 
+                    '0% of total assets'}
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle>Under Maintenance</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-4xl font-bold text-red-600">
+                  {assetData.filter(asset => asset.status === 'Under Maintenance').length}
+                </div>
+                <div className="text-sm text-gray-500">
+                  {assetData.length > 0 ? 
+                    `${((assetData.filter(asset => asset.status === 'Under Maintenance').length / assetData.length) * 100).toFixed(1)}% of total assets` : 
+                    '0% of total assets'}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Status Updates</CardTitle>
+                <CardDescription>
+                  Track and update status across the asset lifecycle
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleLifecycleUpdate} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Asset ID/Tag</label>
+                    <select
+                      className="w-full p-2 border rounded-md"
+                      value={lifecycleAsset.assetId}
+                      onChange={(e) => {
+                        const selectedAsset = assetData.find(asset => asset.id === e.target.value);
+                        setLifecycleAsset({
+                          ...lifecycleAsset,
+                          assetId: e.target.value,
+                          status: selectedAsset?.status || 'Operational',
+                          nextMaintenance: selectedAsset?.nextMaintenanceDate || '',
+                          notes: ''
+                        });
+                      }}
+                      required
+                    >
+                      <option value="">Select an asset</option>
+                      {assetData.map((asset, index) => (
+                        <option key={index} value={asset.id}>
+                          {asset.id} - {asset.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Current Status</label>
+                    <select
+                      className="w-full p-2 border rounded-md"
+                      value={lifecycleAsset.status}
+                      onChange={(e) => setLifecycleAsset({...lifecycleAsset, status: e.target.value})}
+                      required
+                    >
+                      <option value="Operational">Operational</option>
+                      <option value="Requires Maintenance">Requires Maintenance</option>
+                      <option value="Under Maintenance">Under Maintenance</option>
+                      <option value="Out of Service">Out of Service</option>
+                      <option value="Scheduled for Replacement">Scheduled for Replacement</option>
+                      <option value="Decommissioned">Decommissioned</option>
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Next Maintenance Date</label>
+                    <input
+                      type="date"
+                      className="w-full p-2 border rounded-md"
+                      value={lifecycleAsset.nextMaintenance}
+                      onChange={(e) => setLifecycleAsset({...lifecycleAsset, nextMaintenance: e.target.value})}
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Notes</label>
+                    <textarea
+                      className="w-full p-2 border rounded-md"
+                      rows={3}
+                      value={lifecycleAsset.notes}
+                      onChange={(e) => setLifecycleAsset({...lifecycleAsset, notes: e.target.value})}
+                      placeholder="Enter any relevant notes about this asset's status"
+                    ></textarea>
+                  </div>
+                  
+                  <div className="flex space-x-2">
+                    <Button type="submit">
+                      Update Lifecycle Status
+                    </Button>
+                    
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      onClick={() => {
+                        setLifecycleAsset({
+                          assetId: '',
+                          status: 'Operational',
+                          nextMaintenance: '',
+                          notes: ''
+                        });
+                      }}
+                    >
+                      Reset Form
+                    </Button>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        {/* Work Orders Tab */}
+        <TabsContent value="workorders" className="space-y-4">
+          <div className="flex flex-col md:flex-row md:justify-between md:items-center space-y-4 md:space-y-0 mb-4">
+            <h2 className="text-xl font-bold">Maintenance Work Orders</h2>
+            
+            <div className="flex space-x-2">
+              <Button
+                onClick={() => {
+                  toast({
+                    title: "Create Work Order",
+                    description: "Opening work order creation form",
+                  });
+                }}
+              >
+                + Create Work Order
+              </Button>
+              <Button variant="outline">
+                Export
+              </Button>
+            </div>
+          </div>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle>Active Work Orders</CardTitle>
+              <CardDescription>
+                Manage and track maintenance activities
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Asset</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Assigned To</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Due Date</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {workOrders.map(workOrder => (
+                      <tr key={workOrder.id}>
+                        <td className="px-6 py-4 whitespace-nowrap">{workOrder.id}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">{workOrder.asset}</td>
+                        <td className="px-6 py-4">{workOrder.description}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span 
+                            className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
+                            ${workOrder.status === 'Completed' ? 'bg-green-100 text-green-800' : 
+                              workOrder.status === 'In Progress' ? 'bg-blue-100 text-blue-800' : 
+                              'bg-yellow-100 text-yellow-800'}`}
+                          >
+                            {workOrder.status}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">{workOrder.assignedTo}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">{workOrder.dueDate}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                          <button 
+                            className="text-blue-600 hover:text-blue-900 mr-3"
+                            onClick={() => {
+                              toast({
+                                title: "Edit Work Order",
+                                description: `Editing work order: ${workOrder.id}`,
+                              });
+                            }}
+                          >
+                            Edit
+                          </button>
+                          <button 
+                            className="text-blue-600 hover:text-blue-900"
+                            onClick={() => {
+                              toast({
+                                title: "View Work Order",
+                                description: `Viewing details for work order: ${workOrder.id}`,
+                              });
+                            }}
+                          >
+                            Details
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Notifications/Alerts Tab */}
+        <TabsContent value="notifications" className="space-y-4">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-bold">Maintenance Alerts & Notifications</h2>
+            
+            <div>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setNotifications([]);
+                  toast({
+                    title: "Notifications Cleared",
+                    description: "All notifications marked as read",
+                  });
+                }}
+              >
+                Mark All as Read
+              </Button>
+            </div>
+          </div>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle>Recent Notifications</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {notifications.length === 0 ? (
+                  <div className="p-8 text-center text-gray-500">
+                    No notifications to display
+                  </div>
+                ) : (
+                  notifications.map(notification => (
+                    <div key={notification.id} className={`p-4 border-l-4 ${
+                      notification.priority === 'high' ? 'border-red-500 bg-red-50' : 
+                      notification.priority === 'medium' ? 'border-yellow-500 bg-yellow-50' : 
+                      'border-blue-500 bg-blue-50'
+                    } rounded-md mb-2`}>
+                      <div className="flex justify-between">
+                        <h3 className="font-medium">{notification.title}</h3>
+                        <span className="text-xs text-gray-500">{notification.date}</span>
+                      </div>
+                      <p className="text-sm mt-1">{notification.message}</p>
+                      <div className="flex mt-2 space-x-2">
+                        <button 
+                          className="text-xs text-blue-600"
+                          onClick={() => {
+                            setNotifications(notifications.filter(n => n.id !== notification.id));
+                          }}
+                        >
+                          Mark as Read
+                        </button>
+                        <button 
+                          className="text-xs text-blue-600"
+                          onClick={() => {
+                            toast({
+                              title: "Take Action",
+                              description: `Taking action on notification: ${notification.title}`,
+                            });
+                          }}
+                        >
+                          Take Action
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        {/* Field Technician View - Mobile Optimized */}
+        <TabsContent value="fieldwork" className="space-y-4">
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg shadow mb-4">
+            <h2 className="text-lg font-bold mb-2">Field Technician View</h2>
+            <p className="text-sm">Optimized for mobile use in the field with essential functions</p>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-2 mb-4">
+            <button 
+              className="p-3 bg-white rounded-lg shadow text-center flex flex-col items-center gap-2"
+              onClick={() => setActiveTab('workorders')}
+            >
+              <Clipboard size={24} className="text-blue-600" />
+              <span className="text-sm">Work Orders</span>
+            </button>
+            
+            <button 
+              className="p-3 bg-white rounded-lg shadow text-center flex flex-col items-center gap-2"
+              onClick={() => {
+                toast({
+                  title: "Maintenance Dashboard",
+                  description: "Opening maintenance dashboard for field technicians",
+                });
+              }}
+            >
+              <Wrench size={24} className="text-blue-600" />
+              <span className="text-sm">Maintenance</span>
+            </button>
+            
+            <button 
+              className="p-3 bg-white rounded-lg shadow text-center flex flex-col items-center gap-2"
+              onClick={() => setActiveTab('notifications')}
+            >
+              <Bell size={24} className="text-blue-600" />
+              <span className="text-sm">Alerts</span>
+            </button>
+            
+            <button 
+              className="p-3 bg-white rounded-lg shadow text-center flex flex-col items-center gap-2"
+              onClick={() => setActiveTab('locations')}
+            >
+              <Map size={24} className="text-blue-600" />
+              <span className="text-sm">Locations</span>
+            </button>
+          </div>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle>Today's Work Orders</CardTitle>
+            </CardHeader>
+            <CardContent className="px-2 py-1">
+              <div className="space-y-2">
+                {workOrders.map(workOrder => (
+                  <div key={workOrder.id} className="p-3 bg-gray-50 rounded-md border-l-4 border-blue-500">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <div className="font-medium">{workOrder.id}</div>
+                        <div className="text-sm text-gray-600 truncate max-w-xs">{workOrder.description}</div>
+                      </div>
+                      <span 
+                        className={`px-2 py-1 text-xs font-semibold rounded-full 
+                        ${workOrder.status === 'Completed' ? 'bg-green-100 text-green-800' : 
+                          workOrder.status === 'In Progress' ? 'bg-blue-100 text-blue-800' : 
+                          'bg-yellow-100 text-yellow-800'}`}
+                      >
+                        {workOrder.status}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center mt-2">
+                      <div className="text-xs text-gray-500">Asset: {workOrder.asset}</div>
+                      <div className="text-xs text-gray-500">Due: {workOrder.dueDate}</div>
+                    </div>
+                    <div className="mt-2 grid grid-cols-2 gap-1">
+                      <Button variant="default" size="sm" className="text-xs">
+                        Start Work
+                      </Button>
+                      <Button variant="outline" size="sm" className="text-xs">
+                        Update Status
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+};
+
+export default AssetLifecycleManagement;
