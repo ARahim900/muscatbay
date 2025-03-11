@@ -11,6 +11,7 @@ import Water from "./pages/Water";
 import STP from "./pages/STP";
 import Projects from "./pages/Projects";
 import AssetLifecycleManagement from "./pages/AssetLifecycleManagement";
+import ZoneDetails from "./pages/ZoneDetails";
 
 const queryClient = new QueryClient();
 
@@ -27,6 +28,7 @@ const App = () => (
           <Route path="/water" element={<Water />} />
           <Route path="/projects" element={<Projects />} />
           <Route path="/alm" element={<AssetLifecycleManagement />} />
+          <Route path="/zone-details" element={<ZoneDetails />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
