@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import Navbar from './Navbar';
 import Sidebar from './Sidebar';
@@ -28,7 +27,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const sidebarRef = useRef<HTMLDivElement>(null);
 
-  // Check if device is mobile
   useEffect(() => {
     const checkIfMobile = () => {
       const isMobileView = window.innerWidth < 768;
@@ -40,17 +38,13 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       }
     };
     
-    // Initial check
     checkIfMobile();
     
-    // Add resize listener
     window.addEventListener('resize', checkIfMobile);
     
-    // Cleanup listener
     return () => window.removeEventListener('resize', checkIfMobile);
   }, []);
 
-  // Close mobile sidebar when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (mobileOpen && sidebarRef.current && !sidebarRef.current.contains(event.target as Node)) {
@@ -64,7 +58,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     };
   }, [mobileOpen]);
 
-  // Function to open an embedded application
   const openEmbeddedApp = (url: string, title: string) => {
     setIframeLoading(true);
     setEmbeddedApp({
@@ -73,13 +66,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       isOpen: true
     });
     
-    // Close mobile sidebar when opening an app
     if (isMobile) {
       setMobileOpen(false);
     }
   };
 
-  // Function to close the embedded application
   const closeEmbeddedApp = () => {
     setEmbeddedApp({
       ...embeddedApp,
@@ -87,16 +78,14 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     });
   };
 
-  // Handle iframe load event
   const handleIframeLoad = () => {
     setIframeLoading(false);
   };
 
-  // Toggle mobile sidebar
   const toggleMobileSidebar = () => {
     setMobileOpen(!mobileOpen);
   };
-  
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar toggleSidebar={toggleMobileSidebar} />
@@ -111,7 +100,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         />
       </div>
       
-      {/* Mobile sidebar overlay */}
       {mobileOpen && isMobile && (
         <div 
           className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40 animate-fade-in"
@@ -119,7 +107,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         />
       )}
       
-      {/* Mobile menu toggle button (visible only when sidebar is collapsed) */}
       {isMobile && !mobileOpen && !embeddedApp.isOpen && (
         <button
           onClick={toggleMobileSidebar}
@@ -137,7 +124,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       >
         {embeddedApp.isOpen ? (
           <div className="relative w-full h-[calc(100vh-4rem)]">
-            {/* Enhanced header for embedded apps */}
             <div className="fixed top-16 left-0 right-0 z-40 flex items-center justify-between px-3 sm:px-4 py-2 sm:py-3 bg-white border-b shadow-sm">
               <div className="flex items-center">
                 <Button 
@@ -160,14 +146,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               </div>
             </div>
             
-            {/* Loading indicator */}
             {iframeLoading && (
               <div className="absolute inset-0 flex items-center justify-center bg-background/50 z-20" style={{ top: '3rem' }}>
                 <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-muscat-primary"></div>
               </div>
             )}
             
-            {/* Improved iframe container */}
             <div className="w-full h-full pt-12">
               <iframe 
                 ref={iframeRef}
@@ -188,7 +172,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             </div>
           </div>
         ) : (
-          <div className="px-3 sm:px-6 md:px-8 mx-auto max-w-7xl w-full">
+          <div className="px-2 sm:px-4 md:px-6 mx-auto w-full">
             {children}
           </div>
         )}

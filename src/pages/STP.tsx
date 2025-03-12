@@ -17,9 +17,9 @@ const STP = () => {
   return (
     <Layout>
       <div className="w-full">
-        <h1 className="text-3xl font-bold mb-6">STP Plant Management</h1>
+        <h1 className="text-2xl md:text-3xl font-bold mb-4 md:mb-6">STP Plant Management</h1>
         
-        <Card className="mb-8">
+        <Card className="mb-6 md:mb-8">
           <CardHeader>
             <CardTitle className="flex items-center">
               <Github className="mr-2 h-6 w-6" />

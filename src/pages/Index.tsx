@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, forwardRef } from 'react';
 import Layout from '@/components/layout/Layout';
 import DashboardCard from '@/components/dashboard/DashboardCard';
@@ -131,7 +132,7 @@ const Index = () => {
 
   return (
     <Layout>
-      <div className="mb-6 md:mb-8 animate-fade-in">
+      <div className="mb-4 md:mb-6 animate-fade-in w-full">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between">
           <div>
             <h1 className="text-2xl md:text-3xl font-bold text-muscat-primary mb-1">Operations Dashboard</h1>
@@ -141,11 +142,11 @@ const Index = () => {
             </p>
           </div>
           <div className="flex items-center gap-2 mt-4 md:mt-0">
-            <Button variant="outline" className="gap-2 text-sm font-medium border-muscat-primary/20 hover:bg-muscat-primary/5" onClick={() => toast({ title: "Report generated", description: "The report has been downloaded to your device" })}>
+            <Button variant="outline" className="gap-2 text-sm font-medium border-muscat-primary/20 hover:bg-muscat-primary/5 w-full md:w-auto" onClick={() => toast({ title: "Report generated", description: "The report has been downloaded to your device" })}>
               <Download className="w-4 h-4" />
               Export Report
             </Button>
-            <Button variant="outline" className="gap-2 text-sm font-medium border-muscat-primary/20 hover:bg-muscat-primary/5" onClick={() => toast({ title: "Refreshing data", description: "Dashboard data is being updated" })}>
+            <Button variant="outline" className="gap-2 text-sm font-medium border-muscat-primary/20 hover:bg-muscat-primary/5 w-full md:w-auto" onClick={() => toast({ title: "Refreshing data", description: "Dashboard data is being updated" })}>
               <RefreshCw className="w-4 h-4" />
               Refresh Data
             </Button>
@@ -153,7 +154,7 @@ const Index = () => {
         </div>
       </div>
       
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 mb-6">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 mb-4 md:mb-6 w-full">
         {kpiInsights.map((kpi, index) => (
           <KpiIndicator
             key={index}
@@ -561,4 +562,3 @@ const Index = () => {
 };
 
 export default Index;
-
