@@ -187,7 +187,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     pumpingStation: "https://muscat-bay-pumping-stations.lovable.app/", 
     hvac: "https://hvac0.lovable.app/", 
     contracts: "https://contracts-tracker.lovable.app/", 
-    projects: "/projects", // Changed to internal route
+    projects: "/projects", // Internal route
     security: "https://security-manager.lovable.app/", 
   };
   
@@ -289,7 +289,15 @@ const Sidebar: React.FC<SidebarProps> = ({
               icon={FolderKanban} 
               label="Projects" 
               collapsed={collapsed} 
-              external={false} // Changed to internal
+              external={false} 
+              openEmbedded={openEmbeddedApp}
+            />
+            <SidebarLink 
+              to="/alm" 
+              icon={Calendar} 
+              label="Asset Lifecycle" 
+              collapsed={collapsed} 
+              external={false}
               openEmbedded={openEmbeddedApp}
             />
             <SidebarLink 
