@@ -5,7 +5,11 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
 
-const Navbar = () => {
+interface NavbarProps {
+  toggleSidebar?: () => void;
+}
+
+const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
   const [searchOpen, setSearchOpen] = useState(false);
   const { user, signOut } = useAuth();
 
@@ -22,6 +26,15 @@ const Navbar = () => {
     <header className="fixed top-0 right-0 left-0 z-50 border-b bg-white/90 backdrop-blur-md border-muscat-primary/10 animate-fade-in">
       <div className="flex items-center justify-between h-16 px-4 md:px-6">
         <div className="flex items-center gap-2">
+          {toggleSidebar && (
+            <button
+              onClick={toggleSidebar}
+              className="p-2 mr-1 md:hidden"
+              aria-label="Toggle menu"
+            >
+              <Menu className="h-5 w-5 text-muscat-primary" />
+            </button>
+          )}
           <Link to="/" className="flex items-center">
             <img 
               alt="Muscat Bay Logo" 

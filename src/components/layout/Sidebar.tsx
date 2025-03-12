@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { 
@@ -13,7 +12,8 @@ import {
   Shield, 
   ChevronLeft,
   ChevronRight,
-  Calendar
+  Calendar,
+  X
 } from 'lucide-react';
 
 const PumpStationIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -63,6 +63,7 @@ interface SidebarLinkProps {
   external?: boolean;
   openEmbedded?: (url: string, title: string) => void;
   options?: { label: string; url: string; isGitHub?: boolean }[];
+  isMobile?: boolean;
 }
 
 const SidebarLink: React.FC<SidebarLinkProps> = ({ 
@@ -72,7 +73,8 @@ const SidebarLink: React.FC<SidebarLinkProps> = ({
   collapsed, 
   external, 
   openEmbedded,
-  options
+  options,
+  isMobile
 }) => {
   const [showOptions, setShowOptions] = useState(false);
   
@@ -110,12 +112,12 @@ const SidebarLink: React.FC<SidebarLinkProps> = ({
       <div className="relative">
         <a
           href={to}
-          className={`sidebar-link ${collapsed ? 'justify-center px-0' : ''}`}
+          className={`sidebar-link ${collapsed && !isMobile ? 'justify-center px-0' : ''}`}
           onClick={options && options.length > 0 ? toggleOptions : (e) => handleEmbeddedClick(e)}
           aria-expanded={showOptions}
         >
           <Icon className="flex-shrink-0 w-5 h-5" />
-          {!collapsed && (
+          {(!collapsed || isMobile) && (
             <>
               <span className="flex-1">{label}</span>
               {options && options.length > 0 && (
@@ -125,7 +127,7 @@ const SidebarLink: React.FC<SidebarLinkProps> = ({
           )}
         </a>
         
-        {!collapsed && showOptions && options && options.length > 0 && (
+        {(!collapsed || isMobile) && showOptions && options && options.length > 0 && (
           <div className="pl-10 mt-1 space-y-1">
             {options.map((option, index) => (
               <a
@@ -148,11 +150,11 @@ const SidebarLink: React.FC<SidebarLinkProps> = ({
     <NavLink
       to={to}
       className={({ isActive }) => 
-        `sidebar-link ${isActive ? 'active' : ''} ${collapsed ? 'justify-center px-0' : ''}`
+        `sidebar-link ${isActive ? 'active' : ''} ${collapsed && !isMobile ? 'justify-center px-0' : ''}`
       }
     >
       <Icon className="flex-shrink-0 w-5 h-5" />
-      {!collapsed && <span>{label}</span>}
+      {(!collapsed || isMobile) && <span>{label}</span>}
     </NavLink>
   );
 };
@@ -161,12 +163,16 @@ interface SidebarProps {
   collapsed?: boolean;
   setCollapsed?: (collapsed: boolean) => void;
   openEmbeddedApp?: (url: string, title: string) => void;
+  mobileOpen?: boolean;
+  isMobile?: boolean;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ 
   collapsed = false, 
   setCollapsed,
-  openEmbeddedApp
+  openEmbeddedApp,
+  mobileOpen = false,
+  isMobile = false
 }) => {
   const toggleSidebar = () => {
     if (setCollapsed) {
@@ -191,31 +197,51 @@ const Sidebar: React.FC<SidebarProps> = ({
     security: "https://security-manager.lovable.app/", 
   };
   
+  const sidebarVisible = isMobile ? mobileOpen : true;
+  const sidebarWidth = isMobile 
+    ? 'w-64' 
+    : collapsed 
+      ? 'w-20'
+      : 'w-64';
+  
+  if (isMobile && !mobileOpen) {
+    return null; // Don't render sidebar on mobile when closed
+  }
+  
   return (
     <aside 
-      className={`fixed top-0 left-0 z-40 h-screen transition-all duration-300 bg-muscat-primary 
-        ${collapsed ? 'w-20' : 'w-64'} pt-16`}
+      className={`${isMobile ? 'fixed' : 'fixed'} top-0 left-0 z-40 h-screen transition-all duration-300 bg-muscat-primary 
+        ${sidebarWidth} pt-16 ${isMobile ? 'animate-slide-in-right shadow-lg' : ''}`}
     >
       <div className="relative flex flex-col h-full">
-        <button 
-          onClick={toggleSidebar}
-          className="absolute top-2 -right-3 flex items-center justify-center w-6 h-6 text-white bg-muscat-primary rounded-full shadow-md"
-          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-        >
-          {collapsed ? 
-            <ChevronRight className="w-4 h-4" /> : 
-            <ChevronLeft className="w-4 h-4" />
-          }
-        </button>
+        {isMobile ? (
+          <button 
+            className="absolute top-2 right-2 flex items-center justify-center w-8 h-8 text-white bg-muscat-primary/50 rounded-full"
+            aria-label="Close sidebar"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        ) : (
+          <button 
+            onClick={toggleSidebar}
+            className="absolute top-2 -right-3 flex items-center justify-center w-6 h-6 text-white bg-muscat-primary rounded-full shadow-md"
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            {collapsed ? 
+              <ChevronRight className="w-4 h-4" /> : 
+              <ChevronLeft className="w-4 h-4" />
+            }
+          </button>
+        )}
         
         <div className="flex-1 px-3 py-4 overflow-y-auto">
           <div className="mb-6">
-            <SidebarLink to="/" icon={Home} label="Dashboard" collapsed={collapsed} />
+            <SidebarLink to="/" icon={Home} label="Dashboard" collapsed={collapsed} isMobile={isMobile} />
           </div>
           
           <div className="mb-2">
-            <h3 className={`text-xs font-semibold uppercase text-white/50 ${collapsed ? 'text-center' : 'px-4'}`}>
-              {collapsed ? '—' : 'Utilities'}
+            <h3 className={`text-xs font-semibold uppercase text-white/50 ${collapsed && !isMobile ? 'text-center' : 'px-4'}`}>
+              {collapsed && !isMobile ? '—' : 'Utilities'}
             </h3>
           </div>
           <div className="space-y-1 mb-6">
@@ -227,6 +253,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               external={true}
               openEmbedded={openEmbeddedApp}
               options={externalApps.water.options}
+              isMobile={isMobile}
             />
             <SidebarLink 
               to={externalApps.electricity} 
@@ -235,12 +262,13 @@ const Sidebar: React.FC<SidebarProps> = ({
               collapsed={collapsed} 
               external={true}
               openEmbedded={openEmbeddedApp}
+              isMobile={isMobile}
             />
           </div>
           
           <div className="mb-2">
-            <h3 className={`text-xs font-semibold uppercase text-white/50 ${collapsed ? 'text-center' : 'px-4'}`}>
-              {collapsed ? '—' : 'Facilities'}
+            <h3 className={`text-xs font-semibold uppercase text-white/50 ${collapsed && !isMobile ? 'text-center' : 'px-4'}`}>
+              {collapsed && !isMobile ? '—' : 'Facilities'}
             </h3>
           </div>
           <div className="space-y-1 mb-6">
@@ -251,6 +279,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               collapsed={collapsed} 
               external={true}
               openEmbedded={openEmbeddedApp}
+              isMobile={isMobile}
             />
             <SidebarLink 
               to={externalApps.pumpingStation} 
@@ -259,6 +288,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               collapsed={collapsed} 
               external={true}
               openEmbedded={openEmbeddedApp}
+              isMobile={isMobile}
             />
             <SidebarLink 
               to={externalApps.hvac} 
@@ -267,12 +297,13 @@ const Sidebar: React.FC<SidebarProps> = ({
               collapsed={collapsed} 
               external={true}
               openEmbedded={openEmbeddedApp}
+              isMobile={isMobile}
             />
           </div>
           
           <div className="mb-2">
-            <h3 className={`text-xs font-semibold uppercase text-white/50 ${collapsed ? 'text-center' : 'px-4'}`}>
-              {collapsed ? '—' : 'Management'}
+            <h3 className={`text-xs font-semibold uppercase text-white/50 ${collapsed && !isMobile ? 'text-center' : 'px-4'}`}>
+              {collapsed && !isMobile ? '—' : 'Management'}
             </h3>
           </div>
           <div className="space-y-1">
@@ -283,6 +314,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               collapsed={collapsed} 
               external={true}
               openEmbedded={openEmbeddedApp}
+              isMobile={isMobile}
             />
             <SidebarLink 
               to={externalApps.projects} 
@@ -291,6 +323,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               collapsed={collapsed} 
               external={false} 
               openEmbedded={openEmbeddedApp}
+              isMobile={isMobile}
             />
             <SidebarLink 
               to="/alm" 
@@ -299,6 +332,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               collapsed={collapsed} 
               external={false}
               openEmbedded={openEmbeddedApp}
+              isMobile={isMobile}
             />
             <SidebarLink 
               to={externalApps.security} 
@@ -307,13 +341,14 @@ const Sidebar: React.FC<SidebarProps> = ({
               collapsed={collapsed} 
               external={true}
               openEmbedded={openEmbeddedApp}
+              isMobile={isMobile}
             />
           </div>
         </div>
         
-        <div className={`p-4 border-t border-white/10 ${collapsed ? 'text-center' : ''}`}>
+        <div className={`p-4 border-t border-white/10 ${collapsed && !isMobile ? 'text-center' : ''}`}>
           <p className="text-xs text-white/60">
-            {collapsed ? 'v1.0' : 'Muscat Bay Asset Manager v1.0'}
+            {collapsed && !isMobile ? 'v1.0' : 'Muscat Bay Asset Manager v1.0'}
           </p>
         </div>
       </div>

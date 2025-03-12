@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Navbar from './Navbar';
 import Sidebar from './Sidebar';
-import { ArrowLeft, X } from 'lucide-react';
+import { ArrowLeft, X, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface EmbeddedAppState {
@@ -17,6 +17,7 @@ interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const [embeddedApp, setEmbeddedApp] = useState<EmbeddedAppState>({
     url: '',
     title: '',
@@ -25,11 +26,18 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [isMobile, setIsMobile] = useState(false);
   const [iframeLoading, setIframeLoading] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const sidebarRef = useRef<HTMLDivElement>(null);
 
   // Check if device is mobile
   useEffect(() => {
     const checkIfMobile = () => {
-      setIsMobile(window.innerWidth < 768);
+      const isMobileView = window.innerWidth < 768;
+      setIsMobile(isMobileView);
+      if (isMobileView) {
+        setCollapsed(true);
+      } else {
+        setMobileOpen(false);
+      }
     };
     
     // Initial check
@@ -42,6 +50,20 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     return () => window.removeEventListener('resize', checkIfMobile);
   }, []);
 
+  // Close mobile sidebar when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (mobileOpen && sidebarRef.current && !sidebarRef.current.contains(event.target as Node)) {
+        setMobileOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [mobileOpen]);
+
   // Function to open an embedded application
   const openEmbeddedApp = (url: string, title: string) => {
     setIframeLoading(true);
@@ -50,6 +72,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       title,
       isOpen: true
     });
+    
+    // Close mobile sidebar when opening an app
+    if (isMobile) {
+      setMobileOpen(false);
+    }
   };
 
   // Function to close the embedded application
@@ -64,19 +91,48 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const handleIframeLoad = () => {
     setIframeLoading(false);
   };
+
+  // Toggle mobile sidebar
+  const toggleMobileSidebar = () => {
+    setMobileOpen(!mobileOpen);
+  };
   
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
-      <Sidebar 
-        collapsed={collapsed} 
-        setCollapsed={setCollapsed} 
-        openEmbeddedApp={openEmbeddedApp} 
-      />
+      <Navbar toggleSidebar={toggleMobileSidebar} />
+      
+      <div ref={sidebarRef} className={`${isMobile ? 'fixed z-50' : ''}`}>
+        <Sidebar 
+          collapsed={collapsed} 
+          setCollapsed={setCollapsed} 
+          openEmbeddedApp={openEmbeddedApp}
+          mobileOpen={mobileOpen}
+          isMobile={isMobile}
+        />
+      </div>
+      
+      {/* Mobile sidebar overlay */}
+      {mobileOpen && isMobile && (
+        <div 
+          className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40 animate-fade-in"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+      
+      {/* Mobile menu toggle button (visible only when sidebar is collapsed) */}
+      {isMobile && !mobileOpen && !embeddedApp.isOpen && (
+        <button
+          onClick={toggleMobileSidebar}
+          className="fixed bottom-4 right-4 bg-muscat-primary text-white p-3 rounded-full shadow-lg z-40 animate-scale-in"
+          aria-label="Open menu"
+        >
+          <Menu className="h-6 w-6" />
+        </button>
+      )}
       
       <main 
         className={`pt-16 min-h-screen transition-all duration-300 ${
-          collapsed ? 'pl-16 sm:pl-20' : 'pl-16 sm:pl-64'
+          (collapsed && !mobileOpen) ? 'pl-16 sm:pl-20' : !isMobile ? 'pl-16 sm:pl-64' : 'pl-0'
         }`}
       >
         {embeddedApp.isOpen ? (
