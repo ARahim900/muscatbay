@@ -19,14 +19,16 @@ import {
   Waves,
   TrendingUp,
   TrendingDown,
-  LucideProps
+  LucideProps,
+  ArrowUpRight,
+  Download,
+  RefreshCw
 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/use-toast';
 
-// Real electricity consumption data
 const electricityData = [
   { name: 'Jan', usage: 4780 },
   { name: 'Feb', usage: 4250 },
@@ -37,7 +39,6 @@ const electricityData = [
   { name: 'Jul', usage: 5120 },
 ];
 
-// Real water consumption data
 const waterData = [
   { name: 'Jan', usage: 2850 },
   { name: 'Feb', usage: 2620 },
@@ -48,7 +49,6 @@ const waterData = [
   { name: 'Jul', usage: 3850 },
 ];
 
-// STP efficiency data
 const stpEfficiencyData = [
   { name: 'Jan', value: 92 },
   { name: 'Feb', value: 93 },
@@ -59,7 +59,6 @@ const stpEfficiencyData = [
   { name: 'Jul', value: 93 },
 ];
 
-// Pumping station status data
 const pumpingStationsData = [
   { id: 'PS-001', name: 'Main Distribution', status: 'operational', flowRate: '124 m³/h', pressure: '5.2 bar', lastMaintenance: 'Jul 12, 2024' },
   { id: 'PS-002', name: 'Zone A Booster', status: 'operational', flowRate: '86 m³/h', pressure: '4.8 bar', lastMaintenance: 'Jun 28, 2024' },
@@ -68,7 +67,6 @@ const pumpingStationsData = [
   { id: 'PS-005', name: 'Irrigation System', status: 'maintenance', flowRate: '0 m³/h', pressure: '0 bar', lastMaintenance: 'Jul 25, 2024' },
 ];
 
-// Current alerts from various systems
 const currentAlerts = [
   { system: 'Electricity', title: 'High Power Demand', description: 'Main complex showing 12% increase in demand', severity: 'medium', timestamp: 'Today, 11:30' },
   { system: 'Water', title: 'Leak Detection Alert', description: 'Potential leak in Zone B residential area', severity: 'high', timestamp: 'Today, 09:15' },
@@ -76,7 +74,6 @@ const currentAlerts = [
   { system: 'Pumping', title: 'Pump #3 Vibration Warning', description: 'Abnormal vibration detected at Hilltop Station', severity: 'low', timestamp: 'Yesterday, 22:10' },
 ];
 
-// Key performance insights - Fixed status values to match allowed types
 const kpiInsights = [
   { title: 'Water Usage Trend', value: '-4.3%', status: 'good' as const, subtext: 'Below monthly average' },
   { title: 'Electricity Peak', value: '5,120 kWh', status: 'warning' as const, subtext: '18:00-20:00 daily' },
@@ -84,7 +81,6 @@ const kpiInsights = [
   { title: 'Critical Alerts', value: '1', status: 'critical' as const, subtext: 'Requiring immediate attention' },
 ];
 
-// Create a Lucide-compatible Pump icon using forwardRef
 const CustomPumpIcon = forwardRef<SVGSVGElement, LucideProps>((props, ref) => {
   return (
     <svg 
@@ -138,19 +134,25 @@ const Index = () => {
       <div className="mb-6 md:mb-8 animate-fade-in">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between">
           <div>
-            <h1 className="text-xl md:text-2xl font-bold text-muscat-primary">Operations Dashboard</h1>
-            <p className="text-sm md:text-base text-muscat-primary/60">{currentDate} • Daily Overview</p>
+            <h1 className="text-2xl md:text-3xl font-bold text-muscat-primary mb-1">Operations Dashboard</h1>
+            <p className="text-sm md:text-base text-muscat-primary/60 flex items-center">
+              <Calendar className="h-4 w-4 mr-1.5 text-muscat-teal" />
+              {currentDate} • Daily Overview
+            </p>
           </div>
           <div className="flex items-center gap-2 mt-4 md:mt-0">
-            <Button variant="outline" onClick={() => toast({ title: "Refreshing data", description: "Dashboard data is being updated" })}>
-              <Clock className="w-4 h-4 mr-2" />
+            <Button variant="outline" className="gap-2 text-sm font-medium border-muscat-primary/20 hover:bg-muscat-primary/5" onClick={() => toast({ title: "Report generated", description: "The report has been downloaded to your device" })}>
+              <Download className="w-4 h-4" />
+              Export Report
+            </Button>
+            <Button variant="outline" className="gap-2 text-sm font-medium border-muscat-primary/20 hover:bg-muscat-primary/5" onClick={() => toast({ title: "Refreshing data", description: "Dashboard data is being updated" })}>
+              <RefreshCw className="w-4 h-4" />
               Refresh Data
             </Button>
           </div>
         </div>
       </div>
       
-      {/* KPI Insights Section */}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 mb-6">
         {kpiInsights.map((kpi, index) => (
           <KpiIndicator
@@ -199,14 +201,18 @@ const Index = () => {
       </div>
       
       <div className="grid grid-cols-1 gap-4 sm:gap-6 mb-6 sm:mb-8 lg:grid-cols-2">
-        <DashboardCard delay={500}>
+        <DashboardCard delay={500} className="bg-gradient-to-br from-white to-muscat-light/30">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-muscat-primary">Electricity Consumption</h3>
+            <h3 className="text-lg font-semibold text-muscat-primary flex items-center">
+              <Zap className="w-5 h-5 mr-2 text-muscat-gold" />
+              Electricity Consumption
+            </h3>
             <button 
-              className="text-sm text-muscat-teal hover:underline"
+              className="flex items-center text-sm font-medium text-muscat-teal hover:underline"
               onClick={() => navigateToSection('electricity')}
             >
               View Details
+              <ArrowUpRight className="ml-1 w-3.5 h-3.5" />
             </button>
           </div>
           <div className="h-64">
@@ -219,7 +225,7 @@ const Index = () => {
                   contentStyle={{ 
                     backgroundColor: 'white',
                     borderColor: '#E5E7EB',
-                    borderRadius: '0.5rem',
+                    borderRadius: '0.75rem',
                     boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
                   }}
                 />
@@ -227,7 +233,7 @@ const Index = () => {
                   type="monotone" 
                   dataKey="usage" 
                   stroke="#D4B98C" 
-                  strokeWidth={2}
+                  strokeWidth={2.5}
                   dot={{ stroke: '#D4B98C', strokeWidth: 2, r: 4, fill: 'white' }}
                   activeDot={{ stroke: '#D4B98C', strokeWidth: 2, r: 6, fill: 'white' }}
                 />
@@ -239,20 +245,25 @@ const Index = () => {
               <p className="text-sm font-medium text-muscat-primary">Monthly Average: 4,500 kWh</p>
               <p className="text-xs text-muscat-primary/60">Peak Time: 18:00 - 20:00</p>
             </div>
-            <div className="px-3 py-1 text-xs font-medium rounded-full bg-amber-100 text-amber-800">
+            <div className="px-3 py-1.5 text-xs font-medium rounded-full bg-amber-100 text-amber-800 flex items-center">
+              <TrendingUp className="w-3.5 h-3.5 mr-1" />
               +5.1% vs Last Month
             </div>
           </div>
         </DashboardCard>
         
-        <DashboardCard delay={600}>
+        <DashboardCard delay={600} className="bg-gradient-to-br from-white to-muscat-light/30">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-muscat-primary">Water Consumption</h3>
+            <h3 className="text-lg font-semibold text-muscat-primary flex items-center">
+              <Droplet className="w-5 h-5 mr-2 text-muscat-teal" />
+              Water Consumption
+            </h3>
             <button 
-              className="text-sm text-muscat-teal hover:underline"
+              className="flex items-center text-sm font-medium text-muscat-teal hover:underline"
               onClick={() => navigateToSection('water')}
             >
               View Details
+              <ArrowUpRight className="ml-1 w-3.5 h-3.5" />
             </button>
           </div>
           <div className="h-64">
@@ -265,7 +276,7 @@ const Index = () => {
                   contentStyle={{ 
                     backgroundColor: 'white',
                     borderColor: '#E5E7EB',
-                    borderRadius: '0.5rem',
+                    borderRadius: '0.75rem',
                     boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
                   }}
                 />
@@ -273,7 +284,7 @@ const Index = () => {
                   type="monotone" 
                   dataKey="usage" 
                   stroke="#68D1CC" 
-                  strokeWidth={2}
+                  strokeWidth={2.5}
                   dot={{ stroke: '#68D1CC', strokeWidth: 2, r: 4, fill: 'white' }}
                   activeDot={{ stroke: '#68D1CC', strokeWidth: 2, r: 6, fill: 'white' }}
                 />
@@ -285,7 +296,8 @@ const Index = () => {
               <p className="text-sm font-medium text-muscat-primary">Monthly Average: 3,212 m³</p>
               <p className="text-xs text-muscat-primary/60">Highest Zone: Residential Area B</p>
             </div>
-            <div className="px-3 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+            <div className="px-3 py-1.5 text-xs font-medium rounded-full bg-green-100 text-green-800 flex items-center">
+              <TrendingDown className="w-3.5 h-3.5 mr-1" />
               -4.3% vs Last Month
             </div>
           </div>
@@ -293,18 +305,22 @@ const Index = () => {
       </div>
       
       <div className="grid grid-cols-1 gap-4 sm:gap-6 mb-6 sm:mb-8 md:grid-cols-2 lg:grid-cols-3">
-        <DashboardCard delay={700}>
+        <DashboardCard delay={700} className="bg-gradient-to-br from-white to-muscat-light/30">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-muscat-primary">STP Performance</h3>
+            <h3 className="text-lg font-semibold text-muscat-primary flex items-center">
+              <Factory className="w-5 h-5 mr-2 text-muscat-lavender" />
+              STP Performance
+            </h3>
             <button 
-              className="text-sm text-muscat-teal hover:underline"
+              className="flex items-center text-sm font-medium text-muscat-teal hover:underline"
               onClick={() => navigateToSection('stp')}
             >
               View Details
+              <ArrowUpRight className="ml-1 w-3.5 h-3.5" />
             </button>
           </div>
           <div className="space-y-4">
-            <div className="p-4 rounded-lg bg-muscat-light/50">
+            <div className="p-4 rounded-lg bg-white/80 border border-muscat-primary/5">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-medium text-muscat-primary">Current Efficiency</span>
                 <span className="text-sm font-medium text-muscat-primary">93%</span>
@@ -314,7 +330,7 @@ const Index = () => {
               </div>
             </div>
             
-            <div className="p-4 rounded-lg bg-muscat-light/50">
+            <div className="p-4 rounded-lg bg-white/80 border border-muscat-primary/5">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-medium text-muscat-primary">Flow Rate</span>
                 <span className="text-sm font-medium text-muscat-primary">148 m³/day</span>
@@ -324,7 +340,7 @@ const Index = () => {
               </div>
             </div>
             
-            <div className="p-4 rounded-lg bg-muscat-light/50">
+            <div className="p-4 rounded-lg bg-white/80 border border-muscat-primary/5">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-medium text-muscat-primary">BOD Removal</span>
                 <span className="text-sm font-medium text-muscat-primary">96%</span>
@@ -334,7 +350,7 @@ const Index = () => {
               </div>
             </div>
             
-            <div className="p-4 rounded-lg bg-muscat-light/50">
+            <div className="p-4 rounded-lg bg-white/80 border border-muscat-primary/5">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-medium text-muscat-primary">TSS Removal</span>
                 <span className="text-sm font-medium text-muscat-primary">94%</span>
@@ -350,18 +366,20 @@ const Index = () => {
           </div>
         </DashboardCard>
         
-        <DashboardCard delay={800}>
-          <h3 className="mb-4 text-lg font-semibold text-muscat-primary">Critical Alerts</h3>
+        <DashboardCard delay={800} className="bg-gradient-to-br from-white to-muscat-light/30">
+          <h3 className="mb-4 text-lg font-semibold text-muscat-primary flex items-center">
+            <AlertTriangle className="w-5 h-5 mr-2 text-amber-500" />
+            Critical Alerts
+          </h3>
           <div className="space-y-3">
             {currentAlerts.map((alert, index) => (
               <div key={index} className={`
-                p-3 border rounded-lg border-l-4 hover:bg-muscat-light/50 transition-colors
+                p-3 border rounded-lg border-l-4 hover:bg-white transition-colors
                 ${alert.severity === 'high' 
-                  ? "border-red-500 border-l-red-500" 
+                  ? "border-red-400 border-l-red-500 shadow-sm" 
                   : alert.severity === 'medium'
-                  ? "border-amber-500 border-l-amber-500"
-                  : "border-blue-500 border-l-blue-500"}
-                border-muscat-primary/5
+                  ? "border-amber-400 border-l-amber-500 shadow-sm"
+                  : "border-blue-400 border-l-blue-500 shadow-sm"}
               `}>
                 <div className="flex items-start justify-between">
                   <div>
@@ -386,23 +404,27 @@ const Index = () => {
               </div>
             ))}
           </div>
-          <button className="w-full py-2 mt-4 text-sm font-medium transition-colors border rounded-md border-muscat-primary/10 text-muscat-primary hover:bg-muscat-light">
+          <button className="w-full py-2 mt-4 text-sm font-medium transition-colors border rounded-md border-muscat-primary/10 text-muscat-primary hover:bg-white hover:shadow-sm">
             View All Alerts
           </button>
         </DashboardCard>
         
-        <DashboardCard delay={900} className="lg:col-span-1">
+        <DashboardCard delay={900} className="lg:col-span-1 bg-gradient-to-br from-white to-muscat-light/30">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-muscat-primary">Pumping Stations</h3>
+            <h3 className="text-lg font-semibold text-muscat-primary flex items-center">
+              <CustomPumpIcon className="w-5 h-5 mr-2 text-muscat-primary" />
+              Pumping Stations
+            </h3>
             <button 
-              className="text-sm text-muscat-teal hover:underline"
+              className="flex items-center text-sm font-medium text-muscat-teal hover:underline"
             >
               View Details
+              <ArrowUpRight className="ml-1 w-3.5 h-3.5" />
             </button>
           </div>
           <div className="space-y-3">
             {pumpingStationsData.map((station, index) => (
-              <div key={index} className="p-3 border rounded-lg border-muscat-primary/5 hover:bg-muscat-light/50 transition-colors">
+              <div key={index} className="p-3 border rounded-lg border-muscat-primary/10 hover:bg-white hover:shadow-sm transition-all">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
                     <div className={`
@@ -431,18 +453,21 @@ const Index = () => {
         </DashboardCard>
       </div>
       
-      <DashboardCard delay={1000}>
+      <DashboardCard delay={1000} className="bg-gradient-to-br from-white to-muscat-light/30">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-muscat-primary">System Overview</h3>
+          <h3 className="text-lg font-semibold text-muscat-primary flex items-center">
+            <AreaChart className="w-5 h-5 mr-2 text-muscat-primary" />
+            System Overview
+          </h3>
           <div className="flex items-center gap-2">
             <span className="hidden sm:inline text-sm text-muscat-primary/60">Last Updated: Today, 14:30</span>
-            <button className="p-1 transition-all rounded-md hover:bg-muscat-light">
+            <button className="p-1.5 transition-all rounded-md hover:bg-muscat-light">
               <Calendar className="w-4 h-4 text-muscat-primary/60" />
             </button>
           </div>
         </div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="p-4 transition-all border rounded-lg border-muscat-primary/5 hover:shadow-md">
+          <div className="p-4 transition-all border rounded-lg border-muscat-primary/10 hover:shadow-md hover:bg-white">
             <div className="flex items-center gap-3 mb-3">
               <div className="p-2 rounded-lg bg-muscat-teal/10">
                 <Droplet className="w-5 h-5 text-muscat-teal" />
@@ -464,7 +489,7 @@ const Index = () => {
             </div>
           </div>
           
-          <div className="p-4 transition-all border rounded-lg border-muscat-primary/5 hover:shadow-md">
+          <div className="p-4 transition-all border rounded-lg border-muscat-primary/10 hover:shadow-md hover:bg-white">
             <div className="flex items-center gap-3 mb-3">
               <div className="p-2 rounded-lg bg-muscat-gold/10">
                 <Zap className="w-5 h-5 text-muscat-gold" />
@@ -486,7 +511,7 @@ const Index = () => {
             </div>
           </div>
           
-          <div className="p-4 transition-all border rounded-lg border-muscat-primary/5 hover:shadow-md">
+          <div className="p-4 transition-all border rounded-lg border-muscat-primary/10 hover:shadow-md hover:bg-white">
             <div className="flex items-center gap-3 mb-3">
               <div className="p-2 rounded-lg bg-muscat-lavender/10">
                 <Factory className="w-5 h-5 text-muscat-lavender" />
@@ -508,7 +533,7 @@ const Index = () => {
             </div>
           </div>
           
-          <div className="p-4 transition-all border rounded-lg border-muscat-primary/5 hover:shadow-md">
+          <div className="p-4 transition-all border rounded-lg border-muscat-primary/10 hover:shadow-md hover:bg-white">
             <div className="flex items-center gap-3 mb-3">
               <div className="p-2 rounded-lg bg-muscat-primary/10">
                 <CustomPumpIcon className="w-5 h-5 text-muscat-primary" />
@@ -536,3 +561,4 @@ const Index = () => {
 };
 
 export default Index;
+

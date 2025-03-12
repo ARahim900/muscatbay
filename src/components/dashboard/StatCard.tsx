@@ -36,11 +36,11 @@ const StatCard: React.FC<StatCardProps> = ({
   };
   
   return (
-    <DashboardCard className={cn("overflow-hidden", className)} delay={delay}>
+    <DashboardCard className={cn("overflow-hidden bg-gradient-to-br from-white to-muscat-light/30", className)} delay={delay}>
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-sm font-medium text-muscat-primary/60">{title}</p>
-          <h3 className="stat-value">{value}</h3>
+          <p className="text-sm font-medium text-muscat-primary/70">{title}</p>
+          <h3 className="text-2xl font-bold text-muscat-primary mt-1 stat-value">{value}</h3>
           {description && (
             <p className="mt-1 text-xs text-muscat-primary/60">{description}</p>
           )}
@@ -49,18 +49,22 @@ const StatCard: React.FC<StatCardProps> = ({
             <div className="flex items-center mt-2">
               <span 
                 className={cn(
-                  "text-xs font-medium",
-                  trend.isPositive ? "text-green-500" : "text-red-500"
+                  "text-xs font-medium flex items-center",
+                  trend.isPositive ? "text-amber-600" : "text-green-600"
                 )}
               >
                 {trend.isPositive ? '+' : ''}{trend.value}%
+                <span className={cn(
+                  "inline-block w-1.5 h-1.5 ml-1 rounded-full",
+                  trend.isPositive ? "bg-amber-600" : "bg-green-600"
+                )}></span>
               </span>
               <span className="ml-1 text-xs text-muscat-primary/60">vs last period</span>
             </div>
           )}
         </div>
         
-        <div className={cn("p-2 rounded-lg", colorMap[color])}>
+        <div className={cn("p-3 rounded-xl shadow-sm", colorMap[color])}>
           <Icon className="w-5 h-5" />
         </div>
       </div>

@@ -15,10 +15,10 @@ const DashboardCard: React.FC<DashboardCardProps> = ({ className, children, dela
     const card = cardRef.current;
     if (card) {
       card.style.opacity = '0';
-      card.style.transform = 'translateY(10px)';
+      card.style.transform = 'translateY(15px)';
       
       setTimeout(() => {
-        card.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+        card.style.transition = 'opacity 0.6s ease, transform 0.6s ease, box-shadow 0.3s ease, border-color 0.3s ease, background-color 0.3s ease';
         card.style.opacity = '1';
         card.style.transform = 'translateY(0)';
       }, delay);
