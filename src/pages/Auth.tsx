@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
+import { AlertCircle } from 'lucide-react';
 
 const Auth = () => {
   const [loading, setLoading] = useState(false);
@@ -13,6 +14,7 @@ const Auth = () => {
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -50,10 +52,11 @@ const Auth = () => {
     
     try {
       setLoading(true);
+      setAuthError(null);
       
       if (isSignUp) {
         // Sign up new user
-        const { error } = await supabase.auth.signUp({
+        const { error, data } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -63,16 +66,20 @@ const Auth = () => {
           },
         });
         
+        console.log('Sign up response:', { error, data });
+        
         if (error) throw error;
         
         toast.success('Registration successful! Please log in.');
         setIsSignUp(false);
       } else {
         // Sign in existing user
-        const { error } = await supabase.auth.signInWithPassword({
+        const { error, data } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
+        
+        console.log('Sign in response:', { error, data });
         
         if (error) throw error;
         
@@ -80,8 +87,10 @@ const Auth = () => {
         navigate('/');
       }
     } catch (error: any) {
-      toast.error(error.message || 'Authentication failed');
-      console.error('Auth error:', error);
+      console.error('Auth error details:', error);
+      const errorMessage = error.message || 'Authentication failed';
+      setAuthError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -108,6 +117,19 @@ const Auth = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {authError && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md flex items-start">
+              <AlertCircle className="h-5 w-5 text-red-500 mr-2 mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="text-sm font-medium text-red-800">Authentication Error</p>
+                <p className="text-sm text-red-700">{authError}</p>
+                <p className="text-xs text-red-600 mt-1">
+                  Note: Email authentication might be disabled in the Supabase project settings.
+                </p>
+              </div>
+            </div>
+          )}
+          
           <form onSubmit={handleAuth} className="space-y-4">
             {isSignUp && (
               <div className="space-y-2">
