@@ -188,7 +188,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             </div>
           </div>
         ) : (
-          <div className="p-3 sm:p-6">
+          <div className="px-3 sm:px-6 md:px-8 mx-auto max-w-7xl w-full">
             {children}
           </div>
         )}

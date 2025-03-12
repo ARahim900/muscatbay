@@ -42,9 +42,9 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
               src="/lovable-uploads/a4c6f994-ae31-40c5-a0c0-0314f091a04d.jpg" 
               style={{ objectFit: 'contain' }}
             />
-            <h1 className="text-lg md:text-xl font-semibold text-muscat-primary">
-              Muscat Bay <span className="hidden ml-1 text-muscat-primary sm:inline">Asset Manager</span>
-            </h1>
+            <div className="text-lg md:text-xl font-semibold text-muscat-primary whitespace-nowrap">
+              Muscat Bay <span className="hidden sm:inline ml-1 text-muscat-primary">Asset Manager</span>
+            </div>
           </Link>
         </div>
         

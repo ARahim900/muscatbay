@@ -16,7 +16,7 @@ const STP = () => {
 
   return (
     <Layout>
-      <div className="container mx-auto p-6">
+      <div className="w-full">
         <h1 className="text-3xl font-bold mb-6">STP Plant Management</h1>
         
         <Card className="mb-8">
