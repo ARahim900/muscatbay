@@ -1,10 +1,22 @@
 
 import React, { useState } from 'react';
-import { Bell, Search, Settings, User, Menu, X } from 'lucide-react';
+import { Bell, Search, Settings, User, Menu, X, LogOut } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '@/context/AuthContext';
+import { toast } from 'sonner';
 
 const Navbar = () => {
   const [searchOpen, setSearchOpen] = useState(false);
+  const { user, signOut } = useAuth();
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      toast.success("Signed out successfully");
+    } catch (error) {
+      toast.error("Error signing out");
+    }
+  };
 
   return (
     <header className="fixed top-0 right-0 left-0 z-50 border-b bg-white/90 backdrop-blur-md border-muscat-primary/10 animate-fade-in">
@@ -79,13 +91,41 @@ const Navbar = () => {
               </button>
               
               <div className="flex items-center gap-3 pl-2 md:pl-4 border-l border-muscat-primary/10">
-                <div className="hidden text-right md:block">
-                  <p className="text-sm font-medium text-muscat-primary">Abdulrahim Al Balushi</p>
-                  <p className="text-xs text-muscat-primary/60">Assets & Operations</p>
-                </div>
-                <div className="flex items-center justify-center w-8 h-8 md:w-10 md:h-10 overflow-hidden transition-all bg-muscat-lavender/20 rounded-full hover:ring-2 hover:ring-muscat-primary/20">
-                  <User className="w-4 h-4 md:w-5 md:h-5 text-muscat-primary/80" />
-                </div>
+                {user ? (
+                  <>
+                    <div className="hidden text-right md:block">
+                      <p className="text-sm font-medium text-muscat-primary">
+                        {user.user_metadata.full_name || 'Muscat Bay User'}
+                      </p>
+                      <p className="text-xs text-muscat-primary/60">
+                        {user.email}
+                      </p>
+                    </div>
+                    <div className="relative group">
+                      <div className="flex items-center justify-center w-8 h-8 md:w-10 md:h-10 overflow-hidden transition-all bg-muscat-lavender/20 rounded-full hover:ring-2 hover:ring-muscat-primary/20">
+                        <User className="w-4 h-4 md:w-5 md:h-5 text-muscat-primary/80" />
+                      </div>
+                      <div className="absolute right-0 mt-2 w-48 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 bg-white rounded-md shadow-lg border border-gray-200 z-50">
+                        <div className="py-2">
+                          <button 
+                            onClick={handleSignOut}
+                            className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-muscat-light/50"
+                          >
+                            <LogOut className="w-4 h-4 mr-2" />
+                            Sign out
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <Link 
+                    to="/auth" 
+                    className="text-sm font-medium text-muscat-primary hover:text-muscat-primary/80 transition-colors"
+                  >
+                    Sign In
+                  </Link>
+                )}
               </div>
             </>
           )}
