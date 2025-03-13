@@ -26,6 +26,14 @@ const FacilitiesSection: React.FC<FacilitiesSectionProps> = ({
   return (
     <SidebarSection title="Facilities" collapsed={collapsed} isMobile={isMobile}>
       <SidebarLink 
+        to="/stp-dashboard" 
+        icon={Factory} 
+        label="STP Dashboard" 
+        collapsed={collapsed} 
+        external={false}
+        isMobile={isMobile}
+      />
+      <SidebarLink 
         to={externalApps.stpPlant} 
         icon={Factory} 
         label="STP Plant" 

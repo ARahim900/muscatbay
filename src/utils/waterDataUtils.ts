@@ -1,139 +1,175 @@
-
-import { CSVRowData, WaterData } from '@/types/water';
-import Papa from 'papaparse';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase';
+import { WaterData } from '@/types/water';
+import { parse } from 'date-fns';
 
 export const parseCSVFromClipboard = async (
-  text?: string,
-  onSuccess?: (data: WaterData[]) => void,
-  onError?: (message: string) => void
-): Promise<WaterData[]> => {
+  clipboardData: string | undefined,
+  onSuccess: (transformedData: WaterData[]) => void,
+  onError: (errorMessage: string) => void
+) => {
   try {
-    let csvText = text;
+    const text = clipboardData || await navigator.clipboard.readText();
+    const lines = text.split('\n');
+    const headers = lines[0].split(',').map(header => header.trim());
     
-    if (!csvText) {
-      csvText = await navigator.clipboard.readText();
-      if (!csvText) {
-        if (onError) onError("Please copy some CSV data to your clipboard first.");
-        return [];
+    const data = [];
+    for (let i = 1; i < lines.length; i++) {
+      const values = lines[i].split(',').map(value => value.trim());
+      if (values.length !== headers.length) continue;
+      
+      const item: any = {};
+      for (let j = 0; j < headers.length; j++) {
+        item[headers[j]] = values[j];
       }
+      data.push(item);
     }
     
-    return new Promise((resolve, reject) => {
-      Papa.parse<CSVRowData>(csvText as string, {
-        header: true,
-        skipEmptyLines: true,
-        complete: (results) => {
-          const { data, errors } = results;
-          
-          if (errors.length > 0) {
-            console.error("Error parsing CSV:", errors);
-            if (onError) onError("The data couldn't be parsed as CSV.");
-            reject(new Error("CSV parsing errors"));
-            return;
+    const transformedData: WaterData[] = data.map(row => {
+      const monthlyReadings: { [key: string]: number | null } = {};
+      
+      // Dynamically collect monthly readings based on headers
+      headers.forEach(header => {
+        if (header.match(/^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)/i)) {
+          const year = new Date().getFullYear();
+          const monthYear = `${header}-${year}`;
+          try {
+            const parsedDate = parse(monthYear, 'MMM-yyyy', new Date());
+            const isoDate = parsedDate.toISOString().slice(0, 7); // Format as YYYY-MM
+            monthlyReadings[isoDate] = row[header] ? parseFloat(row[header]) : null;
+          } catch (dateError) {
+            console.error(`Error parsing date ${monthYear}:`, dateError);
           }
-          
-          if (data.length === 0) {
-            if (onError) onError("The CSV contains headers but no data rows.");
-            reject(new Error("No data rows"));
-            return;
-          }
-          
-          console.log("Parsed data:", data);
-          const transformedData = transformCSVData(data);
-          if (onSuccess) onSuccess(transformedData);
-          resolve(transformedData);
-        },
-        error: (error) => {
-          const errorMessage = typeof error === 'string' ? error : error.message;
-          console.error("Error parsing CSV:", errorMessage);
-          if (onError) onError("Could not parse the content.");
-          reject(new Error(errorMessage));
         }
       });
+      
+      return {
+        meterLabel: row['Meter Label'] || row['Meter_Label'] || row['MeterLabel'] || 'N/A',
+        accountNumber: row['Acct #'] || row['Acct#'] || row['AccountNumber'] || 'N/A',
+        zone: row['Zone'] || 'N/A',
+        type: row['Type'] || 'N/A',
+        parentMeter: row['Parent Meter'] || row['ParentMeter'] || '',
+        monthlyReadings: monthlyReadings,
+      };
     });
+    
+    onSuccess(transformedData);
   } catch (error) {
-    console.error("Error reading data:", error);
-    if (onError) onError("Failed to read data.");
-    throw error;
+    console.error("Error parsing CSV data:", error);
+    onError(error instanceof Error ? error.message : "Failed to parse CSV data from clipboard.");
   }
-};
-
-export const transformCSVData = (csvData: CSVRowData[]): WaterData[] => {
-  return csvData.map((row: CSVRowData) => ({
-    meter_label: row['Meter Label'] || '',
-    account_number: row['Acct #'] || '',
-    zone: row['Zone'] || '',
-    type: row['Type'] || '',
-    parent_meter: row['Parent Meter'] || '',
-    jan_24: parseFloat(row['Jan-24']) || 0,
-    feb_24: parseFloat(row['Feb-24']) || 0,
-    mar_24: parseFloat(row['Mar-24']) || 0,
-    apr_24: parseFloat(row['Apr-24']) || 0,
-    may_24: parseFloat(row['May-24']) || 0,
-    jun_24: parseFloat(row['Jun-24']) || 0,
-    jul_24: parseFloat(row['Jul-24']) || 0,
-    aug_24: parseFloat(row['Aug-24']) || 0,
-    sep_24: parseFloat(row['Sep-24']) || 0,
-    oct_24: parseFloat(row['Oct-24']) || 0,
-    nov_24: parseFloat(row['Nov-24']) || 0,
-    dec_24: parseFloat(row['Dec-24']) || 0,
-    jan_25: parseFloat(row['Jan-25']) || 0,
-    feb_25: parseFloat(row['Feb-25']) || 0,
-    total: parseFloat(row['Total']) || 0
-  }));
 };
 
 export const saveWaterData = async (data: WaterData[]): Promise<{ success: boolean; message: string }> => {
   try {
-    // Clear existing data
-    const { error: clearError } = await supabase
-      .from('water_distribution_master')
-      .delete()
-      .neq('id', 0); // Delete all records
+    // First, validate the data
+    if (!Array.isArray(data) || data.length === 0) {
+      return { 
+        success: false, 
+        message: "Invalid data format. Please ensure you're importing valid water data." 
+      };
+    }
+    
+    // Check if we already have any of these meters in the database
+    const { data: existingMeters, error: metersError } = await supabase
+      .from('water_meters')
+      .select('meter_label');
+    
+    if (metersError) {
+      console.error("Error checking existing meters:", metersError);
+      return { 
+        success: false, 
+        message: "Database error when checking existing meters." 
+      };
+    }
+    
+    const existingMeterLabels = new Set(existingMeters?.map(m => m.meter_label) || []);
+    
+    // Prepare data for insertion
+    const metersToInsert = data
+      .filter(item => !existingMeterLabels.has(item.meterLabel))
+      .map(item => ({
+        meter_label: item.meterLabel,
+        account_number: item.accountNumber,
+        zone: item.zone,
+        type: item.type,
+        parent_meter: item.parentMeter || null,
+      }));
+    
+    // Insert new meters if any
+    if (metersToInsert.length > 0) {
+      const { error: insertError } = await supabase
+        .from('water_meters')
+        .insert(metersToInsert as unknown as Record<string, any>[]);
       
-    if (clearError) {
-      console.error("Error clearing existing data:", clearError);
+      if (insertError) {
+        console.error("Error inserting new meters:", insertError);
+        return { 
+          success: false, 
+          message: "Failed to insert new water meters. " + insertError.message 
+        };
+      }
+    }
+    
+    // Now fetch all meters to get their IDs
+    const { data: allMeters, error: fetchError } = await supabase
+      .from('water_meters')
+      .select('id, meter_label');
+    
+    if (fetchError) {
+      console.error("Error fetching meters:", fetchError);
       return { 
         success: false, 
-        message: clearError.message 
+        message: "Database error when fetching meter IDs." 
       };
     }
     
-    // Insert new data - Fix the type issue with a proper type assertion
-    const { error: insertError } = await supabase
-      .from('water_distribution_master')
-      .insert(data as unknown as Record<string, any>[]); 
+    // Create mapping of meter labels to IDs
+    const meterMap = new Map();
+    allMeters?.forEach(meter => {
+      meterMap.set(meter.meter_label, meter.id);
+    });
+    
+    // Now prepare the consumption data
+    const readingsToInsert = [];
+    for (const item of data) {
+      const meterId = meterMap.get(item.meterLabel);
+      if (!meterId) continue;
       
-    if (insertError) {
-      console.error("Error inserting data:", insertError);
-      return { 
-        success: false, 
-        message: insertError.message 
-      };
+      for (const [month, value] of Object.entries(item.monthlyReadings)) {
+        if (value !== null && value !== undefined) {
+          readingsToInsert.push({
+            meter_id: meterId,
+            reading_date: month,
+            consumption: value,
+          });
+        }
+      }
     }
     
-    // Refresh materialized views
-    const { data: refreshData, error: refreshError } = await supabase.rpc('refresh_water_consumption_views');
-    
-    if (refreshError) {
-      console.error("Error refreshing views:", refreshError);
-      return { 
-        success: false, 
-        message: refreshError.message || 'Unknown error' 
-      };
+    // Insert consumption data
+    if (readingsToInsert.length > 0) {
+      const { error: readingsError } = await supabase
+        .from('water_consumption')
+        .insert(readingsToInsert as unknown as Record<string, any>[]);
+      
+      if (readingsError) {
+        console.error("Error inserting consumption data:", readingsError);
+        return { 
+          success: false, 
+          message: "Failed to insert consumption data. " + readingsError.message 
+        };
+      }
     }
     
-    return {
-      success: true,
-      message: `Imported ${data.length} water distribution records.`
+    return { 
+      success: true, 
+      message: `Successfully imported ${data.length} meters and ${readingsToInsert.length} consumption readings.` 
     };
-    
   } catch (error) {
-    console.error("Error during data save:", error);
-    return {
-      success: false,
-      message: error instanceof Error ? error.message : "Unknown error occurred"
+    console.error("Error in saveWaterData:", error);
+    return { 
+      success: false, 
+      message: error instanceof Error ? error.message : "Unknown error occurred" 
     };
   }
 };
