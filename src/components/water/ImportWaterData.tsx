@@ -165,8 +165,9 @@ const ImportWaterData: React.FC = () => {
           
           console.log(`Imported ${transformedData.length} records`);
         },
-        error: (error: Papa.ParseError) => {
-          console.error("Error parsing CSV:", error);
+        error: (error: Error | string) => {
+          const errorMessage = typeof error === 'string' ? error : error.message;
+          console.error("Error parsing CSV:", errorMessage);
           toast({
             title: "Error parsing data",
             description: "Could not parse the clipboard content.",
