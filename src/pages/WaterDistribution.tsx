@@ -1054,13 +1054,13 @@ const WaterDistribution = () => {
   return (
     <Layout>
       <div className="min-h-screen bg-gray-50">
-        {/* Header */}
+        {/* Header - Updated to match default color scheme */}
         <div className="bg-white shadow-md">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
             <div className="flex flex-col md:flex-row justify-between items-center">
               <div className="flex items-center">
                 <Droplets className="h-6 w-6 mr-2 text-blue-600" />
-                <h1 className="text-2xl font-bold" style={{ color: primaryColor }}>Muscat Bay Water Distribution Dashboard</h1>
+                <h1 className="text-2xl font-bold text-gray-800">Muscat Bay Water Distribution Dashboard</h1>
               </div>
               <div className="mt-4 md:mt-0">
                 <div className="flex items-center space-x-4">
