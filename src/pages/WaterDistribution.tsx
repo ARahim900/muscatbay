@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import {
   BarChart,
@@ -40,7 +41,7 @@ interface CategoryData {
   percentage: number;
 }
 
-const Dashboard = () => {
+const Dashboard: React.FC = () => {
   const [data, setData] = useState<ConsumptionData[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [zones, setZones] = useState<string[]>([]);
@@ -160,7 +161,7 @@ const Dashboard = () => {
     processData(consumptionData);
   }, []);
   
-  const processData = (data) => {
+  const processData = (data: ConsumptionData[]) => {
     // Extract unique categories, zones, and time periods
     const uniqueCategories = [...new Set(data.map(item => getCategoryFromName(item.name)))];
     const uniqueZones = [...new Set(data.map(item => item.zone))];
@@ -189,7 +190,7 @@ const Dashboard = () => {
     setMaxConsumption(max);
     
     // Process consumption by category
-    const byCategory = uniqueCategories.map(category => {
+    const byCategory: CategoryData[] = uniqueCategories.map(category => {
       const categoryItems = data.filter(item => getCategoryFromName(item.name) === category);
       const categoryTotal = categoryItems.reduce((sum, item) => {
         return sum + Object.values(item.consumption).reduce((a: number, b: number) => Number(a) + Number(b), 0);
@@ -202,20 +203,6 @@ const Dashboard = () => {
       };
     });
     setConsumptionByCategory(byCategory);
-    
-    // Process consumption by zone
-    const byZone = uniqueZones.map(zone => {
-      const zoneItems = data.filter(item => item.zone === zone);
-      const zoneTotal = zoneItems.reduce((sum, item) => {
-        return sum + Object.values(item.consumption).reduce((a: number, b: number) => Number(a) + Number(b), 0);
-      }, 0);
-      
-      return {
-        name: zone,
-        value: zoneTotal,
-        percentage: (zoneTotal / total) * 100
-      };
-    });
   };
   
   const consumptionDataForSelectedMonth = data.map(item => ({
@@ -254,7 +241,8 @@ const Dashboard = () => {
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <DashboardCard title="Consumption by Meter">
+        <DashboardCard>
+          <h2 className="text-lg font-semibold mb-2">Consumption by Meter</h2>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={consumptionDataForSelectedMonth}>
               <CartesianGrid strokeDasharray="3 3" />
@@ -267,7 +255,8 @@ const Dashboard = () => {
           </ResponsiveContainer>
         </DashboardCard>
         
-        <DashboardCard title="Consumption by Category">
+        <DashboardCard>
+          <h2 className="text-lg font-semibold mb-2">Consumption by Category</h2>
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
               <Pie

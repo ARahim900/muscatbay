@@ -22,6 +22,13 @@ export interface WaterData {
   total: number;
 }
 
+export interface WaterMeterReading {
+  [key: string]: string | number;
+  reading?: number;
+  meter_id?: string;
+  date?: string;
+}
+
 export interface CSVRowData {
   'Meter Label': string;
   'Acct #': string;

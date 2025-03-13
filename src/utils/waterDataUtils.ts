@@ -21,7 +21,7 @@ export const parseCSVFromClipboard = async (text: string): Promise<WaterMeterRea
     
     for (let i = 1; i < rows.length; i++) {
       const values = rows[i].split(",");
-      const reading: any = {};
+      const reading: WaterMeterReading = {};
       
       headers.forEach((header, index) => {
         const key = header.trim();
@@ -29,7 +29,7 @@ export const parseCSVFromClipboard = async (text: string): Promise<WaterMeterRea
         reading[key] = key === "reading" ? Number(value) : value;
       });
       
-      data.push(reading as WaterMeterReading);
+      data.push(reading);
     }
     
     return data;

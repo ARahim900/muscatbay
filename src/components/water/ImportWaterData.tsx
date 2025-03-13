@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { toast } from 'sonner';
@@ -20,7 +21,7 @@ const ImportWaterData: React.FC = () => {
     reader.onload = async (e: any) => {
       const text = e.target.result;
       setCsvText(text);
-      await handleParse(text);
+      await handleParseText(text);
     };
 
     reader.readAsText(file);
@@ -32,7 +33,7 @@ const ImportWaterData: React.FC = () => {
     setCsvText(e.target.value);
   };
 
-  const handleParse = async (text: string = csvText) => {
+  const handleParseText = async (text: string = csvText) => {
     setIsParsing(true);
     try {
       const data = await parseCSVFromClipboard(text);
@@ -43,6 +44,10 @@ const ImportWaterData: React.FC = () => {
     } finally {
       setIsParsing(false);
     }
+  };
+
+  const handleParse = () => {
+    handleParseText(csvText);
   };
 
   const handleSave = async () => {
