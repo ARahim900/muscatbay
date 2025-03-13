@@ -40,32 +40,32 @@ const StatCard: React.FC<StatCardProps> = ({
       <div className="flex items-start justify-between">
         <div>
           <p className="text-sm font-medium text-muscat-primary/70">{title}</p>
-          <h3 className="text-3xl font-bold text-muscat-primary mt-1 stat-value">{value}</h3>
+          <h3 className="text-2xl font-bold text-muscat-primary mt-1 stat-value">{value}</h3>
           {description && (
-            <p className="mt-1 text-sm text-muscat-primary/60">{description}</p>
+            <p className="mt-1 text-xs text-muscat-primary/60">{description}</p>
           )}
           
           {trend && (
             <div className="flex items-center mt-2">
               <span 
                 className={cn(
-                  "text-sm font-medium flex items-center",
+                  "text-xs font-medium flex items-center",
                   trend.isPositive ? "text-amber-600" : "text-green-600"
                 )}
               >
                 {trend.isPositive ? '+' : ''}{trend.value}%
                 <span className={cn(
-                  "inline-block w-2 h-2 ml-1 rounded-full",
+                  "inline-block w-1.5 h-1.5 ml-1 rounded-full",
                   trend.isPositive ? "bg-amber-600" : "bg-green-600"
                 )}></span>
               </span>
-              <span className="ml-1 text-sm text-muscat-primary/60">vs last period</span>
+              <span className="ml-1 text-xs text-muscat-primary/60">vs last period</span>
             </div>
           )}
         </div>
         
-        <div className={cn("p-4 rounded-xl shadow-sm", colorMap[color])}>
-          <Icon className="w-6 h-6" />
+        <div className={cn("p-3 rounded-xl shadow-sm", colorMap[color])}>
+          <Icon className="w-5 h-5" />
         </div>
       </div>
     </DashboardCard>

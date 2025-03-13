@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import Layout from '@/components/layout/Layout';
@@ -12,7 +13,7 @@ const COLORS = {
   chartColors: ['#4E4456', '#6A5D75', '#8A7A94', '#AC9EB5', '#CAC0D1', '#E8E3EC']
 };
 
-const Dashboard = () => {
+const ElectricityDistribution = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [data, setData] = useState<any[]>([]);
   const [timeframe, setTimeframe] = useState('all');
@@ -118,7 +119,7 @@ const Dashboard = () => {
     processData(consumptionData);
   }, []);
   
-  const processData = (data) => {
+  const processData = (data: any[]) => {
     // Extract unique categories, zones, and time periods
     const uniqueCategories = [...new Set(data.map(item => getCategoryFromName(item.name)))];
     const uniqueZones = [...new Set(data.map(item => item.zone))];
@@ -130,7 +131,7 @@ const Dashboard = () => {
     
     // Calculate total consumption
     const total = data.reduce((sum, item) => {
-      const itemTotal = Object.values(item.consumption).reduce((a: number, b: number) => Number(a) + Number(b), 0);
+      const itemTotal = Object.values(item.consumption).reduce((a: number, b: number) => a + Number(b), 0);
       return sum + itemTotal;
     }, 0);
     setTotalConsumption(total);
@@ -141,7 +142,7 @@ const Dashboard = () => {
     
     // Find max consumption
     const max = data.reduce((currentMax, item) => {
-      const itemMax = Math.max(...Object.values(item.consumption).map(val => Number(val)));
+      const itemMax = Math.max(...Object.values(item.consumption).map(v => Number(v)));
       return Math.max(currentMax, itemMax);
     }, 0);
     setMaxConsumption(max);
@@ -150,7 +151,7 @@ const Dashboard = () => {
     const byCategory = uniqueCategories.map(category => {
       const categoryItems = data.filter(item => getCategoryFromName(item.name) === category);
       const categoryTotal = categoryItems.reduce((sum, item) => {
-        return sum + Object.values(item.consumption).reduce((a: number, b: number) => Number(a) + Number(b), 0);
+        return sum + Object.values(item.consumption).reduce((a: number, b: number) => a + Number(b), 0);
       }, 0);
       
       return {
@@ -165,7 +166,7 @@ const Dashboard = () => {
     const byZone = uniqueZones.map(zone => {
       const zoneItems = data.filter(item => item.zone === zone);
       const zoneTotal = zoneItems.reduce((sum, item) => {
-        return sum + Object.values(item.consumption).reduce((a: number, b: number) => Number(a) + Number(b), 0);
+        return sum + Object.values(item.consumption).reduce((a: number, b: number) => a + Number(b), 0);
       }, 0);
       
       return {
@@ -191,7 +192,7 @@ const Dashboard = () => {
     
     // Find top consumers
     const consumers = data.map(item => {
-      const itemTotal = Object.values(item.consumption).reduce((a: number, b: number) => Number(a) + Number(b), 0);
+      const itemTotal = Object.values(item.consumption).reduce((a: number, b: number) => a + Number(b), 0);
       return {
         id: item.id,
         name: item.name,
@@ -957,4 +958,4 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard;
+export default ElectricityDistribution;
