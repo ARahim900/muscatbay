@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
   AreaChart, Area, BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, 
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, 
-  ComposedChart, Scatter, ScatterChart, ZAxis, ReferenceLine
+  ComposedChart, Scatter, ScatterChart, ZAxis, ReferenceLine, TooltipProps
 } from 'recharts';
 import _ from 'lodash';
 
@@ -740,7 +740,9 @@ const WaterDistributionDashboard = () => {
                       <Cell key={`cell-${index}`} fill={[primaryColor, secondaryColor, accentColor, '#8884d8', '#82ca9d', '#ffc658', '#ff8042'][index % 7]} />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(value) => [`${formatNumber(value)} m³`, 'Consumption']} />
+                  <Tooltip 
+                    formatter={(value: number) => [`${formatNumber(value)} m³`, 'Consumption']} 
+                  />
                   <Legend />
                 </PieChart>
               </ResponsiveContainer>
