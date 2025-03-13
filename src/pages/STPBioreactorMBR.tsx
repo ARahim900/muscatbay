@@ -646,8 +646,8 @@ const STPBioreactorMBR = () => {
                     >
                       <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                       <XAxis dataKey="month" />
-                      <YAxis tickFormatter={(value) => value >= 1000 ? `${value/1000}K` : value} />
-                      <RechartsTooltip formatter={(value) => [`${value} m³`, '']} />
+                      <YAxis tickFormatter={(value) => value >= 1000 ? `${(value/1000)}K` : value} />
+                      <RechartsTooltip formatter={(value: any) => [`${value} m³`, '']} />
                       <Legend />
                       <Area 
                         type="monotone" 
@@ -732,7 +732,7 @@ const STPBioreactorMBR = () => {
                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}
                       </Pie>
-                      <RechartsTooltip formatter={(value) => `${(value/1000).toFixed(1)}K m³`} />
+                      <RechartsTooltip formatter={(value: any) => `${(Number(value)/1000).toFixed(1)}K m³`} />
                     </PieChart>
                   </ResponsiveContainer>
                 </div>
