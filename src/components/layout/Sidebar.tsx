@@ -247,12 +247,11 @@ const Sidebar: React.FC<SidebarProps> = ({
               isMobile={isMobile}
             />
             <SidebarLink 
-              to={externalApps.electricity} 
+              to="/electricity-distribution" 
               icon={Zap} 
-              label="Electricity" 
+              label="Electricity Distribution" 
               collapsed={collapsed} 
-              external={true}
-              openEmbedded={openEmbeddedApp}
+              external={false}
               isMobile={isMobile}
             />
           </div>
