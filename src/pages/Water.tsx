@@ -150,8 +150,6 @@ const Water = () => {
             </CardContent>
           </Card>
         </div>
-        
-        <ImportWaterData />
       </div>
     </Layout>
   );

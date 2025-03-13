@@ -1,225 +1,163 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { supabase } from '@/integrations/supabase/client';
-import { FileUp, Check, AlertCircle } from 'lucide-react';
-import { Progress } from '@/components/ui/progress';
+import { FileText, Upload } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import Papa from 'papaparse';
 
-const ImportWaterData = () => {
+const ImportWaterData: React.FC = () => {
   const [importing, setImporting] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [totalRows, setTotalRows] = useState(0);
-  const [importedRows, setImportedRows] = useState(0);
-
-  const processRawData = (data: string) => {
-    // Split the data into rows
-    const rows = data.trim().split('\n');
-    
-    // Extract headers
-    const headers = rows[0].split('\t').map(h => h.trim());
-    
-    // Process the data rows
-    const processedData = [];
-    for (let i = 1; i < rows.length; i++) {
-      const values = rows[i].split('\t').map(v => v.trim());
-      if (values.length !== headers.length) continue;
-      
-      const row: any = {};
-      headers.forEach((header, index) => {
-        // Map the header names to database column names
-        switch(header) {
-          case 'Meter Label':
-            row.meter_label = values[index];
-            break;
-          case 'Acct #':
-            row.account_number = values[index];
-            break;
-          case 'Zone':
-            row.zone = values[index];
-            break;
-          case 'Type':
-            row.type = values[index];
-            break;
-          case 'Parent Meter':
-            row.parent_meter = values[index];
-            break;
-          case 'Jan-24':
-            row.jan_24 = values[index] === '' ? null : Number(values[index]);
-            break;
-          case 'Feb-24':
-            row.feb_24 = values[index] === '' ? null : Number(values[index]);
-            break;
-          case 'Mar-24':
-            row.mar_24 = values[index] === '' ? null : Number(values[index]);
-            break;
-          case 'Apr-24':
-            row.apr_24 = values[index] === '' ? null : Number(values[index]);
-            break;
-          case 'May-24':
-            row.may_24 = values[index] === '' ? null : Number(values[index]);
-            break;
-          case 'Jun-24':
-            row.jun_24 = values[index] === '' ? null : Number(values[index]);
-            break;
-          case 'Jul-24':
-            row.jul_24 = values[index] === '' ? null : Number(values[index]);
-            break;
-          case 'Aug-24':
-            row.aug_24 = values[index] === '' ? null : Number(values[index]);
-            break;
-          case 'Sep-24':
-            row.sep_24 = values[index] === '' ? null : Number(values[index]);
-            break;
-          case 'Oct-24':
-            row.oct_24 = values[index] === '' ? null : Number(values[index]);
-            break;
-          case 'Nov-24':
-            row.nov_24 = values[index] === '' ? null : Number(values[index]);
-            break;
-          case 'Dec-24':
-            row.dec_24 = values[index] === '' ? null : Number(values[index]);
-            break;
-          case 'Jan-25':
-            row.jan_25 = values[index] === '' ? null : Number(values[index]);
-            break;
-          case 'Feb-25':
-            row.feb_25 = values[index] === '' ? null : Number(values[index]);
-            break;
-          case 'Total':
-            row.total = values[index] === '' ? null : Number(values[index]);
-            break;
-        }
-      });
-      
-      processedData.push(row);
-    }
-    
-    return processedData;
-  };
-
-  const importWaterData = async (rawData: string) => {
+  
+  const handlePasteData = async () => {
     try {
       setImporting(true);
-      setProgress(0);
       
-      // Clear existing data
-      await supabase.from('water_distribution_master').delete().neq('id', 0);
+      // Request clipboard content
+      const text = await navigator.clipboard.readText();
+      if (!text) {
+        toast({
+          title: "No data on clipboard",
+          description: "Please copy some CSV data to your clipboard first.",
+          variant: "destructive"
+        });
+        return;
+      }
       
-      // Process data
-      const data = processRawData(rawData);
-      setTotalRows(data.length);
-      
-      // Insert data in batches to avoid timeouts
-      const batchSize = 50;
-      let imported = 0;
-      
-      for (let i = 0; i < data.length; i += batchSize) {
-        const batch = data.slice(i, i + batchSize);
-        const { error } = await supabase.from('water_distribution_master').insert(batch);
-        
-        if (error) {
-          console.error('Error inserting batch:', error);
+      // Parse CSV from clipboard
+      Papa.parse(text, {
+        header: true,
+        skipEmptyLines: true,
+        complete: async (results) => {
+          const { data, errors } = results;
+          
+          if (errors.length > 0) {
+            console.error("Error parsing CSV:", errors);
+            toast({
+              title: "Error parsing data",
+              description: "The clipboard data couldn't be parsed as CSV.",
+              variant: "destructive"
+            });
+            return;
+          }
+          
+          if (data.length === 0) {
+            toast({
+              title: "No data found",
+              description: "The clipboard contains CSV headers but no data rows.",
+              variant: "destructive"
+            });
+            return;
+          }
+          
+          console.log("Parsed data:", data);
+          
+          // Transform data for Supabase
+          const transformedData = data.map((row: any) => ({
+            meter_label: row['Meter Label'] || '',
+            account_number: row['Acct #'] || '',
+            zone: row['Zone'] || '',
+            type: row['Type'] || '',
+            parent_meter: row['Parent Meter'] || '',
+            jan_24: parseFloat(row['Jan-24']) || 0,
+            feb_24: parseFloat(row['Feb-24']) || 0,
+            mar_24: parseFloat(row['Mar-24']) || 0,
+            apr_24: parseFloat(row['Apr-24']) || 0,
+            may_24: parseFloat(row['May-24']) || 0,
+            jun_24: parseFloat(row['Jun-24']) || 0,
+            jul_24: parseFloat(row['Jul-24']) || 0,
+            aug_24: parseFloat(row['Aug-24']) || 0,
+            sep_24: parseFloat(row['Sep-24']) || 0,
+            oct_24: parseFloat(row['Oct-24']) || 0,
+            nov_24: parseFloat(row['Nov-24']) || 0,
+            dec_24: parseFloat(row['Dec-24']) || 0,
+            jan_25: parseFloat(row['Jan-25']) || 0,
+            feb_25: parseFloat(row['Feb-25']) || 0,
+            total: parseFloat(row['Total']) || 0
+          }));
+          
+          // Clear existing data
+          const { error: clearError } = await supabase
+            .from('water_distribution_master')
+            .delete()
+            .neq('id', 0); // Delete all records
+            
+          if (clearError) {
+            console.error("Error clearing existing data:", clearError);
+            toast({
+              title: "Error clearing existing data",
+              description: clearError.message,
+              variant: "destructive"
+            });
+            return;
+          }
+          
+          // Insert new data
+          const { error: insertError } = await supabase
+            .from('water_distribution_master')
+            .insert(transformedData);
+            
+          if (insertError) {
+            console.error("Error inserting data:", insertError);
+            toast({
+              title: "Error importing data",
+              description: insertError.message,
+              variant: "destructive"
+            });
+            return;
+          }
+          
+          // Refresh materialized views
+          await supabase.rpc('refresh_water_consumption_views');
+          
           toast({
-            title: "Import Error",
-            description: `Error importing data: ${error.message}`,
+            title: "Data imported successfully",
+            description: `Imported ${transformedData.length} water distribution records.`
+          });
+          
+          console.log(`Imported ${transformedData.length} records`);
+        },
+        error: (error) => {
+          console.error("Error parsing CSV:", error);
+          toast({
+            title: "Error parsing data",
+            description: "Could not parse the clipboard content.",
             variant: "destructive"
           });
-          setImporting(false);
-          return;
         }
-        
-        imported += batch.length;
-        setImportedRows(imported);
-        setProgress(Math.round((imported / data.length) * 100));
-      }
-      
-      // Update the water_consumption_by_type view through a direct query
-      const { error: viewError } = await supabase.rpc('refresh_water_consumption_views');
-      
-      if (viewError) {
-        console.error('Error refreshing views:', viewError);
-        toast({
-          title: "View Refresh Error",
-          description: `Data imported but error refreshing views: ${viewError.message}`,
-          variant: "warning"
-        });
-      }
-      
-      toast({
-        title: "Import Successful",
-        description: `Successfully imported ${imported} water data records.`,
-        variant: "default"
       });
-      
     } catch (error) {
-      console.error('Import error:', error);
+      console.error("Error during import:", error);
       toast({
-        title: "Import Failed",
-        description: "An unexpected error occurred during import.",
+        title: "Import failed",
+        description: error instanceof Error ? error.message : "Unknown error occurred",
         variant: "destructive"
       });
     } finally {
       setImporting(false);
     }
   };
-
-  const handlePasteData = async () => {
-    try {
-      const text = await navigator.clipboard.readText();
-      if (!text) {
-        toast({
-          title: "No Data",
-          description: "No data found in clipboard. Please copy the data first.",
-          variant: "destructive"
-        });
-        return;
-      }
-      
-      // Confirm with the user
-      if (confirm("Are you sure you want to import water distribution data? This will replace all existing data.")) {
-        importWaterData(text);
-      }
-    } catch (error) {
-      console.error('Clipboard error:', error);
-      toast({
-        title: "Clipboard Error",
-        description: "Could not access clipboard data. Please check permissions.",
-        variant: "destructive"
-      });
-    }
-  };
-
+  
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center">
-          <FileUp className="mr-2 h-5 w-5" />
-          Import Water Distribution Data
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        {importing ? (
-          <div className="space-y-4">
-            <Progress value={progress} />
-            <p className="text-sm text-gray-500">
-              Importing {importedRows} of {totalRows} rows ({progress}%)
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            <p className="text-sm text-gray-500">
-              Import water distribution data from clipboard. Copy the data from your spreadsheet first.
-            </p>
-            <Button onClick={handlePasteData} className="w-full">
-              <FileUp className="mr-2 h-4 w-4" />
-              Paste Data from Clipboard
-            </Button>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+    <div className="bg-white rounded-lg shadow p-6">
+      <h2 className="text-lg font-medium text-gray-700 mb-4 flex items-center">
+        <FileText className="h-5 w-5 mr-2 text-gray-500" />
+        Import Water Distribution Data
+      </h2>
+      <p className="text-sm text-gray-500 mb-4">
+        Copy water distribution data from Excel or similar spreadsheet applications to your clipboard, 
+        then click the button below to import. The data should include columns for Meter Label, Acct #, 
+        Zone, Type, Parent Meter, and monthly consumption values.
+      </p>
+      <Button 
+        onClick={handlePasteData}
+        disabled={importing}
+        className="flex items-center"
+      >
+        <Upload className="mr-2 h-4 w-4" />
+        {importing ? "Importing..." : "Import from Clipboard"}
+      </Button>
+    </div>
   );
 };
 

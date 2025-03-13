@@ -3,17 +3,16 @@ import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area, LineChart, Line } from 'recharts';
 import Layout from '@/components/layout/Layout';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { toast } from '@/components/ui/use-toast';
-import { Droplets, FileSpreadsheet } from 'lucide-react';
+import { FileBarChart, Droplets } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import ImportWaterData from '@/components/water/ImportWaterData';
 
 interface WaterData {
-  type: string;
-  name?: string;
-  value?: number;
-  percentage?: string;
+  name: string;
+  value: number;
+  percentage: string;
   [key: string]: any;
 }
 
@@ -62,11 +61,6 @@ const WaterConsumptionTypes = () => {
         setLoading(false);
       } catch (error) {
         console.error('Error processing data:', error);
-        toast({
-          title: "Error Loading Data",
-          description: "There was a problem loading the water consumption data.",
-          variant: "destructive"
-        });
         setLoading(false);
       }
     };
@@ -211,13 +205,13 @@ const WaterConsumptionTypes = () => {
   
   // Apply selected type filters if any are selected
   const typeDataToDisplay = selectedTypes.length > 0 
-    ? filteredTypeData.filter(item => selectedTypes.includes(item.name || ''))
+    ? filteredTypeData.filter(item => selectedTypes.includes(item.name))
     : filteredTypeData;
   
   // Get the types sorted by total consumption for consistent coloring
   const typesByConsumption = [...filteredTypeData]
     .sort((a, b) => (b.value || 0) - (a.value || 0))
-    .map(item => item.name || '');
+    .map(item => item.name);
     
   // Get only selected types for charts if any are selected
   const typesToShow = selectedTypes.length > 0 ? selectedTypes : typesByConsumption;
@@ -297,7 +291,7 @@ const WaterConsumptionTypes = () => {
                   >
                     <span 
                       className="w-3 h-3 rounded-full mr-2" 
-                      style={{ backgroundColor: COLORS[type as keyof typeof COLORS] || '#888' }}
+                      style={{ backgroundColor: COLORS[type] || '#888' }}
                     ></span>
                     {type}
                     {selectedTypes.includes(type) && (
@@ -366,7 +360,7 @@ const WaterConsumptionTypes = () => {
                       <Tooltip formatter={(value: number) => [`${formatNumber(value)} m³`, 'Consumption']} />
                       <Bar dataKey="value">
                         {typeDataToDisplay.map((entry) => (
-                          <Cell key={entry.name} fill={COLORS[entry.name as keyof typeof COLORS] || '#8884d8'} />
+                          <Cell key={entry.name} fill={COLORS[entry.name] || '#8884d8'} />
                         ))}
                       </Bar>
                     </BarChart>
@@ -394,7 +388,7 @@ const WaterConsumptionTypes = () => {
                         label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(1)}%`}
                       >
                         {typeDataToDisplay.map((entry) => (
-                          <Cell key={entry.name} fill={COLORS[entry.name as keyof typeof COLORS] || '#8884d8'} />
+                          <Cell key={entry.name} fill={COLORS[entry.name] || '#8884d8'} />
                         ))}
                       </Pie>
                       <Tooltip formatter={(value: number) => [`${formatNumber(value)} m³`, 'Consumption']} />
@@ -427,7 +421,7 @@ const WaterConsumptionTypes = () => {
                         type="monotone" 
                         dataKey={type} 
                         key={type}
-                        stroke={COLORS[type as keyof typeof COLORS] || '#888'} 
+                        stroke={COLORS[type]} 
                         activeDot={{ r: 8 }} 
                         strokeWidth={2}
                       />
@@ -461,8 +455,8 @@ const WaterConsumptionTypes = () => {
                         dataKey={type} 
                         key={type}
                         stackId="1"
-                        stroke={COLORS[type as keyof typeof COLORS] || '#888'} 
-                        fill={COLORS[type as keyof typeof COLORS] || '#888'} 
+                        stroke={COLORS[type]} 
+                        fill={COLORS[type]} 
                       />
                     ))}
                   </AreaChart>
@@ -477,7 +471,7 @@ const WaterConsumptionTypes = () => {
               <CardTitle className="flex justify-between items-center">
                 <span>Consumption by Type Details ({monthMapping[selectedMonth]})</span>
                 <Button variant="outline" size="sm" className="flex items-center ml-4">
-                  <FileSpreadsheet className="h-4 w-4 mr-2" />
+                  <FileBarChart className="h-4 w-4 mr-2" />
                   Export Data
                 </Button>
               </CardTitle>
@@ -499,7 +493,7 @@ const WaterConsumptionTypes = () => {
                           <div className="flex items-center">
                             <span 
                               className="w-3 h-3 rounded-full mr-2" 
-                              style={{ backgroundColor: COLORS[type.name as keyof typeof COLORS] || '#888' }}
+                              style={{ backgroundColor: COLORS[type.name] || '#888' }}
                             ></span>
                             {type.name}
                           </div>
@@ -513,6 +507,9 @@ const WaterConsumptionTypes = () => {
               </div>
             </CardContent>
           </Card>
+          
+          {/* Import Data Section */}
+          <ImportWaterData />
         </div>
       </div>
     </Layout>
