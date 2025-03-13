@@ -334,7 +334,7 @@ const ContractDashboard = () => {
           </div>
         </div>
         <div className="flex space-x-2 w-full md:w-auto">
-          <button className="bg-gray-700 text-white px-4 py-2 rounded flex items-center">
+          <button className="text-white px-4 py-2 rounded flex items-center bg-[#4e4456]">
             <span className="mr-1">Update</span>
           </button>
           <button className="border border-gray-300 bg-white text-gray-700 px-4 py-2 rounded flex items-center">
