@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ExternalLink, Github, WaterDrop } from 'lucide-react';
+import { ExternalLink, Github, Droplets } from 'lucide-react';
 
 const Water = () => {
   useEffect(() => {
@@ -70,7 +70,7 @@ const Water = () => {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">
-                <WaterDrop className="mr-2 h-6 w-6" />
+                <Droplets className="mr-2 h-6 w-6" />
                 Water Distribution Dashboard
               </CardTitle>
               <CardDescription>

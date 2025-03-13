@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Layout from '@/components/layout/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -24,7 +23,7 @@ const WaterDistributionDashboard = () => {
   const successColor = '#198754';
   
   // Color scale for heat map
-  const getLossColor = (value) => {
+  const getLossColor = (value: number) => {
     if (value < 10) return successColor;
     if (value < 20) return '#5cb85c';
     if (value < 30) return '#30a5ff';
@@ -39,21 +38,21 @@ const WaterDistributionDashboard = () => {
                   'Jan-25', 'Feb-25'];
 
   // Mock data based on our analysis (in a real system this would come from an API/backend)
-  const l1Data = {
+  const l1Data: Record<string, number> = {
     'Jan-24': 32803, 'Feb-24': 27996, 'Mar-24': 23860, 'Apr-24': 31869, 
     'May-24': 30737, 'Jun-24': 41953, 'Jul-24': 35166, 'Aug-24': 35420, 
     'Sep-24': 41341, 'Oct-24': 31519, 'Nov-24': 35290, 'Dec-24': 36733, 
     'Jan-25': 32580, 'Feb-25': 44043
   };
 
-  const l2ZoneBulkData = {
+  const l2ZoneBulkData: Record<string, number> = {
     'Jan-24': 11964, 'Feb-24': 10292, 'Mar-24': 11087, 'Apr-24': 13380, 
     'May-24': 11785, 'Jun-24': 15699, 'Jul-24': 18370, 'Aug-24': 16401, 
     'Sep-24': 14818, 'Oct-24': 16461, 'Nov-24': 13045, 'Dec-24': 16148, 
     'Jan-25': 15327, 'Feb-25': 14716
   };
 
-  const directConnectionData = {
+  const directConnectionData: Record<string, number> = {
     'Jan-24': 16725, 'Feb-24': 14781, 'Mar-24': 12920, 'Apr-24': 15333,
     'May-24': 16304, 'Jun-24': 18927, 'Jul-24': 16319, 'Aug-24': 16352,
     'Sep-24': 16074, 'Oct-24': 22824, 'Nov-24': 16868, 'Dec-24': 16344,
@@ -61,7 +60,10 @@ const WaterDistributionDashboard = () => {
   };
 
   // Zone-wise data for the selected month
-  const zoneData = {
+  const zoneData: Record<string, { 
+    bulk: Record<string, number>; 
+    individual: Record<string, number>;
+  }> = {
     'Zone_01_(FM)': {
       bulk: {
         'Jan-24': 1595, 'Feb-24': 1283, 'Mar-24': 1255, 'Apr-24': 1383,
@@ -149,7 +151,7 @@ const WaterDistributionDashboard = () => {
   };
 
   // Consumption by type data
-  const typeConsumptionData = {
+  const typeConsumptionData: Record<string, Record<string, number>> = {
     'Main BULK': {
       'Jan-24': 32803, 'Feb-24': 27996, 'Mar-24': 23860, 'Apr-24': 31869, 
       'May-24': 30737, 'Jun-24': 41953, 'Jul-24': 35166, 'Aug-24': 35420, 
@@ -196,15 +198,24 @@ const WaterDistributionDashboard = () => {
 
   // Prepare data for charts
   const prepareMonthlyData = () => {
-    return months.map(month => ({
-      month,
-      l1Total: l1Data[month],
-      l2ZoneBulk: l2ZoneBulkData[month],
-      directConnections: directConnectionData[month],
-      totalL2: l2ZoneBulkData[month] + directConnectionData[month],
-      loss: l1Data[month] - (l2ZoneBulkData[month] + directConnectionData[month]),
-      lossPercentage: ((l1Data[month] - (l2ZoneBulkData[month] + directConnectionData[month])) / l1Data[month] * 100).toFixed(2)
-    }));
+    return months.map(month => {
+      const l1Total = l1Data[month];
+      const l2ZoneBulk = l2ZoneBulkData[month];
+      const directConnections = directConnectionData[month];
+      const totalL2 = l2ZoneBulk + directConnections;
+      const loss = l1Total - totalL2;
+      const lossPercentage = ((loss / l1Total) * 100).toFixed(2);
+      
+      return {
+        month,
+        l1Total,
+        l2ZoneBulk,
+        directConnections,
+        totalL2,
+        loss,
+        lossPercentage
+      };
+    });
   };
 
   const monthlyData = prepareMonthlyData();
@@ -221,7 +232,7 @@ const WaterDistributionDashboard = () => {
       const bulkValue = zoneData[zone].bulk[selectedMonth];
       const individualValue = zoneData[zone].individual[selectedMonth];
       const difference = bulkValue - individualValue;
-      const lossPercentage = bulkValue > 0 ? (difference / bulkValue * 100).toFixed(2) : 0;
+      const lossPercentage = bulkValue > 0 ? (difference / bulkValue * 100).toFixed(2) : '0';
       
       return {
         zone,
@@ -230,7 +241,7 @@ const WaterDistributionDashboard = () => {
         difference,
         lossPercentage
       };
-    }).sort((a, b) => b.lossPercentage - a.lossPercentage);
+    }).sort((a, b) => parseFloat(b.lossPercentage) - parseFloat(a.lossPercentage));
   };
 
   const zoneDataForSelectedMonth = prepareZoneData();
@@ -302,14 +313,15 @@ const WaterDistributionDashboard = () => {
   const overallLossPercentage = ((overallLoss / l1Total) * 100).toFixed(2);
 
   // Function to format large numbers with commas
-  const formatNumber = (num) => {
+  const formatNumber = (num: number) => {
     return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   };
 
   // Function to determine status color based on value
-  const getStatusColor = (percentage) => {
-    if (percentage < 10) return successColor;
-    if (percentage < 30) return warningColor;
+  const getStatusColor = (percentage: number | string) => {
+    const numPercentage = typeof percentage === 'string' ? parseFloat(percentage) : percentage;
+    if (numPercentage < 10) return successColor;
+    if (numPercentage < 30) return warningColor;
     return dangerColor;
   };
 

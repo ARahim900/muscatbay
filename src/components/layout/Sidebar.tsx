@@ -15,7 +15,7 @@ import {
   ChevronRight,
   Calendar,
   X,
-  WaterDrop
+  Droplets
 } from 'lucide-react';
 
 const PumpStationIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -259,7 +259,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             />
             <SidebarLink 
               to="/water-distribution" 
-              icon={WaterDrop} 
+              icon={Droplets} 
               label="Water Distribution" 
               collapsed={collapsed} 
               external={false}
