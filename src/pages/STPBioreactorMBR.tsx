@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import Layout from "@/components/layout/Layout";
 import { 
@@ -13,6 +14,8 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { OperatingParameter, ChartDataPoint } from "@/types/stp";
 import { CalendarDays, ChevronDown, Download, FileSpreadsheet, Info, Users } from "lucide-react";
+import { toast } from "sonner";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const STPBioreactorMBR = () => {
   // State for tracking UI
@@ -26,6 +29,7 @@ const STPBioreactorMBR = () => {
   
   useEffect(() => {
     setIsClient(true);
+    document.title = 'MBR Bioreactor | Muscat Bay Asset Manager';
   }, []);
   
   // Monthly data derived from the STP log file
@@ -122,7 +126,7 @@ const STPBioreactorMBR = () => {
       totalInfluent: 13080,
       waterProcessed: 14408,
       tseIrrigation: 12075,
-      capacity: 750 * 29,
+      capacity: 750 * 29, // February 2025 has 29 days (leap year)
       utilizationPercentage: ((13080 / (750 * 29)) * 100).toFixed(1),
       processingEfficiency: ((12075 / 13080) * 100).toFixed(1)
     }
@@ -147,7 +151,7 @@ const STPBioreactorMBR = () => {
     });
     
     const avgProcessingEfficiency = ((totalTSE / totalInfluent) * 100).toFixed(1);
-    const totalCapacity = 750 * (31 + 31 + 30 + 31 + 30 + 31 + 31 + 29);
+    const totalCapacity = 750 * (31 + 31 + 30 + 31 + 30 + 31 + 31 + 29); // Days in each month
     const overallUtilization = ((totalInfluent / totalCapacity) * 100).toFixed(1);
     
     return {
@@ -238,6 +242,7 @@ const STPBioreactorMBR = () => {
         case '7D':
           return recentData;
         case '1M':
+          // Simulating a month of data by returning all available
           return recentData;
         case '3M':
         case 'ALL':
@@ -254,6 +259,7 @@ const STPBioreactorMBR = () => {
       
       switch(selectedTimeRange) {
         case '3M':
+          // Return last 3 months
           return monthlyData.slice(-3);
         case 'ALL':
         default:
@@ -355,6 +361,7 @@ const STPBioreactorMBR = () => {
         break;
       case 'ALL':
       default:
+        // Use all available data
         start = null;
         end = null;
         break;
@@ -365,31 +372,38 @@ const STPBioreactorMBR = () => {
 
   // Export data to CSV
   const exportToCSV = () => {
-    const monthlyDataCSV = monthlyData.map(item => ({
-      Month: item.month,
-      "Tanker Trips": item.tankerTrips,
-      "Tanker Volume (m³)": item.tankerVolume,
-      "Direct Sewage (m³)": item.directSewage,
-      "Total Influent (m³)": item.totalInfluent,
-      "Water Processed (m³)": item.waterProcessed,
-      "TSE to Irrigation (m³)": item.tseIrrigation,
-      "Utilization (%)": item.utilizationPercentage,
-      "Processing Efficiency (%)": item.processingEfficiency
-    }));
-    
-    const csvContent = "data:text/csv;charset=utf-8," + 
-      Object.keys(monthlyDataCSV[0]).join(",") + "\n" +
-      monthlyDataCSV.map(row => {
-        return Object.values(row).join(",");
-      }).join("\n");
-    
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "STP_Monthly_Data.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    try {
+      const monthlyDataCSV = monthlyData.map(item => ({
+        Month: item.month,
+        "Tanker Trips": item.tankerTrips,
+        "Tanker Volume (m³)": item.tankerVolume,
+        "Direct Sewage (m³)": item.directSewage,
+        "Total Influent (m³)": item.totalInfluent,
+        "Water Processed (m³)": item.waterProcessed,
+        "TSE to Irrigation (m³)": item.tseIrrigation,
+        "Utilization (%)": item.utilizationPercentage,
+        "Processing Efficiency (%)": item.processingEfficiency
+      }));
+      
+      const csvContent = "data:text/csv;charset=utf-8," + 
+        Object.keys(monthlyDataCSV[0]).join(",") + "\n" +
+        monthlyDataCSV.map(row => {
+          return Object.values(row).join(",");
+        }).join("\n");
+      
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", "STP_Monthly_Data.csv");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      toast.success("Data exported successfully");
+    } catch (error) {
+      console.error("Error exporting data:", error);
+      toast.error("Failed to export data");
+    }
   };
 
   // Main dashboard content
@@ -581,7 +595,7 @@ const STPBioreactorMBR = () => {
                         tick={{ fontSize: 12 }} 
                         axisLine={false} 
                         tickLine={false} 
-                        tickFormatter={(value) => value >= 1000 ? `${value/1000}K` : value} 
+                        tickFormatter={(value) => value >= 1000 ? `${(value/1000)}K` : value} 
                       />
                       <YAxis 
                         yAxisId="right"
@@ -614,7 +628,7 @@ const STPBioreactorMBR = () => {
                         tick={{ fontSize: 12 }} 
                         axisLine={false} 
                         tickLine={false} 
-                        tickFormatter={(value) => value >= 1000 ? `${value/1000}K` : value} 
+                        tickFormatter={(value) => value >= 1000 ? `${(value/1000)}K` : value} 
                       />
                       <YAxis 
                         yAxisId="right"
@@ -646,7 +660,7 @@ const STPBioreactorMBR = () => {
                     >
                       <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                       <XAxis dataKey="month" />
-                      <YAxis tickFormatter={(value) => value >= 1000 ? `${(value/1000)}K` : value} />
+                      <YAxis tickFormatter={(value) => value >= 1000 ? `${(Number(value)/1000)}K` : value} />
                       <RechartsTooltip formatter={(value: any) => [`${value} m³`, '']} />
                       <Legend />
                       <Area 
@@ -709,12 +723,14 @@ const STPBioreactorMBR = () => {
                     </RadialBarChart>
                   </ResponsiveContainer>
                 </div>
-                <p className="text-sm text-muted-foreground mt-2">Current capacity utilization</p>
-                <p className="text-xs text-muted-foreground">Daily average: {filteredMetrics.recent.avgDailyInfluent} m³ of 750 m³</p>
+                
+                <p className="text-sm text-muted-foreground">Current plant capacity utilization</p>
               </div>
               
-              <div className="mt-8">
-                <h3 className="text-base font-medium text-foreground mb-4">Influent Sources</h3>
+              <Separator className="my-4" />
+              
+              <div>
+                <h4 className="text-sm font-medium mb-2">Influent Source Distribution</h4>
                 <div className="h-40">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
@@ -723,10 +739,9 @@ const STPBioreactorMBR = () => {
                         cx="50%"
                         cy="50%"
                         labelLine={false}
-                        outerRadius={80}
+                        outerRadius={60}
                         fill="#8884d8"
                         dataKey="value"
-                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                       >
                         {filteredMetrics.influentSourceData.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -736,341 +751,462 @@ const STPBioreactorMBR = () => {
                     </PieChart>
                   </ResponsiveContainer>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Parameters & Equipment Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Recent Performance */}
-          <Card className="bg-white shadow-sm hover:shadow transition-all">
-            <CardHeader className="pb-2">
-              <div className="flex justify-between items-center">
-                <CardTitle className="text-base font-medium text-foreground">Recent Performance</CardTitle>
-                <Badge variant="secondary">
-                  {selectedTimeRange === '1D' ? 'Today' : 
-                   selectedTimeRange === '7D' ? 'Last 7 days' : 
-                   selectedTimeRange === '1M' ? 'Last month' : 
-                   'Period'}
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="h-48">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={getFilteredData.recentData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                    <XAxis dataKey="date" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
-                    <YAxis tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
-                    <RechartsTooltip />
-                    <Bar dataKey="totalInfluent" name="Influent (m³)" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="tseIrrigation" name="TSE (m³)" fill="#10b981" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-              <div className="mt-4">
-                <div className="flex justify-between text-xs text-muted-foreground mb-1">
-                  <span>March 8</span>
-                  <span>March 14</span>
-                </div>
-                <div className="w-full h-1 bg-muted rounded-full overflow-hidden">
-                  <div className="bg-blue-500 h-1" style={{ width: '100%' }}></div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Operating Parameters */}
-          <Card className="bg-white shadow-sm hover:shadow transition-all">
-            <CardHeader className="pb-2">
-              <div className="flex justify-between items-center">
-                <CardTitle className="text-base font-medium text-foreground">Operating Parameters</CardTitle>
-                <Badge variant="secondary">Normal</Badge>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {currentParameterData.map((param) => (
-                  <div key={param.name} className="flex items-center">
-                    <div className="w-12">
-                      <span className="text-sm font-medium text-foreground">{param.name}</span>
-                    </div>
-                    <div className="flex-1 mx-3">
-                      <div className="w-full bg-muted rounded-full h-2.5">
-                        <div 
-                          className={`h-2.5 rounded-full ${
-                            param.value < param.min || param.value > param.max ? 'bg-red-500' : 'bg-green-500'
-                          }`}
-                          style={{ 
-                            width: `${((param.value - param.min) / (param.max - param.min) * 100)}%`,
-                            minWidth: '10%',
-                            maxWidth: '100%'
-                          }}
-                        ></div>
-                      </div>
-                    </div>
-                    <div className="w-10 text-right">
-                      <span className="text-sm font-medium text-foreground">{param.value}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Critical Parameters */}
-          <Card className="bg-white shadow-sm hover:shadow transition-all">
-            <CardHeader className="pb-2">
-              <div className="flex justify-between items-center">
-                <CardTitle className="text-base font-medium text-foreground">Critical Parameters</CardTitle>
-                <Badge variant="secondary">All Normal</Badge>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div className="p-3 rounded-lg bg-gray-50">
-                  <div className="flex justify-between mb-2">
-                    <span className="text-sm font-medium text-foreground">Raw Sewage pH</span>
-                    <span className="text-sm font-medium text-green-600">6.7-6.9</span>
-                  </div>
-                  <div className="text-xs text-muted-foreground">Range: 6.5 - 8.0</div>
-                  <div className="w-full bg-muted rounded-full h-1.5 mt-2">
-                    <div className="bg-green-500 h-1.5 rounded-full" style={{ width: '35%' }}></div>
-                  </div>
-                </div>
-                
-                <div className="p-3 rounded-lg bg-gray-50">
-                  <div className="flex justify-between mb-2">
-                    <span className="text-sm font-medium text-foreground">MBR Product pH</span>
-                    <span className="text-sm font-medium text-green-600">7.1-7.3</span>
-                  </div>
-                  <div className="text-xs text-muted-foreground">Range: 6.5 - 8.0</div>
-                  <div className="w-full bg-muted rounded-full h-1.5 mt-2">
-                    <div className="bg-green-500 h-1.5 rounded-full" style={{ width: '45%' }}></div>
-                  </div>
-                </div>
-                
-                <div className="p-3 rounded-lg bg-gray-50">
-                  <div className="flex justify-between mb-2">
-                    <span className="text-sm font-medium text-foreground">MLSS Stream I</span>
-                    <span className="text-sm font-medium text-green-600">8400-8600 mg/L</span>
-                  </div>
-                  <div className="text-xs text-muted-foreground">Target: 3000-4000 mg/L (manufacturer spec)</div>
-                  <div className="w-full bg-muted rounded-full h-1.5 mt-2">
-                    <div className="bg-yellow-500 h-1.5 rounded-full" style={{ width: '90%' }}></div>
-                  </div>
-                </div>
-                
-                <div className="p-3 rounded-lg bg-gray-50">
-                  <div className="flex justify-between mb-2">
-                    <span className="text-sm font-medium text-foreground">MBR Product Chlorine</span>
-                    <span className="text-sm font-medium text-green-600">0.4-0.7 ppm</span>
-                  </div>
-                  <div className="text-xs text-muted-foreground">Target: 125 ppm</div>
-                  <div className="w-full bg-muted rounded-full h-1.5 mt-2">
-                    <div className="bg-red-500 h-1.5 rounded-full" style={{ width: '10%' }}></div>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Tanker Trips Analysis */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card className="bg-white shadow-sm hover:shadow transition-all">
-            <CardHeader className="pb-2">
-              <div className="flex justify-between items-center">
-                <CardTitle className="text-base font-medium text-foreground">Tanker Trips Monthly Trend</CardTitle>
-                <div className="flex text-xs">
-                  <div className="flex items-center mr-3">
+                <div className="flex justify-between text-xs text-muted-foreground mt-2">
+                  <div className="flex items-center">
                     <div className="w-3 h-3 rounded-full bg-blue-500 mr-1"></div>
-                    <span className="text-muted-foreground">Trips</span>
+                    <span>Tanker Delivery: 
+                      {((filteredMetrics.monthly.totalTankerVolume / 
+                        (filteredMetrics.monthly.totalTankerVolume + filteredMetrics.monthly.totalDirectSewage)) * 100).toFixed(1)}%
+                    </span>
                   </div>
                   <div className="flex items-center">
                     <div className="w-3 h-3 rounded-full bg-green-500 mr-1"></div>
-                    <span className="text-muted-foreground">Volume (m³)</span>
+                    <span>Direct Sewage:
+                      {((filteredMetrics.monthly.totalDirectSewage / 
+                        (filteredMetrics.monthly.totalTankerVolume + filteredMetrics.monthly.totalDirectSewage)) * 100).toFixed(1)}%
+                    </span>
                   </div>
                 </div>
               </div>
-            </CardHeader>
-            <CardContent>
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <ComposedChart data={getFilteredData.monthlyData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                    <XAxis dataKey="month" tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
-                    <YAxis 
-                      yAxisId="left" 
-                      tick={{ fontSize: 12 }} 
-                      axisLine={false} 
-                      tickLine={false} 
-                    />
-                    <YAxis 
-                      yAxisId="right" 
-                      orientation="right" 
-                      tick={{ fontSize: 12 }} 
-                      axisLine={false} 
-                      tickLine={false} 
-                      tickFormatter={(value) => value >= 1000 ? `${value/1000}K` : value} 
-                    />
-                    <RechartsTooltip />
-                    <Legend />
-                    <Bar 
-                      yAxisId="left" 
-                      dataKey="tankerTrips" 
-                      name="Tanker Trips" 
-                      fill="#3b82f6" 
-                    />
-                    <Line 
-                      yAxisId="right" 
-                      type="monotone" 
-                      dataKey="tankerVolume" 
-                      name="Tanker Volume (m³)" 
-                      stroke="#10b981" 
-                      strokeWidth={2} 
-                      dot={{ fill: '#10b981', stroke: '#10b981', strokeWidth: 2, r: 4 }} 
-                    />
-                  </ComposedChart>
-                </ResponsiveContainer>
-              </div>
             </CardContent>
+            <CardFooter className="pt-0">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="w-full flex items-center justify-center" 
+                onClick={exportToCSV}
+              >
+                <Download className="mr-2 h-4 w-4" />
+                Export Data
+              </Button>
+            </CardFooter>
           </Card>
+        </div>
 
-          <Card className="bg-white shadow-sm hover:shadow transition-all">
-            <CardHeader className="pb-2">
-              <div className="flex justify-between items-center">
-                <CardTitle className="text-base font-medium text-foreground">Direct vs Tanker Ratio</CardTitle>
-                <div className="flex text-xs">
-                  <div className="flex items-center mr-3">
-                    <div className="w-3 h-3 rounded-full bg-blue-500 mr-1"></div>
-                    <span className="text-muted-foreground">Tanker %</span>
-                  </div>
-                  <div className="flex items-center">
-                    <div className="w-3 h-3 rounded-full bg-green-500 mr-1"></div>
-                    <span className="text-muted-foreground">Direct %</span>
-                  </div>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={getFilteredData.monthlyData.map(month => ({
-                    month: month.month,
-                    tankerPct: parseFloat((month.tankerVolume / month.totalInfluent * 100).toFixed(1)),
-                    directPct: parseFloat((month.directSewage / month.totalInfluent * 100).toFixed(1))
-                  }))}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                    <XAxis dataKey="month" tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
-                    <YAxis 
-                      domain={[0, 100]}
-                      tick={{ fontSize: 12 }} 
-                      axisLine={false} 
-                      tickLine={false} 
-                      tickFormatter={(value) => `${value}%`}
-                    />
-                    <RechartsTooltip formatter={(value) => [`${value}%`, '']} />
-                    <Legend />
-                    <Area 
-                      type="monotone" 
-                      dataKey="tankerPct" 
-                      name="Tanker %" 
-                      stackId="1" 
-                      stroke="#3b82f6" 
-                      fill="#3b82f6"
-                      fillOpacity={0.6}
-                    />
-                    <Area 
-                      type="monotone" 
-                      dataKey="directPct" 
-                      name="Direct %" 
-                      stackId="1" 
-                      stroke="#10b981" 
-                      fill="#10b981"
-                      fillOpacity={0.6}
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-              <div className="mt-4 flex justify-between text-xs text-muted-foreground">
-                <span>Direct Sewage: {(filteredMetrics.monthly.totalDirectSewage / filteredMetrics.monthly.totalInfluent * 100).toFixed(1)}%</span>
-                <span>Tanker: {(filteredMetrics.monthly.totalTankerVolume / filteredMetrics.monthly.totalInfluent * 100).toFixed(1)}%</span>
-              </div>
-            </CardContent>
-          </Card>
+        {/* Filtration Controls */}
+        <div className="flex flex-wrap gap-2 justify-between items-center">
+          <div className="flex space-x-1">
+            <Button 
+              variant={selectedTimeRange === '1D' ? 'default' : 'outline'} 
+              size="sm" 
+              onClick={() => setSelectedTimeRange('1D')}
+            >
+              1D
+            </Button>
+            <Button 
+              variant={selectedTimeRange === '7D' ? 'default' : 'outline'} 
+              size="sm" 
+              onClick={() => setSelectedTimeRange('7D')}
+            >
+              7D
+            </Button>
+            <Button 
+              variant={selectedTimeRange === '1M' ? 'default' : 'outline'} 
+              size="sm" 
+              onClick={() => setSelectedTimeRange('1M')}
+            >
+              1M
+            </Button>
+            <Button 
+              variant={selectedTimeRange === '3M' ? 'default' : 'outline'} 
+              size="sm" 
+              onClick={() => setSelectedTimeRange('3M')}
+            >
+              3M
+            </Button>
+            <Button 
+              variant={selectedTimeRange === 'ALL' ? 'default' : 'outline'} 
+              size="sm" 
+              onClick={() => setSelectedTimeRange('ALL')}
+            >
+              All
+            </Button>
+          </div>
+          
+          <div className="flex items-center space-x-1">
+            <span className="text-xs text-muted-foreground">Current Date:</span>
+            <Badge variant="outline" className="ml-1">
+              <CalendarDays className="h-3 w-3 mr-1" />
+              {currentDate}
+            </Badge>
+          </div>
         </div>
       </div>
     );
   };
 
+  // Equipment Health Tab Content
+  const EquipmentTabContent = () => (
+    <div className="space-y-6">
+      <div className="flex justify-between">
+        <h2 className="text-lg font-medium">Equipment Status & Maintenance</h2>
+        <Button variant="outline" size="sm">
+          <FileSpreadsheet className="mr-2 h-4 w-4" />
+          Export Report
+        </Button>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">MBR System Health</CardTitle>
+            <CardDescription>Membrane bioreactor operational status</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <span className="text-sm">Membrane Condition</span>
+                <Badge variant="success">Optimal</Badge>
+              </div>
+              <div className="w-full bg-muted rounded-full h-2.5 mt-2">
+                <div className="bg-green-600 h-2.5 rounded-full" style={{ width: '92%' }}></div>
+              </div>
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>Last Cleaning: 14 Feb 2025</span>
+                <span>Next Due: 14 May 2025</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Pump Systems</CardTitle>
+            <CardDescription>Feed and circulation pumps</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-sm">Feed Pump P-101</span>
+                <Badge variant="success">Running</Badge>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm">Recirc Pump P-102</span>
+                <Badge variant="success">Running</Badge>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm">Waste Pump P-103</span>
+                <Badge variant="secondary">Standby</Badge>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm">Backwash Pump P-104</span>
+                <Badge variant="secondary">Standby</Badge>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Aeration System</CardTitle>
+            <CardDescription>Blowers and diffusers status</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-sm">Blower B-101</span>
+                <Badge variant="success">Running</Badge>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm">Blower B-102</span>
+                <Badge variant="secondary">Standby</Badge>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm">Diffuser Status</span>
+                <Badge variant="success">Normal</Badge>
+              </div>
+              <div className="mt-4 text-xs text-muted-foreground">
+                <span>Diffuser cleaning last performed: 22 Jan 2025</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+      
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Maintenance Schedule</CardTitle>
+          <CardDescription>Upcoming maintenance tasks</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="relative overflow-x-auto">
+            <table className="w-full text-sm text-left">
+              <thead className="text-xs uppercase bg-muted/50">
+                <tr>
+                  <th scope="col" className="px-6 py-3">Task</th>
+                  <th scope="col" className="px-6 py-3">Equipment</th>
+                  <th scope="col" className="px-6 py-3">Due Date</th>
+                  <th scope="col" className="px-6 py-3">Status</th>
+                  <th scope="col" className="px-6 py-3">Assigned To</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr className="border-b">
+                  <td className="px-6 py-4">Membrane CIP Cleaning</td>
+                  <td className="px-6 py-4">MBR System</td>
+                  <td className="px-6 py-4">14 May 2025</td>
+                  <td className="px-6 py-4"><Badge variant="secondary">Scheduled</Badge></td>
+                  <td className="px-6 py-4">Maintenance Team</td>
+                </tr>
+                <tr className="border-b">
+                  <td className="px-6 py-4">Pump P-101 Inspection</td>
+                  <td className="px-6 py-4">Feed Pump</td>
+                  <td className="px-6 py-4">30 Mar 2025</td>
+                  <td className="px-6 py-4"><Badge variant="secondary">Scheduled</Badge></td>
+                  <td className="px-6 py-4">John D.</td>
+                </tr>
+                <tr className="border-b">
+                  <td className="px-6 py-4">Diffuser Cleaning</td>
+                  <td className="px-6 py-4">Aeration System</td>
+                  <td className="px-6 py-4">22 Apr 2025</td>
+                  <td className="px-6 py-4"><Badge variant="secondary">Scheduled</Badge></td>
+                  <td className="px-6 py-4">Maintenance Team</td>
+                </tr>
+                <tr className="border-b">
+                  <td className="px-6 py-4">Blower B-102 Inspection</td>
+                  <td className="px-6 py-4">Aeration Blower</td>
+                  <td className="px-6 py-4">15 Mar 2025</td>
+                  <td className="px-6 py-4"><Badge variant="default">In Progress</Badge></td>
+                  <td className="px-6 py-4">Sarah K.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+
+  // Reports Tab Content
+  const ReportsTabContent = () => (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-lg font-medium">STP Reports & Documentation</h2>
+        <div className="flex space-x-2">
+          <select className="text-xs border rounded-md px-2 py-1 bg-background">
+            <option value="all">All Reports</option>
+            <option value="operation">Operational</option>
+            <option value="maintenance">Maintenance</option>
+            <option value="regulatory">Regulatory</option>
+          </select>
+          <Button variant="outline" size="sm">
+            <Download className="mr-2 h-4 w-4" />
+            Download
+          </Button>
+        </div>
+      </div>
+      
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Monthly Performance Reports</CardTitle>
+          <CardDescription>STP operation performance reports</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="relative overflow-x-auto">
+            <table className="w-full text-sm text-left">
+              <thead className="text-xs uppercase bg-muted/50">
+                <tr>
+                  <th scope="col" className="px-6 py-3">Report Name</th>
+                  <th scope="col" className="px-6 py-3">Period</th>
+                  <th scope="col" className="px-6 py-3">Created Date</th>
+                  <th scope="col" className="px-6 py-3">Status</th>
+                  <th scope="col" className="px-6 py-3">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr className="border-b">
+                  <td className="px-6 py-4">STP Performance Report</td>
+                  <td className="px-6 py-4">February 2025</td>
+                  <td className="px-6 py-4">Mar 05, 2025</td>
+                  <td className="px-6 py-4"><Badge variant="success">Approved</Badge></td>
+                  <td className="px-6 py-4">
+                    <Button variant="ghost" size="sm"><Download className="h-4 w-4" /></Button>
+                  </td>
+                </tr>
+                <tr className="border-b">
+                  <td className="px-6 py-4">STP Performance Report</td>
+                  <td className="px-6 py-4">January 2025</td>
+                  <td className="px-6 py-4">Feb 04, 2025</td>
+                  <td className="px-6 py-4"><Badge variant="success">Approved</Badge></td>
+                  <td className="px-6 py-4">
+                    <Button variant="ghost" size="sm"><Download className="h-4 w-4" /></Button>
+                  </td>
+                </tr>
+                <tr className="border-b">
+                  <td className="px-6 py-4">STP Performance Report</td>
+                  <td className="px-6 py-4">December 2024</td>
+                  <td className="px-6 py-4">Jan 07, 2025</td>
+                  <td className="px-6 py-4"><Badge variant="success">Approved</Badge></td>
+                  <td className="px-6 py-4">
+                    <Button variant="ghost" size="sm"><Download className="h-4 w-4" /></Button>
+                  </td>
+                </tr>
+                <tr className="border-b">
+                  <td className="px-6 py-4">STP Performance Report</td>
+                  <td className="px-6 py-4">November 2024</td>
+                  <td className="px-6 py-4">Dec 05, 2024</td>
+                  <td className="px-6 py-4"><Badge variant="success">Approved</Badge></td>
+                  <td className="px-6 py-4">
+                    <Button variant="ghost" size="sm"><Download className="h-4 w-4" /></Button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Regulatory Compliance</CardTitle>
+            <CardDescription>Environmental compliance reports</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="relative overflow-x-auto">
+              <table className="w-full text-sm text-left">
+                <thead className="text-xs uppercase bg-muted/50">
+                  <tr>
+                    <th scope="col" className="px-4 py-3">Report Type</th>
+                    <th scope="col" className="px-4 py-3">Date</th>
+                    <th scope="col" className="px-4 py-3">Status</th>
+                    <th scope="col" className="px-4 py-3">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="border-b">
+                    <td className="px-4 py-3">Quarterly Water Quality</td>
+                    <td className="px-4 py-3">Jan-Mar 2025</td>
+                    <td className="px-4 py-3"><Badge variant="success">Compliant</Badge></td>
+                    <td className="px-4 py-3">
+                      <Button variant="ghost" size="sm"><Download className="h-4 w-4" /></Button>
+                    </td>
+                  </tr>
+                  <tr className="border-b">
+                    <td className="px-4 py-3">TSE Reuse Permit</td>
+                    <td className="px-4 py-3">Feb 10, 2025</td>
+                    <td className="px-4 py-3"><Badge variant="success">Active</Badge></td>
+                    <td className="px-4 py-3">
+                      <Button variant="ghost" size="sm"><Download className="h-4 w-4" /></Button>
+                    </td>
+                  </tr>
+                  <tr className="border-b">
+                    <td className="px-4 py-3">Environmental Audit</td>
+                    <td className="px-4 py-3">Dec 15, 2024</td>
+                    <td className="px-4 py-3"><Badge variant="success">Passed</Badge></td>
+                    <td className="px-4 py-3">
+                      <Button variant="ghost" size="sm"><Download className="h-4 w-4" /></Button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Maintenance Records</CardTitle>
+            <CardDescription>Equipment maintenance history</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="relative overflow-x-auto">
+              <table className="w-full text-sm text-left">
+                <thead className="text-xs uppercase bg-muted/50">
+                  <tr>
+                    <th scope="col" className="px-4 py-3">Equipment</th>
+                    <th scope="col" className="px-4 py-3">Task</th>
+                    <th scope="col" className="px-4 py-3">Date</th>
+                    <th scope="col" className="px-4 py-3">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="border-b">
+                    <td className="px-4 py-3">MBR System</td>
+                    <td className="px-4 py-3">Membrane CIP</td>
+                    <td className="px-4 py-3">Feb 14, 2025</td>
+                    <td className="px-4 py-3">
+                      <Button variant="ghost" size="sm"><Download className="h-4 w-4" /></Button>
+                    </td>
+                  </tr>
+                  <tr className="border-b">
+                    <td className="px-4 py-3">Feed Pump P-101</td>
+                    <td className="px-4 py-3">Bearing Replacement</td>
+                    <td className="px-4 py-3">Jan 25, 2025</td>
+                    <td className="px-4 py-3">
+                      <Button variant="ghost" size="sm"><Download className="h-4 w-4" /></Button>
+                    </td>
+                  </tr>
+                  <tr className="border-b">
+                    <td className="px-4 py-3">Blower B-102</td>
+                    <td className="px-4 py-3">Overhaul</td>
+                    <td className="px-4 py-3">Jan 15, 2025</td>
+                    <td className="px-4 py-3">
+                      <Button variant="ghost" size="sm"><Download className="h-4 w-4" /></Button>
+                    </td>
+                  </tr>
+                  <tr className="border-b">
+                    <td className="px-4 py-3">Diffusers</td>
+                    <td className="px-4 py-3">Cleaning</td>
+                    <td className="px-4 py-3">Jan 22, 2025</td>
+                    <td className="px-4 py-3">
+                      <Button variant="ghost" size="sm"><Download className="h-4 w-4" /></Button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+
   return (
     <Layout>
-      <div className="flex flex-col space-y-6">
-        <div className="flex justify-between items-center">
+      <div className="container mx-auto py-6">
+        <div className="flex justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold">STP Bioreactor MBR</h1>
-            <p className="text-muted-foreground">Sewage Treatment Plant Operational Dashboard</p>
+            <h1 className="text-2xl font-bold tracking-tight">STP Bioreactor (MBR)</h1>
+            <p className="text-muted-foreground">
+              Membrane Bioreactor system monitoring and management
+            </p>
           </div>
           <div className="flex space-x-2">
             <Button 
               variant="outline" 
-              size="sm" 
+              size="sm"
               onClick={exportToCSV}
-              className="flex items-center gap-2"
             >
-              <FileSpreadsheet className="h-4 w-4" />
+              <Download className="mr-2 h-4 w-4" />
               Export Data
             </Button>
-            <div className="flex border rounded-lg overflow-hidden">
-              {['1D', '7D', '1M', '3M', 'ALL'].map(range => (
-                <Button
-                  key={range}
-                  variant={selectedTimeRange === range ? "default" : "ghost"}
-                  size="sm"
-                  className="rounded-none border-0"
-                  onClick={() => {
-                    setSelectedTimeRange(range);
-                    if (range !== 'ALL') {
-                      setSelectedMonth('All');
-                    }
-                  }}
-                >
-                  {range}
-                </Button>
-              ))}
-            </div>
+            <Button 
+              variant="default" 
+              size="sm"
+            >
+              <Users className="mr-2 h-4 w-4" />
+              Assign Task
+            </Button>
           </div>
         </div>
         
-        <Separator />
-        
-        <div className="flex border-b">
-          {[
-            { id: 'dashboard', label: 'Dashboard' },
-            { id: 'performance', label: 'Performance' },
-            { id: 'equipment', label: 'Equipment' },
-            { id: 'analytics', label: 'Analytics' },
-            { id: 'reports', label: 'Reports' }
-          ].map(tab => (
-            <Button
-              key={tab.id}
-              variant="ghost"
-              className={`rounded-none px-4 py-2 ${
-                selectedTab === tab.id 
-                  ? 'border-b-2 border-primary' 
-                  : 'text-muted-foreground'
-              }`}
-              onClick={() => setSelectedTab(tab.id)}
-            >
-              {tab.label}
-            </Button>
-          ))}
-        </div>
-        
-        {selectedTab === 'dashboard' && <DashboardTabContent />}
-        {/* Other tabs can be implemented as needed */}
+        <Tabs defaultValue="dashboard" value={selectedTab} onValueChange={setSelectedTab} className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+            <TabsTrigger value="equipment">Equipment Health</TabsTrigger>
+            <TabsTrigger value="reports">Reports</TabsTrigger>
+          </TabsList>
+          <TabsContent value="dashboard" className="space-y-4">
+            <DashboardTabContent />
+          </TabsContent>
+          <TabsContent value="equipment" className="space-y-4">
+            <EquipmentTabContent />
+          </TabsContent>
+          <TabsContent value="reports" className="space-y-4">
+            <ReportsTabContent />
+          </TabsContent>
+        </Tabs>
       </div>
     </Layout>
   );
