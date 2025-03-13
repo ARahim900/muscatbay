@@ -2,7 +2,6 @@
 import { CSVRowData, WaterData } from '@/types/water';
 import Papa from 'papaparse';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from '@/components/ui/use-toast';
 
 export const parseCSVFromClipboard = async (
   onSuccess: (data: WaterData[]) => void,
