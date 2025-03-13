@@ -108,7 +108,7 @@ export const saveWaterData = async (data: WaterData[]): Promise<{ success: boole
       console.error("Error refreshing views:", refreshError);
       return {
         success: true, // Still mark as success since data was imported
-        message: `Imported ${data.length} water distribution records. (View refresh failed: ${refreshError.message as string})`
+        message: `Imported ${data.length} water distribution records. (View refresh failed: ${refreshError.message as unknown as string})`
       };
     }
     

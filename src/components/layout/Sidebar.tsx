@@ -1,9 +1,8 @@
-
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { 
   Home, 
-  Droplet, 
+  Droplets, 
   Zap, 
   Factory, 
   Wind, 
@@ -14,8 +13,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Calendar,
-  X,
-  Droplets
+  X
 } from 'lucide-react';
 
 const PumpStationIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -183,13 +181,6 @@ const Sidebar: React.FC<SidebarProps> = ({
   };
   
   const externalApps = {
-    water: {
-      main: "https://water-dashboard-24.lovable.app/",
-      options: [
-        { label: "Water Dashboard 2024", url: "https://water-dashboard-24.lovable.app/", isGitHub: false },
-        { label: "Water Dashboard 2025", url: "https://water-dashboard-25.lovable.app/", isGitHub: false }
-      ]
-    },
     electricity: "https://electrical-muscatbay.lovable.app/",
     stpPlant: "https://stp.lovable.app/", 
     pumpingStation: "https://muscat-bay-pumping-stations.lovable.app/", 
@@ -247,16 +238,6 @@ const Sidebar: React.FC<SidebarProps> = ({
             </h3>
           </div>
           <div className="space-y-1 mb-6">
-            <SidebarLink 
-              to={externalApps.water.main} 
-              icon={Droplet} 
-              label="Water Management" 
-              collapsed={collapsed} 
-              external={true}
-              openEmbedded={openEmbeddedApp}
-              options={externalApps.water.options}
-              isMobile={isMobile}
-            />
             <SidebarLink 
               to="/water-distribution" 
               icon={Droplets} 

@@ -1,16 +1,17 @@
 
-import React, { useState, useEffect } from 'react';
-import Layout from '@/components/layout/Layout';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
   AreaChart, Area, BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, 
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, 
   ComposedChart, Scatter, ScatterChart, ZAxis, ReferenceLine
 } from 'recharts';
-import _ from 'lodash';
+import Layout from '@/components/layout/Layout';
+import { Droplets } from 'lucide-react';
 
-const WaterDistributionDashboard: React.FC = () => {
+const WaterDistribution = () => {
   const [selectedPage, setSelectedPage] = useState('overview');
+  const [selectedYear, setSelectedYear] = useState('2025'); // Default to most recent year
   const [selectedMonth, setSelectedMonth] = useState('Jan-25'); // Default to a recent month
   const [selectedZone, setSelectedZone] = useState(''); // Empty string means "All Zones"
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]); // For consumption type filtering
@@ -34,27 +35,35 @@ const WaterDistributionDashboard: React.FC = () => {
     return dangerColor;
   };
 
-  // Array of all months for UI selectors
-  const months = ['Jan-24', 'Feb-24', 'Mar-24', 'Apr-24', 'May-24', 'Jun-24', 
-                  'Jul-24', 'Aug-24', 'Sep-24', 'Oct-24', 'Nov-24', 'Dec-24', 
-                  'Jan-25', 'Feb-25'];
+  // Arrays of years and months for UI selectors
+  const years = ['2024', '2025'];
+  
+  // 2024 has all months, 2025 has only Jan and Feb
+  const monthsByYear: Record<string, string[]> = {
+    '2024': ['Jan-24', 'Feb-24', 'Mar-24', 'Apr-24', 'May-24', 'Jun-24', 
+             'Jul-24', 'Aug-24', 'Sep-24', 'Oct-24', 'Nov-24', 'Dec-24'],
+    '2025': ['Jan-25', 'Feb-25']
+  };
+
+  // Get current available months based on selected year
+  const availableMonths = monthsByYear[selectedYear] || [];
 
   // Mock data based on our analysis (in a real system this would come from an API/backend)
-  const l1Data: Record<string, number> = {
+  const l1Data = {
     'Jan-24': 32803, 'Feb-24': 27996, 'Mar-24': 23860, 'Apr-24': 31869, 
     'May-24': 30737, 'Jun-24': 41953, 'Jul-24': 35166, 'Aug-24': 35420, 
     'Sep-24': 41341, 'Oct-24': 31519, 'Nov-24': 35290, 'Dec-24': 36733, 
     'Jan-25': 32580, 'Feb-25': 44043
   };
 
-  const l2ZoneBulkData: Record<string, number> = {
+  const l2ZoneBulkData = {
     'Jan-24': 11964, 'Feb-24': 10292, 'Mar-24': 11087, 'Apr-24': 13380, 
     'May-24': 11785, 'Jun-24': 15699, 'Jul-24': 18370, 'Aug-24': 16401, 
     'Sep-24': 14818, 'Oct-24': 16461, 'Nov-24': 13045, 'Dec-24': 16148, 
     'Jan-25': 15327, 'Feb-25': 14716
   };
 
-  const directConnectionData: Record<string, number> = {
+  const directConnectionData = {
     'Jan-24': 16725, 'Feb-24': 14781, 'Mar-24': 12920, 'Apr-24': 15333,
     'May-24': 16304, 'Jun-24': 18927, 'Jul-24': 16319, 'Aug-24': 16352,
     'Sep-24': 16074, 'Oct-24': 22824, 'Nov-24': 16868, 'Dec-24': 16344,
@@ -62,10 +71,7 @@ const WaterDistributionDashboard: React.FC = () => {
   };
 
   // Zone-wise data for the selected month
-  const zoneData: Record<string, { 
-    bulk: Record<string, number>; 
-    individual: Record<string, number>;
-  }> = {
+  const zoneData = {
     'Zone_01_(FM)': {
       bulk: {
         'Jan-24': 1595, 'Feb-24': 1283, 'Mar-24': 1255, 'Apr-24': 1383,
@@ -153,7 +159,7 @@ const WaterDistributionDashboard: React.FC = () => {
   };
 
   // Consumption by type data
-  const typeConsumptionData: Record<string, Record<string, number>> = {
+  const typeConsumptionData = {
     'Main BULK': {
       'Jan-24': 32803, 'Feb-24': 27996, 'Mar-24': 23860, 'Apr-24': 31869, 
       'May-24': 30737, 'Jun-24': 41953, 'Jul-24': 35166, 'Aug-24': 35420, 
@@ -198,8 +204,21 @@ const WaterDistributionDashboard: React.FC = () => {
     }
   };
 
+  // Function to handle year selection change
+  const handleYearChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newYear = e.target.value;
+    setSelectedYear(newYear);
+    
+    // Update selected month to the first month of the selected year
+    const firstMonthOfYear = monthsByYear[newYear][0];
+    setSelectedMonth(firstMonthOfYear);
+  };
+
   // Prepare data for charts
   const prepareMonthlyData = () => {
+    // Get all months from the selected year
+    const months = monthsByYear[selectedYear];
+    
     return months.map(month => ({
       month,
       l1Total: l1Data[month],
@@ -232,9 +251,9 @@ const WaterDistributionDashboard: React.FC = () => {
         bulkValue,
         individualValue,
         difference,
-        lossPercentage
+        lossPercentage: Number(lossPercentage)
       };
-    }).sort((a, b) => parseFloat(b.lossPercentage) - parseFloat(a.lossPercentage));
+    }).sort((a, b) => b.lossPercentage - a.lossPercentage);
   };
 
   const zoneDataForSelectedMonth = prepareZoneData();
@@ -258,7 +277,7 @@ const WaterDistributionDashboard: React.FC = () => {
     }
     
     return zones.map(zone => {
-      const monthlyLosses = months.map(month => {
+      const monthlyLosses = monthsByYear[selectedYear].map(month => {
         const bulkValue = zoneData[zone].bulk[month];
         const individualValue = zoneData[zone].individual[month];
         const difference = bulkValue - individualValue;
@@ -282,10 +301,10 @@ const WaterDistributionDashboard: React.FC = () => {
 
   // Prepare consumption trend data
   const prepareConsumptionTrendData = () => {
-    return months.map(month => {
-      const data: Record<string, any> = {
+    return monthsByYear[selectedYear].map(month => {
+      const data = {
         month
-      };
+      } as Record<string, any>;
       
       Object.keys(typeConsumptionData).forEach(type => {
         if (type !== 'Main BULK') {
@@ -311,11 +330,17 @@ const WaterDistributionDashboard: React.FC = () => {
   };
 
   // Function to determine status color based on value
-  const getStatusColor = (percentage: number | string) => {
-    const numPercentage = typeof percentage === 'string' ? parseFloat(percentage) : percentage;
-    if (numPercentage < 10) return successColor;
-    if (numPercentage < 30) return warningColor;
+  const getStatusColor = (percentage: number) => {
+    if (percentage < 10) return successColor;
+    if (percentage < 30) return warningColor;
     return dangerColor;
+  };
+
+  // Calculate the maximum loss percentage for y-axis scale
+  const getMaxLossPercentage = () => {
+    const maxPercentage = Math.max(...monthlyData.map(item => parseFloat(item.lossPercentage)));
+    // Round up to nearest 10 for better visual scale
+    return Math.ceil(maxPercentage / 10) * 10;
   };
 
   // Render Overview Page
@@ -393,7 +418,7 @@ const WaterDistributionDashboard: React.FC = () => {
               <LineChart data={monthlyData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                 <XAxis dataKey="month" />
-                <YAxis />
+                <YAxis domain={[0, getMaxLossPercentage()]} />
                 <Tooltip />
                 <Legend />
                 <ReferenceLine y={10} stroke="green" strokeDasharray="3 3" />
@@ -423,7 +448,11 @@ const WaterDistributionDashboard: React.FC = () => {
                   fill={primaryColor}
                   paddingAngle={2}
                   dataKey="value"
-                  label={({ type, percent }) => `${type}: ${(percent ? percent * 100 : 0).toFixed(0)}%`}
+                  label={(entry) => {
+                    const { type, percent } = entry;
+                    return `${type.length > 10 ? type.substring(0, 10) + '...' : type}: ${(percent * 100).toFixed(0)}%`;
+                  }}
+                  labelLine={true}
                 >
                   {typeConsumptionForSelectedMonth.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={[primaryColor, secondaryColor, accentColor, '#8884d8', '#82ca9d', '#ffc658', '#ff8042'][index % 7]} />
@@ -557,7 +586,7 @@ const WaterDistributionDashboard: React.FC = () => {
               <LineChart margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                 <XAxis dataKey="month" type="category" allowDuplicatedCategory={false} />
-                <YAxis />
+                <YAxis domain={[0, getMaxLossPercentage()]} />
                 <Tooltip />
                 <Legend />
                 {lossHeatMapData.map((zone, index) => (
@@ -616,7 +645,7 @@ const WaterDistributionDashboard: React.FC = () => {
               <thead className="bg-gray-100">
                 <tr>
                   <th className="py-3 px-4 text-left">Zone</th>
-                  {months.map(month => (
+                  {monthsByYear[selectedYear].map(month => (
                     <th key={month} className="py-3 px-2 text-center">{month}</th>
                   ))}
                 </tr>
@@ -656,7 +685,7 @@ const WaterDistributionDashboard: React.FC = () => {
               <ScatterChart margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                 <XAxis type="number" dataKey="bulkValue" name="Consumption (m³)" />
-                <YAxis type="number" dataKey="lossPercentage" name="Loss %" />
+                <YAxis type="number" dataKey="lossPercentage" name="Loss %" domain={[0, getMaxLossPercentage()]} />
                 <ZAxis type="number" range={[100, 500]} />
                 <Tooltip cursor={{ strokeDasharray: '3 3' }} />
                 <Legend />
@@ -682,7 +711,7 @@ const WaterDistributionDashboard: React.FC = () => {
   // Render Consumption Types Page
   const renderConsumptionTypes = () => {
     // Define color palette for different meter types
-    const COLORS: Record<string, string> = {
+    const COLORS = {
       'Retail': '#ff8042',
       'Zone Bulk': '#00C49F',
       'Residential (Villa)': '#FFED00', // Yellow
@@ -755,7 +784,7 @@ const WaterDistributionDashboard: React.FC = () => {
     const typesToShow = selectedTypes.length > 0 ? selectedTypes : typesByConsumption;
     
     // Prepare data for trend charts
-    const consumptionTrendsByType = months.map(month => {
+    const consumptionTrendsByType = monthsByYear[selectedYear].map(month => {
       const monthData: Record<string, any> = { month };
       Object.keys(typeConsumptionData).forEach(type => {
         monthData[type] = typeConsumptionData[type][month];
@@ -884,17 +913,25 @@ const WaterDistributionDashboard: React.FC = () => {
                       data={typeDataToDisplay}
                       cx="50%"
                       cy="50%"
-                      labelLine={false}
-                      outerRadius={100}
+                      labelLine={true}
+                      outerRadius={90}
                       fill="#8884d8"
                       dataKey="value"
-                      label={({ name, percent }) => `${name}: ${(percent ? percent * 100 : 0).toFixed(1)}%`}
+                      label={(entry) => {
+                        // Truncate long type names to prevent overlap
+                        const { name, percent } = entry;
+                        const displayName = name.length > 10 ? `${name.substring(0, 10)}...` : name;
+                        return `${displayName}: ${(percent * 100).toFixed(1)}%`;
+                      }}
                     >
                       {typeDataToDisplay.map((entry) => (
                         <Cell key={entry.name} fill={COLORS[entry.name] || primaryColor} />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(value) => [`${formatNumber(value as number)} m³`, 'Consumption']} />
+                    <Tooltip 
+                      formatter={(value) => [`${formatNumber(value as number)} m³`, 'Consumption']}
+                      contentStyle={{ fontSize: '12px' }}
+                    />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
@@ -905,7 +942,9 @@ const WaterDistributionDashboard: React.FC = () => {
         {/* Monthly Trends */}
         <Card className="bg-white shadow-md mb-6">
           <CardHeader className="bg-gradient-to-r from-gray-100 to-gray-200 pb-2">
-            <CardTitle className="text-lg font-bold text-gray-700">Consumption Trend by Type (Jan-24 to Feb-25)</CardTitle>
+            <CardTitle className="text-lg font-bold text-gray-700">
+              Consumption Trend by Type ({selectedYear})
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-96">
@@ -938,7 +977,9 @@ const WaterDistributionDashboard: React.FC = () => {
         {/* Stacked Area Chart for Overall Composition */}
         <Card className="bg-white shadow-md mb-6">
           <CardHeader className="bg-gradient-to-r from-gray-100 to-gray-200 pb-2">
-            <CardTitle className="text-lg font-bold text-gray-700">Consumption Composition Over Time</CardTitle>
+            <CardTitle className="text-lg font-bold text-gray-700">
+              Consumption Composition ({selectedYear})
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-96">
@@ -1005,8 +1046,8 @@ const WaterDistributionDashboard: React.FC = () => {
     );
   };
 
-  // Set page title
-  useEffect(() => {
+  // useEffect to set document title
+  React.useEffect(() => {
     document.title = 'Water Distribution Dashboard | Muscat Bay Asset Manager';
   }, []);
 
@@ -1017,18 +1058,30 @@ const WaterDistributionDashboard: React.FC = () => {
         <div className="bg-white shadow-md">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
             <div className="flex flex-col md:flex-row justify-between items-center">
-              <div>
+              <div className="flex items-center">
+                <Droplets className="h-6 w-6 mr-2 text-blue-600" />
                 <h1 className="text-2xl font-bold" style={{ color: primaryColor }}>Muscat Bay Water Distribution Dashboard</h1>
-                <p className="text-gray-500">Monitoring hierarchical water flow, consumption, and losses</p>
               </div>
               <div className="mt-4 md:mt-0">
                 <div className="flex items-center space-x-4">
+                  {/* Year Selector */}
+                  <select 
+                    value={selectedYear}
+                    onChange={handleYearChange}
+                    className="px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    {years.map(year => (
+                      <option key={year} value={year}>{year}</option>
+                    ))}
+                  </select>
+                  
+                  {/* Month Selector */}
                   <select 
                     value={selectedMonth}
                     onChange={(e) => setSelectedMonth(e.target.value)}
                     className="px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
-                    {months.map(month => (
+                    {availableMonths.map(month => (
                       <option key={month} value={month}>{month}</option>
                     ))}
                   </select>
@@ -1096,4 +1149,4 @@ const WaterDistributionDashboard: React.FC = () => {
   );
 };
 
-export default WaterDistributionDashboard;
+export default WaterDistribution;
