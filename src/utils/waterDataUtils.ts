@@ -4,46 +4,58 @@ import Papa from 'papaparse';
 import { supabase } from '@/integrations/supabase/client';
 
 export const parseCSVFromClipboard = async (
-  onSuccess: (data: WaterData[]) => void,
-  onError: (message: string) => void
-) => {
+  text: string | null = null,
+  onSuccess?: (data: WaterData[]) => void,
+  onError?: (message: string) => void
+): Promise<WaterData[]> => {
   try {
-    const text = await navigator.clipboard.readText();
-    if (!text) {
-      onError("Please copy some CSV data to your clipboard first.");
-      return;
+    let csvText = text;
+    
+    if (!csvText && !text) {
+      csvText = await navigator.clipboard.readText();
+      if (!csvText) {
+        if (onError) onError("Please copy some CSV data to your clipboard first.");
+        return [];
+      }
     }
     
-    Papa.parse<CSVRowData>(text, {
-      header: true,
-      skipEmptyLines: true,
-      complete: (results) => {
-        const { data, errors } = results;
-        
-        if (errors.length > 0) {
-          console.error("Error parsing CSV:", errors);
-          onError("The clipboard data couldn't be parsed as CSV.");
-          return;
+    return new Promise((resolve, reject) => {
+      Papa.parse<CSVRowData>(csvText as string, {
+        header: true,
+        skipEmptyLines: true,
+        complete: (results) => {
+          const { data, errors } = results;
+          
+          if (errors.length > 0) {
+            console.error("Error parsing CSV:", errors);
+            if (onError) onError("The data couldn't be parsed as CSV.");
+            reject(new Error("CSV parsing errors"));
+            return;
+          }
+          
+          if (data.length === 0) {
+            if (onError) onError("The CSV contains headers but no data rows.");
+            reject(new Error("No data rows"));
+            return;
+          }
+          
+          console.log("Parsed data:", data);
+          const transformedData = transformCSVData(data);
+          if (onSuccess) onSuccess(transformedData);
+          resolve(transformedData);
+        },
+        error: (error: Error | string) => {
+          const errorMessage = typeof error === 'string' ? error : error.message;
+          console.error("Error parsing CSV:", errorMessage);
+          if (onError) onError("Could not parse the content.");
+          reject(new Error(errorMessage));
         }
-        
-        if (data.length === 0) {
-          onError("The clipboard contains CSV headers but no data rows.");
-          return;
-        }
-        
-        console.log("Parsed data:", data);
-        const transformedData = transformCSVData(data);
-        onSuccess(transformedData);
-      },
-      error: (error: Error | string) => {
-        const errorMessage = typeof error === 'string' ? error : error.message;
-        console.error("Error parsing CSV:", errorMessage);
-        onError("Could not parse the clipboard content.");
-      }
+      });
     });
   } catch (error) {
-    console.error("Error reading clipboard:", error);
-    onError("Failed to read clipboard data.");
+    console.error("Error reading data:", error);
+    if (onError) onError("Failed to read data.");
+    throw error;
   }
 };
 

@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
   AreaChart, Area, BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, 
@@ -7,7 +6,7 @@ import {
   ComposedChart, Scatter, ScatterChart, ZAxis, ReferenceLine
 } from 'recharts';
 import Layout from '@/components/layout/Layout';
-import { Droplets } from 'lucide-react';
+import { Droplets, Info, TrendingDown, TrendingUp, AlertTriangle, CheckCircle, BarChart3 } from 'lucide-react';
 
 const WaterDistribution = () => {
   const [selectedPage, setSelectedPage] = useState('overview');
@@ -346,37 +345,52 @@ const WaterDistribution = () => {
   // Render Overview Page
   const renderOverview = () => (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      {/* Summary Cards */}
-      <Card className="bg-white shadow-md">
-        <CardHeader className="bg-gradient-to-r from-gray-100 to-gray-200 pb-2">
-          <CardTitle className="text-lg font-bold text-gray-700">L1 Total (Main Bulk)</CardTitle>
+      {/* Summary Cards - Enhanced with subtle animations and better shadows */}
+      <Card className="bg-white shadow-md hover:shadow-lg transition-shadow duration-300">
+        <CardHeader className="bg-gradient-to-r from-gray-50 to-gray-100 pb-2">
+          <CardTitle className="text-lg font-bold text-gray-700 flex items-center">
+            <BarChart3 className="h-5 w-5 mr-2 text-primary" />
+            L1 Total (Main Bulk)
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-3xl font-bold text-center mt-4" style={{ color: primaryColor }}>
+          <div className="text-3xl font-bold text-center mt-4 animate-fade-in" style={{ color: primaryColor }}>
             {formatNumber(l1Total)} m³
           </div>
           <div className="text-sm text-gray-500 text-center">Source Meter Reading</div>
         </CardContent>
       </Card>
 
-      <Card className="bg-white shadow-md">
-        <CardHeader className="bg-gradient-to-r from-gray-100 to-gray-200 pb-2">
-          <CardTitle className="text-lg font-bold text-gray-700">L2 Total (Distribution)</CardTitle>
+      <Card className="bg-white shadow-md hover:shadow-lg transition-shadow duration-300">
+        <CardHeader className="bg-gradient-to-r from-gray-50 to-gray-100 pb-2">
+          <CardTitle className="text-lg font-bold text-gray-700 flex items-center">
+            <BarChart3 className="h-5 w-5 mr-2 text-secondary" />
+            L2 Total (Distribution)
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-3xl font-bold text-center mt-4" style={{ color: secondaryColor }}>
+          <div className="text-3xl font-bold text-center mt-4 animate-fade-in" style={{ color: secondaryColor }}>
             {formatNumber(l2Total)} m³
           </div>
           <div className="text-sm text-gray-500 text-center">Zone Bulk + Direct Connections</div>
         </CardContent>
       </Card>
 
-      <Card className="bg-white shadow-md">
-        <CardHeader className="bg-gradient-to-r from-gray-100 to-gray-200 pb-2">
-          <CardTitle className="text-lg font-bold text-gray-700">Overall Loss</CardTitle>
+      <Card className="bg-white shadow-md hover:shadow-lg transition-shadow duration-300">
+        <CardHeader className="bg-gradient-to-r from-gray-50 to-gray-100 pb-2">
+          <CardTitle className="text-lg font-bold text-gray-700 flex items-center">
+            {parseFloat(overallLossPercentage) < 10 ? (
+              <CheckCircle className="h-5 w-5 mr-2 text-green-500" />
+            ) : parseFloat(overallLossPercentage) < 30 ? (
+              <AlertTriangle className="h-5 w-5 mr-2 text-amber-500" />
+            ) : (
+              <TrendingDown className="h-5 w-5 mr-2 text-red-500" />
+            )}
+            Overall Loss
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-3xl font-bold text-center mt-4" style={{ color: getStatusColor(parseFloat(overallLossPercentage)) }}>
+          <div className="text-3xl font-bold text-center mt-4 animate-fade-in" style={{ color: getStatusColor(parseFloat(overallLossPercentage)) }}>
             {formatNumber(overallLoss)} m³ ({overallLossPercentage}%)
           </div>
           <div className="text-sm text-gray-500 text-center">L1 - L2</div>
@@ -1064,22 +1078,22 @@ const WaterDistribution = () => {
               </div>
               <div className="mt-4 md:mt-0">
                 <div className="flex items-center space-x-4">
-                  {/* Year Selector */}
+                  {/* Year Selector - Enhanced with better styling */}
                   <select 
                     value={selectedYear}
                     onChange={handleYearChange}
-                    className="px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
                   >
                     {years.map(year => (
                       <option key={year} value={year}>{year}</option>
                     ))}
                   </select>
                   
-                  {/* Month Selector */}
+                  {/* Month Selector - Enhanced with better styling */}
                   <select 
                     value={selectedMonth}
                     onChange={(e) => setSelectedMonth(e.target.value)}
-                    className="px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
                   >
                     {availableMonths.map(month => (
                       <option key={month} value={month}>{month}</option>
@@ -1091,31 +1105,31 @@ const WaterDistribution = () => {
           </div>
         </div>
 
-        {/* Navigation */}
+        {/* Navigation - Enhanced with improved styling and hover effects */}
         <div className="bg-gray-100 border-b border-gray-200">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex overflow-x-auto py-2">
+            <div className="flex overflow-x-auto py-2 scrollbar-none">
               <button
                 onClick={() => setSelectedPage('overview')}
-                className={`px-4 py-2 mr-2 font-medium rounded-lg ${selectedPage === 'overview' ? 'bg-white shadow text-blue-600' : 'text-gray-600 hover:bg-gray-200'}`}
+                className={`px-4 py-2 mr-2 font-medium rounded-lg transition-all duration-200 ${selectedPage === 'overview' ? 'bg-white shadow text-primary' : 'text-gray-600 hover:bg-gray-200'}`}
               >
                 Overview
               </button>
               <button
                 onClick={() => setSelectedPage('zone-analysis')}
-                className={`px-4 py-2 mr-2 font-medium rounded-lg ${selectedPage === 'zone-analysis' ? 'bg-white shadow text-blue-600' : 'text-gray-600 hover:bg-gray-200'}`}
+                className={`px-4 py-2 mr-2 font-medium rounded-lg transition-all duration-200 ${selectedPage === 'zone-analysis' ? 'bg-white shadow text-primary' : 'text-gray-600 hover:bg-gray-200'}`}
               >
                 Zone Analysis
               </button>
               <button
                 onClick={() => setSelectedPage('losses')}
-                className={`px-4 py-2 mr-2 font-medium rounded-lg ${selectedPage === 'losses' ? 'bg-white shadow text-blue-600' : 'text-gray-600 hover:bg-gray-200'}`}
+                className={`px-4 py-2 mr-2 font-medium rounded-lg transition-all duration-200 ${selectedPage === 'losses' ? 'bg-white shadow text-primary' : 'text-gray-600 hover:bg-gray-200'}`}
               >
                 Losses
               </button>
               <button
                 onClick={() => setSelectedPage('consumption-types')}
-                className={`px-4 py-2 mr-2 font-medium rounded-lg ${selectedPage === 'consumption-types' ? 'bg-white shadow text-blue-600' : 'text-gray-600 hover:bg-gray-200'}`}
+                className={`px-4 py-2 mr-2 font-medium rounded-lg transition-all duration-200 ${selectedPage === 'consumption-types' ? 'bg-white shadow text-primary' : 'text-gray-600 hover:bg-gray-200'}`}
               >
                 Consumption Types
               </button>
@@ -1123,22 +1137,23 @@ const WaterDistribution = () => {
           </div>
         </div>
 
-        {/* Main Content */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Main Content - Add subtle animation */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in">
           {selectedPage === 'overview' && renderOverview()}
           {selectedPage === 'zone-analysis' && renderZoneAnalysis()}
           {selectedPage === 'losses' && renderLossesAnalysis()}
           {selectedPage === 'consumption-types' && renderConsumptionTypes()}
         </div>
 
-        {/* Footer */}
+        {/* Footer - Improved styling */}
         <div className="bg-white border-t border-gray-200 mt-8">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
             <div className="flex flex-col md:flex-row justify-between items-center">
               <div className="text-gray-500 text-sm">
                 © 2025 Muscat Bay Water Management System
               </div>
-              <div className="text-gray-500 text-sm mt-2 md:mt-0">
+              <div className="text-gray-500 text-sm mt-2 md:mt-0 flex items-center">
+                <Info className="h-4 w-4 mr-1" />
                 Last updated: {new Date().toLocaleDateString()}
               </div>
             </div>
