@@ -91,7 +91,16 @@ export const stpDailyData: STPDailyData[] = [
 
 // Function to get daily data for a specific month
 export const getDailyDataForMonth = (monthStr: string): STPDailyData[] => {
-  return stpDailyData.filter(day => day.date.startsWith(monthStr));
+  console.log("Getting daily data for month:", monthStr);
+  // Check if the month is in the format YYYY-MM
+  if (!monthStr.match(/^\d{4}-\d{2}$/)) {
+    console.error("Invalid month format:", monthStr);
+    return [];
+  }
+  
+  const filteredData = stpDailyData.filter(day => day.date.startsWith(monthStr));
+  console.log("Filtered daily data:", filteredData.length, "items found");
+  return filteredData;
 };
 
 // Function to get daily data for a specific date range

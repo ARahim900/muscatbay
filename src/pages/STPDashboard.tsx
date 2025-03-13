@@ -23,6 +23,7 @@ const STPDashboard = () => {
   }, [selectedMonth]);
 
   const handleMonthChange = (value: string) => {
+    console.log("Selected month changed to:", value);
     setSelectedMonth(value);
   };
 
@@ -42,9 +43,11 @@ const STPDashboard = () => {
               <CalendarClock className="mr-2 h-4 w-4" />
               Select Month:
             </div>
-            <Select onValueChange={handleMonthChange} defaultValue={selectedMonth}>
+            <Select onValueChange={handleMonthChange} value={selectedMonth}>
               <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Select Month" />
+                <SelectValue placeholder="Select Month">
+                  {formatMonth(selectedMonth)}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {stpMonthlyData.map((month) => (
@@ -59,7 +62,7 @@ const STPDashboard = () => {
 
         <STPMetricsCards selectedMonth={selectedMonth} />
 
-        <Tabs defaultValue="monthly" className="mt-6" onValueChange={setActiveTab}>
+        <Tabs defaultValue="monthly" className="mt-6" onValueChange={setActiveTab} value={activeTab}>
           <TabsList className="grid grid-cols-2 w-full max-w-md">
             <TabsTrigger value="monthly" className="flex items-center">
               <AreaChart className="mr-2 h-4 w-4" />

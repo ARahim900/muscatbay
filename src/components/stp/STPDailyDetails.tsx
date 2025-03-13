@@ -1,5 +1,5 @@
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { getDailyDataForMonth, formatDate } from '@/utils/stpDataUtils';
 import { STPDailyData } from '@/types/stp';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,7 +14,9 @@ interface STPDailyDetailsProps {
 export const STPDailyDetails: React.FC<STPDailyDetailsProps> = ({ selectedMonth }) => {
   const [activeTab, setActiveTab] = useState('bars');
   
+  // Get daily data for the selected month
   const dailyData = useMemo(() => {
+    console.log("STPDailyDetails - selectedMonth:", selectedMonth);
     const rawData = getDailyDataForMonth(selectedMonth);
     
     // Ensure all data is properly converted to numbers
@@ -31,11 +33,16 @@ export const STPDailyDetails: React.FC<STPDailyDetailsProps> = ({ selectedMonth 
     }));
   }, [selectedMonth]);
 
-  console.log("Daily data for charts:", dailyData);
+  useEffect(() => {
+    console.log("Daily data for charts:", dailyData);
+  }, [dailyData]);
 
   // Calculate summary metrics
   const summaryMetrics = useMemo(() => {
-    if (!dailyData.length) return null;
+    if (!dailyData.length) {
+      console.log("No daily data available for metrics calculation");
+      return null;
+    }
     
     const totalProcessed = dailyData.reduce((sum, day) => sum + Number(day.totalWaterProcessed), 0);
     const totalInfluent = dailyData.reduce((sum, day) => sum + Number(day.totalInfluent), 0);
@@ -71,6 +78,27 @@ export const STPDailyDetails: React.FC<STPDailyDetailsProps> = ({ selectedMonth 
     if (trend < 0) return <ArrowDown className="h-4 w-4 text-red-500" />;
     return <Minus className="h-4 w-4 text-gray-500" />;
   };
+
+  // Handle the case when there's no data
+  if (!dailyData.length) {
+    return (
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>No Daily Data Available</CardTitle>
+            <CardDescription>
+              There is no daily data available for the selected month ({selectedMonth}).
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground">
+              Try selecting a different month or check the data source.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -145,7 +173,7 @@ export const STPDailyDetails: React.FC<STPDailyDetailsProps> = ({ selectedMonth 
             <CardHeader>
               <CardTitle>Daily Processing Volumes</CardTitle>
               <CardDescription>
-                Daily breakdown of water processing metrics
+                Daily breakdown of water processing metrics for {selectedMonth}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -181,7 +209,7 @@ export const STPDailyDetails: React.FC<STPDailyDetailsProps> = ({ selectedMonth 
             <CardHeader>
               <CardTitle>Daily Processing Trends</CardTitle>
               <CardDescription>
-                Trend analysis of processing metrics
+                Trend analysis of processing metrics for {selectedMonth}
               </CardDescription>
             </CardHeader>
             <CardContent>
