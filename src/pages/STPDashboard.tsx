@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Layout from '@/components/layout/Layout';
-import { stpMonthlyData, formatMonth } from '@/utils/stpDataUtils';
+import { stpMonthlyData, formatMonth, getDailyDataForMonth } from '@/utils/stpDataUtils';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -16,7 +16,11 @@ const STPDashboard = () => {
 
   useEffect(() => {
     document.title = 'STP Dashboard | Muscat Bay Asset Manager';
-  }, []);
+    
+    // Log data to check if it's properly loaded
+    console.log("Monthly data loaded:", stpMonthlyData);
+    console.log("Daily data for selected month:", getDailyDataForMonth(selectedMonth));
+  }, [selectedMonth]);
 
   const handleMonthChange = (value: string) => {
     setSelectedMonth(value);
@@ -68,7 +72,7 @@ const STPDashboard = () => {
           </TabsList>
           
           <TabsContent value="monthly">
-            <STPMonthlyOverview />
+            <STPMonthlyOverview selectedMonth={selectedMonth} />
           </TabsContent>
           
           <TabsContent value="daily">
