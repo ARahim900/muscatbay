@@ -6,6 +6,54 @@ import { toast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import Papa from 'papaparse';
 
+interface WaterData {
+  meter_label: string;
+  account_number: string;
+  zone: string;
+  type: string;
+  parent_meter: string;
+  jan_24: number;
+  feb_24: number;
+  mar_24: number;
+  apr_24: number;
+  may_24: number;
+  jun_24: number;
+  jul_24: number;
+  aug_24: number;
+  sep_24: number;
+  oct_24: number;
+  nov_24: number;
+  dec_24: number;
+  jan_25: number;
+  feb_25: number;
+  total: number;
+}
+
+// Define a more specific type for the CSV row data
+interface CSVRowData {
+  'Meter Label': string;
+  'Acct #': string;
+  'Zone': string;
+  'Type': string;
+  'Parent Meter': string;
+  'Jan-24': string;
+  'Feb-24': string;
+  'Mar-24': string;
+  'Apr-24': string;
+  'May-24': string;
+  'Jun-24': string;
+  'Jul-24': string;
+  'Aug-24': string;
+  'Sep-24': string;
+  'Oct-24': string;
+  'Nov-24': string;
+  'Dec-24': string;
+  'Jan-25': string;
+  'Feb-25': string;
+  'Total': string;
+  [key: string]: string; // Allow for additional properties
+}
+
 const ImportWaterData: React.FC = () => {
   const [importing, setImporting] = useState(false);
   
@@ -25,7 +73,7 @@ const ImportWaterData: React.FC = () => {
       }
       
       // Parse CSV from clipboard
-      Papa.parse(text, {
+      Papa.parse<CSVRowData>(text, {
         header: true,
         skipEmptyLines: true,
         complete: async (results) => {
@@ -53,7 +101,7 @@ const ImportWaterData: React.FC = () => {
           console.log("Parsed data:", data);
           
           // Transform data for Supabase
-          const transformedData = data.map((row: any) => ({
+          const transformedData: WaterData[] = data.map((row: CSVRowData) => ({
             meter_label: row['Meter Label'] || '',
             account_number: row['Acct #'] || '',
             zone: row['Zone'] || '',
