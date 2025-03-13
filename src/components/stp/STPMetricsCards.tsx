@@ -2,7 +2,7 @@
 import React, { useMemo } from 'react';
 import { stpMonthlyData, calculateMonthlyMetrics, formatMonth } from '@/utils/stpDataUtils';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Droplets, Recycle, TruckIcon, WaveformIcon } from 'lucide-react';
+import { Droplets, Recycle, TruckIcon, BarChart2 } from 'lucide-react';
 
 interface STPMetricsCardsProps {
   selectedMonth: string;
@@ -26,7 +26,7 @@ export const STPMetricsCards: React.FC<STPMetricsCardsProps> = ({ selectedMonth 
           <CardTitle className="text-sm font-medium">
             Total Water Processed
           </CardTitle>
-          <WaveformIcon className="h-4 w-4 text-muscat-primary" />
+          <BarChart2 className="h-4 w-4 text-muscat-primary" />
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{monthData?.totalWaterProcessed.toLocaleString()} m³</div>
