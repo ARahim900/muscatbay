@@ -135,6 +135,18 @@ const ImportWaterData = () => {
         setProgress(Math.round((imported / data.length) * 100));
       }
       
+      // Update the water_consumption_by_type view through a direct query
+      const { error: viewError } = await supabase.rpc('refresh_water_consumption_views');
+      
+      if (viewError) {
+        console.error('Error refreshing views:', viewError);
+        toast({
+          title: "View Refresh Error",
+          description: `Data imported but error refreshing views: ${viewError.message}`,
+          variant: "warning"
+        });
+      }
+      
       toast({
         title: "Import Successful",
         description: `Successfully imported ${imported} water data records.`,

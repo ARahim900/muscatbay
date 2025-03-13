@@ -5,6 +5,7 @@ import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ExternalLink, Github, Droplets, FileBarChart, Gauge } from 'lucide-react';
+import ImportWaterData from '@/components/water/ImportWaterData';
 
 const Water = () => {
   useEffect(() => {
@@ -20,7 +21,7 @@ const Water = () => {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">
-                <Github className="mr-2 h-6 w-6" />
+                <Droplets className="mr-2 h-6 w-6" />
                 Water Dashboard 2024
               </CardTitle>
               <CardDescription>
@@ -94,8 +95,8 @@ const Water = () => {
             </CardContent>
           </Card>
         </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-6 md:mb-8">
           <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-100">
             <CardHeader>
               <CardTitle className="flex items-center text-blue-700">
@@ -149,6 +150,8 @@ const Water = () => {
             </CardContent>
           </Card>
         </div>
+        
+        <ImportWaterData />
       </div>
     </Layout>
   );

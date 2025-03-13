@@ -9,24 +9,32 @@ import { toast } from '@/components/ui/use-toast';
 import { Droplets, FileSpreadsheet } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
+interface WaterData {
+  type: string;
+  name?: string;
+  value?: number;
+  percentage?: string;
+  [key: string]: any;
+}
+
 const WaterConsumptionTypes = () => {
   const [selectedMonth, setSelectedMonth] = useState('feb_25');
   const [monthlyData, setMonthlyData] = useState<any[]>([]);
-  const [typeData, setTypeData] = useState<any[]>([]);
+  const [typeData, setTypeData] = useState<WaterData[]>([]);
   const [loading, setLoading] = useState(true);
   const [totalConsumption, setTotalConsumption] = useState(0);
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [availableTypes, setAvailableTypes] = useState<string[]>([]);
 
   // Color palette for different meter types
-  const COLORS = {
+  const COLORS: Record<string, string> = {
     'Retail': '#ff8042',
     'Zone Bulk': '#00C49F',
-    'Residential (Villa)': '#FFED00', // Yellow
+    'Residential (Villa)': '#FFED00',
     'Residential (Apart)': '#82ca9d',
-    'IRR_Servies': '#0088FE', // Blue
-    'MB_Common': '#4E4456', // Dark purple/gray
-    'Building': '#B8860B', // Dark yellow
+    'IRR_Servies': '#0088FE',
+    'MB_Common': '#4E4456',
+    'Building': '#B8860B',
     'D_Building_Bulk': '#a4de6c',
     'D_Building_Common': '#d0ed57',
     'Main BULK': '#ff5252'
@@ -43,7 +51,7 @@ const WaterConsumptionTypes = () => {
   // Reverse mapping for display purposes
   const displayToDbMonth: Record<string, string> = Object.entries(monthMapping).reduce(
     (acc, [db, display]) => ({...acc, [display]: db}), 
-    {}
+    {} as Record<string, string>
   );
 
   useEffect(() => {
@@ -51,7 +59,6 @@ const WaterConsumptionTypes = () => {
       try {
         setLoading(true);
         await fetchMonthlyData();
-        await fetchTypeData();
         setLoading(false);
       } catch (error) {
         console.error('Error processing data:', error);
@@ -68,60 +75,63 @@ const WaterConsumptionTypes = () => {
   }, []);
   
   const fetchMonthlyData = async () => {
-    // Fetch consumption data by type
-    const { data: typeConsumptionData, error: typeError } = await supabase
-      .from('water_consumption_by_type')
-      .select('*');
-    
-    if (typeError) {
-      console.error('Error fetching type data:', typeError);
-      return;
-    }
-
-    // Filter out unwanted types and save available types
-    const filteredTypes = typeConsumptionData?.filter(item => 
-      item.type !== 'Main BULK' && item.type !== 'Zone Bulk'
-    ) || [];
-    
-    const types = filteredTypes.map(item => item.type);
-    setAvailableTypes(types);
-
-    // Fetch main bulk data for total consumption
-    const { data: mainBulkData, error: bulkError } = await supabase
-      .from('water_distribution_master')
-      .select('*')
-      .eq('type', 'Main BULK')
-      .single();
-    
-    if (bulkError) {
-      console.error('Error fetching main bulk data:', bulkError);
-    } else if (mainBulkData) {
-      setTotalConsumption(mainBulkData[selectedMonth] || 0);
-    }
-
-    // Prepare monthly trend data
-    const months = Object.keys(monthMapping);
-    
-    const monthlyResult = months.map(month => {
-      const monthData: Record<string, any> = { 
-        month: monthMapping[month] 
-      };
+    try {
+      // Fetch consumption data by type
+      const { data: typeConsumptionData, error: typeError } = await supabase
+        .from('water_consumption_by_type')
+        .select('*');
       
-      filteredTypes.forEach(typeItem => {
-        monthData[typeItem.type] = typeItem[month] || 0;
+      if (typeError) {
+        console.error('Error fetching type data:', typeError);
+        return;
+      }
+
+      console.log("Fetched type consumption data:", typeConsumptionData);
+
+      // Filter out unwanted types and save available types
+      const filteredTypes = typeConsumptionData?.filter(item => 
+        item.type !== 'Main BULK' && item.type !== 'Zone Bulk'
+      ) || [];
+      
+      const types = filteredTypes.map(item => item.type);
+      setAvailableTypes(types);
+
+      // Fetch main bulk data for total consumption
+      const { data: mainBulkData, error: bulkError } = await supabase
+        .from('water_distribution_master')
+        .select('*')
+        .eq('type', 'Main BULK')
+        .single();
+      
+      if (bulkError) {
+        console.error('Error fetching main bulk data:', bulkError);
+      } else if (mainBulkData) {
+        setTotalConsumption(mainBulkData[selectedMonth] || 0);
+      }
+
+      // Prepare monthly trend data
+      const months = Object.keys(monthMapping);
+      
+      const monthlyResult = months.map(month => {
+        const monthData: Record<string, any> = { 
+          month: monthMapping[month] 
+        };
+        
+        filteredTypes.forEach(typeItem => {
+          monthData[typeItem.type] = typeItem[month] || 0;
+        });
+        
+        return monthData;
       });
       
-      return monthData;
-    });
-    
-    setMonthlyData(monthlyResult);
-    
-    // Prepare data for the selected month
-    updateTypeDataForMonth(selectedMonth, filteredTypes, mainBulkData);
-  };
-  
-  const fetchTypeData = async () => {
-    // This function could be expanded if additional type-specific data is needed
+      setMonthlyData(monthlyResult);
+      
+      // Prepare data for the selected month
+      updateTypeDataForMonth(selectedMonth, filteredTypes, mainBulkData);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      throw error;
+    }
   };
   
   const updateTypeDataForMonth = (month: string, typeData: any[], mainBulkData: any) => {
@@ -201,13 +211,13 @@ const WaterConsumptionTypes = () => {
   
   // Apply selected type filters if any are selected
   const typeDataToDisplay = selectedTypes.length > 0 
-    ? filteredTypeData.filter(item => selectedTypes.includes(item.name))
+    ? filteredTypeData.filter(item => selectedTypes.includes(item.name || ''))
     : filteredTypeData;
   
   // Get the types sorted by total consumption for consistent coloring
   const typesByConsumption = [...filteredTypeData]
-    .sort((a, b) => b.value - a.value)
-    .map(item => item.name);
+    .sort((a, b) => (b.value || 0) - (a.value || 0))
+    .map(item => item.name || '');
     
   // Get only selected types for charts if any are selected
   const typesToShow = selectedTypes.length > 0 ? selectedTypes : typesByConsumption;
@@ -283,7 +293,7 @@ const WaterConsumptionTypes = () => {
                     key={type}
                     onClick={() => handleTypeSelection(type)}
                     variant={selectedTypes.includes(type) ? "default" : "outline"}
-                    className="h-8 px-3 py-1 rounded text-sm flex items-center"
+                    className={`h-8 px-3 py-1 rounded text-sm flex items-center ${selectedTypes.includes(type) ? 'bg-indigo-100 border border-indigo-400' : 'bg-gray-100 border border-gray-300'}`}
                   >
                     <span 
                       className="w-3 h-3 rounded-full mr-2" 
@@ -330,7 +340,7 @@ const WaterConsumptionTypes = () => {
                 </div>
                 <p className="text-sm text-gray-500 mt-1">
                   {typeDataToDisplay.length > 0 ? 
-                    `${formatNumber(typeDataToDisplay[0].value)} m³ (${typeDataToDisplay[0].percentage}% of consumption)` : 
+                    `${formatNumber(typeDataToDisplay[0].value || 0)} m³ (${typeDataToDisplay[0].percentage}% of consumption)` : 
                     ''}
                 </p>
               </CardContent>
@@ -494,7 +504,7 @@ const WaterConsumptionTypes = () => {
                             {type.name}
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatNumber(type.value)}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatNumber(type.value || 0)}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{type.percentage}%</td>
                       </tr>
                     ))}
