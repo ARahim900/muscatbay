@@ -102,13 +102,13 @@ export const saveWaterData = async (data: WaterData[]): Promise<{ success: boole
     }
     
     // Refresh materialized views
-    const { error: refreshError } = await supabase.rpc('refresh_water_consumption_views');
+    const { data: refreshData, error: refreshError } = await supabase.rpc('refresh_water_consumption_views');
     
     if (refreshError) {
       console.error("Error refreshing views:", refreshError);
       return {
         success: true, // Still mark as success since data was imported
-        message: `Imported ${data.length} water distribution records. (View refresh failed: ${refreshError.message as unknown as string})`
+        message: `Imported ${data.length} water distribution records. (View refresh failed: ${String(refreshError.message)})`
       };
     }
     
