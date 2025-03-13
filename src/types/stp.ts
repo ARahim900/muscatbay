@@ -24,6 +24,9 @@ export interface STPMonthlyData {
   totalInfluent: number;
   totalWaterProcessed: number;
   tseToIrrigation: number;
+  utilizationPercentage?: string;
+  processingEfficiency?: string;
+  capacity?: number;
 }
 
 export interface ProcessingMetrics {
@@ -32,3 +35,18 @@ export interface ProcessingMetrics {
   directSewagePercentage: number;
   tankerPercentage: number;
 }
+
+export interface OperatingParameter {
+  name: string;
+  value: number;
+  min: number;
+  max: number;
+  status: string;
+}
+
+export interface ChartDataPoint {
+  name: string;
+  value: number;
+  fill?: string;
+}
+

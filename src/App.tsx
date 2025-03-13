@@ -10,8 +10,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Electricity from "./pages/Electricity";
 import Water from "./pages/Water";
-import STP from "./pages/STP";
-import STPDashboard from "./pages/STPDashboard";
+import STPBioreactorMBR from "./pages/STPBioreactorMBR";
 import Projects from "./pages/Projects";
 import AssetLifecycleManagement from "./pages/AssetLifecycleManagement";
 import Auth from "./pages/Auth";
@@ -36,8 +35,7 @@ const App = () => (
             {/* Protected routes */}
             <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
             <Route path="/electricity" element={<ProtectedRoute><Electricity /></ProtectedRoute>} />
-            <Route path="/stp" element={<ProtectedRoute><STP /></ProtectedRoute>} />
-            <Route path="/stp-dashboard" element={<ProtectedRoute><STPDashboard /></ProtectedRoute>} />
+            <Route path="/stp-bioreactor-mbr" element={<ProtectedRoute><STPBioreactorMBR /></ProtectedRoute>} />
             <Route path="/water" element={<ProtectedRoute><Water /></ProtectedRoute>} />
             <Route path="/water-distribution" element={<ProtectedRoute><WaterDistribution /></ProtectedRoute>} />
             <Route path="/water-consumption-types" element={<ProtectedRoute><WaterConsumptionTypes /></ProtectedRoute>} />

@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Factory, Thermometer } from 'lucide-react';
+import { Factory, Thermometer, Droplet } from 'lucide-react';
 import SidebarLink from './SidebarLink';
 import SidebarSection from './SidebarSection';
 import { PumpStationIcon } from './CustomIcons';
@@ -26,20 +26,11 @@ const FacilitiesSection: React.FC<FacilitiesSectionProps> = ({
   return (
     <SidebarSection title="Facilities" collapsed={collapsed} isMobile={isMobile}>
       <SidebarLink 
-        to="/stp-dashboard" 
-        icon={Factory} 
-        label="STP Dashboard" 
+        to="/stp-bioreactor-mbr" 
+        icon={Droplet} 
+        label="STP Bioreactor MBR" 
         collapsed={collapsed} 
         external={false}
-        isMobile={isMobile}
-      />
-      <SidebarLink 
-        to={externalApps.stpPlant} 
-        icon={Factory} 
-        label="STP Plant" 
-        collapsed={collapsed} 
-        external={true}
-        openEmbedded={openEmbeddedApp}
         isMobile={isMobile}
       />
       <SidebarLink 

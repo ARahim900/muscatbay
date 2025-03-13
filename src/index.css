@@ -3,104 +3,174 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-
 @layer base {
   :root {
-    --background: 262 10% 98%;
-    --foreground: 280 10% 10%;
-
+    --background: 0 0% 98%;
+    --foreground: 240 10% 3.9%;
     --card: 0 0% 100%;
-    --card-foreground: 280 10% 10%;
-
+    --card-foreground: 240 10% 3.9%;
     --popover: 0 0% 100%;
-    --popover-foreground: 280 10% 10%;
-
-    --primary: 280 10% 31%;
-    --primary-foreground: 0 0% 100%;
-
-    --secondary: 180 50% 61%;
-    --secondary-foreground: 280 10% 10%;
-
-    --muted: 280 10% 96%;
-    --muted-foreground: 280 5% 45%;
-
-    --accent: 264 15% 64%;
-    --accent-foreground: 280 10% 10%;
-
+    --popover-foreground: 240 10% 3.9%;
+    --primary: 318 54% 30%; /* Muscat Bay primary purple */
+    --primary-foreground: 0 0% 98%;
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
+    --accent: 240 4.8% 95.9%;
+    --accent-foreground: 240 5.9% 10%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-
-    --border: 280 15% 90%;
-    --input: 280 15% 90%;
-    --ring: 280 10% 31%;
-
-    --radius: 0.75rem;
-
-    --sidebar-background: 280 10% 31%;
-    --sidebar-foreground: 0 0% 100%;
-    --sidebar-primary: 180 50% 61%;
-    --sidebar-primary-foreground: 280 10% 10%;
-    --sidebar-accent: 280 10% 25%;
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 280 10% 25%;
-    --sidebar-ring: 180 50% 61%;
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+    --ring: 318 54% 30%;
+    --radius: 0.5rem;
+    --sidebar-background: 318 54% 30%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 0 0% 98%;
+    --sidebar-primary-foreground: 318 54% 30%;
+    --sidebar-accent: 318 54% 40%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 318 54% 40%;
+    --sidebar-ring: 318 54% 30%;
+    --brand: 318 54% 30%;
+    --brand-foreground: 0 0% 98%;
   }
 
+  .dark {
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 240 5.9% 10%;
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 318 54% 40%;
+  }
+}
+
+@layer base {
   * {
     @apply border-border;
   }
-
-  html, body {
-    @apply antialiased scroll-smooth;
-    font-family: 'Inter', sans-serif;
-  }
-
   body {
-    @apply bg-background text-foreground min-h-screen;
+    @apply bg-background text-foreground antialiased;
   }
 }
 
 @layer components {
-  .glass-card {
-    @apply bg-white/70 backdrop-blur-md border border-white/20 shadow-glass;
-  }
-  
-  .nav-link {
-    @apply relative flex items-center gap-2 px-3 py-2 text-sm font-medium transition-colors rounded-md hover:bg-muscat-light hover:text-muscat-primary;
-  }
-  
-  .nav-link.active {
-    @apply bg-muscat-light text-muscat-primary;
-  }
-  
   .sidebar-link {
-    @apply flex items-center gap-3 px-4 py-3 text-sm font-medium text-white/80 transition-all rounded-md hover:bg-white/10 hover:text-white;
+    @apply flex items-center px-4 py-2 rounded-md hover:bg-white/10 transition-colors text-white/90 hover:text-white font-medium;
   }
-  
+
   .sidebar-link.active {
     @apply bg-white/10 text-white;
   }
-
-  .stat-value {
-    @apply text-2xl font-semibold transition-all;
+  
+  /* STP Dashboard specific styles */
+  .parameter-card {
+    @apply bg-white rounded-xl p-4 shadow-sm transition-all duration-200 hover:shadow;
   }
   
-  .btn-primary {
-    @apply px-4 py-2 font-medium text-white transition-all rounded-md bg-muscat-primary hover:bg-opacity-90 shadow-button;
+  .parameter-normal {
+    @apply text-green-600;
   }
   
-  .btn-secondary {
-    @apply px-4 py-2 font-medium transition-all rounded-md bg-muscat-teal text-muscat-dark hover:bg-opacity-90 shadow-button;
+  .parameter-warning {
+    @apply text-amber-500;
+  }
+  
+  .parameter-critical {
+    @apply text-red-500;
   }
 }
 
 @layer utilities {
-  .text-balance {
-    text-wrap: balance;
+  .animate-appear {
+    animation: appear 0.5s ease-out forwards;
   }
   
-  .text-gradient {
-    @apply bg-gradient-to-br from-muscat-primary via-muscat-primary/90 to-muscat-primary/70 bg-clip-text text-transparent;
+  .animate-appear-zoom {
+    animation: appear-zoom 0.5s ease-out forwards;
+  }
+  
+  .animate-appear-drop {
+    animation: appear-drop 0.5s ease-out forwards;
+  }
+  
+  .animate-pulse-subtle {
+    animation: pulse-subtle 2s ease-in-out infinite;
+  }
+  
+  @keyframes appear {
+    0% {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  @keyframes appear-zoom {
+    0% {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+  
+  @keyframes appear-drop {
+    0% {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  @keyframes pulse-subtle {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.8;
+    }
+  }
+}
+
+/* Print styles for STP reports */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  .print-content {
+    display: block !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  
+  @page {
+    size: A4;
+    margin: 1cm;
   }
 }
