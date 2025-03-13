@@ -76,7 +76,7 @@ const ImportWaterData: React.FC = () => {
       Papa.parse<CSVRowData>(text, {
         header: true,
         skipEmptyLines: true,
-        complete: async (results) => {
+        complete: async (results: Papa.ParseResult<CSVRowData>) => {
           const { data, errors } = results;
           
           if (errors.length > 0) {
