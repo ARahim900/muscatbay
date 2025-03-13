@@ -10,22 +10,31 @@ const ImportWaterData: React.FC = () => {
   const [importing, setImporting] = useState(false);
   
   const handleImportSuccess = async (transformedData: WaterData[]) => {
-    const result = await saveWaterData(transformedData);
-    
-    if (result.success) {
+    try {
+      const result = await saveWaterData(transformedData);
+      
+      if (result.success) {
+        toast({
+          title: "Data imported successfully",
+          description: result.message
+        });
+      } else {
+        toast({
+          title: "Error importing data",
+          description: result.message,
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error("Error saving data:", error);
       toast({
-        title: "Data imported successfully",
-        description: result.message
-      });
-    } else {
-      toast({
-        title: "Error importing data",
-        description: result.message,
+        title: "Error saving data",
+        description: error instanceof Error ? error.message : "Unknown error occurred",
         variant: "destructive"
       });
+    } finally {
+      setImporting(false);
     }
-    
-    setImporting(false);
   };
   
   const handleImportError = (errorMessage: string) => {
@@ -40,7 +49,7 @@ const ImportWaterData: React.FC = () => {
   const handlePasteData = async () => {
     try {
       setImporting(true);
-      parseCSVFromClipboard(handleImportSuccess, handleImportError);
+      await parseCSVFromClipboard(undefined, handleImportSuccess, handleImportError);
     } catch (error) {
       console.error("Error during import:", error);
       toast({

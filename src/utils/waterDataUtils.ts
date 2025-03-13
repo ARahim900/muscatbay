@@ -4,14 +4,14 @@ import Papa from 'papaparse';
 import { supabase } from '@/integrations/supabase/client';
 
 export const parseCSVFromClipboard = async (
-  text: string | null = null,
+  text?: string,
   onSuccess?: (data: WaterData[]) => void,
   onError?: (message: string) => void
 ): Promise<WaterData[]> => {
   try {
     let csvText = text;
     
-    if (!csvText && !text) {
+    if (!csvText) {
       csvText = await navigator.clipboard.readText();
       if (!csvText) {
         if (onError) onError("Please copy some CSV data to your clipboard first.");
