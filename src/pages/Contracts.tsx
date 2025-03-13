@@ -325,7 +325,7 @@ const ContractDashboard = () => {
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
         <div className="flex items-center">
-          <div className="bg-gray-600 p-2 rounded mr-2">
+          <div className="p-2 rounded mr-2 bg-[#4e4456]">
             <div className="text-white font-bold text-xl">MB</div>
           </div>
           <div>
