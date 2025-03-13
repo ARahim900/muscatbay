@@ -42,7 +42,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   const sidebarWidth = isMobile 
     ? 'w-64' 
     : collapsed 
-      ? 'w-20'
+      ? 'w-16 md:w-20'
       : 'w-64';
   
   if (isMobile && !mobileOpen) {
@@ -57,6 +57,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       <div className="relative flex flex-col h-full">
         {isMobile ? (
           <button 
+            onClick={() => setCollapsed && setCollapsed(true)}
             className="absolute top-2 right-2 flex items-center justify-center w-8 h-8 text-white bg-muscat-primary/50 rounded-full"
             aria-label="Close sidebar"
           >
@@ -75,7 +76,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           </button>
         )}
         
-        <div className="flex-1 px-3 py-4 overflow-y-auto">
+        <div className="flex-1 px-3 py-4 overflow-y-auto scrollbar-thin scrollbar-thumb-white/20">
           <div className="mb-6">
             <SidebarLink to="/" icon={Home} label="Dashboard" collapsed={collapsed} isMobile={isMobile} />
           </div>

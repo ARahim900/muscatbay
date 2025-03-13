@@ -4,6 +4,7 @@ import Navbar from './Navbar';
 import Sidebar from './sidebar';
 import { ArrowLeft, X, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useLocation } from 'react-router-dom';
 
 interface EmbeddedAppState {
   url: string;
@@ -27,6 +28,17 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [iframeLoading, setIframeLoading] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const sidebarRef = useRef<HTMLDivElement>(null);
+  const location = useLocation();
+
+  // Auto-collapse sidebar on route change
+  useEffect(() => {
+    if (!isMobile) {
+      setCollapsed(true);
+    }
+    if (isMobile) {
+      setMobileOpen(false);
+    }
+  }, [location.pathname, isMobile]);
 
   useEffect(() => {
     const checkIfMobile = () => {
@@ -125,7 +137,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       >
         {embeddedApp.isOpen ? (
           <div className="relative w-full h-[calc(100vh-4rem)]">
-            <div className="fixed top-16 left-0 right-0 z-40 flex items-center justify-between px-3 sm:px-4 py-2 sm:py-3 bg-white border-b shadow-sm">
+            {/* Hide the embedded app header on mobile to maximize space */}
+            <div className="fixed top-16 left-0 right-0 z-40 flex items-center justify-between px-3 sm:px-4 py-2 sm:py-3 bg-white/80 backdrop-blur-sm border-b shadow-sm">
               <div className="flex items-center">
                 <Button 
                   onClick={closeEmbeddedApp}
@@ -135,12 +148,14 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 >
                   <ArrowLeft className="h-4 w-4" />
                 </Button>
-                <h2 className="text-base sm:text-lg font-medium text-muscat-primary truncate">{embeddedApp.title}</h2>
+                <h2 className="text-sm md:text-base font-medium text-muscat-primary truncate">{embeddedApp.title}</h2>
               </div>
               <div className="flex items-center">
                 <Button 
                   onClick={closeEmbeddedApp}
-                  className="px-3 sm:px-4 py-1 text-xs sm:text-sm font-medium text-white transition-all rounded-md bg-muscat-primary hover:bg-opacity-90 whitespace-nowrap"
+                  variant="default"
+                  size="sm"
+                  className="text-xs sm:text-sm whitespace-nowrap"
                 >
                   Back to Dashboard
                 </Button>

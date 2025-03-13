@@ -12,7 +12,7 @@ const SidebarFooter: React.FC<SidebarFooterProps> = ({ collapsed, isMobile }) =>
       <p className={`text-white/70 font-medium ${collapsed && !isMobile ? 'text-xs' : 'text-sm'}`}>
         {collapsed && !isMobile ? 'v1.0' : 'Muscat Bay Asset Manager v1.0'}
       </p>
-      {!collapsed && !isMobile && (
+      {(!collapsed || isMobile) && (
         <p className="text-xs text-white/50 mt-1">
           Monitoring and managing utilities across the property
         </p>

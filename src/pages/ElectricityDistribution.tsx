@@ -1,4 +1,5 @@
-import React from 'react';
+
+import React, { useState } from 'react';
 import Layout from '@/components/layout/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
@@ -9,10 +10,10 @@ import {
 import { Zap, Info, TrendingDown, TrendingUp, AlertTriangle, CheckCircle, BarChart3 } from 'lucide-react';
 
 const ElectricityDistribution = () => {
-  const [selectedYear, setSelectedYear] = React.useState('2024');
-  const [selectedMonth, setSelectedMonth] = React.useState('Jan-24');
-  const [selectedZone, setSelectedZone] = React.useState('');
-  const [selectedPage, setSelectedPage] = React.useState('overview');
+  const [selectedYear, setSelectedYear] = useState('2024');
+  const [selectedMonth, setSelectedMonth] = useState('Jan-24');
+  const [selectedZone, setSelectedZone] = useState('');
+  const [selectedPage, setSelectedPage] = useState('overview');
 
   // Define color scheme
   const primaryColor = '#4E4456';
@@ -48,7 +49,7 @@ const ElectricityDistribution = () => {
   const calculateMetrics = (data: any) => {
     // Replace problematic calculations with safe numeric operations
     const result1 = ensureNumber(data.value1) * ensureNumber(data.multiplier);
-    const result2 = ensureNumber(data.value2) / (ensureNumber(data.value3) * ensureNumber(data.value4));
+    const result2 = ensureNumber(data.value2) / (ensureNumber(data.value3) || 1) * (ensureNumber(data.value4) || 1);
     return { result1, result2 };
   };
 
@@ -131,8 +132,176 @@ const ElectricityDistribution = () => {
 
         {/* Main Content */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in">
+          {/* Overview Page Content */}
+          {selectedPage === 'overview' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* Key Metrics Card */}
+              <Card className="bg-white shadow-md hover:shadow-lg transition-shadow duration-300">
+                <CardHeader className="bg-gradient-to-r from-gray-50 to-gray-100 pb-2">
+                  <CardTitle className="text-lg font-bold text-gray-700 flex items-center">
+                    <BarChart3 className="h-5 w-5 mr-2 text-primary" />
+                    Key Electricity Metrics
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold text-center mt-4 animate-fade-in" style={{ color: primaryColor }}>
+                    Total Usage: {formatNumber(15680)} kWh
+                  </div>
+                  <div className="text-xl font-medium text-center mt-2 animate-fade-in" style={{ color: secondaryColor }}>
+                    Average Daily: {formatNumber(523)} kWh
+                  </div>
+                  <div className="flex items-center justify-center mt-4">
+                    <TrendingDown className="h-5 w-5 mr-2" style={{ color: successColor }} />
+                    <span className="text-sm font-medium" style={{ color: successColor }}>
+                      5% decrease compared to last month
+                    </span>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Zone Analysis Card */}
+              <Card className="bg-white shadow-md hover:shadow-lg transition-shadow duration-300">
+                <CardHeader className="bg-gradient-to-r from-gray-50 to-gray-100 pb-2">
+                  <CardTitle className="text-lg font-bold text-gray-700 flex items-center">
+                    <BarChart3 className="h-5 w-5 mr-2 text-primary" />
+                    Zone Consumption
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-64">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={[
+                            { name: 'Residential', value: 8500 },
+                            { name: 'Commercial', value: 4200 },
+                            { name: 'Community', value: 2980 }
+                          ]}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={60}
+                          outerRadius={80}
+                          paddingAngle={5}
+                          dataKey="value"
+                          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                        >
+                          <Cell fill={primaryColor} />
+                          <Cell fill={secondaryColor} />
+                          <Cell fill={accentColor} />
+                        </Pie>
+                        <Tooltip formatter={(value) => [formatNumber(value as number) + ' kWh']} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Monthly Trend Card */}
+              <Card className="bg-white shadow-md hover:shadow-lg transition-shadow duration-300">
+                <CardHeader className="bg-gradient-to-r from-gray-50 to-gray-100 pb-2">
+                  <CardTitle className="text-lg font-bold text-gray-700 flex items-center">
+                    <BarChart3 className="h-5 w-5 mr-2 text-primary" />
+                    Monthly Trend
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-64">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart
+                        data={[
+                          { month: 'Jan', usage: 14500 },
+                          { month: 'Feb', usage: 15200 },
+                          { month: 'Mar', usage: 16500 },
+                          { month: 'Apr', usage: 17200 },
+                          { month: 'May', usage: 16800 },
+                          { month: 'Jun', usage: 15680 }
+                        ]}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="month" />
+                        <YAxis />
+                        <Tooltip formatter={(value) => [formatNumber(value as number) + ' kWh']} />
+                        <Line type="monotone" dataKey="usage" stroke={primaryColor} activeDot={{ r: 8 }} />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {/* Zone Analysis Page Content */}
+          {selectedPage === 'zone-analysis' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Card className="bg-white shadow-md col-span-1 md:col-span-2">
+                <CardHeader className="bg-gradient-to-r from-gray-50 to-gray-100 pb-2">
+                  <CardTitle className="text-lg font-bold text-gray-700 flex items-center">
+                    Zone Consumption Breakdown
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-80">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart
+                        data={[
+                          { zone: 'Zone A', residential: 3200, commercial: 1800, community: 950 },
+                          { zone: 'Zone B', residential: 2800, commercial: 1400, community: 1050 },
+                          { zone: 'Zone C', residential: 2500, commercial: 1000, community: 980 }
+                        ]}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="zone" />
+                        <YAxis />
+                        <Tooltip />
+                        <Legend />
+                        <Bar dataKey="residential" name="Residential" fill={primaryColor} />
+                        <Bar dataKey="commercial" name="Commercial" fill={secondaryColor} />
+                        <Bar dataKey="community" name="Community" fill={accentColor} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {/* Consumption Page Content */}
+          {selectedPage === 'consumption' && (
+            <div className="grid grid-cols-1 gap-6">
+              <Card className="bg-white shadow-md">
+                <CardHeader className="bg-gradient-to-r from-gray-50 to-gray-100 pb-2">
+                  <CardTitle className="text-lg font-bold text-gray-700 flex items-center">
+                    Consumption by Time of Day
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-80">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart
+                        data={[
+                          { time: '00:00', usage: 320 },
+                          { time: '04:00', usage: 280 },
+                          { time: '08:00', usage: 560 },
+                          { time: '12:00', usage: 680 },
+                          { time: '16:00', usage: 720 },
+                          { time: '20:00', usage: 580 }
+                        ]}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="time" />
+                        <YAxis />
+                        <Tooltip formatter={(value) => [formatNumber(value as number) + ' kWh']} />
+                        <Area type="monotone" dataKey="usage" stroke={primaryColor} fill={lightColor} />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
           {/* Example Card with Safe Calculations */}
-          <Card className="bg-white shadow-md hover:shadow-lg transition-shadow duration-300">
+          <Card className="mt-6 bg-white shadow-md hover:shadow-lg transition-shadow duration-300">
             <CardHeader className="bg-gradient-to-r from-gray-50 to-gray-100 pb-2">
               <CardTitle className="text-lg font-bold text-gray-700 flex items-center">
                 <BarChart3 className="h-5 w-5 mr-2 text-primary" />
