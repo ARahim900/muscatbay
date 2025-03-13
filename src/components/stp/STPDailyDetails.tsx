@@ -84,7 +84,7 @@ export const STPDailyDetails: React.FC<STPDailyDetailsProps> = ({ selectedMonth 
   if (!dailyData.length) {
     return (
       <div className="space-y-6">
-        <Alert variant="warning">
+        <Alert variant="default">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>No Data Available</AlertTitle>
           <AlertDescription>
