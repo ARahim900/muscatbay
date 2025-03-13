@@ -1,925 +1,1149 @@
 
-import React, { useState, useEffect } from 'react';
-import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import React, { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { 
+  AreaChart, Area, BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, 
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, 
+  ComposedChart, Scatter, ScatterChart, ZAxis, ReferenceLine
+} from 'recharts';
 import Layout from '@/components/layout/Layout';
 import { Droplets } from 'lucide-react';
 
-// Main color scheme
-const COLORS = {
-  primary: '#0EA5E9',  // Ocean Blue for water theme
-  secondary: '#38BDF8',
-  tertiary: '#7DD3FC',
-  light: '#BAE6FD',
-  background: '#F0F9FF',
-  chartColors: ['#0EA5E9', '#38BDF8', '#7DD3FC', '#BAE6FD', '#E0F2FE', '#F0F9FF']
-};
-
 const WaterDistribution = () => {
-  const [activeTab, setActiveTab] = useState('overview');
-  const [data, setData] = useState<any[]>([]);
-  const [timeframe, setTimeframe] = useState('all');
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [selectedZones, setSelectedZones] = useState<string[]>([]);
-  const [showFilters, setShowFilters] = useState(false);
-  const [selectedMonth, setSelectedMonth] = useState('');
-  const [showExportMessage, setShowExportMessage] = useState(false);
+  const [selectedPage, setSelectedPage] = useState('overview');
+  const [selectedYear, setSelectedYear] = useState('2025'); // Default to most recent year
+  const [selectedMonth, setSelectedMonth] = useState('Jan-25'); // Default to a recent month
+  const [selectedZone, setSelectedZone] = useState(''); // Empty string means "All Zones"
+  const [selectedTypes, setSelectedTypes] = useState<string[]>([]); // For consumption type filtering
   
-  const [categories, setCategories] = useState<string[]>([]);
-  const [zones, setZones] = useState<string[]>([]);
-  const [timePeriods, setTimePeriods] = useState<string[]>([]);
+  // Define color scheme
+  const primaryColor = '#4E4456';
+  const secondaryColor = '#6d5d78';
+  const accentColor = '#8b7998';
+  const lightColor = '#e0d8e6';
+  const dangerColor = '#dc3545';
+  const warningColor = '#ffc107';
+  const successColor = '#198754';
   
-  const [totalConsumption, setTotalConsumption] = useState(0);
-  const [averageConsumption, setAverageConsumption] = useState(0);
-  const [maxConsumption, setMaxConsumption] = useState(0);
-  const [consumptionByCategory, setConsumptionByCategory] = useState<any[]>([]);
-  const [consumptionByZone, setConsumptionByZone] = useState<any[]>([]);
-  const [monthlyTrends, setMonthlyTrends] = useState<any[]>([]);
-  const [topConsumers, setTopConsumers] = useState<any[]>([]);
+  // Color scale for heat map
+  const getLossColor = (value: number) => {
+    if (value < 10) return successColor;
+    if (value < 20) return '#5cb85c';
+    if (value < 30) return '#30a5ff';
+    if (value < 40) return '#f0ad4e';
+    if (value < 50) return warningColor;
+    return dangerColor;
+  };
+
+  // Arrays of years and months for UI selectors
+  const years = ['2024', '2025'];
   
-  useEffect(() => {
-    // Create structured data from the file content
-    const months = ['April-24', 'May-24', 'June-24', 'July-24', 'August-24', 'September-24', 
-                   'October-24', 'November-24', 'December-24', 'January-25', 'February-25'];
-                   
-    // Set the default selected month to the latest month
-    setSelectedMonth('February-25');
+  // 2024 has all months, 2025 has only Jan and Feb
+  const monthsByYear: Record<string, string[]> = {
+    '2024': ['Jan-24', 'Feb-24', 'Mar-24', 'Apr-24', 'May-24', 'Jun-24', 
+             'Jul-24', 'Aug-24', 'Sep-24', 'Oct-24', 'Nov-24', 'Dec-24'],
+    '2025': ['Jan-25', 'Feb-25']
+  };
+
+  // Get current available months based on selected year
+  const availableMonths = monthsByYear[selectedYear] || [];
+
+  // Mock data based on our analysis (in a real system this would come from an API/backend)
+  const l1Data = {
+    'Jan-24': 32803, 'Feb-24': 27996, 'Mar-24': 23860, 'Apr-24': 31869, 
+    'May-24': 30737, 'Jun-24': 41953, 'Jul-24': 35166, 'Aug-24': 35420, 
+    'Sep-24': 41341, 'Oct-24': 31519, 'Nov-24': 35290, 'Dec-24': 36733, 
+    'Jan-25': 32580, 'Feb-25': 44043
+  };
+
+  const l2ZoneBulkData = {
+    'Jan-24': 11964, 'Feb-24': 10292, 'Mar-24': 11087, 'Apr-24': 13380, 
+    'May-24': 11785, 'Jun-24': 15699, 'Jul-24': 18370, 'Aug-24': 16401, 
+    'Sep-24': 14818, 'Oct-24': 16461, 'Nov-24': 13045, 'Dec-24': 16148, 
+    'Jan-25': 15327, 'Feb-25': 14716
+  };
+
+  const directConnectionData = {
+    'Jan-24': 16725, 'Feb-24': 14781, 'Mar-24': 12920, 'Apr-24': 15333,
+    'May-24': 16304, 'Jun-24': 18927, 'Jul-24': 16319, 'Aug-24': 16352,
+    'Sep-24': 16074, 'Oct-24': 22824, 'Nov-24': 16868, 'Dec-24': 16344,
+    'Jan-25': 19897, 'Feb-25': 21338
+  };
+
+  // Zone-wise data for the selected month
+  const zoneData = {
+    'Zone_01_(FM)': {
+      bulk: {
+        'Jan-24': 1595, 'Feb-24': 1283, 'Mar-24': 1255, 'Apr-24': 1383,
+        'May-24': 1411, 'Jun-24': 2078, 'Jul-24': 2601, 'Aug-24': 1638,
+        'Sep-24': 1550, 'Oct-24': 2098, 'Nov-24': 1808, 'Dec-24': 1946,
+        'Jan-25': 2008, 'Feb-25': 1740
+      },
+      individual: {
+        'Jan-24': 1746, 'Feb-24': 1225, 'Mar-24': 1194, 'Apr-24': 1316,
+        'May-24': 1295, 'Jun-24': 1909, 'Jul-24': 2369, 'Aug-24': 1619,
+        'Sep-24': 1425, 'Oct-24': 1485, 'Nov-24': 1756, 'Dec-24': 1975,
+        'Jan-25': 2062, 'Feb-25': 1832
+      }
+    },
+    'Zone_03_(A)': {
+      bulk: {
+        'Jan-24': 1234, 'Feb-24': 1099, 'Mar-24': 1297, 'Apr-24': 1892,
+        'May-24': 2254, 'Jun-24': 2227, 'Jul-24': 3313, 'Aug-24': 3172,
+        'Sep-24': 2698, 'Oct-24': 3715, 'Nov-24': 3501, 'Dec-24': 3796,
+        'Jan-25': 4235, 'Feb-25': 4273
+      },
+      individual: {
+        'Jan-24': 1420, 'Feb-24': 1309, 'Mar-24': 1196, 'Apr-24': 1194,
+        'May-24': 1409, 'Jun-24': 1187, 'Jul-24': 1183, 'Aug-24': 1482,
+        'Sep-24': 1269, 'Oct-24': 2529, 'Nov-24': 2326, 'Dec-24': 2191,
+        'Jan-25': 2064, 'Feb-25': 2070
+      }
+    },
+    'Zone_03_(B)': {
+      bulk: {
+        'Jan-24': 2653, 'Feb-24': 2169, 'Mar-24': 2315, 'Apr-24': 2381,
+        'May-24': 2634, 'Jun-24': 2932, 'Jul-24': 3369, 'Aug-24': 3458,
+        'Sep-24': 3742, 'Oct-24': 2906, 'Nov-24': 2695, 'Dec-24': 3583,
+        'Jan-25': 3256, 'Feb-25': 2962
+      },
+      individual: {
+        'Jan-24': 1709, 'Feb-24': 1471, 'Mar-24': 1553, 'Apr-24': 1572,
+        'May-24': 1557, 'Jun-24': 1675, 'Jul-24': 1794, 'Aug-24': 1653,
+        'Sep-24': 1503, 'Oct-24': 2412, 'Nov-24': 1975, 'Dec-24': 2574,
+        'Jan-25': 2312, 'Feb-25': 1986
+      }
+    },
+    'Zone_05': {
+      bulk: {
+        'Jan-24': 4286, 'Feb-24': 3897, 'Mar-24': 4127, 'Apr-24': 4911,
+        'May-24': 2639, 'Jun-24': 4992, 'Jul-24': 5305, 'Aug-24': 4039,
+        'Sep-24': 2736, 'Oct-24': 3383, 'Nov-24': 1438, 'Dec-24': 3788,
+        'Jan-25': 4267, 'Feb-25': 4231
+      },
+      individual: {
+        'Jan-24': 2172, 'Feb-24': 1623, 'Mar-24': 1032, 'Apr-24': 1553,
+        'May-24': 788, 'Jun-24': 1274, 'Jul-24': 1861, 'Aug-24': 1137,
+        'Sep-24': 858, 'Oct-24': 1100, 'Nov-24': 1057, 'Dec-24': 1154,
+        'Jan-25': 1254, 'Feb-25': 1233
+      }
+    },
+    'Zone_08': {
+      bulk: {
+        'Jan-24': 2170, 'Feb-24': 1825, 'Mar-24': 2021, 'Apr-24': 2753,
+        'May-24': 2722, 'Jun-24': 3193, 'Jul-24': 3639, 'Aug-24': 3957,
+        'Sep-24': 3947, 'Oct-24': 4296, 'Nov-24': 3569, 'Dec-24': 3018,
+        'Jan-25': 1547, 'Feb-25': 1498
+      },
+      individual: {
+        'Jan-24': 1986, 'Feb-24': 1560, 'Mar-24': 1749, 'Apr-24': 2597,
+        'May-24': 2372, 'Jun-24': 2718, 'Jul-24': 2311, 'Aug-24': 2896,
+        'Sep-24': 2493, 'Oct-24': 1977, 'Nov-24': 2070, 'Dec-24': 1680,
+        'Jan-25': 1477, 'Feb-25': 1379
+      }
+    },
+    'Zone_VS': {
+      bulk: {
+        'Jan-24': 26, 'Feb-24': 19, 'Mar-24': 72, 'Apr-24': 60,
+        'May-24': 125, 'Jun-24': 277, 'Jul-24': 143, 'Aug-24': 137,
+        'Sep-24': 145, 'Oct-24': 63, 'Nov-24': 34, 'Dec-24': 17,
+        'Jan-25': 14, 'Feb-25': 12
+      },
+      individual: {
+        'Jan-24': 0, 'Feb-24': 1, 'Mar-24': 16, 'Apr-24': 51,
+        'May-24': 33, 'Jun-24': 191, 'Jul-24': 148, 'Aug-24': 125,
+        'Sep-24': 134, 'Oct-24': 49, 'Nov-24': 57, 'Dec-24': 34,
+        'Jan-25': 35, 'Feb-25': 30
+      }
+    }
+  };
+
+  // Consumption by type data
+  const typeConsumptionData = {
+    'Main BULK': {
+      'Jan-24': 32803, 'Feb-24': 27996, 'Mar-24': 23860, 'Apr-24': 31869, 
+      'May-24': 30737, 'Jun-24': 41953, 'Jul-24': 35166, 'Aug-24': 35420, 
+      'Sep-24': 41341, 'Oct-24': 31519, 'Nov-24': 35290, 'Dec-24': 36733, 
+      'Jan-25': 32580, 'Feb-25': 44043
+    },
+    'IRR_Servies': {
+      'Jan-24': 3800, 'Feb-24': 2765, 'Mar-24': 2157, 'Apr-24': 2798,
+      'May-24': 2211, 'Jun-24': 4463, 'Jul-24': 5225, 'Aug-24': 2630,
+      'Sep-24': 2400, 'Oct-24': 2793, 'Nov-24': 326, 'Dec-24': 295,
+      'Jan-25': 208, 'Feb-25': 286
+    },
+    'MB_Common': {
+      'Jan-24': 213, 'Feb-24': 232, 'Mar-24': 190, 'Apr-24': 187,
+      'May-24': 175, 'Jun-24': 164, 'Jul-24': 123, 'Aug-24': 136,
+      'Sep-24': 143, 'Oct-24': 168, 'Nov-24': 173, 'Dec-24': 283,
+      'Jan-25': 273, 'Feb-25': 193
+    },
+    'Building': {
+      'Jan-24': 99, 'Feb-24': 98, 'Mar-24': 70, 'Apr-24': 53,
+      'May-24': 22, 'Jun-24': 95, 'Jul-24': 90, 'Aug-24': 10,
+      'Sep-24': 4, 'Oct-24': 1, 'Nov-24': 15, 'Dec-24': 42,
+      'Jan-25': 68, 'Feb-25': 59
+    },
+    'Retail': {
+      'Jan-24': 15624, 'Feb-24': 13964, 'Mar-24': 12339, 'Apr-24': 14509,
+      'May-24': 15255, 'Jun-24': 16688, 'Jul-24': 14206, 'Aug-24': 15365,
+      'Sep-24': 15116, 'Oct-24': 21426, 'Nov-24': 18197, 'Dec-24': 17790,
+      'Jan-25': 21494, 'Feb-25': 22709
+    },
+    'Residential (Villa)': {
+      'Jan-24': 4626, 'Feb-24': 3591, 'Mar-24': 3709, 'Apr-24': 4724,
+      'May-24': 4800, 'Jun-24': 5288, 'Jul-24': 5060, 'Aug-24': 5964,
+      'Sep-24': 5178, 'Oct-24': 4955, 'Nov-24': 4719, 'Dec-24': 4789,
+      'Jan-25': 4494, 'Feb-25': 4174
+    },
+    'Residential (Apart)': {
+      'Jan-24': 1240, 'Feb-24': 1182, 'Mar-24': 1127, 'Apr-24': 1281,
+      'May-24': 1163, 'Jun-24': 1151, 'Jul-24': 1233, 'Aug-24': 1121,
+      'Sep-24': 891, 'Oct-24': 1501, 'Nov-24': 1339, 'Dec-24': 1326,
+      'Jan-25': 1243, 'Feb-25': 1173
+    }
+  };
+
+  // Function to handle year selection change
+  const handleYearChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newYear = e.target.value;
+    setSelectedYear(newYear);
     
-    // Sample data for water consumption
-    const consumptionData = [
-      { id: 1, zone: 'Residential', type: 'MC', name: 'Building A', meter: 'W5230', 
-        consumption: { 'April-24': 1208, 'May-24': 1140, 'June-24': 1483, 'July-24': 1674, 'August-24': 1862, 
-                     'September-24': 1522, 'October-24': 1376, 'November-24': 1229, 'December-24': 1140, 
-                     'January-25': 1303, 'February-25': 1095 }},
-      { id: 2, zone: 'Residential', type: 'MC', name: 'Building B', meter: 'W5231', 
-        consumption: { 'April-24': 931, 'May-24': 947, 'June-24': 1025, 'July-24': 1203, 'August-24': 1300, 
-                     'September-24': 1100, 'October-24': 933, 'November-24': 800, 'December-24': 779, 
-                     'January-25': 832.5, 'February-25': 937.2 }},
-      { id: 3, zone: 'Commercial', type: 'MC', name: 'Retail Complex', meter: 'W5232', 
-        consumption: { 'April-24': 2830, 'May-24': 2818, 'June-24': 2920, 'July-24': 3131, 'August-24': 3257, 
-                     'September-24': 2976, 'October-24': 2645, 'November-24': 2519, 'December-24': 2421, 
-                     'January-25': 2545.1, 'February-25': 2669.5 }},
-      { id: 4, zone: 'Commercial', type: 'MC', name: 'Hotel Complex', meter: 'W5233', 
-        consumption: { 'April-24': 3774, 'May-24': 4216, 'June-24': 4511, 'July-24': 5059, 'August-24': 5229, 
-                     'September-24': 4817, 'October-24': 4483, 'November-24': 3599, 'December-24': 3952, 
-                     'January-25': 4069, 'February-25': 4221 }},
-      { id: 5, zone: 'Landscaping', type: 'MC', name: 'Central Garden', meter: 'W5234', 
-        consumption: { 'April-24': 5044, 'May-24': 6210, 'June-24': 6450, 'July-24': 6800, 'August-24': 6153, 
-                     'September-24': 5825, 'October-24': 4600, 'November-24': 4200, 'December-24': 4000, 
-                     'January-25': 4300, 'February-25': 4900 }},
-      { id: 6, zone: 'Landscaping', type: 'MC', name: 'Roadside Greenery', meter: 'W5235', 
-        consumption: { 'April-24': 3198, 'May-24': 3969, 'June-24': 4122, 'July-24': 4303, 'August-24': 4208, 
-                     'September-24': 3957, 'October-24': 3196, 'November-24': 2991, 'December-24': 2885, 
-                     'January-25': 3028, 'February-25': 3240 }},
-      { id: 7, zone: 'Public', type: 'MC', name: 'Community Center', meter: 'W5236', 
-        consumption: { 'April-24': 944, 'May-24': 965, 'June-24': 1091, 'July-24': 1168, 'August-24': 1247, 
-                     'September-24': 1123, 'October-24': 928, 'November-24': 886, 'December-24': 831, 
-                     'January-25': 901, 'February-25': 938 }},
-      { id: 8, zone: 'Public', type: 'MC', name: 'Sports Complex', meter: 'W5237', 
-        consumption: { 'April-24': 2856, 'May-24': 3077, 'June-24': 3361, 'July-24': 3616, 'August-24': 3684, 
-                     'September-24': 3466, 'October-24': 2915, 'November-24': 2613, 'December-24': 2443, 
-                     'January-25': 2673, 'February-25': 2865 }},
-      { id: 9, zone: 'Facilities', type: 'MC', name: 'Water Treatment Plant', meter: 'W5238', 
-        consumption: { 'April-24': 543, 'May-24': 573, 'June-24': 663, 'July-24': 723, 'August-24': 767, 
-                     'September-24': 690, 'October-24': 644, 'November-24': 532, 'December-24': 468, 
-                     'January-25': 589, 'February-25': 614 }},
-      { id: 10, zone: 'Facilities', type: 'MC', name: 'Maintenance Building', meter: 'W5239', 
-        consumption: { 'April-24': 272, 'May-24': 289, 'June-24': 318, 'July-24': 330, 'August-24': 358, 
-                     'September-24': 325, 'October-24': 293, 'November-24': 274, 'December-24': 256, 
-                     'January-25': 283, 'February-25': 304 }},
-    ];
+    // Update selected month to the first month of the selected year
+    const firstMonthOfYear = monthsByYear[newYear][0];
+    setSelectedMonth(firstMonthOfYear);
+  };
+
+  // Prepare data for charts
+  const prepareMonthlyData = () => {
+    // Get all months from the selected year
+    const months = monthsByYear[selectedYear];
     
-    setData(consumptionData);
-    processData(consumptionData);
+    return months.map(month => ({
+      month,
+      l1Total: l1Data[month],
+      l2ZoneBulk: l2ZoneBulkData[month],
+      directConnections: directConnectionData[month],
+      totalL2: l2ZoneBulkData[month] + directConnectionData[month],
+      loss: l1Data[month] - (l2ZoneBulkData[month] + directConnectionData[month]),
+      lossPercentage: ((l1Data[month] - (l2ZoneBulkData[month] + directConnectionData[month])) / l1Data[month] * 100).toFixed(2)
+    }));
+  };
+
+  const monthlyData = prepareMonthlyData();
+
+  // Prepare zone data for the selected month
+  const prepareZoneData = () => {
+    // Filter zones based on selection if needed
+    let zones = Object.keys(zoneData);
+    if (selectedZone) {
+      zones = zones.filter(zone => zone === selectedZone);
+    }
+    
+    return zones.map(zone => {
+      const bulkValue = zoneData[zone].bulk[selectedMonth];
+      const individualValue = zoneData[zone].individual[selectedMonth];
+      const difference = bulkValue - individualValue;
+      const lossPercentage = bulkValue > 0 ? (difference / bulkValue * 100).toFixed(2) : '0';
+      
+      return {
+        zone,
+        bulkValue,
+        individualValue,
+        difference,
+        lossPercentage: Number(lossPercentage)
+      };
+    }).sort((a, b) => b.lossPercentage - a.lossPercentage);
+  };
+
+  const zoneDataForSelectedMonth = prepareZoneData();
+
+  // Prepare type consumption data for the selected month
+  const prepareTypeConsumptionData = () => {
+    return Object.keys(typeConsumptionData).map(type => ({
+      type,
+      value: typeConsumptionData[type][selectedMonth],
+    })).sort((a, b) => b.value - a.value);
+  };
+
+  const typeConsumptionForSelectedMonth = prepareTypeConsumptionData();
+
+  // Prepare loss data for the heat map
+  const prepareLossHeatMapData = () => {
+    // Filter zones based on selection if needed
+    let zones = Object.keys(zoneData);
+    if (selectedZone && selectedPage === 'zone-analysis') {
+      zones = zones.filter(zone => zone === selectedZone);
+    }
+    
+    return zones.map(zone => {
+      const monthlyLosses = monthsByYear[selectedYear].map(month => {
+        const bulkValue = zoneData[zone].bulk[month];
+        const individualValue = zoneData[zone].individual[month];
+        const difference = bulkValue - individualValue;
+        const lossPercentage = bulkValue > 0 ? (difference / bulkValue * 100) : 0;
+        
+        return {
+          month,
+          zone,
+          lossPercentage: lossPercentage > 0 ? parseFloat(lossPercentage.toFixed(2)) : 0
+        };
+      });
+      
+      return {
+        zone,
+        data: monthlyLosses
+      };
+    });
+  };
+
+  const lossHeatMapData = prepareLossHeatMapData();
+
+  // Prepare consumption trend data
+  const prepareConsumptionTrendData = () => {
+    return monthsByYear[selectedYear].map(month => {
+      const data = {
+        month
+      } as Record<string, any>;
+      
+      Object.keys(typeConsumptionData).forEach(type => {
+        if (type !== 'Main BULK') {
+          data[type] = typeConsumptionData[type][month];
+        }
+      });
+      
+      return data;
+    });
+  };
+
+  const consumptionTrendData = prepareConsumptionTrendData();
+
+  // Calculate summary metrics for the selected month
+  const l1Total = l1Data[selectedMonth];
+  const l2Total = l2ZoneBulkData[selectedMonth] + directConnectionData[selectedMonth];
+  const overallLoss = l1Total - l2Total;
+  const overallLossPercentage = ((overallLoss / l1Total) * 100).toFixed(2);
+
+  // Function to format large numbers with commas
+  const formatNumber = (num: number) => {
+    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  };
+
+  // Function to determine status color based on value
+  const getStatusColor = (percentage: number) => {
+    if (percentage < 10) return successColor;
+    if (percentage < 30) return warningColor;
+    return dangerColor;
+  };
+
+  // Calculate the maximum loss percentage for y-axis scale
+  const getMaxLossPercentage = () => {
+    const maxPercentage = Math.max(...monthlyData.map(item => parseFloat(item.lossPercentage)));
+    // Round up to nearest 10 for better visual scale
+    return Math.ceil(maxPercentage / 10) * 10;
+  };
+
+  // Render Overview Page
+  const renderOverview = () => (
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* Summary Cards */}
+      <Card className="bg-white shadow-md">
+        <CardHeader className="bg-gradient-to-r from-gray-100 to-gray-200 pb-2">
+          <CardTitle className="text-lg font-bold text-gray-700">L1 Total (Main Bulk)</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-3xl font-bold text-center mt-4" style={{ color: primaryColor }}>
+            {formatNumber(l1Total)} m³
+          </div>
+          <div className="text-sm text-gray-500 text-center">Source Meter Reading</div>
+        </CardContent>
+      </Card>
+
+      <Card className="bg-white shadow-md">
+        <CardHeader className="bg-gradient-to-r from-gray-100 to-gray-200 pb-2">
+          <CardTitle className="text-lg font-bold text-gray-700">L2 Total (Distribution)</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-3xl font-bold text-center mt-4" style={{ color: secondaryColor }}>
+            {formatNumber(l2Total)} m³
+          </div>
+          <div className="text-sm text-gray-500 text-center">Zone Bulk + Direct Connections</div>
+        </CardContent>
+      </Card>
+
+      <Card className="bg-white shadow-md">
+        <CardHeader className="bg-gradient-to-r from-gray-100 to-gray-200 pb-2">
+          <CardTitle className="text-lg font-bold text-gray-700">Overall Loss</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-3xl font-bold text-center mt-4" style={{ color: getStatusColor(parseFloat(overallLossPercentage)) }}>
+            {formatNumber(overallLoss)} m³ ({overallLossPercentage}%)
+          </div>
+          <div className="text-sm text-gray-500 text-center">L1 - L2</div>
+        </CardContent>
+      </Card>
+
+      {/* Monthly Trend Chart */}
+      <Card className="col-span-1 lg:col-span-3 bg-white shadow-md">
+        <CardHeader className="bg-gradient-to-r from-gray-100 to-gray-200 pb-2">
+          <CardTitle className="text-lg font-bold text-gray-700">Monthly Water Distribution Trend</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="h-96">
+            <ResponsiveContainer width="100%" height="100%">
+              <ComposedChart data={monthlyData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <XAxis dataKey="month" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Bar dataKey="l1Total" name="L1 Total (Main Bulk)" fill={primaryColor} />
+                <Bar dataKey="l2ZoneBulk" name="L2 Zone Bulk" fill={secondaryColor} stackId="a" />
+                <Bar dataKey="directConnections" name="Direct Connections" fill={accentColor} stackId="a" />
+                <Line type="monotone" dataKey="loss" name="Loss (m³)" stroke={dangerColor} />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Loss Distribution */}
+      <Card className="col-span-1 lg:col-span-2 bg-white shadow-md">
+        <CardHeader className="bg-gradient-to-r from-gray-100 to-gray-200 pb-2">
+          <CardTitle className="text-lg font-bold text-gray-700">Loss Percentage by Month</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={monthlyData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <XAxis dataKey="month" />
+                <YAxis domain={[0, getMaxLossPercentage()]} />
+                <Tooltip />
+                <Legend />
+                <ReferenceLine y={10} stroke="green" strokeDasharray="3 3" />
+                <ReferenceLine y={30} stroke="orange" strokeDasharray="3 3" />
+                <Line type="monotone" dataKey="lossPercentage" name="Loss %" stroke={dangerColor} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Consumption by Type */}
+      <Card className="col-span-1 bg-white shadow-md">
+        <CardHeader className="bg-gradient-to-r from-gray-100 to-gray-200 pb-2">
+          <CardTitle className="text-lg font-bold text-gray-700">Consumption by Type</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={typeConsumptionForSelectedMonth.filter(d => d.type !== 'Main BULK')}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={40}
+                  outerRadius={80}
+                  fill={primaryColor}
+                  paddingAngle={2}
+                  dataKey="value"
+                  label={(entry) => {
+                    const { type, percent } = entry;
+                    return `${type.length > 10 ? type.substring(0, 10) + '...' : type}: ${(percent * 100).toFixed(0)}%`;
+                  }}
+                  labelLine={true}
+                >
+                  {typeConsumptionForSelectedMonth.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={[primaryColor, secondaryColor, accentColor, '#8884d8', '#82ca9d', '#ffc658', '#ff8042'][index % 7]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+
+  // Render Zone-wise Analysis Page
+  const renderZoneAnalysis = () => (
+    <div className="grid grid-cols-1 gap-6">
+      {/* Zone-wise Comparison */}
+      <Card className="bg-white shadow-md">
+        <CardHeader className="bg-gradient-to-r from-gray-100 to-gray-200 pb-2">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
+            <CardTitle className="text-lg font-bold text-gray-700">Zone-wise Consumption and Loss Analysis</CardTitle>
+            <div className="mt-2 md:mt-0">
+              <select 
+                value={selectedZone}
+                onChange={(e) => setSelectedZone(e.target.value)}
+                className="px-3 py-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+              >
+                <option value="">All Zones</option>
+                {Object.keys(zoneData).map(zone => (
+                  <option key={zone} value={zone}>{zone}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="h-96">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={zoneDataForSelectedMonth} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <XAxis dataKey="zone" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Bar dataKey="bulkValue" name="Zone Bulk Meter (m³)" fill={primaryColor} />
+                <Bar dataKey="individualValue" name="Sum of Individual Meters (m³)" fill={accentColor} />
+                <Line type="monotone" dataKey="lossPercentage" name="Loss %" stroke={dangerColor} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Zone Loss Details Table */}
+      <Card className="bg-white shadow-md">
+        <CardHeader className="bg-gradient-to-r from-gray-100 to-gray-200 pb-2">
+          <CardTitle className="text-lg font-bold text-gray-700">
+            {selectedZone ? `${selectedZone} Details for ${selectedMonth}` : `Zone Details for ${selectedMonth}`}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <table className="min-w-full bg-white rounded-lg">
+              <thead className="bg-gray-100">
+                <tr>
+                  <th className="py-3 px-4 text-left">Zone</th>
+                  <th className="py-3 px-4 text-right">Bulk Meter (m³)</th>
+                  <th className="py-3 px-4 text-right">Sum of Individual (m³)</th>
+                  <th className="py-3 px-4 text-right">Difference (m³)</th>
+                  <th className="py-3 px-4 text-right">Loss %</th>
+                  <th className="py-3 px-4 text-center">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {zoneDataForSelectedMonth.map((zone, index) => (
+                  <tr 
+                    key={index} 
+                    className={`${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'} cursor-pointer hover:bg-blue-50`}
+                    onClick={() => selectedZone === zone.zone ? setSelectedZone('') : setSelectedZone(zone.zone)}
+                  >
+                    <td className="py-3 px-4 border-b font-medium">
+                      {zone.zone}
+                      {selectedZone === zone.zone && (
+                        <span className="ml-2 text-blue-600">●</span>
+                      )}
+                    </td>
+                    <td className="py-3 px-4 border-b text-right">{formatNumber(zone.bulkValue)}</td>
+                    <td className="py-3 px-4 border-b text-right">{formatNumber(zone.individualValue)}</td>
+                    <td className="py-3 px-4 border-b text-right">{formatNumber(zone.difference)}</td>
+                    <td className="py-3 px-4 border-b text-right font-semibold" style={{ color: getStatusColor(zone.lossPercentage) }}>
+                      {zone.lossPercentage}%
+                    </td>
+                    <td className="py-3 px-4 border-b text-center">
+                      <span 
+                        className="inline-block w-3 h-3 rounded-full" 
+                        style={{ backgroundColor: getStatusColor(zone.lossPercentage) }}
+                      ></span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="mt-2 text-sm text-gray-500">
+            Click on any zone row to filter the dashboard to that specific zone.
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Zone Performance Over Time */}
+      <Card className="bg-white shadow-md">
+        <CardHeader className="bg-gradient-to-r from-gray-100 to-gray-200 pb-2">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
+            <CardTitle className="text-lg font-bold text-gray-700">
+              {selectedZone ? `${selectedZone} Performance Over Time` : 'Zone Performance Over Time'}
+            </CardTitle>
+            {selectedZone && (
+              <button 
+                onClick={() => setSelectedZone('')}
+                className="mt-2 md:mt-0 px-3 py-1 text-sm bg-gray-200 hover:bg-gray-300 rounded-lg transition duration-200"
+              >
+                View All Zones
+              </button>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="h-96">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <XAxis dataKey="month" type="category" allowDuplicatedCategory={false} />
+                <YAxis domain={[0, getMaxLossPercentage()]} />
+                <Tooltip />
+                <Legend />
+                {lossHeatMapData.map((zone, index) => (
+                  <Line 
+                    key={index}
+                    data={zone.data} 
+                    dataKey="lossPercentage" 
+                    name={zone.zone} 
+                    stroke={[primaryColor, secondaryColor, accentColor, '#8884d8', '#82ca9d', '#ffc658'][index % 6]}
+                    type="monotone"
+                    strokeWidth={selectedZone === zone.zone ? 3 : 1.5}
+                  />
+                ))}
+                <ReferenceLine y={10} stroke="green" strokeDasharray="3 3" />
+                <ReferenceLine y={30} stroke="orange" strokeDasharray="3 3" />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+
+  // Render Losses Analysis Page
+  const renderLossesAnalysis = () => (
+    <div className="grid grid-cols-1 gap-6">
+      {/* Loss Trend Over Time */}
+      <Card className="bg-white shadow-md">
+        <CardHeader className="bg-gradient-to-r from-gray-100 to-gray-200 pb-2">
+          <CardTitle className="text-lg font-bold text-gray-700">L1 to L2 Loss Trend</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={monthlyData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <XAxis dataKey="month" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Area type="monotone" dataKey="loss" name="Loss (m³)" fill={dangerColor} stroke={dangerColor} fillOpacity={0.3} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Loss Heatmap */}
+      <Card className="bg-white shadow-md">
+        <CardHeader className="bg-gradient-to-r from-gray-100 to-gray-200 pb-2">
+          <CardTitle className="text-lg font-bold text-gray-700">Zone Loss Heatmap</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <table className="min-w-full bg-white rounded-lg">
+              <thead className="bg-gray-100">
+                <tr>
+                  <th className="py-3 px-4 text-left">Zone</th>
+                  {monthsByYear[selectedYear].map(month => (
+                    <th key={month} className="py-3 px-2 text-center">{month}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {lossHeatMapData.map((zone, zoneIndex) => (
+                  <tr key={zoneIndex} className={zoneIndex % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
+                    <td className="py-3 px-4 border-b font-medium">{zone.zone}</td>
+                    {zone.data.map((item, monthIndex) => (
+                      <td 
+                        key={`${zoneIndex}-${monthIndex}`} 
+                        className="py-3 px-2 border-b text-center text-white font-medium"
+                        style={{ 
+                          backgroundColor: getLossColor(item.lossPercentage),
+                          opacity: 0.7 + (item.lossPercentage > 0 ? 0.3 : 0)
+                        }}
+                      >
+                        {item.lossPercentage.toFixed(1)}%
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Top Loss Zones Scatter Plot */}
+      <Card className="bg-white shadow-md">
+        <CardHeader className="bg-gradient-to-r from-gray-100 to-gray-200 pb-2">
+          <CardTitle className="text-lg font-bold text-gray-700">Loss vs. Consumption Analysis</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <ScatterChart margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <XAxis type="number" dataKey="bulkValue" name="Consumption (m³)" />
+                <YAxis type="number" dataKey="lossPercentage" name="Loss %" domain={[0, getMaxLossPercentage()]} />
+                <ZAxis type="number" range={[100, 500]} />
+                <Tooltip cursor={{ strokeDasharray: '3 3' }} />
+                <Legend />
+                <Scatter 
+                  name="Zones" 
+                  data={zoneDataForSelectedMonth} 
+                  fill={primaryColor}
+                  shape="circle"
+                />
+                <ReferenceLine y={10} stroke="green" strokeDasharray="3 3" />
+                <ReferenceLine y={30} stroke="orange" strokeDasharray="3 3" />
+              </ScatterChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="text-sm text-gray-500 mt-4">
+            <p>This chart helps identify high-consumption zones with significant losses. The larger the bubble, the higher the absolute water loss.</p>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+
+  // Render Consumption Types Page
+  const renderConsumptionTypes = () => {
+    // Define color palette for different meter types
+    const COLORS = {
+      'Retail': '#ff8042',
+      'Zone Bulk': '#00C49F',
+      'Residential (Villa)': '#FFED00', // Yellow
+      'Residential (Apart)': '#82ca9d',
+      'IRR_Servies': '#0088FE', // Blue
+      'MB_Common': '#4E4456', // Dark purple/gray
+      'Building': '#B8860B', // Dark yellow
+      'D_Building_Bulk': '#a4de6c',
+      'D_Building_Common': '#d0ed57',
+      'Main BULK': '#ff5252'
+    };
+    
+    // Access available types for filtering
+    const availableTypes = Object.keys(typeConsumptionData).filter(type => type !== 'Main BULK');
+    
+    // Handle type selection toggling
+    const handleTypeSelection = (type: string) => {
+      setSelectedTypes(prevSelectedTypes => {
+        if (prevSelectedTypes.includes(type)) {
+          return prevSelectedTypes.filter(t => t !== type);
+        } else {
+          return [...prevSelectedTypes, type];
+        }
+      });
+    };
+    
+    // Clear all type selections
+    const clearTypeSelection = () => {
+      setSelectedTypes([]);
+    };
+    
+    // Prepare the consumption data by type
+    const prepareTypeData = () => {
+      const typeData = Object.keys(typeConsumptionData)
+        .map(type => ({
+          name: type,
+          value: typeConsumptionData[type][selectedMonth]
+        }))
+        .sort((a, b) => b.value - a.value);
+        
+      // Calculate percentages
+      const totalConsumption = typeData
+        .filter(item => item.name !== 'Main BULK')
+        .reduce((sum, item) => sum + item.value, 0);
+        
+      return typeData.map(item => ({
+        ...item,
+        percentage: item.name !== 'Main BULK' 
+          ? ((item.value / totalConsumption) * 100).toFixed(1) 
+          : '0'
+      }));
+    };
+    
+    const typeData = prepareTypeData();
+    
+    // Filter out Main BULK for some charts to focus on actual consumption types
+    const filteredTypeData = typeData.filter(item => item.name !== 'Main BULK');
+    
+    // Apply selected type filters if any are selected
+    const typeDataToDisplay = selectedTypes.length > 0 
+      ? filteredTypeData.filter(item => selectedTypes.includes(item.name))
+      : filteredTypeData;
+    
+    // Get the types sorted by total consumption for consistent coloring
+    const typesByConsumption = [...filteredTypeData]
+      .sort((a, b) => b.value - a.value)
+      .map(item => item.name);
+      
+    // Get only selected types for charts if any are selected
+    const typesToShow = selectedTypes.length > 0 ? selectedTypes : typesByConsumption;
+    
+    // Prepare data for trend charts
+    const consumptionTrendsByType = monthsByYear[selectedYear].map(month => {
+      const monthData: Record<string, any> = { month };
+      Object.keys(typeConsumptionData).forEach(type => {
+        monthData[type] = typeConsumptionData[type][month];
+      });
+      return monthData;
+    });
+    
+    const totalConsumption = l1Data[selectedMonth];
+
+    return (
+      <div className="bg-gray-50">
+        {/* Type Selector */}
+        <div className="bg-white shadow mb-6 rounded-lg">
+          <div className="p-4">
+            <div className="flex flex-col space-y-2">
+              <div className="flex justify-between items-center">
+                <h2 className="text-lg font-medium text-gray-700">Filter by Meter Type</h2>
+                {selectedTypes.length > 0 && (
+                  <button 
+                    onClick={clearTypeSelection}
+                    className="px-3 py-1 bg-gray-200 hover:bg-gray-300 rounded text-sm"
+                  >
+                    Clear All
+                  </button>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {availableTypes.map(type => (
+                  <button
+                    key={type}
+                    onClick={() => handleTypeSelection(type)}
+                    className={`px-3 py-1 rounded text-sm flex items-center ${
+                      selectedTypes.includes(type) 
+                        ? 'bg-indigo-100 border border-indigo-400' 
+                        : 'bg-gray-100 border border-gray-300'
+                    }`}
+                  >
+                    <span 
+                      className="w-3 h-3 rounded-full mr-2" 
+                      style={{ backgroundColor: COLORS[type] || primaryColor }}
+                    ></span>
+                    {type}
+                    {selectedTypes.includes(type) && (
+                      <span className="ml-2 text-indigo-600">✓</span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Main Dashboard */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          {/* Total Consumption Card */}
+          <Card className="bg-white shadow-md">
+            <CardHeader className="bg-gradient-to-r from-gray-100 to-gray-200 pb-2">
+              <CardTitle className="text-lg font-bold text-gray-700">Total Consumption (Main Bulk)</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-baseline">
+                <span className="text-3xl font-bold" style={{ color: primaryColor }}>{formatNumber(totalConsumption)}</span>
+                <span className="ml-2 text-gray-500">m³</span>
+              </div>
+              <p className="text-sm text-gray-500 mt-1">For {selectedMonth}</p>
+            </CardContent>
+          </Card>
+
+          {/* Highest Consumer Type Card */}
+          <Card className="bg-white shadow-md">
+            <CardHeader className="bg-gradient-to-r from-gray-100 to-gray-200 pb-2">
+              <CardTitle className="text-lg font-bold text-gray-700">Top Consumer Type</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-baseline">
+                <span className="text-3xl font-bold text-green-600">
+                  {typeDataToDisplay.length > 0 ? typeDataToDisplay[0].name : '-'}
+                </span>
+              </div>
+              <p className="text-sm text-gray-500 mt-1">
+                {typeDataToDisplay.length > 0 ? 
+                  `${formatNumber(typeDataToDisplay[0].value)} m³ (${typeDataToDisplay[0].percentage}% of consumption)` : 
+                  ''}
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Consumption By Type Charts */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <Card className="bg-white shadow-md">
+            <CardHeader className="bg-gradient-to-r from-gray-100 to-gray-200 pb-2">
+              <CardTitle className="text-lg font-bold text-gray-700">Consumption by Type ({selectedMonth})</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={typeDataToDisplay}
+                    margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" tick={{ fontSize: 12 }} angle={-45} textAnchor="end" height={80} />
+                    <YAxis label={{ value: 'Consumption (m³)', angle: -90, position: 'insideLeft' }} />
+                    <Tooltip formatter={(value) => [`${formatNumber(value as number)} m³`, 'Consumption']} />
+                    <Bar dataKey="value">
+                      {typeDataToDisplay.map((entry) => (
+                        <Cell key={entry.name} fill={COLORS[entry.name] || primaryColor} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white shadow-md">
+            <CardHeader className="bg-gradient-to-r from-gray-100 to-gray-200 pb-2">
+              <CardTitle className="text-lg font-bold text-gray-700">Consumption Distribution (%)</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={typeDataToDisplay}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={true}
+                      outerRadius={90}
+                      fill="#8884d8"
+                      dataKey="value"
+                      label={(entry) => {
+                        // Truncate long type names to prevent overlap
+                        const { name, percent } = entry;
+                        const displayName = name.length > 10 ? `${name.substring(0, 10)}...` : name;
+                        return `${displayName}: ${(percent * 100).toFixed(1)}%`;
+                      }}
+                    >
+                      {typeDataToDisplay.map((entry) => (
+                        <Cell key={entry.name} fill={COLORS[entry.name] || primaryColor} />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      formatter={(value) => [`${formatNumber(value as number)} m³`, 'Consumption']}
+                      contentStyle={{ fontSize: '12px' }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Monthly Trends */}
+        <Card className="bg-white shadow-md mb-6">
+          <CardHeader className="bg-gradient-to-r from-gray-100 to-gray-200 pb-2">
+            <CardTitle className="text-lg font-bold text-gray-700">
+              Consumption Trend by Type ({selectedYear})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-96">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart
+                  data={consumptionTrendsByType}
+                  margin={{ top: 10, right: 30, left: 20, bottom: 30 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="month" tick={{ fontSize: 12 }} angle={-45} textAnchor="end" height={60} />
+                  <YAxis label={{ value: 'Consumption (m³)', angle: -90, position: 'insideLeft' }} />
+                  <Tooltip formatter={(value) => [`${formatNumber(value as number)} m³`, 'Consumption']} />
+                  <Legend />
+                  {typesToShow.map((type) => (
+                    <Line 
+                      type="monotone" 
+                      dataKey={type} 
+                      key={type}
+                      stroke={COLORS[type] || primaryColor} 
+                      activeDot={{ r: 8 }} 
+                      strokeWidth={2}
+                    />
+                  ))}
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Stacked Area Chart for Overall Composition */}
+        <Card className="bg-white shadow-md mb-6">
+          <CardHeader className="bg-gradient-to-r from-gray-100 to-gray-200 pb-2">
+            <CardTitle className="text-lg font-bold text-gray-700">
+              Consumption Composition ({selectedYear})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-96">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart
+                  data={consumptionTrendsByType}
+                  margin={{ top: 10, right: 30, left: 20, bottom: 30 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="month" tick={{ fontSize: 12 }} angle={-45} textAnchor="end" height={60} />
+                  <YAxis label={{ value: 'Consumption (m³)', angle: -90, position: 'insideLeft' }} />
+                  <Tooltip formatter={(value) => [`${formatNumber(value as number)} m³`, 'Consumption']} />
+                  <Legend />
+                  {typesToShow.map((type) => (
+                    <Area 
+                      type="monotone" 
+                      dataKey={type} 
+                      key={type}
+                      stackId="1"
+                      stroke={COLORS[type] || primaryColor} 
+                      fill={COLORS[type] || primaryColor} 
+                    />
+                  ))}
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Consumption Table */}
+        <Card className="bg-white shadow-md mb-6">
+          <CardHeader className="bg-gradient-to-r from-gray-100 to-gray-200 pb-2">
+            <CardTitle className="text-lg font-bold text-gray-700">Consumption by Type Details ({selectedMonth})</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Consumption Type</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Value (m³)</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Percentage</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {typeDataToDisplay.map((type) => (
+                    <tr key={type.name}>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        <div className="flex items-center">
+                          <span className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: COLORS[type.name] || primaryColor }}></span>
+                          {type.name}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatNumber(type.value)}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{type.percentage}%</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  };
+
+  // useEffect to set document title
+  React.useEffect(() => {
+    document.title = 'Water Distribution Dashboard | Muscat Bay Asset Manager';
   }, []);
-  
-  const processData = (data: any[]) => {
-    // Extract unique categories, zones, and time periods
-    const uniqueCategories = [...new Set(data.map(item => getCategoryFromName(item.name)))];
-    const uniqueZones = [...new Set(data.map(item => item.zone))];
-    const uniqueTimePeriods = Object.keys(data[0]?.consumption || {});
-    
-    setCategories(uniqueCategories);
-    setZones(uniqueZones);
-    setTimePeriods(uniqueTimePeriods);
-    
-    // Calculate total consumption
-    const total = data.reduce((sum, item) => {
-      const itemTotal = Object.values(item.consumption).reduce((a: number, b: number) => a + Number(b), 0);
-      return sum + itemTotal;
-    }, 0);
-    setTotalConsumption(total);
-    
-    // Calculate average consumption
-    const avg = total / (data.length * uniqueTimePeriods.length);
-    setAverageConsumption(avg);
-    
-    // Find max consumption
-    const max = data.reduce((currentMax, item) => {
-      const itemMax = Math.max(...Object.values(item.consumption).map(v => Number(v)));
-      return Math.max(currentMax, itemMax);
-    }, 0);
-    setMaxConsumption(max);
-    
-    // Process consumption by category
-    const byCategory = uniqueCategories.map(category => {
-      const categoryItems = data.filter(item => getCategoryFromName(item.name) === category);
-      const categoryTotal = categoryItems.reduce((sum, item) => {
-        return sum + Object.values(item.consumption).reduce((a: number, b: number) => a + Number(b), 0);
-      }, 0);
-      
-      return {
-        name: category,
-        value: categoryTotal,
-        percentage: (categoryTotal / total) * 100
-      };
-    });
-    setConsumptionByCategory(byCategory);
-    
-    // Process consumption by zone
-    const byZone = uniqueZones.map(zone => {
-      const zoneItems = data.filter(item => item.zone === zone);
-      const zoneTotal = zoneItems.reduce((sum, item) => {
-        return sum + Object.values(item.consumption).reduce((a: number, b: number) => a + Number(b), 0);
-      }, 0);
-      
-      return {
-        name: zone,
-        value: zoneTotal,
-        percentage: (zoneTotal / total) * 100
-      };
-    });
-    setConsumptionByZone(byZone);
-    
-    // Process monthly trends
-    const byMonth = uniqueTimePeriods.map(month => {
-      const monthTotal = data.reduce((sum, item) => {
-        return sum + Number(item.consumption[month] || 0);
-      }, 0);
-      
-      return {
-        name: month,
-        total: monthTotal
-      };
-    });
-    setMonthlyTrends(byMonth);
-    
-    // Find top consumers
-    const consumers = data.map(item => {
-      const itemTotal = Object.values(item.consumption).reduce((a: number, b: number) => a + Number(b), 0);
-      return {
-        id: item.id,
-        name: item.name,
-        zone: item.zone,
-        meter: item.meter,
-        total: itemTotal,
-        percentage: (itemTotal / total) * 100
-      };
-    });
-    
-    setTopConsumers(consumers.sort((a, b) => b.total - a.total).slice(0, 10));
-  };
-  
-  const getCategoryFromName = (name: string) => {
-    if (name.includes('Building')) return 'Residential';
-    if (name.includes('Retail')) return 'Retail';
-    if (name.includes('Hotel')) return 'Hospitality';
-    if (name.includes('Garden') || name.includes('Greenery')) return 'Landscaping';
-    if (name.includes('Center') || name.includes('Complex')) return 'Public Facilities';
-    if (name.includes('Treatment') || name.includes('Maintenance')) return 'Utility Facilities';
-    return 'Other';
-  };
-  
-  const toggleCategoryFilter = (category: string) => {
-    if (selectedCategories.includes(category)) {
-      setSelectedCategories(selectedCategories.filter(cat => cat !== category));
-    } else {
-      setSelectedCategories([...selectedCategories, category]);
-    }
-  };
-  
-  const toggleZoneFilter = (zone: string) => {
-    if (selectedZones.includes(zone)) {
-      setSelectedZones(selectedZones.filter(z => z !== zone));
-    } else {
-      setSelectedZones([...selectedZones, zone]);
-    }
-  };
-  
-  const resetFilters = () => {
-    setTimeframe('all');
-    setSelectedCategories([]);
-    setSelectedZones([]);
-  };
-  
-  // Calculate cost (using a fictional rate)
-  const calculateCost = (consumption: number) => {
-    const rate = 0.003; // OMR per unit (cubic meter)
-    return (consumption * rate).toFixed(3);
-  };
 
   return (
     <Layout>
       <div className="min-h-screen bg-gray-50">
         {/* Header */}
-        <header className="px-6 py-4 shadow-md" style={{ backgroundColor: COLORS.primary }}>
-          <div className="flex justify-between items-center">
-            <div className="flex items-center space-x-2">
-              <Droplets className="w-6 h-6 text-white" />
-              <h1 className="text-xl font-bold text-white">Muscat Bay Water Dashboard</h1>
-            </div>
-            <div className="flex items-center space-x-4">
-              <button 
-                className="flex items-center px-3 py-1 rounded-lg bg-white text-sm" 
-                style={{ color: COLORS.primary }}
-                onClick={() => setShowFilters(!showFilters)}
-              >
-                <svg className="w-4 h-4 mr-1" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M3 4H21V6H3V4ZM5 11H19V13H5V11ZM7 18H17V20H7V18Z" fill={COLORS.primary}/>
-                </svg>
-                Filters
-              </button>
-              <button className="flex items-center px-3 py-1 rounded-lg bg-white text-sm" style={{ color: COLORS.primary }}>
-                <svg className="w-4 h-4 mr-1" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M3 19H21V21H3V19ZM13 13V3H11V13H4L12 21L20 13H13Z" fill={COLORS.primary}/>
-                </svg>
-                Export
-              </button>
-            </div>
-          </div>
-        </header>
-        
-        {/* Filters Panel */}
-        {showFilters && (
-          <div className="p-4 border-b bg-white">
-            <div className="flex justify-between items-center mb-3">
-              <h3 className="font-medium" style={{ color: COLORS.primary }}>Filter Dashboard</h3>
-              <button onClick={() => setShowFilters(false)} className="text-gray-500 hover:text-gray-700">
-                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </button>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-1 text-gray-700">Timeframe</label>
-                <select
-                  value={timeframe}
-                  onChange={(e) => setTimeframe(e.target.value)}
-                  className="w-full p-2 border rounded-md"
-                >
-                  <option value="all">All Time</option>
-                  <option value="last30">Last 30 Days</option>
-                  <option value="last90">Last 90 Days</option>
-                  <option value="last180">Last 180 Days</option>
-                  <option value="custom">Custom Range</option>
-                </select>
+        <div className="bg-white shadow-md">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div className="flex flex-col md:flex-row justify-between items-center">
+              <div className="flex items-center">
+                <Droplets className="h-6 w-6 mr-2 text-blue-600" />
+                <h1 className="text-2xl font-bold" style={{ color: primaryColor }}>Muscat Bay Water Distribution Dashboard</h1>
               </div>
-              
-              <div>
-                <label className="block text-sm font-medium mb-1 text-gray-700">Categories</label>
-                <div className="flex flex-wrap gap-2">
-                  {categories.map(category => (
-                    <button
-                      key={category}
-                      onClick={() => toggleCategoryFilter(category)}
-                      className={`px-2 py-1 text-xs rounded-full ${
-                        selectedCategories.includes(category) 
-                          ? 'text-white' 
-                          : 'text-gray-700 bg-gray-200'
-                      }`}
-                      style={{ 
-                        backgroundColor: selectedCategories.includes(category) 
-                          ? COLORS.primary 
-                          : undefined 
-                      }}
-                    >
-                      {category}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium mb-1 text-gray-700">Zones</label>
-                <div className="flex flex-wrap gap-2">
-                  {zones.map(zone => (
-                    <button
-                      key={zone}
-                      onClick={() => toggleZoneFilter(zone)}
-                      className={`px-2 py-1 text-xs rounded-full ${
-                        selectedZones.includes(zone) 
-                          ? 'text-white' 
-                          : 'text-gray-700 bg-gray-200'
-                      }`}
-                      style={{ 
-                        backgroundColor: selectedZones.includes(zone) 
-                          ? COLORS.primary 
-                          : undefined 
-                      }}
-                    >
-                      {zone}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-            
-            <div className="mt-4 flex justify-end">
-              <button
-                onClick={resetFilters}
-                className="flex items-center px-3 py-1 rounded-lg text-sm text-white"
-                style={{ backgroundColor: COLORS.primary }}
-              >
-                <svg className="w-4 h-4 mr-1" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4C7.58 4 4.01 7.58 4.01 12C4.01 16.42 7.58 20 12 20C15.73 20 18.84 17.45 19.73 14H17.65C16.83 16.33 14.61 18 12 18C8.69 18 6 15.31 6 12C6 8.69 8.69 6 12 6C13.66 6 15.14 6.69 16.22 7.78L13 11H20V4L17.65 6.35Z" fill="white"/>
-                </svg>
-                Reset Filters
-              </button>
-            </div>
-          </div>
-        )}
-        
-        {/* Tabs */}
-        <div className="flex border-b px-6 bg-white">
-          <button
-            className={`py-4 px-4 font-medium border-b-2 ${
-              activeTab === 'overview' ? 'border-current' : 'border-transparent'
-            }`}
-            style={{ color: activeTab === 'overview' ? COLORS.primary : 'gray' }}
-            onClick={() => setActiveTab('overview')}
-          >
-            <div className="flex items-center">
-              <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M3 13H11V3H3V13ZM3 21H11V15H3V21ZM13 21H21V11H13V21ZM13 3V9H21V3H13Z" fill="currentColor"/>
-              </svg>
-              Overview
-            </div>
-          </button>
-          <button
-            className={`py-4 px-4 font-medium border-b-2 ${
-              activeTab === 'categories' ? 'border-current' : 'border-transparent'
-            }`}
-            style={{ color: activeTab === 'categories' ? COLORS.primary : 'gray' }}
-            onClick={() => setActiveTab('categories')}
-          >
-            <div className="flex items-center">
-              <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M19 3H5C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H19C20.1 21 21 20.1 21 19V5C21 3.9 20.1 3 19 3ZM9 17H7V7H9V17ZM13 17H11V10H13V17ZM17 17H15V13H17V17Z" fill="currentColor"/>
-              </svg>
-              Categories
-            </div>
-          </button>
-          <button
-            className={`py-4 px-4 font-medium border-b-2 ${
-              activeTab === 'zones' ? 'border-current' : 'border-transparent'
-            }`}
-            style={{ color: activeTab === 'zones' ? COLORS.primary : 'gray' }}
-            onClick={() => setActiveTab('zones')}
-          >
-            <div className="flex items-center">
-              <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 2C8.13 2 5 5.13 5 9C5 14.25 12 22 12 22C12 22 19 14.25 19 9C19 5.13 15.87 2 12 2ZM12 11.5C10.62 11.5 9.5 10.38 9.5 9C9.5 7.62 10.62 6.5 12 6.5C13.38 6.5 14.5 7.62 14.5 9C14.5 10.38 13.38 11.5 12 11.5Z" fill="currentColor"/>
-              </svg>
-              Zones
-            </div>
-          </button>
-          <button
-            className={`py-4 px-4 font-medium border-b-2 ${
-              activeTab === 'trends' ? 'border-current' : 'border-transparent'
-            }`}
-            style={{ color: activeTab === 'trends' ? COLORS.primary : 'gray' }}
-            onClick={() => setActiveTab('trends')}
-          >
-            <div className="flex items-center">
-              <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M3.5 18.49L9.5 12.48L13.5 16.48L22 6.92L20.59 5.51L13.5 13.48L9.5 9.48L2 16.99L3.5 18.49Z" fill="currentColor"/>
-              </svg>
-              Trend Analysis
-            </div>
-          </button>
-          <button
-            className={`py-4 px-4 font-medium border-b-2 ${
-              activeTab === 'reports' ? 'border-current' : 'border-transparent'
-            }`}
-            style={{ color: activeTab === 'reports' ? COLORS.primary : 'gray' }}
-            onClick={() => setActiveTab('reports')}
-          >
-            <div className="flex items-center">
-              <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V8L14 2ZM16 18H8V16H16V18ZM16 14H8V12H16V14ZM13 9V3.5L18.5 9H13Z" fill="currentColor"/>
-              </svg>
-              Reports
-            </div>
-          </button>
-        </div>
-        
-        {/* Main Content */}
-        <main className="container mx-auto p-6">
-          {/* Overview Tab */}
-          {activeTab === 'overview' && (
-            <div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                {/* Key Metrics Cards */}
-                <div className="bg-white p-4 rounded-lg shadow">
-                  <h3 className="text-sm font-medium text-gray-500 mb-1">Total Consumption</h3>
-                  <div className="flex justify-between items-end">
-                    <div>
-                      <p className="text-2xl font-bold" style={{ color: COLORS.primary }}>
-                        {totalConsumption.toLocaleString()} m³
-                      </p>
-                      <p className="text-sm text-gray-600">
-                        Cost: {calculateCost(totalConsumption)} OMR
-                      </p>
-                    </div>
-                    <div className="p-2 rounded-full" style={{ backgroundColor: `${COLORS.light}40` }}>
-                      <Droplets className="w-6 h-6" style={{ color: COLORS.primary }} />
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="bg-white p-4 rounded-lg shadow">
-                  <h3 className="text-sm font-medium text-gray-500 mb-1">Average Monthly Consumption</h3>
-                  <div className="flex justify-between items-end">
-                    <div>
-                      <p className="text-2xl font-bold" style={{ color: COLORS.primary }}>
-                        {Math.round(averageConsumption).toLocaleString()} m³
-                      </p>
-                      <p className="text-sm text-gray-600">
-                        Per facility per month
-                      </p>
-                    </div>
-                    <div className="p-2 rounded-full" style={{ backgroundColor: `${COLORS.light}40` }}>
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M8 18H21M8 6H21M8 12H21M3 6V6.01M3 12V12.01M3 18V18.01" stroke={COLORS.primary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="bg-white p-4 rounded-lg shadow">
-                  <h3 className="text-sm font-medium text-gray-500 mb-1">Maximum Consumption</h3>
-                  <div className="flex justify-between items-end">
-                    <div>
-                      <p className="text-2xl font-bold" style={{ color: COLORS.primary }}>
-                        {maxConsumption.toLocaleString()} m³
-                      </p>
-                      <p className="text-sm text-gray-600">
-                        Highest recorded in a month
-                      </p>
-                    </div>
-                    <div className="p-2 rounded-full" style={{ backgroundColor: `${COLORS.light}40` }}>
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M13 3H12H7C5.89543 3 5 3.89543 5 5V19C5 20.1046 5.89543 21 7 21H17C18.1046 21 19 20.1046 19 19V9M13 3L19 9M13 3V9H19" stroke={COLORS.primary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-                {/* Consumption by Category */}
-                <div className="bg-white p-4 rounded-lg shadow">
-                  <h3 className="text-md font-medium mb-4" style={{ color: COLORS.primary }}>
-                    Consumption by Category
-                  </h3>
-                  <div className="h-64">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={consumptionByCategory}
-                          cx="50%"
-                          cy="50%"
-                          labelLine={false}
-                          outerRadius={80}
-                          fill="#8884d8"
-                          dataKey="value"
-                          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                        >
-                          {consumptionByCategory.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS.chartColors[index % COLORS.chartColors.length]} />
-                          ))}
-                        </Pie>
-                        <Tooltip formatter={(value: any) => `${Number(value).toLocaleString()} m³`} />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
-                
-                {/* Monthly Consumption Trend */}
-                <div className="bg-white p-4 rounded-lg shadow">
-                  <h3 className="text-md font-medium mb-4" style={{ color: COLORS.primary }}>
-                    Monthly Consumption Trend
-                  </h3>
-                  <div className="h-64">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={monthlyTrends}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis 
-                          dataKey="name"
-                          tick={{ fontSize: 12 }}
-                          tickFormatter={(value) => value.split('-')[0]}
-                        />
-                        <YAxis />
-                        <Tooltip formatter={(value: any) => `${Number(value).toLocaleString()} m³`} />
-                        <Line 
-                          type="monotone" 
-                          dataKey="total" 
-                          name="Consumption"
-                          stroke={COLORS.primary} 
-                          strokeWidth={2}
-                          dot={{ r: 4, strokeWidth: 2 }}
-                          activeDot={{ r: 6, strokeWidth: 2 }}
-                        />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Top Consumers */}
-              <div className="bg-white p-4 rounded-lg shadow mb-6">
-                <h3 className="text-md font-medium mb-4" style={{ color: COLORS.primary }}>
-                  Top Consumers
-                </h3>
-                <div className="overflow-x-auto">
-                  <table className="min-w-full">
-                    <thead>
-                      <tr>
-                        <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider py-2">
-                          #
-                        </th>
-                        <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider py-2">
-                          Facility
-                        </th>
-                        <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider py-2">
-                          Zone
-                        </th>
-                        <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider py-2">
-                          Meter
-                        </th>
-                        <th className="text-right text-xs font-medium text-gray-500 uppercase tracking-wider py-2">
-                          Total Consumption
-                        </th>
-                        <th className="text-right text-xs font-medium text-gray-500 uppercase tracking-wider py-2">
-                          % of Total
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {topConsumers.map((consumer, index) => (
-                        <tr key={consumer.id} className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
-                          <td className="py-2 text-sm font-medium text-gray-900">
-                            {index + 1}
-                          </td>
-                          <td className="py-2 text-sm text-gray-900">
-                            {consumer.name}
-                          </td>
-                          <td className="py-2 text-sm text-gray-900">
-                            {consumer.zone}
-                          </td>
-                          <td className="py-2 text-sm text-gray-900">
-                            {consumer.meter}
-                          </td>
-                          <td className="py-2 text-sm text-right text-gray-900">
-                            {consumer.total.toLocaleString()} m³
-                          </td>
-                          <td className="py-2 text-sm text-right text-gray-900">
-                            <div className="flex items-center justify-end">
-                              <span className="mr-2">{consumer.percentage.toFixed(1)}%</span>
-                              <div className="w-16 bg-gray-200 rounded-full h-2">
-                                <div
-                                  className="h-2 rounded-full"
-                                  style={{
-                                    width: `${consumer.percentage.toFixed(1)}%`,
-                                    backgroundColor: COLORS.primary,
-                                    maxWidth: '100%'
-                                  }}
-                                ></div>
-                              </div>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          )}
-          
-          {/* Categories Tab */}
-          {activeTab === 'categories' && (
-            <div>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-                {/* Category Distribution */}
-                <div className="bg-white p-4 rounded-lg shadow">
-                  <h3 className="text-md font-medium mb-4" style={{ color: COLORS.primary }}>
-                    Category Distribution
-                  </h3>
-                  <div className="h-64">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={consumptionByCategory}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                        <YAxis />
-                        <Tooltip formatter={(value: any) => `${Number(value).toLocaleString()} m³`} />
-                        <Bar dataKey="value" name="Consumption" fill={COLORS.primary}>
-                          {consumptionByCategory.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS.chartColors[index % COLORS.chartColors.length]} />
-                          ))}
-                        </Bar>
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
-                
-                {/* Category Breakdown */}
-                <div className="bg-white p-4 rounded-lg shadow">
-                  <h3 className="text-md font-medium mb-4" style={{ color: COLORS.primary }}>
-                    Category Breakdown
-                  </h3>
-                  <div className="overflow-y-auto h-64">
-                    {consumptionByCategory.map((category, index) => (
-                      <div key={index} className="mb-4">
-                        <div className="flex justify-between mb-1">
-                          <span className="text-sm font-medium" style={{ color: COLORS.primary }}>
-                            {category.name}
-                          </span>
-                          <span className="text-sm text-gray-600">
-                            {category.value.toLocaleString()} m³ ({category.percentage.toFixed(1)}%)
-                          </span>
-                        </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2.5">
-                          <div
-                            className="h-2.5 rounded-full"
-                            style={{
-                              width: `${category.percentage}%`,
-                              backgroundColor: COLORS.chartColors[index % COLORS.chartColors.length]
-                            }}
-                          ></div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-          
-          {/* Zones Tab */}
-          {activeTab === 'zones' && (
-            <div>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-                {/* Zone Distribution */}
-                <div className="bg-white p-4 rounded-lg shadow">
-                  <h3 className="text-md font-medium mb-4" style={{ color: COLORS.primary }}>
-                    Zone Distribution
-                  </h3>
-                  <div className="h-64">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={consumptionByZone}
-                          cx="50%"
-                          cy="50%"
-                          labelLine={false}
-                          outerRadius={80}
-                          fill="#8884d8"
-                          dataKey="value"
-                          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                        >
-                          {consumptionByZone.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS.chartColors[index % COLORS.chartColors.length]} />
-                          ))}
-                        </Pie>
-                        <Tooltip formatter={(value: any) => `${Number(value).toLocaleString()} m³`} />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
-                
-                {/* Zone Comparison */}
-                <div className="bg-white p-4 rounded-lg shadow">
-                  <h3 className="text-md font-medium mb-4" style={{ color: COLORS.primary }}>
-                    Zone Comparison
-                  </h3>
-                  <div className="h-64">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={consumptionByZone}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                        <YAxis />
-                        <Tooltip formatter={(value: any) => `${Number(value).toLocaleString()} m³`} />
-                        <Bar dataKey="value" name="Consumption" fill={COLORS.primary}>
-                          {consumptionByZone.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS.chartColors[index % COLORS.chartColors.length]} />
-                          ))}
-                        </Bar>
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-          
-          {/* Trend Analysis Tab */}
-          {activeTab === 'trends' && (
-            <div>
-              <div className="bg-white p-4 rounded-lg shadow mb-6">
-                <h3 className="text-md font-medium mb-4" style={{ color: COLORS.primary }}>
-                  Consumption Trends (All Facilities)
-                </h3>
-                <div className="h-80">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={monthlyTrends}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis 
-                        dataKey="name"
-                        tick={{ fontSize: 12 }}
-                      />
-                      <YAxis />
-                      <Tooltip formatter={(value: any) => `${Number(value).toLocaleString()} m³`} />
-                      <Legend />
-                      <Line 
-                        type="monotone" 
-                        dataKey="total" 
-                        name="Total Consumption"
-                        stroke={COLORS.primary} 
-                        strokeWidth={2}
-                        dot={{ r: 4, strokeWidth: 2 }}
-                        activeDot={{ r: 6, strokeWidth: 2 }}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-              
-              <div className="bg-white p-4 rounded-lg shadow mb-6">
-                <h3 className="text-md font-medium mb-4" style={{ color: COLORS.primary }}>
-                  Seasonal Patterns
-                </h3>
-                <div className="h-64">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart 
-                      data={[
-                        { name: 'Summer (Apr-Sep)', value: monthlyTrends.slice(0, 6).reduce((sum, m) => sum + m.total, 0) },
-                        { name: 'Winter (Oct-Feb)', value: monthlyTrends.slice(6).reduce((sum, m) => sum + m.total, 0) }
-                      ]}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                      <YAxis />
-                      <Tooltip formatter={(value: any) => `${Number(value).toLocaleString()} m³`} />
-                      <Bar dataKey="value" name="Consumption" fill={COLORS.primary}>
-                        <Cell fill={COLORS.chartColors[0]} />
-                        <Cell fill={COLORS.chartColors[1]} />
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-            </div>
-          )}
-          
-          {/* Reports Tab */}
-          {activeTab === 'reports' && (
-            <div>
-              <div className="bg-white p-4 rounded-lg shadow mb-6">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-md font-medium" style={{ color: COLORS.primary }}>
-                    Monthly Consumption Report
-                  </h3>
-                  <button 
-                    onClick={() => {
-                      setShowExportMessage(true);
-                      setTimeout(() => setShowExportMessage(false), 3000);
-                    }}
-                    className="flex items-center px-3 py-1 rounded-lg text-sm text-white"
-                    style={{ backgroundColor: COLORS.primary }}
+              <div className="mt-4 md:mt-0">
+                <div className="flex items-center space-x-4">
+                  {/* Year Selector */}
+                  <select 
+                    value={selectedYear}
+                    onChange={handleYearChange}
+                    className="px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
-                    <svg className="w-4 h-4 mr-1" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M3 19H21V21H3V19ZM13 13V3H11V13H4L12 21L20 13H13Z" fill="white"/>
-                    </svg>
-                    Export PDF
-                  </button>
-                  {showExportMessage && (
-                    <div className="fixed top-4 right-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded shadow-md">
-                      <div className="flex items-center">
-                        <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                        </svg>
-                        <p>Exporting PDF for {selectedMonth}...</p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-                
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {timePeriods.map((month, index) => (
-                    <button
-                      key={index}
-                      onClick={() => setSelectedMonth(month)}
-                      className={`px-3 py-1 text-xs rounded-lg ${
-                        month === selectedMonth
-                          ? 'text-white'
-                          : 'text-gray-700 bg-gray-200'
-                      }`}
-                      style={{ 
-                        backgroundColor: month === selectedMonth
-                          ? COLORS.primary
-                          : undefined
-                      }}
-                    >
-                      {month}
-                    </button>
-                  ))}
-                </div>
-                
-                <div className="overflow-x-auto">
-                  <table className="min-w-full">
-                    <thead>
-                      <tr>
-                        <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider py-2">
-                          Meter ID
-                        </th>
-                        <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider py-2">
-                          Name
-                        </th>
-                        <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider py-2">
-                          Zone
-                        </th>
-                        <th className="text-right text-xs font-medium text-gray-500 uppercase tracking-wider py-2">
-                          Consumption
-                        </th>
-                        <th className="text-right text-xs font-medium text-gray-500 uppercase tracking-wider py-2">
-                          vs Prev Month
-                        </th>
-                        <th className="text-right text-xs font-medium text-gray-500 uppercase tracking-wider py-2">
-                          Cost (OMR)
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {data.map((item, index) => {
-                        const currentMonth = selectedMonth;
-                        // Find the previous month in the time periods array
-                        const currentMonthIndex = timePeriods.indexOf(currentMonth);
-                        const previousMonth = currentMonthIndex > 0 ? timePeriods[currentMonthIndex - 1] : null;
-                        
-                        const currentValue = item.consumption[currentMonth] || 0;
-                        const previousValue = previousMonth ? (item.consumption[previousMonth] || 0) : 0;
-                        
-                        const percentChange = previousValue === 0
-                          ? 100
-                          : ((Number(currentValue) - Number(previousValue)) / Number(previousValue)) * 100;
-                        
-                        return (
-                          <tr key={item.id} className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
-                            <td className="py-2 text-sm text-gray-900">
-                              {item.meter}
-                            </td>
-                            <td className="py-2 text-sm font-medium text-gray-900">
-                              {item.name}
-                            </td>
-                            <td className="py-2 text-sm text-gray-900">
-                              {item.zone}
-                            </td>
-                            <td className="py-2 text-sm text-right text-gray-900">
-                              {Number(currentValue).toLocaleString()} m³
-                            </td>
-                            <td className="py-2 text-sm text-right">
-                              <span className={`px-2 py-0.5 rounded-full text-white ${
-                                Number(percentChange) > 0 ? 'bg-red-500' : 'bg-green-500'
-                              }`}>
-                                {Number(percentChange) > 0 ? '+' : ''}{percentChange.toFixed(1)}%
-                              </span>
-                            </td>
-                            <td className="py-2 text-sm text-right text-gray-900">
-                              {calculateCost(Number(currentValue))}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
+                    {years.map(year => (
+                      <option key={year} value={year}>{year}</option>
+                    ))}
+                  </select>
+                  
+                  {/* Month Selector */}
+                  <select 
+                    value={selectedMonth}
+                    onChange={(e) => setSelectedMonth(e.target.value)}
+                    className="px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    {availableMonths.map(month => (
+                      <option key={month} value={month}>{month}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
             </div>
-          )}
-        </main>
-        
-        {/* Footer */}
-        <footer className="bg-white p-4 border-t mt-auto">
-          <div className="container mx-auto flex justify-between items-center">
-            <p className="text-sm text-gray-600">
-              © 2025 Muscat Bay Water Monitoring System
-            </p>
-            <p className="text-sm text-gray-600">
-              Last updated: March 13, 2025
-            </p>
           </div>
-        </footer>
+        </div>
+
+        {/* Navigation */}
+        <div className="bg-gray-100 border-b border-gray-200">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex overflow-x-auto py-2">
+              <button
+                onClick={() => setSelectedPage('overview')}
+                className={`px-4 py-2 mr-2 font-medium rounded-lg ${selectedPage === 'overview' ? 'bg-white shadow text-blue-600' : 'text-gray-600 hover:bg-gray-200'}`}
+              >
+                Overview
+              </button>
+              <button
+                onClick={() => setSelectedPage('zone-analysis')}
+                className={`px-4 py-2 mr-2 font-medium rounded-lg ${selectedPage === 'zone-analysis' ? 'bg-white shadow text-blue-600' : 'text-gray-600 hover:bg-gray-200'}`}
+              >
+                Zone Analysis
+              </button>
+              <button
+                onClick={() => setSelectedPage('losses')}
+                className={`px-4 py-2 mr-2 font-medium rounded-lg ${selectedPage === 'losses' ? 'bg-white shadow text-blue-600' : 'text-gray-600 hover:bg-gray-200'}`}
+              >
+                Losses
+              </button>
+              <button
+                onClick={() => setSelectedPage('consumption-types')}
+                className={`px-4 py-2 mr-2 font-medium rounded-lg ${selectedPage === 'consumption-types' ? 'bg-white shadow text-blue-600' : 'text-gray-600 hover:bg-gray-200'}`}
+              >
+                Consumption Types
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Main Content */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {selectedPage === 'overview' && renderOverview()}
+          {selectedPage === 'zone-analysis' && renderZoneAnalysis()}
+          {selectedPage === 'losses' && renderLossesAnalysis()}
+          {selectedPage === 'consumption-types' && renderConsumptionTypes()}
+        </div>
+
+        {/* Footer */}
+        <div className="bg-white border-t border-gray-200 mt-8">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div className="flex flex-col md:flex-row justify-between items-center">
+              <div className="text-gray-500 text-sm">
+                © 2025 Muscat Bay Water Management System
+              </div>
+              <div className="text-gray-500 text-sm mt-2 md:mt-0">
+                Last updated: {new Date().toLocaleDateString()}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </Layout>
   );

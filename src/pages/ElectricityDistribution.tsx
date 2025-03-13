@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import Layout from '@/components/layout/Layout';
@@ -131,7 +130,7 @@ const ElectricityDistribution = () => {
     
     // Calculate total consumption
     const total = data.reduce((sum, item) => {
-      const itemTotal = Object.values(item.consumption).reduce((a: number, b: number) => a + Number(b), 0);
+      const itemTotal = Object.values(item.consumption).reduce((a: number, b: number) => a + b, 0);
       return sum + itemTotal;
     }, 0);
     setTotalConsumption(total);
@@ -151,7 +150,7 @@ const ElectricityDistribution = () => {
     const byCategory = uniqueCategories.map(category => {
       const categoryItems = data.filter(item => getCategoryFromName(item.name) === category);
       const categoryTotal = categoryItems.reduce((sum, item) => {
-        return sum + Object.values(item.consumption).reduce((a: number, b: number) => a + Number(b), 0);
+        return sum + Object.values(item.consumption).reduce((a: number, b: number) => a + b, 0);
       }, 0);
       
       return {
@@ -166,7 +165,7 @@ const ElectricityDistribution = () => {
     const byZone = uniqueZones.map(zone => {
       const zoneItems = data.filter(item => item.zone === zone);
       const zoneTotal = zoneItems.reduce((sum, item) => {
-        return sum + Object.values(item.consumption).reduce((a: number, b: number) => a + Number(b), 0);
+        return sum + Object.values(item.consumption).reduce((a: number, b: number) => a + b, 0);
       }, 0);
       
       return {
@@ -180,7 +179,7 @@ const ElectricityDistribution = () => {
     // Process monthly trends
     const byMonth = uniqueTimePeriods.map(month => {
       const monthTotal = data.reduce((sum, item) => {
-        return sum + Number(item.consumption[month] || 0);
+        return sum + (item.consumption[month] || 0);
       }, 0);
       
       return {
@@ -192,7 +191,7 @@ const ElectricityDistribution = () => {
     
     // Find top consumers
     const consumers = data.map(item => {
-      const itemTotal = Object.values(item.consumption).reduce((a: number, b: number) => a + Number(b), 0);
+      const itemTotal = Object.values(item.consumption).reduce((a: number, b: number) => a + b, 0);
       return {
         id: item.id,
         name: item.name,
