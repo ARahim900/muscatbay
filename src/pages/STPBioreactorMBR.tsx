@@ -122,7 +122,7 @@ const STPBioreactorMBR = () => {
       totalInfluent: 13080,
       waterProcessed: 14408,
       tseIrrigation: 12075,
-      capacity: 750 * 29, // February 2025 has 29 days (leap year)
+      capacity: 750 * 29,
       utilizationPercentage: ((13080 / (750 * 29)) * 100).toFixed(1),
       processingEfficiency: ((12075 / 13080) * 100).toFixed(1)
     }
@@ -147,7 +147,7 @@ const STPBioreactorMBR = () => {
     });
     
     const avgProcessingEfficiency = ((totalTSE / totalInfluent) * 100).toFixed(1);
-    const totalCapacity = 750 * (31 + 31 + 30 + 31 + 30 + 31 + 31 + 29); // Days in each month
+    const totalCapacity = 750 * (31 + 31 + 30 + 31 + 30 + 31 + 31 + 29);
     const overallUtilization = ((totalInfluent / totalCapacity) * 100).toFixed(1);
     
     return {
@@ -238,7 +238,6 @@ const STPBioreactorMBR = () => {
         case '7D':
           return recentData;
         case '1M':
-          // Simulating a month of data by returning all available
           return recentData;
         case '3M':
         case 'ALL':
@@ -255,7 +254,6 @@ const STPBioreactorMBR = () => {
       
       switch(selectedTimeRange) {
         case '3M':
-          // Return last 3 months
           return monthlyData.slice(-3);
         case 'ALL':
         default:
@@ -357,7 +355,6 @@ const STPBioreactorMBR = () => {
         break;
       case 'ALL':
       default:
-        // Use all available data
         start = null;
         end = null;
         break;
@@ -708,3 +705,375 @@ const STPBioreactorMBR = () => {
                         className="text-2xl font-bold text-foreground"
                       >
                         {filteredMetrics.recent.avgCapacityUsage}%
+                      </text>
+                    </RadialBarChart>
+                  </ResponsiveContainer>
+                </div>
+                <p className="text-sm text-muted-foreground mt-2">Current capacity utilization</p>
+                <p className="text-xs text-muted-foreground">Daily average: {filteredMetrics.recent.avgDailyInfluent} m³ of 750 m³</p>
+              </div>
+              
+              <div className="mt-8">
+                <h3 className="text-base font-medium text-foreground mb-4">Influent Sources</h3>
+                <div className="h-40">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={filteredMetrics.influentSourceData}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        outerRadius={80}
+                        fill="#8884d8"
+                        dataKey="value"
+                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      >
+                        {filteredMetrics.influentSourceData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <RechartsTooltip formatter={(value) => `${(value/1000).toFixed(1)}K m³`} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Parameters & Equipment Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Recent Performance */}
+          <Card className="bg-white shadow-sm hover:shadow transition-all">
+            <CardHeader className="pb-2">
+              <div className="flex justify-between items-center">
+                <CardTitle className="text-base font-medium text-foreground">Recent Performance</CardTitle>
+                <Badge variant="secondary">
+                  {selectedTimeRange === '1D' ? 'Today' : 
+                   selectedTimeRange === '7D' ? 'Last 7 days' : 
+                   selectedTimeRange === '1M' ? 'Last month' : 
+                   'Period'}
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="h-48">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={getFilteredData.recentData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                    <XAxis dataKey="date" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
+                    <RechartsTooltip />
+                    <Bar dataKey="totalInfluent" name="Influent (m³)" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="tseIrrigation" name="TSE (m³)" fill="#10b981" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="mt-4">
+                <div className="flex justify-between text-xs text-muted-foreground mb-1">
+                  <span>March 8</span>
+                  <span>March 14</span>
+                </div>
+                <div className="w-full h-1 bg-muted rounded-full overflow-hidden">
+                  <div className="bg-blue-500 h-1" style={{ width: '100%' }}></div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Operating Parameters */}
+          <Card className="bg-white shadow-sm hover:shadow transition-all">
+            <CardHeader className="pb-2">
+              <div className="flex justify-between items-center">
+                <CardTitle className="text-base font-medium text-foreground">Operating Parameters</CardTitle>
+                <Badge variant="secondary">Normal</Badge>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {currentParameterData.map((param) => (
+                  <div key={param.name} className="flex items-center">
+                    <div className="w-12">
+                      <span className="text-sm font-medium text-foreground">{param.name}</span>
+                    </div>
+                    <div className="flex-1 mx-3">
+                      <div className="w-full bg-muted rounded-full h-2.5">
+                        <div 
+                          className={`h-2.5 rounded-full ${
+                            param.value < param.min || param.value > param.max ? 'bg-red-500' : 'bg-green-500'
+                          }`}
+                          style={{ 
+                            width: `${((param.value - param.min) / (param.max - param.min) * 100)}%`,
+                            minWidth: '10%',
+                            maxWidth: '100%'
+                          }}
+                        ></div>
+                      </div>
+                    </div>
+                    <div className="w-10 text-right">
+                      <span className="text-sm font-medium text-foreground">{param.value}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Critical Parameters */}
+          <Card className="bg-white shadow-sm hover:shadow transition-all">
+            <CardHeader className="pb-2">
+              <div className="flex justify-between items-center">
+                <CardTitle className="text-base font-medium text-foreground">Critical Parameters</CardTitle>
+                <Badge variant="secondary">All Normal</Badge>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <div className="p-3 rounded-lg bg-gray-50">
+                  <div className="flex justify-between mb-2">
+                    <span className="text-sm font-medium text-foreground">Raw Sewage pH</span>
+                    <span className="text-sm font-medium text-green-600">6.7-6.9</span>
+                  </div>
+                  <div className="text-xs text-muted-foreground">Range: 6.5 - 8.0</div>
+                  <div className="w-full bg-muted rounded-full h-1.5 mt-2">
+                    <div className="bg-green-500 h-1.5 rounded-full" style={{ width: '35%' }}></div>
+                  </div>
+                </div>
+                
+                <div className="p-3 rounded-lg bg-gray-50">
+                  <div className="flex justify-between mb-2">
+                    <span className="text-sm font-medium text-foreground">MBR Product pH</span>
+                    <span className="text-sm font-medium text-green-600">7.1-7.3</span>
+                  </div>
+                  <div className="text-xs text-muted-foreground">Range: 6.5 - 8.0</div>
+                  <div className="w-full bg-muted rounded-full h-1.5 mt-2">
+                    <div className="bg-green-500 h-1.5 rounded-full" style={{ width: '45%' }}></div>
+                  </div>
+                </div>
+                
+                <div className="p-3 rounded-lg bg-gray-50">
+                  <div className="flex justify-between mb-2">
+                    <span className="text-sm font-medium text-foreground">MLSS Stream I</span>
+                    <span className="text-sm font-medium text-green-600">8400-8600 mg/L</span>
+                  </div>
+                  <div className="text-xs text-muted-foreground">Target: 3000-4000 mg/L (manufacturer spec)</div>
+                  <div className="w-full bg-muted rounded-full h-1.5 mt-2">
+                    <div className="bg-yellow-500 h-1.5 rounded-full" style={{ width: '90%' }}></div>
+                  </div>
+                </div>
+                
+                <div className="p-3 rounded-lg bg-gray-50">
+                  <div className="flex justify-between mb-2">
+                    <span className="text-sm font-medium text-foreground">MBR Product Chlorine</span>
+                    <span className="text-sm font-medium text-green-600">0.4-0.7 ppm</span>
+                  </div>
+                  <div className="text-xs text-muted-foreground">Target: 125 ppm</div>
+                  <div className="w-full bg-muted rounded-full h-1.5 mt-2">
+                    <div className="bg-red-500 h-1.5 rounded-full" style={{ width: '10%' }}></div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Tanker Trips Analysis */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card className="bg-white shadow-sm hover:shadow transition-all">
+            <CardHeader className="pb-2">
+              <div className="flex justify-between items-center">
+                <CardTitle className="text-base font-medium text-foreground">Tanker Trips Monthly Trend</CardTitle>
+                <div className="flex text-xs">
+                  <div className="flex items-center mr-3">
+                    <div className="w-3 h-3 rounded-full bg-blue-500 mr-1"></div>
+                    <span className="text-muted-foreground">Trips</span>
+                  </div>
+                  <div className="flex items-center">
+                    <div className="w-3 h-3 rounded-full bg-green-500 mr-1"></div>
+                    <span className="text-muted-foreground">Volume (m³)</span>
+                  </div>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <ComposedChart data={getFilteredData.monthlyData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                    <XAxis dataKey="month" tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
+                    <YAxis 
+                      yAxisId="left" 
+                      tick={{ fontSize: 12 }} 
+                      axisLine={false} 
+                      tickLine={false} 
+                    />
+                    <YAxis 
+                      yAxisId="right" 
+                      orientation="right" 
+                      tick={{ fontSize: 12 }} 
+                      axisLine={false} 
+                      tickLine={false} 
+                      tickFormatter={(value) => value >= 1000 ? `${value/1000}K` : value} 
+                    />
+                    <RechartsTooltip />
+                    <Legend />
+                    <Bar 
+                      yAxisId="left" 
+                      dataKey="tankerTrips" 
+                      name="Tanker Trips" 
+                      fill="#3b82f6" 
+                    />
+                    <Line 
+                      yAxisId="right" 
+                      type="monotone" 
+                      dataKey="tankerVolume" 
+                      name="Tanker Volume (m³)" 
+                      stroke="#10b981" 
+                      strokeWidth={2} 
+                      dot={{ fill: '#10b981', stroke: '#10b981', strokeWidth: 2, r: 4 }} 
+                    />
+                  </ComposedChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white shadow-sm hover:shadow transition-all">
+            <CardHeader className="pb-2">
+              <div className="flex justify-between items-center">
+                <CardTitle className="text-base font-medium text-foreground">Direct vs Tanker Ratio</CardTitle>
+                <div className="flex text-xs">
+                  <div className="flex items-center mr-3">
+                    <div className="w-3 h-3 rounded-full bg-blue-500 mr-1"></div>
+                    <span className="text-muted-foreground">Tanker %</span>
+                  </div>
+                  <div className="flex items-center">
+                    <div className="w-3 h-3 rounded-full bg-green-500 mr-1"></div>
+                    <span className="text-muted-foreground">Direct %</span>
+                  </div>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={getFilteredData.monthlyData.map(month => ({
+                    month: month.month,
+                    tankerPct: parseFloat((month.tankerVolume / month.totalInfluent * 100).toFixed(1)),
+                    directPct: parseFloat((month.directSewage / month.totalInfluent * 100).toFixed(1))
+                  }))}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                    <XAxis dataKey="month" tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
+                    <YAxis 
+                      domain={[0, 100]}
+                      tick={{ fontSize: 12 }} 
+                      axisLine={false} 
+                      tickLine={false} 
+                      tickFormatter={(value) => `${value}%`}
+                    />
+                    <RechartsTooltip formatter={(value) => [`${value}%`, '']} />
+                    <Legend />
+                    <Area 
+                      type="monotone" 
+                      dataKey="tankerPct" 
+                      name="Tanker %" 
+                      stackId="1" 
+                      stroke="#3b82f6" 
+                      fill="#3b82f6"
+                      fillOpacity={0.6}
+                    />
+                    <Area 
+                      type="monotone" 
+                      dataKey="directPct" 
+                      name="Direct %" 
+                      stackId="1" 
+                      stroke="#10b981" 
+                      fill="#10b981"
+                      fillOpacity={0.6}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="mt-4 flex justify-between text-xs text-muted-foreground">
+                <span>Direct Sewage: {(filteredMetrics.monthly.totalDirectSewage / filteredMetrics.monthly.totalInfluent * 100).toFixed(1)}%</span>
+                <span>Tanker: {(filteredMetrics.monthly.totalTankerVolume / filteredMetrics.monthly.totalInfluent * 100).toFixed(1)}%</span>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <Layout>
+      <div className="flex flex-col space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl font-bold">STP Bioreactor MBR</h1>
+            <p className="text-muted-foreground">Sewage Treatment Plant Operational Dashboard</p>
+          </div>
+          <div className="flex space-x-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={exportToCSV}
+              className="flex items-center gap-2"
+            >
+              <FileSpreadsheet className="h-4 w-4" />
+              Export Data
+            </Button>
+            <div className="flex border rounded-lg overflow-hidden">
+              {['1D', '7D', '1M', '3M', 'ALL'].map(range => (
+                <Button
+                  key={range}
+                  variant={selectedTimeRange === range ? "default" : "ghost"}
+                  size="sm"
+                  className="rounded-none border-0"
+                  onClick={() => {
+                    setSelectedTimeRange(range);
+                    if (range !== 'ALL') {
+                      setSelectedMonth('All');
+                    }
+                  }}
+                >
+                  {range}
+                </Button>
+              ))}
+            </div>
+          </div>
+        </div>
+        
+        <Separator />
+        
+        <div className="flex border-b">
+          {[
+            { id: 'dashboard', label: 'Dashboard' },
+            { id: 'performance', label: 'Performance' },
+            { id: 'equipment', label: 'Equipment' },
+            { id: 'analytics', label: 'Analytics' },
+            { id: 'reports', label: 'Reports' }
+          ].map(tab => (
+            <Button
+              key={tab.id}
+              variant="ghost"
+              className={`rounded-none px-4 py-2 ${
+                selectedTab === tab.id 
+                  ? 'border-b-2 border-primary' 
+                  : 'text-muted-foreground'
+              }`}
+              onClick={() => setSelectedTab(tab.id)}
+            >
+              {tab.label}
+            </Button>
+          ))}
+        </div>
+        
+        {selectedTab === 'dashboard' && <DashboardTabContent />}
+        {/* Other tabs can be implemented as needed */}
+      </div>
+    </Layout>
+  );
+};
+
+export default STPBioreactorMBR;
