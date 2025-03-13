@@ -1,17 +1,19 @@
+
 import React, { useState, useEffect } from 'react';
 import Layout from '@/components/layout/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
   AreaChart, Area, BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, 
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, 
-  ComposedChart, Scatter, ScatterChart, ZAxis, ReferenceLine, TooltipProps
+  ComposedChart, Scatter, ScatterChart, ZAxis, ReferenceLine
 } from 'recharts';
 import _ from 'lodash';
 
-const WaterDistributionDashboard = () => {
+const WaterDistributionDashboard: React.FC = () => {
   const [selectedPage, setSelectedPage] = useState('overview');
   const [selectedMonth, setSelectedMonth] = useState('Jan-25'); // Default to a recent month
   const [selectedZone, setSelectedZone] = useState(''); // Empty string means "All Zones"
+  const [selectedTypes, setSelectedTypes] = useState<string[]>([]); // For consumption type filtering
   
   // Define color scheme
   const primaryColor = '#4E4456';
@@ -198,24 +200,15 @@ const WaterDistributionDashboard = () => {
 
   // Prepare data for charts
   const prepareMonthlyData = () => {
-    return months.map(month => {
-      const l1Total = l1Data[month];
-      const l2ZoneBulk = l2ZoneBulkData[month];
-      const directConnections = directConnectionData[month];
-      const totalL2 = l2ZoneBulk + directConnections;
-      const loss = l1Total - totalL2;
-      const lossPercentage = ((loss / l1Total) * 100).toFixed(2);
-      
-      return {
-        month,
-        l1Total,
-        l2ZoneBulk,
-        directConnections,
-        totalL2,
-        loss,
-        lossPercentage
-      };
-    });
+    return months.map(month => ({
+      month,
+      l1Total: l1Data[month],
+      l2ZoneBulk: l2ZoneBulkData[month],
+      directConnections: directConnectionData[month],
+      totalL2: l2ZoneBulkData[month] + directConnectionData[month],
+      loss: l1Data[month] - (l2ZoneBulkData[month] + directConnectionData[month]),
+      lossPercentage: ((l1Data[month] - (l2ZoneBulkData[month] + directConnectionData[month])) / l1Data[month] * 100).toFixed(2)
+    }));
   };
 
   const monthlyData = prepareMonthlyData();
@@ -290,7 +283,7 @@ const WaterDistributionDashboard = () => {
   // Prepare consumption trend data
   const prepareConsumptionTrendData = () => {
     return months.map(month => {
-      const data = {
+      const data: Record<string, any> = {
         month
       };
       
@@ -430,7 +423,7 @@ const WaterDistributionDashboard = () => {
                   fill={primaryColor}
                   paddingAngle={2}
                   dataKey="value"
-                  label={({ type, percent }) => `${type}: ${(percent * 100).toFixed(0)}%`}
+                  label={({ type, percent }) => `${type}: ${(percent ? percent * 100 : 0).toFixed(0)}%`}
                 >
                   {typeConsumptionForSelectedMonth.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={[primaryColor, secondaryColor, accentColor, '#8884d8', '#82ca9d', '#ffc658', '#ff8042'][index % 7]} />
@@ -687,174 +680,330 @@ const WaterDistributionDashboard = () => {
   );
 
   // Render Consumption Types Page
-  const renderConsumptionTypes = () => (
-    <div className="grid grid-cols-1 gap-6">
-      {/* Consumption by Type Trend */}
-      <Card className="bg-white shadow-md">
-        <CardHeader className="bg-gradient-to-r from-gray-100 to-gray-200 pb-2">
-          <CardTitle className="text-lg font-bold text-gray-700">Consumption by Type Over Time</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="h-96">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={consumptionTrendData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis dataKey="month" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Area type="monotone" dataKey="Retail" stackId="1" fill={primaryColor} stroke={primaryColor} fillOpacity={0.8} />
-                <Area type="monotone" dataKey="Residential (Villa)" stackId="1" fill={secondaryColor} stroke={secondaryColor} fillOpacity={0.8} />
-                <Area type="monotone" dataKey="IRR_Servies" stackId="1" fill={accentColor} stroke={accentColor} fillOpacity={0.8} />
-                <Area type="monotone" dataKey="Residential (Apart)" stackId="1" fill="#8884d8" stroke="#8884d8" fillOpacity={0.8} />
-                <Area type="monotone" dataKey="MB_Common" stackId="1" fill="#82ca9d" stroke="#82ca9d" fillOpacity={0.8} />
-                <Area type="monotone" dataKey="Building" stackId="1" fill="#ffc658" stroke="#ffc658" fillOpacity={0.8} />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </CardContent>
-      </Card>
+  const renderConsumptionTypes = () => {
+    // Define color palette for different meter types
+    const COLORS: Record<string, string> = {
+      'Retail': '#ff8042',
+      'Zone Bulk': '#00C49F',
+      'Residential (Villa)': '#FFED00', // Yellow
+      'Residential (Apart)': '#82ca9d',
+      'IRR_Servies': '#0088FE', // Blue
+      'MB_Common': '#4E4456', // Dark purple/gray
+      'Building': '#B8860B', // Dark yellow
+      'D_Building_Bulk': '#a4de6c',
+      'D_Building_Common': '#d0ed57',
+      'Main BULK': '#ff5252'
+    };
+    
+    // Access available types for filtering
+    const availableTypes = Object.keys(typeConsumptionData).filter(type => type !== 'Main BULK');
+    
+    // Handle type selection toggling
+    const handleTypeSelection = (type: string) => {
+      setSelectedTypes(prevSelectedTypes => {
+        if (prevSelectedTypes.includes(type)) {
+          return prevSelectedTypes.filter(t => t !== type);
+        } else {
+          return [...prevSelectedTypes, type];
+        }
+      });
+    };
+    
+    // Clear all type selections
+    const clearTypeSelection = () => {
+      setSelectedTypes([]);
+    };
+    
+    // Prepare the consumption data by type
+    const prepareTypeData = () => {
+      const typeData = Object.keys(typeConsumptionData)
+        .map(type => ({
+          name: type,
+          value: typeConsumptionData[type][selectedMonth]
+        }))
+        .sort((a, b) => b.value - a.value);
+        
+      // Calculate percentages
+      const totalConsumption = typeData
+        .filter(item => item.name !== 'Main BULK')
+        .reduce((sum, item) => sum + item.value, 0);
+        
+      return typeData.map(item => ({
+        ...item,
+        percentage: item.name !== 'Main BULK' 
+          ? ((item.value / totalConsumption) * 100).toFixed(1) 
+          : '0'
+      }));
+    };
+    
+    const typeData = prepareTypeData();
+    
+    // Filter out Main BULK for some charts to focus on actual consumption types
+    const filteredTypeData = typeData.filter(item => item.name !== 'Main BULK');
+    
+    // Apply selected type filters if any are selected
+    const typeDataToDisplay = selectedTypes.length > 0 
+      ? filteredTypeData.filter(item => selectedTypes.includes(item.name))
+      : filteredTypeData;
+    
+    // Get the types sorted by total consumption for consistent coloring
+    const typesByConsumption = [...filteredTypeData]
+      .sort((a, b) => b.value - a.value)
+      .map(item => item.name);
+      
+    // Get only selected types for charts if any are selected
+    const typesToShow = selectedTypes.length > 0 ? selectedTypes : typesByConsumption;
+    
+    // Prepare data for trend charts
+    const consumptionTrendsByType = months.map(month => {
+      const monthData: Record<string, any> = { month };
+      Object.keys(typeConsumptionData).forEach(type => {
+        monthData[type] = typeConsumptionData[type][month];
+      });
+      return monthData;
+    });
+    
+    const totalConsumption = l1Data[selectedMonth];
 
-      {/* Consumption Types Breakdown for Selected Month */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="bg-white shadow-md">
+    return (
+      <div className="bg-gray-50">
+        {/* Type Selector */}
+        <div className="bg-white shadow mb-6 rounded-lg">
+          <div className="p-4">
+            <div className="flex flex-col space-y-2">
+              <div className="flex justify-between items-center">
+                <h2 className="text-lg font-medium text-gray-700">Filter by Meter Type</h2>
+                {selectedTypes.length > 0 && (
+                  <button 
+                    onClick={clearTypeSelection}
+                    className="px-3 py-1 bg-gray-200 hover:bg-gray-300 rounded text-sm"
+                  >
+                    Clear All
+                  </button>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {availableTypes.map(type => (
+                  <button
+                    key={type}
+                    onClick={() => handleTypeSelection(type)}
+                    className={`px-3 py-1 rounded text-sm flex items-center ${
+                      selectedTypes.includes(type) 
+                        ? 'bg-indigo-100 border border-indigo-400' 
+                        : 'bg-gray-100 border border-gray-300'
+                    }`}
+                  >
+                    <span 
+                      className="w-3 h-3 rounded-full mr-2" 
+                      style={{ backgroundColor: COLORS[type] || primaryColor }}
+                    ></span>
+                    {type}
+                    {selectedTypes.includes(type) && (
+                      <span className="ml-2 text-indigo-600">✓</span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Main Dashboard */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          {/* Total Consumption Card */}
+          <Card className="bg-white shadow-md">
+            <CardHeader className="bg-gradient-to-r from-gray-100 to-gray-200 pb-2">
+              <CardTitle className="text-lg font-bold text-gray-700">Total Consumption (Main Bulk)</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-baseline">
+                <span className="text-3xl font-bold" style={{ color: primaryColor }}>{formatNumber(totalConsumption)}</span>
+                <span className="ml-2 text-gray-500">m³</span>
+              </div>
+              <p className="text-sm text-gray-500 mt-1">For {selectedMonth}</p>
+            </CardContent>
+          </Card>
+
+          {/* Highest Consumer Type Card */}
+          <Card className="bg-white shadow-md">
+            <CardHeader className="bg-gradient-to-r from-gray-100 to-gray-200 pb-2">
+              <CardTitle className="text-lg font-bold text-gray-700">Top Consumer Type</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-baseline">
+                <span className="text-3xl font-bold text-green-600">
+                  {typeDataToDisplay.length > 0 ? typeDataToDisplay[0].name : '-'}
+                </span>
+              </div>
+              <p className="text-sm text-gray-500 mt-1">
+                {typeDataToDisplay.length > 0 ? 
+                  `${formatNumber(typeDataToDisplay[0].value)} m³ (${typeDataToDisplay[0].percentage}% of consumption)` : 
+                  ''}
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Consumption By Type Charts */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <Card className="bg-white shadow-md">
+            <CardHeader className="bg-gradient-to-r from-gray-100 to-gray-200 pb-2">
+              <CardTitle className="text-lg font-bold text-gray-700">Consumption by Type ({selectedMonth})</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={typeDataToDisplay}
+                    margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" tick={{ fontSize: 12 }} angle={-45} textAnchor="end" height={80} />
+                    <YAxis label={{ value: 'Consumption (m³)', angle: -90, position: 'insideLeft' }} />
+                    <Tooltip formatter={(value) => [`${formatNumber(value as number)} m³`, 'Consumption']} />
+                    <Bar dataKey="value">
+                      {typeDataToDisplay.map((entry) => (
+                        <Cell key={entry.name} fill={COLORS[entry.name] || primaryColor} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white shadow-md">
+            <CardHeader className="bg-gradient-to-r from-gray-100 to-gray-200 pb-2">
+              <CardTitle className="text-lg font-bold text-gray-700">Consumption Distribution (%)</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={typeDataToDisplay}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      outerRadius={100}
+                      fill="#8884d8"
+                      dataKey="value"
+                      label={({ name, percent }) => `${name}: ${(percent ? percent * 100 : 0).toFixed(1)}%`}
+                    >
+                      {typeDataToDisplay.map((entry) => (
+                        <Cell key={entry.name} fill={COLORS[entry.name] || primaryColor} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value) => [`${formatNumber(value as number)} m³`, 'Consumption']} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Monthly Trends */}
+        <Card className="bg-white shadow-md mb-6">
           <CardHeader className="bg-gradient-to-r from-gray-100 to-gray-200 pb-2">
-            <CardTitle className="text-lg font-bold text-gray-700">Consumption by Type for {selectedMonth}</CardTitle>
+            <CardTitle className="text-lg font-bold text-gray-700">Consumption Trend by Type (Jan-24 to Feb-25)</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-80">
+            <div className="h-96">
               <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={typeConsumptionForSelectedMonth.filter(d => d.type !== 'Main BULK')}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={100}
-                    fill={primaryColor}
-                    paddingAngle={2}
-                    dataKey="value"
-                    label
-                  >
-                    {typeConsumptionForSelectedMonth.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={[primaryColor, secondaryColor, accentColor, '#8884d8', '#82ca9d', '#ffc658', '#ff8042'][index % 7]} />
-                    ))}
-                  </Pie>
-                  <Tooltip 
-                    formatter={(value: number) => [`${formatNumber(value)} m³`, 'Consumption']} 
-                  />
+                <LineChart
+                  data={consumptionTrendsByType}
+                  margin={{ top: 10, right: 30, left: 20, bottom: 30 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="month" tick={{ fontSize: 12 }} angle={-45} textAnchor="end" height={60} />
+                  <YAxis label={{ value: 'Consumption (m³)', angle: -90, position: 'insideLeft' }} />
+                  <Tooltip formatter={(value) => [`${formatNumber(value as number)} m³`, 'Consumption']} />
                   <Legend />
-                </PieChart>
+                  {typesToShow.map((type) => (
+                    <Line 
+                      type="monotone" 
+                      dataKey={type} 
+                      key={type}
+                      stroke={COLORS[type] || primaryColor} 
+                      activeDot={{ r: 8 }} 
+                      strokeWidth={2}
+                    />
+                  ))}
+                </LineChart>
               </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-white shadow-md">
+        {/* Stacked Area Chart for Overall Composition */}
+        <Card className="bg-white shadow-md mb-6">
           <CardHeader className="bg-gradient-to-r from-gray-100 to-gray-200 pb-2">
-            <CardTitle className="text-lg font-bold text-gray-700">Consumption by Type Details</CardTitle>
+            <CardTitle className="text-lg font-bold text-gray-700">Consumption Composition Over Time</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-96">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart
+                  data={consumptionTrendsByType}
+                  margin={{ top: 10, right: 30, left: 20, bottom: 30 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="month" tick={{ fontSize: 12 }} angle={-45} textAnchor="end" height={60} />
+                  <YAxis label={{ value: 'Consumption (m³)', angle: -90, position: 'insideLeft' }} />
+                  <Tooltip formatter={(value) => [`${formatNumber(value as number)} m³`, 'Consumption']} />
+                  <Legend />
+                  {typesToShow.map((type) => (
+                    <Area 
+                      type="monotone" 
+                      dataKey={type} 
+                      key={type}
+                      stackId="1"
+                      stroke={COLORS[type] || primaryColor} 
+                      fill={COLORS[type] || primaryColor} 
+                    />
+                  ))}
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Consumption Table */}
+        <Card className="bg-white shadow-md mb-6">
+          <CardHeader className="bg-gradient-to-r from-gray-100 to-gray-200 pb-2">
+            <CardTitle className="text-lg font-bold text-gray-700">Consumption by Type Details ({selectedMonth})</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
-              <table className="min-w-full bg-white rounded-lg">
-                <thead className="bg-gray-100">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
                   <tr>
-                    <th className="py-3 px-4 text-left">Consumption Type</th>
-                    <th className="py-3 px-4 text-right">Value (m³)</th>
-                    <th className="py-3 px-4 text-right">Percentage</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Consumption Type</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Value (m³)</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Percentage</th>
                   </tr>
                 </thead>
-                <tbody>
-                  {typeConsumptionForSelectedMonth
-                    .filter(type => type.type !== 'Main BULK')
-                    .map((type, index) => {
-                      const totalConsumption = typeConsumptionForSelectedMonth
-                        .filter(t => t.type !== 'Main BULK')
-                        .reduce((sum, item) => sum + item.value, 0);
-                      const percentage = ((type.value / totalConsumption) * 100).toFixed(2);
-                      
-                      return (
-                        <tr key={index} className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
-                          <td className="py-3 px-4 border-b">{type.type}</td>
-                          <td className="py-3 px-4 border-b text-right">{formatNumber(type.value)}</td>
-                          <td className="py-3 px-4 border-b text-right">{percentage}%</td>
-                        </tr>
-                      );
-                    })}
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {typeDataToDisplay.map((type) => (
+                    <tr key={type.name}>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        <div className="flex items-center">
+                          <span className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: COLORS[type.name] || primaryColor }}></span>
+                          {type.name}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatNumber(type.value)}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{type.percentage}%</td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>
           </CardContent>
         </Card>
       </div>
-
-      {/* Action Plan Recommendations */}
-      <Card className="bg-white shadow-md">
-        <CardHeader className="bg-gradient-to-r from-gray-100 to-gray-200 pb-2">
-          <CardTitle className="text-lg font-bold text-gray-700">Action Plan & Recommendations</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="rounded-lg bg-blue-50 p-4 border border-blue-200">
-              <h3 className="text-lg font-semibold text-blue-700 mb-2">High Loss Zones</h3>
-              <ul className="list-disc pl-5 text-blue-800">
-                {zoneDataForSelectedMonth
-                  .filter(zone => parseFloat(zone.lossPercentage) > 30)
-                  .map((zone, index) => (
-                    <li key={index} className="mb-2">
-                      <span className="font-medium">{zone.zone}:</span> {zone.lossPercentage}% loss
-                      <p className="text-sm text-blue-600 mt-1">
-                        Recommend meter calibration and leak detection surveys in this zone.
-                      </p>
-                    </li>
-                  ))}
-              </ul>
-            </div>
-
-            <div className="rounded-lg bg-green-50 p-4 border border-green-200">
-              <h3 className="text-lg font-semibold text-green-700 mb-2">Consumption Optimization</h3>
-              <ul className="list-disc pl-5 text-green-800">
-                <li className="mb-2">
-                  <span className="font-medium">Irrigation Services:</span> {formatNumber(typeConsumptionData['IRR_Servies'][selectedMonth])} m³
-                  <p className="text-sm text-green-600 mt-1">
-                    {typeConsumptionData['IRR_Servies'][selectedMonth] > 1000 ? 
-                      'Consider optimizing irrigation schedules during non-peak hours.' :
-                      'Current irrigation usage is efficient.'}
-                  </p>
-                </li>
-                <li className="mb-2">
-                  <span className="font-medium">Retail Consumption:</span> {formatNumber(typeConsumptionData['Retail'][selectedMonth])} m³
-                  <p className="text-sm text-green-600 mt-1">
-                    {typeConsumptionData['Retail'][selectedMonth] > 15000 ?
-                      'Investigate high retail consumption – conduct audits of major retail users.' :
-                      'Retail consumption is within expected range.'}
-                  </p>
-                </li>
-              </ul>
-            </div>
-          </div>
-
-          <div className="mt-4 rounded-lg bg-amber-50 p-4 border border-amber-200">
-            <h3 className="text-lg font-semibold text-amber-700 mb-2">Improvement Recommendations</h3>
-            <ol className="list-decimal pl-5 text-amber-800">
-              <li className="mb-2">
-                <span className="font-medium">Install Sub-Meters</span> in zones with high loss percentages to better isolate problem areas.
-              </li>
-              <li className="mb-2">
-                <span className="font-medium">Regular Calibration Schedule</span> for all bulk meters to ensure accurate readings.
-              </li>
-              <li className="mb-2">
-                <span className="font-medium">Leak Detection Program</span> focusing on Zone_05 and Zone_03_(A) which show consistently high losses.
-              </li>
-              <li className="mb-2">
-                <span className="font-medium">Real-Time Monitoring</span> implementation for major consumption points to quickly identify anomalies.
-              </li>
-            </ol>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
+    );
+  };
 
   // Set page title
   useEffect(() => {
