@@ -615,6 +615,117 @@ export type Database = {
         }
         Relationships: []
       }
+      stp_daily_data: {
+        Row: {
+          bod: number | null
+          cod: number | null
+          created_at: string | null
+          date: string
+          direct_sewage_mb: number | null
+          expected_volume_tankers: number | null
+          id: string
+          nh4_n: number | null
+          ph: number | null
+          tanker_trips: number | null
+          tn: number | null
+          total_influent: number | null
+          total_water_processed: number | null
+          tp: number | null
+          tse_to_irrigation: number | null
+          tss: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          bod?: number | null
+          cod?: number | null
+          created_at?: string | null
+          date: string
+          direct_sewage_mb?: number | null
+          expected_volume_tankers?: number | null
+          id?: string
+          nh4_n?: number | null
+          ph?: number | null
+          tanker_trips?: number | null
+          tn?: number | null
+          total_influent?: number | null
+          total_water_processed?: number | null
+          tp?: number | null
+          tse_to_irrigation?: number | null
+          tss?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          bod?: number | null
+          cod?: number | null
+          created_at?: string | null
+          date?: string
+          direct_sewage_mb?: number | null
+          expected_volume_tankers?: number | null
+          id?: string
+          nh4_n?: number | null
+          ph?: number | null
+          tanker_trips?: number | null
+          tn?: number | null
+          total_influent?: number | null
+          total_water_processed?: number | null
+          tp?: number | null
+          tse_to_irrigation?: number | null
+          tss?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      stp_monthly_data: {
+        Row: {
+          created_at: string | null
+          direct_sewage_mb: number | null
+          direct_sewage_percentage: number | null
+          expected_volume_tankers: number | null
+          id: string
+          irrigation_utilization: number | null
+          month: string
+          processing_efficiency: number | null
+          tanker_percentage: number | null
+          tanker_trips: number | null
+          total_influent: number | null
+          total_water_processed: number | null
+          tse_to_irrigation: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          direct_sewage_mb?: number | null
+          direct_sewage_percentage?: number | null
+          expected_volume_tankers?: number | null
+          id?: string
+          irrigation_utilization?: number | null
+          month: string
+          processing_efficiency?: number | null
+          tanker_percentage?: number | null
+          tanker_trips?: number | null
+          total_influent?: number | null
+          total_water_processed?: number | null
+          tse_to_irrigation?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          direct_sewage_mb?: number | null
+          direct_sewage_percentage?: number | null
+          expected_volume_tankers?: number | null
+          id?: string
+          irrigation_utilization?: number | null
+          month?: string
+          processing_efficiency?: number | null
+          tanker_percentage?: number | null
+          tanker_trips?: number | null
+          total_influent?: number | null
+          total_water_processed?: number | null
+          tse_to_irrigation?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       water_distribution_master: {
         Row: {
           account_number: string | null

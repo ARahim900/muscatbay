@@ -8,6 +8,12 @@ export interface STPDailyData {
   totalWaterProcessed: number;
   tseToIrrigation: number;
   "NH4-N"?: number;
+  pH?: number;
+  BOD?: number;
+  COD?: number;
+  TSS?: number;
+  TN?: number;
+  TP?: number;
 }
 
 export interface STPMonthlyData {
