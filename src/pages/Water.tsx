@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ExternalLink, Github, Droplets } from 'lucide-react';
+import { ExternalLink, Github, Droplets, FileBarChart, Gauge } from 'lucide-react';
 
 const Water = () => {
   useEffect(() => {
@@ -87,9 +87,64 @@ const Water = () => {
                 className="flex items-center"
               >
                 <Link to="/water-distribution">
-                  <ExternalLink className="mr-2 h-4 w-4" />
+                  <Gauge className="mr-2 h-4 w-4" />
                   Open Dashboard
                 </Link>
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+          <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-100">
+            <CardHeader>
+              <CardTitle className="flex items-center text-blue-700">
+                <FileBarChart className="mr-2 h-6 w-6 text-blue-600" />
+                Water Consumption by Type
+              </CardTitle>
+              <CardDescription className="text-blue-600">
+                Analyze water consumption patterns by different meter types
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="mb-4 text-blue-700">
+                This dashboard provides detailed analytics on water consumption across different consumer types,
+                including retail, residential, irrigation services, and more.
+              </p>
+              <Button 
+                asChild
+                variant="default"
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                <Link to="/water-consumption-types">
+                  <FileBarChart className="mr-2 h-4 w-4" />
+                  View Consumption Analytics
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-100">
+            <CardHeader>
+              <CardTitle className="flex items-center text-green-700">
+                <Droplets className="mr-2 h-6 w-6 text-green-600" />
+                Water Conservation Initiatives
+              </CardTitle>
+              <CardDescription className="text-green-600">
+                Track water-saving initiatives and conservation efforts
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="mb-4 text-green-700">
+                Monitor ongoing water conservation projects and their impact on reducing water consumption
+                and improving sustainability across Muscat Bay properties.
+              </p>
+              <Button 
+                variant="outline"
+                className="border-green-600 text-green-700 hover:bg-green-50"
+              >
+                <ExternalLink className="mr-2 h-4 w-4" />
+                Coming Soon
               </Button>
             </CardContent>
           </Card>

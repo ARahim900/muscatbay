@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -15,6 +14,7 @@ import Projects from "./pages/Projects";
 import AssetLifecycleManagement from "./pages/AssetLifecycleManagement";
 import Auth from "./pages/Auth";
 import WaterDistribution from "./pages/WaterDistribution";
+import WaterConsumptionTypes from './pages/WaterConsumptionTypes';
 
 const queryClient = new QueryClient();
 
@@ -35,6 +35,7 @@ const App = () => (
             <Route path="/stp" element={<ProtectedRoute><STP /></ProtectedRoute>} />
             <Route path="/water" element={<ProtectedRoute><Water /></ProtectedRoute>} />
             <Route path="/water-distribution" element={<ProtectedRoute><WaterDistribution /></ProtectedRoute>} />
+            <Route path="/water-consumption-types" element={<WaterConsumptionTypes />} />
             <Route path="/projects" element={<ProtectedRoute><Projects /></ProtectedRoute>} />
             <Route path="/alm" element={<ProtectedRoute><AssetLifecycleManagement /></ProtectedRoute>} />
             
