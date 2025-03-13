@@ -9,6 +9,7 @@ import { STPMonthlyOverview } from '@/components/stp/STPMonthlyOverview';
 import { STPDailyDetails } from '@/components/stp/STPDailyDetails';
 import { STPMetricsCards } from '@/components/stp/STPMetricsCards';
 import { AreaChart, BarChart2, CalendarClock, Droplets } from 'lucide-react';
+import { toast } from 'sonner';
 
 const STPDashboard = () => {
   const [selectedMonth, setSelectedMonth] = useState<string>(stpMonthlyData[stpMonthlyData.length - 1].month);
@@ -19,12 +20,23 @@ const STPDashboard = () => {
     
     // Log data to check if it's properly loaded
     console.log("Monthly data loaded:", stpMonthlyData);
-    console.log("Daily data for selected month:", getDailyDataForMonth(selectedMonth));
+    const dailyData = getDailyDataForMonth(selectedMonth);
+    console.log("Daily data for selected month:", dailyData);
+    
+    if (dailyData.length === 0) {
+      toast.warning(`No daily data found for ${formatMonth(selectedMonth)}. Please select another month.`);
+    }
   }, [selectedMonth]);
 
   const handleMonthChange = (value: string) => {
     console.log("Selected month changed to:", value);
     setSelectedMonth(value);
+    const dailyData = getDailyDataForMonth(value);
+    if (dailyData.length === 0) {
+      toast.warning(`No daily data found for ${formatMonth(value)}. Please select another month.`);
+    } else {
+      toast.success(`Loaded ${dailyData.length} days of data for ${formatMonth(value)}`);
+    }
   };
 
   return (

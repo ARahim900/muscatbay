@@ -5,7 +5,8 @@ import { STPDailyData } from '@/types/stp';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, LineChart, Line, ComposedChart } from 'recharts';
-import { BarChart2, LineChart as LineChartIcon, ArrowUp, ArrowDown, Minus } from 'lucide-react';
+import { BarChart2, LineChart as LineChartIcon, ArrowUp, ArrowDown, Minus, AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface STPDailyDetailsProps {
   selectedMonth: string;
@@ -83,19 +84,14 @@ export const STPDailyDetails: React.FC<STPDailyDetailsProps> = ({ selectedMonth 
   if (!dailyData.length) {
     return (
       <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>No Daily Data Available</CardTitle>
-            <CardDescription>
-              There is no daily data available for the selected month ({selectedMonth}).
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground">
-              Try selecting a different month or check the data source.
-            </p>
-          </CardContent>
-        </Card>
+        <Alert variant="warning">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>No Data Available</AlertTitle>
+          <AlertDescription>
+            There is no daily data available for the selected month ({selectedMonth}).
+            Please select a different month that has data.
+          </AlertDescription>
+        </Alert>
       </div>
     );
   }
