@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { FolderKanban, Shield, Calendar } from 'lucide-react';
+import { FolderKanban, Shield, Calendar, FileText } from 'lucide-react';
 import SidebarLink from './SidebarLink';
 import SidebarSection from './SidebarSection';
 import { ContractIcon } from './CustomIcons';
@@ -26,11 +26,11 @@ const ManagementSection: React.FC<ManagementSectionProps> = ({
   return (
     <SidebarSection title="Management" collapsed={collapsed} isMobile={isMobile}>
       <SidebarLink 
-        to={externalApps.contracts} 
-        icon={ContractIcon} 
+        to="/contracts" 
+        icon={FileText} 
         label="Contracts" 
         collapsed={collapsed} 
-        external={true}
+        external={false}
         openEmbedded={openEmbeddedApp}
         isMobile={isMobile}
       />

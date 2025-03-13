@@ -17,6 +17,7 @@ import Auth from "./pages/Auth";
 import WaterDistribution from "./pages/WaterDistribution";
 import WaterConsumptionTypes from './pages/WaterConsumptionTypes';
 import ElectricityDistribution from './pages/ElectricityDistribution';
+import Contracts from './pages/Contracts';
 
 const queryClient = new QueryClient();
 
@@ -41,6 +42,7 @@ const App = () => (
             <Route path="/electricity-distribution" element={<ProtectedRoute><ElectricityDistribution /></ProtectedRoute>} />
             <Route path="/projects" element={<ProtectedRoute><Projects /></ProtectedRoute>} />
             <Route path="/alm" element={<ProtectedRoute><AssetLifecycleManagement /></ProtectedRoute>} />
+            <Route path="/contracts" element={<ProtectedRoute><Contracts /></ProtectedRoute>} />
             
             {/* Catch-all route */}
             <Route path="*" element={<NotFound />} />
