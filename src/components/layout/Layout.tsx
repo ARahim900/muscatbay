@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import Navbar from './Navbar';
 import Sidebar from './sidebar';
@@ -108,7 +107,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         />
       )}
       
-      {isMobile && !mobileOpen && !embeddedApp.isOpen && (
+      {isMobile && (
         <button
           onClick={toggleMobileSidebar}
           className="fixed bottom-4 right-4 bg-muscat-primary text-white p-3 rounded-full shadow-lg z-40 animate-scale-in"
@@ -133,14 +132,14 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   size="icon"
                   className="mr-2"
                 >
-                  <ArrowLeft className="h-4 w-4" />
+                  <ArrowLeft className="h-5 w-5" />
                 </Button>
-                <h2 className="text-base sm:text-lg font-medium text-muscat-primary truncate">{embeddedApp.title}</h2>
+                <h2 className="text-lg sm:text-xl font-semibold text-muscat-primary truncate">{embeddedApp.title}</h2>
               </div>
               <div className="flex items-center">
                 <Button 
                   onClick={closeEmbeddedApp}
-                  className="px-3 sm:px-4 py-1 text-xs sm:text-sm font-medium text-white transition-all rounded-md bg-muscat-primary hover:bg-opacity-90 whitespace-nowrap"
+                  className="px-3 sm:px-4 py-1.5 text-sm sm:text-base font-medium text-white transition-all rounded-md bg-muscat-primary hover:bg-opacity-90 whitespace-nowrap"
                 >
                   Back to Dashboard
                 </Button>
@@ -149,7 +148,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             
             {iframeLoading && (
               <div className="absolute inset-0 flex items-center justify-center bg-background/50 z-20" style={{ top: '3rem' }}>
-                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-muscat-primary"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-muscat-primary"></div>
               </div>
             )}
             
@@ -173,8 +172,18 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             </div>
           </div>
         ) : (
-          <div className="px-2 sm:px-4 md:px-6 mx-auto w-full">
+          <div className="px-2 sm:px-4 md:px-6 mx-auto w-full pb-16">
             {children}
+            
+            {isMobile && !location.pathname.includes('/') && (
+              <Button
+                onClick={() => window.history.back()}
+                className="fixed bottom-16 right-4 bg-muscat-primary text-white p-2 rounded-full shadow-lg z-40 animate-scale-in"
+                size="icon"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
+            )}
           </div>
         )}
       </main>
