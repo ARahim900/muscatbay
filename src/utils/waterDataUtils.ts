@@ -100,7 +100,7 @@ export const saveWaterData = async (data: WaterData[]): Promise<{ success: boole
       };
     }
     
-    // Insert new data - Fixed by adding explicit type annotation
+    // Insert new data - Fixed by adding explicit type assertion
     const { error: insertError } = await supabase
       .from('water_distribution_master')
       .insert(data as any[]); // Using type assertion to bypass type checking for now

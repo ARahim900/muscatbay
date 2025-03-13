@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ComposedChart, Area, PieChart, Pie, Cell, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis } from 'recharts';
 
@@ -42,6 +43,8 @@ interface CustomTooltipProps {
   payload?: any[];
   label?: string;
 }
+
+type ValueType = string | number | Array<string | number>;
 
 const STPDashboard = () => {
   // Application primary colors based on #4E4456
@@ -642,4 +645,625 @@ const STPDashboard = () => {
                         fill={colors.chart5}
                         unit="%"
                       />
-                    </
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+                <p className="text-xs text-gray-500 mt-2">* Gradually increasing direct sewage contribution as property occupancy increases</p>
+              </div>
+              
+              {/* Efficiency Trend */}
+              <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
+                <h3 className="text-sm font-semibold mb-4" style={{ color: colors.primary }}>Efficiency & Sewage Type Trend</h3>
+                <div className="h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={data}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                      <XAxis 
+                        dataKey="month" 
+                        tickFormatter={(value, index) => `${value} ${data[index]?.year || ''}`}
+                        tick={{ fontSize: 12 }}
+                      />
+                      <YAxis 
+                        yAxisId="left"
+                        orientation="left"
+                        domain={[85, 90]}
+                        label={{ value: 'Efficiency %', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fontSize: '12px', fill: '#666' } }}
+                        tick={{ fontSize: 12 }}
+                      />
+                      <YAxis 
+                        yAxisId="right"
+                        orientation="right"
+                        domain={[40, 60]}
+                        label={{ value: 'Direct Sewage %', angle: -90, position: 'insideRight', style: { textAnchor: 'middle', fontSize: '12px', fill: '#666' } }}
+                        tick={{ fontSize: 12 }}
+                      />
+                      <Tooltip content={<CustomTooltip />} />
+                      <Legend wrapperStyle={{ fontSize: '12px' }} />
+                      <Line 
+                        yAxisId="left"
+                        type="monotone" 
+                        dataKey="treatmentEfficiency" 
+                        name="Treatment Efficiency" 
+                        stroke={colors.chart4} 
+                        dot={{ r: 3 }}
+                        unit="%"
+                      />
+                      <Line 
+                        yAxisId="right"
+                        type="monotone" 
+                        dataKey="directSewagePercentage" 
+                        name="Direct Sewage Contribution" 
+                        stroke={colors.chart5} 
+                        dot={{ r: 3 }}
+                        unit="%"
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+                <p className="text-xs text-gray-500 mt-2">* The slight decline in efficiency correlates with increasing direct sewage percentage</p>
+              </div>
+              
+              {/* Water Balance */}
+              <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
+                <h3 className="text-sm font-semibold mb-4" style={{ color: colors.primary }}>Water Balance Analysis</h3>
+                <div className="h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={data}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                      <XAxis 
+                        dataKey="month" 
+                        tickFormatter={(value, index) => `${value} ${data[index]?.year || ''}`}
+                        tick={{ fontSize: 12 }}
+                      />
+                      <YAxis 
+                        domain={[80, 120]}
+                        label={{ value: 'Ratio %', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fontSize: '12px', fill: '#666' } }}
+                        tick={{ fontSize: 12 }}
+                      />
+                      <Tooltip content={<CustomTooltip />} />
+                      <Legend wrapperStyle={{ fontSize: '12px' }} />
+                      <Line 
+                        type="monotone" 
+                        dataKey="waterRecoveryRate" 
+                        name="Processed/Influent" 
+                        stroke={colors.chart1} 
+                        dot={{ r: 3 }}
+                        unit="%"
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="treatmentEfficiency" 
+                        name="Irrigation/Processed" 
+                        stroke={colors.chart6} 
+                        dot={{ r: 3 }}
+                        unit="%"
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey={() => 100} 
+                        name="Ideal Balance" 
+                        stroke="#999" 
+                        strokeDasharray="5 5"
+                        dot={false}
+                        unit="%"
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+                <p className="text-xs text-gray-500 mt-2">* Process consistently shows water recovery {'>'}100%, suggesting measurement discrepancies</p>
+              </div>
+            </div>
+            
+            {/* Process Parameters */}
+            <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
+              <h3 className="text-sm font-semibold mb-4" style={{ color: colors.primary }}>Key Process Parameters</h3>
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Parameter</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Average Value</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Normal Range</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    <tr>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">pH</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">7.2</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">6.5 - 8.0</td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">Normal</span>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Dissolved Oxygen</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2.5 ppm</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2.0 - 3.0 ppm</td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">Normal</span>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">MLSS</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">12,000 mg/L</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">10,000 - 14,000 mg/L</td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">Normal</span>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Chlorine Dosing</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">125 ppm</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">100 - 150 ppm</td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">Normal</span>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Treatment Efficiency</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{metrics.avgTreatmentEfficiency.toFixed(1)}%</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">≥ 85%</td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">Normal</span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {/* Equipment Status Tab */}
+        {activeTab === 'equipment' && (
+          <div className="space-y-6">
+            {/* Equipment Status Overview */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {equipmentStatus.map((equipment, index) => (
+                <div key={index} className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
+                  <div className="flex justify-between items-center mb-2">
+                    <h3 className="text-sm font-semibold" style={{ color: colors.primary }}>{equipment.name}</h3>
+                    <div className={`px-2 py-1 text-xs font-medium rounded-full ${
+                      equipment.status === 'Optimal' || equipment.status === 'Operational' || equipment.status === 'Normal Operation' || equipment.status === 'Good Condition' 
+                        ? 'bg-green-100 text-green-800' 
+                        : equipment.status === 'Requires Check' || equipment.status === 'Monitor Performance' 
+                          ? 'bg-yellow-100 text-yellow-800'
+                          : 'bg-red-100 text-red-800'
+                    }`}>
+                      {equipment.status}
+                    </div>
+                  </div>
+                  <div className="mt-3 h-6 bg-gray-200 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full rounded-full"
+                      style={{ 
+                        width: `${equipment.performance}%`,
+                        backgroundColor: equipment.performance >= 90 ? colors.success :
+                                        equipment.performance >= 75 ? colors.chart5 :
+                                        colors.warning
+                      }}
+                    ></div>
+                  </div>
+                  <div className="flex justify-between mt-1 text-xs text-gray-500">
+                    <span>0%</span>
+                    <span>{equipment.performance}% Performance</span>
+                    <span>100%</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            {/* Equipment Performance Charts */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* MBR Performance */}
+              <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
+                <h3 className="text-sm font-semibold mb-4" style={{ color: colors.primary }}>MBR Performance Indicators</h3>
+                <div className="h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <ComposedChart data={data}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                      <XAxis 
+                        dataKey="month" 
+                        tickFormatter={(value, index) => `${value} ${data[index]?.year || ''}`}
+                        tick={{ fontSize: 12 }}
+                      />
+                      <YAxis 
+                        yAxisId="left"
+                        orientation="left"
+                        domain={[85, 90]}
+                        label={{ value: 'Treatment Efficiency %', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fontSize: '12px', fill: '#666' } }}
+                        tick={{ fontSize: 12 }}
+                      />
+                      <YAxis 
+                        yAxisId="right"
+                        orientation="right"
+                        domain={[11000, 13000]}
+                        label={{ value: 'MLSS (mg/L)', angle: -90, position: 'insideRight', style: { textAnchor: 'middle', fontSize: '12px', fill: '#666' } }}
+                        tick={{ fontSize: 12 }}
+                      />
+                      <Tooltip content={<CustomTooltip />} />
+                      <Legend wrapperStyle={{ fontSize: '12px' }} />
+                      <Bar 
+                        yAxisId="right"
+                        dataKey="mlss" 
+                        name="MLSS" 
+                        fill={colors.chart2}
+                        unit=" mg/L"
+                      />
+                      <Line 
+                        yAxisId="left"
+                        type="monotone" 
+                        dataKey="treatmentEfficiency" 
+                        name="Treatment Efficiency" 
+                        stroke={colors.chart4} 
+                        dot={{ r: 3 }}
+                        unit="%"
+                      />
+                    </ComposedChart>
+                  </ResponsiveContainer>
+                </div>
+                <p className="text-xs text-gray-500 mt-2">* MBR performance shows slight efficiency decline despite stable MLSS levels</p>
+              </div>
+              
+              {/* Equipment Status Radar */}
+              <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
+                <h3 className="text-sm font-semibold mb-4" style={{ color: colors.primary }}>Equipment Performance Map</h3>
+                <div className="h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RadarChart outerRadius={90} data={equipmentStatus}>
+                      <PolarGrid />
+                      <PolarAngleAxis dataKey="name" tick={{ fontSize: 11 }} />
+                      <PolarRadiusAxis domain={[0, 100]} tick={{ fontSize: 10 }} />
+                      <Radar
+                        name="Equipment Performance"
+                        dataKey="performance"
+                        stroke={colors.accent1}
+                        fill={colors.accent1}
+                        fillOpacity={0.5}
+                      />
+                      <Legend wrapperStyle={{ fontSize: '12px' }} />
+                      <Tooltip />
+                    </RadarChart>
+                  </ResponsiveContainer>
+                </div>
+                <p className="text-xs text-gray-500 mt-2">* Radar chart shows relative performance of key equipment systems</p>
+              </div>
+            </div>
+            
+            {/* Maintenance Schedule */}
+            <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
+              <h3 className="text-sm font-semibold mb-4" style={{ color: colors.primary }}>Recommended Maintenance Schedule</h3>
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Equipment</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Maintenance Task</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Frequency</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Done</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Next Due</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Priority</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    <tr>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">MBR Membranes</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Inspection & Cleaning</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Quarterly</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Dec 2024</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Mar 2025</td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">Medium</span>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Aeration Blowers</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Performance Check</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Monthly</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Feb 2025</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Mar 2025</td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">Low</span>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Flow Meters</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Calibration</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Quarterly</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Nov 2024</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Mar 2025</td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full">High</span>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Chlorination System</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Dosing Check</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Weekly</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Mar 2025</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Mar 2025</td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">Low</span>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Raw Sewage Pumps</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Performance Check</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Monthly</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Feb 2025</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Mar 2025</td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">Low</span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {/* Compliance & Reports Tab */}
+        {activeTab === 'compliance' && (
+          <div className="space-y-6">
+            {/* Compliance Status */}
+            <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
+              <h3 className="text-sm font-semibold mb-4" style={{ color: colors.primary }}>Regulatory Compliance Status</h3>
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Parameter</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Current Value</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Limit/Requirement</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Standard</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {parameterCompliance.map((param, index) => (
+                      <tr key={index}>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{param.parameter}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{typeof param.value === 'number' ? param.value.toFixed(1) : param.value}{param.unit}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{param.min} - {param.max}{param.unit}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">ISO 14001, Local Standards</td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">{param.status}</span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            
+            {/* Recommendations */}
+            <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
+              <h3 className="text-sm font-semibold mb-4" style={{ color: colors.primary }}>Recommendations & Action Items</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <h4 className="text-sm font-medium mb-2">Process Optimization</h4>
+                  <ul className="space-y-2">
+                    <li className="flex items-start">
+                      <div className="h-5 w-5 mt-0.5 mr-2 flex-shrink-0 rounded-full bg-blue-100 flex items-center justify-center">
+                        <svg className="h-3.5 w-3.5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                      <span className="text-sm text-gray-700">Monitor increasing flow trends; develop capacity management plan if trend continues</span>
+                    </li>
+                    <li className="flex items-start">
+                      <div className="h-5 w-5 mt-0.5 mr-2 flex-shrink-0 rounded-full bg-blue-100 flex items-center justify-center">
+                        <svg className="h-3.5 w-3.5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                      <span className="text-sm text-gray-700">Adjust operations for higher direct sewage proportion (may require aeration adjustment)</span>
+                    </li>
+                    <li className="flex items-start">
+                      <div className="h-5 w-5 mt-0.5 mr-2 flex-shrink-0 rounded-full bg-blue-100 flex items-center justify-center">
+                        <svg className="h-3.5 w-3.5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                      <span className="text-sm text-gray-700">Investigate slight treatment efficiency decline; consider membrane cleaning schedule</span>
+                    </li>
+                    <li className="flex items-start">
+                      <div className="h-5 w-5 mt-0.5 mr-2 flex-shrink-0 rounded-full bg-blue-100 flex items-center justify-center">
+                        <svg className="h-3.5 w-3.5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                      <span className="text-sm text-gray-700">Review energy consumption of blowers as flows increase</span>
+                    </li>
+                  </ul>
+                </div>
+                
+                <div>
+                  <h4 className="text-sm font-medium mb-2">Maintenance Schedule</h4>
+                  <ul className="space-y-2">
+                    <li className="flex items-start">
+                      <div className="h-5 w-5 mt-0.5 mr-2 flex-shrink-0 rounded-full bg-red-100 flex items-center justify-center">
+                        <svg className="h-3.5 w-3.5 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
+                      <span className="text-sm text-gray-700"><span className="font-medium">Urgent:</span> Flow meter calibration for all systems</span>
+                    </li>
+                    <li className="flex items-start">
+                      <div className="h-5 w-5 mt-0.5 mr-2 flex-shrink-0 rounded-full bg-yellow-100 flex items-center justify-center">
+                        <svg className="h-3.5 w-3.5 text-yellow-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
+                      <span className="text-sm text-gray-700"><span className="font-medium">Q1 2025:</span> Full membrane inspection and potential cleaning</span>
+                    </li>
+                    <li className="flex items-start">
+                      <div className="h-5 w-5 mt-0.5 mr-2 flex-shrink-0 rounded-full bg-yellow-100 flex items-center justify-center">
+                        <svg className="h-3.5 w-3.5 text-yellow-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
+                      <span className="text-sm text-gray-700"><span className="font-medium">Q1 2025:</span> Blower performance assessment (all three SEM.4.1 TRCB.GCA units)</span>
+                    </li>
+                    <li className="flex items-start">
+                      <div className="h-5 w-5 mt-0.5 mr-2 flex-shrink-0 rounded-full bg-green-100 flex items-center justify-center">
+                        <svg className="h-3.5 w-3.5 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
+                      <span className="text-sm text-gray-700"><span className="font-medium">Monthly:</span> MLSS concentration verification (target ~12,000 mg/L)</span>
+                    </li>
+                    <li className="flex items-start">
+                      <div className="h-5 w-5 mt-0.5 mr-2 flex-shrink-0 rounded-full bg-green-100 flex items-center justify-center">
+                        <svg className="h-3.5 w-3.5 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
+                      <span className="text-sm text-gray-700"><span className="font-medium">Monthly:</span> Chlorine dosing system calibration check</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            
+            {/* Reports Section */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
+                <h3 className="text-sm font-semibold mb-3" style={{ color: colors.primary }}>ISO 14001 Compliance</h3>
+                <div className="flex items-center mb-4">
+                  <div className="h-10 w-10 rounded-full flex items-center justify-center mr-3 bg-green-100">
+                    <svg className="h-6 w-6 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-700">Last Audit: January 2025</p>
+                    <p className="text-sm text-gray-500">Status: Compliant</p>
+                  </div>
+                </div>
+                <ul className="space-y-2 text-sm text-gray-700">
+                  <li className="flex items-start">
+                    <svg className="h-5 w-5 text-green-500 mr-2 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    Environmental Management System
+                  </li>
+                  <li className="flex items-start">
+                    <svg className="h-5 w-5 text-green-500 mr-2 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    Resource Efficiency
+                  </li>
+                  <li className="flex items-start">
+                    <svg className="h-5 w-5 text-green-500 mr-2 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    Pollution Prevention
+                  </li>
+                  <li className="flex items-start">
+                    <svg className="h-5 w-5 text-yellow-500 mr-2 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    Energy Monitoring (Action required)
+                  </li>
+                </ul>
+              </div>
+              
+              <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
+                <h3 className="text-sm font-semibold mb-3" style={{ color: colors.primary }}>WHO Guidelines Compliance</h3>
+                <div className="flex items-center mb-4">
+                  <div className="h-10 w-10 rounded-full flex items-center justify-center mr-3 bg-green-100">
+                    <svg className="h-6 w-6 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-700">Last Assessment: February 2025</p>
+                    <p className="text-sm text-gray-500">Status: Compliant</p>
+                  </div>
+                </div>
+                <ul className="space-y-2 text-sm text-gray-700">
+                  <li className="flex items-start">
+                    <svg className="h-5 w-5 text-green-500 mr-2 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    Effluent Quality Standards
+                  </li>
+                  <li className="flex items-start">
+                    <svg className="h-5 w-5 text-green-500 mr-2 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    Disinfection Requirements
+                  </li>
+                  <li className="flex items-start">
+                    <svg className="h-5 w-5 text-green-500 mr-2 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    Water Reuse Guidelines
+                  </li>
+                  <li className="flex items-start">
+                    <svg className="h-5 w-5 text-green-500 mr-2 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    Health & Safety Standards
+                  </li>
+                </ul>
+              </div>
+              
+              <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
+                <h3 className="text-sm font-semibold mb-3" style={{ color: colors.primary }}>Local Regulatory Compliance</h3>
+                <div className="flex items-center mb-4">
+                  <div className="h-10 w-10 rounded-full flex items-center justify-center mr-3 bg-green-100">
+                    <svg className="h-6 w-6 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-700">Last Inspection: February 2025</p>
+                    <p className="text-sm text-gray-500">Status: Fully Compliant</p>
+                  </div>
+                </div>
+                <ul className="space-y-2 text-sm text-gray-700">
+                  <li className="flex items-start">
+                    <svg className="h-5 w-5 text-green-500 mr-2 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    Operating Permit Requirements
+                  </li>
+                  <li className="flex items-start">
+                    <svg className="h-5 w-5 text-green-500 mr-2 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    Effluent Quality Standards
+                  </li>
+                  <li className="flex items-start">
+                    <svg className="h-5 w-5 text-green-500 mr-2 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    Monitoring & Reporting
+                  </li>
+                  <li className="flex items-start">
+                    <svg className="h-5 w-5 text-green-500 mr-2 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    Odor Control Requirements
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+      
+      {/* Footer */}
+      <footer className="p-4 mt-6 text-center text-xs text-gray-500 border-t border-gray-200">
+        <p>Muscat Bay STP Performance Dashboard | Data Period: Jul 2024 - Feb 2025 | Last Updated: Mar 2025</p>
+        <p className="mt-1">Plant Capacity: 750 m³/day | Membrane Bioreactor (MBR) Technology</p>
+      </footer>
+    </div>
+  );
+};
+
+export default STPDashboard;
