@@ -11,7 +11,12 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format, differenceInDays } from 'date-fns';
 import { STPDailyData } from '@/types/stp';
-import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, Scatter, ComposedChart, ScatterChart, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Area } from 'recharts';
+import { 
+  LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, 
+  Scatter, ComposedChart, ScatterChart, XAxis, YAxis, 
+  CartesianGrid, Tooltip, Legend, ResponsiveContainer, 
+  Area, ZAxis 
+} from 'recharts';
 import { BarChart2, CalendarRange, DropletIcon, FlaskConical, PieChart as PieChartIcon, LineChart as LineChartIcon, Sigma, TrendingUp } from 'lucide-react';
 
 const STPAnalytics = () => {
