@@ -1,9 +1,9 @@
-
 import React, { useState, useEffect, forwardRef } from 'react';
 import Layout from '@/components/layout/Layout';
 import DashboardCard from '@/components/dashboard/DashboardCard';
 import StatCard from '@/components/dashboard/StatCard';
 import KpiIndicator from '@/components/dashboard/KpiIndicator';
+import WelcomeSpotlight from '@/components/welcome/WelcomeSpotlight';
 import { 
   Droplet, 
   Zap, 
@@ -122,6 +122,20 @@ const Index = () => {
     day: 'numeric' 
   }));
   
+  const [showWelcome, setShowWelcome] = useState(false);
+
+  useEffect(() => {
+    const hasVisited = localStorage.getItem('hasVisitedBefore');
+    if (!hasVisited) {
+      const timer = setTimeout(() => {
+        setShowWelcome(true);
+        localStorage.setItem('hasVisitedBefore', 'true');
+      }, 1000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, []);
+  
   const navigateToSection = (section: string) => {
     navigate(`/${section}`);
     toast({
@@ -132,6 +146,8 @@ const Index = () => {
 
   return (
     <Layout>
+      {showWelcome && <WelcomeSpotlight onClose={() => setShowWelcome(false)} />}
+      
       <div className="mb-4 md:mb-6 animate-fade-in w-full">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between">
           <div>
