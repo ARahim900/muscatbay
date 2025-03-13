@@ -165,7 +165,7 @@ const ImportWaterData: React.FC = () => {
           
           console.log(`Imported ${transformedData.length} records`);
         },
-        error: (error) => {
+        error: (error: Papa.ParseError) => {
           console.error("Error parsing CSV:", error);
           toast({
             title: "Error parsing data",
