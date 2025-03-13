@@ -135,6 +135,72 @@ export type Database = {
         }
         Relationships: []
       }
+      L1_Main_Bulk: {
+        Row: {
+          apr_24: number | null
+          aug_24: number | null
+          created_at: string | null
+          dec_24: number | null
+          feb_24: number | null
+          id: number
+          jan_24: number | null
+          jul_24: number | null
+          jun_24: number | null
+          mar_24: number | null
+          may_24: number | null
+          meter_id: string | null
+          meter_label: string | null
+          meter_type: string | null
+          nov_24: number | null
+          oct_24: number | null
+          parent_meter: string | null
+          sep_24: number | null
+          total_24: number | null
+        }
+        Insert: {
+          apr_24?: number | null
+          aug_24?: number | null
+          created_at?: string | null
+          dec_24?: number | null
+          feb_24?: number | null
+          id?: number
+          jan_24?: number | null
+          jul_24?: number | null
+          jun_24?: number | null
+          mar_24?: number | null
+          may_24?: number | null
+          meter_id?: string | null
+          meter_label?: string | null
+          meter_type?: string | null
+          nov_24?: number | null
+          oct_24?: number | null
+          parent_meter?: string | null
+          sep_24?: number | null
+          total_24?: number | null
+        }
+        Update: {
+          apr_24?: number | null
+          aug_24?: number | null
+          created_at?: string | null
+          dec_24?: number | null
+          feb_24?: number | null
+          id?: number
+          jan_24?: number | null
+          jul_24?: number | null
+          jun_24?: number | null
+          mar_24?: number | null
+          may_24?: number | null
+          meter_id?: string | null
+          meter_label?: string | null
+          meter_type?: string | null
+          nov_24?: number | null
+          oct_24?: number | null
+          parent_meter?: string | null
+          sep_24?: number | null
+          total_24?: number | null
+        }
+        Relationships: []
+      }
       "L1: Main Bulk Meter": {
         Row: {
           "Acct #": string | null
@@ -198,6 +264,75 @@ export type Database = {
         }
         Relationships: []
       }
+      L2_Zone_Bulk_Direct: {
+        Row: {
+          apr_24: number | null
+          aug_24: number | null
+          created_at: string | null
+          dec_24: number | null
+          feb_24: number | null
+          id: number
+          jan_24: number | null
+          jul_24: number | null
+          jun_24: number | null
+          mar_24: number | null
+          may_24: number | null
+          meter_id: string | null
+          meter_label: string | null
+          meter_type: string | null
+          nov_24: number | null
+          oct_24: number | null
+          parent_meter: string | null
+          sep_24: number | null
+          total_24: number | null
+          zone: string | null
+        }
+        Insert: {
+          apr_24?: number | null
+          aug_24?: number | null
+          created_at?: string | null
+          dec_24?: number | null
+          feb_24?: number | null
+          id?: number
+          jan_24?: number | null
+          jul_24?: number | null
+          jun_24?: number | null
+          mar_24?: number | null
+          may_24?: number | null
+          meter_id?: string | null
+          meter_label?: string | null
+          meter_type?: string | null
+          nov_24?: number | null
+          oct_24?: number | null
+          parent_meter?: string | null
+          sep_24?: number | null
+          total_24?: number | null
+          zone?: string | null
+        }
+        Update: {
+          apr_24?: number | null
+          aug_24?: number | null
+          created_at?: string | null
+          dec_24?: number | null
+          feb_24?: number | null
+          id?: number
+          jan_24?: number | null
+          jul_24?: number | null
+          jun_24?: number | null
+          mar_24?: number | null
+          may_24?: number | null
+          meter_id?: string | null
+          meter_label?: string | null
+          meter_type?: string | null
+          nov_24?: number | null
+          oct_24?: number | null
+          parent_meter?: string | null
+          sep_24?: number | null
+          total_24?: number | null
+          zone?: string | null
+        }
+        Relationships: []
+      }
       "L2: Zones Bulk + Direct Connection": {
         Row: {
           "Acct #": number | null
@@ -258,6 +393,75 @@ export type Database = {
           Total?: number | null
           Type?: string | null
           Zone?: string | null
+        }
+        Relationships: []
+      }
+      L3_Individual_Meters: {
+        Row: {
+          apr_24: number | null
+          aug_24: number | null
+          created_at: string | null
+          dec_24: number | null
+          feb_24: number | null
+          id: number
+          jan_24: number | null
+          jul_24: number | null
+          jun_24: number | null
+          mar_24: number | null
+          may_24: number | null
+          meter_id: string | null
+          meter_label: string | null
+          meter_type: string | null
+          nov_24: number | null
+          oct_24: number | null
+          parent_meter: string | null
+          sep_24: number | null
+          total_24: number | null
+          zone: string | null
+        }
+        Insert: {
+          apr_24?: number | null
+          aug_24?: number | null
+          created_at?: string | null
+          dec_24?: number | null
+          feb_24?: number | null
+          id?: number
+          jan_24?: number | null
+          jul_24?: number | null
+          jun_24?: number | null
+          mar_24?: number | null
+          may_24?: number | null
+          meter_id?: string | null
+          meter_label?: string | null
+          meter_type?: string | null
+          nov_24?: number | null
+          oct_24?: number | null
+          parent_meter?: string | null
+          sep_24?: number | null
+          total_24?: number | null
+          zone?: string | null
+        }
+        Update: {
+          apr_24?: number | null
+          aug_24?: number | null
+          created_at?: string | null
+          dec_24?: number | null
+          feb_24?: number | null
+          id?: number
+          jan_24?: number | null
+          jul_24?: number | null
+          jun_24?: number | null
+          mar_24?: number | null
+          may_24?: number | null
+          meter_id?: string | null
+          meter_label?: string | null
+          meter_type?: string | null
+          nov_24?: number | null
+          oct_24?: number | null
+          parent_meter?: string | null
+          sep_24?: number | null
+          total_24?: number | null
+          zone?: string | null
         }
         Relationships: []
       }
@@ -791,7 +995,17 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      Zone_Metrics: {
+        Row: {
+          bulksupply: number | null
+          cleaned_zone: string | null
+          individualmeters: number | null
+          loss: number | null
+          losspercentage: number | null
+          zone: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       [_ in never]: never

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { 
@@ -13,7 +14,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Calendar,
-  X
+  X,
+  WaterDrop
 } from 'lucide-react';
 
 const PumpStationIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -253,6 +255,14 @@ const Sidebar: React.FC<SidebarProps> = ({
               external={true}
               openEmbedded={openEmbeddedApp}
               options={externalApps.water.options}
+              isMobile={isMobile}
+            />
+            <SidebarLink 
+              to="/water-distribution" 
+              icon={WaterDrop} 
+              label="Water Distribution" 
+              collapsed={collapsed} 
+              external={false}
               isMobile={isMobile}
             />
             <SidebarLink 

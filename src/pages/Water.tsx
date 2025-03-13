@@ -1,9 +1,10 @@
 
 import React, { useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ExternalLink, Github } from 'lucide-react';
+import { ExternalLink, Github, WaterDrop } from 'lucide-react';
 
 const Water = () => {
   useEffect(() => {
@@ -15,7 +16,7 @@ const Water = () => {
       <div className="w-full">
         <h1 className="text-2xl md:text-3xl font-bold mb-4 md:mb-6">Water Management</h1>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-6 md:mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-6 md:mb-8">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">
@@ -62,6 +63,33 @@ const Water = () => {
               >
                 <ExternalLink className="mr-2 h-4 w-4" />
                 Open GitHub Repository
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <WaterDrop className="mr-2 h-6 w-6" />
+                Water Distribution Dashboard
+              </CardTitle>
+              <CardDescription>
+                View and analyze the water distribution system across Muscat Bay
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="mb-4">
+                The Water Distribution Dashboard provides comprehensive analysis of water consumption,
+                losses, and distribution patterns across different zones in Muscat Bay.
+              </p>
+              <Button 
+                asChild
+                className="flex items-center"
+              >
+                <Link to="/water-distribution">
+                  <ExternalLink className="mr-2 h-4 w-4" />
+                  Open Dashboard
+                </Link>
               </Button>
             </CardContent>
           </Card>
