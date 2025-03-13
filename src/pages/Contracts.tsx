@@ -386,7 +386,7 @@ const ContractDashboard = () => {
           </div>
         </div>
         <div className="mt-4 flex justify-end">
-          <button className="bg-gray-700 text-white px-4 py-2 rounded mr-2 flex items-center">
+          <button className="text-white px-4 py-2 rounded mr-2 flex items-center bg-[#4e4456]">
             <Filter size={16} className="mr-1" />
             <span>Apply</span>
           </button>
