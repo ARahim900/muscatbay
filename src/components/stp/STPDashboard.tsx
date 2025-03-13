@@ -2,6 +2,48 @@
 import React, { useState } from 'react';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ComposedChart, Area, PieChart, Pie, Cell, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis } from 'recharts';
 
+interface EquipmentStatus {
+  name: string;
+  status: string;
+  performance: number;
+}
+
+interface ParameterCompliance {
+  parameter: string;
+  value: number;
+  min: number;
+  max: number;
+  unit: string;
+  status: string;
+}
+
+interface DataPoint {
+  id: number;
+  month: string;
+  year: string;
+  avgDailyInfluent: number;
+  capacityUtilization: number;
+  directSewagePercentage: number;
+  tankerPercentage: number;
+  treatmentEfficiency: number;
+  waterRecoveryRate: number;
+  totalInfluent: number;
+  totalProcessed: number;
+  irrigation: number;
+  tankerTrips: number;
+  directSewage: number;
+  pH: number;
+  do: number;
+  mlss: number;
+  chlorine: number;
+}
+
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: any[];
+  label?: string;
+}
+
 const STPDashboard = () => {
   // Application primary colors based on #4E4456
   const colors = {
@@ -25,7 +67,7 @@ const STPDashboard = () => {
   };
 
   // Monthly data from analysis
-  const fullData = [
+  const fullData: DataPoint[] = [
     {
       id: 1,
       month: "Jul",
@@ -273,12 +315,12 @@ const STPDashboard = () => {
   const uniqueMonths = [...new Set(fullData.map(item => item.month))];
   
   // Custom tooltip for charts
-  const CustomTooltip = ({ active, payload, label }: any) => {
+  const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
     if (active && payload && payload.length) {
       return (
         <div className="p-2 bg-white border border-gray-200 rounded shadow-md">
           <p className="font-semibold text-sm">{`${label}`}</p>
-          {payload.map((entry: any, index: number) => (
+          {payload.map((entry, index) => (
             <p key={index} style={{ color: entry.color }} className="text-sm">
               {`${entry.name}: ${typeof entry.value === 'number' ? entry.value.toFixed(1) : entry.value}${entry.unit || ''}`}
             </p>
@@ -309,7 +351,7 @@ const STPDashboard = () => {
   const equipmentStatus = calculateEquipmentStatus();
   
   // Process Parameter Compliance
-  const parameterCompliance = [
+  const parameterCompliance: ParameterCompliance[] = [
     { parameter: 'pH', value: 7.2, min: 6.5, max: 8.0, unit: '', status: 'Compliant' },
     { parameter: 'DO', value: 2.5, min: 2.0, max: 3.0, unit: 'ppm', status: 'Compliant' },
     { parameter: 'MLSS', value: 12000, min: 10000, max: 14000, unit: 'mg/L', status: 'Compliant' },
@@ -912,7 +954,7 @@ const STPDashboard = () => {
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
-                <p className="text-xs text-gray-500 mt-2">* Process consistently shows water recovery >100%, suggesting measurement discrepancies</p>
+                <p className="text-xs text-gray-500 mt-2">* Process consistently shows water recovery {'>'} 100%, suggesting measurement discrepancies</p>
               </div>
             </div>
             
