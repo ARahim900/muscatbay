@@ -1,4 +1,3 @@
-
 import { CSVRowData, WaterData } from '@/types/water';
 import Papa from 'papaparse';
 import { supabase } from '@/integrations/supabase/client';
@@ -106,10 +105,7 @@ export const saveWaterData = async (data: WaterData[]): Promise<{ success: boole
     
     if (refreshError) {
       console.error("Error refreshing views:", refreshError);
-      return {
-        success: true, // Still mark as success since data was imported
-        message: `Imported ${data.length} water distribution records. (View refresh failed: ${refreshError?.message || "Unknown error"})`
-      };
+      throw new Error(`Failed to refresh data connection: ${refreshError?.message || 'Unknown error'}`);
     }
     
     return {

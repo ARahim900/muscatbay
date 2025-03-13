@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import Navbar from './Navbar';
-import Sidebar from './Sidebar';
+import Sidebar from './sidebar';
 import { ArrowLeft, X, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
