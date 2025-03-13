@@ -118,7 +118,10 @@ export const saveWaterData = async (data: WaterData[]): Promise<{ success: boole
     
     if (refreshError) {
       console.error("Error refreshing views:", refreshError);
-      throw new Error(`Failed to refresh data connection: ${refreshError?.message || 'Unknown error'}`);
+      return { 
+        success: false, 
+        message: refreshError.message || 'Unknown error' 
+      };
     }
     
     return {
