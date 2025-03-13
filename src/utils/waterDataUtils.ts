@@ -44,7 +44,7 @@ export const parseCSVFromClipboard = async (
           if (onSuccess) onSuccess(transformedData);
           resolve(transformedData);
         },
-        error: (error: Error | string) => {
+        error: (error) => {
           const errorMessage = typeof error === 'string' ? error : error.message;
           console.error("Error parsing CSV:", errorMessage);
           if (onError) onError("Could not parse the content.");
