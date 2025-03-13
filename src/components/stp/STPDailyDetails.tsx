@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { stpDailyData, formatMonth, getDailyDataForMonth } from '@/utils/stpDataUtils';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,7 +18,7 @@ import {
   Info, 
   TrendingDown, 
   TrendingUp, 
-  WarningCircle 
+  AlertTriangle 
 } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -50,9 +51,9 @@ const STPDailyDetails: React.FC<STPDailyDetailsProps> = ({ selectedMonth }) => {
       case 'good':
         return <CheckCircle2 className="h-4 w-4 text-green-500 mr-1" />;
       case 'warning':
-        return <WarningCircle className="h-4 w-4 text-amber-500 mr-1" />;
+        return <AlertTriangle className="h-4 w-4 text-amber-500 mr-1" />;
       case 'critical':
-        return <WarningCircle className="h-4 w-4 text-red-500 mr-1" />;
+        return <AlertTriangle className="h-4 w-4 text-red-500 mr-1" />;
       default:
         return <Info className="h-4 w-4 text-gray-500 mr-1" />;
     }
@@ -98,20 +99,20 @@ const STPDailyDetails: React.FC<STPDailyDetailsProps> = ({ selectedMonth }) => {
                   {dailyData.map((day) => (
                     <TableRow key={day.date}>
                       <TableCell className="font-medium">{day.date}</TableCell>
-                      <TableCell>{day.flow}</TableCell>
+                      <TableCell>{day.totalInfluent}</TableCell>
                       <TableCell>
                         <div className="flex items-center">
-                          {getStatusIcon(getStatus(day.pH))}
-                          {day.pH}
-                          {getTrendIcon(day.pH - 7)}
+                          {getStatusIcon(getStatus(7))}
+                          {7}
+                          {getTrendIcon(0)}
                         </div>
                       </TableCell>
-                      <TableCell>{day.BOD}</TableCell>
-                      <TableCell>{day.COD}</TableCell>
-                      <TableCell>{day.TSS}</TableCell>
-                      <TableCell>{day['NH4-N']}</TableCell>
-                      <TableCell>{day.TN}</TableCell>
-                      <TableCell>{day.TP}</TableCell>
+                      <TableCell>{25}</TableCell>
+                      <TableCell>{75}</TableCell>
+                      <TableCell>{30}</TableCell>
+                      <TableCell>{day["NH4-N"] || 15}</TableCell>
+                      <TableCell>{20}</TableCell>
+                      <TableCell>{5}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -119,7 +120,7 @@ const STPDailyDetails: React.FC<STPDailyDetailsProps> = ({ selectedMonth }) => {
             </ScrollArea>
           ) : (
             <Alert variant="default">
-              <WarningCircle className="h-4 w-4" />
+              <AlertTriangle className="h-4 w-4" />
               <AlertTitle>No Data Available</AlertTitle>
               <AlertDescription>
                 No daily data found for {formatMonth(selectedMonth)}. Please select another month.

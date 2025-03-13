@@ -7,6 +7,7 @@ export interface STPDailyData {
   totalInfluent: number;
   totalWaterProcessed: number;
   tseToIrrigation: number;
+  "NH4-N"?: number;
 }
 
 export interface STPMonthlyData {
