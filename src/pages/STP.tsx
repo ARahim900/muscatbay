@@ -6,10 +6,12 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Link } from 'react-router-dom';
-import { ArrowRight, LineChart, Microscope, MonitorSmartphone } from 'lucide-react';
+import { ArrowRight, LineChart, Microscope, MonitorSmartphone, Upload } from 'lucide-react';
+import STPDataImport from '@/components/stp/STPDataImport';
 
 const STP = () => {
   const [selectedTab, setSelectedTab] = useState('dashboard');
+  const [showImport, setShowImport] = useState(false);
 
   useEffect(() => {
     document.title = 'STP Plant | Muscat Bay Asset Manager';
@@ -20,6 +22,16 @@ const STP = () => {
       duration: 3000,
     });
   }, []);
+
+  const handleImportSuccess = () => {
+    setShowImport(false);
+    setSelectedTab('dashboard');
+    toast.success("STP data imported successfully", {
+      description: "The dashboard has been refreshed with the latest data",
+    });
+    // Refresh the dashboard
+    window.location.reload();
+  };
 
   return (
     <Layout>
@@ -32,6 +44,10 @@ const STP = () => {
             </p>
           </div>
           <div className="flex space-x-2">
+            <Button variant="outline" size="sm" onClick={() => setShowImport(!showImport)}>
+              <Upload className="mr-2 h-4 w-4" />
+              {showImport ? 'Hide Import' : 'Import Data'}
+            </Button>
             <Button asChild variant="outline" size="sm">
               <Link to="/stp-bioreactor-mbr">
                 <Microscope className="mr-2 h-4 w-4" />
@@ -46,6 +62,12 @@ const STP = () => {
             </Button>
           </div>
         </div>
+
+        {showImport && (
+          <div className="mb-6">
+            <STPDataImport onImportSuccess={handleImportSuccess} />
+          </div>
+        )}
 
         <Tabs value={selectedTab} onValueChange={setSelectedTab} className="space-y-4">
           <TabsList>
