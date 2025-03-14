@@ -42,6 +42,36 @@
     padding: 0 1rem;
     width: calc(100% + 2rem);
   }
+
+  /* Fix for chart text overflow on small screens */
+  .recharts-text {
+    font-size: 8px !important;
+  }
+  
+  .recharts-cartesian-axis-tick-value {
+    font-size: 8px !important;
+  }
+  
+  /* Fix for system pages on mobile */
+  .system-section {
+    padding: 0.5rem !important;
+  }
+  
+  .system-section .grid {
+    gap: 0.5rem !important;
+  }
+  
+  .system-section h1 {
+    font-size: 1.25rem !important;
+  }
+  
+  .system-section h3 {
+    font-size: 1rem !important;
+  }
+  
+  .system-section .card {
+    padding: 0.75rem !important;
+  }
 }
 
 /* When not on mobile, hide mobile-only elements */
@@ -110,5 +140,18 @@
   
   .recharts-text {
     font-size: 10px !important;
+  }
+}
+
+/* Landscape orientation fixes */
+@media (max-width: 900px) and (orientation: landscape) {
+  .system-section {
+    padding: 0.75rem !important;
+    overflow-y: auto;
+    max-height: calc(100vh - 64px);
+  }
+  
+  .system-chart-container {
+    height: 250px !important;
   }
 }

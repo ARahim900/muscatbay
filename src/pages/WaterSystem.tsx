@@ -54,7 +54,34 @@ const waterData = {
     { name: 'Residential (Apart)', value: 5800, color: '#4CAF50' },
     { name: 'MB_Common', value: 3400, color: '#9C27B0' },
     { name: 'Building', value: 25000, color: '#FF9800' },
-  ]
+  ],
+  // Zone data for Zone Analysis tab
+  zoneData: [
+    { zone: 'Zone A', consumption: 125000, users: 450, efficiency: 92 },
+    { zone: 'Zone B', consumption: 98000, users: 320, efficiency: 88 },
+    { zone: 'Zone C', consumption: 110000, users: 380, efficiency: 90 },
+    { zone: 'Zone D', consumption: 145000, users: 510, efficiency: 85 },
+  ],
+  // Conservation data for Conservation tab
+  conservationData: [
+    { month: 'Mar-23', actual: 63800, target: 70000, savings: 6200 },
+    { month: 'Apr-23', actual: 55800, target: 65000, savings: 9200 },
+    { month: 'May-23', actual: 60000, target: 63000, savings: 3000 },
+    { month: 'Jun-23', actual: 58800, target: 62000, savings: 3200 },
+    { month: 'Jul-23', actual: 62900, target: 64000, savings: 1100 },
+    { month: 'Aug-23', actual: 64300, target: 66000, savings: 1700 },
+    { month: 'Sep-23', actual: 59500, target: 61000, savings: 1500 },
+    { month: 'Oct-23', actual: 57200, target: 60000, savings: 2800 },
+    { month: 'Nov-23', actual: 63200, target: 64000, savings: 800 },
+    { month: 'Dec-23', actual: 68100, target: 68000, savings: -100 },
+    { month: 'Jan-24', actual: 63400, target: 65000, savings: 1600 },
+    { month: 'Feb-24', actual: 64700, target: 67000, savings: 2300 },
+  ],
+  savingsHighlight: {
+    total: 33300,
+    percentage: 4.2,
+    costSaved: 43956
+  }
 };
 
 const COLORS = ['#FF5252', '#FFC107', '#2196F3', '#4CAF50', '#9C27B0', '#FF9800'];
@@ -67,7 +94,7 @@ const WaterSystem = () => {
   
   return (
     <Layout>
-      <div className="p-4 max-w-full">
+      <div className="p-4 max-w-full system-section">
         <div className="flex flex-col space-y-4">
           {/* Header with Title and Controls */}
           <div className="flex items-center justify-between flex-wrap gap-4 mb-2">
@@ -75,7 +102,7 @@ const WaterSystem = () => {
               <div className="p-2 bg-blue-500 rounded-lg text-white">
                 <DropletIcon className="h-6 w-6" />
               </div>
-              <h1 className={cn("font-bold text-muscat-primary", isMobile ? "text-xl" : "text-2xl")}>
+              <h1 className={cn("font-bold text-muscat-primary dark:text-white", isMobile ? "text-xl" : "text-2xl")}>
                 Muscat Bay Water System
               </h1>
             </div>
@@ -83,9 +110,9 @@ const WaterSystem = () => {
             <div className="flex items-center gap-2">
               <div className="hidden sm:flex items-center gap-2">
                 <div className="flex items-center gap-2">
-                  <CalendarIcon className="h-4 w-4 text-gray-500" />
+                  <CalendarIcon className="h-4 w-4 text-gray-500 dark:text-gray-400" />
                   <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-500">Year:</span>
+                    <span className="text-sm text-gray-500 dark:text-gray-400">Year:</span>
                     <Select value={year} onValueChange={setYear}>
                       <SelectTrigger className="w-24 h-8">
                         <SelectValue />
@@ -100,7 +127,7 @@ const WaterSystem = () => {
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-500">Month:</span>
+                  <span className="text-sm text-gray-500 dark:text-gray-400">Month:</span>
                   <Select value={month} onValueChange={setMonth}>
                     <SelectTrigger className="w-24 h-8">
                       <SelectValue />
@@ -165,7 +192,7 @@ const WaterSystem = () => {
             </TabsList>
             
             <TabsContent value="overview" className="space-y-4">
-              <div className="text-lg font-medium mb-2">Showing: All Data</div>
+              <div className="text-lg font-medium mb-2 dark:text-white">Showing: All Data</div>
               
               {/* Stats Cards */}
               <div className={`grid ${isMobile ? "grid-cols-1" : "grid-cols-2 xl:grid-cols-4"} gap-4 mb-6`}>
@@ -205,7 +232,7 @@ const WaterSystem = () => {
               
               {/* Filter Section */}
               <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm mb-6">
-                <div className="mb-2 font-medium flex items-center">
+                <div className="mb-2 font-medium flex items-center dark:text-white">
                   <Filter className="w-4 h-4 mr-2" />
                   Filter by Type
                 </div>
@@ -222,9 +249,9 @@ const WaterSystem = () => {
               {/* Charts */}
               <div className="space-y-6">
                 {/* Monthly Trend Chart */}
-                <Card className="p-4">
-                  <h3 className="text-lg font-medium mb-4">Monthly Consumption Trend</h3>
-                  <div className="h-[300px] w-full">
+                <Card className="p-4 dark:bg-gray-800 dark:border-gray-700">
+                  <h3 className="text-lg font-medium mb-4 dark:text-white">Monthly Consumption Trend</h3>
+                  <div className="h-[300px] w-full system-chart-container">
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart data={waterData.monthlyData}>
                         <CartesianGrid strokeDasharray="3 3" />
@@ -247,9 +274,9 @@ const WaterSystem = () => {
                 </Card>
                 
                 {/* Pie Chart */}
-                <Card className="p-4">
-                  <h3 className="text-lg font-medium mb-4">Consumption by Type</h3>
-                  <div className="h-[300px] w-full">
+                <Card className="p-4 dark:bg-gray-800 dark:border-gray-700">
+                  <h3 className="text-lg font-medium mb-4 dark:text-white">Consumption by Type</h3>
+                  <div className="h-[300px] w-full system-chart-container">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
@@ -272,7 +299,7 @@ const WaterSystem = () => {
                   </div>
                   <div className="flex flex-wrap justify-center gap-3 mt-2">
                     {waterData.pieData.map((entry, index) => (
-                      <div key={entry.name} className="flex items-center text-xs">
+                      <div key={entry.name} className="flex items-center text-xs dark:text-gray-300">
                         <div className="w-3 h-3 mr-1" style={{ backgroundColor: COLORS[index % COLORS.length] }}></div>
                         <span>{entry.name}</span>
                       </div>
@@ -281,9 +308,9 @@ const WaterSystem = () => {
                 </Card>
                 
                 {/* Composition Chart */}
-                <Card className="p-4">
-                  <h3 className="text-lg font-medium mb-4">Consumption Composition</h3>
-                  <div className="h-[300px] w-full">
+                <Card className="p-4 dark:bg-gray-800 dark:border-gray-700">
+                  <h3 className="text-lg font-medium mb-4 dark:text-white">Consumption Composition</h3>
+                  <div className="h-[300px] w-full system-chart-container">
                     <ResponsiveContainer width="100%" height="100%">
                       <AreaChart data={waterData.monthlyData}>
                         <CartesianGrid strokeDasharray="3 3" />
@@ -308,18 +335,172 @@ const WaterSystem = () => {
               </div>
             </TabsContent>
             
-            <TabsContent value="zone-analysis">
-              <div className="p-6 text-center">
-                <h3 className="text-lg font-medium mb-2">Zone Analysis</h3>
-                <p className="text-gray-500">Zone analysis features are coming soon.</p>
+            <TabsContent value="zone-analysis" className="space-y-4">
+              <div className="text-lg font-medium mb-4 dark:text-white">Zone Analysis Dashboard</div>
+              
+              {/* Zone Stats */}
+              <div className={`grid ${isMobile ? "grid-cols-1" : "grid-cols-2 xl:grid-cols-4"} gap-4 mb-6`}>
+                {waterData.zoneData.map((zone) => (
+                  <Card key={zone.zone} className="p-4 dark:bg-gray-800 dark:border-gray-700">
+                    <h3 className="text-lg font-medium mb-2 dark:text-white">{zone.zone}</h3>
+                    <div className="flex flex-col space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-500 dark:text-gray-400">Consumption:</span>
+                        <span className="font-medium dark:text-white">{zone.consumption.toLocaleString()} m³</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-500 dark:text-gray-400">Users:</span>
+                        <span className="font-medium dark:text-white">{zone.users}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-500 dark:text-gray-400">Efficiency:</span>
+                        <span className="font-medium dark:text-white">{zone.efficiency}%</span>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
               </div>
+              
+              {/* Zone Consumption Chart */}
+              <Card className="p-4 dark:bg-gray-800 dark:border-gray-700">
+                <h3 className="text-lg font-medium mb-4 dark:text-white">Zone Consumption Comparison</h3>
+                <div className="h-[300px] w-full system-chart-container">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={waterData.zoneData}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={true}
+                        outerRadius={isMobile ? 80 : 100}
+                        fill="#8884d8"
+                        dataKey="consumption"
+                        nameKey="zone"
+                        label={({ zone, percent }) => `${zone}: ${(percent * 100).toFixed(0)}%`}
+                      >
+                        {waterData.zoneData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip formatter={(value) => `${Number(value).toLocaleString()} m³`} />
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              </Card>
+              
+              {/* Zone Efficiency Chart */}
+              <Card className="p-4 dark:bg-gray-800 dark:border-gray-700 mt-6">
+                <h3 className="text-lg font-medium mb-4 dark:text-white">Zone Efficiency</h3>
+                <div className="h-[300px] w-full system-chart-container">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart
+                      data={waterData.zoneData}
+                      margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="zone" />
+                      <YAxis domain={[80, 100]} />
+                      <Tooltip />
+                      <Legend />
+                      <Line
+                        type="monotone"
+                        dataKey="efficiency"
+                        name="Efficiency (%)"
+                        stroke="#8884d8"
+                        activeDot={{ r: 8 }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </Card>
             </TabsContent>
             
-            <TabsContent value="conservation">
-              <div className="p-6 text-center">
-                <h3 className="text-lg font-medium mb-2">Water Conservation</h3>
-                <p className="text-gray-500">Conservation features are coming soon.</p>
+            <TabsContent value="conservation" className="space-y-4">
+              <div className="text-lg font-medium mb-4 dark:text-white">Water Conservation Dashboard</div>
+              
+              {/* Conservation Stats */}
+              <div className={`grid ${isMobile ? "grid-cols-1" : "grid-cols-3"} gap-4 mb-6`}>
+                <StatCard
+                  title="Total Water Saved"
+                  value={`${waterData.savingsHighlight.total.toLocaleString()} m³`}
+                  description="Annual savings"
+                  icon={DropletIcon}
+                  color="primary"
+                />
+                
+                <StatCard
+                  title="Savings Percentage"
+                  value={`${waterData.savingsHighlight.percentage}%`}
+                  description="Below target consumption"
+                  icon={DropletIcon}
+                  color="teal"
+                  trend={{ value: waterData.savingsHighlight.percentage, isPositive: true }}
+                />
+                
+                <StatCard
+                  title="Cost Saved"
+                  value={`${waterData.savingsHighlight.costSaved.toLocaleString()} OMR`}
+                  description="From water conservation efforts"
+                  icon={DropletIcon}
+                  color="gold"
+                />
               </div>
+              
+              {/* Conservation Chart */}
+              <Card className="p-4 dark:bg-gray-800 dark:border-gray-700">
+                <h3 className="text-lg font-medium mb-4 dark:text-white">Actual vs Target Consumption</h3>
+                <div className="h-[300px] w-full system-chart-container">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={waterData.conservationData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="month" fontSize={10} />
+                      <YAxis fontSize={10} />
+                      <Tooltip />
+                      <Legend />
+                      <Line 
+                        type="monotone" 
+                        dataKey="target" 
+                        name="Target Consumption" 
+                        stroke="#FF5252" 
+                        activeDot={{ r: 8 }} 
+                        strokeWidth={2}
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="actual" 
+                        name="Actual Consumption" 
+                        stroke="#2196F3" 
+                        activeDot={{ r: 8 }}
+                        strokeWidth={2}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </Card>
+              
+              {/* Water Savings Chart */}
+              <Card className="p-4 dark:bg-gray-800 dark:border-gray-700 mt-6">
+                <h3 className="text-lg font-medium mb-4 dark:text-white">Monthly Water Savings</h3>
+                <div className="h-[300px] w-full system-chart-container">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={waterData.conservationData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="month" fontSize={10} />
+                      <YAxis fontSize={10} />
+                      <Tooltip />
+                      <Legend />
+                      <Area 
+                        type="monotone" 
+                        dataKey="savings" 
+                        name="Water Saved (m³)" 
+                        fill="#4CAF50" 
+                        stroke="#4CAF50"
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </Card>
             </TabsContent>
           </Tabs>
         </div>

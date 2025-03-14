@@ -5,7 +5,7 @@ import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { CalendarIcon, Zap, DownloadIcon, Filter } from 'lucide-react';
+import { CalendarIcon, Zap, DownloadIcon, Filter, Activity, Building, Lightbulb } from 'lucide-react';
 import { 
   ResponsiveContainer, 
   LineChart, 
@@ -19,7 +19,9 @@ import {
   Pie,
   Cell,
   AreaChart,
-  Area
+  Area,
+  BarChart,
+  Bar
 } from 'recharts';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -53,7 +55,81 @@ const electricityData = {
     { name: 'IRR', value: 7.7, color: '#3B82F6' },
     { name: 'Street Light', value: 7.7, color: '#EC4899' },
     { name: 'D_Building', value: 69.3, color: '#EF4444' },
-  ]
+  ],
+  // Consumption analysis data
+  consumptionAnalysis: {
+    peakHours: [
+      { hour: '00:00', consumption: 2100 },
+      { hour: '01:00', consumption: 1900 },
+      { hour: '02:00', consumption: 1800 },
+      { hour: '03:00', consumption: 1750 },
+      { hour: '04:00', consumption: 1700 },
+      { hour: '05:00', consumption: 1800 },
+      { hour: '06:00', consumption: 2300 },
+      { hour: '07:00', consumption: 2800 },
+      { hour: '08:00', consumption: 3500 },
+      { hour: '09:00', consumption: 3800 },
+      { hour: '10:00', consumption: 4000 },
+      { hour: '11:00', consumption: 4200 },
+      { hour: '12:00', consumption: 4100 },
+      { hour: '13:00', consumption: 4300 },
+      { hour: '14:00', consumption: 4500 },
+      { hour: '15:00', consumption: 4400 },
+      { hour: '16:00', consumption: 4200 },
+      { hour: '17:00', consumption: 4000 },
+      { hour: '18:00', consumption: 3900 },
+      { hour: '19:00', consumption: 3700 },
+      { hour: '20:00', consumption: 3500 },
+      { hour: '21:00', consumption: 3200 },
+      { hour: '22:00', consumption: 2800 },
+      { hour: '23:00', consumption: 2400 },
+    ],
+    seasonalTrends: [
+      { season: 'Winter', consumption: 60000, cost: 1500 },
+      { season: 'Spring', consumption: 58000, cost: 1450 },
+      { season: 'Summer', consumption: 82000, cost: 2050 },
+      { season: 'Fall', consumption: 65000, cost: 1625 },
+    ]
+  },
+  // Facilities management data
+  facilities: [
+    { name: 'Main Building', consumption: 175000, efficiency: 85, maintenance: 'Scheduled' },
+    { name: 'Residential Area', consumption: 210000, efficiency: 78, maintenance: 'Completed' },
+    { name: 'Commercial Complex', consumption: 145000, efficiency: 82, maintenance: 'Due' },
+    { name: 'Public Areas', consumption: 95000, efficiency: 90, maintenance: 'Scheduled' },
+    { name: 'Infrastructure', consumption: 68320, efficiency: 88, maintenance: 'Completed' },
+  ],
+  // Cost analysis data
+  costAnalysis: {
+    byMonth: [
+      { month: 'Mar-23', cost: 1375 },
+      { month: 'Apr-23', cost: 1250 },
+      { month: 'May-23', cost: 1500 },
+      { month: 'Jun-23', cost: 1700 },
+      { month: 'Jul-23', cost: 1875 },
+      { month: 'Aug-23', cost: 2125 },
+      { month: 'Sep-23', cost: 2000 },
+      { month: 'Oct-23', cost: 1750 },
+      { month: 'Nov-23', cost: 1550 },
+      { month: 'Dec-23', cost: 1450 },
+      { month: 'Jan-24', cost: 1625 },
+      { month: 'Feb-24', cost: 1750 },
+    ],
+    predictions: [
+      { month: 'Mar-24', predicted: 1400, actual: 1375 },
+      { month: 'Apr-24', predicted: 1300, actual: 1250 },
+      { month: 'May-24', predicted: 1550, actual: 1500 },
+      { month: 'Jun-24', predicted: 1800, actual: 1700 },
+      { month: 'Jul-24', predicted: 1950, actual: 1875 },
+      { month: 'Aug-24', predicted: 2200, actual: 2125 },
+      { month: 'Sep-24', predicted: 2100, actual: 2000 },
+      { month: 'Oct-24', predicted: 1800, actual: 1750 },
+      { month: 'Nov-24', predicted: 1600, actual: 1550 },
+      { month: 'Dec-24', predicted: 1500, actual: 1450 },
+      { month: 'Jan-25', predicted: 1700, actual: null },
+      { month: 'Feb-25', predicted: 1800, actual: null },
+    ]
+  }
 };
 
 const COLORS = ['#F59E0B', '#10B981', '#3B82F6', '#EC4899', '#EF4444'];
@@ -65,7 +141,7 @@ const ElectricitySystem = () => {
   
   return (
     <Layout>
-      <div className="p-4 max-w-full">
+      <div className="p-4 max-w-full system-section">
         <div className="flex flex-col space-y-4">
           {/* Header with Title and Controls */}
           <div className="flex items-center justify-between flex-wrap gap-4 mb-2">
@@ -212,7 +288,7 @@ const ElectricitySystem = () => {
                 {/* Monthly Consumption Chart */}
                 <Card className="p-4 dark:border-gray-700 dark:bg-gray-800">
                   <h3 className="text-lg font-medium mb-4 text-muscat-primary dark:text-white">Monthly Electricity Consumption</h3>
-                  <div className="h-[300px] w-full">
+                  <div className="h-[300px] w-full system-chart-container">
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart data={electricityData.monthlyData}>
                         <CartesianGrid strokeDasharray="3 3" />
@@ -237,7 +313,7 @@ const ElectricitySystem = () => {
                 {/* Pie Chart */}
                 <Card className="p-4 dark:border-gray-700 dark:bg-gray-800">
                   <h3 className="text-lg font-medium mb-4 text-muscat-primary dark:text-white">Consumption by Facility Type</h3>
-                  <div className="h-[300px] w-full">
+                  <div className="h-[300px] w-full system-chart-container">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
@@ -260,9 +336,9 @@ const ElectricitySystem = () => {
                   </div>
                   <div className="flex flex-wrap justify-center gap-3 mt-2">
                     {electricityData.pieData.map((entry, index) => (
-                      <div key={entry.name} className="flex items-center text-xs">
+                      <div key={entry.name} className="flex items-center text-xs dark:text-gray-300">
                         <div className="w-3 h-3 mr-1" style={{ backgroundColor: COLORS[index % COLORS.length] }}></div>
-                        <span className="dark:text-white">{entry.name}</span>
+                        <span>{entry.name}</span>
                       </div>
                     ))}
                   </div>
@@ -271,7 +347,7 @@ const ElectricitySystem = () => {
                 {/* Composition Chart */}
                 <Card className="p-4 dark:border-gray-700 dark:bg-gray-800">
                   <h3 className="text-lg font-medium mb-4 text-muscat-primary dark:text-white">Consumption Composition</h3>
-                  <div className="h-[300px] w-full">
+                  <div className="h-[300px] w-full system-chart-container">
                     <ResponsiveContainer width="100%" height="100%">
                       <AreaChart data={electricityData.monthlyData}>
                         <CartesianGrid strokeDasharray="3 3" />
@@ -296,25 +372,253 @@ const ElectricitySystem = () => {
               </div>
             </TabsContent>
             
-            <TabsContent value="consumption">
-              <div className="p-6 text-center">
-                <h3 className="text-lg font-medium mb-2 dark:text-white">Consumption Analysis</h3>
-                <p className="text-gray-500 dark:text-gray-400">Consumption analysis features are coming soon.</p>
+            <TabsContent value="consumption" className="space-y-4">
+              <div className="text-lg font-medium mb-4 dark:text-white">Consumption Analysis</div>
+              
+              {/* Consumption Stats */}
+              <div className={`grid ${isMobile ? "grid-cols-1" : "grid-cols-3"} gap-4 mb-6`}>
+                <StatCard
+                  title="Average Daily Usage"
+                  value="2,310 kWh"
+                  description="Per day"
+                  icon={Activity}
+                  color="primary"
+                />
+                
+                <StatCard
+                  title="Peak Hour Usage"
+                  value="4,500 kWh"
+                  description="At 14:00"
+                  icon={Activity}
+                  color="teal"
+                />
+                
+                <StatCard
+                  title="Seasonal Variance"
+                  value="41.4%"
+                  description="Summer vs. Winter"
+                  icon={Activity}
+                  color="gold"
+                />
               </div>
+              
+              {/* Hourly Usage Chart */}
+              <Card className="p-4 dark:border-gray-700 dark:bg-gray-800">
+                <h3 className="text-lg font-medium mb-4 dark:text-white">24-Hour Usage Pattern</h3>
+                <div className="h-[300px] w-full system-chart-container">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={electricityData.consumptionAnalysis.peakHours}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="hour" fontSize={10} />
+                      <YAxis fontSize={10} />
+                      <Tooltip />
+                      <Area 
+                        type="monotone" 
+                        dataKey="consumption" 
+                        name="Consumption (kWh)" 
+                        stroke="#3B82F6" 
+                        fill="#3B82F6" 
+                        fillOpacity={0.3}
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </Card>
+              
+              {/* Seasonal Trends Chart */}
+              <Card className="p-4 dark:border-gray-700 dark:bg-gray-800 mt-6">
+                <h3 className="text-lg font-medium mb-4 dark:text-white">Seasonal Consumption Trends</h3>
+                <div className="h-[300px] w-full system-chart-container">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={electricityData.consumptionAnalysis.seasonalTrends}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="season" fontSize={10} />
+                      <YAxis yAxisId="left" orientation="left" stroke="#3B82F6" fontSize={10} />
+                      <YAxis yAxisId="right" orientation="right" stroke="#F59E0B" fontSize={10} />
+                      <Tooltip />
+                      <Legend />
+                      <Bar 
+                        yAxisId="left" 
+                        dataKey="consumption" 
+                        name="Consumption (kWh)" 
+                        fill="#3B82F6" 
+                      />
+                      <Bar 
+                        yAxisId="right" 
+                        dataKey="cost" 
+                        name="Cost (OMR)" 
+                        fill="#F59E0B" 
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </Card>
             </TabsContent>
             
-            <TabsContent value="facilities">
-              <div className="p-6 text-center">
-                <h3 className="text-lg font-medium mb-2 dark:text-white">Facilities Management</h3>
-                <p className="text-gray-500 dark:text-gray-400">Facilities management features are coming soon.</p>
+            <TabsContent value="facilities" className="space-y-4">
+              <div className="text-lg font-medium mb-4 dark:text-white">Facilities Management</div>
+              
+              {/* Facilities List */}
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+                <div className="p-4 border-b dark:border-gray-700">
+                  <h3 className="text-lg font-medium dark:text-white">Facility Performance</h3>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead className="bg-gray-50 dark:bg-gray-900">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Facility</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Consumption (kWh)</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Efficiency (%)</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Maintenance</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                      {electricityData.facilities.map((facility) => (
+                        <tr key={facility.name}>
+                          <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
+                            <div className="flex items-center">
+                              <Building className="h-4 w-4 mr-2 text-gray-400" />
+                              {facility.name}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">{facility.consumption.toLocaleString()}</td>
+                          <td className="px-6 py-4 text-sm">
+                            <div className="flex items-center">
+                              <span className={`px-2 py-1 rounded text-xs ${
+                                facility.efficiency >= 85 ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 
+                                facility.efficiency >= 80 ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' : 
+                                'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                              }`}>
+                                {facility.efficiency}%
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 text-sm">
+                            <span className={`px-2 py-1 rounded text-xs ${
+                              facility.maintenance === 'Completed' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 
+                              facility.maintenance === 'Scheduled' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' : 
+                              'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200'
+                            }`}>
+                              {facility.maintenance}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
+              
+              {/* Efficiency Chart */}
+              <Card className="p-4 dark:border-gray-700 dark:bg-gray-800 mt-6">
+                <h3 className="text-lg font-medium mb-4 dark:text-white">Facility Efficiency Comparison</h3>
+                <div className="h-[300px] w-full system-chart-container">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart 
+                      data={electricityData.facilities}
+                      layout="vertical"
+                      margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis type="number" domain={[70, 100]} />
+                      <YAxis dataKey="name" type="category" width={150} fontSize={10} />
+                      <Tooltip />
+                      <Legend />
+                      <Bar 
+                        dataKey="efficiency" 
+                        name="Efficiency (%)" 
+                        fill="#10B981"
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </Card>
             </TabsContent>
             
-            <TabsContent value="cost">
-              <div className="p-6 text-center">
-                <h3 className="text-lg font-medium mb-2 dark:text-white">Cost Analysis</h3>
-                <p className="text-gray-500 dark:text-gray-400">Cost analysis features are coming soon.</p>
+            <TabsContent value="cost" className="space-y-4">
+              <div className="text-lg font-medium mb-4 dark:text-white">Cost Analysis</div>
+              
+              {/* Cost Stats */}
+              <div className={`grid ${isMobile ? "grid-cols-1" : "grid-cols-3"} gap-4 mb-6`}>
+                <StatCard
+                  title="Total Annual Cost"
+                  value="17,333 OMR"
+                  description="For 693,320 kWh"
+                  icon={Zap}
+                  color="primary"
+                />
+                
+                <StatCard
+                  title="Average Monthly Cost"
+                  value="1,444 OMR"
+                  description="Per month"
+                  icon={Zap}
+                  color="teal"
+                />
+                
+                <StatCard
+                  title="Cost Savings Potential"
+                  value="2,600 OMR"
+                  description="Estimated annual savings"
+                  icon={Lightbulb}
+                  color="gold"
+                  trend={{ value: 15, isPositive: true }}
+                />
               </div>
+              
+              {/* Monthly Cost Chart */}
+              <Card className="p-4 dark:border-gray-700 dark:bg-gray-800">
+                <h3 className="text-lg font-medium mb-4 dark:text-white">Monthly Cost Trend</h3>
+                <div className="h-[300px] w-full system-chart-container">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={electricityData.costAnalysis.byMonth}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="month" fontSize={10} />
+                      <YAxis fontSize={10} />
+                      <Tooltip />
+                      <Area 
+                        type="monotone" 
+                        dataKey="cost" 
+                        name="Cost (OMR)" 
+                        stroke="#EF4444" 
+                        fill="#EF4444" 
+                        fillOpacity={0.3}
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </Card>
+              
+              {/* Cost Prediction Chart */}
+              <Card className="p-4 dark:border-gray-700 dark:bg-gray-800 mt-6">
+                <h3 className="text-lg font-medium mb-4 dark:text-white">Cost Prediction vs Actual</h3>
+                <div className="h-[300px] w-full system-chart-container">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={electricityData.costAnalysis.predictions}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="month" fontSize={10} />
+                      <YAxis fontSize={10} />
+                      <Tooltip />
+                      <Legend />
+                      <Line 
+                        type="monotone" 
+                        dataKey="predicted" 
+                        name="Predicted Cost" 
+                        stroke="#3B82F6" 
+                        strokeDasharray="5 5"
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="actual" 
+                        name="Actual Cost" 
+                        stroke="#10B981" 
+                        activeDot={{ r: 8 }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </Card>
             </TabsContent>
           </Tabs>
         </div>

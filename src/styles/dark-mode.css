@@ -39,3 +39,22 @@
 .dark .recharts-tooltip-wrapper .recharts-default-tooltip .recharts-tooltip-item {
   color: rgba(255, 255, 255, 0.9) !important;
 }
+
+/* Fix for overlapping elements in system pages */
+.system-chart-container {
+  overflow: visible;
+}
+
+.system-section {
+  overflow-x: hidden;
+}
+
+/* Ensure proper spacing between chart elements */
+.recharts-wrapper {
+  margin: 0 auto;
+}
+
+/* Ensure proper sizing of SVG elements */
+.recharts-surface {
+  overflow: visible;
+}
