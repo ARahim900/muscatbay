@@ -18,14 +18,6 @@ const UtilitiesSection: React.FC<UtilitiesSectionProps> = ({
   return (
     <SidebarSection title="Utilities" collapsed={collapsed} isMobile={isMobile}>
       <SidebarLink 
-        to="/electricity-distribution" 
-        icon={Zap} 
-        label="Electricity Distribution" 
-        collapsed={collapsed} 
-        external={false}
-        isMobile={isMobile}
-      />
-      <SidebarLink 
         to="/water-system" 
         icon={Droplets} 
         label="Water System" 
