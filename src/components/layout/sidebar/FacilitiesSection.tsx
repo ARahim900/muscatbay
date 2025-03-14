@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Factory, Thermometer, Droplet } from 'lucide-react';
+import { Thermometer, Droplet } from 'lucide-react';
 import SidebarLink from './SidebarLink';
 import SidebarSection from './SidebarSection';
 import { PumpStationIcon } from './CustomIcons';

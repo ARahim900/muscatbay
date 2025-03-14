@@ -10,7 +10,6 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Electricity from "./pages/Electricity";
 import Water from "./pages/Water";
-import STPPlant from "./pages/STPPlant";
 import Projects from "./pages/Projects";
 import AssetLifecycleManagement from "./pages/AssetLifecycleManagement";
 import Auth from "./pages/Auth";
@@ -36,7 +35,6 @@ const App = () => (
             {/* Protected routes */}
             <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
             <Route path="/electricity" element={<ProtectedRoute><Electricity /></ProtectedRoute>} />
-            <Route path="/stp-plant" element={<ProtectedRoute><STPPlant /></ProtectedRoute>} />
             <Route path="/stp-bioreactor-mbr" element={<ProtectedRoute><STPBioreactorMBR /></ProtectedRoute>} />
             <Route path="/water" element={<ProtectedRoute><Water /></ProtectedRoute>} />
             <Route path="/water-distribution" element={<ProtectedRoute><WaterDistribution /></ProtectedRoute>} />
