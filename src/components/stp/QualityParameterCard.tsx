@@ -1,11 +1,13 @@
 
 import React from 'react';
 
+type StatusType = 'optimal' | 'warning' | 'critical';
+
 interface QualityParameterCardProps {
   name: string;
   value: string;
   target: string;
-  status: 'optimal' | 'warning' | 'critical';
+  status: StatusType;
 }
 
 export const QualityParameterCard: React.FC<QualityParameterCardProps> = ({ name, value, target, status }) => (

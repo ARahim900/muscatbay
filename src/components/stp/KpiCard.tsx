@@ -1,11 +1,11 @@
 
-import React, { ReactNode } from 'react';
+import React from 'react';
 
 interface KpiCardProps {
   title: string;
   value: string;
   subtext?: string;
-  icon: ReactNode;
+  icon: React.ReactNode;
   color: string;
 }
 

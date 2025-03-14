@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import {
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
@@ -31,7 +30,6 @@ const STPDashboard = () => {
   ];
   
   // Daily data for each month
-  // This is sample data for March - based on the CSV info, we have 12 days of data
   const dailyData: Record<string, Array<{
     day: string;
     treatedWater: number;
@@ -92,7 +90,6 @@ const STPDashboard = () => {
     'Jul-24': generateDailyDataForMonth(18308, 16067, 16895, 31)
   };
   
-  // Function to generate realistic daily data based on monthly totals
   function generateDailyDataForMonth(totalTreated: number, totalIrrigation: number, totalInlet: number, days: number) {
     const result = [];
     let accumulatedTreated = 0;
@@ -100,10 +97,8 @@ const STPDashboard = () => {
     let accumulatedInlet = 0;
     
     for (let i = 1; i <= days; i++) {
-      // Create day string
       const day = `${i.toString().padStart(2, '0')}/${getMonthNumber(selectedMonth)}`;
       
-      // Generate realistic daily values with variations that will sum to the monthly total
       let treatedWater = Math.round(totalTreated / days * (0.9 + Math.random() * 0.2));
       let irrigationOutput = Math.round(totalIrrigation / days * (0.9 + Math.random() * 0.2));
       let inletSewage = Math.round(totalInlet / days * (0.9 + Math.random() * 0.2));
@@ -111,14 +106,12 @@ const STPDashboard = () => {
       const tankerVolume = tankers * 20;
       const directInlineSewage = Math.max(0, inletSewage - tankerVolume);
       
-      // Adjust the last day to ensure we match the monthly total
       if (i === days) {
         treatedWater = totalTreated - accumulatedTreated;
         irrigationOutput = totalIrrigation - accumulatedIrrigation;
         inletSewage = totalInlet - accumulatedInlet;
       }
       
-      // Accumulate values
       accumulatedTreated += treatedWater;
       accumulatedIrrigation += irrigationOutput;
       accumulatedInlet += inletSewage;
@@ -137,7 +130,6 @@ const STPDashboard = () => {
     return result;
   }
   
-  // Helper function to get month number from month-year string
   function getMonthNumber(monthYear: string): string {
     const months: Record<string, string> = {
       'Jan': '01', 'Feb': '02', 'Mar': '03', 'Apr': '04', 'May': '05', 'Jun': '06',
@@ -147,7 +139,6 @@ const STPDashboard = () => {
     return months[month] || '01';
   }
   
-  // Water quality data based on actual analysis
   const waterQualityData = {
     rawSewagePh: { avg: 6.78, target: '6.5-8.0', status: 'optimal' as const },
     mbrProductPh: { avg: 7.18, target: '6.5-8.0', status: 'optimal' as const },
@@ -157,7 +148,6 @@ const STPDashboard = () => {
     aerationDo: { avg: 0.00, target: '2-3', status: 'critical' as const }
   };
   
-  // Overall plant performance
   const plantPerformance = {
     avgTreatedWater: 552.57,
     avgIrrigationOutput: 475.81,
@@ -173,13 +163,11 @@ const STPDashboard = () => {
     maxTankers: 19
   };
   
-  // Source distribution data
   const sewageSourceData = [
     { name: 'Direct Inline', value: 325.59 },
     { name: 'Tanker Volume', value: 170.97 }
   ];
   
-  // Color constants
   const COLORS = {
     primary: '#3b82f6',
     secondary: '#10b981',
@@ -192,7 +180,6 @@ const STPDashboard = () => {
   
   const PIE_COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
   
-  // Get filtered data based on time range
   const getFilteredMonthlyData = () => {
     if (timeRange === '3months') {
       return monthlyData.slice(-3);
@@ -202,21 +189,17 @@ const STPDashboard = () => {
     return monthlyData;
   };
   
-  // Toggle daily view
   const toggleDailyView = () => {
     setShowDailyView(!showDailyView);
   };
   
-  // Handle month selection for daily view
   const handleMonthSelect = (month: string) => {
     setSelectedMonth(month);
     setShowDailyView(true);
   };
   
-  // Render Overview tab
   const renderOverview = () => (
     <div className="space-y-6">
-      {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiCard 
           title="Daily Treated Water" 
@@ -248,9 +231,7 @@ const STPDashboard = () => {
         />
       </div>
       
-      {/* Monthly/Daily View Toggle */}
       <div className="bg-white rounded-lg shadow p-4">
-        {/* Control Header */}
         <div className="flex flex-wrap justify-between mb-4">
           <div className="flex items-center">
             <h3 className="text-lg font-medium">Production Data</h3>
@@ -307,10 +288,8 @@ const STPDashboard = () => {
           )}
         </div>
         
-        {/* Monthly or Daily Chart */}
         <div className="h-80">
           {showDailyView ? (
-            // Daily view chart
             <ResponsiveContainer width="100%" height="100%">
               <LineChart
                 data={dailyData[selectedMonth] || []}
@@ -328,7 +307,6 @@ const STPDashboard = () => {
               </LineChart>
             </ResponsiveContainer>
           ) : (
-            // Monthly view chart
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={getFilteredMonthlyData()}
@@ -348,80 +326,72 @@ const STPDashboard = () => {
           )}
         </div>
         
-        {/* Daily Data Table (Only shown in daily view) */}
-        {showDailyView && (
-          <div className="mt-6">
-            <h4 className="text-md font-medium mb-2">Daily Production Data for {selectedMonth}</h4>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Date
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Treated Water (m³)
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Irrigation Output (m³)
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Inlet Sewage (m³)
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Tankers
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Tanker Volume (m³)
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Direct Inline (m³)
-                    </th>
+        <div className="mt-6">
+          <h4 className="text-md font-medium mb-2">Daily Production Data for {selectedMonth}</h4>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Date
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Treated Water (m³)
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Irrigation Output (m³)
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Inlet Sewage (m³)
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Tankers
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Tanker Volume (m³)
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Direct Inline (m³)
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {(dailyData[selectedMonth] || []).map((day, index) => (
+                  <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                    <td className="px-6 py-2 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {day.day}
+                    </td>
+                    <td className="px-6 py-2 whitespace-nowrap text-sm text-gray-500">
+                      {day.treatedWater}
+                    </td>
+                    <td className="px-6 py-2 whitespace-nowrap text-sm text-gray-500">
+                      {day.irrigationOutput}
+                    </td>
+                    <td className="px-6 py-2 whitespace-nowrap text-sm text-gray-500">
+                      {day.inletSewage}
+                    </td>
+                    <td className="px-6 py-2 whitespace-nowrap text-sm text-gray-500">
+                      {day.tankers}
+                    </td>
+                    <td className="px-6 py-2 whitespace-nowrap text-sm text-gray-500">
+                      {day.tankerVolume}
+                    </td>
+                    <td className="px-6 py-2 whitespace-nowrap text-sm text-gray-500">
+                      {day.directInlineSewage}
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {(dailyData[selectedMonth] || []).map((day, index) => (
-                    <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                      <td className="px-6 py-2 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {day.day}
-                      </td>
-                      <td className="px-6 py-2 whitespace-nowrap text-sm text-gray-500">
-                        {day.treatedWater}
-                      </td>
-                      <td className="px-6 py-2 whitespace-nowrap text-sm text-gray-500">
-                        {day.irrigationOutput}
-                      </td>
-                      <td className="px-6 py-2 whitespace-nowrap text-sm text-gray-500">
-                        {day.inletSewage}
-                      </td>
-                      <td className="px-6 py-2 whitespace-nowrap text-sm text-gray-500">
-                        {day.tankers}
-                      </td>
-                      <td className="px-6 py-2 whitespace-nowrap text-sm text-gray-500">
-                        {day.tankerVolume}
-                      </td>
-                      <td className="px-6 py-2 whitespace-nowrap text-sm text-gray-500">
-                        {day.directInlineSewage}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                ))}
+              </tbody>
+            </table>
           </div>
-        )}
+        </div>
         
-        {/* Monthly click hint (Only shown in monthly view) */}
-        {!showDailyView && (
-          <div className="mt-2 text-center text-sm text-gray-500">
-            Click on any month's bar to view daily data for that month
-          </div>
-        )}
+        <div className="mt-2 text-center text-sm text-gray-500">
+          Click on any month's bar to view daily data for that month
+        </div>
       </div>
       
-      {/* Efficiency & Water Quality Overview */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Efficiency Trends */}
         <div className="bg-white rounded-lg shadow p-4">
           <h3 className="text-lg font-medium mb-4">Efficiency Trends</h3>
           <div className="h-72">
@@ -443,7 +413,6 @@ const STPDashboard = () => {
           </div>
         </div>
         
-        {/* Water Quality Status */}
         <div className="bg-white rounded-lg shadow p-4">
           <h3 className="text-lg font-medium mb-4">Water Quality Status</h3>
           <div className="space-y-4">
@@ -481,9 +450,7 @@ const STPDashboard = () => {
         </div>
       </div>
       
-      {/* Sewage Sources & Capacity Utilization */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Sewage Source Distribution */}
         <div className="bg-white rounded-lg shadow p-4">
           <h3 className="text-lg font-medium mb-4">Sewage Source Distribution</h3>
           <div className="h-64">
@@ -525,13 +492,11 @@ const STPDashboard = () => {
           </div>
         </div>
         
-        {/* Capacity Utilization */}
         <div className="bg-white rounded-lg shadow p-4">
           <h3 className="text-lg font-medium mb-4">Capacity Utilization</h3>
           <div className="flex flex-col items-center">
             <div className="relative mb-4">
               <svg viewBox="0 0 200 100" className="w-48">
-                {/* Background gauge */}
                 <path 
                   d="M20,90 A 80,80 0 0,1 180,90" 
                   fill="none" 
@@ -539,7 +504,6 @@ const STPDashboard = () => {
                   strokeWidth="12" 
                   strokeLinecap="round"
                 />
-                {/* Value gauge */}
                 <path 
                   d="M20,90 A 80,80 0 0,1 180,90" 
                   fill="none" 
@@ -548,7 +512,6 @@ const STPDashboard = () => {
                   strokeLinecap="round"
                   strokeDasharray={`${Math.min(100, plantPerformance.capacityUtilization) * 3.14}, 314.16`}
                 />
-                {/* Display value */}
                 <text 
                   x="100" 
                   y="85" 
@@ -596,7 +559,6 @@ const STPDashboard = () => {
     </div>
   );
   
-  // Render Flow Analysis tab
   const renderFlowAnalysis = () => (
     <div className="space-y-6">
       <div className="bg-white rounded-lg shadow p-4">
@@ -618,7 +580,6 @@ const STPDashboard = () => {
           </div>
         </div>
         
-        {/* Flow Statistics */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           <StatCard
             title="Avg. Daily Inlet"
@@ -638,7 +599,6 @@ const STPDashboard = () => {
           />
         </div>
         
-        {/* Daily Flow Comparison Chart */}
         <div className="h-80 mt-6">
           <h4 className="text-md font-medium mb-3">Daily Flow Data for {selectedMonth}</h4>
           <ResponsiveContainer width="100%" height="100%">
@@ -676,7 +636,6 @@ const STPDashboard = () => {
           </ResponsiveContainer>
         </div>
         
-        {/* Treatment Efficiency Chart */}
         <div className="h-80 mt-6">
           <h4 className="text-md font-medium mb-3">Daily Efficiency Calculation</h4>
           <ResponsiveContainer width="100%" height="100%">
@@ -721,7 +680,6 @@ const STPDashboard = () => {
           </ResponsiveContainer>
         </div>
         
-        {/* Sewage Sources Chart */}
         <div className="h-80 mt-6">
           <h4 className="text-md font-medium mb-3">Daily Sewage Sources</h4>
           <ResponsiveContainer width="100%" height="100%">
@@ -740,8 +698,20 @@ const STPDashboard = () => {
               <YAxis tickFormatter={(value) => `${Math.floor(value * 100)}%`} />
               <Tooltip 
                 formatter={(value, name) => {
-                  if (name === 'tankerVolume') return [`${value} m³ (${((value / (value + (dailyData[selectedMonth].find(d => d.day === activeLabel)?.directInlineSewage || 0))) * 100).toFixed(0)}%)`, 'Tanker Volume'];
-                  if (name === 'directInlineSewage') return [`${value} m³ (${((value / (value + (dailyData[selectedMonth].find(d => d.day === activeLabel)?.tankerVolume || 0))) * 100).toFixed(0)}%)`, 'Direct Inline'];
+                  if (name === 'tankerVolume') {
+                    const currentDay = dailyData[selectedMonth]?.find(d => d.day === activeLabel);
+                    const directInline = currentDay?.directInlineSewage || 0;
+                    const percentage = Number(value) > 0 ? 
+                      ((Number(value) / (Number(value) + directInline)) * 100).toFixed(0) : '0';
+                    return [`${value} m³ (${percentage}%)`, 'Tanker Volume'];
+                  }
+                  if (name === 'directInlineSewage') {
+                    const currentDay = dailyData[selectedMonth]?.find(d => d.day === activeLabel);
+                    const tankerVolume = currentDay?.tankerVolume || 0;
+                    const percentage = Number(value) > 0 ? 
+                      ((Number(value) / (Number(value) + tankerVolume)) * 100).toFixed(0) : '0';
+                    return [`${value} m³ (${percentage}%)`, 'Direct Inline'];
+                  }
                   return [value, name];
                 }}
                 labelFormatter={(label) => `Date: ${label}`}
@@ -767,7 +737,6 @@ const STPDashboard = () => {
           </ResponsiveContainer>
         </div>
         
-        {/* Daily Data Table */}
         <div className="mt-6">
           <h4 className="text-md font-medium mb-2">Daily Flow Data for {selectedMonth}</h4>
           <div className="overflow-x-auto">
@@ -843,14 +812,12 @@ const STPDashboard = () => {
     </div>
   );
   
-  // Render Water Quality tab
   const renderWaterQuality = () => (
     <div className="space-y-6">
       <div className="bg-white rounded-lg shadow p-4">
         <h3 className="text-lg font-medium mb-6">Water Quality Analysis</h3>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* pH Values */}
           <div className="rounded-lg border border-gray-200 p-4">
             <h4 className="text-md font-medium mb-3">pH Values</h4>
             <div className="space-y-4">
@@ -902,7 +869,6 @@ const STPDashboard = () => {
             </div>
           </div>
           
-          {/* Chlorine Dosing */}
           <div className="rounded-lg border border-gray-200 p-4">
             <h4 className="text-md font-medium mb-3">Chlorine Dosing</h4>
             <div className="space-y-4">
@@ -940,7 +906,6 @@ const STPDashboard = () => {
             </div>
           </div>
           
-          {/* MLSS */}
           <div className="rounded-lg border border-gray-200 p-4">
             <h4 className="text-md font-medium mb-3">Mixed Liquor Suspended Solids (MLSS)</h4>
             <div className="space-y-4">
@@ -992,7 +957,6 @@ const STPDashboard = () => {
             </div>
           </div>
           
-          {/* Dissolved Oxygen */}
           <div className="rounded-lg border border-gray-200 p-4">
             <h4 className="text-md font-medium mb-3">Dissolved Oxygen (DO)</h4>
             <div className="space-y-4">
@@ -1031,7 +995,6 @@ const STPDashboard = () => {
           </div>
         </div>
         
-        {/* Water Quality Summary */}
         <div className="mt-6 rounded-lg bg-blue-50 p-4">
           <h4 className="text-md font-medium text-blue-800 mb-3">Water Quality Summary</h4>
           <p className="text-sm text-blue-800 mb-2">
@@ -1048,7 +1011,6 @@ const STPDashboard = () => {
     </div>
   );
   
-  // Render current tab content
   const renderTabContent = () => {
     switch (selectedTab) {
       case 'overview':
@@ -1064,7 +1026,6 @@ const STPDashboard = () => {
   
   return (
     <div className="min-h-screen bg-gray-100">
-      {/* Header */}
       <header className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
@@ -1090,45 +1051,40 @@ const STPDashboard = () => {
         </div>
       </header>
       
-      {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* Navigation Tabs */}
-        <div className="mb-6">
-          <nav className="flex space-x-4">
-            <button
-              className={`px-3 py-2 font-medium text-sm rounded-md ${
-                selectedTab === 'overview'
-                  ? 'bg-blue-100 text-blue-700'
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-              onClick={() => setSelectedTab('overview')}
-            >
-              Overview
-            </button>
-            <button
-              className={`px-3 py-2 font-medium text-sm rounded-md ${
-                selectedTab === 'flowAnalysis'
-                  ? 'bg-blue-100 text-blue-700'
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-              onClick={() => setSelectedTab('flowAnalysis')}
-            >
-              Flow Analysis
-            </button>
-            <button
-              className={`px-3 py-2 font-medium text-sm rounded-md ${
-                selectedTab === 'waterQuality'
-                  ? 'bg-blue-100 text-blue-700'
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-              onClick={() => setSelectedTab('waterQuality')}
-            >
-              Water Quality
-            </button>
-          </nav>
-        </div>
+        <nav className="flex space-x-4">
+          <button
+            className={`px-3 py-2 font-medium text-sm rounded-md ${
+              selectedTab === 'overview'
+                ? 'bg-blue-100 text-blue-700'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+            onClick={() => setSelectedTab('overview')}
+          >
+            Overview
+          </button>
+          <button
+            className={`px-3 py-2 font-medium text-sm rounded-md ${
+              selectedTab === 'flowAnalysis'
+                ? 'bg-blue-100 text-blue-700'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+            onClick={() => setSelectedTab('flowAnalysis')}
+          >
+            Flow Analysis
+          </button>
+          <button
+            className={`px-3 py-2 font-medium text-sm rounded-md ${
+              selectedTab === 'waterQuality'
+                ? 'bg-blue-100 text-blue-700'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+            onClick={() => setSelectedTab('waterQuality')}
+          >
+            Water Quality
+          </button>
+        </nav>
         
-        {/* Tab Content */}
         {renderTabContent()}
       </main>
     </div>
