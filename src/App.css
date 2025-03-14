@@ -63,24 +63,24 @@
 }
 
 .data-table thead {
-  @apply bg-gray-50;
+  @apply bg-gray-50 dark:bg-gray-800;
 }
 
 .data-table th {
-  @apply py-3 px-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider;
+  @apply py-3 px-4 text-left text-sm font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider;
 }
 
 .data-table td {
-  @apply py-3 px-4 whitespace-nowrap text-sm text-gray-900 border-t border-gray-200;
+  @apply py-3 px-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100 border-t border-gray-200 dark:border-gray-700;
 }
 
 .data-table tr:hover {
-  @apply bg-gray-50;
+  @apply bg-gray-50 dark:bg-gray-800/50;
 }
 
 /* Modern input styles */
 .modern-input {
-  @apply bg-white border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-muscat-primary/20 focus:border-transparent transition-all;
+  @apply bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-muscat-primary/20 focus:border-transparent transition-all;
 }
 
 /* Responsive container */
@@ -119,11 +119,11 @@
 
 /* Enhanced dashboard card style */
 .dashboard-card {
-  @apply bg-white rounded-xl shadow-md border border-gray-100 p-6 transition-all duration-300;
+  @apply bg-white dark:bg-gray-800 rounded-xl shadow-md border border-gray-100 dark:border-gray-700 p-6 transition-all duration-300;
 }
 
 .dashboard-card:hover {
-  @apply shadow-lg border-gray-200;
+  @apply shadow-lg border-gray-200 dark:border-gray-600;
 }
 
 /* Status indicators */
@@ -150,7 +150,7 @@
 }
 
 .stat-label {
-  @apply text-sm text-gray-500 mt-1;
+  @apply text-sm text-gray-500 dark:text-gray-400 mt-1;
 }
 
 /* Mobile optimizations */
@@ -262,5 +262,57 @@
   /* Improve tap targets on mobile */
   .sidebar-menu-item {
     @apply py-1;
+  }
+}
+
+/* Dark mode styles */
+.dark .recharts-cartesian-grid-horizontal line,
+.dark .recharts-cartesian-grid-vertical line {
+  stroke: rgba(255, 255, 255, 0.1);
+}
+
+.dark .recharts-text {
+  fill: rgba(255, 255, 255, 0.7);
+}
+
+.dark .recharts-legend-item-text {
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+
+.dark .recharts-tooltip-wrapper .recharts-default-tooltip {
+  background-color: rgba(30, 30, 30, 0.9) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+.dark .recharts-tooltip-wrapper .recharts-default-tooltip .recharts-tooltip-label,
+.dark .recharts-tooltip-wrapper .recharts-default-tooltip .recharts-tooltip-item {
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* Theme transition */
+.theme-transition {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Mobile-friendly styles for font sizes */
+@media (max-width: 640px) {
+  h1 {
+    @apply text-xl;
+  }
+  
+  h2 {
+    @apply text-lg;
+  }
+  
+  h3 {
+    @apply text-base;
+  }
+  
+  p, span, div {
+    @apply text-sm;
+  }
+  
+  .recharts-text {
+    font-size: 10px !important;
   }
 }
