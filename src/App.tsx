@@ -17,7 +17,6 @@ import WaterDistribution from "./pages/WaterDistribution";
 import WaterConsumptionTypes from './pages/WaterConsumptionTypes';
 import ElectricityDistribution from './pages/ElectricityDistribution';
 import Contracts from './pages/Contracts';
-import STPBioreactorMBR from './pages/STPBioreactorMBR';
 
 const queryClient = new QueryClient();
 
@@ -35,7 +34,6 @@ const App = () => (
             {/* Protected routes */}
             <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
             <Route path="/electricity" element={<ProtectedRoute><Electricity /></ProtectedRoute>} />
-            <Route path="/stp-bioreactor-mbr" element={<ProtectedRoute><STPBioreactorMBR /></ProtectedRoute>} />
             <Route path="/water" element={<ProtectedRoute><Water /></ProtectedRoute>} />
             <Route path="/water-distribution" element={<ProtectedRoute><WaterDistribution /></ProtectedRoute>} />
             <Route path="/water-consumption-types" element={<ProtectedRoute><WaterConsumptionTypes /></ProtectedRoute>} />
