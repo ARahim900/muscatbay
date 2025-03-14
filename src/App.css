@@ -152,3 +152,71 @@
 .stat-label {
   @apply text-sm text-gray-500 mt-1;
 }
+
+/* Mobile optimizations */
+@media (max-width: 640px) {
+  .responsive-chart {
+    height: 250px !important;
+  }
+  
+  .mobile-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .mobile-card {
+    @apply px-3 py-4;
+  }
+  
+  .mobile-hidden {
+    display: none;
+  }
+  
+  .mobile-stack {
+    @apply flex-col;
+  }
+  
+  .recharts-wrapper, .recharts-surface {
+    width: 100% !important;
+    height: auto !important;
+  }
+}
+
+/* Responsive utils */
+.wrap-anywhere {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.text-balance {
+  text-wrap: balance;
+}
+
+.auto-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+}
+
+/* Enhanced responsive container */
+.fluid-container {
+  width: 100%;
+  padding-right: 1rem;
+  padding-left: 1rem;
+  margin-right: auto;
+  margin-left: auto;
+}
+
+@media (min-width: 640px) {
+  .fluid-container {
+    padding-right: 1.5rem;
+    padding-left: 1.5rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .fluid-container {
+    padding-right: 2rem;
+    padding-left: 2rem;
+  }
+}

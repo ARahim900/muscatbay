@@ -38,15 +38,15 @@ const StatCard: React.FC<StatCardProps> = ({
   return (
     <DashboardCard className={cn("overflow-hidden bg-gradient-to-br from-white to-muscat-light/30", className)} delay={delay}>
       <div className="flex items-start justify-between">
-        <div>
-          <p className="text-sm font-medium text-muscat-primary/70">{title}</p>
-          <h3 className="text-2xl font-bold text-muscat-primary mt-1 stat-value">{value}</h3>
+        <div className="mr-2">
+          <p className="text-sm font-medium text-muscat-primary/70 text-balance">{title}</p>
+          <h3 className="text-2xl font-bold text-muscat-primary mt-1 stat-value wrap-anywhere">{value}</h3>
           {description && (
-            <p className="mt-1 text-xs text-muscat-primary/60">{description}</p>
+            <p className="mt-1 text-xs text-muscat-primary/60 text-balance">{description}</p>
           )}
           
           {trend && (
-            <div className="flex items-center mt-2">
+            <div className="flex items-center mt-2 flex-wrap">
               <span 
                 className={cn(
                   "text-xs font-medium flex items-center",
@@ -64,7 +64,7 @@ const StatCard: React.FC<StatCardProps> = ({
           )}
         </div>
         
-        <div className={cn("p-3 rounded-xl shadow-sm", colorMap[color])}>
+        <div className={cn("p-3 rounded-xl shadow-sm flex-shrink-0", colorMap[color])}>
           <Icon className="w-5 h-5" />
         </div>
       </div>

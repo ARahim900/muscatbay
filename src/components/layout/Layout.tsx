@@ -5,6 +5,7 @@ import Sidebar from './sidebar';
 import { ArrowLeft, X, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useLocation } from 'react-router-dom';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface EmbeddedAppState {
   url: string;
@@ -24,7 +25,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     title: '',
     isOpen: false
   });
-  const [isMobile, setIsMobile] = useState(false);
+  const isMobileView = useIsMobile();
   const [iframeLoading, setIframeLoading] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const sidebarRef = useRef<HTMLDivElement>(null);
@@ -32,31 +33,21 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   // Auto-collapse sidebar on route change
   useEffect(() => {
-    if (!isMobile) {
+    if (!isMobileView) {
       setCollapsed(true);
     }
-    if (isMobile) {
+    if (isMobileView) {
       setMobileOpen(false);
     }
-  }, [location.pathname, isMobile]);
+  }, [location.pathname, isMobileView]);
 
   useEffect(() => {
-    const checkIfMobile = () => {
-      const isMobileView = window.innerWidth < 768;
-      setIsMobile(isMobileView);
-      if (isMobileView) {
-        setCollapsed(true);
-      } else {
-        setMobileOpen(false);
-      }
-    };
-    
-    checkIfMobile();
-    
-    window.addEventListener('resize', checkIfMobile);
-    
-    return () => window.removeEventListener('resize', checkIfMobile);
-  }, []);
+    if (isMobileView) {
+      setCollapsed(true);
+    } else {
+      setMobileOpen(false);
+    }
+  }, [isMobileView]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -79,7 +70,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       isOpen: true
     });
     
-    if (isMobile) {
+    if (isMobileView) {
       setMobileOpen(false);
     }
   };
@@ -103,24 +94,24 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     <div className="min-h-screen bg-background">
       <Navbar toggleSidebar={toggleMobileSidebar} />
       
-      <div ref={sidebarRef} className={`${isMobile ? 'fixed z-50' : ''}`}>
+      <div ref={sidebarRef} className={`${isMobileView ? 'fixed z-50' : ''}`}>
         <Sidebar 
           collapsed={collapsed} 
           setCollapsed={setCollapsed} 
           openEmbeddedApp={openEmbeddedApp}
           mobileOpen={mobileOpen}
-          isMobile={isMobile}
+          isMobile={isMobileView}
         />
       </div>
       
-      {mobileOpen && isMobile && (
+      {mobileOpen && isMobileView && (
         <div 
           className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40 animate-fade-in"
           onClick={() => setMobileOpen(false)}
         />
       )}
       
-      {isMobile && !mobileOpen && !embeddedApp.isOpen && (
+      {isMobileView && !mobileOpen && !embeddedApp.isOpen && (
         <button
           onClick={toggleMobileSidebar}
           className="fixed bottom-4 right-4 bg-muscat-primary text-white p-3 rounded-full shadow-lg z-40 animate-scale-in"
@@ -132,7 +123,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       
       <main 
         className={`pt-16 min-h-screen transition-all duration-300 ${
-          (collapsed && !mobileOpen) ? 'pl-16 sm:pl-20' : !isMobile ? 'pl-16 sm:pl-64' : 'pl-0'
+          (collapsed && !mobileOpen) ? 'pl-16 sm:pl-20' : !isMobileView ? 'pl-16 sm:pl-64' : 'pl-0'
         }`}
       >
         {embeddedApp.isOpen ? (
