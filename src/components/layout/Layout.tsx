@@ -18,7 +18,7 @@ interface LayoutProps {
 }
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true); // Default to collapsed 
   const [mobileOpen, setMobileOpen] = useState(false);
   const [embeddedApp, setEmbeddedApp] = useState<EmbeddedAppState>({
     url: '',
@@ -33,21 +33,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   // Auto-collapse sidebar on route change
   useEffect(() => {
-    if (!isMobileView) {
-      setCollapsed(true);
-    }
     if (isMobileView) {
       setMobileOpen(false);
     }
   }, [location.pathname, isMobileView]);
-
-  useEffect(() => {
-    if (isMobileView) {
-      setCollapsed(true);
-    } else {
-      setMobileOpen(false);
-    }
-  }, [isMobileView]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -90,20 +79,31 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     setMobileOpen(!mobileOpen);
   };
 
+  // Calculate the left padding for the main content area
+  const mainPadding = () => {
+    if (isMobileView) return 'pl-0'; 
+    if (collapsed) return 'pl-16 sm:pl-20';  
+    return 'pl-16 sm:pl-64';
+  };
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overflow-x-hidden">
       <Navbar toggleSidebar={toggleMobileSidebar} />
       
-      <div ref={sidebarRef} className={`${isMobileView ? 'fixed z-50' : ''}`}>
-        <Sidebar 
-          collapsed={collapsed} 
-          setCollapsed={setCollapsed} 
-          openEmbeddedApp={openEmbeddedApp}
-          mobileOpen={mobileOpen}
-          isMobile={isMobileView}
-        />
-      </div>
+      {/* Only render sidebar if it's visible */}
+      {(mobileOpen || !isMobileView) && (
+        <div ref={sidebarRef} className={`${isMobileView ? 'fixed z-50' : ''}`}>
+          <Sidebar 
+            collapsed={collapsed} 
+            setCollapsed={setCollapsed} 
+            openEmbeddedApp={openEmbeddedApp}
+            mobileOpen={mobileOpen}
+            isMobile={isMobileView}
+          />
+        </div>
+      )}
       
+      {/* Mobile backdrop overlay */}
       {mobileOpen && isMobileView && (
         <div 
           className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40 animate-fade-in"
@@ -111,6 +111,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         />
       )}
       
+      {/* Mobile toggle button */}
       {isMobileView && !mobileOpen && !embeddedApp.isOpen && (
         <button
           onClick={toggleMobileSidebar}
@@ -122,9 +123,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       )}
       
       <main 
-        className={`pt-16 min-h-screen transition-all duration-300 ${
-          (collapsed && !mobileOpen) ? 'pl-16 sm:pl-20' : !isMobileView ? 'pl-16 sm:pl-64' : 'pl-0'
-        }`}
+        className={`pt-16 min-h-screen transition-all duration-300 ${mainPadding()}`}
       >
         {embeddedApp.isOpen ? (
           <div className="relative w-full h-[calc(100vh-4rem)]">
@@ -179,7 +178,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             </div>
           </div>
         ) : (
-          <div className="px-2 sm:px-4 md:px-6 mx-auto w-full">
+          <div className="px-2 sm:px-4 md:px-6 mx-auto w-full max-w-full overflow-x-hidden">
             {children}
           </div>
         )}

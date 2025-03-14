@@ -3,6 +3,7 @@ import React from 'react';
 import { cn } from '@/lib/utils';
 import { LucideIcon } from 'lucide-react';
 import DashboardCard from './DashboardCard';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface StatCardProps {
   title: string;
@@ -28,6 +29,8 @@ const StatCard: React.FC<StatCardProps> = ({
   className,
   delay
 }) => {
+  const isMobile = useIsMobile();
+  
   const colorMap = {
     primary: 'bg-muscat-primary/10 text-muscat-primary',
     teal: 'bg-muscat-teal/10 text-muscat-teal',
@@ -36,11 +39,18 @@ const StatCard: React.FC<StatCardProps> = ({
   };
   
   return (
-    <DashboardCard className={cn("overflow-hidden bg-gradient-to-br from-white to-muscat-light/30", className)} delay={delay}>
+    <DashboardCard className={cn(
+      "overflow-hidden bg-gradient-to-br from-white to-muscat-light/30",
+      isMobile ? "p-4" : "",
+      className
+    )} delay={delay}>
       <div className="flex items-start justify-between">
-        <div className="mr-2">
+        <div className={cn("mr-2", isMobile ? "max-w-[70%]" : "")}>
           <p className="text-sm font-medium text-muscat-primary/70 text-balance">{title}</p>
-          <h3 className="text-2xl font-bold text-muscat-primary mt-1 stat-value wrap-anywhere">{value}</h3>
+          <h3 className={cn(
+            "font-bold text-muscat-primary mt-1 stat-value wrap-anywhere",
+            isMobile ? "text-xl" : "text-2xl"
+          )}>{value}</h3>
           {description && (
             <p className="mt-1 text-xs text-muscat-primary/60 text-balance">{description}</p>
           )}
@@ -64,8 +74,12 @@ const StatCard: React.FC<StatCardProps> = ({
           )}
         </div>
         
-        <div className={cn("p-3 rounded-xl shadow-sm flex-shrink-0", colorMap[color])}>
-          <Icon className="w-5 h-5" />
+        <div className={cn(
+          "rounded-xl shadow-sm flex-shrink-0", 
+          colorMap[color],
+          isMobile ? "p-2" : "p-3"
+        )}>
+          <Icon className={isMobile ? "w-4 h-4" : "w-5 h-5"} />
         </div>
       </div>
     </DashboardCard>
