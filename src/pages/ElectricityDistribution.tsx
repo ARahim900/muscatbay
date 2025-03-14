@@ -1,741 +1,1191 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { LineChart, Line, AreaChart, Area, BarChart, Bar, PieChart, Pie, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Cell } from 'recharts';
+import { Calendar, Search, Download, Filter, ChevronDown, Moon, Sun, Zap, DollarSign, AlertTriangle, TrendingUp, Gauge } from 'lucide-react';
 import Layout from '@/components/layout/Layout';
-import { 
-  BarChart, Bar, LineChart, Line, AreaChart, Area, PieChart, Pie, Cell,
-  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer 
-} from 'recharts';
-import { 
-  Calendar, ChevronDown, Download, FileText, Filter, Home, Layers, MapPin,
-  RefreshCw, Search, TrendingUp, X 
-} from 'lucide-react';
-import _ from 'lodash';
 
-// Main color scheme
-const COLORS = {
-  primary: '#4E4456',
-  secondary: '#6A5D75',
-  tertiary: '#8A7A94',
-  light: '#D8D0DE',
-  background: '#F8F7FA',
-  success: '#4CAF50',
-  warning: '#FF9800',
-  danger: '#F44336',
-  info: '#2196F3',
-  chartColors: ['#4E4456', '#6A5D75', '#8A7A94', '#AC9EB5', '#CAC0D1', '#E8E3EC']
+// Sample electricity consumption data based on the provided table
+const electricityData = [
+  { name: 'Pumping Station RS2330', account: 'RS2330', type: 'PS', 'Apr-24': 1608, 'May-24': 1940, 'Jun-24': 1783, 'Jul-24': 1874, 'Aug-24': 1662, 'Sep-24': 3822, 'Oct-24': 6876, 'Nov-24': 1629, 'Dec-24': 1640, 'Jan-24': 1903, 'Feb-24': 2095 },
+  { name: 'Pumping Station RS2329', account: 'RS2329', type: 'PS', 'Apr-24': 31, 'May-24': 47, 'Jun-24': 25, 'Jul-24': 3, 'Aug-24': 0, 'Sep-24': 0, 'Oct-24': 33, 'Nov-24': 0, 'Dec-24': 179, 'Jan-24': 33, 'Feb-24': 137 },
+  { name: 'Pumping Station RS2327', account: 'RS2327', type: 'PS', 'Apr-24': 830, 'May-24': 818, 'Jun-24': 720, 'Jul-24': 731, 'Aug-24': 857, 'Sep-24': 1176, 'Oct-24': 445, 'Nov-24': 919, 'Dec-24': 921, 'Jan-24': 245, 'Feb-24': 870 },
+  { name: 'Pumping Station RS2325', account: 'RS2325', type: 'PS', 'Apr-24': 1774, 'May-24': 2216, 'Jun-24': 2011, 'Jul-24': 2059, 'Aug-24': 2229, 'Sep-24': 5217, 'Oct-24': 2483, 'Nov-24': 2599, 'Dec-24': 1952, 'Jan-24': 2069, 'Feb-24': 2521 },
+  { name: 'Lifting Station RS2328', account: 'RS2328', type: 'LS', 'Apr-24': 44, 'May-24': 0, 'Jun-24': 0, 'Jul-24': 0, 'Aug-24': 153, 'Sep-24': 125, 'Oct-24': 0, 'Nov-24': 0, 'Dec-24': 0, 'Jan-24': 0, 'Feb-24': 0 },
+  { name: 'Lifting Station RS2333', account: 'RS2333', type: 'LS', 'Apr-24': 198, 'May-24': 269, 'Jun-24': 122, 'Jul-24': 203, 'Aug-24': 208, 'Sep-24': 257, 'Oct-24': 196, 'Nov-24': 91, 'Dec-24': 185, 'Jan-24': 28, 'Feb-24': 40 },
+  { name: 'Lifting Station RS2324', account: 'RS2324', type: 'LS', 'Apr-24': 644, 'May-24': 865, 'Jun-24': 791, 'Jul-24': 768, 'Aug-24': 747, 'Sep-24': 723, 'Oct-24': 628, 'Nov-24': 686, 'Dec-24': 631, 'Jan-24': 701, 'Feb-24': 638 },
+  { name: 'Lifting Station RS2332', account: 'RS2332', type: 'LS', 'Apr-24': 2056, 'May-24': 2577, 'Jun-24': 2361, 'Jul-24': 3016, 'Aug-24': 3684, 'Sep-24': 5866, 'Oct-24': 1715, 'Nov-24': 2413, 'Dec-24': 2643, 'Jan-24': 2873, 'Feb-24': 3665 },
+  { name: 'Irrigation RS2324', account: 'RS2324', type: 'IRR', 'Apr-24': 1543, 'May-24': 2673, 'Jun-24': 2763, 'Jul-24': 2623, 'Aug-24': 1467, 'Sep-24': 1290, 'Oct-24': 1244, 'Nov-24': 1432, 'Dec-24': 1268, 'Jan-24': 1689, 'Feb-24': 2214 },
+  { name: 'Irrigation RS2331', account: 'RS2331', type: 'IRR', 'Apr-24': 1272, 'May-24': 2839, 'Jun-24': 3118, 'Jul-24': 2330, 'Aug-24': 2458, 'Sep-24': 1875, 'Oct-24': 893, 'Nov-24': 974, 'Dec-24': 1026, 'Jan-24': 983, 'Feb-24': 1124 },
+  { name: 'Irrigation RS2323', account: 'RS2323', type: 'IRR', 'Apr-24': 894, 'May-24': 866, 'Jun-24': 1869, 'Jul-24': 1543, 'Aug-24': 1793, 'Sep-24': 524, 'Oct-24': 266, 'Nov-24': 269, 'Dec-24': 417, 'Jan-24': 840, 'Feb-24': 1009 },
+  { name: 'Irrigation RS3195', account: 'RS3195', type: 'IRR', 'Apr-24': 880, 'May-24': 827, 'Jun-24': 555, 'Jul-24': 443, 'Aug-24': 336, 'Sep-24': 195, 'Oct-24': 183, 'Nov-24': 212, 'Dec-24': 213, 'Jan-24': 40, 'Feb-24': 233 },
+  { name: 'Actuator RS3196', account: 'RS3196', type: 'DB', 'Apr-24': 39, 'May-24': 49, 'Jun-24': 43, 'Jul-24': 43, 'Aug-24': 45, 'Sep-24': 43, 'Oct-24': 36, 'Nov-24': 34, 'Dec-24': 29, 'Jan-24': 7, 'Feb-24': 28 },
+  { name: 'Actuator RS1900', account: 'RS1900', type: 'DB', 'Apr-24': 285, 'May-24': 335, 'Jun-24': 275, 'Jul-24': 220, 'Aug-24': 210, 'Sep-24': 219, 'Oct-24': 165, 'Nov-24': 232, 'Dec-24': 161, 'Jan-24': 33, 'Feb-24': 134 },
+  // Include more data as needed...
+];
+
+// Group the data by type for easier analysis
+const groupedByType = {
+  PS: electricityData.filter(item => item.type === 'PS'),
+  LS: electricityData.filter(item => item.type === 'LS'),
+  IRR: electricityData.filter(item => item.type === 'IRR'),
+  DB: electricityData.filter(item => item.type === 'DB'),
+  'Street Light': electricityData.filter(item => item.type === 'Street Light'),
+  'D_Building': electricityData.filter(item => item.type === 'D_Building'),
+  'FP-Landscape': electricityData.filter(item => item.type === 'FP-Landscape'),
+  'Retail': electricityData.filter(item => item.type === 'Retail')
 };
 
-// TypeScript interfaces
-interface ConsumptionRecord {
-  [key: string]: number;
-}
+// Aggregated consumption by type per month
+const aggregatedByType = [
+  { type: 'Pumping Stations', color: '#60A5FA', totalConsumption: 25622, percentOfTotal: 25.1 },
+  { type: 'Lifting Stations', color: '#F87171', totalConsumption: 19424, percentOfTotal: 19.0 },
+  { type: 'Irrigation', color: '#34D399', totalConsumption: 15632, percentOfTotal: 15.3 },
+  { type: 'D-Buildings', color: '#A78BFA', totalConsumption: 28971, percentOfTotal: 28.3 },
+  { type: 'Street Lights', color: '#FBBF24', totalConsumption: 10574, percentOfTotal: 10.3 },
+  { type: 'Retail', color: '#F472B6', totalConsumption: 1053, percentOfTotal: 1.0 },
+  { type: 'FP-Landscape', color: '#6EE7B7', totalConsumption: 974, percentOfTotal: 1.0 }
+];
 
-interface ConsumptionData {
-  id: number;
-  zone: string;
-  type: string;
-  name: string;
-  meter: string;
-  consumption: ConsumptionRecord;
-}
+// Monthly aggregated data
+const monthlyData = [
+  { month: 'Apr-24', PS: 4243, LS: 2942, IRR: 4589, DB: 726, 'Street Light': 7270, 'D_Building': 42293, 'FP-Landscape': 47, Retail: 0 },
+  { month: 'May-24', PS: 5021, LS: 3711, IRR: 7205, DB: 953, 'Street Light': 8592, 'D_Building': 83372, 'FP-Landscape': 77, Retail: 0 },
+  { month: 'Jun-24', PS: 4539, LS: 3274, IRR: 8305, DB: 830, 'Street Light': 8017, 'D_Building': 83654, 'FP-Landscape': 40, Retail: 0 },
+  { month: 'Jul-24', PS: 4667, LS: 3987, IRR: 6939, DB: 740, 'Street Light': 9196, 'D_Building': 86533, 'FP-Landscape': 47, Retail: 17895 },
+  { month: 'Aug-24', PS: 4748, LS: 4792, IRR: 6054, DB: 713, 'Street Light': 11959, 'D_Building': 89784, 'FP-Landscape': 44, Retail: 16532 },
+  { month: 'Sep-24', PS: 10215, LS: 6971, IRR: 3884, DB: 811, 'Street Light': 10138, 'D_Building': 81318, 'FP-Landscape': 38, Retail: 18955 },
+  { month: 'Oct-24', PS: 9837, LS: 2539, IRR: 2586, DB: 599, 'Street Light': 11854, 'D_Building': 84724, 'FP-Landscape': 40, Retail: 15071 },
+  { month: 'Nov-24', PS: 5147, LS: 3190, IRR: 2887, DB: 725, 'Street Light': 12790, 'D_Building': 73558, 'FP-Landscape': 46, Retail: 16742 },
+  { month: 'Dec-24', PS: 4692, LS: 3459, IRR: 2924, DB: 622, 'Street Light': 9961, 'D_Building': 68845, 'FP-Landscape': 56, Retail: 15554 },
+  { month: 'Jan-24', PS: 4250, LS: 3602, IRR: 3552, DB: 333, 'Street Light': 4062, 'D_Building': 82877, 'FP-Landscape': 13, Retail: 16788 },
+  { month: 'Feb-24', PS: 5623, LS: 4343, IRR: 4580, DB: 589, 'Street Light': 10976, 'D_Building': 52651, 'FP-Landscape': 57, Retail: 16154 }
+];
 
-interface CategoryData {
-  name: string;
-  value: number;
-  percentage: number;
-}
+// Cost per kWh by type (illustrative)
+const COST_BY_TYPE = {
+  PS: 0.048,
+  LS: 0.048,
+  IRR: 0.048,
+  DB: 0.048,
+  'Street Light': 0.048,
+  'D_Building': 0.048,
+  'FP-Landscape': 0.048,
+  Retail: 0.048
+};
 
-interface MonthlyData {
-  name: string;
-  total: number;
-  [key: string]: number | string;
-}
+interface ElectricityDistributionProps {}
 
-interface ConsumerData {
-  id: number;
-  name: string;
-  zone: string;
-  meter: string;
-  total: number;
-  percentage: number;
-}
-
-const ElectricityDistribution: React.FC = () => {
+const ElectricityDistribution: React.FC<ElectricityDistributionProps> = () => {
+  const [darkMode, setDarkMode] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<string>('overview');
-  const [data, setData] = useState<ConsumptionData[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [timeframe, setTimeframe] = useState<string>('all');
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [selectedZones, setSelectedZones] = useState<string[]>([]);
-  const [showFilters, setShowFilters] = useState<boolean>(false);
+  const [selectedYear, setSelectedYear] = useState<string>('24');
+  const [selectedMonth, setSelectedMonth] = useState<string>('all');
+  const [visibleTypes, setVisibleTypes] = useState<string[]>(['PS', 'LS', 'IRR', 'DB', 'Street Light', 'D_Building', 'FP-Landscape', 'Retail']);
+  const [showYearDropdown, setShowYearDropdown] = useState<boolean>(false);
+  const [showMonthDropdown, setShowMonthDropdown] = useState<boolean>(false);
+  const [showExportDropdown, setShowExportDropdown] = useState<boolean>(false);
   
-  // Get unique categories, zones, and time periods from data
-  const [categories, setCategories] = useState<string[]>([]);
-  const [zones, setZones] = useState<string[]>([]);
-  const [timePeriods, setTimePeriods] = useState<string[]>([]);
+  // Months list for filtering
+  const months = ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'];
   
-  // Derived/processed data for dashboards
-  const [totalConsumption, setTotalConsumption] = useState<number>(0);
-  const [averageConsumption, setAverageConsumption] = useState<number>(0);
-  const [maxConsumption, setMaxConsumption] = useState<number>(0);
-  const [consumptionByCategory, setConsumptionByCategory] = useState<CategoryData[]>([]);
-  const [consumptionByZone, setConsumptionByZone] = useState<CategoryData[]>([]);
-  const [monthlyTrends, setMonthlyTrends] = useState<MonthlyData[]>([]);
-  const [topConsumers, setTopConsumers] = useState<ConsumerData[]>([]);
-  
-  // Get the consumption data
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // Use hardcoded data instead of trying to read a file
-        const hardcodedData = parseScreenshotData();
-        setData(hardcodedData);
-        processData(hardcodedData);
-        setLoading(false);
-      } catch (error) {
-        console.error('Error loading data:', error);
-        setLoading(false);
-      }
-    };
-    
-    fetchData();
-  }, []);
-  
-  // Process data whenever filters change
-  useEffect(() => {
-    if (data.length > 0) {
-      const filteredData = filterData(data);
-      processData(filteredData);
-    }
-  }, [timeframe, selectedCategories, selectedZones, data]);
-  
-  const parseScreenshotData = (): ConsumptionData[] => {
-    // Create structured data from the screenshots
-    const months = ['April-24', 'May-24', 'June-24', 'July-24', 'August-24', 'September-24', 
-                   'October-24', 'November-24', 'December-24', 'January-25', 'February-25'];
-    
-    // Extract data from the screenshots
-    const consumptionData: ConsumptionData[] = [
-      { id: 1, zone: 'Infrastructure', type: 'MC', name: 'Pumping Station 01', meter: 'R52330', 
-        consumption: { 'April-24': 1608, 'May-24': 1940, 'June-24': 1783, 'July-24': 1874, 'August-24': 1662, 
-                     'September-24': 3822, 'October-24': 6876, 'November-24': 1629, 'December-24': 1640, 
-                     'January-25': 1903, 'February-25': 2095 }},
-      { id: 2, zone: 'Infrastructure', type: 'MC', name: 'Pumping Station 03', meter: 'R52329', 
-        consumption: { 'April-24': 31, 'May-24': 47, 'June-24': 25, 'July-24': 3, 'August-24': 0, 
-                     'September-24': 0, 'October-24': 33, 'November-24': 0, 'December-24': 179, 
-                     'January-25': 32.5, 'February-25': 137.2 }},
-      { id: 3, zone: 'Infrastructure', type: 'MC', name: 'Pumping Station 04', meter: 'R52327', 
-        consumption: { 'April-24': 830, 'May-24': 818, 'June-24': 720, 'July-24': 731, 'August-24': 857, 
-                     'September-24': 1176, 'October-24': 445, 'November-24': 919, 'December-24': 921, 
-                     'January-25': 245.1, 'February-25': 869.5 }},
-      { id: 4, zone: 'Infrastructure', type: 'MC', name: 'Pumping Station 05', meter: 'R52325', 
-        consumption: { 'April-24': 1774, 'May-24': 2216, 'June-24': 2011, 'July-24': 2059, 'August-24': 2229, 
-                     'September-24': 5217, 'October-24': 2483, 'November-24': 2599, 'December-24': 1952, 
-                     'January-25': 2069, 'February-25': 2521 }},
-      { id: 5, zone: 'Infrastructure', type: 'MC', name: 'Lifting Station 02', meter: 'R52328', 
-        consumption: { 'April-24': 44, 'May-24': 0, 'June-24': 0, 'July-24': 0, 'August-24': 153, 
-                     'September-24': 125, 'October-24': 0, 'November-24': 0, 'December-24': 0, 
-                     'January-25': 0, 'February-25': 0 }},
-      { id: 6, zone: 'Infrastructure', type: 'MC', name: 'Lifting Station 03', meter: 'R52333', 
-        consumption: { 'April-24': 198, 'May-24': 269, 'June-24': 122, 'July-24': 203, 'August-24': 208, 
-                     'September-24': 257, 'October-24': 196, 'November-24': 91, 'December-24': 185, 
-                     'January-25': 28, 'February-25': 40 }},
-      { id: 7, zone: 'Infrastructure', type: 'MC', name: 'Lifting Station 04', meter: 'R52324', 
-        consumption: { 'April-24': 644, 'May-24': 865, 'June-24': 791, 'July-24': 768, 'August-24': 747, 
-                     'September-24': 723, 'October-24': 628, 'November-24': 686, 'December-24': 631, 
-                     'January-25': 701, 'February-25': 638 }},
-      { id: 8, zone: 'Infrastructure', type: 'MC', name: 'Lifting Station 05', meter: 'R52332', 
-        consumption: { 'April-24': 2056, 'May-24': 2577, 'June-24': 2361, 'July-24': 3016, 'August-24': 3684, 
-                     'September-24': 5866, 'October-24': 1715, 'November-24': 2413, 'December-24': 2643, 
-                     'January-25': 2873, 'February-25': 3665 }},
-      { id: 9, zone: 'Infrastructure', type: 'MC', name: 'Irrigation Tank 01', meter: 'R52324 (R52326)', 
-        consumption: { 'April-24': 1543, 'May-24': 2673, 'June-24': 2763, 'July-24': 2623, 'August-24': 1467, 
-                     'September-24': 1290, 'October-24': 1244, 'November-24': 1432, 'December-24': 1268, 
-                     'January-25': 1689, 'February-25': 2214 }},
-      { id: 10, zone: 'Infrastructure', type: 'MC', name: 'Irrigation Tank 02', meter: 'R52331', 
-        consumption: { 'April-24': 1272, 'May-24': 2839, 'June-24': 3118, 'July-24': 2330, 'August-24': 2458, 
-                     'September-24': 1875, 'October-24': 893, 'November-24': 974, 'December-24': 1026, 
-                     'January-25': 983, 'February-25': 1124 }},
-      { id: 24, zone: 'Infrastructure', type: 'MC', name: 'Beachwell', meter: 'R51903', 
-        consumption: { 'April-24': 16908, 'May-24': 46, 'June-24': 19332, 'July-24': 23170, 'August-24': 42241, 
-                     'September-24': 15223, 'October-24': 25370, 'November-24': 24383, 'December-24': 37236, 
-                     'January-25': 38168, 'February-25': 18422 }},
-      { id: 26, zone: 'Central Park', type: 'MC', name: 'Central Park', meter: 'R54672', 
-        consumption: { 'April-24': 12208, 'May-24': 21845, 'June-24': 29438, 'July-24': 28186, 'August-24': 21995, 
-                     'September-24': 20202, 'October-24': 14900, 'November-24': 9604, 'December-24': 19032, 
-                     'January-25': 22819, 'February-25': 19974 }},
-      { id: 27, zone: 'Ancilary Building', type: 'MC', name: 'Guard House', meter: 'R53651', 
-        consumption: { 'April-24': 823, 'May-24': 1489, 'June-24': 1573.6, 'July-24': 1586.4, 'August-24': 1325, 
-                     'September-24': 1391, 'October-24': 1205, 'November-24': 1225, 'December-24': 814, 
-                     'January-25': 798, 'February-25': 936 }},
-      { id: 28, zone: 'Ancilary Building', type: 'MC', name: 'Security Building', meter: 'R53649', 
-        consumption: { 'April-24': 3529, 'May-24': 3898, 'June-24': 4255, 'July-24': 4359, 'August-24': 3728, 
-                     'September-24': 3676, 'October-24': 3140, 'November-24': 5702, 'December-24': 5131, 
-                     'January-25': 5559, 'February-25': 5417 }},
-      { id: 29, zone: 'Ancilary Building', type: 'MC', name: 'ROP Building', meter: 'R53648', 
-        consumption: { 'April-24': 2047, 'May-24': 4442, 'June-24': 3057, 'July-24': 4321, 'August-24': 4185, 
-                     'September-24': 3554, 'October-24': 3692, 'November-24': 3581, 'December-24': 2352, 
-                     'January-25': 2090, 'February-25': 2246 }},
-    ];
-    
-    // Add many more items from Zone 3 (Apartments)
-    for (let i = 30; i <= 50; i++) {
-      const apartmentNumber = i - 30 + 44;
-      consumptionData.push({
-        id: i,
-        zone: 'Zone 3',
-        type: 'SBJ Common Meter',
-        name: `D ${apartmentNumber} Apartment`,
-        meter: `R53${650 + i}`,
-        consumption: {
-          'April-24': Math.floor(Math.random() * 1000) + 500,
-          'May-24': Math.floor(Math.random() * 3000) + 1000,
-          'June-24': Math.floor(Math.random() * 2000) + 800,
-          'July-24': Math.floor(Math.random() * 2500) + 1000,
-          'August-24': Math.floor(Math.random() * 3000) + 1000,
-          'September-24': Math.floor(Math.random() * 2500) + 1000,
-          'October-24': Math.floor(Math.random() * 2500) + 1000,
-          'November-24': Math.floor(Math.random() * 2000) + 1000,
-          'December-24': Math.floor(Math.random() * 1500) + 700,
-          'January-25': Math.floor(Math.random() * 1000) + 600,
-          'February-25': Math.floor(Math.random() * 1000) + 500
-        }
-      });
-    }
-    
-    return consumptionData;
+  // Format numbers with commas
+  const formatNumber = (num: number): string => {
+    return num?.toLocaleString() || '0';
   };
-  
-  const filterData = (data: ConsumptionData[]): ConsumptionData[] => {
-    let filteredData = [...data];
-    
-    // Filter by timeframe
-    if (timeframe !== 'all') {
-      // Implement timeframe filtering logic here
-      // For example, only show last 30 days, 90 days, etc.
-    }
-    
-    // Filter by categories
-    if (selectedCategories.length > 0) {
-      filteredData = filteredData.filter(item => 
-        selectedCategories.includes(getCategoryFromName(item.name))
-      );
-    }
-    
-    // Filter by zones
-    if (selectedZones.length > 0) {
-      filteredData = filteredData.filter(item => 
-        selectedZones.includes(item.zone)
-      );
-    }
-    
-    return filteredData;
+
+  // Format currency
+  const formatCurrency = (num: number): string => {
+    return `${formatNumber(num)} OMR`;
   };
-  
-  const getCategoryFromName = (name: string): string => {
-    if (name.includes('Pumping Station')) return 'Pumping Station';
-    if (name.includes('Lifting Station')) return 'Lifting Station';
-    if (name.includes('Irrigation Tank')) return 'Irrigation Tank';
-    if (name.includes('Actuator')) return 'Actuator';
-    if (name.includes('Street Light')) return 'Street Light';
-    if (name.includes('Beachwell')) return 'Beachwell';
-    if (name.includes('Central Park')) return 'Central Park';
-    if (name.includes('Apartment')) return 'Apartment';
-    return 'Other';
-  };
-  
-  const processData = (data: ConsumptionData[]): void => {
-    if (data.length === 0) {
-      return;
+
+  // Toggle type visibility for charts
+  const toggleTypeVisibility = (type: string) => {
+    if (visibleTypes.includes(type)) {
+      setVisibleTypes(visibleTypes.filter(t => t !== type));
+    } else {
+      setVisibleTypes([...visibleTypes, type]);
     }
+  };
+
+  // Calculate total consumption by type
+  const calculateTotalByType = useMemo(() => {
+    const totals: Record<string, number> = {};
     
-    // Extract unique categories, zones, and time periods
-    const uniqueCategories = [...new Set(data.map(item => getCategoryFromName(item.name)))];
-    const uniqueZones = [...new Set(data.map(item => item.zone))];
-    const uniqueTimePeriods = Object.keys(data[0]?.consumption || {});
-    
-    setCategories(uniqueCategories);
-    setZones(uniqueZones);
-    setTimePeriods(uniqueTimePeriods);
-    
-    // Calculate total consumption
-    const total = data.reduce((sum, item) => {
-      const itemTotal = Object.values(item.consumption).reduce((a, b) => Number(a) + Number(b), 0);
-      return sum + itemTotal;
-    }, 0);
-    setTotalConsumption(total);
-    
-    // Calculate average consumption
-    const avg = data.length > 0 && uniqueTimePeriods.length > 0 ? 
-      total / (data.length * uniqueTimePeriods.length) : 0;
-    setAverageConsumption(avg);
-    
-    // Find max consumption
-    const max = data.reduce((currentMax, item) => {
-      const values = Object.values(item.consumption).map(val => Number(val));
-      const itemMax = values.length > 0 ? Math.max(...values) : 0;
-      return Math.max(currentMax, itemMax);
-    }, 0);
-    setMaxConsumption(max);
-    
-    // Process consumption by category
-    const byCategory: CategoryData[] = uniqueCategories.map(category => {
-      const categoryItems = data.filter(item => getCategoryFromName(item.name) === category);
-      const categoryTotal = categoryItems.reduce((sum, item) => {
-        return sum + Object.values(item.consumption).reduce((a, b) => Number(a) + Number(b), 0);
-      }, 0);
-      
-      return {
-        name: category,
-        value: categoryTotal,
-        percentage: total > 0 ? (categoryTotal / total) * 100 : 0
-      };
-    });
-    setConsumptionByCategory(byCategory);
-    
-    // Process consumption by zone
-    const byZone: CategoryData[] = uniqueZones.map(zone => {
-      const zoneItems = data.filter(item => item.zone === zone);
-      const zoneTotal = zoneItems.reduce((sum, item) => {
-        return sum + Object.values(item.consumption).reduce((a, b) => Number(a) + Number(b), 0);
-      }, 0);
-      
-      return {
-        name: zone,
-        value: zoneTotal,
-        percentage: total > 0 ? (zoneTotal / total) * 100 : 0
-      };
-    });
-    setConsumptionByZone(byZone);
-    
-    // Process monthly trends
-    const byMonth: MonthlyData[] = uniqueTimePeriods.map(month => {
-      const monthTotal = data.reduce((sum, item) => {
-        return sum + Number(item.consumption[month] || 0);
-      }, 0);
-      
-      // Add category breakdowns to the monthly data
-      const monthData: MonthlyData = {
-        name: month,
-        total: monthTotal
-      };
-      
-      // Add data for each category
-      uniqueCategories.forEach(category => {
-        const categoryMonthTotal = data
-          .filter(item => getCategoryFromName(item.name) === category)
-          .reduce((sum, item) => sum + Number(item.consumption[month] || 0), 0);
+    Object.keys(groupedByType).forEach(type => {
+      totals[type] = groupedByType[type].reduce((sum, item) => {
+        // Sum up all months for this type
+        const monthlyValues = Object.entries(item)
+          .filter(([key]) => key.includes('-24'))
+          .map(([_, value]) => Number(value));
         
-        monthData[category.toLowerCase().replace(/\s+/g, '_')] = categoryMonthTotal;
-      });
-      
-      return monthData;
-    });
-    setMonthlyTrends(byMonth);
-    
-    // Find top consumers
-    const consumers: ConsumerData[] = data.map(item => {
-      const itemTotal = Object.values(item.consumption).reduce((a, b) => Number(a) + Number(b), 0);
-      return {
-        id: item.id,
-        name: item.name,
-        zone: item.zone,
-        meter: item.meter,
-        total: itemTotal,
-        percentage: total > 0 ? (itemTotal / total) * 100 : 0
-      };
+        return sum + monthlyValues.reduce((acc, curr) => acc + curr, 0);
+      }, 0);
     });
     
-    setTopConsumers(consumers.sort((a, b) => b.total - a.total).slice(0, 10));
-  };
+    return totals;
+  }, []);
+
+  // Calculate total cost by type
+  const calculateCostByType = useMemo(() => {
+    const costs: Record<string, number> = {};
+    
+    Object.keys(calculateTotalByType).forEach(type => {
+      costs[type] = calculateTotalByType[type] * COST_BY_TYPE[type as keyof typeof COST_BY_TYPE];
+    });
+    
+    return costs;
+  }, [calculateTotalByType]);
+
+  // Calculate grand totals
+  const grandTotal = useMemo(() => 
+    Object.values(calculateTotalByType).reduce((acc, curr) => acc + curr, 0),
+    [calculateTotalByType]
+  );
   
-  const resetFilters = (): void => {
-    setTimeframe('all');
-    setSelectedCategories([]);
-    setSelectedZones([]);
+  const grandTotalCost = useMemo(() => 
+    Object.values(calculateCostByType).reduce((acc, curr) => acc + curr, 0),
+    [calculateCostByType]
+  );
+
+  // Calculate monthly averages
+  const monthlyAverage = Math.round(grandTotal / 12);
+
+  // Background and text colors based on dark mode
+  const bgColor = darkMode ? 'bg-gray-900' : 'bg-gray-50';
+  const textColor = darkMode ? 'text-white' : 'text-gray-800';
+  const cardBg = darkMode ? 'bg-gray-800' : 'bg-white';
+  const borderColor = darkMode ? 'border-gray-700' : 'border-gray-200';
+  const secondaryText = darkMode ? 'text-gray-400' : 'text-gray-500';
+  const activeTabBg = darkMode ? 'bg-gray-700' : 'bg-indigo-50';
+  const activeTabText = darkMode ? 'text-indigo-400' : 'text-indigo-600';
+  const headerBg = darkMode ? 'bg-gray-800' : 'bg-white';
+
+  // Define tabs for the dashboard
+  const tabs = [
+    { id: 'overview', label: 'Overview', icon: <TrendingUp size={16} /> },
+    { id: 'consumption-types', label: 'Consumption Types', icon: <Zap size={16} /> },
+    { id: 'cost-analysis', label: 'Cost Analysis', icon: <DollarSign size={16} /> },
+    { id: 'anomalies', label: 'Anomalies', icon: <AlertTriangle size={16} /> }
+  ];
+
+  // Get display text for date filter
+  const getDisplayText = () => {
+    if (selectedYear === 'all' && selectedMonth === 'all') return 'All Data';
+    if (selectedYear === 'all') return `${selectedMonth} (All Years)`;
+    if (selectedMonth === 'all') return `All Months, 20${selectedYear}`;
+    return `${selectedMonth} 20${selectedYear}`;
   };
-  
-  const toggleCategoryFilter = (category: string): void => {
-    if (selectedCategories.includes(category)) {
-      setSelectedCategories(selectedCategories.filter(cat => cat !== category));
-    } else {
-      setSelectedCategories([...selectedCategories, category]);
-    }
-  };
-  
-  const toggleZoneFilter = (zone: string): void => {
-    if (selectedZones.includes(zone)) {
-      setSelectedZones(selectedZones.filter(z => z !== zone));
-    } else {
-      setSelectedZones([...selectedZones, zone]);
-    }
-  };
-  
-  // Calculate cost (using a fictional rate)
-  const calculateCost = (consumption: number): string => {
-    const rate = 0.025; // OMR per unit
-    return (consumption * rate).toFixed(3);
-  };
-  
-  if (loading) {
-    return (
-      <Layout>
-        <div className="flex items-center justify-center h-screen bg-gray-100">
-          <div className="text-center">
-            <div className="w-16 h-16 border-4 border-t-4 border-gray-200 rounded-full animate-spin mx-auto mb-4" 
-                 style={{ borderTopColor: COLORS.primary }}></div>
-            <p className="text-xl font-semibold" style={{ color: COLORS.primary }}>Loading Dashboard...</p>
-          </div>
-        </div>
-      </Layout>
-    );
-  }
+
+  // Add CSS for no scrollbar when component mounts
+  useEffect(() => {
+    // Set document title
+    document.title = 'Electricity Distribution | Muscat Bay Asset Manager';
+    
+    // Add style for no scrollbar
+    const style = document.createElement('style');
+    style.textContent = `
+      .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+    `;
+    document.head.appendChild(style);
+    
+    return () => {
+      // Clean up
+      document.head.removeChild(style);
+    };
+  }, []);
 
   return (
     <Layout>
-      <div className="min-h-screen" style={{ backgroundColor: COLORS.background }}>
+      <div className={`min-h-screen ${bgColor} ${textColor}`}>
         {/* Header */}
-        <header className="px-3 sm:px-6 py-3 sm:py-4 shadow-md" style={{ backgroundColor: COLORS.primary }}>
-          <div className="flex justify-between items-center">
-            <div className="flex items-center space-x-2">
-              <svg width="24" height="24" className="sm:w-32 sm:h-32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M13 10V3L4 14H11V21L20 10H13Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-              <h1 className="text-lg sm:text-xl font-bold text-white">Muscat Bay Electricity Dashboard</h1>
+        <div className={`${headerBg} border-b ${borderColor} p-4 flex justify-between items-center`}>
+          <div className="flex items-center">
+            <div className="flex items-center justify-center p-2 w-10 h-10 rounded bg-indigo-600 text-white mr-3">
+              <Zap size={20} />
             </div>
-            <div className="flex items-center space-x-2 sm:space-x-4">
-              <button 
-                className="flex items-center px-2 sm:px-3 py-1 rounded-lg bg-white text-xs sm:text-sm" 
-                style={{ color: COLORS.primary }}
-                onClick={() => setShowFilters(!showFilters)}
-              >
-                <Filter size={14} className="sm:w-4 sm:h-4 mr-1" />
-                <span className="hidden xs:inline">Filters</span>
-                <ChevronDown size={14} className="sm:w-4 sm:h-4 ml-1" />
-              </button>
-              <button className="flex items-center px-2 sm:px-3 py-1 rounded-lg bg-white text-xs sm:text-sm" 
-                      style={{ color: COLORS.primary }}>
-                <Download size={14} className="sm:w-4 sm:h-4 mr-1" />
-                <span className="hidden xs:inline">Export</span>
-              </button>
-            </div>
+            <h1 className="text-2xl font-bold">Muscat Bay Electricity Distribution</h1>
           </div>
-        </header>
-        
-        {/* Filters Panel */}
-        {showFilters && (
-          <div className="p-3 sm:p-4 border-b" style={{ backgroundColor: 'white' }}>
-            <div className="flex justify-between items-center mb-3">
-              <h3 className="text-sm sm:text-base font-medium" style={{ color: COLORS.primary }}>Filter Dashboard</h3>
-              <button onClick={() => setShowFilters(false)} className="text-gray-500 hover:text-gray-700">
-                <X size={18} />
+          <div className="flex items-center space-x-4">
+            {/* Year Selector */}
+            <div className="relative">
+              <button
+                onClick={() => {
+                  setShowYearDropdown(!showYearDropdown);
+                  setShowMonthDropdown(false);
+                }}
+                className={`flex items-center space-x-2 px-3 py-2 border ${borderColor} rounded-md`}
+              >
+                <Calendar size={16} className={secondaryText} />
+                <span>Year: 20{selectedYear}</span>
+                <ChevronDown size={16} className={secondaryText} />
               </button>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-xs sm:text-sm font-medium mb-1 text-gray-700">Timeframe</label>
-                <select
-                  value={timeframe}
-                  onChange={(e) => setTimeframe(e.target.value)}
-                  className="w-full p-1.5 sm:p-2 text-xs sm:text-sm border rounded-md"
-                >
-                  <option value="all">All Time</option>
-                  <option value="last30">Last 30 Days</option>
-                  <option value="last90">Last 90 Days</option>
-                  <option value="last180">Last 180 Days</option>
-                  <option value="custom">Custom Range</option>
-                </select>
-              </div>
               
-              <div>
-                <label className="block text-xs sm:text-sm font-medium mb-1 text-gray-700">Categories</label>
-                <div className="flex flex-wrap gap-1 sm:gap-2">
-                  {categories.map(category => (
+              {showYearDropdown && (
+                <div className={`absolute z-10 mt-1 w-48 rounded-md shadow-lg ${cardBg} ring-1 ring-black ring-opacity-5`}>
+                  <div className="py-1">
                     <button
-                      key={category}
-                      onClick={() => toggleCategoryFilter(category)}
-                      className={`px-1.5 sm:px-2 py-0.5 sm:py-1 text-2xs sm:text-xs rounded-full ${
-                        selectedCategories.includes(category) 
-                          ? 'text-white' 
-                          : 'text-gray-700 bg-gray-200'
-                      }`}
-                      style={{ 
-                        backgroundColor: selectedCategories.includes(category) 
-                          ? COLORS.primary 
-                          : undefined 
+                      onClick={() => {
+                        setSelectedYear('24');
+                        setShowYearDropdown(false);
                       }}
+                      className={`block w-full text-left px-4 py-2 text-sm ${selectedYear === '24' ? 'bg-indigo-100 text-indigo-900' : `${secondaryText} hover:bg-gray-100`}`}
                     >
-                      {category}
+                      2024
                     </button>
-                  ))}
+                  </div>
                 </div>
-              </div>
-              
-              <div>
-                <label className="block text-xs sm:text-sm font-medium mb-1 text-gray-700">Zones</label>
-                <div className="flex flex-wrap gap-1 sm:gap-2">
-                  {zones.map(zone => (
-                    <button
-                      key={zone}
-                      onClick={() => toggleZoneFilter(zone)}
-                      className={`px-1.5 sm:px-2 py-0.5 sm:py-1 text-2xs sm:text-xs rounded-full ${
-                        selectedZones.includes(zone) 
-                          ? 'text-white' 
-                          : 'text-gray-700 bg-gray-200'
-                      }`}
-                      style={{ 
-                        backgroundColor: selectedZones.includes(zone) 
-                          ? COLORS.primary 
-                          : undefined 
-                      }}
-                    >
-                      {zone}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              )}
             </div>
             
-            <div className="mt-4 flex justify-end">
+            {/* Month Selector */}
+            <div className="relative">
               <button
-                onClick={resetFilters}
-                className="flex items-center px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs sm:text-sm text-white"
-                style={{ backgroundColor: COLORS.primary }}
+                onClick={() => {
+                  setShowMonthDropdown(!showMonthDropdown);
+                  setShowYearDropdown(false);
+                }}
+                className={`flex items-center space-x-2 px-3 py-2 border ${borderColor} rounded-md`}
               >
-                <RefreshCw size={14} className="mr-1" />
-                Reset Filters
+                <Calendar size={16} className={secondaryText} />
+                <span>Month: {selectedMonth === 'all' ? 'All' : selectedMonth}</span>
+                <ChevronDown size={16} className={secondaryText} />
               </button>
+              
+              {showMonthDropdown && (
+                <div className={`absolute z-10 mt-1 w-48 rounded-md shadow-lg ${cardBg} ring-1 ring-black ring-opacity-5`}>
+                  <div className="py-1">
+                    <button
+                      onClick={() => {
+                        setSelectedMonth('all');
+                        setShowMonthDropdown(false);
+                      }}
+                      className={`block w-full text-left px-4 py-2 text-sm ${selectedMonth === 'all' ? 'bg-indigo-100 text-indigo-900' : `${secondaryText} hover:bg-gray-100`}`}
+                    >
+                      All Months
+                    </button>
+                    {months.map(month => (
+                      <button
+                        key={month}
+                        onClick={() => {
+                          setSelectedMonth(month);
+                          setShowMonthDropdown(false);
+                        }}
+                        className={`block w-full text-left px-4 py-2 text-sm ${selectedMonth === month ? 'bg-indigo-100 text-indigo-900' : `${secondaryText} hover:bg-gray-100`}`}
+                      >
+                        {month}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
+            
+            <div className="relative">
+              <button
+                onClick={() => setShowExportDropdown(!showExportDropdown)}
+                className="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md flex items-center"
+              >
+                <Download size={16} className="mr-2" />
+                <span>Export</span>
+                <ChevronDown size={16} className="ml-2" />
+              </button>
+              
+              {showExportDropdown && (
+                <div className={`absolute right-0 z-10 mt-1 w-48 rounded-md shadow-lg ${cardBg} ring-1 ring-black ring-opacity-5`}>
+                  <div className="py-1">
+                    <button
+                      onClick={() => {
+                        console.log('Export as CSV');
+                        setShowExportDropdown(false);
+                      }}
+                      className={`block w-full text-left px-4 py-2 text-sm ${secondaryText} hover:bg-gray-100`}
+                    >
+                      Export as CSV
+                    </button>
+                    <button
+                      onClick={() => {
+                        console.log('Export as Excel');
+                        setShowExportDropdown(false);
+                      }}
+                      className={`block w-full text-left px-4 py-2 text-sm ${secondaryText} hover:bg-gray-100`}
+                    >
+                      Export as Excel
+                    </button>
+                    <button
+                      onClick={() => {
+                        console.log('Export as PDF');
+                        setShowExportDropdown(false);
+                      }}
+                      className={`block w-full text-left px-4 py-2 text-sm ${secondaryText} hover:bg-gray-100`}
+                    >
+                      Export as PDF
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            <button
+              onClick={() => setDarkMode(!darkMode)}
+              className={`p-2 rounded-full ${darkMode ? 'bg-gray-700' : 'bg-gray-200'}`}
+              aria-label="Toggle dark mode"
+            >
+              {darkMode ? <Sun size={18} /> : <Moon size={18} />}
+            </button>
           </div>
-        )}
-        
-        {/* Tabs - Scrollable on mobile */}
-        <div className="flex overflow-x-auto border-b px-2 sm:px-6 bg-white scrollbar-none">
-          <button
-            className={`py-3 sm:py-4 px-2 sm:px-4 font-medium border-b-2 whitespace-nowrap ${
-              activeTab === 'overview' ? 'border-current' : 'border-transparent'
-            }`}
-            style={{ color: activeTab === 'overview' ? COLORS.primary : 'gray' }}
-            onClick={() => setActiveTab('overview')}
-          >
-            <div className="flex items-center">
-              <Home size={14} className="sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-              Overview
-            </div>
-          </button>
-          <button
-            className={`py-3 sm:py-4 px-2 sm:px-4 font-medium border-b-2 whitespace-nowrap ${
-              activeTab === 'categories' ? 'border-current' : 'border-transparent'
-            }`}
-            style={{ color: activeTab === 'categories' ? COLORS.primary : 'gray' }}
-            onClick={() => setActiveTab('categories')}
-          >
-            <div className="flex items-center">
-              <Layers size={14} className="sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-              Categories
-            </div>
-          </button>
-          <button
-            className={`py-3 sm:py-4 px-2 sm:px-4 font-medium border-b-2 whitespace-nowrap ${
-              activeTab === 'zones' ? 'border-current' : 'border-transparent'
-            }`}
-            style={{ color: activeTab === 'zones' ? COLORS.primary : 'gray' }}
-            onClick={() => setActiveTab('zones')}
-          >
-            <div className="flex items-center">
-              <MapPin size={14} className="sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-              Zones
-            </div>
-          </button>
-          <button
-            className={`py-3 sm:py-4 px-2 sm:px-4 font-medium border-b-2 whitespace-nowrap ${
-              activeTab === 'trends' ? 'border-current' : 'border-transparent'
-            }`}
-            style={{ color: activeTab === 'trends' ? COLORS.primary : 'gray' }}
-            onClick={() => setActiveTab('trends')}
-          >
-            <div className="flex items-center">
-              <TrendingUp size={14} className="sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-              Trends
-            </div>
-          </button>
-          <button
-            className={`py-3 sm:py-4 px-2 sm:px-4 font-medium border-b-2 whitespace-nowrap ${
-              activeTab === 'reports' ? 'border-current' : 'border-transparent'
-            }`}
-            style={{ color: activeTab === 'reports' ? COLORS.primary : 'gray' }}
-            onClick={() => setActiveTab('reports')}
-          >
-            <div className="flex items-center">
-              <FileText size={14} className="sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-              Reports
-            </div>
-          </button>
         </div>
-        
-        {/* Main Content */}
-        <main className="container mx-auto px-3 sm:px-6 py-4 sm:py-6">
-          {/* Overview Tab */}
+
+        {/* Horizontal Navigation */}
+        <div className={`${cardBg} border-b ${borderColor} py-3 px-6`}>
+          <div className="flex overflow-x-auto no-scrollbar space-x-2">
+            {tabs.map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`px-4 py-2 rounded-md whitespace-nowrap transition-all duration-200 flex items-center ${
+                  activeTab === tab.id 
+                    ? `${activeTabBg} ${activeTabText} font-medium` 
+                    : `hover:bg-gray-100 ${secondaryText}`
+                }`}
+              >
+                <span className="mr-2">{tab.icon}</span>
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Main content */}
+        <div className="p-6 overflow-y-auto">
+          {/* Current selection display */}
+          <div className="mb-6">
+            <h2 className="text-xl font-semibold">
+              Showing: <span className="text-indigo-600">{getDisplayText()}</span>
+            </h2>
+          </div>
+          
+          {/* Overview Tab Content */}
           {activeTab === 'overview' && (
-            <div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 mb-4 sm:mb-6">
-                {/* Key Metrics Cards */}
-                <div className="bg-white p-3 sm:p-4 rounded-lg shadow">
-                  <h3 className="text-xs sm:text-sm font-medium text-gray-500 mb-1">Total Consumption</h3>
-                  <div className="flex justify-between items-end">
-                    <div>
-                      <p className="text-lg sm:text-2xl font-bold" style={{ color: COLORS.primary }}>
-                        {totalConsumption.toLocaleString()} kWh
-                      </p>
-                      <p className="text-2xs sm:text-sm text-gray-600">
-                        Cost: {calculateCost(totalConsumption)} OMR
-                      </p>
-                    </div>
-                    <div className="p-1.5 sm:p-2 rounded-full" style={{ backgroundColor: `${COLORS.light}40` }}>
-                      <svg width="20" height="20" className="sm:w-24 sm:h-24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M13 10V3L4 14H11V21L20 10H13Z" stroke={COLORS.primary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                    </div>
+            <>
+              {/* Stats Cards for Overview */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                <div className={`${cardBg} p-6 rounded-lg border ${borderColor} shadow-sm hover:shadow-md transition-shadow duration-300`}>
+                  <h3 className={secondaryText}>Total Consumption</h3>
+                  <div className="mt-2">
+                    <div className="text-3xl font-bold">{formatNumber(grandTotal)}</div>
+                    <p className={`text-sm ${secondaryText} mt-1`}>kWh for {getDisplayText()}</p>
                   </div>
                 </div>
                 
-                <div className="bg-white p-3 sm:p-4 rounded-lg shadow">
-                  <h3 className="text-xs sm:text-sm font-medium text-gray-500 mb-1">Average Monthly Consumption</h3>
-                  <div className="flex justify-between items-end">
-                    <div>
-                      <p className="text-lg sm:text-2xl font-bold" style={{ color: COLORS.primary }}>
-                        {Math.round(averageConsumption).toLocaleString()} kWh
-                      </p>
-                      <p className="text-2xs sm:text-sm text-gray-600">
-                        Per facility per month
-                      </p>
-                    </div>
-                    <div className="p-1.5 sm:p-2 rounded-full" style={{ backgroundColor: `${COLORS.light}40` }}>
-                      <svg width="20" height="20" className="sm:w-24 sm:h-24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M8 18H21M8 6H21M8 12H21M3 6V6.01M3 12V12.01M3 18V18.01" stroke={COLORS.primary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                    </div>
+                <div className={`${cardBg} p-6 rounded-lg border ${borderColor} shadow-sm hover:shadow-md transition-shadow duration-300`}>
+                  <h3 className={secondaryText}>Total Cost</h3>
+                  <div className="mt-2">
+                    <div className="text-3xl font-bold text-indigo-600">{formatCurrency(grandTotalCost)}</div>
+                    <p className={`text-sm ${secondaryText} mt-1`}>0.048 OMR per kWh</p>
                   </div>
                 </div>
                 
-                <div className="bg-white p-3 sm:p-4 rounded-lg shadow">
-                  <h3 className="text-xs sm:text-sm font-medium text-gray-500 mb-1">Maximum Consumption</h3>
-                  <div className="flex justify-between items-end">
-                    <div>
-                      <p className="text-lg sm:text-2xl font-bold" style={{ color: COLORS.primary }}>
-                        {maxConsumption.toLocaleString()} kWh
-                      </p>
-                      <p className="text-2xs sm:text-sm text-gray-600">
-                        Highest recorded in a month
-                      </p>
-                    </div>
-                    <div className="p-1.5 sm:p-2 rounded-full" style={{ backgroundColor: `${COLORS.light}40` }}>
-                      <svg width="20" height="20" className="sm:w-24 sm:h-24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M13 3H12H7C5.89543 3 5 3.89543 5 5V19C5 20.1046 5.89543 21 7 21H17C18.1046 21 19 20.1046 19 19V9M13 3L19 9M13 3V9H19" stroke={COLORS.primary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                    </div>
+                <div className={`${cardBg} p-6 rounded-lg border ${borderColor} shadow-sm hover:shadow-md transition-shadow duration-300`}>
+                  <h3 className={secondaryText}>Largest Consumer</h3>
+                  <div className="mt-2">
+                    <div className="text-3xl font-bold text-purple-600">D-Buildings</div>
+                    <p className={`text-sm ${secondaryText} mt-1`}>{Math.round(calculateTotalByType['D_Building'] / grandTotal * 100)}% of total</p>
+                  </div>
+                </div>
+                
+                <div className={`${cardBg} p-6 rounded-lg border ${borderColor} shadow-sm hover:shadow-md transition-shadow duration-300`}>
+                  <h3 className={secondaryText}>Monthly Average</h3>
+                  <div className="mt-2">
+                    <div className="text-3xl font-bold">{formatNumber(monthlyAverage)}</div>
+                    <p className={`text-sm ${secondaryText} mt-1`}>kWh per month</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Filters for types */}
+              <div className={`${cardBg} p-4 rounded-lg border ${borderColor} mb-6 shadow-sm`}>
+                <h2 className="font-medium mb-3">Filter by Type</h2>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={() => toggleTypeVisibility('PS')}
+                    className={`px-4 py-2 rounded-full text-sm flex items-center transition-colors duration-200 ${visibleTypes.includes('PS') ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-600'}`}
+                  >
+                    <span className="w-3 h-3 rounded-full bg-blue-500 mr-2"></span>
+                    Pumping Stations
+                  </button>
+                  <button
+                    onClick={() => toggleTypeVisibility('LS')}
+                    className={`px-4 py-2 rounded-full text-sm flex items-center transition-colors duration-200 ${visibleTypes.includes('LS') ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-600'}`}
+                  >
+                    <span className="w-3 h-3 rounded-full bg-red-500 mr-2"></span>
+                    Lifting Stations
+                  </button>
+                  <button
+                    onClick={() => toggleTypeVisibility('IRR')}
+                    className={`px-4 py-2 rounded-full text-sm flex items-center transition-colors duration-200 ${visibleTypes.includes('IRR') ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-600'}`}
+                  >
+                    <span className="w-3 h-3 rounded-full bg-green-500 mr-2"></span>
+                    Irrigation
+                  </button>
+                  <button
+                    onClick={() => toggleTypeVisibility('DB')}
+                    className={`px-4 py-2 rounded-full text-sm flex items-center transition-colors duration-200 ${visibleTypes.includes('DB') ? 'bg-gray-500 text-gray-100' : 'bg-gray-100 text-gray-600'}`}
+                  >
+                    <span className="w-3 h-3 rounded-full bg-gray-800 mr-2"></span>
+                    Actuators
+                  </button>
+                  <button
+                    onClick={() => toggleTypeVisibility('Street Light')}
+                    className={`px-4 py-2 rounded-full text-sm flex items-center transition-colors duration-200 ${visibleTypes.includes('Street Light') ? 'bg-yellow-100 text-yellow-600' : 'bg-gray-100 text-gray-600'}`}
+                  >
+                    <span className="w-3 h-3 rounded-full bg-yellow-500 mr-2"></span>
+                    Street Lights
+                  </button>
+                  <button
+                    onClick={() => toggleTypeVisibility('D_Building')}
+                    className={`px-4 py-2 rounded-full text-sm flex items-center transition-colors duration-200 ${visibleTypes.includes('D_Building') ? 'bg-purple-100 text-purple-600' : 'bg-gray-100 text-gray-600'}`}
+                  >
+                    <span className="w-3 h-3 rounded-full bg-purple-500 mr-2"></span>
+                    D-Buildings
+                  </button>
+                  <button
+                    onClick={() => toggleTypeVisibility('Retail')}
+                    className={`px-4 py-2 rounded-full text-sm flex items-center transition-colors duration-200 ${visibleTypes.includes('Retail') ? 'bg-pink-100 text-pink-600' : 'bg-gray-100 text-gray-600'}`}
+                  >
+                    <span className="w-3 h-3 rounded-full bg-pink-500 mr-2"></span>
+                    Retail
+                  </button>
+                  <button
+                    onClick={() => toggleTypeVisibility('FP-Landscape')}
+                    className={`px-4 py-2 rounded-full text-sm flex items-center transition-colors duration-200 ${visibleTypes.includes('FP-Landscape') ? 'bg-emerald-100 text-emerald-600' : 'bg-gray-100 text-gray-600'}`}
+                  >
+                    <span className="w-3 h-3 rounded-full bg-emerald-500 mr-2"></span>
+                    FP-Landscape
+                  </button>
+                </div>
+              </div>
+
+              {/* Monthly Consumption Chart */}
+              <div className={`${cardBg} p-6 rounded-lg border ${borderColor} mb-6 shadow-sm`}>
+                <h2 className="text-xl font-medium mb-4">Monthly Consumption Trend</h2>
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart
+                      data={monthlyData}
+                      margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                      <XAxis dataKey="month" />
+                      <YAxis />
+                      <Tooltip formatter={(value) => [formatNumber(Number(value)) + ' kWh', '']} />
+                      <Legend />
+                      {visibleTypes.includes('PS') && (
+                        <Line 
+                          type="monotone" 
+                          dataKey="PS" 
+                          name="Pumping Stations" 
+                          stroke="#60A5FA" 
+                          strokeWidth={2} 
+                          dot={{ r: 3 }} 
+                          activeDot={{ r: 5 }} 
+                        />
+                      )}
+                      {visibleTypes.includes('LS') && (
+                        <Line 
+                          type="monotone" 
+                          dataKey="LS" 
+                          name="Lifting Stations" 
+                          stroke="#F87171" 
+                          strokeWidth={2} 
+                          dot={{ r: 3 }} 
+                          activeDot={{ r: 5 }} 
+                        />
+                      )}
+                      {visibleTypes.includes('IRR') && (
+                        <Line 
+                          type="monotone" 
+                          dataKey="IRR" 
+                          name="Irrigation" 
+                          stroke="#34D399" 
+                          strokeWidth={2} 
+                          dot={{ r: 3 }} 
+                          activeDot={{ r: 5 }} 
+                        />
+                      )}
+                      {visibleTypes.includes('DB') && (
+                        <Line 
+                          type="monotone" 
+                          dataKey="DB" 
+                          name="Actuators" 
+                          stroke="#6B7280" 
+                          strokeWidth={2} 
+                          dot={{ r: 3 }} 
+                          activeDot={{ r: 5 }} 
+                        />
+                      )}
+                      {visibleTypes.includes('Street Light') && (
+                        <Line 
+                          type="monotone" 
+                          dataKey="Street Light" 
+                          name="Street Light" 
+                          stroke="#FBBF24" 
+                          strokeWidth={2} 
+                          dot={{ r: 3 }} 
+                          activeDot={{ r: 5 }} 
+                        />
+                      )}
+                      {visibleTypes.includes('D_Building') && (
+                        <Line 
+                          type="monotone" 
+                          dataKey="D_Building" 
+                          name="D-Buildings" 
+                          stroke="#A78BFA" 
+                          strokeWidth={2} 
+                          dot={{ r: 3 }} 
+                          activeDot={{ r: 5 }} 
+                        />
+                      )}
+                      {visibleTypes.includes('FP-Landscape') && (
+                        <Line 
+                          type="monotone" 
+                          dataKey="FP-Landscape" 
+                          name="FP-Landscape" 
+                          stroke="#6EE7B7" 
+                          strokeWidth={2} 
+                          dot={{ r: 3 }} 
+                          activeDot={{ r: 5 }} 
+                        />
+                      )}
+                      {visibleTypes.includes('Retail') && (
+                        <Line 
+                          type="monotone" 
+                          dataKey="Retail" 
+                          name="Retail" 
+                          stroke="#F472B6" 
+                          strokeWidth={2} 
+                          dot={{ r: 3 }} 
+                          activeDot={{ r: 5 }} 
+                        />
+                      )}
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Distribution Charts */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                {/* Type Distribution Chart */}
+                <div className={`${cardBg} p-6 rounded-lg border ${borderColor} shadow-sm`}>
+                  <h2 className="text-xl font-medium mb-4">Consumption by Type</h2>
+                  <div className="h-80">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={aggregatedByType.filter(item => 
+                            visibleTypes.includes(item.type === 'Pumping Stations' ? 'PS' : 
+                                               item.type === 'Lifting Stations' ? 'LS' : 
+                                               item.type === 'Irrigation' ? 'IRR' : 
+                                               item.type === 'D-Buildings' ? 'D_Building' : 
+                                               item.type === 'Street Lights' ? 'Street Light' : 
+                                               item.type)
+                          )}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={60}
+                          outerRadius={100}
+                          paddingAngle={2}
+                          dataKey="totalConsumption"
+                          nameKey="type"
+                          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(1)}%`}
+                        >
+                          {aggregatedByType.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <Tooltip formatter={(value) => formatNumber(Number(value)) + ' kWh'} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                {/* Consumption Composition Area Chart */}
+                <div className={`${cardBg} p-6 rounded-lg border ${borderColor} shadow-sm`}>
+                  <h2 className="text-xl font-medium mb-4">Consumption Composition</h2>
+                  <div className="h-80">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart
+                        data={monthlyData}
+                        margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                        <XAxis dataKey="month" />
+                        <YAxis />
+                        <Tooltip formatter={(value) => formatNumber(Number(value)) + ' kWh'} />
+                        <Legend />
+                        {visibleTypes.includes('PS') && (
+                          <Area type="monotone" dataKey="PS" stackId="1" fill="#60A5FA" stroke="#60A5FA" name="Pumping Stations" />
+                        )}
+                        {visibleTypes.includes('LS') && (
+                          <Area type="monotone" dataKey="LS" stackId="1" fill="#F87171" stroke="#F87171" name="Lifting Stations" />
+                        )}
+                        {visibleTypes.includes('IRR') && (
+                          <Area type="monotone" dataKey="IRR" stackId="1" fill="#34D399" stroke="#34D399" name="Irrigation" />
+                        )}
+                        {visibleTypes.includes('DB') && (
+                          <Area type="monotone" dataKey="DB" stackId="1" fill="#6B7280" stroke="#6B7280" name="Actuators" />
+                        )}
+                        {visibleTypes.includes('Street Light') && (
+                          <Area type="monotone" dataKey="Street Light" stackId="1" fill="#FBBF24" stroke="#FBBF24" name="Street Lights" />
+                        )}
+                        {visibleTypes.includes('D_Building') && (
+                          <Area type="monotone" dataKey="D_Building" stackId="1" fill="#A78BFA" stroke="#A78BFA" name="D-Buildings" />
+                        )}
+                        {visibleTypes.includes('FP-Landscape') && (
+                          <Area type="monotone" dataKey="FP-Landscape" stackId="1" fill="#6EE7B7" stroke="#6EE7B7" name="FP-Landscape" />
+                        )}
+                        {visibleTypes.includes('Retail') && (
+                          <Area type="monotone" dataKey="Retail" stackId="1" fill="#F472B6" stroke="#F472B6" name="Retail" />
+                        )}
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Consumption Types Tab */}
+          {activeTab === 'consumption-types' && (
+            <>
+              {/* Stats Cards for Consumption Types */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                <div className={`${cardBg} p-6 rounded-lg border ${borderColor} shadow-sm hover:shadow-md transition-shadow duration-300`}>
+                  <h3 className={secondaryText}>Pumping Stations</h3>
+                  <div className="mt-2">
+                    <div className="text-3xl font-bold text-blue-500">{formatNumber(calculateTotalByType.PS)}</div>
+                    <p className={`text-sm ${secondaryText} mt-1`}>kWh ({((calculateTotalByType.PS / grandTotal) * 100).toFixed(1)}% of total)</p>
+                  </div>
+                </div>
+                
+                <div className={`${cardBg} p-6 rounded-lg border ${borderColor} shadow-sm hover:shadow-md transition-shadow duration-300`}>
+                  <h3 className={secondaryText}>Lifting Stations</h3>
+                  <div className="mt-2">
+                    <div className="text-3xl font-bold text-red-500">{formatNumber(calculateTotalByType.LS)}</div>
+                    <p className={`text-sm ${secondaryText} mt-1`}>kWh ({((calculateTotalByType.LS / grandTotal) * 100).toFixed(1)}% of total)</p>
+                  </div>
+                </div>
+                
+                <div className={`${cardBg} p-6 rounded-lg border ${borderColor} shadow-sm hover:shadow-md transition-shadow duration-300`}>
+                  <h3 className={secondaryText}>D-Buildings</h3>
+                  <div className="mt-2">
+                    <div className="text-3xl font-bold text-purple-500">{formatNumber(calculateTotalByType.D_Building)}</div>
+                    <p className={`text-sm ${secondaryText} mt-1`}>kWh ({((calculateTotalByType.D_Building / grandTotal) * 100).toFixed(1)}% of total)</p>
+                  </div>
+                </div>
+                
+                <div className={`${cardBg} p-6 rounded-lg border ${borderColor} shadow-sm hover:shadow-md transition-shadow duration-300`}>
+                  <h3 className={secondaryText}>Street Lights</h3>
+                  <div className="mt-2">
+                    <div className="text-3xl font-bold text-yellow-500">{formatNumber(calculateTotalByType['Street Light'])}</div>
+                    <p className={`text-sm ${secondaryText} mt-1`}>kWh ({((calculateTotalByType['Street Light'] / grandTotal) * 100).toFixed(1)}% of total)</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                {/* Consumption by Type Bar Chart */}
+                <div className={`${cardBg} p-6 rounded-lg border ${borderColor} shadow-sm`}>
+                  <h2 className="text-xl font-medium mb-4">Consumption by Type</h2>
+                  <div className="h-80">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart
+                        data={[
+                          { name: 'Pumping Stations', value: calculateTotalByType.PS, color: '#60A5FA' },
+                          { name: 'Lifting Stations', value: calculateTotalByType.LS, color: '#F87171' },
+                          { name: 'Irrigation', value: calculateTotalByType.IRR, color: '#34D399' },
+                          { name: 'Actuators', value: calculateTotalByType.DB, color: '#6B7280' },
+                          { name: 'Street Lights', value: calculateTotalByType['Street Light'], color: '#FBBF24' },
+                          { name: 'D-Buildings', value: calculateTotalByType.D_Building, color: '#A78BFA' },
+                          { name: 'FP-Landscape', value: calculateTotalByType['FP-Landscape'], color: '#6EE7B7' },
+                          { name: 'Retail', value: calculateTotalByType.Retail, color: '#F472B6' },
+                        ].filter(item => 
+                          visibleTypes.includes(
+                            item.name === 'Pumping Stations' ? 'PS' : 
+                            item.name === 'Lifting Stations' ? 'LS' : 
+                            item.name === 'Irrigation' ? 'IRR' :
+                            item.name === 'Actuators' ? 'DB' :
+                            item.name === 'Street Lights' ? 'Street Light' :
+                            item.name === 'D-Buildings' ? 'D_Building' :
+                            item.name === 'FP-Landscape' ? 'FP-Landscape' :
+                            'Retail'
+                          )
+                        )}
+                        layout="vertical"
+                        margin={{ top: 5, right: 30, left: 100, bottom: 5 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
+                        <XAxis type="number" />
+                        <YAxis dataKey="name" type="category" width={110} />
+                        <Tooltip formatter={(value) => formatNumber(Number(value)) + ' kWh'} />
+                        <Bar 
+                          dataKey="value" 
+                          animationDuration={1000}
+                        >
+                          {[
+                            { name: 'Pumping Stations', color: '#60A5FA' },
+                            { name: 'Lifting Stations', color: '#F87171' },
+                            { name: 'Irrigation', color: '#34D399' },
+                            { name: 'Actuators', color: '#6B7280' },
+                            { name: 'Street Lights', color: '#FBBF24' },
+                            { name: 'D-Buildings', color: '#A78BFA' },
+                            { name: 'FP-Landscape', color: '#6EE7B7' },
+                            { name: 'Retail', color: '#F472B6' },
+                          ]
+                            .filter(item => 
+                              visibleTypes.includes(
+                                item.name === 'Pumping Stations' ? 'PS' : 
+                                item.name === 'Lifting Stations' ? 'LS' : 
+                                item.name === 'Irrigation' ? 'IRR' :
+                                item.name === 'Actuators' ? 'DB' :
+                                item.name === 'Street Lights' ? 'Street Light' :
+                                item.name === 'D-Buildings' ? 'D_Building' :
+                                item.name === 'FP-Landscape' ? 'FP-Landscape' :
+                                'Retail'
+                              )
+                            )
+                            .map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.color} />
+                            ))
+                          }
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                {/* Cost Distribution */}
+                <div className={`${cardBg} p-6 rounded-lg border ${borderColor} shadow-sm`}>
+                  <h2 className="text-xl font-medium mb-4">Cost Distribution</h2>
+                  <div className="h-80">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={[
+                            { name: 'Pumping Stations', value: calculateCostByType.PS, color: '#60A5FA' },
+                            { name: 'Lifting Stations', value: calculateCostByType.LS, color: '#F87171' },
+                            { name: 'Irrigation', value: calculateCostByType.IRR, color: '#34D399' },
+                            { name: 'Actuators', value: calculateCostByType.DB, color: '#6B7280' },
+                            { name: 'Street Lights', value: calculateCostByType['Street Light'], color: '#FBBF24' },
+                            { name: 'D-Buildings', value: calculateCostByType.D_Building, color: '#A78BFA' },
+                            { name: 'FP-Landscape', value: calculateCostByType['FP-Landscape'], color: '#6EE7B7' },
+                            { name: 'Retail', value: calculateCostByType.Retail, color: '#F472B6' },
+                          ].filter(item => 
+                            visibleTypes.includes(
+                              item.name === 'Pumping Stations' ? 'PS' : 
+                              item.name === 'Lifting Stations' ? 'LS' : 
+                              item.name === 'Irrigation' ? 'IRR' :
+                              item.name === 'Actuators' ? 'DB' :
+                              item.name === 'Street Lights' ? 'Street Light' :
+                              item.name === 'D-Buildings' ? 'D_Building' :
+                              item.name === 'FP-Landscape' ? 'FP-Landscape' :
+                              'Retail'
+                            )
+                          )}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={60}
+                          outerRadius={100}
+                          paddingAngle={2}
+                          dataKey="value"
+                          nameKey="name"
+                          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(1)}%`}
+                        >
+                          {[
+                            { name: 'Pumping Stations', color: '#60A5FA' },
+                            { name: 'Lifting Stations', color: '#F87171' },
+                            { name: 'Irrigation', color: '#34D399' },
+                            { name: 'Actuators', color: '#6B7280' },
+                            { name: 'Street Lights', color: '#FBBF24' },
+                            { name: 'D-Buildings', color: '#A78BFA' },
+                            { name: 'FP-Landscape', color: '#6EE7B7' },
+                            { name: 'Retail', color: '#F472B6' },
+                          ].map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <Tooltip formatter={(value) => formatCurrency(Number(value))} />
+                      </PieChart>
+                    </ResponsiveContainer>
                   </div>
                 </div>
               </div>
               
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-6 mb-4 sm:mb-6">
-                {/* Consumption by Category */}
-                <div className="bg-white p-3 sm:p-4 rounded-lg shadow">
-                  <h3 className="text-sm sm:text-md font-medium mb-2 sm:mb-4" style={{ color: COLORS.primary }}>
-                    Consumption by Category
-                  </h3>
-                  <div className="flex flex-col md:flex-row items-center">
-                    <div className="w-full md:w-1/2 h-48 sm:h-64">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie
-                            data={consumptionByCategory}
-                            cx="50%"
-                            cy="50%"
-                            labelLine={false}
-                            outerRadius="70%"
-                            fill="#8884d8"
-                            dataKey="value"
-                            label={({ name, percent }) => {
-                              // On smaller screens, only show percentage
-                              const screenWidth = window.innerWidth;
-                              return screenWidth < 640 ? 
-                                `${(percent * 100).toFixed(0)}%` :
-                                `${name} ${(percent * 100).toFixed(0)}%`;
-                            }}
-                          >
-                            {consumptionByCategory.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={COLORS.chartColors[index % COLORS.chartColors.length]} />
-                            ))}
-                          </Pie>
-                          <Tooltip formatter={(value: number) => `${value.toLocaleString()} kWh`} />
-                        </PieChart>
-                      </ResponsiveContainer>
+              {/* Consumption Trend by Type */}
+              <div className={`${cardBg} p-6 rounded-lg border ${borderColor} mb-6 shadow-sm`}>
+                <h2 className="text-xl font-medium mb-4">Consumption Trend by Type</h2>
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart
+                      data={monthlyData}
+                      margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                      <XAxis dataKey="month" />
+                      <YAxis />
+                      <Tooltip formatter={(value) => formatNumber(Number(value)) + ' kWh'} />
+                      <Legend />
+                      {visibleTypes.includes('PS') && (
+                        <Line 
+                          type="monotone" 
+                          dataKey="PS" 
+                          name="Pumping Stations" 
+                          stroke="#60A5FA" 
+                          strokeWidth={2} 
+                          dot={{ r: 3 }} 
+                          activeDot={{ r: 5 }} 
+                        />
+                      )}
+                      {visibleTypes.includes('LS') && (
+                        <Line 
+                          type="monotone" 
+                          dataKey="LS" 
+                          name="Lifting Stations" 
+                          stroke="#F87171" 
+                          strokeWidth={2} 
+                          dot={{ r: 3 }} 
+                          activeDot={{ r: 5 }} 
+                        />
+                      )}
+                      {visibleTypes.includes('IRR') && (
+                        <Line 
+                          type="monotone" 
+                          dataKey="IRR" 
+                          name="Irrigation" 
+                          stroke="#34D399" 
+                          strokeWidth={2} 
+                          dot={{ r: 3 }} 
+                          activeDot={{ r: 5 }} 
+                        />
+                      )}
+                      {visibleTypes.includes('DB') && (
+                        <Line 
+                          type="monotone" 
+                          dataKey="DB" 
+                          name="Actuators" 
+                          stroke="#6B7280" 
+                          strokeWidth={2} 
+                          dot={{ r: 3 }} 
+                          activeDot={{ r: 5 }} 
+                        />
+                      )}
+                      {visibleTypes.includes('Street Light') && (
+                        <Line 
+                          type="monotone" 
+                          dataKey="Street Light" 
+                          name="Street Lights" 
+                          stroke="#FBBF24" 
+                          strokeWidth={2} 
+                          dot={{ r: 3 }} 
+                          activeDot={{ r: 5 }} 
+                        />
+                      )}
+                      {visibleTypes.includes('D_Building') && (
+                        <Line 
+                          type="monotone" 
+                          dataKey="D_Building" 
+                          name="D-Buildings" 
+                          stroke="#A78BFA" 
+                          strokeWidth={2} 
+                          dot={{ r: 3 }} 
+                          activeDot={{ r: 5 }} 
+                        />
+                      )}
+                      {visibleTypes.includes('FP-Landscape') && (
+                        <Line 
+                          type="monotone" 
+                          dataKey="FP-Landscape" 
+                          name="FP-Landscape" 
+                          stroke="#6EE7B7" 
+                          strokeWidth={2} 
+                          dot={{ r: 3 }} 
+                          activeDot={{ r: 5 }} 
+                        />
+                      )}
+                      {visibleTypes.includes('Retail') && (
+                        <Line 
+                          type="monotone" 
+                          dataKey="Retail" 
+                          name="Retail" 
+                          stroke="#F472B6" 
+                          strokeWidth={2} 
+                          dot={{ r: 3 }} 
+                          activeDot={{ r: 5 }} 
+                        />
+                      )}
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Cost Analysis Tab */}
+          {activeTab === 'cost-analysis' && (
+            <>
+              {/* Stats Cards for Cost Analysis */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                <div className={`${cardBg} p-6 rounded-lg border ${borderColor} shadow-sm hover:shadow-md transition-shadow duration-300`}>
+                  <h3 className={secondaryText}>Total Cost</h3>
+                  <div className="mt-2">
+                    <div className="text-3xl font-bold text-indigo-600">{formatCurrency(grandTotalCost)}</div>
+                    <p className={`text-sm ${secondaryText} mt-1`}>For all electricity usage</p>
+                  </div>
+                </div>
+                
+                <div className={`${cardBg} p-6 rounded-lg border ${borderColor} shadow-sm hover:shadow-md transition-shadow duration-300`}>
+                  <h3 className={secondaryText}>D-Buildings Cost</h3>
+                  <div className="mt-2">
+                    <div className="text-3xl font-bold text-purple-600">{formatCurrency(calculateCostByType.D_Building)}</div>
+                    <p className={`text-sm ${secondaryText} mt-1`}>{((calculateCostByType.D_Building / grandTotalCost) * 100).toFixed(1)}% of total cost</p>
+                  </div>
+                </div>
+                
+                <div className={`${cardBg} p-6 rounded-lg border ${borderColor} shadow-sm hover:shadow-md transition-shadow duration-300`}>
+                  <h3 className={secondaryText}>Pumping Stations Cost</h3>
+                  <div className="mt-2">
+                    <div className="text-3xl font-bold text-blue-600">{formatCurrency(calculateCostByType.PS)}</div>
+                    <p className={`text-sm ${secondaryText} mt-1`}>{((calculateCostByType.PS / grandTotalCost) * 100).toFixed(1)}% of total cost</p>
+                  </div>
+                </div>
+                
+                <div className={`${cardBg} p-6 rounded-lg border ${borderColor} shadow-sm hover:shadow-md transition-shadow duration-300`}>
+                  <h3 className={secondaryText}>Rate per kWh</h3>
+                  <div className="mt-2">
+                    <div className="text-3xl font-bold">0.048 OMR</div>
+                    <p className={`text-sm ${secondaryText} mt-1`}>Standard electricity rate</p>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Monthly Cost Chart */}
+              <div className={`${cardBg} p-6 rounded-lg border ${borderColor} mb-6 shadow-sm`}>
+                <h2 className="text-xl font-medium mb-4">Monthly Cost by Type</h2>
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      data={monthlyData.map(month => {
+                        // Convert each consumption value to cost
+                        const costData: any = { month: month.month };
+                        Object.keys(month).forEach(key => {
+                          if (key !== 'month') {
+                            costData[key] = month[key as keyof typeof month] * COST_BY_TYPE[key as keyof typeof COST_BY_TYPE];
+                          }
+                        });
+                        return costData;
+                      })}
+                      margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="month" />
+                      <YAxis />
+                      <Tooltip formatter={(value) => formatCurrency(Number(value))} />
+                      <Legend />
+                      {visibleTypes.includes('PS') && (
+                        <Bar dataKey="PS" name="Pumping Stations" fill="#60A5FA" />
+                      )}
+                      {visibleTypes.includes('LS') && (
+                        <Bar dataKey="LS" name="Lifting Stations" fill="#F87171" />
+                      )}
+                      {visibleTypes.includes('IRR') && (
+                        <Bar dataKey="IRR" name="Irrigation" fill="#34D399" />
+                      )}
+                      {visibleTypes.includes('DB') && (
+                        <Bar dataKey="DB" name="Actuators" fill="#6B7280" />
+                      )}
+                      {visibleTypes.includes('Street Light') && (
+                        <Bar dataKey="Street Light" name="Street Lights" fill="#FBBF24" />
+                      )}
+                      {visibleTypes.includes('D_Building') && (
+                        <Bar dataKey="D_Building" name="D-Buildings" fill="#A78BFA" />
+                      )}
+                      {visibleTypes.includes('FP-Landscape') && (
+                        <Bar dataKey="FP-Landscape" name="FP-Landscape" fill="#6EE7B7" />
+                      )}
+                      {visibleTypes.includes('Retail') && (
+                        <Bar dataKey="Retail" name="Retail" fill="#F472B6" />
+                      )}
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+              
+              {/* Cost Distribution Pie Chart */}
+              <div className={`${cardBg} p-6 rounded-lg border ${borderColor} mb-6 shadow-sm`}>
+                <h2 className="text-xl font-medium mb-4">Cost Distribution</h2>
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={[
+                          { name: 'Pumping Stations', value: calculateCostByType.PS, color: '#60A5FA' },
+                          { name: 'Lifting Stations', value: calculateCostByType.LS, color: '#F87171' },
+                          { name: 'Irrigation', value: calculateCostByType.IRR, color: '#34D399' },
+                          { name: 'Actuators', value: calculateCostByType.DB, color: '#6B7280' },
+                          { name: 'Street Lights', value: calculateCostByType['Street Light'], color: '#FBBF24' },
+                          { name: 'D-Buildings', value: calculateCostByType.D_Building, color: '#A78BFA' },
+                          { name: 'FP-Landscape', value: calculateCostByType['FP-Landscape'], color: '#6EE7B7' },
+                          { name: 'Retail', value: calculateCostByType.Retail, color: '#F472B6' },
+                        ].filter(item => 
+                          visibleTypes.includes(
+                            item.name === 'Pumping Stations' ? 'PS' : 
+                            item.name === 'Lifting Stations' ? 'LS' : 
+                            item.name === 'Irrigation' ? 'IRR' :
+                            item.name === 'Actuators' ? 'DB' :
+                            item.name === 'Street Lights' ? 'Street Light' :
+                            item.name === 'D-Buildings' ? 'D_Building' :
+                            item.name === 'FP-Landscape' ? 'FP-Landscape' :
+                            'Retail'
+                          )
+                        )}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={100}
+                        paddingAngle={2}
+                        dataKey="value"
+                        nameKey="name"
+                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(1)}%`}
+                      >
+                        {[
+                          { name: 'Pumping Stations', color: '#60A5FA' },
+                          { name: 'Lifting Stations', color: '#F87171' },
+                          { name: 'Irrigation', color: '#34D399' },
+                          { name: 'Actuators', color: '#6B7280' },
+                          { name: 'Street Lights', color: '#FBBF24' },
+                          { name: 'D-Buildings', color: '#A78BFA' },
+                          { name: 'FP-Landscape', color: '#6EE7B7' },
+                          { name: 'Retail', color: '#F472B6' },
+                        ].map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip formatter={(value) => formatCurrency(Number(value))} />
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Anomalies Tab */}
+          {activeTab === 'anomalies' && (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div className={`${cardBg} p-6 rounded-lg border ${borderColor} shadow-sm`}>
+                  <h2 className="text-xl font-medium mb-4">Consumption Irregularities</h2>
+                  <div className="space-y-4">
+                    <div className="p-4 border border-orange-200 bg-orange-50 rounded-lg">
+                      <div className="flex items-center">
+                        <div className="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center text-orange-600 mr-3">
+                          <AlertTriangle size={20} />
+                        </div>
+                        <div>
+                          <p className="text-lg font-bold text-orange-800">Beachwell RS1903 (D_Building)</p>
+                          <p className="text-sm text-orange-700">Significant fluctuation in consumption patterns</p>
+                          <p className="text-xs text-orange-600 mt-1">42241 kWh in Aug-24 vs 46 kWh in May-24</p>
+                        </div>
+                      </div>
                     </div>
-                    <div className="w-full md:w-1/2 mt-2 md:mt-0">
-                      <div className="overflow-y-auto max-h-48 sm:max-h-64">
-                        <table className="min-w-full">
-                          <thead>
-                            <tr>
-                              <th className="text-left text-2xs sm:text-xs font-medium text-gray-500 uppercase tracking-wider py-1 sm:py-2">
-                                Category
-                              </th>
-                              <th className="text-right text-2xs sm:text-xs font-medium text-gray-500 uppercase tracking-wider py-1 sm:py-2">
-                                Consumption
-                              </th>
-                              <th className="text-right text-2xs sm:text-xs font-medium text-gray-500 uppercase tracking-wider py-1 sm:py-2">
-                                %
-                              </th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {consumptionByCategory.map((category, index) => (
-                              <tr key={index} className="border-t">
-                                <td className="py-1 sm:py-2 text-2xs sm:text-sm text-gray-900 flex items-center">
-                                  <div className="w-2 sm:w-3 h-2 sm:h-3 rounded-full mr-1 sm:mr-2" 
-                                       style={{ backgroundColor: COLORS.chartColors[index % COLORS.chartColors.length] }}></div>
-                                  {category.name}
-                                </td>
-                                <td className="py-1 sm:py-2 text-2xs sm:text-sm text-right text-gray-900">
-                                  {category.value.toLocaleString()} kWh
-                                </td>
-                                <td className="py-1 sm:py-2 text-2xs sm:text-sm text-right text-gray-900">
-                                  {category.percentage.toFixed(1)}%
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
+                    
+                    <div className="p-4 border border-red-200 bg-red-50 rounded-lg">
+                      <div className="flex items-center">
+                        <div className="w-10 h-10 rounded-lg bg-red-100 flex items-center justify-center text-red-600 mr-3">
+                          <AlertTriangle size={20} />
+                        </div>
+                        <div>
+                          <p className="text-lg font-bold text-red-800">Lifting Station RS2332 (LS)</p>
+                          <p className="text-sm text-red-700">High consumption spike in Sep-24</p>
+                          <p className="text-xs text-red-600 mt-1">5866 kWh (Sep-24) vs 3684 kWh (Aug-24)</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="p-4 border border-yellow-200 bg-yellow-50 rounded-lg">
+                      <div className="flex items-center">
+                        <div className="w-10 h-10 rounded-lg bg-yellow-100 flex items-center justify-center text-yellow-600 mr-3">
+                          <AlertTriangle size={20} />
+                        </div>
+                        <div>
+                          <p className="text-lg font-bold text-yellow-800">D Building RS3668 (D_Building)</p>
+                          <p className="text-sm text-yellow-700">Unusual consumption spike in May-24</p>
+                          <p className="text-xs text-yellow-600 mt-1">6744 kWh in May-24 vs ~1200 kWh average</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="p-4 border border-purple-200 bg-purple-50 rounded-lg">
+                      <div className="flex items-center">
+                        <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center text-purple-600 mr-3">
+                          <AlertTriangle size={20} />
+                        </div>
+                        <div>
+                          <p className="text-lg font-bold text-purple-800">Central Pa RS4672 (D_Building)</p>
+                          <p className="text-sm text-purple-700">Consistently high consumption</p>
+                          <p className="text-xs text-purple-600 mt-1">Average 20,000+ kWh monthly</p>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
                 
-                {/* Monthly Consumption Trend */}
-                <div className="bg-white p-3 sm:p-4 rounded-lg shadow">
-                  <h3 className="text-sm sm:text-md font-medium mb-2 sm:mb-4" style={{ color: COLORS.primary }}>
-                    Monthly Consumption Trend
-                  </h3>
-                  <div className="h-48 sm:h-64">
+                <div className={`${cardBg} p-6 rounded-lg border ${borderColor} shadow-sm`}>
+                  <h2 className="text-xl font-medium mb-4">Anomaly Detection</h2>
+                  <div className="h-80">
                     <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={monthlyTrends}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis 
-                          dataKey="name"
-                          tick={{ fontSize: window.innerWidth < 640 ? 8 : 12 }}
-                          tickFormatter={(value) => value.split('-')[0]}
-                          interval={window.innerWidth < 640 ? 1 : 0}
-                        />
-                        <YAxis width={35} tick={{ fontSize: window.innerWidth < 640 ? 8 : 12 }} />
-                        <Tooltip formatter={(value: number) => `${value.toLocaleString()} kWh`} />
+                      <LineChart
+                        data={[
+                          { month: 'Apr-24', value: 16908, threshold: 18000 },
+                          { month: 'May-24', value: 46, threshold: 18000 },
+                          { month: 'Jun-24', value: 19332, threshold: 18000 },
+                          { month: 'Jul-24', value: 23170, threshold: 18000 },
+                          { month: 'Aug-24', value: 42241, threshold: 18000 },
+                          { month: 'Sep-24', value: 15223, threshold: 18000 },
+                          { month: 'Oct-24', value: 25370, threshold: 18000 },
+                          { month: 'Nov-24', value: 24383, threshold: 18000 },
+                          { month: 'Dec-24', value: 37236, threshold: 18000 },
+                          { month: 'Jan-24', value: 38168, threshold: 18000 },
+                          { month: 'Feb-24', value: 18422, threshold: 18000 },
+                        ]}
+                        margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                        <XAxis dataKey="month" />
+                        <YAxis />
+                        <Tooltip formatter={(value) => formatNumber(Number(value)) + ' kWh'} />
+                        <Legend />
                         <Line 
                           type="monotone" 
-                          dataKey="total" 
-                          name="Consumption"
-                          stroke={COLORS.primary} 
+                          dataKey="value" 
+                          name="Beachwell RS1903 Consumption" 
+                          stroke="#F97316" 
+                          strokeWidth={2} 
+                          dot={{ r: 3 }} 
+                          activeDot={{ r: 5 }} 
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="threshold" 
+                          name="Expected Threshold" 
+                          stroke="#9333EA" 
+                          strokeDasharray="5 5"
                           strokeWidth={2}
-                          dot={{ r: window.innerWidth < 640 ? 2 : 4, strokeWidth: 2 }}
-                          activeDot={{ r: window.innerWidth < 640 ? 4 : 6, strokeWidth: 2 }}
                         />
                       </LineChart>
                     </ResponsiveContainer>
@@ -743,638 +1193,68 @@ const ElectricityDistribution: React.FC = () => {
                 </div>
               </div>
               
-              {/* Top Consumers */}
-              <div className="bg-white p-3 sm:p-4 rounded-lg shadow mb-4 sm:mb-6">
-                <h3 className="text-sm sm:text-md font-medium mb-2 sm:mb-4" style={{ color: COLORS.primary }}>
-                  Top Consumers
-                </h3>
+              <div className={`${cardBg} p-6 rounded-lg border ${borderColor} mb-6 shadow-sm`}>
+                <h2 className="text-xl font-medium mb-4">Consumption Variance Analysis</h2>
                 <div className="overflow-x-auto">
-                  <table className="min-w-full">
-                    <thead className="text-left text-2xs sm:text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
                       <tr>
-                        <th className="py-1 sm:py-2">#</th>
-                        <th className="py-1 sm:py-2">Facility</th>
-                        <th className="py-1 sm:py-2">Zone</th>
-                        <th className="py-1 sm:py-2">Meter</th>
-                        <th className="py-1 sm:py-2 text-right">Consumption</th>
-                        <th className="py-1 sm:py-2 text-right">% of Total</th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Account</th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Max Value</th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Min Value</th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Variance</th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                       </tr>
                     </thead>
-                    <tbody className="text-2xs sm:text-sm">
-                      {topConsumers.map((consumer, index) => (
-                        <tr key={consumer.id} className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
-                          <td className="py-1 sm:py-2 font-medium text-gray-900">
-                            {index + 1}
-                          </td>
-                          <td className="py-1 sm:py-2 text-gray-900">
-                            {consumer.name}
-                          </td>
-                          <td className="py-1 sm:py-2 text-gray-900">
-                            {consumer.zone}
-                          </td>
-                          <td className="py-1 sm:py-2 text-gray-900">
-                            {consumer.meter}
-                          </td>
-                          <td className="py-1 sm:py-2 text-right text-gray-900">
-                            {consumer.total.toLocaleString()} kWh
-                          </td>
-                          <td className="py-1 sm:py-2 text-right text-gray-900">
-                            <div className="flex items-center justify-end">
-                              <span className="mr-2">{consumer.percentage.toFixed(1)}%</span>
-                              <div className="w-8 sm:w-16 bg-gray-200 rounded-full h-1.5 sm:h-2">
-                                <div
-                                  className="h-1.5 sm:h-2 rounded-full"
-                                  style={{
-                                    width: `${consumer.percentage.toFixed(1)}%`,
-                                    backgroundColor: COLORS.primary,
-                                    maxWidth: '100%'
-                                  }}
-                                ></div>
-                              </div>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      <tr className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">RS1903</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Beachwell</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">D_Building</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">42241 kWh</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">46 kWh</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">91740%</td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                            Critical
+                          </span>
+                        </td>
+                      </tr>
+                      <tr className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">RS2332</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Lifting Station</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">LS</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">5866 kWh</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">1715 kWh</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">242%</td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                            Warning
+                          </span>
+                        </td>
+                      </tr>
+                      <tr className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">RS3668</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">D Building</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">D_Building</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">6744 kWh</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">475 kWh</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">1319%</td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-orange-100 text-orange-800">
+                            High
+                          </span>
+                        </td>
+                      </tr>
                     </tbody>
                   </table>
                 </div>
               </div>
-            </div>
+            </>
           )}
-          
-          {/* Categories Tab */}
-          {activeTab === 'categories' && (
-            <div>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-6 mb-4 sm:mb-6">
-                {/* Category Distribution */}
-                <div className="bg-white p-3 sm:p-4 rounded-lg shadow">
-                  <h3 className="text-sm sm:text-md font-medium mb-2 sm:mb-4" style={{ color: COLORS.primary }}>
-                    Category Distribution
-                  </h3>
-                  <div className="h-48 sm:h-64">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={consumptionByCategory}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis 
-                          dataKey="name" 
-                          tick={{ fontSize: window.innerWidth < 640 ? 8 : 12 }}
-                          interval={0}
-                          angle={-45}
-                          textAnchor="end"
-                          height={50}
-                        />
-                        <YAxis width={35} tick={{ fontSize: window.innerWidth < 640 ? 8 : 12 }} />
-                        <Tooltip formatter={(value: number) => `${value.toLocaleString()} kWh`} />
-                        <Bar dataKey="value" name="Consumption" fill={COLORS.primary}>
-                          {consumptionByCategory.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS.chartColors[index % COLORS.chartColors.length]} />
-                          ))}
-                        </Bar>
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
-                
-                {/* Category Breakdown */}
-                <div className="bg-white p-3 sm:p-4 rounded-lg shadow">
-                  <h3 className="text-sm sm:text-md font-medium mb-2 sm:mb-4" style={{ color: COLORS.primary }}>
-                    Category Breakdown
-                  </h3>
-                  <div className="overflow-y-auto h-48 sm:h-64">
-                    {consumptionByCategory.map((category, index) => (
-                      <div key={index} className="mb-3 sm:mb-4">
-                        <div className="flex justify-between mb-1">
-                          <span className="text-2xs sm:text-sm font-medium" style={{ color: COLORS.primary }}>
-                            {category.name}
-                          </span>
-                          <span className="text-2xs sm:text-sm text-gray-600">
-                            {category.value.toLocaleString()} kWh ({category.percentage.toFixed(1)}%)
-                          </span>
-                        </div>
-                        <div className="w-full bg-gray-200 rounded-full h-1.5 sm:h-2.5">
-                          <div
-                            className="h-1.5 sm:h-2.5 rounded-full"
-                            style={{
-                              width: `${category.percentage}%`,
-                              backgroundColor: COLORS.chartColors[index % COLORS.chartColors.length]
-                            }}
-                          ></div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-              
-              {/* Category Details */}
-              <div className="bg-white p-3 sm:p-4 rounded-lg shadow mb-4 sm:mb-6">
-                <h3 className="text-sm sm:text-md font-medium mb-2 sm:mb-4" style={{ color: COLORS.primary }}>
-                  Consumption by Facility Type
-                </h3>
-                <div>
-                  <ul className="flex flex-wrap border-b overflow-x-auto pb-2 scrollbar-none">
-                    {categories.map((category, index) => (
-                      <li key={index} className="mr-2">
-                        <button
-                          className={`py-2 px-3 sm:px-4 text-xs sm:text-sm font-medium border-b-2 whitespace-nowrap ${
-                            selectedCategories.length === 0 || selectedCategories.includes(category)
-                              ? 'border-current' 
-                              : 'border-transparent'
-                          }`}
-                          style={{ 
-                            color: selectedCategories.length === 0 || selectedCategories.includes(category) 
-                              ? COLORS.primary 
-                              : 'gray' 
-                          }}
-                          onClick={() => toggleCategoryFilter(category)}
-                        >
-                          {category}
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                  
-                  <div className="mt-4 overflow-x-auto">
-                    <table className="min-w-full">
-                      <thead className="text-left text-2xs sm:text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        <tr>
-                          <th className="py-1 sm:py-2">Facility</th>
-                          <th className="py-1 sm:py-2">Zone</th>
-                          <th className="py-1 sm:py-2">Meter ID</th>
-                          <th className="py-1 sm:py-2 text-right">Avg. Monthly</th>
-                          <th className="py-1 sm:py-2 text-right">Total</th>
-                          <th className="py-1 sm:py-2 text-right">Cost (OMR)</th>
-                        </tr>
-                      </thead>
-                      <tbody className="text-2xs sm:text-sm">
-                        {data
-                          .filter(item => 
-                            selectedCategories.length === 0 || 
-                            selectedCategories.includes(getCategoryFromName(item.name))
-                          )
-                          .map((item, index) => {
-                            const total = Object.values(item.consumption).reduce((a, b) => Number(a) + Number(b), 0);
-                            const avg = total / Object.keys(item.consumption).length;
-                            
-                            return (
-                              <tr key={item.id} className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
-                                <td className="py-1 sm:py-2 font-medium text-gray-900">
-                                  {item.name}
-                                </td>
-                                <td className="py-1 sm:py-2 text-gray-900">
-                                  {item.zone}
-                                </td>
-                                <td className="py-1 sm:py-2 text-gray-900">
-                                  {item.meter}
-                                </td>
-                                <td className="py-1 sm:py-2 text-right text-gray-900">
-                                  {Math.round(avg).toLocaleString()} kWh
-                                </td>
-                                <td className="py-1 sm:py-2 text-right text-gray-900">
-                                  {total.toLocaleString()} kWh
-                                </td>
-                                <td className="py-1 sm:py-2 text-right text-gray-900">
-                                  {calculateCost(total)}
-                                </td>
-                              </tr>
-                            );
-                          })}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-          
-          {/* Zones Tab */}
-          {activeTab === 'zones' && (
-            <div>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-6 mb-4 sm:mb-6">
-                {/* Zone Distribution */}
-                <div className="bg-white p-3 sm:p-4 rounded-lg shadow">
-                  <h3 className="text-sm sm:text-md font-medium mb-2 sm:mb-4" style={{ color: COLORS.primary }}>
-                    Zone Distribution
-                  </h3>
-                  <div className="h-48 sm:h-64">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={consumptionByZone}
-                          cx="50%"
-                          cy="50%"
-                          labelLine={false}
-                          outerRadius="70%"
-                          fill="#8884d8"
-                          dataKey="value"
-                          label={({ name, percent }) => {
-                            // On smaller screens, only show percentage
-                            const screenWidth = window.innerWidth;
-                            return screenWidth < 640 ? 
-                              `${(percent * 100).toFixed(0)}%` :
-                              `${name} ${(percent * 100).toFixed(0)}%`;
-                          }}
-                        >
-                          {consumptionByZone.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS.chartColors[index % COLORS.chartColors.length]} />
-                          ))}
-                        </Pie>
-                        <Tooltip formatter={(value: number) => `${value.toLocaleString()} kWh`} />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
-                
-                {/* Zone Comparison */}
-                <div className="bg-white p-3 sm:p-4 rounded-lg shadow">
-                  <h3 className="text-sm sm:text-md font-medium mb-2 sm:mb-4" style={{ color: COLORS.primary }}>
-                    Zone Comparison
-                  </h3>
-                  <div className="h-48 sm:h-64">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={consumptionByZone}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis 
-                          dataKey="name" 
-                          tick={{ fontSize: window.innerWidth < 640 ? 8 : 12 }}
-                        />
-                        <YAxis width={35} tick={{ fontSize: window.innerWidth < 640 ? 8 : 12 }} />
-                        <Tooltip formatter={(value: number) => `${value.toLocaleString()} kWh`} />
-                        <Bar dataKey="value" name="Consumption" fill={COLORS.primary}>
-                          {consumptionByZone.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS.chartColors[index % COLORS.chartColors.length]} />
-                          ))}
-                        </Bar>
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Zone Details */}
-              <div className="bg-white p-3 sm:p-4 rounded-lg shadow mb-4 sm:mb-6">
-                <h3 className="text-sm sm:text-md font-medium mb-2 sm:mb-4" style={{ color: COLORS.primary }}>
-                  Zone Details
-                </h3>
-                <div>
-                  <ul className="flex flex-wrap border-b overflow-x-auto pb-2 scrollbar-none">
-                    {zones.map((zone, index) => (
-                      <li key={index} className="mr-2">
-                        <button
-                          className={`py-2 px-3 sm:px-4 text-xs sm:text-sm font-medium border-b-2 whitespace-nowrap ${
-                            selectedZones.length === 0 || selectedZones.includes(zone)
-                              ? 'border-current' 
-                              : 'border-transparent'
-                          }`}
-                          style={{ 
-                            color: selectedZones.length === 0 || selectedZones.includes(zone) 
-                              ? COLORS.primary 
-                              : 'gray' 
-                          }}
-                          onClick={() => toggleZoneFilter(zone)}
-                        >
-                          {zone}
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mt-4">
-                    {data
-                      .filter(item => 
-                        selectedZones.length === 0 || 
-                        selectedZones.includes(item.zone)
-                      )
-                      .map(item => {
-                        const total = Object.values(item.consumption).reduce((a, b) => Number(a) + Number(b), 0);
-                        const avg = total / Object.keys(item.consumption).length;
-                        
-                        return (
-                          <div key={item.id} className="border rounded-lg p-3 sm:p-4">
-                            <h4 className="font-medium text-xs sm:text-sm mb-2" style={{ color: COLORS.primary }}>
-                              {item.name}
-                            </h4>
-                            <p className="text-2xs sm:text-xs text-gray-500">{item.zone} | {item.meter}</p>
-                            <div className="mt-3 flex justify-between">
-                              <div>
-                                <p className="text-2xs sm:text-xs text-gray-500">Total</p>
-                                <p className="text-xs sm:text-sm font-bold" style={{ color: COLORS.primary }}>
-                                  {total.toLocaleString()} kWh
-                                </p>
-                              </div>
-                              <div>
-                                <p className="text-2xs sm:text-xs text-gray-500">Monthly Avg</p>
-                                <p className="text-xs sm:text-sm font-bold" style={{ color: COLORS.primary }}>
-                                  {Math.round(avg).toLocaleString()} kWh
-                                </p>
-                              </div>
-                              <div>
-                                <p className="text-2xs sm:text-xs text-gray-500">Cost</p>
-                                <p className="text-xs sm:text-sm font-bold" style={{ color: COLORS.primary }}>
-                                  {calculateCost(total)} OMR
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-          
-          {/* Trend Analysis Tab */}
-          {activeTab === 'trends' && (
-            <div>
-              <div className="bg-white p-3 sm:p-4 rounded-lg shadow mb-4 sm:mb-6">
-                <h3 className="text-sm sm:text-md font-medium mb-2 sm:mb-4" style={{ color: COLORS.primary }}>
-                  Consumption Trends (All Stations)
-                </h3>
-                <div className="h-60 sm:h-80">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={monthlyTrends}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis 
-                        dataKey="name"
-                        tick={{ fontSize: window.innerWidth < 640 ? 8 : 12 }}
-                        interval={window.innerWidth < 640 ? 1 : 0}
-                      />
-                      <YAxis width={35} tick={{ fontSize: window.innerWidth < 640 ? 8 : 12 }} />
-                      <Tooltip formatter={(value: number) => `${value.toLocaleString()} kWh`} />
-                      <Legend wrapperStyle={{ fontSize: window.innerWidth < 640 ? 10 : 12 }} />
-                      <Line 
-                        type="monotone" 
-                        dataKey="total" 
-                        name="Total Consumption"
-                        stroke={COLORS.primary} 
-                        strokeWidth={2}
-                        dot={{ r: window.innerWidth < 640 ? 2 : 4, strokeWidth: 2 }}
-                        activeDot={{ r: window.innerWidth < 640 ? 4 : 6, strokeWidth: 2 }}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-              
-              {/* Stacked area chart for categories over time */}
-              <div className="bg-white p-3 sm:p-4 rounded-lg shadow mb-4 sm:mb-6">
-                <h3 className="text-sm sm:text-md font-medium mb-2 sm:mb-4" style={{ color: COLORS.primary }}>
-                  Consumption Composition by Month
-                </h3>
-                <div className="h-60 sm:h-80">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={monthlyTrends}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis 
-                        dataKey="name"
-                        tick={{ fontSize: window.innerWidth < 640 ? 8 : 12 }}
-                        interval={window.innerWidth < 640 ? 1 : 0}
-                      />
-                      <YAxis width={35} tick={{ fontSize: window.innerWidth < 640 ? 8 : 12 }} />
-                      <Tooltip formatter={(value: number) => `${value.toLocaleString()} kWh`} />
-                      <Legend wrapperStyle={{ fontSize: window.innerWidth < 640 ? 10 : 12 }} />
-                      {categories.slice(0, 5).map((category, index) => (
-                        <Area 
-                          key={category}
-                          type="monotone" 
-                          dataKey={category.toLowerCase().replace(/\s+/g, '_')}
-                          name={category}
-                          stackId="1"
-                          stroke={COLORS.chartColors[index % COLORS.chartColors.length]}
-                          fill={COLORS.chartColors[index % COLORS.chartColors.length]}
-                        />
-                      ))}
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-              
-              {/* Seasonal pattern analysis */}
-              <div className="bg-white p-3 sm:p-4 rounded-lg shadow mb-4 sm:mb-6">
-                <h3 className="text-sm sm:text-md font-medium mb-2 sm:mb-4" style={{ color: COLORS.primary }}>
-                  Seasonal Patterns
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-6">
-                  <div>
-                    <h4 className="text-xs sm:text-sm font-medium mb-2" style={{ color: COLORS.secondary }}>
-                      Summer vs Winter Comparison
-                    </h4>
-                    <div className="h-48 sm:h-64">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart 
-                          data={[
-                            { name: 'Summer (Apr-Sep)', value: monthlyTrends.slice(0, 6).reduce((sum, m) => sum + m.total, 0) },
-                            { name: 'Winter (Oct-Feb)', value: monthlyTrends.slice(6).reduce((sum, m) => sum + m.total, 0) }
-                          ]}
-                        >
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis dataKey="name" tick={{ fontSize: window.innerWidth < 640 ? 8 : 12 }} />
-                          <YAxis width={35} tick={{ fontSize: window.innerWidth < 640 ? 8 : 12 }} />
-                          <Tooltip formatter={(value: number) => `${value.toLocaleString()} kWh`} />
-                          <Bar dataKey="value" name="Consumption" fill={COLORS.primary}>
-                            <Cell fill={COLORS.chartColors[0]} />
-                            <Cell fill={COLORS.chartColors[1]} />
-                          </Bar>
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <h4 className="text-xs sm:text-sm font-medium mb-2" style={{ color: COLORS.secondary }}>
-                      Top 5 Stations - Monthly Variation
-                    </h4>
-                    <div className="h-48 sm:h-64">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <LineChart>
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis 
-                            dataKey="name"
-                            type="category"
-                            allowDuplicatedCategory={false}
-                            tick={{ fontSize: window.innerWidth < 640 ? 8 : 10 }}
-                          />
-                          <YAxis width={35} tick={{ fontSize: window.innerWidth < 640 ? 8 : 12 }} />
-                          <Tooltip formatter={(value: number) => `${value.toLocaleString()} kWh`} />
-                          <Legend wrapperStyle={{ fontSize: window.innerWidth < 640 ? 8 : 10 }} />
-                          {topConsumers.slice(0, 5).map((station, index) => {
-                            const stationMonthlyData = timePeriods.map(month => {
-                              const stationData = data.find(item => item.id === station.id);
-                              return {
-                                name: month,
-                                value: stationData?.consumption[month] || 0
-                              };
-                            });
-                            
-                            return (
-                              <Line 
-                                key={station.id}
-                                data={stationMonthlyData}
-                                type="monotone" 
-                                dataKey="value" 
-                                name={station.name}
-                                stroke={COLORS.chartColors[index % COLORS.chartColors.length]}
-                                strokeWidth={2}
-                                dot={{ r: window.innerWidth < 640 ? 1 : 3 }}
-                                activeDot={{ r: window.innerWidth < 640 ? 3 : 5 }}
-                              />
-                            );
-                          })}
-                        </LineChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-          
-          {/* Reports Tab */}
-          {activeTab === 'reports' && (
-            <div>
-              <div className="bg-white p-3 sm:p-4 rounded-lg shadow mb-4 sm:mb-6">
-                <div className="flex flex-col sm:flex-row justify-between gap-2 sm:items-center mb-3 sm:mb-4">
-                  <h3 className="text-sm sm:text-md font-medium" style={{ color: COLORS.primary }}>
-                    Monthly Consumption Report
-                  </h3>
-                  <button className="flex items-center self-end px-2 sm:px-3 py-1 rounded-lg text-xs sm:text-sm text-white"
-                          style={{ backgroundColor: COLORS.primary }}>
-                    <Download size={14} className="mr-1" />
-                    Export PDF
-                  </button>
-                </div>
-                
-                <div className="flex flex-wrap gap-1 sm:gap-2 mb-3 sm:mb-4 overflow-x-auto pb-2 scrollbar-none">
-                  {timePeriods.map((month, index) => (
-                    <button
-                      key={index}
-                      className={`px-2 sm:px-3 py-0.5 sm:py-1 text-2xs sm:text-xs rounded-lg whitespace-nowrap ${
-                        index === timePeriods.length - 1
-                          ? 'text-white'
-                          : 'text-gray-700 bg-gray-200'
-                      }`}
-                      style={{ 
-                        backgroundColor: index === timePeriods.length - 1
-                          ? COLORS.primary
-                          : undefined
-                      }}
-                    >
-                      {month}
-                    </button>
-                  ))}
-                </div>
-                
-                <div className="overflow-x-auto">
-                  <table className="min-w-full">
-                    <thead className="text-left text-2xs sm:text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      <tr>
-                        <th className="py-1 sm:py-2">Station ID</th>
-                        <th className="py-1 sm:py-2">Name</th>
-                        <th className="py-1 sm:py-2">Zone</th>
-                        <th className="py-1 sm:py-2 text-right">Consumption</th>
-                        <th className="py-1 sm:py-2 text-right">vs Prev Month</th>
-                        <th className="py-1 sm:py-2 text-right">Cost (OMR)</th>
-                      </tr>
-                    </thead>
-                    <tbody className="text-2xs sm:text-sm">
-                      {data.map((item, index) => {
-                        const currentMonth = timePeriods[timePeriods.length - 1];
-                        const previousMonth = timePeriods[timePeriods.length - 2];
-                        
-                        const currentValue = Number(item.consumption[currentMonth] || 0);
-                        const previousValue = Number(item.consumption[previousMonth] || 0);
-                        
-                        const percentChange = previousValue === 0
-                          ? 100
-                          : ((currentValue - previousValue) / previousValue) * 100;
-                        
-                        return (
-                          <tr key={item.id} className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
-                            <td className="py-1 sm:py-2 text-gray-900">
-                              {item.meter}
-                            </td>
-                            <td className="py-1 sm:py-2 font-medium text-gray-900">
-                              {item.name}
-                            </td>
-                            <td className="py-1 sm:py-2 text-gray-900">
-                              {item.zone}
-                            </td>
-                            <td className="py-1 sm:py-2 text-right text-gray-900">
-                              {currentValue.toLocaleString()} kWh
-                            </td>
-                            <td className="py-1 sm:py-2 text-right">
-                              <span className={`px-1 sm:px-2 py-0.5 rounded-full text-white text-2xs sm:text-xs ${
-                                percentChange > 0 ? 'bg-red-500' : 'bg-green-500'
-                              }`}>
-                                {percentChange > 0 ? '+' : ''}{percentChange.toFixed(1)}%
-                              </span>
-                            </td>
-                            <td className="py-1 sm:py-2 text-right text-gray-900">
-                              {calculateCost(currentValue)}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-              
-              {/* Cost Summary */}
-              <div className="bg-white p-3 sm:p-4 rounded-lg shadow mb-4 sm:mb-6">
-                <h3 className="text-sm sm:text-md font-medium mb-2 sm:mb-4" style={{ color: COLORS.primary }}>
-                  Cost Summary
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-6">
-                  <div className="border rounded-lg p-3 sm:p-4">
-                    <h4 className="text-xs sm:text-sm font-medium mb-2" style={{ color: COLORS.secondary }}>
-                      Total Cost (Current Month)
-                    </h4>
-                    <p className="text-xl sm:text-2xl font-bold" style={{ color: COLORS.primary }}>
-                      {calculateCost(
-                        data.reduce((sum, item) => {
-                          const currentMonth = timePeriods[timePeriods.length - 1];
-                          return sum + Number(item.consumption[currentMonth] || 0);
-                        }, 0)
-                      )} OMR
-                    </p>
-                  </div>
-                  
-                  <div className="border rounded-lg p-3 sm:p-4">
-                    <h4 className="text-xs sm:text-sm font-medium mb-2" style={{ color: COLORS.secondary }}>
-                      YTD Cost
-                    </h4>
-                    <p className="text-xl sm:text-2xl font-bold" style={{ color: COLORS.primary }}>
-                      {calculateCost(totalConsumption)} OMR
-                    </p>
-                  </div>
-                  
-                  <div className="border rounded-lg p-3 sm:p-4">
-                    <h4 className="text-xs sm:text-sm font-medium mb-2" style={{ color: COLORS.secondary }}>
-                      Average Monthly Cost
-                    </h4>
-                    <p className="text-xl sm:text-2xl font-bold" style={{ color: COLORS.primary }}>
-                      {calculateCost(totalConsumption / timePeriods.length)} OMR
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-        </main>
-        
-        {/* Footer */}
-        <footer className="bg-white p-3 sm:p-4 border-t mt-auto">
-          <div className="container mx-auto flex flex-col sm:flex-row justify-between items-center gap-2 sm:gap-0">
-            <p className="text-xs sm:text-sm text-gray-600 text-center sm:text-left">
-              © 2025 Muscat Bay Electricity Monitoring System
-            </p>
-            <p className="text-xs sm:text-sm text-gray-600 text-center sm:text-right">
-              Last updated: March 13, 2025
-            </p>
-          </div>
-        </footer>
+        </div>
       </div>
     </Layout>
   );
