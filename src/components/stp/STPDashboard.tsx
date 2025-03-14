@@ -32,7 +32,15 @@ const STPDashboard = () => {
   
   // Daily data for each month
   // This is sample data for March - based on the CSV info, we have 12 days of data
-  const dailyData = {
+  const dailyData: Record<string, Array<{
+    day: string;
+    treatedWater: number;
+    irrigationOutput: number;
+    inletSewage: number;
+    tankers: number;
+    tankerVolume: number;
+    directInlineSewage: number;
+  }>> = {
     'Mar-25': [
       { day: '01/03', treatedWater: 583, irrigationOutput: 476, inletSewage: 487, tankers: 0, tankerVolume: 0, directInlineSewage: 487 },
       { day: '02/03', treatedWater: 592, irrigationOutput: 514, inletSewage: 493, tankers: 1, tankerVolume: 20, directInlineSewage: 473 },
@@ -85,7 +93,7 @@ const STPDashboard = () => {
   };
   
   // Function to generate realistic daily data based on monthly totals
-  function generateDailyDataForMonth(totalTreated, totalIrrigation, totalInlet, days) {
+  function generateDailyDataForMonth(totalTreated: number, totalIrrigation: number, totalInlet: number, days: number) {
     const result = [];
     let accumulatedTreated = 0;
     let accumulatedIrrigation = 0;
@@ -101,7 +109,7 @@ const STPDashboard = () => {
       let inletSewage = Math.round(totalInlet / days * (0.9 + Math.random() * 0.2));
       const tankers = Math.round(Math.random() * 10);
       const tankerVolume = tankers * 20;
-      const directInlineSewage = inletSewage - tankerVolume;
+      const directInlineSewage = Math.max(0, inletSewage - tankerVolume);
       
       // Adjust the last day to ensure we match the monthly total
       if (i === days) {
@@ -130,8 +138,8 @@ const STPDashboard = () => {
   }
   
   // Helper function to get month number from month-year string
-  function getMonthNumber(monthYear) {
-    const months = {
+  function getMonthNumber(monthYear: string): string {
+    const months: Record<string, string> = {
       'Jan': '01', 'Feb': '02', 'Mar': '03', 'Apr': '04', 'May': '05', 'Jun': '06',
       'Jul': '07', 'Aug': '08', 'Sep': '09', 'Oct': '10', 'Nov': '11', 'Dec': '12'
     };
@@ -141,12 +149,12 @@ const STPDashboard = () => {
   
   // Water quality data based on actual analysis
   const waterQualityData = {
-    rawSewagePh: { avg: 6.78, target: '6.5-8.0', status: 'optimal' },
-    mbrProductPh: { avg: 7.18, target: '6.5-8.0', status: 'optimal' },
-    chlorine: { avg: 0.60, target: '125', status: 'critical' },
-    mlssStream1: { avg: 6.30, target: '3000-4000', status: 'critical' },
-    mlssStream2: { avg: 24.58, target: '3000-4000', status: 'critical' },
-    aerationDo: { avg: 0.00, target: '2-3', status: 'critical' }
+    rawSewagePh: { avg: 6.78, target: '6.5-8.0', status: 'optimal' as const },
+    mbrProductPh: { avg: 7.18, target: '6.5-8.0', status: 'optimal' as const },
+    chlorine: { avg: 0.60, target: '125', status: 'critical' as const },
+    mlssStream1: { avg: 6.30, target: '3000-4000', status: 'critical' as const },
+    mlssStream2: { avg: 24.58, target: '3000-4000', status: 'critical' as const },
+    aerationDo: { avg: 0.00, target: '2-3', status: 'critical' as const }
   };
   
   // Overall plant performance
@@ -200,7 +208,7 @@ const STPDashboard = () => {
   };
   
   // Handle month selection for daily view
-  const handleMonthSelect = (month) => {
+  const handleMonthSelect = (month: string) => {
     setSelectedMonth(month);
     setShowDailyView(true);
   };
@@ -212,22 +220,22 @@ const STPDashboard = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiCard 
           title="Daily Treated Water" 
-          value={`${plantPerformance.avgTreatedWater} m³`}
-          subtext={`${plantPerformance.capacityUtilization}% of capacity`}
+          value={`${plantPerformance.avgTreatedWater.toFixed(2)} m³`}
+          subtext={`${plantPerformance.capacityUtilization.toFixed(2)}% of capacity`}
           icon={<WaterDropIcon />}
           color={COLORS.primary}
         />
         <KpiCard 
           title="Treatment Efficiency" 
-          value={`${plantPerformance.treatmentEfficiency}%`}
+          value={`${plantPerformance.treatmentEfficiency.toFixed(2)}%`}
           subtext="Exceeds inlet volume"
           icon={<EfficiencyIcon />}
           color={COLORS.success}
         />
         <KpiCard 
           title="Irrigation Output" 
-          value={`${plantPerformance.avgIrrigationOutput} m³`}
-          subtext={`${plantPerformance.irrigationEfficiency}% of treated water`}
+          value={`${plantPerformance.avgIrrigationOutput.toFixed(2)} m³`}
+          subtext={`${plantPerformance.irrigationEfficiency.toFixed(2)}% of treated water`}
           icon={<IrrigationIcon />}
           color={COLORS.secondary}
         />
@@ -311,7 +319,7 @@ const STPDashboard = () => {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="day" />
                 <YAxis />
-                <Tooltip formatter={(value) => `${value.toLocaleString()} m³`} />
+                <Tooltip formatter={(value) => `${Number(value).toLocaleString()} m³`} />
                 <Legend />
                 <ReferenceLine y={750} stroke="red" strokeDasharray="3 3" label="Daily Capacity" />
                 <Line type="monotone" dataKey="treatedWater" name="Treated Water (m³)" stroke={COLORS.primary} strokeWidth={2} />
@@ -329,7 +337,7 @@ const STPDashboard = () => {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="month" />
                 <YAxis />
-                <Tooltip formatter={(value) => `${value.toLocaleString()} m³`} />
+                <Tooltip formatter={(value) => `${Number(value).toLocaleString()} m³`} />
                 <Legend />
                 <ReferenceLine y={750 * 30} stroke="red" strokeDasharray="3 3" label="Monthly Capacity" />
                 <Bar dataKey="treatedWater" name="Treated Water (m³)" fill={COLORS.primary} onClick={(data) => handleMonthSelect(data.month)} cursor="pointer" />
@@ -425,7 +433,7 @@ const STPDashboard = () => {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="month" />
                 <YAxis domain={[50, 120]} />
-                <Tooltip formatter={(value) => `${value.toFixed(1)}%`} />
+                <Tooltip formatter={(value) => typeof value === 'number' ? `${value.toFixed(1)}%` : value} />
                 <Legend />
                 <ReferenceLine y={100} stroke="#888" strokeDasharray="3 3" />
                 <Line type="monotone" dataKey="treatmentEfficiency" name="Treatment Efficiency" stroke={COLORS.primary} strokeWidth={2} dot={{ r: 4 }} />
@@ -495,7 +503,7 @@ const STPDashboard = () => {
                     <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip formatter={(value) => `${value.toFixed(2)} m³`} />
+                <Tooltip formatter={(value) => typeof value === 'number' ? `${value.toFixed(2)} m³` : value} />
               </PieChart>
             </ResponsiveContainer>
           </div>
