@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Zap } from 'lucide-react';
+import { Zap, Droplets } from 'lucide-react';
 import SidebarLink from './SidebarLink';
 import SidebarSection from './SidebarSection';
 
@@ -21,6 +21,14 @@ const UtilitiesSection: React.FC<UtilitiesSectionProps> = ({
         to="/electricity-distribution" 
         icon={Zap} 
         label="Electricity Distribution" 
+        collapsed={collapsed} 
+        external={false}
+        isMobile={isMobile}
+      />
+      <SidebarLink 
+        to="/water-system" 
+        icon={Droplets} 
+        label="Water System" 
         collapsed={collapsed} 
         external={false}
         isMobile={isMobile}
