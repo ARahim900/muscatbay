@@ -20,7 +20,6 @@ import DateFilter from "@/components/stp/DateFilter";
 import { supabase } from "@/integrations/supabase/client";
 import { format, parseISO, startOfMonth, endOfMonth, startOfDay, endOfDay, subMonths, subDays } from 'date-fns';
 
-// Define the STP daily data type based on the Supabase table
 interface STPDailyRecord {
   id: string;
   date: string;
@@ -39,7 +38,6 @@ interface STPDailyRecord {
   tp?: number;
 }
 
-// Define monthly aggregate data
 interface STPMonthlyAggregate {
   month: string;
   tankerTrips: number;
@@ -57,7 +55,6 @@ const STPBioreactorMBR = () => {
   const [searchParams] = useSearchParams();
   const initialTab = searchParams.get('tab') || 'dashboard';
   
-  // State for tracking UI
   const [selectedTab, setSelectedTab] = useState(initialTab);
   const [selectedTimeRange, setSelectedTimeRange] = useState('ALL');
   const [selectedSection, setSelectedSection] = useState('capacity');
@@ -67,7 +64,6 @@ const STPBioreactorMBR = () => {
   const [isClient, setIsClient] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   
-  // State for STP data
   const [dailyData, setDailyData] = useState<STPDailyRecord[]>([]);
   const [filteredDailyData, setFilteredDailyData] = useState<STPDailyRecord[]>([]);
   
@@ -77,7 +73,6 @@ const STPBioreactorMBR = () => {
     fetchSTPData();
   }, []);
   
-  // Fetch data from Supabase
   const fetchSTPData = async () => {
     setIsLoading(true);
     try {
@@ -103,7 +98,6 @@ const STPBioreactorMBR = () => {
     }
   };
   
-  // Filter data based on selected time range, year, and month
   useEffect(() => {
     if (dailyData.length === 0) return;
     
@@ -113,7 +107,6 @@ const STPBioreactorMBR = () => {
       let startDate: Date | null = null;
       let endDate: Date | null = null;
       
-      // Apply time range filter
       if (selectedTimeRange !== 'ALL') {
         switch(selectedTimeRange) {
           case '1D':
@@ -142,7 +135,6 @@ const STPBioreactorMBR = () => {
         }
       }
       
-      // Apply year filter
       if (selectedYear !== 'all') {
         filtered = filtered.filter(item => {
           const itemDate = parseISO(item.date);
@@ -150,7 +142,6 @@ const STPBioreactorMBR = () => {
         });
       }
       
-      // Apply month filter
       if (selectedMonth !== 'all') {
         filtered = filtered.filter(item => {
           const itemDate = parseISO(item.date);
@@ -164,13 +155,11 @@ const STPBioreactorMBR = () => {
     filterData();
   }, [dailyData, selectedTimeRange, selectedYear, selectedMonth]);
   
-  // Calculate monthly aggregated data
   const monthlyData = useMemo((): STPMonthlyAggregate[] => {
     if (filteredDailyData.length === 0) return [];
     
     const monthGroups: Record<string, STPDailyRecord[]> = {};
     
-    // Group data by month
     filteredDailyData.forEach(record => {
       const date = parseISO(record.date);
       const monthKey = format(date, 'yyyy-MM');
@@ -182,7 +171,6 @@ const STPBioreactorMBR = () => {
       monthGroups[monthKey].push(record);
     });
     
-    // Calculate monthly aggregates
     return Object.entries(monthGroups).map(([month, records]) => {
       const tankerTrips = records.reduce((sum, record) => sum + (record.tanker_trips || 0), 0);
       const tankerVolume = records.reduce((sum, record) => sum + (record.expected_volume_tankers || 0), 0);
@@ -191,7 +179,6 @@ const STPBioreactorMBR = () => {
       const waterProcessed = records.reduce((sum, record) => sum + (record.total_water_processed || 0), 0);
       const tseIrrigation = records.reduce((sum, record) => sum + (record.tse_to_irrigation || 0), 0);
       
-      // Calculate plant capacity (750 m³/day)
       const capacity = 750 * records.length;
       const utilizationPercentage = capacity > 0 ? (totalInfluent / capacity) * 100 : 0;
       const processingEfficiency = totalInfluent > 0 ? (tseIrrigation / totalInfluent) * 100 : 0;
@@ -211,7 +198,6 @@ const STPBioreactorMBR = () => {
     });
   }, [filteredDailyData]);
 
-  // Calculate total metrics across all filtered data
   const totalMetrics = useMemo(() => {
     if (filteredDailyData.length === 0) {
       return {
@@ -233,7 +219,6 @@ const STPBioreactorMBR = () => {
     const totalDirectSewage = filteredDailyData.reduce((sum, record) => sum + (record.direct_sewage_mb || 0), 0);
     const totalTankerTrips = filteredDailyData.reduce((sum, record) => sum + (record.tanker_trips || 0), 0);
     
-    // Calculate total capacity based on number of days
     const totalCapacity = 750 * filteredDailyData.length;
     
     const avgProcessingEfficiency = totalInfluent > 0 ? ((totalTSE / totalInfluent) * 100).toFixed(1) : "0";
@@ -251,13 +236,11 @@ const STPBioreactorMBR = () => {
     };
   }, [filteredDailyData]);
 
-  // Calculate recent metrics (last 7 days or all available data if less)
   const recentMetrics = useMemo(() => {
     if (filteredDailyData.length === 0) {
       return { avgDailyInfluent: 0, avgCapacityUsage: "0", processingEfficiency: "0" };
     }
     
-    // Use the most recent 7 days (or fewer if not available)
     const recentData = filteredDailyData.slice(-7);
     
     const sumInfluent = recentData.reduce((sum, day) => sum + (day.total_influent || 0), 0);
@@ -275,7 +258,6 @@ const STPBioreactorMBR = () => {
     };
   }, [filteredDailyData]);
 
-  // Influent source distribution data
   const influentSourceData = useMemo(() => [
     { name: 'Tanker Delivery', value: totalMetrics.totalTankerVolume },
     { name: 'Direct Sewage', value: totalMetrics.totalDirectSewage }
@@ -283,7 +265,6 @@ const STPBioreactorMBR = () => {
   
   const COLORS = ['#3b82f6', '#10b981'];
 
-  // Operating parameters data (using latest values from data if available)
   const currentParameterData: OperatingParameter[] = useMemo(() => {
     const latestRecord = filteredDailyData.length > 0 ? filteredDailyData[filteredDailyData.length - 1] : null;
     
@@ -297,21 +278,21 @@ const STPBioreactorMBR = () => {
       },
       { 
         name: 'DO', 
-        value: 2.4, // Default value as it's not in the data
+        value: 2.4, 
         min: 2.0, 
         max: 3.0, 
         status: 'normal' 
       },
       { 
         name: 'MLSS', 
-        value: 8400, // Default value as it's not in the data
+        value: 8400, 
         min: 8000, 
         max: 8600, 
         status: 'normal' 
       },
       { 
         name: 'Cl₂', 
-        value: 0.6, // Default value as it's not in the data
+        value: 0.6, 
         min: 0.5, 
         max: 0.7, 
         status: 'normal' 
@@ -319,7 +300,6 @@ const STPBioreactorMBR = () => {
     ];
   }, [filteredDailyData]);
 
-  // Plant capacity gauge data
   const capacityGaugeData: ChartDataPoint[] = useMemo(() => [
     {
       name: 'Current',
@@ -329,7 +309,6 @@ const STPBioreactorMBR = () => {
     }
   ], [recentMetrics]);
 
-  // Reset filters
   const resetFilters = () => {
     setSelectedMonth('all');
     setSelectedYear('all');
@@ -337,7 +316,6 @@ const STPBioreactorMBR = () => {
     toast.success('Filters reset to show all data');
   };
 
-  // Export data to CSV
   const exportToCSV = () => {
     try {
       const exportData = filteredDailyData.map(item => ({
@@ -372,7 +350,6 @@ const STPBioreactorMBR = () => {
     }
   };
 
-  // Get period description for the current filtered data
   const getPeriodDescription = () => {
     if (filteredDailyData.length === 0) return "No data";
     
@@ -389,7 +366,6 @@ const STPBioreactorMBR = () => {
     }
   };
 
-  // Main dashboard content
   const DashboardTabContent = () => {
     if (isLoading) {
       return (
@@ -432,7 +408,6 @@ const STPBioreactorMBR = () => {
           />
         </div>
         
-        {/* Time Range Selector */}
         <div className="flex space-x-1">
           <Button 
             variant={selectedTimeRange === '1D' ? 'default' : 'outline'} 
@@ -471,7 +446,6 @@ const STPBioreactorMBR = () => {
           </Button>
         </div>
 
-        {/* Key Stats Row */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <Card className="bg-white shadow-sm hover:shadow transition-all">
             <CardHeader className="pb-2">
@@ -599,9 +573,7 @@ const STPBioreactorMBR = () => {
           </Card>
         </div>
 
-        {/* Charts & Tables Section */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Monthly Flow Chart */}
           <Card className="bg-white shadow-sm hover:shadow transition-all lg:col-span-2">
             <CardHeader className="pb-0">
               <div className="flex justify-between items-center">
@@ -722,7 +694,6 @@ const STPBioreactorMBR = () => {
             </CardContent>
           </Card>
 
-          {/* Plant Capacity & Influent Source */}
           <Card className="bg-white shadow-sm hover:shadow transition-all">
             <CardHeader>
               <CardTitle className="text-base font-medium text-foreground">Plant Capacity</CardTitle>
@@ -831,6 +802,9 @@ const STPBioreactorMBR = () => {
             
             <TabsContent value="reports">
               <STPDailyDetails 
+                dailyData={filteredDailyData} 
+                isLoading={isLoading}
+                onExportData={exportToCSV}
                 selectedMonth={selectedMonth}
                 showHeader={true}
               />
@@ -937,4 +911,3 @@ const STPBioreactorMBR = () => {
 };
 
 export default STPBioreactorMBR;
-

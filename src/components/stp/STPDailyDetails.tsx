@@ -31,20 +31,32 @@ import DateFilter from './DateFilter';
 interface STPDailyDetailsProps {
   selectedMonth?: string;
   showHeader?: boolean;
+  dailyData?: STPDailyRecord[];
+  isLoading?: boolean;
+  onExportData?: () => void;
 }
 
 const STPDailyDetails: React.FC<STPDailyDetailsProps> = ({ 
   selectedMonth = 'all',
-  showHeader = true
+  showHeader = true,
+  dailyData: externalData,
+  isLoading: externalLoading,
+  onExportData
 }) => {
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(externalLoading || false);
   const [showSpotlight, setShowSpotlight] = useState(false);
-  const [dailyData, setDailyData] = useState<STPDailyRecord[]>([]);
+  const [dailyData, setDailyData] = useState<STPDailyRecord[]>(externalData || []);
   const [selectedYear, setSelectedYear] = useState<string>('all');
   const [currentSelectedMonth, setCurrentSelectedMonth] = useState<string>(selectedMonth);
   const [timeRange, setTimeRange] = useState<string>('ALL');
   
   useEffect(() => {
+    // If external data is provided, use it
+    if (externalData) {
+      setDailyData(externalData);
+      return;
+    }
+
     const fetchData = async () => {
       setLoading(true);
       try {
@@ -73,7 +85,14 @@ const STPDailyDetails: React.FC<STPDailyDetailsProps> = ({
       
       return () => clearTimeout(timer);
     }
-  }, [selectedYear, currentSelectedMonth, timeRange]);
+  }, [selectedYear, currentSelectedMonth, timeRange, externalData]);
+
+  // Update loading state when external loading changes
+  useEffect(() => {
+    if (externalLoading !== undefined) {
+      setLoading(externalLoading);
+    }
+  }, [externalLoading]);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -91,6 +110,12 @@ const STPDailyDetails: React.FC<STPDailyDetailsProps> = ({
   };
 
   const exportData = () => {
+    // If onExportData is provided, use it
+    if (onExportData) {
+      onExportData();
+      return;
+    }
+
     try {
       const csvContent = "data:text/csv;charset=utf-8," + 
         "Date,Tanker Trips,Expected Volume (m³),Direct Sewage (m³),Total Influent (m³),Total Water Processed (m³),TSE to Irrigation (m³)\n" +
