@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import Layout from "@/components/layout/Layout";
 import { 
@@ -832,9 +831,8 @@ const STPBioreactorMBR = () => {
             
             <TabsContent value="reports">
               <STPDailyDetails 
-                dailyData={filteredDailyData} 
-                isLoading={isLoading}
-                onExportData={exportToCSV}
+                selectedMonth={selectedMonth}
+                showHeader={true}
               />
             </TabsContent>
             
@@ -939,3 +937,4 @@ const STPBioreactorMBR = () => {
 };
 
 export default STPBioreactorMBR;
+
