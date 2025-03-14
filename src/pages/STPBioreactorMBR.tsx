@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import Layout from "@/components/layout/Layout";
 import { 
@@ -12,18 +11,47 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { OperatingParameter, ChartDataPoint } from "@/types/stp";
-import { CalendarDays, ChevronDown, Download, FileSpreadsheet, Info, Users } from "lucide-react";
+import { CalendarDays, ChevronDown, Download, FileSpreadsheet, Info, Users, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSearchParams } from "react-router-dom";
 import { STPDailyDetails } from "@/components/stp/STPDailyDetails"; 
 import DateFilter from "@/components/stp/DateFilter";
-import { 
-  STPDailyRecord, 
-  calculateMonthlyAggregates, 
-  filterDataByYearMonth, 
-  processData 
-} from "@/utils/stpDailyData";
+import { supabase } from "@/integrations/supabase/client";
+import { format, parseISO, startOfMonth, endOfMonth, startOfDay, endOfDay, subMonths, subDays } from 'date-fns';
+
+// Define the STP daily data type based on the Supabase table
+interface STPDailyRecord {
+  id: string;
+  date: string;
+  tanker_trips: number;
+  expected_volume_tankers: number;
+  direct_sewage_mb: number;
+  total_influent: number;
+  total_water_processed: number;
+  tse_to_irrigation: number;
+  ph: number;
+  bod?: number;
+  cod?: number;
+  tss?: number;
+  nh4_n?: number;
+  tn?: number;
+  tp?: number;
+}
+
+// Define monthly aggregate data
+interface STPMonthlyAggregate {
+  month: string;
+  tankerTrips: number;
+  tankerVolume: number;
+  directSewage: number;
+  totalInfluent: number;
+  waterProcessed: number;
+  tseIrrigation: number;
+  capacity: number;
+  utilizationPercentage: number;
+  processingEfficiency: number;
+}
 
 const STPBioreactorMBR = () => {
   const [searchParams] = useSearchParams();
@@ -35,48 +63,180 @@ const STPBioreactorMBR = () => {
   const [selectedSection, setSelectedSection] = useState('capacity');
   const [selectedMonth, setSelectedMonth] = useState('all');
   const [selectedYear, setSelectedYear] = useState('all');
-  const [selectedDateRange, setSelectedDateRange] = useState<{ start: Date | null; end: Date | null }>({ start: null, end: null });
-  const [currentDate] = useState('March 14, 2025');
+  const [currentDate] = useState(format(new Date(), 'MMMM dd, yyyy'));
   const [isClient, setIsClient] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // State for STP data
+  const [dailyData, setDailyData] = useState<STPDailyRecord[]>([]);
+  const [filteredDailyData, setFilteredDailyData] = useState<STPDailyRecord[]>([]);
   
   useEffect(() => {
     setIsClient(true);
     document.title = 'MBR Bioreactor | Muscat Bay Asset Manager';
+    fetchSTPData();
   }, []);
   
-  // Handle data filtering
-  const [filteredDailyData, setFilteredDailyData] = useState<STPDailyRecord[]>([]);
+  // Fetch data from Supabase
+  const fetchSTPData = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('stp_daily_data')
+        .select('*')
+        .order('date', { ascending: true });
+      
+      if (error) {
+        throw error;
+      }
+      
+      if (data) {
+        setDailyData(data);
+        setFilteredDailyData(data);
+        toast.success('STP data loaded successfully');
+      }
+    } catch (error) {
+      console.error('Error fetching STP data:', error);
+      toast.error('Failed to load STP data');
+    } finally {
+      setIsLoading(false);
+    }
+  };
   
+  // Filter data based on selected time range, year, and month
   useEffect(() => {
-    const data = processData([], selectedTimeRange, selectedYear, selectedMonth);
-    setFilteredDailyData(data);
-  }, [selectedYear, selectedMonth, selectedTimeRange]);
+    if (dailyData.length === 0) return;
+    
+    const filterData = () => {
+      let filtered = [...dailyData];
+      const now = new Date();
+      let startDate: Date | null = null;
+      let endDate: Date | null = null;
+      
+      // Apply time range filter
+      if (selectedTimeRange !== 'ALL') {
+        switch(selectedTimeRange) {
+          case '1D':
+            startDate = startOfDay(now);
+            endDate = endOfDay(now);
+            break;
+          case '7D':
+            startDate = startOfDay(subDays(now, 7));
+            endDate = endOfDay(now);
+            break;
+          case '1M':
+            startDate = startOfDay(subMonths(now, 1));
+            endDate = endOfDay(now);
+            break;
+          case '3M':
+            startDate = startOfDay(subMonths(now, 3));
+            endDate = endOfDay(now);
+            break;
+        }
+        
+        if (startDate && endDate) {
+          filtered = filtered.filter(item => {
+            const itemDate = parseISO(item.date);
+            return itemDate >= startDate! && itemDate <= endDate!;
+          });
+        }
+      }
+      
+      // Apply year filter
+      if (selectedYear !== 'all') {
+        filtered = filtered.filter(item => {
+          const itemDate = parseISO(item.date);
+          return itemDate.getFullYear().toString() === selectedYear;
+        });
+      }
+      
+      // Apply month filter
+      if (selectedMonth !== 'all') {
+        filtered = filtered.filter(item => {
+          const itemDate = parseISO(item.date);
+          return (itemDate.getMonth() + 1).toString().padStart(2, '0') === selectedMonth;
+        });
+      }
+      
+      setFilteredDailyData(filtered);
+    };
+    
+    filterData();
+  }, [dailyData, selectedTimeRange, selectedYear, selectedMonth]);
   
   // Calculate monthly aggregated data
-  const monthlyData = useMemo(() => {
-    return calculateMonthlyAggregates(filteredDailyData);
-  }, [filteredDailyData]);
-
-  // Calculate total metrics across all months
-  const calculateTotalMetrics = () => {
-    let totalInfluent = 0;
-    let totalProcessed = 0;
-    let totalTSE = 0;
-    let totalTankerVolume = 0;
-    let totalDirectSewage = 0;
-    let totalTankerTrips = 0;
+  const monthlyData = useMemo((): STPMonthlyAggregate[] => {
+    if (filteredDailyData.length === 0) return [];
     
-    monthlyData.forEach(month => {
-      totalInfluent += month.totalInfluent;
-      totalProcessed += month.waterProcessed;
-      totalTSE += month.tseIrrigation;
-      totalTankerVolume += month.tankerVolume;
-      totalDirectSewage += month.directSewage;
-      totalTankerTrips += month.tankerTrips;
+    const monthGroups: Record<string, STPDailyRecord[]> = {};
+    
+    // Group data by month
+    filteredDailyData.forEach(record => {
+      const date = parseISO(record.date);
+      const monthKey = format(date, 'yyyy-MM');
+      
+      if (!monthGroups[monthKey]) {
+        monthGroups[monthKey] = [];
+      }
+      
+      monthGroups[monthKey].push(record);
     });
     
+    // Calculate monthly aggregates
+    return Object.entries(monthGroups).map(([month, records]) => {
+      const tankerTrips = records.reduce((sum, record) => sum + (record.tanker_trips || 0), 0);
+      const tankerVolume = records.reduce((sum, record) => sum + (record.expected_volume_tankers || 0), 0);
+      const directSewage = records.reduce((sum, record) => sum + (record.direct_sewage_mb || 0), 0);
+      const totalInfluent = records.reduce((sum, record) => sum + (record.total_influent || 0), 0);
+      const waterProcessed = records.reduce((sum, record) => sum + (record.total_water_processed || 0), 0);
+      const tseIrrigation = records.reduce((sum, record) => sum + (record.tse_to_irrigation || 0), 0);
+      
+      // Calculate plant capacity (750 m³/day)
+      const capacity = 750 * records.length;
+      const utilizationPercentage = capacity > 0 ? (totalInfluent / capacity) * 100 : 0;
+      const processingEfficiency = totalInfluent > 0 ? (tseIrrigation / totalInfluent) * 100 : 0;
+      
+      return {
+        month: format(parseISO(`${month}-01`), 'MMM yyyy'),
+        tankerTrips,
+        tankerVolume,
+        directSewage,
+        totalInfluent,
+        waterProcessed,
+        tseIrrigation,
+        capacity,
+        utilizationPercentage,
+        processingEfficiency
+      };
+    });
+  }, [filteredDailyData]);
+
+  // Calculate total metrics across all filtered data
+  const totalMetrics = useMemo(() => {
+    if (filteredDailyData.length === 0) {
+      return {
+        totalInfluent: 0,
+        totalProcessed: 0,
+        totalTSE: 0,
+        avgProcessingEfficiency: "0",
+        overallUtilization: "0",
+        totalTankerVolume: 0,
+        totalDirectSewage: 0,
+        totalTankerTrips: 0
+      };
+    }
+    
+    const totalInfluent = filteredDailyData.reduce((sum, record) => sum + (record.total_influent || 0), 0);
+    const totalProcessed = filteredDailyData.reduce((sum, record) => sum + (record.total_water_processed || 0), 0);
+    const totalTSE = filteredDailyData.reduce((sum, record) => sum + (record.tse_to_irrigation || 0), 0);
+    const totalTankerVolume = filteredDailyData.reduce((sum, record) => sum + (record.expected_volume_tankers || 0), 0);
+    const totalDirectSewage = filteredDailyData.reduce((sum, record) => sum + (record.direct_sewage_mb || 0), 0);
+    const totalTankerTrips = filteredDailyData.reduce((sum, record) => sum + (record.tanker_trips || 0), 0);
+    
+    // Calculate total capacity based on number of days
+    const totalCapacity = 750 * filteredDailyData.length;
+    
     const avgProcessingEfficiency = totalInfluent > 0 ? ((totalTSE / totalInfluent) * 100).toFixed(1) : "0";
-    const totalCapacity = monthlyData.reduce((sum, month) => sum + month.capacity, 0);
     const overallUtilization = totalCapacity > 0 ? ((totalInfluent / totalCapacity) * 100).toFixed(1) : "0";
     
     return {
@@ -89,26 +249,20 @@ const STPBioreactorMBR = () => {
       totalDirectSewage,
       totalTankerTrips
     };
-  };
-  
-  const totalMetrics = useMemo(() => calculateTotalMetrics(), [monthlyData]);
+  }, [filteredDailyData]);
 
-  // Calculate recent metrics
-  const calculateRecentMetrics = () => {
-    if (filteredDailyData.length === 0) return { avgDailyInfluent: 0, avgCapacityUsage: "0", processingEfficiency: "0" };
-    
-    let sumInfluent = 0;
-    let sumProcessed = 0;
-    let sumTSE = 0;
+  // Calculate recent metrics (last 7 days or all available data if less)
+  const recentMetrics = useMemo(() => {
+    if (filteredDailyData.length === 0) {
+      return { avgDailyInfluent: 0, avgCapacityUsage: "0", processingEfficiency: "0" };
+    }
     
     // Use the most recent 7 days (or fewer if not available)
     const recentData = filteredDailyData.slice(-7);
     
-    recentData.forEach(day => {
-      sumInfluent += day.totalInfluent;
-      sumProcessed += day.totalWaterProcessed;
-      sumTSE += day.tseToIrrigation;
-    });
+    const sumInfluent = recentData.reduce((sum, day) => sum + (day.total_influent || 0), 0);
+    const sumProcessed = recentData.reduce((sum, day) => sum + (day.total_water_processed || 0), 0);
+    const sumTSE = recentData.reduce((sum, day) => sum + (day.tse_to_irrigation || 0), 0);
     
     const avgDailyInfluent = sumInfluent / recentData.length;
     const avgCapacityUsage = (avgDailyInfluent / 750 * 100).toFixed(1);
@@ -119,9 +273,7 @@ const STPBioreactorMBR = () => {
       avgCapacityUsage,
       processingEfficiency
     };
-  };
-  
-  const recentMetrics = useMemo(() => calculateRecentMetrics(), [filteredDailyData]);
+  }, [filteredDailyData]);
 
   // Influent source distribution data
   const influentSourceData = useMemo(() => [
@@ -131,92 +283,84 @@ const STPBioreactorMBR = () => {
   
   const COLORS = ['#3b82f6', '#10b981'];
 
-  // Operating parameters data
-  const currentParameterData: OperatingParameter[] = [
-    { name: 'pH', value: 7.2, min: 6.5, max: 8.0, status: 'normal' },
-    { name: 'DO', value: 2.4, min: 2.0, max: 3.0, status: 'normal' },
-    { name: 'MLSS', value: 8400, min: 8000, max: 8600, status: 'normal' },
-    { name: 'Cl₂', value: 0.6, min: 0.5, max: 0.7, status: 'normal' }
-  ];
+  // Operating parameters data (using latest values from data if available)
+  const currentParameterData: OperatingParameter[] = useMemo(() => {
+    const latestRecord = filteredDailyData.length > 0 ? filteredDailyData[filteredDailyData.length - 1] : null;
+    
+    return [
+      { 
+        name: 'pH', 
+        value: latestRecord?.ph || 7.2, 
+        min: 6.5, 
+        max: 8.0, 
+        status: 'normal' 
+      },
+      { 
+        name: 'DO', 
+        value: 2.4, // Default value as it's not in the data
+        min: 2.0, 
+        max: 3.0, 
+        status: 'normal' 
+      },
+      { 
+        name: 'MLSS', 
+        value: 8400, // Default value as it's not in the data
+        min: 8000, 
+        max: 8600, 
+        status: 'normal' 
+      },
+      { 
+        name: 'Cl₂', 
+        value: 0.6, // Default value as it's not in the data
+        min: 0.5, 
+        max: 0.7, 
+        status: 'normal' 
+      }
+    ];
+  }, [filteredDailyData]);
 
   // Plant capacity gauge data
-  const capacityGaugeData: ChartDataPoint[] = [
+  const capacityGaugeData: ChartDataPoint[] = useMemo(() => [
     {
       name: 'Current',
       value: parseFloat(recentMetrics.avgCapacityUsage),
       fill: parseFloat(recentMetrics.avgCapacityUsage) > 85 ? '#f97316' : 
             parseFloat(recentMetrics.avgCapacityUsage) > 70 ? '#facc15' : '#10b981'
     }
-  ];
-  
-  // Effect to update date range based on selected time range
-  useEffect(() => {
-    const today = new Date('2025-03-14');
-    let start, end;
-    
-    switch(selectedTimeRange) {
-      case '1D':
-        start = new Date(today);
-        end = new Date(today);
-        break;
-      case '7D':
-        end = new Date(today);
-        start = new Date(today);
-        start.setDate(start.getDate() - 6);
-        break;
-      case '1M':
-        end = new Date(today);
-        start = new Date(today);
-        start.setMonth(start.getMonth() - 1);
-        break;
-      case '3M':
-        end = new Date(today);
-        start = new Date(today);
-        start.setMonth(start.getMonth() - 3);
-        break;
-      case 'ALL':
-      default:
-        // Use all available data
-        start = null;
-        end = null;
-        break;
-    }
-    
-    setSelectedDateRange({ start, end });
-  }, [selectedTimeRange]);
+  ], [recentMetrics]);
 
   // Reset filters
   const resetFilters = () => {
     setSelectedMonth('all');
     setSelectedYear('all');
     setSelectedTimeRange('ALL');
+    toast.success('Filters reset to show all data');
   };
 
   // Export data to CSV
   const exportToCSV = () => {
     try {
-      const monthlyDataCSV = monthlyData.map(item => ({
-        Month: item.month,
-        "Tanker Trips": item.tankerTrips,
-        "Tanker Volume (m³)": item.tankerVolume,
-        "Direct Sewage (m³)": item.directSewage,
-        "Total Influent (m³)": item.totalInfluent,
-        "Water Processed (m³)": item.waterProcessed,
-        "TSE to Irrigation (m³)": item.tseIrrigation,
-        "Utilization (%)": item.utilizationPercentage,
-        "Processing Efficiency (%)": item.processingEfficiency
+      const exportData = filteredDailyData.map(item => ({
+        Date: format(parseISO(item.date), 'yyyy-MM-dd'),
+        "Tanker Trips": item.tanker_trips,
+        "Tanker Volume (m³)": item.expected_volume_tankers,
+        "Direct Sewage (m³)": item.direct_sewage_mb,
+        "Total Influent (m³)": item.total_influent,
+        "Water Processed (m³)": item.total_water_processed,
+        "TSE to Irrigation (m³)": item.tse_to_irrigation,
+        "pH": item.ph
       }));
       
       const csvContent = "data:text/csv;charset=utf-8," + 
-        Object.keys(monthlyDataCSV[0] || {}).join(",") + "\n" +
-        monthlyDataCSV.map(row => {
+        Object.keys(exportData[0] || {}).join(",") + "\n" +
+        exportData.map(row => {
           return Object.values(row).join(",");
         }).join("\n");
       
       const encodedUri = encodeURI(csvContent);
       const link = document.createElement("a");
       link.setAttribute("href", encodedUri);
-      link.setAttribute("download", "STP_Monthly_Data.csv");
+      link.setAttribute("download", "STP_Data_Export.csv");
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -228,24 +372,43 @@ const STPBioreactorMBR = () => {
     }
   };
 
+  // Get period description for the current filtered data
+  const getPeriodDescription = () => {
+    if (filteredDailyData.length === 0) return "No data";
+    
+    if (selectedMonth !== 'all' && selectedYear !== 'all') {
+      const monthName = new Date(parseInt(selectedYear), parseInt(selectedMonth) - 1, 1)
+        .toLocaleString('default', { month: 'long' });
+      return `${monthName} ${selectedYear}`;
+    } else if (selectedYear !== 'all') {
+      return selectedYear;
+    } else if (selectedTimeRange !== 'ALL') {
+      return `Last ${selectedTimeRange}`;
+    } else {
+      return "All available data";
+    }
+  };
+
   // Main dashboard content
   const DashboardTabContent = () => {
-    if (!isClient) {
+    if (isLoading) {
       return (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 animate-pulse">
-          {[...Array(4)].map((_, i) => (
-            <Card key={i} className="bg-white">
-              <CardHeader className="pb-2">
-                <div className="h-4 w-24 bg-gray-200 rounded"></div>
-              </CardHeader>
-              <CardContent>
-                <div className="h-8 w-16 bg-gray-200 rounded mb-4"></div>
-                <div className="h-2 w-full bg-gray-200 rounded"></div>
-              </CardContent>
-            </Card>
-          ))}
-          <div className="col-span-1 md:col-span-2 h-64 bg-gray-100 rounded-xl"></div>
-          <div className="col-span-1 h-64 bg-gray-100 rounded-xl"></div>
+        <div className="flex justify-center items-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <span className="ml-2">Loading STP data...</span>
+        </div>
+      );
+    }
+
+    if (filteredDailyData.length === 0 && !isLoading) {
+      return (
+        <div className="flex flex-col items-center justify-center h-64 text-center">
+          <Info className="h-12 w-12 text-muted-foreground mb-2" />
+          <h3 className="text-lg font-medium">No data available for the selected filters</h3>
+          <p className="text-muted-foreground">Try adjusting your filter settings or select a different time period.</p>
+          <Button variant="outline" className="mt-4" onClick={resetFilters}>
+            Reset Filters
+          </Button>
         </div>
       );
     }
@@ -253,7 +416,12 @@ const STPBioreactorMBR = () => {
     return (
       <div className="space-y-6 animate-appear-zoom">
         <div className="flex justify-between items-center flex-wrap gap-4">
-          <h2 className="text-lg font-medium">MBR Performance Dashboard</h2>
+          <div>
+            <h2 className="text-lg font-medium">MBR Performance Dashboard</h2>
+            <p className="text-sm text-muted-foreground">
+              Showing data for: <span className="font-medium">{getPeriodDescription()}</span>
+            </p>
+          </div>
           
           <DateFilter
             selectedMonth={selectedMonth}
@@ -348,7 +516,10 @@ const STPBioreactorMBR = () => {
             <CardHeader className="pb-2">
               <div className="flex justify-between items-center">
                 <CardTitle className="text-sm font-medium text-muted-foreground">Processing Efficiency</CardTitle>
-                <Badge variant="secondary">Excellent</Badge>
+                <Badge variant="secondary">
+                  {parseFloat(recentMetrics.processingEfficiency) > 90 ? 'Excellent' : 
+                   parseFloat(recentMetrics.processingEfficiency) > 80 ? 'Good' : 'Fair'}
+                </Badge>
               </div>
             </CardHeader>
             <CardContent>
@@ -371,7 +542,9 @@ const STPBioreactorMBR = () => {
             <CardHeader className="pb-2">
               <div className="flex justify-between items-center">
                 <CardTitle className="text-sm font-medium text-muted-foreground">Total Volume</CardTitle>
-                <Badge variant="secondary">Complete</Badge>
+                <Badge variant="secondary">
+                  {filteredDailyData.length} days
+                </Badge>
               </div>
             </CardHeader>
             <CardContent>
@@ -407,19 +580,19 @@ const STPBioreactorMBR = () => {
               <div className="mt-4 flex justify-between text-xs text-muted-foreground">
                 <div>
                   <span className="font-medium text-foreground">pH:</span>
-                  <span className="ml-1 text-green-600">7.2</span>
+                  <span className="ml-1 text-green-600">{currentParameterData[0].value.toFixed(1)}</span>
                 </div>
                 <div>
                   <span className="font-medium text-foreground">DO:</span>
-                  <span className="ml-1 text-green-600">2.4</span>
+                  <span className="ml-1 text-green-600">{currentParameterData[1].value.toFixed(1)}</span>
                 </div>
                 <div>
                   <span className="font-medium text-foreground">MLSS:</span>
-                  <span className="ml-1 text-green-600">8400</span>
+                  <span className="ml-1 text-green-600">{currentParameterData[2].value}</span>
                 </div>
                 <div>
                   <span className="font-medium text-foreground">Cl₂:</span>
-                  <span className="ml-1 text-green-600">0.6</span>
+                  <span className="ml-1 text-green-600">{currentParameterData[3].value.toFixed(1)}</span>
                 </div>
               </div>
             </CardContent>
@@ -603,262 +776,4 @@ const STPBioreactorMBR = () => {
                         cy="50%"
                         labelLine={false}
                         outerRadius={60}
-                        fill="#8884d8"
-                        dataKey="value"
-                      >
-                        {influentSourceData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <RechartsTooltip formatter={(value: any) => `${(Number(value)/1000).toFixed(1)}K m³`} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-                <div className="flex justify-between text-xs text-muted-foreground mt-2">
-                  <div className="flex items-center">
-                    <div className="w-3 h-3 rounded-full bg-blue-500 mr-1"></div>
-                    <span>Tanker Delivery: 
-                      {((totalMetrics.totalTankerVolume / 
-                        (totalMetrics.totalTankerVolume + totalMetrics.totalDirectSewage)) * 100).toFixed(1)}%
-                    </span>
-                  </div>
-                  <div className="flex items-center">
-                    <div className="w-3 h-3 rounded-full bg-green-500 mr-1"></div>
-                    <span>Direct Sewage:
-                      {((totalMetrics.totalDirectSewage / 
-                        (totalMetrics.totalTankerVolume + totalMetrics.totalDirectSewage)) * 100).toFixed(1)}%
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-            <CardFooter className="pt-0">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="w-full flex items-center justify-center" 
-                onClick={exportToCSV}
-              >
-                <Download className="mr-2 h-4 w-4" />
-                Export Data
-              </Button>
-            </CardFooter>
-          </Card>
-        </div>
-
-        {/* Current Date Info */}
-        <div className="flex items-center justify-end">
-          <span className="text-xs text-muted-foreground">Current Date:</span>
-          <Badge variant="outline" className="ml-1">
-            <CalendarDays className="h-3 w-3 mr-1" />
-            {currentDate}
-          </Badge>
-        </div>
-      </div>
-    );
-  };
-
-  // Equipment Health Tab Content
-  const EquipmentTabContent = () => (
-    <div className="space-y-6">
-      <div className="flex justify-between">
-        <h2 className="text-lg font-medium">Equipment Status & Maintenance</h2>
-        <Button variant="outline" size="sm">
-          <FileSpreadsheet className="mr-2 h-4 w-4" />
-          Export Report
-        </Button>
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">MBR System Health</CardTitle>
-            <CardDescription>Membrane bioreactor operational status</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span className="text-sm">Membrane Condition</span>
-                <Badge variant="outline" className="bg-green-100 text-green-800 hover:bg-green-200">Optimal</Badge>
-              </div>
-              <div className="w-full bg-muted rounded-full h-2.5 mt-2">
-                <div className="bg-green-600 h-2.5 rounded-full" style={{ width: '92%' }}></div>
-              </div>
-              <div className="flex justify-between text-xs text-muted-foreground">
-                <span>Last Cleaning: 14 Feb 2025</span>
-                <span>Next Due: 14 May 2025</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Pump Systems</CardTitle>
-            <CardDescription>Feed and circulation pumps</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-sm">Feed Pump P-101</span>
-                <Badge variant="outline" className="bg-green-100 text-green-800 hover:bg-green-200">Running</Badge>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm">Recirc Pump P-102</span>
-                <Badge variant="outline" className="bg-green-100 text-green-800 hover:bg-green-200">Running</Badge>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm">Waste Pump P-103</span>
-                <Badge variant="secondary">Standby</Badge>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm">Backwash Pump P-104</span>
-                <Badge variant="secondary">Standby</Badge>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Aeration System</CardTitle>
-            <CardDescription>Blowers and diffusers status</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-sm">Blower B-101</span>
-                <Badge variant="outline" className="bg-green-100 text-green-800 hover:bg-green-200">Running</Badge>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm">Blower B-102</span>
-                <Badge variant="secondary">Standby</Badge>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm">Diffuser Status</span>
-                <Badge variant="outline" className="bg-green-100 text-green-800 hover:bg-green-200">Normal</Badge>
-              </div>
-              <div className="mt-4 text-xs text-muted-foreground">
-                <span>Diffuser cleaning last performed: 22 Jan 2025</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-      
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Maintenance Schedule</CardTitle>
-          <CardDescription>Upcoming maintenance tasks</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="relative overflow-x-auto">
-            <table className="w-full text-sm text-left">
-              <thead className="text-xs uppercase bg-muted/50">
-                <tr>
-                  <th scope="col" className="px-6 py-3">Task</th>
-                  <th scope="col" className="px-6 py-3">Equipment</th>
-                  <th scope="col" className="px-6 py-3">Due Date</th>
-                  <th scope="col" className="px-6 py-3">Status</th>
-                  <th scope="col" className="px-6 py-3">Assigned To</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr className="border-b">
-                  <td className="px-6 py-4">Membrane CIP Cleaning</td>
-                  <td className="px-6 py-4">MBR System</td>
-                  <td className="px-6 py-4">14 May 2025</td>
-                  <td className="px-6 py-4"><Badge variant="secondary">Scheduled</Badge></td>
-                  <td className="px-6 py-4">Maintenance Team</td>
-                </tr>
-                <tr className="border-b">
-                  <td className="px-6 py-4">Pump P-101 Inspection</td>
-                  <td className="px-6 py-4">Feed Pump</td>
-                  <td className="px-6 py-4">30 Mar 2025</td>
-                  <td className="px-6 py-4"><Badge variant="secondary">Scheduled</Badge></td>
-                  <td className="px-6 py-4">John D.</td>
-                </tr>
-                <tr className="border-b">
-                  <td className="px-6 py-4">Diffuser Cleaning</td>
-                  <td className="px-6 py-4">Aeration System</td>
-                  <td className="px-6 py-4">22 Apr 2025</td>
-                  <td className="px-6 py-4"><Badge variant="secondary">Scheduled</Badge></td>
-                  <td className="px-6 py-4">Maintenance Team</td>
-                </tr>
-                <tr className="border-b">
-                  <td className="px-6 py-4">Blower B-102 Inspection</td>
-                  <td className="px-6 py-4">Aeration Blower</td>
-                  <td className="px-6 py-4">15 Mar 2025</td>
-                  <td className="px-6 py-4"><Badge variant="default">In Progress</Badge></td>
-                  <td className="px-6 py-4">Sarah K.</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
-
-  // Reports Tab Content - Replace with actual daily details component
-  const ReportsTabContent = () => (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-lg font-medium">STP Daily Performance Data</h2>
-      </div>
-      
-      <STPDailyDetails selectedMonth={selectedMonth} showHeader={false} />
-    </div>
-  );
-
-  return (
-    <Layout>
-      <div className="container mx-auto py-6">
-        <div className="flex justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">STP Bioreactor (MBR)</h1>
-            <p className="text-muted-foreground">
-              Membrane Bioreactor system monitoring and management
-            </p>
-          </div>
-          <div className="flex space-x-2">
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={exportToCSV}
-            >
-              <Download className="mr-2 h-4 w-4" />
-              Export Data
-            </Button>
-            <Button 
-              variant="default" 
-              size="sm"
-            >
-              <Users className="mr-2 h-4 w-4" />
-              Assign Task
-            </Button>
-          </div>
-        </div>
-        
-        <Tabs defaultValue="dashboard" value={selectedTab} onValueChange={setSelectedTab} className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-            <TabsTrigger value="reports">Daily Reports</TabsTrigger>
-            <TabsTrigger value="equipment">Equipment Health</TabsTrigger>
-          </TabsList>
-          <TabsContent value="dashboard" className="space-y-4">
-            <DashboardTabContent />
-          </TabsContent>
-          <TabsContent value="reports" className="space-y-4">
-            <ReportsTabContent />
-          </TabsContent>
-          <TabsContent value="equipment" className="space-y-4">
-            <EquipmentTabContent />
-          </TabsContent>
-        </Tabs>
-      </div>
-    </Layout>
-  );
-};
-
-export default STPBioreactorMBR;
+                        fill="#8884d8

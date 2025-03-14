@@ -62,15 +62,15 @@ const STP = () => {
             <div className="grid gap-4">
               <div className="flex justify-between items-center">
                 <h2 className="text-xl font-semibold">Daily Reports</h2>
-                <Button asChild variant="outline" size="sm">
-                  <Link to="/stp-bioreactor-mbr">
+                <Button asChild variant="success" size="sm">
+                  <Link to="/stp-bioreactor-mbr?tab=reports">
                     View Detailed Reports
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Link>
                 </Button>
               </div>
               <iframe 
-                src="/stp-bioreactor-mbr" 
+                src="/stp-bioreactor-mbr?tab=reports" 
                 className="w-full h-[600px] border rounded-lg" 
                 title="STP Daily Reports"
               />
@@ -81,8 +81,8 @@ const STP = () => {
             <div className="grid gap-4">
               <div className="flex justify-between items-center">
                 <h2 className="text-xl font-semibold">Equipment Status</h2>
-                <Button asChild variant="outline" size="sm">
-                  <Link to="/stp-bioreactor-mbr">
+                <Button asChild variant="success" size="sm">
+                  <Link to="/stp-bioreactor-mbr?tab=equipment">
                     View Equipment Details
                     <MonitorSmartphone className="ml-2 h-4 w-4" />
                   </Link>
