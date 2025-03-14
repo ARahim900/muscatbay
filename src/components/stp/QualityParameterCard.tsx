@@ -8,7 +8,7 @@ interface QualityParameterCardProps {
   status: 'optimal' | 'warning' | 'critical';
 }
 
-const QualityParameterCard: React.FC<QualityParameterCardProps> = ({ name, value, target, status }) => (
+export const QualityParameterCard: React.FC<QualityParameterCardProps> = ({ name, value, target, status }) => (
   <div className="flex justify-between items-center p-3 rounded-md bg-gray-50">
     <div>
       <p className="text-sm font-medium text-gray-900">{name}</p>
@@ -23,5 +23,3 @@ const QualityParameterCard: React.FC<QualityParameterCardProps> = ({ name, value
     </div>
   </div>
 );
-
-export default QualityParameterCard;

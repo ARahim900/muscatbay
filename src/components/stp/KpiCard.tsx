@@ -9,7 +9,7 @@ interface KpiCardProps {
   color: string;
 }
 
-const KpiCard: React.FC<KpiCardProps> = ({ title, value, subtext, icon, color }) => (
+export const KpiCard: React.FC<KpiCardProps> = ({ title, value, subtext, icon, color }) => (
   <div className="bg-white rounded-lg shadow p-4">
     <div className="flex items-start">
       <div className={`rounded-md p-2 bg-opacity-10`} style={{ backgroundColor: `${color}20` }}>
@@ -25,5 +25,3 @@ const KpiCard: React.FC<KpiCardProps> = ({ title, value, subtext, icon, color })
     </div>
   </div>
 );
-
-export default KpiCard;
