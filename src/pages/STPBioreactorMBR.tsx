@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import Layout from "@/components/layout/Layout";
 import { 
@@ -776,4 +777,165 @@ const STPBioreactorMBR = () => {
                         cy="50%"
                         labelLine={false}
                         outerRadius={60}
-                        fill="#8884d8
+                        fill="#8884d8"
+                        dataKey="value"
+                      >
+                        {influentSourceData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <Layout>
+      <div className="container mx-auto py-6 px-4 sm:px-6">
+        <div className="flex flex-col space-y-4">
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight">STP MBR Bioreactor</h1>
+              <p className="text-muted-foreground">
+                Membrane bioreactor operational dashboard
+              </p>
+            </div>
+            <div className="flex space-x-2">
+              <Button variant="outline" size="sm" onClick={exportToCSV}>
+                <FileSpreadsheet className="mr-2 h-4 w-4" />
+                Export Data
+              </Button>
+              <Button variant="outline" size="sm">
+                <CalendarDays className="mr-2 h-4 w-4" />
+                {currentDate}
+              </Button>
+            </div>
+          </div>
+
+          <Tabs value={selectedTab} onValueChange={setSelectedTab} className="w-full">
+            <TabsList className="grid w-full sm:w-auto grid-cols-3 mb-4">
+              <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+              <TabsTrigger value="reports">Daily Reports</TabsTrigger>
+              <TabsTrigger value="equipment">Equipment Status</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="dashboard">
+              {DashboardTabContent()}
+            </TabsContent>
+            
+            <TabsContent value="reports">
+              <STPDailyDetails 
+                dailyData={filteredDailyData} 
+                isLoading={isLoading}
+                onExportData={exportToCSV}
+              />
+            </TabsContent>
+            
+            <TabsContent value="equipment">
+              <div className="grid gap-4">
+                <div className="flex justify-between items-center">
+                  <h2 className="text-xl font-semibold">Equipment Status</h2>
+                  <Badge variant="outline" className="px-3 py-1">
+                    <span className="flex items-center">
+                      <span className="mr-2 h-2 w-2 rounded-full bg-green-500"></span>
+                      All Systems Operational
+                    </span>
+                  </Badge>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm">Fine Screens</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex items-center">
+                        <div className="w-2 h-2 rounded-full bg-green-500 mr-2"></div>
+                        <span className="text-sm">Operational</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">Last maintenance: 2024-03-15</p>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm">Anoxic Tanks</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex items-center">
+                        <div className="w-2 h-2 rounded-full bg-green-500 mr-2"></div>
+                        <span className="text-sm">Operational</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">Last maintenance: 2024-02-28</p>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm">Aeration Tanks</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex items-center">
+                        <div className="w-2 h-2 rounded-full bg-green-500 mr-2"></div>
+                        <span className="text-sm">Operational</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">Last maintenance: 2024-03-10</p>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm">MBR Modules</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex items-center">
+                        <div className="w-2 h-2 rounded-full bg-green-500 mr-2"></div>
+                        <span className="text-sm">Operational</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">Last cleaning: 2024-03-20</p>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm">UV Disinfection</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex items-center">
+                        <div className="w-2 h-2 rounded-full bg-green-500 mr-2"></div>
+                        <span className="text-sm">Operational</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">Last maintenance: 2024-02-15</p>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm">Chlorination System</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex items-center">
+                        <div className="w-2 h-2 rounded-full bg-green-500 mr-2"></div>
+                        <span className="text-sm">Operational</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">Last refill: 2024-03-25</p>
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
+        </div>
+      </div>
+    </Layout>
+  );
+};
+
+export default STPBioreactorMBR;

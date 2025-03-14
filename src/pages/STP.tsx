@@ -62,7 +62,7 @@ const STP = () => {
             <div className="grid gap-4">
               <div className="flex justify-between items-center">
                 <h2 className="text-xl font-semibold">Daily Reports</h2>
-                <Button asChild variant="success" size="sm">
+                <Button asChild variant="default" size="sm">
                   <Link to="/stp-bioreactor-mbr?tab=reports">
                     View Detailed Reports
                     <ArrowRight className="ml-2 h-4 w-4" />
@@ -81,7 +81,7 @@ const STP = () => {
             <div className="grid gap-4">
               <div className="flex justify-between items-center">
                 <h2 className="text-xl font-semibold">Equipment Status</h2>
-                <Button asChild variant="success" size="sm">
+                <Button asChild variant="default" size="sm">
                   <Link to="/stp-bioreactor-mbr?tab=equipment">
                     View Equipment Details
                     <MonitorSmartphone className="ml-2 h-4 w-4" />
