@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import {
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
@@ -485,4 +486,33 @@ const STPPlant = () => {
                   labelLine={false}
                   outerRadius={80}
                   fill="#8884d8"
-                  dataKey="value
+                  dataKey="value"
+                  label={({ name, value }) => `${name}: ${value} m³`}
+                >
+                  {sewageSourceData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip formatter={(value) => `${value} m³`} />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+  
+  return (
+    <div className="p-4">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold">STP Plant Dashboard</h1>
+        <p className="text-gray-600">Daily and monthly performance analysis</p>
+      </div>
+      
+      {renderOverview()}
+    </div>
+  );
+};
+
+export default STPPlant;
