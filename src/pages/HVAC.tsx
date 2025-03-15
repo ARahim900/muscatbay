@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { AirVent, Filter, Download, Building, AlertTriangle, CheckCircle, DollarSign } from 'lucide-react';
@@ -59,6 +60,32 @@ const HVACDashboard = () => {
     { name: 'General Items', value: 1650 }
   ];
 
+  // Monthly cost trend data
+  const monthlyTrendData = [
+    { month: 'Jan', cost: 1800 },
+    { month: 'Feb', cost: 1200 },
+    { month: 'Mar', cost: 3500 },
+    { month: 'Apr', cost: 2800 },
+    { month: 'May', cost: 1900 },
+    { month: 'Jun', cost: 2900 },
+    { month: 'Jul', cost: 3100 },
+    { month: 'Aug', cost: 2400 },
+    { month: 'Sep', cost: 1700 },
+    { month: 'Oct', cost: 2100 },
+    { month: 'Nov', cost: 900 },
+    { month: 'Dec', cost: 1100 }
+  ];
+
+  // Equipment maintenance frequency data
+  const maintenanceFrequencyData = [
+    { name: "Chillers", repairs: 37 },
+    { name: "Pressurization Units", repairs: 14 },
+    { name: "Pumps", repairs: 5 },
+    { name: "Electrical Components", repairs: 9 },
+    { name: "Sensors", repairs: 18 },
+    { name: "Valves", repairs: 11 }
+  ];
+
   useEffect(() => {
     // Simulate loading data
     setTimeout(() => {
@@ -96,32 +123,6 @@ const HVACDashboard = () => {
 
   // Colors for charts
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
-
-  // Monthly cost trend data
-  const monthlyTrendData = [
-    { month: 'Jan', cost: 1800 },
-    { month: 'Feb', cost: 1200 },
-    { month: 'Mar', cost: 3500 },
-    { month: 'Apr', cost: 2800 },
-    { month: 'May', cost: 1900 },
-    { month: 'Jun', cost: 2900 },
-    { month: 'Jul', cost: 3100 },
-    { month: 'Aug', cost: 2400 },
-    { month: 'Sep', cost: 1700 },
-    { month: 'Oct', cost: 2100 },
-    { month: 'Nov', cost: 900 },
-    { month: 'Dec', cost: 1100 }
-  ];
-
-  // Equipment maintenance frequency data
-  const maintenanceFrequencyData = [
-    { name: "Chillers", repairs: 37 },
-    { name: "Pressurization Units", repairs: 14 },
-    { name: "Pumps", repairs: 5 },
-    { name: "Electrical Components", repairs: 9 },
-    { name: "Sensors", repairs: 18 },
-    { name: "Valves", repairs: 11 }
-  ];
 
   // Skeleton loader
   const CardSkeleton = () => (
@@ -372,7 +373,7 @@ const HVACDashboard = () => {
                         <tr className="bg-green-50">
                           <td className="px-4 py-3 text-sm font-bold text-gray-900">SPECIAL DISCOUNT</td>
                           <td className="px-4 py-3 text-sm text-gray-500"></td>
-                          <td className="px-4 py-3 text-sm font-bold text-gray-900 text-right">{selectedBuilding === 'All' ? '500' : '0'} OMR</td>
+                          <td className="px-4 py-3 text-sm font-bold text-gray-900 text-right">{selectedBuilding === 'All' ? 500 : 0} OMR</td>
                           <td className="px-4 py-3 text-sm text-gray-900 text-right"></td>
                         </tr>
                         <tr className="bg-blue-50">

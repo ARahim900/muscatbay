@@ -1,7 +1,17 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { LineChart, Line, AreaChart, Area, BarChart, Bar, PieChart, Pie, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Cell } from 'recharts';
 import { Calendar, Search, Download, Filter, ChevronDown, Moon, Sun, Zap, DollarSign, TrendingUp, Activity, BarChart2, AlertTriangle } from 'lucide-react';
 import Layout from '@/components/layout/Layout';
+
+// Type definitions for recharts value types
+type ValueType = string | number | Array<string | number>;
+type PieChartDataItem = {
+  name: string;
+  value: number;
+  color: string;
+  percent?: number;
+};
 
 // Sample electricity consumption data based on the provided file
 const electricityData = [
@@ -52,14 +62,6 @@ const transformedData: MonthData[] = monthNames.map(month => {
   return monthData;
 });
 
-// Define type for consumption by type data
-interface ConsumptionTypeData {
-  name: string;
-  value: number;
-  color: string;
-  percent?: number;
-}
-
 // Electricity Dashboard Component
 const ElectricitySystem = () => {
   const [darkMode, setDarkMode] = useState(false);
@@ -74,15 +76,19 @@ const ElectricitySystem = () => {
   const COST_PER_KWH = 0.025;
 
   // Format numbers with commas
-  const formatNumber = (num: number | undefined) => {
+  const formatNumber = (num: number | undefined | ValueType) => {
     if (num === undefined || num === null) return '0';
-    return Number(num).toLocaleString();
+    // Convert to number if it's not one already
+    const numValue = typeof num === 'number' ? num : Number(num);
+    return isNaN(numValue) ? '0' : numValue.toLocaleString();
   };
 
   // Format currency
-  const formatCurrency = (num: number | undefined) => {
+  const formatCurrency = (num: number | undefined | ValueType) => {
     if (num === undefined || num === null) return '0 OMR';
-    return `${(num * COST_PER_KWH).toLocaleString(undefined, {
+    // Convert to number if it's not one already
+    const numValue = typeof num === 'number' ? num : Number(num);
+    return isNaN(numValue) ? '0 OMR' : `${(numValue * COST_PER_KWH).toLocaleString(undefined, {
       minimumFractionDigits: 3,
       maximumFractionDigits: 3
     })} OMR`;
@@ -197,7 +203,7 @@ const ElectricitySystem = () => {
   };
 
   // Prepare data for pie chart
-  const consumptionByTypeData: ConsumptionTypeData[] = Object.keys(metrics.consumptionByType || {})
+  const consumptionByTypeData: PieChartDataItem[] = Object.keys(metrics.consumptionByType || {})
     .filter(type => visibleTypes.includes(type))
     .map(type => ({
       name: type,
@@ -210,7 +216,7 @@ const ElectricitySystem = () => {
 
   // Add percentage to pie chart data
   consumptionByTypeData.forEach(item => {
-    item.percent = (item.value / totalVisibleConsumption) * 100;
+    item.percent = totalVisibleConsumption > 0 ? (item.value / totalVisibleConsumption) * 100 : 0;
   });
   
   return <Layout>
@@ -373,7 +379,7 @@ const ElectricitySystem = () => {
                       <CartesianGrid strokeDasharray="3 3" vertical={false} />
                       <XAxis dataKey="month" />
                       <YAxis />
-                      <Tooltip formatter={(value) => [formatNumber(value as number) + ' kWh', '']} />
+                      <Tooltip formatter={(value: ValueType) => [`${formatNumber(value)} kWh`, '']} />
                       <Legend />
                       <Line type="monotone" dataKey="total" name="Total Consumption" stroke="#F59E0B" strokeWidth={3} dot={{
                     r: 3
@@ -401,10 +407,10 @@ const ElectricitySystem = () => {
                         <Pie data={consumptionByTypeData} cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={2} dataKey="value" nameKey="name" label={({
                       name,
                       percent
-                    }) => `${name}: ${percent !== undefined ? percent.toFixed(1) : 0}%`}>
+                    }: PieChartDataItem) => `${name}: ${percent !== undefined ? percent.toFixed(1) : 0}%`}>
                           {consumptionByTypeData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
                         </Pie>
-                        <Tooltip formatter={(value) => formatNumber(value as number) + ' kWh'} />
+                        <Tooltip formatter={(value: ValueType) => `${formatNumber(value)} kWh`} />
                         <Legend />
                       </PieChart>
                     </ResponsiveContainer>
@@ -425,7 +431,7 @@ const ElectricitySystem = () => {
                         <CartesianGrid strokeDasharray="3 3" vertical={false} />
                         <XAxis dataKey="month" />
                         <YAxis />
-                        <Tooltip formatter={(value) => formatNumber(value as number) + ' kWh'} />
+                        <Tooltip formatter={(value: ValueType) => `${formatNumber(value)} kWh`} />
                         <Legend />
                         {visibleTypes.map(type => <Area key={type} type="monotone" dataKey={type} stackId="1" fill={`${typeColors[type]}90`} stroke={typeColors[type]} name={type} />)}
                       </AreaChart>
@@ -449,7 +455,7 @@ const ElectricitySystem = () => {
                         <div className="text-3xl font-bold" style={{
                   color: typeColors[type]
                 }}>{formatNumber(consumption)}</div>
-                        <p className={`text-sm ${secondaryText} mt-1`}>kWh ({(consumption / metrics.totalConsumption * 100).toFixed(1)}% of total)</p>
+                        <p className={`text-sm ${secondaryText} mt-1`}>kWh ({metrics.totalConsumption > 0 ? (consumption / metrics.totalConsumption * 100).toFixed(1) : 0}% of total)</p>
                       </div>
                     </div>)}
               </div>
@@ -468,7 +474,7 @@ const ElectricitySystem = () => {
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="month" />
                       <YAxis />
-                      <Tooltip formatter={(value, name) => [formatNumber(value) + ' kWh', name]} />
+                      <Tooltip formatter={(value: ValueType, name) => [`${formatNumber(value)} kWh`, name]} />
                       <Legend />
                       {visibleTypes.map(type => <Bar key={type} dataKey={type} name={type} fill={typeColors[type]} stackId="a" />)}
                     </BarChart>
@@ -559,7 +565,7 @@ const ElectricitySystem = () => {
                       <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
                       <XAxis type="number" />
                       <YAxis dataKey="name" type="category" width={120} />
-                      <Tooltip formatter={value => formatNumber(value) + ' kWh'} />
+                      <Tooltip formatter={(value: ValueType) => `${formatNumber(value)} kWh`} />
                       <Bar dataKey="value" name="Consumption (kWh)">
                         {consumptionByTypeData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
                       </Bar>
@@ -676,9 +682,9 @@ const ElectricitySystem = () => {
                       <XAxis dataKey="month" />
                       <YAxis yAxisId="left" orientation="left" />
                       <YAxis yAxisId="right" orientation="right" unit=" kWh" domain={[0, 'dataMax']} />
-                      <Tooltip formatter={(value, name) => {
-                    if (name === 'cost') return [formatCurrency(value / COST_PER_KWH), 'Cost'];
-                    return [formatNumber(value) + ' kWh', name];
+                      <Tooltip formatter={(value: ValueType, name) => {
+                    if (name === 'cost') return [formatCurrency(Number(value) / COST_PER_KWH), 'Cost'];
+                    return [`${formatNumber(value)} kWh`, name];
                   }} />
                       <Legend />
                       <Line yAxisId="left" type="monotone" dataKey="cost" name="Cost (OMR)" stroke="#F59E0B" strokeWidth={3} dot={{
@@ -706,10 +712,10 @@ const ElectricitySystem = () => {
                         <Pie data={consumptionByTypeData} cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={2} dataKey="value" nameKey="name" label={({
                       name,
                       percent
-                    }) => `${name}: ${percent.toFixed(1)}%`}>
+                    }: PieChartDataItem) => `${name}: ${percent?.toFixed(1) || '0'}%`}>
                           {consumptionByTypeData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
                         </Pie>
-                        <Tooltip formatter={value => formatCurrency(value)} />
+                        <Tooltip formatter={(value: ValueType) => `${formatCurrency(value)}`} />
                         <Legend />
                       </PieChart>
                     </ResponsiveContainer>
@@ -733,7 +739,7 @@ const ElectricitySystem = () => {
                         <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
                         <XAxis type="number" />
                         <YAxis dataKey="name" type="category" width={120} />
-                        <Tooltip formatter={value => formatCurrency(value / COST_PER_KWH)} />
+                        <Tooltip formatter={(value: ValueType) => `${formatCurrency(Number(value) / COST_PER_KWH)}`} />
                         <Bar dataKey="cost" name="Cost (OMR)">
                           {consumptionByTypeData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
                         </Bar>
@@ -780,7 +786,7 @@ const ElectricitySystem = () => {
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{formatNumber(facility.totalConsumption)}</td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-yellow-600 dark:text-yellow-400 font-medium">{formatCurrency(facility.totalConsumption)}</td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                              {(facility.totalConsumption / metrics.totalConsumption * 100).toFixed(2)}%
+                              {metrics.totalConsumption > 0 ? (facility.totalConsumption / metrics.totalConsumption * 100).toFixed(2) : "0"}%
                             </td>
                           </tr>)}
                     </tbody>
