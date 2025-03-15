@@ -1,8 +1,9 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { LineChart, Line, AreaChart, Area, BarChart, Bar, PieChart, Pie, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Cell } from 'recharts';
+import { LineChart, Line, AreaChart, Area, BarChart, Bar, PieChart, Pie, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Cell, TooltipProps } from 'recharts';
 import { Calendar, Search, Download, Filter, ChevronDown, Moon, Sun, Zap, DollarSign, TrendingUp, Activity, BarChart2, AlertTriangle } from 'lucide-react';
 import Layout from '@/components/layout/Layout';
+import { ValueType } from 'recharts/types/component/DefaultTooltipContent';
 
 // Type definitions for electricity data
 interface ElectricityDataItem {
@@ -24,7 +25,16 @@ interface PieChartDataItem {
 interface MonthData {
   month: string;
   total: number;
-  [key: string]: number | string;
+  cost?: number;
+  [key: string]: number | string | undefined;
+}
+
+// Type for facility cost data
+interface FacilityCostData {
+  name: string;
+  type: string;
+  cost: number;
+  consumption: number;
 }
 
 // Sample electricity consumption data
@@ -109,30 +119,36 @@ const THEME_COLOR = '#4E4456';
 
 // Electricity Dashboard Component
 const ElectricitySystem = () => {
-  const [darkMode, setDarkMode] = useState(false);
-  const [activeTab, setActiveTab] = useState('overview');
+  const [darkMode, setDarkMode] = useState<boolean>(false);
+  const [activeTab, setActiveTab] = useState<string>('overview');
   const [selectedYear, setSelectedYear] = useState<number | 'all'>(2024);
   const [selectedMonth, setSelectedMonth] = useState<string>('all');
   const [visibleTypes, setVisibleTypes] = useState<string[]>([...facilityTypes]);
-  const [showYearDropdown, setShowYearDropdown] = useState(false);
-  const [showMonthDropdown, setShowMonthDropdown] = useState(false);
-  const [showExportDropdown, setShowExportDropdown] = useState(false);
+  const [showYearDropdown, setShowYearDropdown] = useState<boolean>(false);
+  const [showMonthDropdown, setShowMonthDropdown] = useState<boolean>(false);
+  const [showExportDropdown, setShowExportDropdown] = useState<boolean>(false);
   const [filteredData, setFilteredData] = useState<MonthData[]>(transformedData);
   
   // Electricity cost per kWh
   const COST_PER_KWH = 0.025;
   
-  // Format numbers with commas
-  const formatNumber = (num: number | string | undefined): string => {
-    if (num === undefined || num === null) return '0';
-    const numValue = typeof num === 'number' ? num : Number(num);
+  // Format numbers with commas - now safely handles array inputs
+  const formatNumber = (num: ValueType): string => {
+    // Handle array input (first value is used if it's an array)
+    const value = Array.isArray(num) ? num[0] : num;
+    
+    if (value === undefined || value === null) return '0';
+    const numValue = typeof value === 'number' ? value : Number(value);
     return isNaN(numValue) ? '0' : numValue.toLocaleString();
   };
 
-  // Format currency
-  const formatCurrency = (num: number | string | undefined): string => {
-    if (num === undefined || num === null) return '0 OMR';
-    const numValue = typeof num === 'number' ? num : Number(num);
+  // Format currency - now safely handles array inputs
+  const formatCurrency = (num: ValueType): string => {
+    // Handle array input (first value is used if it's an array)
+    const value = Array.isArray(num) ? num[0] : num;
+    
+    if (value === undefined || value === null) return '0 OMR';
+    const numValue = typeof value === 'number' ? value : Number(value);
     if (isNaN(numValue)) return '0 OMR';
     return `${(numValue * COST_PER_KWH).toLocaleString(undefined, { 
       minimumFractionDigits: 3, 
@@ -282,6 +298,28 @@ const ElectricitySystem = () => {
   consumptionByTypeData.forEach(item => {
     item.percent = totalVisibleConsumption > 0 ? (item.value / totalVisibleConsumption) * 100 : 0;
   });
+
+  // Common formatter for tooltip labels
+  const tooltipFormatter = (value: ValueType, name: string) => {
+    const formattedValue = formatNumber(value);
+    return [`${formattedValue} kWh`, name];
+  };
+
+  // Formatter for cost tooltips
+  const costTooltipFormatter = (value: ValueType, name: string) => {
+    if (name === 'cost') {
+      // Extract numeric value
+      const numericValue = Array.isArray(value) ? Number(value[0]) : Number(value);
+      if (isNaN(numericValue)) return ['0 OMR', 'Cost'];
+      
+      // Format the consumption value (cost / COST_PER_KWH) as currency
+      return [`${(numericValue / COST_PER_KWH * COST_PER_KWH).toLocaleString(undefined, { 
+        minimumFractionDigits: 3, 
+        maximumFractionDigits: 3 
+      })} OMR`, 'Cost'];
+    }
+    return [`${formatNumber(value)} kWh`, name];
+  };
 
   return (
     <Layout>
@@ -532,7 +570,10 @@ const ElectricitySystem = () => {
                       <CartesianGrid strokeDasharray="3 3" vertical={false} />
                       <XAxis dataKey="month" />
                       <YAxis />
-                      <Tooltip formatter={(value) => [formatNumber(value) + ' kWh', '']} />
+                      <Tooltip formatter={(value, name) => {
+                        const formattedValue = formatNumber(value);
+                        return [`${formattedValue} kWh`, name.toString()];
+                      }} />
                       <Legend />
                       <Line 
                         type="monotone" 
@@ -586,7 +627,9 @@ const ElectricitySystem = () => {
                             <Cell key={`cell-${index}`} fill={entry.color} />
                           ))}
                         </Pie>
-                        <Tooltip formatter={(value) => formatNumber(value) + ' kWh'} />
+                        <Tooltip formatter={(value) => {
+                          return [`${formatNumber(value)} kWh`];
+                        }} />
                         <Legend />
                       </PieChart>
                     </ResponsiveContainer>
@@ -605,7 +648,9 @@ const ElectricitySystem = () => {
                         <CartesianGrid strokeDasharray="3 3" vertical={false} />
                         <XAxis dataKey="month" />
                         <YAxis />
-                        <Tooltip formatter={(value) => formatNumber(value) + ' kWh'} />
+                        <Tooltip formatter={(value) => {
+                          return [`${formatNumber(value)} kWh`];
+                        }} />
                         <Legend />
                         {visibleTypes.map(type => (
                           <Area 
@@ -663,7 +708,9 @@ const ElectricitySystem = () => {
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="month" />
                       <YAxis />
-                      <Tooltip formatter={(value, name) => [formatNumber(value) + ' kWh', name]} />
+                      <Tooltip formatter={(value, name) => {
+                        return [`${formatNumber(value)} kWh`, name.toString()];
+                      }} />
                       <Legend />
                       {visibleTypes.map(type => (
                         <Bar 
@@ -791,7 +838,9 @@ const ElectricitySystem = () => {
                       <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
                       <XAxis type="number" />
                       <YAxis dataKey="name" type="category" width={120} />
-                      <Tooltip formatter={(value) => formatNumber(value) + ' kWh'} />
+                      <Tooltip formatter={(value) => {
+                        return [`${formatNumber(value)} kWh`];
+                      }} />
                       <Bar dataKey="value" name="Consumption (kWh)">
                         {consumptionByTypeData.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={entry.color} />
@@ -942,11 +991,19 @@ const ElectricitySystem = () => {
                       <YAxis yAxisId="left" orientation="left" />
                       <YAxis yAxisId="right" orientation="right" unit=" kWh" domain={[0, 'dataMax']} />
                       <Tooltip formatter={(value, name) => {
-                        if (name === 'cost') {
-                          const numValue = Number(value);
-                          return [formatCurrency(numValue / COST_PER_KWH), 'Cost'];
+                        if (name && name.toString() === 'cost') {
+                          const numValue = Array.isArray(value) ? Number(value[0]) : Number(value);
+                          if (isNaN(numValue)) return ['0 OMR', 'Cost'];
+                          
+                          return [
+                            `${(numValue).toLocaleString(undefined, { 
+                              minimumFractionDigits: 3, 
+                              maximumFractionDigits: 3 
+                            })} OMR`,
+                            'Cost'
+                          ];
                         }
-                        return [formatNumber(value) + ' kWh', name];
+                        return [`${formatNumber(value)} kWh`, name ? name.toString() : ''];
                       }} />
                       <Legend />
                       <Line 
@@ -999,7 +1056,9 @@ const ElectricitySystem = () => {
                             <Cell key={`cell-${index}`} fill={entry.color} />
                           ))}
                         </Pie>
-                        <Tooltip formatter={(value) => formatCurrency(value)} />
+                        <Tooltip formatter={(value) => {
+                          return [`${formatCurrency(value)}`];
+                        }} />
                         <Legend />
                       </PieChart>
                     </ResponsiveContainer>
@@ -1023,8 +1082,15 @@ const ElectricitySystem = () => {
                         <XAxis type="number" />
                         <YAxis dataKey="name" type="category" width={120} />
                         <Tooltip formatter={(value) => {
-                          const numValue = Number(value);
-                          return formatCurrency(numValue / COST_PER_KWH);
+                          const numValue = Array.isArray(value) ? Number(value[0]) : Number(value);
+                          if (isNaN(numValue)) return ["0 OMR"];
+                          
+                          return [
+                            `${numValue.toLocaleString(undefined, { 
+                              minimumFractionDigits: 3, 
+                              maximumFractionDigits: 3 
+                            })} OMR`
+                          ];
                         }} />
                         <Bar dataKey="cost" name="Cost (OMR)">
                           {consumptionByTypeData.map((entry, index) => (
