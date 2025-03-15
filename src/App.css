@@ -1,0 +1,154 @@
+
+/* Modern SaaS application styles */
+
+.btn-primary {
+  @apply px-4 py-2 font-medium text-white transition-all rounded-md bg-muscat-primary hover:bg-opacity-90 shadow-button;
+}
+
+.btn-secondary {
+  @apply px-4 py-2 font-medium transition-all rounded-md bg-muscat-teal text-muscat-dark hover:bg-opacity-90 shadow-button;
+}
+
+/* Enhanced Animations */
+.fade-up {
+  animation: fadeUp 0.5s ease forwards;
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Page transition animations */
+.page-enter {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.page-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 300ms, transform 300ms;
+}
+
+.page-exit {
+  opacity: 1;
+}
+
+.page-exit-active {
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: opacity 300ms, transform 300ms;
+}
+
+/* Improved card hover effects */
+.hover-card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hover-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+/* Enhanced table styles */
+.data-table {
+  @apply w-full rounded-lg overflow-hidden;
+}
+
+.data-table thead {
+  @apply bg-gray-50;
+}
+
+.data-table th {
+  @apply py-3 px-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider;
+}
+
+.data-table td {
+  @apply py-3 px-4 whitespace-nowrap text-sm text-gray-900 border-t border-gray-200;
+}
+
+.data-table tr:hover {
+  @apply bg-gray-50;
+}
+
+/* Modern input styles */
+.modern-input {
+  @apply bg-white border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-muscat-primary/20 focus:border-transparent transition-all;
+}
+
+/* Responsive container */
+.content-container {
+  @apply w-full mx-auto;
+  max-width: calc(100% - 2rem);
+}
+
+@media (min-width: 640px) {
+  .content-container {
+    max-width: calc(100% - 3rem);
+  }
+}
+
+@media (min-width: 768px) {
+  .content-container {
+    max-width: calc(100% - 4rem);
+  }
+}
+
+@media (min-width: 1024px) {
+  .content-container {
+    max-width: 1024px;
+  }
+}
+
+/* Improved scrollbar for better UX */
+.scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+/* Enhanced dashboard card style */
+.dashboard-card {
+  @apply bg-white rounded-xl shadow-md border border-gray-100 p-6 transition-all duration-300;
+}
+
+.dashboard-card:hover {
+  @apply shadow-lg border-gray-200;
+}
+
+/* Status indicators */
+.status-dot {
+  @apply inline-block w-2 h-2 rounded-full;
+}
+
+.status-dot.success {
+  @apply bg-green-500;
+}
+
+.status-dot.warning {
+  @apply bg-amber-500;
+}
+
+.status-dot.error {
+  @apply bg-red-500;
+}
+
+/* Stats display */
+.stat-value {
+  @apply text-3xl font-bold;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-label {
+  @apply text-sm text-gray-500 mt-1;
+}

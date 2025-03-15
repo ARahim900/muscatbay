@@ -18,7 +18,6 @@ import Contracts from './pages/Contracts';
 import STP from './pages/STP';
 import WaterSystem from './pages/WaterSystem';
 import ElectricitySystem from './pages/ElectricitySystem';
-import "@/styles/index.css";
 
 const queryClient = new QueryClient();
 
