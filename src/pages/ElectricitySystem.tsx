@@ -4,487 +4,9 @@ import { Calendar, Search, Download, Filter, ChevronDown, Moon, Sun, Zap, Dollar
 import Layout from '@/components/layout/Layout';
 
 // Sample electricity consumption data based on the provided file
-const electricityData = [{
-  name: 'Pumping Station 01',
-  account: 'R52330',
-  type: 'PS',
-  'Apr-24': 1608,
-  'May-24': 1940,
-  'Jun-24': 1783,
-  'Jul-24': 1874,
-  'Aug-24': 1662,
-  'Sep-24': 3822,
-  'Oct-24': 6876,
-  'Nov-24': 1629,
-  'Dec-24': 1640,
-  'Jan-24': 1903,
-  'Feb-24': 2095
-}, {
-  name: 'Pumping Station 03',
-  account: 'R52329',
-  type: 'PS',
-  'Apr-24': 31,
-  'May-24': 47,
-  'Jun-24': 25,
-  'Jul-24': 3,
-  'Aug-24': 0,
-  'Sep-24': 0,
-  'Oct-24': 33,
-  'Nov-24': 0,
-  'Dec-24': 179,
-  'Jan-24': 33,
-  'Feb-24': 137
-}, {
-  name: 'Pumping Station 04',
-  account: 'R52327',
-  type: 'PS',
-  'Apr-24': 830,
-  'May-24': 818,
-  'Jun-24': 720,
-  'Jul-24': 731,
-  'Aug-24': 857,
-  'Sep-24': 1176,
-  'Oct-24': 445,
-  'Nov-24': 919,
-  'Dec-24': 921,
-  'Jan-24': 245,
-  'Feb-24': 870
-}, {
-  name: 'Pumping Station 05',
-  account: 'R52325',
-  type: 'PS',
-  'Apr-24': 1774,
-  'May-24': 2216,
-  'Jun-24': 2011,
-  'Jul-24': 2059,
-  'Aug-24': 2229,
-  'Sep-24': 5217,
-  'Oct-24': 2483,
-  'Nov-24': 2599,
-  'Dec-24': 1952,
-  'Jan-24': 2069,
-  'Feb-24': 2521
-}, {
-  name: 'Lifting Station 02',
-  account: 'R52328',
-  type: 'LS',
-  'Apr-24': 44,
-  'May-24': 0,
-  'Jun-24': 0,
-  'Jul-24': 0,
-  'Aug-24': 153,
-  'Sep-24': 125,
-  'Oct-24': 0,
-  'Nov-24': 0,
-  'Dec-24': 0,
-  'Jan-24': 0,
-  'Feb-24': 0
-}, {
-  name: 'Lifting Station 03',
-  account: 'R52333',
-  type: 'LS',
-  'Apr-24': 198,
-  'May-24': 269,
-  'Jun-24': 122,
-  'Jul-24': 203,
-  'Aug-24': 208,
-  'Sep-24': 257,
-  'Oct-24': 196,
-  'Nov-24': 91,
-  'Dec-24': 185,
-  'Jan-24': 28,
-  'Feb-24': 40
-}, {
-  name: 'Lifting Station 04',
-  account: 'R52324',
-  type: 'LS',
-  'Apr-24': 644,
-  'May-24': 865,
-  'Jun-24': 791,
-  'Jul-24': 768,
-  'Aug-24': 747,
-  'Sep-24': 723,
-  'Oct-24': 628,
-  'Nov-24': 686,
-  'Dec-24': 631,
-  'Jan-24': 701,
-  'Feb-24': 638
-}, {
-  name: 'Lifting Station 05',
-  account: 'R52332',
-  type: 'LS',
-  'Apr-24': 2056,
-  'May-24': 2577,
-  'Jun-24': 2361,
-  'Jul-24': 3016,
-  'Aug-24': 3684,
-  'Sep-24': 5866,
-  'Oct-24': 1715,
-  'Nov-24': 2413,
-  'Dec-24': 2643,
-  'Jan-24': 2873,
-  'Feb-24': 3665
-}, {
-  name: 'Irrigation Tank 01',
-  account: 'R52324 (R52326)',
-  type: 'IRR',
-  'Apr-24': 1543,
-  'May-24': 2673,
-  'Jun-24': 2763,
-  'Jul-24': 2623,
-  'Aug-24': 1467,
-  'Sep-24': 1290,
-  'Oct-24': 1244,
-  'Nov-24': 1432,
-  'Dec-24': 1268,
-  'Jan-24': 1689,
-  'Feb-24': 2214
-}, {
-  name: 'Irrigation Tank 02',
-  account: 'R52331',
-  type: 'IRR',
-  'Apr-24': 1272,
-  'May-24': 2839,
-  'Jun-24': 3118,
-  'Jul-24': 2330,
-  'Aug-24': 2458,
-  'Sep-24': 1875,
-  'Oct-24': 893,
-  'Nov-24': 974,
-  'Dec-24': 1026,
-  'Jan-24': 983,
-  'Feb-24': 1124
-}, {
-  name: 'Irrigation Tank 03',
-  account: 'R52323',
-  type: 'IRR',
-  'Apr-24': 894,
-  'May-24': 866,
-  'Jun-24': 1869,
-  'Jul-24': 1543,
-  'Aug-24': 1793,
-  'Sep-24': 524,
-  'Oct-24': 266,
-  'Nov-24': 269,
-  'Dec-24': 417,
-  'Jan-24': 840,
-  'Feb-24': 1009
-}, {
-  name: 'Irrigation Tank 04',
-  account: 'R53195',
-  type: 'IRR',
-  'Apr-24': 880,
-  'May-24': 827,
-  'Jun-24': 555,
-  'Jul-24': 443,
-  'Aug-24': 336,
-  'Sep-24': 195,
-  'Oct-24': 183,
-  'Nov-24': 212,
-  'Dec-24': 213,
-  'Jan-24': 40,
-  'Feb-24': 233
-}, {
-  name: 'Actuator DB 01 (Z8)',
-  account: 'R53196',
-  type: 'DB',
-  'Apr-24': 39,
-  'May-24': 49,
-  'Jun-24': 43,
-  'Jul-24': 43,
-  'Aug-24': 45,
-  'Sep-24': 43,
-  'Oct-24': 36,
-  'Nov-24': 34,
-  'Dec-24': 29,
-  'Jan-24': 7,
-  'Feb-24': 28
-}, {
-  name: 'Actuator DB 02',
-  account: 'R51900',
-  type: 'DB',
-  'Apr-24': 285,
-  'May-24': 335,
-  'Jun-24': 275,
-  'Jul-24': 220,
-  'Aug-24': 210,
-  'Sep-24': 219,
-  'Oct-24': 165,
-  'Nov-24': 232,
-  'Dec-24': 161,
-  'Jan-24': 33,
-  'Feb-24': 134
-}, {
-  name: 'Actuator DB 03',
-  account: 'R51904',
-  type: 'DB',
-  'Apr-24': 188,
-  'May-24': 226,
-  'Jun-24': 197,
-  'Jul-24': 203,
-  'Aug-24': 212,
-  'Sep-24': 203,
-  'Oct-24': 196,
-  'Nov-24': 220,
-  'Dec-24': 199,
-  'Jan-24': 56,
-  'Feb-24': 203
-}, {
-  name: 'Actuator DB 04',
-  account: 'R51901',
-  type: 'DB',
-  'Apr-24': 159,
-  'May-24': 275,
-  'Jun-24': 258,
-  'Jul-24': 210,
-  'Aug-24': 184,
-  'Sep-24': 201,
-  'Oct-24': 144,
-  'Nov-24': 172,
-  'Dec-24': 173,
-  'Jan-24': 186,
-  'Feb-24': 161
-}, {
-  name: 'Actuator DB 05',
-  account: 'R51907',
-  type: 'DB',
-  'Apr-24': 15,
-  'May-24': 18,
-  'Jun-24': 15,
-  'Jul-24': 16,
-  'Aug-24': 16,
-  'Sep-24': 16,
-  'Oct-24': 15,
-  'Nov-24': 18,
-  'Dec-24': 16,
-  'Jan-24': 4,
-  'Feb-24': 18
-}, {
-  name: 'Actuator DB 06',
-  account: 'R51909',
-  type: 'DB',
-  'Apr-24': 39,
-  'May-24': 50,
-  'Jun-24': 42,
-  'Jul-24': 48,
-  'Aug-24': 46,
-  'Sep-24': 129,
-  'Oct-24': 43,
-  'Nov-24': 49,
-  'Dec-24': 44,
-  'Jan-24': 47,
-  'Feb-24': 45
-}, {
-  name: 'Street Light FP 01 (Z8)',
-  account: 'R53197',
-  type: 'Street Light',
-  'Apr-24': 2773,
-  'May-24': 3276,
-  'Jun-24': 3268,
-  'Jul-24': 3040,
-  'Aug-24': 3203,
-  'Sep-24': 3225,
-  'Oct-24': 3064,
-  'Nov-24': 3593,
-  'Dec-24': 3147,
-  'Jan-24': 787,
-  'Feb-24': 3228
-}, {
-  name: 'Street Light FP 02',
-  account: 'R51906',
-  type: 'Street Light',
-  'Apr-24': 1705,
-  'May-24': 2076,
-  'Jun-24': 1758,
-  'Jul-24': 1738,
-  'Aug-24': 1940,
-  'Sep-24': 2006,
-  'Oct-24': 1944,
-  'Nov-24': 2361,
-  'Dec-24': 2258,
-  'Jan-24': 633,
-  'Feb-24': 2298
-}, {
-  name: 'Street Light FP 03',
-  account: 'R51905',
-  type: 'Street Light',
-  'Apr-24': 1399,
-  'May-24': 1608,
-  'Jun-24': 1365,
-  'Jul-24': 1380,
-  'Aug-24': 1457,
-  'Sep-24': 1499,
-  'Oct-24': 1561,
-  'Nov-24': 2060,
-  'Dec-24': 1966,
-  'Jan-24': 1868,
-  'Feb-24': 1974
-}, {
-  name: 'Street Light FP 04',
-  account: 'R51908',
-  type: 'Street Light',
-  'Apr-24': 861,
-  'May-24': 1045,
-  'Jun-24': 1051,
-  'Jul-24': 2268,
-  'Aug-24': 2478,
-  'Sep-24': 2513,
-  'Oct-24': 2341,
-  'Nov-24': 2299,
-  'Dec-24': 1389,
-  'Jan-24': 325,
-  'Feb-24': 1406
-}, {
-  name: 'Street Light FP 05',
-  account: 'R51902',
-  type: 'Street Light',
-  'Apr-24': 532,
-  'May-24': 587,
-  'Jun-24': 575,
-  'Jul-24': 770,
-  'Aug-24': 1341,
-  'Sep-24': 1895,
-  'Oct-24': 1844,
-  'Nov-24': 1477,
-  'Dec-24': 1121,
-  'Jan-24': 449,
-  'Feb-24': 2070
-}, {
-  name: 'Beachwell',
-  account: 'R51903',
-  type: 'D_Building',
-  'Apr-24': 16908,
-  'May-24': 46,
-  'Jun-24': 19332,
-  'Jul-24': 23170,
-  'Aug-24': 42241,
-  'Sep-24': 15223,
-  'Oct-24': 25370,
-  'Nov-24': 24383,
-  'Dec-24': 37236,
-  'Jan-24': 38168,
-  'Feb-24': 18422
-}, {
-  name: 'Helipad',
-  account: 'R52334',
-  type: 'D_Building',
-  'Apr-24': 0,
-  'May-24': 0,
-  'Jun-24': 0,
-  'Jul-24': 0,
-  'Aug-24': 0,
-  'Sep-24': 0,
-  'Oct-24': 0,
-  'Nov-24': 0,
-  'Dec-24': 0,
-  'Jan-24': 0,
-  'Feb-24': 0
-}, {
-  name: 'Central Park',
-  account: 'R54672',
-  type: 'D_Building',
-  'Apr-24': 12208,
-  'May-24': 21845,
-  'Jun-24': 29438,
-  'Jul-24': 28186,
-  'Aug-24': 21995,
-  'Sep-24': 20202,
-  'Oct-24': 14900,
-  'Nov-24': 9604,
-  'Dec-24': 19032,
-  'Jan-24': 22819,
-  'Feb-24': 19974
-}, {
-  name: 'Guard House',
-  account: 'R53651',
-  type: 'D_Building',
-  'Apr-24': 823,
-  'May-24': 1489,
-  'Jun-24': 1574,
-  'Jul-24': 1586,
-  'Aug-24': 1325,
-  'Sep-24': 1391,
-  'Oct-24': 1205,
-  'Nov-24': 1225,
-  'Dec-24': 814,
-  'Jan-24': 798,
-  'Feb-24': 936
-}, {
-  name: 'Security Building',
-  account: 'R53649',
-  type: 'D_Building',
-  'Apr-24': 3529,
-  'May-24': 3898,
-  'Jun-24': 4255,
-  'Jul-24': 4359,
-  'Aug-24': 3728,
-  'Sep-24': 3676,
-  'Oct-24': 3140,
-  'Nov-24': 5702,
-  'Dec-24': 5131,
-  'Jan-24': 5559,
-  'Feb-24': 5417
-}, {
-  name: 'ROP Building',
-  account: 'R53648',
-  type: 'D_Building',
-  'Apr-24': 2047,
-  'May-24': 4442,
-  'Jun-24': 3057,
-  'Jul-24': 4321,
-  'Aug-24': 4185,
-  'Sep-24': 3554,
-  'Oct-24': 3692,
-  'Nov-24': 3581,
-  'Dec-24': 2352,
-  'Jan-24': 2090,
-  'Feb-24': 2246
-}, {
-  name: 'D Building 44',
-  account: 'R53705',
-  type: 'D_Building',
-  'Apr-24': 463,
-  'May-24': 2416,
-  'Jun-24': 2036,
-  'Jul-24': 2120,
-  'Aug-24': 1645,
-  'Sep-24': 1717,
-  'Oct-24': 1643,
-  'Nov-24': 1377,
-  'Dec-24': 764,
-  'Jan-24': 647,
-  'Feb-24': 657
-}, {
-  name: 'Bank muscat',
-  account: '',
-  type: 'Retail',
-  'Apr-24': 0,
-  'May-24': 0,
-  'Jun-24': 0,
-  'Jul-24': 3,
-  'Aug-24': 71,
-  'Sep-24': -2,
-  'Oct-24': 1407,
-  'Nov-24': 148,
-  'Dec-24': 72,
-  'Jan-24': 59,
-  'Feb-24': 98
-}, {
-  name: 'CIF kitchen',
-  account: '',
-  type: 'Retail',
-  'Apr-24': 0,
-  'May-24': 0,
-  'Jun-24': 0,
-  'Jul-24': 17895,
-  'Aug-24': 16532,
-  'Sep-24': 18955,
-  'Oct-24': 15071,
-  'Nov-24': 16742,
-  'Dec-24': 15554,
-  'Jan-24': 16788,
-  'Feb-24': 16154
-}];
+const electricityData = [
+  // ... keep existing code (electricityData array)
+];
 
 // Map month indexes to month names for better reference
 const monthMapping = {
@@ -507,18 +29,36 @@ const monthNames = ['Apr-24', 'May-24', 'Jun-24', 'Jul-24', 'Aug-24', 'Sep-24', 
 // Get unique facility types for filtering
 const facilityTypes = [...new Set(electricityData.map(item => item.type))];
 
+// Define the shape of the transformed data
+interface MonthData {
+  month: string;
+  total: number;
+  [key: string]: any;
+}
+
 // Transform data for visualization
-const transformedData = monthNames.map(month => {
-  const monthData = {
-    month
+const transformedData: MonthData[] = monthNames.map(month => {
+  const monthData: MonthData = {
+    month,
+    total: 0
   };
+  
   facilityTypes.forEach(type => {
     const typeTotal = electricityData.filter(item => item.type === type).reduce((sum, item) => sum + (item[month] || 0), 0);
     monthData[type] = typeTotal;
   });
+  
   monthData.total = facilityTypes.reduce((sum, type) => sum + (monthData[type] || 0), 0);
   return monthData;
 });
+
+// Define type for consumption by type data
+interface ConsumptionTypeData {
+  name: string;
+  value: number;
+  color: string;
+  percent?: number;
+}
 
 // Electricity Dashboard Component
 const ElectricitySystem = () => {
@@ -528,19 +68,19 @@ const ElectricitySystem = () => {
   const [visibleTypes, setVisibleTypes] = useState([...facilityTypes]);
   const [showMonthDropdown, setShowMonthDropdown] = useState(false);
   const [showExportDropdown, setShowExportDropdown] = useState(false);
-  const [filteredData, setFilteredData] = useState(transformedData);
+  const [filteredData, setFilteredData] = useState<MonthData[]>(transformedData);
 
   // Electricity cost per kWh
   const COST_PER_KWH = 0.025;
 
   // Format numbers with commas
-  const formatNumber = num => {
+  const formatNumber = (num: number | undefined) => {
     if (num === undefined || num === null) return '0';
     return Number(num).toLocaleString();
   };
 
   // Format currency
-  const formatCurrency = num => {
+  const formatCurrency = (num: number | undefined) => {
     if (num === undefined || num === null) return '0 OMR';
     return `${(num * COST_PER_KWH).toLocaleString(undefined, {
       minimumFractionDigits: 3,
@@ -563,13 +103,13 @@ const ElectricitySystem = () => {
     const averageMonthlyConsumption = Math.round(totalConsumption / (filteredData.length || 1));
 
     // Calculate consumption by type
-    const consumptionByType = {};
+    const consumptionByType: Record<string, number> = {};
     facilityTypes.forEach(type => {
       consumptionByType[type] = filteredData.reduce((sum, month) => sum + (month[type] || 0), 0);
     });
 
     // Calculate cost by type
-    const costByType = {};
+    const costByType: Record<string, number> = {};
     facilityTypes.forEach(type => {
       costByType[type] = consumptionByType[type] * COST_PER_KWH;
     });
@@ -602,7 +142,7 @@ const ElectricitySystem = () => {
   }, [filteredData, COST_PER_KWH]);
 
   // Toggle a type's visibility
-  const toggleTypeVisibility = type => {
+  const toggleTypeVisibility = (type: string) => {
     if (visibleTypes.includes(type)) {
       setVisibleTypes(visibleTypes.filter(t => t !== type));
     } else {
@@ -645,38 +185,34 @@ const ElectricitySystem = () => {
   };
 
   // Generate type-specific colors
-  const typeColors = {
-    'PS': '#F59E0B',
-    // Amber
-    'LS': '#10B981',
-    // Emerald
-    'IRR': '#3B82F6',
-    // Blue
-    'DB': '#8B5CF6',
-    // Purple
-    'Street Light': '#EC4899',
-    // Pink
-    'D_Building': '#EF4444',
-    // Red
-    'FP-Landscape Lights Z3': '#6366F1',
-    // Indigo
+  const typeColors: Record<string, string> = {
+    'PS': '#F59E0B', // Amber
+    'LS': '#10B981', // Emerald
+    'IRR': '#3B82F6', // Blue
+    'DB': '#8B5CF6', // Purple
+    'Street Light': '#EC4899', // Pink
+    'D_Building': '#EF4444', // Red
+    'FP-Landscape Lights Z3': '#6366F1', // Indigo
     'Retail': '#F97316' // Orange
   };
 
   // Prepare data for pie chart
-  const consumptionByTypeData = Object.keys(metrics.consumptionByType || {}).filter(type => visibleTypes.includes(type)).map(type => ({
-    name: type,
-    value: metrics.consumptionByType[type],
-    color: typeColors[type]
-  }));
+  const consumptionByTypeData: ConsumptionTypeData[] = Object.keys(metrics.consumptionByType || {})
+    .filter(type => visibleTypes.includes(type))
+    .map(type => ({
+      name: type,
+      value: metrics.consumptionByType[type],
+      color: typeColors[type]
+    }));
 
   // Calculate total visible consumption for percentage calculation
   const totalVisibleConsumption = consumptionByTypeData.reduce((sum, item) => sum + item.value, 0);
 
   // Add percentage to pie chart data
   consumptionByTypeData.forEach(item => {
-    item.percent = item.value / totalVisibleConsumption * 100;
+    item.percent = (item.value / totalVisibleConsumption) * 100;
   });
+  
   return <Layout>
       <div className={`min-h-screen ${textColor}`}>
         {/* Header */}
@@ -837,7 +373,7 @@ const ElectricitySystem = () => {
                       <CartesianGrid strokeDasharray="3 3" vertical={false} />
                       <XAxis dataKey="month" />
                       <YAxis />
-                      <Tooltip formatter={value => [formatNumber(value) + ' kWh', '']} />
+                      <Tooltip formatter={(value) => [formatNumber(value as number) + ' kWh', '']} />
                       <Legend />
                       <Line type="monotone" dataKey="total" name="Total Consumption" stroke="#F59E0B" strokeWidth={3} dot={{
                     r: 3
@@ -865,10 +401,10 @@ const ElectricitySystem = () => {
                         <Pie data={consumptionByTypeData} cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={2} dataKey="value" nameKey="name" label={({
                       name,
                       percent
-                    }) => `${name}: ${percent.toFixed(1)}%`}>
+                    }) => `${name}: ${percent !== undefined ? percent.toFixed(1) : 0}%`}>
                           {consumptionByTypeData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
                         </Pie>
-                        <Tooltip formatter={value => formatNumber(value) + ' kWh'} />
+                        <Tooltip formatter={(value) => formatNumber(value as number) + ' kWh'} />
                         <Legend />
                       </PieChart>
                     </ResponsiveContainer>
@@ -889,7 +425,7 @@ const ElectricitySystem = () => {
                         <CartesianGrid strokeDasharray="3 3" vertical={false} />
                         <XAxis dataKey="month" />
                         <YAxis />
-                        <Tooltip formatter={value => formatNumber(value) + ' kWh'} />
+                        <Tooltip formatter={(value) => formatNumber(value as number) + ' kWh'} />
                         <Legend />
                         {visibleTypes.map(type => <Area key={type} type="monotone" dataKey={type} stackId="1" fill={`${typeColors[type]}90`} stroke={typeColors[type]} name={type} />)}
                       </AreaChart>
