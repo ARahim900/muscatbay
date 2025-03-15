@@ -38,9 +38,8 @@ const Sidebar: React.FC<SidebarProps> = ({
     security: "https://security-manager.lovable.app/", 
   };
   
-  const sidebarVisible = isMobile ? mobileOpen : true;
   const sidebarWidth = isMobile 
-    ? 'w-64' 
+    ? 'w-72' 
     : collapsed 
       ? 'w-16 md:w-20'
       : 'w-64';
@@ -52,7 +51,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   return (
     <aside 
       className={`${isMobile ? 'fixed' : 'fixed'} top-0 left-0 z-40 h-screen transition-all duration-300 bg-muscat-primary 
-        ${sidebarWidth} pt-16 ${isMobile ? 'animate-slide-in-right shadow-lg' : ''}`}
+        ${sidebarWidth} pt-16 ${isMobile ? 'animate-slide-in shadow-lg' : ''}`}
     >
       <div className="relative flex flex-col h-full">
         {isMobile ? (

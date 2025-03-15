@@ -5,6 +5,7 @@ import Sidebar from './sidebar';
 import { ArrowLeft, X, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useLocation } from 'react-router-dom';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface EmbeddedAppState {
   url: string;
@@ -24,7 +25,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     title: '',
     isOpen: false
   });
-  const [isMobile, setIsMobile] = useState(false);
+  const isMobile = useIsMobile();
   const [iframeLoading, setIframeLoading] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const sidebarRef = useRef<HTMLDivElement>(null);
@@ -39,24 +40,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       setMobileOpen(false);
     }
   }, [location.pathname, isMobile]);
-
-  useEffect(() => {
-    const checkIfMobile = () => {
-      const isMobileView = window.innerWidth < 768;
-      setIsMobile(isMobileView);
-      if (isMobileView) {
-        setCollapsed(true);
-      } else {
-        setMobileOpen(false);
-      }
-    };
-    
-    checkIfMobile();
-    
-    window.addEventListener('resize', checkIfMobile);
-    
-    return () => window.removeEventListener('resize', checkIfMobile);
-  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -100,7 +83,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overflow-hidden">
       <Navbar toggleSidebar={toggleMobileSidebar} />
       
       <div ref={sidebarRef} className={`${isMobile ? 'fixed z-50' : ''}`}>
@@ -132,12 +115,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       
       <main 
         className={`pt-16 min-h-screen transition-all duration-300 ${
-          (collapsed && !mobileOpen) ? 'pl-16 sm:pl-20' : !isMobile ? 'pl-16 sm:pl-64' : 'pl-0'
-        }`}
+          (collapsed && !isMobile) ? 'pl-16 sm:pl-20' : 
+          !isMobile ? 'pl-16 sm:pl-64' : 'pl-0'
+        } w-full`}
       >
         {embeddedApp.isOpen ? (
           <div className="relative w-full h-[calc(100vh-4rem)]">
-            {/* Hide the embedded app header on mobile to maximize space */}
             <div className="fixed top-16 left-0 right-0 z-40 flex items-center justify-between px-3 sm:px-4 py-2 sm:py-3 bg-white/80 backdrop-blur-sm border-b shadow-sm">
               <div className="flex items-center">
                 <Button 
@@ -188,7 +171,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             </div>
           </div>
         ) : (
-          <div className="px-2 sm:px-4 md:px-6 mx-auto w-full">
+          <div className="px-2 sm:px-4 md:px-6 mx-auto w-full max-w-full">
             {children}
           </div>
         )}

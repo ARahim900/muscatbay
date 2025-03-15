@@ -62,7 +62,7 @@ const ImportWaterData: React.FC = () => {
   };
   
   return (
-    <div className="bg-white rounded-lg shadow p-6">
+    <div className="bg-white rounded-lg shadow p-4 sm:p-6">
       <ImportInstructions />
       <ImportButton 
         onClick={handlePasteData}

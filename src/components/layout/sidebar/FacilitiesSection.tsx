@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Droplets, AirVent, Zap } from 'lucide-react';
+import { Droplets, AirVent } from 'lucide-react';
 import SidebarLink from './SidebarLink';
 import SidebarSection from './SidebarSection';
 import { PumpStationIcon } from './CustomIcons';
