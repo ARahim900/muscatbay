@@ -753,7 +753,7 @@ const ElectricitySystem = () => {
 
         {/* Horizontal Navigation */}
         <div className={`${cardBg} border-b ${borderColor} py-3 px-6 mb-6 rounded-lg shadow-sm`}>
-          <div className="flex overflow-x-auto no-scrollbar space-x-2">
+          <div className="flex overflow-x-auto no-scrollbar space-x-2 bg-neutral-100">
             {tabs.map(tab => <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`px-4 py-2 rounded-md whitespace-nowrap transition-all duration-200 flex items-center ${activeTab === tab.id ? `${activeTabBg} ${activeTabText} font-medium` : `hover:bg-gray-100 ${secondaryText}`}`}>
                 <span className="mr-2">{tab.icon}</span>
                 {tab.label}
