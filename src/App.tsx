@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/context/AuthContext";
+import { ThemeProvider } from "@/components/theme/theme-provider";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
@@ -24,34 +25,36 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            {/* Public routes */}
-            <Route path="/auth" element={<Auth />} />
-            
-            {/* Protected routes */}
-            <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
-            <Route path="/electricity" element={<ProtectedRoute><Electricity /></ProtectedRoute>} />
-            <Route path="/electricity-system" element={<ProtectedRoute><ElectricitySystem /></ProtectedRoute>} />
-            <Route path="/stp" element={<ProtectedRoute><STP /></ProtectedRoute>} />
-            <Route path="/water" element={<ProtectedRoute><Water /></ProtectedRoute>} />
-            <Route path="/water-consumption-types" element={<ProtectedRoute><WaterConsumptionTypes /></ProtectedRoute>} />
-            <Route path="/water-system" element={<ProtectedRoute><WaterSystem /></ProtectedRoute>} />
-            <Route path="/hvac" element={<ProtectedRoute><HVAC /></ProtectedRoute>} />
-            <Route path="/projects" element={<ProtectedRoute><Projects /></ProtectedRoute>} />
-            <Route path="/alm" element={<ProtectedRoute><AssetLifecycleManagement /></ProtectedRoute>} />
-            <Route path="/contracts" element={<ProtectedRoute><Contracts /></ProtectedRoute>} />
-            
-            {/* Catch-all route */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </AuthProvider>
+    <ThemeProvider defaultTheme="light">
+      <AuthProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              {/* Public routes */}
+              <Route path="/auth" element={<Auth />} />
+              
+              {/* Protected routes */}
+              <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+              <Route path="/electricity" element={<ProtectedRoute><Electricity /></ProtectedRoute>} />
+              <Route path="/electricity-system" element={<ProtectedRoute><ElectricitySystem /></ProtectedRoute>} />
+              <Route path="/stp" element={<ProtectedRoute><STP /></ProtectedRoute>} />
+              <Route path="/water" element={<ProtectedRoute><Water /></ProtectedRoute>} />
+              <Route path="/water-consumption-types" element={<ProtectedRoute><WaterConsumptionTypes /></ProtectedRoute>} />
+              <Route path="/water-system" element={<ProtectedRoute><WaterSystem /></ProtectedRoute>} />
+              <Route path="/hvac" element={<ProtectedRoute><HVAC /></ProtectedRoute>} />
+              <Route path="/projects" element={<ProtectedRoute><Projects /></ProtectedRoute>} />
+              <Route path="/alm" element={<ProtectedRoute><AssetLifecycleManagement /></ProtectedRoute>} />
+              <Route path="/contracts" element={<ProtectedRoute><Contracts /></ProtectedRoute>} />
+              
+              {/* Catch-all route */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </AuthProvider>
+    </ThemeProvider>
   </QueryClientProvider>
 );
 

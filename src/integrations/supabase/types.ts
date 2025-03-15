@@ -1236,7 +1236,10 @@ export type Database = {
       }
     }
     Functions: {
-      [_ in never]: never
+      refresh_all_materialized_views: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

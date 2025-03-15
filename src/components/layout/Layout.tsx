@@ -5,7 +5,7 @@ import Sidebar from './sidebar';
 import { ArrowLeft, X, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useLocation } from 'react-router-dom';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { useIsMobile, useTouchDevice } from '@/hooks/use-mobile';
 
 interface EmbeddedAppState {
   url: string;
@@ -26,6 +26,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     isOpen: false
   });
   const isMobile = useIsMobile();
+  const isTouch = useTouchDevice();
   const [iframeLoading, setIframeLoading] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const sidebarRef = useRef<HTMLDivElement>(null);
@@ -82,8 +83,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     setMobileOpen(!mobileOpen);
   };
 
+  const touchButtonClasses = isTouch ? "touch-manipulation min-h-[44px] min-w-[44px]" : "";
+
   return (
-    <div className="min-h-screen bg-background overflow-hidden">
+    <div className="min-h-screen bg-background text-foreground overflow-hidden transition-colors duration-150">
       <Navbar toggleSidebar={toggleMobileSidebar} />
       
       <div ref={sidebarRef} className={`${isMobile ? 'fixed z-50' : ''}`}>
@@ -98,7 +101,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       
       {mobileOpen && isMobile && (
         <div 
-          className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40 animate-fade-in"
+          className="fixed inset-0 bg-black/30 dark:bg-black/50 backdrop-blur-sm z-40 animate-fade-in"
           onClick={() => setMobileOpen(false)}
         />
       )}
@@ -106,7 +109,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       {isMobile && !mobileOpen && !embeddedApp.isOpen && (
         <button
           onClick={toggleMobileSidebar}
-          className="fixed bottom-4 right-4 bg-muscat-primary text-white p-3 rounded-full shadow-lg z-40 animate-scale-in"
+          className={`fixed bottom-4 right-4 bg-primary text-primary-foreground p-3 rounded-full shadow-lg z-40 animate-scale-in ${touchButtonClasses} flex items-center justify-center`}
           aria-label="Open menu"
         >
           <Menu className="h-6 w-6" />
@@ -121,24 +124,24 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       >
         {embeddedApp.isOpen ? (
           <div className="relative w-full h-[calc(100vh-4rem)]">
-            <div className="fixed top-16 left-0 right-0 z-40 flex items-center justify-between px-3 sm:px-4 py-2 sm:py-3 bg-white/80 backdrop-blur-sm border-b shadow-sm">
+            <div className="fixed top-16 left-0 right-0 z-40 flex items-center justify-between px-3 sm:px-4 py-2 sm:py-3 bg-card dark:bg-card/80 backdrop-blur-sm border-b shadow-sm border-border">
               <div className="flex items-center">
                 <Button 
                   onClick={closeEmbeddedApp}
                   variant="ghost"
                   size="icon"
-                  className="mr-2"
+                  className={`mr-2 ${touchButtonClasses}`}
                 >
                   <ArrowLeft className="h-4 w-4" />
                 </Button>
-                <h2 className="text-sm md:text-base font-medium text-muscat-primary truncate">{embeddedApp.title}</h2>
+                <h2 className="text-sm md:text-base font-medium text-primary truncate">{embeddedApp.title}</h2>
               </div>
               <div className="flex items-center">
                 <Button 
                   onClick={closeEmbeddedApp}
                   variant="default"
                   size="sm"
-                  className="text-xs sm:text-sm whitespace-nowrap"
+                  className={`text-xs sm:text-sm whitespace-nowrap ${isTouch ? "min-h-[44px]" : ""}`}
                 >
                   Back to Dashboard
                 </Button>
@@ -146,8 +149,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             </div>
             
             {iframeLoading && (
-              <div className="absolute inset-0 flex items-center justify-center bg-background/50 z-20" style={{ top: '3rem' }}>
-                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-muscat-primary"></div>
+              <div className="absolute inset-0 flex items-center justify-center bg-background/50 dark:bg-background/70 z-20" style={{ top: '3rem' }}>
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
               </div>
             )}
             
@@ -155,7 +158,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               <iframe 
                 ref={iframeRef}
                 src={embeddedApp.url} 
-                className="w-full h-full border-none bg-white"
+                className="w-full h-full border-none bg-white dark:bg-gray-900"
                 title={embeddedApp.title}
                 onLoad={handleIframeLoad}
                 style={{ 

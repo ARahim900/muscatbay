@@ -4,6 +4,7 @@ import { Droplets, AirVent } from 'lucide-react';
 import SidebarLink from './SidebarLink';
 import SidebarSection from './SidebarSection';
 import { PumpStationIcon } from './CustomIcons';
+import { useTouchDevice } from '@/hooks/use-mobile';
 
 interface FacilitiesSectionProps {
   collapsed?: boolean;
@@ -23,6 +24,10 @@ const FacilitiesSection: React.FC<FacilitiesSectionProps> = ({
   openEmbeddedApp,
   externalApps
 }) => {
+  const isTouch = useTouchDevice();
+  
+  const linkClasses = isTouch ? "touch-manipulation min-h-[44px]" : "";
+  
   return (
     <SidebarSection title="Facilities" collapsed={collapsed} isMobile={isMobile}>
       <SidebarLink 
@@ -32,6 +37,7 @@ const FacilitiesSection: React.FC<FacilitiesSectionProps> = ({
         collapsed={collapsed} 
         external={false}
         isMobile={isMobile}
+        className={linkClasses}
       />
       <SidebarLink 
         to={externalApps.pumpingStation} 
@@ -41,6 +47,7 @@ const FacilitiesSection: React.FC<FacilitiesSectionProps> = ({
         external={true}
         openEmbedded={openEmbeddedApp}
         isMobile={isMobile}
+        className={linkClasses}
       />
       <SidebarLink 
         to="/hvac" 
@@ -49,6 +56,7 @@ const FacilitiesSection: React.FC<FacilitiesSectionProps> = ({
         collapsed={collapsed} 
         external={false}
         isMobile={isMobile}
+        className={linkClasses}
       />
     </SidebarSection>
   );
