@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Thermometer, Droplets, AirVent, FileText, Database, BarChart } from 'lucide-react';
+import { Thermometer, Droplets, AirVent, Zap } from 'lucide-react';
 import SidebarLink from './SidebarLink';
 import SidebarSection from './SidebarSection';
 import { PumpStationIcon } from './CustomIcons';
@@ -51,25 +51,9 @@ const FacilitiesSection: React.FC<FacilitiesSectionProps> = ({
         isMobile={isMobile}
       />
       <SidebarLink 
-        to="/electricity" 
-        icon={BarChart} 
+        to="/electricity-system" 
+        icon={Zap} 
         label="Electricity System" 
-        collapsed={collapsed} 
-        external={false}
-        isMobile={isMobile}
-      />
-      <SidebarLink 
-        to="/water" 
-        icon={Droplets} 
-        label="Water System" 
-        collapsed={collapsed} 
-        external={false}
-        isMobile={isMobile}
-      />
-      <SidebarLink 
-        to="/contracts" 
-        icon={FileText} 
-        label="Contracts" 
         collapsed={collapsed} 
         external={false}
         isMobile={isMobile}

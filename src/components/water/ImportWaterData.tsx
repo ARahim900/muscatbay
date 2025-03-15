@@ -5,11 +5,9 @@ import ImportInstructions from './ImportInstructions';
 import ImportButton from './ImportButton';
 import { parseCSVFromClipboard, saveWaterData } from '@/utils/waterDataUtils';
 import { WaterData } from '@/types/water';
-import { useSystemsData } from '@/hooks/useSystemsData';
 
 const ImportWaterData: React.FC = () => {
   const [importing, setImporting] = useState(false);
-  const { refreshWaterData } = useSystemsData();
   
   const handleImportSuccess = async (transformedData: WaterData[]) => {
     try {
@@ -20,9 +18,6 @@ const ImportWaterData: React.FC = () => {
           title: "Data imported successfully",
           description: result.message
         });
-        
-        // Refresh water data after successful import
-        refreshWaterData();
       } else {
         toast({
           title: "Error importing data",

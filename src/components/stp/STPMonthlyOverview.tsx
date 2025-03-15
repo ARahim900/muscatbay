@@ -1,58 +1,28 @@
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
+import { stpMonthlyData } from '@/utils/stpDataUtils';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line, Area, AreaChart } from 'recharts';
-import { fetchSTPMonthlyData } from '@/utils/stpDataFetcher';
-import type { STPMonthlyData } from '@/types/stp';
 
 interface STPMonthlyOverviewProps {
   selectedMonth?: string;
 }
 
 export const STPMonthlyOverview: React.FC<STPMonthlyOverviewProps> = ({ selectedMonth }) => {
-  const [monthlyData, setMonthlyData] = useState<STPMonthlyData[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const loadData = async () => {
-      setLoading(true);
-      const result = await fetchSTPMonthlyData();
-      
-      if (result.error) {
-        setError(result.error);
-      } else {
-        setMonthlyData(result.data || []);
-      }
-      
-      setLoading(false);
-    };
-    
-    loadData();
-  }, []);
-
-  if (loading) {
-    return <div className="p-6 text-center">Loading monthly data...</div>;
-  }
-  
-  if (error) {
-    return <div className="p-6 text-center text-red-500">Error loading data: {error}</div>;
-  }
-
   // Transform data for charts - ensure we're using actual numeric values
-  const chartData = monthlyData.map(month => ({
+  const chartData = stpMonthlyData.map(month => ({
     name: month.month.substring(5), // Just show MM format for cleaner display
-    tankerVolume: Number(month.expected_volume_tankers),
-    directSewage: Number(month.direct_sewage_mb),
-    totalInfluent: Number(month.total_influent),
-    processed: Number(month.total_water_processed),
-    irrigation: Number(month.tse_to_irrigation),
+    tankerVolume: Number(month.expectedVolumeTankers),
+    directSewage: Number(month.directSewageMB),
+    totalInfluent: Number(month.totalInfluent),
+    processed: Number(month.totalWaterProcessed),
+    irrigation: Number(month.tseToIrrigation),
   }));
 
   // Calculate efficiency metrics for each month - ensure proper numerical calculations
-  const efficiencyData = monthlyData.map(month => {
-    const processingEfficiency = ((Number(month.total_water_processed) / Number(month.total_influent)) * 100).toFixed(1);
-    const irrigationUtilization = ((Number(month.tse_to_irrigation) / Number(month.total_water_processed)) * 100).toFixed(1);
+  const efficiencyData = stpMonthlyData.map(month => {
+    const processingEfficiency = ((Number(month.totalWaterProcessed) / Number(month.totalInfluent)) * 100).toFixed(1);
+    const irrigationUtilization = ((Number(month.tseToIrrigation) / Number(month.totalWaterProcessed)) * 100).toFixed(1);
     
     return {
       name: month.month.substring(5),
