@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Thermometer, Droplets } from 'lucide-react';
+import { Thermometer, Droplets, AirVent } from 'lucide-react';
 import SidebarLink from './SidebarLink';
 import SidebarSection from './SidebarSection';
 import { PumpStationIcon } from './CustomIcons';
@@ -43,12 +43,11 @@ const FacilitiesSection: React.FC<FacilitiesSectionProps> = ({
         isMobile={isMobile}
       />
       <SidebarLink 
-        to={externalApps.hvac} 
-        icon={Thermometer} 
+        to="/hvac" 
+        icon={AirVent} 
         label="HVAC/BMS" 
         collapsed={collapsed} 
-        external={true}
-        openEmbedded={openEmbeddedApp}
+        external={false}
         isMobile={isMobile}
       />
     </SidebarSection>
