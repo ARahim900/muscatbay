@@ -66,6 +66,11 @@ export const parseCSVFromClipboard = async (
         }
       });
       
+      // Calculate the total consumption
+      waterDataEntry.total = Object.keys(waterDataEntry)
+        .filter(key => key.match(/^(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)_\d{2}$/))
+        .reduce((sum, key) => sum + ((waterDataEntry as any)[key] || 0), 0);
+      
       return waterDataEntry;
     });
     
@@ -148,6 +153,103 @@ export const saveWaterData = async (data: WaterData[]): Promise<{ success: boole
     };
   } catch (error) {
     console.error("Error in saveWaterData:", error);
+    return { 
+      success: false, 
+      message: error instanceof Error ? error.message : "Unknown error occurred" 
+    };
+  }
+};
+
+// New function to fetch water data from Supabase
+export const fetchWaterData = async (): Promise<{ data: WaterData[] | null; error: string | null }> => {
+  try {
+    const { data, error } = await supabase
+      .from('water_distribution_master')
+      .select('*');
+    
+    if (error) {
+      console.error("Error fetching water data:", error);
+      return { data: null, error: error.message };
+    }
+    
+    return { data, error: null };
+  } catch (error) {
+    console.error("Error fetching water data:", error);
+    return { 
+      data: null, 
+      error: error instanceof Error ? error.message : "Unknown error occurred" 
+    };
+  }
+};
+
+// Function to fetch water data by type
+export const fetchWaterDataByType = async (type: string): Promise<{ data: WaterData[] | null; error: string | null }> => {
+  try {
+    const { data, error } = await supabase
+      .from('water_distribution_master')
+      .select('*')
+      .eq('type', type);
+    
+    if (error) {
+      console.error(`Error fetching water data for type ${type}:`, error);
+      return { data: null, error: error.message };
+    }
+    
+    return { data, error: null };
+  } catch (error) {
+    console.error(`Error fetching water data for type ${type}:`, error);
+    return { 
+      data: null, 
+      error: error instanceof Error ? error.message : "Unknown error occurred" 
+    };
+  }
+};
+
+// Function to fetch water data by zone
+export const fetchWaterDataByZone = async (zone: string): Promise<{ data: WaterData[] | null; error: string | null }> => {
+  try {
+    const { data, error } = await supabase
+      .from('water_distribution_master')
+      .select('*')
+      .eq('zone', zone);
+    
+    if (error) {
+      console.error(`Error fetching water data for zone ${zone}:`, error);
+      return { data: null, error: error.message };
+    }
+    
+    return { data, error: null };
+  } catch (error) {
+    console.error(`Error fetching water data for zone ${zone}:`, error);
+    return { 
+      data: null, 
+      error: error instanceof Error ? error.message : "Unknown error occurred" 
+    };
+  }
+};
+
+// Function to update water data
+export const updateWaterMeter = async (meterId: number, updates: Partial<WaterData>): Promise<{ success: boolean; message: string }> => {
+  try {
+    const { error } = await supabase
+      .from('water_distribution_master')
+      .update(updates)
+      .eq('id', meterId);
+    
+    if (error) {
+      console.error("Error updating water meter:", error);
+      return { 
+        success: false, 
+        message: "Failed to update water meter. " + error.message 
+      };
+    }
+    
+    return { 
+      success: true, 
+      message: "Water meter updated successfully." 
+    };
+  } catch (error) {
+    console.error("Error updating water meter:", error);
     return { 
       success: false, 
       message: error instanceof Error ? error.message : "Unknown error occurred" 
