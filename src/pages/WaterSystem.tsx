@@ -1,1269 +1,1399 @@
 
-import React, { useState, useEffect, useMemo } from 'react';
-import { LineChart, Line, AreaChart, Area, BarChart, Bar, PieChart, Pie, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Cell } from 'recharts';
-import { Calendar, Search, Download, Filter, ChevronDown, Moon, Sun, Droplet, DollarSign, AlertTriangle, TrendingUp, Zap } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { 
+  LineChart, Line, BarChart, Bar, PieChart, Pie, 
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend, 
+  ResponsiveContainer, Cell, Area, AreaChart,
+  ComposedChart
+} from 'recharts';
+import { 
+  Droplet, BarChart2, Activity, Calendar, FileText, 
+  Filter, Moon, Sun, Download, RefreshCw, Search
+} from 'lucide-react';
 import Layout from '@/components/layout/Layout';
+import { supabase } from '@/integrations/supabase/client';
 
-// Sample data based on the provided file
-const allMonthlyData = [
-  { month: 'Jan-24', L1: 32803, L2: 11964, L3: 8114, DC: 16725, Retail: 15624, ResidentialVilla: 4240, IRR_Services: 3741, ResidentialApart: 1243, MB_Common: 274, Building: 181 },
-  { month: 'Feb-24', L1: 27996, L2: 10292, L3: 7486, DC: 14781, Retail: 12880, ResidentialVilla: 3627, IRR_Services: 2849, ResidentialApart: 1074, MB_Common: 258, Building: 171 },
-  { month: 'Mar-24', L1: 23860, L2: 11087, L3: 7631, DC: 12920, Retail: 11222, ResidentialVilla: 3768, IRR_Services: 2147, ResidentialApart: 861, MB_Common: 268, Building: 163 },
-  { month: 'Apr-24', L1: 31869, L2: 13380, L3: 9329, DC: 15333, Retail: 13217, ResidentialVilla: 4621, IRR_Services: 2950, ResidentialApart: 1152, MB_Common: 307, Building: 162 },
-  { month: 'May-24', L1: 30737, L2: 11785, L3: 8336, DC: 16304, Retail: 14150, ResidentialVilla: 4824, IRR_Services: 2211, ResidentialApart: 1217, MB_Common: 245, Building: 170 },
-  { month: 'Jun-24', L1: 41953, L2: 15699, L3: 11277, DC: 18927, Retail: 15562, ResidentialVilla: 5429, IRR_Services: 4662, ResidentialApart: 1204, MB_Common: 215, Building: 147 },
-  { month: 'Jul-24', L1: 35166, L2: 18370, L3: 12674, DC: 16319, Retail: 13347, ResidentialVilla: 5731, IRR_Services: 5247, ResidentialApart: 1189, MB_Common: 205, Building: 168 },
-  { month: 'Aug-24', L1: 35420, L2: 16401, L3: 11296, DC: 16352, Retail: 14129, ResidentialVilla: 5849, IRR_Services: 3653, ResidentialApart: 1347, MB_Common: 195, Building: 197 },
-  { month: 'Sep-24', L1: 41341, L2: 14818, L3: 10173, DC: 16074, Retail: 14217, ResidentialVilla: 5492, IRR_Services: 3040, ResidentialApart: 1154, MB_Common: 216, Building: 175 },
-  { month: 'Oct-24', L1: 31519, L2: 16461, L3: 11127, DC: 22824, Retail: 19688, ResidentialVilla: 5430, IRR_Services: 2843, ResidentialApart: 1270, MB_Common: 232, Building: 166 },
-  { month: 'Nov-24', L1: 35290, L2: 13045, L3: 8852, DC: 16868, Retail: 16745, ResidentialVilla: 5213, IRR_Services: 371, ResidentialApart: 1047, MB_Common: 227, Building: 117 },
-  { month: 'Dec-24', L1: 36733, L2: 16148, L3: 11065, DC: 16344, Retail: 16520, ResidentialVilla: 5064, IRR_Services: 295, ResidentialApart: 1091, MB_Common: 233, Building: 142 },
-  { month: 'Jan-25', L1: 32580, L2: 15327, L3: 10308, DC: 19897, Retail: 19780, ResidentialVilla: 4986, IRR_Services: 159, ResidentialApart: 1065, MB_Common: 275, Building: 152 },
-  { month: 'Feb-25', L1: 44043, L2: 14716, L3: 9944, DC: 21338, Retail: 21066, ResidentialVilla: 4977, IRR_Services: 286, ResidentialApart: 1057, MB_Common: 252, Building: 140 }
-];
-
-const zoneData = [
-  { zone: 'ZONE FM', bulk: 24394, individual: 23208, difference: 1186, lossPercent: 4.9, costPerM3: 1.32, lossCost: 1565.52 },
-  { zone: 'ZONE 3A', bulk: 38706, individual: 14020, difference: 24686, lossPercent: 63.8, costPerM3: 1.32, lossCost: 32585.52 },
-  { zone: 'ZONE 3B', bulk: 41055, individual: 17120, difference: 23935, lossPercent: 58.3, costPerM3: 1.32, lossCost: 31594.20 },
-  { zone: 'ZONE 5', bulk: 54039, individual: 19096, difference: 34943, lossPercent: 64.7, costPerM3: 1.32, lossCost: 46124.76 },
-  { zone: 'ZONE 8', bulk: 40155, individual: 29265, difference: 10890, lossPercent: 27.1, costPerM3: 1.32, lossCost: 14374.80 },
-  { zone: 'Village Square', bulk: 1144, individual: 904, difference: 240, lossPercent: 21.0, costPerM3: 1.32, lossCost: 316.80 }
-];
-
-const typeDistribution = [
-  { name: 'Retail', value: 234682, percent: 48.8, color: '#F87171' },
-  { name: 'Residential (Villas)', value: 66071, percent: 13.7, color: '#FBBF24' },
-  { name: 'IRR_Services', value: 32357, percent: 6.7, color: '#60A5FA' },
-  { name: 'Residential (Apart)', value: 16971, percent: 3.5, color: '#34D399' },
-  { name: 'MB_Common', value: 3379, percent: 0.7, color: '#A78BFA' },
-  { name: 'D_Building_Bulk', value: 7130, percent: 1.5, color: '#F472B6' },
-  { name: 'D_Building_Common', value: 464, percent: 0.1, color: '#6EE7B7' },
-  { name: 'System Losses', value: 120256, percent: 25.0, color: '#9CA3AF' }
-];
-
-interface MonthlyData {
-  month: string;
-  L1: number;
-  L2: number;
-  L3: number;
-  DC: number;
-  Retail: number;
-  ResidentialVilla: number;
-  IRR_Services: number;
-  ResidentialApart: number;
-  MB_Common: number;
-  Building: number;
-  [key: string]: number | string;
-}
-
-interface ZoneData {
-  zone: string;
-  bulk: number;
-  individual: number;
-  difference: number;
-  lossPercent: number;
-  costPerM3: number;
-  lossCost: number;
-}
-
-interface TypeDistribution {
-  name: string;
-  value: number;
-  percent: number;
-  color: string;
-}
-
-interface CalculatedMetrics {
-  totalL1: number;
-  totalL2: number;
-  totalL3: number;
-  totalDC: number;
-  l1ToL2Loss: number;
-  l2ToL3Loss: number;
-  totalLoss: number;
-  lossPercentage: number;
-  l1ToL2LossCost: number;
-  l2ToL3LossCost: number;
-  totalLossCost: number;
-  latestData: MonthlyData;
-  avgMonthlyConsumption: number;
-  totalRetail: number;
-  totalResidentialVilla: number;
-  totalIRR: number;
-  totalResidentialApart: number;
-  totalMBCommon: number;
-  totalBuilding: number;
-  payableConsumption: number;
-  payableCost: number;
-}
-
-// Add CSS for no scrollbar
-const noScrollbarStyle = `
-  .no-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
+// Sample data for 2024-2025
+const waterData = {
+  "2024": {
+    monthly: [
+      {month: "Jan", l1: 32803, l2: 11964, l3: 7188, dc: 16725, loss: 4114},
+      {month: "Feb", l1: 27996, l2: 10292, l3: 6437, dc: 14781, loss: 2923},
+      {month: "Mar", l1: 23860, l2: 11087, l3: 5666, dc: 12920, loss: -147},
+      {month: "Apr", l1: 31869, l2: 13380, l3: 7004, dc: 15333, loss: 3156},
+      {month: "May", l1: 30737, l2: 11785, l3: 5969, dc: 16304, loss: 2648},
+      {month: "Jun", l1: 41953, l2: 15699, l3: 7885, dc: 18927, loss: 7327},
+      {month: "Jul", l1: 35166, l2: 18370, l3: 7526, dc: 16319, loss: 477},
+      {month: "Aug", l1: 35420, l2: 16401, l3: 7526, dc: 16352, loss: 2667},
+      {month: "Sep", l1: 41341, l2: 14818, l3: 7212, dc: 16074, loss: 10449},
+      {month: "Oct", l1: 31519, l2: 16461, l3: 6820, dc: 22824, loss: -7766},
+      {month: "Nov", l1: 35290, l2: 13045, l3: 6254, dc: 16868, loss: 5377},
+      {month: "Dec", l1: 36733, l2: 16148, l3: 6813, dc: 16344, loss: 4241}
+    ],
+    zoneBulk: [
+      {zone: "ZONE FM", consumption: 20646, loss: 1277, lossPercentage: 6.2},
+      {zone: "ZONE 3A", consumption: 30198, loss: 18526, lossPercentage: 61.3},
+      {zone: "ZONE 3B", consumption: 34837, loss: 19936, lossPercentage: 57.2},
+      {zone: "ZONE 5", consumption: 45541, loss: 29089, lossPercentage: 63.9},
+      {zone: "ZONE 8", consumption: 37110, loss: 14306, lossPercentage: 38.6},
+      {zone: "Village Square", consumption: 1118, loss: 354, lossPercentage: 31.7}
+    ],
+    zoneMonthly: {
+      "ZONE FM": [1595, 1283, 1255, 1383, 1411, 2078, 2601, 1638, 1550, 2098, 1808, 1946],
+      "ZONE 3A": [1234, 1099, 1297, 1892, 2254, 2227, 3313, 3172, 2698, 3715, 3501, 3796],
+      "ZONE 3B": [2653, 2169, 2315, 2381, 2634, 2932, 3369, 3458, 3742, 2906, 2695, 3583],
+      "ZONE 5": [4286, 3897, 4127, 4911, 2639, 4992, 5305, 4039, 2736, 3383, 1438, 3788],
+      "ZONE 8": [2170, 1825, 2021, 2753, 2722, 3193, 3639, 3957, 3947, 4296, 3569, 3018],
+      "Village Square": [26, 19, 72, 60, 125, 277, 143, 137, 145, 63, 34, 17]
+    },
+    consumptionByType: [
+      {type: "Retail", value: 192667, percentage: 47.6},
+      {type: "Residential (Villas)", value: 54771, percentage: 13.5},
+      {type: "Residential (Apart)", value: 14145, percentage: 3.5},
+      {type: "IRR_Services", value: 27469, percentage: 6.8},
+      {type: "MB_Common", value: 2769, percentage: 0.7},
+      {type: "D_Building_Bulk", value: 5901, percentage: 1.5},
+      {type: "D_Building_Common", value: 390, percentage: 0.1},
+      {type: "Loss", value: 118954, percentage: 29.4}
+    ],
+    typeMonthly: {
+      "Retail": [14012, 12880, 11222, 13217, 13980, 15385, 12810, 13747, 13031, 19940, 16458, 15970],
+      "Residential (Villas)": [4238, 3745, 3835, 4524, 4581, 5155, 4812, 5087, 4396, 5023, 4292, 5083],
+      "Residential (Apart)": [1024, 972, 1059, 1162, 1142, 1132, 1288, 1301, 1118, 1362, 1307, 1278],
+      "IRR_Services": [2535, 1713, 1531, 1949, 2180, 3404, 3424, 2514, 2937, 2763, 295, 238],
+      "MB_Common": [178, 188, 167, 167, 144, 138, 85, 91, 106, 121, 115, 136],
+      "D_Building_Bulk": [425, 381, 463, 562, 421, 491, 530, 546, 499, 563, 451, 569],
+      "D_Building_Common": [41, 42, 27, 23, 10, 10, 14, 9, 10, 20, 15, 12]
+    },
+    payable: {
+      "IRR_Services": {consumption: 27469, cost: 36259.08},
+      "MB_Common": {consumption: 2769, cost: 3655.08},
+      "D_Building_Common": {consumption: 390, cost: 514.8}
+    },
+    summary: {
+      totalConsumption: 404687,
+      avgDailyConsumption: 1106,
+      totalLoss: 118954,
+      lossPercentage: 29.4,
+      highestConsumptionMonth: "June",
+      lowestConsumptionMonth: "March",
+      payableConsumption: 30628,
+      payableCost: 40429,
+      waterRate: 1.32 // OMR per m³
+    }
+  },
+  "2025": {
+    monthly: [
+      {month: "Jan", l1: 32580, l2: 15327, l3: 9109, dc: 19897, loss: -2644},
+      {month: "Feb", l1: 44043, l2: 14716, l3: 8542, dc: 21338, loss: 7989}
+    ],
+    zoneBulk: [
+      {zone: "ZONE FM", consumption: 3748, loss: -91, lossPercentage: -2.4},
+      {zone: "ZONE 3A", consumption: 8508, loss: 6160, lossPercentage: 72.4},
+      {zone: "ZONE 3B", consumption: 6218, loss: 3999, lossPercentage: 64.3},
+      {zone: "ZONE 5", consumption: 8498, loss: 5854, lossPercentage: 68.9},
+      {zone: "ZONE 8", consumption: 3045, loss: -3416, lossPercentage: -112.2},
+      {zone: "Village Square", consumption: 26, loss: -114, lossPercentage: -438.5}
+    ],
+    zoneMonthly: {
+      "ZONE FM": [2008, 1740],
+      "ZONE 3A": [4235, 4273],
+      "ZONE 3B": [3256, 2962],
+      "ZONE 5": [4267, 4231],
+      "ZONE 8": [1547, 1498],
+      "Village Square": [14, 12]
+    },
+    consumptionByType: [
+      {type: "Retail", value: 42015, percentage: 54.8},
+      {type: "Residential (Villas)", value: 11300, percentage: 14.7},
+      {type: "Residential (Apart)", value: 2826, percentage: 3.7},
+      {type: "IRR_Services", value: 4888, percentage: 6.4},
+      {type: "MB_Common", value: 610, percentage: 0.8},
+      {type: "D_Building_Bulk", value: 1229, percentage: 1.6},
+      {type: "D_Building_Common", value: 74, percentage: 0.1},
+      {type: "Loss", value: 17737, percentage: 23.1}
+    ],
+    typeMonthly: {
+      "Retail": [19590, 20970],
+      "Residential (Villas)": [5827, 5473],
+      "Residential (Apart)": [1450, 1376],
+      "IRR_Services": [2159, 2729],
+      "MB_Common": [148, 129],
+      "D_Building_Bulk": [615, 614],
+      "D_Building_Common": [37, 37]
+    },
+    payable: {
+      "IRR_Services": {consumption: 4888, cost: 6452.16},
+      "MB_Common": {consumption: 610, cost: 805.2},
+      "D_Building_Common": {consumption: 74, cost: 97.68}
+    },
+    summary: {
+      totalConsumption: 76623,
+      avgDailyConsumption: 1278,
+      totalLoss: 17737,
+      lossPercentage: 23.1,
+      highestConsumptionMonth: "February",
+      lowestConsumptionMonth: "January",
+      payableConsumption: 5572,
+      payableCost: 7355.04,
+      waterRate: 1.32 // OMR per m³
+    }
   }
-  .no-scrollbar::-webkit-scrollbar {
-    display: none;
+};
+
+// Color themes
+const themes = {
+  light: {
+    bg: "bg-gray-50",
+    cardBg: "bg-white",
+    panelBg: "bg-gray-100",
+    border: "border-gray-200",
+    text: "text-gray-800",
+    textSecondary: "text-gray-500",
+    shadow: "shadow",
+    primary: "#2563eb",
+    secondary: "#6b7280",
+    success: "#10b981",
+    warning: "#f59e0b",
+    danger: "#ef4444",
+    info: "#3b82f6",
+    chartColors: {
+      l1Color: "#3b82f6",
+      l2Color: "#10b981",
+      l3Color: "#8b5cf6",
+      dcColor: "#f59e0b",
+      lossColor: "#ef4444",
+      l2dcColor: "#059669", // L2 + DC
+      l3dcColor: "#7c3aed", // L3 + DC
+      bgGrid: "#e5e7eb"
+    },
+    zoneColors: ["#3b82f6", "#10b981", "#8b5cf6", "#f59e0b", "#ef4444", "#6366f1"],
+    typeColors: ["#3b82f6", "#10b981", "#8b5cf6", "#f59e0b", "#ef4444", "#6366f1", "#ec4899", "#14b8a6"]
+  },
+  dark: {
+    bg: "bg-slate-900",
+    cardBg: "bg-slate-800",
+    panelBg: "bg-slate-800",
+    border: "border-slate-700",
+    text: "text-slate-100",
+    textSecondary: "text-slate-400",
+    shadow: "shadow-xl shadow-slate-900/50",
+    primary: "#3b82f6",
+    secondary: "#94a3b8",
+    success: "#10b981",
+    warning: "#f59e0b",
+    danger: "#ef4444",
+    info: "#3b82f6",
+    chartColors: {
+      l1Color: "#3b82f6",
+      l2Color: "#10b981",
+      l3Color: "#8b5cf6",
+      dcColor: "#f59e0b",
+      lossColor: "#ef4444",
+      l2dcColor: "#059669", // L2 + DC
+      l3dcColor: "#7c3aed", // L3 + DC
+      bgGrid: "#334155"
+    },
+    zoneColors: ["#3b82f6", "#10b981", "#8b5cf6", "#f59e0b", "#ef4444", "#6366f1"],
+    typeColors: ["#3b82f6", "#10b981", "#8b5cf6", "#f59e0b", "#ef4444", "#6366f1", "#ec4899", "#14b8a6"]
   }
-`;
+};
 
-const WaterSystem: React.FC = () => {
-  const [darkMode, setDarkMode] = useState<boolean>(false);
-  const [activeTab, setActiveTab] = useState<string>('overview');
-  const [selectedYear, setSelectedYear] = useState<string>('all');
-  const [selectedMonth, setSelectedMonth] = useState<string>('all');
-  const [filteredData, setFilteredData] = useState<MonthlyData[]>(allMonthlyData);
-  const [visibleTypes, setVisibleTypes] = useState<string[]>(['Retail', 'ResidentialVilla', 'IRR_Services', 'ResidentialApart', 'MB_Common', 'Building']);
-  const [visibleZones, setVisibleZones] = useState<string[]>(['ZONE FM', 'ZONE 3A', 'ZONE 3B', 'ZONE 5', 'ZONE 8', 'Village Square']);
-  const [showYearDropdown, setShowYearDropdown] = useState<boolean>(false);
-  const [showMonthDropdown, setShowMonthDropdown] = useState<boolean>(false);
-  const [showExportDropdown, setShowExportDropdown] = useState<boolean>(false);
+// Helper function to format numbers
+const formatNumber = (num, decimals = 0) => {
+  if (num === undefined || num === null) return '';
+  return num.toLocaleString(undefined, { 
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals
+  });
+};
+
+// Component for metric card
+const MetricCard = ({ title, value, unit, subValue, subUnit, icon, color, percentage, theme }) => {
+  const Icon = icon;
   
-  // Cost per cubic meter
-  const COST_PER_M3 = 1.32;
-  
-  // Calculate available years and months from data
-  const availableYears = useMemo(() => {
-    const years = [...new Set(allMonthlyData.map(item => item.month.split('-')[1]))];
-    return ['all', ...years];
-  }, []);
-  
-  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  
-  // Get available months based on selected year
-  const availableMonths = useMemo(() => {
-    if (selectedYear === 'all') {
-      return ['all', ...monthNames];
-    }
-    
-    const months = allMonthlyData
-      .filter(item => item.month.includes(`-${selectedYear}`))
-      .map(item => item.month.split('-')[0]);
-    
-    return ['all', ...new Set(months)];
-  }, [selectedYear]);
-
-  // Format numbers with commas
-  const formatNumber = (num: number | undefined): string => {
-    return num?.toLocaleString() || '0';
-  };
-
-  // Format currency
-  const formatCurrency = (num: number): string => {
-    return `${formatNumber(num)} OMR`;
-  };
-
-  useEffect(() => {
-    // Add the style element for no scrollbar
-    const style = document.createElement('style');
-    style.textContent = noScrollbarStyle;
-    document.head.appendChild(style);
-    
-    // Set the document title
-    document.title = 'Water System | Muscat Bay Asset Manager';
-    
-    return () => {
-      // Clean up the style element when component unmounts
-      document.head.removeChild(style);
-    };
-  }, []);
-
-  // Filter data based on selected year and month
-  useEffect(() => {
-    let filtered = [...allMonthlyData];
-    
-    if (selectedYear !== 'all') {
-      filtered = filtered.filter(item => item.month.includes(`-${selectedYear}`));
-    }
-    
-    if (selectedMonth !== 'all') {
-      filtered = filtered.filter(item => item.month.startsWith(selectedMonth));
-    }
-    
-    // If no data matches the filter, don't change the current data
-    // This prevents selecting non-existent month-year combinations
-    if (filtered.length === 0) {
-      if (selectedMonth !== 'all' && selectedYear !== 'all') {
-        // Alert user about invalid selection
-        alert(`No data available for ${selectedMonth} 20${selectedYear}`);
-      } else {
-        setFilteredData(allMonthlyData);
-      }
-    } else {
-      setFilteredData(filtered);
-    }
-  }, [selectedYear, selectedMonth]);
-
-  // Calculate summaries based on filtered data
-  const calculateMetrics = useMemo<CalculatedMetrics | null>(() => {
-    // Only calculate if we have data
-    if (!filteredData.length) return null;
-    
-    const totalL1 = filteredData.reduce((sum, month) => sum + month.L1, 0);
-    const totalL2 = filteredData.reduce((sum, month) => sum + month.L2, 0);
-    const totalL3 = filteredData.reduce((sum, month) => sum + month.L3, 0);
-    const totalDC = filteredData.reduce((sum, month) => sum + month.DC, 0);
-    
-    // Calculate losses
-    const l1ToL2Loss = totalL1 - (totalL2 + totalDC);
-    const l2ToL3Loss = totalL2 - totalL3;
-    const totalLoss = l1ToL2Loss + l2ToL3Loss;
-    const lossPercentage = (totalLoss / totalL1) * 100;
-    
-    // Calculate monetary values
-    const l1ToL2LossCost = l1ToL2Loss * COST_PER_M3;
-    const l2ToL3LossCost = l2ToL3Loss * COST_PER_M3;
-    const totalLossCost = totalLoss * COST_PER_M3;
-    
-    // Latest data point
-    const latestData = filteredData[filteredData.length - 1];
-    
-    // Calculate monthly average
-    const avgMonthlyConsumption = Math.round(totalL1 / filteredData.length);
-    
-    // Consumption types total
-    const totalRetail = filteredData.reduce((sum, month) => sum + month.Retail, 0);
-    const totalResidentialVilla = filteredData.reduce((sum, month) => sum + month.ResidentialVilla, 0);
-    const totalIRR = filteredData.reduce((sum, month) => sum + month.IRR_Services, 0);
-    const totalResidentialApart = filteredData.reduce((sum, month) => sum + month.ResidentialApart, 0);
-    const totalMBCommon = filteredData.reduce((sum, month) => sum + month.MB_Common, 0);
-    const totalBuilding = filteredData.reduce((sum, month) => sum + month.Building, 0);
-    
-    // Payable consumption (from your original data)
-    const payableConsumption = totalIRR + totalMBCommon + totalBuilding;
-    const payableCost = payableConsumption * COST_PER_M3;
-
-    return {
-      totalL1,
-      totalL2,
-      totalL3,
-      totalDC,
-      l1ToL2Loss,
-      l2ToL3Loss,
-      totalLoss,
-      lossPercentage,
-      l1ToL2LossCost,
-      l2ToL3LossCost,
-      totalLossCost,
-      latestData,
-      avgMonthlyConsumption,
-      totalRetail,
-      totalResidentialVilla,
-      totalIRR,
-      totalResidentialApart,
-      totalMBCommon,
-      totalBuilding,
-      payableConsumption,
-      payableCost
-    };
-  }, [filteredData, COST_PER_M3]);
-
-  // Toggle a type's visibility
-  const toggleTypeVisibility = (type: string) => {
-    if (visibleTypes.includes(type)) {
-      setVisibleTypes(visibleTypes.filter(t => t !== type));
-    } else {
-      setVisibleTypes([...visibleTypes, type]);
-    }
-  };
-
-  // Toggle a zone's visibility
-  const toggleZoneVisibility = (zone: string) => {
-    if (visibleZones.includes(zone)) {
-      setVisibleZones(visibleZones.filter(z => z !== zone));
-    } else {
-      setVisibleZones([...visibleZones, zone]);
-    }
-  };
-
-  // Background and text colors based on dark mode
-  const bgColor = darkMode ? 'bg-gray-900' : 'bg-gray-50';
-  const textColor = darkMode ? 'text-white' : 'text-gray-800';
-  const cardBg = darkMode ? 'bg-gray-800' : 'bg-white';
-  const borderColor = darkMode ? 'border-gray-700' : 'border-gray-200';
-  const secondaryText = darkMode ? 'text-gray-400' : 'text-gray-500';
-  const activeTabBg = darkMode ? 'bg-gray-700' : 'bg-blue-50';
-  const activeTabText = darkMode ? 'text-blue-400' : 'text-blue-600';
-  const headerBg = darkMode ? 'bg-gray-800' : 'bg-white';
-
-  // Filter zone data based on visible zones
-  const filteredZoneData = zoneData.filter(zone => visibleZones.includes(zone.zone));
-  
-  // Define tabs for the dashboard
-  const tabs = [
-    { id: 'overview', label: 'Overview', icon: <TrendingUp size={16} /> },
-    { id: 'zone-analysis', label: 'Zone Analysis', icon: <Zap size={16} /> },
-    { id: 'consumption', label: 'Consumption Types', icon: <Droplet size={16} /> },
-    { id: 'losses', label: 'Losses', icon: <AlertTriangle size={16} /> }
-  ];
-
-  // Get display text for date filter
-  const getDisplayText = () => {
-    if (selectedYear === 'all' && selectedMonth === 'all') return 'All Data';
-    if (selectedYear === 'all') return `${selectedMonth} (All Years)`;
-    if (selectedMonth === 'all') return `All Months, 20${selectedYear}`;
-    return `${selectedMonth} 20${selectedYear}`;
-  };
-  
-  // Check if metrics calculated successfully
-  if (!calculateMetrics) {
-    return (
-      <Layout>
-        <div className="flex items-center justify-center h-screen">
-          <div className="text-center">
-            <h2 className="text-2xl font-bold">Loading data...</h2>
-            <p>Please wait while we prepare your dashboard.</p>
-          </div>
+  return (
+    <div className={`${theme.cardBg} rounded-lg ${theme.shadow} p-6 flex flex-col h-36 relative overflow-hidden transition-colors duration-300`}>
+      <div className="absolute left-0 top-0 h-full w-1 bg-opacity-70" style={{ backgroundColor: color }}></div>
+      <div className="flex justify-between items-start">
+        <div className={`text-sm font-medium ${theme.textSecondary}`}>{title}</div>
+        <div className="p-2 rounded-full bg-opacity-20" style={{ backgroundColor: `${color}30` }}>
+          <Icon size={18} color={color} />
         </div>
-      </Layout>
+      </div>
+      <div className="mt-2 flex items-baseline">
+        <div className={`text-3xl font-semibold ${theme.text}`}>{formatNumber(value)}</div>
+        <div className={`ml-1 text-sm ${theme.textSecondary}`}>{unit}</div>
+      </div>
+      {subValue !== undefined && (
+        <div className={`mt-1 text-sm ${theme.textSecondary}`}>
+          {formatNumber(subValue, subUnit === "OMR" ? 2 : 0)} {subUnit}
+          {percentage !== undefined && (
+            <span className={`ml-2 ${percentage >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+              {percentage >= 0 ? '+' : ''}{percentage}%
+            </span>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Custom tooltip for charts
+const CustomTooltip = ({ active, payload, label, theme }) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className={`${theme.cardBg} p-3 border ${theme.border} ${theme.shadow} rounded-md`}>
+        <p className={`font-medium ${theme.text}`}>{label}</p>
+        {payload.map((entry, index) => (
+          <p key={`item-${index}`} style={{ color: entry.color }}>
+            {entry.name}: {formatNumber(entry.value)} m³
+          </p>
+        ))}
+      </div>
     );
   }
+  return null;
+};
+
+// Filter button component
+const FilterButton = ({ label, active, color, onClick, theme }) => {
+  return (
+    <button
+      className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+        active ? 'bg-opacity-20 shadow-sm' : 'bg-transparent'
+      }`}
+      style={{ backgroundColor: active ? `${color}30` : '', color: active ? color : theme.text }}
+      onClick={onClick}
+    >
+      <div className="flex items-center">
+        <div 
+          className="w-2 h-2 rounded-full mr-2" 
+          style={{ backgroundColor: color }}
+        ></div>
+        {label}
+      </div>
+    </button>
+  );
+};
+
+// Table component
+const DataTable = ({ data, columns, theme }) => {
+  return (
+    <div className="overflow-x-auto">
+      <table className={`min-w-full divide-y ${theme.border}`}>
+        <thead className={theme.panelBg}>
+          <tr>
+            {columns.map((column, index) => (
+              <th
+                key={index}
+                scope="col"
+                className={`px-4 py-3 text-left text-xs font-medium ${theme.textSecondary} uppercase tracking-wider ${
+                  column.numeric ? 'text-right' : ''
+                }`}
+              >
+                {column.header}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody className={`${theme.cardBg} divide-y ${theme.border}`}>
+          {data.map((row, rowIndex) => (
+            <tr key={rowIndex} className={rowIndex % 2 === 0 ? theme.cardBg : theme.panelBg}>
+              {columns.map((column, colIndex) => (
+                <td
+                  key={colIndex}
+                  className={`px-4 py-3 whitespace-nowrap text-sm ${theme.text} ${
+                    column.numeric ? 'text-right font-medium' : ''
+                  }`}
+                >
+                  {column.render 
+                    ? column.render(row[column.key], row, theme) 
+                    : column.numeric && typeof row[column.key] === 'number'
+                      ? formatNumber(row[column.key])
+                      : row[column.key]}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+};
+
+// Tab component
+const TabButton = ({ label, active, onClick, theme }) => {
+  return (
+    <button
+      className={`px-4 py-2 font-medium text-sm rounded-t-md ${
+        active 
+          ? `${theme.cardBg} text-blue-600 border-b-2 border-blue-600` 
+          : `${theme.textSecondary} hover:text-blue-500`
+      } transition-colors duration-200`}
+      onClick={onClick}
+    >
+      {label}
+    </button>
+  );
+};
+
+// Button component
+const Button = ({ children, icon, onClick, theme, primary = false, className = '' }) => {
+  const Icon = icon;
+  
+  return (
+    <button
+      onClick={onClick}
+      className={`flex items-center gap-1 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 
+      ${primary 
+        ? 'bg-blue-600 hover:bg-blue-700 text-white' 
+        : `${theme.panelBg} ${theme.text} hover:bg-opacity-80 border ${theme.border}`
+      } ${className}`}
+    >
+      {icon && <Icon size={16} />}
+      <span>{children}</span>
+    </button>
+  );
+};
+
+// Theme toggle component
+const ThemeToggle = ({ darkMode, setDarkMode }) => {
+  return (
+    <button
+      onClick={() => setDarkMode(!darkMode)}
+      className={`p-2 rounded-md transition-colors duration-200 ${
+        darkMode 
+          ? 'bg-gray-700 text-yellow-300 hover:bg-gray-600' 
+          : 'bg-gray-200 text-blue-900 hover:bg-gray-300'
+      }`}
+      aria-label="Toggle theme"
+    >
+      {darkMode ? <Sun size={18} /> : <Moon size={18} />}
+    </button>
+  );
+};
+
+// Main dashboard component
+const WaterSystemDashboard = () => {
+  const [selectedYear, setSelectedYear] = useState("2024");
+  const [selectedTab, setSelectedTab] = useState("overview");
+  const [selectedMonth, setSelectedMonth] = useState("All");
+  const [darkMode, setDarkMode] = useState(false);
+  const [visibleSeries, setVisibleSeries] = useState({
+    l1: true,
+    l2dc: true,
+    l3dc: true,
+    loss: true
+  });
+  
+  const [visibleZones, setVisibleZones] = useState({
+    "ZONE FM": true,
+    "ZONE 3A": true,
+    "ZONE 3B": true,
+    "ZONE 5": true,
+    "ZONE 8": true,
+    "Village Square": true
+  });
+  
+  const theme = darkMode ? themes.dark : themes.light;
+  
+  // Filter monthly data based on selected month
+  const getFilteredMonthlyData = () => {
+    let data;
+    if (selectedMonth === "All") {
+      data = waterData[selectedYear].monthly;
+    } else {
+      data = waterData[selectedYear].monthly.filter(item => item.month === selectedMonth);
+    }
+    
+    // Add combined metrics L2+DC and L3+DC to the data
+    return data.map(item => ({
+      ...item,
+      l2dc: item.l2 + item.dc, // Zone Bulk + Direct Connection
+      l3dc: item.l3 + item.dc  // Individual Meters + Direct Connection
+    }));
+  };
+  
+  // Get filtered zone data based on the selected month
+  const getFilteredZoneData = () => {
+    if (selectedMonth === "All") {
+      return waterData[selectedYear].zoneBulk;
+    } else {
+      const monthIndex = waterData[selectedYear].monthly.findIndex(m => m.month === selectedMonth);
+      if (monthIndex === -1) return waterData[selectedYear].zoneBulk;
+      
+      return waterData[selectedYear].zoneBulk.map(zone => {
+        const monthlyConsumption = waterData[selectedYear].zoneMonthly[zone.zone]?.[monthIndex] || 0;
+        // Estimating monthly loss based on annual loss percentage
+        const monthlyLoss = Math.round(monthlyConsumption * (zone.lossPercentage / 100));
+        
+        return {
+          ...zone,
+          consumption: monthlyConsumption,
+          loss: monthlyLoss
+        };
+      });
+    }
+  };
+  
+  // Get filtered consumption by type based on selected month
+  const getFilteredConsumptionByType = () => {
+    if (selectedMonth === "All") {
+      return waterData[selectedYear].consumptionByType;
+    } else {
+      const monthIndex = waterData[selectedYear].monthly.findIndex(m => m.month === selectedMonth);
+      if (monthIndex === -1) return waterData[selectedYear].consumptionByType;
+      
+      const typeMonthly = waterData[selectedYear].typeMonthly;
+      const totalMonthlyConsumption = waterData[selectedYear].monthly[monthIndex].l1;
+      
+      return waterData[selectedYear].consumptionByType.map(type => {
+        const monthlyValue = type.type === "Loss" 
+          ? waterData[selectedYear].monthly[monthIndex].loss
+          : typeMonthly[type.type]?.[monthIndex] || 0;
+        
+        return {
+          ...type,
+          value: monthlyValue,
+          percentage: parseFloat(((monthlyValue / totalMonthlyConsumption) * 100).toFixed(1))
+        };
+      });
+    }
+  };
+  
+  // For comparing current year with previous year
+  const getCurrentVsPreviousYear = () => {
+    if (selectedYear === "2025" && waterData["2024"]) {
+      const currentYearData = waterData["2025"];
+      const prevYearData = waterData["2024"];
+      
+      // Get comparable months (only months that exist in both years)
+      const comparableMonths = currentYearData.monthly.map(item => item.month)
+        .filter(month => prevYearData.monthly.some(m => m.month === month));
+      
+      if (selectedMonth !== "All" && comparableMonths.includes(selectedMonth)) {
+        // Compare specific month across years
+        const currentMonth = currentYearData.monthly.find(m => m.month === selectedMonth);
+        const prevMonth = prevYearData.monthly.find(m => m.month === selectedMonth);
+        
+        if (currentMonth && prevMonth) {
+          const percentageChange = ((currentMonth.l1 - prevMonth.l1) / prevMonth.l1 * 100).toFixed(1);
+          
+          return {
+            currentTotal: currentMonth.l1,
+            prevTotal: prevMonth.l1,
+            percentageChange: parseFloat(percentageChange)
+          };
+        }
+      } else {
+        // Calculate totals for those months only
+        const currentTotal = currentYearData.monthly
+          .filter(item => comparableMonths.includes(item.month))
+          .reduce((sum, item) => sum + item.l1, 0);
+          
+        const prevTotal = prevYearData.monthly
+          .filter(item => comparableMonths.includes(item.month))
+          .reduce((sum, item) => sum + item.l1, 0);
+        
+        const percentageChange = ((currentTotal - prevTotal) / prevTotal * 100).toFixed(1);
+        
+        return {
+          currentTotal,
+          prevTotal,
+          percentageChange: parseFloat(percentageChange)
+        };
+      }
+    }
+    
+    return null;
+  };
+  
+  // Get summary data based on month selection
+  const getSummaryData = () => {
+    if (selectedMonth === "All") {
+      return waterData[selectedYear].summary;
+    } else {
+      const monthData = waterData[selectedYear].monthly.find(m => m.month === selectedMonth);
+      if (!monthData) return waterData[selectedYear].summary;
+      
+      const daysInMonth = new Date(2024, 
+        ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"].indexOf(selectedMonth), 
+        0).getDate();
+      
+      return {
+        ...waterData[selectedYear].summary,
+        totalConsumption: monthData.l1,
+        avgDailyConsumption: Math.round(monthData.l1 / daysInMonth),
+        totalLoss: monthData.loss,
+        lossPercentage: parseFloat(((monthData.loss / monthData.l1) * 100).toFixed(1)),
+        // These will stay the same for monthly view
+        highestConsumptionMonth: waterData[selectedYear].summary.highestConsumptionMonth,
+        lowestConsumptionMonth: waterData[selectedYear].summary.lowestConsumptionMonth
+      };
+    }
+  };
+  
+  const yearComparisonData = getCurrentVsPreviousYear();
+  const filteredMonthlyData = getFilteredMonthlyData();
+  const filteredZoneData = getFilteredZoneData();
+  const filteredConsumptionByType = getFilteredConsumptionByType();
+  const summaryData = getSummaryData();
+  
+  // Prepare data for the zone comparison chart
+  const prepareZoneComparisonData = () => {
+    // Only show the zones that are selected
+    const filteredZones = filteredZoneData.filter(zone => visibleZones[zone.zone]);
+    
+    // Transform to format needed by chart
+    const months = waterData[selectedYear].monthly.map(m => m.month);
+    
+    if (selectedMonth === "All") {
+      return months.map((month, index) => {
+        const dataPoint = { month };
+        
+        filteredZones.forEach(zone => {
+          dataPoint[zone.zone] = waterData[selectedYear].zoneMonthly[zone.zone][index];
+        });
+        
+        return dataPoint;
+      });
+    } else {
+      const monthIndex = months.indexOf(selectedMonth);
+      if (monthIndex === -1) return [];
+      
+      return [{
+        month: selectedMonth,
+        ...filteredZones.reduce((acc, zone) => {
+          acc[zone.zone] = waterData[selectedYear].zoneMonthly[zone.zone][monthIndex];
+          return acc;
+        }, {})
+      }];
+    }
+  };
+  
+  const zoneComparisonData = prepareZoneComparisonData();
+  
+  // Table columns for zone data
+  const zoneColumns = [
+    { key: 'zone', header: 'Zone' },
+    { key: 'consumption', header: 'Consumption (m³)', numeric: true },
+    { key: 'loss', header: 'Loss (m³)', numeric: true },
+    { key: 'lossPercentage', header: 'Loss %', numeric: true, 
+      render: (value, row, theme) => (
+        <span className={value < 0 ? 'text-red-500' : value > 30 ? 'text-orange-500' : 'text-green-500'}>
+          {value.toFixed(1)}%
+        </span>
+      )
+    }
+  ];
+
+  // Set page title
+  useEffect(() => {
+    document.title = 'Water System | Muscat Bay Asset Manager';
+  }, []);
+  
+  // Initialize data from Supabase in the future
+  useEffect(() => {
+    // This would normally fetch data from Supabase
+    // const fetchData = async () => {
+    //   try {
+    //     const { data, error } = await supabase
+    //       .from('water_meter_readings')
+    //       .select('*');
+    //     
+    //     if (error) throw error;
+    //     // Process and set data
+    //   } catch (error) {
+    //     console.error('Error fetching water data:', error);
+    //   }
+    // };
+    // 
+    // fetchData();
+  }, []);
 
   return (
     <Layout>
-      <div className={`min-h-screen ${bgColor} ${textColor}`}>
+      <div className={`min-h-screen ${theme.bg} p-4 md:p-6 transition-colors duration-300`}>
         {/* Header */}
-        <div className={`${headerBg} border-b ${borderColor} p-4 flex justify-between items-center`}>
-          <div className="flex items-center">
-            <div className="flex items-center justify-center p-2 w-10 h-10 rounded bg-blue-600 text-white mr-3">
-              <Droplet size={20} />
+        <div className={`${theme.cardBg} rounded-lg ${theme.shadow} p-4 md:p-6 mb-6 transition-colors duration-300`}>
+          <div className="flex flex-col md:flex-row md:items-center justify-between">
+            <div className="flex items-center mb-4 md:mb-0">
+              <div className="p-3 rounded-full bg-blue-100 mr-4 dark:bg-blue-900">
+                <Droplet size={24} className="text-blue-600 dark:text-blue-400" />
+              </div>
+              <h1 className={`text-2xl font-bold ${theme.text}`}>Water System</h1>
             </div>
-            <h1 className="text-2xl font-bold">Muscat Bay Water System</h1>
-          </div>
-          <div className="flex items-center space-x-4">
-            {/* Year Selector */}
-            <div className="relative">
-              <button
-                onClick={() => {
-                  setShowYearDropdown(!showYearDropdown);
-                  setShowMonthDropdown(false);
+            
+            <div className="flex flex-wrap items-center gap-2">
+              <select 
+                className={`px-3 py-2 border ${theme.border} rounded-md text-sm ${theme.text} ${theme.cardBg}`}
+                value={selectedYear}
+                onChange={(e) => {
+                  setSelectedYear(e.target.value);
+                  // Reset month selection when changing year
+                  setSelectedMonth("All");
                 }}
-                className={`flex items-center space-x-2 px-3 py-2 border ${borderColor} rounded-md`}
               >
-                <Calendar size={16} className={secondaryText} />
-                <span>Year: {selectedYear === 'all' ? 'All' : `20${selectedYear}`}</span>
-                <ChevronDown size={16} className={secondaryText} />
-              </button>
+                <option value="2024">2024</option>
+                <option value="2025">2025</option>
+              </select>
               
-              {showYearDropdown && (
-                <div className={`absolute z-10 mt-1 w-48 rounded-md shadow-lg ${cardBg} ring-1 ring-black ring-opacity-5`}>
-                  <div className="py-1">
-                    {availableYears.map(year => (
-                      <button
-                        key={year}
-                        onClick={() => {
-                          setSelectedYear(year);
-                          // Reset month if changing year
-                          if (year !== selectedYear) {
-                            setSelectedMonth('all');
-                          }
-                          setShowYearDropdown(false);
-                        }}
-                        className={`block w-full text-left px-4 py-2 text-sm ${selectedYear === year ? 'bg-blue-100 text-blue-900' : `${secondaryText} hover:bg-gray-100`}`}
-                      >
-                        {year === 'all' ? 'All Years' : `20${year}`}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-            
-            {/* Month Selector */}
-            <div className="relative">
-              <button
-                onClick={() => {
-                  setShowMonthDropdown(!showMonthDropdown);
-                  setShowYearDropdown(false);
-                }}
-                className={`flex items-center space-x-2 px-3 py-2 border ${borderColor} rounded-md`}
+              <select 
+                className={`px-3 py-2 border ${theme.border} rounded-md text-sm ${theme.text} ${theme.cardBg}`}
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(e.target.value)}
               >
-                <Calendar size={16} className={secondaryText} />
-                <span>Month: {selectedMonth === 'all' ? 'All' : selectedMonth}</span>
-                <ChevronDown size={16} className={secondaryText} />
-              </button>
+                <option value="All">All Months</option>
+                {waterData[selectedYear].monthly.map(item => (
+                  <option key={item.month} value={item.month}>{item.month}</option>
+                ))}
+              </select>
               
-              {showMonthDropdown && (
-                <div className={`absolute z-10 mt-1 w-48 rounded-md shadow-lg ${cardBg} ring-1 ring-black ring-opacity-5`}>
-                  <div className="py-1">
-                    {availableMonths.map(month => (
-                      <button
-                        key={month}
-                        onClick={() => {
-                          setSelectedMonth(month);
-                          setShowMonthDropdown(false);
-                        }}
-                        className={`block w-full text-left px-4 py-2 text-sm ${selectedMonth === month ? 'bg-blue-100 text-blue-900' : `${secondaryText} hover:bg-gray-100`}`}
-                      >
-                        {month === 'all' ? 'All Months' : month}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-            
-            <div className="relative">
-              <button
-                onClick={() => setShowExportDropdown(!showExportDropdown)}
-                className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md flex items-center"
+              <Button 
+                icon={Download} 
+                primary 
+                theme={theme}
               >
-                <Download size={16} className="mr-2" />
-                <span>Export</span>
-                <ChevronDown size={16} className="ml-2" />
-              </button>
+                Export
+              </Button>
               
-              {showExportDropdown && (
-                <div className={`absolute right-0 z-10 mt-1 w-48 rounded-md shadow-lg ${cardBg} ring-1 ring-black ring-opacity-5`}>
-                  <div className="py-1">
-                    <button
-                      onClick={() => {
-                        console.log('Export as CSV');
-                        setShowExportDropdown(false);
-                      }}
-                      className={`block w-full text-left px-4 py-2 text-sm ${secondaryText} hover:bg-gray-100`}
-                    >
-                      Export as CSV
-                    </button>
-                    <button
-                      onClick={() => {
-                        console.log('Export as Excel');
-                        setShowExportDropdown(false);
-                      }}
-                      className={`block w-full text-left px-4 py-2 text-sm ${secondaryText} hover:bg-gray-100`}
-                    >
-                      Export as Excel
-                    </button>
-                    <button
-                      onClick={() => {
-                        console.log('Export as PDF');
-                        setShowExportDropdown(false);
-                      }}
-                      className={`block w-full text-left px-4 py-2 text-sm ${secondaryText} hover:bg-gray-100`}
-                    >
-                      Export as PDF
-                    </button>
-                  </div>
-                </div>
-              )}
+              <ThemeToggle darkMode={darkMode} setDarkMode={setDarkMode} />
             </div>
-            
-            <button
-              onClick={() => setDarkMode(!darkMode)}
-              className={`p-2 rounded-full ${darkMode ? 'bg-gray-700' : 'bg-gray-200'}`}
-              aria-label="Toggle dark mode"
-            >
-              {darkMode ? <Sun size={18} /> : <Moon size={18} />}
-            </button>
           </div>
         </div>
-
-        {/* Horizontal Navigation */}
-        <div className={`${cardBg} border-b ${borderColor} py-3 px-6`}>
-          <div className="flex overflow-x-auto no-scrollbar space-x-2">
-            {tabs.map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`px-4 py-2 rounded-md whitespace-nowrap transition-all duration-200 flex items-center ${
-                  activeTab === tab.id 
-                    ? `${activeTabBg} ${activeTabText} font-medium` 
-                    : `hover:bg-gray-100 ${secondaryText}`
-                }`}
-              >
-                <span className="mr-2">{tab.icon}</span>
-                {tab.label}
-              </button>
-            ))}
+        
+        {/* Tab navigation */}
+        <div className={`${theme.panelBg} rounded-t-lg border-b ${theme.border} mb-0 transition-colors duration-300`}>
+          <div className="flex overflow-x-auto">
+            <TabButton 
+              label="Overview" 
+              active={selectedTab === 'overview'} 
+              onClick={() => setSelectedTab('overview')} 
+              theme={theme}
+            />
+            <TabButton 
+              label="Zone Analysis" 
+              active={selectedTab === 'zones'} 
+              onClick={() => setSelectedTab('zones')} 
+              theme={theme}
+            />
+            <TabButton 
+              label="Consumption Types" 
+              active={selectedTab === 'types'} 
+              onClick={() => setSelectedTab('types')} 
+              theme={theme}
+            />
+            <TabButton 
+              label="Loss Analysis" 
+              active={selectedTab === 'loss'} 
+              onClick={() => setSelectedTab('loss')} 
+              theme={theme}
+            />
           </div>
         </div>
-
-        {/* Main content */}
-        <div className="p-6 overflow-y-auto">
-          {/* Current selection display */}
-          <div className="mb-6">
-            <h2 className="text-xl font-semibold">
-              Showing: <span className="text-blue-600">{getDisplayText()}</span>
-            </h2>
+        
+        <div className={`${theme.cardBg} rounded-b-lg ${theme.shadow} p-4 md:p-6 mb-6 transition-colors duration-300`}>
+          <div className={`text-sm ${theme.textSecondary} mb-4`}>
+            Showing: {selectedTab === 'overview' ? 'Water System Overview' : 
+                     selectedTab === 'zones' ? 'Zone Analysis' :
+                     selectedTab === 'types' ? 'Consumption Types' : 'Loss Analysis'} 
+            {selectedMonth !== 'All' ? ` for ${selectedMonth} ${selectedYear}` : ` for ${selectedYear}`}
           </div>
           
-          {/* Overview Tab Content */}
-          {activeTab === 'overview' && (
+          {/* Overview Tab */}
+          {selectedTab === 'overview' && (
             <>
-              {/* Stats Cards for Overview */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-                <div className={`${cardBg} p-6 rounded-lg border ${borderColor} shadow-sm hover:shadow-md transition-shadow duration-300`}>
-                  <h3 className={secondaryText}>Total Consumption</h3>
-                  <div className="mt-2">
-                    <div className="text-3xl font-bold">{formatNumber(calculateMetrics.totalL1)}</div>
-                    <p className={`text-sm ${secondaryText} mt-1`}>m³ for {getDisplayText()}</p>
-                  </div>
-                </div>
-                
-                <div className={`${cardBg} p-6 rounded-lg border ${borderColor} shadow-sm hover:shadow-md transition-shadow duration-300`}>
-                  <h3 className={secondaryText}>Water Loss</h3>
-                  <div className="mt-2">
-                    <div className="text-3xl font-bold text-red-600">{formatNumber(calculateMetrics.totalLoss)}</div>
-                    <p className={`text-sm ${secondaryText} mt-1`}>{calculateMetrics.lossPercentage.toFixed(1)}% of total supply</p>
-                  </div>
-                </div>
-                
-                <div className={`${cardBg} p-6 rounded-lg border ${borderColor} shadow-sm hover:shadow-md transition-shadow duration-300`}>
-                  <h3 className={secondaryText}>Payable Volume</h3>
-                  <div className="mt-2">
-                    <div className="text-3xl font-bold">{formatNumber(calculateMetrics.payableConsumption)}</div>
-                    <p className={`text-sm ${secondaryText} mt-1`}>{formatCurrency(calculateMetrics.payableCost)}</p>
-                  </div>
-                </div>
-                
-                <div className={`${cardBg} p-6 rounded-lg border ${borderColor} shadow-sm hover:shadow-md transition-shadow duration-300`}>
-                  <h3 className={secondaryText}>Monthly Average</h3>
-                  <div className="mt-2">
-                    <div className="text-3xl font-bold">{formatNumber(calculateMetrics.avgMonthlyConsumption)}</div>
-                    <p className={`text-sm ${secondaryText} mt-1`}>m³ per month</p>
-                  </div>
-                </div>
+              {/* Key metrics */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <MetricCard 
+                  title="Total Consumption" 
+                  value={summaryData.totalConsumption}
+                  unit="m³"
+                  subValue={summaryData.avgDailyConsumption}
+                  subUnit="m³/day avg."
+                  icon={Droplet}
+                  color={theme.chartColors.l1Color}
+                  percentage={yearComparisonData ? yearComparisonData.percentageChange : undefined}
+                  theme={theme}
+                />
+                <MetricCard 
+                  title="Total System Loss" 
+                  value={summaryData.totalLoss}
+                  unit="m³"
+                  subValue={summaryData.lossPercentage}
+                  subUnit="% of total"
+                  icon={BarChart2}
+                  color={theme.chartColors.lossColor}
+                  theme={theme}
+                />
+                <MetricCard 
+                  title="Highest Month" 
+                  value={selectedYear === "2024" ? 41953 : 44043}
+                  unit="m³"
+                  subValue={summaryData.highestConsumptionMonth}
+                  icon={Calendar}
+                  color={theme.info}
+                  theme={theme}
+                />
+                <MetricCard 
+                  title="Payable Consumption" 
+                  value={summaryData.payableConsumption}
+                  unit="m³"
+                  subValue={summaryData.payableCost}
+                  subUnit="OMR"
+                  icon={FileText}
+                  color={theme.warning}
+                  theme={theme}
+                />
               </div>
 
-              {/* Filters for types */}
-              <div className={`${cardBg} p-4 rounded-lg border ${borderColor} mb-6 shadow-sm`}>
-                <h2 className="font-medium mb-3">Filter by Type</h2>
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    onClick={() => toggleTypeVisibility('Retail')}
-                    className={`px-4 py-2 rounded-full text-sm flex items-center transition-colors duration-200 ${visibleTypes.includes('Retail') ? 'bg-orange-100 text-orange-600' : 'bg-gray-100 text-gray-600'}`}
-                  >
-                    <span className="w-3 h-3 rounded-full bg-orange-500 mr-2"></span>
-                    Retail
-                  </button>
-                  <button
-                    onClick={() => toggleTypeVisibility('ResidentialVilla')}
-                    className={`px-4 py-2 rounded-full text-sm flex items-center transition-colors duration-200 ${visibleTypes.includes('ResidentialVilla') ? 'bg-yellow-100 text-yellow-600' : 'bg-gray-100 text-gray-600'}`}
-                  >
-                    <span className="w-3 h-3 rounded-full bg-yellow-500 mr-2"></span>
-                    Residential (Villa)
-                  </button>
-                  <button
-                    onClick={() => toggleTypeVisibility('IRR_Services')}
-                    className={`px-4 py-2 rounded-full text-sm flex items-center transition-colors duration-200 ${visibleTypes.includes('IRR_Services') ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-600'}`}
-                  >
-                    <span className="w-3 h-3 rounded-full bg-blue-500 mr-2"></span>
-                    IRR_Services
-                  </button>
-                  <button
-                    onClick={() => toggleTypeVisibility('ResidentialApart')}
-                    className={`px-4 py-2 rounded-full text-sm flex items-center transition-colors duration-200 ${visibleTypes.includes('ResidentialApart') ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-600'}`}
-                  >
-                    <span className="w-3 h-3 rounded-full bg-green-500 mr-2"></span>
-                    Residential (Apart)
-                  </button>
-                  <button
-                    onClick={() => toggleTypeVisibility('MB_Common')}
-                    className={`px-4 py-2 rounded-full text-sm flex items-center transition-colors duration-200 ${visibleTypes.includes('MB_Common') ? 'bg-purple-100 text-purple-600' : 'bg-gray-100 text-gray-600'}`}
-                  >
-                    <span className="w-3 h-3 rounded-full bg-purple-500 mr-2"></span>
-                    MB_Common
-                  </button>
-                  <button
-                    onClick={() => toggleTypeVisibility('Building')}
-                    className={`px-4 py-2 rounded-full text-sm flex items-center transition-colors duration-200 ${visibleTypes.includes('Building') ? 'bg-pink-100 text-pink-600' : 'bg-gray-100 text-gray-600'}`}
-                  >
-                    <span className="w-3 h-3 rounded-full bg-pink-500 mr-2"></span>
-                    Building
-                  </button>
+              {/* Filter buttons */}
+              <div className="mb-4 flex flex-wrap gap-2">
+                <div className={`flex items-center mr-2 ${theme.textSecondary}`}>
+                  <Filter size={16} className="mr-1" />
+                  <span className="text-sm">Data Series:</span>
                 </div>
+                <FilterButton 
+                  label="Main Bulk (L1)" 
+                  active={visibleSeries.l1} 
+                  color={theme.chartColors.l1Color}
+                  onClick={() => setVisibleSeries({...visibleSeries, l1: !visibleSeries.l1})}
+                  theme={theme}
+                />
+                <FilterButton 
+                  label="Zone Bulk + DC (L2+DC)" 
+                  active={visibleSeries.l2dc} 
+                  color={theme.chartColors.l2dcColor}
+                  onClick={() => setVisibleSeries({...visibleSeries, l2dc: !visibleSeries.l2dc})}
+                  theme={theme}
+                />
+                <FilterButton 
+                  label="Individual Meters + DC (L3+DC)" 
+                  active={visibleSeries.l3dc} 
+                  color={theme.chartColors.l3dcColor}
+                  onClick={() => setVisibleSeries({...visibleSeries, l3dc: !visibleSeries.l3dc})}
+                  theme={theme}
+                />
+                <FilterButton 
+                  label="System Loss" 
+                  active={visibleSeries.loss} 
+                  color={theme.chartColors.lossColor}
+                  onClick={() => setVisibleSeries({...visibleSeries, loss: !visibleSeries.loss})}
+                  theme={theme}
+                />
               </div>
 
-              {/* Monthly Consumption Chart */}
-              <div className={`${cardBg} p-6 rounded-lg border ${borderColor} mb-6 shadow-sm`}>
-                <h2 className="text-xl font-medium mb-4">Monthly Consumption Trend</h2>
+              {/* Main chart */}
+              <div className={`${theme.cardBg} rounded-lg p-4 mb-6 transition-colors duration-300`}>
+                <h3 className={`text-lg font-medium mb-4 ${theme.text}`}>Monthly Water Consumption</h3>
                 <div className="h-80">
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart
-                      data={filteredData}
+                    <ComposedChart
+                      data={filteredMonthlyData}
                       margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                     >
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                      <XAxis dataKey="month" />
-                      <YAxis />
-                      <Tooltip formatter={(value) => [formatNumber(Number(value)) + ' m³', '']} />
-                      <Legend />
-                      {visibleTypes.includes('Retail') && (
-                        <Line 
-                          type="monotone" 
-                          dataKey="Retail" 
-                          name="Retail" 
-                          stroke="#F87171" 
-                          strokeWidth={2} 
-                          dot={{ r: 3 }} 
-                          activeDot={{ r: 5 }} 
-                        />
-                      )}
-                      {visibleTypes.includes('ResidentialVilla') && (
-                        <Line 
-                          type="monotone" 
-                          dataKey="ResidentialVilla" 
-                          name="Residential (Villa)" 
-                          stroke="#FBBF24" 
-                          strokeWidth={2} 
-                          dot={{ r: 3 }} 
-                          activeDot={{ r: 5 }} 
-                        />
-                      )}
-                      {visibleTypes.includes('IRR_Services') && (
-                        <Line 
-                          type="monotone" 
-                          dataKey="IRR_Services" 
-                          name="IRR_Services" 
-                          stroke="#60A5FA" 
-                          strokeWidth={2} 
-                          dot={{ r: 3 }} 
-                          activeDot={{ r: 5 }} 
-                        />
-                      )}
-                      {visibleTypes.includes('ResidentialApart') && (
-                        <Line 
-                          type="monotone" 
-                          dataKey="ResidentialApart" 
-                          name="Residential (Apart)" 
-                          stroke="#34D399" 
-                          strokeWidth={2} 
-                          dot={{ r: 3 }} 
-                          activeDot={{ r: 5 }} 
-                        />
-                      )}
-                      {visibleTypes.includes('MB_Common') && (
-                        <Line 
-                          type="monotone" 
-                          dataKey="MB_Common" 
-                          name="MB_Common" 
-                          stroke="#A78BFA" 
-                          strokeWidth={2} 
-                          dot={{ r: 3 }} 
-                          activeDot={{ r: 5 }} 
-                        />
-                      )}
-                      {visibleTypes.includes('Building') && (
-                        <Line 
-                          type="monotone" 
-                          dataKey="Building" 
-                          name="Building" 
-                          stroke="#F472B6" 
-                          strokeWidth={2} 
-                          dot={{ r: 3 }} 
-                          activeDot={{ r: 5 }} 
-                        />
-                      )}
-                    </LineChart>
+                      <CartesianGrid strokeDasharray="3 3" stroke={theme.chartColors.bgGrid} />
+                      <XAxis dataKey="month" tick={{ fill: theme.text }} />
+                      <YAxis tick={{ fill: theme.text }} />
+                      <Tooltip content={(props) => <CustomTooltip {...props} theme={theme} />} />
+                      <Legend wrapperStyle={{ color: theme.text }} />
+                      {visibleSeries.l1 && <Line 
+                        type="monotone" 
+                        dataKey="l1" 
+                        name="Main Bulk (L1)"
+                        stroke={theme.chartColors.l1Color} 
+                        strokeWidth={2} 
+                        dot={{ r: 4 }}
+                        activeDot={{ r: 6 }}
+                      />}
+                      {visibleSeries.l2dc && <Line 
+                        type="monotone" 
+                        dataKey="l2dc" 
+                        name="Zone Bulk + DC (L2+DC)"
+                        stroke={theme.chartColors.l2dcColor} 
+                        strokeWidth={2} 
+                        dot={{ r: 4 }}
+                      />}
+                      {visibleSeries.l3dc && <Line 
+                        type="monotone" 
+                        dataKey="l3dc" 
+                        name="Individual Meters + DC (L3+DC)"
+                        stroke={theme.chartColors.l3dcColor} 
+                        strokeWidth={2} 
+                        dot={{ r: 4 }}
+                      />}
+                      {visibleSeries.loss && <Bar 
+                        dataKey="loss" 
+                        name="System Loss"
+                        fill={theme.chartColors.lossColor} 
+                        fillOpacity={0.7}
+                      />}
+                    </ComposedChart>
                   </ResponsiveContainer>
                 </div>
               </div>
-
-              {/* Distribution Charts */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                {/* Type Distribution Chart */}
-                <div className={`${cardBg} p-6 rounded-lg border ${borderColor} shadow-sm`}>
-                  <h2 className="text-xl font-medium mb-4">Consumption by Type</h2>
+              
+              {/* Monthly data table */}
+              <div className={`${theme.cardBg} rounded-lg p-4 transition-colors duration-300`}>
+                <h3 className={`text-lg font-medium mb-4 ${theme.text}`}>Monthly Consumption Details</h3>
+                <DataTable 
+                  data={filteredMonthlyData}
+                  columns={[
+                    { key: 'month', header: 'Month' },
+                    { key: 'l1', header: 'Main Bulk (m³)', numeric: true },
+                    { key: 'l2dc', header: 'Zone Bulk + DC (m³)', numeric: true },
+                    { key: 'l3dc', header: 'Individual Meters + DC (m³)', numeric: true },
+                    { key: 'loss', header: 'System Loss (m³)', numeric: true, 
+                      render: (value, row, theme) => (
+                        <span className={value < 0 ? 'text-red-500' : theme.text}>
+                          {formatNumber(value)}
+                        </span>
+                      )
+                    }
+                  ]}
+                  theme={theme}
+                />
+              </div>
+            </>
+          )}
+          
+          {/* Zone Analysis Tab */}
+          {selectedTab === 'zones' && (
+            <>
+              {/* Zone metrics */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <MetricCard 
+                  title="Highest Consumption Zone" 
+                  value={filteredZoneData.reduce((prev, current) => 
+                    (prev.consumption > current.consumption) ? prev : current
+                  ).zone}
+                  subValue={filteredZoneData.reduce((prev, current) => 
+                    (prev.consumption > current.consumption) ? prev : current
+                  ).consumption}
+                  subUnit="m³"
+                  icon={Droplet}
+                  color={theme.success}
+                  theme={theme}
+                />
+                <MetricCard 
+                  title="Highest Loss Zone" 
+                  value={filteredZoneData.reduce((prev, current) => 
+                    (prev.loss > current.loss) ? prev : current
+                  ).zone}
+                  subValue={filteredZoneData.reduce((prev, current) => 
+                    (prev.loss > current.loss) ? prev : current
+                  ).loss}
+                  subUnit="m³"
+                  icon={BarChart2}
+                  color={theme.danger}
+                  theme={theme}
+                />
+                <MetricCard 
+                  title="Zone Bulk Total" 
+                  value={filteredZoneData.reduce((sum, item) => sum + item.consumption, 0)}
+                  unit="m³"
+                  subValue={(filteredZoneData.reduce((sum, item) => sum + item.consumption, 0) / 
+                            summaryData.totalConsumption * 100).toFixed(1)}
+                  subUnit="% of Main Bulk"
+                  icon={BarChart2}
+                  color={theme.info}
+                  theme={theme}
+                />
+                <MetricCard 
+                  title="Zone Distribution Loss" 
+                  value={filteredZoneData.reduce((sum, item) => sum + (item.loss > 0 ? item.loss : 0), 0)}
+                  unit="m³"
+                  subValue={(filteredZoneData.reduce((sum, item) => sum + (item.loss > 0 ? item.loss : 0), 0) / 
+                            filteredZoneData.reduce((sum, item) => sum + item.consumption, 0) * 100).toFixed(1)}
+                  subUnit="% of Zone Bulk"
+                  icon={BarChart2}
+                  color={theme.warning}
+                  theme={theme}
+                />
+              </div>
+              
+              {/* Zone filter buttons */}
+              <div className="mb-4 flex flex-wrap gap-2">
+                <div className={`flex items-center mr-2 ${theme.textSecondary}`}>
+                  <Filter size={16} className="mr-1" />
+                  <span className="text-sm">Zones:</span>
+                </div>
+                {filteredZoneData.map((zone, index) => (
+                  <FilterButton 
+                    key={zone.zone}
+                    label={zone.zone} 
+                    active={visibleZones[zone.zone]} 
+                    color={theme.zoneColors[index % theme.zoneColors.length]}
+                    onClick={() => setVisibleZones({
+                      ...visibleZones, 
+                      [zone.zone]: !visibleZones[zone.zone]
+                    })}
+                    theme={theme}
+                  />
+                ))}
+              </div>
+              
+              {/* Zone charts */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <div className={`${theme.cardBg} rounded-lg p-4 transition-colors duration-300`}>
+                  <h3 className={`text-lg font-medium mb-4 ${theme.text}`}>Zone Consumption Distribution</h3>
                   <div className="h-80">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
-                          data={typeDistribution.filter(item => 
-                            visibleTypes.includes(item.name.replace(' (Villas)', 'Villa').replace(' (Apart)', 'Apart'))
-                          )}
+                          data={filteredZoneData.filter(zone => visibleZones[zone.zone])}
                           cx="50%"
                           cy="50%"
-                          innerRadius={60}
-                          outerRadius={100}
-                          paddingAngle={2}
-                          dataKey="value"
-                          nameKey="name"
-                          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(1)}%`}
+                          labelLine={true}
+                          label={({ name, percent }) => `${name} (${(percent * 100).toFixed(1)}%)`}
+                          outerRadius={80}
+                          dataKey="consumption"
+                          nameKey="zone"
                         >
-                          {typeDistribution.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          {filteredZoneData.filter(zone => visibleZones[zone.zone]).map((entry, index) => (
+                            <Cell 
+                              key={`cell-${index}`} 
+                              fill={theme.zoneColors[filteredZoneData.findIndex(z => z.zone === entry.zone) % theme.zoneColors.length]} 
+                            />
                           ))}
                         </Pie>
-                        <Tooltip formatter={(value) => formatNumber(Number(value)) + ' m³'} />
+                        <Tooltip formatter={(value) => formatNumber(value) + ' m³'} />
+                        <Legend 
+                          formatter={(value) => <span className={theme.text}>{value}</span>}
+                        />
                       </PieChart>
                     </ResponsiveContainer>
                   </div>
                 </div>
-
-                {/* Consumption Composition Area Chart */}
-                <div className={`${cardBg} p-6 rounded-lg border ${borderColor} shadow-sm`}>
-                  <h2 className="text-xl font-medium mb-4">Consumption Composition</h2>
+                
+                <div className={`${theme.cardBg} rounded-lg p-4 transition-colors duration-300`}>
+                  <h3 className={`text-lg font-medium mb-4 ${theme.text}`}>Zone Consumption Trends</h3>
                   <div className="h-80">
                     <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart
-                        data={filteredData}
+                      <LineChart
+                        data={zoneComparisonData}
                         margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                       >
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                        <XAxis dataKey="month" />
-                        <YAxis />
-                        <Tooltip formatter={(value) => formatNumber(Number(value)) + ' m³'} />
-                        <Legend />
-                        {visibleTypes.includes('Retail') && (
-                          <Area type="monotone" dataKey="Retail" stackId="1" fill="#F87171" stroke="#F87171" name="Retail" />
-                        )}
-                        {visibleTypes.includes('ResidentialVilla') && (
-                          <Area type="monotone" dataKey="ResidentialVilla" stackId="1" fill="#FBBF24" stroke="#FBBF24" name="Residential (Villa)" />
-                        )}
-                        {visibleTypes.includes('IRR_Services') && (
-                          <Area type="monotone" dataKey="IRR_Services" stackId="1" fill="#60A5FA" stroke="#60A5FA" name="IRR_Services" />
-                        )}
-                        {visibleTypes.includes('ResidentialApart') && (
-                          <Area type="monotone" dataKey="ResidentialApart" stackId="1" fill="#34D399" stroke="#34D399" name="Residential (Apart)" />
-                        )}
-                        {visibleTypes.includes('MB_Common') && (
-                          <Area type="monotone" dataKey="MB_Common" stackId="1" fill="#A78BFA" stroke="#A78BFA" name="MB_Common" />
-                        )}
-                        {visibleTypes.includes('Building') && (
-                          <Area type="monotone" dataKey="Building" stackId="1" fill="#F472B6" stroke="#F472B6" name="Building" />
-                        )}
-                      </AreaChart>
+                        <CartesianGrid strokeDasharray="3 3" stroke={theme.chartColors.bgGrid} />
+                        <XAxis dataKey="month" tick={{ fill: theme.text }} />
+                        <YAxis tick={{ fill: theme.text }} />
+                        <Tooltip content={(props) => <CustomTooltip {...props} theme={theme} />} />
+                        <Legend wrapperStyle={{ color: theme.text }} />
+                        
+                        {Object.keys(visibleZones)
+                          .filter(zone => visibleZones[zone])
+                          .map((zone, index) => (
+                            <Line
+                              key={zone}
+                              type="monotone"
+                              dataKey={zone}
+                              name={zone}
+                              stroke={theme.zoneColors[index % theme.zoneColors.length]}
+                              strokeWidth={2}
+                              dot={{ r: 4 }}
+                            />
+                          ))
+                        }
+                      </LineChart>
                     </ResponsiveContainer>
                   </div>
                 </div>
               </div>
-            </>
-          )}
 
-          {/* Zone Analysis Tab */}
-          {activeTab === 'zone-analysis' && (
-            <>
-              {/* Stats Cards for Zone Analysis */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-                <div className={`${cardBg} p-6 rounded-lg border ${borderColor} shadow-sm hover:shadow-md transition-shadow duration-300`}>
-                  <h3 className={secondaryText}>Total Zone Bulk (L2)</h3>
-                  <div className="mt-2">
-                    <div className="text-3xl font-bold">{formatNumber(calculateMetrics.totalL2)}</div>
-                    <p className={`text-sm ${secondaryText} mt-1`}>m³ across all zones</p>
-                  </div>
-                </div>
-                
-                <div className={`${cardBg} p-6 rounded-lg border ${borderColor} shadow-sm hover:shadow-md transition-shadow duration-300`}>
-                  <h3 className={secondaryText}>Total Individual (L3)</h3>
-                  <div className="mt-2">
-                    <div className="text-3xl font-bold">{formatNumber(calculateMetrics.totalL3)}</div>
-                    <p className={`text-sm ${secondaryText} mt-1`}>m³ consumed by end users</p>
-                  </div>
-                </div>
-                
-                <div className={`${cardBg} p-6 rounded-lg border ${borderColor} shadow-sm hover:shadow-md transition-shadow duration-300`}>
-                  <h3 className={secondaryText}>Zone Losses</h3>
-                  <div className="mt-2">
-                    <div className="text-3xl font-bold text-red-600">{formatNumber(calculateMetrics.l2ToL3Loss)}</div>
-                    <p className={`text-sm ${secondaryText} mt-1`}>{formatCurrency(calculateMetrics.l2ToL3LossCost)}</p>
-                  </div>
-                </div>
-              </div>
-            
-              {/* Filter for Zones */}
-              <div className={`${cardBg} p-4 rounded-lg border ${borderColor} mb-6 shadow-sm`}>
-                <h2 className="font-medium mb-3">Filter by Zone</h2>
-                <div className="flex flex-wrap gap-2">
-                  {zoneData.map((zone) => (
-                    <button
-                      key={zone.zone}
-                      onClick={() => toggleZoneVisibility(zone.zone)}
-                      className={`px-4 py-2 rounded-full text-sm flex items-center transition-colors duration-200 ${visibleZones.includes(zone.zone) ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-600'}`}
-                    >
-                      <span className="w-3 h-3 rounded-full bg-blue-500 mr-2"></span>
-                      {zone.zone}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Zone Data Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-                {filteredZoneData.map((zone) => (
-                  <div key={zone.zone} className={`${cardBg} p-6 rounded-lg border ${borderColor} shadow-sm hover:shadow-md transition-shadow duration-300`}>
-                    <h2 className="text-lg font-medium mb-2">{zone.zone}</h2>
-                    <div className="grid grid-cols-2 gap-4 mb-4">
-                      <div>
-                        <p className={secondaryText}>Bulk (L2)</p>
-                        <p className="text-lg font-semibold">{formatNumber(zone.bulk)} m³</p>
-                      </div>
-                      <div>
-                        <p className={secondaryText}>Individual (L3)</p>
-                        <p className="text-lg font-semibold">{formatNumber(zone.individual)} m³</p>
-                      </div>
-                      <div>
-                        <p className={secondaryText}>Loss</p>
-                        <p className="text-lg font-semibold text-red-500">{formatNumber(zone.difference)} m³</p>
-                      </div>
-                      <div>
-                        <p className={secondaryText}>Loss Cost</p>
-                        <p className="text-lg font-semibold text-red-500">{formatNumber(zone.lossCost)} OMR</p>
-                      </div>
-                    </div>
-                    <div className="mt-2">
-                      <p className={secondaryText}>Loss Percentage</p>
-                      <div className="w-full bg-gray-200 rounded-full h-2 mt-1 mb-1">
-                        <div 
-                          className="bg-red-500 h-2 rounded-full transition-all duration-500" 
-                          style={{ width: `${zone.lossPercent}%` }}
-                        ></div>
-                      </div>
-                      <p className="text-sm font-semibold text-right">{zone.lossPercent.toFixed(1)}%</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Zone Comparison Chart */}
-              <div className={`${cardBg} p-6 rounded-lg border ${borderColor} mb-6 shadow-sm`}>
-                <h2 className="text-xl font-medium mb-4">Zone Comparison</h2>
-                <div className="h-80">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                      data={filteredZoneData}
-                      margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="zone" />
-                      <YAxis />
-                      <Tooltip formatter={(value, name) => {
-                        if (name === 'individual') return [formatNumber(Number(value)) + ' m³', 'Individual (L3)'];
-                        if (name === 'bulk') return [formatNumber(Number(value)) + ' m³', 'Bulk (L2)'];
-                        if (name === 'difference') return [formatNumber(Number(value)) + ' m³', 'Loss'];
-                        return [formatNumber(Number(value)), name];
-                      }} />
-                      <Legend />
-                      <Bar dataKey="bulk" name="Bulk (L2)" fill="#3B82F6" />
-                      <Bar dataKey="individual" name="Individual (L3)" fill="#60A5FA" />
-                      <Bar dataKey="difference" name="Loss" fill="#F87171" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-              
-              {/* Loss Percentage by Zone Chart */}
-              <div className={`${cardBg} p-6 rounded-lg border ${borderColor} mb-6 shadow-sm`}>
-                <h2 className="text-xl font-medium mb-4">Loss Percentage by Zone</h2>
-                <div className="h-80">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                      data={filteredZoneData}
-                      margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                      layout="vertical"
-                    >
-                      <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
-                      <XAxis type="number" domain={[0, 100]} unit="%" />
-                      <YAxis dataKey="zone" type="category" width={100} />
-                      <Tooltip formatter={(value) => `${Number(value).toFixed(1)}%`} />
-                      <Bar dataKey="lossPercent" name="Loss Percentage" fill="#F87171">
-                        {filteredZoneData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.lossPercent > 50 ? '#EF4444' : (entry.lossPercent > 25 ? '#F59E0B' : '#10B981')} />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-            </>
-          )}
-
-          {/* Consumption Types Tab */}
-          {activeTab === 'consumption' && (
-            <>
-              {/* Stats Cards for Consumption */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-                <div className={`${cardBg} p-6 rounded-lg border ${borderColor} shadow-sm hover:shadow-md transition-shadow duration-300`}>
-                  <h3 className={secondaryText}>Retail</h3>
-                  <div className="mt-2">
-                    <div className="text-3xl font-bold text-orange-500">{formatNumber(calculateMetrics.totalRetail)}</div>
-                    <p className={`text-sm ${secondaryText} mt-1`}>m³ ({((calculateMetrics.totalRetail / calculateMetrics.totalL1) * 100).toFixed(1)}% of total)</p>
-                  </div>
-                </div>
-                
-                <div className={`${cardBg} p-6 rounded-lg border ${borderColor} shadow-sm hover:shadow-md transition-shadow duration-300`}>
-                  <h3 className={secondaryText}>Residential</h3>
-                  <div className="mt-2">
-                    <div className="text-3xl font-bold text-yellow-500">{formatNumber(calculateMetrics.totalResidentialVilla + calculateMetrics.totalResidentialApart)}</div>
-                    <p className={`text-sm ${secondaryText} mt-1`}>m³ ({(((calculateMetrics.totalResidentialVilla + calculateMetrics.totalResidentialApart) / calculateMetrics.totalL1) * 100).toFixed(1)}% of total)</p>
-                  </div>
-                </div>
-                
-                <div className={`${cardBg} p-6 rounded-lg border ${borderColor} shadow-sm hover:shadow-md transition-shadow duration-300`}>
-                  <h3 className={secondaryText}>IRR Services</h3>
-                  <div className="mt-2">
-                    <div className="text-3xl font-bold text-blue-500">{formatNumber(calculateMetrics.totalIRR)}</div>
-                    <p className={`text-sm ${secondaryText} mt-1`}>m³ ({((calculateMetrics.totalIRR / calculateMetrics.totalL1) * 100).toFixed(1)}% of total)</p>
-                  </div>
-                </div>
-                
-                <div className={`${cardBg} p-6 rounded-lg border ${borderColor} shadow-sm hover:shadow-md transition-shadow duration-300`}>
-                  <h3 className={secondaryText}>Common Areas</h3>
-                  <div className="mt-2">
-                    <div className="text-3xl font-bold text-purple-500">{formatNumber(calculateMetrics.totalMBCommon + calculateMetrics.totalBuilding)}</div>
-                    <p className={`text-sm ${secondaryText} mt-1`}>m³ ({(((calculateMetrics.totalMBCommon + calculateMetrics.totalBuilding) / calculateMetrics.totalL1) * 100).toFixed(1)}% of total)</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                {/* Consumption by Type Bar Chart */}
-                <div className={`${cardBg} p-6 rounded-lg border ${borderColor} shadow-sm`}>
-                  <h2 className="text-xl font-medium mb-4">Consumption by Type</h2>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <div className={`${theme.cardBg} rounded-lg p-4 transition-colors duration-300`}>
+                  <h3 className={`text-lg font-medium mb-4 ${theme.text}`}>Zone Loss Comparison</h3>
                   <div className="h-80">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart
-                        data={[
-                          { name: 'Retail', value: calculateMetrics.totalRetail, color: '#F87171' },
-                          { name: 'Residential (Villa)', value: calculateMetrics.totalResidentialVilla, color: '#FBBF24' },
-                          { name: 'IRR_Services', value: calculateMetrics.totalIRR, color: '#60A5FA' },
-                          { name: 'Residential (Apart)', value: calculateMetrics.totalResidentialApart, color: '#34D399' },
-                          { name: 'MB_Common', value: calculateMetrics.totalMBCommon, color: '#A78BFA' },
-                          { name: 'Building', value: calculateMetrics.totalBuilding, color: '#F472B6' },
-                        ].filter(item => visibleTypes.includes(item.name.replace(' (Villa)', 'Villa').replace(' (Apart)', 'Apart')))}
+                        data={filteredZoneData.filter(zone => visibleZones[zone.zone])}
                         layout="vertical"
                         margin={{ top: 5, right: 30, left: 80, bottom: 5 }}
                       >
-                        <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
-                        <XAxis type="number" />
-                        <YAxis dataKey="name" type="category" width={110} />
-                        <Tooltip formatter={(value) => formatNumber(Number(value)) + ' m³'} />
-                        <Bar 
-                          dataKey="value" 
-                          animationDuration={1000}
-                        >
-                          {[
-                            { name: 'Retail', color: '#F87171' },
-                            { name: 'Residential (Villa)', color: '#FBBF24' },
-                            { name: 'IRR_Services', color: '#60A5FA' },
-                            { name: 'Residential (Apart)', color: '#34D399' },
-                            { name: 'MB_Common', color: '#A78BFA' },
-                            { name: 'Building', color: '#F472B6' },
-                          ]
-                            .filter(item => visibleTypes.includes(item.name.replace(' (Villa)', 'Villa').replace(' (Apart)', 'Apart')))
-                            .map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={entry.color} />
-                            ))
-                          }
-                        </Bar>
+                        <CartesianGrid strokeDasharray="3 3" stroke={theme.chartColors.bgGrid} />
+                        <XAxis type="number" tick={{ fill: theme.text }} />
+                        <YAxis type="category" dataKey="zone" tick={{ fill: theme.text }} />
+                        <Tooltip content={(props) => <CustomTooltip {...props} theme={theme} />} />
+                        <Legend wrapperStyle={{ color: theme.text }} />
+                        <Bar dataKey="consumption" name="Consumption" fill={theme.chartColors.l2Color} stackId="a" />
+                        <Bar dataKey="loss" name="Loss" fill={theme.chartColors.lossColor} stackId="a" />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
                 </div>
 
-                {/* Payable Consumption */}
-                <div className={`${cardBg} p-6 rounded-lg border ${borderColor} shadow-sm`}>
-                  <h2 className="text-xl font-medium mb-4">Payable Consumption</h2>
-                  <div className="space-y-4 mb-6">
-                    <div className="p-4 border border-gray-200 rounded-lg hover:shadow-sm transition-shadow duration-300">
-                      <div className="flex items-center">
-                        <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600 mr-3">
-                          <Droplet size={20} />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-gray-500">IRR_Services</p>
-                          <p className="text-lg font-bold">{formatNumber(calculateMetrics.totalIRR)} m³</p>
-                          <p className="text-sm text-gray-500">Cost: {formatCurrency(calculateMetrics.totalIRR * COST_PER_M3)}</p>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="p-4 border border-gray-200 rounded-lg hover:shadow-sm transition-shadow duration-300">
-                      <div className="flex items-center">
-                        <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center text-purple-600 mr-3">
-                          <Droplet size={20} />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-gray-500">MB_Common</p>
-                          <p className="text-lg font-bold">{formatNumber(calculateMetrics.totalMBCommon)} m³</p>
-                          <p className="text-sm text-gray-500">Cost: {formatCurrency(calculateMetrics.totalMBCommon * COST_PER_M3)}</p>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="p-4 border border-gray-200 rounded-lg hover:shadow-sm transition-shadow duration-300">
-                      <div className="flex items-center">
-                        <div className="w-10 h-10 rounded-lg bg-pink-100 flex items-center justify-center text-pink-600 mr-3">
-                          <Droplet size={20} />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-gray-500">Building</p>
-                          <p className="text-lg font-bold">{formatNumber(calculateMetrics.totalBuilding)} m³</p>
-                          <p className="text-sm text-gray-500">Cost: {formatCurrency(calculateMetrics.totalBuilding * COST_PER_M3)}</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="p-4 bg-green-50 border border-green-200 rounded-lg shadow-sm">
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <p className="text-lg font-semibold text-green-800">Total Payable</p>
-                        <p className="text-sm text-green-600">{COST_PER_M3.toFixed(3)} OMR per m³</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-2xl font-bold text-green-800">{formatNumber(calculateMetrics.payableConsumption)} m³</p>
-                        <p className="text-lg font-medium text-green-600">{formatCurrency(calculateMetrics.payableCost)}</p>
-                      </div>
-                    </div>
+                <div className={`${theme.cardBg} rounded-lg p-4 transition-colors duration-300`}>
+                  <h3 className={`text-lg font-medium mb-4 ${theme.text}`}>Zone Loss Percentage</h3>
+                  <div className="h-80">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart
+                        data={filteredZoneData.filter(zone => visibleZones[zone.zone] && zone.lossPercentage > 0)}
+                        margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" stroke={theme.chartColors.bgGrid} />
+                        <XAxis dataKey="zone" tick={{ fill: theme.text }} />
+                        <YAxis unit="%" tick={{ fill: theme.text }} />
+                        <Tooltip formatter={(value) => value.toFixed(1) + '%'} />
+                        <Legend wrapperStyle={{ color: theme.text }} />
+                        <Bar 
+                          dataKey="lossPercentage" 
+                          name="Loss Percentage"
+                          fill={theme.chartColors.lossColor} 
+                        >
+                          {filteredZoneData
+                            .filter(zone => visibleZones[zone.zone] && zone.lossPercentage > 0)
+                            .map((entry, index) => (
+                            <Cell 
+                              key={`cell-${index}`} 
+                              fill={entry.lossPercentage > 50 ? theme.danger : 
+                                    entry.lossPercentage > 30 ? theme.warning : theme.success} 
+                            />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
                   </div>
                 </div>
               </div>
               
-              {/* Consumption Trend by Type */}
-              <div className={`${cardBg} p-6 rounded-lg border ${borderColor} mb-6 shadow-sm`}>
-                <h2 className="text-xl font-medium mb-4">Consumption Trend by Type</h2>
-                <div className="h-80">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart
-                      data={filteredData}
-                      margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                      <XAxis dataKey="month" />
-                      <YAxis />
-                      <Tooltip formatter={(value) => formatNumber(Number(value)) + ' m³'} />
-                      <Legend />
-                      {visibleTypes.includes('Retail') && (
-                        <Line 
-                          type="monotone" 
-                          dataKey="Retail" 
-                          name="Retail" 
-                          stroke="#F87171" 
-                          strokeWidth={2} 
-                          dot={{ r: 3 }} 
-                          activeDot={{ r: 5 }} 
-                        />
-                      )}
-                      {visibleTypes.includes('ResidentialVilla') && (
-                        <Line 
-                          type="monotone" 
-                          dataKey="ResidentialVilla" 
-                          name="Residential (Villa)" 
-                          stroke="#FBBF24" 
-                          strokeWidth={2} 
-                          dot={{ r: 3 }} 
-                          activeDot={{ r: 5 }} 
-                        />
-                      )}
-                      {visibleTypes.includes('IRR_Services') && (
-                        <Line 
-                          type="monotone" 
-                          dataKey="IRR_Services" 
-                          name="IRR_Services" 
-                          stroke="#60A5FA" 
-                          strokeWidth={2} 
-                          dot={{ r: 3 }} 
-                          activeDot={{ r: 5 }} 
-                        />
-                      )}
-                      {visibleTypes.includes('ResidentialApart') && (
-                        <Line 
-                          type="monotone" 
-                          dataKey="ResidentialApart" 
-                          name="Residential (Apart)" 
-                          stroke="#34D399" 
-                          strokeWidth={2} 
-                          dot={{ r: 3 }} 
-                          activeDot={{ r: 5 }} 
-                        />
-                      )}
-                      {visibleTypes.includes('MB_Common') && (
-                        <Line 
-                          type="monotone" 
-                          dataKey="MB_Common" 
-                          name="MB_Common" 
-                          stroke="#A78BFA" 
-                          strokeWidth={2} 
-                          dot={{ r: 3 }} 
-                          activeDot={{ r: 5 }} 
-                        />
-                      )}
-                      {visibleTypes.includes('Building') && (
-                        <Line 
-                          type="monotone" 
-                          dataKey="Building" 
-                          name="Building" 
-                          stroke="#F472B6" 
-                          strokeWidth={2} 
-                          dot={{ r: 3 }} 
-                          activeDot={{ r: 5 }} 
-                        />
-                      )}
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
+              {/* Zone data table */}
+              <div className={`${theme.cardBg} rounded-lg p-4 transition-colors duration-300`}>
+                <h3 className={`text-lg font-medium mb-4 ${theme.text}`}>Zone Details</h3>
+                <DataTable data={filteredZoneData} columns={zoneColumns} theme={theme} />
               </div>
             </>
           )}
-
-          {/* Losses Tab */}
-          {activeTab === 'losses' && (
+          
+          {/* Consumption Types Tab */}
+          {selectedTab === 'types' && (
             <>
-              {/* System Losses Summary */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                <div className={`${cardBg} p-6 rounded-lg border ${borderColor} shadow-sm hover:shadow-md transition-shadow duration-300`}>
-                  <h2 className="text-lg font-medium text-gray-500 mb-2">Total System Loss</h2>
-                  <div className="text-3xl font-bold text-red-600">{formatNumber(calculateMetrics.totalLoss)} <span className="text-base font-normal text-gray-500">m³</span></div>
-                  <p className="text-gray-500 mt-1">{calculateMetrics.lossPercentage.toFixed(1)}% of total consumption</p>
-                  <p className="text-red-600 font-semibold mt-1">{formatCurrency(calculateMetrics.totalLossCost)}</p>
-                  <div className="mt-4 w-full bg-gray-200 rounded-full h-2.5">
-                    <div 
-                      className="bg-red-600 h-2.5 rounded-full transition-all duration-500" 
-                      style={{ width: `${calculateMetrics.lossPercentage}%` }}
-                    ></div>
+              {/* Consumption type metrics */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <MetricCard 
+                  title="Retail Consumption" 
+                  value={filteredConsumptionByType.find(t => t.type === 'Retail')?.value || 0}
+                  unit="m³"
+                  subValue={filteredConsumptionByType.find(t => t.type === 'Retail')?.percentage || 0}
+                  subUnit="% of total"
+                  icon={Activity}
+                  color={theme.typeColors[0]}
+                  theme={theme}
+                />
+                <MetricCard 
+                  title="Residential (Villas)" 
+                  value={filteredConsumptionByType.find(t => t.type === 'Residential (Villas)')?.value || 0}
+                  unit="m³"
+                  subValue={filteredConsumptionByType.find(t => t.type === 'Residential (Villas)')?.percentage || 0}
+                  subUnit="% of total"
+                  icon={Activity}
+                  color={theme.typeColors[1]}
+                  theme={theme}
+                />
+                <MetricCard 
+                  title="Irrigation Services" 
+                  value={filteredConsumptionByType.find(t => t.type === 'IRR_Services')?.value || 0}
+                  unit="m³"
+                  subValue={filteredConsumptionByType.find(t => t.type === 'IRR_Services')?.percentage || 0}
+                  subUnit="% of total"
+                  icon={Activity}
+                  color={theme.typeColors[3]}
+                  theme={theme}
+                />
+                <MetricCard 
+                  title="System Loss" 
+                  value={filteredConsumptionByType.find(t => t.type === 'Loss')?.value || 0}
+                  unit="m³"
+                  subValue={filteredConsumptionByType.find(t => t.type === 'Loss')?.percentage || 0}
+                  subUnit="% of total"
+                  icon={Activity}
+                  color={theme.chartColors.lossColor}
+                  theme={theme}
+                />
+              </div>
+              
+              {/* Water price information */}
+              <div className={`flex flex-col md:flex-row gap-4 mb-6`}>
+                <div className={`${theme.cardBg} rounded-lg p-4 flex-1 transition-colors duration-300`}>
+                  <h3 className={`text-lg font-medium mb-2 ${theme.text}`}>Water Pricing Information</h3>
+                  <div className={`text-sm ${theme.textSecondary}`}>
+                    <p>Water rate: <span className="font-semibold">{summaryData.waterRate.toFixed(2)} OMR</span> per cubic meter (m³)</p>
+                    <p className="mt-2">Total payable consumption: <span className="font-semibold">{formatNumber(summaryData.payableConsumption)} m³</span></p>
+                    <p className="mt-2">Total cost: <span className="font-semibold">{formatNumber(summaryData.payableCost, 2)} OMR</span></p>
                   </div>
                 </div>
                 
-                <div className={`${cardBg} p-6 rounded-lg border ${borderColor} shadow-sm hover:shadow-md transition-shadow duration-300`}>
-                  <h2 className="text-lg font-medium text-gray-500 mb-2">L1 to L2/DC Loss</h2>
-                  <div className="text-3xl font-bold text-amber-600">{formatNumber(calculateMetrics.l1ToL2Loss)} <span className="text-base font-normal text-gray-500">m³</span></div>
-                  <p className="text-gray-500 mt-1">{((calculateMetrics.l1ToL2Loss / calculateMetrics.totalL1) * 100).toFixed(1)}% of main bulk (L1)</p>
-                  <p className="text-amber-600 font-semibold mt-1">{formatCurrency(calculateMetrics.l1ToL2LossCost)}</p>
-                  <div className="mt-4 w-full bg-gray-200 rounded-full h-2.5">
-                    <div 
-                      className="bg-amber-600 h-2.5 rounded-full transition-all duration-500" 
-                      style={{ width: `${(calculateMetrics.l1ToL2Loss / calculateMetrics.totalL1) * 100}%` }}
-                    ></div>
-                  </div>
-                </div>
-                
-                <div className={`${cardBg} p-6 rounded-lg border ${borderColor} shadow-sm hover:shadow-md transition-shadow duration-300`}>
-                  <h2 className="text-lg font-medium text-gray-500 mb-2">L2 to L3 Loss</h2>
-                  <div className="text-3xl font-bold text-orange-600">{formatNumber(calculateMetrics.l2ToL3Loss)} <span className="text-base font-normal text-gray-500">m³</span></div>
-                  <p className="text-gray-500 mt-1">{((calculateMetrics.l2ToL3Loss / calculateMetrics.totalL2) * 100).toFixed(1)}% of zone bulk (L2)</p>
-                  <p className="text-orange-600 font-semibold mt-1">{formatCurrency(calculateMetrics.l2ToL3LossCost)}</p>
-                  <div className="mt-4 w-full bg-gray-200 rounded-full h-2.5">
-                    <div 
-                      className="bg-orange-600 h-2.5 rounded-full transition-all duration-500" 
-                      style={{ width: `${(calculateMetrics.l2ToL3Loss / calculateMetrics.totalL2) * 100}%` }}
-                    ></div>
+                <div className={`${theme.cardBg} rounded-lg p-4 flex-1 transition-colors duration-300`}>
+                  <h3 className={`text-lg font-medium mb-2 ${theme.text}`}>Payable Categories</h3>
+                  <div className="overflow-x-auto">
+                    <table className={`min-w-full ${theme.text}`}>
+                      <thead>
+                        <tr>
+                          <th className="text-left py-2">Category</th>
+                          <th className="text-right py-2">Consumption (m³)</th>
+                          <th className="text-right py-2">Cost (OMR)</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {Object.entries(waterData[selectedYear].payable).map(([category, data]) => (
+                          <tr key={category}>
+                            <td className="py-1">{category}</td>
+                            <td className="text-right py-1">{formatNumber(data.consumption)}</td>
+                            <td className="text-right py-1">{formatNumber(data.cost, 2)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
               </div>
-
-              {/* Loss Breakdown Chart */}
-              <div className={`${cardBg} p-6 rounded-lg border ${borderColor} mb-6 shadow-sm`}>
-                <h2 className="text-xl font-medium mb-4">Loss Breakdown by Stage</h2>
-                <div className="h-80">
+              
+              {/* Consumption type chart */}
+              <div className={`${theme.cardBg} rounded-lg p-4 mb-6 transition-colors duration-300`}>
+                <h3 className={`text-lg font-medium mb-4 ${theme.text}`}>Consumption by Type</h3>
+                <div className="h-96">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
-                        data={[
-                          { name: 'L1 to L2 Loss', value: calculateMetrics.l1ToL2Loss, color: '#F59E0B' },
-                          { name: 'L2 to L3 Loss', value: calculateMetrics.l2ToL3Loss, color: '#F97316' }
-                        ]}
+                        data={filteredConsumptionByType}
                         cx="50%"
                         cy="50%"
-                        innerRadius={60}
-                        outerRadius={100}
-                        paddingAngle={2}
+                        labelLine={true}
+                        label={({ name, percent }) => `${name} (${(percent * 100).toFixed(1)}%)`}
+                        outerRadius={130}
                         dataKey="value"
-                        nameKey="name"
-                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(1)}%`}
+                        nameKey="type"
                       >
-                        {[
-                          { name: 'L1 to L2 Loss', color: '#F59E0B' },
-                          { name: 'L2 to L3 Loss', color: '#F97316' }
-                        ].map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        {filteredConsumptionByType.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={theme.typeColors[index % theme.typeColors.length]} />
                         ))}
                       </Pie>
-                      <Tooltip formatter={(value) => [
-                        `${formatNumber(Number(value))} m³ (${formatCurrency(Number(value) * COST_PER_M3)})`,
-                        ''
-                      ]} />
-                      <Legend />
+                      <Tooltip formatter={(value) => formatNumber(value) + ' m³'} />
+                      <Legend 
+                        layout="vertical" 
+                        verticalAlign="middle" 
+                        align="right"
+                        formatter={(value) => <span className={theme.text}>{value}</span>}
+                      />
                     </PieChart>
                   </ResponsiveContainer>
                 </div>
               </div>
-
-              {/* Loss Comparison by Zone */}
-              <div className={`${cardBg} p-6 rounded-lg border ${borderColor} mb-6 shadow-sm`}>
-                <h2 className="text-xl font-medium mb-4">Loss Comparison by Zone</h2>
-                <div className="h-80">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                      data={filteredZoneData}
-                      margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="zone" />
-                      <YAxis yAxisId="left" orientation="left" />
-                      <YAxis yAxisId="right" orientation="right" unit="%" />
-                      <Tooltip formatter={(value, name) => {
-                        if (name === 'difference') return [formatNumber(Number(value)) + ' m³', 'Loss Volume'];
-                        if (name === 'lossPercent') return [Number(value).toFixed(1) + '%', 'Loss %'];
-                        if (name === 'lossCost') return [formatCurrency(Number(value)), 'Loss Cost'];
-                        return [value, name];
-                      }} />
-                      <Legend />
-                      <Bar yAxisId="left" dataKey="difference" name="Loss Volume (m³)" fill="#F87171" />
-                      <Bar yAxisId="right" dataKey="lossPercent" name="Loss %" fill="#60A5FA" />
-                      <Bar yAxisId="left" dataKey="lossCost" name="Loss Cost (OMR)" fill="#10B981" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
               
-              {/* Monthly Loss Trend */}
-              <div className={`${cardBg} p-6 rounded-lg border ${borderColor} mb-6 shadow-sm`}>
-                <h2 className="text-xl font-medium mb-4">Monthly Loss Trend</h2>
-                <div className="h-80">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart
-                      data={filteredData.map(month => ({
-                        ...month,
-                        L1toL2Loss: month.L1 - (month.L2 + month.DC),
-                        L2toL3Loss: month.L2 - month.L3,
-                        TotalLoss: month.L1 - (month.L3 + month.DC)
-                      }))}
-                      margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                      <XAxis dataKey="month" />
-                      <YAxis />
-                      <Tooltip formatter={(value) => formatNumber(Number(value)) + ' m³'} />
-                      <Legend />
-                      <Line 
-                        type="monotone" 
-                        dataKey="L1toL2Loss" 
-                        name="L1 to L2 Loss" 
-                        stroke="#F59E0B" 
-                        strokeWidth={2} 
-                        dot={{ r: 3 }} 
-                        activeDot={{ r: 5 }} 
-                      />
-                      <Line 
-                        type="monotone" 
-                        dataKey="L2toL3Loss" 
-                        name="L2 to L3 Loss" 
-                        stroke="#F97316" 
-                        strokeWidth={2} 
-                        dot={{ r: 3 }} 
-                        activeDot={{ r: 5 }} 
-                      />
-                      <Line 
-                        type="monotone" 
-                        dataKey="TotalLoss" 
-                        name="Total Loss" 
-                        stroke="#EF4444" 
-                        strokeWidth={3} 
-                        dot={{ r: 3 }} 
-                        activeDot={{ r: 5 }} 
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
+              {/* Consumption type table */}
+              <div className={`${theme.cardBg} rounded-lg p-4 transition-colors duration-300`}>
+                <h3 className={`text-lg font-medium mb-4 ${theme.text}`}>Consumption Type Details</h3>
+                <DataTable 
+                  data={filteredConsumptionByType}
+                  columns={[
+                    { key: 'type', header: 'Type' },
+                    { key: 'value', header: 'Consumption (m³)', numeric: true },
+                    { key: 'percentage', header: 'Percentage', numeric: true,
+                      render: (value) => `${value.toFixed(1)}%` 
+                    }
+                  ]}
+                  theme={theme}
+                />
               </div>
             </>
           )}
+          
+          {/* Loss Analysis Tab */}
+          {selectedTab === 'loss' && (
+            <>
+              {/* Loss metrics */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <MetricCard 
+                  title="Main Bulk Loss" 
+                  value={summaryData.totalLoss}
+                  unit="m³"
+                  subValue={summaryData.lossPercentage}
+                  subUnit="% of Main Bulk"
+                  icon={Droplet}
+                  color={theme.danger}
+                  theme={theme}
+                />
+                <MetricCard 
+                  title="Zone Distribution Loss" 
+                  value={filteredZoneData.reduce((sum, item) => sum + (item.loss > 0 ? item.loss : 0), 0)}
+                  unit="m³"
+                  subValue={(filteredZoneData.reduce((sum, item) => sum + (item.loss > 0 ? item.loss : 0), 0) / 
+                            filteredZoneData.reduce((sum, item) => sum + item.consumption, 0) * 100).toFixed(1)}
+                  subUnit="% of Zone Bulk"
+                  icon={BarChart2}
+                  color={theme.warning}
+                  theme={theme}
+                />
+                <MetricCard 
+                  title="Highest Loss Zone" 
+                  value={filteredZoneData.reduce((prev, current) => 
+                    (prev.loss > current.loss) ? prev : current
+                  ).zone}
+                  subValue={filteredZoneData.reduce((prev, current) => 
+                    (prev.loss > current.loss) ? prev : current
+                  ).loss}
+                  subUnit="m³"
+                  icon={BarChart2}
+                  color={theme.danger}
+                  theme={theme}
+                />
+                <MetricCard 
+                  title="Highest Loss Month" 
+                  value={selectedYear === "2024" ? "September" : "February"}
+                  subValue={selectedYear === "2024" ? 10449 : 7989}
+                  subUnit="m³"
+                  icon={Calendar}
+                  color={theme.danger}
+                  theme={theme}
+                />
+              </div>
+              
+              {/* Loss charts */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <div className={`${theme.cardBg} rounded-lg p-4 transition-colors duration-300`}>
+                  <h3 className={`text-lg font-medium mb-4 ${theme.text}`}>Monthly Loss Trend</h3>
+                  <div className="h-80">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <ComposedChart
+                        data={filteredMonthlyData}
+                        margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" stroke={theme.chartColors.bgGrid} />
+                        <XAxis dataKey="month" tick={{ fill: theme.text }} />
+                        <YAxis tick={{ fill: theme.text }} />
+                        <Tooltip content={(props) => <CustomTooltip {...props} theme={theme} />} />
+                        <Legend wrapperStyle={{ color: theme.text }} />
+                        <Bar 
+                          dataKey="loss" 
+                          name="System Loss"
+                          fill={theme.chartColors.lossColor} 
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="l1" 
+                          name="Main Bulk (L1)"
+                          stroke={theme.chartColors.l1Color} 
+                          strokeWidth={2} 
+                          dot={{ r: 4 }}
+                        />
+                      </ComposedChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+                
+                <div className={`${theme.cardBg} rounded-lg p-4 transition-colors duration-300`}>
+                  <h3 className={`text-lg font-medium mb-4 ${theme.text}`}>Loss Distribution by Zone</h3>
+                  <div className="h-80">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={filteredZoneData.filter(zone => zone.loss > 0)}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={true}
+                          label={({ name, percent }) => `${name} (${(percent * 100).toFixed(1)}%)`}
+                          outerRadius={80}
+                          dataKey="loss"
+                          nameKey="zone"
+                        >
+                          {filteredZoneData.filter(zone => zone.loss > 0).map((entry, index) => (
+                            <Cell 
+                              key={`cell-${index}`} 
+                              fill={theme.zoneColors[filteredZoneData.findIndex(z => z.zone === entry.zone) % theme.zoneColors.length]} 
+                            />
+                          ))}
+                        </Pie>
+                        <Tooltip formatter={(value) => formatNumber(value) + ' m³'} />
+                        <Legend 
+                          formatter={(value) => <span className={theme.text}>{value}</span>}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Financial impact of losses */}
+              <div className={`${theme.cardBg} rounded-lg p-4 mb-6 transition-colors duration-300`}>
+                <h3 className={`text-lg font-medium mb-4 ${theme.text}`}>Financial Impact of Water Losses</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className={`p-4 rounded-lg border ${theme.border}`}>
+                    <h4 className={`text-md font-medium ${theme.text}`}>Total Loss Value</h4>
+                    <p className="text-2xl font-bold text-red-500 mt-2">
+                      {formatNumber(Math.abs(summaryData.totalLoss) * summaryData.waterRate, 2)} OMR
+                    </p>
+                    <p className={`mt-1 text-sm ${theme.textSecondary}`}>
+                      Based on {formatNumber(Math.abs(summaryData.totalLoss))} m³ at {summaryData.waterRate.toFixed(2)} OMR/m³
+                    </p>
+                  </div>
+                  
+                  <div className={`p-4 rounded-lg border ${theme.border}`}>
+                    <h4 className={`text-md font-medium ${theme.text}`}>Zone Distribution Loss Value</h4>
+                    <p className="text-2xl font-bold text-orange-500 mt-2">
+                      {formatNumber(filteredZoneData.reduce((sum, item) => sum + (item.loss > 0 ? item.loss : 0), 0) * summaryData.waterRate, 2)} OMR
+                    </p>
+                    <p className={`mt-1 text-sm ${theme.textSecondary}`}>
+                      {formatNumber(filteredZoneData.reduce((sum, item) => sum + (item.loss > 0 ? item.loss : 0), 0))} m³ at {summaryData.waterRate.toFixed(2)} OMR/m³
+                    </p>
+                  </div>
+                  
+                  <div className={`p-4 rounded-lg border ${theme.border}`}>
+                    <h4 className={`text-md font-medium ${theme.text}`}>Potential Annual Savings</h4>
+                    <p className="text-2xl font-bold text-green-500 mt-2">
+                      {formatNumber(summaryData.totalLoss * summaryData.waterRate * 0.5, 2)} OMR
+                    </p>
+                    <p className={`mt-1 text-sm ${theme.textSecondary}`}>
+                      If losses are reduced by 50%
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Loss anomalies table */}
+              <div className={`${theme.cardBg} rounded-lg p-4 transition-colors duration-300`}>
+                <h3 className={`text-lg font-medium mb-4 ${theme.text}`}>Measurement Anomalies</h3>
+                <DataTable 
+                  data={filteredMonthlyData.filter(item => item.loss < 0)}
+                  columns={[
+                    { key: 'month', header: 'Month' },
+                    { key: 'l1', header: 'Main Bulk (m³)', numeric: true },
+                    { key: 'l2', header: 'Zone Bulk (m³)', numeric: true },
+                    { key: 'dc', header: 'Direct Connection (m³)', numeric: true },
+                    { key: 'loss', header: 'Negative Loss (m³)', numeric: true, 
+                      render: (value) => (
+                        <span className="text-red-500 font-medium">
+                          {formatNumber(value)}
+                        </span>
+                      )
+                    }
+                  ]}
+                  theme={theme}
+                />
+                {filteredMonthlyData.filter(item => item.loss < 0).length === 0 && (
+                  <div className={`text-center ${theme.textSecondary} py-4`}>
+                    No measurement anomalies detected for the selected period.
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+        </div>
+        
+        {/* Footer */}
+        <div className={`${theme.cardBg} rounded-lg ${theme.shadow} p-4 md:p-6 transition-colors duration-300`}>
+          <div className="flex flex-col md:flex-row justify-between items-center">
+            <div className={`text-sm ${theme.textSecondary} mb-2 md:mb-0`}>
+              Last updated: March 16, 2025 | Data source: Muscat Bay Water Management System
+            </div>
+            <div className="flex gap-2">
+              <Button icon={RefreshCw} theme={theme}>Refresh Data</Button>
+              <Button icon={Search} theme={theme}>Advanced Search</Button>
+            </div>
+          </div>
         </div>
       </div>
     </Layout>
   );
 };
 
-export default WaterSystem;
+export default WaterSystemDashboard;
