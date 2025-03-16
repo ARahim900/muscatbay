@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';
+
 interface SidebarLinkProps {
   to: string;
   icon: React.ElementType;
@@ -14,7 +15,9 @@ interface SidebarLinkProps {
     isGitHub?: boolean;
   }[];
   isMobile?: boolean;
+  className?: string;
 }
+
 const SidebarLink: React.FC<SidebarLinkProps> = ({
   to,
   icon: Icon,
@@ -23,9 +26,11 @@ const SidebarLink: React.FC<SidebarLinkProps> = ({
   external,
   openEmbedded,
   options,
-  isMobile
+  isMobile,
+  className
 }) => {
   const [showOptions, setShowOptions] = useState(false);
+
   const handleEmbeddedClick = (e: React.MouseEvent, url: string = to, title: string = label) => {
     if (external && openEmbedded) {
       e.preventDefault();
@@ -35,6 +40,7 @@ const SidebarLink: React.FC<SidebarLinkProps> = ({
       }
     }
   };
+
   const handleOptionClick = (e: React.MouseEvent, option: {
     url: string;
     label: string;
@@ -49,6 +55,7 @@ const SidebarLink: React.FC<SidebarLinkProps> = ({
     }
     setShowOptions(false);
   };
+
   const toggleOptions = (e: React.MouseEvent) => {
     if (options && options.length > 0) {
       e.preventDefault();
@@ -56,9 +63,10 @@ const SidebarLink: React.FC<SidebarLinkProps> = ({
       setShowOptions(!showOptions);
     }
   };
+
   if (external) {
     return <div className="relative">
-        <a href={to} className={`sidebar-link ${collapsed && !isMobile ? 'justify-center px-0' : ''}`} onClick={options && options.length > 0 ? toggleOptions : e => handleEmbeddedClick(e)} aria-expanded={showOptions}>
+        <a href={to} className={`sidebar-link ${collapsed && !isMobile ? 'justify-center px-0' : ''} ${className || ''}`} onClick={options && options.length > 0 ? toggleOptions : e => handleEmbeddedClick(e)} aria-expanded={showOptions}>
           <Icon className="flex-shrink-0 w-5 h-5" />
           {(!collapsed || isMobile) && <>
               <span className="flex-1">{label}</span>
@@ -73,11 +81,13 @@ const SidebarLink: React.FC<SidebarLinkProps> = ({
           </div>}
       </div>;
   }
+
   return <NavLink to={to} className={({
     isActive
-  }) => `sidebar-link ${isActive ? 'active' : ''} ${collapsed && !isMobile ? 'justify-center px-0' : ''}`}>
+  }) => `sidebar-link ${isActive ? 'active' : ''} ${collapsed && !isMobile ? 'justify-center px-0' : ''} ${className || ''}`}>
       <Icon className="flex-shrink-0 w-5 h-5" />
       {(!collapsed || isMobile) && <span className="font-normal text-base text-center text-stone-200">{label}</span>}
     </NavLink>;
 };
+
 export default SidebarLink;

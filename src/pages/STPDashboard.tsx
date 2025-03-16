@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import Layout from '@/components/layout/Layout';
 import { stpMonthlyData, formatMonth, getDailyDataForMonth } from '@/utils/stpDataUtils';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { STPMonthlyOverview } from '@/components/stp/STPMonthlyOverview';
 import { STPDailyDetails } from '@/components/stp/STPDailyDetails';
 import { STPMetricsCards } from '@/components/stp/STPMetricsCards';
+import ExportPDFButton from '@/components/stp/ExportPDFButton';
 import { 
   AreaChart, 
   BarChart2, 
@@ -28,6 +29,7 @@ const STPDashboard = () => {
   const [selectedMonth, setSelectedMonth] = useState<string>(stpMonthlyData[stpMonthlyData.length - 1].month);
   const [activeTab, setActiveTab] = useState<string>("monthly");
   const [isCompactView, setIsCompactView] = useState<boolean>(false);
+  const dashboardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     document.title = 'STP Dashboard | Muscat Bay Asset Manager';
@@ -65,7 +67,10 @@ const STPDashboard = () => {
 
   return (
     <Layout>
-      <div className={`container mx-auto py-6 transition-all duration-300 ${isCompactView ? 'py-3' : 'py-6'}`}>
+      <div 
+        ref={dashboardRef} 
+        className={`container mx-auto py-6 transition-all duration-300 ${isCompactView ? 'py-3' : 'py-6'}`}
+      >
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 animate-fade-in">
           <div>
             <div className="flex items-center">
@@ -145,11 +150,11 @@ const STPDashboard = () => {
             </TabsTrigger>
           </TabsList>
           
-          <TabsContent value="monthly" className="animate-fade-in" style={{animationDelay: "0.2s"}}>
+          <TabsContent value="monthly" className="animate-fade-in tab-content" style={{animationDelay: "0.2s"}}>
             <STPMonthlyOverview selectedMonth={selectedMonth} />
           </TabsContent>
           
-          <TabsContent value="daily" className="animate-fade-in" style={{animationDelay: "0.2s"}}>
+          <TabsContent value="daily" className="animate-fade-in tab-content" style={{animationDelay: "0.2s"}}>
             <STPDailyDetails selectedMonth={selectedMonth} />
           </TabsContent>
         </Tabs>
@@ -164,10 +169,10 @@ const STPDashboard = () => {
               <FileSpreadsheet className="h-3 w-3 mr-1" />
               Export as Excel
             </Button>
-            <Button variant="outline" size="sm" className="text-xs h-8" onClick={exportData}>
-              <Download className="h-3 w-3 mr-1" />
-              Download PDF Report
-            </Button>
+            <ExportPDFButton 
+              selector="#dashboardRef" 
+              filename={`stp-dashboard-${selectedMonth}.pdf`} 
+            />
           </div>
         </div>
       </div>

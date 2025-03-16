@@ -42,11 +42,49 @@ export function ThemeProvider({
         : "light"
       
       root.classList.add(systemTheme)
+      
+      // Apply chart styles based on system theme
+      applyChartStyles(systemTheme)
       return
     }
     
     root.classList.add(theme)
+    
+    // Apply chart styles based on selected theme
+    applyChartStyles(theme)
   }, [theme])
+  
+  // Function to apply styles to charts based on theme
+  const applyChartStyles = (activeTheme: string) => {
+    // Add CSS for chart text color in dark mode
+    const styleId = "chart-theme-styles";
+    let styleElement = document.getElementById(styleId) as HTMLStyleElement;
+    
+    if (!styleElement) {
+      styleElement = document.createElement('style');
+      styleElement.id = styleId;
+      document.head.appendChild(styleElement);
+    }
+    
+    if (activeTheme === 'dark') {
+      styleElement.textContent = `
+        .recharts-text {
+          fill: #ffffff !important;
+        }
+        .recharts-cartesian-axis-line, .recharts-cartesian-axis-tick-line {
+          stroke: #555555 !important;
+        }
+        .recharts-legend-item-text {
+          color: #ffffff !important;
+        }
+        .recharts-tooltip-item-name, .recharts-tooltip-item-value {
+          color: #f0f0f0 !important;
+        }
+      `;
+    } else {
+      styleElement.textContent = '';
+    }
+  };
 
   const value = {
     theme,

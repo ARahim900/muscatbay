@@ -3,6 +3,7 @@ import React from 'react';
 import { stpMonthlyData } from '@/utils/stpDataUtils';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line, Area, AreaChart } from 'recharts';
+import { ChartContainer } from "@/components/ui/chart";
 
 interface STPMonthlyOverviewProps {
   selectedMonth?: string;
