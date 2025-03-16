@@ -20,6 +20,7 @@ import STP from './pages/STP';
 import WaterSystem from './pages/WaterSystem';
 import ElectricitySystem from './pages/ElectricitySystem';
 import HVAC from './pages/HVAC';
+import PumpingStations from './pages/PumpingStations';
 
 const queryClient = new QueryClient();
 
@@ -44,6 +45,7 @@ const App = () => (
               <Route path="/water-consumption-types" element={<ProtectedRoute><WaterConsumptionTypes /></ProtectedRoute>} />
               <Route path="/water-system" element={<ProtectedRoute><WaterSystem /></ProtectedRoute>} />
               <Route path="/hvac" element={<ProtectedRoute><HVAC /></ProtectedRoute>} />
+              <Route path="/pumping-stations" element={<ProtectedRoute><PumpingStations /></ProtectedRoute>} />
               <Route path="/projects" element={<ProtectedRoute><Projects /></ProtectedRoute>} />
               <Route path="/alm" element={<ProtectedRoute><AssetLifecycleManagement /></ProtectedRoute>} />
               <Route path="/contracts" element={<ProtectedRoute><Contracts /></ProtectedRoute>} />

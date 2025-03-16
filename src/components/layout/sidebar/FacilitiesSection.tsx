@@ -40,12 +40,11 @@ const FacilitiesSection: React.FC<FacilitiesSectionProps> = ({
         className={linkClasses}
       />
       <SidebarLink 
-        to={externalApps.pumpingStation} 
+        to="/pumping-stations" 
         icon={PumpStationIcon} 
         label="Pumping Stations" 
         collapsed={collapsed} 
-        external={true}
-        openEmbedded={openEmbeddedApp}
+        external={false}
         isMobile={isMobile}
         className={linkClasses}
       />

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Layout from '@/components/layout/Layout';
 import { Calendar, BarChart2, Droplet, Zap, Home, Shield, FileText, Briefcase, Activity, ThermometerSun, PieChart, ArrowRight, TrendingUp } from 'lucide-react';
@@ -96,9 +95,8 @@ const Index = () => {
             { label: 'Operational', value: '14/15', trend: '0%' },
             { label: 'Efficiency', value: '94.2%', trend: '+0.7%' }
           ],
-          path: 'https://muscat-bay-pumping-stations.lovable.app/',
-          description: 'Monitor performance and operational status',
-          isExternal: true
+          path: '/pumping-stations',
+          description: 'Monitor performance and operational status'
         },
         { 
           name: 'HVAC/BMS', 
@@ -120,22 +118,22 @@ const Index = () => {
     {
       id: 'management',
       title: 'MANAGEMENT',
-      icon: <Briefcase size={22} className={`text-[${brandColor}]`} />,
-      gradientFrom: `from-[${brandColor}]`,
-      gradientTo: `to-[${brandColor}]`,
-      bgGradient: `bg-gradient-to-r from-[${brandColor}]/10 to-[${brandColor}]/10`,
-      shadowColor: `shadow-[${brandColor}]/20`,
-      accentColor: `bg-[${brandColor}]`,
-      textColor: `text-[${brandColor}]`,
+      icon: <Briefcase size={22} className="text-muscat-primary" />,
+      gradientFrom: 'from-muscat-primary',
+      gradientTo: 'to-muscat-primary',
+      bgGradient: 'bg-gradient-to-r from-muscat-primary/10 to-muscat-primary/10',
+      shadowColor: 'shadow-muscat-primary/20',
+      accentColor: 'bg-muscat-primary',
+      textColor: 'text-muscat-primary',
       subsections: [
         { 
           name: 'Contracts', 
           icon: <FileText size={22} />, 
-          color: `from-[${brandColor}]/80 to-[${brandColor}]`,
-          bgColor: `bg-[${brandColor}]`,
-          lightBg: `bg-[${brandColor}]/5`,
-          textColor: `text-[${brandColor}]`,
-          iconBg: `bg-gradient-to-br from-[${brandColor}]/80 to-[${brandColor}]`,
+          color: 'from-muscat-primary/80 to-muscat-primary',
+          bgColor: 'bg-muscat-primary',
+          lightBg: 'bg-muscat-primary/5',
+          textColor: 'text-muscat-primary',
+          iconBg: 'bg-gradient-to-br from-muscat-primary/80 to-muscat-primary',
           metrics: [
             { label: 'Active', value: '23', trend: '+3' },
             { label: 'Expiring', value: '2', trend: '-1' }
@@ -146,11 +144,11 @@ const Index = () => {
         { 
           name: 'Projects', 
           icon: <BarChart2 size={22} />, 
-          color: `from-[${brandColor}]/70 to-[${brandColor}]/90`,
-          bgColor: `bg-[${brandColor}]`,
-          lightBg: `bg-[${brandColor}]/5`,
-          textColor: `text-[${brandColor}]`,
-          iconBg: `bg-gradient-to-br from-[${brandColor}]/70 to-[${brandColor}]/90`,
+          color: 'from-muscat-primary/70 to-muscat-primary/90',
+          bgColor: 'bg-muscat-primary',
+          lightBg: 'bg-muscat-primary/5',
+          textColor: 'text-muscat-primary',
+          iconBg: 'bg-gradient-to-br from-muscat-primary/70 to-muscat-primary/90',
           metrics: [
             { label: 'In Progress', value: '7', trend: '+1' },
             { label: 'Completed', value: '12', trend: '+2' }
@@ -160,12 +158,12 @@ const Index = () => {
         },
         { 
           name: 'Asset Lifecycle', 
-          icon: <PieChart size={22} />, 
-          color: `from-[${brandColor}]/60 to-[${brandColor}]/80`,
-          bgColor: `bg-[${brandColor}]`,
-          lightBg: `bg-[${brandColor}]/5`,
-          textColor: `text-[${brandColor}]`,
-          iconBg: `bg-gradient-to-br from-[${brandColor}]/60 to-[${brandColor}]/80`,
+          icon: <Calendar size={22} />, 
+          color: 'from-muscat-primary/60 to-muscat-primary/80',
+          bgColor: 'bg-muscat-primary',
+          lightBg: 'bg-muscat-primary/5',
+          textColor: 'text-muscat-primary',
+          iconBg: 'bg-gradient-to-br from-muscat-primary/60 to-muscat-primary/80',
           metrics: [
             { label: 'New Assets', value: '12', trend: '+5' },
             { label: 'Maintenance', value: '36', trend: '+2' }
@@ -176,11 +174,11 @@ const Index = () => {
         { 
           name: 'Security', 
           icon: <Shield size={22} />, 
-          color: `from-[${brandColor}]/50 to-[${brandColor}]/70`,
-          bgColor: `bg-[${brandColor}]`,
-          lightBg: `bg-[${brandColor}]/5`,
-          textColor: `text-[${brandColor}]`,
-          iconBg: `bg-gradient-to-br from-[${brandColor}]/50 to-[${brandColor}]/70`,
+          color: 'from-muscat-primary/50 to-muscat-primary/70',
+          bgColor: 'bg-muscat-primary',
+          lightBg: 'bg-muscat-primary/5',
+          textColor: 'text-muscat-primary',
+          iconBg: 'bg-gradient-to-br from-muscat-primary/50 to-muscat-primary/70',
           metrics: [
             { label: 'Alerts', value: '0', trend: '-3' },
             { label: 'Systems', value: '100%', trend: '0%' }
@@ -221,11 +219,7 @@ const Index = () => {
   }, []);
 
   const handleCardClick = (path, isExternal) => {
-    if (isExternal) {
-      window.open(path, '_blank');
-    } else {
-      navigate(path);
-    }
+    navigate(path);
   };
 
   const NavigationCard = ({ subsection, index, categoryIdx }) => {
