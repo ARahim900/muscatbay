@@ -209,7 +209,7 @@ const formatNumber = (num, decimals = 0) => {
 };
 
 // Component for metric card
-const MetricCard = ({ title, value, unit, subValue, subUnit, icon, color, percentage, theme }) => {
+const MetricCard = ({ title, value, unit, subValue, subUnit, icon, color, percentage = 0, theme }) => {
   const Icon = icon;
   
   return (
@@ -612,6 +612,22 @@ const WaterSystemDashboard = () => {
     // fetchData();
   }, []);
 
+  // Handler functions for buttons
+  const handleExportClick = () => {
+    console.log('Export clicked');
+    // Implementation for export functionality
+  };
+
+  const handleRefreshClick = () => {
+    console.log('Refresh clicked');
+    // Implementation for refresh functionality
+  };
+
+  const handleSearchClick = () => {
+    console.log('Search clicked');
+    // Implementation for search functionality
+  };
+
   return (
     <Layout>
       <div className={`min-h-screen ${theme.bg} p-4 md:p-6 transition-colors duration-300`}>
@@ -654,6 +670,7 @@ const WaterSystemDashboard = () => {
                 icon={Download} 
                 primary 
                 theme={theme}
+                onClick={handleExportClick}
               >
                 Export
               </Button>
@@ -714,7 +731,7 @@ const WaterSystemDashboard = () => {
                   subUnit="m³/day avg."
                   icon={Droplet}
                   color={theme.chartColors.l1Color}
-                  percentage={yearComparisonData ? yearComparisonData.percentageChange : undefined}
+                  percentage={yearComparisonData ? yearComparisonData.percentageChange : 0}
                   theme={theme}
                 />
                 <MetricCard 
@@ -725,6 +742,7 @@ const WaterSystemDashboard = () => {
                   subUnit="% of total"
                   icon={BarChart2}
                   color={theme.chartColors.lossColor}
+                  percentage={0}
                   theme={theme}
                 />
                 <MetricCard 
@@ -732,8 +750,10 @@ const WaterSystemDashboard = () => {
                   value={selectedYear === "2024" ? 41953 : 44043}
                   unit="m³"
                   subValue={summaryData.highestConsumptionMonth}
+                  subUnit=""
                   icon={Calendar}
                   color={theme.info}
+                  percentage={0}
                   theme={theme}
                 />
                 <MetricCard 
@@ -744,6 +764,7 @@ const WaterSystemDashboard = () => {
                   subUnit="OMR"
                   icon={FileText}
                   color={theme.warning}
+                  percentage={0}
                   theme={theme}
                 />
               </div>
@@ -868,12 +889,14 @@ const WaterSystemDashboard = () => {
                   value={filteredZoneData.reduce((prev, current) => 
                     (prev.consumption > current.consumption) ? prev : current
                   ).zone}
+                  unit=""
                   subValue={filteredZoneData.reduce((prev, current) => 
                     (prev.consumption > current.consumption) ? prev : current
                   ).consumption}
                   subUnit="m³"
                   icon={Droplet}
                   color={theme.success}
+                  percentage={0}
                   theme={theme}
                 />
                 <MetricCard 
@@ -881,12 +904,14 @@ const WaterSystemDashboard = () => {
                   value={filteredZoneData.reduce((prev, current) => 
                     (prev.loss > current.loss) ? prev : current
                   ).zone}
+                  unit=""
                   subValue={filteredZoneData.reduce((prev, current) => 
                     (prev.loss > current.loss) ? prev : current
                   ).loss}
                   subUnit="m³"
                   icon={BarChart2}
                   color={theme.danger}
+                  percentage={0}
                   theme={theme}
                 />
                 <MetricCard 
@@ -898,6 +923,7 @@ const WaterSystemDashboard = () => {
                   subUnit="% of Main Bulk"
                   icon={BarChart2}
                   color={theme.info}
+                  percentage={0}
                   theme={theme}
                 />
                 <MetricCard 
@@ -909,6 +935,7 @@ const WaterSystemDashboard = () => {
                   subUnit="% of Zone Bulk"
                   icon={BarChart2}
                   color={theme.warning}
+                  percentage={0}
                   theme={theme}
                 />
               </div>
@@ -1034,7 +1061,9 @@ const WaterSystemDashboard = () => {
                         <CartesianGrid strokeDasharray="3 3" stroke={theme.chartColors.bgGrid} />
                         <XAxis dataKey="zone" tick={{ fill: theme.text }} />
                         <YAxis unit="%" tick={{ fill: theme.text }} />
-                        <Tooltip formatter={(value) => value.toFixed(1) + '%'} />
+                        <Tooltip formatter={(value) => {
+                          return typeof value === 'number' ? value.toFixed(1) + '%' : value + '%';
+                        }} />
                         <Legend wrapperStyle={{ color: theme.text }} />
                         <Bar 
                           dataKey="lossPercentage" 
@@ -1078,6 +1107,7 @@ const WaterSystemDashboard = () => {
                   subUnit="% of total"
                   icon={Activity}
                   color={theme.typeColors[0]}
+                  percentage={0}
                   theme={theme}
                 />
                 <MetricCard 
@@ -1088,6 +1118,7 @@ const WaterSystemDashboard = () => {
                   subUnit="% of total"
                   icon={Activity}
                   color={theme.typeColors[1]}
+                  percentage={0}
                   theme={theme}
                 />
                 <MetricCard 
@@ -1098,6 +1129,7 @@ const WaterSystemDashboard = () => {
                   subUnit="% of total"
                   icon={Activity}
                   color={theme.typeColors[3]}
+                  percentage={0}
                   theme={theme}
                 />
                 <MetricCard 
@@ -1108,6 +1140,7 @@ const WaterSystemDashboard = () => {
                   subUnit="% of total"
                   icon={Activity}
                   color={theme.chartColors.lossColor}
+                  percentage={0}
                   theme={theme}
                 />
               </div>
@@ -1135,13 +1168,16 @@ const WaterSystemDashboard = () => {
                         </tr>
                       </thead>
                       <tbody>
-                        {Object.entries(waterData[selectedYear].payable).map(([category, data]) => (
+                        {Object.entries(waterData[selectedYear].payable).map(([category, data]) => {
+                          const typedData = data as { consumption: number; cost: number };
+                          return (
                           <tr key={category}>
                             <td className="py-1">{category}</td>
-                            <td className="text-right py-1">{formatNumber(data.consumption)}</td>
-                            <td className="text-right py-1">{formatNumber(data.cost, 2)}</td>
+                            <td className="text-right py-1">{formatNumber(typedData.consumption)}</td>
+                            <td className="text-right py-1">{formatNumber(typedData.cost, 2)}</td>
                           </tr>
-                        ))}
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>
@@ -1211,6 +1247,7 @@ const WaterSystemDashboard = () => {
                   subUnit="% of Main Bulk"
                   icon={Droplet}
                   color={theme.danger}
+                  percentage={0}
                   theme={theme}
                 />
                 <MetricCard 
@@ -1222,6 +1259,7 @@ const WaterSystemDashboard = () => {
                   subUnit="% of Zone Bulk"
                   icon={BarChart2}
                   color={theme.warning}
+                  percentage={0}
                   theme={theme}
                 />
                 <MetricCard 
@@ -1229,21 +1267,25 @@ const WaterSystemDashboard = () => {
                   value={filteredZoneData.reduce((prev, current) => 
                     (prev.loss > current.loss) ? prev : current
                   ).zone}
+                  unit=""
                   subValue={filteredZoneData.reduce((prev, current) => 
                     (prev.loss > current.loss) ? prev : current
                   ).loss}
                   subUnit="m³"
                   icon={BarChart2}
                   color={theme.danger}
+                  percentage={0}
                   theme={theme}
                 />
                 <MetricCard 
                   title="Highest Loss Month" 
                   value={selectedYear === "2024" ? "September" : "February"}
+                  unit=""
                   subValue={selectedYear === "2024" ? 10449 : 7989}
                   subUnit="m³"
                   icon={Calendar}
                   color={theme.danger}
+                  percentage={0}
                   theme={theme}
                 />
               </div>
@@ -1386,8 +1428,8 @@ const WaterSystemDashboard = () => {
               Last updated: March 16, 2025 | Data source: Muscat Bay Water Management System
             </div>
             <div className="flex gap-2">
-              <Button icon={RefreshCw} theme={theme}>Refresh Data</Button>
-              <Button icon={Search} theme={theme}>Advanced Search</Button>
+              <Button icon={RefreshCw} theme={theme} onClick={handleRefreshClick}>Refresh Data</Button>
+              <Button icon={Search} theme={theme} onClick={handleSearchClick}>Advanced Search</Button>
             </div>
           </div>
         </div>
