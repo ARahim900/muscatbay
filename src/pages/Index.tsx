@@ -1,14 +1,12 @@
 
 import React, { useState, useEffect } from 'react';
 import Layout from '@/components/layout/Layout';
-import { Calendar, BarChart2, Droplet, Zap, Home, Shield, FileText, Briefcase, Activity, ThermometerSun, PieChart, ArrowRight, TrendingUp, Bell, Search, Settings, ChevronRight, Menu, X } from 'lucide-react';
+import { Calendar, BarChart2, Droplet, Zap, Home, Shield, FileText, Briefcase, Activity, ThermometerSun, PieChart, ArrowRight, TrendingUp } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const Index = () => {
   const navigate = useNavigate();
   const [hoveredCard, setHoveredCard] = useState(null);
-  const [activeSection, setActiveSection] = useState('utilities');
-  const [menuOpen, setMenuOpen] = useState(false);
   const [animatedItems, setAnimatedItems] = useState({});
 
   // Brand color
@@ -39,7 +37,7 @@ const Index = () => {
             { label: 'Consumption', value: '12.6 MW', trend: '+3%' },
             { label: 'Distribution', value: '98.2%', trend: '-0.5%' }
           ],
-          path: '/electricity',
+          path: '/electricity-system',
           description: 'Monitor power consumption and distribution'
         },
         { 
@@ -54,7 +52,7 @@ const Index = () => {
             { label: 'Consumption', value: '325 m³', trend: '-1.2%' },
             { label: 'Quality Index', value: '97.8%', trend: '+0.3%' }
           ],
-          path: '/water',
+          path: '/water-system',
           description: 'Track usage and water management systems'
         }
       ]
@@ -120,22 +118,22 @@ const Index = () => {
     {
       id: 'management',
       title: 'MANAGEMENT',
-      icon: <Briefcase size={22} className="text-violet-500" />,
-      gradientFrom: 'from-violet-500',
-      gradientTo: 'to-purple-600',
-      bgGradient: 'bg-gradient-to-r from-violet-500/10 to-purple-600/10',
-      shadowColor: 'shadow-violet-200/50',
-      accentColor: 'bg-violet-500',
-      textColor: 'text-violet-500',
+      icon: <Briefcase size={22} />,
+      gradientFrom: `from-[${brandColor}]`,
+      gradientTo: `to-[${brandColor}]`,
+      bgGradient: `bg-gradient-to-r from-[${brandColor}]/10 to-[${brandColor}]/10`,
+      shadowColor: `shadow-[${brandColor}]/20`,
+      accentColor: `bg-[${brandColor}]`,
+      textColor: `text-[${brandColor}]`,
       subsections: [
         { 
           name: 'Contracts', 
           icon: <FileText size={22} />, 
-          color: 'from-purple-400 to-purple-600',
-          bgColor: 'bg-purple-500',
-          lightBg: 'bg-purple-50',
-          textColor: 'text-purple-600',
-          iconBg: 'bg-gradient-to-br from-purple-400 to-purple-600',
+          color: `from-[${brandColor}]/80 to-[${brandColor}]`,
+          bgColor: `bg-[${brandColor}]`,
+          lightBg: `bg-[${brandColor}]/5`,
+          textColor: `text-[${brandColor}]`,
+          iconBg: `bg-gradient-to-br from-[${brandColor}]/80 to-[${brandColor}]`,
           metrics: [
             { label: 'Active', value: '23', trend: '+3' },
             { label: 'Expiring', value: '2', trend: '-1' }
@@ -146,11 +144,11 @@ const Index = () => {
         { 
           name: 'Projects', 
           icon: <BarChart2 size={22} />, 
-          color: 'from-indigo-400 to-indigo-600',
-          bgColor: 'bg-indigo-500',
-          lightBg: 'bg-indigo-50',
-          textColor: 'text-indigo-600',
-          iconBg: 'bg-gradient-to-br from-indigo-400 to-indigo-600',
+          color: `from-[${brandColor}]/70 to-[${brandColor}]/90`,
+          bgColor: `bg-[${brandColor}]`,
+          lightBg: `bg-[${brandColor}]/5`,
+          textColor: `text-[${brandColor}]`,
+          iconBg: `bg-gradient-to-br from-[${brandColor}]/70 to-[${brandColor}]/90`,
           metrics: [
             { label: 'In Progress', value: '7', trend: '+1' },
             { label: 'Completed', value: '12', trend: '+2' }
@@ -161,11 +159,11 @@ const Index = () => {
         { 
           name: 'Asset Lifecycle', 
           icon: <PieChart size={22} />, 
-          color: 'from-teal-400 to-teal-600',
-          bgColor: 'bg-teal-500',
-          lightBg: 'bg-teal-50',
-          textColor: 'text-teal-600',
-          iconBg: 'bg-gradient-to-br from-teal-400 to-teal-600',
+          color: `from-[${brandColor}]/60 to-[${brandColor}]/80`,
+          bgColor: `bg-[${brandColor}]`,
+          lightBg: `bg-[${brandColor}]/5`,
+          textColor: `text-[${brandColor}]`,
+          iconBg: `bg-gradient-to-br from-[${brandColor}]/60 to-[${brandColor}]/80`,
           metrics: [
             { label: 'New Assets', value: '12', trend: '+5' },
             { label: 'Maintenance', value: '36', trend: '+2' }
@@ -176,11 +174,11 @@ const Index = () => {
         { 
           name: 'Security', 
           icon: <Shield size={22} />, 
-          color: 'from-rose-400 to-rose-600',
-          bgColor: 'bg-rose-500',
-          lightBg: 'bg-rose-50',
-          textColor: 'text-rose-600',
-          iconBg: 'bg-gradient-to-br from-rose-400 to-rose-600',
+          color: `from-[${brandColor}]/50 to-[${brandColor}]/70`,
+          bgColor: `bg-[${brandColor}]`,
+          lightBg: `bg-[${brandColor}]/5`,
+          textColor: `text-[${brandColor}]`,
+          iconBg: `bg-gradient-to-br from-[${brandColor}]/50 to-[${brandColor}]/70`,
           metrics: [
             { label: 'Alerts', value: '0', trend: '-3' },
             { label: 'Systems', value: '100%', trend: '0%' }
@@ -232,7 +230,7 @@ const Index = () => {
       <div 
         className={`relative bg-white dark:bg-gray-800 backdrop-blur-lg bg-opacity-80 dark:bg-opacity-80 rounded-xl shadow-lg transition-all duration-500 cursor-pointer overflow-hidden h-full border border-gray-100 dark:border-gray-700
                   ${hasAnimated ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}
-                  ${isHovered ? `shadow-xl ${subsection.lightBg} dark:bg-gray-700 scale-102` : 'scale-100'}`}
+                  ${isHovered ? `shadow-xl ${subsection.lightBg} dark:bg-gray-700 scale-105` : 'scale-100'}`}
         onMouseEnter={() => setHoveredCard(`${categoryIdx}-${index}`)}
         onMouseLeave={() => setHoveredCard(null)}
         onClick={() => handleCardClick(subsection.path)}
@@ -293,53 +291,9 @@ const Index = () => {
             </div>
           </div>
           
-          {/* Mobile Tab Navigation */}
-          <div className="mb-6 overflow-x-auto scrollbar-hide md:hidden">
-            <div className="flex items-center space-x-1 py-1">
-              {navigationCategories.map((category) => (
-                <button
-                  key={category.id}
-                  onClick={() => setActiveSection(category.id)}
-                  className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 whitespace-nowrap flex items-center gap-2
-                            ${activeSection === category.id 
-                              ? `bg-gradient-to-r ${category.gradientFrom} ${category.gradientTo} text-white shadow-md shadow-${category.gradientFrom}/20` 
-                              : 'bg-transparent hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'}`}
-                >
-                  {category.icon}
-                  <span>{category.title}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-          
-          {/* Desktop Tab Navigation */}
-          <div className="hidden md:block mb-6">
-            <div className="bg-white dark:bg-gray-800/60 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 backdrop-blur-md p-1">
-              <div className="flex items-center space-x-1">
-                {navigationCategories.map((category) => (
-                  <button
-                    key={category.id}
-                    onClick={() => setActiveSection(category.id)}
-                    className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 flex items-center gap-2
-                             ${activeSection === category.id 
-                               ? `bg-gradient-to-r ${category.gradientFrom} ${category.gradientTo} text-white shadow-md` 
-                               : 'bg-transparent hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'}`}
-                  >
-                    {category.icon}
-                    <span>{category.title}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-          
-          {/* Category Content */}
+          {/* Show all sections without tabs */}
           {navigationCategories.map((category, categoryIdx) => (
-            <div 
-              key={category.id}
-              className={`transition-all duration-500 ease-in-out
-                        ${activeSection === category.id ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 hidden'}`}
-            >
+            <div key={category.id} className="mb-10">
               <div className={`rounded-2xl p-5 mb-6 ${category.bgGradient} border border-${category.accentColor}/10`}>
                 <div className="flex items-center gap-4">
                   <div className={`p-3 rounded-xl bg-gradient-to-br ${category.gradientFrom} ${category.gradientTo} text-white shadow-lg`}>
@@ -354,7 +308,7 @@ const Index = () => {
                 </div>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-12">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {category.subsections.map((subsection, idx) => (
                   <NavigationCard 
                     key={idx}

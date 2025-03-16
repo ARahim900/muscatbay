@@ -102,6 +102,30 @@ export function ThemeProvider({
         .recharts-sector {
           stroke: #333333 !important;
         }
+        .recharts-pie-label-text {
+          fill: #ffffff !important;
+        }
+        .recharts-label-list text {
+          fill: #ffffff !important;
+        }
+        .recharts-cartesian-axis-ticks text {
+          fill: #ffffff !important;
+        }
+        .recharts-cartesian-axis-label text {
+          fill: #ffffff !important;
+        }
+        .recharts-text-wrapper text {
+          fill: #ffffff !important;
+        }
+        .recharts-radial-bar-background-sector {
+          fill: #333333 !important;
+        }
+        .recharts-legend-wrapper {
+          color: #ffffff !important;
+        }
+        .recharts-surface {
+          background-color: transparent !important;
+        }
       `;
     } else {
       styleElement.textContent = '';
