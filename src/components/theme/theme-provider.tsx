@@ -80,6 +80,28 @@ export function ThemeProvider({
         .recharts-tooltip-item-name, .recharts-tooltip-item-value {
           color: #f0f0f0 !important;
         }
+        .recharts-default-tooltip {
+          background-color: rgba(50, 50, 50, 0.9) !important;
+          border-color: #555555 !important;
+        }
+        .recharts-tooltip-wrapper {
+          filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.3)) !important;
+        }
+        .recharts-reference-line line {
+          stroke: #777777 !important;
+        }
+        .recharts-cartesian-grid line {
+          stroke: #444444 !important;
+        }
+        .recharts-tooltip-cursor {
+          stroke: #666666 !important;
+        }
+        .recharts-brush-texts {
+          fill: #ffffff !important;
+        }
+        .recharts-sector {
+          stroke: #333333 !important;
+        }
       `;
     } else {
       styleElement.textContent = '';

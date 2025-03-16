@@ -1,578 +1,373 @@
-import React, { useState, useEffect, forwardRef } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import Layout from '@/components/layout/Layout';
-import DashboardCard from '@/components/dashboard/DashboardCard';
-import StatCard from '@/components/dashboard/StatCard';
-import KpiIndicator from '@/components/dashboard/KpiIndicator';
-import WelcomeSpotlight from '@/components/welcome/WelcomeSpotlight';
-import { 
-  Droplet, 
-  Zap, 
-  Factory, 
-  FileText, 
-  Thermometer, 
-  ClipboardCheck, 
-  AlertTriangle,
-  AreaChart,
-  Calendar,
-  CheckCircle2,
-  Clock,
-  Gauge,
-  Waves,
-  TrendingUp,
-  TrendingDown,
-  LucideProps,
-  ArrowUpRight,
-  Download,
-  RefreshCw
-} from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { Calendar, BarChart2, Droplet, Zap, Home, Shield, FileText, Briefcase, Activity, ThermometerSun, PieChart, ArrowRight, TrendingUp, Bell, Search, Settings, ChevronRight, Menu, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { toast } from '@/components/ui/use-toast';
-
-const electricityData = [
-  { name: 'Jan', usage: 4780 },
-  { name: 'Feb', usage: 4250 },
-  { name: 'Mar', usage: 3800 },
-  { name: 'Apr', usage: 4120 },
-  { name: 'May', usage: 4590 },
-  { name: 'Jun', usage: 4860 },
-  { name: 'Jul', usage: 5120 },
-];
-
-const waterData = [
-  { name: 'Jan', usage: 2850 },
-  { name: 'Feb', usage: 2620 },
-  { name: 'Mar', usage: 2910 },
-  { name: 'Apr', usage: 3150 },
-  { name: 'May', usage: 3420 },
-  { name: 'Jun', usage: 3690 },
-  { name: 'Jul', usage: 3850 },
-];
-
-const stpEfficiencyData = [
-  { name: 'Jan', value: 92 },
-  { name: 'Feb', value: 93 },
-  { name: 'Mar', value: 91 },
-  { name: 'Apr', value: 94 },
-  { name: 'May', value: 95 },
-  { name: 'Jun', value: 94 },
-  { name: 'Jul', value: 93 },
-];
-
-const pumpingStationsData = [
-  { id: 'PS-001', name: 'Main Distribution', status: 'operational', flowRate: '124 m³/h', pressure: '5.2 bar', lastMaintenance: 'Jul 12, 2024' },
-  { id: 'PS-002', name: 'Zone A Booster', status: 'operational', flowRate: '86 m³/h', pressure: '4.8 bar', lastMaintenance: 'Jun 28, 2024' },
-  { id: 'PS-003', name: 'Hilltop Station', status: 'warning', flowRate: '72 m³/h', pressure: '3.9 bar', lastMaintenance: 'May 15, 2024' },
-  { id: 'PS-004', name: 'Residential Supply', status: 'operational', flowRate: '95 m³/h', pressure: '4.5 bar', lastMaintenance: 'Jul 05, 2024' },
-  { id: 'PS-005', name: 'Irrigation System', status: 'maintenance', flowRate: '0 m³/h', pressure: '0 bar', lastMaintenance: 'Jul 25, 2024' },
-];
-
-const currentAlerts = [
-  { system: 'Electricity', title: 'High Power Demand', description: 'Main complex showing 12% increase in demand', severity: 'medium', timestamp: 'Today, 11:30' },
-  { system: 'Water', title: 'Leak Detection Alert', description: 'Potential leak in Zone B residential area', severity: 'high', timestamp: 'Today, 09:15' },
-  { system: 'STP', title: 'Filter Maintenance Required', description: 'Primary filter efficiency below threshold', severity: 'medium', timestamp: 'Today, 08:45' },
-  { system: 'Pumping', title: 'Pump #3 Vibration Warning', description: 'Abnormal vibration detected at Hilltop Station', severity: 'low', timestamp: 'Yesterday, 22:10' },
-];
-
-const kpiInsights = [
-  { title: 'Water Usage Trend', value: '-4.3%', status: 'good' as const, subtext: 'Below monthly average' },
-  { title: 'Electricity Peak', value: '5,120 kWh', status: 'warning' as const, subtext: '18:00-20:00 daily' },
-  { title: 'STP Efficiency', value: '93%', status: 'good' as const, subtext: 'Within optimal range' },
-  { title: 'Critical Alerts', value: '1', status: 'critical' as const, subtext: 'Requiring immediate attention' },
-];
-
-const CustomPumpIcon = forwardRef<SVGSVGElement, LucideProps>((props, ref) => {
-  return (
-    <svg 
-      ref={ref}
-      xmlns="http://www.w3.org/2000/svg" 
-      width="24" 
-      height="24" 
-      viewBox="0 0 24 24" 
-      fill="none" 
-      stroke="currentColor" 
-      strokeWidth="2" 
-      strokeLinecap="round" 
-      strokeLinejoin="round" 
-      {...props}
-    >
-      <path d="M19 8.5l-4.5 7H19l-4.5 7H19"></path>
-      <path d="M12 12h1"></path>
-      <path d="M8 12h1"></path>
-      <path d="M4 12h1"></path>
-      <path d="M3 5v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-3"></path>
-      <path d="M13 5V3"></path>
-      <path d="M9 5V3"></path>
-      <path d="M5 5V3"></path>
-      <path d="M17 5V3"></path>
-      <path d="M3 5h18"></path>
-    </svg>
-  );
-});
-
-CustomPumpIcon.displayName = 'CustomPumpIcon';
 
 const Index = () => {
   const navigate = useNavigate();
-  const [currentDate] = useState(new Date().toLocaleDateString('en-US', { 
-    weekday: 'long', 
-    year: 'numeric', 
-    month: 'long', 
-    day: 'numeric' 
-  }));
-  
-  const [showWelcome, setShowWelcome] = useState(false);
+  const [hoveredCard, setHoveredCard] = useState(null);
+  const [activeSection, setActiveSection] = useState('utilities');
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [animatedItems, setAnimatedItems] = useState({});
 
-  useEffect(() => {
-    const hasVisited = localStorage.getItem('hasVisitedBefore');
-    if (!hasVisited) {
-      const timer = setTimeout(() => {
-        setShowWelcome(true);
-        localStorage.setItem('hasVisitedBefore', 'true');
-      }, 1000);
-      
-      return () => clearTimeout(timer);
-    }
-  }, []);
+  // Brand color
+  const brandColor = "#4E4456";
   
-  const navigateToSection = (section: string) => {
-    navigate(`/${section}`);
-    toast({
-      title: `Navigating to ${section.charAt(0).toUpperCase() + section.slice(1)}`,
-      description: `Opening detailed ${section} management dashboard`,
+  // Define the navigation categories and their subsections
+  const navigationCategories = [
+    {
+      id: 'utilities',
+      title: 'UTILITIES',
+      icon: <Activity size={22} className="text-blue-500" />,
+      gradientFrom: 'from-blue-500',
+      gradientTo: 'to-indigo-600',
+      bgGradient: 'bg-gradient-to-r from-blue-500/10 to-indigo-600/10',
+      shadowColor: 'shadow-blue-200/50',
+      accentColor: 'bg-blue-500',
+      textColor: 'text-blue-500',
+      subsections: [
+        { 
+          name: 'Electricity System', 
+          icon: <Zap size={22} />, 
+          color: 'from-amber-400 to-amber-600',
+          bgColor: 'bg-amber-500',
+          lightBg: 'bg-amber-50',
+          textColor: 'text-amber-600',
+          iconBg: 'bg-gradient-to-br from-amber-400 to-amber-600',
+          metrics: [
+            { label: 'Consumption', value: '12.6 MW', trend: '+3%' },
+            { label: 'Distribution', value: '98.2%', trend: '-0.5%' }
+          ],
+          path: '/electricity',
+          description: 'Monitor power consumption and distribution'
+        },
+        { 
+          name: 'Water System', 
+          icon: <Droplet size={22} />, 
+          color: 'from-cyan-400 to-blue-500',
+          bgColor: 'bg-cyan-500',
+          lightBg: 'bg-cyan-50',
+          textColor: 'text-cyan-600',
+          iconBg: 'bg-gradient-to-br from-cyan-400 to-blue-500',
+          metrics: [
+            { label: 'Consumption', value: '325 m³', trend: '-1.2%' },
+            { label: 'Quality Index', value: '97.8%', trend: '+0.3%' }
+          ],
+          path: '/water',
+          description: 'Track usage and water management systems'
+        }
+      ]
+    },
+    {
+      id: 'facilities',
+      title: 'FACILITIES',
+      icon: <Home size={22} className="text-emerald-500" />,
+      gradientFrom: 'from-emerald-500',
+      gradientTo: 'to-teal-600',
+      bgGradient: 'bg-gradient-to-r from-emerald-500/10 to-teal-600/10',
+      shadowColor: 'shadow-emerald-200/50',
+      accentColor: 'bg-emerald-500',
+      textColor: 'text-emerald-500',
+      subsections: [
+        { 
+          name: 'STP Plant', 
+          icon: <Droplet size={22} />, 
+          color: 'from-green-400 to-green-600',
+          bgColor: 'bg-green-500',
+          lightBg: 'bg-green-50',
+          textColor: 'text-green-600',
+          iconBg: 'bg-gradient-to-br from-green-400 to-green-600',
+          metrics: [
+            { label: 'Processing', value: '92.3%', trend: '+1.2%' },
+            { label: 'Efficiency', value: '88.7%', trend: '+2.5%' }
+          ],
+          path: '/stp',
+          description: 'Sewage treatment plant operations dashboard'
+        },
+        { 
+          name: 'Pumping Stations', 
+          icon: <Activity size={22} />, 
+          color: 'from-blue-400 to-indigo-600',
+          bgColor: 'bg-blue-500',
+          lightBg: 'bg-blue-50',
+          textColor: 'text-blue-600',
+          iconBg: 'bg-gradient-to-br from-blue-400 to-indigo-600',
+          metrics: [
+            { label: 'Operational', value: '14/15', trend: '0%' },
+            { label: 'Efficiency', value: '94.2%', trend: '+0.7%' }
+          ],
+          path: '/water-system',
+          description: 'Monitor performance and operational status'
+        },
+        { 
+          name: 'HVAC/BMS', 
+          icon: <ThermometerSun size={22} />, 
+          color: 'from-orange-400 to-red-500',
+          bgColor: 'bg-orange-500',
+          lightBg: 'bg-orange-50', 
+          textColor: 'text-orange-600',
+          iconBg: 'bg-gradient-to-br from-orange-400 to-red-500',
+          metrics: [
+            { label: 'Energy Usage', value: '8.4 MW', trend: '-2.1%' },
+            { label: 'Performance', value: '91.5%', trend: '+1.3%' }
+          ],
+          path: '/hvac',
+          description: 'Building management and climate control'
+        }
+      ]
+    },
+    {
+      id: 'management',
+      title: 'MANAGEMENT',
+      icon: <Briefcase size={22} className="text-violet-500" />,
+      gradientFrom: 'from-violet-500',
+      gradientTo: 'to-purple-600',
+      bgGradient: 'bg-gradient-to-r from-violet-500/10 to-purple-600/10',
+      shadowColor: 'shadow-violet-200/50',
+      accentColor: 'bg-violet-500',
+      textColor: 'text-violet-500',
+      subsections: [
+        { 
+          name: 'Contracts', 
+          icon: <FileText size={22} />, 
+          color: 'from-purple-400 to-purple-600',
+          bgColor: 'bg-purple-500',
+          lightBg: 'bg-purple-50',
+          textColor: 'text-purple-600',
+          iconBg: 'bg-gradient-to-br from-purple-400 to-purple-600',
+          metrics: [
+            { label: 'Active', value: '23', trend: '+3' },
+            { label: 'Expiring', value: '2', trend: '-1' }
+          ],
+          path: '/contracts',
+          description: 'Vendor agreements and service contracts'
+        },
+        { 
+          name: 'Projects', 
+          icon: <BarChart2 size={22} />, 
+          color: 'from-indigo-400 to-indigo-600',
+          bgColor: 'bg-indigo-500',
+          lightBg: 'bg-indigo-50',
+          textColor: 'text-indigo-600',
+          iconBg: 'bg-gradient-to-br from-indigo-400 to-indigo-600',
+          metrics: [
+            { label: 'In Progress', value: '7', trend: '+1' },
+            { label: 'Completed', value: '12', trend: '+2' }
+          ],
+          path: '/projects',
+          description: 'Development and maintenance project tracking'
+        },
+        { 
+          name: 'Asset Lifecycle', 
+          icon: <PieChart size={22} />, 
+          color: 'from-teal-400 to-teal-600',
+          bgColor: 'bg-teal-500',
+          lightBg: 'bg-teal-50',
+          textColor: 'text-teal-600',
+          iconBg: 'bg-gradient-to-br from-teal-400 to-teal-600',
+          metrics: [
+            { label: 'New Assets', value: '12', trend: '+5' },
+            { label: 'Maintenance', value: '36', trend: '+2' }
+          ],
+          path: '/alm',
+          description: 'Track assets throughout their lifecycle'
+        },
+        { 
+          name: 'Security', 
+          icon: <Shield size={22} />, 
+          color: 'from-rose-400 to-rose-600',
+          bgColor: 'bg-rose-500',
+          lightBg: 'bg-rose-50',
+          textColor: 'text-rose-600',
+          iconBg: 'bg-gradient-to-br from-rose-400 to-rose-600',
+          metrics: [
+            { label: 'Alerts', value: '0', trend: '-3' },
+            { label: 'Systems', value: '100%', trend: '0%' }
+          ],
+          path: '/security',
+          description: 'Security systems monitoring and management'
+        }
+      ]
+    }
+  ];
+  
+  useEffect(() => {
+    // Initialize animation states for all items
+    const allAnimations = {};
+    navigationCategories.forEach((category, catIndex) => {
+      category.subsections.forEach((_, idx) => {
+        allAnimations[`${catIndex}-${idx}`] = false;
+      });
     });
+    
+    // Set timeout to animate items with a staggered effect
+    const timeouts = [];
+    navigationCategories.forEach((category, catIndex) => {
+      category.subsections.forEach((_, idx) => {
+        const timeout = setTimeout(() => {
+          setAnimatedItems(prev => ({
+            ...prev,
+            [`${catIndex}-${idx}`]: true
+          }));
+        }, 100 + (catIndex * 100) + (idx * 150));
+        timeouts.push(timeout);
+      });
+    });
+    
+    return () => {
+      timeouts.forEach(timeout => clearTimeout(timeout));
+    };
+  }, []);
+
+  const handleCardClick = (path) => {
+    navigate(path);
   };
 
+  const NavigationCard = ({ subsection, index, categoryIdx }) => {
+    const isHovered = hoveredCard === `${categoryIdx}-${index}`;
+    const hasAnimated = animatedItems[`${categoryIdx}-${index}`];
+    
+    return (
+      <div 
+        className={`relative bg-white dark:bg-gray-800 backdrop-blur-lg bg-opacity-80 dark:bg-opacity-80 rounded-xl shadow-lg transition-all duration-500 cursor-pointer overflow-hidden h-full border border-gray-100 dark:border-gray-700
+                  ${hasAnimated ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}
+                  ${isHovered ? `shadow-xl ${subsection.lightBg} dark:bg-gray-700 scale-102` : 'scale-100'}`}
+        onMouseEnter={() => setHoveredCard(`${categoryIdx}-${index}`)}
+        onMouseLeave={() => setHoveredCard(null)}
+        onClick={() => handleCardClick(subsection.path)}
+      >
+        <div className={`h-1 bg-gradient-to-r ${subsection.color}`}></div>
+        <div className="p-6">
+          <div className="flex justify-between items-start mb-5">
+            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${subsection.iconBg} text-white shadow-lg shadow-${subsection.bgColor}/20 transform transition-transform duration-500 ${isHovered ? 'rotate-6 scale-110' : 'rotate-0'}`}>
+              {subsection.icon}
+            </div>
+            
+            <div className={`flex items-center justify-center transition-all duration-500 opacity-0 ${isHovered ? 'opacity-100 scale-100' : 'scale-0'}`}>
+              <span className={`text-xs font-semibold ${subsection.textColor} mr-1`}>View</span>
+              <ArrowRight className={`h-4 w-4 ${subsection.textColor}`} />
+            </div>
+          </div>
+          
+          <h3 className={`text-xl font-bold text-gray-800 dark:text-white mb-2 transition-transform duration-500 ${isHovered ? 'translate-x-2' : 'translate-x-0'}`}>
+            {subsection.name}
+          </h3>
+          
+          <p className="text-gray-600 dark:text-gray-300 text-sm mb-4">{subsection.description}</p>
+          
+          {subsection.metrics && (
+            <div className="grid grid-cols-2 gap-3 mt-4">
+              {subsection.metrics.map((metric, i) => (
+                <div key={i} className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-2">
+                  <div className="text-xs text-gray-500 dark:text-gray-400">{metric.label}</div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-lg font-semibold text-gray-800 dark:text-white">{metric.value}</span>
+                    <span className={`text-xs font-medium flex items-center ${metric.trend.startsWith('+') ? 'text-green-500' : metric.trend.startsWith('-') ? 'text-red-500' : 'text-gray-500'}`}>
+                      {metric.trend}
+                      {metric.trend.startsWith('+') && <TrendingUp className="ml-1 h-3 w-3" />}
+                      {metric.trend.startsWith('-') && <TrendingUp className="ml-1 h-3 w-3 rotate-180" />}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+  
   return (
     <Layout>
-      {showWelcome && <WelcomeSpotlight onClose={() => setShowWelcome(false)} />}
-      
-      <div className="mb-4 md:mb-6 animate-fade-in w-full">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-muscat-primary mb-1">Operations Dashboard</h1>
-            <p className="text-sm md:text-base text-muscat-primary/60 flex items-center">
-              <Calendar className="h-4 w-4 mr-1.5 text-muscat-teal" />
-              {currentDate} • Daily Overview
-            </p>
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+        {/* Main Content */}
+        <main className="pb-6">
+          <div className="mb-6">
+            <h2 style={{ color: brandColor }} className="text-3xl font-bold mb-2">
+              Operations Dashboard
+            </h2>
+            <div className="flex items-center text-gray-600 dark:text-gray-400 text-sm">
+              <Calendar className="h-4 w-4 mr-2" />
+              <span>Sunday, March 16, 2025 • Daily Overview</span>
+            </div>
           </div>
-          <div className="flex items-center gap-2 mt-4 md:mt-0">
-            <Button variant="outline" className="gap-2 text-sm font-medium border-muscat-primary/20 hover:bg-muscat-primary/5 w-full md:w-auto" onClick={() => toast({ title: "Report generated", description: "The report has been downloaded to your device" })}>
-              <Download className="w-4 h-4" />
-              Export Report
-            </Button>
-            <Button variant="outline" className="gap-2 text-sm font-medium border-muscat-primary/20 hover:bg-muscat-primary/5 w-full md:w-auto" onClick={() => toast({ title: "Refreshing data", description: "Dashboard data is being updated" })}>
-              <RefreshCw className="w-4 h-4" />
-              Refresh Data
-            </Button>
+          
+          {/* Mobile Tab Navigation */}
+          <div className="mb-6 overflow-x-auto scrollbar-hide md:hidden">
+            <div className="flex items-center space-x-1 py-1">
+              {navigationCategories.map((category) => (
+                <button
+                  key={category.id}
+                  onClick={() => setActiveSection(category.id)}
+                  className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 whitespace-nowrap flex items-center gap-2
+                            ${activeSection === category.id 
+                              ? `bg-gradient-to-r ${category.gradientFrom} ${category.gradientTo} text-white shadow-md shadow-${category.gradientFrom}/20` 
+                              : 'bg-transparent hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'}`}
+                >
+                  {category.icon}
+                  <span>{category.title}</span>
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
-      </div>
-      
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 mb-4 md:mb-6 w-full">
-        {kpiInsights.map((kpi, index) => (
-          <KpiIndicator
-            key={index}
-            title={kpi.title}
-            value={kpi.value}
-            status={kpi.status}
-            subtext={kpi.subtext}
-          />
-        ))}
-      </div>
-      
-      <div className="grid grid-cols-1 gap-4 sm:gap-6 mb-6 sm:mb-8 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard 
-          title="Water Consumption" 
-          value="3,850 m³" 
-          icon={Droplet} 
-          trend={{ value: 4.3, isPositive: false }}
-          color="teal"
-          delay={100}
-        />
-        <StatCard 
-          title="Electricity Usage" 
-          value="5,120 kWh" 
-          icon={Zap} 
-          trend={{ value: 5.1, isPositive: true }}
-          color="gold"
-          delay={200}
-        />
-        <StatCard 
-          title="STP Efficiency" 
-          value="93%" 
-          icon={Gauge} 
-          trend={{ value: 1, isPositive: false }}
-          color="lavender"
-          delay={300}
-        />
-        <StatCard 
-          title="Active Pumping Stations" 
-          value="4/5" 
-          icon={CustomPumpIcon} 
-          description="1 under maintenance"
-          color="primary"
-          delay={400}
-        />
-      </div>
-      
-      <div className="grid grid-cols-1 gap-4 sm:gap-6 mb-6 sm:mb-8 lg:grid-cols-2">
-        <DashboardCard delay={500} className="bg-gradient-to-br from-white to-muscat-light/30">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-muscat-primary flex items-center">
-              <Zap className="w-5 h-5 mr-2 text-muscat-gold" />
-              Electricity Consumption
-            </h3>
-            <button 
-              className="flex items-center text-sm font-medium text-muscat-teal hover:underline"
-              onClick={() => navigateToSection('electricity')}
+          
+          {/* Desktop Tab Navigation */}
+          <div className="hidden md:block mb-6">
+            <div className="bg-white dark:bg-gray-800/60 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 backdrop-blur-md p-1">
+              <div className="flex items-center space-x-1">
+                {navigationCategories.map((category) => (
+                  <button
+                    key={category.id}
+                    onClick={() => setActiveSection(category.id)}
+                    className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 flex items-center gap-2
+                             ${activeSection === category.id 
+                               ? `bg-gradient-to-r ${category.gradientFrom} ${category.gradientTo} text-white shadow-md` 
+                               : 'bg-transparent hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'}`}
+                  >
+                    {category.icon}
+                    <span>{category.title}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+          
+          {/* Category Content */}
+          {navigationCategories.map((category, categoryIdx) => (
+            <div 
+              key={category.id}
+              className={`transition-all duration-500 ease-in-out
+                        ${activeSection === category.id ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 hidden'}`}
             >
-              View Details
-              <ArrowUpRight className="ml-1 w-3.5 h-3.5" />
-            </button>
-          </div>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={electricityData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis dataKey="name" stroke="#9CA3AF" />
-                <YAxis stroke="#9CA3AF" />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: 'white',
-                    borderColor: '#E5E7EB',
-                    borderRadius: '0.75rem',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                  }}
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="usage" 
-                  stroke="#D4B98C" 
-                  strokeWidth={2.5}
-                  dot={{ stroke: '#D4B98C', strokeWidth: 2, r: 4, fill: 'white' }}
-                  activeDot={{ stroke: '#D4B98C', strokeWidth: 2, r: 6, fill: 'white' }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="flex items-center justify-between mt-4">
-            <div>
-              <p className="text-sm font-medium text-muscat-primary">Monthly Average: 4,500 kWh</p>
-              <p className="text-xs text-muscat-primary/60">Peak Time: 18:00 - 20:00</p>
-            </div>
-            <div className="px-3 py-1.5 text-xs font-medium rounded-full bg-amber-100 text-amber-800 flex items-center">
-              <TrendingUp className="w-3.5 h-3.5 mr-1" />
-              +5.1% vs Last Month
-            </div>
-          </div>
-        </DashboardCard>
-        
-        <DashboardCard delay={600} className="bg-gradient-to-br from-white to-muscat-light/30">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-muscat-primary flex items-center">
-              <Droplet className="w-5 h-5 mr-2 text-muscat-teal" />
-              Water Consumption
-            </h3>
-            <button 
-              className="flex items-center text-sm font-medium text-muscat-teal hover:underline"
-              onClick={() => navigateToSection('water')}
-            >
-              View Details
-              <ArrowUpRight className="ml-1 w-3.5 h-3.5" />
-            </button>
-          </div>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={waterData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis dataKey="name" stroke="#9CA3AF" />
-                <YAxis stroke="#9CA3AF" />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: 'white',
-                    borderColor: '#E5E7EB',
-                    borderRadius: '0.75rem',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                  }}
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="usage" 
-                  stroke="#68D1CC" 
-                  strokeWidth={2.5}
-                  dot={{ stroke: '#68D1CC', strokeWidth: 2, r: 4, fill: 'white' }}
-                  activeDot={{ stroke: '#68D1CC', strokeWidth: 2, r: 6, fill: 'white' }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="flex items-center justify-between mt-4">
-            <div>
-              <p className="text-sm font-medium text-muscat-primary">Monthly Average: 3,212 m³</p>
-              <p className="text-xs text-muscat-primary/60">Highest Zone: Residential Area B</p>
-            </div>
-            <div className="px-3 py-1.5 text-xs font-medium rounded-full bg-green-100 text-green-800 flex items-center">
-              <TrendingDown className="w-3.5 h-3.5 mr-1" />
-              -4.3% vs Last Month
-            </div>
-          </div>
-        </DashboardCard>
-      </div>
-      
-      <div className="grid grid-cols-1 gap-4 sm:gap-6 mb-6 sm:mb-8 md:grid-cols-2 lg:grid-cols-3">
-        <DashboardCard delay={700} className="bg-gradient-to-br from-white to-muscat-light/30">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-muscat-primary flex items-center">
-              <Factory className="w-5 h-5 mr-2 text-muscat-lavender" />
-              STP Performance
-            </h3>
-            <button 
-              className="flex items-center text-sm font-medium text-muscat-teal hover:underline"
-              onClick={() => navigateToSection('stp')}
-            >
-              View Details
-              <ArrowUpRight className="ml-1 w-3.5 h-3.5" />
-            </button>
-          </div>
-          <div className="space-y-4">
-            <div className="p-4 rounded-lg bg-white/80 border border-muscat-primary/5">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-muscat-primary">Current Efficiency</span>
-                <span className="text-sm font-medium text-muscat-primary">93%</span>
-              </div>
-              <div className="w-full h-2 rounded-full bg-gray-200">
-                <div className="h-full rounded-full bg-muscat-lavender" style={{ width: "93%" }}></div>
-              </div>
-            </div>
-            
-            <div className="p-4 rounded-lg bg-white/80 border border-muscat-primary/5">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-muscat-primary">Flow Rate</span>
-                <span className="text-sm font-medium text-muscat-primary">148 m³/day</span>
-              </div>
-              <div className="w-full h-2 rounded-full bg-gray-200">
-                <div className="h-full rounded-full bg-muscat-teal" style={{ width: "80%" }}></div>
-              </div>
-            </div>
-            
-            <div className="p-4 rounded-lg bg-white/80 border border-muscat-primary/5">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-muscat-primary">BOD Removal</span>
-                <span className="text-sm font-medium text-muscat-primary">96%</span>
-              </div>
-              <div className="w-full h-2 rounded-full bg-gray-200">
-                <div className="h-full rounded-full bg-muscat-gold" style={{ width: "96%" }}></div>
-              </div>
-            </div>
-            
-            <div className="p-4 rounded-lg bg-white/80 border border-muscat-primary/5">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-muscat-primary">TSS Removal</span>
-                <span className="text-sm font-medium text-muscat-primary">94%</span>
-              </div>
-              <div className="w-full h-2 rounded-full bg-gray-200">
-                <div className="h-full rounded-full bg-muscat-primary" style={{ width: "94%" }}></div>
-              </div>
-            </div>
-          </div>
-          <div className="mt-4 text-xs text-muscat-primary/60">
-            <p>Last Inspection: July 20, 2024</p>
-            <p>Next Maintenance: August 15, 2024</p>
-          </div>
-        </DashboardCard>
-        
-        <DashboardCard delay={800} className="bg-gradient-to-br from-white to-muscat-light/30">
-          <h3 className="mb-4 text-lg font-semibold text-muscat-primary flex items-center">
-            <AlertTriangle className="w-5 h-5 mr-2 text-amber-500" />
-            Critical Alerts
-          </h3>
-          <div className="space-y-3">
-            {currentAlerts.map((alert, index) => (
-              <div key={index} className={`
-                p-3 border rounded-lg border-l-4 hover:bg-white transition-colors
-                ${alert.severity === 'high' 
-                  ? "border-red-400 border-l-red-500 shadow-sm" 
-                  : alert.severity === 'medium'
-                  ? "border-amber-400 border-l-amber-500 shadow-sm"
-                  : "border-blue-400 border-l-blue-500 shadow-sm"}
-              `}>
-                <div className="flex items-start justify-between">
+              <div className={`rounded-2xl p-5 mb-6 ${category.bgGradient} border border-${category.accentColor}/10`}>
+                <div className="flex items-center gap-4">
+                  <div className={`p-3 rounded-xl bg-gradient-to-br ${category.gradientFrom} ${category.gradientTo} text-white shadow-lg`}>
+                    {category.icon}
+                  </div>
                   <div>
-                    <h4 className="text-sm font-medium text-muscat-primary">{alert.title}</h4>
-                    <p className="text-xs text-muscat-primary/60">{alert.description}</p>
-                  </div>
-                  <span className="text-xs text-muscat-primary/50 ml-2">{alert.timestamp}</span>
-                </div>
-                <div className="flex items-center justify-between mt-2">
-                  <span className="text-xs font-medium text-muscat-primary/70">{alert.system}</span>
-                  <span className={`
-                    inline-block px-2 py-0.5 text-xs rounded-full
-                    ${alert.severity === 'high' 
-                      ? "bg-red-100 text-red-800" 
-                      : alert.severity === 'medium'
-                      ? "bg-amber-100 text-amber-800"
-                      : "bg-blue-100 text-blue-800"}
-                  `}>
-                    {alert.severity.charAt(0).toUpperCase() + alert.severity.slice(1)}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-          <button className="w-full py-2 mt-4 text-sm font-medium transition-colors border rounded-md border-muscat-primary/10 text-muscat-primary hover:bg-white hover:shadow-sm">
-            View All Alerts
-          </button>
-        </DashboardCard>
-        
-        <DashboardCard delay={900} className="lg:col-span-1 bg-gradient-to-br from-white to-muscat-light/30">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-muscat-primary flex items-center">
-              <CustomPumpIcon className="w-5 h-5 mr-2 text-muscat-primary" />
-              Pumping Stations
-            </h3>
-            <button 
-              className="flex items-center text-sm font-medium text-muscat-teal hover:underline"
-            >
-              View Details
-              <ArrowUpRight className="ml-1 w-3.5 h-3.5" />
-            </button>
-          </div>
-          <div className="space-y-3">
-            {pumpingStationsData.map((station, index) => (
-              <div key={index} className="p-3 border rounded-lg border-muscat-primary/10 hover:bg-white hover:shadow-sm transition-all">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <div className={`
-                      w-2 h-2 rounded-full mr-2
-                      ${station.status === 'operational' 
-                        ? "bg-green-500" 
-                        : station.status === 'warning'
-                        ? "bg-amber-500"
-                        : "bg-blue-500"}
-                    `}></div>
-                    <span className="text-sm font-medium text-muscat-primary">{station.name}</span>
-                  </div>
-                  <span className="text-xs text-muscat-primary/60">{station.id}</span>
-                </div>
-                <div className="grid grid-cols-2 gap-2 mt-2">
-                  <div className="text-xs text-muscat-primary/60">
-                    Flow: <span className="text-muscat-primary">{station.flowRate}</span>
-                  </div>
-                  <div className="text-xs text-muscat-primary/60">
-                    Pressure: <span className="text-muscat-primary">{station.pressure}</span>
+                    <h3 className="text-xl font-bold text-gray-800 dark:text-white">{category.title}</h3>
+                    <p className={`text-sm ${category.textColor}`}>
+                      {category.subsections.length} subsystems • Last updated: 2 hours ago
+                    </p>
                   </div>
                 </div>
               </div>
-            ))}
-          </div>
-        </DashboardCard>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-12">
+                {category.subsections.map((subsection, idx) => (
+                  <NavigationCard 
+                    key={idx}
+                    subsection={subsection} 
+                    index={idx} 
+                    categoryIdx={categoryIdx} 
+                  />
+                ))}
+              </div>
+            </div>
+          ))}
+        </main>
       </div>
-      
-      <DashboardCard delay={1000} className="bg-gradient-to-br from-white to-muscat-light/30">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-muscat-primary flex items-center">
-            <AreaChart className="w-5 h-5 mr-2 text-muscat-primary" />
-            System Overview
-          </h3>
-          <div className="flex items-center gap-2">
-            <span className="hidden sm:inline text-sm text-muscat-primary/60">Last Updated: Today, 14:30</span>
-            <button className="p-1.5 transition-all rounded-md hover:bg-muscat-light">
-              <Calendar className="w-4 h-4 text-muscat-primary/60" />
-            </button>
-          </div>
-        </div>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="p-4 transition-all border rounded-lg border-muscat-primary/10 hover:shadow-md hover:bg-white">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="p-2 rounded-lg bg-muscat-teal/10">
-                <Droplet className="w-5 h-5 text-muscat-teal" />
-              </div>
-              <div>
-                <h4 className="text-sm font-medium text-muscat-primary">Water Systems</h4>
-                <p className="text-xs text-muscat-primary/60">5 zones monitored</p>
-              </div>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1">
-                <CheckCircle2 className="w-4 h-4 text-green-500" />
-                <span className="text-xs text-muscat-primary">4 Operational</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <AlertTriangle className="w-4 h-4 text-amber-500" />
-                <span className="text-xs text-muscat-primary">1 Warning</span>
-              </div>
-            </div>
-          </div>
-          
-          <div className="p-4 transition-all border rounded-lg border-muscat-primary/10 hover:shadow-md hover:bg-white">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="p-2 rounded-lg bg-muscat-gold/10">
-                <Zap className="w-5 h-5 text-muscat-gold" />
-              </div>
-              <div>
-                <h4 className="text-sm font-medium text-muscat-primary">Electrical Systems</h4>
-                <p className="text-xs text-muscat-primary/60">8 substations</p>
-              </div>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1">
-                <CheckCircle2 className="w-4 h-4 text-green-500" />
-                <span className="text-xs text-muscat-primary">7 Operational</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <AlertTriangle className="w-4 h-4 text-amber-500" />
-                <span className="text-xs text-muscat-primary">1 Warning</span>
-              </div>
-            </div>
-          </div>
-          
-          <div className="p-4 transition-all border rounded-lg border-muscat-primary/10 hover:shadow-md hover:bg-white">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="p-2 rounded-lg bg-muscat-lavender/10">
-                <Factory className="w-5 h-5 text-muscat-lavender" />
-              </div>
-              <div>
-                <h4 className="text-sm font-medium text-muscat-primary">STP Operations</h4>
-                <p className="text-xs text-muscat-primary/60">4 process units</p>
-              </div>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1">
-                <CheckCircle2 className="w-4 h-4 text-green-500" />
-                <span className="text-xs text-muscat-primary">All Operational</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <Clock className="w-4 h-4 text-blue-500" />
-                <span className="text-xs text-muscat-primary">Maintenance Due</span>
-              </div>
-            </div>
-          </div>
-          
-          <div className="p-4 transition-all border rounded-lg border-muscat-primary/10 hover:shadow-md hover:bg-white">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="p-2 rounded-lg bg-muscat-primary/10">
-                <CustomPumpIcon className="w-5 h-5 text-muscat-primary" />
-              </div>
-              <div>
-                <h4 className="text-sm font-medium text-muscat-primary">Pumping Network</h4>
-                <p className="text-xs text-muscat-primary/60">5 major stations</p>
-              </div>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1">
-                <CheckCircle2 className="w-4 h-4 text-green-500" />
-                <span className="text-xs text-muscat-primary">4 Operational</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <Clock className="w-4 h-4 text-blue-500" />
-                <span className="text-xs text-muscat-primary">1 Maintenance</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </DashboardCard>
     </Layout>
   );
 };
