@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import Layout from '@/components/layout/Layout';
 import { Calendar, BarChart2, Droplet, Zap, Home, Shield, FileText, Briefcase, Activity, ThermometerSun, PieChart, ArrowRight, TrendingUp } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { ContractIcon } from '@/components/layout/sidebar/CustomIcons';
 
 const Index = () => {
   const navigate = useNavigate();
@@ -95,8 +96,9 @@ const Index = () => {
             { label: 'Operational', value: '14/15', trend: '0%' },
             { label: 'Efficiency', value: '94.2%', trend: '+0.7%' }
           ],
-          path: '/water-system',
-          description: 'Monitor performance and operational status'
+          path: 'https://muscat-bay-pumping-stations.lovable.app/',
+          description: 'Monitor performance and operational status',
+          isExternal: true
         },
         { 
           name: 'HVAC/BMS', 
@@ -118,7 +120,7 @@ const Index = () => {
     {
       id: 'management',
       title: 'MANAGEMENT',
-      icon: <Briefcase size={22} />,
+      icon: <Briefcase size={22} className={`text-[${brandColor}]`} />,
       gradientFrom: `from-[${brandColor}]`,
       gradientTo: `to-[${brandColor}]`,
       bgGradient: `bg-gradient-to-r from-[${brandColor}]/10 to-[${brandColor}]/10`,
@@ -218,8 +220,12 @@ const Index = () => {
     };
   }, []);
 
-  const handleCardClick = (path) => {
-    navigate(path);
+  const handleCardClick = (path, isExternal) => {
+    if (isExternal) {
+      window.open(path, '_blank');
+    } else {
+      navigate(path);
+    }
   };
 
   const NavigationCard = ({ subsection, index, categoryIdx }) => {
@@ -233,7 +239,7 @@ const Index = () => {
                   ${isHovered ? `shadow-xl ${subsection.lightBg} dark:bg-gray-700 scale-105` : 'scale-100'}`}
         onMouseEnter={() => setHoveredCard(`${categoryIdx}-${index}`)}
         onMouseLeave={() => setHoveredCard(null)}
-        onClick={() => handleCardClick(subsection.path)}
+        onClick={() => handleCardClick(subsection.path, subsection.isExternal)}
       >
         <div className={`h-1 bg-gradient-to-r ${subsection.color}`}></div>
         <div className="p-6">
