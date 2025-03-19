@@ -219,8 +219,19 @@ const maintenanceSchedule = [
   }
 ];
 
+// Define proper TypeScript interfaces for component props
+interface MetricCardProps {
+  title: string;
+  value: number | string;
+  icon: React.ReactNode;
+  trend?: { type: string; value: string };
+  suffix?: string;
+  color: string;
+  bgColor?: string;
+}
+
 // Metric Card Component
-const MetricCard = ({ title, value, icon, trend, suffix, color, bgColor }) => {
+const MetricCard = ({ title, value, icon, trend, suffix, color, bgColor }: MetricCardProps) => {
   return (
     <div 
       className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 transition-all hover:shadow-md" 
@@ -247,15 +258,21 @@ const MetricCard = ({ title, value, icon, trend, suffix, color, bgColor }) => {
           className="p-2.5 rounded-full" 
           style={{ backgroundColor: bgColor || `${color}20` }}
         >
-          {React.cloneElement(icon, { size: 18, color: color })}
+          {React.cloneElement(icon as React.ReactElement, { size: 18, color: color })}
         </div>
       </div>
     </div>
   );
 };
 
+interface BadgeProps {
+  text: string;
+  color: string;
+  bgColor?: string;
+}
+
 // Badge Component
-const Badge = ({ text, color, bgColor }) => {
+const Badge = ({ text, color, bgColor }: BadgeProps) => {
   return (
     <span 
       className="px-2.5 py-1 text-xs font-medium rounded-full"
@@ -312,7 +329,7 @@ const FilterPill = ({ label, active, onClick, color = COLORS.primary }) => {
 // Main Asset Lifecycle Management Component
 const AssetLifecycleManagement = () => {
   const [activeTab, setActiveTab] = useState("overview");
-  const [selectedYear, setSelectedYear] = useState(2025);
+  const [selectedYear, setSelectedYear] = useState<number | "all">(2025);
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedLocation, setSelectedLocation] = useState("all");
 
@@ -330,7 +347,6 @@ const AssetLifecycleManagement = () => {
   const urgentAssets = criticalAssets.filter(asset => asset.remainingLife <= 2);
   
   // Filter maintenance schedule based on selections
-  // Filter maintenance schedule based on user selections
   const filteredMaintenance = maintenanceSchedule.filter(item => {
     const itemYear = new Date(item.date).getFullYear();
     const matchesYear = selectedYear === "all" || itemYear === selectedYear;
@@ -369,7 +385,7 @@ const AssetLifecycleManagement = () => {
               <div className="relative">
                 <select 
                   className="pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-indigo-500 focus:border-indigo-500"
-                  value={selectedYear}
+                  value={selectedYear.toString()}
                   onChange={(e) => setSelectedYear(e.target.value === "all" ? "all" : parseInt(e.target.value))}
                 >
                   <option value="all">All Years</option>
@@ -1042,7 +1058,7 @@ const AssetLifecycleManagement = () => {
                   <div>
                     <select 
                       className="text-sm border-gray-300 rounded-lg"
-                      value={selectedYear}
+                      value={selectedYear.toString()}
                       onChange={(e) => setSelectedYear(e.target.value === "all" ? "all" : parseInt(e.target.value))}
                     >
                       <option value="all">All Years</option>
@@ -1266,6 +1282,7 @@ const AssetLifecycleManagement = () => {
                   suffix="OMR" 
                   icon={<DollarSign />} 
                   color={COLORS.primary}
+                  trend={undefined}
                 />
                 <MetricCard 
                   title="Total Planned Expenditure" 
@@ -1273,6 +1290,7 @@ const AssetLifecycleManagement = () => {
                   suffix="OMR" 
                   icon={<BarChart2 />} 
                   color={COLORS.danger}
+                  trend={undefined}
                 />
                 <MetricCard 
                   title="Annual Contribution (2025)" 
@@ -1280,6 +1298,7 @@ const AssetLifecycleManagement = () => {
                   suffix="OMR" 
                   icon={<DollarSign />} 
                   color={COLORS.success}
+                  trend={undefined}
                 />
                 <MetricCard 
                   title="2040 Projected Balance" 
@@ -1287,6 +1306,7 @@ const AssetLifecycleManagement = () => {
                   suffix="OMR" 
                   icon={<Gauge />} 
                   color={COLORS.secondary}
+                  trend={undefined}
                 />
               </div>
               
@@ -1312,10 +1332,10 @@ const AssetLifecycleManagement = () => {
                       {financialProjections.map((item, index) => (
                         <tr 
                           key={item.year} 
-                          className={item.year === selectedYear ? 'bg-indigo-50' : index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}
+                          className={selectedYear !== "all" && item.year === selectedYear ? 'bg-indigo-50' : index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}
                         >
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`text-sm font-medium ${item.year === selectedYear ? 'text-indigo-700' : 'text-gray-900'}`}>
+                            <span className={`text-sm font-medium ${selectedYear !== "all" && item.year === selectedYear ? 'text-indigo-700' : 'text-gray-900'}`}>
                               {item.year}
                             </span>
                           </td>
