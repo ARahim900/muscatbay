@@ -19,27 +19,27 @@ const ElectricitySystem = () => {
       <div className="container mx-auto px-4 py-8 animate-fade-in">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6">
           <div className="flex items-center">
-            <div className="bg-gradient-to-br from-amber-400 to-amber-600 p-3 rounded-xl shadow-lg mr-4">
-              <Zap className="h-6 w-6 text-white" />
+            <div className="bg-gradient-to-br from-muscat-primary to-muscat-lavender p-3 rounded-xl shadow-lg mr-4 transform hover:scale-105 transition-all">
+              <Zap className="h-6 w-6 text-white animate-pulse-subtle" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-muscat-primary">Electricity System</h1>
+              <h1 className="text-3xl font-bold text-muscat-primary bg-gradient-to-r from-muscat-primary to-muscat-lavender bg-clip-text text-transparent">Electricity System</h1>
               <p className="text-muted-foreground">Real-time monitoring and management</p>
             </div>
           </div>
           <div className="mt-4 sm:mt-0 flex flex-wrap gap-2">
-            <Button variant="outline" size="sm" className="flex items-center gap-1">
-              <Clock className="h-4 w-4" />
+            <Button variant="outline" size="sm" className="flex items-center gap-1 border-muscat-primary/20 hover:border-muscat-primary/40 transition-all duration-300">
+              <Clock className="h-4 w-4 text-muscat-primary" />
               <span className="hidden sm:inline">Last Update:</span> Just now
             </Button>
-            <Button variant="outline" size="sm" className="flex items-center gap-1">
-              <DownloadCloud className="h-4 w-4" />
+            <Button variant="outline" size="sm" className="flex items-center gap-1 border-muscat-primary/20 hover:border-muscat-primary/40 transition-all duration-300">
+              <DownloadCloud className="h-4 w-4 text-muscat-primary" />
               <span>Export</span>
             </Button>
           </div>
         </div>
         
-        <Alert className="mb-6 border-amber-200 bg-amber-50 dark:bg-amber-900/10 dark:border-amber-800">
+        <Alert className="mb-6 border-amber-200 bg-gradient-to-r from-amber-50 to-amber-100/50 dark:from-amber-900/10 dark:to-amber-800/10 dark:border-amber-800 backdrop-blur-sm shadow-soft">
           <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
           <AlertTitle className="text-amber-800 dark:text-amber-400">Information</AlertTitle>
           <AlertDescription className="text-amber-700 dark:text-amber-300">
@@ -48,34 +48,34 @@ const ElectricitySystem = () => {
         </Alert>
         
         <Tabs defaultValue="overview" className="w-full" onValueChange={handleTabChange}>
-          <TabsList className="grid w-full grid-cols-3 mb-8 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
+          <TabsList className="grid w-full grid-cols-3 mb-8 bg-gradient-to-r from-gray-100 to-gray-50 dark:from-gray-800 dark:to-gray-800/80 p-1 rounded-lg shadow-inner">
             <TabsTrigger 
               value="overview" 
-              className={`transition-all duration-200 rounded-md ${activeTab === 'overview' ? 'bg-white dark:bg-gray-700 shadow-sm' : 'hover:bg-white/50 dark:hover:bg-gray-700/50'}`}
+              className={`transition-all duration-300 rounded-md ${activeTab === 'overview' ? 'bg-white dark:bg-gray-700 shadow-md' : 'hover:bg-white/80 dark:hover:bg-gray-700/50'}`}
             >
-              <Gauge className="h-4 w-4 mr-2" />
+              <Gauge className={`h-4 w-4 mr-2 ${activeTab === 'overview' ? 'text-muscat-primary' : 'text-gray-500'}`} />
               Overview
             </TabsTrigger>
             <TabsTrigger 
               value="monitoring"
-              className={`transition-all duration-200 rounded-md ${activeTab === 'monitoring' ? 'bg-white dark:bg-gray-700 shadow-sm' : 'hover:bg-white/50 dark:hover:bg-gray-700/50'}`}
+              className={`transition-all duration-300 rounded-md ${activeTab === 'monitoring' ? 'bg-white dark:bg-gray-700 shadow-md' : 'hover:bg-white/80 dark:hover:bg-gray-700/50'}`}
             >
-              <Activity className="h-4 w-4 mr-2" />
+              <Activity className={`h-4 w-4 mr-2 ${activeTab === 'monitoring' ? 'text-muscat-primary' : 'text-gray-500'}`} />
               Monitoring
             </TabsTrigger>
             <TabsTrigger 
               value="reports"
-              className={`transition-all duration-200 rounded-md ${activeTab === 'reports' ? 'bg-white dark:bg-gray-700 shadow-sm' : 'hover:bg-white/50 dark:hover:bg-gray-700/50'}`}
+              className={`transition-all duration-300 rounded-md ${activeTab === 'reports' ? 'bg-white dark:bg-gray-700 shadow-md' : 'hover:bg-white/80 dark:hover:bg-gray-700/50'}`}
             >
-              <BarChart3 className="h-4 w-4 mr-2" />
+              <BarChart3 className={`h-4 w-4 mr-2 ${activeTab === 'reports' ? 'text-muscat-primary' : 'text-gray-500'}`} />
               Reports
             </TabsTrigger>
           </TabsList>
           
           <TabsContent value="overview" className="animate-fade-in">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <Card className="border-0 bg-white dark:bg-gray-800 shadow-soft hover:shadow-md transition-shadow overflow-hidden">
-                <div className="h-1 bg-gradient-to-r from-amber-400 to-amber-600"></div>
+              <Card className="border-0 bg-white dark:bg-gray-800 shadow-soft hover:shadow-md transition-all duration-300 overflow-hidden transform hover:translate-y-[-3px]">
+                <div className="h-1.5 bg-gradient-to-r from-amber-400 to-amber-600"></div>
                 <CardHeader>
                   <CardTitle className="text-muscat-primary flex items-center">
                     Power Consumption
@@ -84,8 +84,8 @@ const ElectricitySystem = () => {
                   <CardDescription>Current total consumption</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-3xl font-bold text-gray-800 dark:text-white">843.5 kWh</div>
-                  <p className="text-muted-foreground flex items-center">
+                  <div className="text-3xl font-bold text-gray-800 dark:text-white bg-gradient-to-r from-muscat-primary to-muscat-lavender bg-clip-text text-transparent font-mono">843.5 kWh</div>
+                  <p className="text-muted-foreground flex items-center mt-1">
                     Today's usage
                     <span className="ml-2 text-xs px-1.5 py-0.5 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 rounded-full flex items-center">
                       -2.3% <ArrowRight className="h-3 w-3 -rotate-90" />
@@ -94,8 +94,8 @@ const ElectricitySystem = () => {
                 </CardContent>
               </Card>
               
-              <Card className="border-0 bg-white dark:bg-gray-800 shadow-soft hover:shadow-md transition-shadow overflow-hidden">
-                <div className="h-1 bg-gradient-to-r from-green-400 to-emerald-600"></div>
+              <Card className="border-0 bg-white dark:bg-gray-800 shadow-soft hover:shadow-md transition-all duration-300 overflow-hidden transform hover:translate-y-[-3px]">
+                <div className="h-1.5 bg-gradient-to-r from-green-400 to-emerald-600"></div>
                 <CardHeader>
                   <CardTitle className="text-muscat-primary">System Status</CardTitle>
                   <CardDescription>All systems operational</CardDescription>
@@ -105,21 +105,21 @@ const ElectricitySystem = () => {
                     <div className="h-3 w-3 rounded-full bg-green-500 mr-2 animate-pulse-subtle"></div>
                     <span className="text-gray-800 dark:text-gray-200">All systems normal</span>
                   </div>
-                  <div className="mt-3 w-full h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
-                    <div className="h-full bg-gradient-to-r from-green-400 to-emerald-500 rounded-full" style={{ width: '94%' }}></div>
+                  <div className="mt-3 w-full h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden shadow-inner">
+                    <div className="h-full bg-gradient-to-r from-green-400 to-emerald-500 rounded-full transition-all" style={{ width: '94%' }}></div>
                   </div>
                   <p className="mt-1 text-xs text-muted-foreground">System performance: 94%</p>
                 </CardContent>
               </Card>
               
-              <Card className="border-0 bg-white dark:bg-gray-800 shadow-soft hover:shadow-md transition-shadow overflow-hidden">
-                <div className="h-1 bg-gradient-to-r from-amber-300 to-amber-500"></div>
+              <Card className="border-0 bg-white dark:bg-gray-800 shadow-soft hover:shadow-md transition-all duration-300 overflow-hidden transform hover:translate-y-[-3px]">
+                <div className="h-1.5 bg-gradient-to-r from-amber-300 to-amber-500"></div>
                 <CardHeader>
                   <CardTitle className="text-muscat-primary">Alerts</CardTitle>
                   <CardDescription>System notifications</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex items-center text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg">
+                  <div className="flex items-center text-amber-600 dark:text-amber-400 bg-gradient-to-r from-amber-50 to-amber-100/50 dark:from-amber-900/20 dark:to-amber-800/20 p-3 rounded-lg shadow-sm">
                     <AlertTriangle className="h-5 w-5 mr-2 flex-shrink-0" />
                     <span>Scheduled maintenance: Tomorrow, 10:00 AM</span>
                   </div>
@@ -128,21 +128,21 @@ const ElectricitySystem = () => {
             </div>
             
             <div className="mt-8">
-              <Card className="border-0 bg-white dark:bg-gray-800 shadow-soft">
+              <Card className="border-0 bg-white dark:bg-gray-800 shadow-soft transform hover:shadow transition-all duration-300">
                 <CardHeader>
                   <CardTitle className="text-muscat-primary">Quick Actions</CardTitle>
                   <CardDescription>Common electricity system tasks</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <Button variant="outline" className="text-muscat-primary hover:bg-muscat-primary/5 border-muscat-primary/20 hover:border-muscat-primary/30 transition-all">
-                      View Consumption History
+                    <Button variant="outline" className="text-muscat-primary hover:bg-muscat-primary/5 border-muscat-primary/20 hover:border-muscat-primary/30 transition-all duration-300 group">
+                      <span className="group-hover:translate-x-1 transition-transform inline-block">View Consumption History</span>
                     </Button>
-                    <Button variant="outline" className="text-muscat-primary hover:bg-muscat-primary/5 border-muscat-primary/20 hover:border-muscat-primary/30 transition-all">
-                      Run System Diagnostics
+                    <Button variant="outline" className="text-muscat-primary hover:bg-muscat-primary/5 border-muscat-primary/20 hover:border-muscat-primary/30 transition-all duration-300 group">
+                      <span className="group-hover:translate-x-1 transition-transform inline-block">Run System Diagnostics</span>
                     </Button>
-                    <Button variant="outline" className="text-muscat-primary hover:bg-muscat-primary/5 border-muscat-primary/20 hover:border-muscat-primary/30 transition-all">
-                      Generate Monthly Report
+                    <Button variant="outline" className="text-muscat-primary hover:bg-muscat-primary/5 border-muscat-primary/20 hover:border-muscat-primary/30 transition-all duration-300 group">
+                      <span className="group-hover:translate-x-1 transition-transform inline-block">Generate Monthly Report</span>
                     </Button>
                   </div>
                 </CardContent>
@@ -152,7 +152,7 @@ const ElectricitySystem = () => {
           
           <TabsContent value="monitoring">
             <div className="space-y-6">
-              <Card className="border-0 bg-white dark:bg-gray-800 shadow-soft">
+              <Card className="border-0 bg-white dark:bg-gray-800 shadow-soft transform hover:shadow-md transition-all duration-300">
                 <CardHeader>
                   <CardTitle className="text-muscat-primary">Real-time Monitoring</CardTitle>
                   <CardDescription>Live power metrics</CardDescription>
@@ -161,8 +161,8 @@ const ElectricitySystem = () => {
                   <p className="text-muted-foreground mb-4">
                     Real-time monitoring dashboard will be displayed here. The monitoring system is currently being upgraded.
                   </p>
-                  <div className="h-64 bg-gray-50 dark:bg-gray-700/50 rounded-md flex flex-col items-center justify-center">
-                    <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-muscat-primary mb-3"></div>
+                  <div className="h-64 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-700/50 dark:to-gray-800/50 rounded-md flex flex-col items-center justify-center">
+                    <div className="animate-spin rounded-full h-10 w-10 border-2 border-muscat-primary/30 border-t-muscat-primary mb-3"></div>
                     <p className="text-gray-500 dark:text-gray-400">Monitoring dashboard loading...</p>
                   </div>
                 </CardContent>
@@ -172,7 +172,7 @@ const ElectricitySystem = () => {
           
           <TabsContent value="reports">
             <div className="space-y-6">
-              <Card className="border-0 bg-white dark:bg-gray-800 shadow-soft">
+              <Card className="border-0 bg-white dark:bg-gray-800 shadow-soft transform hover:shadow-md transition-all duration-300">
                 <CardHeader>
                   <CardTitle className="text-muscat-primary flex items-center">
                     <FileText className="h-5 w-5 mr-2 text-muscat-primary" />
@@ -204,7 +204,7 @@ const ElectricitySystem = () => {
                       </select>
                     </div>
                     <div className="md:col-span-2">
-                      <Button className="w-full md:w-auto bg-muscat-primary hover:bg-muscat-primary/90 text-white">
+                      <Button className="w-full md:w-auto bg-gradient-to-r from-muscat-primary to-muscat-primary/90 hover:from-muscat-primary/90 hover:to-muscat-primary text-white transition-all duration-300">
                         Generate Report
                       </Button>
                     </div>
