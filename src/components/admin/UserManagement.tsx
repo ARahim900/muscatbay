@@ -57,7 +57,8 @@ const UserManagement: React.FC = () => {
         return;
       }
       
-      const mergedUsers = authUsers.map(profile => {
+      // Add explicit type annotation to fix the TypeScript error
+      const mergedUsers: UserProfile[] = authUsers.map(profile => {
         const authUser = data.users.find(u => u.id === profile.id);
         return {
           id: profile.id,
