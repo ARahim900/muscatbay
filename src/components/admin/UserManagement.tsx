@@ -26,6 +26,14 @@ interface UserProfile {
   email_confirmed: boolean;
 }
 
+// Define the shape of the auth user data from Supabase
+interface SupabaseAuthUser {
+  id: string;
+  email?: string;
+  created_at?: string;
+  email_confirmed_at?: string | null;
+}
+
 const UserManagement: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<UserProfile[]>([]);
@@ -59,7 +67,8 @@ const UserManagement: React.FC = () => {
       
       // Add explicit type annotation to fix the TypeScript error
       const mergedUsers: UserProfile[] = authUsers.map(profile => {
-        const authUser = data.users.find(u => u.id === profile.id);
+        // Explicitly type the authUser object to prevent the TypeScript error
+        const authUser = data.users.find(u => u.id === profile.id) as SupabaseAuthUser | undefined;
         return {
           id: profile.id,
           email: authUser?.email || 'Unknown',
