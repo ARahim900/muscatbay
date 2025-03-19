@@ -10,7 +10,7 @@ import STPDataAdmin from '@/components/admin/STPDataAdmin';
 import UserManagement from '@/components/admin/UserManagement';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Info } from 'lucide-react';
 
 // List of admin emails - add more emails here if needed
 const ADMIN_EMAILS = ["aalbalushi@muscatbay.com"];
@@ -22,6 +22,9 @@ const AdminPage: React.FC = () => {
 
   useEffect(() => {
     if (user && !loading) {
+      console.log("Admin page - Current user:", user.email);
+      console.log("Admin emails list:", ADMIN_EMAILS);
+      
       // Check if the user email is in the admin emails list
       if (user.email && ADMIN_EMAILS.includes(user.email)) {
         console.log("Admin access granted to:", user.email);
@@ -29,6 +32,7 @@ const AdminPage: React.FC = () => {
         toast.success("Welcome to the admin dashboard!");
       } else {
         console.log("Admin access denied for:", user.email);
+        console.log("Expected admin email:", ADMIN_EMAILS[0]);
         toast.error("You don't have permission to access the admin page.");
         setIsAuthorized(false);
       }
@@ -70,10 +74,22 @@ const AdminPage: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  <p>
-                    Your current email ({user.email}) is not authorized to view the admin area.
-                    Only administrators can access this page.
-                  </p>
+                  <div className="bg-amber-50 p-4 rounded-md border border-amber-200">
+                    <div className="flex gap-2 items-start">
+                      <Info className="h-5 w-5 text-amber-500 mt-0.5" />
+                      <div>
+                        <p className="text-sm font-medium text-amber-800">
+                          Debugging Information
+                        </p>
+                        <p className="text-xs text-amber-700 mt-1">
+                          Your current email: <span className="font-mono bg-amber-100 px-1 rounded">{user.email}</span>
+                        </p>
+                        <p className="text-xs text-amber-700 mt-1">
+                          Expected admin email: <span className="font-mono bg-amber-100 px-1 rounded">{ADMIN_EMAILS[0]}</span>
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                   <p className="text-sm text-muted-foreground">
                     If you believe this is an error, please contact the system administrator.
                   </p>

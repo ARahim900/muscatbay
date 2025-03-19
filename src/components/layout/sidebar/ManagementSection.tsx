@@ -1,45 +1,44 @@
 
 import React from 'react';
-import { FolderKanban, Shield, Calendar, FileText } from 'lucide-react';
-import SidebarLink from './SidebarLink';
 import SidebarSection from './SidebarSection';
-import { ContractIcon } from './CustomIcons';
+import SidebarLink from './SidebarLink';
+import { Shield, Calendar } from 'lucide-react';
+import { ContractIcon, FolderKanbanIcon } from './CustomIcons';
 
 interface ManagementSectionProps {
   collapsed?: boolean;
   isMobile?: boolean;
   openEmbeddedApp?: (url: string, title: string) => void;
-  externalApps: {
-    contracts: string;
-    projects: string;
-    security: string;
-    [key: string]: string;
-  };
+  externalApps?: Record<string, string>;
 }
 
-const ManagementSection: React.FC<ManagementSectionProps> = ({ 
-  collapsed,
-  isMobile,
+const ManagementSection: React.FC<ManagementSectionProps> = ({
+  collapsed = false,
+  isMobile = false,
   openEmbeddedApp,
-  externalApps
+  externalApps = {}
 }) => {
   return (
-    <SidebarSection title="Management" collapsed={collapsed} isMobile={isMobile}>
+    <SidebarSection 
+      title="Management" 
+      collapsed={collapsed} 
+      isMobile={isMobile}
+    >
       <SidebarLink 
-        to="/contracts" 
-        icon={FileText} 
+        to={externalApps.contracts || "/"} 
+        icon={ContractIcon} 
         label="Contracts" 
         collapsed={collapsed} 
-        external={false}
+        external={!!externalApps.contracts}
         openEmbedded={openEmbeddedApp}
         isMobile={isMobile}
       />
       <SidebarLink 
-        to={externalApps.projects} 
-        icon={FolderKanban} 
+        to={externalApps.projects || "/projects"} 
+        icon={FolderKanbanIcon} 
         label="Projects" 
         collapsed={collapsed} 
-        external={false} 
+        external={!!externalApps.projects && externalApps.projects !== "/projects"}
         openEmbedded={openEmbeddedApp}
         isMobile={isMobile}
       />
@@ -47,17 +46,22 @@ const ManagementSection: React.FC<ManagementSectionProps> = ({
         to="/alm" 
         icon={Calendar} 
         label="Asset Lifecycle" 
-        collapsed={collapsed} 
-        external={false}
-        openEmbedded={openEmbeddedApp}
+        collapsed={collapsed}
         isMobile={isMobile}
       />
       <SidebarLink 
-        to={externalApps.security} 
+        to="/admin" 
+        icon={Shield} 
+        label="Admin Panel" 
+        collapsed={collapsed}
+        isMobile={isMobile}
+      />
+      <SidebarLink 
+        to={externalApps.security || "/"} 
         icon={Shield} 
         label="Security" 
         collapsed={collapsed} 
-        external={true}
+        external={!!externalApps.security}
         openEmbedded={openEmbeddedApp}
         isMobile={isMobile}
       />

@@ -12,6 +12,11 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { user, loading } = useAuth();
   const location = useLocation();
 
+  // Add console logs for debugging
+  console.log("ProtectedRoute - Current path:", location.pathname);
+  console.log("ProtectedRoute - User authenticated:", !!user);
+  console.log("ProtectedRoute - Auth loading:", loading);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -24,10 +29,12 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     // Show toast only when trying to access a protected route
     if (location.pathname !== '/auth') {
       toast.error('Please log in to access this page');
+      console.log("ProtectedRoute - Redirecting to auth page from:", location.pathname);
     }
     return <Navigate to="/auth" replace state={{ from: location.pathname }} />;
   }
 
+  console.log("ProtectedRoute - Access granted to:", location.pathname);
   return <>{children}</>;
 };
 
