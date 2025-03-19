@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   LineChart, Line, BarChart, Bar, PieChart, Pie, 
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, 
   ResponsiveContainer, Cell, Area, AreaChart,
-  ComposedChart
+  ComposedChart, TooltipProps
 } from 'recharts';
 import { 
   Droplet, BarChart2, Activity, Calendar, FileText, 
@@ -209,7 +208,7 @@ const formatNumber = (num, decimals = 0) => {
 };
 
 // Component for metric card
-const MetricCard = ({ title, value, unit, subValue, subUnit, icon, color, percentage = 0, theme }) => {
+const MetricCard = ({ title, value, unit, subValue, subUnit = '', icon, color, percentage = 0, theme }) => {
   const Icon = icon;
   
   return (
@@ -240,7 +239,7 @@ const MetricCard = ({ title, value, unit, subValue, subUnit, icon, color, percen
 };
 
 // Custom tooltip for charts
-const CustomTooltip = ({ active, payload, label, theme }) => {
+const CustomTooltip = ({ active, payload, label, theme }: { active?: boolean; payload?: any[]; label?: string; theme: any }) => {
   if (active && payload && payload.length) {
     return (
       <div className={`${theme.cardBg} p-3 border ${theme.border} ${theme.shadow} rounded-md`}>
@@ -817,7 +816,7 @@ const WaterSystemDashboard = () => {
                       <CartesianGrid strokeDasharray="3 3" stroke={theme.chartColors.bgGrid} />
                       <XAxis dataKey="month" tick={{ fill: theme.text }} />
                       <YAxis tick={{ fill: theme.text }} />
-                      <Tooltip content={(props) => <CustomTooltip {...props} theme={theme} />} />
+                      <Tooltip content={(props) => <CustomTooltip active={props.active} payload={props.payload} label={props.label} theme={theme} />} />
                       <Legend wrapperStyle={{ color: theme.text }} />
                       {visibleSeries.l1 && <Line 
                         type="monotone" 
@@ -985,7 +984,7 @@ const WaterSystemDashboard = () => {
                             />
                           ))}
                         </Pie>
-                        <Tooltip formatter={(value) => formatNumber(value) + ' m³'} />
+                        <Tooltip content={(props) => <CustomTooltip active={props.active} payload={props.payload} label={props.label} theme={theme} />} />
                         <Legend 
                           formatter={(value) => <span className={theme.text}>{value}</span>}
                         />
@@ -1005,7 +1004,7 @@ const WaterSystemDashboard = () => {
                         <CartesianGrid strokeDasharray="3 3" stroke={theme.chartColors.bgGrid} />
                         <XAxis dataKey="month" tick={{ fill: theme.text }} />
                         <YAxis tick={{ fill: theme.text }} />
-                        <Tooltip content={(props) => <CustomTooltip {...props} theme={theme} />} />
+                        <Tooltip content={(props) => <CustomTooltip active={props.active} payload={props.payload} label={props.label} theme={theme} />} />
                         <Legend wrapperStyle={{ color: theme.text }} />
                         
                         {Object.keys(visibleZones)
@@ -1041,7 +1040,7 @@ const WaterSystemDashboard = () => {
                         <CartesianGrid strokeDasharray="3 3" stroke={theme.chartColors.bgGrid} />
                         <XAxis type="number" tick={{ fill: theme.text }} />
                         <YAxis type="category" dataKey="zone" tick={{ fill: theme.text }} />
-                        <Tooltip content={(props) => <CustomTooltip {...props} theme={theme} />} />
+                        <Tooltip content={(props) => <CustomTooltip active={props.active} payload={props.payload} label={props.label} theme={theme} />} />
                         <Legend wrapperStyle={{ color: theme.text }} />
                         <Bar dataKey="consumption" name="Consumption" fill={theme.chartColors.l2Color} stackId="a" />
                         <Bar dataKey="loss" name="Loss" fill={theme.chartColors.lossColor} stackId="a" />
@@ -1204,7 +1203,7 @@ const WaterSystemDashboard = () => {
                           <Cell key={`cell-${index}`} fill={theme.typeColors[index % theme.typeColors.length]} />
                         ))}
                       </Pie>
-                      <Tooltip formatter={(value) => formatNumber(value) + ' m³'} />
+                      <Tooltip content={(props) => <CustomTooltip active={props.active} payload={props.payload} label={props.label} theme={theme} />} />
                       <Legend 
                         layout="vertical" 
                         verticalAlign="middle" 
@@ -1303,7 +1302,7 @@ const WaterSystemDashboard = () => {
                         <CartesianGrid strokeDasharray="3 3" stroke={theme.chartColors.bgGrid} />
                         <XAxis dataKey="month" tick={{ fill: theme.text }} />
                         <YAxis tick={{ fill: theme.text }} />
-                        <Tooltip content={(props) => <CustomTooltip {...props} theme={theme} />} />
+                        <Tooltip content={(props) => <CustomTooltip active={props.active} payload={props.payload} label={props.label} theme={theme} />} />
                         <Legend wrapperStyle={{ color: theme.text }} />
                         <Bar 
                           dataKey="loss" 
@@ -1345,7 +1344,7 @@ const WaterSystemDashboard = () => {
                             />
                           ))}
                         </Pie>
-                        <Tooltip formatter={(value) => formatNumber(value) + ' m³'} />
+                        <Tooltip content={(props) => <CustomTooltip active={props.active} payload={props.payload} label={props.label} theme={theme} />} />
                         <Legend 
                           formatter={(value) => <span className={theme.text}>{value}</span>}
                         />
