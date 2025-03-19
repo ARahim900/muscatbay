@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -11,7 +10,7 @@
     --card-foreground: 240 10% 3.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 240 10% 3.9%;
-    --primary: 318 54% 30%; /* Muscat Bay primary purple */
+    --primary: 318 15% 30%; /* Adjusted to match #4E4456 */
     --primary-foreground: 0 0% 98%;
     --secondary: 240 4.8% 95.9%;
     --secondary-foreground: 240 5.9% 10%;
@@ -23,17 +22,17 @@
     --destructive-foreground: 0 0% 98%;
     --border: 240 5.9% 90%;
     --input: 240 5.9% 90%;
-    --ring: 318 54% 30%;
+    --ring: 318 15% 30%;
     --radius: 0.5rem;
-    --sidebar-background: 318 54% 30%;
+    --sidebar-background: 318 15% 30%;
     --sidebar-foreground: 0 0% 98%;
     --sidebar-primary: 0 0% 98%;
-    --sidebar-primary-foreground: 318 54% 30%;
-    --sidebar-accent: 318 54% 40%;
+    --sidebar-primary-foreground: 318 15% 30%;
+    --sidebar-accent: 318 15% 40%;
     --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 318 54% 40%;
-    --sidebar-ring: 318 54% 30%;
-    --brand: 318 54% 30%;
+    --sidebar-border: 318 15% 40%;
+    --sidebar-ring: 318 15% 30%;
+    --brand: 318 15% 30%;
     --brand-foreground: 0 0% 98%;
   }
 

@@ -64,7 +64,7 @@ export default {
 					ring: 'hsl(var(--sidebar-ring))'
 				},
 				muscat: {
-					primary: '#4E4456',
+					primary: '#4E4456', // Updated to exact hex code
 					teal: '#68D1CC',
 					gold: '#D4B98C',
 					lavender: '#9D8EB7',

@@ -53,21 +53,23 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
         
         <div className="flex items-center gap-2 md:gap-4">
           {searchOpen ? (
-            <div className="absolute left-0 right-0 top-0 z-50 bg-card dark:bg-card flex items-center px-4 h-16 md:relative md:bg-transparent md:left-auto md:right-auto md:top-auto md:z-auto md:h-auto">
-              <Search className="absolute left-6 top-1/2 -translate-y-1/2 h-4 w-4 text-primary/50 md:left-3" />
-              <input 
-                type="text" 
-                placeholder="Search assets, systems, or documents..." 
-                className="w-full py-2 pl-10 pr-4 text-sm transition-all border rounded-full focus:outline-none focus:ring-2 focus:ring-primary/20 border-input bg-background dark:bg-secondary md:w-64" 
-                autoFocus
-              />
-              <button 
-                onClick={() => setSearchOpen(false)} 
-                className="ml-2 p-2 md:hidden rounded-full hover:bg-accent transition-colors touch-manipulation min-h-[44px] min-w-[44px] flex items-center justify-center"
-                aria-label="Close search"
-              >
-                <X className="w-5 h-5 text-primary/80" />
-              </button>
+            <div className="fixed inset-0 pt-16 pb-4 px-4 bg-background/95 backdrop-blur-sm z-50 flex items-start justify-center md:relative md:inset-auto md:pt-0 md:pb-0 md:bg-transparent md:backdrop-blur-none md:z-auto md:block">
+              <div className="w-full max-w-md relative md:w-auto">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary/50" />
+                <input 
+                  type="text" 
+                  placeholder="Search assets, systems, or documents..." 
+                  className="w-full py-2 pl-10 pr-4 text-sm transition-all border rounded-full focus:outline-none focus:ring-2 focus:ring-primary/20 border-input bg-background dark:bg-secondary" 
+                  autoFocus
+                />
+                <button 
+                  onClick={() => setSearchOpen(false)} 
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full hover:bg-accent transition-colors touch-manipulation min-h-[44px] min-w-[44px] flex items-center justify-center"
+                  aria-label="Close search"
+                >
+                  <X className="w-4 h-4 text-primary/80" />
+                </button>
+              </div>
             </div>
           ) : (
             <>

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useForm } from 'react-hook-form';
@@ -22,9 +21,9 @@ interface WaterRecord {
 }
 
 const months = [
-  'jan_24', 'feb_24', 'mar_24', 'apr_24', 'may_24', 'jun_24', 
-  'jul_24', 'aug_24', 'sep_24', 'oct_24', 'nov_24', 'dec_24',
-  'jan_25', 'feb_25'
+  'jan_25', 'feb_25', 'mar_25', 'apr_25', 'may_25', 'jun_25', 
+  'jul_25', 'aug_25', 'sep_25', 'oct_25', 'nov_25', 'dec_25',
+  'jan_26', 'feb_26'
 ];
 
 const WaterDataAdmin: React.FC = () => {
@@ -332,9 +331,9 @@ const WaterDataAdmin: React.FC = () => {
                 <TableHead>Account Number</TableHead>
                 <TableHead>Zone</TableHead>
                 <TableHead>Type</TableHead>
-                <TableHead>Jan 24</TableHead>
-                <TableHead>Feb 24</TableHead>
-                <TableHead>Mar 24</TableHead>
+                <TableHead>Jan 25</TableHead>
+                <TableHead>Feb 25</TableHead>
+                <TableHead>Mar 25</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -358,9 +357,9 @@ const WaterDataAdmin: React.FC = () => {
                     <TableCell>{record.account_number}</TableCell>
                     <TableCell>{record.zone}</TableCell>
                     <TableCell>{record.type}</TableCell>
-                    <TableCell>{formatConsumption(record.jan_24)}</TableCell>
-                    <TableCell>{formatConsumption(record.feb_24)}</TableCell>
-                    <TableCell>{formatConsumption(record.mar_24)}</TableCell>
+                    <TableCell>{formatConsumption(record.jan_25)}</TableCell>
+                    <TableCell>{formatConsumption(record.feb_25)}</TableCell>
+                    <TableCell>{formatConsumption(record.mar_25)}</TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
                         <Button 
