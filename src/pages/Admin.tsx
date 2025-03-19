@@ -62,9 +62,13 @@ const AdminPage: React.FC = () => {
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="water" className="w-full">
-              <TabsList className="mb-6">
+              <TabsList className="mb-6 flex flex-wrap">
                 <TabsTrigger value="water">Water Data</TabsTrigger>
                 <TabsTrigger value="stp">STP Data</TabsTrigger>
+                <TabsTrigger value="electricity">Electricity Data</TabsTrigger>
+                <TabsTrigger value="contracts">Contracts Data</TabsTrigger>
+                <TabsTrigger value="hvac">HVAC Data</TabsTrigger>
+                <TabsTrigger value="projects">Projects Data</TabsTrigger>
                 <TabsTrigger value="users">User Management</TabsTrigger>
               </TabsList>
               
@@ -76,6 +80,22 @@ const AdminPage: React.FC = () => {
                 <STPDataAdmin />
               </TabsContent>
               
+              <TabsContent value="electricity" className="space-y-4">
+                <PlaceholderAdmin title="Electricity Data" />
+              </TabsContent>
+              
+              <TabsContent value="contracts" className="space-y-4">
+                <PlaceholderAdmin title="Contracts Data" />
+              </TabsContent>
+              
+              <TabsContent value="hvac" className="space-y-4">
+                <PlaceholderAdmin title="HVAC Data" />
+              </TabsContent>
+              
+              <TabsContent value="projects" className="space-y-4">
+                <PlaceholderAdmin title="Projects Data" />
+              </TabsContent>
+              
               <TabsContent value="users" className="space-y-4">
                 <UserManagement />
               </TabsContent>
@@ -84,6 +104,21 @@ const AdminPage: React.FC = () => {
         </Card>
       </div>
     </Layout>
+  );
+};
+
+// Placeholder component for sections that haven't been implemented yet
+const PlaceholderAdmin: React.FC<{ title: string }> = ({ title }) => {
+  return (
+    <div className="flex flex-col items-center justify-center p-8 border border-dashed rounded-lg">
+      <h3 className="text-xl font-semibold mb-2">{title} Management</h3>
+      <p className="text-muted-foreground text-center mb-4">
+        This administration section is under development. It will allow you to view and manage {title.toLowerCase()}.
+      </p>
+      <div className="text-sm text-muted-foreground">
+        Coming soon!
+      </div>
+    </div>
   );
 };
 

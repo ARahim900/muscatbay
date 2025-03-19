@@ -52,8 +52,13 @@ const UserManagement: React.FC = () => {
       // Get user data from auth.users (if possible) and merge with profiles
       const { data } = await supabase.auth.admin.listUsers();
       
-      const mergedUsers = authUsers?.map(profile => {
-        const authUser = data?.users?.find(u => u.id === profile.id);
+      if (!authUsers || !data?.users) {
+        setUsers([]);
+        return;
+      }
+      
+      const mergedUsers = authUsers.map(profile => {
+        const authUser = data.users.find(u => u.id === profile.id);
         return {
           id: profile.id,
           email: authUser?.email || 'Unknown',
@@ -62,7 +67,7 @@ const UserManagement: React.FC = () => {
           role: profile.role || 'user',
           email_confirmed: authUser?.email_confirmed_at !== null
         };
-      }) || [];
+      });
       
       setUsers(mergedUsers);
     } catch (error: any) {
