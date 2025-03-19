@@ -34,6 +34,11 @@ interface SupabaseAuthUser {
   email_confirmed_at?: string | null;
 }
 
+// Define the shape of the response from admin.listUsers()
+interface ListUsersResponse {
+  users: SupabaseAuthUser[];
+}
+
 const UserManagement: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<UserProfile[]>([]);
