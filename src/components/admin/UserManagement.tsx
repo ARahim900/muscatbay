@@ -63,7 +63,7 @@ const UserManagement: React.FC = () => {
       if (authError) throw authError;
       
       // Get user data from auth.users (if possible) and merge with profiles
-      const { data } = await supabase.auth.admin.listUsers();
+      const { data } = await supabase.auth.admin.listUsers() as { data: ListUsersResponse };
       
       if (!authUsers || !data?.users) {
         setUsers([]);
@@ -72,8 +72,8 @@ const UserManagement: React.FC = () => {
       
       // Add explicit type annotation to fix the TypeScript error
       const mergedUsers: UserProfile[] = authUsers.map(profile => {
-        // Explicitly type the authUser object to prevent the TypeScript error
-        const authUser = data.users.find(u => u.id === profile.id) as SupabaseAuthUser | undefined;
+        // Find the matching auth user
+        const authUser = data.users.find(u => u.id === profile.id);
         return {
           id: profile.id,
           email: authUser?.email || 'Unknown',
