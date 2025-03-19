@@ -230,6 +230,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         <div className="flex-1 px-3 py-4 overflow-y-auto">
           <div className="mb-6">
             <SidebarLink to="/" icon={Home} label="Dashboard" collapsed={collapsed} isMobile={isMobile} />
+            <SidebarLink to="/admin" icon={Shield} label="Admin Panel" collapsed={collapsed} isMobile={isMobile} />
           </div>
           
           <div className="mb-2">
@@ -347,3 +348,4 @@ const Sidebar: React.FC<SidebarProps> = ({
 };
 
 export default Sidebar;
+

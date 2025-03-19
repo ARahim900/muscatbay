@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import Layout from '@/components/layout/Layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,24 +9,35 @@ import WaterDataAdmin from '@/components/admin/WaterDataAdmin';
 import STPDataAdmin from '@/components/admin/STPDataAdmin';
 import UserManagement from '@/components/admin/UserManagement';
 import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import { AlertCircle } from 'lucide-react';
 
-const ADMIN_EMAIL = "aalbalushi@muscatbay.com";
+// List of admin emails - add more emails here if needed
+const ADMIN_EMAILS = ["aalbalushi@muscatbay.com"];
 
 const AdminPage: React.FC = () => {
   const { user, loading } = useAuth();
   const [isAuthorized, setIsAuthorized] = useState<boolean>(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (user && !loading) {
-      // Check if the user email matches the admin email
-      if (user.email === ADMIN_EMAIL) {
+      // Check if the user email is in the admin emails list
+      if (user.email && ADMIN_EMAILS.includes(user.email)) {
+        console.log("Admin access granted to:", user.email);
         setIsAuthorized(true);
+        toast.success("Welcome to the admin dashboard!");
       } else {
+        console.log("Admin access denied for:", user.email);
         toast.error("You don't have permission to access the admin page.");
         setIsAuthorized(false);
       }
+    } else if (!loading && !user) {
+      // User is not logged in
+      toast.error("Please log in to access the admin page");
+      navigate("/auth", { replace: true });
     }
-  }, [user, loading]);
+  }, [user, loading, navigate]);
 
   if (loading) {
     return (
@@ -36,9 +47,46 @@ const AdminPage: React.FC = () => {
     );
   }
 
-  // If not authenticated or not authorized, redirect to home
-  if (!user || !isAuthorized) {
-    return <Navigate to="/" replace />;
+  // If not authenticated, redirect to auth page
+  if (!user) {
+    return <Navigate to="/auth" replace />;
+  }
+
+  // If not authorized but authenticated, show access denied page
+  if (!isAuthorized && user) {
+    return (
+      <Layout>
+        <div className="h-full flex flex-col items-center justify-center p-4">
+          <div className="max-w-md w-full">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="h-5 w-5 text-destructive" />
+                  <CardTitle>Access Denied</CardTitle>
+                </div>
+                <CardDescription>
+                  You don't have permission to access the admin dashboard.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <p>
+                    Your current email ({user.email}) is not authorized to view the admin area.
+                    Only administrators can access this page.
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    If you believe this is an error, please contact the system administrator.
+                  </p>
+                  <Button onClick={() => navigate("/")} className="w-full">
+                    Return to Dashboard
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </Layout>
+    );
   }
 
   return (
