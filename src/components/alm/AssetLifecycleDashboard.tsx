@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
@@ -340,7 +341,6 @@ const AssetLifecycleDashboard = () => {
     return theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500';
   };
 
-  
   return (
     <div className={`min-h-screen ${getBgColor()}`}>
       {/* Header */}
@@ -641,4 +641,747 @@ const AssetLifecycleDashboard = () => {
                   </p>
                   <ul className="list-disc list-inside space-y-2">
                     <li>
-                      <span className="font-medium text-foreground">
+                      <span className="font-medium text-foreground">Base Rate:</span> Each unit type has a base rate (per sqm) defined by zone and unit type
+                    </li>
+                    <li>
+                      <span className="font-medium text-foreground">VAT:</span> 5% VAT is applied to the base service charge
+                    </li>
+                    <li>
+                      <span className="font-medium text-foreground">Reserve Fund:</span> 30% contribution to long-term asset replacement
+                    </li>
+                    <li>
+                      <span className="font-medium text-foreground">Operational Costs:</span> 40% for daily maintenance and operations
+                    </li>
+                    <li>
+                      <span className="font-medium text-foreground">Admin Fee:</span> 10% for administrative overhead
+                    </li>
+                    <li>
+                      <span className="font-medium text-foreground">Master Community:</span> 20% contribution to master community upkeep
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {activeTab === 'overview' && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className={`${getCardBgColor()} rounded-lg shadow p-6`}>
+              <h3 className={`text-lg font-medium ${getTextColor()} mb-4`}>Assets by Category</h3>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={assetCategoriesData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="value"
+                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    >
+                      {assetCategoriesData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value) => `${value} assets`} />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            <div className={`${getCardBgColor()} rounded-lg shadow p-6`}>
+              <h3 className={`text-lg font-medium ${getTextColor()} mb-4`}>Maintenance Forecast</h3>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={maintenanceForecastData}
+                    margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="year" />
+                    <YAxis />
+                    <Tooltip formatter={(value) => `OMR ${value.toLocaleString()}`} />
+                    <Bar dataKey="cost" fill="#8884d8" name="Estimated Cost" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            <div className={`${getCardBgColor()} rounded-lg shadow p-6`}>
+              <h3 className={`text-lg font-medium ${getTextColor()} mb-4`}>Asset Condition</h3>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={assetConditionData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="value"
+                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    >
+                      {assetConditionData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value) => `${value}%`} />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            <div className={`${getCardBgColor()} rounded-lg shadow p-6 col-span-full`}>
+              <div className="flex justify-between items-center mb-4">
+                <h3 className={`text-lg font-medium ${getTextColor()}`}>Critical Assets</h3>
+                <button className="px-3 py-1 text-xs rounded-full bg-red-100 text-red-800 flex items-center">
+                  <AlertTriangle size={12} className="mr-1" /> Requires Attention
+                </button>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-border">
+                  <thead className="bg-muted">
+                    <tr>
+                      <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${getMutedTextColor()} uppercase tracking-wider`}>Asset</th>
+                      <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${getMutedTextColor()} uppercase tracking-wider`}>Location</th>
+                      <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${getMutedTextColor()} uppercase tracking-wider`}>Replacement Cost</th>
+                      <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${getMutedTextColor()} uppercase tracking-wider`}>Life Expectancy</th>
+                      <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${getMutedTextColor()} uppercase tracking-wider`}>Next Scheduled</th>
+                      <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${getMutedTextColor()} uppercase tracking-wider`}>Criticality</th>
+                    </tr>
+                  </thead>
+                  <tbody className={`${getCardBgColor()} divide-y divide-border`}>
+                    {criticalAssetsData.map((asset) => (
+                      <tr key={asset.id}>
+                        <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${getTextColor()}`}>{asset.name}</td>
+                        <td className={`px-6 py-4 whitespace-nowrap text-sm ${getMutedTextColor()}`}>{asset.location}</td>
+                        <td className={`px-6 py-4 whitespace-nowrap text-sm ${getMutedTextColor()}`}>OMR {asset.cost.toLocaleString()}</td>
+                        <td className={`px-6 py-4 whitespace-nowrap text-sm ${getMutedTextColor()}`}>{asset.lifeExpectancy} years</td>
+                        <td className={`px-6 py-4 whitespace-nowrap text-sm ${getMutedTextColor()}`}>{asset.nextScheduled}</td>
+                        <td className={`px-6 py-4 whitespace-nowrap text-sm ${getMutedTextColor()}`}>
+                          <span className="px-2 py-1 text-xs rounded-full bg-red-100 text-red-800">{asset.criticality}</span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div className={`${getCardBgColor()} rounded-lg shadow p-6 col-span-full`}>
+              <h3 className={`text-lg font-medium ${getTextColor()} mb-4`}>Upcoming Maintenance</h3>
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-border">
+                  <thead className="bg-muted">
+                    <tr>
+                      <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${getMutedTextColor()} uppercase tracking-wider`}>Asset</th>
+                      <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${getMutedTextColor()} uppercase tracking-wider`}>Zone</th>
+                      <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${getMutedTextColor()} uppercase tracking-wider`}>Date</th>
+                      <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${getMutedTextColor()} uppercase tracking-wider`}>Type</th>
+                      <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${getMutedTextColor()} uppercase tracking-wider`}>Estimated Cost</th>
+                      <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${getMutedTextColor()} uppercase tracking-wider`}>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className={`${getCardBgColor()} divide-y divide-border`}>
+                    {upcomingMaintenanceData.map((task) => (
+                      <tr key={task.id}>
+                        <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${getTextColor()}`}>{task.asset}</td>
+                        <td className={`px-6 py-4 whitespace-nowrap text-sm ${getMutedTextColor()}`}>{task.zone}</td>
+                        <td className={`px-6 py-4 whitespace-nowrap text-sm ${getMutedTextColor()}`}>{new Date(task.date).toLocaleDateString()}</td>
+                        <td className={`px-6 py-4 whitespace-nowrap text-sm ${getMutedTextColor()}`}>
+                          <span className={`px-2 py-1 text-xs rounded-full ${
+                            task.type === 'Replace' ? 'bg-red-100 text-red-800' : 
+                            task.type === 'Service' ? 'bg-blue-100 text-blue-800' : 
+                            'bg-yellow-100 text-yellow-800'
+                          }`}>{task.type}</span>
+                        </td>
+                        <td className={`px-6 py-4 whitespace-nowrap text-sm ${getMutedTextColor()}`}>OMR {task.estimatedCost.toLocaleString()}</td>
+                        <td className={`px-6 py-4 whitespace-nowrap text-sm ${getMutedTextColor()}`}>
+                          <button className="px-2 py-1 text-xs rounded bg-primary text-primary-foreground">View Details</button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'financial' && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className={`${getCardBgColor()} rounded-lg shadow p-6`}>
+                <h3 className={`text-lg font-medium ${getTextColor()} mb-4`}>Reserve Fund</h3>
+                <div className="space-y-4">
+                  {reserveFundData.map((item, index) => (
+                    <div key={index} className="bg-muted/20 p-4 rounded-lg">
+                      <div className="flex justify-between items-center mb-2">
+                        <h4 className={`text-sm font-medium ${getTextColor()}`}>{item.zone}</h4>
+                        <span className="text-lg font-bold text-primary">OMR {item.contribution.toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between items-center text-xs">
+                        <span className={`${getMutedTextColor()}`}>Annual Contribution</span>
+                        <span className={`${getMutedTextColor()}`}>Min Balance: OMR {item.minimumBalance.toLocaleString()}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className={`${getCardBgColor()} rounded-lg shadow p-6 md:col-span-2`}>
+                <h3 className={`text-lg font-medium ${getTextColor()} mb-4`}>20-Year Financial Forecast</h3>
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart
+                      data={[
+                        { year: '2021', income: 260262, expense: 0, balance: 260262 },
+                        { year: '2022', income: 261563, expense: 9490, balance: 512335 },
+                        { year: '2023', income: 262871, expense: 0, balance: 775206 },
+                        { year: '2024', income: 264185, expense: 28210, balance: 1011181 },
+                        { year: '2025', income: 265506, expense: 65591, balance: 1211096 },
+                        { year: '2026', income: 266834, expense: 70819, balance: 1407111 },
+                        { year: '2027', income: 268168, expense: 42592, balance: 1632687 },
+                        { year: '2028', income: 269509, expense: 248833, balance: 1653363 },
+                        { year: '2029', income: 270856, expense: 161579, balance: 1762640 },
+                        { year: '2030', income: 272211, expense: 109033, balance: 1925818 },
+                        { year: '2031', income: 273572, expense: 67919, balance: 2131471 },
+                        { year: '2032', income: 274940, expense: 175944, balance: 2230467 },
+                        { year: '2033', income: 276314, expense: 263986, balance: 2242795 },
+                        { year: '2034', income: 277696, expense: 160821, balance: 2359670 },
+                        { year: '2035', income: 279084, expense: 290901, balance: 2347853 },
+                        { year: '2036', income: 280480, expense: 98272, balance: 2530061 },
+                        { year: '2037', income: 281882, expense: 273462, balance: 2538481 },
+                        { year: '2038', income: 283292, expense: 85191, balance: 2736582 },
+                        { year: '2039', income: 284708, expense: 327035, balance: 2694255 },
+                        { year: '2040', income: 286132, expense: 269492, balance: 2710895 }
+                      ]}
+                      margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="year" />
+                      <YAxis />
+                      <Tooltip formatter={(value) => `OMR ${value.toLocaleString()}`} />
+                      <Legend />
+                      <Line type="monotone" dataKey="income" name="Annual Contribution" stroke="#4CAF50" strokeWidth={2} />
+                      <Line type="monotone" dataKey="expense" name="Annual Expenditure" stroke="#F44336" strokeWidth={2} />
+                      <Line type="monotone" dataKey="balance" name="Reserve Balance" stroke="#2196F3" strokeWidth={2} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            </div>
+
+            <div className={`${getCardBgColor()} rounded-lg shadow p-6`}>
+              <h3 className={`text-lg font-medium ${getTextColor()} mb-4`}>Financial Parameters</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="p-4 bg-muted/20 rounded-lg">
+                  <h4 className={`text-sm font-medium ${getMutedTextColor()}`}>Contribution Growth Rate</h4>
+                  <p className="text-2xl font-bold">0.5%</p>
+                </div>
+                <div className="p-4 bg-muted/20 rounded-lg">
+                  <h4 className={`text-sm font-medium ${getMutedTextColor()}`}>Inflation Rate</h4>
+                  <p className="text-2xl font-bold">0.5%</p>
+                </div>
+                <div className="p-4 bg-muted/20 rounded-lg">
+                  <h4 className={`text-sm font-medium ${getMutedTextColor()}`}>Interest Rate</h4>
+                  <p className="text-2xl font-bold">1.5%</p>
+                </div>
+                <div className="p-4 bg-muted/20 rounded-lg">
+                  <h4 className={`text-sm font-medium ${getMutedTextColor()}`}>Contingency</h4>
+                  <p className="text-2xl font-bold">5.0%</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'maintenance' && (
+          <div className="space-y-6">
+            <div className={`${getCardBgColor()} rounded-lg shadow overflow-hidden`}>
+              <div className="px-6 py-4 border-b border-border">
+                <h3 className={`text-lg font-medium ${getTextColor()}`}>Maintenance Calendar</h3>
+              </div>
+              <div className="p-6">
+                <div className="flex flex-col space-y-4">
+                  {upcomingMaintenanceData.map((task) => (
+                    <div 
+                      key={task.id}
+                      className="border border-border rounded-lg overflow-hidden"
+                    >
+                      <div 
+                        className="px-4 py-3 bg-muted/20 flex justify-between items-center cursor-pointer"
+                        onClick={() => toggleCard(task.id)}
+                      >
+                        <div className="flex items-center">
+                          {task.type === 'Replace' ? (
+                            <div className="p-2 rounded-full bg-red-100 text-red-600 mr-3">
+                              <Settings size={18} />
+                            </div>
+                          ) : task.type === 'Service' ? (
+                            <div className="p-2 rounded-full bg-blue-100 text-blue-600 mr-3">
+                              <Settings size={18} />
+                            </div>
+                          ) : (
+                            <div className="p-2 rounded-full bg-yellow-100 text-yellow-600 mr-3">
+                              <Settings size={18} />
+                            </div>
+                          )}
+                          <div>
+                            <h4 className={`text-sm font-medium ${getTextColor()}`}>{task.asset}</h4>
+                            <div className="flex items-center text-xs text-muted-foreground">
+                              <Calendar size={12} className="mr-1" />
+                              <span>{new Date(task.date).toLocaleDateString()}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center">
+                          <span className="px-2 py-1 text-xs rounded-full bg-muted/30 text-muted-foreground mr-2">
+                            {task.zone}
+                          </span>
+                          {expandedCard === task.id ? (
+                            <ChevronUp size={16} />
+                          ) : (
+                            <ChevronDown size={16} />
+                          )}
+                        </div>
+                      </div>
+                      {expandedCard === task.id && (
+                        <div className="px-4 py-3 border-t border-border">
+                          <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2">
+                            <div>
+                              <dt className="text-xs text-muted-foreground">Maintenance Type</dt>
+                              <dd className={`text-sm font-medium ${getTextColor()}`}>{task.type}</dd>
+                            </div>
+                            <div>
+                              <dt className="text-xs text-muted-foreground">Estimated Cost</dt>
+                              <dd className={`text-sm font-medium ${getTextColor()}`}>OMR {task.estimatedCost.toLocaleString()}</dd>
+                            </div>
+                            <div className="sm:col-span-2">
+                              <dt className="text-xs text-muted-foreground">Description</dt>
+                              <dd className={`text-sm ${getTextColor()}`}>
+                                Scheduled {task.type.toLowerCase()} of {task.asset} in {task.zone} according to 
+                                the asset lifecycle management plan. This task ensures operational reliability
+                                and extends asset lifespan.
+                              </dd>
+                            </div>
+                            <div className="sm:col-span-2 mt-2">
+                              <button className="inline-flex items-center px-3 py-1 border border-transparent text-sm leading-4 font-medium rounded-md text-primary-foreground bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+                                <CheckCircle size={16} className="mr-1" />
+                                Mark as Complete
+                              </button>
+                            </div>
+                          </dl>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className={`${getCardBgColor()} rounded-lg shadow p-6`}>
+              <h3 className={`text-lg font-medium ${getTextColor()} mb-4`}>Maintenance By Category</h3>
+              <div className="h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={[
+                        { name: 'Preventive', value: 65, color: '#4CAF50' },
+                        { name: 'Corrective', value: 20, color: '#FFC107' },
+                        { name: 'Replacement', value: 15, color: '#F44336' }
+                      ]}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="value"
+                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    >
+                      {[
+                        { name: 'Preventive', value: 65, color: '#4CAF50' },
+                        { name: 'Corrective', value: 20, color: '#FFC107' },
+                        { name: 'Replacement', value: 15, color: '#F44336' }
+                      ].map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value) => `${value}%`} />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'assets' && (
+          <div className="space-y-6">
+            <div className={`${getCardBgColor()} rounded-lg shadow overflow-hidden`}>
+              <div className="px-6 py-4 border-b border-border flex justify-between items-center">
+                <h3 className={`text-lg font-medium ${getTextColor()}`}>Asset Inventory</h3>
+                <div className="flex space-x-2">
+                  <div className="relative">
+                    <input
+                      type="text"
+                      className="focus:ring-primary focus:border-primary block w-full pl-10 pr-3 py-2 border border-input bg-background rounded-md text-sm"
+                      placeholder="Search assets..."
+                    />
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <svg className="h-5 w-5 text-muted-foreground" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                  </div>
+                  <select className="focus:ring-primary focus:border-primary py-2 px-3 border border-input bg-background rounded-md text-sm">
+                    <option>All Categories</option>
+                    <option>Architectural</option>
+                    <option>Mechanical</option>
+                    <option>Electrical</option>
+                    <option>External Works</option>
+                    <option>Infrastructure</option>
+                  </select>
+                  <select className="focus:ring-primary focus:border-primary py-2 px-3 border border-input bg-background rounded-md text-sm">
+                    <option>All Locations</option>
+                    <option>Typical Buildings</option>
+                    <option>Zone 3 (Al Zaha)</option>
+                    <option>Zone 5 (Al Nameer)</option>
+                    <option>Zone 8 (Al Wajd)</option>
+                    <option>Staff Accommodation</option>
+                    <option>Master Community</option>
+                  </select>
+                </div>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-border">
+                  <thead className="bg-muted">
+                    <tr>
+                      <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${getMutedTextColor()} uppercase tracking-wider`}>Asset Name</th>
+                      <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${getMutedTextColor()} uppercase tracking-wider`}>Category</th>
+                      <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${getMutedTextColor()} uppercase tracking-wider`}>Location</th>
+                      <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${getMutedTextColor()} uppercase tracking-wider`}>Condition</th>
+                      <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${getMutedTextColor()} uppercase tracking-wider`}>Install Date</th>
+                      <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${getMutedTextColor()} uppercase tracking-wider`}>Life Expectancy</th>
+                      <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${getMutedTextColor()} uppercase tracking-wider`}>Replacement Cost</th>
+                      <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${getMutedTextColor()} uppercase tracking-wider`}>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className={`divide-y divide-border`}>
+                    <tr>
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${getTextColor()}`}>Chillers (Type 1)</td>
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm ${getMutedTextColor()}`}>Mechanical</td>
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm ${getMutedTextColor()}`}>Staff Accommodation</td>
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm ${getMutedTextColor()}`}>
+                        <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">Excellent</span>
+                      </td>
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm ${getMutedTextColor()}`}>2021-01-15</td>
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm ${getMutedTextColor()}`}>20 years</td>
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm ${getMutedTextColor()}`}>OMR 65,625</td>
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm ${getMutedTextColor()}`}>
+                        <button className="text-primary hover:text-primary/80">View</button>
+                      </td>
+                    </tr>
+                    <tr className="bg-muted/20">
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${getTextColor()}`}>Fire Pumps</td>
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm ${getMutedTextColor()}`}>Mechanical</td>
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm ${getMutedTextColor()}`}>Zone 3 (Al Zaha)</td>
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm ${getMutedTextColor()}`}>
+                        <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">Excellent</span>
+                      </td>
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm ${getMutedTextColor()}`}>2021-02-20</td>
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm ${getMutedTextColor()}`}>15 years</td>
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm ${getMutedTextColor()}`}>OMR 12,060</td>
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm ${getMutedTextColor()}`}>
+                        <button className="text-primary hover:text-primary/80">View</button>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${getTextColor()}`}>Elevators</td>
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm ${getMutedTextColor()}`}>Mechanical</td>
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm ${getMutedTextColor()}`}>Typical Buildings</td>
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm ${getMutedTextColor()}`}>
+                        <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">Excellent</span>
+                      </td>
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm ${getMutedTextColor()}`}>2021-03-10</td>
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm ${getMutedTextColor()}`}>18 years</td>
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm ${getMutedTextColor()}`}>OMR 4,870</td>
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm ${getMutedTextColor()}`}>
+                        <button className="text-primary hover:text-primary/80">View</button>
+                      </td>
+                    </tr>
+                    <tr className="bg-muted/20">
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${getTextColor()}`}>STP Components</td>
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm ${getMutedTextColor()}`}>Infrastructure</td>
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm ${getMutedTextColor()}`}>Master Community</td>
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm ${getMutedTextColor()}`}>
+                        <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">Excellent</span>
+                      </td>
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm ${getMutedTextColor()}`}>2021-02-05</td>
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm ${getMutedTextColor()}`}>10 years</td>
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm ${getMutedTextColor()}`}>OMR 54,580</td>
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm ${getMutedTextColor()}`}>
+                        <button className="text-primary hover:text-primary/80">View</button>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${getTextColor()}`}>Main Distribution Boards</td>
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm ${getMutedTextColor()}`}>Electrical</td>
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm ${getMutedTextColor()}`}>Staff Accommodation</td>
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm ${getMutedTextColor()}`}>
+                        <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">Excellent</span>
+                      </td>
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm ${getMutedTextColor()}`}>2021-01-30</td>
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm ${getMutedTextColor()}`}>20 years</td>
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm ${getMutedTextColor()}`}>OMR 9,160</td>
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm ${getMutedTextColor()}`}>
+                        <button className="text-primary hover:text-primary/80">View</button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div className="px-6 py-3 flex items-center justify-between border-t border-border">
+                <div className="flex-1 flex justify-between items-center">
+                  <div>
+                    <p className="text-sm text-muted-foreground">
+                      Showing <span className="font-medium">1</span> to <span className="font-medium">5</span> of <span className="font-medium">2,100+</span> assets
+                    </p>
+                  </div>
+                  <div>
+                    <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                      <a href="#" className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-input bg-background text-sm font-medium text-muted-foreground hover:bg-muted">
+                        <span className="sr-only">Previous</span>
+                        <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                          <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                      </a>
+                      <a href="#" className="relative inline-flex items-center px-4 py-2 border border-input bg-background text-sm font-medium text-foreground hover:bg-muted">
+                        1
+                      </a>
+                      <a href="#" className="relative inline-flex items-center px-4 py-2 border border-input bg-background text-sm font-medium text-foreground hover:bg-muted">
+                        2
+                      </a>
+                      <a href="#" className="relative inline-flex items-center px-4 py-2 border border-input bg-background text-sm font-medium text-foreground hover:bg-muted">
+                        3
+                      </a>
+                      <span className="relative inline-flex items-center px-4 py-2 border border-input bg-background text-sm font-medium text-muted-foreground">
+                        ...
+                      </span>
+                      <a href="#" className="relative inline-flex items-center px-4 py-2 border border-input bg-background text-sm font-medium text-foreground hover:bg-muted">
+                        10
+                      </a>
+                      <a href="#" className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-input bg-background text-sm font-medium text-muted-foreground hover:bg-muted">
+                        <span className="sr-only">Next</span>
+                        <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                          <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                        </svg>
+                      </a>
+                    </nav>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'reports' && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className={`${getCardBgColor()} rounded-lg shadow p-6`}>
+                <h3 className={`text-lg font-medium ${getTextColor()} mb-4`}>Available Reports</h3>
+                <ul className="divide-y divide-border">
+                  <li className="py-4 flex">
+                    <div className="flex-shrink-0">
+                      <FileText className="h-5 w-5 text-muted-foreground" />
+                    </div>
+                    <div className="ml-3">
+                      <p className={`text-sm font-medium ${getTextColor()}`}>Asset Lifecycle Summary Report</p>
+                      <p className="text-sm text-muted-foreground">Overview of all assets with lifecycle information</p>
+                    </div>
+                    <div className="ml-auto">
+                      <button className="inline-flex items-center px-3 py-1 border border-transparent text-sm leading-4 font-medium rounded-md text-primary bg-primary/10 hover:bg-primary/20 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+                        Download
+                      </button>
+                    </div>
+                  </li>
+                  <li className="py-4 flex">
+                    <div className="flex-shrink-0">
+                      <FileText className="h-5 w-5 text-muted-foreground" />
+                    </div>
+                    <div className="ml-3">
+                      <p className={`text-sm font-medium ${getTextColor()}`}>Maintenance Forecast Report</p>
+                      <p className="text-sm text-muted-foreground">20-year projection of maintenance activities</p>
+                    </div>
+                    <div className="ml-auto">
+                      <button className="inline-flex items-center px-3 py-1 border border-transparent text-sm leading-4 font-medium rounded-md text-primary bg-primary/10 hover:bg-primary/20 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+                        Download
+                      </button>
+                    </div>
+                  </li>
+                  <li className="py-4 flex">
+                    <div className="flex-shrink-0">
+                      <FileText className="h-5 w-5 text-muted-foreground" />
+                    </div>
+                    <div className="ml-3">
+                      <p className={`text-sm font-medium ${getTextColor()}`}>Reserve Fund Analysis</p>
+                      <p className="text-sm text-muted-foreground">Detailed financial projections for asset replacements</p>
+                    </div>
+                    <div className="ml-auto">
+                      <button className="inline-flex items-center px-3 py-1 border border-transparent text-sm leading-4 font-medium rounded-md text-primary bg-primary/10 hover:bg-primary/20 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+                        Download
+                      </button>
+                    </div>
+                  </li>
+                  <li className="py-4 flex">
+                    <div className="flex-shrink-0">
+                      <FileText className="h-5 w-5 text-muted-foreground" />
+                    </div>
+                    <div className="ml-3">
+                      <p className={`text-sm font-medium ${getTextColor()}`}>Critical Assets Report</p>
+                      <p className="text-sm text-muted-foreground">Focus on high-criticality assets requiring special attention</p>
+                    </div>
+                    <div className="ml-auto">
+                      <button className="inline-flex items-center px-3 py-1 border border-transparent text-sm leading-4 font-medium rounded-md text-primary bg-primary/10 hover:bg-primary/20 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+                        Download
+                      </button>
+                    </div>
+                  </li>
+                </ul>
+              </div>
+
+              <div className={`${getCardBgColor()} rounded-lg shadow p-6`}>
+                <h3 className={`text-lg font-medium ${getTextColor()} mb-4`}>Generate Custom Report</h3>
+                <form className="space-y-4">
+                  <div>
+                    <label htmlFor="report-type" className={`block text-sm font-medium ${getMutedTextColor()}`}>Report Type</label>
+                    <select id="report-type" className="mt-1 block w-full py-2 px-3 border border-input bg-background rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm">
+                      <option>Asset Lifecycle Report</option>
+                      <option>Maintenance Schedule</option>
+                      <option>Financial Projection</option>
+                      <option>Asset Condition Assessment</option>
+                      <option>Risk Analysis</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label htmlFor="asset-category" className={`block text-sm font-medium ${getMutedTextColor()}`}>Asset Category</label>
+                    <select id="asset-category" className="mt-1 block w-full py-2 px-3 border border-input bg-background rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm">
+                      <option>All Categories</option>
+                      <option>Architectural</option>
+                      <option>Mechanical</option>
+                      <option>Electrical</option>
+                      <option>External Works</option>
+                      <option>Infrastructure</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label htmlFor="location" className={`block text-sm font-medium ${getMutedTextColor()}`}>Location</label>
+                    <select id="location" className="mt-1 block w-full py-2 px-3 border border-input bg-background rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm">
+                      <option>All Locations</option>
+                      <option>Typical Buildings</option>
+                      <option>Zone 3 (Al Zaha)</option>
+                      <option>Zone 5 (Al Nameer)</option>
+                      <option>Zone 8 (Al Wajd)</option>
+                      <option>Staff Accommodation</option>
+                      <option>Master Community</option>
+                    </select>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="start-date" className={`block text-sm font-medium ${getMutedTextColor()}`}>Start Date</label>
+                      <input type="date" id="start-date" className="mt-1 block w-full py-2 px-3 border border-input bg-background rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm" />
+                    </div>
+                    <div>
+                      <label htmlFor="end-date" className={`block text-sm font-medium ${getMutedTextColor()}`}>End Date</label>
+                      <input type="date" id="end-date" className="mt-1 block w-full py-2 px-3 border border-input bg-background rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm" />
+                    </div>
+                  </div>
+                  <div>
+                    <label htmlFor="format" className={`block text-sm font-medium ${getMutedTextColor()}`}>Format</label>
+                    <select id="format" className="mt-1 block w-full py-2 px-3 border border-input bg-background rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm">
+                      <option>PDF</option>
+                      <option>Excel</option>
+                      <option>CSV</option>
+                    </select>
+                  </div>
+                  <div className="pt-2">
+                    <button type="submit" className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+                      Generate Report
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+
+            <div className={`${getCardBgColor()} rounded-lg shadow p-6`}>
+              <h3 className={`text-lg font-medium ${getTextColor()} mb-4`}>Recent Reports</h3>
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-border">
+                  <thead className="bg-muted">
+                    <tr>
+                      <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${getMutedTextColor()} uppercase tracking-wider`}>Report Name</th>
+                      <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${getMutedTextColor()} uppercase tracking-wider`}>Generated On</th>
+                      <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${getMutedTextColor()} uppercase tracking-wider`}>Generated By</th>
+                      <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${getMutedTextColor()} uppercase tracking-wider`}>Format</th>
+                      <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${getMutedTextColor()} uppercase tracking-wider`}>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className={`divide-y divide-border`}>
+                    <tr>
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${getTextColor()}`}>Muscat Bay ALM Monthly Summary</td>
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm ${getMutedTextColor()}`}>2023-11-01</td>
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm ${getMutedTextColor()}`}>System</td>
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm ${getMutedTextColor()}`}>PDF</td>
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm ${getMutedTextColor()}`}>
+                        <button className="text-primary hover:text-primary/80 mr-3">View</button>
+                        <button className="text-primary hover:text-primary/80">Download</button>
+                      </td>
+                    </tr>
+                    <tr className="bg-muted/20">
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${getTextColor()}`}>Critical Assets Status Report</td>
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm ${getMutedTextColor()}`}>2023-10-15</td>
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm ${getMutedTextColor()}`}>Ahmed Hassan</td>
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm ${getMutedTextColor()}`}>Excel</td>
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm ${getMutedTextColor()}`}>
+                        <button className="text-primary hover:text-primary/80 mr-3">View</button>
+                        <button className="text-primary hover:text-primary/80">Download</button>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${getTextColor()}`}>Maintenance Schedule Q4 2023</td>
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm ${getMutedTextColor()}`}>2023-10-01</td>
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm ${getMutedTextColor()}`}>Sarah Johnson</td>
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm ${getMutedTextColor()}`}>PDF</td>
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm ${getMutedTextColor()}`}>
+                        <button className="text-primary hover:text-primary/80 mr-3">View</button>
+                        <button className="text-primary hover:text-primary/80">Download</button>
+                      </td>
+                    </tr>
+                    <tr className="bg-muted/20">
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${getTextColor()}`}>Reserve Fund Analysis 2023</td>
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm ${getMutedTextColor()}`}>2023-09-15</td>
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm ${getMutedTextColor()}`}>Mohammed Al-Balushi</td>
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm ${getMutedTextColor()}`}>PDF</td>
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm ${getMutedTextColor()}`}>
+                        <button className="text-primary hover:text-primary/80 mr-3">View</button>
+                        <button className="text-primary hover:text-primary/80">Download</button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+      </main>
+    </div>
+  );
+};
+
+export default AssetLifecycleDashboard;
