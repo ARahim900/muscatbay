@@ -4,12 +4,13 @@
 import * as React from "react"
 import { ThemeProvider as NextThemesProvider } from "next-themes"
 import { type ThemeProviderProps } from "next-themes/dist/types"
+import { useTheme as useNextTheme } from "next-themes"
 
 export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
   return (
     <NextThemesProvider
       attribute="class"
-      defaultTheme="light" // Changed from "system" to "light" to ensure light mode is default
+      defaultTheme="light" // Light mode is default
       enableSystem
       {...props}
     >
@@ -18,9 +19,9 @@ export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
   )
 }
 
-// Fix the useTheme hook export
+// Export a custom useTheme hook that wraps the hook from next-themes
 export function useTheme() {
-  // Import the hook directly from next-themes to avoid context issues
-  const { theme, setTheme } = React.useContext(NextThemesProvider.Context);
+  // Use the hook directly from next-themes instead of trying to access context
+  const { theme, setTheme } = useNextTheme();
   return { theme, setTheme };
 }
