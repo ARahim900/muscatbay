@@ -20,13 +20,13 @@ const AssetCategoriesTable: React.FC<AssetCategoriesTableProps> = ({ data }) => 
       <Table className="w-full">
         <TableHeader>
           <TableRow>
-            <TableHead className="text-sm">ID</TableHead>
-            <TableHead className="text-sm">Category</TableHead>
-            <TableHead className="text-sm">Sub Category</TableHead>
-            <TableHead className="text-sm">Asset Count</TableHead>
-            <TableHead className="text-sm text-right">Replacement Cost (OMR)</TableHead>
-            <TableHead className="text-sm">Life Expectancy (Years)</TableHead>
-            <TableHead className="text-sm">Zone Coverage</TableHead>
+            <TableHead className="font-medium text-sm">ID</TableHead>
+            <TableHead className="font-medium text-sm">Category</TableHead>
+            <TableHead className="font-medium text-sm">Sub Category</TableHead>
+            <TableHead className="font-medium text-sm">Asset Count</TableHead>
+            <TableHead className="font-medium text-sm text-right">Replacement Cost (OMR)</TableHead>
+            <TableHead className="font-medium text-sm">Life Expectancy (Years)</TableHead>
+            <TableHead className="font-medium text-sm">Zone Coverage</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>

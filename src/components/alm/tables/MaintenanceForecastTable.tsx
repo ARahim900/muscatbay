@@ -20,15 +20,15 @@ const MaintenanceForecastTable: React.FC<MaintenanceForecastTableProps> = ({ dat
       <Table className="w-full">
         <TableHeader>
           <TableRow>
-            <TableHead className="text-sm">Asset ID</TableHead>
-            <TableHead className="text-sm">Asset Name</TableHead>
-            <TableHead className="text-sm">Zone</TableHead>
-            <TableHead className="text-sm">Installation Year</TableHead>
-            <TableHead className="text-sm">Condition</TableHead>
-            <TableHead className="text-sm">Next Maintenance</TableHead>
-            <TableHead className="text-sm">Type</TableHead>
-            <TableHead className="text-sm text-right">Estimated Cost (OMR)</TableHead>
-            <TableHead className="text-sm">Life (Years)</TableHead>
+            <TableHead className="font-medium text-sm">Asset ID</TableHead>
+            <TableHead className="font-medium text-sm">Asset Name</TableHead>
+            <TableHead className="font-medium text-sm">Zone</TableHead>
+            <TableHead className="font-medium text-sm">Installation Year</TableHead>
+            <TableHead className="font-medium text-sm">Condition</TableHead>
+            <TableHead className="font-medium text-sm">Next Maintenance</TableHead>
+            <TableHead className="font-medium text-sm">Type</TableHead>
+            <TableHead className="font-medium text-sm text-right">Estimated Cost (OMR)</TableHead>
+            <TableHead className="font-medium text-sm">Life (Years)</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>

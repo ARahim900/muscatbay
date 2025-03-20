@@ -1,12 +1,11 @@
-
 import React, { useState } from 'react';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-  PieChart, Pie, Cell
+  PieChart, Pie, Cell, LineChart, Line
 } from 'recharts';
 import { 
   Calendar, AlertTriangle, Clock, DollarSign, CheckCircle, 
-  Layers, MapPin, List, File
+  Layers, MapPin, List, File, Calculator
 } from 'lucide-react';
 import { useTheme } from '@/components/theme/theme-provider';
 import { 
@@ -18,6 +17,7 @@ import MaintenanceForecastTable from './tables/MaintenanceForecastTable';
 import AssetConditionsTable from './tables/AssetConditionsTable';
 import CriticalAssetsTable from './tables/CriticalAssetsTable';
 import UpcomingMaintenanceTable from './tables/UpcomingMaintenanceTable';
+import ServiceChargeCalculator from './ServiceChargeCalculator';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -142,6 +142,26 @@ const AssetLifecycleDashboard = () => {
     { id: 'M015', assetName: 'Main Entrance Ceiling', zone: 'Typical Buildings', scheduledDate: '2024-09-20', maintenanceType: 'Replace', estimatedCost: 12, duration: 1, resourceRequirements: 'Painting team', priority: 'Low' }
   ];
 
+  // Add gradient definitions for charts
+  const chartGradients = () => {
+    return (
+      <defs>
+        <linearGradient id="colorCost" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8}/>
+          <stop offset="95%" stopColor="#8884d8" stopOpacity={0.2}/>
+        </linearGradient>
+        <linearGradient id="blueGradient" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="5%" stopColor="#2196F3" stopOpacity={0.8}/>
+          <stop offset="95%" stopColor="#2196F3" stopOpacity={0.2}/>
+        </linearGradient>
+        <linearGradient id="greenGradient" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="5%" stopColor="#4CAF50" stopOpacity={0.8}/>
+          <stop offset="95%" stopColor="#4CAF50" stopOpacity={0.2}/>
+        </linearGradient>
+      </defs>
+    );
+  };
+
   // Background color based on theme
   const getBgColor = () => {
     return theme === 'dark' ? 'bg-background' : 'bg-gray-50';
@@ -175,7 +195,7 @@ const AssetLifecycleDashboard = () => {
       {/* Dashboard Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
         <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 sm:grid-cols-5 mb-4 sm:mb-6">
+          <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 mb-4 sm:mb-6">
             <TabsTrigger value="overview" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
               <Layers className="h-3 w-3 sm:h-4 sm:w-4" />
               <span className="hidden sm:inline">Overview</span>
@@ -200,6 +220,11 @@ const AssetLifecycleDashboard = () => {
               <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4" />
               <span className="hidden sm:inline">Conditions</span>
               <span className="sm:hidden">Conditions</span>
+            </TabsTrigger>
+            <TabsTrigger value="serviceCharges" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+              <Calculator className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">Service Charges</span>
+              <span className="sm:hidden">Charges</span>
             </TabsTrigger>
           </TabsList>
 
@@ -304,12 +329,13 @@ const AssetLifecycleDashboard = () => {
                     data={maintenanceForecastData}
                     margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
                   >
+                    {chartGradients()}
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="year" />
                     <YAxis />
                     <Tooltip formatter={(value) => `OMR ${value.toLocaleString()}`} />
                     <Legend />
-                    <Bar dataKey="cost" name="Estimated Cost" fill="#8884d8" />
+                    <Bar dataKey="cost" name="Estimated Cost" fill="url(#colorCost)" />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -381,6 +407,11 @@ const AssetLifecycleDashboard = () => {
               </div>
               <AssetConditionsTable data={assetConditionsTableData} />
             </Card>
+          </TabsContent>
+
+          {/* Service Charges Tab */}
+          <TabsContent value="serviceCharges">
+            <ServiceChargeCalculator />
           </TabsContent>
         </Tabs>
       </main>
