@@ -1,8 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-  PieChart, Pie, Cell
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
 import { Calculator, ChevronDown, ChevronUp } from 'lucide-react';
 import { useTheme } from '@/components/theme/theme-provider';
@@ -14,46 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
-// Define interfaces for our data structures
-interface UnitType {
-  name: string;
-  baseRate: number;
-  sizes: number[];
-}
-
-interface ZoneData {
-  name: string;
-  totalContribution: number;
-  totalArea: number;
-  unitTypes: Record<string, UnitType>;
-  description: string;
-}
-
-interface ServiceChargeData {
-  [key: string]: ZoneData;
-}
-
-interface ServiceCharge {
-  annual: {
-    total: number;
-    baseCharge: number;
-    vat: number;
-    reserveFund?: number;
-    operational?: number;
-    admin?: number;
-    masterCommunity?: number;
-  };
-  monthly: {
-    total: number;
-    baseCharge: number;
-    vat: number;
-    reserveFund?: number;
-    operational?: number;
-    admin?: number;
-    masterCommunity?: number;
-  };
-}
+import { ServiceChargeData, UnitType, ZoneData, ServiceCharge } from '@/types/alm';
 
 const ServiceChargeCalculator: React.FC = () => {
   const [selectedZone, setSelectedZone] = useState('zone3');
@@ -72,12 +32,12 @@ const ServiceChargeCalculator: React.FC = () => {
       unitTypes: {
         apartment: {
           name: 'Apartment',
-          baseRate: 9.00, // OMR/m² as specified
+          baseRate: 9.00,
           sizes: [90, 120, 150, 200]
         },
         villa: {
           name: 'Villa',
-          baseRate: 6.99, // OMR/m² as specified
+          baseRate: 6.99,
           sizes: [200, 250, 300, 350]
         }
       },
@@ -90,7 +50,7 @@ const ServiceChargeCalculator: React.FC = () => {
       unitTypes: {
         villa: {
           name: 'Villa',
-          baseRate: 6.99, // OMR/m² as specified
+          baseRate: 6.99,
           sizes: [280, 320, 380, 420]
         }
       },
@@ -103,7 +63,7 @@ const ServiceChargeCalculator: React.FC = () => {
       unitTypes: {
         villa: {
           name: 'Villa',
-          baseRate: 6.99, // OMR/m² as specified
+          baseRate: 6.99,
           sizes: [300, 350, 400, 450]
         }
       },
@@ -116,7 +76,7 @@ const ServiceChargeCalculator: React.FC = () => {
       unitTypes: {
         apartment: {
           name: 'Apartment',
-          baseRate: 9.00, // OMR/m² as specified
+          baseRate: 9.00,
           sizes: [75, 100, 125, 150]
         }
       },
@@ -129,7 +89,7 @@ const ServiceChargeCalculator: React.FC = () => {
       unitTypes: {
         apartment: {
           name: 'Staff Apartment',
-          baseRate: 9.00, // OMR/m² as specified
+          baseRate: 9.00,
           sizes: [60, 80, 100]
         }
       },
@@ -165,7 +125,7 @@ const ServiceChargeCalculator: React.FC = () => {
       return;
     }
     
-    const unitType = zone.unitTypes?.[selectedUnitType as keyof typeof zone.unitTypes];
+    const unitType = zone.unitTypes[selectedUnitType as keyof typeof zone.unitTypes];
     if (!unitType) {
       setCalculatedServiceCharge({
         annual: { total: 0, baseCharge: 0, vat: 0 },
@@ -175,7 +135,7 @@ const ServiceChargeCalculator: React.FC = () => {
     }
     
     // Calculate base service charge
-    const baseCharge = (unitType.baseRate || 0) * selectedUnitSize;
+    const baseCharge = unitType.baseRate * selectedUnitSize;
     
     // Add 5% VAT
     const vat = baseCharge * 0.05;
@@ -229,9 +189,9 @@ const ServiceChargeCalculator: React.FC = () => {
     }
     
     // Safety check to ensure the selected size exists for the unit type
-    if (zone && zone.unitTypes[selectedUnitType as keyof typeof zone.unitTypes]) {
+    if (zone.unitTypes[selectedUnitType as keyof typeof zone.unitTypes]) {
       const unitType = zone.unitTypes[selectedUnitType as keyof typeof zone.unitTypes];
-      if (unitType && !unitType.sizes.includes(selectedUnitSize)) {
+      if (!unitType.sizes.includes(selectedUnitSize)) {
         // If not valid, set to the first available size
         setSelectedUnitSize(unitType.sizes[0]);
         return;
@@ -261,6 +221,28 @@ const ServiceChargeCalculator: React.FC = () => {
       }
     }
   }, [selectedZone]);
+
+  // Helper function to get simplified unit name
+  const getUnitTypeName = (zoneKey: string, typeKey: string): string => {
+    const zone = serviceChargeData[zoneKey as keyof typeof serviceChargeData];
+    if (!zone) return typeKey;
+    
+    const unitType = zone.unitTypes[typeKey as keyof typeof zone.unitTypes];
+    if (!unitType) return typeKey;
+    
+    return unitType.name;
+  };
+
+  // Helper function to get unit base rate
+  const getUnitBaseRate = (zoneKey: string, typeKey: string): number => {
+    const zone = serviceChargeData[zoneKey as keyof typeof serviceChargeData];
+    if (!zone) return 0;
+    
+    const unitType = zone.unitTypes[typeKey as keyof typeof zone.unitTypes];
+    if (!unitType) return 0;
+    
+    return unitType.baseRate;
+  };
 
   return (
     <div className="space-y-6">
@@ -299,7 +281,7 @@ const ServiceChargeCalculator: React.FC = () => {
                 <SelectContent>
                   {Object.keys(serviceChargeData[selectedZone as keyof typeof serviceChargeData]?.unitTypes || {}).map((type) => (
                     <SelectItem key={type} value={type}>
-                      {serviceChargeData[selectedZone as keyof typeof serviceChargeData]?.unitTypes[type as keyof typeof serviceChargeData[typeof selectedZone as keyof typeof serviceChargeData]["unitTypes"]]?.name || type}
+                      {getUnitTypeName(selectedZone, type)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -316,7 +298,7 @@ const ServiceChargeCalculator: React.FC = () => {
                   <SelectValue placeholder="Select Unit Size" />
                 </SelectTrigger>
                 <SelectContent>
-                  {serviceChargeData[selectedZone as keyof typeof serviceChargeData]?.unitTypes[selectedUnitType as keyof typeof serviceChargeData[typeof selectedZone as keyof typeof serviceChargeData]["unitTypes"]]?.sizes.map((size) => (
+                  {serviceChargeData[selectedZone as keyof typeof serviceChargeData]?.unitTypes[selectedUnitType as keyof typeof serviceChargeData[typeof selectedZone as keyof typeof serviceChargeData]['unitTypes']]?.sizes.map((size) => (
                     <SelectItem key={size} value={size.toString()}>{size} sqm</SelectItem>
                   ))}
                 </SelectContent>
@@ -326,7 +308,7 @@ const ServiceChargeCalculator: React.FC = () => {
             <div>
               <label htmlFor="base-rate" className={`block text-sm font-medium ${getMutedTextColor()}`}>Base Rate per sqm</label>
               <div className={`mt-1 py-2 px-3 border border-input bg-muted rounded-md text-sm`}>
-                OMR {(serviceChargeData[selectedZone as keyof typeof serviceChargeData]?.unitTypes[selectedUnitType as keyof typeof serviceChargeData[typeof selectedZone as keyof typeof serviceChargeData]["unitTypes"]]?.baseRate || 0).toFixed(2)}
+                OMR {getUnitBaseRate(selectedZone, selectedUnitType).toFixed(2)}
               </div>
             </div>
           </div>
@@ -343,7 +325,7 @@ const ServiceChargeCalculator: React.FC = () => {
                   {showServiceChargeBreakdown ? <ChevronUp size={16} className="ml-1" /> : <ChevronDown size={16} className="ml-1" />}
                 </button>
                 <button 
-                  onClick={() => calculateServiceCharge()}
+                  onClick={calculateServiceCharge}
                   className="inline-flex items-center px-3 py-1 border border-transparent text-sm leading-4 font-medium rounded-md text-primary-foreground bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
                 >
                   <Calculator size={16} className="mr-1" /> Recalculate
@@ -360,7 +342,7 @@ const ServiceChargeCalculator: React.FC = () => {
                   </span>
                 </div>
                 <div className={`mt-2 text-sm ${getMutedTextColor()}`}>
-                  For a {selectedUnitSize} sqm {serviceChargeData[selectedZone as keyof typeof serviceChargeData]?.unitTypes[selectedUnitType as keyof typeof serviceChargeData[typeof selectedZone as keyof typeof serviceChargeData]["unitTypes"]]?.name?.toLowerCase() || selectedUnitType} in {serviceChargeData[selectedZone as keyof typeof serviceChargeData]?.name}
+                  For a {selectedUnitSize} sqm {getUnitTypeName(selectedZone, selectedUnitType).toLowerCase()} in {serviceChargeData[selectedZone as keyof typeof serviceChargeData]?.name || selectedZone}
                 </div>
               </div>
               

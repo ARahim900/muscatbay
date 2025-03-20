@@ -18,7 +18,8 @@ export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
   )
 }
 
+// Properly export useTheme using the hook from next-themes
 export function useTheme() {
-  const { theme, setTheme } = React.useContext(NextThemesProvider);
+  const { theme, setTheme } = React.useContext(NextThemesProvider.Context);
   return { theme, setTheme };
 }
