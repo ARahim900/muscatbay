@@ -2,7 +2,7 @@
 import React from 'react';
 import SidebarSection from './SidebarSection';
 import SidebarLink from './SidebarLink';
-import { Shield, Calendar } from 'lucide-react';
+import { Shield } from 'lucide-react';
 import { ContractIcon, FolderKanbanIcon } from './CustomIcons';
 
 interface ManagementSectionProps {
@@ -40,20 +40,6 @@ const ManagementSection: React.FC<ManagementSectionProps> = ({
         collapsed={collapsed} 
         external={!!externalApps.projects && externalApps.projects !== "/projects"}
         openEmbedded={openEmbeddedApp}
-        isMobile={isMobile}
-      />
-      <SidebarLink 
-        to="/alm" 
-        icon={Calendar} 
-        label="Asset Lifecycle" 
-        collapsed={collapsed}
-        isMobile={isMobile}
-      />
-      <SidebarLink 
-        to="/admin" 
-        icon={Shield} 
-        label="Admin Panel" 
-        collapsed={collapsed}
         isMobile={isMobile}
       />
       <SidebarLink 

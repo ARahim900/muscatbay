@@ -12,7 +12,6 @@ import NotFound from "./pages/NotFound";
 import Electricity from "./pages/Electricity";
 import Water from "./pages/Water";
 import Projects from "./pages/Projects";
-import AssetLifecycleManagement from "./pages/AssetLifecycleManagement";
 import Auth from "./pages/Auth";
 import WaterConsumptionTypes from './pages/WaterConsumptionTypes';
 import Contracts from './pages/Contracts';
@@ -27,7 +26,7 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <ThemeProvider defaultTheme="light">
+    <ThemeProvider defaultTheme="dark">
       <AuthProvider>
         <TooltipProvider>
           <Toaster />
@@ -48,7 +47,6 @@ const App = () => (
               <Route path="/hvac" element={<ProtectedRoute><HVAC /></ProtectedRoute>} />
               <Route path="/pumping-stations" element={<ProtectedRoute><PumpingStations /></ProtectedRoute>} />
               <Route path="/projects" element={<ProtectedRoute><Projects /></ProtectedRoute>} />
-              <Route path="/alm" element={<ProtectedRoute><AssetLifecycleManagement /></ProtectedRoute>} />
               <Route path="/contracts" element={<ProtectedRoute><Contracts /></ProtectedRoute>} />
               <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
               
