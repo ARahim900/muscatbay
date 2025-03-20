@@ -21,6 +21,7 @@ import ElectricitySystem from './pages/ElectricitySystem';
 import HVAC from './pages/HVAC';
 import PumpingStations from './pages/PumpingStations';
 import Admin from './pages/Admin';
+import AssetLifecycle from './pages/AssetLifecycle';
 
 const queryClient = new QueryClient();
 
@@ -49,6 +50,7 @@ const App = () => (
               <Route path="/projects" element={<ProtectedRoute><Projects /></ProtectedRoute>} />
               <Route path="/contracts" element={<ProtectedRoute><Contracts /></ProtectedRoute>} />
               <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
+              <Route path="/alm" element={<ProtectedRoute><AssetLifecycle /></ProtectedRoute>} />
               
               {/* Catch-all route */}
               <Route path="*" element={<NotFound />} />
