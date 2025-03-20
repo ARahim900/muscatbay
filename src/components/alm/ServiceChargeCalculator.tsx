@@ -244,6 +244,17 @@ const ServiceChargeCalculator: React.FC = () => {
     return unitType.baseRate;
   };
 
+  // Helper function to safely get unit sizes
+  const getUnitSizes = (zoneKey: string, typeKey: string): number[] => {
+    const zone = serviceChargeData[zoneKey as keyof typeof serviceChargeData];
+    if (!zone) return [];
+    
+    const unitType = zone.unitTypes[typeKey as keyof typeof zone.unitTypes];
+    if (!unitType) return [];
+    
+    return unitType.sizes;
+  };
+
   return (
     <div className="space-y-6">
       <Card className="p-6 shadow-md">
@@ -298,7 +309,7 @@ const ServiceChargeCalculator: React.FC = () => {
                   <SelectValue placeholder="Select Unit Size" />
                 </SelectTrigger>
                 <SelectContent>
-                  {serviceChargeData[selectedZone as keyof typeof serviceChargeData]?.unitTypes[selectedUnitType as keyof typeof serviceChargeData[typeof selectedZone as keyof typeof serviceChargeData]['unitTypes']]?.sizes.map((size) => (
+                  {getUnitSizes(selectedZone, selectedUnitType).map((size) => (
                     <SelectItem key={size} value={size.toString()}>{size} sqm</SelectItem>
                   ))}
                 </SelectContent>
