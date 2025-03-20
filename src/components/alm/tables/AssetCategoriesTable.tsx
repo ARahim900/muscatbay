@@ -17,28 +17,28 @@ interface AssetCategoriesTableProps {
 const AssetCategoriesTable: React.FC<AssetCategoriesTableProps> = ({ data }) => {
   return (
     <div className="overflow-x-auto">
-      <Table>
+      <Table className="w-full">
         <TableHeader>
           <TableRow>
-            <TableHead>ID</TableHead>
-            <TableHead>Category</TableHead>
-            <TableHead>Sub Category</TableHead>
-            <TableHead>Asset Count</TableHead>
-            <TableHead className="text-right">Replacement Cost (OMR)</TableHead>
-            <TableHead>Life Expectancy (Years)</TableHead>
-            <TableHead>Zone Coverage</TableHead>
+            <TableHead className="text-sm">ID</TableHead>
+            <TableHead className="text-sm">Category</TableHead>
+            <TableHead className="text-sm">Sub Category</TableHead>
+            <TableHead className="text-sm">Asset Count</TableHead>
+            <TableHead className="text-sm text-right">Replacement Cost (OMR)</TableHead>
+            <TableHead className="text-sm">Life Expectancy (Years)</TableHead>
+            <TableHead className="text-sm">Zone Coverage</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {data.map((category) => (
             <TableRow key={category.id}>
-              <TableCell className="font-medium">{category.id}</TableCell>
-              <TableCell>{category.name}</TableCell>
-              <TableCell>{category.subCategory}</TableCell>
-              <TableCell>{category.assetCount}</TableCell>
-              <TableCell className="text-right">{category.totalReplacementCost.toLocaleString()}</TableCell>
-              <TableCell>{category.lifeExpectancyRange}</TableCell>
-              <TableCell>{category.zoneCoverage}</TableCell>
+              <TableCell className="text-sm font-medium">{category.id}</TableCell>
+              <TableCell className="text-sm">{category.name}</TableCell>
+              <TableCell className="text-sm">{category.subCategory}</TableCell>
+              <TableCell className="text-sm">{category.assetCount}</TableCell>
+              <TableCell className="text-sm text-right">{category.totalReplacementCost.toLocaleString()}</TableCell>
+              <TableCell className="text-sm">{category.lifeExpectancyRange}</TableCell>
+              <TableCell className="text-sm">{category.zoneCoverage}</TableCell>
             </TableRow>
           ))}
         </TableBody>

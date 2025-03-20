@@ -144,7 +144,7 @@ const AssetLifecycleDashboard = () => {
 
   // Background color based on theme
   const getBgColor = () => {
-    return theme === 'dark' ? 'bg-background' : 'bg-gray-100';
+    return theme === 'dark' ? 'bg-background' : 'bg-gray-50';
   };
 
   const getCardBgColor = () => {
@@ -163,86 +163,91 @@ const AssetLifecycleDashboard = () => {
     <div className={`min-h-screen ${getBgColor()}`}>
       {/* Header */}
       <header className={`${getCardBgColor()} shadow`}>
-        <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8 flex justify-between items-center">
-          <h1 className={`text-3xl font-bold ${getTextColor()}`}>Asset Lifecycle Management Dashboard</h1>
+        <div className="max-w-7xl mx-auto px-4 py-4 sm:py-6 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+          <h1 className={`text-2xl sm:text-3xl font-bold ${getTextColor()}`}>Asset Lifecycle Management Dashboard</h1>
           <div className="flex items-center space-x-4">
             <span className={`text-sm ${getMutedTextColor()}`}>Muscat Bay Community</span>
-            <span className="px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">Live Data</span>
+            <span className="px-3 py-1 rounded-full text-xs sm:text-sm font-medium bg-green-100 text-green-800">Live Data</span>
           </div>
         </div>
       </header>
 
       {/* Dashboard Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
         <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="grid w-full grid-cols-5 mb-6">
-            <TabsTrigger value="overview" className="flex items-center gap-2">
-              <Layers className="h-4 w-4" />
-              <span>Overview</span>
+          <TabsList className="grid w-full grid-cols-3 sm:grid-cols-5 mb-4 sm:mb-6">
+            <TabsTrigger value="overview" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+              <Layers className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">Overview</span>
+              <span className="sm:hidden">Overview</span>
             </TabsTrigger>
-            <TabsTrigger value="categories" className="flex items-center gap-2">
-              <List className="h-4 w-4" />
-              <span>Asset Categories</span>
+            <TabsTrigger value="categories" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+              <List className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">Asset Categories</span>
+              <span className="sm:hidden">Categories</span>
             </TabsTrigger>
-            <TabsTrigger value="critical" className="flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4" />
-              <span>Critical Assets</span>
+            <TabsTrigger value="critical" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+              <AlertTriangle className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">Critical Assets</span>
+              <span className="sm:hidden">Critical</span>
             </TabsTrigger>
-            <TabsTrigger value="maintenance" className="flex items-center gap-2">
-              <Clock className="h-4 w-4" />
-              <span>Maintenance</span>
+            <TabsTrigger value="maintenance" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+              <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">Maintenance</span>
+              <span className="sm:hidden">Maintenance</span>
             </TabsTrigger>
-            <TabsTrigger value="conditions" className="flex items-center gap-2">
-              <CheckCircle className="h-4 w-4" />
-              <span>Conditions</span>
+            <TabsTrigger value="conditions" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+              <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">Conditions</span>
+              <span className="sm:hidden">Conditions</span>
             </TabsTrigger>
           </TabsList>
 
           {/* Overview Tab */}
-          <TabsContent value="overview" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <Card className="p-4">
+          <TabsContent value="overview" className="space-y-4 sm:space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+              <Card className="p-3 sm:p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className={`text-sm ${getMutedTextColor()}`}>Total Assets</p>
-                    <h2 className="text-2xl font-semibold">1,044</h2>
+                    <p className={`text-xs sm:text-sm ${getMutedTextColor()}`}>Total Assets</p>
+                    <h2 className="text-xl sm:text-2xl font-semibold">2,100</h2>
                   </div>
-                  <Layers className="h-8 w-8 text-primary" />
+                  <Layers className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
                 </div>
               </Card>
-              <Card className="p-4">
+              <Card className="p-3 sm:p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className={`text-sm ${getMutedTextColor()}`}>Critical Assets</p>
-                    <h2 className="text-2xl font-semibold">10</h2>
+                    <p className={`text-xs sm:text-sm ${getMutedTextColor()}`}>Critical Assets</p>
+                    <h2 className="text-xl sm:text-2xl font-semibold">10</h2>
                   </div>
-                  <AlertTriangle className="h-8 w-8 text-amber-500" />
+                  <AlertTriangle className="h-6 w-6 sm:h-8 sm:w-8 text-amber-500" />
                 </div>
               </Card>
-              <Card className="p-4">
+              <Card className="p-3 sm:p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className={`text-sm ${getMutedTextColor()}`}>Upcoming Maintenance</p>
-                    <h2 className="text-2xl font-semibold">15</h2>
+                    <p className={`text-xs sm:text-sm ${getMutedTextColor()}`}>Upcoming Maintenance</p>
+                    <h2 className="text-xl sm:text-2xl font-semibold">15</h2>
                   </div>
-                  <Calendar className="h-8 w-8 text-blue-500" />
+                  <Calendar className="h-6 w-6 sm:h-8 sm:w-8 text-blue-500" />
                 </div>
               </Card>
-              <Card className="p-4">
+              <Card className="p-3 sm:p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className={`text-sm ${getMutedTextColor()}`}>Total Replacement Value</p>
-                    <h2 className="text-2xl font-semibold">OMR 612,305</h2>
+                    <p className={`text-xs sm:text-sm ${getMutedTextColor()}`}>Total Replacement Value</p>
+                    <h2 className="text-xl sm:text-2xl font-semibold">OMR 612,305</h2>
                   </div>
-                  <DollarSign className="h-8 w-8 text-green-500" />
+                  <DollarSign className="h-6 w-6 sm:h-8 sm:w-8 text-green-500" />
                 </div>
               </Card>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card className="p-6">
-                <h3 className={`text-lg font-medium ${getTextColor()} mb-4`}>Asset Categories Distribution</h3>
-                <div className="h-64">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+              <Card className="p-4 sm:p-6">
+                <h3 className={`text-base sm:text-lg font-medium ${getTextColor()} mb-3 sm:mb-4`}>Asset Categories Distribution</h3>
+                <div className="h-56 sm:h-64">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
@@ -265,9 +270,9 @@ const AssetLifecycleDashboard = () => {
                 </div>
               </Card>
 
-              <Card className="p-6">
-                <h3 className={`text-lg font-medium ${getTextColor()} mb-4`}>Asset Condition Overview</h3>
-                <div className="h-64">
+              <Card className="p-4 sm:p-6">
+                <h3 className={`text-base sm:text-lg font-medium ${getTextColor()} mb-3 sm:mb-4`}>Asset Condition Overview</h3>
+                <div className="h-56 sm:h-64">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
@@ -291,9 +296,9 @@ const AssetLifecycleDashboard = () => {
               </Card>
             </div>
 
-            <Card className="p-6">
-              <h3 className={`text-lg font-medium ${getTextColor()} mb-4`}>Maintenance Cost Forecast</h3>
-              <div className="h-64">
+            <Card className="p-4 sm:p-6">
+              <h3 className={`text-base sm:text-lg font-medium ${getTextColor()} mb-3 sm:mb-4`}>Maintenance Cost Forecast</h3>
+              <div className="h-56 sm:h-64">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
                     data={maintenanceForecastData}
@@ -313,12 +318,12 @@ const AssetLifecycleDashboard = () => {
 
           {/* Asset Categories Tab */}
           <TabsContent value="categories">
-            <Card className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className={`text-lg font-medium ${getTextColor()}`}>Asset Categories</h3>
+            <Card className="p-3 sm:p-6">
+              <div className="flex items-center justify-between mb-3 sm:mb-4">
+                <h3 className={`text-base sm:text-lg font-medium ${getTextColor()}`}>Asset Categories</h3>
                 <div className="flex items-center gap-2">
-                  <MapPin className="h-4 w-4 text-primary" />
-                  <span className={`text-sm ${getMutedTextColor()}`}>Muscat Bay Community</span>
+                  <MapPin className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
+                  <span className={`text-xs sm:text-sm ${getMutedTextColor()}`}>Muscat Bay Community</span>
                 </div>
               </div>
               <AssetCategoriesTable data={assetCategoriesTableData} />
@@ -327,12 +332,12 @@ const AssetLifecycleDashboard = () => {
 
           {/* Critical Assets Tab */}
           <TabsContent value="critical">
-            <Card className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className={`text-lg font-medium ${getTextColor()}`}>Critical Assets</h3>
+            <Card className="p-3 sm:p-6">
+              <div className="flex items-center justify-between mb-3 sm:mb-4">
+                <h3 className={`text-base sm:text-lg font-medium ${getTextColor()}`}>Critical Assets</h3>
                 <div className="flex items-center gap-2">
-                  <AlertTriangle className="h-4 w-4 text-amber-500" />
-                  <span className={`text-sm ${getMutedTextColor()}`}>High Priority Items</span>
+                  <AlertTriangle className="h-3 w-3 sm:h-4 sm:w-4 text-amber-500" />
+                  <span className={`text-xs sm:text-sm ${getMutedTextColor()}`}>High Priority Items</span>
                 </div>
               </div>
               <CriticalAssetsTable data={criticalAssetsTableData} />
@@ -340,24 +345,24 @@ const AssetLifecycleDashboard = () => {
           </TabsContent>
 
           {/* Maintenance Tab */}
-          <TabsContent value="maintenance" className="space-y-6">
-            <Card className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className={`text-lg font-medium ${getTextColor()}`}>Maintenance Forecast</h3>
+          <TabsContent value="maintenance" className="space-y-4 sm:space-y-6">
+            <Card className="p-3 sm:p-6">
+              <div className="flex items-center justify-between mb-3 sm:mb-4">
+                <h3 className={`text-base sm:text-lg font-medium ${getTextColor()}`}>Maintenance Forecast</h3>
                 <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-blue-500" />
-                  <span className={`text-sm ${getMutedTextColor()}`}>Long-term Planning</span>
+                  <Calendar className="h-3 w-3 sm:h-4 sm:w-4 text-blue-500" />
+                  <span className={`text-xs sm:text-sm ${getMutedTextColor()}`}>Long-term Planning</span>
                 </div>
               </div>
               <MaintenanceForecastTable data={maintenanceForecastTableData} />
             </Card>
 
-            <Card className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className={`text-lg font-medium ${getTextColor()}`}>Upcoming Maintenance Tasks</h3>
+            <Card className="p-3 sm:p-6">
+              <div className="flex items-center justify-between mb-3 sm:mb-4">
+                <h3 className={`text-base sm:text-lg font-medium ${getTextColor()}`}>Upcoming Maintenance Tasks</h3>
                 <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-blue-500" />
-                  <span className={`text-sm ${getMutedTextColor()}`}>Scheduled Work</span>
+                  <Clock className="h-3 w-3 sm:h-4 sm:w-4 text-blue-500" />
+                  <span className={`text-xs sm:text-sm ${getMutedTextColor()}`}>Scheduled Work</span>
                 </div>
               </div>
               <UpcomingMaintenanceTable data={upcomingMaintenanceTableData} />
@@ -366,12 +371,12 @@ const AssetLifecycleDashboard = () => {
 
           {/* Conditions Tab */}
           <TabsContent value="conditions">
-            <Card className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className={`text-lg font-medium ${getTextColor()}`}>Asset Conditions</h3>
+            <Card className="p-3 sm:p-6">
+              <div className="flex items-center justify-between mb-3 sm:mb-4">
+                <h3 className={`text-base sm:text-lg font-medium ${getTextColor()}`}>Asset Conditions</h3>
                 <div className="flex items-center gap-2">
-                  <File className="h-4 w-4 text-primary" />
-                  <span className={`text-sm ${getMutedTextColor()}`}>Condition Assessment</span>
+                  <File className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
+                  <span className={`text-xs sm:text-sm ${getMutedTextColor()}`}>Condition Assessment</span>
                 </div>
               </div>
               <AssetConditionsTable data={assetConditionsTableData} />

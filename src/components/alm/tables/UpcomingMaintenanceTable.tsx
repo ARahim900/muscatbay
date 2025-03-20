@@ -37,33 +37,33 @@ const UpcomingMaintenanceTable: React.FC<UpcomingMaintenanceTableProps> = ({ dat
 
   return (
     <div className="overflow-x-auto">
-      <Table>
+      <Table className="w-full">
         <TableHeader>
           <TableRow>
-            <TableHead>Task ID</TableHead>
-            <TableHead>Asset Name</TableHead>
-            <TableHead>Zone</TableHead>
-            <TableHead>Scheduled Date</TableHead>
-            <TableHead>Type</TableHead>
-            <TableHead className="text-right">Estimated Cost (OMR)</TableHead>
-            <TableHead>Duration (Days)</TableHead>
-            <TableHead>Resource Requirements</TableHead>
-            <TableHead>Priority</TableHead>
+            <TableHead className="text-sm">Task ID</TableHead>
+            <TableHead className="text-sm">Asset Name</TableHead>
+            <TableHead className="text-sm">Zone</TableHead>
+            <TableHead className="text-sm">Scheduled Date</TableHead>
+            <TableHead className="text-sm">Type</TableHead>
+            <TableHead className="text-sm text-right">Estimated Cost (OMR)</TableHead>
+            <TableHead className="text-sm">Duration (Days)</TableHead>
+            <TableHead className="text-sm">Resource Requirements</TableHead>
+            <TableHead className="text-sm">Priority</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {data.map((task) => (
             <TableRow key={task.id}>
-              <TableCell className="font-medium">{task.id}</TableCell>
-              <TableCell>{task.assetName}</TableCell>
-              <TableCell>{task.zone}</TableCell>
-              <TableCell>{formatDate(task.scheduledDate)}</TableCell>
-              <TableCell>{task.maintenanceType}</TableCell>
-              <TableCell className="text-right">{task.estimatedCost.toLocaleString()}</TableCell>
-              <TableCell>{task.duration}</TableCell>
-              <TableCell>{task.resourceRequirements}</TableCell>
+              <TableCell className="text-sm font-medium">{task.id}</TableCell>
+              <TableCell className="text-sm">{task.assetName}</TableCell>
+              <TableCell className="text-sm">{task.zone}</TableCell>
+              <TableCell className="text-sm">{formatDate(task.scheduledDate)}</TableCell>
+              <TableCell className="text-sm">{task.maintenanceType}</TableCell>
+              <TableCell className="text-sm text-right">{task.estimatedCost.toLocaleString()}</TableCell>
+              <TableCell className="text-sm">{task.duration}</TableCell>
+              <TableCell className="text-sm">{task.resourceRequirements}</TableCell>
               <TableCell>
-                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getPriorityColor(task.priority)}`}>
+                <span className={`text-xs inline-flex items-center px-2.5 py-0.5 rounded-full font-medium ${getPriorityColor(task.priority)}`}>
                   {task.priority}
                 </span>
               </TableCell>

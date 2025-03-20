@@ -17,32 +17,32 @@ interface MaintenanceForecastTableProps {
 const MaintenanceForecastTable: React.FC<MaintenanceForecastTableProps> = ({ data }) => {
   return (
     <div className="overflow-x-auto">
-      <Table>
+      <Table className="w-full">
         <TableHeader>
           <TableRow>
-            <TableHead>Asset ID</TableHead>
-            <TableHead>Asset Name</TableHead>
-            <TableHead>Zone</TableHead>
-            <TableHead>Installation Year</TableHead>
-            <TableHead>Condition</TableHead>
-            <TableHead>Next Maintenance</TableHead>
-            <TableHead>Type</TableHead>
-            <TableHead className="text-right">Estimated Cost (OMR)</TableHead>
-            <TableHead>Life (Years)</TableHead>
+            <TableHead className="text-sm">Asset ID</TableHead>
+            <TableHead className="text-sm">Asset Name</TableHead>
+            <TableHead className="text-sm">Zone</TableHead>
+            <TableHead className="text-sm">Installation Year</TableHead>
+            <TableHead className="text-sm">Condition</TableHead>
+            <TableHead className="text-sm">Next Maintenance</TableHead>
+            <TableHead className="text-sm">Type</TableHead>
+            <TableHead className="text-sm text-right">Estimated Cost (OMR)</TableHead>
+            <TableHead className="text-sm">Life (Years)</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {data.map((item) => (
             <TableRow key={item.id}>
-              <TableCell className="font-medium">{item.id}</TableCell>
-              <TableCell>{item.assetName}</TableCell>
-              <TableCell>{item.zone}</TableCell>
-              <TableCell>{item.installationYear}</TableCell>
-              <TableCell>{item.currentCondition}</TableCell>
-              <TableCell>{item.nextMaintenanceYear}</TableCell>
-              <TableCell>{item.maintenanceType}</TableCell>
-              <TableCell className="text-right">{item.estimatedCost.toLocaleString()}</TableCell>
-              <TableCell>{item.lifeExpectancy}</TableCell>
+              <TableCell className="text-sm font-medium">{item.id}</TableCell>
+              <TableCell className="text-sm">{item.assetName}</TableCell>
+              <TableCell className="text-sm">{item.zone}</TableCell>
+              <TableCell className="text-sm">{item.installationYear}</TableCell>
+              <TableCell className="text-sm">{item.currentCondition}</TableCell>
+              <TableCell className="text-sm">{item.nextMaintenanceYear}</TableCell>
+              <TableCell className="text-sm">{item.maintenanceType}</TableCell>
+              <TableCell className="text-sm text-right">{item.estimatedCost.toLocaleString()}</TableCell>
+              <TableCell className="text-sm">{item.lifeExpectancy}</TableCell>
             </TableRow>
           ))}
         </TableBody>

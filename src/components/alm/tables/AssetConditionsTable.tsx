@@ -35,30 +35,30 @@ const AssetConditionsTable: React.FC<AssetConditionsTableProps> = ({ data }) => 
 
   return (
     <div className="overflow-x-auto">
-      <Table>
+      <Table className="w-full">
         <TableHeader>
           <TableRow>
-            <TableHead>ID</TableHead>
-            <TableHead>Condition Rating</TableHead>
-            <TableHead>Description</TableHead>
-            <TableHead>Asset Count</TableHead>
-            <TableHead>Percentage</TableHead>
-            <TableHead>Recommended Action</TableHead>
+            <TableHead className="text-sm">ID</TableHead>
+            <TableHead className="text-sm">Condition Rating</TableHead>
+            <TableHead className="text-sm">Description</TableHead>
+            <TableHead className="text-sm">Asset Count</TableHead>
+            <TableHead className="text-sm">Percentage</TableHead>
+            <TableHead className="text-sm">Recommended Action</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {data.map((condition) => (
             <TableRow key={condition.id}>
-              <TableCell className="font-medium">{condition.id}</TableCell>
+              <TableCell className="text-sm font-medium">{condition.id}</TableCell>
               <TableCell>
-                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getConditionColor(condition.conditionRating)}`}>
+                <span className={`text-xs inline-flex items-center px-2.5 py-0.5 rounded-full font-medium ${getConditionColor(condition.conditionRating)}`}>
                   {condition.conditionRating}
                 </span>
               </TableCell>
-              <TableCell>{condition.description}</TableCell>
-              <TableCell>{condition.assetCount}</TableCell>
-              <TableCell>{condition.percentage}%</TableCell>
-              <TableCell>{condition.recommendedAction}</TableCell>
+              <TableCell className="text-sm">{condition.description}</TableCell>
+              <TableCell className="text-sm">{condition.assetCount}</TableCell>
+              <TableCell className="text-sm">{condition.percentage}%</TableCell>
+              <TableCell className="text-sm">{condition.recommendedAction}</TableCell>
             </TableRow>
           ))}
         </TableBody>

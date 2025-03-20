@@ -54,39 +54,39 @@ const CriticalAssetsTable: React.FC<CriticalAssetsTableProps> = ({ data }) => {
 
   return (
     <div className="overflow-x-auto">
-      <Table>
+      <Table className="w-full">
         <TableHeader>
           <TableRow>
-            <TableHead>Asset ID</TableHead>
-            <TableHead>Asset Name</TableHead>
-            <TableHead>Zone</TableHead>
-            <TableHead>Condition</TableHead>
-            <TableHead className="text-right">Replacement Cost (OMR)</TableHead>
-            <TableHead>Criticality</TableHead>
-            <TableHead>Failure Impact</TableHead>
-            <TableHead>Recommended Action</TableHead>
-            <TableHead>Target Completion</TableHead>
+            <TableHead className="text-sm">Asset ID</TableHead>
+            <TableHead className="text-sm">Asset Name</TableHead>
+            <TableHead className="text-sm">Zone</TableHead>
+            <TableHead className="text-sm">Condition</TableHead>
+            <TableHead className="text-sm text-right">Replacement Cost (OMR)</TableHead>
+            <TableHead className="text-sm">Criticality</TableHead>
+            <TableHead className="text-sm">Failure Impact</TableHead>
+            <TableHead className="text-sm">Recommended Action</TableHead>
+            <TableHead className="text-sm">Target Completion</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {data.map((asset) => (
             <TableRow key={asset.id}>
-              <TableCell className="font-medium">{asset.id}</TableCell>
-              <TableCell>{asset.assetName}</TableCell>
-              <TableCell>{asset.zone}</TableCell>
-              <TableCell className={getConditionColor(asset.currentCondition)}>
+              <TableCell className="text-sm font-medium">{asset.id}</TableCell>
+              <TableCell className="text-sm">{asset.assetName}</TableCell>
+              <TableCell className="text-sm">{asset.zone}</TableCell>
+              <TableCell className={`text-sm ${getConditionColor(asset.currentCondition)}`}>
                 {asset.currentCondition}
               </TableCell>
-              <TableCell className="text-right">{asset.replacementCost.toLocaleString()}</TableCell>
+              <TableCell className="text-sm text-right">{asset.replacementCost.toLocaleString()}</TableCell>
               <TableCell>
-                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getCriticalityColor(asset.criticalityRating)}`}>
+                <span className={`text-xs inline-flex items-center px-2.5 py-0.5 rounded-full font-medium ${getCriticalityColor(asset.criticalityRating)}`}>
                   {asset.criticalityRating === 5 && <AlertTriangle className="w-3 h-3 mr-1" />}
                   {asset.criticalityRating}
                 </span>
               </TableCell>
-              <TableCell>{asset.failureImpact}</TableCell>
-              <TableCell>{asset.recommendedAction}</TableCell>
-              <TableCell>{asset.targetCompletion}</TableCell>
+              <TableCell className="text-sm">{asset.failureImpact}</TableCell>
+              <TableCell className="text-sm">{asset.recommendedAction}</TableCell>
+              <TableCell className="text-sm">{asset.targetCompletion}</TableCell>
             </TableRow>
           ))}
         </TableBody>
