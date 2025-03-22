@@ -1,7 +1,7 @@
 
 // Asset Categories
 export interface AssetCategory {
-  id: number;
+  id: string;
   name: string;
   subCategory: string;
   assetCount: number;
@@ -68,10 +68,7 @@ export interface UnitType {
 
 export interface ZoneData {
   name: string;
-  totalContribution: number;
-  totalArea: number;
   unitTypes: Record<string, UnitType>;
-  description: string;
 }
 
 export interface ServiceChargeData {
@@ -99,8 +96,44 @@ export interface ServiceCharge {
   };
 }
 
-export interface ReserveFund {
-  zone: string;
-  contribution: number;
-  minimumBalance: number;
+// New types for expense analysis
+export interface ExpenseData {
+  year: number;
+  expenses: number;
+}
+
+export interface ZoneExpenseData {
+  [key: string]: ExpenseData[];
+}
+
+export interface CategoryBreakdown {
+  name: string;
+  value: number;
+}
+
+export interface ExpenseType {
+  name: string;
+  value: number;
+}
+
+export interface MonthlyDistribution {
+  month: string;
+  value: number;
+}
+
+export interface CategoryAnalysisItem {
+  category: string;
+  total: number;
+  percentage: number;
+  count: number;
+  avgCost: number;
+  workType: string;
+}
+
+export interface MajorReplacementYear {
+  year: number;
+  expense: number;
+  components: string;
+  zones: number;
+  percentage: number;
 }
