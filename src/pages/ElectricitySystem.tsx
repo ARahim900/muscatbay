@@ -44,6 +44,7 @@ import { ElectricityTrends } from '@/components/electricity/ElectricityTrends';
 import { ElectricityComparison } from '@/components/electricity/ElectricityComparison';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import StatCard from '@/components/dashboard/StatCard';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const ELECTRICITY_RATE = 0.025; // OMR per kWh
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#FF6B6B'];
@@ -52,6 +53,7 @@ const ElectricitySystem = () => {
   const { theme } = useTheme();
   const [selectedMonth, setSelectedMonth] = useState<string>("all");
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const isMobile = useIsMobile();
   
   // Simulate loading
   useEffect(() => {
@@ -62,36 +64,105 @@ const ElectricitySystem = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  // Calculate total consumption for Jan-Feb 2025
-  const totalConsumption2025 = electricityData.reduce((total, facility) => {
-    return total + (facility.consumption['Jan-25'] || 0) + (facility.consumption['Feb-25'] || 0);
-  }, 0);
+  // Get all available months from the data
+  const allMonths = [
+    { value: 'all', label: 'All Months' },
+    { value: 'Apr-24', label: 'April 2024' },
+    { value: 'May-24', label: 'May 2024' },
+    { value: 'Jun-24', label: 'June 2024' },
+    { value: 'Jul-24', label: 'July 2024' },
+    { value: 'Aug-24', label: 'August 2024' },
+    { value: 'Sep-24', label: 'September 2024' },
+    { value: 'Oct-24', label: 'October 2024' },
+    { value: 'Nov-24', label: 'November 2024' },
+    { value: 'Dec-24', label: 'December 2024' },
+    { value: 'Jan-25', label: 'January 2025' },
+    { value: 'Feb-25', label: 'February 2025' }
+  ];
 
-  // Calculate total consumption for Feb 2025
-  const febConsumption = electricityData.reduce((total, facility) => {
-    return total + (facility.consumption['Feb-25'] || 0);
-  }, 0);
-
-  // Calculate total consumption for Jan 2025
-  const janConsumption = electricityData.reduce((total, facility) => {
-    return total + (facility.consumption['Jan-25'] || 0);
-  }, 0);
-
-  // Calculate month over month change
-  const momChange = ((febConsumption - janConsumption) / janConsumption) * 100;
-
-  // Group consumption by facility type for February 2025
-  const consumptionByType = electricityData.reduce((acc, facility) => {
-    const type = facility.type;
-    const consumption = facility.consumption['Feb-25'] || 0;
-    
-    if (!acc[type]) {
-      acc[type] = 0;
+  // Calculate total consumption for the selected month or for Jan-Feb 2025 as default
+  const getConsumptionData = () => {
+    if (selectedMonth === 'all') {
+      // Calculate 2025 data as default
+      const janConsumption = electricityData.reduce((total, facility) => {
+        return total + (facility.consumption['Jan-25'] || 0);
+      }, 0);
+      
+      const febConsumption = electricityData.reduce((total, facility) => {
+        return total + (facility.consumption['Feb-25'] || 0);
+      }, 0);
+      
+      return {
+        totalConsumption: janConsumption + febConsumption,
+        periodLabel: 'Jan-Feb 2025',
+        currentMonth: febConsumption,
+        currentMonthLabel: 'February 2025',
+        previousMonth: janConsumption,
+        previousMonthLabel: 'January 2025',
+        momChange: janConsumption > 0 ? ((febConsumption - janConsumption) / janConsumption) * 100 : 0
+      };
+    } else {
+      // Get month index to determine previous month
+      const monthIndex = allMonths.findIndex(m => m.value === selectedMonth);
+      const previousMonthIndex = monthIndex > 1 ? monthIndex - 1 : -1;
+      const previousMonth = previousMonthIndex > 0 ? allMonths[previousMonthIndex].value : null;
+      
+      const currentMonthConsumption = electricityData.reduce((total, facility) => {
+        return total + (facility.consumption[selectedMonth] || 0);
+      }, 0);
+      
+      let previousMonthConsumption = 0;
+      if (previousMonth) {
+        previousMonthConsumption = electricityData.reduce((total, facility) => {
+          return total + (facility.consumption[previousMonth] || 0);
+        }, 0);
+      }
+      
+      return {
+        totalConsumption: currentMonthConsumption,
+        periodLabel: allMonths.find(m => m.value === selectedMonth)?.label || selectedMonth,
+        currentMonth: currentMonthConsumption,
+        currentMonthLabel: allMonths.find(m => m.value === selectedMonth)?.label || selectedMonth,
+        previousMonth: previousMonthConsumption,
+        previousMonthLabel: previousMonth ? (allMonths.find(m => m.value === previousMonth)?.label || previousMonth) : 'N/A',
+        momChange: previousMonthConsumption > 0 ? ((currentMonthConsumption - previousMonthConsumption) / previousMonthConsumption) * 100 : 0
+      };
     }
-    
-    acc[type] += consumption;
-    return acc;
-  }, {} as Record<string, number>);
+  };
+
+  const consumptionData = getConsumptionData();
+
+  // Group consumption by facility type for the selected month
+  const getConsumptionByType = () => {
+    if (selectedMonth === 'all') {
+      // For 'all', we'll use February 2025 data as reference
+      return electricityData.reduce((acc, facility) => {
+        const type = facility.type;
+        const consumption = facility.consumption['Feb-25'] || 0;
+        
+        if (!acc[type]) {
+          acc[type] = 0;
+        }
+        
+        acc[type] += consumption;
+        return acc;
+      }, {} as Record<string, number>);
+    } else {
+      return electricityData.reduce((acc, facility) => {
+        const type = facility.type;
+        const consumption = facility.consumption[selectedMonth] || 0;
+        
+        if (!acc[type]) {
+          acc[type] = 0;
+        }
+        
+        acc[type] += consumption;
+        return acc;
+      }, {} as Record<string, number>);
+    }
+  };
+
+  const consumptionByType = getConsumptionByType();
 
   // Convert to array for charts
   const consumptionByTypeArray = Object.entries(consumptionByType)
@@ -103,17 +174,23 @@ const ElectricitySystem = () => {
     }))
     .sort((a, b) => b.consumption - a.consumption);
 
-  // Get top consumers for February 2025
-  const topConsumers = electricityData
-    .filter(facility => facility.name && facility.consumption['Feb-25'] > 0)
-    .map(facility => ({
-      name: facility.name,
-      type: facility.type,
-      consumption: facility.consumption['Feb-25'] || 0,
-      cost: (facility.consumption['Feb-25'] || 0) * ELECTRICITY_RATE
-    }))
-    .sort((a, b) => b.consumption - a.consumption)
-    .slice(0, 10);
+  // Get top consumers for the selected month
+  const getTopConsumers = () => {
+    const monthToUse = selectedMonth === 'all' ? 'Feb-25' : selectedMonth;
+    
+    return electricityData
+      .filter(facility => facility.name && facility.consumption[monthToUse] > 0)
+      .map(facility => ({
+        name: facility.name,
+        type: facility.type,
+        consumption: facility.consumption[monthToUse] || 0,
+        cost: (facility.consumption[monthToUse] || 0) * ELECTRICITY_RATE
+      }))
+      .sort((a, b) => b.consumption - a.consumption)
+      .slice(0, 10);
+  };
+
+  const topConsumers = getTopConsumers();
 
   // Monthly consumption trend (Apr 2024 - Feb 2025)
   const months = ['Apr-24', 'May-24', 'Jun-24', 'Jul-24', 'Aug-24', 'Sep-24', 'Oct-24', 'Nov-24', 'Dec-24', 'Jan-25', 'Feb-25'];
@@ -142,31 +219,33 @@ const ElectricitySystem = () => {
   }
 
   return (
-    <div className="container px-4 py-8 mx-auto max-w-7xl">
+    <div className="container px-2 sm:px-4 py-4 sm:py-8 mx-auto max-w-7xl">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4 sm:mb-8">
         <div className="flex items-center mb-4 md:mb-0">
-          <Zap className="w-8 h-8 mr-3 text-muscat-primary" />
+          <Zap className="w-6 h-6 sm:w-8 sm:h-8 mr-2 sm:mr-3 text-muscat-primary" />
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">Electricity System Dashboard</h1>
-            <p className="text-sm text-gray-500">Current rate: <span className="font-medium text-muscat-primary">0.025 OMR/kWh</span></p>
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800">Electricity System Dashboard</h1>
+            <p className="text-xs sm:text-sm text-gray-500">Current rate: <span className="font-medium text-muscat-primary">0.025 OMR/kWh</span></p>
           </div>
         </div>
         
         <div className="flex flex-col sm:flex-row gap-3">
           <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-full sm:w-[200px] text-sm sm:text-base">
               <CalendarRange className="w-4 h-4 mr-2" />
               <SelectValue placeholder="Select Month" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Months</SelectItem>
-              <SelectItem value="Jan-25">January 2025</SelectItem>
-              <SelectItem value="Feb-25">February 2025</SelectItem>
+              {allMonths.map((month) => (
+                <SelectItem key={month.value} value={month.value} className="text-sm sm:text-base">
+                  {month.label}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
           
-          <button className="flex items-center justify-center px-4 py-2 rounded-md bg-muscat-primary text-white hover:bg-muscat-primary/90 transition-colors">
+          <button className="flex items-center justify-center px-3 py-2 sm:px-4 sm:py-2 text-sm sm:text-base rounded-md bg-muscat-primary text-white hover:bg-muscat-primary/90 transition-colors">
             <Download className="w-4 h-4 mr-2" />
             Export Report
           </button>
@@ -175,21 +254,21 @@ const ElectricitySystem = () => {
       
       {/* Tabs Navigation */}
       <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="mb-6 bg-gray-100 dark:bg-gray-800">
-          <TabsTrigger value="overview" className="data-[state=active]:bg-muscat-primary data-[state=active]:text-white">
-            <BarChartIcon className="w-4 h-4 mr-2" />
+        <TabsList className="mb-4 sm:mb-6 bg-gray-100 dark:bg-gray-800 overflow-x-auto whitespace-nowrap max-w-full p-1 sm:p-0 flex flex-nowrap">
+          <TabsTrigger value="overview" className="text-xs sm:text-sm data-[state=active]:bg-muscat-primary data-[state=active]:text-white">
+            <BarChartIcon className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
             Overview
           </TabsTrigger>
-          <TabsTrigger value="facilities" className="data-[state=active]:bg-muscat-primary data-[state=active]:text-white">
-            <Building className="w-4 h-4 mr-2" />
+          <TabsTrigger value="facilities" className="text-xs sm:text-sm data-[state=active]:bg-muscat-primary data-[state=active]:text-white">
+            <Building className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
             Facilities
           </TabsTrigger>
-          <TabsTrigger value="trends" className="data-[state=active]:bg-muscat-primary data-[state=active]:text-white">
-            <AreaChartIcon className="w-4 h-4 mr-2" />
+          <TabsTrigger value="trends" className="text-xs sm:text-sm data-[state=active]:bg-muscat-primary data-[state=active]:text-white">
+            <AreaChartIcon className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
             Trends
           </TabsTrigger>
-          <TabsTrigger value="comparison" className="data-[state=active]:bg-muscat-primary data-[state=active]:text-white">
-            <PieChartIcon className="w-4 h-4 mr-2" />
+          <TabsTrigger value="comparison" className="text-xs sm:text-sm data-[state=active]:bg-muscat-primary data-[state=active]:text-white">
+            <PieChartIcon className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
             Comparison
           </TabsTrigger>
         </TabsList>
@@ -197,61 +276,67 @@ const ElectricitySystem = () => {
         {/* Overview Tab Content */}
         <TabsContent value="overview" className="mt-0">
           {/* Metric Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-6">
             <StatCard
-              title="Total Consumption (Jan-Feb 2025)"
-              value={`${totalConsumption2025.toLocaleString()} kWh`}
-              description={`${(totalConsumption2025 * ELECTRICITY_RATE).toLocaleString()} OMR`}
+              title={`Total ${consumptionData.periodLabel} Consumption`}
+              value={`${consumptionData.totalConsumption.toLocaleString()} kWh`}
+              description={`${(consumptionData.totalConsumption * ELECTRICITY_RATE).toLocaleString()} OMR`}
               icon={Zap}
               color="primary"
             />
             
             <StatCard
-              title="February 2025 Consumption"
-              value={`${febConsumption.toLocaleString()} kWh`}
-              description={`${(febConsumption * ELECTRICITY_RATE).toLocaleString()} OMR`}
+              title={`${consumptionData.currentMonthLabel} Consumption`}
+              value={`${consumptionData.currentMonth.toLocaleString()} kWh`}
+              description={`${(consumptionData.currentMonth * ELECTRICITY_RATE).toLocaleString()} OMR`}
               icon={Zap}
               color="teal"
             />
             
             <StatCard
-              title="January 2025 Consumption"
-              value={`${janConsumption.toLocaleString()} kWh`}
-              description={`${(janConsumption * ELECTRICITY_RATE).toLocaleString()} OMR`}
+              title={`${consumptionData.previousMonthLabel} Consumption`}
+              value={`${consumptionData.previousMonth.toLocaleString()} kWh`}
+              description={`${(consumptionData.previousMonth * ELECTRICITY_RATE).toLocaleString()} OMR`}
               icon={Zap}
               color="lavender"
             />
             
             <StatCard
               title="Month-over-Month Change"
-              value={`${momChange.toFixed(1)}%`}
-              icon={momChange >= 0 ? TrendingUp : TrendingDown}
+              value={`${consumptionData.momChange.toFixed(1)}%`}
+              icon={consumptionData.momChange >= 0 ? TrendingUp : TrendingDown}
               trend={{
-                value: Math.abs(parseFloat(momChange.toFixed(1))),
-                isPositive: momChange >= 0
+                value: Math.abs(parseFloat(consumptionData.momChange.toFixed(1))),
+                isPositive: consumptionData.momChange >= 0
               }}
               color="gold"
             />
           </div>
           
           {/* Charts Row 1 */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
             {/* Monthly Consumption Trend */}
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-lg font-medium">Monthly Consumption Trend</CardTitle>
+                <CardTitle className="text-base sm:text-lg md:text-xl font-medium">Monthly Consumption Trend</CardTitle>
               </CardHeader>
               <CardContent className="pt-0">
                 <ChartContainer
-                  className="h-80"
+                  className="h-60 sm:h-80"
                   config={{
                     consumption: {},
-                    cost: {}
+                    cost: {},
+                    month: {}
                   }}
                 >
                   <AreaChart
                     data={monthlyConsumption}
-                    margin={{ top: 10, right: 30, left: 20, bottom: 30 }}
+                    margin={{ 
+                      top: 10, 
+                      right: isMobile ? 10 : 30, 
+                      left: isMobile ? 0 : 20, 
+                      bottom: isMobile ? 60 : 30 
+                    }}
                   >
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis 
@@ -260,17 +345,32 @@ const ElectricitySystem = () => {
                       textAnchor="end" 
                       height={60} 
                       tickMargin={20}
+                      tick={{ fontSize: isMobile ? 10 : 12 }}
                     />
                     <YAxis 
                       yAxisId="left"
-                      tickFormatter={(value) => `${value.toLocaleString()}`}
-                      label={{ value: 'kWh', angle: -90, position: 'insideLeft', offset: -5 }}
+                      tickFormatter={(value) => `${(value/1000).toFixed(0)}k`}
+                      label={{ 
+                        value: 'kWh', 
+                        angle: -90, 
+                        position: 'insideLeft', 
+                        offset: -5,
+                        style: { fontSize: isMobile ? 10 : 12 }
+                      }}
+                      tick={{ fontSize: isMobile ? 10 : 12 }}
                     />
                     <YAxis 
                       yAxisId="right" 
                       orientation="right"
-                      tickFormatter={(value) => `${value.toLocaleString()}`}
-                      label={{ value: 'OMR', angle: 90, position: 'insideRight', offset: 5 }}
+                      tickFormatter={(value) => `${(value/1000).toFixed(0)}k`}
+                      label={{ 
+                        value: 'OMR', 
+                        angle: 90, 
+                        position: 'insideRight', 
+                        offset: 5,
+                        style: { fontSize: isMobile ? 10 : 12 }
+                      }}
+                      tick={{ fontSize: isMobile ? 10 : 12 }}
                     />
                     <Tooltip 
                       content={({ active, payload, label }) => {
@@ -290,7 +390,7 @@ const ElectricitySystem = () => {
                         return null;
                       }}
                     />
-                    <Legend />
+                    <Legend wrapperStyle={{ fontSize: isMobile ? 10 : 12 }} />
                     <Area
                       type="monotone"
                       dataKey="consumption"
@@ -308,11 +408,13 @@ const ElectricitySystem = () => {
             {/* Consumption by Facility Type */}
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-lg font-medium">Consumption by Facility Type</CardTitle>
+                <CardTitle className="text-base sm:text-lg md:text-xl font-medium">
+                  Consumption by Facility Type {selectedMonth !== 'all' ? `(${allMonths.find(m => m.value === selectedMonth)?.label})` : ''}
+                </CardTitle>
               </CardHeader>
               <CardContent className="pt-0">
                 <ChartContainer
-                  className="h-80"
+                  className="h-60 sm:h-80"
                   config={{
                     type: {},
                     consumption: {},
@@ -325,7 +427,7 @@ const ElectricitySystem = () => {
                       cx="50%"
                       cy="50%"
                       labelLine={false}
-                      outerRadius={80}
+                      outerRadius={isMobile ? 60 : 80}
                       fill="#8884d8"
                       dataKey="consumption"
                       nameKey="type"
@@ -362,7 +464,7 @@ const ElectricitySystem = () => {
                         return null;
                       }}
                     />
-                    <Legend />
+                    <Legend wrapperStyle={{ fontSize: isMobile ? 10 : 12 }} />
                   </PieChart>
                 </ChartContainer>
               </CardContent>
@@ -370,15 +472,17 @@ const ElectricitySystem = () => {
           </div>
           
           {/* Charts Row 2 */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-            {/* February 2025 Cost Breakdown */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
+            {/* Cost Breakdown */}
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-lg font-medium">February 2025 Cost Breakdown</CardTitle>
+                <CardTitle className="text-base sm:text-lg md:text-xl font-medium">
+                  Cost Breakdown {selectedMonth !== 'all' ? `(${allMonths.find(m => m.value === selectedMonth)?.label})` : ''}
+                </CardTitle>
               </CardHeader>
               <CardContent className="pt-0">
                 <ChartContainer
-                  className="h-80"
+                  className="h-60 sm:h-80"
                   config={{
                     type: {},
                     cost: {}
@@ -386,19 +490,20 @@ const ElectricitySystem = () => {
                 >
                   <BarChart
                     data={consumptionByTypeArray}
-                    margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+                    margin={{ top: 20, right: isMobile ? 10 : 30, left: isMobile ? 80 : 100, bottom: isMobile ? 10 : 20 }}
                     layout="vertical"
                   >
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis
                       type="number"
-                      tickFormatter={(value) => `${value.toLocaleString()} OMR`}
+                      tickFormatter={(value) => `${(value/1000).toFixed(0)}k`}
+                      tick={{ fontSize: isMobile ? 10 : 12 }}
                     />
                     <YAxis 
                       type="category" 
                       dataKey="type" 
-                      width={100}
-                      tick={{ fontSize: 12 }}
+                      width={isMobile ? 70 : 100}
+                      tick={{ fontSize: isMobile ? 10 : 12 }}
                     />
                     <Tooltip
                       formatter={(value, name, props) => {
@@ -425,7 +530,7 @@ const ElectricitySystem = () => {
                         return null;
                       }}
                     />
-                    <Legend />
+                    <Legend wrapperStyle={{ fontSize: isMobile ? 10 : 12 }} />
                     <Bar
                       dataKey="cost"
                       fill="#0088FE"
@@ -444,11 +549,13 @@ const ElectricitySystem = () => {
             {/* Top Consumers */}
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-lg font-medium">Top Consumers - February 2025</CardTitle>
+                <CardTitle className="text-base sm:text-lg md:text-xl font-medium">
+                  Top Consumers {selectedMonth !== 'all' ? `(${allMonths.find(m => m.value === selectedMonth)?.label})` : ''}
+                </CardTitle>
               </CardHeader>
               <CardContent className="pt-0">
                 <ChartContainer
-                  className="h-80"
+                  className="h-60 sm:h-80"
                   config={{
                     name: {},
                     consumption: {}
@@ -456,19 +563,20 @@ const ElectricitySystem = () => {
                 >
                   <BarChart
                     data={topConsumers}
-                    margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                    margin={{ top: 20, right: isMobile ? 10 : 30, left: isMobile ? 80 : 120, bottom: isMobile ? 10 : 20 }}
                     layout="vertical"
                   >
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis 
                       type="number"
-                      tickFormatter={(value) => `${value.toLocaleString()}`}
+                      tickFormatter={(value) => `${(value/1000).toFixed(0)}k`}
+                      tick={{ fontSize: isMobile ? 10 : 12 }}
                     />
                     <YAxis 
                       type="category" 
                       dataKey="name" 
-                      width={120}
-                      tick={{ fontSize: 11 }}
+                      width={isMobile ? 80 : 120}
+                      tick={{ fontSize: isMobile ? 9 : 11 }}
                     />
                     <Tooltip
                       content={({ active, payload }) => {
@@ -490,7 +598,7 @@ const ElectricitySystem = () => {
                         return null;
                       }}
                     />
-                    <Legend />
+                    <Legend wrapperStyle={{ fontSize: isMobile ? 10 : 12 }} />
                     <Bar
                       dataKey="consumption"
                       fill="#00C49F"
