@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Zap, TrendingUp, TrendingDown } from 'lucide-react';
@@ -92,28 +93,44 @@ export const ElectricitySummary: React.FC<ElectricitySummaryProps> = ({
   // Calculate month over month change
   const momChange = previousMonthConsumption > 0 ? ((currentMonthConsumption - previousMonthConsumption) / previousMonthConsumption) * 100 : 0;
 
+  // Format numbers for better readability
+  const formatNumber = (num: number): string => {
+    return num.toLocaleString(undefined, { 
+      minimumFractionDigits: 0, 
+      maximumFractionDigits: 0 
+    });
+  };
+
+  // Format currency for better readability
+  const formatCurrency = (num: number): string => {
+    return num.toLocaleString(undefined, { 
+      minimumFractionDigits: 2, 
+      maximumFractionDigits: 2 
+    });
+  };
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-6">
       <StatCard
         title={periodLabel}
-        value={`${totalConsumption.toLocaleString()} kWh`}
-        description={`${(totalConsumption * electricityRate).toLocaleString()} OMR`}
+        value={`${formatNumber(totalConsumption)} kWh`}
+        description={`${formatCurrency(totalConsumption * electricityRate)} OMR`}
         icon={Zap}
         color="primary"
       />
       
       <StatCard
         title={currentMonthLabel}
-        value={`${currentMonthConsumption.toLocaleString()} kWh`}
-        description={`${(currentMonthConsumption * electricityRate).toLocaleString()} OMR`}
+        value={`${formatNumber(currentMonthConsumption)} kWh`}
+        description={`${formatCurrency(currentMonthConsumption * electricityRate)} OMR`}
         icon={Zap}
         color="teal"
       />
       
       <StatCard
         title={previousMonthLabel}
-        value={`${previousMonthConsumption.toLocaleString()} kWh`}
-        description={`${(previousMonthConsumption * electricityRate).toLocaleString()} OMR`}
+        value={`${formatNumber(previousMonthConsumption)} kWh`}
+        description={`${formatCurrency(previousMonthConsumption * electricityRate)} OMR`}
         icon={Zap}
         color="lavender"
       />
