@@ -1,4 +1,3 @@
-
 export interface ElectricityRecord {
   name: string;
   type: string;
@@ -17,12 +16,17 @@ export interface ElectricityMonthlyData {
 export interface FacilityConsumption {
   name: string;
   type: string;
-  januaryConsumption: number;
-  januaryCost: number;
-  februaryConsumption: number;
-  februaryCost: number;
-  totalConsumption: number;
-  totalCost: number;
+  consumption: number;
+  cost: number;
+  previousConsumption?: number;
+  previousCost?: number;
+  change?: number | null;
+  januaryConsumption?: number;
+  januaryCost?: number;
+  februaryConsumption?: number;
+  februaryCost?: number;
+  totalConsumption?: number;
+  totalCost?: number;
 }
 
 export interface TypeConsumption {
