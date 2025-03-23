@@ -102,6 +102,26 @@ export const ElectricityTrends: React.FC<ElectricityTrendsProps> = ({
     }
   ];
   
+  // Create a config object for all facility types
+  const chartConfig = {
+    month: {}
+  };
+
+  // Add all facility types to the config
+  facilityTypes.forEach(type => {
+    chartConfig[type] = {};
+  });
+  
+  // Create config for the line chart
+  const lineChartConfig = {
+    month: {}
+  };
+  
+  // Add all consumer names to the config
+  topConsumersTrend.forEach(consumer => {
+    lineChartConfig[consumer.name] = {};
+  });
+  
   return (
     <div className="space-y-6">
       {/* Monthly Consumption by Facility Type */}
@@ -112,10 +132,7 @@ export const ElectricityTrends: React.FC<ElectricityTrendsProps> = ({
         <CardContent className="pt-0">
           <ChartContainer
             className="h-96"
-            config={Object.fromEntries([
-              ['month', {}],
-              ...facilityTypes.map(type => [type, {}])
-            ])}
+            config={chartConfig}
           >
             <BarChart
               data={typeConsumptionData}
@@ -153,10 +170,7 @@ export const ElectricityTrends: React.FC<ElectricityTrendsProps> = ({
         <CardContent className="pt-0">
           <ChartContainer
             className="h-96"
-            config={Object.fromEntries([
-              ['month', {}],
-              ...topConsumersTrend.map(consumer => [consumer.name, {}])
-            ])}
+            config={lineChartConfig}
           >
             <LineChart
               data={monthlyVariationData}

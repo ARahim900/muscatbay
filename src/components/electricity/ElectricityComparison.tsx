@@ -102,7 +102,13 @@ export const ElectricityComparison: React.FC<ElectricityComparisonProps> = ({
           <CardTitle className="text-lg font-medium">Month-over-Month Change by Facility Type</CardTitle>
         </CardHeader>
         <CardContent className="pt-0">
-          <ChartContainer className="h-96">
+          <ChartContainer 
+            className="h-96"
+            config={{
+              changePercent: {},
+              type: {}
+            }}
+          >
             <BarChart
               data={monthOverMonthChanges}
               margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
@@ -149,7 +155,7 @@ export const ElectricityComparison: React.FC<ElectricityComparisonProps> = ({
               <Bar 
                 dataKey="changePercent" 
                 name="Change %" 
-                fill={(data) => data.changePercent >= 0 ? '#ff8042' : '#00C49F'}
+                fill="#ff8042"
               >
                 {monthOverMonthChanges.map((entry, index) => (
                   <Cell 

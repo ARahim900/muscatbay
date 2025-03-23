@@ -32,7 +32,7 @@ export const ElectricitySummary: React.FC<ElectricitySummaryProps> = ({
   }, 0);
 
   // Calculate month over month change
-  const momChange = ((febConsumption - janConsumption) / janConsumption) * 100;
+  const momChange = janConsumption > 0 ? ((febConsumption - janConsumption) / janConsumption) * 100 : 0;
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
