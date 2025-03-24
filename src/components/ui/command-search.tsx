@@ -99,7 +99,7 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
   );
 }
 
-// Export the CommandSearch component as before
+// Export the CommandSearch component
 export function CommandSearch() {
   const [open, setOpen] = React.useState(false);
   const navigate = useNavigate();

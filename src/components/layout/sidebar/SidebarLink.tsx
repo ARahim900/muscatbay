@@ -13,7 +13,9 @@ export interface SidebarLinkProps {
   isMobile?: boolean;
   iconColor?: string;
   bgColor?: string;
-  onClick?: () => void; // Add onClick prop to the interface
+  className?: string;
+  openEmbedded?: (url: string, title: string) => void;
+  onClick?: () => void;
 }
 
 const SidebarLink: React.FC<SidebarLinkProps> = ({
@@ -25,12 +27,20 @@ const SidebarLink: React.FC<SidebarLinkProps> = ({
   isMobile = false,
   iconColor = 'primary',
   bgColor = 'primary-foreground',
-  onClick, // Add onClick to function parameters
+  className,
+  openEmbedded,
+  onClick,
 }) => {
   const location = useLocation();
   const isActive = location.pathname === to || location.pathname.startsWith(`${to}/`);
   
   const handleClick = (e: React.MouseEvent) => {
+    if (openEmbedded) {
+      e.preventDefault();
+      openEmbedded(to, label);
+      return;
+    }
+    
     if (onClick) {
       e.preventDefault();
       onClick();
@@ -44,7 +54,8 @@ const SidebarLink: React.FC<SidebarLinkProps> = ({
         isActive
           ? "bg-accent dark:bg-accent/80 text-primary font-medium"
           : "hover:bg-muted/80 dark:hover:bg-muted/50 text-foreground/90",
-        collapsed && !isMobile ? "justify-center px-0" : ""
+        collapsed && !isMobile ? "justify-center px-0" : "",
+        className
       )}
     >
       {Icon && (

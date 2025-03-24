@@ -21,5 +21,8 @@ export function ModeToggle() {
   )
 }
 
+// Export as default as well for components that might import it that way
+export default ModeToggle;
+
 // Alias ThemeToggle to ModeToggle for backward compatibility
 export { ModeToggle as ThemeToggle }
