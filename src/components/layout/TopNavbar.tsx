@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { ModeToggle } from '@/components/theme/theme-toggle';
 import { Menu, Search, Bell, User, Zap, Droplets, CalendarRange, Home } from 'lucide-react';
@@ -86,7 +85,6 @@ const TopNavbar: React.FC<TopNavbarProps> = ({ toggleMobileMenu, openEmbeddedApp
         }`}
       >
         <div className="container flex h-full items-center justify-between px-4">
-          {/* Logo and Mobile Menu Toggle */}
           <div className="flex items-center gap-2">
             <Button 
               variant="ghost" 
@@ -112,7 +110,6 @@ const TopNavbar: React.FC<TopNavbarProps> = ({ toggleMobileMenu, openEmbeddedApp
             </div>
           </div>
           
-          {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center space-x-1">
             <Button 
               variant="ghost" 
@@ -157,7 +154,6 @@ const TopNavbar: React.FC<TopNavbarProps> = ({ toggleMobileMenu, openEmbeddedApp
             </Button>
           </nav>
           
-          {/* Actions */}
           <div className="flex items-center gap-1 sm:gap-2">
             <Button 
               variant="ghost" 

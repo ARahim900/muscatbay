@@ -1,466 +1,330 @@
-import * as React from "react";
-import { Bar, BarChart, CartesianGrid, Cell, Label, Legend, Line, LineChart, Pie, PieChart, ResponsiveContainer, Sector, Tooltip, XAxis, YAxis } from "recharts";
-import { useTheme } from "@/components/theme/theme-provider";
+
+import React, { ReactNode } from "react";
+import { 
+  ResponsiveContainer, 
+  BarChart as RechartsBarChart,
+  Bar, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  Legend,
+  LineChart as RechartsLineChart,
+  Line,
+  PieChart as RechartsPieChart,
+  Pie,
+  Cell,
+  AreaChart as RechartsAreaChart,
+  Area,
+  TooltipProps
+} from "recharts";
 import { cn } from "@/lib/utils";
 
-interface ChartProps extends React.HTMLAttributes<HTMLDivElement> {
-  title?: string;
-  description?: string;
-}
-
-export function Chart({
-  title,
-  description,
-  className,
-  children,
-  ...props
-}: ChartProps) {
-  return (
-    <div className={cn("space-y-3", className)} {...props}>
-      {title && <h4 className="text-sm font-medium">{title}</h4>}
-      {description && (
-        <p className="text-xs text-muted-foreground">{description}</p>
-      )}
-      <div className="h-[200px]">{children}</div>
-    </div>
-  );
-}
-
-// Add ChartContainer component that was missing but is being imported by other files
-export function ChartContainer({
-  children,
-  className,
-  config = {},
-  ...props
-}: {
-  children: React.ReactNode;
+type ChartProps = {
+  data: any[];
+  height?: number;
   className?: string;
-  config?: Record<string, Record<string, unknown>>;
-} & React.HTMLAttributes<HTMLDivElement>) {
+  children?: ReactNode;
+};
+
+export const ChartContainer: React.FC<ChartProps> = ({ 
+  data, 
+  height = 300, 
+  className,
+  children
+}: ChartProps) => {
+  if (!data || data.length === 0) {
+    return (
+      <div className={cn("flex items-center justify-center w-full bg-muted/20 rounded-md", className)} style={{ height }}>
+        <p className="text-muted-foreground">No data available</p>
+      </div>
+    );
+  }
+
   return (
-    <div className={cn("h-80 w-full", className)} {...props}>
+    <div className={cn("w-full", className)} style={{ height }}>
       <ResponsiveContainer width="100%" height="100%">
-        {children}
+        {React.Children.only(children as React.ReactElement)}
       </ResponsiveContainer>
     </div>
   );
-}
+};
 
-// Add missing ChartTooltip component
-export function ChartTooltip({
-  children,
-  ...props
-}: React.PropsWithChildren<{ className?: string }>) {
-  return <div className="rounded-lg border bg-background p-2 shadow-md" {...props}>{children}</div>;
-}
+type LineChartProps = ChartProps & {
+  lines: Array<{
+    dataKey: string;
+    stroke?: string;
+    name?: string;
+    type?: "monotone" | "basis" | "linear" | "natural" | "step";
+  }>;
+  xAxisDataKey: string;
+  grid?: boolean;
+  tickFormatter?: (value: any) => string;
+  tooltipFormatter?: (value: any) => [string, string];
+  tooltipLabelFormatter?: (label: any) => string;
+};
 
-// Add missing ChartTooltipContent
-export function ChartTooltipContent({
-  label,
-  payload,
-  formatter,
-}: {
-  label?: string;
-  payload?: Array<{ value: number; name: string; }>;
-  formatter?: (value: number, name: string) => [string, string];
-}) {
-  if (!payload || payload.length === 0) return null;
-  
+export const LineChart = ({ 
+  data, 
+  lines, 
+  xAxisDataKey, 
+  height,
+  grid = true,
+  tickFormatter,
+  tooltipFormatter,
+  tooltipLabelFormatter,
+  className
+}: LineChartProps) => {
   return (
-    <div className="space-y-1.5">
-      {label && <p className="text-xs font-medium">{label}</p>}
-      {payload.map((item, index) => (
-        <div key={`tooltip-item-${index}`} className="flex items-center justify-between gap-2 text-xs">
-          <span className="font-medium">{item.name}:</span>
-          <span>{
-            formatter 
-              ? formatter(Number(item.value), item.name)[0] 
-              : typeof item.value === 'number' 
-                ? item.value.toLocaleString() 
-                : item.value
-          }</span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-interface ChartBarProps {
-  data: any[];
-  xAxisKey: string;
-  yAxisKey: string;
-  colors?: string[];
-  gradientColors?: string[];
-  showXAxis?: boolean;
-  showYAxis?: boolean;
-  showLegend?: boolean;
-  showTooltip?: boolean;
-  showGrid?: boolean;
-  stack?: boolean;
-  horizontal?: boolean;
-  hideGridLines?: boolean;
-  chartHeight?: number;
-  showLabels?: boolean;
-  formatValue?: (value: number) => string;
-  formatLabel?: (label: string) => string;
-  formatTooltip?: (value: number, name: string) => React.ReactNode;
-  onClick?: (data: any) => void;
-}
-
-export function ChartBar({
-  data,
-  xAxisKey,
-  yAxisKey,
-  colors = ["#3b82f6", "#34d399", "#f59e0b", "#ef4444"],
-  gradientColors,
-  showXAxis = true,
-  showYAxis = true,
-  showLegend = false,
-  showTooltip = true,
-  showGrid = true,
-  stack = false,
-  horizontal = false,
-  hideGridLines = false,
-  chartHeight = 200,
-  showLabels = false,
-  formatValue,
-  formatLabel,
-  formatTooltip,
-  onClick,
-}: ChartBarProps) {
-  // Use the theme hook to get the current theme
-  const { theme } = useTheme();
-  
-  // Define theme-based colors
-  const textColor = "#666666"; // Light mode text color
-  const gridColor = "#e5e7eb"; // Light mode grid color
-  const tooltipBg = "#ffffff"; // Light mode tooltip background
-
-  return (
-    <ResponsiveContainer width="100%" height={chartHeight}>
-      <BarChart
-        data={data}
-        layout={horizontal ? "vertical" : "horizontal"}
-        onClick={onClick}
-      >
-        {showGrid && !hideGridLines && (
-          <CartesianGrid 
-            strokeDasharray="3 3" 
-            stroke={gridColor} 
-            vertical={!horizontal} 
-            horizontal={horizontal} 
-          />
-        )}
-        {showTooltip && (
-          <Tooltip
-            cursor={{ fill: "rgba(0, 0, 0, 0.05)" }}
-            content={({ active, payload, label }) => {
-              if (active && payload && payload.length) {
-                return (
-                  <div className="rounded-lg border bg-background shadow-md p-2 min-w-[150px]">
-                    <div className="text-xs font-medium mb-1">
-                      {formatLabel ? formatLabel(label) : label}
-                    </div>
-                    {payload.map((item, index) => (
-                      <div
-                        key={`tooltip-item-${index}`}
-                        className="flex items-center justify-between text-xs"
-                      >
-                        <div className="flex items-center gap-1">
-                          <div
-                            className="h-2 w-2 rounded-full"
-                            style={{ backgroundColor: item.color }}
-                          />
-                          <span>{item.name}</span>
-                        </div>
-                        <div className="font-medium">
-                          {formatTooltip
-                            ? formatTooltip(Number(item.value), item.name)
-                            : formatValue
-                            ? formatValue(Number(item.value))
-                            : item.value}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                );
-              }
-              return null;
-            }}
-          />
-        )}
-        {horizontal ? (
-          <>
-            <XAxis
-              type="number"
-              tick={{ fill: textColor, fontSize: 12 }}
-              tickFormatter={formatValue}
-              stroke={gridColor}
-              hide={!showXAxis}
-            />
-            <YAxis
-              type="category"
-              dataKey={xAxisKey}
-              tick={{ fill: textColor, fontSize: 12 }}
-              tickFormatter={formatLabel}
-              stroke={gridColor}
-              hide={!showYAxis}
-              width={80}
-            />
-          </>
-        ) : (
-          <>
-            <XAxis
-              type="category"
-              dataKey={xAxisKey}
-              tick={{ fill: textColor, fontSize: 12 }}
-              tickFormatter={formatLabel}
-              stroke={gridColor}
-              hide={!showXAxis}
-            />
-            <YAxis
-              type="number"
-              tick={{ fill: textColor, fontSize: 12 }}
-              tickFormatter={formatValue}
-              stroke={gridColor}
-              hide={!showYAxis}
-              width={50}
-            />
-          </>
-        )}
-        {showLegend && (
-          <Legend
-            wrapperStyle={{ fontSize: 12 }}
-            formatter={(value) => (
-              <span style={{ color: textColor }}>{value}</span>
-            )}
-          />
-        )}
-        <Bar
-          dataKey={yAxisKey}
-          fill={colors[0]}
-          radius={[4, 4, 0, 0]}
-          maxBarSize={60}
-        >
-          {showLabels && (
-            <Label
-              position="top"
-              content={({ x, y, width, height, value }) => {
-                return (
-                  <text
-                    x={x + width / 2}
-                    y={y - 10}
-                    fill={textColor}
-                    textAnchor="middle"
-                    dominantBaseline="middle"
-                    className="text-xs"
-                  >
-                    {formatValue ? formatValue(Number(value)) : value}
-                  </text>
-                );
-              }}
-            />
-          )}
-        </Bar>
-      </BarChart>
-    </ResponsiveContainer>
-  );
-}
-
-interface ChartLineProps {
-  data: any[];
-  xAxisKey: string;
-  yAxisKey: string | string[];
-  colors?: string[];
-  showXAxis?: boolean;
-  showYAxis?: boolean;
-  showLegend?: boolean;
-  showTooltip?: boolean;
-  showGrid?: boolean;
-  showDots?: boolean;
-  hideGridLines?: boolean;
-  chartHeight?: number;
-  smooth?: boolean;
-  formatValue?: (value: number) => string;
-  formatLabel?: (label: string) => string;
-  onClick?: (data: any) => void;
-}
-
-export function ChartLine({
-  data,
-  xAxisKey,
-  yAxisKey,
-  colors = ["#3b82f6", "#10b981", "#ef4444", "#f59e0b", "#a855f7"],
-  showXAxis = true,
-  showYAxis = true,
-  showLegend = true,
-  showTooltip = true,
-  showGrid = true,
-  showDots = true,
-  hideGridLines = false,
-  chartHeight = 200,
-  smooth = true,
-  formatValue,
-  formatLabel,
-  onClick,
-}: ChartLineProps) {
-  // Use the theme hook to get the current theme
-  const { theme } = useTheme();
-  
-  // Define theme-based colors for light theme
-  const textColor = "#666666";
-  const gridColor = "#e5e7eb";
-  const tooltipBg = "#ffffff";
-
-  // Convert single yAxisKey to array for consistent processing
-  const yAxisKeys = Array.isArray(yAxisKey) ? yAxisKey : [yAxisKey];
-
-  return (
-    <ResponsiveContainer width="100%" height={chartHeight}>
-      <LineChart data={data} onClick={onClick}>
-        {showGrid && !hideGridLines && (
-          <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
-        )}
-        <XAxis
-          dataKey={xAxisKey}
-          tick={{ fill: textColor, fontSize: 12 }}
-          tickFormatter={formatLabel}
-          stroke={gridColor}
-          hide={!showXAxis}
-          padding={{ left: 10, right: 10 }}
+    <ChartContainer data={data} height={height} className={className}>
+      <RechartsLineChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+        {grid && <CartesianGrid strokeDasharray="3 3" />}
+        <XAxis 
+          dataKey={xAxisDataKey} 
+          tick={{ fontSize: 12 }}
+          tickLine={{ stroke: '#888' }}
+          axisLine={{ stroke: '#888' }}
         />
-        <YAxis
-          tick={{ fill: textColor, fontSize: 12 }}
-          tickFormatter={formatValue}
-          stroke={gridColor}
-          hide={!showYAxis}
-          width={50}
+        <YAxis 
+          tick={{ fontSize: 12 }}
+          tickLine={{ stroke: '#888' }}
+          axisLine={{ stroke: '#888' }}
+          tickFormatter={tickFormatter}
         />
-        {showTooltip && (
-          <Tooltip
-            contentStyle={{
-              backgroundColor: tooltipBg,
-              border: "1px solid #e2e8f0",
-              borderRadius: "0.375rem",
-              fontSize: "0.75rem",
-            }}
-            formatter={(value: number, name: string) => [
-              formatValue ? formatValue(value) : value,
-              name,
-            ]}
-            labelFormatter={(label) =>
-              formatLabel ? formatLabel(label) : label
-            }
-          />
-        )}
-        {showLegend && (
-          <Legend
-            wrapperStyle={{ fontSize: 12, paddingTop: 8 }}
-            formatter={(value) => (
-              <span style={{ color: textColor }}>{value}</span>
-            )}
-          />
-        )}
-        {yAxisKeys.map((key, index) => (
+        <Tooltip 
+          contentStyle={{ 
+            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+            borderRadius: '6px',
+            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+            border: '1px solid rgb(226, 232, 240)'
+          }}
+          formatter={tooltipFormatter as any}
+          labelFormatter={tooltipLabelFormatter}
+        />
+        <Legend />
+        {lines.map((line, index) => (
           <Line
-            key={`line-${key}-${index}`}
-            type={smooth ? "monotone" : "linear"}
-            dataKey={key}
-            stroke={colors[index % colors.length]}
+            key={index}
+            type={line.type || "monotone"}
+            dataKey={line.dataKey}
+            stroke={line.stroke}
+            name={line.name || line.dataKey}
             strokeWidth={2}
-            dot={showDots ? { stroke: colors[index % colors.length], strokeWidth: 2, r: 3 } : false}
-            activeDot={{ r: 6, stroke: colors[index % colors.length], strokeWidth: 1 }}
+            dot={{ r: 3 }}
+            activeDot={{ r: 6 }}
           />
         ))}
-      </LineChart>
-    </ResponsiveContainer>
+      </RechartsLineChart>
+    </ChartContainer>
   );
-}
+};
 
-interface ChartPieProps {
-  data: Array<{ name: string; value: number }>;
+type BarChartProps = ChartProps & {
+  bars: Array<{
+    dataKey: string;
+    fill?: string;
+    name?: string;
+    stackId?: string;
+  }>;
+  xAxisDataKey: string;
+  grid?: boolean;
+  tickFormatter?: (value: any) => string;
+  layout?: "horizontal" | "vertical";
+  tooltipFormatter?: (value: any) => [string, string];
+  tooltipLabelFormatter?: (label: string) => string;
+};
+
+export const BarChart = ({ 
+  data, 
+  bars, 
+  xAxisDataKey, 
+  height,
+  grid = true,
+  layout = "horizontal",
+  tickFormatter,
+  tooltipFormatter,
+  tooltipLabelFormatter,
+  className
+}: BarChartProps) => {
+  return (
+    <ChartContainer data={data} height={height} className={className}>
+      <RechartsBarChart 
+        data={data} 
+        layout={layout}
+        margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+      >
+        {grid && <CartesianGrid strokeDasharray="3 3" />}
+        <XAxis 
+          dataKey={xAxisDataKey} 
+          tick={{ fontSize: 12 }}
+          tickLine={{ stroke: '#888' }}
+          axisLine={{ stroke: '#888' }}
+          type={layout === "horizontal" ? "category" : "number"}
+        />
+        <YAxis 
+          tick={{ fontSize: 12 }}
+          tickLine={{ stroke: '#888' }}
+          axisLine={{ stroke: '#888' }}
+          tickFormatter={tickFormatter}
+          type={layout === "horizontal" ? "number" : "category"}
+        />
+        <Tooltip 
+          contentStyle={{ 
+            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+            borderRadius: '6px',
+            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+            border: '1px solid rgb(226, 232, 240)'
+          }}
+          formatter={tooltipFormatter as any}
+          labelFormatter={tooltipLabelFormatter as any}
+        />
+        <Legend />
+        {bars.map((bar, index) => (
+          <Bar 
+            key={index} 
+            dataKey={bar.dataKey} 
+            fill={bar.fill} 
+            name={bar.name || bar.dataKey}
+            stackId={bar.stackId}
+            radius={[4, 4, 0, 0]}
+          />
+        ))}
+      </RechartsBarChart>
+    </ChartContainer>
+  );
+};
+
+const COLORS = [
+  '#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', 
+  '#82CA9D', '#FF6B6B', '#6A6AFF', '#FFAB6A', '#62DADD'
+];
+
+type PieChartProps = ChartProps & {
+  dataKey: string;
+  nameKey: string;
   colors?: string[];
-  showTooltip?: boolean;
-  showLegend?: boolean;
-  chartHeight?: number;
   innerRadius?: number;
   outerRadius?: number;
   paddingAngle?: number;
-  formatValue?: (value: number) => string;
-  formatName?: (name: string) => string;
-  onClick?: (data: any) => void;
-}
+  tooltipFormatter?: (value: number | string, name: string) => [string, string];
+};
 
-export function ChartPie({
+export const PieChart = ({
   data,
-  colors = ["#3b82f6", "#10b981", "#ef4444", "#f59e0b", "#a855f7", "#0ea5e9", "#8b5cf6", "#ec4899"],
-  showTooltip = true,
-  showLegend = true,
-  chartHeight = 200,
+  dataKey,
+  nameKey,
+  height,
+  colors = COLORS,
   innerRadius = 0,
   outerRadius = 80,
-  paddingAngle = 0,
-  formatValue,
-  formatName,
-  onClick,
-}: ChartPieProps) {
-  // Use the theme hook to get the current theme
-  const { theme } = useTheme();
-  
-  // Define theme-based colors for light theme
-  const textColor = "#666666";
-  const tooltipBg = "#ffffff";
-
+  paddingAngle = 2,
+  tooltipFormatter,
+  className
+}: PieChartProps) => {
   return (
-    <ResponsiveContainer width="100%" height={chartHeight}>
-      <PieChart>
+    <ChartContainer data={data} height={height} className={className}>
+      <RechartsPieChart>
         <Pie
           data={data}
           cx="50%"
           cy="50%"
+          labelLine={false}
           innerRadius={innerRadius}
           outerRadius={outerRadius}
           paddingAngle={paddingAngle}
-          dataKey="value"
-          onClick={onClick}
+          dataKey={dataKey}
+          nameKey={nameKey}
+          label={(entry) => entry.name}
         >
           {data.map((entry, index) => (
-            <Cell
-              key={`cell-${index}`}
-              fill={colors[index % colors.length]}
+            <Cell 
+              key={`cell-${index}`} 
+              fill={colors[index % colors.length]} 
             />
           ))}
         </Pie>
-        {showTooltip && (
-          <Tooltip
-            contentStyle={{
-              backgroundColor: tooltipBg,
-              border: "1px solid #e2e8f0",
-              borderRadius: "0.375rem",
-              fontSize: "0.75rem",
-            }}
-            formatter={(value: number) =>
-              formatValue ? [formatValue(value), ""] : [value, ""]
-            }
-            labelFormatter={(name) =>
-              formatName ? formatName(name) : name
-            }
-          />
-        )}
-        {showLegend && (
-          <Legend
-            layout="vertical"
-            verticalAlign="middle"
-            align="right"
-            wrapperStyle={{ fontSize: 12, paddingLeft: 20 }}
-            formatter={(value) => (
-              <span style={{ color: textColor }}>
-                {formatName ? formatName(value) : value}
-              </span>
-            )}
-          />
-        )}
-      </PieChart>
-    </ResponsiveContainer>
+        <Tooltip 
+          contentStyle={{ 
+            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+            borderRadius: '6px',
+            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+            border: '1px solid rgb(226, 232, 240)'
+          }}
+          formatter={tooltipFormatter as any}
+        />
+        <Legend />
+      </RechartsPieChart>
+    </ChartContainer>
   );
-}
+};
+
+type AreaChartProps = ChartProps & {
+  areas: Array<{
+    dataKey: string;
+    fill?: string;
+    stroke?: string;
+    name?: string;
+    stackId?: string;
+    type?: "monotone" | "basis" | "linear" | "natural" | "step";
+  }>;
+  xAxisDataKey: string;
+  grid?: boolean;
+  tickFormatter?: (value: any) => string;
+  tooltipFormatter?: (value: any) => [string, string];
+  tooltipLabelFormatter?: (label: any) => string;
+};
+
+export const AreaChart = ({
+  data,
+  areas,
+  xAxisDataKey,
+  height,
+  grid = true,
+  tickFormatter,
+  tooltipFormatter,
+  tooltipLabelFormatter,
+  className
+}: AreaChartProps) => {
+  return (
+    <ChartContainer data={data} height={height} className={className}>
+      <RechartsAreaChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+        {grid && <CartesianGrid strokeDasharray="3 3" />}
+        <XAxis 
+          dataKey={xAxisDataKey} 
+          tick={{ fontSize: 12 }}
+          tickLine={{ stroke: '#888' }}
+          axisLine={{ stroke: '#888' }}
+        />
+        <YAxis 
+          tick={{ fontSize: 12 }}
+          tickLine={{ stroke: '#888' }}
+          axisLine={{ stroke: '#888' }}
+          tickFormatter={tickFormatter}
+        />
+        <Tooltip 
+          contentStyle={{ 
+            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+            borderRadius: '6px',
+            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+            border: '1px solid rgb(226, 232, 240)'
+          }}
+          formatter={tooltipFormatter as any}
+          labelFormatter={tooltipLabelFormatter}
+        />
+        <Legend />
+        {areas.map((area, index) => (
+          <Area
+            key={index}
+            type={area.type || "monotone"}
+            dataKey={area.dataKey}
+            fill={area.fill}
+            stroke={area.stroke || area.fill}
+            name={area.name || area.dataKey}
+            stackId={area.stackId}
+            fillOpacity={0.6}
+          />
+        ))}
+      </RechartsAreaChart>
+    </ChartContainer>
+  );
+};

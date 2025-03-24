@@ -27,6 +27,79 @@ import {
   Home
 } from 'lucide-react';
 
+export interface CommandMenuProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
+  const navigate = useNavigate();
+
+  const handleNavigation = (path: string) => {
+    navigate(path);
+    onOpenChange(false);
+  };
+
+  return (
+    <CommandDialog open={open} onOpenChange={onOpenChange}>
+      <CommandInput placeholder="Type a command or search..." />
+      <CommandList>
+        <CommandEmpty>No results found.</CommandEmpty>
+        <CommandGroup heading="Suggestions">
+          <CommandItem onSelect={() => handleNavigation("/")}>
+            <Home className="mr-2 h-4 w-4" />
+            <span>Dashboard</span>
+          </CommandItem>
+          <CommandItem onSelect={() => handleNavigation("/water-system")}>
+            <Droplets className="mr-2 h-4 w-4 text-blue-500" />
+            <span>Water System</span>
+          </CommandItem>
+          <CommandItem onSelect={() => handleNavigation("/electricity-system")}>
+            <Zap className="mr-2 h-4 w-4 text-amber-500" />
+            <span>Electricity System</span>
+          </CommandItem>
+        </CommandGroup>
+        <CommandSeparator />
+        <CommandGroup heading="Facilities">
+          <CommandItem onSelect={() => handleNavigation("/stp")}>
+            <Factory className="mr-2 h-4 w-4 text-green-500" />
+            <span>STP Plant</span>
+          </CommandItem>
+          <CommandItem onSelect={() => handleNavigation("/pumping-stations")}>
+            <Wind className="mr-2 h-4 w-4 text-blue-500" />
+            <span>Pumping Stations</span>
+          </CommandItem>
+          <CommandItem onSelect={() => handleNavigation("/hvac")}>
+            <AirVent className="mr-2 h-4 w-4 text-orange-500" />
+            <span>HVAC/BMS</span>
+          </CommandItem>
+        </CommandGroup>
+        <CommandSeparator />
+        <CommandGroup heading="Management">
+          <CommandItem onSelect={() => handleNavigation("/contracts")}>
+            <FileText className="mr-2 h-4 w-4 text-purple-500" />
+            <span>Contracts</span>
+          </CommandItem>
+          <CommandItem onSelect={() => handleNavigation("/projects")}>
+            <FolderKanban className="mr-2 h-4 w-4 text-indigo-500" />
+            <span>Projects</span>
+          </CommandItem>
+          <CommandItem onSelect={() => handleNavigation("/alm")}>
+            <Clock className="mr-2 h-4 w-4 text-sky-500" />
+            <span>Asset Lifecycle</span>
+          </CommandItem>
+          <CommandItem onSelect={() => handleNavigation("/admin")}>
+            <Shield className="mr-2 h-4 w-4" />
+            <span>Admin</span>
+            <CommandShortcut>⌘A</CommandShortcut>
+          </CommandItem>
+        </CommandGroup>
+      </CommandList>
+    </CommandDialog>
+  );
+}
+
+// Export the CommandSearch component as before
 export function CommandSearch() {
   const [open, setOpen] = React.useState(false);
   const navigate = useNavigate();
@@ -43,11 +116,6 @@ export function CommandSearch() {
     return () => document.removeEventListener("keydown", down);
   }, []);
 
-  const handleNavigation = (path: string) => {
-    navigate(path);
-    setOpen(false);
-  };
-
   return (
     <>
       <button
@@ -60,61 +128,7 @@ export function CommandSearch() {
           <span className="text-xs">⌘</span>K
         </kbd>
       </button>
-      <CommandDialog open={open} onOpenChange={setOpen}>
-        <CommandInput placeholder="Type a command or search..." />
-        <CommandList>
-          <CommandEmpty>No results found.</CommandEmpty>
-          <CommandGroup heading="Suggestions">
-            <CommandItem onSelect={() => handleNavigation("/")}>
-              <Home className="mr-2 h-4 w-4" />
-              <span>Dashboard</span>
-            </CommandItem>
-            <CommandItem onSelect={() => handleNavigation("/water-system")}>
-              <Droplets className="mr-2 h-4 w-4 text-blue-500" />
-              <span>Water System</span>
-            </CommandItem>
-            <CommandItem onSelect={() => handleNavigation("/electricity-system")}>
-              <Zap className="mr-2 h-4 w-4 text-amber-500" />
-              <span>Electricity System</span>
-            </CommandItem>
-          </CommandGroup>
-          <CommandSeparator />
-          <CommandGroup heading="Facilities">
-            <CommandItem onSelect={() => handleNavigation("/stp")}>
-              <Factory className="mr-2 h-4 w-4 text-green-500" />
-              <span>STP Plant</span>
-            </CommandItem>
-            <CommandItem onSelect={() => handleNavigation("/pumping-stations")}>
-              <Wind className="mr-2 h-4 w-4 text-blue-500" />
-              <span>Pumping Stations</span>
-            </CommandItem>
-            <CommandItem onSelect={() => handleNavigation("/hvac")}>
-              <AirVent className="mr-2 h-4 w-4 text-orange-500" />
-              <span>HVAC/BMS</span>
-            </CommandItem>
-          </CommandGroup>
-          <CommandSeparator />
-          <CommandGroup heading="Management">
-            <CommandItem onSelect={() => handleNavigation("/contracts")}>
-              <FileText className="mr-2 h-4 w-4 text-purple-500" />
-              <span>Contracts</span>
-            </CommandItem>
-            <CommandItem onSelect={() => handleNavigation("/projects")}>
-              <FolderKanban className="mr-2 h-4 w-4 text-indigo-500" />
-              <span>Projects</span>
-            </CommandItem>
-            <CommandItem onSelect={() => handleNavigation("/alm")}>
-              <Clock className="mr-2 h-4 w-4 text-sky-500" />
-              <span>Asset Lifecycle</span>
-            </CommandItem>
-            <CommandItem onSelect={() => handleNavigation("/admin")}>
-              <Shield className="mr-2 h-4 w-4" />
-              <span>Admin</span>
-              <CommandShortcut>⌘A</CommandShortcut>
-            </CommandItem>
-          </CommandGroup>
-        </CommandList>
-      </CommandDialog>
+      <CommandMenu open={open} onOpenChange={setOpen} />
     </>
   );
 }

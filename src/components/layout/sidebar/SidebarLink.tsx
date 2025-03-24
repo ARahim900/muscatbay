@@ -1,24 +1,19 @@
 
-import React, { useState } from 'react';
+import React, { ElementType } from 'react';
 import { NavLink } from 'react-router-dom';
-import { ChevronRight } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
+import { cn } from '@/lib/utils';
 
-interface SidebarLinkProps {
+export interface SidebarLinkProps {
   to: string;
-  icon: React.ElementType;
+  icon: ElementType;
   label: string;
   collapsed?: boolean;
   external?: boolean;
-  openEmbedded?: (url: string, title: string) => void;
-  options?: {
-    label: string;
-    url: string;
-    isGitHub?: boolean;
-  }[];
   isMobile?: boolean;
-  className?: string;
   iconColor?: string;
   bgColor?: string;
+  onClick?: () => void; // Add onClick prop to the interface
 }
 
 const SidebarLink: React.FC<SidebarLinkProps> = ({
@@ -26,92 +21,72 @@ const SidebarLink: React.FC<SidebarLinkProps> = ({
   icon: Icon,
   label,
   collapsed,
-  external,
-  openEmbedded,
-  options,
-  isMobile,
-  className,
-  iconColor = "",
-  bgColor = ""
+  external = false,
+  isMobile = false,
+  iconColor = 'primary',
+  bgColor = 'primary-foreground',
+  onClick, // Add onClick to function parameters
 }) => {
-  const [showOptions, setShowOptions] = useState(false);
-
-  const handleEmbeddedClick = (e: React.MouseEvent, url: string = to, title: string = label) => {
-    if (external && openEmbedded) {
+  const location = useLocation();
+  const isActive = location.pathname === to || location.pathname.startsWith(`${to}/`);
+  
+  const handleClick = (e: React.MouseEvent) => {
+    if (onClick) {
       e.preventDefault();
-      openEmbedded(url, title);
-      if (options) {
-        setShowOptions(false);
-      }
+      onClick();
     }
   };
 
-  const handleOptionClick = (e: React.MouseEvent, option: {
-    url: string;
-    label: string;
-    isGitHub?: boolean;
-  }) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (option.isGitHub) {
-      window.open(option.url, '_blank');
-    } else if (external && openEmbedded) {
-      openEmbedded(option.url, option.label);
-    }
-    setShowOptions(false);
-  };
-
-  const toggleOptions = (e: React.MouseEvent) => {
-    if (options && options.length > 0) {
-      e.preventDefault();
-      e.stopPropagation();
-      setShowOptions(!showOptions);
-    }
-  };
-
-  // Custom icon styling based on props
-  const iconStyle = iconColor ? `text-${iconColor}` : "";
-  const iconBgStyle = bgColor ? `bg-${bgColor}` : "";
-  const iconWrapper = iconColor && bgColor ? 
-    `mr-2 p-1.5 rounded-md ${iconBgStyle}` : 
-    "mr-2";
+  const content = (
+    <div
+      className={cn(
+        "w-full flex items-center px-4 py-2.5 my-1 rounded-lg transition-colors duration-200",
+        isActive
+          ? "bg-accent dark:bg-accent/80 text-primary font-medium"
+          : "hover:bg-muted/80 dark:hover:bg-muted/50 text-foreground/90",
+        collapsed && !isMobile ? "justify-center px-0" : ""
+      )}
+    >
+      {Icon && (
+        <div
+          className={cn(
+            `flex-shrink-0 rounded-md w-8 h-8 flex items-center justify-center`,
+            `text-${iconColor}`,
+            `bg-${bgColor}/10`,
+            iconColor && bgColor
+              ? `text-${iconColor} bg-${bgColor}/10`
+              : "text-primary/80 bg-primary/5"
+          )}
+        >
+          <Icon className="h-[18px] w-[18px]" />
+        </div>
+      )}
+      
+      {(!collapsed || isMobile) && (
+        <span className="ml-3 text-[15px] whitespace-nowrap">{label}</span>
+      )}
+    </div>
+  );
 
   if (external) {
-    return <div className="relative">
-        <a href={to} className={`sidebar-link ${collapsed && !isMobile ? 'justify-center px-0' : ''} ${className || ''}`} onClick={options && options.length > 0 ? toggleOptions : e => handleEmbeddedClick(e)} aria-expanded={showOptions}>
-          {iconColor && bgColor && !collapsed ? (
-            <div className={iconWrapper}>
-              <Icon className={`flex-shrink-0 w-5 h-5 ${iconStyle}`} />
-            </div>
-          ) : (
-            <Icon className={`flex-shrink-0 w-5 h-5 ${iconStyle}`} />
-          )}
-          {(!collapsed || isMobile) && <>
-              <span className="flex-1">{label}</span>
-              {options && options.length > 0 && <ChevronRight className={`w-4 h-4 transition-transform ${showOptions ? 'rotate-90' : ''}`} />}
-            </>}
-        </a>
-        
-        {(!collapsed || isMobile) && showOptions && options && options.length > 0 && <div className="pl-10 mt-1 space-y-1">
-            {options.map((option, index) => <a key={index} href={option.url} className="flex items-center py-2 px-4 text-sm text-white/80 hover:text-white hover:bg-white/10 rounded-md transition-colors" onClick={e => handleOptionClick(e, option)}>
-                <span>{option.label}</span>
-              </a>)}
-          </div>}
-      </div>;
+    return (
+      <a
+        href={to}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="w-full block"
+        onClick={handleClick}
+      >
+        {content}
+      </a>
+    );
   }
 
-  return <NavLink to={to} className={({
-    isActive
-  }) => `sidebar-link ${isActive ? 'active' : ''} ${collapsed && !isMobile ? 'justify-center px-0' : ''} ${className || ''}`}>
-      {iconColor && bgColor && !collapsed ? (
-        <div className={iconWrapper}>
-          <Icon className={`flex-shrink-0 w-5 h-5 ${iconStyle}`} />
-        </div>
-      ) : (
-        <Icon className={`flex-shrink-0 w-5 h-5 ${iconStyle}`} />
-      )}
-      {(!collapsed || isMobile) && <span className="font-normal text-base text-center text-stone-200">{label}</span>}
-    </NavLink>;
+  return (
+    <NavLink to={to} className="w-full block" onClick={handleClick}>
+      {content}
+    </NavLink>
+  );
 };
 
 export default SidebarLink;
