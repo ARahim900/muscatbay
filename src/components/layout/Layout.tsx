@@ -36,6 +36,16 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   // Close mobile menu on route change
   useEffect(() => {
     setMobileMenuOpen(false);
+    
+    // Check if we're navigating to an external app route
+    // If we are, we should close the embedded app view
+    if (location.pathname.startsWith('/') && embeddedApp.isOpen) {
+      setEmbeddedApp({
+        url: '',
+        title: '',
+        isOpen: false
+      });
+    }
   }, [location.pathname]);
 
   const toggleMobileMenu = () => {
@@ -43,6 +53,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   };
 
   const openEmbeddedApp = (url: string, title: string) => {
+    // If it's an internal route, use navigation instead
+    if (url.startsWith('/')) {
+      navigate(url);
+      return;
+    }
+    
     setIframeLoading(true);
     setEmbeddedApp({
       url,

@@ -3,6 +3,7 @@ import React from 'react';
 import { Zap, Droplets } from 'lucide-react';
 import SidebarLink from './SidebarLink';
 import SidebarSection from './SidebarSection';
+import { useNavigate } from 'react-router-dom';
 
 interface UtilitiesSectionProps {
   collapsed?: boolean;
@@ -15,6 +16,13 @@ const UtilitiesSection: React.FC<UtilitiesSectionProps> = ({
   isMobile,
   openEmbeddedApp
 }) => {
+  const navigate = useNavigate();
+  
+  // Handle clicks for internal routes
+  const handleClick = (path: string) => {
+    navigate(path);
+  };
+  
   return (
     <SidebarSection title="Utilities" collapsed={collapsed} isMobile={isMobile}>
       <SidebarLink 

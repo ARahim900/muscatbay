@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
@@ -60,7 +59,7 @@ const TopNavbar: React.FC<TopNavbarProps> = ({ toggleMobileMenu, openEmbeddedApp
 
   // External app URLs
   const externalApps = {
-    electricity: "https://electrical-muscatbay.lovable.app/",
+    electricity: "/electricity-system", // Changed to internal route
     stpPlant: "https://stp.lovable.app/", 
     pumpingStation: "https://muscat-bay-pumping-stations.lovable.app/", 
     hvac: "https://hvac0.lovable.app/", 
@@ -93,7 +92,10 @@ const TopNavbar: React.FC<TopNavbarProps> = ({ toggleMobileMenu, openEmbeddedApp
   };
 
   const handleEmbeddedAppClick = (url: string, title: string) => {
-    if (openEmbeddedApp) {
+    // If it's an internal route (starts with /), use navigate instead of embedded app
+    if (url.startsWith('/')) {
+      navigate(url);
+    } else if (openEmbeddedApp) {
       openEmbeddedApp(url, title);
     }
   };
