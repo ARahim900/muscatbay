@@ -44,7 +44,7 @@ const renderCustomizedLabel = (props: PieLabelRenderProps, formatter?: (entry: a
     <g>
       {/* Connecting line */}
       <path
-        d={`M${cx},${cy} L${cx + (outerRadius as number) * Math.cos(-midAngle * Math.PI / 180)},${cy + (outerRadius as number) * Math.sin(-midAngle * Math.PI / 180)} L${x},${y}`}
+        d={`M${Number(cx)},${Number(cy)} L${Number(cx) + (Number(outerRadius)) * Math.cos(-midAngle * Math.PI / 180)},${Number(cy) + (Number(outerRadius)) * Math.sin(-midAngle * Math.PI / 180)} L${x},${y}`}
         stroke="#888"
         fill="none"
         strokeWidth={1}

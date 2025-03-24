@@ -22,7 +22,7 @@ import { cn } from '@/lib/utils'
 
 export interface ChartProps {
   className?: string;
-  children: React.ReactElement; // This ensures children is a React element, not just any ReactNode
+  children: React.ReactElement; // This ensures children is a React element
   config?: Record<string, unknown>;
 }
 
