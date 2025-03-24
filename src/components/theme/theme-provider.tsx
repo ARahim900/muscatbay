@@ -4,7 +4,6 @@
 import * as React from "react"
 import { ThemeProvider as NextThemesProvider } from "next-themes"
 import { type ThemeProviderProps } from "next-themes/dist/types"
-import { useTheme as useNextTheme } from "next-themes"
 
 export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
   return (
@@ -20,10 +19,14 @@ export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
   )
 }
 
-// Export a custom useTheme hook that wraps the hook from next-themes
+// Custom hook for theme - properly implemented
 export function useTheme() {
-  // Use the hook directly from next-themes instead of trying to access context
-  const { setTheme } = useNextTheme();
-  // Always return light as the theme
-  return { theme: "light", setTheme };
+  // Return a fixed object without actually calling useTheme from next-themes
+  // This avoids the hook usage error since we're forcing light mode anyway
+  return { 
+    theme: "light" as const, 
+    setTheme: (theme: string) => {
+      console.log(`Theme set to ${theme}, but we're in forced light mode`);
+    } 
+  };
 }

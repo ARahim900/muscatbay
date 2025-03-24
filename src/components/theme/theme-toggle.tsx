@@ -13,6 +13,7 @@ export function ThemeToggle() {
       size="icon" 
       className="rounded-full w-10 h-10 transition-all duration-300 hover:bg-accent" 
       aria-label="Light mode"
+      onClick={() => setTheme("light")}
     >
       <Sun className="h-5 w-5 text-amber-500" />
       <span className="sr-only">Light mode</span>
