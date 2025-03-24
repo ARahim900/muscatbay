@@ -21,9 +21,9 @@ import {
 import { cn } from '@/lib/utils'
 
 export interface ChartProps {
-  className?: string
-  children: ReactNode
-  config?: Record<string, unknown>
+  className?: string;
+  children: React.ReactElement;
+  config?: Record<string, unknown>;
 }
 
 export const Chart = ({ className, children }: ChartProps) => {
@@ -36,7 +36,7 @@ export const Chart = ({ className, children }: ChartProps) => {
   )
 }
 
-export const ChartContainer = ({ children, className, config }: ChartProps) => {
+export const ChartContainer = ({ children, className }: ChartProps) => {
   return <div className={cn('w-full h-64 md:h-80', className)}>{children}</div>
 }
 
@@ -48,8 +48,8 @@ export const ChartTooltip = ({
   formatter, 
   labelFormatter 
 }: TooltipProps<any, any> & { 
-  formatter?: (value: any, name?: string) => React.ReactNode
-  labelFormatter?: (label: any) => React.ReactNode 
+  formatter?: (value: any, name?: string) => React.ReactNode;
+  labelFormatter?: (label: any) => React.ReactNode;
 }) => {
   if (active && payload && payload.length) {
     return (
