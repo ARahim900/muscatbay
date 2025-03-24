@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Home, 
@@ -28,9 +27,10 @@ import { cn } from '@/lib/utils';
 
 interface NavbarProps {
   toggleSidebar?: () => void;
+  toggleMobileMenu?: () => void;
 }
 
-const AppNavbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
+const AppNavbar: React.FC<NavbarProps> = ({ toggleSidebar, toggleMobileMenu }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
@@ -40,7 +40,6 @@ const AppNavbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Determine which section is active based on current URL
   useEffect(() => {
     if (location.pathname.includes('electricity') || location.pathname.includes('water')) {
       setActiveSection('utilities');
@@ -114,9 +113,9 @@ const AppNavbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
     <header className={`fixed top-0 left-0 right-0 h-16 z-40 ${isScrolled ? 'bg-background/90 backdrop-blur-sm' : 'bg-background'} border-b transition-all duration-200`}>
       <div className="container flex h-full items-center justify-between px-4">
         <div className="flex items-center gap-2">
-          {toggleSidebar && (
+          {toggleMobileMenu && (
             <button
-              onClick={toggleSidebar}
+              onClick={toggleMobileMenu}
               className={`p-2 lg:hidden rounded-full hover:bg-accent transition-colors ${touchButtonClasses}`}
               aria-label="Toggle menu"
             >
@@ -134,7 +133,6 @@ const AppNavbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
           </Link>
         </div>
         
-        {/* Desktop Navigation */}
         <nav className="hidden lg:flex items-center space-x-1">
           <Link 
             to="/" 
@@ -148,7 +146,6 @@ const AppNavbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
             Dashboard
           </Link>
           
-          {/* Utilities Dropdown */}
           <div className="relative">
             <button 
               onClick={() => handleDropdownToggle('utilities')}
@@ -178,7 +175,6 @@ const AppNavbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
             )}
           </div>
           
-          {/* Facilities Dropdown */}
           <div className="relative">
             <button 
               onClick={() => handleDropdownToggle('facilities')}
@@ -208,7 +204,6 @@ const AppNavbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
             )}
           </div>
           
-          {/* Management Dropdown */}
           <div className="relative">
             <button 
               onClick={() => handleDropdownToggle('management')}
