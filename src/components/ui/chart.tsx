@@ -26,7 +26,7 @@ export interface ChartProps {
   config?: Record<string, unknown>;
 }
 
-export const Chart = ({ className, children }: ChartProps) => {
+export const Chart = ({ className, children, config }: ChartProps) => {
   return (
     <div className={cn('w-full h-full', className)}>
       <ResponsiveContainer width="100%" height="100%">
@@ -40,7 +40,7 @@ export const ChartContainer = ({ children, className }: { children: React.ReactE
   return <div className={cn('w-full h-64 md:h-80', className)}>{children}</div>
 }
 
-// Add missing chart components
+// Enhanced tooltip component to show better formatted information
 export const ChartTooltip = ({ 
   active, 
   payload, 

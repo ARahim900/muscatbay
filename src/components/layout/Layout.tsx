@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import TopNavbar from './TopNavbar';
+import AppNavbar from './AppNavbar';
 import MobileMenu from './MobileMenu';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useIsMobile, useTouchDevice } from '@/hooks/use-mobile';
@@ -94,10 +94,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   return (
     <div className="min-h-screen bg-background text-foreground overflow-hidden transition-colors duration-150">
       {/* Top Navigation */}
-      <TopNavbar 
-        toggleMobileMenu={toggleMobileMenu} 
-        openEmbeddedApp={openEmbeddedApp}
-      />
+      <AppNavbar toggleMobileMenu={toggleMobileMenu} />
       
       {/* Mobile Menu */}
       <AnimatePresence>

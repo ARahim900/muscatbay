@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Bell, Settings, User, Menu, X, LogOut } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -55,7 +56,7 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
           {searchOpen ? (
             <div className="fixed inset-0 pt-16 pb-4 px-4 bg-background/95 backdrop-blur-sm z-50 flex items-start justify-center md:relative md:inset-auto md:pt-0 md:pb-0 md:bg-transparent md:backdrop-blur-none md:z-auto md:block">
               <div className="w-full max-w-md relative md:w-auto">
-                <CommandMenu />
+                <CommandMenu open={searchOpen} onOpenChange={setIsSearchOpen} />
                 <button 
                   onClick={() => setSearchOpen(false)} 
                   className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full hover:bg-accent transition-colors touch-manipulation min-h-[44px] min-w-[44px] flex items-center justify-center"
@@ -75,7 +76,7 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
                 <User className="w-5 h-5 text-primary/80" />
               </button>
               <div className="relative hidden md:block">
-                <CommandMenu />
+                <CommandMenu open={searchOpen} onOpenChange={setIsSearchOpen} />
               </div>
             </>
           )}

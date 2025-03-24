@@ -1,11 +1,11 @@
+
 import React, { useState, useEffect } from 'react';
 import Layout from '@/components/layout/Layout';
 import { useTheme } from '@/components/theme/theme-provider';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
-  ChartContainer, 
-  ChartTooltip
+  ChartContainer
 } from '@/components/ui/chart';
 import {
   AreaChart, 
@@ -30,7 +30,6 @@ import {
   TrendingUp, 
   TrendingDown, 
   CalendarRange,
-  Info,
   Building,
   BarChart as BarChartIcon,
   PieChart as PieChartIcon,
@@ -49,6 +48,8 @@ import { Button } from '@/components/ui/button';
 import { Link, useNavigate } from 'react-router-dom';
 import BreadcrumbNavigation from '@/components/ui/breadcrumb-navigation';
 import { toast } from 'sonner';
+import EnhancedPieChart from '@/components/ui/enhanced-pie-chart';
+import ResponsiveBarChart from '@/components/ui/responsive-chart';
 
 const ELECTRICITY_RATE = 0.025; // OMR per kWh
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#FF6B6B'];
@@ -175,6 +176,13 @@ const ElectricitySystem = () => {
       cost: consumption * ELECTRICITY_RATE
     }))
     .sort((a, b) => b.consumption - a.consumption);
+
+  // Format for Enhanced Pie Chart
+  const pieChartData = consumptionByTypeArray.map((item, index) => ({
+    name: item.type,
+    value: item.consumption,
+    color: COLORS[index % COLORS.length]
+  }));
 
   const getTopConsumers = () => {
     const monthToUse = selectedMonth === 'all' ? 'Feb-25' : selectedMonth;
@@ -337,80 +345,82 @@ const ElectricitySystem = () => {
                   <CardTitle className="text-base sm:text-lg md:text-xl font-medium">Monthly Consumption Trend</CardTitle>
                 </CardHeader>
                 <CardContent className="pt-0">
-                  <ChartContainer>
-                    <AreaChart
-                      data={monthlyConsumption}
-                      margin={{ 
-                        top: 10, 
-                        right: isMobile ? 10 : 30, 
-                        left: isMobile ? 0 : 20, 
-                        bottom: isMobile ? 60 : 30 
-                      }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis 
-                        dataKey="month" 
-                        angle={-45} 
-                        textAnchor="end" 
-                        height={60} 
-                        tickMargin={20}
-                        tick={{ fontSize: isMobile ? 10 : 12 }}
-                      />
-                      <YAxis 
-                        yAxisId="left"
-                        tickFormatter={(value) => `${(value/1000).toFixed(0)}k`}
-                        label={{ 
-                          value: 'kWh', 
-                          angle: -90, 
-                          position: 'insideLeft', 
-                          offset: -5,
-                          style: { fontSize: isMobile ? 10 : 12 }
+                  <div className="w-full h-64 md:h-80">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart
+                        data={monthlyConsumption}
+                        margin={{ 
+                          top: 10, 
+                          right: isMobile ? 10 : 30, 
+                          left: isMobile ? 0 : 20, 
+                          bottom: isMobile ? 60 : 30 
                         }}
-                        tick={{ fontSize: isMobile ? 10 : 12 }}
-                      />
-                      <YAxis 
-                        yAxisId="right" 
-                        orientation="right"
-                        tickFormatter={(value) => `${(value/1000).toFixed(0)}k`}
-                        label={{ 
-                          value: 'OMR', 
-                          angle: 90, 
-                          position: 'insideRight', 
-                          offset: 5,
-                          style: { fontSize: isMobile ? 10 : 12 }
-                        }}
-                        tick={{ fontSize: isMobile ? 10 : 12 }}
-                      />
-                      <Tooltip 
-                        content={({ active, payload, label }) => {
-                          if (active && payload && payload.length) {
-                            return (
-                              <div className="bg-white p-3 border border-gray-200 shadow-md rounded-md">
-                                <p className="font-medium">{label}</p>
-                                <p className="text-sm">
-                                  Consumption: <span className="font-medium">{payload[0].value?.toLocaleString()} kWh</span>
-                                </p>
-                                <p className="text-sm">
-                                  Cost: <span className="font-medium">{(Number(payload[0].value) * ELECTRICITY_RATE).toLocaleString()} OMR</span>
-                                </p>
-                              </div>
-                            );
-                          }
-                          return null;
-                        }}
-                      />
-                      <Legend wrapperStyle={{ fontSize: isMobile ? 10 : 12 }} />
-                      <Area
-                        type="monotone"
-                        dataKey="consumption"
-                        yAxisId="left"
-                        stroke="#8884d8"
-                        fill="#8884d8"
-                        fillOpacity={0.3}
-                        name="Consumption (kWh)"
-                      />
-                    </AreaChart>
-                  </ChartContainer>
+                      >
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis 
+                          dataKey="month" 
+                          angle={-45} 
+                          textAnchor="end" 
+                          height={60} 
+                          tickMargin={20}
+                          tick={{ fontSize: isMobile ? 10 : 12 }}
+                        />
+                        <YAxis 
+                          yAxisId="left"
+                          tickFormatter={(value) => `${(value/1000).toFixed(0)}k`}
+                          label={{ 
+                            value: 'kWh', 
+                            angle: -90, 
+                            position: 'insideLeft', 
+                            offset: -5,
+                            style: { fontSize: isMobile ? 10 : 12 }
+                          }}
+                          tick={{ fontSize: isMobile ? 10 : 12 }}
+                        />
+                        <YAxis 
+                          yAxisId="right" 
+                          orientation="right"
+                          tickFormatter={(value) => `${(value/1000).toFixed(0)}k`}
+                          label={{ 
+                            value: 'OMR', 
+                            angle: 90, 
+                            position: 'insideRight', 
+                            offset: 5,
+                            style: { fontSize: isMobile ? 10 : 12 }
+                          }}
+                          tick={{ fontSize: isMobile ? 10 : 12 }}
+                        />
+                        <Tooltip 
+                          content={({ active, payload, label }) => {
+                            if (active && payload && payload.length) {
+                              return (
+                                <div className="bg-white dark:bg-gray-800 p-3 border border-gray-200 dark:border-gray-700 shadow-md rounded-md">
+                                  <p className="font-medium">{label}</p>
+                                  <p className="text-sm">
+                                    Consumption: <span className="font-medium">{payload[0].value?.toLocaleString()} kWh</span>
+                                  </p>
+                                  <p className="text-sm">
+                                    Cost: <span className="font-medium">{(Number(payload[0].value) * ELECTRICITY_RATE).toLocaleString()} OMR</span>
+                                  </p>
+                                </div>
+                              );
+                            }
+                            return null;
+                          }}
+                        />
+                        <Legend wrapperStyle={{ fontSize: isMobile ? 10 : 12 }} />
+                        <Area
+                          type="monotone"
+                          dataKey="consumption"
+                          yAxisId="left"
+                          stroke="#8884d8"
+                          fill="#8884d8"
+                          fillOpacity={0.3}
+                          name="Consumption (kWh)"
+                        />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
                 </CardContent>
               </Card>
               
@@ -421,53 +431,26 @@ const ElectricitySystem = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="pt-0">
-                  <ChartContainer>
-                    <PieChart>
-                      <Pie
-                        data={consumptionByTypeArray}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        outerRadius={isMobile ? 60 : 80}
-                        fill="#8884d8"
-                        dataKey="consumption"
-                        nameKey="type"
-                        label={({ type, percent }) => 
-                          `${type}: ${(percent * 100).toFixed(1)}%`
-                        }
-                      >
-                        {consumptionByTypeArray.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip
-                        formatter={(value, name, props) => {
-                          if (name === "consumption") {
-                            return [`${Number(value).toLocaleString()} kWh`, "Consumption"];
-                          }
-                          return [value, name];
-                        }}
-                        content={({ active, payload }) => {
-                          if (active && payload && payload.length) {
-                            const data = payload[0].payload;
-                            return (
-                              <div className="bg-white p-3 border border-gray-200 shadow-md rounded-md">
-                                <p className="font-medium">{data.type}</p>
-                                <p className="text-sm">
-                                  Consumption: <span className="font-medium">{data.consumption.toLocaleString()} kWh</span>
-                                </p>
-                                <p className="text-sm">
-                                  Cost: <span className="font-medium">{data.cost.toLocaleString()} OMR</span>
-                                </p>
-                              </div>
-                            );
-                          }
-                          return null;
-                        }}
-                      />
-                      <Legend wrapperStyle={{ fontSize: isMobile ? 10 : 12 }} />
-                    </PieChart>
-                  </ChartContainer>
+                  <div className="w-full h-64 md:h-80">
+                    <EnhancedPieChart
+                      data={pieChartData}
+                      colors={COLORS}
+                      outerRadius={isMobile ? 60 : 80}
+                      valueFormatter={(value) => `${value.toLocaleString()} kWh`}
+                      labelFormatter={({ name, percent }) => `${name}: ${(percent * 100).toFixed(1)}%`}
+                      tooltipFormatter={(value, name) => (
+                        <div className="bg-white dark:bg-gray-800 p-3 border border-gray-200 dark:border-gray-700 shadow-md rounded-md">
+                          <p className="font-medium">{name}</p>
+                          <p className="text-sm">
+                            Consumption: <span className="font-medium">{value.toLocaleString()} kWh</span>
+                          </p>
+                          <p className="text-sm">
+                            Cost: <span className="font-medium">{(value * ELECTRICITY_RATE).toLocaleString()} OMR</span>
+                          </p>
+                        </div>
+                      )}
+                    />
+                  </div>
                 </CardContent>
               </Card>
             </div>
@@ -480,62 +463,34 @@ const ElectricitySystem = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="pt-0">
-                  <ChartContainer>
-                    <BarChart
-                      data={consumptionByTypeArray}
-                      margin={{ top: 20, right: isMobile ? 10 : 30, left: isMobile ? 80 : 100, bottom: isMobile ? 10 : 20 }}
-                      layout="vertical"
-                    >
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis
-                        type="number"
-                        tickFormatter={(value) => `${(value/1000).toFixed(0)}k`}
-                        tick={{ fontSize: isMobile ? 10 : 12 }}
-                      />
-                      <YAxis 
-                        type="category" 
-                        dataKey="type" 
-                        width={isMobile ? 70 : 100}
-                        tick={{ fontSize: isMobile ? 10 : 12 }}
-                      />
-                      <Tooltip
-                        formatter={(value, name, props) => {
-                          if (name === "cost") {
-                            return [`${Number(value).toLocaleString()} OMR`, "Cost"];
-                          }
-                          return [value, name];
-                        }}
-                        content={({ active, payload }) => {
-                          if (active && payload && payload.length) {
-                            const data = payload[0].payload;
-                            return (
-                              <div className="bg-white p-3 border border-gray-200 shadow-md rounded-md">
-                                <p className="font-medium">{data.type}</p>
-                                <p className="text-sm">
-                                  Cost: <span className="font-medium">{data.cost.toLocaleString()} OMR</span>
-                                </p>
-                                <p className="text-sm">
-                                  Consumption: <span className="font-medium">{data.consumption.toLocaleString()} kWh</span>
-                                </p>
-                              </div>
-                            );
-                          }
-                          return null;
-                        }}
-                      />
-                      <Legend wrapperStyle={{ fontSize: isMobile ? 10 : 12 }} />
-                      <Bar
-                        dataKey="cost"
-                        fill="#0088FE"
-                        name="Cost (OMR)"
-                        radius={[0, 4, 4, 0]}
-                      >
-                        {consumptionByTypeArray.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                  </ChartContainer>
+                  <ResponsiveBarChart
+                    data={consumptionByTypeArray}
+                    xKey="type"
+                    yKey="cost"
+                    horizontal={true}
+                    barColor="#0088FE"
+                    yLabel="Cost (OMR)"
+                    height={300}
+                    barRadius={[0, 4, 4, 0]}
+                    yFormatter={(value) => `${(value/1000).toFixed(0)}k`}
+                    tooltip={({ active, payload }) => {
+                      if (active && payload && payload.length) {
+                        const data = payload[0].payload;
+                        return (
+                          <div className="bg-white dark:bg-gray-800 p-3 border border-gray-200 dark:border-gray-700 shadow-md rounded-md">
+                            <p className="font-medium">{data.type}</p>
+                            <p className="text-sm">
+                              Cost: <span className="font-medium">{data.cost.toLocaleString()} OMR</span>
+                            </p>
+                            <p className="text-sm">
+                              Consumption: <span className="font-medium">{data.consumption.toLocaleString()} kWh</span>
+                            </p>
+                          </div>
+                        );
+                      }
+                      return null;
+                    }}
+                  />
                 </CardContent>
               </Card>
               
@@ -546,53 +501,35 @@ const ElectricitySystem = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="pt-0">
-                  <ChartContainer>
-                    <BarChart
-                      data={topConsumers}
-                      margin={{ top: 20, right: isMobile ? 10 : 30, left: isMobile ? 80 : 120, bottom: isMobile ? 10 : 20 }}
-                      layout="vertical"
-                    >
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis 
-                        type="number"
-                        tickFormatter={(value) => `${(value/1000).toFixed(0)}k`}
-                        tick={{ fontSize: isMobile ? 10 : 12 }}
-                      />
-                      <YAxis 
-                        type="category" 
-                        dataKey="name" 
-                        width={isMobile ? 80 : 120}
-                        tick={{ fontSize: isMobile ? 9 : 11 }}
-                      />
-                      <Tooltip
-                        content={({ active, payload }) => {
-                          if (active && payload && payload.length) {
-                            const data = payload[0].payload;
-                            return (
-                              <div className="bg-white p-3 border border-gray-200 shadow-md rounded-md">
-                                <p className="font-medium">{data.name}</p>
-                                <p className="text-sm text-gray-500">{data.type}</p>
-                                <p className="text-sm mt-1">
-                                  Consumption: <span className="font-medium">{data.consumption.toLocaleString()} kWh</span>
-                                </p>
-                                <p className="text-sm">
-                                  Cost: <span className="font-medium">{data.cost.toLocaleString()} OMR</span>
-                                </p>
-                              </div>
-                            );
-                          }
-                          return null;
-                        }}
-                      />
-                      <Legend wrapperStyle={{ fontSize: isMobile ? 10 : 12 }} />
-                      <Bar
-                        dataKey="consumption"
-                        fill="#00C49F"
-                        name="Consumption (kWh)"
-                        radius={[0, 4, 4, 0]}
-                      />
-                    </BarChart>
-                  </ChartContainer>
+                  <ResponsiveBarChart
+                    data={topConsumers}
+                    xKey="name"
+                    yKey="consumption"
+                    horizontal={true}
+                    barColor="#00C49F"
+                    yLabel="Consumption (kWh)"
+                    height={300}
+                    barRadius={[0, 4, 4, 0]}
+                    yFormatter={(value) => `${(value/1000).toFixed(0)}k`}
+                    tooltip={({ active, payload }) => {
+                      if (active && payload && payload.length) {
+                        const data = payload[0].payload;
+                        return (
+                          <div className="bg-white dark:bg-gray-800 p-3 border border-gray-200 dark:border-gray-700 shadow-md rounded-md">
+                            <p className="font-medium">{data.name}</p>
+                            <p className="text-sm text-gray-500">{data.type}</p>
+                            <p className="text-sm mt-1">
+                              Consumption: <span className="font-medium">{data.consumption.toLocaleString()} kWh</span>
+                            </p>
+                            <p className="text-sm">
+                              Cost: <span className="font-medium">{data.cost.toLocaleString()} OMR</span>
+                            </p>
+                          </div>
+                        );
+                      }
+                      return null;
+                    }}
+                  />
                 </CardContent>
               </Card>
             </div>
