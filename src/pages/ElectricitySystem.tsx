@@ -35,7 +35,8 @@ import {
   Building,
   BarChart as BarChartIcon,
   PieChart as PieChartIcon,
-  AreaChart as AreaChartIcon
+  AreaChart as AreaChartIcon,
+  ChevronLeft
 } from 'lucide-react';
 import { electricityData } from '@/data/electricityData';
 import { ElectricitySummary } from '@/components/electricity/ElectricitySummary';
@@ -45,6 +46,10 @@ import { ElectricityComparison } from '@/components/electricity/ElectricityCompa
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import StatCard from '@/components/dashboard/StatCard';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { Button } from '@/components/ui/button';
+import { Link, useNavigate } from 'react-router-dom';
+import BreadcrumbNavigation from '@/components/ui/breadcrumb-navigation';
+import { toast } from 'sonner';
 
 const ELECTRICITY_RATE = 0.025; // OMR per kWh
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#FF6B6B'];
@@ -54,6 +59,7 @@ const ElectricitySystem = () => {
   const [selectedMonth, setSelectedMonth] = useState<string>("all");
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
   
   // Simulate loading
   useEffect(() => {
@@ -63,6 +69,11 @@ const ElectricitySystem = () => {
     
     return () => clearTimeout(timer);
   }, []);
+
+  const handleBackToDashboard = () => {
+    navigate('/');
+    toast.success("Returned to dashboard");
+  };
 
   // Get all available months from the data
   const allMonths = [
@@ -218,8 +229,28 @@ const ElectricitySystem = () => {
     );
   }
 
+  const breadcrumbItems = [
+    { label: 'Utilities', path: '/' },
+    { label: 'Electricity System', path: '/electricity-system', icon: <Zap className="h-3.5 w-3.5" /> }
+  ];
+
   return (
     <div className="container px-2 sm:px-4 py-4 sm:py-8 mx-auto max-w-7xl">
+      {/* Back & Breadcrumb navigation */}
+      <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between">
+        <BreadcrumbNavigation items={breadcrumbItems} className="mb-2 sm:mb-0" />
+        
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleBackToDashboard}
+          className="self-start"
+        >
+          <ChevronLeft className="mr-1 h-4 w-4" />
+          Back to Dashboard
+        </Button>
+      </div>
+      
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4 sm:mb-8">
         <div className="flex items-center mb-4 md:mb-0">
