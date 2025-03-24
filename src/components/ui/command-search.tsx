@@ -106,5 +106,5 @@ export function CommandMenu({ open, onOpenChange }: { open?: boolean; onOpenChan
   );
 }
 
-// This is needed for compatibility with other components
-export { CommandMenu };
+// Also export as CommandSearch for compatibility with other components
+export { CommandMenu as CommandSearch };

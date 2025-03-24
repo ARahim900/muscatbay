@@ -22,7 +22,7 @@ import { cn } from '@/lib/utils'
 
 export interface ChartProps {
   className?: string;
-  children: React.ReactElement;
+  children: React.ReactElement; // This ensures children is a React element, not just any ReactNode
   config?: Record<string, unknown>;
 }
 
@@ -36,7 +36,7 @@ export const Chart = ({ className, children }: ChartProps) => {
   )
 }
 
-export const ChartContainer = ({ children, className }: ChartProps) => {
+export const ChartContainer = ({ children, className }: { children: React.ReactElement; className?: string }) => {
   return <div className={cn('w-full h-64 md:h-80', className)}>{children}</div>
 }
 
