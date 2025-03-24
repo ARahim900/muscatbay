@@ -1,4 +1,3 @@
-
 import * as React from "react";
 import { Bar, BarChart, CartesianGrid, Cell, Label, Legend, Line, LineChart, Pie, PieChart, ResponsiveContainer, Sector, Tooltip, XAxis, YAxis } from "recharts";
 import { useTheme } from "@/components/theme/theme-provider";
@@ -23,6 +22,65 @@ export function Chart({
         <p className="text-xs text-muted-foreground">{description}</p>
       )}
       <div className="h-[200px]">{children}</div>
+    </div>
+  );
+}
+
+// Add ChartContainer component that was missing but is being imported by other files
+export function ChartContainer({
+  children,
+  className,
+  config = {},
+  ...props
+}: {
+  children: React.ReactNode;
+  className?: string;
+  config?: Record<string, Record<string, unknown>>;
+} & React.HTMLAttributes<HTMLDivElement>) {
+  return (
+    <div className={cn("h-80 w-full", className)} {...props}>
+      <ResponsiveContainer width="100%" height="100%">
+        {children}
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
+// Add missing ChartTooltip component
+export function ChartTooltip({
+  children,
+  ...props
+}: React.PropsWithChildren<{ className?: string }>) {
+  return <div className="rounded-lg border bg-background p-2 shadow-md" {...props}>{children}</div>;
+}
+
+// Add missing ChartTooltipContent
+export function ChartTooltipContent({
+  label,
+  payload,
+  formatter,
+}: {
+  label?: string;
+  payload?: Array<{ value: number; name: string; }>;
+  formatter?: (value: number, name: string) => [string, string];
+}) {
+  if (!payload || payload.length === 0) return null;
+  
+  return (
+    <div className="space-y-1.5">
+      {label && <p className="text-xs font-medium">{label}</p>}
+      {payload.map((item, index) => (
+        <div key={`tooltip-item-${index}`} className="flex items-center justify-between gap-2 text-xs">
+          <span className="font-medium">{item.name}:</span>
+          <span>{
+            formatter 
+              ? formatter(Number(item.value), item.name)[0] 
+              : typeof item.value === 'number' 
+                ? item.value.toLocaleString() 
+                : item.value
+          }</span>
+        </div>
+      ))}
     </div>
   );
 }
@@ -117,9 +175,9 @@ export function ChartBar({
                         </div>
                         <div className="font-medium">
                           {formatTooltip
-                            ? formatTooltip(item.value, item.name)
+                            ? formatTooltip(Number(item.value), item.name)
                             : formatValue
-                            ? formatValue(item.value)
+                            ? formatValue(Number(item.value))
                             : item.value}
                         </div>
                       </div>
@@ -197,7 +255,7 @@ export function ChartBar({
                     dominantBaseline="middle"
                     className="text-xs"
                   >
-                    {formatValue ? formatValue(value) : value}
+                    {formatValue ? formatValue(Number(value)) : value}
                   </text>
                 );
               }}
