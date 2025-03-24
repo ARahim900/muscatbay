@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { ChartContainer } from '@/components/ui/chart';
@@ -102,26 +101,6 @@ export const ElectricityTrends: React.FC<ElectricityTrendsProps> = ({
     }
   ];
   
-  // Create a config object for all facility types
-  const chartConfig = {
-    month: {}
-  };
-
-  // Add all facility types to the config
-  facilityTypes.forEach(type => {
-    chartConfig[type] = {};
-  });
-  
-  // Create config for the line chart
-  const lineChartConfig = {
-    month: {}
-  };
-  
-  // Add all consumer names to the config
-  topConsumersTrend.forEach(consumer => {
-    lineChartConfig[consumer.name] = {};
-  });
-  
   return (
     <div className="space-y-6">
       {/* Monthly Consumption by Facility Type */}
@@ -130,10 +109,7 @@ export const ElectricityTrends: React.FC<ElectricityTrendsProps> = ({
           <CardTitle className="text-lg font-medium">Monthly Consumption by Facility Type</CardTitle>
         </CardHeader>
         <CardContent className="pt-0">
-          <ChartContainer
-            className="h-96"
-            config={chartConfig}
-          >
+          <ChartContainer className="h-96">
             <BarChart
               data={typeConsumptionData}
               margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
@@ -168,10 +144,7 @@ export const ElectricityTrends: React.FC<ElectricityTrendsProps> = ({
           <CardTitle className="text-lg font-medium">Monthly Variation for Top Consumers</CardTitle>
         </CardHeader>
         <CardContent className="pt-0">
-          <ChartContainer
-            className="h-96"
-            config={lineChartConfig}
-          >
+          <ChartContainer className="h-96">
             <LineChart
               data={monthlyVariationData}
               margin={{ top: 20, right: 30, left: 20, bottom: 5 }}

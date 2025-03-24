@@ -23,6 +23,7 @@ import { cn } from '@/lib/utils'
 export interface ChartProps {
   className?: string
   children: ReactNode
+  config?: Record<string, unknown>
 }
 
 export const Chart = ({ className, children }: ChartProps) => {
@@ -35,7 +36,7 @@ export const Chart = ({ className, children }: ChartProps) => {
   )
 }
 
-export const ChartContainer = ({ children, className }: ChartProps) => {
+export const ChartContainer = ({ children, className, config }: ChartProps) => {
   return <div className={cn('w-full h-64 md:h-80', className)}>{children}</div>
 }
 

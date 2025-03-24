@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '@/components/theme/theme-provider';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -61,7 +60,6 @@ const ElectricitySystem = () => {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   
-  // Simulate loading
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoading(false);
@@ -75,7 +73,6 @@ const ElectricitySystem = () => {
     toast.success("Returned to dashboard");
   };
 
-  // Get all available months from the data
   const allMonths = [
     { value: 'all', label: 'All Months' },
     { value: 'Apr-24', label: 'April 2024' },
@@ -91,10 +88,8 @@ const ElectricitySystem = () => {
     { value: 'Feb-25', label: 'February 2025' }
   ];
 
-  // Calculate total consumption for the selected month or for Jan-Feb 2025 as default
   const getConsumptionData = () => {
     if (selectedMonth === 'all') {
-      // Calculate 2025 data as default
       const janConsumption = electricityData.reduce((total, facility) => {
         return total + (facility.consumption['Jan-25'] || 0);
       }, 0);
@@ -113,7 +108,6 @@ const ElectricitySystem = () => {
         momChange: janConsumption > 0 ? ((febConsumption - janConsumption) / janConsumption) * 100 : 0
       };
     } else {
-      // Get month index to determine previous month
       const monthIndex = allMonths.findIndex(m => m.value === selectedMonth);
       const previousMonthIndex = monthIndex > 1 ? monthIndex - 1 : -1;
       const previousMonth = previousMonthIndex > 0 ? allMonths[previousMonthIndex].value : null;
@@ -143,10 +137,8 @@ const ElectricitySystem = () => {
 
   const consumptionData = getConsumptionData();
 
-  // Group consumption by facility type for the selected month
   const getConsumptionByType = () => {
     if (selectedMonth === 'all') {
-      // For 'all', we'll use February 2025 data as reference
       return electricityData.reduce((acc, facility) => {
         const type = facility.type;
         const consumption = facility.consumption['Feb-25'] || 0;
@@ -175,7 +167,6 @@ const ElectricitySystem = () => {
 
   const consumptionByType = getConsumptionByType();
 
-  // Convert to array for charts
   const consumptionByTypeArray = Object.entries(consumptionByType)
     .filter(([type]) => type && type !== '')
     .map(([type, consumption]) => ({
@@ -185,7 +176,6 @@ const ElectricitySystem = () => {
     }))
     .sort((a, b) => b.consumption - a.consumption);
 
-  // Get top consumers for the selected month
   const getTopConsumers = () => {
     const monthToUse = selectedMonth === 'all' ? 'Feb-25' : selectedMonth;
     
@@ -203,7 +193,6 @@ const ElectricitySystem = () => {
 
   const topConsumers = getTopConsumers();
 
-  // Monthly consumption trend (Apr 2024 - Feb 2025)
   const months = ['Apr-24', 'May-24', 'Jun-24', 'Jul-24', 'Aug-24', 'Sep-24', 'Oct-24', 'Nov-24', 'Dec-24', 'Jan-25', 'Feb-25'];
   
   const monthlyConsumption = months.map(month => {
@@ -236,7 +225,6 @@ const ElectricitySystem = () => {
 
   return (
     <div className="container px-2 sm:px-4 py-4 sm:py-8 mx-auto max-w-7xl">
-      {/* Back & Breadcrumb navigation */}
       <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <BreadcrumbNavigation items={breadcrumbItems} className="mb-2 sm:mb-0" />
         
@@ -251,7 +239,6 @@ const ElectricitySystem = () => {
         </Button>
       </div>
       
-      {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4 sm:mb-8">
         <div className="flex items-center mb-4 md:mb-0">
           <Zap className="w-6 h-6 sm:w-8 sm:h-8 mr-2 sm:mr-3 text-muscat-primary" />
@@ -283,7 +270,6 @@ const ElectricitySystem = () => {
         </div>
       </div>
       
-      {/* Tabs Navigation */}
       <Tabs defaultValue="overview" className="w-full">
         <TabsList className="mb-4 sm:mb-6 bg-gray-100 dark:bg-gray-800 overflow-x-auto whitespace-nowrap max-w-full p-1 sm:p-0 flex flex-nowrap">
           <TabsTrigger value="overview" className="text-xs sm:text-sm data-[state=active]:bg-muscat-primary data-[state=active]:text-white">
@@ -304,9 +290,7 @@ const ElectricitySystem = () => {
           </TabsTrigger>
         </TabsList>
         
-        {/* Overview Tab Content */}
         <TabsContent value="overview" className="mt-0">
-          {/* Metric Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-6">
             <StatCard
               title={`Total ${consumptionData.periodLabel} Consumption`}
@@ -344,22 +328,13 @@ const ElectricitySystem = () => {
             />
           </div>
           
-          {/* Charts Row 1 */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
-            {/* Monthly Consumption Trend */}
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-base sm:text-lg md:text-xl font-medium">Monthly Consumption Trend</CardTitle>
               </CardHeader>
               <CardContent className="pt-0">
-                <ChartContainer
-                  className="h-60 sm:h-80"
-                  config={{
-                    consumption: {},
-                    cost: {},
-                    month: {}
-                  }}
-                >
+                <ChartContainer className="h-60 sm:h-80">
                   <AreaChart
                     data={monthlyConsumption}
                     margin={{ 
@@ -436,7 +411,6 @@ const ElectricitySystem = () => {
               </CardContent>
             </Card>
             
-            {/* Consumption by Facility Type */}
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-base sm:text-lg md:text-xl font-medium">
@@ -444,14 +418,7 @@ const ElectricitySystem = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent className="pt-0">
-                <ChartContainer
-                  className="h-60 sm:h-80"
-                  config={{
-                    type: {},
-                    consumption: {},
-                    cost: {}
-                  }}
-                >
+                <ChartContainer className="h-60 sm:h-80">
                   <PieChart>
                     <Pie
                       data={consumptionByTypeArray}
@@ -502,9 +469,7 @@ const ElectricitySystem = () => {
             </Card>
           </div>
           
-          {/* Charts Row 2 */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
-            {/* Cost Breakdown */}
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-base sm:text-lg md:text-xl font-medium">
@@ -512,13 +477,7 @@ const ElectricitySystem = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent className="pt-0">
-                <ChartContainer
-                  className="h-60 sm:h-80"
-                  config={{
-                    type: {},
-                    cost: {}
-                  }}
-                >
+                <ChartContainer className="h-60 sm:h-80">
                   <BarChart
                     data={consumptionByTypeArray}
                     margin={{ top: 20, right: isMobile ? 10 : 30, left: isMobile ? 80 : 100, bottom: isMobile ? 10 : 20 }}
@@ -577,7 +536,6 @@ const ElectricitySystem = () => {
               </CardContent>
             </Card>
             
-            {/* Top Consumers */}
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-base sm:text-lg md:text-xl font-medium">
@@ -585,13 +543,7 @@ const ElectricitySystem = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent className="pt-0">
-                <ChartContainer
-                  className="h-60 sm:h-80"
-                  config={{
-                    name: {},
-                    consumption: {}
-                  }}
-                >
+                <ChartContainer className="h-60 sm:h-80">
                   <BarChart
                     data={topConsumers}
                     margin={{ top: 20, right: isMobile ? 10 : 30, left: isMobile ? 80 : 120, bottom: isMobile ? 10 : 20 }}
@@ -643,7 +595,6 @@ const ElectricitySystem = () => {
           </div>
         </TabsContent>
         
-        {/* Facilities Tab Content */}
         <TabsContent value="facilities">
           <ElectricityFacilitiesTable 
             electricityData={electricityData} 
@@ -651,7 +602,6 @@ const ElectricitySystem = () => {
           />
         </TabsContent>
         
-        {/* Trends Tab Content */}
         <TabsContent value="trends">
           <ElectricityTrends 
             electricityData={electricityData} 
@@ -659,7 +609,6 @@ const ElectricitySystem = () => {
           />
         </TabsContent>
         
-        {/* Comparison Tab Content */}
         <TabsContent value="comparison">
           <ElectricityComparison 
             electricityData={electricityData} 
@@ -672,3 +621,4 @@ const ElectricitySystem = () => {
 };
 
 export default ElectricitySystem;
+

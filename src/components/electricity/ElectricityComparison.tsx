@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { ChartContainer } from '@/components/ui/chart';
@@ -102,13 +101,7 @@ export const ElectricityComparison: React.FC<ElectricityComparisonProps> = ({
           <CardTitle className="text-lg font-medium">Month-over-Month Change by Facility Type</CardTitle>
         </CardHeader>
         <CardContent className="pt-0">
-          <ChartContainer 
-            className="h-96"
-            config={{
-              changePercent: {},
-              type: {}
-            }}
-          >
+          <ChartContainer className="h-96">
             <BarChart
               data={monthOverMonthChanges}
               margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
@@ -176,14 +169,7 @@ export const ElectricityComparison: React.FC<ElectricityComparisonProps> = ({
             <CardTitle className="text-lg font-medium">January 2025 Distribution</CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
-            <ChartContainer
-              className="h-80"
-              config={{
-                type: {},
-                consumption: {},
-                cost: {}
-              }}
-            >
+            <ChartContainer className="h-80">
               <PieChart>
                 <Pie
                   data={typeConsumptionJan}
@@ -243,14 +229,7 @@ export const ElectricityComparison: React.FC<ElectricityComparisonProps> = ({
             <CardTitle className="text-lg font-medium">February 2025 Distribution</CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
-            <ChartContainer
-              className="h-80"
-              config={{
-                type: {},
-                consumption: {},
-                cost: {}
-              }}
-            >
+            <ChartContainer className="h-80">
               <PieChart>
                 <Pie
                   data={typeConsumptionFeb}
