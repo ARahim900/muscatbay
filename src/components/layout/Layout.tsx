@@ -1,12 +1,13 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import Navbar from './Navbar';
-import Sidebar from './sidebar';
-import { ArrowLeft, X, Menu, Home } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import TopNavbar from './TopNavbar';
+import MobileMenu from './MobileMenu';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useIsMobile, useTouchDevice } from '@/hooks/use-mobile';
 import { toast } from 'sonner';
+import { ArrowLeft, X, Menu, Home } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface EmbeddedAppState {
   url: string;
@@ -19,8 +20,7 @@ interface LayoutProps {
 }
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
-  const [collapsed, setCollapsed] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [embeddedApp, setEmbeddedApp] = useState<EmbeddedAppState>({
     url: '',
     title: '',
@@ -30,32 +30,17 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const isTouch = useTouchDevice();
   const [iframeLoading, setIframeLoading] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  const sidebarRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Auto-collapse sidebar on route change
+  // Close mobile menu on route change
   useEffect(() => {
-    if (!isMobile) {
-      setCollapsed(true);
-    }
-    if (isMobile) {
-      setMobileOpen(false);
-    }
-  }, [location.pathname, isMobile]);
+    setMobileMenuOpen(false);
+  }, [location.pathname]);
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (mobileOpen && sidebarRef.current && !sidebarRef.current.contains(event.target as Node)) {
-        setMobileOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [mobileOpen]);
+  const toggleMobileMenu = () => {
+    setMobileMenuOpen(!mobileMenuOpen);
+  };
 
   const openEmbeddedApp = (url: string, title: string) => {
     setIframeLoading(true);
@@ -66,7 +51,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     });
     
     if (isMobile) {
-      setMobileOpen(false);
+      setMobileMenuOpen(false);
     }
   };
 
@@ -76,7 +61,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       isOpen: false
     });
     
-    // Show toast notification when returning to dashboard
     toast.success("Returned to dashboard");
   };
 
@@ -89,49 +73,35 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     setIframeLoading(false);
   };
 
-  const toggleMobileSidebar = () => {
-    setMobileOpen(!mobileOpen);
-  };
-
   const touchButtonClasses = isTouch ? "touch-manipulation min-h-[44px] min-w-[44px]" : "";
 
   return (
     <div className="min-h-screen bg-background text-foreground overflow-hidden transition-colors duration-150">
-      <Navbar toggleSidebar={toggleMobileSidebar} />
+      {/* Top Navigation */}
+      <TopNavbar 
+        toggleMobileMenu={toggleMobileMenu} 
+        openEmbeddedApp={openEmbeddedApp}
+      />
       
-      <div ref={sidebarRef} className={`${isMobile ? 'fixed z-50' : ''}`}>
-        <Sidebar 
-          collapsed={collapsed} 
-          setCollapsed={setCollapsed} 
-          openEmbeddedApp={openEmbeddedApp}
-          mobileOpen={mobileOpen}
-          isMobile={isMobile}
-        />
-      </div>
+      {/* Mobile Menu */}
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <motion.div
+            initial={{ x: "-100%" }}
+            animate={{ x: 0 }}
+            exit={{ x: "-100%" }}
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+          >
+            <MobileMenu 
+              isOpen={mobileMenuOpen} 
+              onClose={() => setMobileMenuOpen(false)} 
+              openEmbeddedApp={openEmbeddedApp}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
       
-      {mobileOpen && isMobile && (
-        <div 
-          className="fixed inset-0 bg-black/30 dark:bg-black/50 backdrop-blur-sm z-40 animate-fade-in"
-          onClick={() => setMobileOpen(false)}
-        />
-      )}
-      
-      {isMobile && !mobileOpen && !embeddedApp.isOpen && (
-        <button
-          onClick={toggleMobileSidebar}
-          className={`fixed bottom-4 right-4 bg-primary text-primary-foreground p-3 rounded-full shadow-lg z-40 animate-scale-in ${touchButtonClasses} flex items-center justify-center`}
-          aria-label="Open menu"
-        >
-          <Menu className="h-6 w-6" />
-        </button>
-      )}
-      
-      <main 
-        className={`pt-16 min-h-screen transition-all duration-300 ${
-          (collapsed && !isMobile) ? 'pl-16 sm:pl-20' : 
-          !isMobile ? 'pl-16 sm:pl-64' : 'pl-0'
-        } w-full`}
-      >
+      <main className="pt-16 min-h-screen w-full max-w-[1800px] mx-auto">
         {embeddedApp.isOpen ? (
           <div className="relative w-full h-[calc(100vh-4rem)]">
             <div className="fixed top-16 left-0 right-0 z-40 flex items-center justify-between px-3 sm:px-4 py-2 sm:py-3 bg-card dark:bg-card/80 backdrop-blur-sm border-b shadow-sm border-border">
@@ -157,7 +127,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   Home
                 </Button>
                 <Button 
-                  onClick={toggleMobileSidebar}
+                  onClick={toggleMobileMenu}
                   variant="default"
                   size="sm"
                   className={`text-xs sm:text-sm whitespace-nowrap ${isTouch ? "min-h-[44px]" : ""}`}
@@ -194,8 +164,14 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             </div>
           </div>
         ) : (
-          <div className="px-2 sm:px-4 md:px-6 mx-auto w-full max-w-full">
-            {children}
+          <div className="px-2 sm:px-6 md:px-8 mx-auto w-full max-w-full">
+            <motion.div
+              initial={{ opacity: 0, y: 5 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              {children}
+            </motion.div>
           </div>
         )}
       </main>

@@ -24,7 +24,28 @@
     --border: 240 5.9% 90%;
     --input: 240 5.9% 90%;
     --ring: 318 15% 30%;
+    
+    /* Custom Colors */
+    --muscat-primary: 318 15% 30%;
+    --muscat-teal: 178 53% 61%;
+    --muscat-gold: 43 51% 69%;
+    --muscat-lavender: 267 19% 64%;
+    
+    /* System Colors */
+    --water: 195 100% 50%;
+    --electricity: 45 100% 60%;
+    --stp: 142 76% 45%;
+    --hvac: 25 100% 60%;
+    --contracts: 273 68% 59%;
+    --projects: 230 68% 59%;
+    
     --radius: 0.5rem;
+    
+    /* Chart Design Tokens */
+    --chart-grid: 240 5.9% 90%;
+    --chart-axis: 240 3.8% 46.1%;
+    --chart-tooltip-bg: 0 0% 100%;
+    --chart-tooltip-border: 240 5.9% 90%;
   }
 
   .dark {
@@ -47,6 +68,12 @@
     --border: 240 3.7% 15.9%;
     --input: 240 3.7% 15.9%;
     --ring: 318 54% 40%;
+    
+    /* Chart Design Tokens - Dark Mode */
+    --chart-grid: 240 3.7% 15.9%;
+    --chart-axis: 240 5% 64.9%;
+    --chart-tooltip-bg: 240 10% 13%;
+    --chart-tooltip-border: 240 3.7% 25%;
   }
 
   * {
@@ -54,6 +81,7 @@
   }
 
   html {
+    scroll-behavior: smooth;
     font-size: 16px; /* Base font size for consistency */
   }
 
@@ -93,21 +121,76 @@
 }
 
 @layer components {
-  .sidebar-link {
-    @apply flex items-center px-4 py-2 rounded-md hover:bg-white/10 transition-colors text-white/90 hover:text-white font-medium;
+  /* Navigation styles */
+  .top-nav-link {
+    @apply relative px-3 py-2 text-foreground/80 hover:text-foreground transition-colors 
+      after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:w-0 
+      after:bg-primary after:transition-all after:duration-300 hover:after:w-full;
   }
 
-  .sidebar-link.active {
-    @apply bg-white/10 text-white;
+  .top-nav-link.active {
+    @apply text-foreground after:w-full;
   }
   
-  /* STP Dashboard specific styles */
-  .parameter-card {
-    @apply bg-white rounded-xl p-4 shadow-sm transition-all duration-200 hover:shadow;
+  /* Standardized Card styles */
+  .metric-card {
+    @apply p-6 rounded-xl border flex flex-col gap-2 transition-all duration-300
+      hover:shadow-md hover:-translate-y-1;
   }
   
+  .metric-card-title {
+    @apply text-sm font-medium text-muted-foreground;
+  }
+  
+  .metric-card-value {
+    @apply text-3xl font-bold;
+  }
+  
+  .metric-card-trend {
+    @apply text-xs font-medium flex items-center gap-1;
+  }
+  
+  .trend-up {
+    @apply text-green-500;
+  }
+  
+  .trend-down {
+    @apply text-red-500;
+  }
+  
+  .trend-neutral {
+    @apply text-muted-foreground;
+  }
+  
+  /* Chart standardization */
+  .chart-container {
+    @apply p-4 rounded-lg border bg-card w-full h-full min-h-[300px];
+  }
+  
+  /* Table standardization */
+  .data-table-container {
+    @apply w-full overflow-hidden rounded-lg border;
+  }
+  
+  .data-table {
+    @apply w-full border-collapse;
+  }
+  
+  .data-table th {
+    @apply bg-muted/50 py-3 px-4 text-left text-sm font-semibold text-foreground;
+  }
+  
+  .data-table td {
+    @apply border-t border-border py-3 px-4 text-sm;
+  }
+  
+  .data-table tr:hover {
+    @apply bg-muted/20;
+  }
+  
+  /* Parameter status indicators */
   .parameter-normal {
-    @apply text-green-600;
+    @apply text-green-600 dark:text-green-400;
   }
   
   .parameter-warning {
@@ -118,42 +201,85 @@
     @apply text-red-500;
   }
 
-  /* Table styles for consistency */
-  .data-table th {
-    @apply py-3 px-4 text-left text-sm font-medium text-gray-700 bg-gray-50;
-  }
-
-  .data-table td {
-    @apply py-3 px-4 text-sm text-gray-900 border-t border-gray-200;
-  }
-
-  /* Responsive container for all content sections */
+  /* Responsive containers */
   .content-container {
     @apply w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
-  }
-  
-  /* Card styles */
-  .dashboard-card {
-    @apply bg-card rounded-lg border border-border p-4 sm:p-6 shadow-sm hover:shadow-md transition-all duration-300;
-  }
-  
-  /* Button hover effects */
-  .btn-hover-effect {
-    @apply transition-all duration-200 hover:translate-y-[-2px] hover:shadow-md active:translate-y-[0px];
-  }
-  
-  /* Nav link hover effect */
-  .nav-link-hover {
-    @apply relative after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:w-0 after:bg-primary after:transition-all hover:after:w-full;
   }
   
   /* Card hover effects */
   .card-hover {
     @apply transition-all duration-300 hover:shadow-md hover:translate-y-[-2px];
   }
+  
+  /* Chart Standardization */
+  .recharts-default-tooltip {
+    @apply !bg-card !border !border-border !rounded-md !shadow-md !px-3 !py-2;
+  }
+  
+  .recharts-tooltip-label {
+    @apply !text-sm !font-medium !text-foreground !mb-1;
+  }
+  
+  .recharts-tooltip-item {
+    @apply !text-xs;
+  }
+  
+  .recharts-cartesian-grid-horizontal line,
+  .recharts-cartesian-grid-vertical line {
+    @apply !stroke-[hsl(var(--chart-grid))];
+  }
+  
+  .recharts-cartesian-axis-line {
+    @apply !stroke-[hsl(var(--chart-axis))];
+  }
+  
+  .recharts-cartesian-axis-tick-line {
+    @apply !stroke-[hsl(var(--chart-axis))];
+  }
+  
+  .recharts-cartesian-axis-tick-value {
+    @apply !fill-[hsl(var(--chart-axis))];
+  }
+  
+  /* Standardized page layouts */
+  .page-header {
+    @apply mb-6 pb-4 border-b;
+  }
+  
+  .page-title {
+    @apply text-2xl font-bold;
+  }
+  
+  .page-description {
+    @apply text-muted-foreground mt-1;
+  }
+  
+  .page-content {
+    @apply space-y-6;
+  }
+  
+  .section-title {
+    @apply text-xl font-semibold mb-4;
+  }
+  
+  /* Standardized metrics grid */
+  .metrics-grid {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4;
+  }
+  
+  /* Standardized chart grids */
+  .charts-grid {
+    @apply grid grid-cols-1 lg:grid-cols-2 gap-6;
+  }
+  
+  /* Standardized data tables */
+  .data-table-wrapper {
+    @apply mt-6 rounded-lg border bg-card overflow-hidden;
+  }
 }
 
 @layer utilities {
+  /* Animation utilities */
   .animate-appear {
     animation: appear 0.5s ease-out forwards;
   }
@@ -178,19 +304,30 @@
     animation: float 3s ease-in-out infinite;
   }
   
-  .animate-bounce-subtle {
-    animation: bounce-subtle 2s infinite;
+  /* Micro-animations */
+  .hover-scale {
+    @apply transition-transform duration-200 hover:scale-105;
   }
   
-  .animate-shimmer {
-    background: linear-gradient(
-      90deg,
-      transparent 0%,
-      rgba(255, 255, 255, 0.1) 50%,
-      transparent 100%
-    );
-    background-size: 200% 100%;
-    animation: shimmer 1.5s infinite;
+  .hover-lift {
+    @apply transition-transform duration-200 hover:-translate-y-1;
+  }
+  
+  .hover-glow {
+    @apply transition-shadow duration-200 hover:shadow-lg;
+  }
+  
+  .hover-bright {
+    @apply transition-all duration-200 hover:brightness-110;
+  }
+  
+  /* Enhanced box shadows */
+  .shadow-card {
+    @apply shadow-[0_4px_12px_rgba(0,0,0,0.05)];
+  }
+  
+  .shadow-card-hover {
+    @apply shadow-[0_8px_16px_rgba(0,0,0,0.08)];
   }
   
   @keyframes appear {
@@ -253,31 +390,7 @@
     }
   }
   
-  @keyframes bounce-subtle {
-    0%, 100% {
-      transform: translateY(0);
-    }
-    50% {
-      transform: translateY(-3px);
-    }
-  }
-  
-  @keyframes shimmer {
-    0% {
-      background-position: -200% 0;
-    }
-    100% {
-      background-position: 200% 0;
-    }
-  }
-  
-  /* Responsive adjustments */
-  .fit-content {
-    width: fit-content;
-    max-width: 100%;
-  }
-  
-  /* Improved scrollbars for better UX */
+  /* Improved scrollbars */
   .scrollbar-thin {
     scrollbar-width: thin;
   }
@@ -299,18 +412,22 @@
     background: rgba(255, 255, 255, 0.2);
   }
   
-  /* Touch optimizations */
+  /* Mobile touch optimizations */
   .touch-opt {
     @apply touch-manipulation min-h-[44px] min-w-[44px];
   }
   
-  /* Glassmorphism effects */
-  .glass {
-    @apply backdrop-blur-sm bg-white/70 dark:bg-gray-900/70;
+  /* Chart utility classes */
+  .chart-full-width {
+    @apply w-full max-w-full overflow-visible;
   }
   
-  .glass-card {
-    @apply glass border border-white/20 dark:border-white/10;
+  .chart-responsive {
+    @apply w-full h-[300px] sm:h-[350px] md:h-[400px];
+  }
+  
+  .chart-tooltip {
+    @apply rounded-md bg-card shadow-md border border-border p-2 text-sm;
   }
 }
 
