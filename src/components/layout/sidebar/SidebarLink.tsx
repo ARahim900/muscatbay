@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';
@@ -16,6 +17,8 @@ interface SidebarLinkProps {
   }[];
   isMobile?: boolean;
   className?: string;
+  iconColor?: string;
+  bgColor?: string;
 }
 
 const SidebarLink: React.FC<SidebarLinkProps> = ({
@@ -27,7 +30,9 @@ const SidebarLink: React.FC<SidebarLinkProps> = ({
   openEmbedded,
   options,
   isMobile,
-  className
+  className,
+  iconColor = "",
+  bgColor = ""
 }) => {
   const [showOptions, setShowOptions] = useState(false);
 
@@ -64,10 +69,23 @@ const SidebarLink: React.FC<SidebarLinkProps> = ({
     }
   };
 
+  // Custom icon styling based on props
+  const iconStyle = iconColor ? `text-${iconColor}` : "";
+  const iconBgStyle = bgColor ? `bg-${bgColor}` : "";
+  const iconWrapper = iconColor && bgColor ? 
+    `mr-2 p-1.5 rounded-md ${iconBgStyle}` : 
+    "mr-2";
+
   if (external) {
     return <div className="relative">
         <a href={to} className={`sidebar-link ${collapsed && !isMobile ? 'justify-center px-0' : ''} ${className || ''}`} onClick={options && options.length > 0 ? toggleOptions : e => handleEmbeddedClick(e)} aria-expanded={showOptions}>
-          <Icon className="flex-shrink-0 w-5 h-5" />
+          {iconColor && bgColor && !collapsed ? (
+            <div className={iconWrapper}>
+              <Icon className={`flex-shrink-0 w-5 h-5 ${iconStyle}`} />
+            </div>
+          ) : (
+            <Icon className={`flex-shrink-0 w-5 h-5 ${iconStyle}`} />
+          )}
           {(!collapsed || isMobile) && <>
               <span className="flex-1">{label}</span>
               {options && options.length > 0 && <ChevronRight className={`w-4 h-4 transition-transform ${showOptions ? 'rotate-90' : ''}`} />}
@@ -85,7 +103,13 @@ const SidebarLink: React.FC<SidebarLinkProps> = ({
   return <NavLink to={to} className={({
     isActive
   }) => `sidebar-link ${isActive ? 'active' : ''} ${collapsed && !isMobile ? 'justify-center px-0' : ''} ${className || ''}`}>
-      <Icon className="flex-shrink-0 w-5 h-5" />
+      {iconColor && bgColor && !collapsed ? (
+        <div className={iconWrapper}>
+          <Icon className={`flex-shrink-0 w-5 h-5 ${iconStyle}`} />
+        </div>
+      ) : (
+        <Icon className={`flex-shrink-0 w-5 h-5 ${iconStyle}`} />
+      )}
       {(!collapsed || isMobile) && <span className="font-normal text-base text-center text-stone-200">{label}</span>}
     </NavLink>;
 };

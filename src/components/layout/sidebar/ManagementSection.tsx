@@ -32,6 +32,8 @@ const ManagementSection: React.FC<ManagementSectionProps> = ({
         external={!!externalApps.contracts}
         openEmbedded={openEmbeddedApp}
         isMobile={isMobile}
+        iconColor="amber-500"
+        bgColor="amber-100"
       />
       <SidebarLink 
         to={externalApps.projects || "/projects"} 
@@ -41,6 +43,8 @@ const ManagementSection: React.FC<ManagementSectionProps> = ({
         external={!!externalApps.projects && externalApps.projects !== "/projects"}
         openEmbedded={openEmbeddedApp}
         isMobile={isMobile}
+        iconColor="teal-500"
+        bgColor="teal-100"
       />
       <SidebarLink 
         to="/alm" 
@@ -48,6 +52,8 @@ const ManagementSection: React.FC<ManagementSectionProps> = ({
         label="Asset Lifecycle" 
         collapsed={collapsed}
         isMobile={isMobile}
+        iconColor="cyan-500"
+        bgColor="cyan-100"
       />
       <SidebarLink 
         to={externalApps.security || "/"} 
@@ -57,6 +63,8 @@ const ManagementSection: React.FC<ManagementSectionProps> = ({
         external={!!externalApps.security}
         openEmbedded={openEmbeddedApp}
         isMobile={isMobile}
+        iconColor="red-500"
+        bgColor="red-100"
       />
     </SidebarSection>
   );

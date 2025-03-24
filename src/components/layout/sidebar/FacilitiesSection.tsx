@@ -38,6 +38,8 @@ const FacilitiesSection: React.FC<FacilitiesSectionProps> = ({
         external={false}
         isMobile={isMobile}
         className={linkClasses}
+        iconColor="green-500"
+        bgColor="green-100"
       />
       <SidebarLink 
         to="/pumping-stations" 
@@ -47,6 +49,8 @@ const FacilitiesSection: React.FC<FacilitiesSectionProps> = ({
         external={false}
         isMobile={isMobile}
         className={linkClasses}
+        iconColor="blue-600"
+        bgColor="blue-100"
       />
       <SidebarLink 
         to="/hvac" 
@@ -56,6 +60,8 @@ const FacilitiesSection: React.FC<FacilitiesSectionProps> = ({
         external={false}
         isMobile={isMobile}
         className={linkClasses}
+        iconColor="orange-500"
+        bgColor="orange-100"
       />
     </SidebarSection>
   );

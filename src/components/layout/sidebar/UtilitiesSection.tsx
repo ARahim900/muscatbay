@@ -24,6 +24,8 @@ const UtilitiesSection: React.FC<UtilitiesSectionProps> = ({
         collapsed={collapsed} 
         external={false}
         isMobile={isMobile}
+        iconColor="amber-500"
+        bgColor="amber-100"
       />
       <SidebarLink 
         to="/water-system" 
@@ -32,6 +34,8 @@ const UtilitiesSection: React.FC<UtilitiesSectionProps> = ({
         collapsed={collapsed} 
         external={false}
         isMobile={isMobile}
+        iconColor="blue-500"
+        bgColor="blue-100"
       />
     </SidebarSection>
   );

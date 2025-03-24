@@ -2,10 +2,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Navbar from './Navbar';
 import Sidebar from './sidebar';
-import { ArrowLeft, X, Menu } from 'lucide-react';
+import { ArrowLeft, X, Menu, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useIsMobile, useTouchDevice } from '@/hooks/use-mobile';
+import { toast } from 'sonner';
 
 interface EmbeddedAppState {
   url: string;
@@ -31,6 +32,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
+  const navigate = useNavigate();
 
   // Auto-collapse sidebar on route change
   useEffect(() => {
@@ -73,6 +75,14 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       ...embeddedApp,
       isOpen: false
     });
+    
+    // Show toast notification when returning to dashboard
+    toast.success("Returned to dashboard");
+  };
+
+  const goToHome = () => {
+    closeEmbeddedApp();
+    navigate('/');
   };
 
   const handleIframeLoad = () => {
@@ -136,14 +146,24 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 </Button>
                 <h2 className="text-sm md:text-base font-medium text-primary truncate">{embeddedApp.title}</h2>
               </div>
-              <div className="flex items-center">
+              <div className="flex items-center space-x-2">
                 <Button 
-                  onClick={closeEmbeddedApp}
+                  onClick={goToHome}
+                  variant="outline"
+                  size="sm"
+                  className={`text-xs sm:text-sm whitespace-nowrap flex items-center ${isTouch ? "min-h-[44px]" : ""}`}
+                >
+                  <Home className="h-3.5 w-3.5 mr-1.5" />
+                  Home
+                </Button>
+                <Button 
+                  onClick={toggleMobileSidebar}
                   variant="default"
                   size="sm"
                   className={`text-xs sm:text-sm whitespace-nowrap ${isTouch ? "min-h-[44px]" : ""}`}
                 >
-                  Back to Dashboard
+                  <Menu className="h-3.5 w-3.5 mr-1.5" />
+                  Menu
                 </Button>
               </div>
             </div>
