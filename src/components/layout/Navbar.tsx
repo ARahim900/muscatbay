@@ -1,11 +1,12 @@
 
 import React, { useState } from 'react';
-import { Bell, Search, Settings, User, Menu, X, LogOut } from 'lucide-react';
+import { Bell, Settings, User, Menu, X, LogOut } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
 import { ThemeToggle } from '@/components/theme/theme-toggle';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { CommandSearch } from '@/components/ui/command-search';
 
 interface NavbarProps {
   toggleSidebar?: () => void;
@@ -55,13 +56,7 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
           {searchOpen ? (
             <div className="fixed inset-0 pt-16 pb-4 px-4 bg-background/95 backdrop-blur-sm z-50 flex items-start justify-center md:relative md:inset-auto md:pt-0 md:pb-0 md:bg-transparent md:backdrop-blur-none md:z-auto md:block">
               <div className="w-full max-w-md relative md:w-auto">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary/50" />
-                <input 
-                  type="text" 
-                  placeholder="Search assets, systems, or documents..." 
-                  className="w-full py-2 pl-10 pr-4 text-sm transition-all border rounded-full focus:outline-none focus:ring-2 focus:ring-primary/20 border-input bg-background dark:bg-secondary" 
-                  autoFocus
-                />
+                <CommandSearch />
                 <button 
                   onClick={() => setSearchOpen(false)} 
                   className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full hover:bg-accent transition-colors touch-manipulation min-h-[44px] min-w-[44px] flex items-center justify-center"
@@ -78,15 +73,10 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
                 className="p-2 transition-all rounded-full hover:bg-accent md:hidden touch-manipulation min-h-[44px] min-w-[44px] flex items-center justify-center"
                 aria-label="Open search"
               >
-                <Search className="w-5 h-5 text-primary/80" />
+                <User className="w-5 h-5 text-primary/80" />
               </button>
               <div className="relative hidden md:block">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary/50" />
-                <input 
-                  type="text" 
-                  placeholder="Search assets, systems, or documents..." 
-                  className="w-56 md:w-64 py-2 pl-10 pr-4 text-sm transition-all border rounded-full focus:outline-none focus:ring-2 focus:ring-primary/20 border-input bg-background dark:bg-secondary" 
-                />
+                <CommandSearch />
               </div>
             </>
           )}

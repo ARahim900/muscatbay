@@ -1,16 +1,20 @@
-import { Sun } from "lucide-react"
+
+import { Moon, Sun } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { useTheme } from "@/components/theme/theme-provider"
 
 export function ThemeToggle() {
   const { setTheme } = useTheme()
 
-  // This component is now simplified to just show the light mode icon
-  // We keep it to avoid breaking any layouts, but it doesn't actually toggle themes
+  // We only support light mode for this application
   return (
-    <Button variant="ghost" size="icon" className="rounded-full" aria-label="Light mode" disabled>
-      <Sun className="h-5 w-5" />
+    <Button 
+      variant="outline" 
+      size="icon" 
+      className="rounded-full w-10 h-10 transition-all duration-300 hover:bg-accent" 
+      aria-label="Light mode"
+    >
+      <Sun className="h-5 w-5 text-amber-500" />
       <span className="sr-only">Light mode</span>
     </Button>
   )

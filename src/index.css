@@ -134,7 +134,22 @@
   
   /* Card styles */
   .dashboard-card {
-    @apply bg-card rounded-lg border border-border p-4 sm:p-6 shadow-sm;
+    @apply bg-card rounded-lg border border-border p-4 sm:p-6 shadow-sm hover:shadow-md transition-all duration-300;
+  }
+  
+  /* Button hover effects */
+  .btn-hover-effect {
+    @apply transition-all duration-200 hover:translate-y-[-2px] hover:shadow-md active:translate-y-[0px];
+  }
+  
+  /* Nav link hover effect */
+  .nav-link-hover {
+    @apply relative after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:w-0 after:bg-primary after:transition-all hover:after:w-full;
+  }
+  
+  /* Card hover effects */
+  .card-hover {
+    @apply transition-all duration-300 hover:shadow-md hover:translate-y-[-2px];
   }
 }
 
@@ -157,6 +172,25 @@
   
   .animate-slide-in {
     animation: slide-in 0.3s ease-out forwards;
+  }
+  
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+  
+  .animate-bounce-subtle {
+    animation: bounce-subtle 2s infinite;
+  }
+  
+  .animate-shimmer {
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.1) 50%,
+      transparent 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
   }
   
   @keyframes appear {
@@ -210,6 +244,33 @@
     }
   }
   
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-5px);
+    }
+  }
+  
+  @keyframes bounce-subtle {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-3px);
+    }
+  }
+  
+  @keyframes shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
+  }
+  
   /* Responsive adjustments */
   .fit-content {
     width: fit-content;
@@ -236,6 +297,20 @@
   
   .scrollbar-thumb-white\/20::-webkit-scrollbar-thumb {
     background: rgba(255, 255, 255, 0.2);
+  }
+  
+  /* Touch optimizations */
+  .touch-opt {
+    @apply touch-manipulation min-h-[44px] min-w-[44px];
+  }
+  
+  /* Glassmorphism effects */
+  .glass {
+    @apply backdrop-blur-sm bg-white/70 dark:bg-gray-900/70;
+  }
+  
+  .glass-card {
+    @apply glass border border-white/20 dark:border-white/10;
   }
 }
 
