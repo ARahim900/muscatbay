@@ -1,4 +1,3 @@
-
 // Asset Category type
 export interface AssetCategory {
   id: string;
@@ -76,4 +75,35 @@ export interface ServiceChargeCalculation {
   reserveFund: number;
   totalCharge: number;
   ratePerSqm: number;
+}
+
+// Service Charge Data for calculator
+export interface ServiceChargeUnitType {
+  name: string;
+  baseRate: number;
+  sizes: number[];
+}
+
+export interface ServiceChargeZoneData {
+  name: string;
+  unitTypes: {
+    [key: string]: ServiceChargeUnitType;
+  };
+}
+
+export interface ServiceChargeData {
+  [key: string]: ServiceChargeZoneData;
+}
+
+export interface ServiceCharge {
+  annual: {
+    total: number;
+    baseCharge: number;
+    vat: number;
+  };
+  monthly: {
+    total: number;
+    baseCharge: number;
+    vat: number;
+  };
 }

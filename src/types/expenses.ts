@@ -1,12 +1,13 @@
-
 // Operating Expense type
 export interface OperatingExpense {
   id: string;
   category: string;
   description: string;
-  monthly: number;
-  annual: number;
-  status: 'Budgeted' | 'Actual' | 'Projected';
+  service_provider: string;
+  service_type: string;
+  monthly_cost: number;
+  annual_cost: number;
+  status: 'Active' | 'Pending' | 'Expired';
   year: number;
   quarter?: number;
   month?: number;
@@ -70,4 +71,52 @@ export interface ServiceChargeZone {
   unitCount: number;
   serviceChargeRate: number;
   reserveFundRate: number;
+}
+
+// Expense Summary By Status
+export interface ExpenseSummaryByStatus {
+  status: string;
+  count: number;
+  total_monthly_cost: number;
+  total_annual_cost: number;
+}
+
+// Expense Summary By Type
+export interface ExpenseSummaryByType {
+  service_type: string;
+  count: number;
+  total_monthly_cost: number;
+  total_annual_cost: number;
+}
+
+// Operating Expense Display for UI
+export interface OperatingExpenseDisplay extends ExpenseDisplay {
+  // Additional UI-specific properties
+}
+
+// Reserve Fund Rate type
+export interface ReserveFundRate {
+  zone: string;
+  zoneName: string;
+  rate: number;
+  effectiveDate: string;
+  notes?: string;
+}
+
+// Service Charge Calculator Props
+export interface ServiceChargeCalculatorProps {
+  expenses: OperatingExpenseDisplay[];
+  reserveFundRates: ReserveFundRate[];
+}
+
+// Service Charge Expenses Props
+export interface ServiceChargeExpensesProps {
+  expenses: OperatingExpenseDisplay[];
+  reserveFundRates: ReserveFundRate[];
+}
+
+// Service Charge Overview Props
+export interface ServiceChargeOverviewProps {
+  expenses: OperatingExpenseDisplay[];
+  reserveFundRates: ReserveFundRate[];
 }

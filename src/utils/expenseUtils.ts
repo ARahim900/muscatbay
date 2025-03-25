@@ -1,5 +1,5 @@
 
-import { ExpenseDisplay } from '@/types/expenses';
+import { ExpenseDisplay, OperatingExpense, ExpenseSummaryByStatus, ExpenseSummaryByType } from '@/types/expenses';
 
 // Mock expense data for demonstration
 export const getMockExpenseDisplayData = (): ExpenseDisplay[] => {
@@ -65,4 +65,140 @@ export const getMockExpenseDisplayData = (): ExpenseDisplay[] => {
       change: 4.4
     }
   ];
+};
+
+// Mock operating expenses data
+export const fetchOperatingExpenses = async (): Promise<OperatingExpense[]> => {
+  // Simulate API call with timeout
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve([
+        {
+          id: '1',
+          category: 'Facilities',
+          description: 'Electrical maintenance contract',
+          service_provider: 'ElectroCorp LLC',
+          service_type: 'Utilities',
+          monthly_cost: 15000,
+          annual_cost: 180000,
+          status: 'Active',
+          year: 2024
+        },
+        {
+          id: '2',
+          category: 'Grounds',
+          description: 'Landscaping services',
+          service_provider: 'Green Gardens Co',
+          service_type: 'Landscaping',
+          monthly_cost: 22500,
+          annual_cost: 270000,
+          status: 'Active',
+          year: 2024
+        },
+        {
+          id: '3',
+          category: 'Security',
+          description: 'Security services contract',
+          service_provider: 'Shield Security',
+          service_type: 'Security',
+          monthly_cost: 18500,
+          annual_cost: 222000,
+          status: 'Active',
+          year: 2024
+        },
+        {
+          id: '4',
+          category: 'Facilities',
+          description: 'Plumbing maintenance',
+          service_provider: 'Plumb Perfect',
+          service_type: 'Maintenance',
+          monthly_cost: 12000,
+          annual_cost: 144000,
+          status: 'Pending',
+          year: 2024
+        },
+        {
+          id: '5',
+          category: 'Admin',
+          description: 'Administration services',
+          service_provider: 'Admin Solutions',
+          service_type: 'Administration',
+          monthly_cost: 13000,
+          annual_cost: 156000,
+          status: 'Active',
+          year: 2024
+        }
+      ]);
+    }, 1000);
+  });
+};
+
+// Mock expense summary by status
+export const fetchExpenseSummaryByStatus = async (): Promise<ExpenseSummaryByStatus[]> => {
+  // Simulate API call with timeout
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve([
+        {
+          status: 'Active',
+          count: 4,
+          total_monthly_cost: 69000,
+          total_annual_cost: 828000
+        },
+        {
+          status: 'Pending',
+          count: 1,
+          total_monthly_cost: 12000,
+          total_annual_cost: 144000
+        },
+        {
+          status: 'Expired',
+          count: 0,
+          total_monthly_cost: 0,
+          total_annual_cost: 0
+        }
+      ]);
+    }, 1000);
+  });
+};
+
+// Mock expense summary by type
+export const fetchExpenseSummaryByType = async (): Promise<ExpenseSummaryByType[]> => {
+  // Simulate API call with timeout
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve([
+        {
+          service_type: 'Utilities',
+          count: 1,
+          total_monthly_cost: 15000,
+          total_annual_cost: 180000
+        },
+        {
+          service_type: 'Landscaping',
+          count: 1,
+          total_monthly_cost: 22500,
+          total_annual_cost: 270000
+        },
+        {
+          service_type: 'Security',
+          count: 1,
+          total_monthly_cost: 18500,
+          total_annual_cost: 222000
+        },
+        {
+          service_type: 'Maintenance',
+          count: 1,
+          total_monthly_cost: 12000,
+          total_annual_cost: 144000
+        },
+        {
+          service_type: 'Administration',
+          count: 1,
+          total_monthly_cost: 13000,
+          total_annual_cost: 156000
+        }
+      ]);
+    }, 1000);
+  });
 };
