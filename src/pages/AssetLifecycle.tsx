@@ -1,9 +1,10 @@
+
 import React, { useState } from 'react';
 import StandardPageLayout from '@/components/layout/StandardPageLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { AssetCategory, CriticalAsset, MaintenanceForecast, AssetCondition } from '@/types/alm';
+import { AssetCategory, CriticalAsset, MaintenanceForecast, AssetCondition, UpcomingMaintenance } from '@/types/alm';
 import { PropertyTransaction, PropertyOwner, PropertyUnit } from '@/types/expenses';
 import { PackageOpen, Wrench, AlertCircle, BarChart3, Ruler, Calculator } from 'lucide-react';
 import ServiceChargeCalculator from '@/components/service-charges/ServiceChargeCalculator';
@@ -122,6 +123,161 @@ const propertyTransactions: PropertyTransaction[] = [
       region: 'International',
       date_of_birth: '1982-09-12'
     }
+  }
+];
+
+// Mock critical assets data for the CriticalAssetsTable
+const criticalAssets: CriticalAsset[] = [
+  {
+    id: 'CA001',
+    assetName: 'Main Electrical Transformer',
+    location: 'Zone 3 Utility Area',
+    criticality: 'High',
+    riskScore: 85,
+    lastInspectionDate: '2023-04-15',
+    nextInspectionDate: '2023-07-15',
+    replacementValue: 320000,
+    notes: 'Serves the entire residential area'
+  },
+  {
+    id: 'CA002',
+    assetName: 'Water Treatment Plant',
+    location: 'Zone 2 Utility Area',
+    criticality: 'High',
+    riskScore: 80,
+    lastInspectionDate: '2023-03-22',
+    nextInspectionDate: '2023-06-22',
+    replacementValue: 450000,
+    notes: 'Critical for potable water supply'
+  },
+  {
+    id: 'CA003',
+    assetName: 'Main HVAC Chiller',
+    location: 'Zone 5 Mechanical Room',
+    criticality: 'Medium',
+    riskScore: 70,
+    lastInspectionDate: '2023-05-10',
+    nextInspectionDate: '2023-08-10',
+    replacementValue: 285000,
+    notes: 'Serves commercial and hospitality areas'
+  }
+];
+
+// Mock maintenance forecast data for MaintenanceForecastTable
+const maintenanceForecasts: MaintenanceForecast[] = [
+  {
+    id: 'MF001',
+    assetName: 'Elevators - Tower A',
+    zone: 'Zone 3',
+    installationYear: 2020,
+    currentCondition: 'Good',
+    nextMaintenanceYear: 2024,
+    maintenanceType: 'Major Service',
+    estimatedCost: 45000,
+    lifeExpectancy: 25
+  },
+  {
+    id: 'MF002',
+    assetName: 'Roofing System - Villa Complex',
+    zone: 'Zone 5',
+    installationYear: 2021,
+    currentCondition: 'Excellent',
+    nextMaintenanceYear: 2026,
+    maintenanceType: 'Inspection & Repair',
+    estimatedCost: 32000,
+    lifeExpectancy: 20
+  },
+  {
+    id: 'MF003',
+    assetName: 'Swimming Pool Equipment',
+    zone: 'Zone 8',
+    installationYear: 2022,
+    currentCondition: 'Excellent',
+    nextMaintenanceYear: 2024,
+    maintenanceType: 'Routine Service',
+    estimatedCost: 8500,
+    lifeExpectancy: 10
+  }
+];
+
+// Mock asset conditions data for AssetConditionsTable
+const assetConditions: AssetCondition[] = [
+  {
+    id: '1',
+    conditionRating: 'Excellent',
+    description: 'New or like new condition, fully functional',
+    assetCount: 145,
+    percentage: 36.5,
+    recommendedAction: 'Regular maintenance only'
+  },
+  {
+    id: '2',
+    conditionRating: 'Good',
+    description: 'Minor wear, fully functional',
+    assetCount: 172,
+    percentage: 43.2,
+    recommendedAction: 'Routine maintenance'
+  },
+  {
+    id: '3',
+    conditionRating: 'Fair',
+    description: 'Moderate wear, functionally adequate',
+    assetCount: 48,
+    percentage: 12.1,
+    recommendedAction: 'Increased monitoring, plan for future repairs'
+  },
+  {
+    id: '4',
+    conditionRating: 'Poor',
+    description: 'Significant deterioration, function compromised',
+    assetCount: 25,
+    percentage: 6.3,
+    recommendedAction: 'Repair or replace soon'
+  },
+  {
+    id: '5',
+    conditionRating: 'Critical',
+    description: 'Severely deteriorated, function impaired',
+    assetCount: 8,
+    percentage: 2.0,
+    recommendedAction: 'Immediate replacement required'
+  }
+];
+
+// Mock upcoming maintenance data for UpcomingMaintenanceTable
+const upcomingMaintenance: UpcomingMaintenance[] = [
+  {
+    id: 'UM001',
+    assetName: 'Fire Alarm Systems',
+    zone: 'All Zones',
+    scheduledDate: '2023-08-15',
+    maintenanceType: 'Annual Certification',
+    estimatedCost: 18500,
+    duration: 5,
+    resourceRequirements: 'Specialized Contractor',
+    priority: 'High'
+  },
+  {
+    id: 'UM002',
+    assetName: 'Landscaping - Main Boulevard',
+    zone: 'Zone 1',
+    scheduledDate: '2023-07-22',
+    maintenanceType: 'Seasonal Replacement',
+    estimatedCost: 12000,
+    duration: 7,
+    resourceRequirements: 'Landscaping Team',
+    priority: 'Medium'
+  },
+  {
+    id: 'UM003',
+    assetName: 'Tennis Courts Resurfacing',
+    zone: 'Zone 7',
+    scheduledDate: '2023-09-10',
+    maintenanceType: 'Major Repair',
+    estimatedCost: 35000,
+    duration: 14,
+    resourceRequirements: 'Specialized Contractor',
+    priority: 'Low'
   }
 ];
 
@@ -253,6 +409,26 @@ const AssetLifecycle: React.FC = () => {
               </CardContent>
             </Card>
           </div>
+          
+          <div className="grid grid-cols-1 gap-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Critical Assets</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <CriticalAssetsTable data={criticalAssets} />
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader>
+                <CardTitle>Upcoming Maintenance</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <UpcomingMaintenanceTable data={upcomingMaintenance} />
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
 
         <TabsContent value="assets" className="space-y-4">
@@ -262,6 +438,24 @@ const AssetLifecycle: React.FC = () => {
             </CardHeader>
             <CardContent>
               <AssetCategoriesTable data={assetCategories} />
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle>Asset Conditions</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <AssetConditionsTable data={assetConditions} />
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle>Maintenance Forecast</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <MaintenanceForecastTable data={maintenanceForecasts} />
             </CardContent>
           </Card>
         </TabsContent>
