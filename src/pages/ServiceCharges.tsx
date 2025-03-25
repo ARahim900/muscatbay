@@ -3,81 +3,92 @@ import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Calculator, BarChart2, FileText, Settings, PieChart } from 'lucide-react';
-import { OperatingExpenseDisplay, ReserveFundRate } from '@/types/expenses';
 import ServiceChargeCalculator from '@/components/service-charges/ServiceChargeCalculator';
 import ServiceChargeOverview from '@/components/service-charges/ServiceChargeOverview';
 import ServiceChargeExpenses from '@/components/service-charges/ServiceChargeExpenses';
-import { getMockExpenseDisplayData } from '@/utils/expenseUtils';
+import StandardPageLayout from '@/components/layout/StandardPageLayout';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+// Create a QueryClient for React Query
+const queryClient = new QueryClient();
 
 const ServiceCharges: React.FC = () => {
   const [activeTab, setActiveTab] = useState('overview');
 
-  // Sample data for service charge calculations
-  const operatingExpenses: OperatingExpenseDisplay[] = getMockExpenseDisplayData();
-
-  // Reserve fund rates
-  const reserveFundRates: ReserveFundRate[] = [
-    { zone: 'zone03', zoneName: 'Zone 03 - Residential Area (Zaha)', rate: 0.40, effectiveDate: '2024-01-01' },
-    { zone: 'zone05', zoneName: 'Zone 05 - Residential Area (Nameer)', rate: 0.50, effectiveDate: '2024-01-01' },
-    { zone: 'zone08', zoneName: 'Zone 08 - Residential Area (Wajd)', rate: 0.60, effectiveDate: '2024-01-01' },
-    { zone: 'commercial', zoneName: 'Commercial Area', rate: 0.70, effectiveDate: '2024-01-01' },
-    { zone: 'staff', zoneName: 'Staff Accommodation', rate: 0.30, effectiveDate: '2024-01-01' }
-  ];
-
   return (
-    <div className="container py-6 space-y-6">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Service Charges</h1>
-          <p className="text-muted-foreground">Manage and calculate service charges for all properties</p>
-        </div>
-      </div>
+    <QueryClientProvider client={queryClient}>
+      <StandardPageLayout
+        title="Service Charges"
+        description="Manage and calculate service charges for all properties"
+        icon={<Calculator className="h-5 w-5 text-primary" />}
+        headerColor="bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-950/20 dark:to-blue-900/10"
+      >
+        <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="grid grid-cols-2 md:grid-cols-4 lg:w-[600px]">
+            <TabsTrigger value="overview" className="flex items-center gap-2">
+              <BarChart2 className="h-4 w-4" />
+              <span>Overview</span>
+            </TabsTrigger>
+            <TabsTrigger value="calculator" className="flex items-center gap-2">
+              <Calculator className="h-4 w-4" />
+              <span>Calculator</span>
+            </TabsTrigger>
+            <TabsTrigger value="expenses" className="flex items-center gap-2">
+              <PieChart className="h-4 w-4" />
+              <span>Expenses</span>
+            </TabsTrigger>
+            <TabsTrigger value="settings" className="flex items-center gap-2">
+              <Settings className="h-4 w-4" />
+              <span>Settings</span>
+            </TabsTrigger>
+          </TabsList>
 
-      <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid grid-cols-2 md:grid-cols-4 lg:w-[600px]">
-          <TabsTrigger value="overview" className="flex items-center gap-2">
-            <BarChart2 className="h-4 w-4" />
-            <span>Overview</span>
-          </TabsTrigger>
-          <TabsTrigger value="calculator" className="flex items-center gap-2">
-            <Calculator className="h-4 w-4" />
-            <span>Calculator</span>
-          </TabsTrigger>
-          <TabsTrigger value="expenses" className="flex items-center gap-2">
-            <PieChart className="h-4 w-4" />
-            <span>Expenses</span>
-          </TabsTrigger>
-          <TabsTrigger value="settings" className="flex items-center gap-2">
-            <Settings className="h-4 w-4" />
-            <span>Settings</span>
-          </TabsTrigger>
-        </TabsList>
+          <TabsContent value="overview" className="space-y-6">
+            <ServiceChargeOverview />
+          </TabsContent>
 
-        <TabsContent value="overview" className="space-y-4">
-          <ServiceChargeOverview expenses={operatingExpenses} reserveFundRates={reserveFundRates} />
-        </TabsContent>
+          <TabsContent value="calculator" className="space-y-6">
+            <ServiceChargeCalculator />
+          </TabsContent>
 
-        <TabsContent value="calculator" className="space-y-4">
-          <ServiceChargeCalculator expenses={operatingExpenses} reserveFundRates={reserveFundRates} />
-        </TabsContent>
+          <TabsContent value="expenses" className="space-y-6">
+            <ServiceChargeExpenses />
+          </TabsContent>
 
-        <TabsContent value="expenses" className="space-y-4">
-          <ServiceChargeExpenses expenses={operatingExpenses} reserveFundRates={reserveFundRates} />
-        </TabsContent>
-
-        <TabsContent value="settings" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Service Charge Settings</CardTitle>
-              <CardDescription>Configure service charge parameters and policies</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p>Settings panel content will be implemented here.</p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-    </div>
+          <TabsContent value="settings" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Service Charge Settings</CardTitle>
+                <CardDescription>Configure service charge parameters and policies</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-6">
+                  <div>
+                    <h3 className="text-lg font-medium mb-2">Reserve Fund Configuration</h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Configure reserve fund rates by zone. These settings determine the contribution to the reserve fund for each property based on size and location.
+                    </p>
+                    <div className="bg-muted p-4 rounded text-center">
+                      <p>Reserve fund settings editor will be implemented here.</p>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <h3 className="text-lg font-medium mb-2">Service Charge Policies</h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Define service charge policies, payment terms, and allocation rules for different property types and zones.
+                    </p>
+                    <div className="bg-muted p-4 rounded text-center">
+                      <p>Policy configuration settings will be implemented here.</p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </StandardPageLayout>
+    </QueryClientProvider>
   );
 };
 
