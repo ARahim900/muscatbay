@@ -44,7 +44,7 @@ function App() {
       <Toaster />
         <Routes>
           <Route path="/" element={<Index />} />
-          <Route element={<Layout />}>
+          <Route element={<Layout><div></div></Layout>}>
             <Route path="/alm" element={<AssetLifecycle />} />
             <Route path="/contracts" element={<Contracts />} />
             <Route path="/projects" element={<Projects />} />

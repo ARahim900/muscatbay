@@ -1,3 +1,4 @@
+
 export interface OperatingExpense {
   id: string;
   service_provider: string;
@@ -8,6 +9,14 @@ export interface OperatingExpense {
   notes: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface OperatingExpenseDisplay {
+  category: string;
+  supplier: string;
+  annual: number;
+  allocation: string;
+  description?: string;
 }
 
 export interface ExpenseSummaryByType {
@@ -89,12 +98,4 @@ export interface ReserveFundRate {
   rate: number;
   effectiveDate: string;
   notes?: string;
-}
-
-export interface OperatingExpense {
-  category: string;
-  supplier: string;
-  annual: number;
-  allocation: string;
-  description?: string;
 }

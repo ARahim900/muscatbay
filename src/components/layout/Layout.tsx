@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import AppNavbar from './AppNavbar';
 import MobileMenu from './MobileMenu';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useIsMobile, useTouchDevice } from '@/hooks/use-mobile';
 import { toast } from 'sonner';
 import { ArrowLeft, X, Menu, Home } from 'lucide-react';
@@ -183,7 +183,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
             >
-              {children}
+              {children || <Outlet />}
             </motion.div>
           </div>
         )}
