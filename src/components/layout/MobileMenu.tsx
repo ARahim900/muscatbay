@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { 
@@ -11,7 +12,8 @@ import {
   Clock,
   AirVent,
   X,
-  ChevronRight
+  ChevronRight,
+  Settings
 } from 'lucide-react';
 import { 
   Accordion,
@@ -227,7 +229,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose, openEmbeddedAp
               className="flex items-center gap-3 p-3 rounded-lg hover:bg-accent transition-colors"
               onClick={onClose}
             >
-              <Shield className="h-5 w-5 text-primary" />
+              <Settings className="h-5 w-5 text-primary" />
               <span className="font-medium">Admin</span>
             </Link>
           </motion.div>
