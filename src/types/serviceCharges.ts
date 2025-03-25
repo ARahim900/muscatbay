@@ -1,3 +1,4 @@
+
 // Service Charge Zone type
 export interface ServiceChargeZone {
   id: number;

@@ -809,57 +809,9 @@ const ServiceChargeAllocations = () => {
 };
 
 const PropertyServiceCharges = () => {
-  // Placeholder for property service charges data
   const { data: propertyCharges, isLoading } = useQuery({
     queryKey: ['property-service-charges'],
-    queryFn: fetchPropertyServiceCharges,
-    placeholderData: [
-      {
-        id: '1',
-        unitNumber: 'Z3-061(1A)',
-        zone: 'Zaha (Z3)',
-        unitType: '2 Bedroom Small Apartment',
-        bua: 115.47,
-        hasLift: true,
-        owner: 'Ahmed Al Balushi',
-        baseOperatingShare: 1210.43,
-        liftShare: 99.00,
-        reserveFundContribution: 4.62,
-        totalCharge: 1314.05,
-        quarterlyCharge: 328.51,
-        monthlyCharge: 109.50
-      },
-      {
-        id: '2',
-        unitNumber: 'Z5-008',
-        zone: 'Nameer (Z5)',
-        unitType: '4 Bedroom Nameer Villa',
-        bua: 497.62,
-        hasLift: false,
-        owner: 'Mohammed Al Harthi',
-        baseOperatingShare: 2840.54,
-        liftShare: 0,
-        reserveFundContribution: 24.88,
-        totalCharge: 2865.42,
-        quarterlyCharge: 716.36,
-        monthlyCharge: 238.79
-      },
-      {
-        id: '3',
-        unitNumber: 'Z8-007',
-        zone: 'Wajd (Z8)',
-        unitType: '5 Bedroom Wajd Villa',
-        bua: 750.35,
-        hasLift: false,
-        owner: 'Sara Johnson',
-        baseOperatingShare: 4137.68,
-        liftShare: 0,
-        reserveFundContribution: 45.02,
-        totalCharge: 4182.70,
-        quarterlyCharge: 1045.68,
-        monthlyCharge: 348.56
-      }
-    ]
+    queryFn: fetchPropertyServiceCharges
   });
 
   if (isLoading) {
@@ -1039,11 +991,9 @@ const PropertyServiceCharges = () => {
   );
 };
 
-// Service Charge Settings Component (your existing code)
 const ServiceChargeSettings = () => {
   const [activeTab, setActiveTab] = useState('rates');
   
-  // Fetch the necessary data
   const { data: expenses, isLoading: loadingExpenses } = useQuery({
     queryKey: ['operating-expenses'],
     queryFn: fetchOperatingExpenses
@@ -1054,7 +1004,6 @@ const ServiceChargeSettings = () => {
     queryFn: fetchReserveFundRates
   });
   
-  // Make sure we have data before rendering
   const isLoading = loadingExpenses || loadingRates;
   
   if (isLoading) {
@@ -1242,3 +1191,4 @@ const ServiceChargeSettings = () => {
 };
 
 export default AssetLifecycleManagement;
+
