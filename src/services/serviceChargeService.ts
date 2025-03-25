@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { 
   ServiceChargeZone, 
@@ -8,7 +7,8 @@ import {
   ServiceChargeCalculation,
   ExpenseBreakdownItem,
   ExpenseCategorySummary,
-  ZoneExpenseSummary
+  ZoneExpenseSummary,
+  PropertyServiceCharge
 } from '@/types/serviceCharges';
 
 // Fetch all service charge zones
@@ -131,6 +131,124 @@ export const fetchPropertyUnits = async (): Promise<PropertyUnit[]> => {
     }));
   } catch (err) {
     console.error('Error in fetchPropertyUnits:', err);
+    return [];
+  }
+};
+
+// Fetch property service charges
+export const fetchPropertyServiceCharges = async (): Promise<PropertyServiceCharge[]> => {
+  try {
+    // First fetch all property units
+    const properties = await fetchPropertyUnits();
+    
+    // Fetch all service charge calculations
+    const { data: calculations, error } = await supabase
+      .from('service_charge_calculations')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (error) {
+      console.error('Error fetching service charge calculations:', error);
+      throw error;
+    }
+    
+    // Map the calculations to property service charges
+    // For each property, use the latest calculation
+    const propertyCharges: PropertyServiceCharge[] = [];
+    const processedPropertyIds = new Set();
+    
+    // Create a basic set of sample data if no real data exists
+    if (calculations.length === 0) {
+      return [
+        {
+          id: '1',
+          unitNumber: 'Z3-061(1A)',
+          zone: 'Zaha (Z3)',
+          unitType: '2 Bedroom Small Apartment',
+          bua: 115.47,
+          hasLift: true,
+          owner: 'Ahmed Al Balushi',
+          baseOperatingShare: 1210.43,
+          liftShare: 99.00,
+          reserveFundContribution: 4.62,
+          totalCharge: 1314.05,
+          quarterlyCharge: 328.51,
+          monthlyCharge: 109.50
+        },
+        {
+          id: '2',
+          unitNumber: 'Z5-008',
+          zone: 'Nameer (Z5)',
+          unitType: '4 Bedroom Nameer Villa',
+          bua: 497.62,
+          hasLift: false,
+          owner: 'Mohammed Al Harthi',
+          baseOperatingShare: 2840.54,
+          liftShare: 0,
+          reserveFundContribution: 24.88,
+          totalCharge: 2865.42,
+          quarterlyCharge: 716.36,
+          monthlyCharge: 238.79
+        },
+        {
+          id: '3',
+          unitNumber: 'Z8-007',
+          zone: 'Wajd (Z8)',
+          unitType: '5 Bedroom Wajd Villa',
+          bua: 750.35,
+          hasLift: false,
+          owner: 'Sara Johnson',
+          baseOperatingShare: 4137.68,
+          liftShare: 0,
+          reserveFundContribution: 45.02,
+          totalCharge: 4182.70,
+          quarterlyCharge: 1045.68,
+          monthlyCharge: 348.56
+        }
+      ];
+    }
+    
+    // Get all zones to have zone names
+    const zones = await fetchServiceChargeZones();
+    const zoneMap = new Map(zones.map(zone => [zone.code, zone.name]));
+    
+    for (const calc of calculations) {
+      // Skip if we already processed this property
+      if (calc.property_id && processedPropertyIds.has(calc.property_id)) {
+        continue;
+      }
+      
+      // Find the property for this calculation
+      const property = calc.property_id 
+        ? properties.find(p => p.id === calc.property_id)
+        : null;
+      
+      const zoneName = zoneMap.get(calc.zone_code) || calc.zone_code;
+      
+      propertyCharges.push({
+        id: calc.id,
+        unitNumber: property?.unitNo || `Property-${calc.id.substring(0, 8)}`,
+        zone: zoneName,
+        unitType: property?.unitType || 'Unknown',
+        bua: property?.bua || calc.property_size,
+        hasLift: property?.hasLift || calc.has_lift_access,
+        owner: 'Owner information not available',
+        baseOperatingShare: calc.operating_share,
+        liftShare: calc.lift_share,
+        reserveFundContribution: calc.reserve_contribution,
+        totalCharge: calc.total_annual,
+        quarterlyCharge: calc.quarterly,
+        monthlyCharge: calc.monthly
+      });
+      
+      if (calc.property_id) {
+        processedPropertyIds.add(calc.property_id);
+      }
+    }
+    
+    return propertyCharges;
+  } catch (err) {
+    console.error('Error in fetchPropertyServiceCharges:', err);
     return [];
   }
 };

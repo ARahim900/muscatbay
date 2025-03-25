@@ -1,4 +1,3 @@
-
 // Service Charge Zone type
 export interface ServiceChargeZone {
   id: number;
@@ -80,6 +79,23 @@ export interface ExpenseBreakdownItem {
   allocation: string;
   isApplicable: boolean;
   amount: number;
+}
+
+// Property Service Charge for display
+export interface PropertyServiceCharge {
+  id: string;
+  unitNumber: string;
+  zone: string;
+  unitType: string;
+  bua: number;
+  hasLift: boolean;
+  owner: string;
+  baseOperatingShare: number;
+  liftShare: number;
+  reserveFundContribution: number;
+  totalCharge: number;
+  quarterlyCharge: number;
+  monthlyCharge: number;
 }
 
 // Expense Category Summary for charts
