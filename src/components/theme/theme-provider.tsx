@@ -19,12 +19,12 @@ export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
   )
 }
 
-// Custom hook for theme - properly implemented
+// Custom hook for theme that doesn't use next-themes internally
+// This avoids the hook usage error since we're forcing light mode anyway
 export function useTheme() {
-  // Return a fixed object without actually calling useTheme from next-themes
-  // This avoids the hook usage error since we're forcing light mode anyway
+  // Return a fixed object without calling useTheme from next-themes
   return { 
-    theme: "light" as const, 
+    theme: "light", 
     setTheme: (theme: string) => {
       console.log(`Theme set to ${theme}, but we're in forced light mode`);
     } 
