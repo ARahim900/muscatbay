@@ -1,66 +1,89 @@
 
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
-import { useQuery } from '@tanstack/react-query';
+import { Loader2 } from "lucide-react";
+import { ExpenseSummaryByType } from '@/types/expenses';
 import { fetchExpenseSummaryByType } from '@/utils/expenseUtils';
-import { Skeleton } from '@/components/ui/skeleton';
-import { formatCurrency } from '@/lib/utils';
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d', '#ffc658', '#8dd1e1'];
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d', '#ffc658', '#8dd1e1', '#a4de6c'];
 
 const ExpenseTypePieChart: React.FC = () => {
-  const { data: expensesByType, isLoading } = useQuery({
-    queryKey: ['expense-summary-by-type'],
-    queryFn: fetchExpenseSummaryByType
-  });
+  const [data, setData] = useState<ExpenseSummaryByType[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
 
-  if (isLoading) {
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const data = await fetchExpenseSummaryByType();
+        setData(data);
+      } catch (error) {
+        console.error('Error fetching expense type data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }: any) => {
+    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+    const x = cx + radius * Math.cos(-midAngle * Math.PI / 180);
+    const y = cy + radius * Math.sin(-midAngle * Math.PI / 180);
+
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Expenses by Type</CardTitle>
-        </CardHeader>
-        <CardContent className="pt-2">
-          <Skeleton className="h-[300px] w-full" />
-        </CardContent>
+      <text 
+        x={x} 
+        y={y} 
+        fill="white" 
+        textAnchor="middle" 
+        dominantBaseline="central"
+      >
+        {`${(percent * 100).toFixed(0)}%`}
+      </text>
+    );
+  };
+
+  if (loading) {
+    return (
+      <Card className="h-96 flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </Card>
     );
   }
 
-  const formatTooltip = (value: any, name: any, props: any) => {
-    return formatCurrency(value, 'OMR');
-  };
+  const chartData = data.length > 0 ? data.map(item => ({
+    name: item.service_type,
+    value: item.total_annual_cost
+  })) : [];
 
   return (
-    <Card>
+    <Card className="h-96">
       <CardHeader>
         <CardTitle>Expenses by Type</CardTitle>
       </CardHeader>
-      <CardContent className="pt-2">
-        <div className="h-[300px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={expensesByType}
-                cx="50%"
-                cy="50%"
-                labelLine={false}
-                outerRadius={80}
-                fill="#8884d8"
-                dataKey="total_annual_cost"
-                nameKey="service_type"
-                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-              >
-                {expensesByType?.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                ))}
-              </Pie>
-              <Tooltip formatter={formatTooltip} />
-              <Legend />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
+      <CardContent>
+        <ResponsiveContainer width="100%" height={300}>
+          <PieChart>
+            <Pie
+              data={chartData}
+              cx="50%"
+              cy="50%"
+              labelLine={false}
+              label={renderCustomizedLabel}
+              outerRadius={100}
+              fill="#8884d8"
+              dataKey="value"
+            >
+              {chartData.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+              ))}
+            </Pie>
+            <Tooltip formatter={(value: number) => `OMR ${value.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`} />
+            <Legend />
+          </PieChart>
+        </ResponsiveContainer>
       </CardContent>
     </Card>
   );

@@ -1,73 +1,47 @@
 
-import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { fetchOperatingExpenses } from '@/utils/expenseUtils';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { formatCurrency } from '@/lib/utils';
-import { Input } from '@/components/ui/input';
-import { OperatingExpense } from '@/types/expenses';
-import { Skeleton } from '@/components/ui/skeleton';
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { fetchOperatingExpenses } from "@/utils/expenseUtils";
+import { OperatingExpense } from "@/types/expenses";
+import { formatCurrency } from "@/lib/utils";
+import { Loader2 } from "lucide-react";
 
 const ExpensesTable: React.FC = () => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
-  const [typeFilter, setTypeFilter] = useState('');
+  const [expenses, setExpenses] = useState<OperatingExpense[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [filterType, setFilterType] = useState<string>('All');
 
-  const { data: expenses, isLoading } = useQuery({
-    queryKey: ['operating-expenses'],
-    queryFn: fetchOperatingExpenses
-  });
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const data = await fetchOperatingExpenses();
+        setExpenses(data);
+      } catch (error) {
+        console.error('Error fetching operating expenses:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  // Extract unique statuses and types for filters
-  const uniqueStatuses = [...new Set(expenses?.map(expense => expense.status) || [])];
-  const uniqueTypes = [...new Set(expenses?.map(expense => expense.service_type) || [])];
+    fetchData();
+  }, []);
 
-  // Filter expenses
-  const filteredExpenses = expenses?.filter(expense => {
-    const matchesSearch = searchTerm === '' || 
-      expense.service_provider.toLowerCase().includes(searchTerm.toLowerCase()) || 
-      expense.service_type.toLowerCase().includes(searchTerm.toLowerCase()) || 
-      expense.notes?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesStatus = statusFilter === '' || expense.status === statusFilter;
-    const matchesType = typeFilter === '' || expense.service_type === typeFilter;
-    
-    return matchesSearch && matchesStatus && matchesType;
-  });
+  // Get unique service types for filtering
+  const serviceTypes = ['All', ...new Set(expenses.map(expense => expense.service_type))];
+  
+  // Get unique service providers for filtering
+  const serviceProviders = ['All', ...new Set(expenses.map(expense => expense.service_provider))];
+  
+  // Filter expenses based on selected type
+  const filteredExpenses = filterType === 'All' 
+    ? expenses 
+    : expenses.filter(expense => expense.service_type === filterType);
 
-  if (isLoading) {
+  if (loading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Operating Expenses</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="flex flex-col sm:flex-row gap-4">
-              <Skeleton className="h-10 w-full" />
-              <Skeleton className="h-10 w-full sm:w-1/4" />
-              <Skeleton className="h-10 w-full sm:w-1/4" />
-            </div>
-            <Skeleton className="h-[400px] w-full" />
-          </div>
-        </CardContent>
+      <Card className="h-96 flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </Card>
     );
   }
@@ -75,95 +49,52 @@ const ExpensesTable: React.FC = () => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Operating Expenses</CardTitle>
+        <CardTitle className="flex justify-between items-center">
+          <span>Operating Expenses</span>
+          <div className="flex items-center space-x-2">
+            <select 
+              className="text-sm border rounded p-1"
+              value={filterType}
+              onChange={(e) => setFilterType(e.target.value)}
+            >
+              {serviceTypes.map((type) => (
+                <option key={type} value={type}>{type}</option>
+              ))}
+            </select>
+          </div>
+        </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <Input
-              placeholder="Search expenses..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full"
-            />
-            
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full sm:w-[180px]">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectLabel>Status</SelectLabel>
-                  <SelectItem value="">All Statuses</SelectItem>
-                  {uniqueStatuses.map(status => (
-                    <SelectItem key={status} value={status}>{status}</SelectItem>
-                  ))}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-            
-            <Select value={typeFilter} onValueChange={setTypeFilter}>
-              <SelectTrigger className="w-full sm:w-[180px]">
-                <SelectValue placeholder="Service Type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectLabel>Service Type</SelectLabel>
-                  <SelectItem value="">All Types</SelectItem>
-                  {uniqueTypes.map(type => (
-                    <SelectItem key={type} value={type}>{type}</SelectItem>
-                  ))}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div className="border rounded-md">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Service Provider</TableHead>
-                  <TableHead>Service Type</TableHead>
-                  <TableHead className="text-right">Monthly Cost</TableHead>
-                  <TableHead className="text-right">Annual Cost</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Notes</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredExpenses?.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center py-4">
-                      No expenses found matching your filters
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredExpenses?.map((expense) => (
-                    <TableRow key={expense.id}>
-                      <TableCell className="font-medium">{expense.service_provider}</TableCell>
-                      <TableCell>{expense.service_type}</TableCell>
-                      <TableCell className="text-right">{formatCurrency(expense.monthly_cost, 'OMR')}</TableCell>
-                      <TableCell className="text-right">{formatCurrency(expense.annual_cost, 'OMR')}</TableCell>
-                      <TableCell>
-                        <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                          ${expense.status === 'Active' ? 'bg-green-100 text-green-800' : 
-                            expense.status === 'Estimate' ? 'bg-blue-100 text-blue-800' : 
-                            expense.status === 'Critical Gap' ? 'bg-red-100 text-red-800' : 
-                            'bg-gray-100 text-gray-800'}`
-                        }>
-                          {expense.status}
-                        </div>
-                      </TableCell>
-                      <TableCell className="max-w-xs truncate" title={expense.notes || ''}>
-                        {expense.notes}
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </div>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Service Provider</TableHead>
+              <TableHead>Service Type</TableHead>
+              <TableHead className="text-right">Monthly Cost</TableHead>
+              <TableHead className="text-right">Annual Cost</TableHead>
+              <TableHead>Status</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredExpenses.map((expense) => (
+              <TableRow key={expense.id}>
+                <TableCell className="font-medium">{expense.service_provider}</TableCell>
+                <TableCell>{expense.service_type}</TableCell>
+                <TableCell className="text-right">{formatCurrency(expense.monthly_cost, 'OMR')}</TableCell>
+                <TableCell className="text-right">{formatCurrency(expense.annual_cost, 'OMR')}</TableCell>
+                <TableCell>
+                  <span className={`px-2 py-1 rounded-full text-xs ${
+                    expense.status === 'Active' ? 'bg-green-100 text-green-800' :
+                    expense.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
+                    'bg-gray-100 text-gray-800'
+                  }`}>
+                    {expense.status}
+                  </span>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </CardContent>
     </Card>
   );

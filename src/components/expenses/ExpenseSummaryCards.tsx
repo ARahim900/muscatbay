@@ -1,72 +1,71 @@
 
-import React from 'react';
-import { useQuery } from '@tanstack/react-query';
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent } from "@/components/ui/card";
 import ExpenseStatusCard from './ExpenseStatusCard';
+import { ExpenseSummaryByStatus } from '@/types/expenses';
 import { fetchExpenseSummaryByStatus, fetchOperatingExpenses } from '@/utils/expenseUtils';
-import { Skeleton } from '@/components/ui/skeleton';
 
 const ExpenseSummaryCards: React.FC = () => {
-  const { data: expenses, isLoading: isLoadingExpenses } = useQuery({
-    queryKey: ['operating-expenses'],
-    queryFn: fetchOperatingExpenses
-  });
+  const [expensesByStatus, setExpensesByStatus] = useState<ExpenseSummaryByStatus[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
 
-  const { data: statusSummary, isLoading: isLoadingStatus } = useQuery({
-    queryKey: ['expense-summary-by-status'],
-    queryFn: fetchExpenseSummaryByStatus
-  });
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const data = await fetchExpenseSummaryByStatus();
+        setExpensesByStatus(data);
+      } catch (error) {
+        console.error('Error fetching expense summary data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const isLoading = isLoadingExpenses || isLoadingStatus;
+    fetchData();
+  }, []);
 
-  // Calculate totals
-  const totalMonthly = expenses?.reduce((sum, expense) => sum + expense.monthly_cost, 0) || 0;
-  const totalAnnual = expenses?.reduce((sum, expense) => sum + expense.annual_cost, 0) || 0;
-  const totalCount = expenses?.length || 0;
+  // Calculate summary metrics
+  const totalAnnualCost = expensesByStatus.reduce((sum, item) => sum + item.total_annual_cost, 0);
+  const totalMonthlyCost = expensesByStatus.reduce((sum, item) => sum + item.total_monthly_cost, 0);
+  const totalServiceCount = expensesByStatus.reduce((sum, item) => sum + item.count, 0);
 
-  // Get status summaries
-  const activeExpenses = statusSummary?.find(s => s.status === 'Active');
-  const estimateExpenses = statusSummary?.find(s => s.status === 'Estimate');
-  const criticalExpenses = statusSummary?.find(s => s.status === 'Critical Gap');
-
-  if (isLoading) {
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {[...Array(4)].map((_, i) => (
-          <Skeleton key={i} className="h-[120px] w-full" />
-        ))}
-      </div>
-    );
-  }
+  // Find specific statuses
+  const activeExpenses = expensesByStatus.find(item => item.status === 'Active');
+  const pendingExpenses = expensesByStatus.find(item => item.status === 'Pending');
+  const expiredExpenses = expensesByStatus.find(item => item.status === 'Expired');
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <ExpenseStatusCard
-        title="Total Annual Expense"
-        amount={totalAnnual}
-        count={totalCount}
-        description="All operating expenses combined"
-        className="border-blue-200 bg-blue-50"
+        title="Total Operating Expenses"
+        amount={totalAnnualCost}
+        count={totalServiceCount}
+        description="Annual budget for all services"
+        className="border-l-4 border-blue-500"
       />
+      
       <ExpenseStatusCard
-        title="Monthly Operating Cost"
-        amount={totalMonthly}
-        count={totalCount}
-        description="Monthly operating budget"
-        className="border-green-200 bg-green-50"
-      />
-      <ExpenseStatusCard
-        title="Active Service Contracts"
+        title="Active Contracts"
         amount={activeExpenses?.total_annual_cost || 0}
         count={activeExpenses?.count || 0}
-        description="Current service agreements"
-        className="border-teal-200 bg-teal-50"
+        description="Currently active service contracts"
+        className="border-l-4 border-green-500"
       />
+      
       <ExpenseStatusCard
-        title="Estimated & Pending"
-        amount={(estimateExpenses?.total_annual_cost || 0) + (criticalExpenses?.total_annual_cost || 0)}
-        count={(estimateExpenses?.count || 0) + (criticalExpenses?.count || 0)}
-        description="Estimated and critical expense gaps"
-        className="border-amber-200 bg-amber-50"
+        title="Pending Approval"
+        amount={pendingExpenses?.total_annual_cost || 0}
+        count={pendingExpenses?.count || 0}
+        description="Contracts awaiting approval"
+        className="border-l-4 border-yellow-500"
+      />
+      
+      <ExpenseStatusCard
+        title="Monthly Operating Cost"
+        amount={totalMonthlyCost}
+        count={totalServiceCount}
+        description="Average monthly expenses"
+        className="border-l-4 border-purple-500"
       />
     </div>
   );

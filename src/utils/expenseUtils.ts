@@ -1,4 +1,3 @@
-
 import { OperatingExpense, ExpenseSummaryByType, ExpenseSummaryByStatus, OperatingExpenseDisplay } from '@/types/expenses';
 
 // Helper function to group expenses by service type and calculate totals
@@ -178,4 +177,21 @@ export const getMockExpenseDisplayData = (): OperatingExpenseDisplay[] => {
     { category: 'Electricity', supplier: 'Utility Provider', annual: 35000.00, allocation: 'All Units' },
     { category: 'Other Expenses', supplier: 'Various', annual: 11252.38, allocation: 'All Units' }
   ];
+};
+
+// Fetch operating expenses - returns mock data for now
+export const fetchOperatingExpenses = async (): Promise<OperatingExpense[]> => {
+  return getMockExpensesData();
+};
+
+// Fetch expense summary by type
+export const fetchExpenseSummaryByType = async (): Promise<ExpenseSummaryByType[]> => {
+  const expenses = await fetchOperatingExpenses();
+  return getExpensesByType(expenses);
+};
+
+// Fetch expense summary by status
+export const fetchExpenseSummaryByStatus = async (): Promise<ExpenseSummaryByStatus[]> => {
+  const expenses = await fetchOperatingExpenses();
+  return getExpensesByStatus(expenses);
 };
