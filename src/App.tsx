@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import './App.css';
@@ -21,6 +22,7 @@ import Reports from '@/pages/Reports';
 import Admin from '@/pages/Admin';
 import OperatingExpenses from '@/pages/OperatingExpenses';
 import PropertyManagement from '@/pages/PropertyManagement';
+import ServiceCharges from '@/pages/ServiceCharges';
 import NotFound from '@/pages/NotFound';
 import Layout from '@/components/layout/Layout';
 import { ThemeProvider } from '@/components/theme/theme-provider';
@@ -61,6 +63,7 @@ function App() {
             <Route path="/admin" element={<Admin />} />
             <Route path="/operating-expenses" element={<OperatingExpenses />} />
             <Route path="/property-management" element={<PropertyManagement />} />
+            <Route path="/service-charges" element={<ServiceCharges />} />
           </Route>
           <Route path="/auth" element={<Auth />} />
           <Route path="*" element={<NotFound />} />
