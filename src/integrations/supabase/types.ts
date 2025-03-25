@@ -588,6 +588,78 @@ export type Database = {
         }
         Relationships: []
       }
+      "Muscat Bay Assets List": {
+        Row: {
+          "Asset Brand": string | null
+          "Asset Categ Id": number | null
+          "Asset Categ Name": string | null
+          "Asset Desc": string | null
+          "Asset Id": number | null
+          "Asset In Loc Srlno": string | null
+          "Asset Loc Key Id": number | null
+          "Asset Loc Ref1": string | null
+          "Asset Loc Ref2": string | null
+          "Asset Loc Ref3": string | null
+          "Asset Model": string | null
+          "Asset Name": string | null
+          "Asset Sub Categ Id": number | null
+          "Asset Sub Categ Name": string | null
+          "Asset Tag": string | null
+          Client: string | null
+          "Country Of Origin": string | null
+          "Is Asset Active": string | null
+          "Location Name": string | null
+          "Location Tag": string | null
+          "Ppm Freq": string | null
+        }
+        Insert: {
+          "Asset Brand"?: string | null
+          "Asset Categ Id"?: number | null
+          "Asset Categ Name"?: string | null
+          "Asset Desc"?: string | null
+          "Asset Id"?: number | null
+          "Asset In Loc Srlno"?: string | null
+          "Asset Loc Key Id"?: number | null
+          "Asset Loc Ref1"?: string | null
+          "Asset Loc Ref2"?: string | null
+          "Asset Loc Ref3"?: string | null
+          "Asset Model"?: string | null
+          "Asset Name"?: string | null
+          "Asset Sub Categ Id"?: number | null
+          "Asset Sub Categ Name"?: string | null
+          "Asset Tag"?: string | null
+          Client?: string | null
+          "Country Of Origin"?: string | null
+          "Is Asset Active"?: string | null
+          "Location Name"?: string | null
+          "Location Tag"?: string | null
+          "Ppm Freq"?: string | null
+        }
+        Update: {
+          "Asset Brand"?: string | null
+          "Asset Categ Id"?: number | null
+          "Asset Categ Name"?: string | null
+          "Asset Desc"?: string | null
+          "Asset Id"?: number | null
+          "Asset In Loc Srlno"?: string | null
+          "Asset Loc Key Id"?: number | null
+          "Asset Loc Ref1"?: string | null
+          "Asset Loc Ref2"?: string | null
+          "Asset Loc Ref3"?: string | null
+          "Asset Model"?: string | null
+          "Asset Name"?: string | null
+          "Asset Sub Categ Id"?: number | null
+          "Asset Sub Categ Name"?: string | null
+          "Asset Tag"?: string | null
+          Client?: string | null
+          "Country Of Origin"?: string | null
+          "Is Asset Active"?: string | null
+          "Location Name"?: string | null
+          "Location Tag"?: string | null
+          "Ppm Freq"?: string | null
+        }
+        Relationships: []
+      }
       operating_expenses: {
         Row: {
           allocation: string
@@ -639,6 +711,66 @@ export type Database = {
           status?: string
           updated_at?: string | null
           year?: number
+        }
+        Relationships: []
+      }
+      "Owners & Properties Information List": {
+        Row: {
+          "Anticipated Handover Date": string | null
+          BUA: string | null
+          "Client Name": string | null
+          DOB: string | null
+          Email: string | null
+          "Handover Date": string | null
+          "Name in Arabic": string | null
+          Nationality: string | null
+          Plot: string | null
+          Region: string | null
+          Sector: string | null
+          "SPA Date": string | null
+          Status: string | null
+          Type: string | null
+          "Unit No": string | null
+          "Unit Type": string | null
+          "Unit Value": number | null
+        }
+        Insert: {
+          "Anticipated Handover Date"?: string | null
+          BUA?: string | null
+          "Client Name"?: string | null
+          DOB?: string | null
+          Email?: string | null
+          "Handover Date"?: string | null
+          "Name in Arabic"?: string | null
+          Nationality?: string | null
+          Plot?: string | null
+          Region?: string | null
+          Sector?: string | null
+          "SPA Date"?: string | null
+          Status?: string | null
+          Type?: string | null
+          "Unit No"?: string | null
+          "Unit Type"?: string | null
+          "Unit Value"?: number | null
+        }
+        Update: {
+          "Anticipated Handover Date"?: string | null
+          BUA?: string | null
+          "Client Name"?: string | null
+          DOB?: string | null
+          Email?: string | null
+          "Handover Date"?: string | null
+          "Name in Arabic"?: string | null
+          Nationality?: string | null
+          Plot?: string | null
+          Region?: string | null
+          Sector?: string | null
+          "SPA Date"?: string | null
+          Status?: string | null
+          Type?: string | null
+          "Unit No"?: string | null
+          "Unit Type"?: string | null
+          "Unit Value"?: number | null
         }
         Relationships: []
       }
