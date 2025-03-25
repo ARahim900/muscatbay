@@ -1,66 +1,71 @@
-import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
-import Auth from "./pages/Auth";
-import Index from "./pages/Index";
-import Layout from "./components/layout/Layout";
-import ProtectedRoute from "./components/auth/ProtectedRoute";
-import { AuthProvider } from "./context/AuthContext";
-import { ThemeProvider } from "./components/theme/theme-provider";
-import NotFound from "./pages/NotFound";
-import Water from "./pages/Water";
-import Electricity from "./pages/Electricity";
-import ElectricitySystem from "./pages/ElectricitySystem";
-import WaterSystem from "./pages/WaterSystem";
-import WaterConsumptionTypes from "./pages/WaterConsumptionTypes";
-import STP from "./pages/STP";
-import STPPlant from "./pages/STPPlant";
-import STPDashboard from "./pages/STPDashboard";
-import STPAnalytics from "./pages/STPAnalytics";
-import PumpingStations from "./pages/PumpingStations";
-import HVAC from "./pages/HVAC";
-import Reports from "./pages/Reports";
-import Projects from "./pages/Projects";
-import Contracts from "./pages/Contracts";
-import AssetLifecycle from "./pages/AssetLifecycle";
-import Admin from "./pages/Admin";
-import { Toaster } from "./components/ui/toaster";
-import OperatingExpenses from "./pages/OperatingExpenses";
+import { useState, useEffect } from 'react';
+import { Routes, Route } from 'react-router-dom';
+import './App.css';
+import Index from '@/pages/Index';
+import Auth from '@/pages/Auth';
+import AssetLifecycle from '@/pages/AssetLifecycle';
+import Contracts from '@/pages/Contracts';
+import Projects from '@/pages/Projects';
+import Water from '@/pages/Water';
+import WaterSystem from '@/pages/WaterSystem';
+import WaterConsumptionTypes from '@/pages/WaterConsumptionTypes';
+import Electricity from '@/pages/Electricity';
+import ElectricitySystem from '@/pages/ElectricitySystem';
+import HVAC from '@/pages/HVAC';
+import PumpingStations from '@/pages/PumpingStations';
+import STP from '@/pages/STP';
+import STPPlant from '@/pages/STPPlant';
+import STPDashboard from '@/pages/STPDashboard';
+import STPAnalytics from '@/pages/STPAnalytics';
+import Reports from '@/pages/Reports';
+import Admin from '@/pages/Admin';
+import OperatingExpenses from '@/pages/OperatingExpenses';
+import PropertyManagement from '@/pages/PropertyManagement';
+import NotFound from '@/pages/NotFound';
+import Layout from '@/components/layout/Layout';
+import { ThemeProvider } from '@/components/theme/theme-provider';
+import { Toaster } from '@/components/ui/toaster';
 
 function App() {
-  const storedTheme = localStorage.getItem("vite-ui-theme") || "light";
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  if (!mounted) {
+    return <div className="bg-background text-foreground">Loading...</div>
+  }
 
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
-          <Routes>
-            <Route path="/login" element={<Auth />} />
-            <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
-              <Route index element={<Navigate to="/dashboard" replace />} />
-              <Route path="dashboard" element={<Index />} />
-              <Route path="water" element={<Water />} />
-              <Route path="water-types" element={<WaterConsumptionTypes />} />
-              <Route path="water-system" element={<WaterSystem />} />
-              <Route path="electricity" element={<Electricity />} />
-              <Route path="electricity-system" element={<ElectricitySystem />} />
-              <Route path="stp" element={<STP />} />
-              <Route path="stp-dashboard" element={<STPDashboard />} />
-              <Route path="stp-plant" element={<STPPlant />} />
-              <Route path="stp-analytics" element={<STPAnalytics />} />
-              <Route path="pumping-stations" element={<PumpingStations />} />
-              <Route path="hvac" element={<HVAC />} />
-              <Route path="reports" element={<Reports />} />
-              <Route path="projects" element={<Projects />} />
-              <Route path="contracts" element={<Contracts />} />
-              <Route path="alm" element={<AssetLifecycle />} />
-              <Route path="operating-expenses" element={<OperatingExpenses />} />
-              <Route path="admin" element={<Admin />} />
-              <Route path="*" element={<NotFound />} />
-            </Route>
-          </Routes>
-        </ThemeProvider>
-      </AuthProvider>
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <Toaster />
-    </BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Index />} />
+          <Route element={<Layout />}>
+            <Route path="/alm" element={<AssetLifecycle />} />
+            <Route path="/contracts" element={<Contracts />} />
+            <Route path="/projects" element={<Projects />} />
+            <Route path="/water" element={<Water />} />
+            <Route path="/water-system" element={<WaterSystem />} />
+            <Route path="/water-consumption-types" element={<WaterConsumptionTypes />} />
+            <Route path="/electricity" element={<Electricity />} />
+            <Route path="/electricity-system" element={<ElectricitySystem />} />
+            <Route path="/hvac" element={<HVAC />} />
+            <Route path="/pumping-stations" element={<PumpingStations />} />
+            <Route path="/stp" element={<STP />} />
+            <Route path="/stp-plant" element={<STPPlant />} />
+            <Route path="/stp-dashboard" element={<STPDashboard />} />
+            <Route path="/stp-analytics" element={<STPAnalytics />} />
+            <Route path="/reports" element={<Reports />} />
+            <Route path="/admin" element={<Admin />} />
+            <Route path="/operating-expenses" element={<OperatingExpenses />} />
+            <Route path="/property-management" element={<PropertyManagement />} />
+          </Route>
+          <Route path="/auth" element={<Auth />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+    </ThemeProvider>
   );
 }
 

@@ -651,6 +651,132 @@ export type Database = {
         }
         Relationships: []
       }
+      property_owners: {
+        Row: {
+          client_name: string
+          client_name_arabic: string | null
+          created_at: string | null
+          date_of_birth: string | null
+          email: string | null
+          id: string
+          nationality: string | null
+          region: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          client_name: string
+          client_name_arabic?: string | null
+          created_at?: string | null
+          date_of_birth?: string | null
+          email?: string | null
+          id?: string
+          nationality?: string | null
+          region?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          client_name?: string
+          client_name_arabic?: string | null
+          created_at?: string | null
+          date_of_birth?: string | null
+          email?: string | null
+          id?: string
+          nationality?: string | null
+          region?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      property_transactions: {
+        Row: {
+          created_at: string | null
+          id: string
+          owner_id: string | null
+          property_id: string | null
+          spa_date: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          owner_id?: string | null
+          property_id?: string | null
+          spa_date?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          owner_id?: string | null
+          property_id?: string | null
+          spa_date?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_transactions_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "property_owners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "property_transactions_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "property_units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      property_units: {
+        Row: {
+          anticipated_handover_date: string | null
+          bua: number | null
+          created_at: string | null
+          handover_date: string | null
+          id: string
+          plot_size: number | null
+          property_type: string | null
+          sector: string | null
+          status: string | null
+          unit_no: string
+          unit_type: string | null
+          unit_value: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          anticipated_handover_date?: string | null
+          bua?: number | null
+          created_at?: string | null
+          handover_date?: string | null
+          id?: string
+          plot_size?: number | null
+          property_type?: string | null
+          sector?: string | null
+          status?: string | null
+          unit_no: string
+          unit_type?: string | null
+          unit_value?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          anticipated_handover_date?: string | null
+          bua?: number | null
+          created_at?: string | null
+          handover_date?: string | null
+          id?: string
+          plot_size?: number | null
+          property_type?: string | null
+          sector?: string | null
+          status?: string | null
+          unit_no?: string
+          unit_type?: string | null
+          unit_value?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       stp_daily_data: {
         Row: {
           bod: number | null
@@ -1466,6 +1592,47 @@ export type Database = {
         }
         Relationships: []
       }
+      owners_by_nationality: {
+        Row: {
+          count: number | null
+          nationality: string | null
+        }
+        Relationships: []
+      }
+      owners_by_region: {
+        Row: {
+          count: number | null
+          region: string | null
+        }
+        Relationships: []
+      }
+      property_by_sector: {
+        Row: {
+          avg_size: number | null
+          count: number | null
+          sector: string | null
+          total_value: number | null
+        }
+        Relationships: []
+      }
+      property_by_status: {
+        Row: {
+          avg_size: number | null
+          count: number | null
+          status: string | null
+          total_value: number | null
+        }
+        Relationships: []
+      }
+      property_by_type: {
+        Row: {
+          avg_size: number | null
+          count: number | null
+          total_value: number | null
+          unit_type: string | null
+        }
+        Relationships: []
+      }
       water_consumption_by_type: {
         Row: {
           apr_24: number | null
@@ -1521,6 +1688,28 @@ export type Database = {
       }
     }
     Functions: {
+      add_property_with_owner: {
+        Args: {
+          p_unit_no: string
+          p_sector: string
+          p_property_type: string
+          p_status: string
+          p_unit_type: string
+          p_bua: number
+          p_plot_size: number
+          p_unit_value: number
+          p_client_name: string
+          p_client_name_arabic: string
+          p_email: string
+          p_nationality: string
+          p_region: string
+          p_dob: string
+          p_spa_date: string
+          p_handover_date: string
+          p_anticipated_handover_date: string
+        }
+        Returns: undefined
+      }
       refresh_all_materialized_views: {
         Args: Record<PropertyKey, never>
         Returns: undefined

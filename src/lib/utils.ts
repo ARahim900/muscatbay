@@ -10,7 +10,7 @@ export function formatCurrency(value: number, currency: string = 'USD'): string 
   return new Intl.NumberFormat('en-OM', {
     style: 'currency',
     currency: currency,
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
   }).format(value);
 }
