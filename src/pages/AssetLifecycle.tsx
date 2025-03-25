@@ -1,509 +1,334 @@
 import React, { useState } from 'react';
-import StandardPageLayout from '@/components/layout/StandardPageLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Building2, Wrench, FileText, TrendingUp, ListChecks, Plus, Pencil, Loader2 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { AssetCategory, CriticalAsset, MaintenanceForecast, AssetCondition, UpcomingMaintenance } from '@/types/alm';
-import { PropertyTransaction, PropertyOwner, PropertyUnit } from '@/types/expenses';
-import { PackageOpen, Wrench, AlertCircle, BarChart3, Ruler, Calculator } from 'lucide-react';
-import ServiceChargeCalculator from '@/components/service-charges/ServiceChargeCalculator';
-import { getMockExpenseDisplayData } from '@/utils/expenseUtils';
-import { 
-  AssetCategoriesTable, 
-  CriticalAssetsTable, 
-  MaintenanceForecastTable, 
-  AssetConditionsTable, 
-  UpcomingMaintenanceTable 
-} from '@/components/alm/tables';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useQuery } from '@tanstack/react-query';
+import { fetchOperatingExpenses, fetchReserveFundRates } from '@/services/serviceChargeService';
 
-// Mock asset categories data
-const assetCategories: AssetCategory[] = [
-  { 
-    id: '1', 
-    name: 'HVAC Systems', 
-    subCategory: 'Mechanical', 
-    assetCount: 58, 
-    totalReplacementCost: 1200000, 
-    lifeExpectancyRange: '15-20 years', 
-    zoneCoverage: 'All Zones' 
-  },
-  { 
-    id: '2', 
-    name: 'Electrical Distribution', 
-    subCategory: 'Electrical', 
-    assetCount: 45, 
-    totalReplacementCost: 850000, 
-    lifeExpectancyRange: '20-25 years', 
-    zoneCoverage: 'Zones 1-5' 
-  },
-  { 
-    id: '3', 
-    name: 'Water Distribution', 
-    subCategory: 'Plumbing', 
-    assetCount: 65, 
-    totalReplacementCost: 720000, 
-    lifeExpectancyRange: '25-30 years', 
-    zoneCoverage: 'All Zones' 
-  },
-  { 
-    id: '4', 
-    name: 'Fire Protection', 
-    subCategory: 'Safety', 
-    assetCount: 32, 
-    totalReplacementCost: 450000, 
-    lifeExpectancyRange: '10-15 years', 
-    zoneCoverage: 'All Buildings' 
-  },
-  { 
-    id: '5', 
-    name: 'Elevators', 
-    subCategory: 'Mechanical', 
-    assetCount: 12, 
-    totalReplacementCost: 680000, 
-    lifeExpectancyRange: '20-25 years', 
-    zoneCoverage: 'Residential Towers' 
-  }
-];
-
-// Mock property transactions
-const propertyTransactions: PropertyTransaction[] = [
-  {
-    id: '1',
-    property_id: 'prop1',
-    owner_id: 'owner1',
-    spa_date: '2023-01-15',
-    property: {
-      id: 'prop1',
-      unit_no: 'Z3-001',
-      sector: 'Zone 3',
-      property_type: 'Residential',
-      status: 'Occupied',
-      unit_type: 'Apartment',
-      bua: 120,
-      plot_size: 0,
-      unit_value: 185000,
-      handover_date: '2022-06-10',
-      anticipated_handover_date: null
-    },
-    owner: {
-      id: 'owner1',
-      client_name: 'Mohammed Al-Balushi',
-      client_name_arabic: 'محمد البلوشي',
-      email: 'mohammed@example.com',
-      nationality: 'Omani',
-      region: 'Muscat',
-      date_of_birth: '1975-03-22'
-    }
-  },
-  {
-    id: '2',
-    property_id: 'prop2',
-    owner_id: 'owner2',
-    spa_date: '2023-02-20',
-    property: {
-      id: 'prop2',
-      unit_no: 'Z5-015',
-      sector: 'Zone 5',
-      property_type: 'Residential',
-      status: 'Occupied',
-      unit_type: 'Villa',
-      bua: 250,
-      plot_size: 400,
-      unit_value: 425000,
-      handover_date: '2022-07-15',
-      anticipated_handover_date: null
-    },
-    owner: {
-      id: 'owner2',
-      client_name: 'Sarah Johnson',
-      client_name_arabic: null,
-      email: 'sarah@example.com',
-      nationality: 'British',
-      region: 'International',
-      date_of_birth: '1982-09-12'
-    }
-  }
-];
-
-// Mock critical assets data for the CriticalAssetsTable
-const criticalAssets: CriticalAsset[] = [
-  {
-    id: 'CA001',
-    assetName: 'Main Electrical Transformer',
-    location: 'Zone 3 Utility Area',
-    criticality: 'High',
-    riskScore: 85,
-    lastInspectionDate: '2023-04-15',
-    nextInspectionDate: '2023-07-15',
-    replacementValue: 320000,
-    notes: 'Serves the entire residential area'
-  },
-  {
-    id: 'CA002',
-    assetName: 'Water Treatment Plant',
-    location: 'Zone 2 Utility Area',
-    criticality: 'High',
-    riskScore: 80,
-    lastInspectionDate: '2023-03-22',
-    nextInspectionDate: '2023-06-22',
-    replacementValue: 450000,
-    notes: 'Critical for potable water supply'
-  },
-  {
-    id: 'CA003',
-    assetName: 'Main HVAC Chiller',
-    location: 'Zone 5 Mechanical Room',
-    criticality: 'Medium',
-    riskScore: 70,
-    lastInspectionDate: '2023-05-10',
-    nextInspectionDate: '2023-08-10',
-    replacementValue: 285000,
-    notes: 'Serves commercial and hospitality areas'
-  }
-];
-
-// Mock maintenance forecast data for MaintenanceForecastTable
-const maintenanceForecasts: MaintenanceForecast[] = [
-  {
-    id: 'MF001',
-    assetName: 'Elevators - Tower A',
-    zone: 'Zone 3',
-    installationYear: 2020,
-    currentCondition: 'Good',
-    nextMaintenanceYear: 2024,
-    maintenanceType: 'Major Service',
-    estimatedCost: 45000,
-    lifeExpectancy: 25
-  },
-  {
-    id: 'MF002',
-    assetName: 'Roofing System - Villa Complex',
-    zone: 'Zone 5',
-    installationYear: 2021,
-    currentCondition: 'Excellent',
-    nextMaintenanceYear: 2026,
-    maintenanceType: 'Inspection & Repair',
-    estimatedCost: 32000,
-    lifeExpectancy: 20
-  },
-  {
-    id: 'MF003',
-    assetName: 'Swimming Pool Equipment',
-    zone: 'Zone 8',
-    installationYear: 2022,
-    currentCondition: 'Excellent',
-    nextMaintenanceYear: 2024,
-    maintenanceType: 'Routine Service',
-    estimatedCost: 8500,
-    lifeExpectancy: 10
-  }
-];
-
-// Mock asset conditions data for AssetConditionsTable
-const assetConditions: AssetCondition[] = [
-  {
-    id: '1',
-    conditionRating: 'Excellent',
-    description: 'New or like new condition, fully functional',
-    assetCount: 145,
-    percentage: 36.5,
-    recommendedAction: 'Regular maintenance only'
-  },
-  {
-    id: '2',
-    conditionRating: 'Good',
-    description: 'Minor wear, fully functional',
-    assetCount: 172,
-    percentage: 43.2,
-    recommendedAction: 'Routine maintenance'
-  },
-  {
-    id: '3',
-    conditionRating: 'Fair',
-    description: 'Moderate wear, functionally adequate',
-    assetCount: 48,
-    percentage: 12.1,
-    recommendedAction: 'Increased monitoring, plan for future repairs'
-  },
-  {
-    id: '4',
-    conditionRating: 'Poor',
-    description: 'Significant deterioration, function compromised',
-    assetCount: 25,
-    percentage: 6.3,
-    recommendedAction: 'Repair or replace soon'
-  },
-  {
-    id: '5',
-    conditionRating: 'Critical',
-    description: 'Severely deteriorated, function impaired',
-    assetCount: 8,
-    percentage: 2.0,
-    recommendedAction: 'Immediate replacement required'
-  }
-];
-
-// Mock upcoming maintenance data for UpcomingMaintenanceTable
-const upcomingMaintenance: UpcomingMaintenance[] = [
-  {
-    id: 'UM001',
-    assetName: 'Fire Alarm Systems',
-    zone: 'All Zones',
-    scheduledDate: '2023-08-15',
-    maintenanceType: 'Annual Certification',
-    estimatedCost: 18500,
-    duration: 5,
-    resourceRequirements: 'Specialized Contractor',
-    priority: 'High'
-  },
-  {
-    id: 'UM002',
-    assetName: 'Landscaping - Main Boulevard',
-    zone: 'Zone 1',
-    scheduledDate: '2023-07-22',
-    maintenanceType: 'Seasonal Replacement',
-    estimatedCost: 12000,
-    duration: 7,
-    resourceRequirements: 'Landscaping Team',
-    priority: 'Medium'
-  },
-  {
-    id: 'UM003',
-    assetName: 'Tennis Courts Resurfacing',
-    zone: 'Zone 7',
-    scheduledDate: '2023-09-10',
-    maintenanceType: 'Major Repair',
-    estimatedCost: 35000,
-    duration: 14,
-    resourceRequirements: 'Specialized Contractor',
-    priority: 'Low'
-  }
-];
-
-const AssetLifecycle: React.FC = () => {
-  const [activeTab, setActiveTab] = useState('overview');
-  
-  // Get expense data for service charge calculations
-  const expenses = getMockExpenseDisplayData();
-  
-  // Mock reserve fund rates
-  const reserveFundRates = [
-    { zone: 'zone03', zoneName: 'Zone 3 (Zaha)', rate: 0.40, effectiveDate: '2023-01-01', notes: 'Residential apartments' },
-    { zone: 'zone05', zoneName: 'Zone 5 (Nameer)', rate: 0.50, effectiveDate: '2023-01-01', notes: 'Premium villas' },
-    { zone: 'zone08', zoneName: 'Zone 8 (Wajd)', rate: 0.60, effectiveDate: '2023-01-01', notes: 'Luxury villas' },
-    { zone: 'commercial', zoneName: 'Commercial', rate: 0.70, effectiveDate: '2023-01-01', notes: 'Retail and office spaces' }
-  ];
+const AssetLifecycleManagement = () => {
+  const [searchTerm, setSearchTerm] = useState('');
 
   return (
-    <StandardPageLayout
-      title="Asset Lifecycle Management"
-      icon={<PackageOpen className="h-8 w-8 text-blue-600" />}
-      description="Comprehensive asset management and service charge calculations"
-    >
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <Card className="bg-blue-50">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-blue-600">Total Assets</p>
-                <h3 className="text-2xl font-bold">{assetCategories.reduce((sum, cat) => sum + cat.assetCount, 0)}</h3>
-              </div>
-              <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                <PackageOpen className="h-6 w-6 text-blue-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-amber-50">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-amber-600">Properties</p>
-                <h3 className="text-2xl font-bold">{propertyTransactions.length}</h3>
-              </div>
-              <div className="h-12 w-12 bg-amber-100 rounded-lg flex items-center justify-center">
-                <Ruler className="h-6 w-6 text-amber-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-emerald-50">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-emerald-600">Total Replacement Value</p>
-                <h3 className="text-2xl font-bold">OMR {(assetCategories.reduce((sum, cat) => sum + cat.totalReplacementCost, 0) / 1000000).toFixed(1)}M</h3>
-              </div>
-              <div className="h-12 w-12 bg-emerald-100 rounded-lg flex items-center justify-center">
-                <BarChart3 className="h-6 w-6 text-emerald-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-purple-50">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-purple-600">Service Charges</p>
-                <h3 className="text-2xl font-bold">OMR {(expenses.reduce((sum, expense) => sum + expense.annual, 0) / 1000).toFixed(1)}K</h3>
-              </div>
-              <div className="h-12 w-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                <Calculator className="h-6 w-6 text-purple-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+    <div className="container py-6 space-y-6">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Asset Lifecycle Management</h1>
+          <p className="text-muted-foreground">Manage and track the lifecycle of all assets</p>
+        </div>
       </div>
 
-      <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4 max-w-2xl mb-4">
+      <Tabs defaultValue="overview" className="space-y-4">
+        <TabsList className="grid grid-cols-1 md:grid-cols-5 lg:w-[800px]">
           <TabsTrigger value="overview" className="flex items-center gap-2">
-            <BarChart3 className="h-4 w-4" />
-            <span className="hidden sm:inline">Overview</span>
+            <Building2 className="h-4 w-4" />
+            <span>Overview</span>
           </TabsTrigger>
-          <TabsTrigger value="assets" className="flex items-center gap-2">
-            <PackageOpen className="h-4 w-4" />
-            <span className="hidden sm:inline">Asset Categories</span>
+          <TabsTrigger value="condition" className="flex items-center gap-2">
+            <Wrench className="h-4 w-4" />
+            <span>Condition Assessment</span>
           </TabsTrigger>
-          <TabsTrigger value="properties" className="flex items-center gap-2">
-            <Ruler className="h-4 w-4" />
-            <span className="hidden sm:inline">Properties</span>
+          <TabsTrigger value="critical" className="flex items-center gap-2">
+            <FileText className="h-4 w-4" />
+            <span>Critical Assets</span>
           </TabsTrigger>
-          <TabsTrigger value="service-charges" className="flex items-center gap-2">
-            <Calculator className="h-4 w-4" />
-            <span className="hidden sm:inline">Service Charges</span>
+          <TabsTrigger value="forecast" className="flex items-center gap-2">
+            <TrendingUp className="h-4 w-4" />
+            <span>Lifecycle Forecast</span>
+          </TabsTrigger>
+          <TabsTrigger value="maintenance" className="flex items-center gap-2">
+            <ListChecks className="h-4 w-4" />
+            <span>Maintenance Schedule</span>
+          </TabsTrigger>
+          <TabsTrigger value="serviceCharges" className="flex items-center gap-2">
+            <ListChecks className="h-4 w-4" />
+            <span>Service Charge Settings</span>
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Asset Replacement Value by Category</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-80">
-                  {/* Placeholder for chart */}
-                  <div className="w-full h-full bg-gray-50 rounded-md flex items-center justify-center">
-                    Asset Replacement Value Chart
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader>
-                <CardTitle>Asset Distribution by Zone</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-80">
-                  {/* Placeholder for chart */}
-                  <div className="w-full h-full bg-gray-50 rounded-md flex items-center justify-center">
-                    Asset Distribution Chart
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-          
-          <div className="grid grid-cols-1 gap-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Critical Assets</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <CriticalAssetsTable data={criticalAssets} />
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader>
-                <CardTitle>Upcoming Maintenance</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <UpcomingMaintenanceTable data={upcomingMaintenance} />
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="assets" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Asset Categories</CardTitle>
+              <CardTitle>Asset Overview</CardTitle>
+              <CardDescription>Summary of all assets and their status</CardDescription>
             </CardHeader>
             <CardContent>
-              <AssetCategoriesTable data={assetCategories} />
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader>
-              <CardTitle>Asset Conditions</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <AssetConditionsTable data={assetConditions} />
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader>
-              <CardTitle>Maintenance Forecast</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <MaintenanceForecastTable data={maintenanceForecasts} />
+              <p>Overview content will be implemented here.</p>
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="properties" className="space-y-4">
+        <TabsContent value="condition" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Property Transactions</CardTitle>
+              <CardTitle>Condition Assessment</CardTitle>
+              <CardDescription>Assess the condition of assets</CardDescription>
             </CardHeader>
             <CardContent>
+              <p>Condition assessment content will be implemented here.</p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="critical" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Critical Assets</CardTitle>
+              <CardDescription>List of critical assets</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p>Critical assets content will be implemented here.</p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="forecast" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Lifecycle Forecast</CardTitle>
+              <CardDescription>Forecast the lifecycle of assets</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p>Lifecycle forecast content will be implemented here.</p>
+            </CardContent>
+          </Card>
+
+        </TabsContent>
+
+        <TabsContent value="maintenance" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Maintenance Schedule</CardTitle>
+              <CardDescription>Schedule maintenance for assets</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p>Maintenance schedule content will be implemented here.</p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="serviceCharges" className="space-y-4">
+          <ServiceChargeSettings />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+};
+
+const ServiceChargeSettings = () => {
+  const [activeTab, setActiveTab] = useState('rates');
+  
+  // Fetch the necessary data
+  const { data: expenses, isLoading: loadingExpenses } = useQuery({
+    queryKey: ['operating-expenses'],
+    queryFn: fetchOperatingExpenses
+  });
+  
+  const { data: reserveFundRates, isLoading: loadingRates } = useQuery({
+    queryKey: ['reserve-fund-rates'],
+    queryFn: fetchReserveFundRates
+  });
+  
+  // Make sure we have data before rendering
+  const isLoading = loadingExpenses || loadingRates;
+  
+  if (isLoading) {
+    return (
+      <div className="flex justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+  
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle>Service Charge Configuration</CardTitle>
+        <CardDescription>
+          Configure service charge parameters, rates, and expenses
+        </CardDescription>
+        
+        <div className="mt-4 border-b">
+          <div className="flex">
+            <button
+              className={`px-4 py-2 ${activeTab === 'rates' ? 'border-b-2 border-primary font-medium' : 'text-muted-foreground'}`}
+              onClick={() => setActiveTab('rates')}
+            >
+              Reserve Fund Rates
+            </button>
+            <button
+              className={`px-4 py-2 ${activeTab === 'expenses' ? 'border-b-2 border-primary font-medium' : 'text-muted-foreground'}`}
+              onClick={() => setActiveTab('expenses')}
+            >
+              Operating Expenses
+            </button>
+            <button
+              className={`px-4 py-2 ${activeTab === 'policies' ? 'border-b-2 border-primary font-medium' : 'text-muted-foreground'}`}
+              onClick={() => setActiveTab('policies')}
+            >
+              Policies
+            </button>
+          </div>
+        </div>
+      </CardHeader>
+      
+      <CardContent>
+        {activeTab === 'rates' && (
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-medium">Reserve Fund Rates</h3>
+              <Button size="sm" variant="outline" className="flex items-center gap-1">
+                <Plus className="h-4 w-4" /> Add Rate
+              </Button>
+            </div>
+            
+            <div className="rounded-md border">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Unit No</TableHead>
-                    <TableHead>Sector</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Owner</TableHead>
-                    <TableHead className="text-right">BUA (sqm)</TableHead>
-                    <TableHead className="text-right">Value (OMR)</TableHead>
-                    <TableHead>Handover Date</TableHead>
+                    <TableHead>Zone</TableHead>
+                    <TableHead>Rate (OMR/sqm)</TableHead>
+                    <TableHead>Effective Date</TableHead>
+                    <TableHead>Notes</TableHead>
+                    <TableHead className="w-[100px]">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {propertyTransactions.map((transaction) => (
-                    <TableRow key={transaction.id}>
-                      <TableCell className="font-medium">{transaction.property.unit_no}</TableCell>
-                      <TableCell>{transaction.property.sector}</TableCell>
-                      <TableCell>{transaction.property.unit_type}</TableCell>
-                      <TableCell>{transaction.owner.client_name}</TableCell>
-                      <TableCell className="text-right">{transaction.property.bua}</TableCell>
-                      <TableCell className="text-right">{transaction.property.unit_value.toLocaleString()}</TableCell>
-                      <TableCell>{transaction.property.handover_date}</TableCell>
+                  {reserveFundRates?.map((rate) => (
+                    <TableRow key={rate.id}>
+                      <TableCell className="font-medium">{rate.zoneCode}</TableCell>
+                      <TableCell>{rate.rate.toFixed(2)}</TableCell>
+                      <TableCell>
+                        {new Date(rate.effectiveDate).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell>{rate.notes || '-'}</TableCell>
+                      <TableCell>
+                        <Button variant="ghost" size="icon">
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="service-charges" className="space-y-4">
-          <ServiceChargeCalculator 
-            expenses={expenses}
-            reserveFundRates={reserveFundRates}
-          />
-        </TabsContent>
-      </Tabs>
-    </StandardPageLayout>
+            </div>
+          </div>
+        )}
+        
+        {activeTab === 'expenses' && (
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-medium">Operating Expenses</h3>
+              <Button size="sm" variant="outline" className="flex items-center gap-1">
+                <Plus className="h-4 w-4" /> Add Expense
+              </Button>
+            </div>
+            
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Category</TableHead>
+                    <TableHead>Service Provider</TableHead>
+                    <TableHead>Monthly Cost</TableHead>
+                    <TableHead>Annual Cost</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="w-[100px]">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {expenses?.map((expense) => (
+                    <TableRow key={expense.id}>
+                      <TableCell className="font-medium">{expense.category}</TableCell>
+                      <TableCell>{expense.serviceProvider}</TableCell>
+                      <TableCell>{expense.monthlyCost.toFixed(2)} OMR</TableCell>
+                      <TableCell>{expense.annualCost.toFixed(2)} OMR</TableCell>
+                      <TableCell>
+                        <Badge variant={expense.status === 'Active' ? 'default' : expense.status === 'Pending' ? 'outline' : 'destructive'}>
+                          {expense.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Button variant="ghost" size="icon">
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+        )}
+        
+        {activeTab === 'policies' && (
+          <div className="space-y-6">
+            <div>
+              <h3 className="text-lg font-medium mb-2">Service Charge Policies</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Define billing frequency and payment terms for service charges.
+              </p>
+              
+              <div className="grid gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="billingFrequency">Billing Frequency</Label>
+                  <Select defaultValue="quarterly">
+                    <SelectTrigger id="billingFrequency">
+                      <SelectValue placeholder="Select frequency" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="monthly">Monthly</SelectItem>
+                      <SelectItem value="quarterly">Quarterly</SelectItem>
+                      <SelectItem value="biannually">Bi-annually</SelectItem>
+                      <SelectItem value="annually">Annually</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="grid gap-2">
+                  <Label htmlFor="paymentDays">Payment Terms (days)</Label>
+                  <Input id="paymentDays" type="number" defaultValue={30} />
+                </div>
+                
+                <div className="grid gap-2">
+                  <Label htmlFor="latePaymentFee">Late Payment Fee (%)</Label>
+                  <Input id="latePaymentFee" type="number" defaultValue={2} />
+                </div>
+              </div>
+            </div>
+            
+            <div>
+              <h3 className="text-lg font-medium mb-2">Calculation Settings</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Configure how service charges are calculated.
+              </p>
+              
+              <div className="flex items-center space-x-2 mb-4">
+                <Checkbox id="includeVAT" />
+                <Label htmlFor="includeVAT">Include VAT in service charge calculations</Label>
+              </div>
+              
+              <div className="grid gap-2">
+                <Label htmlFor="vatRate">VAT Rate (%)</Label>
+                <Input id="vatRate" type="number" defaultValue={5} />
+              </div>
+            </div>
+            
+            <div className="flex justify-end space-x-2">
+              <Button variant="outline">Cancel</Button>
+              <Button>Save Settings</Button>
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 };
 
-export default AssetLifecycle;
+export default AssetLifecycleManagement;

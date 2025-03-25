@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { Calculator, ChevronDown, ChevronUp, Printer, Download } from 'lucide-react';
+import { Calculator, ChevronDown, ChevronUp, Printer, Download, Loader2Icon } from 'lucide-react';
 import { PropertyUnit, ExpenseBreakdownItem, ServiceChargeCalculation } from '@/types/serviceCharges';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -504,7 +504,7 @@ const ServiceChargeCalculator: React.FC = () => {
               >
                 {isGeneratingPdf ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
                     Generating...
                   </>
                 ) : (

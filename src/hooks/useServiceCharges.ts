@@ -59,7 +59,7 @@ export const useServiceCharges = () => {
     };
     
     fetchData();
-  }, []);
+  }, [toast]);
 
   // Calculate service charges for a property
   const calculateServiceCharge = (

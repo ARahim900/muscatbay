@@ -590,37 +590,55 @@ export type Database = {
       }
       operating_expenses: {
         Row: {
+          allocation: string
           annual_cost: number
+          category: string
           created_at: string | null
+          description: string | null
           id: string
+          month: number | null
           monthly_cost: number
           notes: string | null
+          quarter: number | null
           service_provider: string
           service_type: string
           status: string
           updated_at: string | null
+          year: number
         }
         Insert: {
+          allocation?: string
           annual_cost: number
+          category?: string
           created_at?: string | null
+          description?: string | null
           id?: string
+          month?: number | null
           monthly_cost: number
           notes?: string | null
+          quarter?: number | null
           service_provider: string
           service_type: string
           status: string
           updated_at?: string | null
+          year?: number
         }
         Update: {
+          allocation?: string
           annual_cost?: number
+          category?: string
           created_at?: string | null
+          description?: string | null
           id?: string
+          month?: number | null
           monthly_cost?: number
           notes?: string | null
+          quarter?: number | null
           service_provider?: string
           service_type?: string
           status?: string
           updated_at?: string | null
+          year?: number
         }
         Relationships: []
       }
@@ -735,6 +753,7 @@ export type Database = {
           bua: number | null
           created_at: string | null
           handover_date: string | null
+          has_lift: boolean | null
           id: string
           plot_size: number | null
           property_type: string | null
@@ -744,12 +763,14 @@ export type Database = {
           unit_type: string | null
           unit_value: number | null
           updated_at: string | null
+          zone_code: string | null
         }
         Insert: {
           anticipated_handover_date?: string | null
           bua?: number | null
           created_at?: string | null
           handover_date?: string | null
+          has_lift?: boolean | null
           id?: string
           plot_size?: number | null
           property_type?: string | null
@@ -759,12 +780,14 @@ export type Database = {
           unit_type?: string | null
           unit_value?: number | null
           updated_at?: string | null
+          zone_code?: string | null
         }
         Update: {
           anticipated_handover_date?: string | null
           bua?: number | null
           created_at?: string | null
           handover_date?: string | null
+          has_lift?: boolean | null
           id?: string
           plot_size?: number | null
           property_type?: string | null
@@ -774,6 +797,155 @@ export type Database = {
           unit_type?: string | null
           unit_value?: number | null
           updated_at?: string | null
+          zone_code?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_units_zone_code_fkey"
+            columns: ["zone_code"]
+            isOneToOne: false
+            referencedRelation: "service_charge_zones"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
+      reserve_fund_rates: {
+        Row: {
+          created_at: string | null
+          effective_date: string
+          id: number
+          notes: string | null
+          rate: number
+          zone_code: string
+        }
+        Insert: {
+          created_at?: string | null
+          effective_date: string
+          id?: number
+          notes?: string | null
+          rate?: number
+          zone_code: string
+        }
+        Update: {
+          created_at?: string | null
+          effective_date?: string
+          id?: number
+          notes?: string | null
+          rate?: number
+          zone_code?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reserve_fund_rates_zone_code_fkey"
+            columns: ["zone_code"]
+            isOneToOne: false
+            referencedRelation: "service_charge_zones"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
+      service_charge_calculations: {
+        Row: {
+          base_rate: number
+          calculation_date: string | null
+          created_at: string | null
+          has_lift_access: boolean
+          id: string
+          lift_rate: number
+          lift_share: number
+          monthly: number
+          operating_share: number
+          property_id: string | null
+          property_size: number
+          quarterly: number
+          reserve_contribution: number
+          reserve_rate: number
+          total_annual: number
+          zone_code: string
+        }
+        Insert: {
+          base_rate: number
+          calculation_date?: string | null
+          created_at?: string | null
+          has_lift_access?: boolean
+          id?: string
+          lift_rate?: number
+          lift_share?: number
+          monthly?: number
+          operating_share?: number
+          property_id?: string | null
+          property_size: number
+          quarterly?: number
+          reserve_contribution?: number
+          reserve_rate?: number
+          total_annual?: number
+          zone_code: string
+        }
+        Update: {
+          base_rate?: number
+          calculation_date?: string | null
+          created_at?: string | null
+          has_lift_access?: boolean
+          id?: string
+          lift_rate?: number
+          lift_share?: number
+          monthly?: number
+          operating_share?: number
+          property_id?: string | null
+          property_size?: number
+          quarterly?: number
+          reserve_contribution?: number
+          reserve_rate?: number
+          total_annual?: number
+          zone_code?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_charge_calculations_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "property_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_charge_calculations_zone_code_fkey"
+            columns: ["zone_code"]
+            isOneToOne: false
+            referencedRelation: "service_charge_zones"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
+      service_charge_zones: {
+        Row: {
+          code: string
+          created_at: string | null
+          id: number
+          name: string
+          reserve_fund_rate: number
+          service_charge_rate: number
+          total_bua: number
+          unit_count: number
+        }
+        Insert: {
+          code: string
+          created_at?: string | null
+          id?: number
+          name: string
+          reserve_fund_rate?: number
+          service_charge_rate?: number
+          total_bua?: number
+          unit_count?: number
+        }
+        Update: {
+          code?: string
+          created_at?: string | null
+          id?: number
+          name?: string
+          reserve_fund_rate?: number
+          service_charge_rate?: number
+          total_bua?: number
+          unit_count?: number
         }
         Relationships: []
       }
