@@ -22,6 +22,7 @@ import HVAC from './pages/HVAC';
 import PumpingStations from './pages/PumpingStations';
 import Admin from './pages/Admin';
 import AssetLifecycle from './pages/AssetLifecycle';
+import Reports from './pages/Reports';
 
 const queryClient = new QueryClient();
 
@@ -51,6 +52,7 @@ const App = () => (
               <Route path="/contracts" element={<ProtectedRoute><Contracts /></ProtectedRoute>} />
               <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
               <Route path="/alm" element={<ProtectedRoute><AssetLifecycle /></ProtectedRoute>} />
+              <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
               
               {/* Catch-all route */}
               <Route path="*" element={<NotFound />} />

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { 
@@ -6,7 +5,7 @@ import {
   Droplets,
   Zap, 
   Factory, 
-  Shield, 
+  FileBarChart, 
   FileText, 
   FolderKanban,
   Clock,
@@ -37,7 +36,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose, openEmbeddedAp
     hvac: "https://hvac0.lovable.app/", 
     contracts: "https://contracts-tracker.lovable.app/", 
     projects: "/projects", // Internal route
-    security: "https://security-manager.lovable.app/", 
+    reports: "https://aitable.ai/share/shrVgCRjXVZUA5M2VZdWn", 
   };
 
   const handleEmbeddedAppClick = (url: string, title: string) => {
@@ -211,9 +210,9 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose, openEmbeddedAp
                     </Link>
                     <button 
                       className="flex items-center justify-between w-full p-2 rounded-md hover:bg-accent/80 transition-colors text-sm text-left"
-                      onClick={() => handleEmbeddedAppClick(externalApps.security, "Security")}
+                      onClick={() => handleEmbeddedAppClick(externalApps.reports, "Reports Management")}
                     >
-                      <span>Security</span>
+                      <span>Reports Management</span>
                       <ChevronRight className="h-4 w-4 text-muted-foreground" />
                     </button>
                   </div>

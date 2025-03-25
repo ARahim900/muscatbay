@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
 import Layout from '@/components/layout/Layout';
-import { Calendar, BarChart2, Droplet, Zap, Home, Shield, FileText, Briefcase, Activity, ThermometerSun, PieChart, ArrowRight, TrendingUp } from 'lucide-react';
+import { Calendar, BarChart2, Droplet, Zap, Home, FileBarChart, FileText, Briefcase, Activity, ThermometerSun, PieChart, ArrowRight, TrendingUp } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ContractIcon } from '@/components/layout/sidebar/CustomIcons';
 
@@ -172,19 +173,19 @@ const Index = () => {
           description: 'Track assets throughout their lifecycle'
         },
         { 
-          name: 'Security', 
-          icon: <Shield size={22} />, 
+          name: 'Reports Management', 
+          icon: <FileBarChart size={22} />, 
           color: 'from-muscat-primary/50 to-muscat-primary/70',
           bgColor: 'bg-muscat-primary',
           lightBg: 'bg-muscat-primary/5',
           textColor: 'text-muscat-primary',
           iconBg: 'bg-gradient-to-br from-muscat-primary/50 to-muscat-primary/70',
           metrics: [
-            { label: 'Alerts', value: '0', trend: '-3' },
-            { label: 'Systems', value: '100%', trend: '0%' }
+            { label: 'Reports', value: '28', trend: '+5' },
+            { label: 'Pending', value: '3', trend: '-2' }
           ],
-          path: '/security',
-          description: 'Security systems monitoring and management'
+          path: '/reports',
+          description: 'Reporting and analytics dashboards'
         }
       ]
     }

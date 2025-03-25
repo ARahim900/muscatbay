@@ -9,7 +9,7 @@ import {
   FileText, 
   Thermometer, 
   FolderKanban, 
-  Shield, 
+  FileBarChart,
   ChevronLeft,
   ChevronRight,
   Calendar,
@@ -187,7 +187,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     hvac: "https://hvac0.lovable.app/", 
     contracts: "https://contracts-tracker.lovable.app/", 
     projects: "/projects", // Internal route
-    security: "https://security-manager.lovable.app/", 
+    reports: "https://aitable.ai/share/shrVgCRjXVZUA5M2VZdWn", 
   };
   
   const sidebarVisible = isMobile ? mobileOpen : true;
@@ -230,7 +230,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         <div className="flex-1 px-3 py-4 overflow-y-auto">
           <div className="mb-6">
             <SidebarLink to="/" icon={Home} label="Dashboard" collapsed={collapsed} isMobile={isMobile} />
-            <SidebarLink to="/admin" icon={Shield} label="Admin Panel" collapsed={collapsed} isMobile={isMobile} />
+            <SidebarLink to="/admin" icon={FileBarChart} label="Admin Panel" collapsed={collapsed} isMobile={isMobile} />
           </div>
           
           <div className="mb-2">
@@ -326,9 +326,9 @@ const Sidebar: React.FC<SidebarProps> = ({
               isMobile={isMobile}
             />
             <SidebarLink 
-              to={externalApps.security} 
-              icon={Shield} 
-              label="Security" 
+              to={externalApps.reports} 
+              icon={FileBarChart} 
+              label="Reports Management" 
               collapsed={collapsed} 
               external={true}
               openEmbedded={openEmbeddedApp}
@@ -348,4 +348,3 @@ const Sidebar: React.FC<SidebarProps> = ({
 };
 
 export default Sidebar;
-

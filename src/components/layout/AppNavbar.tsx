@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
   Home, 
@@ -13,9 +14,9 @@ import {
   FileText, 
   Briefcase, 
   Calendar, 
-  Shield, 
   ChevronDown, 
-  LogOut 
+  LogOut,
+  FileBarChart
 } from 'lucide-react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { ThemeToggle } from '@/components/theme/theme-toggle';
@@ -106,7 +107,7 @@ const AppNavbar: React.FC<NavbarProps> = ({ toggleSidebar, toggleMobileMenu }) =
     { name: 'Contracts', icon: <FileText className="w-4 h-4 text-gray-500" />, path: '/contracts' },
     { name: 'Projects', icon: <Briefcase className="w-4 h-4 text-purple-500" />, path: '/projects' },
     { name: 'Asset Lifecycle', icon: <Calendar className="w-4 h-4 text-indigo-500" />, path: '/alm' },
-    { name: 'Admin', icon: <Shield className="w-4 h-4 text-red-500" />, path: '/admin' }
+    { name: 'Reports Management', icon: <FileBarChart className="w-4 h-4 text-red-500" />, path: '/reports' }
   ];
 
   return (
@@ -232,6 +233,7 @@ const AppNavbar: React.FC<NavbarProps> = ({ toggleSidebar, toggleMobileMenu }) =
               </div>
             )}
           </div>
+          
         </nav>
         
         <div className="flex items-center gap-1 sm:gap-2">

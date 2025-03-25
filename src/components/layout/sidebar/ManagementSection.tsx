@@ -2,7 +2,7 @@
 import React from 'react';
 import SidebarSection from './SidebarSection';
 import SidebarLink from './SidebarLink';
-import { Shield, Calendar } from 'lucide-react';
+import { Calendar, FileBarChart } from 'lucide-react';
 import { ContractIcon, FolderKanbanIcon } from './CustomIcons';
 
 interface ManagementSectionProps {
@@ -56,11 +56,11 @@ const ManagementSection: React.FC<ManagementSectionProps> = ({
         bgColor="cyan-100"
       />
       <SidebarLink 
-        to={externalApps.security || "/"} 
-        icon={Shield} 
-        label="Security" 
+        to={externalApps.reports || "/reports"} 
+        icon={FileBarChart} 
+        label="Reports Management" 
         collapsed={collapsed} 
-        external={!!externalApps.security}
+        external={!!externalApps.reports}
         openEmbedded={openEmbeddedApp}
         isMobile={isMobile}
         iconColor="red-500"
