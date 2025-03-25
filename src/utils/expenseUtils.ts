@@ -1,5 +1,5 @@
 
-import { OperatingExpense, ExpenseSummaryByType, ExpenseSummaryByStatus } from '@/types/expenses';
+import { OperatingExpense, ExpenseSummaryByType, ExpenseSummaryByStatus, OperatingExpenseDisplay } from '@/types/expenses';
 
 // Helper function to group expenses by service type and calculate totals
 export const getExpensesByType = (expenses: OperatingExpense[]): ExpenseSummaryByType[] => {
@@ -47,6 +47,17 @@ export const getExpensesByStatus = (expenses: OperatingExpense[]): ExpenseSummar
   });
   
   return Object.values(groupedExpenses);
+};
+
+// Function to convert OperatingExpense to OperatingExpenseDisplay format
+export const convertToExpenseDisplay = (expenses: OperatingExpense[]): OperatingExpenseDisplay[] => {
+  return expenses.map(expense => ({
+    category: expense.service_type,
+    supplier: expense.service_provider,
+    annual: expense.annual_cost,
+    allocation: expense.service_type === 'Lift Maintenance' ? 'With Lift Only' : 'All Units',
+    description: expense.notes || undefined
+  }));
 };
 
 // Mock data for testing
@@ -151,5 +162,20 @@ export const getMockExpensesData = (): OperatingExpense[] => {
       created_at: '2023-01-01T00:00:00Z',
       updated_at: '2023-12-31T00:00:00Z'
     }
+  ];
+};
+
+// Get the display version of mock data
+export const getMockExpenseDisplayData = (): OperatingExpenseDisplay[] => {
+  return [
+    { category: 'Facility Management', supplier: 'Kalhat', annual: 386409.72, allocation: 'All Units' },
+    { category: 'STP O&M', supplier: 'OWATCO', annual: 37245.40, allocation: 'All Units' },
+    { category: 'Lift Maintenance', supplier: 'KONE Assarain LLC', annual: 12127.50, allocation: 'With Lift Only' },
+    { category: 'Pest Control', supplier: 'Muna Noor', annual: 16800.00, allocation: 'All Units' },
+    { category: 'Chillers & BMS', supplier: 'Gulf Expert', annual: 9240.00, allocation: 'All Units' },
+    { category: 'Fire Systems', supplier: 'Bahwan Engineering', annual: 8925.00, allocation: 'All Units' },
+    { category: 'Water Consumption', supplier: 'Utility Provider', annual: 50000.00, allocation: 'All Units' },
+    { category: 'Electricity', supplier: 'Utility Provider', annual: 35000.00, allocation: 'All Units' },
+    { category: 'Other Expenses', supplier: 'Various', annual: 11252.38, allocation: 'All Units' }
   ];
 };

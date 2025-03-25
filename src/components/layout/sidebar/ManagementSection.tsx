@@ -1,36 +1,35 @@
 
 import React from 'react';
+import { PackageOpen, FileSpreadsheet, Building2, CreditCard, Calculator, FileCog } from 'lucide-react';
 import SidebarSection from './SidebarSection';
-import SidebarLink from './SidebarLink';
-import { LifeBuoy, GitFork, FileText, Wallet, Home, Calculator } from 'lucide-react';
+import SidebarLink, { SidebarLinkProps } from './SidebarLink';
 
 interface ManagementSectionProps {
   collapsed?: boolean;
   isMobile?: boolean;
   openEmbeddedApp?: (url: string, title: string) => void;
   externalApps?: {
-    electricity: string;
-    stpPlant: string;
-    pumpingStation: string;
-    hvac: string;
-    contracts: string;
-    projects: string;
-    security: string;
+    [key: string]: string;
   };
 }
 
-const ManagementSection: React.FC<ManagementSectionProps> = ({ collapsed }) => {
+const ManagementSection: React.FC<ManagementSectionProps> = ({ 
+  collapsed = false, 
+  isMobile = false,
+  openEmbeddedApp,
+  externalApps = {}
+}) => {
   return (
     <SidebarSection
       title="Management"
       collapsed={collapsed}
     >
-      <SidebarLink to="/alm" icon={<LifeBuoy size={20} />} label="Asset Lifecycle" collapsed={collapsed} />
-      <SidebarLink to="/contracts" icon={<FileText size={20} />} label="Contracts" collapsed={collapsed} />
-      <SidebarLink to="/operating-expenses" icon={<Wallet size={20} />} label="Expenses" collapsed={collapsed} />
-      <SidebarLink to="/service-charges" icon={<Calculator size={20} />} label="Service Charges" collapsed={collapsed} />
-      <SidebarLink to="/projects" icon={<GitFork size={20} />} label="Projects" collapsed={collapsed} />
-      <SidebarLink to="/property-management" icon={<Home size={20} />} label="Properties" collapsed={collapsed} />
+      <SidebarLink to="/alm" icon={PackageOpen} label="Asset Lifecycle" collapsed={collapsed} isMobile={isMobile} />
+      <SidebarLink to="/contracts" icon={FileCog} label="Contracts" collapsed={collapsed} isMobile={isMobile} />
+      <SidebarLink to="/operating-expenses" icon={FileSpreadsheet} label="Operating Expenses" collapsed={collapsed} isMobile={isMobile} />
+      <SidebarLink to="/property-management" icon={Building2} label="Property Management" collapsed={collapsed} isMobile={isMobile} />
+      <SidebarLink to="/service-charges" icon={Calculator} label="Service Charges" collapsed={collapsed} isMobile={isMobile} />
+      <SidebarLink to="/reports" icon={CreditCard} label="Financial Reports" collapsed={collapsed} isMobile={isMobile} />
     </SidebarSection>
   );
 };

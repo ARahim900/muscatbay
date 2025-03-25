@@ -1,4 +1,3 @@
-
 export interface OperatingExpense {
   id: string;
   service_provider: string;
@@ -98,4 +97,19 @@ export interface ReserveFundRate {
   rate: number;
   effectiveDate: string;
   notes?: string;
+}
+
+export interface ServiceChargeOverviewProps {
+  expenses: OperatingExpenseDisplay[];
+  reserveFundRates: ReserveFundRate[];
+}
+
+export interface ServiceChargeCalculatorProps {
+  expenses: OperatingExpenseDisplay[];
+  reserveFundRates: ReserveFundRate[];
+}
+
+export interface ServiceChargeExpensesProps {
+  expenses: OperatingExpenseDisplay[];
+  reserveFundRates: ReserveFundRate[];
 }

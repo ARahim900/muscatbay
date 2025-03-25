@@ -7,22 +7,13 @@ import { OperatingExpenseDisplay, ReserveFundRate } from '@/types/expenses';
 import ServiceChargeCalculator from '@/components/service-charges/ServiceChargeCalculator';
 import ServiceChargeOverview from '@/components/service-charges/ServiceChargeOverview';
 import ServiceChargeExpenses from '@/components/service-charges/ServiceChargeExpenses';
+import { getMockExpenseDisplayData } from '@/utils/expenseUtils';
 
 const ServiceCharges: React.FC = () => {
   const [activeTab, setActiveTab] = useState('overview');
 
   // Sample data for service charge calculations
-  const operatingExpenses: OperatingExpenseDisplay[] = [
-    { category: 'Facility Management', supplier: 'Kalhat', annual: 386409.72, allocation: 'All Units' },
-    { category: 'STP O&M', supplier: 'OWATCO', annual: 37245.40, allocation: 'All Units' },
-    { category: 'Lift Maintenance', supplier: 'KONE Assarain LLC', annual: 12127.50, allocation: 'With Lift Only' },
-    { category: 'Pest Control', supplier: 'Muna Noor', annual: 16800.00, allocation: 'All Units' },
-    { category: 'Chillers & BMS', supplier: 'Gulf Expert', annual: 9240.00, allocation: 'All Units' },
-    { category: 'Fire Systems', supplier: 'Bahwan Engineering', annual: 8925.00, allocation: 'All Units' },
-    { category: 'Water Consumption', supplier: 'Utility Provider', annual: 50000.00, allocation: 'All Units' },
-    { category: 'Electricity', supplier: 'Utility Provider', annual: 35000.00, allocation: 'All Units' },
-    { category: 'Other Expenses', supplier: 'Various', annual: 11252.38, allocation: 'All Units' }
-  ];
+  const operatingExpenses: OperatingExpenseDisplay[] = getMockExpenseDisplayData();
 
   // Reserve fund rates
   const reserveFundRates: ReserveFundRate[] = [
