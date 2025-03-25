@@ -1,67 +1,67 @@
-
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "@/context/AuthContext";
-import { ThemeProvider } from "@/components/theme/theme-provider";
-import ProtectedRoute from "@/components/auth/ProtectedRoute";
-import Index from "./pages/Index";
-import NotFound from "./pages/NotFound";
-import Electricity from "./pages/Electricity";
-import Water from "./pages/Water";
-import Projects from "./pages/Projects";
+import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import Auth from "./pages/Auth";
-import WaterConsumptionTypes from './pages/WaterConsumptionTypes';
-import Contracts from './pages/Contracts';
-import STP from './pages/STP';
-import WaterSystem from './pages/WaterSystem';
-import ElectricitySystem from './pages/ElectricitySystem';
-import HVAC from './pages/HVAC';
-import PumpingStations from './pages/PumpingStations';
-import Admin from './pages/Admin';
-import AssetLifecycle from './pages/AssetLifecycle';
-import Reports from './pages/Reports';
+import Index from "./pages/Index";
+import Layout from "./components/layout/Layout";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
+import { AuthProvider } from "./context/AuthContext";
+import { ThemeProvider } from "./components/theme/theme-provider";
+import NotFound from "./pages/NotFound";
+import Water from "./pages/Water";
+import Electricity from "./pages/Electricity";
+import ElectricitySystem from "./pages/ElectricitySystem";
+import WaterSystem from "./pages/WaterSystem";
+import WaterConsumptionTypes from "./pages/WaterConsumptionTypes";
+import STP from "./pages/STP";
+import STPPlant from "./pages/STPPlant";
+import STPDashboard from "./pages/STPDashboard";
+import STPAnalytics from "./pages/STPAnalytics";
+import PumpingStations from "./pages/PumpingStations";
+import HVAC from "./pages/HVAC";
+import Reports from "./pages/Reports";
+import Projects from "./pages/Projects";
+import Contracts from "./pages/Contracts";
+import AssetLifecycle from "./pages/AssetLifecycle";
+import Admin from "./pages/Admin";
+import { Toaster } from "./components/ui/toaster";
+import OperatingExpenses from "./pages/OperatingExpenses";
 
-const queryClient = new QueryClient();
+function App() {
+  const storedTheme = localStorage.getItem("vite-ui-theme") || "light";
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <ThemeProvider defaultTheme="light" forcedTheme="light">
+  return (
+    <BrowserRouter>
       <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              {/* Public routes */}
-              <Route path="/auth" element={<Auth />} />
-              
-              {/* Protected routes */}
-              <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
-              <Route path="/electricity" element={<ProtectedRoute><Electricity /></ProtectedRoute>} />
-              <Route path="/electricity-system" element={<ProtectedRoute><ElectricitySystem /></ProtectedRoute>} />
-              <Route path="/stp" element={<ProtectedRoute><STP /></ProtectedRoute>} />
-              <Route path="/water" element={<ProtectedRoute><Water /></ProtectedRoute>} />
-              <Route path="/water-consumption-types" element={<ProtectedRoute><WaterConsumptionTypes /></ProtectedRoute>} />
-              <Route path="/water-system" element={<ProtectedRoute><WaterSystem /></ProtectedRoute>} />
-              <Route path="/hvac" element={<ProtectedRoute><HVAC /></ProtectedRoute>} />
-              <Route path="/pumping-stations" element={<ProtectedRoute><PumpingStations /></ProtectedRoute>} />
-              <Route path="/projects" element={<ProtectedRoute><Projects /></ProtectedRoute>} />
-              <Route path="/contracts" element={<ProtectedRoute><Contracts /></ProtectedRoute>} />
-              <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
-              <Route path="/alm" element={<ProtectedRoute><AssetLifecycle /></ProtectedRoute>} />
-              <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
-              
-              {/* Catch-all route */}
+        <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
+          <Routes>
+            <Route path="/login" element={<Auth />} />
+            <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+              <Route index element={<Navigate to="/dashboard" replace />} />
+              <Route path="dashboard" element={<Index />} />
+              <Route path="water" element={<Water />} />
+              <Route path="water-types" element={<WaterConsumptionTypes />} />
+              <Route path="water-system" element={<WaterSystem />} />
+              <Route path="electricity" element={<Electricity />} />
+              <Route path="electricity-system" element={<ElectricitySystem />} />
+              <Route path="stp" element={<STP />} />
+              <Route path="stp-dashboard" element={<STPDashboard />} />
+              <Route path="stp-plant" element={<STPPlant />} />
+              <Route path="stp-analytics" element={<STPAnalytics />} />
+              <Route path="pumping-stations" element={<PumpingStations />} />
+              <Route path="hvac" element={<HVAC />} />
+              <Route path="reports" element={<Reports />} />
+              <Route path="projects" element={<Projects />} />
+              <Route path="contracts" element={<Contracts />} />
+              <Route path="alm" element={<AssetLifecycle />} />
+              <Route path="operating-expenses" element={<OperatingExpenses />} />
+              <Route path="admin" element={<Admin />} />
               <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
+            </Route>
+          </Routes>
+        </ThemeProvider>
       </AuthProvider>
-    </ThemeProvider>
-  </QueryClientProvider>
-);
+      <Toaster />
+    </BrowserRouter>
+  );
+}
 
 export default App;

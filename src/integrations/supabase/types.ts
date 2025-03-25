@@ -588,6 +588,42 @@ export type Database = {
         }
         Relationships: []
       }
+      operating_expenses: {
+        Row: {
+          annual_cost: number
+          created_at: string | null
+          id: string
+          monthly_cost: number
+          notes: string | null
+          service_provider: string
+          service_type: string
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          annual_cost: number
+          created_at?: string | null
+          id?: string
+          monthly_cost: number
+          notes?: string | null
+          service_provider: string
+          service_type: string
+          status: string
+          updated_at?: string | null
+        }
+        Update: {
+          annual_cost?: number
+          created_at?: string | null
+          id?: string
+          monthly_cost?: number
+          notes?: string | null
+          service_provider?: string
+          service_type?: string
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -1412,6 +1448,24 @@ export type Database = {
       }
     }
     Views: {
+      expense_summary_by_status: {
+        Row: {
+          count: number | null
+          status: string | null
+          total_annual_cost: number | null
+          total_monthly_cost: number | null
+        }
+        Relationships: []
+      }
+      expense_summary_by_type: {
+        Row: {
+          count: number | null
+          service_type: string | null
+          total_annual_cost: number | null
+          total_monthly_cost: number | null
+        }
+        Relationships: []
+      }
       water_consumption_by_type: {
         Row: {
           apr_24: number | null
