@@ -30,27 +30,25 @@ function App() {
   return (
     <Routes>
       <Route path="/" element={<Index />} />
-      <Route element={<Layout><div></div></Layout>}>
-        <Route path="/alm" element={<AssetLifecycle />} />
-        <Route path="/contracts" element={<Contracts />} />
-        <Route path="/projects" element={<Projects />} />
-        <Route path="/water" element={<Water />} />
-        <Route path="/water-system" element={<WaterSystem />} />
-        <Route path="/water-consumption-types" element={<WaterConsumptionTypes />} />
-        <Route path="/electricity" element={<Electricity />} />
-        <Route path="/electricity-system" element={<ElectricitySystem />} />
-        <Route path="/hvac" element={<HVAC />} />
-        <Route path="/pumping-stations" element={<PumpingStations />} />
-        <Route path="/stp" element={<STP />} />
-        <Route path="/stp-plant" element={<STPPlant />} />
-        <Route path="/stp-dashboard" element={<STPDashboard />} />
-        <Route path="/stp-analytics" element={<STPAnalytics />} />
-        <Route path="/reports" element={<Reports />} />
-        <Route path="/admin" element={<Admin />} />
-        <Route path="/operating-expenses" element={<OperatingExpenses />} />
-        <Route path="/property-management" element={<PropertyManagement />} />
-        <Route path="/service-charges" element={<ServiceCharges />} />
-      </Route>
+      <Route path="/alm" element={<AssetLifecycle />} />
+      <Route path="/contracts" element={<Contracts />} />
+      <Route path="/projects" element={<Projects />} />
+      <Route path="/water" element={<Water />} />
+      <Route path="/water-system" element={<WaterSystem />} />
+      <Route path="/water-consumption-types" element={<WaterConsumptionTypes />} />
+      <Route path="/electricity" element={<Electricity />} />
+      <Route path="/electricity-system" element={<ElectricitySystem />} />
+      <Route path="/hvac" element={<HVAC />} />
+      <Route path="/pumping-stations" element={<PumpingStations />} />
+      <Route path="/stp" element={<STP />} />
+      <Route path="/stp-plant" element={<STPPlant />} />
+      <Route path="/stp-dashboard" element={<STPDashboard />} />
+      <Route path="/stp-analytics" element={<STPAnalytics />} />
+      <Route path="/reports" element={<Reports />} />
+      <Route path="/admin" element={<Admin />} />
+      <Route path="/operating-expenses" element={<OperatingExpenses />} />
+      <Route path="/property-management" element={<PropertyManagement />} />
+      <Route path="/service-charges" element={<ServiceCharges />} />
       <Route path="/auth" element={<Auth />} />
       <Route path="*" element={<NotFound />} />
     </Routes>

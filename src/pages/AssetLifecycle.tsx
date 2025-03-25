@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,115 +12,127 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useQuery } from '@tanstack/react-query';
 import { fetchOperatingExpenses, fetchReserveFundRates } from '@/services/serviceChargeService';
+import Layout from '@/components/layout/Layout';
 
 const AssetLifecycleManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
 
   return (
-    <div className="container py-6 space-y-6">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Asset Lifecycle Management</h1>
-          <p className="text-muted-foreground">Manage and track the lifecycle of all assets</p>
+    <Layout>
+      <div className="container py-6 space-y-6">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Asset Lifecycle Management</h1>
+            <p className="text-muted-foreground">Manage and track the lifecycle of all assets</p>
+          </div>
         </div>
+
+        <Tabs defaultValue="overview" className="space-y-4">
+          <TabsList className="grid grid-cols-1 md:grid-cols-6 lg:w-[900px]">
+            <TabsTrigger value="overview" className="flex items-center gap-2">
+              <Building2 className="h-4 w-4" />
+              <span>Overview</span>
+            </TabsTrigger>
+            <TabsTrigger value="condition" className="flex items-center gap-2">
+              <Wrench className="h-4 w-4" />
+              <span>Condition Assessment</span>
+            </TabsTrigger>
+            <TabsTrigger value="critical" className="flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              <span>Critical Assets</span>
+            </TabsTrigger>
+            <TabsTrigger value="forecast" className="flex items-center gap-2">
+              <TrendingUp className="h-4 w-4" />
+              <span>Lifecycle Forecast</span>
+            </TabsTrigger>
+            <TabsTrigger value="maintenance" className="flex items-center gap-2">
+              <ListChecks className="h-4 w-4" />
+              <span>Maintenance Schedule</span>
+            </TabsTrigger>
+            <TabsTrigger value="serviceCharges" className="flex items-center gap-2">
+              <ListChecks className="h-4 w-4" />
+              <span>Service Charges</span>
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="overview" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Asset Overview</CardTitle>
+                <CardDescription>Summary of all assets and their status</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p>Overview content will be implemented here.</p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="condition" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Condition Assessment</CardTitle>
+                <CardDescription>Assess the condition of assets</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p>Condition assessment content will be implemented here.</p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="critical" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Critical Assets</CardTitle>
+                <CardDescription>List of critical assets</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p>Critical assets content will be implemented here.</p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="forecast" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Lifecycle Forecast</CardTitle>
+                <CardDescription>Forecast the lifecycle of assets</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p>Lifecycle forecast content will be implemented here.</p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="maintenance" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Maintenance Schedule</CardTitle>
+                <CardDescription>Schedule maintenance for assets</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p>Maintenance schedule content will be implemented here.</p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="serviceCharges" className="space-y-4">
+            <ServiceChargeSettings />
+          </TabsContent>
+        </Tabs>
       </div>
-
-      <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList className="grid grid-cols-1 md:grid-cols-5 lg:w-[800px]">
-          <TabsTrigger value="overview" className="flex items-center gap-2">
-            <Building2 className="h-4 w-4" />
-            <span>Overview</span>
-          </TabsTrigger>
-          <TabsTrigger value="condition" className="flex items-center gap-2">
-            <Wrench className="h-4 w-4" />
-            <span>Condition Assessment</span>
-          </TabsTrigger>
-          <TabsTrigger value="critical" className="flex items-center gap-2">
-            <FileText className="h-4 w-4" />
-            <span>Critical Assets</span>
-          </TabsTrigger>
-          <TabsTrigger value="forecast" className="flex items-center gap-2">
-            <TrendingUp className="h-4 w-4" />
-            <span>Lifecycle Forecast</span>
-          </TabsTrigger>
-          <TabsTrigger value="maintenance" className="flex items-center gap-2">
-            <ListChecks className="h-4 w-4" />
-            <span>Maintenance Schedule</span>
-          </TabsTrigger>
-          <TabsTrigger value="serviceCharges" className="flex items-center gap-2">
-            <ListChecks className="h-4 w-4" />
-            <span>Service Charge Settings</span>
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="overview" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Asset Overview</CardTitle>
-              <CardDescription>Summary of all assets and their status</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p>Overview content will be implemented here.</p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="condition" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Condition Assessment</CardTitle>
-              <CardDescription>Assess the condition of assets</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p>Condition assessment content will be implemented here.</p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="critical" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Critical Assets</CardTitle>
-              <CardDescription>List of critical assets</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p>Critical assets content will be implemented here.</p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="forecast" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Lifecycle Forecast</CardTitle>
-              <CardDescription>Forecast the lifecycle of assets</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p>Lifecycle forecast content will be implemented here.</p>
-            </CardContent>
-          </Card>
-
-        </TabsContent>
-
-        <TabsContent value="maintenance" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Maintenance Schedule</CardTitle>
-              <CardDescription>Schedule maintenance for assets</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p>Maintenance schedule content will be implemented here.</p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="serviceCharges" className="space-y-4">
-          <ServiceChargeSettings />
-        </TabsContent>
-      </Tabs>
-    </div>
+    </Layout>
   );
 };
+
+// Define a proper interface for ServiceChargeSettings props
+interface OperatingExpenseDisplay {
+  id: string;
+  category: string;
+  serviceProvider: string;
+  monthlyCost: number;
+  annualCost: number;
+  status: string;
+}
 
 const ServiceChargeSettings = () => {
   const [activeTab, setActiveTab] = useState('rates');
