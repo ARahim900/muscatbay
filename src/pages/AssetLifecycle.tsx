@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -166,6 +167,35 @@ const ServiceChargeSection = () => {
     </div>
   );
 };
+
+// Placeholder components for ServiceChargeSection
+const ServiceChargeCalculations = () => (
+  <div>
+    <h3 className="text-lg font-medium mb-4">Calculation Methodology</h3>
+    <p className="text-muted-foreground">Service charge calculation methodology will be displayed here.</p>
+  </div>
+);
+
+const ServiceChargeAllocations = () => (
+  <div>
+    <h3 className="text-lg font-medium mb-4">Charge Allocations</h3>
+    <p className="text-muted-foreground">Service charge allocations will be displayed here.</p>
+  </div>
+);
+
+const PropertyServiceCharges = () => (
+  <div>
+    <h3 className="text-lg font-medium mb-4">Property Charges</h3>
+    <p className="text-muted-foreground">Property service charges will be displayed here.</p>
+  </div>
+);
+
+const ServiceChargeSettings = () => (
+  <div>
+    <h3 className="text-lg font-medium mb-4">Settings</h3>
+    <p className="text-muted-foreground">Service charge settings will be displayed here.</p>
+  </div>
+);
 
 const AssetOverview = () => {
   const { 
@@ -768,3 +798,116 @@ const MaintenanceSchedule = () => {
       case 'Completed': return <CheckCircle2 className="h-4 w-4 mr-1" />;
       case 'Overdue': return <AlertTriangle className="h-4 w-4 mr-1" />;
       default: return null;
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Maintenance Schedule</CardTitle>
+          <CardDescription>Upcoming and past maintenance activities for assets</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <Card className="border-blue-500 border-l-4">
+              <CardContent className="p-4">
+                <div className="text-lg font-bold">{statusCounts.scheduled}</div>
+                <p className="text-sm">Scheduled</p>
+              </CardContent>
+            </Card>
+            <Card className="border-yellow-500 border-l-4">
+              <CardContent className="p-4">
+                <div className="text-lg font-bold">{statusCounts.inProgress}</div>
+                <p className="text-sm">In Progress</p>
+              </CardContent>
+            </Card>
+            <Card className="border-green-500 border-l-4">
+              <CardContent className="p-4">
+                <div className="text-lg font-bold">{statusCounts.completed}</div>
+                <p className="text-sm">Completed</p>
+              </CardContent>
+            </Card>
+            <Card className="border-red-500 border-l-4">
+              <CardContent className="p-4">
+                <div className="text-lg font-bold">{statusCounts.overdue}</div>
+                <p className="text-sm">Overdue</p>
+              </CardContent>
+            </Card>
+          </div>
+          
+          <div className="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
+            <div className="flex items-center gap-2 w-full md:w-auto">
+              <div className="relative w-full md:w-64">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="search"
+                  placeholder="Search maintenance..."
+                  className="pl-8"
+                />
+              </div>
+              <Select defaultValue="all">
+                <SelectTrigger className="w-[150px]">
+                  <SelectValue placeholder="Filter by" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="scheduled">Scheduled</SelectItem>
+                  <SelectItem value="inProgress">In Progress</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
+                  <SelectItem value="overdue">Overdue</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              Schedule Maintenance
+            </Button>
+          </div>
+          
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Asset</TableHead>
+                  <TableHead>Category</TableHead>
+                  <TableHead>Location</TableHead>
+                  <TableHead>Maintenance Type</TableHead>
+                  <TableHead>Scheduled Date</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="w-[100px]">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {maintenanceWithDetails.slice(0, 10).map((item) => (
+                  <TableRow key={item.id}>
+                    <TableCell className="font-medium">{item.assetName}</TableCell>
+                    <TableCell>{item.category}</TableCell>
+                    <TableCell>{item.location}</TableCell>
+                    <TableCell>{item.maintenanceType}</TableCell>
+                    <TableCell>{item.scheduledDate}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center">
+                        <Badge variant={getStatusBadgeVariant(item.status)}>
+                          <div className="flex items-center">
+                            {getStatusIcon(item.status)}
+                            {item.status}
+                          </div>
+                        </Badge>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Button variant="outline" size="sm">Details</Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+export default AssetLifecycleManagement;
