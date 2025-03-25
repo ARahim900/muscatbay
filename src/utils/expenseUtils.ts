@@ -1,11 +1,13 @@
 
-import { ExpenseDisplay, OperatingExpense, ExpenseSummaryByStatus, ExpenseSummaryByType } from '@/types/expenses';
+import { ExpenseDisplay, OperatingExpense, ExpenseSummaryByStatus, ExpenseSummaryByType, OperatingExpenseDisplay } from '@/types/expenses';
 
 // Mock expense data for demonstration
-export const getMockExpenseDisplayData = (): ExpenseDisplay[] => {
+export const getMockExpenseDisplayData = (): OperatingExpenseDisplay[] => {
   return [
     {
       category: 'Utilities',
+      supplier: 'Muscat Electricity Company',
+      allocation: 'All Properties',
       quarterly: [125000, 132000, 128000, 135000],
       monthly: [41000, 42000, 42000, 44000, 44000, 44000, 42000, 43000, 43000, 45000, 45000, 45000],
       annual: 520000,
@@ -16,6 +18,8 @@ export const getMockExpenseDisplayData = (): ExpenseDisplay[] => {
     },
     {
       category: 'Maintenance',
+      supplier: 'Tech Solutions LLC',
+      allocation: 'Common Areas',
       quarterly: [95000, 98000, 97000, 100000],
       monthly: [31500, 32000, 31500, 32500, 33000, 32500, 32000, 32500, 32500, 33500, 33500, 33000],
       annual: 390000,
@@ -26,6 +30,8 @@ export const getMockExpenseDisplayData = (): ExpenseDisplay[] => {
     },
     {
       category: 'Landscaping',
+      supplier: 'Green Gardens Co',
+      allocation: 'Common Areas',
       quarterly: [65000, 68000, 70000, 67000],
       monthly: [21500, 22000, 21500, 22500, 23000, 22500, 23500, 23000, 23500, 22500, 22000, 22500],
       annual: 270000,
@@ -36,6 +42,8 @@ export const getMockExpenseDisplayData = (): ExpenseDisplay[] => {
     },
     {
       category: 'Security',
+      supplier: 'Shield Security Services',
+      allocation: 'All Properties',
       quarterly: [55000, 55000, 55000, 55000],
       monthly: [18333, 18333, 18334, 18333, 18333, 18334, 18333, 18333, 18334, 18333, 18333, 18334],
       annual: 220000,
@@ -46,6 +54,8 @@ export const getMockExpenseDisplayData = (): ExpenseDisplay[] => {
     },
     {
       category: 'Administration',
+      supplier: 'Admin Solutions Co',
+      allocation: 'All Properties',
       quarterly: [38000, 39000, 39000, 40000],
       monthly: [12500, 12750, 12750, 13000, 13000, 13000, 13000, 13000, 13000, 13250, 13250, 13500],
       annual: 156000,
@@ -56,6 +66,8 @@ export const getMockExpenseDisplayData = (): ExpenseDisplay[] => {
     },
     {
       category: 'Insurance',
+      supplier: 'Oman Insurance Co',
+      allocation: 'All Properties',
       quarterly: [23500, 23500, 23500, 23500],
       monthly: [7833, 7833, 7834, 7833, 7833, 7834, 7833, 7833, 7834, 7833, 7833, 7834],
       annual: 94000,
@@ -63,6 +75,18 @@ export const getMockExpenseDisplayData = (): ExpenseDisplay[] => {
       previousYear: 90000,
       trend: 'up',
       change: 4.4
+    },
+    {
+      category: 'Lift Maintenance',
+      supplier: 'Elevator Experts LLC',
+      allocation: 'Properties with Lifts',
+      quarterly: [19000, 19000, 19000, 19000],
+      monthly: [6333, 6333, 6334, 6333, 6333, 6334, 6333, 6333, 6334, 6333, 6333, 6334],
+      annual: 76000,
+      percentage: 4.6,
+      previousYear: 76000,
+      trend: 'stable',
+      change: 0
     }
   ];
 };

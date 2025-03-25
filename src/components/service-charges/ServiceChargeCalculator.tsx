@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -19,6 +18,15 @@ interface PropertyData {
   typeName: string;
 }
 
+interface ExpenseBreakdownItem {
+  category: string;
+  supplier: string;
+  annual: number;
+  allocation: string;
+  isApplicable: boolean;
+  amount: string;
+}
+
 interface CalculationResult {
   propertyId: string;
   propertySize: number | string;
@@ -33,14 +41,7 @@ interface CalculationResult {
   totalAnnual: string;
   quarterly: string;
   monthly: string;
-  expenseBreakdown: Array<{
-    category: string;
-    supplier: string;
-    annual: number;
-    allocation: string;
-    isApplicable: boolean;
-    amount: string;
-  }>;
+  expenseBreakdown: ExpenseBreakdownItem[];
   calculationDate: string;
 }
 
@@ -161,8 +162,8 @@ const ServiceChargeCalculator: React.FC<ServiceChargeCalculatorProps> = ({ expen
     const quarterly = totalAnnual / 4;
     const monthly = totalAnnual / 12;
     
-    // Expense breakdown
-    const expenseBreakdown = expenses.map(expense => {
+    // Expense breakdown with proper typing
+    const expenseBreakdown: ExpenseBreakdownItem[] = expenses.map(expense => {
       const isApplicable = expense.category !== 'Lift Maintenance' || hasLiftAccess;
       let amount = 0;
       
@@ -175,7 +176,10 @@ const ServiceChargeCalculator: React.FC<ServiceChargeCalculatorProps> = ({ expen
       }
       
       return {
-        ...expense,
+        category: expense.category,
+        supplier: expense.supplier,
+        annual: expense.annual,
+        allocation: expense.allocation,
         isApplicable,
         amount: amount.toFixed(2)
       };

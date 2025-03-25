@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import StandardPageLayout from '@/components/layout/StandardPageLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -289,10 +288,10 @@ const AssetLifecycle: React.FC = () => {
   
   // Mock reserve fund rates
   const reserveFundRates = [
-    { zone: 'Z3', zoneName: 'Zone 3 (Zaha)', rate: 0.40, effectiveDate: '2023-01-01', notes: 'Residential apartments' },
-    { zone: 'Z5', zoneName: 'Zone 5 (Nameer)', rate: 0.50, effectiveDate: '2023-01-01', notes: 'Premium villas' },
-    { zone: 'Z8', zoneName: 'Zone 8 (Wajd)', rate: 0.60, effectiveDate: '2023-01-01', notes: 'Luxury villas' },
-    { zone: 'COM', zoneName: 'Commercial', rate: 0.70, effectiveDate: '2023-01-01', notes: 'Retail and office spaces' }
+    { zone: 'zone03', zoneName: 'Zone 3 (Zaha)', rate: 0.40, effectiveDate: '2023-01-01', notes: 'Residential apartments' },
+    { zone: 'zone05', zoneName: 'Zone 5 (Nameer)', rate: 0.50, effectiveDate: '2023-01-01', notes: 'Premium villas' },
+    { zone: 'zone08', zoneName: 'Zone 8 (Wajd)', rate: 0.60, effectiveDate: '2023-01-01', notes: 'Luxury villas' },
+    { zone: 'commercial', zoneName: 'Commercial', rate: 0.70, effectiveDate: '2023-01-01', notes: 'Retail and office spaces' }
   ];
 
   return (

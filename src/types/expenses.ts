@@ -1,3 +1,4 @@
+
 // Operating Expense type
 export interface OperatingExpense {
   id: string;
@@ -91,7 +92,8 @@ export interface ExpenseSummaryByType {
 
 // Operating Expense Display for UI
 export interface OperatingExpenseDisplay extends ExpenseDisplay {
-  // Additional UI-specific properties
+  supplier: string;
+  allocation: string;
 }
 
 // Reserve Fund Rate type
