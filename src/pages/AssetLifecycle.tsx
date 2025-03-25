@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import StandardPageLayout from '@/components/layout/StandardPageLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -9,7 +8,13 @@ import { PropertyTransaction, PropertyOwner, PropertyUnit } from '@/types/expens
 import { PackageOpen, Wrench, AlertCircle, BarChart3, Ruler, Calculator } from 'lucide-react';
 import ServiceChargeCalculator from '@/components/service-charges/ServiceChargeCalculator';
 import { getMockExpenseDisplayData } from '@/utils/expenseUtils';
-import { tables } from '@/components/alm/tables';
+import { 
+  AssetCategoriesTable, 
+  CriticalAssetsTable, 
+  MaintenanceForecastTable, 
+  AssetConditionsTable, 
+  UpcomingMaintenanceTable 
+} from '@/components/alm/tables';
 
 // Mock asset categories data
 const assetCategories: AssetCategory[] = [
@@ -256,30 +261,7 @@ const AssetLifecycle: React.FC = () => {
               <CardTitle>Asset Categories</CardTitle>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead className="text-center">Asset Count</TableHead>
-                    <TableHead className="text-right">Replacement Cost</TableHead>
-                    <TableHead>Life Expectancy</TableHead>
-                    <TableHead>Zone Coverage</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {assetCategories.map((category) => (
-                    <TableRow key={category.id}>
-                      <TableCell className="font-medium">{category.name}</TableCell>
-                      <TableCell>{category.subCategory}</TableCell>
-                      <TableCell className="text-center">{category.assetCount}</TableCell>
-                      <TableCell className="text-right">OMR {category.totalReplacementCost.toLocaleString()}</TableCell>
-                      <TableCell>{category.lifeExpectancyRange}</TableCell>
-                      <TableCell>{category.zoneCoverage}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+              <AssetCategoriesTable data={assetCategories} />
             </CardContent>
           </Card>
         </TabsContent>
