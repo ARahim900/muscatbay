@@ -13,7 +13,7 @@ import {
 export const fetchAssets = async (): Promise<Asset[]> => {
   try {
     const { data, error } = await supabase
-      .from('Muscat Bay Assets List')
+      .from('Muscat Bay - Assets List 2025')
       .select('*');
 
     if (error) {
