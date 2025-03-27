@@ -9,6 +9,39 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      "Assets List_ALM": {
+        Row: {
+          "Asset Name": string | null
+          Condition: string | null
+          "Installation Date": number | null
+          Location: string | null
+          "Main Category": string | null
+          "Number of Each Asset": number | null
+          "Sub-Category": string | null
+          "Unique Tag": string | null
+        }
+        Insert: {
+          "Asset Name"?: string | null
+          Condition?: string | null
+          "Installation Date"?: number | null
+          Location?: string | null
+          "Main Category"?: string | null
+          "Number of Each Asset"?: number | null
+          "Sub-Category"?: string | null
+          "Unique Tag"?: string | null
+        }
+        Update: {
+          "Asset Name"?: string | null
+          Condition?: string | null
+          "Installation Date"?: number | null
+          Location?: string | null
+          "Main Category"?: string | null
+          "Number of Each Asset"?: number | null
+          "Sub-Category"?: string | null
+          "Unique Tag"?: string | null
+        }
+        Relationships: []
+      }
       "Direct Connections": {
         Row: {
           "Acct #": number | null
@@ -588,7 +621,7 @@ export type Database = {
         }
         Relationships: []
       }
-      "Muscat Bay Assets List": {
+      "Muscat Bay - Assets List 2025": {
         Row: {
           "Asset Brand": string | null
           "Asset Categ Id": number | null
@@ -660,6 +693,33 @@ export type Database = {
         }
         Relationships: []
       }
+      "Operating Expenses & Contract Information": {
+        Row: {
+          "Annual Cost (OMR)": number | null
+          "Monthly Cost (OMR)": number | null
+          Notes: string | null
+          "Service Provider": string | null
+          "Service Type": string | null
+          Status: string | null
+        }
+        Insert: {
+          "Annual Cost (OMR)"?: number | null
+          "Monthly Cost (OMR)"?: number | null
+          Notes?: string | null
+          "Service Provider"?: string | null
+          "Service Type"?: string | null
+          Status?: string | null
+        }
+        Update: {
+          "Annual Cost (OMR)"?: number | null
+          "Monthly Cost (OMR)"?: number | null
+          Notes?: string | null
+          "Service Provider"?: string | null
+          "Service Type"?: string | null
+          Status?: string | null
+        }
+        Relationships: []
+      }
       operating_expenses: {
         Row: {
           allocation: string
@@ -714,7 +774,7 @@ export type Database = {
         }
         Relationships: []
       }
-      "Owners & Properties Information List": {
+      "Owners/Properties Details": {
         Row: {
           "Anticipated Handover Date": string | null
           BUA: string | null

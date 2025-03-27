@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import FinancialReports from '@/components/reports/FinancialReports';
 
 const Reports = () => {
   const [year, setYear] = useState<string>("2023");
@@ -122,9 +123,7 @@ const Reports = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="h-[400px] flex items-center justify-center border border-dashed rounded-lg">
-                    <p className="text-muted-foreground">Select a specific financial report to view</p>
-                  </div>
+                  <FinancialReports />
                 </CardContent>
               </Card>
             </TabsContent>
