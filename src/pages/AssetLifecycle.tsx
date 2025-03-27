@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,6 +21,11 @@ import { useAssets } from '@/hooks/useAssets';
 
 const AssetLifecycleManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [iframeLoading, setIframeLoading] = useState(true);
+
+  const handleIframeLoad = () => {
+    setIframeLoading(false);
+  };
 
   return (
     <Layout>
@@ -90,7 +94,31 @@ const AssetLifecycleManagement = () => {
           </TabsList>
 
           <TabsContent value="overview" className="space-y-4">
-            <AssetOverview />
+            <Card>
+              <CardHeader>
+                <CardTitle>Asset Management System</CardTitle>
+                <CardDescription>Comprehensive asset lifecycle management portal</CardDescription>
+              </CardHeader>
+              <CardContent className="p-0">
+                {iframeLoading && (
+                  <div className="flex items-center justify-center p-12">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  </div>
+                )}
+                <div 
+                  className={`w-full transition-opacity duration-300 ${iframeLoading ? 'opacity-0 h-0' : 'opacity-100'}`}
+                >
+                  <iframe 
+                    src="https://385625d3-1859-4f0b-bb54-8a8eda56d526-00-7d477rbtcpk7.riker.replit.dev/" 
+                    className="w-full border-0 min-h-[calc(100vh-18rem)]"
+                    onLoad={handleIframeLoad}
+                    title="Asset Management System"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-modals"
+                  />
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="condition" className="space-y-4">
@@ -168,7 +196,6 @@ const ServiceChargeSection = () => {
   );
 };
 
-// Placeholder components for ServiceChargeSection
 const ServiceChargeCalculations = () => (
   <div>
     <h3 className="text-lg font-medium mb-4">Calculation Methodology</h3>
@@ -229,12 +256,10 @@ const AssetOverview = () => {
     );
   }
 
-  // Calculate summary metrics
   const totalAssets = assets.length;
   const totalCategories = new Set(assets.map(asset => asset.assetCategName)).size;
   const totalLocations = new Set(assets.map(asset => asset.locationName)).size;
   
-  // Count assets by condition
   const conditionCounts = {
     excellent: assetConditions.filter(c => c.condition === 'Excellent').length,
     good: assetConditions.filter(c => c.condition === 'Good').length,
@@ -420,7 +445,6 @@ const AssetConditionAssessment = () => {
     );
   }
 
-  // Join asset conditions with asset details
   const conditionsWithDetails = assetConditions.map(condition => {
     const asset = assets.find(a => a.assetId === condition.assetId);
     return {
@@ -650,7 +674,6 @@ const LifecycleForecast = () => {
     );
   }
 
-  // Group assets by replacement year
   const assetsByYear = lifecycleForecast.reduce((acc, asset) => {
     const year = asset.replacementYear;
     if (!acc[year]) {
@@ -660,10 +683,8 @@ const LifecycleForecast = () => {
     return acc;
   }, {} as Record<number, typeof lifecycleForecast>);
 
-  // Sort years for display
   const years = Object.keys(assetsByYear).map(Number).sort();
 
-  // Calculate total replacement costs by year
   const replacementCostsByYear = years.map(year => {
     const assets = assetsByYear[year];
     const totalCost = assets.reduce((sum, asset) => sum + (asset.replacementCost || 0), 0);
@@ -761,7 +782,6 @@ const MaintenanceSchedule = () => {
     );
   }
 
-  // Join maintenance schedule with asset details
   const maintenanceWithDetails = maintenanceSchedule.map(maintenance => {
     const asset = assets.find(a => a.assetId === maintenance.assetId);
     return {
@@ -773,7 +793,6 @@ const MaintenanceSchedule = () => {
     };
   });
 
-  // Count maintenance by status
   const statusCounts = {
     scheduled: maintenanceSchedule.filter(m => m.status === 'Scheduled').length,
     inProgress: maintenanceSchedule.filter(m => m.status === 'In Progress').length,
