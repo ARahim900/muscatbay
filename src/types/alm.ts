@@ -68,3 +68,33 @@ export interface UpcomingMaintenance {
   resourceRequirements: string;
   priority: string;
 }
+
+// Service Charge Data definition
+export interface ServiceChargeZone {
+  name: string;
+  unitTypes: {
+    [key: string]: {
+      name: string;
+      baseRate: number;
+      sizes: number[];
+    };
+  };
+}
+
+export interface ServiceChargeData {
+  [zoneKey: string]: ServiceChargeZone;
+}
+
+// Service Charge calculation result
+export interface ServiceCharge {
+  annual: {
+    total: number;
+    baseCharge: number;
+    vat: number;
+  };
+  monthly: {
+    total: number;
+    baseCharge: number;
+    vat: number;
+  };
+}
