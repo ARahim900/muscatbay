@@ -1,6 +1,5 @@
 
 import React from 'react';
-import { CriticalAsset } from '@/types/alm';
 import { 
   Table, 
   TableBody, 
@@ -9,12 +8,13 @@ import {
   TableHeader, 
   TableRow 
 } from '@/components/ui/table';
+import { CriticalAsset } from '@/types/alm';
 
-interface CriticalAssetsTableProps {
+export interface CriticalAssetsTableProps {
   data: CriticalAsset[];
 }
 
-const CriticalAssetsTable: React.FC<CriticalAssetsTableProps> = ({ data }) => {
+const CriticalAssetsTable: React.FC<CriticalAssetsTableProps> = ({ data = [] }) => {
   // Helper function to get appropriate color based on criticality
   const getCriticalityColor = (criticality: string) => {
     switch (criticality) {
@@ -30,39 +30,50 @@ const CriticalAssetsTable: React.FC<CriticalAssetsTableProps> = ({ data }) => {
   };
 
   return (
-    <div className="overflow-x-auto">
-      <Table className="w-full">
-        <TableHeader>
-          <TableRow>
-            <TableHead className="text-sm">ID</TableHead>
-            <TableHead className="text-sm">Asset Name</TableHead>
-            <TableHead className="text-sm">Location</TableHead>
-            <TableHead className="text-sm">Criticality</TableHead>
-            <TableHead className="text-sm">Risk Score</TableHead>
-            <TableHead className="text-sm">Last Inspection</TableHead>
-            <TableHead className="text-sm">Next Inspection</TableHead>
-            <TableHead className="text-sm text-right">Replacement Value (OMR)</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {data.map((asset) => (
-            <TableRow key={asset.id}>
-              <TableCell className="text-sm font-medium">{asset.id}</TableCell>
-              <TableCell className="text-sm">{asset.assetName}</TableCell>
-              <TableCell className="text-sm">{asset.location}</TableCell>
-              <TableCell>
-                <span className={`text-xs inline-flex items-center px-2.5 py-0.5 rounded-full font-medium ${getCriticalityColor(asset.criticality)}`}>
-                  {asset.criticality}
-                </span>
-              </TableCell>
-              <TableCell className="text-sm">{asset.riskScore}</TableCell>
-              <TableCell className="text-sm">{asset.lastInspectionDate}</TableCell>
-              <TableCell className="text-sm">{asset.nextInspectionDate}</TableCell>
-              <TableCell className="text-sm text-right">{asset.replacementValue.toLocaleString()}</TableCell>
+    <div className="bg-white rounded-md shadow">
+      <h3 className="text-lg font-medium p-4 border-b">Critical Assets</h3>
+      <div className="overflow-x-auto">
+        <Table className="w-full">
+          <TableHeader>
+            <TableRow>
+              <TableHead className="text-sm">ID</TableHead>
+              <TableHead className="text-sm">Asset Name</TableHead>
+              <TableHead className="text-sm">Location</TableHead>
+              <TableHead className="text-sm">Criticality</TableHead>
+              <TableHead className="text-sm">Risk Score</TableHead>
+              <TableHead className="text-sm">Last Inspection</TableHead>
+              <TableHead className="text-sm">Next Inspection</TableHead>
+              <TableHead className="text-sm text-right">Replacement Value (OMR)</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {data && data.length > 0 ? (
+              data.map((asset) => (
+                <TableRow key={asset.id}>
+                  <TableCell className="text-sm font-medium">{asset.id}</TableCell>
+                  <TableCell className="text-sm">{asset.assetName}</TableCell>
+                  <TableCell className="text-sm">{asset.location}</TableCell>
+                  <TableCell>
+                    <span className={`text-xs inline-flex items-center px-2.5 py-0.5 rounded-full font-medium ${getCriticalityColor(asset.criticality)}`}>
+                      {asset.criticality}
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-sm">{asset.riskScore}</TableCell>
+                  <TableCell className="text-sm">{asset.lastInspectionDate}</TableCell>
+                  <TableCell className="text-sm">{asset.nextInspectionDate}</TableCell>
+                  <TableCell className="text-sm text-right">{asset.replacementValue.toLocaleString()}</TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={8} className="text-center py-4 text-gray-500">
+                  No critical assets data available
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   );
 };

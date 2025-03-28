@@ -1,6 +1,5 @@
 
 import React from 'react';
-import { AssetCondition } from '@/types/alm';
 import { 
   Table, 
   TableBody, 
@@ -9,12 +8,13 @@ import {
   TableHeader, 
   TableRow 
 } from '@/components/ui/table';
+import { AssetCondition } from '@/types/alm';
 
-interface AssetConditionsTableProps {
+export interface AssetConditionsTableProps {
   data: AssetCondition[];
 }
 
-const AssetConditionsTable: React.FC<AssetConditionsTableProps> = ({ data }) => {
+const AssetConditionsTable: React.FC<AssetConditionsTableProps> = ({ data = [] }) => {
   // Helper function to get appropriate color based on condition
   const getConditionColor = (rating: string) => {
     switch (rating) {
@@ -34,35 +34,46 @@ const AssetConditionsTable: React.FC<AssetConditionsTableProps> = ({ data }) => 
   };
 
   return (
-    <div className="overflow-x-auto">
-      <Table className="w-full">
-        <TableHeader>
-          <TableRow>
-            <TableHead className="text-sm">ID</TableHead>
-            <TableHead className="text-sm">Condition Rating</TableHead>
-            <TableHead className="text-sm">Description</TableHead>
-            <TableHead className="text-sm">Asset Count</TableHead>
-            <TableHead className="text-sm">Percentage</TableHead>
-            <TableHead className="text-sm">Recommended Action</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {data.map((condition) => (
-            <TableRow key={condition.id}>
-              <TableCell className="text-sm font-medium">{condition.id}</TableCell>
-              <TableCell>
-                <span className={`text-xs inline-flex items-center px-2.5 py-0.5 rounded-full font-medium ${getConditionColor(condition.conditionRating)}`}>
-                  {condition.conditionRating}
-                </span>
-              </TableCell>
-              <TableCell className="text-sm">{condition.description}</TableCell>
-              <TableCell className="text-sm">{condition.assetCount}</TableCell>
-              <TableCell className="text-sm">{condition.percentage}%</TableCell>
-              <TableCell className="text-sm">{condition.recommendedAction}</TableCell>
+    <div className="bg-white rounded-md shadow">
+      <h3 className="text-lg font-medium p-4 border-b">Asset Conditions</h3>
+      <div className="overflow-x-auto">
+        <Table className="w-full">
+          <TableHeader>
+            <TableRow>
+              <TableHead className="text-sm">ID</TableHead>
+              <TableHead className="text-sm">Condition Rating</TableHead>
+              <TableHead className="text-sm">Description</TableHead>
+              <TableHead className="text-sm">Asset Count</TableHead>
+              <TableHead className="text-sm">Percentage</TableHead>
+              <TableHead className="text-sm">Recommended Action</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {data && data.length > 0 ? (
+              data.map((condition) => (
+                <TableRow key={condition.id}>
+                  <TableCell className="text-sm font-medium">{condition.id}</TableCell>
+                  <TableCell>
+                    <span className={`text-xs inline-flex items-center px-2.5 py-0.5 rounded-full font-medium ${getConditionColor(condition.conditionRating)}`}>
+                      {condition.conditionRating}
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-sm">{condition.description}</TableCell>
+                  <TableCell className="text-sm">{condition.assetCount}</TableCell>
+                  <TableCell className="text-sm">{condition.percentage}%</TableCell>
+                  <TableCell className="text-sm">{condition.recommendedAction}</TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center py-4 text-gray-500">
+                  No condition data available
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   );
 };
