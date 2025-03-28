@@ -131,7 +131,7 @@ const AssetLifecycle = () => {
         </TabsContent>
         
         <TabsContent value="calculator" className="space-y-4">
-          {/* Reserve Fund Calculator content */}
+          {/* Reserve Fund Calculator */}
           <ReserveFundCalculator />
         </TabsContent>
       </Tabs>

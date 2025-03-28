@@ -118,6 +118,7 @@ const ReserveFundCalculator: React.FC = () => {
             };
           });
 
+          console.log('Fetched properties:', parsedData.length);
           setPropertyDatabase(parsedData);
         }
       } catch (err) {
