@@ -18,6 +18,7 @@ import { fetchOperatingExpenses, fetchReserveFundRates, fetchPropertyServiceChar
 import Layout from '@/components/layout/Layout';
 import { Progress } from '@/components/ui/progress';
 import { useAssets } from '@/hooks/useAssets';
+import ReserveCalculatorPage from '@/components/ReserveCalculatorPage';
 
 const AssetLifecycleManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -87,9 +88,9 @@ const AssetLifecycleManagement = () => {
               <ListChecks className="h-4 w-4" />
               <span>Maintenance Schedule</span>
             </TabsTrigger>
-            <TabsTrigger value="serviceCharges" className="flex items-center gap-2">
+            <TabsTrigger value="assetManagement" className="flex items-center gap-2">
               <DollarSign className="h-4 w-4" />
-              <span>Service Charges</span>
+              <span>Asset Management</span>
             </TabsTrigger>
           </TabsList>
 
@@ -137,8 +138,16 @@ const AssetLifecycleManagement = () => {
             <MaintenanceSchedule />
           </TabsContent>
 
-          <TabsContent value="serviceCharges" className="space-y-4">
-            <ServiceChargeSection />
+          <TabsContent value="assetManagement" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Asset Management</CardTitle>
+                <CardDescription>Comprehensive asset management and reserve fund calculation</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ReserveCalculatorPage />
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>
