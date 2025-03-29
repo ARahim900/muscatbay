@@ -40,8 +40,7 @@ export const usePropertyUnits = (options: {
             property_transactions(
               property_owners(client_name)
             )
-          `)
-          .order('unit_no');
+          `);
 
         // Apply filters if provided
         if (zone) query = query.eq('zone_code', zone);
