@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Calculator, ChevronUp, ChevronDown } from 'lucide-react';
 import { ServiceChargeData, ServiceCharge } from '@/types/alm';
@@ -69,7 +68,7 @@ const ServiceChargeCalculator: React.FC<ServiceChargeCalculatorProps> = ({ initi
                 onChange={(e) => setServiceChargeZone(e.target.value)}
               >
                 {Object.entries(initialData).map(([key, zone]) => (
-                  <option key={key} value={key}>{zone.name}</option>
+                  <option key={key} value={key}>{zone.name} ({zone.code})</option>
                 ))}
               </select>
             </div>

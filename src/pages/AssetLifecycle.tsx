@@ -310,6 +310,7 @@ const AssetLifecycle = () => {
             <ServiceChargeCalculator initialData={{
               zone3: {
                 name: "Zaha Zone",
+                code: "Z3", // Added missing code property
                 unitTypes: {
                   apartment: {
                     name: "Apartment",
@@ -325,6 +326,7 @@ const AssetLifecycle = () => {
               },
               zone5: {
                 name: "Nameer Zone",
+                code: "Z5", // Added missing code property
                 unitTypes: {
                   villa: {
                     name: "Villa",
@@ -335,6 +337,7 @@ const AssetLifecycle = () => {
               },
               zone8: {
                 name: "Wajd Zone",
+                code: "Z8", // Added missing code property
                 unitTypes: {
                   villa: {
                     name: "Villa",

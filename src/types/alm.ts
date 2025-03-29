@@ -87,19 +87,23 @@ export interface PropertyUnit {
   owner?: string;
 }
 
-// Service Charge Data definition
+// Service Charge Unit Type definition
+export interface ServiceChargeUnitType {
+  name: string;
+  baseRate: number;
+  sizes: number[];
+}
+
+// Service Charge Zone definition
 export interface ServiceChargeZone {
   name: string;
   code: string;
   unitTypes: {
-    [key: string]: {
-      name: string;
-      baseRate: number;
-      sizes: number[];
-    };
+    [key: string]: ServiceChargeUnitType;
   };
 }
 
+// Service Charge Data definition
 export interface ServiceChargeData {
   [zoneKey: string]: ServiceChargeZone;
 }
