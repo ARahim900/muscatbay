@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Inbox, LifeBuoy, Boxes, Calculator } from 'lucide-react';
+import { Inbox, LifeBuoy, Boxes, Calculator, Building2 } from 'lucide-react';
 import { useAssets } from "@/hooks/useAssets";
 import { 
   CriticalAssetsTable, 
@@ -12,6 +12,7 @@ import {
   UpcomingMaintenanceTable 
 } from "@/components/alm/tables";
 import ServiceChargeCalculator from "@/components/alm/ServiceChargeCalculator";
+import RealPropertyServiceChargeCalculator from "@/components/alm/RealPropertyServiceChargeCalculator";
 import ReserveFundCalculator from "@/components/alm/ReserveFundCalculator";
 import { AssetCategorySummary, AssetCondition, CriticalAsset, MaintenanceForecast, UpcomingMaintenance } from '@/types/alm';
 
@@ -197,6 +198,7 @@ const sampleUpcomingMaintenanceData: UpcomingMaintenance[] = [
 const AssetLifecycle = () => {
   const { assets, loading, error } = useAssets();
   const [activeTab, setActiveTab] = useState("overview");
+  const [serviceChargeCalculatorType, setServiceChargeCalculatorType] = useState<'template' | 'real'>('real');
 
   return (
     <div className="container py-6 space-y-6">
@@ -208,7 +210,7 @@ const AssetLifecycle = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid grid-cols-2 md:grid-cols-4 lg:w-[800px]">
+        <TabsList className="grid grid-cols-2 md:grid-cols-5 lg:w-[800px]">
           <TabsTrigger value="overview" className="flex items-center gap-2">
             <Inbox className="h-4 w-4" />
             <span>Overview</span>
@@ -220,6 +222,10 @@ const AssetLifecycle = () => {
           <TabsTrigger value="service-charges" className="flex items-center gap-2">
             <Boxes className="h-4 w-4" />
             <span>Service Charges</span>
+          </TabsTrigger>
+          <TabsTrigger value="properties" className="flex items-center gap-2">
+            <Building2 className="h-4 w-4" />
+            <span>Properties</span>
           </TabsTrigger>
           <TabsTrigger value="calculator" className="flex items-center gap-2">
             <Calculator className="h-4 w-4" />
@@ -277,43 +283,83 @@ const AssetLifecycle = () => {
         
         <TabsContent value="service-charges" className="space-y-4">
           {/* Service charges content */}
-          <ServiceChargeCalculator initialData={{
-            zone3: {
-              name: "Zaha Zone",
-              unitTypes: {
-                apartment: {
-                  name: "Apartment",
-                  baseRate: 2.5,
-                  sizes: [79.09, 115.47, 199.13, 355.07, 361.42]
-                },
-                villa: {
-                  name: "Villa",
-                  baseRate: 2.2,
-                  sizes: [357.12, 422.24]
+          <div className="flex justify-end space-x-2 mb-4">
+            <button
+              onClick={() => setServiceChargeCalculatorType('template')}
+              className={`px-3 py-1.5 text-sm rounded-md ${
+                serviceChargeCalculatorType === 'template' 
+                  ? 'bg-blue-100 text-blue-800' 
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              Template Calculator
+            </button>
+            <button
+              onClick={() => setServiceChargeCalculatorType('real')}
+              className={`px-3 py-1.5 text-sm rounded-md ${
+                serviceChargeCalculatorType === 'real' 
+                  ? 'bg-blue-100 text-blue-800' 
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              Property-Based Calculator
+            </button>
+          </div>
+          
+          {serviceChargeCalculatorType === 'template' ? (
+            <ServiceChargeCalculator initialData={{
+              zone3: {
+                name: "Zaha Zone",
+                unitTypes: {
+                  apartment: {
+                    name: "Apartment",
+                    baseRate: 2.5,
+                    sizes: [79.09, 115.47, 199.13, 355.07, 361.42]
+                  },
+                  villa: {
+                    name: "Villa",
+                    baseRate: 2.2,
+                    sizes: [357.12, 422.24]
+                  }
+                }
+              },
+              zone5: {
+                name: "Nameer Zone",
+                unitTypes: {
+                  villa: {
+                    name: "Villa",
+                    baseRate: 2.0,
+                    sizes: [426.78, 497.62]
+                  }
+                }
+              },
+              zone8: {
+                name: "Wajd Zone",
+                unitTypes: {
+                  villa: {
+                    name: "Villa",
+                    baseRate: 1.8,
+                    sizes: [750.35, 760.40, 943.00, 1187.47, 1844.67]
+                  }
                 }
               }
-            },
-            zone5: {
-              name: "Nameer Zone",
-              unitTypes: {
-                villa: {
-                  name: "Villa",
-                  baseRate: 2.0,
-                  sizes: [426.78, 497.62]
-                }
-              }
-            },
-            zone8: {
-              name: "Wajd Zone",
-              unitTypes: {
-                villa: {
-                  name: "Villa",
-                  baseRate: 1.8,
-                  sizes: [750.35, 760.40, 943.00, 1187.47, 1844.67]
-                }
-              }
-            }
-          }} />
+            }} />
+          ) : (
+            <RealPropertyServiceChargeCalculator />
+          )}
+        </TabsContent>
+
+        <TabsContent value="properties" className="space-y-4">
+          {/* Properties tab content will be added in a future update */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Property Management</CardTitle>
+              <CardDescription>View and manage property units in Muscat Bay</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p>The property management interface will be implemented here. You can currently use the Property-Based calculator in the Service Charges tab to view property details.</p>
+            </CardContent>
+          </Card>
         </TabsContent>
         
         <TabsContent value="calculator" className="space-y-4">

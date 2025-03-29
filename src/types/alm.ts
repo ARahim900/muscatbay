@@ -69,9 +69,28 @@ export interface UpcomingMaintenance {
   priority: string;
 }
 
+// Property Unit definition
+export interface PropertyUnit {
+  id: string;
+  unitNo: string;
+  sector: string;
+  zone: string;
+  propertyType: string;
+  status: string;
+  unitType: string;
+  bua: number;
+  hasLift: boolean;
+  plotSize?: number;
+  unitValue?: number;
+  handoverDate?: string | null;
+  anticipatedHandoverDate?: string | null;
+  owner?: string;
+}
+
 // Service Charge Data definition
 export interface ServiceChargeZone {
   name: string;
+  code: string;
   unitTypes: {
     [key: string]: {
       name: string;
@@ -97,4 +116,15 @@ export interface ServiceCharge {
     baseCharge: number;
     vat: number;
   };
+}
+
+// Service Charge Zone from database
+export interface ServiceChargeZoneData {
+  id: number;
+  name: string;
+  code: string;
+  totalBua: number;
+  unitCount: number;
+  serviceChargeRate: number;
+  reserveFundRate: number;
 }
