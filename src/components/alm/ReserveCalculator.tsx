@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calculator, Building2, MapPin, ArrowRight } from 'lucide-react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAssetService } from '@/hooks/useAssetService';
 import { PropertyUnit, ContributionBreakdown } from '@/types/asset';
 import { toast } from "sonner";
@@ -233,75 +232,78 @@ const ReserveCalculator: React.FC = () => {
               {/* Zone */}
               <div>
                 <label htmlFor="zone-select" className="block text-sm font-medium text-gray-700 mb-1">Zone</label>
-                <Select value={selectedZone} onValueChange={setSelectedZone}>
-                  <SelectTrigger id="zone-select" className="w-full">
-                    <SelectValue placeholder="-- Select Zone --" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availableZones.map(zone => (
-                      <SelectItem key={zone} value={zone}>
-                        {getZoneLabel(zone)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <select
+                  id="zone-select"
+                  value={selectedZone}
+                  onChange={(e) => setSelectedZone(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white"
+                >
+                  <option value="">-- Select Zone --</option>
+                  {availableZones.map(zone => (
+                    <option key={zone} value={zone}>
+                      {getZoneLabel(zone)}
+                    </option>
+                  ))}
+                </select>
               </div>
               
               {/* Property Type */}
               <div>
                 <label htmlFor="type-select" className="block text-sm font-medium text-gray-700 mb-1">Property Type</label>
-                <Select value={selectedPropertyType} onValueChange={setSelectedPropertyType} disabled={!selectedZone}>
-                  <SelectTrigger id="type-select" className="w-full">
-                    <SelectValue placeholder="-- Select Type --" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availablePropertyTypes.map(type => (
-                      <SelectItem key={type} value={type}>
-                        {type}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <select
+                  id="type-select"
+                  value={selectedPropertyType}
+                  onChange={(e) => setSelectedPropertyType(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white"
+                  disabled={!selectedZone}
+                >
+                  <option value="">-- Select Type --</option>
+                  {availablePropertyTypes.map(type => (
+                    <option key={type} value={type}>
+                      {type}
+                    </option>
+                  ))}
+                </select>
               </div>
               
               {/* Building (conditional) */}
               {availableBuildings.length > 0 && (
                 <div>
                   <label htmlFor="building-select" className="block text-sm font-medium text-gray-700 mb-1">Building</label>
-                  <Select value={selectedBuilding} onValueChange={setSelectedBuilding} disabled={!selectedPropertyType}>
-                    <SelectTrigger id="building-select" className="w-full">
-                      <SelectValue placeholder="-- Select Building --" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableBuildings.map(building => (
-                        <SelectItem key={building} value={building}>
-                          {building}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <select
+                    id="building-select"
+                    value={selectedBuilding}
+                    onChange={(e) => setSelectedBuilding(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white"
+                    disabled={!selectedPropertyType}
+                  >
+                    <option value="">-- Select Building --</option>
+                    {availableBuildings.map(building => (
+                      <option key={building} value={building}>
+                        {building}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               )}
               
               {/* Unit */}
               <div>
                 <label htmlFor="unit-select" className="block text-sm font-medium text-gray-700 mb-1">Unit</label>
-                <Select 
-                  value={selectedUnitId ? selectedUnitId.toString() : ""} 
-                  onValueChange={(value) => setSelectedUnitId(value ? parseInt(value) : null)} 
+                <select
+                  id="unit-select"
+                  value={selectedUnitId ? selectedUnitId.toString() : ""}
+                  onChange={(e) => setSelectedUnitId(e.target.value ? parseInt(e.target.value) : null)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white"
                   disabled={availableUnits.length === 0}
                 >
-                  <SelectTrigger id="unit-select" className="w-full">
-                    <SelectValue placeholder="-- Select Unit --" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availableUnits.map(unit => (
-                      <SelectItem key={unit.id} value={unit.id.toString()}>
-                        {unit.unit_no}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  <option value="">-- Select Unit --</option>
+                  {availableUnits.map(unit => (
+                    <option key={unit.id} value={unit.id.toString()}>
+                      {unit.unit_no}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
           </div>
