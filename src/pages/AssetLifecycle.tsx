@@ -1,8 +1,7 @@
-
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Inbox, LifeBuoy, Boxes, Calculator, Building2 } from 'lucide-react';
+import { Inbox, LifeBuoy, Boxes, Calculator, Building2, ChevronRight, Home } from 'lucide-react';
 import { useAssets } from "@/hooks/useAssets";
 import { 
   CriticalAssetsTable, 
@@ -15,8 +14,9 @@ import ServiceChargeCalculator from "@/components/alm/ServiceChargeCalculator";
 import RealPropertyServiceChargeCalculator from "@/components/alm/RealPropertyServiceChargeCalculator";
 import ReserveFundCalculator from "@/components/alm/ReserveFundCalculator";
 import { AssetCategorySummary, AssetCondition, CriticalAsset, MaintenanceForecast, UpcomingMaintenance } from '@/types/alm';
+import { Link } from 'react-router-dom';
+import BreadcrumbNavigation from '@/components/ui/breadcrumb-navigation';
 
-// Sample data for tables
 const sampleCategoryData: AssetCategorySummary[] = [
   {
     id: "CAT-001",
@@ -200,8 +200,20 @@ const AssetLifecycle = () => {
   const [activeTab, setActiveTab] = useState("overview");
   const [serviceChargeCalculatorType, setServiceChargeCalculatorType] = useState<'template' | 'real'>('real');
 
+  const breadcrumbItems = [
+    {
+      label: "Asset Lifecycle Management",
+      path: "/alm",
+      icon: <Building2 className="h-4 w-4" />
+    }
+  ];
+
   return (
     <div className="container py-6 space-y-6">
+      <div className="mb-2">
+        <BreadcrumbNavigation items={breadcrumbItems} />
+      </div>
+
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Asset Lifecycle Management</h1>
@@ -234,7 +246,6 @@ const AssetLifecycle = () => {
         </TabsList>
         
         <TabsContent value="overview" className="space-y-4">
-          {/* Overview content */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Card>
               <CardHeader className="pb-2">
@@ -274,7 +285,6 @@ const AssetLifecycle = () => {
         </TabsContent>
         
         <TabsContent value="maintenance" className="space-y-4">
-          {/* Maintenance content */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <MaintenanceForecastTable data={sampleMaintenanceData} />
             <UpcomingMaintenanceTable data={sampleUpcomingMaintenanceData} />
@@ -282,7 +292,6 @@ const AssetLifecycle = () => {
         </TabsContent>
         
         <TabsContent value="service-charges" className="space-y-4">
-          {/* Service charges content */}
           <div className="flex justify-end space-x-2 mb-4">
             <button
               onClick={() => setServiceChargeCalculatorType('template')}
@@ -310,7 +319,7 @@ const AssetLifecycle = () => {
             <ServiceChargeCalculator initialData={{
               zone3: {
                 name: "Zaha Zone",
-                code: "Z3", // Added missing code property
+                code: "Z3",
                 unitTypes: {
                   apartment: {
                     name: "Apartment",
@@ -326,7 +335,7 @@ const AssetLifecycle = () => {
               },
               zone5: {
                 name: "Nameer Zone",
-                code: "Z5", // Added missing code property
+                code: "Z5",
                 unitTypes: {
                   villa: {
                     name: "Villa",
@@ -337,7 +346,7 @@ const AssetLifecycle = () => {
               },
               zone8: {
                 name: "Wajd Zone",
-                code: "Z8", // Added missing code property
+                code: "Z8",
                 unitTypes: {
                   villa: {
                     name: "Villa",
@@ -353,7 +362,6 @@ const AssetLifecycle = () => {
         </TabsContent>
 
         <TabsContent value="properties" className="space-y-4">
-          {/* Properties tab content will be added in a future update */}
           <Card>
             <CardHeader>
               <CardTitle>Property Management</CardTitle>
@@ -366,7 +374,6 @@ const AssetLifecycle = () => {
         </TabsContent>
         
         <TabsContent value="calculator" className="space-y-4">
-          {/* Reserve Fund Calculator */}
           <ReserveFundCalculator />
         </TabsContent>
       </Tabs>
