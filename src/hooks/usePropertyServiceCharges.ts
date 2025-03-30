@@ -43,7 +43,7 @@ export const usePropertyServiceCharges = () => {
 
   // Filter properties by zone
   const filterPropertiesByZone = (zoneCode: string) => {
-    if (!zoneCode || zoneCode === 'all') {
+    if (!zoneCode) {
       setFilteredProperties(properties);
       return;
     }
@@ -80,54 +80,65 @@ export const usePropertyServiceCharges = () => {
           
         if (zonesError) throw zonesError;
         
-        // Fetch property and expense data
-        const { data, error: dataError } = await supabase
-          .from('property_service_charge_data')
-          .select('*');
+        // Fetch all property units
+        const { data: propertyUnitsData, error: propertyUnitsError } = await supabase
+          .from('property_units')
+          .select(`
+            id,
+            unit_no,
+            sector,
+            unit_type,
+            bua,
+            has_lift,
+            zone_code,
+            property_transactions(
+              property_owners(client_name)
+            )
+          `)
+          .order('unit_no');
           
-        if (dataError) throw dataError;
+        if (propertyUnitsError) throw propertyUnitsError;
+        
+        // Fetch expense data
+        const { data: expensesData, error: expensesError } = await supabase
+          .from('operating_expenses')
+          .select('*')
+          .eq('status', 'Active');
+          
+        if (expensesError) throw expensesError;
         
         // Process and organize the data
-        const propertyMap = new Map<string, PropertyServiceCharge>();
+        const propertyList: PropertyServiceCharge[] = [];
         
-        data.forEach((row) => {
-          const propertyId = row.property_id;
+        // Map for zone code to name
+        const zoneMap = new Map(zonesData.map(zone => [zone.code, zone.name]));
+        
+        // Process property units
+        propertyUnitsData.forEach((unit) => {
+          const propertyExpenses = expensesData.map(expense => ({
+            category: expense.category,
+            serviceProvider: expense.service_provider,
+            monthlyCost: expense.monthly_cost,
+            annualCost: expense.annual_cost,
+            allocation: expense.allocation
+          }));
           
-          if (!propertyMap.has(propertyId)) {
-            propertyMap.set(propertyId, {
-              propertyId,
-              unitNo: row.unit_no,
-              sector: row.sector,
-              unitType: row.unit_type,
-              bua: row.bua,
-              hasLift: row.has_lift,
-              zoneCode: row.zone_code,
-              zoneName: row.zone_name,
-              ownerName: row.owner_name,
-              expenses: []
-            });
-          }
-          
-          // Add expense to property
-          const property = propertyMap.get(propertyId);
-          if (property) {
-            // Only add unique expenses (avoiding duplicates from the CROSS JOIN)
-            const expenseExists = property.expenses.some(e => e.category === row.expense_category);
-            if (!expenseExists) {
-              property.expenses.push({
-                category: row.expense_category,
-                serviceProvider: row.service_provider,
-                monthlyCost: row.monthly_cost,
-                annualCost: row.annual_cost,
-                allocation: row.allocation
-              });
-            }
-          }
+          propertyList.push({
+            propertyId: unit.id,
+            unitNo: unit.unit_no,
+            sector: unit.sector || 'Unknown',
+            unitType: unit.unit_type || 'Unknown',
+            bua: unit.bua || 0,
+            hasLift: unit.has_lift || false,
+            zoneCode: unit.zone_code || 'Unknown',
+            zoneName: zoneMap.get(unit.zone_code) || unit.zone_code || 'Unknown',
+            ownerName: unit.property_transactions?.[0]?.property_owners?.client_name || null,
+            expenses: propertyExpenses
+          });
         });
         
-        const propertiesArray = Array.from(propertyMap.values());
-        setProperties(propertiesArray);
-        setFilteredProperties(propertiesArray);
+        setProperties(propertyList);
+        setFilteredProperties(propertyList);
         
         // Format zones
         const formattedZones = zonesData.map(zone => ({

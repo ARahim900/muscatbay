@@ -16,12 +16,14 @@ interface PropertyUnitSelectorProps {
   zoneCode?: string;
   value: string;
   onChange: (value: string) => void;
+  placeholder?: string;
 }
 
 const PropertyUnitSelector: React.FC<PropertyUnitSelectorProps> = ({ 
   zoneCode, 
   value, 
-  onChange 
+  onChange,
+  placeholder = "Select a property"
 }) => {
   const { properties, loading, error } = usePropertyUnits(
     zoneCode ? { zone: zoneCode } : {}
@@ -60,9 +62,9 @@ const PropertyUnitSelector: React.FC<PropertyUnitSelectorProps> = ({
   return (
     <Select value={value} onValueChange={onChange}>
       <SelectTrigger>
-        <SelectValue placeholder="Select a property" />
+        <SelectValue placeholder={placeholder} />
       </SelectTrigger>
-      <SelectContent>
+      <SelectContent className="max-h-[300px]">
         {properties.length === 0 ? (
           <SelectItem value="no-properties-available">No properties available</SelectItem>
         ) : (

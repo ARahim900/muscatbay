@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { PieChart, BarChart3, Calculator, ChevronDown, ChevronUp, Download } from 'lucide-react';
+import { PieChart, BarChart3, Calculator, ChevronDown, ChevronUp, Download, Search } from 'lucide-react';
 import { usePropertyServiceCharges } from '@/hooks/usePropertyServiceCharges';
 import { Skeleton } from "@/components/ui/skeleton";
 import html2canvas from 'html2canvas';
@@ -20,7 +20,7 @@ const PropertyServiceChargeCalculator: React.FC = () => {
     filterPropertiesBySearch
   } = usePropertyServiceCharges();
   
-  const [selectedZone, setSelectedZone] = useState<string>('');
+  const [selectedZone, setSelectedZone] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [selectedPropertyId, setSelectedPropertyId] = useState<string>('');
   const [selectedProperty, setSelectedProperty] = useState<any>(null);
@@ -31,13 +31,13 @@ const PropertyServiceChargeCalculator: React.FC = () => {
   
   // Handle zone selection change
   useEffect(() => {
-    filterPropertiesByZone(selectedZone);
-  }, [selectedZone]);
+    filterPropertiesByZone(selectedZone === 'all' ? '' : selectedZone);
+  }, [selectedZone, filterPropertiesByZone]);
   
   // Handle search term change
   useEffect(() => {
     filterPropertiesBySearch(searchTerm);
-  }, [searchTerm]);
+  }, [searchTerm, filterPropertiesBySearch]);
   
   // Handle property selection
   useEffect(() => {
@@ -222,9 +222,9 @@ const PropertyServiceChargeCalculator: React.FC = () => {
       </CardHeader>
       <CardContent>
         <div className="space-y-6">
-          {/* Selection Controls */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
+          {/* Improved Selection Controls Layout */}
+          <div className="flex flex-col md:flex-row gap-4 items-end">
+            <div className="w-full md:w-1/3 space-y-2">
               <label className="text-sm font-medium">Zone</label>
               <Select
                 value={selectedZone}
@@ -244,44 +244,50 @@ const PropertyServiceChargeCalculator: React.FC = () => {
               </Select>
             </div>
             
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Search Property</label>
-              <Input
-                placeholder="Search by unit number or owner"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Select Property</label>
-              <Select
-                value={selectedPropertyId}
-                onValueChange={setSelectedPropertyId}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a property" />
-                </SelectTrigger>
-                <SelectContent>
-                  {filteredProperties.length === 0 ? (
-                    <SelectItem value="no-properties">No properties available</SelectItem>
-                  ) : (
-                    filteredProperties.map((property) => (
-                      <SelectItem key={property.propertyId} value={property.propertyId}>
-                        {property.unitNo} - {property.unitType} ({property.bua} sqm)
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-muted-foreground mt-1">
-                {filteredProperties.length} properties available
-              </p>
+            <div className="w-full md:flex-1 flex flex-col md:flex-row gap-4">
+              <div className="w-full md:w-2/3 space-y-2">
+                <label className="text-sm font-medium">Select Property</label>
+                <Select
+                  value={selectedPropertyId}
+                  onValueChange={setSelectedPropertyId}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a property" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-[300px]">
+                    {filteredProperties.length === 0 ? (
+                      <SelectItem value="no-properties">No properties available</SelectItem>
+                    ) : (
+                      filteredProperties.map((property) => (
+                        <SelectItem key={property.propertyId} value={property.propertyId}>
+                          {property.unitNo} - {property.unitType} ({property.bua} sqm)
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="w-full md:w-1/3 space-y-2">
+                <label className="text-sm font-medium">Search</label>
+                <div className="relative">
+                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Unit or owner..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-8"
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {filteredProperties.length} properties available
+                </p>
+              </div>
             </div>
           </div>
           
           {/* Results Section */}
-          {selectedProperty && calculationResult && (
+          {selectedProperty && calculationResult ? (
             <div ref={resultRef} className="bg-muted/30 rounded-lg p-6 mt-6">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-medium">Service Charge Calculation Results</h3>
@@ -466,10 +472,7 @@ const PropertyServiceChargeCalculator: React.FC = () => {
                 </div>
               </div>
             </div>
-          )}
-          
-          {/* No Property Selected State */}
-          {!selectedProperty && (
+          ) : (
             <div className="text-center p-8 bg-muted/30 rounded-lg">
               <Calculator className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
               <h3 className="text-lg font-medium mb-2">No Property Selected</h3>
