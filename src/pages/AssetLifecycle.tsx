@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { 
   Building2, Activity, Layers, Filter, Search, ChevronsUpDown, 
-  Users, Calculator 
+  Users, Calculator, X 
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
