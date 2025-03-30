@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 
 export interface PropertyUnit {
@@ -81,19 +82,31 @@ export const calculateReserveFundContribution = async (unit: PropertyUnit): Prom
       { 
         name: 'Master Community Infrastructure', 
         category: 'Infrastructure', 
-        share: masterShare 
+        share: masterShare * 0.7 
+      },
+      { 
+        name: 'Master Community Landscaping', 
+        category: 'Amenities', 
+        share: masterShare * 0.3 
       },
       { 
         name: `Zone ${unit.zone} Specific Assets`, 
         category: 'Zone Specific', 
         share: zoneShare 
       },
-      ...(buildingShare > 0 ? [{
-        name: 'Building Specific Assets',
-        category: 'Building Assets',
-        share: buildingShare
-      }] : [])
-    ];
+      ...(buildingShare > 0 ? [
+        {
+          name: 'Building Elevators',
+          category: 'Building MEP',
+          share: buildingShare * 0.5
+        },
+        {
+          name: 'Building Finishes',
+          category: 'Building Finishes',
+          share: buildingShare * 0.5
+        }
+      ] : [])
+    ].filter(item => item.share > 0);
     
     // Save calculation result
     const { data, error } = await supabase

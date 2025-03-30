@@ -20,6 +20,12 @@ export interface ContributionRate {
   rate: number;
 }
 
+export interface ContributionBreakdown {
+  name: string;
+  category: string;
+  share: number;
+}
+
 export interface ContributionCalculation {
   propertyDetails: PropertyUnit;
   calculation: {
