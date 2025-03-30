@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,7 +12,7 @@ import {
 } from "@/components/alm/tables";
 import ServiceChargeCalculator from "@/components/alm/ServiceChargeCalculator";
 import RealPropertyServiceChargeCalculator from "@/components/alm/RealPropertyServiceChargeCalculator";
-import ReserveFundCalculator from "@/components/alm/ReserveFundCalculator";
+import ReserveCalculator from "@/components/alm/ReserveCalculator";
 import { AssetCategorySummary, AssetCondition, CriticalAsset, MaintenanceForecast, UpcomingMaintenance } from '@/types/alm';
 import { Link } from 'react-router-dom';
 import BreadcrumbNavigation from '@/components/ui/breadcrumb-navigation';
@@ -380,7 +379,7 @@ const AssetLifecycle = () => {
         </TabsContent>
         
         <TabsContent value="calculator" className="space-y-4">
-          <ReserveFundCalculator />
+          <ReserveCalculator />
         </TabsContent>
       </Tabs>
     </div>
