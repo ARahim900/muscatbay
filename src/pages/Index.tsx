@@ -5,7 +5,10 @@ import {
   Bell, Search, Settings, Menu, ChevronRight, User, LogOut, 
   Moon, Sun, Grid, Sliders, X, ChevronLeft, Clock, Filter, Plus
 } from 'lucide-react';
-import { LineChart, Line, AreaChart, Area, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, PieChart as RechartsPieChart, Pie, Cell } from 'recharts';
+import { 
+  LineChart, Line, AreaChart, Area, ResponsiveContainer, BarChart, Bar, 
+  XAxis, YAxis, Tooltip, PieChart as RechartsPieChart, Pie, Cell 
+} from 'recharts';
 
 const OperationsDashboard = () => {
   const [sidebarExpanded, setSidebarExpanded] = useState(true);

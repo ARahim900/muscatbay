@@ -1,8 +1,16 @@
 
-import React, { useState, useEffect } from 'react';
-import { Building2, Activity, Layers, Filter, Search, ChevronsUpDown, Users, Calculator } from 'lucide-react';
+import React, { useState } from 'react';
+import { 
+  Building2, Activity, Layers, Filter, Search, ChevronsUpDown, 
+  Users, Calculator 
+} from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge';
+import EnhancedPieChart from '@/components/ui/enhanced-pie-chart';
 
 // Mock data
 const zones = [
@@ -26,11 +34,18 @@ const reserveMetrics = {
   }
 };
 
-const AssetLifecycle = () => {
+const assetConditionData = [
+  { name: 'Excellent', value: 45, color: '#10b981' },
+  { name: 'Good', value: 30, color: '#3b82f6' },
+  { name: 'Fair', value: 15, color: '#f59e0b' },
+  { name: 'Poor', value: 8, color: '#f97316' },
+  { name: 'Critical', value: 2, color: '#ef4444' }
+];
+
+const Dashboard = () => {
   const [selectedZone, setSelectedZone] = useState(null);
   const [isZoneModalOpen, setIsZoneModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
-  const navigate = useNavigate();
   
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -48,17 +63,17 @@ const AssetLifecycle = () => {
             <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
               <Search className="w-4 h-4 text-gray-500 dark:text-gray-400" />
             </div>
-            <input 
+            <Input 
               type="search" 
-              className="w-full py-2 pl-10 pr-4 text-sm border rounded-lg bg-gray-50 border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white" 
+              className="w-full py-2 pl-10 pr-4 text-sm"
               placeholder="Search properties, owners, assets..." 
             />
           </div>
           
           <div className="flex items-center gap-4">
-            <button className="p-2 text-gray-500 rounded-lg hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-700">
+            <Button variant="ghost" size="icon">
               <Filter size={20} />
-            </button>
+            </Button>
             <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-800 flex items-center justify-center font-medium">MB</div>
           </div>
         </div>
@@ -69,55 +84,60 @@ const AssetLifecycle = () => {
         {/* Sidebar */}
         <aside className="w-20 md:w-64 p-4 border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
           <nav className="space-y-1 mt-6">
-            <button 
+            <Button 
               onClick={() => setActiveTab('overview')}
-              className={`flex items-center w-full p-3 rounded-lg ${activeTab === 'overview' 
+              variant={activeTab === 'overview' ? 'secondary' : 'ghost'}
+              className={`flex items-center w-full justify-start ${activeTab === 'overview' 
                 ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-100' 
                 : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'}`}
             >
               <Activity size={20} className="mr-3" />
               <span className="hidden md:inline">Overview</span>
-            </button>
+            </Button>
             
-            <button 
+            <Button 
               onClick={() => setActiveTab('properties')}
-              className={`flex items-center w-full p-3 rounded-lg ${activeTab === 'properties' 
+              variant={activeTab === 'properties' ? 'secondary' : 'ghost'}
+              className={`flex items-center w-full justify-start ${activeTab === 'properties' 
                 ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-100' 
                 : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'}`}
             >
               <Building2 size={20} className="mr-3" />
               <span className="hidden md:inline">Properties</span>
-            </button>
+            </Button>
             
-            <button 
+            <Button 
               onClick={() => setActiveTab('assets')}
-              className={`flex items-center w-full p-3 rounded-lg ${activeTab === 'assets' 
+              variant={activeTab === 'assets' ? 'secondary' : 'ghost'}
+              className={`flex items-center w-full justify-start ${activeTab === 'assets' 
                 ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-100' 
                 : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'}`}
             >
               <Layers size={20} className="mr-3" />
               <span className="hidden md:inline">Assets</span>
-            </button>
+            </Button>
             
-            <button 
+            <Button 
               onClick={() => setActiveTab('owners')}
-              className={`flex items-center w-full p-3 rounded-lg ${activeTab === 'owners' 
+              variant={activeTab === 'owners' ? 'secondary' : 'ghost'}
+              className={`flex items-center w-full justify-start ${activeTab === 'owners' 
                 ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-100' 
                 : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'}`}
             >
               <Users size={20} className="mr-3" />
               <span className="hidden md:inline">Owners</span>
-            </button>
+            </Button>
             
-            <button 
+            <Button 
               onClick={() => setActiveTab('calculator')}
-              className={`flex items-center w-full p-3 rounded-lg ${activeTab === 'calculator' 
+              variant={activeTab === 'calculator' ? 'secondary' : 'ghost'}
+              className={`flex items-center w-full justify-start ${activeTab === 'calculator' 
                 ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-100' 
                 : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'}`}
             >
               <Calculator size={20} className="mr-3" />
               <span className="hidden md:inline">Calculator</span>
-            </button>
+            </Button>
           </nav>
         </aside>
         
@@ -138,47 +158,54 @@ const AssetLifecycle = () => {
                   
                   {/* High-level metrics */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-                      <h3 className="text-gray-500 text-sm font-medium">Total Reserve Funds</h3>
-                      <p className="text-2xl font-bold mt-1">OMR {reserveMetrics.totalReserveFunds.toLocaleString()}</p>
-                      <div className="flex items-center mt-2 text-sm">
-                        <span className="text-green-500 font-medium">+{reserveMetrics.fundingRatio}%</span>
-                        <span className="text-gray-500 ml-1">funded ratio</span>
-                      </div>
-                    </div>
+                    <Card>
+                      <CardContent className="pt-6">
+                        <h3 className="text-gray-500 text-sm font-medium">Total Reserve Funds</h3>
+                        <p className="text-2xl font-bold mt-1">OMR {reserveMetrics.totalReserveFunds.toLocaleString()}</p>
+                        <div className="flex items-center mt-2 text-sm">
+                          <span className="text-green-500 font-medium">+{reserveMetrics.fundingRatio}%</span>
+                          <span className="text-gray-500 ml-1">funded ratio</span>
+                        </div>
+                      </CardContent>
+                    </Card>
                     
-                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-                      <h3 className="text-gray-500 text-sm font-medium">Annual Contribution</h3>
-                      <p className="text-2xl font-bold mt-1">OMR {reserveMetrics.totalAnnualContribution.toLocaleString()}</p>
-                      <div className="flex items-center mt-2 text-sm">
-                        <span className="text-gray-500">Last updated {reserveMetrics.lastUpdated}</span>
-                      </div>
-                    </div>
+                    <Card>
+                      <CardContent className="pt-6">
+                        <h3 className="text-gray-500 text-sm font-medium">Annual Contribution</h3>
+                        <p className="text-2xl font-bold mt-1">OMR {reserveMetrics.totalAnnualContribution.toLocaleString()}</p>
+                        <div className="flex items-center mt-2 text-sm">
+                          <span className="text-gray-500">Last updated {reserveMetrics.lastUpdated}</span>
+                        </div>
+                      </CardContent>
+                    </Card>
                     
-                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-                      <h3 className="text-gray-500 text-sm font-medium">Next Major Expenditure</h3>
-                      <p className="text-2xl font-bold mt-1">OMR {reserveMetrics.nextMajorExpenditure.amount.toLocaleString()}</p>
-                      <div className="flex items-center mt-2 text-sm">
-                        <span className="text-gray-500">Projected for {reserveMetrics.nextMajorExpenditure.year}</span>
-                      </div>
-                    </div>
+                    <Card>
+                      <CardContent className="pt-6">
+                        <h3 className="text-gray-500 text-sm font-medium">Next Major Expenditure</h3>
+                        <p className="text-2xl font-bold mt-1">OMR {reserveMetrics.nextMajorExpenditure.amount.toLocaleString()}</p>
+                        <div className="flex items-center mt-2 text-sm">
+                          <span className="text-gray-500">Projected for {reserveMetrics.nextMajorExpenditure.year}</span>
+                        </div>
+                      </CardContent>
+                    </Card>
                   </div>
                   
                   {/* Zones overview */}
-                  <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
-                    <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-                      <h2 className="text-lg font-medium">Reserve Fund by Zone</h2>
-                    </div>
-                    <div className="p-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Reserve Fund by Zone</CardTitle>
+                    </CardHeader>
+                    <CardContent>
                       <div className="space-y-4">
                         {zones.map(zone => (
-                          <button 
+                          <Button 
                             key={zone.id}
+                            variant="outline"
                             onClick={() => {
                               setSelectedZone(zone);
                               setIsZoneModalOpen(true);
                             }}
-                            className="w-full flex items-center justify-between p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                            className="w-full flex items-center justify-between p-4 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors h-auto"
                           >
                             <div className="flex items-center">
                               <div className="w-10 h-10 rounded-md" style={{ backgroundColor: zone.color }}></div>
@@ -191,18 +218,18 @@ const AssetLifecycle = () => {
                               <p className="font-bold">OMR {zone.rate} / sq.ft</p>
                               <p className="text-sm text-gray-500">Annual rate</p>
                             </div>
-                          </button>
+                          </Button>
                         ))}
                       </div>
-                    </div>
-                  </div>
+                    </CardContent>
+                  </Card>
                   
                   {/* Recent Activity */}
-                  <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
-                    <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-                      <h2 className="text-lg font-medium">Recent Activity</h2>
-                    </div>
-                    <div className="p-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Recent Activity</CardTitle>
+                    </CardHeader>
+                    <CardContent>
                       <ul className="space-y-4">
                         <li className="flex items-center gap-4">
                           <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center">
@@ -232,27 +259,27 @@ const AssetLifecycle = () => {
                           </div>
                         </li>
                       </ul>
-                    </div>
-                  </div>
+                    </CardContent>
+                  </Card>
                 </div>
               )}
               
               {activeTab === 'properties' && (
                 <div>
                   <h1 className="text-2xl font-bold mb-6">Properties</h1>
-                  <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
-                    <div className="p-6 flex justify-between items-center border-b border-gray-200 dark:border-gray-700">
-                      <h2 className="text-lg font-medium">Property List</h2>
+                  <Card>
+                    <CardHeader className="flex flex-row items-center justify-between">
+                      <CardTitle>Property List</CardTitle>
                       <div className="flex items-center gap-2">
-                        <button className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700">
+                        <Button variant="ghost" size="icon">
                           <Filter size={18} />
-                        </button>
-                        <button className="px-3 py-2 bg-blue-50 text-blue-600 rounded-md hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-300 dark:hover:bg-blue-900/30">
+                        </Button>
+                        <Button variant="secondary">
                           Add Property
-                        </button>
+                        </Button>
                       </div>
-                    </div>
-                    <div className="p-6">
+                    </CardHeader>
+                    <CardContent>
                       <div className="overflow-x-auto">
                         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                           <thead className="bg-gray-50 dark:bg-gray-800">
@@ -277,7 +304,7 @@ const AssetLifecycle = () => {
                               <td className="px-6 py-4 whitespace-nowrap text-sm">0.03</td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm">OMR 346.41</td>
                               <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                <button className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300">View</button>
+                                <Button variant="link">View</Button>
                               </td>
                             </tr>
                             <tr>
@@ -289,7 +316,7 @@ const AssetLifecycle = () => {
                               <td className="px-6 py-4 whitespace-nowrap text-sm">0.10</td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm">OMR 4,976.20</td>
                               <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                <button className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300">View</button>
+                                <Button variant="link">View</Button>
                               </td>
                             </tr>
                             <tr>
@@ -301,53 +328,130 @@ const AssetLifecycle = () => {
                               <td className="px-6 py-4 whitespace-nowrap text-sm">0.03</td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm">OMR 2,251.05</td>
                               <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                <button className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300">View</button>
+                                <Button variant="link">View</Button>
                               </td>
                             </tr>
                           </tbody>
                         </table>
                       </div>
-                    </div>
-                  </div>
+                    </CardContent>
+                  </Card>
                 </div>
               )}
               
               {activeTab === 'assets' && (
                 <div>
                   <h1 className="text-2xl font-bold mb-6">Assets</h1>
-                  <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
-                    <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-                      <h2 className="text-lg font-medium">Asset Lifecycle Management</h2>
-                    </div>
-                    <div className="p-6">
-                      <p className="text-gray-700 dark:text-gray-300">The Asset Lifecycle Management view will be displayed here.</p>
-                    </div>
-                  </div>
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Asset Lifecycle Management</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                          <h3 className="text-lg font-medium mb-4">Asset Condition Overview</h3>
+                          <div className="h-[300px]">
+                            <EnhancedPieChart 
+                              data={assetConditionData}
+                              innerRadius={60}
+                              outerRadius={100}
+                              valueFormatter={(value) => `${value}%`}
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-medium mb-4">Critical Assets</h3>
+                          <div className="space-y-3">
+                            <div className="p-4 border rounded-lg">
+                              <div className="flex justify-between items-start">
+                                <div>
+                                  <h4 className="font-medium">HVAC Chiller Unit #3</h4>
+                                  <p className="text-sm text-gray-500">Zone 5 - Main Building</p>
+                                </div>
+                                <Badge variant="destructive">Critical</Badge>
+                              </div>
+                              <div className="mt-2">
+                                <p className="text-sm">Replacement Cost: <span className="font-medium">OMR 78,500</span></p>
+                                <p className="text-sm">Expected Failure: <span className="font-medium">Within 3 months</span></p>
+                              </div>
+                            </div>
+                            <div className="p-4 border rounded-lg">
+                              <div className="flex justify-between items-start">
+                                <div>
+                                  <h4 className="font-medium">Swimming Pool Filtration System</h4>
+                                  <p className="text-sm text-gray-500">Zone 3 - Recreation Area</p>
+                                </div>
+                                <Badge variant="destructive">Critical</Badge>
+                              </div>
+                              <div className="mt-2">
+                                <p className="text-sm">Replacement Cost: <span className="font-medium">OMR 42,300</span></p>
+                                <p className="text-sm">Expected Failure: <span className="font-medium">Within 6 months</span></p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <Separator />
+                      
+                      <div>
+                        <h3 className="text-lg font-medium mb-4">Upcoming Maintenance</h3>
+                        <div className="space-y-3">
+                          <div className="p-4 border rounded-lg">
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <h4 className="font-medium">Quarterly HVAC Maintenance</h4>
+                                <p className="text-sm text-gray-500">All Zones</p>
+                              </div>
+                              <Badge variant="outline">Scheduled</Badge>
+                            </div>
+                            <div className="mt-2">
+                              <p className="text-sm">Due Date: <span className="font-medium">April 15, 2025</span></p>
+                              <p className="text-sm">Estimated Cost: <span className="font-medium">OMR 12,500</span></p>
+                            </div>
+                          </div>
+                          <div className="p-4 border rounded-lg">
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <h4 className="font-medium">Fire Safety System Inspection</h4>
+                                <p className="text-sm text-gray-500">Zones 3, 5, 8</p>
+                              </div>
+                              <Badge variant="outline">Scheduled</Badge>
+                            </div>
+                            <div className="mt-2">
+                              <p className="text-sm">Due Date: <span className="font-medium">April 22, 2025</span></p>
+                              <p className="text-sm">Estimated Cost: <span className="font-medium">OMR 8,300</span></p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
                 </div>
               )}
               
               {activeTab === 'owners' && (
                 <div>
                   <h1 className="text-2xl font-bold mb-6">Property Owners</h1>
-                  <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
-                    <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-                      <h2 className="text-lg font-medium">Owner Directory</h2>
-                    </div>
-                    <div className="p-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Owner Directory</CardTitle>
+                    </CardHeader>
+                    <CardContent>
                       <p className="text-gray-700 dark:text-gray-300">The Property Owners view will be displayed here.</p>
-                    </div>
-                  </div>
+                    </CardContent>
+                  </Card>
                 </div>
               )}
               
               {activeTab === 'calculator' && (
                 <div>
                   <h1 className="text-2xl font-bold mb-6">Reserve Fund Calculator</h1>
-                  <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
-                    <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-                      <h2 className="text-lg font-medium">Calculate Reserve Fund Contributions</h2>
-                    </div>
-                    <div className="p-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Calculate Reserve Fund Contributions</CardTitle>
+                    </CardHeader>
+                    <CardContent>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                           <h3 className="text-lg font-medium mb-4">Property Details</h3>
@@ -373,7 +477,7 @@ const AssetLifecycle = () => {
                             
                             <div>
                               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Built-Up Area (sq.ft)</label>
-                              <input type="number" className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="Enter BUA" />
+                              <Input type="number" placeholder="Enter BUA" />
                             </div>
                             
                             <div className="flex items-center">
@@ -381,7 +485,7 @@ const AssetLifecycle = () => {
                               <label htmlFor="has-lift" className="ml-2 text-sm text-gray-700 dark:text-gray-300">Has Lift Access</label>
                             </div>
                             
-                            <button className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md">Calculate</button>
+                            <Button className="w-full">Calculate</Button>
                           </div>
                         </div>
                         
@@ -429,8 +533,8 @@ const AssetLifecycle = () => {
                           </div>
                         </div>
                       </div>
-                    </div>
-                  </div>
+                    </CardContent>
+                  </Card>
                 </div>
               )}
             </motion.div>
@@ -447,11 +551,9 @@ const AssetLifecycle = () => {
                 <div className="w-6 h-6 rounded-md mr-2" style={{ backgroundColor: selectedZone.color }}></div>
                 {selectedZone.name}
               </h2>
-              <button onClick={() => setIsZoneModalOpen(false)} className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">
-                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
+              <Button variant="ghost" size="icon" onClick={() => setIsZoneModalOpen(false)}>
+                <X className="h-5 w-5" />
+              </Button>
             </div>
             <div className="p-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
@@ -544,12 +646,12 @@ const AssetLifecycle = () => {
               </div>
             </div>
             <div className="p-6 border-t border-gray-200 dark:border-gray-700 flex justify-between">
-              <button onClick={() => setIsZoneModalOpen(false)} className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700">
+              <Button variant="outline" onClick={() => setIsZoneModalOpen(false)}>
                 Close
-              </button>
-              <button className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+              </Button>
+              <Button>
                 View Detailed Report
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -558,4 +660,4 @@ const AssetLifecycle = () => {
   );
 };
 
-export default AssetLifecycle;
+export default Dashboard;
