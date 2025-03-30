@@ -9,6 +9,57 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      assets: {
+        Row: {
+          bedrooms: number | null
+          bua: number | null
+          building: string | null
+          created_at: string | null
+          id: number
+          plot: number | null
+          property_type: string | null
+          sector_zone: string | null
+          status: string | null
+          type: string | null
+          unit_no: string
+          unit_type: string | null
+          updated_at: string | null
+          zone: string | null
+        }
+        Insert: {
+          bedrooms?: number | null
+          bua?: number | null
+          building?: string | null
+          created_at?: string | null
+          id?: number
+          plot?: number | null
+          property_type?: string | null
+          sector_zone?: string | null
+          status?: string | null
+          type?: string | null
+          unit_no: string
+          unit_type?: string | null
+          updated_at?: string | null
+          zone?: string | null
+        }
+        Update: {
+          bedrooms?: number | null
+          bua?: number | null
+          building?: string | null
+          created_at?: string | null
+          id?: number
+          plot?: number | null
+          property_type?: string | null
+          sector_zone?: string | null
+          status?: string | null
+          type?: string | null
+          unit_no?: string
+          unit_type?: string | null
+          updated_at?: string | null
+          zone?: string | null
+        }
+        Relationships: []
+      }
       "Assets List_ALM": {
         Row: {
           "Asset Name": string | null
@@ -39,6 +90,81 @@ export type Database = {
           "Number of Each Asset"?: number | null
           "Sub-Category"?: string | null
           "Unique Tag"?: string | null
+        }
+        Relationships: []
+      }
+      contribution_calculations: {
+        Row: {
+          breakdown: Json | null
+          building_share: number
+          calculation_date: string | null
+          created_at: string | null
+          id: string
+          master_share: number
+          total_annual_contribution: number
+          unit_no: string
+          year: number
+          zone_share: number
+        }
+        Insert: {
+          breakdown?: Json | null
+          building_share?: number
+          calculation_date?: string | null
+          created_at?: string | null
+          id?: string
+          master_share?: number
+          total_annual_contribution: number
+          unit_no: string
+          year: number
+          zone_share?: number
+        }
+        Update: {
+          breakdown?: Json | null
+          building_share?: number
+          calculation_date?: string | null
+          created_at?: string | null
+          id?: string
+          master_share?: number
+          total_annual_contribution?: number
+          unit_no?: string
+          year?: number
+          zone_share?: number
+        }
+        Relationships: []
+      }
+      contribution_rates: {
+        Row: {
+          category: string
+          created_at: string | null
+          description: string | null
+          id: number
+          property_type: string | null
+          rate: number
+          updated_at: string | null
+          year: number
+          zone: string
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          description?: string | null
+          id?: number
+          property_type?: string | null
+          rate: number
+          updated_at?: string | null
+          year: number
+          zone: string
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          description?: string | null
+          id?: number
+          property_type?: string | null
+          rate?: number
+          updated_at?: string | null
+          year?: number
+          zone?: string
         }
         Relationships: []
       }
