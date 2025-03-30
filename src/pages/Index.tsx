@@ -5,7 +5,7 @@ import {
   Bell, Search, Settings, Menu, ChevronRight, User, LogOut, 
   Moon, Sun, Grid, Sliders, X, ChevronLeft, Clock, Filter, Plus
 } from 'lucide-react';
-import { LineChart, Line, AreaChart, Area, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
+import { LineChart, Line, AreaChart, Area, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, PieChart as RechartsPieChart, Pie, Cell } from 'recharts';
 
 const OperationsDashboard = () => {
   const [sidebarExpanded, setSidebarExpanded] = useState(true);
@@ -20,7 +20,6 @@ const OperationsDashboard = () => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   
-  // Mock chart data
   const energyData = [
     { name: 'Mon', value: 40 },
     { name: 'Tue', value: 35 },
@@ -57,13 +56,11 @@ const OperationsDashboard = () => {
   ];
   
   useEffect(() => {
-    // Check system preference for dark mode
     if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
       setDarkMode(true);
       document.documentElement.classList.add('dark');
     }
     
-    // Simulate initial loading
     setIsLoading(true);
     setTimeout(() => {
       setIsLoading(false);
@@ -71,7 +68,6 @@ const OperationsDashboard = () => {
   }, []);
   
   useEffect(() => {
-    // Apply dark mode class to document
     if (darkMode) {
       document.documentElement.classList.add('dark');
     } else {
@@ -103,7 +99,6 @@ const OperationsDashboard = () => {
     return notifications.filter(notification => !notification.read).length;
   };
   
-  // Navigation menu items
   const navigationItems = [
     { 
       id: 'dashboard', 
@@ -146,7 +141,6 @@ const OperationsDashboard = () => {
     }
   ];
   
-  // Loading screen
   if (isLoading) {
     return (
       <div className="fixed inset-0 flex items-center justify-center bg-white dark:bg-gray-900">
@@ -160,12 +154,10 @@ const OperationsDashboard = () => {
   
   return (
     <div className="h-screen flex overflow-hidden bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200 transition-colors duration-200">
-      {/* Sidebar */}
       <div 
         className={`fixed inset-y-0 left-0 z-10 flex flex-col ${sidebarExpanded ? 'w-64' : 'w-20'} 
                    bg-white dark:bg-gray-800 shadow-lg transition-all duration-300 ease-in-out`}
       >
-        {/* Logo area */}
         <div className="h-16 flex items-center justify-center px-4 border-b border-gray-100 dark:border-gray-700">
           {sidebarExpanded ? (
             <div className="flex items-center">
@@ -183,7 +175,6 @@ const OperationsDashboard = () => {
           )}
         </div>
         
-        {/* Navigation menu */}
         <div className="flex-1 overflow-y-auto py-6">
           <ul className="space-y-1 px-3">
             {navigationItems.map(item => (
@@ -233,7 +224,6 @@ const OperationsDashboard = () => {
           </ul>
         </div>
         
-        {/* User profile and controls at the bottom */}
         <div className="p-4 border-t border-gray-100 dark:border-gray-700">
           <div className="flex items-center justify-between">
             {sidebarExpanded && (
@@ -264,9 +254,7 @@ const OperationsDashboard = () => {
         </div>
       </div>
       
-      {/* Main content */}
       <div className={`flex-1 flex flex-col ${sidebarExpanded ? 'ml-64' : 'ml-20'} transition-all duration-300 ease-in-out`}>
-        {/* Top navigation bar */}
         <header className="h-16 bg-white dark:bg-gray-800 shadow-sm flex items-center justify-between px-6 sticky top-0 z-10">
           <div className="flex items-center">
             <button className="lg:hidden mr-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
@@ -280,7 +268,6 @@ const OperationsDashboard = () => {
           </div>
           
           <div className="flex items-center space-x-4">
-            {/* Search */}
             <div className="relative hidden md:block">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Search className="h-4 w-4 text-gray-400" />
@@ -292,7 +279,6 @@ const OperationsDashboard = () => {
               />
             </div>
             
-            {/* Notifications */}
             <div className="relative">
               <button 
                 className="relative text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded-full p-1 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
@@ -306,7 +292,6 @@ const OperationsDashboard = () => {
                 )}
               </button>
               
-              {/* Notifications panel */}
               {showNotifications && (
                 <div className="absolute right-0 mt-2 w-80 md:w-96 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-20">
                   <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700">
@@ -381,7 +366,6 @@ const OperationsDashboard = () => {
               )}
             </div>
             
-            {/* Dark mode toggle */}
             <button 
               onClick={toggleDarkMode}
               className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded-full p-1 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
@@ -389,18 +373,14 @@ const OperationsDashboard = () => {
               {darkMode ? <Sun size={20} /> : <Moon size={20} />}
             </button>
             
-            {/* Settings */}
             <button className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded-full p-1 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
               <Settings size={20} />
             </button>
           </div>
         </header>
         
-        {/* Main content area */}
         <main className="flex-1 overflow-y-auto p-6">
-          {/* Quick stats */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            {/* Energy consumption */}
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-5 hover:shadow-md transition-shadow duration-200">
               <div className="flex justify-between items-start mb-4">
                 <div>
@@ -432,7 +412,6 @@ const OperationsDashboard = () => {
               </div>
             </div>
             
-            {/* Water usage */}
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-5 hover:shadow-md transition-shadow duration-200">
               <div className="flex justify-between items-start mb-4">
                 <div>
@@ -464,7 +443,6 @@ const OperationsDashboard = () => {
               </div>
             </div>
             
-            {/* System status */}
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-5 hover:shadow-md transition-shadow duration-200">
               <div className="flex justify-between items-start mb-4">
                 <div>
@@ -501,7 +479,6 @@ const OperationsDashboard = () => {
               </div>
             </div>
             
-            {/* Alerts */}
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-5 hover:shadow-md transition-shadow duration-200">
               <div className="flex justify-between items-start mb-4">
                 <div>
@@ -528,7 +505,6 @@ const OperationsDashboard = () => {
             </div>
           </div>
           
-          {/* System Overview */}
           <div className="mb-8">
             <div className="flex justify-between items-center mb-5">
               <h2 className="text-xl font-semibold">System Overview</h2>
@@ -545,7 +521,6 @@ const OperationsDashboard = () => {
             </div>
             
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Facility Status */}
               <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 hover:shadow-md transition-shadow duration-200">
                 <div className="flex justify-between items-center mb-6">
                   <h3 className="font-medium">Facility Performance</h3>
@@ -599,7 +574,6 @@ const OperationsDashboard = () => {
                 </div>
               </div>
               
-              {/* Contract Status */}
               <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 hover:shadow-md transition-shadow duration-200">
                 <div className="flex justify-between items-center mb-6">
                   <h3 className="font-medium">Contract Status</h3>
@@ -611,7 +585,7 @@ const OperationsDashboard = () => {
                 <div className="flex flex-col md:flex-row items-center justify-between">
                   <div className="h-48 w-48">
                     <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
+                      <RechartsPieChart>
                         <defs>
                           <linearGradient id="activeGradient" x1="0" y1="0" x2="0" y2="1">
                             <stop offset="0%" stopColor="#3B82F6" stopOpacity={1} />
@@ -640,21 +614,21 @@ const OperationsDashboard = () => {
                           }}
                           formatter={(value, name) => [`${value} contracts`, name]}
                         />
-                        <Bar 
+                        <Pie 
                           dataKey="value" 
                           data={contractsData} 
-                          fill="url(#activeGradient)" 
-                          radius={[10, 10, 10, 10]}
-                          barSize={8}
                           cx="50%"
                           cy="50%"
-                          startAngle={0}
-                          endAngle={360}
                           innerRadius={60}
                           outerRadius={80}
                           paddingAngle={2}
-                        />
-                      </PieChart>
+                        >
+                          {contractsData.map((entry, index) => {
+                            const gradientIds = ['url(#activeGradient)', 'url(#pendingGradient)', 'url(#expiringGradient)', 'url(#completedGradient)'];
+                            return <Cell key={`cell-${index}`} fill={gradientIds[index % gradientIds.length]} />;
+                          })}
+                        </Pie>
+                      </RechartsPieChart>
                     </ResponsiveContainer>
                   </div>
                   
@@ -694,14 +668,12 @@ const OperationsDashboard = () => {
             </div>
           </div>
           
-          {/* System Categories */}
           <div>
             <div className="flex justify-between items-center mb-5">
               <h2 className="text-xl font-semibold">System Categories</h2>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {/* Utilities */}
               <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden group hover:shadow-md transition-shadow duration-200">
                 <div className="h-2 bg-gradient-to-r from-blue-500 to-indigo-600"></div>
                 <div className="p-6">
@@ -758,7 +730,6 @@ const OperationsDashboard = () => {
                 </div>
               </div>
               
-              {/* Facilities */}
               <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden group hover:shadow-md transition-shadow duration-200">
                 <div className="h-2 bg-gradient-to-r from-emerald-500 to-teal-600"></div>
                 <div className="p-6">
@@ -815,7 +786,6 @@ const OperationsDashboard = () => {
                 </div>
               </div>
               
-              {/* Management */}
               <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden group hover:shadow-md transition-shadow duration-200">
                 <div className="h-2 bg-gradient-to-r from-purple-500 to-purple-600"></div>
                 <div className="p-6">
