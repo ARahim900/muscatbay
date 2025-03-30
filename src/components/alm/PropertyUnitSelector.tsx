@@ -18,7 +18,7 @@ interface PropertyUnitSelectorProps {
   onChange: (value: string) => void;
 }
 
-export const PropertyUnitSelector: React.FC<PropertyUnitSelectorProps> = ({ 
+const PropertyUnitSelector: React.FC<PropertyUnitSelectorProps> = ({ 
   zoneCode, 
   value, 
   onChange 
@@ -40,21 +40,16 @@ export const PropertyUnitSelector: React.FC<PropertyUnitSelectorProps> = ({
   if (error) {
     return (
       <Select disabled>
-        <SelectTrigger className="border-red-300 bg-red-50">
+        <SelectTrigger>
           <SelectValue placeholder="Error loading properties" />
         </SelectTrigger>
       </Select>
     );
   }
 
-  // Filter properties by zone if zoneCode is provided
-  const filteredProperties = zoneCode 
-    ? properties.filter(p => p.zone === zoneCode)
-    : properties;
-
   // Group properties by sector
   const groupedProperties: Record<string, PropertyUnit[]> = {};
-  filteredProperties.forEach(property => {
+  properties.forEach(property => {
     const sector = property.sector || 'Other';
     if (!groupedProperties[sector]) {
       groupedProperties[sector] = [];
@@ -68,8 +63,8 @@ export const PropertyUnitSelector: React.FC<PropertyUnitSelectorProps> = ({
         <SelectValue placeholder="Select a property" />
       </SelectTrigger>
       <SelectContent>
-        {filteredProperties.length === 0 ? (
-          <SelectItem value="none" disabled>No properties available{zoneCode ? ` in ${zoneCode}` : ''}</SelectItem>
+        {properties.length === 0 ? (
+          <SelectItem value="none" disabled>No properties available</SelectItem>
         ) : (
           Object.entries(groupedProperties).map(([sector, sectorProperties]) => (
             <SelectGroup key={sector}>
@@ -86,3 +81,5 @@ export const PropertyUnitSelector: React.FC<PropertyUnitSelectorProps> = ({
     </Select>
   );
 };
+
+export default PropertyUnitSelector;
