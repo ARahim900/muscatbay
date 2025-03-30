@@ -43,7 +43,7 @@ export const usePropertyServiceCharges = () => {
 
   // Filter properties by zone
   const filterPropertiesByZone = (zoneCode: string) => {
-    if (!zoneCode) {
+    if (!zoneCode || zoneCode === 'all') {
       setFilteredProperties(properties);
       return;
     }

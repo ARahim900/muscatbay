@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -235,7 +234,7 @@ const PropertyServiceChargeCalculator: React.FC = () => {
                   <SelectValue placeholder="Select a zone" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Zones</SelectItem>
+                  <SelectItem value="all">All Zones</SelectItem>
                   {zones.map((zone) => (
                     <SelectItem key={zone.code} value={zone.code}>
                       {zone.name} ({zone.code})
@@ -265,7 +264,7 @@ const PropertyServiceChargeCalculator: React.FC = () => {
                 </SelectTrigger>
                 <SelectContent>
                   {filteredProperties.length === 0 ? (
-                    <SelectItem value="" disabled>No properties available</SelectItem>
+                    <SelectItem value="no-properties">No properties available</SelectItem>
                   ) : (
                     filteredProperties.map((property) => (
                       <SelectItem key={property.propertyId} value={property.propertyId}>

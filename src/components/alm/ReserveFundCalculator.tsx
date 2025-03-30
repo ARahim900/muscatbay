@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import _ from 'lodash';
 import { supabase } from '@/integrations/supabase/client';
@@ -8,7 +7,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input';
 import { Loader2 } from 'lucide-react';
 
-// Data Structure
 interface PropertyUnit {
   id: string;
   unitNo: string;
@@ -35,7 +33,6 @@ interface CalculationResult {
   breakdown: ContributionBreakdown[];
 }
 
-// Rates
 const ratesOMRPerSqm2025 = {
   masterCommunity: 1.75,
   typicalBuilding: 1.65,
@@ -47,7 +44,6 @@ const ratesOMRPerSqm2025 = {
 };
 
 const ReserveFundCalculator: React.FC = () => {
-  // State for filters
   const [selectedZone, setSelectedZone] = useState<string>('');
   const [selectedPropType, setSelectedPropType] = useState<string>('');
   const [selectedUnitId, setSelectedUnitId] = useState<string>('');
@@ -56,13 +52,11 @@ const ReserveFundCalculator: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
 
-  // State for results
   const [selectedUnitDetails, setSelectedUnitDetails] = useState<PropertyUnit | null>(null);
   const [calculationResult, setCalculationResult] = useState<CalculationResult | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch properties from Supabase
   useEffect(() => {
     const fetchProperties = async () => {
       setLoading(true);
@@ -79,14 +73,11 @@ const ReserveFundCalculator: React.FC = () => {
         }
 
         if (data) {
-          // Parse and structure the data from Supabase
           const parsedData: PropertyUnit[] = data.map(item => {
-            // Convert BUA to number if it's a string
             const buaValue = typeof item.BUA === 'string' 
               ? parseFloat(item.BUA.replace(/,/g, '')) 
               : item.BUA;
 
-            // Derive property type
             let propertyType: PropertyUnit['propertyType'] = 'Unknown';
             if (item['Unit Type']?.toLowerCase().includes('apartment')) propertyType = 'Apartment';
             else if (item['Unit Type']?.toLowerCase().includes('villa')) propertyType = 'Villa';
@@ -94,7 +85,6 @@ const ReserveFundCalculator: React.FC = () => {
             else if (item['Unit Type']?.toLowerCase().includes('staff')) propertyType = 'Staff Accommodation';
             else if (item['Unit Type']?.toLowerCase().includes('land')) propertyType = 'Development Land';
 
-            // Derive zone from Unit No
             let zone = 'Unknown';
             const unitNo = item['Unit No'] || '';
             if (unitNo.startsWith('Z1') || item.Sector === 'FM') zone = '1';
@@ -102,7 +92,7 @@ const ReserveFundCalculator: React.FC = () => {
             else if (unitNo.startsWith('Z5') || item.Sector === 'Nameer') zone = '5';
             else if (unitNo.startsWith('Z8') || item.Sector === 'Wajd') zone = '8';
             else if (item.Sector === 'Village Square') zone = '2';
-            else if (item.Sector === 'C') zone = 'MC'; // Assuming Sector C is Master Community related
+            else if (item.Sector === 'C') zone = 'MC';
 
             return {
               id: item['Unit No'] || `id-${Math.random()}`,
@@ -132,7 +122,6 @@ const ReserveFundCalculator: React.FC = () => {
     fetchProperties();
   }, []);
 
-  // Filtering Logic
   const zones = useMemo(() => {
     const dataZones = _.chain(propertyDatabase)
       .map('zone')
@@ -140,7 +129,6 @@ const ReserveFundCalculator: React.FC = () => {
       .compact()
       .value();
 
-    // Manually ensure Zone 1 and 2 are present for selection
     if (!dataZones.includes('1')) dataZones.push('1');
     if (!dataZones.includes('2')) dataZones.push('2');
     
@@ -155,7 +143,6 @@ const ReserveFundCalculator: React.FC = () => {
   const propertyTypesInZone = useMemo(() => {
     if (!selectedZone) return [];
     
-    // Specific logic for empty zones if necessary
     if (selectedZone === '1') return ["Staff Accommodation"];
     if (selectedZone === '2') return ["Commercial"];
 
@@ -177,7 +164,6 @@ const ReserveFundCalculator: React.FC = () => {
     if (selectedPropType) {
       units = units.filter(p => p.propertyType === selectedPropType);
     }
-    // Apply search term filter
     if (searchTerm) {
       const lowerSearchTerm = searchTerm.toLowerCase();
       units = units.filter(p =>
@@ -190,28 +176,6 @@ const ReserveFundCalculator: React.FC = () => {
     return _.sortBy(units, 'unitNo');
   }, [selectedZone, selectedPropType, searchTerm, propertyDatabase]);
 
-  // Update details when unit selection changes
-  useEffect(() => {
-    if (!selectedUnitId) {
-      setSelectedUnitDetails(null);
-      setCalculationResult(null);
-      setError(null);
-      return;
-    }
-    
-    const unit = propertyDatabase.find(p => p.id === selectedUnitId);
-    setSelectedUnitDetails(unit || null);
-
-    if (unit) {
-      simulateCalculation(unit);
-    } else {
-      setSelectedUnitDetails(null);
-      setCalculationResult(null);
-      setError(`Could not find details for selected unit ID: ${selectedUnitId}`);
-    }
-  }, [selectedUnitId, propertyDatabase]);
-
-  // Reset dependent filters on change
   useEffect(() => {
     setSelectedPropType('');
     setSelectedUnitId('');
@@ -223,13 +187,12 @@ const ReserveFundCalculator: React.FC = () => {
     setSearchTerm('');
   }, [selectedPropType]);
 
-  // Calculation Logic
   const simulateCalculation = async (unit: PropertyUnit) => {
     setIsLoading(true);
     setError(null);
     setCalculationResult(null);
 
-    await new Promise(resolve => setTimeout(resolve, 50)); // Simulate async
+    await new Promise(resolve => setTimeout(resolve, 50));
 
     if (unit.buaSqm === null || unit.buaSqm === undefined || isNaN(unit.buaSqm) || unit.buaSqm <= 0) {
       if (unit.propertyType === 'Development Land') {
@@ -247,8 +210,6 @@ const ReserveFundCalculator: React.FC = () => {
       const breakdown: ContributionBreakdown[] = [];
       const bua = unit.buaSqm;
 
-      // 1. Master Community Rate
-      // Apply unless Zone 1 or Dev Land (Confirm exclusion rules)
       if (unit.zone !== '1' && unit.propertyType !== 'Development Land') {
         const rate = ratesOMRPerSqm2025.masterCommunity;
         if (rate !== undefined) {
@@ -258,7 +219,6 @@ const ReserveFundCalculator: React.FC = () => {
         }
       }
 
-      // 2. Zone Specific Rate
       let zoneRate = 0;
       const zone = unit.zone;
       let zoneName = `Zone ${zone} Specific`;
@@ -275,7 +235,6 @@ const ReserveFundCalculator: React.FC = () => {
         totalContribution += contribution;
       }
 
-      // 3. Building Specific Rate (Only for Apartments in Zone 3)
       if (unit.propertyType === 'Apartment' && unit.zone === '3') {
         const rate = ratesOMRPerSqm2025.typicalBuilding;
         if (rate !== undefined) {
@@ -285,7 +244,6 @@ const ReserveFundCalculator: React.FC = () => {
         }
       }
 
-      // Handle cases where no rates applied but BUA is valid (e.g., Zone 2 with 0 rate)
       if (breakdown.length === 0 && totalContribution === 0 && bua > 0) {
         if (zone === '2') {
           setError(`Zone 2 units currently have a 0.0 OMR/Sq.m specific rate applied. Master Community rate might apply depending on rules.`);
@@ -347,7 +305,6 @@ const ReserveFundCalculator: React.FC = () => {
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-gray-700 border-b pb-2">Select Property</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* Zone Filter */}
               <div className="space-y-2">
                 <Label htmlFor="zone-select">Zone</Label>
                 <Select
@@ -358,7 +315,7 @@ const ReserveFundCalculator: React.FC = () => {
                     <SelectValue placeholder="-- Select Zone --" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Zones</SelectItem>
+                    <SelectItem value="all-zones">All Zones</SelectItem>
                     {zones.map(zone => (
                       <SelectItem key={zone} value={zone}>
                         Zone {zone === '1' ? '01 (FM)' : (zone === '2' ? '02 (Comm.)' : zone)}
@@ -368,7 +325,6 @@ const ReserveFundCalculator: React.FC = () => {
                 </Select>
               </div>
 
-              {/* Property Type Filter */}
               <div className="space-y-2">
                 <Label htmlFor="type-select">Property Type</Label>
                 <Select
@@ -380,7 +336,7 @@ const ReserveFundCalculator: React.FC = () => {
                     <SelectValue placeholder="-- Select Type --" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Types</SelectItem>
+                    <SelectItem value="all-types">All Types</SelectItem>
                     {propertyTypesInZone.map(type => (
                       <SelectItem key={type} value={type}>{type}</SelectItem>
                     ))}
@@ -388,7 +344,6 @@ const ReserveFundCalculator: React.FC = () => {
                 </Select>
               </div>
 
-              {/* Search Input */}
               <div className="space-y-2">
                 <Label htmlFor="unit-search">Search Unit No/Type/Owner</Label>
                 <Input
@@ -400,7 +355,6 @@ const ReserveFundCalculator: React.FC = () => {
                 />
               </div>
 
-              {/* Unit Filter */}
               <div className="col-span-1 md:col-span-3 space-y-2">
                 <Label htmlFor="unit-select">Select Unit ({unitsInFilter.length} available)</Label>
                 <Select
@@ -425,7 +379,6 @@ const ReserveFundCalculator: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Results Area */}
       {isLoading && (
         <div className="flex items-center justify-center p-8">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -433,7 +386,6 @@ const ReserveFundCalculator: React.FC = () => {
         </div>
       )}
 
-      {/* Error Display */}
       {error && (
         <Card>
           <CardContent className="pt-6">
@@ -458,14 +410,12 @@ const ReserveFundCalculator: React.FC = () => {
         </Card>
       )}
 
-      {/* Results Display */}
       {!isLoading && !error && selectedUnitDetails && calculationResult && (
         <Card>
           <CardHeader>
             <CardTitle>Calculation Results for Unit: {selectedUnitDetails.unitNo}</CardTitle>
           </CardHeader>
           <CardContent>
-            {/* Property Details */}
             <div className="p-4 mb-4 bg-blue-50 border border-blue-200 rounded-md">
               <h3 className="font-medium text-blue-800 mb-2">Property Details</h3>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-1 text-sm">
@@ -480,7 +430,6 @@ const ReserveFundCalculator: React.FC = () => {
               </div>
             </div>
 
-            {/* Calculation Result */}
             <div className="p-4 bg-green-50 border border-green-200 rounded-md">
               <h3 className="font-medium text-green-800 mb-2">Projected Reserve Fund Contribution (2025 Basis)</h3>
               <div className="text-center mb-4">

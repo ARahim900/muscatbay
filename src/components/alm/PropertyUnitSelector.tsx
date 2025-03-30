@@ -64,7 +64,7 @@ const PropertyUnitSelector: React.FC<PropertyUnitSelectorProps> = ({
       </SelectTrigger>
       <SelectContent>
         {properties.length === 0 ? (
-          <SelectItem value="none" disabled>No properties available</SelectItem>
+          <SelectItem value="no-properties-available">No properties available</SelectItem>
         ) : (
           Object.entries(groupedProperties).map(([sector, sectorProperties]) => (
             <SelectGroup key={sector}>
