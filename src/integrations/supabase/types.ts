@@ -934,6 +934,13 @@ export type Database = {
             foreignKeyName: "property_transactions_property_id_fkey"
             columns: ["property_id"]
             isOneToOne: false
+            referencedRelation: "property_service_charge_data"
+            referencedColumns: ["property_id"]
+          },
+          {
+            foreignKeyName: "property_transactions_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
             referencedRelation: "property_units"
             referencedColumns: ["id"]
           },
@@ -1092,6 +1099,13 @@ export type Database = {
           zone_code?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "service_charge_calculations_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "property_service_charge_data"
+            referencedColumns: ["property_id"]
+          },
           {
             foreignKeyName: "service_charge_calculations_property_id_fkey"
             columns: ["property_id"]
@@ -1996,6 +2010,33 @@ export type Database = {
           unit_type: string | null
         }
         Relationships: []
+      }
+      property_service_charge_data: {
+        Row: {
+          allocation: string | null
+          annual_cost: number | null
+          bua: number | null
+          expense_category: string | null
+          has_lift: boolean | null
+          monthly_cost: number | null
+          owner_name: string | null
+          property_id: string | null
+          sector: string | null
+          service_provider: string | null
+          unit_no: string | null
+          unit_type: string | null
+          zone_code: string | null
+          zone_name: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_units_zone_code_fkey"
+            columns: ["zone_code"]
+            isOneToOne: false
+            referencedRelation: "service_charge_zones"
+            referencedColumns: ["code"]
+          },
+        ]
       }
       water_consumption_by_type: {
         Row: {

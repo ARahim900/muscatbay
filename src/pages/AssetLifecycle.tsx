@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -201,6 +202,11 @@ const AssetLifecycle = () => {
   const [serviceChargeCalculatorType, setServiceChargeCalculatorType] = useState<'template' | 'real'>('real');
 
   const breadcrumbItems = [
+    {
+      label: "Dashboard",
+      path: "/",
+      icon: <Home className="h-4 w-4" />
+    },
     {
       label: "Asset Lifecycle Management",
       path: "/alm",
