@@ -33,12 +33,50 @@ const ManagementSection: React.FC<ManagementSectionProps> = ({
         iconColor="blue" 
         bgColor="blue" 
       />
-      <SidebarLink to="/contracts" icon={FileCog} label="Contracts" collapsed={collapsed} isMobile={isMobile} />
-      <SidebarLink to="/operating-expenses" icon={FileSpreadsheet} label="Operating Expenses" collapsed={collapsed} isMobile={isMobile} />
-      <SidebarLink to="/property-management" icon={Building2} label="Property Management" collapsed={collapsed} isMobile={isMobile} />
-      <SidebarLink to="/service-charges" icon={Calculator} label="Service Charges" collapsed={collapsed} isMobile={isMobile} />
-      <SidebarLink to="/reserve-fund-calculator" icon={CalculatorIcon} label="Reserve Fund Calculator" collapsed={collapsed} isMobile={isMobile} iconColor="green" bgColor="green" />
-      <SidebarLink to="/reports" icon={CreditCard} label="Financial Reports" collapsed={collapsed} isMobile={isMobile} />
+      <SidebarLink 
+        to="/contracts" 
+        icon={FileCog} 
+        label="Contracts" 
+        collapsed={collapsed} 
+        isMobile={isMobile} 
+      />
+      <SidebarLink 
+        to="/operating-expenses" 
+        icon={FileSpreadsheet} 
+        label="Operating Expenses" 
+        collapsed={collapsed} 
+        isMobile={isMobile} 
+      />
+      <SidebarLink 
+        to="/property-management" 
+        icon={Building2} 
+        label="Property Management" 
+        collapsed={collapsed} 
+        isMobile={isMobile} 
+      />
+      <SidebarLink 
+        to="/service-charges" 
+        icon={Calculator} 
+        label="Service Charges" 
+        collapsed={collapsed} 
+        isMobile={isMobile} 
+      />
+      <SidebarLink 
+        to="/reserve-fund-calculator" 
+        icon={CalculatorIcon} 
+        label="Reserve Fund Calculator" 
+        collapsed={collapsed} 
+        isMobile={isMobile} 
+        iconColor="green" 
+        bgColor="green" 
+      />
+      <SidebarLink 
+        to="/reports" 
+        icon={CreditCard} 
+        label="Financial Reports" 
+        collapsed={collapsed} 
+        isMobile={isMobile} 
+      />
     </SidebarSection>
   );
 };
