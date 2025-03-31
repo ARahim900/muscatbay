@@ -1,9 +1,7 @@
 
 import React, { useState } from 'react';
-import { 
-  Building2, Activity, Layers, Filter, Search, ChevronsUpDown, 
-  Users, Calculator, X 
-} from 'lucide-react';
+import { Building2, Activity, Layers, Filter, Search, ChevronsUpDown, 
+  Users, X } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -126,17 +124,6 @@ const Dashboard = () => {
             >
               <Users size={20} className="mr-3" />
               <span className="hidden md:inline">Owners</span>
-            </Button>
-            
-            <Button 
-              onClick={() => setActiveTab('calculator')}
-              variant={activeTab === 'calculator' ? 'secondary' : 'ghost'}
-              className={`flex items-center w-full justify-start ${activeTab === 'calculator' 
-                ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-100' 
-                : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'}`}
-            >
-              <Calculator size={20} className="mr-3" />
-              <span className="hidden md:inline">Calculator</span>
             </Button>
           </nav>
         </aside>
@@ -439,100 +426,6 @@ const Dashboard = () => {
                     </CardHeader>
                     <CardContent>
                       <p className="text-gray-700 dark:text-gray-300">The Property Owners view will be displayed here.</p>
-                    </CardContent>
-                  </Card>
-                </div>
-              )}
-              
-              {activeTab === 'calculator' && (
-                <div>
-                  <h1 className="text-2xl font-bold mb-6">Reserve Fund Calculator</h1>
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Calculate Reserve Fund Contributions</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                          <h3 className="text-lg font-medium mb-4">Property Details</h3>
-                          <div className="space-y-4">
-                            <div>
-                              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Zone</label>
-                              <select className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                                <option value="">Select Zone</option>
-                                {zones.map(zone => (
-                                  <option key={zone.id} value={zone.id}>{zone.name}</option>
-                                ))}
-                              </select>
-                            </div>
-                            
-                            <div>
-                              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Property Type</label>
-                              <select className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                                <option value="">Select Property Type</option>
-                                <option value="apartment">Apartment</option>
-                                <option value="villa">Villa</option>
-                              </select>
-                            </div>
-                            
-                            <div>
-                              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Built-Up Area (sq.ft)</label>
-                              <Input type="number" placeholder="Enter BUA" />
-                            </div>
-                            
-                            <div className="flex items-center">
-                              <input id="has-lift" type="checkbox" className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:bg-gray-700 dark:border-gray-600" />
-                              <label htmlFor="has-lift" className="ml-2 text-sm text-gray-700 dark:text-gray-300">Has Lift Access</label>
-                            </div>
-                            
-                            <Button className="w-full">Calculate</Button>
-                          </div>
-                        </div>
-                        
-                        <div>
-                          <h3 className="text-lg font-medium mb-4">Calculation Results</h3>
-                          <div className="bg-gray-50 dark:bg-gray-700 p-6 rounded-lg">
-                            <div className="space-y-4">
-                              <div>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">Base Rate</p>
-                                <p className="text-lg font-medium">OMR 0.00 / sq.ft</p>
-                              </div>
-                              
-                              <div>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">Operating Share</p>
-                                <p className="text-lg font-medium">OMR 0.00</p>
-                              </div>
-                              
-                              <div>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">Lift Maintenance Share</p>
-                                <p className="text-lg font-medium">OMR 0.00</p>
-                              </div>
-                              
-                              <div>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">Reserve Fund Contribution</p>
-                                <p className="text-lg font-medium">OMR 0.00</p>
-                              </div>
-                              
-                              <div className="pt-4 border-t border-gray-200 dark:border-gray-600">
-                                <p className="text-sm text-gray-500 dark:text-gray-400">Total Annual Charge</p>
-                                <p className="text-xl font-bold">OMR 0.00</p>
-                              </div>
-                              
-                              <div className="grid grid-cols-2 gap-4 pt-4">
-                                <div>
-                                  <p className="text-sm text-gray-500 dark:text-gray-400">Quarterly</p>
-                                  <p className="text-lg font-medium">OMR 0.00</p>
-                                </div>
-                                
-                                <div>
-                                  <p className="text-sm text-gray-500 dark:text-gray-400">Monthly</p>
-                                  <p className="text-lg font-medium">OMR 0.00</p>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
                     </CardContent>
                   </Card>
                 </div>
