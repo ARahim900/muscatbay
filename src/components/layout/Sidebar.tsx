@@ -15,6 +15,8 @@ import {
   Calendar,
   X
 } from 'lucide-react';
+import ManagementSection from './sidebar/ManagementSection';
+import CalculatorSection from './sidebar/CalculatorSection';
 
 const PumpStationIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
@@ -292,49 +294,20 @@ const Sidebar: React.FC<SidebarProps> = ({
             />
           </div>
           
-          <div className="mb-2">
-            <h3 className={`text-xs font-semibold uppercase text-white/50 ${collapsed && !isMobile ? 'text-center' : 'px-4'}`}>
-              {collapsed && !isMobile ? '—' : 'Management'}
-            </h3>
-          </div>
-          <div className="space-y-1">
-            <SidebarLink 
-              to={externalApps.contracts} 
-              icon={ContractIcon} 
-              label="Contracts" 
-              collapsed={collapsed} 
-              external={true}
-              openEmbedded={openEmbeddedApp}
-              isMobile={isMobile}
-            />
-            <SidebarLink 
-              to={externalApps.projects} 
-              icon={FolderKanban} 
-              label="Projects" 
-              collapsed={collapsed} 
-              external={false} 
-              openEmbedded={openEmbeddedApp}
-              isMobile={isMobile}
-            />
-            <SidebarLink 
-              to="/alm" 
-              icon={Calendar} 
-              label="Asset Lifecycle" 
-              collapsed={collapsed} 
-              external={false}
-              openEmbedded={openEmbeddedApp}
-              isMobile={isMobile}
-            />
-            <SidebarLink 
-              to={externalApps.reports} 
-              icon={FileBarChart} 
-              label="Reports Management" 
-              collapsed={collapsed} 
-              external={true}
-              openEmbedded={openEmbeddedApp}
-              isMobile={isMobile}
-            />
-          </div>
+          <ManagementSection 
+            collapsed={collapsed} 
+            isMobile={isMobile}
+            openEmbeddedApp={openEmbeddedApp}
+            externalApps={externalApps}
+          />
+          
+          <CalculatorSection
+            collapsed={collapsed}
+            isMobile={isMobile}
+            openEmbeddedApp={openEmbeddedApp}
+            externalApps={externalApps}
+          />
+          
         </div>
         
         <div className={`p-4 border-t border-white/10 ${collapsed && !isMobile ? 'text-center' : ''}`}>
