@@ -371,7 +371,7 @@ const allPropertyUnits: PropertyUnit[] = [
   { unitNo: "Z8 021", sector: "Wajd", zone: 8, unitType: "5 Bedroom Wajd Villa", bua: 750, plot: 21 },
   { unitNo: "Z8 022", sector: "Wajd", zone: 8, unitType: "King Villa", bua: 1845, plot: 22 },
 
-// Staff Accommodation & Central Facilities
+  // Staff Accommodation & Central Facilities
   { unitNo: "SA-B1-101", sector: "Staff", zone: 9, unitType: "Staff Accommodation", bua: 800, plot: 0, building: "SA-B1" },
   { unitNo: "SA-B1-102", sector: "Staff", zone: 9, unitType: "Staff Accommodation", bua: 750, plot: 0, building: "SA-B1" },
   { unitNo: "SA-B1-103", sector: "Staff", zone: 9, unitType: "Staff Accommodation", bua: 780, plot: 0, building: "SA-B1" },
@@ -886,54 +886,6 @@ const PropertyReserveFundCalculator = () => {
                 </div>
               </div>
 
-              {/* Additional Parameters (Consider if needed, currently only affect small table) */}
-               {/*
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-8">
-                <div>
-                  <label htmlFor="inflationRateInput" className="block text-sm font-medium text-gray-700 mb-1">
-                    Inflation Rate (%)
-                  </label>
-                  <input
-                    id="inflationRateInput"
-                    type="number"
-                    className="w-full p-2 border border-gray-300 rounded-md shadow-sm text-sm"
-                    value={inflationRate}
-                    onChange={handleInflationRateChange}
-                    step="0.1"
-                    min="0"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="interestRateInput" className="block text-sm font-medium text-gray-700 mb-1">
-                    Interest Rate (%)
-                  </label>
-                  <input
-                     id="interestRateInput"
-                    type="number"
-                    className="w-full p-2 border border-gray-300 rounded-md shadow-sm text-sm"
-                    value={interestRate}
-                    onChange={handleInterestRateChange}
-                    step="0.1"
-                    min="0"
-                  />
-                </div>
-                <div>
-                    <label htmlFor="yearRangeInputCalc" className="block text-sm font-medium text-gray-700 mb-1">
-                        Projection Years
-                    </label>
-                    <input
-                        id="yearRangeInputCalc"
-                        type="number"
-                        className="w-full p-2 border border-gray-300 rounded-md shadow-sm text-sm"
-                        value={yearRange}
-                        onChange={handleYearRangeChange}
-                        min="1"
-                        max="20" // Max projection years
-                    />
-                </div>
-              </div>
-              */}
-
               {/* Results Display */}
               {contributionResult && selectedUnit && zoneInfo ? (
                 <div className="bg-blue-50 p-4 md:p-6 rounded-lg mt-6">
@@ -1308,21 +1260,6 @@ const PropertyReserveFundCalculator = () => {
                                </tr>
                            )}
                         </tbody>
-                         {/* Optional Footer for Totals */}
-                         {/*
-                         <tfoot className="bg-gray-100 font-bold">
-                            <tr>
-                                <td className="px-4 py-2">Totals ({projectionData.length} yrs)</td>
-                                <td className="px-4 py-2"></td>
-                                <td className="px-4 py-2 text-right">{(projectionData.reduce((sum, y) => sum + y.contribution, 0)).toLocaleString()}</td>
-                                <td className="px-4 py-2 text-right">{(projectionData.reduce((sum, y) => sum + y.interest, 0)).toLocaleString()}</td>
-                                <td className="px-4 py-2 text-right">{(projectionData.reduce((sum, y) => sum + y.totalIncome, 0)).toLocaleString()}</td>
-                                <td className="px-4 py-2 text-right text-red-600">{(projectionData.reduce((sum, y) => sum + y.expenditure, 0)).toLocaleString()}</td>
-                                <td className="px-4 py-2"></td>
-                                <td className="px-4 py-2"></td>
-                            </tr>
-                         </tfoot>
-                          */}
                       </table>
                     </div>
                   </div>

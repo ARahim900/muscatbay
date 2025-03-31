@@ -23,6 +23,7 @@ import Admin from '@/pages/Admin';
 import OperatingExpenses from '@/pages/OperatingExpenses';
 import PropertyManagement from '@/pages/PropertyManagement';
 import ServiceCharges from '@/pages/ServiceCharges';
+import PropertyReserveFundCalculator from '@/pages/PropertyReserveFundCalculator';
 import NotFound from '@/pages/NotFound';
 import Layout from '@/components/layout/Layout';
 
@@ -49,6 +50,7 @@ function App() {
       <Route path="/operating-expenses" element={<Layout><OperatingExpenses /></Layout>} />
       <Route path="/property-management" element={<Layout><PropertyManagement /></Layout>} />
       <Route path="/service-charges" element={<Layout><ServiceCharges /></Layout>} />
+      <Route path="/reserve-fund-calculator" element={<Layout><PropertyReserveFundCalculator /></Layout>} />
       <Route path="/auth" element={<Auth />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
