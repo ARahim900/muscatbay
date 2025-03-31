@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { PackageOpen, FileSpreadsheet, Building2, Calculator, FileCog, CreditCard, Calculator as CalculatorIcon } from 'lucide-react';
 import SidebarSection from './SidebarSection';
