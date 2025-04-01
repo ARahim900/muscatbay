@@ -17,8 +17,8 @@ const ALM = () => {
   const years = ["2023", "2024", "2025"];
 
   return (
-    <div className="container mx-auto p-4 space-y-4">
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-4">
+    <div className="container mx-auto p-2 space-y-2 h-[calc(100vh-4rem)]">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-2 mb-2">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-lg bg-green-500 text-white flex items-center justify-center">
             <BarChart3 size={20} />
@@ -47,8 +47,8 @@ const ALM = () => {
         </div>
       </div>
       
-      <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="mb-3">
+      <Tabs defaultValue="overview" className="w-full h-[calc(100vh-6rem)]">
+        <TabsList className="mb-2">
           <TabsTrigger value="overview" className="gap-2">
             <BarChart3 size={16} />
             Overview
@@ -63,15 +63,15 @@ const ALM = () => {
           </TabsTrigger>
         </TabsList>
         
-        <div className="mb-3">
+        <div className="mb-2">
           <p className="text-sm text-muted-foreground">
             Showing: <span className="font-medium">Asset Management Data for {selectedYear}</span>
           </p>
         </div>
         
-        <TabsContent value="overview" className="mt-0">
-          <Card className="border-0 shadow-sm">
-            <CardContent className="p-0 h-[calc(100vh-200px)] min-h-[500px] relative">
+        <TabsContent value="overview" className="mt-0 h-full">
+          <Card className="border-0 shadow-sm h-full">
+            <CardContent className="p-0 h-full relative">
               {isLoading && (
                 <div className="absolute inset-0 flex items-center justify-center bg-background/50 z-10">
                   <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
@@ -82,16 +82,16 @@ const ALM = () => {
                 className="w-full h-full rounded-md"
                 onLoad={handleIframeLoad}
                 title="Asset Lifecycle Management"
-                style={{ border: 'none' }}
+                style={{ border: 'none', height: 'calc(100vh - 12rem)' }}
                 sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
               />
             </CardContent>
           </Card>
         </TabsContent>
         
-        <TabsContent value="detailed" className="mt-0">
-          <Card className="border-0 shadow-sm">
-            <CardContent className="p-0 h-[calc(100vh-200px)] min-h-[500px] relative">
+        <TabsContent value="detailed" className="mt-0 h-full">
+          <Card className="border-0 shadow-sm h-full">
+            <CardContent className="p-0 h-full relative">
               {isLoading && (
                 <div className="absolute inset-0 flex items-center justify-center bg-background/50 z-10">
                   <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
@@ -102,16 +102,16 @@ const ALM = () => {
                 className="w-full h-full rounded-md"
                 onLoad={handleIframeLoad}
                 title="Asset Lifecycle Management - Detailed"
-                style={{ border: 'none' }}
+                style={{ border: 'none', height: 'calc(100vh - 12rem)' }}
                 sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
               />
             </CardContent>
           </Card>
         </TabsContent>
         
-        <TabsContent value="forecast" className="mt-0">
-          <Card className="border-0 shadow-sm">
-            <CardContent className="p-0 h-[calc(100vh-200px)] min-h-[500px] relative">
+        <TabsContent value="forecast" className="mt-0 h-full">
+          <Card className="border-0 shadow-sm h-full">
+            <CardContent className="p-0 h-full relative">
               {isLoading && (
                 <div className="absolute inset-0 flex items-center justify-center bg-background/50 z-10">
                   <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
@@ -122,7 +122,7 @@ const ALM = () => {
                 className="w-full h-full rounded-md"
                 onLoad={handleIframeLoad}
                 title="Asset Lifecycle Management - Forecast"
-                style={{ border: 'none' }}
+                style={{ border: 'none', height: 'calc(100vh - 12rem)' }}
                 sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
               />
             </CardContent>
