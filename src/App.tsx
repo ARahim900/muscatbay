@@ -4,7 +4,6 @@ import { Routes, Route } from 'react-router-dom';
 import './App.css';
 import Index from '@/pages/Index';
 import Auth from '@/pages/Auth';
-import AssetLifecycle from '@/pages/AssetLifecycle';
 import Contracts from '@/pages/Contracts';
 import Projects from '@/pages/Projects';
 import Water from '@/pages/Water';
@@ -24,6 +23,7 @@ import OperatingExpenses from '@/pages/OperatingExpenses';
 import PropertyManagement from '@/pages/PropertyManagement';
 import ServiceCharges from '@/pages/ServiceCharges';
 import PropertyReserveFundCalculator from '@/pages/PropertyReserveFundCalculator';
+import FinancialVisualizer from '@/pages/FinancialVisualizer';
 import NotFound from '@/pages/NotFound';
 import Layout from '@/components/layout/Layout';
 
@@ -31,7 +31,7 @@ function App() {
   return (
     <Routes>
       <Route path="/" element={<Layout><Index /></Layout>} />
-      <Route path="/alm" element={<Layout><AssetLifecycle /></Layout>} />
+      <Route path="/financial-visualizer" element={<Layout><FinancialVisualizer /></Layout>} />
       <Route path="/contracts" element={<Layout><Contracts /></Layout>} />
       <Route path="/projects" element={<Layout><Projects /></Layout>} />
       <Route path="/water" element={<Layout><Water /></Layout>} />

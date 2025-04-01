@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { PackageOpen, FileSpreadsheet, Building2, Calculator, FileCog, CreditCard } from 'lucide-react';
+import { PackageOpen, FileSpreadsheet, Building2, Calculator, FileCog, CreditCard, BarChart3 } from 'lucide-react';
 import SidebarSection from './SidebarSection';
 import SidebarLink, { SidebarLinkProps } from './SidebarLink';
 
@@ -25,9 +25,9 @@ const ManagementSection: React.FC<ManagementSectionProps> = ({
       collapsed={collapsed}
     >
       <SidebarLink 
-        to="/alm" 
-        icon={PackageOpen} 
-        label="Asset Lifecycle" 
+        to="/financial-visualizer" 
+        icon={BarChart3} 
+        label="Financial Visualizer" 
         collapsed={collapsed} 
         isMobile={isMobile} 
         iconColor="blue" 
