@@ -34,6 +34,15 @@ const ManagementSection: React.FC<ManagementSectionProps> = ({
         bgColor="blue" 
       />
       <SidebarLink 
+        to="/alm" 
+        icon={PackageOpen} 
+        label="Asset Lifecycle" 
+        collapsed={collapsed} 
+        isMobile={isMobile}
+        iconColor="green"
+        bgColor="green"
+      />
+      <SidebarLink 
         to="/contracts" 
         icon={FileCog} 
         label="Contracts" 

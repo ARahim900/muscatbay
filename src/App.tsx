@@ -24,6 +24,7 @@ import PropertyManagement from '@/pages/PropertyManagement';
 import ServiceCharges from '@/pages/ServiceCharges';
 import PropertyReserveFundCalculator from '@/pages/PropertyReserveFundCalculator';
 import FinancialVisualizer from '@/pages/FinancialVisualizer';
+import ALM from '@/pages/ALM';
 import NotFound from '@/pages/NotFound';
 import Layout from '@/components/layout/Layout';
 
@@ -32,6 +33,7 @@ function App() {
     <Routes>
       <Route path="/" element={<Layout><Index /></Layout>} />
       <Route path="/financial-visualizer" element={<Layout><FinancialVisualizer /></Layout>} />
+      <Route path="/alm" element={<Layout><ALM /></Layout>} />
       <Route path="/contracts" element={<Layout><Contracts /></Layout>} />
       <Route path="/projects" element={<Layout><Projects /></Layout>} />
       <Route path="/water" element={<Layout><Water /></Layout>} />
