@@ -42,3 +42,27 @@ export const Calculator = (props: React.SVGProps<SVGSVGElement>) => (
     <line x1="16" x2="16" y1="16" y2="16" />
   </svg>
 );
+
+export const AssetLifecycleIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    {...props}
+  >
+    <path d="M8 5H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
+    <path d="M16 3v4" />
+    <path d="M20 7h-4" />
+    <path d="M20 17h-4" />
+    <path d="M16 21v-4" />
+    <path d="M8 3v4" />
+    <path d="M4 7h4" />
+    <path d="M4 17h4" />
+    <path d="M8 21v-4" />
+    <circle cx="12" cy="12" r="3" />
+  </svg>
+);
