@@ -51,7 +51,7 @@ const mockUpcomingReplacements = [
   { component: 'Fire Extinguishers', location: 'Typical Buildings', year: 2026, cost: 129 }, 
   { component: 'Lagoon Infrastructure', location: 'Master Community', year: 2027, cost: 42000 }, 
   { component: 'Elevator Wire Ropes', location: 'Typical Buildings', year: 2027, cost: 2450 }, 
-  { component: 'External Wall Paint', location: 'Typical Buildings', year: 2028, cost: 1465 }, 
+  { component: 'External Wall Paint', location: 'Typical Buildings', location: 'Typical Buildings', year: 2028, cost: 1465 }, 
   { component: 'Tree Uplighters', location: 'Zone 3', year: 2031, cost: 1120 }
 ];
 
@@ -354,4 +354,3 @@ const GlobalStyles = () => {
   
   return (
     <style>{`
-      @keyframes fadeIn {
