@@ -9,7 +9,6 @@ import { useAssets } from '@/hooks/useAssets';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 
-// Mock Data
 const mockYearlyData = [
   { year: '2021', balance: 52636, contribution: 52636, expenditure: 0 }, 
   { year: '2022', balance: 106324, contribution: 52899, expenditure: 0 }, 
@@ -295,7 +294,7 @@ const Transition = ({ show, enter, enterFrom, enterTo, leave, leaveFrom, leaveTo
   );
 };
 
-const KpiCard = ({ title, value, description, trend, icon, compactView, darkMode }) => {
+const KpiCard = ({ title, value, description, trend, icon, compactView = false, darkMode }) => {
   return (
     <div className={`overflow-hidden shadow-md rounded-lg transform transition-transform hover:scale-[1.02] ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
       <div className={`p-5 ${compactView ? 'p-4' : 'p-5'}`}>
@@ -393,7 +392,6 @@ const ALM = () => {
   const [category, setCategory] = useState("all");
   const [activeTab, setActiveTab] = useState("overview");
 
-  // Fetch asset data using the hook
   const { 
     assets, 
     categorySummary, 
@@ -406,7 +404,6 @@ const ALM = () => {
     error 
   } = useAssets();
 
-  // Yearly options for filter
   const yearOptions = [
     { value: "2024", label: "2024" },
     { value: "2025", label: "2025" },
@@ -415,7 +412,6 @@ const ALM = () => {
     { value: "2028", label: "2028" },
   ];
 
-  // Zone options for filter
   const zoneOptions = [
     { value: "all", label: "All Zones" },
     { value: "master", label: "Master Community" },
@@ -426,7 +422,6 @@ const ALM = () => {
     { value: "staff", label: "Staff Accommodation" },
   ];
 
-  // Category options for filter
   const categoryOptions = [
     { value: "all", label: "All Categories" },
     { value: "infrastructure", label: "Infrastructure" },
@@ -435,7 +430,6 @@ const ALM = () => {
     { value: "landscaping", label: "Landscaping" },
   ];
 
-  // Calculate summary stats
   const summaryStats = useMemo(() => {
     if (loading) return {
       totalAssets: 0,
@@ -455,7 +449,6 @@ const ALM = () => {
     };
   }, [assets, criticalAssets, maintenanceSchedule, lifecycleForecast, loading]);
 
-  // Filter upcoming replacements based on selected year
   const filteredReplacements = useMemo(() => {
     return mockUpcomingReplacements.filter(item => 
       (year === "all" || parseInt(year) === item.year) &&
@@ -469,7 +462,6 @@ const ALM = () => {
     );
   }, [year, zone]);
 
-  // Asset category data for pie chart
   const assetCategoryData = useMemo(() => {
     return mockAssetCategories.filter(item => 
       category === "all" || 
@@ -480,7 +472,6 @@ const ALM = () => {
     );
   }, [category]);
 
-  // Zone balances data for pie chart
   const zoneBalancesData = useMemo(() => {
     return mockZoneBalances.filter(item => 
       zone === "all" || 
@@ -493,12 +484,10 @@ const ALM = () => {
     );
   }, [zone]);
 
-  // Chart data for reserve fund projection
   const reserveFundData = useMemo(() => {
     return mockYearlyData.filter(item => parseInt(item.year) <= parseInt(year) + 5);
   }, [year]);
 
-  // Handle filter changes
   const handleYearChange = (newYear) => {
     setYear(newYear);
   };
@@ -519,7 +508,6 @@ const ALM = () => {
     <div className="container mx-auto py-6 px-4">
       <GlobalStyles />
       
-      {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 space-y-4 md:space-y-0">
         <div className="flex items-center">
           <div className="bg-primary/10 p-2 rounded-lg mr-3">
@@ -571,7 +559,6 @@ const ALM = () => {
         </div>
       </div>
       
-      {/* Tab Navigation */}
       <Tabs 
         defaultValue="overview" 
         className="w-full mb-6"
@@ -593,9 +580,7 @@ const ALM = () => {
                     activeTab === "zones" ? "Zones breakdown" : "Maintenance schedule"}
         </div>
         
-        {/* Overview Tab Content */}
         <TabsContent value="overview" className="mt-6">
-          {/* KPI Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             <KpiCard 
               title="Total Assets" 
@@ -603,6 +588,8 @@ const ALM = () => {
               description="Total assets under management" 
               icon={<Package className="h-5 w-5" />}
               darkMode={darkMode}
+              trend="neutral"
+              compactView={false}
             />
             <KpiCard 
               title="Critical Assets" 
@@ -611,6 +598,7 @@ const ALM = () => {
               trend="up" 
               icon={<AlertTriangle className="h-5 w-5" />}
               darkMode={darkMode}
+              compactView={false}
             />
             <KpiCard 
               title="Upcoming Maintenance" 
@@ -618,6 +606,8 @@ const ALM = () => {
               description={`Scheduled in ${year}`} 
               icon={<Wrench className="h-5 w-5" />}
               darkMode={darkMode}
+              trend="neutral"
+              compactView={false}
             />
             <KpiCard 
               title="Total Replacement Value" 
@@ -625,10 +615,11 @@ const ALM = () => {
               description="Estimated asset replacement cost" 
               icon={<Landmark className="h-5 w-5" />}
               darkMode={darkMode}
+              trend="neutral"
+              compactView={false}
             />
           </div>
 
-          {/* Charts Row */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
             <ChartCard title="Reserve Fund Projection" darkMode={darkMode}>
               <ResponsiveContainer width="100%" height={300}>
@@ -672,7 +663,6 @@ const ALM = () => {
             </ChartCard>
           </div>
 
-          {/* Upcoming Replacements Section */}
           <ChartCard title="Upcoming Asset Replacements" darkMode={darkMode}>
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
@@ -707,7 +697,6 @@ const ALM = () => {
           </ChartCard>
         </TabsContent>
         
-        {/* Other Tab Content */}
         <TabsContent value="analysis" className="mt-6">
           <div className="grid grid-cols-1 gap-6">
             <ChartCard title="Asset Performance Analysis" darkMode={darkMode}>
@@ -789,7 +778,6 @@ const ALM = () => {
         </TabsContent>
       </Tabs>
       
-      {/* Quick Links Section */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 my-6">
         <Link to="/water-system" className="group">
           <Card className="hover:shadow-md transition-all duration-200">
