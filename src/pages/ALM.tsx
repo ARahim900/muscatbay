@@ -51,7 +51,7 @@ const mockUpcomingReplacements = [
   { component: 'Fire Extinguishers', location: 'Typical Buildings', year: 2026, cost: 129 }, 
   { component: 'Lagoon Infrastructure', location: 'Master Community', year: 2027, cost: 42000 }, 
   { component: 'Elevator Wire Ropes', location: 'Typical Buildings', year: 2027, cost: 2450 }, 
-  { component: 'External Wall Paint', location: 'Typical Buildings', location: 'Typical Buildings', year: 2028, cost: 1465 }, 
+  { component: 'External Wall Paint', location: 'Typical Buildings', year: 2028, cost: 1465 }, 
   { component: 'Tree Uplighters', location: 'Zone 3', year: 2031, cost: 1120 }
 ];
 
@@ -62,7 +62,6 @@ const mockZones = [
   { id: 'staff', name: 'Staff Accommodation', propertyTypes: ['Staff Accommodation'] }
 ];
 
-// Mock buildings within zones/property types
 const mockBuildings = {
   '3': {
     'Apartment': [
@@ -75,7 +74,6 @@ const mockBuildings = {
   }
 };
 
-// Mock units data
 const mockUnits = {
   '3': {
     'Villa': [
@@ -239,7 +237,6 @@ const mockUnits = {
   }
 };
 
-// Base rates for 2025 (OMR per sq.m.)
 const rates2025 = {
   masterCommunity: 1.75,
   typicalBuilding: 1.65,
@@ -249,7 +246,6 @@ const rates2025 = {
   staffAccommodation: 3.95
 };
 
-// Custom Transition Component
 const Transition = ({ show, enter, enterFrom, enterTo, leave, leaveFrom, leaveTo, children, className, unmount = true }) => {
   const [shouldRender, setShouldRender] = useState(show);
   const [transitionState, setTransitionState] = useState(show ? 'enterTo' : 'leaveTo');
@@ -296,7 +292,6 @@ const Transition = ({ show, enter, enterFrom, enterTo, leave, leaveFrom, leaveTo
   );
 };
 
-// KPI Card Component
 const KpiCard = ({ title, value, description, trend, icon, compactView, darkMode }) => {
   return (
     <div className={`overflow-hidden shadow-md rounded-lg transform transition-transform hover:scale-[1.02] ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
@@ -331,7 +326,6 @@ const KpiCard = ({ title, value, description, trend, icon, compactView, darkMode
   );
 };
 
-// Chart Card Component
 const ChartCard = ({ title, children, darkMode }) => {
   return (
     <div className={`overflow-hidden shadow-md rounded-lg transform transition-all hover:shadow-lg ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
@@ -345,7 +339,6 @@ const ChartCard = ({ title, children, darkMode }) => {
   );
 };
 
-// Global Styles Component
 const GlobalStyles = () => {
   const isDarkMode = document.documentElement.classList.contains('dark');
   const trackColor = isDarkMode ? '#1f2937' : '#f1f1f1';
@@ -354,3 +347,63 @@ const GlobalStyles = () => {
   
   return (
     <style>{`
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+      
+      .animate-fadeIn {
+        animation: fadeIn 0.5s ease-out forwards;
+      }
+      
+      .dark {
+        color-scheme: dark;
+      }
+      
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      
+      ::-webkit-scrollbar-track {
+        background: ${trackColor};
+        border-radius: 10px;
+      }
+      
+      ::-webkit-scrollbar-thumb {
+        background: ${thumbColor};
+        border-radius: 10px;
+      }
+      
+      ::-webkit-scrollbar-thumb:hover {
+        background: ${thumbHoverColor};
+      }
+    `}</style>
+  );
+};
+
+const ALM = () => {
+  const [show, setShow] = useState(false);
+  const [darkMode, setDarkMode] = useState(false);
+
+  return (
+    <div>
+      <GlobalStyles />
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">ALM Dashboard</h1>
+        <button onClick={() => setShow(!show)} className="p-2 rounded-md bg-gray-200 hover:bg-gray-300">
+          {show ? <Calendar /> : <Calendar />}
+        </button>
+      </div>
+      <div className="mt-4">
+        {show && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {/* Add your KPI cards and charts here */}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default ALM;
