@@ -1,12 +1,15 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { BarChart3, FileSpreadsheet, Calendar, Download, LineChart, PieChart, BarChart, Activity } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
+import { BarChart3, FileSpreadsheet, Calendar, Download, LineChart, PieChart, BarChart, Activity, Clock, Package, Building, Landmark, Wrench, AlertTriangle, Zap, Droplets, Calculator } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ResponsiveContainer, LineChart as RechartsLineChart, Line, BarChart as RechartsBarChart, Bar, PieChart as RechartsPieChart, Pie, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Cell } from 'recharts';
+import { ResponsiveContainer, LineChart as RechartsLineChart, Line, BarChart as RechartsBarChart, Bar, PieChart as RechartsPieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
+import { useAssets } from '@/hooks/useAssets';
+import { Link } from 'react-router-dom';
+import { toast } from 'sonner';
 
-// --- Mock Data ---
+// Mock Data
 const mockYearlyData = [
   { year: '2021', balance: 52636, contribution: 52636, expenditure: 0 }, 
   { year: '2022', balance: 106324, contribution: 52899, expenditure: 0 }, 
@@ -385,22 +388,450 @@ const GlobalStyles = () => {
 const ALM = () => {
   const [show, setShow] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
+  const [year, setYear] = useState("2025");
+  const [zone, setZone] = useState("all");
+  const [category, setCategory] = useState("all");
+  const [activeTab, setActiveTab] = useState("overview");
+
+  // Fetch asset data using the hook
+  const { 
+    assets, 
+    categorySummary, 
+    locationSummary, 
+    criticalAssets, 
+    assetConditions,
+    maintenanceSchedule,
+    lifecycleForecast,
+    loading, 
+    error 
+  } = useAssets();
+
+  // Yearly options for filter
+  const yearOptions = [
+    { value: "2024", label: "2024" },
+    { value: "2025", label: "2025" },
+    { value: "2026", label: "2026" },
+    { value: "2027", label: "2027" },
+    { value: "2028", label: "2028" },
+  ];
+
+  // Zone options for filter
+  const zoneOptions = [
+    { value: "all", label: "All Zones" },
+    { value: "master", label: "Master Community" },
+    { value: "typical", label: "Typical Buildings" },
+    { value: "zone3", label: "Zone 3 (Al Zaha)" },
+    { value: "zone5", label: "Zone 5 (Al Nameer)" },
+    { value: "zone8", label: "Zone 8 (Al Wajd)" },
+    { value: "staff", label: "Staff Accommodation" },
+  ];
+
+  // Category options for filter
+  const categoryOptions = [
+    { value: "all", label: "All Categories" },
+    { value: "infrastructure", label: "Infrastructure" },
+    { value: "mep", label: "MEP Systems" },
+    { value: "finishes", label: "Finishes/Structure" },
+    { value: "landscaping", label: "Landscaping" },
+  ];
+
+  // Calculate summary stats
+  const summaryStats = useMemo(() => {
+    if (loading) return {
+      totalAssets: 0,
+      criticalCount: 0,
+      upcomingMaintenance: 0,
+      totalReplacementCost: 0
+    };
+
+    return {
+      totalAssets: assets?.length || 0,
+      criticalCount: criticalAssets?.length || 0,
+      upcomingMaintenance: maintenanceSchedule?.filter(m => 
+        m.status === 'Scheduled' || m.status === 'Overdue'
+      ).length || 0,
+      totalReplacementCost: lifecycleForecast?.reduce((sum, item) => 
+        sum + (item.replacementCost || 0), 0) || 0
+    };
+  }, [assets, criticalAssets, maintenanceSchedule, lifecycleForecast, loading]);
+
+  // Filter upcoming replacements based on selected year
+  const filteredReplacements = useMemo(() => {
+    return mockUpcomingReplacements.filter(item => 
+      (year === "all" || parseInt(year) === item.year) &&
+      (zone === "all" || 
+        (zone === "master" && item.location === "Master Community") ||
+        (zone === "typical" && item.location === "Typical Buildings") ||
+        (zone === "zone3" && item.location === "Zone 3") ||
+        (zone === "zone5" && item.location === "Zone 5") ||
+        (zone === "zone8" && item.location === "Zone 8") ||
+        (zone === "staff" && item.location === "Staff Accommodation"))
+    );
+  }, [year, zone]);
+
+  // Asset category data for pie chart
+  const assetCategoryData = useMemo(() => {
+    return mockAssetCategories.filter(item => 
+      category === "all" || 
+      (category === "infrastructure" && item.name === "Infrastructure") ||
+      (category === "mep" && item.name === "MEP Systems") ||
+      (category === "finishes" && item.name === "Finishes/Structure") ||
+      (category === "landscaping" && item.name === "Landscaping")
+    );
+  }, [category]);
+
+  // Zone balances data for pie chart
+  const zoneBalancesData = useMemo(() => {
+    return mockZoneBalances.filter(item => 
+      zone === "all" || 
+      (zone === "master" && item.name === "Master Community") ||
+      (zone === "typical" && item.name === "Typical Buildings") ||
+      (zone === "zone3" && item.name === "Zone 3 (Al Zaha)") ||
+      (zone === "zone5" && item.name === "Zone 5 (Al Nameer)") ||
+      (zone === "zone8" && item.name === "Zone 8 (Al Wajd)") ||
+      (zone === "staff" && item.name === "Staff Accommodation")
+    );
+  }, [zone]);
+
+  // Chart data for reserve fund projection
+  const reserveFundData = useMemo(() => {
+    return mockYearlyData.filter(item => parseInt(item.year) <= parseInt(year) + 5);
+  }, [year]);
+
+  // Handle filter changes
+  const handleYearChange = (newYear) => {
+    setYear(newYear);
+  };
+
+  const handleZoneChange = (newZone) => {
+    setZone(newZone);
+  };
+
+  const handleCategoryChange = (newCategory) => {
+    setCategory(newCategory);
+  };
+
+  const handleExport = () => {
+    toast.success("Exporting data to Excel...");
+  };
 
   return (
-    <div>
+    <div className="container mx-auto py-6 px-4">
       <GlobalStyles />
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">ALM Dashboard</h1>
-        <button onClick={() => setShow(!show)} className="p-2 rounded-md bg-gray-200 hover:bg-gray-300">
-          {show ? <Calendar /> : <Calendar />}
-        </button>
-      </div>
-      <div className="mt-4">
-        {show && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {/* Add your KPI cards and charts here */}
+      
+      {/* Header Section */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 space-y-4 md:space-y-0">
+        <div className="flex items-center">
+          <div className="bg-primary/10 p-2 rounded-lg mr-3">
+            <Package className="h-6 w-6 text-primary" />
           </div>
-        )}
+          <div>
+            <h1 className="text-2xl font-bold">Asset Lifecycle Management</h1>
+            <p className="text-sm text-muted-foreground">Manage and monitor all assets across Muscat Bay</p>
+          </div>
+        </div>
+        
+        <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
+          <div className="flex space-x-3">
+            <div className="flex flex-col space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">Year</label>
+              <Select value={year} onValueChange={handleYearChange}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Select Year" />
+                </SelectTrigger>
+                <SelectContent>
+                  {yearOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex flex-col space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">Zone</label>
+              <Select value={zone} onValueChange={handleZoneChange}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Select Zone" />
+                </SelectTrigger>
+                <SelectContent>
+                  {zoneOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <Button className="whitespace-nowrap" onClick={handleExport}>
+            <Download className="h-4 w-4 mr-1" />
+            Export Data
+          </Button>
+        </div>
+      </div>
+      
+      {/* Tab Navigation */}
+      <Tabs 
+        defaultValue="overview" 
+        className="w-full mb-6"
+        value={activeTab}
+        onValueChange={setActiveTab}
+      >
+        <TabsList className="grid grid-cols-3 md:grid-cols-5 lg:w-[600px]">
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="analysis">Analysis</TabsTrigger>
+          <TabsTrigger value="categories">Categories</TabsTrigger>
+          <TabsTrigger value="zones">Zones</TabsTrigger>
+          <TabsTrigger value="maintenance">Maintenance</TabsTrigger>
+        </TabsList>
+        
+        <div className="mt-2 text-sm text-muted-foreground">
+          Showing: {activeTab === "overview" ? "Overview dashboard" : 
+                    activeTab === "analysis" ? "Asset performance analysis" :
+                    activeTab === "categories" ? "Asset categories breakdown" :
+                    activeTab === "zones" ? "Zones breakdown" : "Maintenance schedule"}
+        </div>
+        
+        {/* Overview Tab Content */}
+        <TabsContent value="overview" className="mt-6">
+          {/* KPI Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <KpiCard 
+              title="Total Assets" 
+              value={summaryStats.totalAssets.toLocaleString()} 
+              description="Total assets under management" 
+              icon={<Package className="h-5 w-5" />}
+              darkMode={darkMode}
+            />
+            <KpiCard 
+              title="Critical Assets" 
+              value={summaryStats.criticalCount.toLocaleString()} 
+              description="Assets requiring immediate attention" 
+              trend="up" 
+              icon={<AlertTriangle className="h-5 w-5" />}
+              darkMode={darkMode}
+            />
+            <KpiCard 
+              title="Upcoming Maintenance" 
+              value={summaryStats.upcomingMaintenance.toLocaleString()} 
+              description={`Scheduled in ${year}`} 
+              icon={<Wrench className="h-5 w-5" />}
+              darkMode={darkMode}
+            />
+            <KpiCard 
+              title="Total Replacement Value" 
+              value={`${Math.round(summaryStats.totalReplacementCost/1000).toLocaleString()} K`} 
+              description="Estimated asset replacement cost" 
+              icon={<Landmark className="h-5 w-5" />}
+              darkMode={darkMode}
+            />
+          </div>
+
+          {/* Charts Row */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <ChartCard title="Reserve Fund Projection" darkMode={darkMode}>
+              <ResponsiveContainer width="100%" height={300}>
+                <RechartsLineChart data={reserveFundData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <XAxis dataKey="year" />
+                  <YAxis tickFormatter={(value) => `${Math.round(value / 1000)}K`} />
+                  <Tooltip formatter={(value) => [`${value.toLocaleString()} OMR`, ""]} />
+                  <Legend />
+                  <Line type="monotone" dataKey="balance" name="Balance" stroke="#4E4456" activeDot={{ r: 8 }} />
+                  <Line type="monotone" dataKey="contribution" name="Contribution" stroke="#9F7AEA" />
+                  <Line type="monotone" dataKey="expenditure" name="Expenditure" stroke="#F56565" />
+                </RechartsLineChart>
+              </ResponsiveContainer>
+            </ChartCard>
+          
+            <ChartCard title="Asset Allocation by Category" darkMode={darkMode}>
+              <div className="flex items-center justify-center h-[300px]">
+                <ResponsiveContainer width="100%" height={280}>
+                  <RechartsPieChart>
+                    <Pie
+                      data={assetCategoryData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      outerRadius={100}
+                      fill="#8884d8"
+                      dataKey="value"
+                      nameKey="name"
+                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                    >
+                      {assetCategoryData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value) => `${value.toLocaleString()} OMR`} />
+                    <Legend />
+                  </RechartsPieChart>
+                </ResponsiveContainer>
+              </div>
+            </ChartCard>
+          </div>
+
+          {/* Upcoming Replacements Section */}
+          <ChartCard title="Upcoming Asset Replacements" darkMode={darkMode}>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50 dark:bg-gray-800">
+                  <tr>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Component</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Location</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Year</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Cost (OMR)</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
+                  {filteredReplacements.length > 0 ? (
+                    filteredReplacements.map((item, index) => (
+                      <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-800">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">{item.component}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{item.location}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{item.year}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{item.cost.toLocaleString()}</td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={4} className="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
+                        No replacements scheduled for the selected filters
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </ChartCard>
+        </TabsContent>
+        
+        {/* Other Tab Content */}
+        <TabsContent value="analysis" className="mt-6">
+          <div className="grid grid-cols-1 gap-6">
+            <ChartCard title="Asset Performance Analysis" darkMode={darkMode}>
+              <div className="p-4 text-muted-foreground text-center">
+                Detailed asset performance analysis by category and condition
+              </div>
+            </ChartCard>
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="categories" className="mt-6">
+          <div className="grid grid-cols-1 gap-6">
+            <ChartCard title="Asset Categories" darkMode={darkMode}>
+              <div className="flex items-center justify-center h-[300px]">
+                <ResponsiveContainer width="100%" height={280}>
+                  <RechartsPieChart>
+                    <Pie
+                      data={assetCategoryData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      outerRadius={100}
+                      fill="#8884d8"
+                      dataKey="value"
+                      nameKey="name"
+                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                    >
+                      {assetCategoryData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value) => `${value.toLocaleString()} OMR`} />
+                    <Legend />
+                  </RechartsPieChart>
+                </ResponsiveContainer>
+              </div>
+            </ChartCard>
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="zones" className="mt-6">
+          <div className="grid grid-cols-1 gap-6">
+            <ChartCard title="Zone Allocation" darkMode={darkMode}>
+              <div className="flex items-center justify-center h-[300px]">
+                <ResponsiveContainer width="100%" height={280}>
+                  <RechartsPieChart>
+                    <Pie
+                      data={zoneBalancesData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      outerRadius={100}
+                      fill="#8884d8"
+                      dataKey="value"
+                      nameKey="name"
+                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                    >
+                      {zoneBalancesData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value) => `${value.toLocaleString()} OMR`} />
+                    <Legend />
+                  </RechartsPieChart>
+                </ResponsiveContainer>
+              </div>
+            </ChartCard>
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="maintenance" className="mt-6">
+          <div className="grid grid-cols-1 gap-6">
+            <ChartCard title="Maintenance Schedule" darkMode={darkMode}>
+              <div className="p-4 text-muted-foreground text-center">
+                Scheduled maintenance activities and asset replacement plans
+              </div>
+            </ChartCard>
+          </div>
+        </TabsContent>
+      </Tabs>
+      
+      {/* Quick Links Section */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 my-6">
+        <Link to="/water-system" className="group">
+          <Card className="hover:shadow-md transition-all duration-200">
+            <CardContent className="p-4 flex items-center space-x-3">
+              <div className="rounded-full bg-blue-50 p-3">
+                <Droplets className="h-5 w-5 text-blue-500" />
+              </div>
+              <div>
+                <h3 className="font-medium group-hover:text-blue-600 transition-colors">Water System</h3>
+                <p className="text-xs text-muted-foreground">Manage water distribution assets</p>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+        
+        <Link to="/electricity-system" className="group">
+          <Card className="hover:shadow-md transition-all duration-200">
+            <CardContent className="p-4 flex items-center space-x-3">
+              <div className="rounded-full bg-amber-50 p-3">
+                <Zap className="h-5 w-5 text-amber-500" />
+              </div>
+              <div>
+                <h3 className="font-medium group-hover:text-amber-600 transition-colors">Electricity System</h3>
+                <p className="text-xs text-muted-foreground">Manage electrical distribution assets</p>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+        
+        <Link to="/reserve-fund-calculator" className="group">
+          <Card className="hover:shadow-md transition-all duration-200">
+            <CardContent className="p-4 flex items-center space-x-3">
+              <div className="rounded-full bg-purple-50 p-3">
+                <Calculator className="h-5 w-5 text-purple-500" />
+              </div>
+              <div>
+                <h3 className="font-medium group-hover:text-purple-600 transition-colors">Reserve Fund Calculator</h3>
+                <p className="text-xs text-muted-foreground">Calculate required reserve fund contributions</p>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
     </div>
   );
