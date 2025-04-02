@@ -355,4 +355,3 @@ const GlobalStyles = () => {
   return (
     <style>{`
       @keyframes fadeIn {
-        from {
