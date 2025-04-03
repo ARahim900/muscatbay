@@ -12,7 +12,7 @@ import {
 import ALMDashboard from '@/components/alm/ALMDashboard';
 import ReserveFundCalculator from '@/components/alm/ReserveFundCalculator';
 import PropertyServiceChargeCalculator from '@/components/alm/PropertyServiceChargeCalculator';
-import { AssetCondition, CriticalAsset, UpcomingMaintenance, MaintenanceForecast, AssetCategory } from '@/types/assets';
+import { AssetCondition, CriticalAsset, UpcomingMaintenance, MaintenanceForecast, AssetCategory } from '@/types/alm';
 
 const ALM = () => {
   // Initialize dashboard state variables
@@ -75,7 +75,7 @@ const ALM = () => {
     ]
   };
 
-  // Create mock data for tables to fix the missing data properties
+  // Create mock data for tables with the correct types from alm.ts
   const criticalAssetsData: CriticalAsset[] = [
     { 
       id: "1", 

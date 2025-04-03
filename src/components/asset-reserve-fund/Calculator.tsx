@@ -1,6 +1,5 @@
 
 import React, { useState, useMemo } from 'react';
-import Transition from './Transition';
 import { mockZones, mockBuildings, mockUnits, rates2025 } from '@/data/reserveFundData';
 
 interface CalculatorProps {
@@ -8,50 +7,31 @@ interface CalculatorProps {
   darkMode?: boolean;
 }
 
-interface UnitDetails {
-  id: string;
-  unitNo: string;
-  type: string;
-  bua: number;
-}
+// Import the Transition component
+import Transition from './Transition';
 
-interface ContributionBreakdown {
-  category: string;
-  components: {
-    name: string;
-    share: number;
-  }[];
-}
-
-interface CalculationResultType {
-  unitDetails: UnitDetails;
-  masterContribution: number;
-  zoneContribution: number;
-  buildingContribution: number;
-  totalAnnualContribution: number;
-  componentBreakdown: ContributionBreakdown[];
-  year: string;
-}
-
-const Calculator: React.FC<CalculatorProps> = ({ compactView = false, darkMode = false }) => {
+const Calculator: React.FC<CalculatorProps> = ({ compactView, darkMode }) => {
   const [selectedZone, setSelectedZone] = useState('');
   const [selectedPropertyType, setSelectedPropertyType] = useState('');
   const [selectedBuilding, setSelectedBuilding] = useState('');
   const [selectedUnit, setSelectedUnit] = useState('');
-  const [calculationResult, setCalculationResult] = useState<CalculationResultType | null>(null);
+  const [calculationResult, setCalculationResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [selectedYear, setSelectedYear] = useState('2025');
 
-  const propertyTypes = useMemo(
-    () => (selectedZone ? mockZones.find(z => z.id === selectedZone)?.propertyTypes || [] : []),
+  // Get available property types based on selected zone
+  const propertyTypes = useMemo(() => 
+    selectedZone ? mockZones.find(z => z.id === selectedZone)?.propertyTypes || [] : [], 
     [selectedZone]
   );
 
-  const buildings = useMemo(
-    () => (selectedZone && selectedPropertyType === 'Apartment' && mockBuildings[selectedZone]?.[selectedPropertyType]) || [],
+  // Get available buildings based on selected zone and property type
+  const buildings = useMemo(() => 
+    (selectedZone && selectedPropertyType === 'Apartment' && mockBuildings[selectedZone]?.[selectedPropertyType]) || [], 
     [selectedZone, selectedPropertyType]
   );
 
+  // Get available units based on selections
   const units = useMemo(() => {
     if (!selectedZone || !selectedPropertyType) return [];
     
@@ -63,7 +43,8 @@ const Calculator: React.FC<CalculatorProps> = ({ compactView = false, darkMode =
     }
   }, [selectedZone, selectedPropertyType, selectedBuilding, buildings]);
 
-  const getInflationAdjustedRates = (year: string) => {
+  // Calculate inflation-adjusted rates
+  const getInflationAdjustedRates = (year) => {
     const yearDiff = parseInt(year) - 2025;
     const inflationRate = 0.005;
     const adjustmentFactor = Math.pow(1 + inflationRate, yearDiff);
@@ -78,6 +59,7 @@ const Calculator: React.FC<CalculatorProps> = ({ compactView = false, darkMode =
     };
   };
 
+  // Get details for the selected unit
   const getUnitDetails = () => {
     if (!selectedZone || !selectedPropertyType || !selectedUnit) return null;
     
@@ -92,6 +74,7 @@ const Calculator: React.FC<CalculatorProps> = ({ compactView = false, darkMode =
     }
   };
 
+  // Calculate contribution based on selections
   const calculateContribution = () => {
     setLoading(true);
     setCalculationResult(null);
@@ -135,7 +118,7 @@ const Calculator: React.FC<CalculatorProps> = ({ compactView = false, darkMode =
       
       const totalAnnualContribution = masterContribution + zoneContribution + buildingContribution;
       
-      const componentBreakdown: ContributionBreakdown[] = [];
+      const componentBreakdown = [];
       
       if (masterContribution > 0) {
         componentBreakdown.push({
@@ -185,6 +168,7 @@ const Calculator: React.FC<CalculatorProps> = ({ compactView = false, darkMode =
     }, 800);
   };
 
+  // Reset all selections
   const resetCalculator = () => {
     setSelectedZone('');
     setSelectedPropertyType('');
@@ -194,7 +178,8 @@ const Calculator: React.FC<CalculatorProps> = ({ compactView = false, darkMode =
     setCalculationResult(null);
   };
 
-  const handleZoneChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  // Event handlers
+  const handleZoneChange = (e) => {
     setSelectedZone(e.target.value);
     setSelectedPropertyType('');
     setSelectedBuilding('');
@@ -202,25 +187,25 @@ const Calculator: React.FC<CalculatorProps> = ({ compactView = false, darkMode =
     setCalculationResult(null);
   };
 
-  const handlePropertyTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  const handlePropertyTypeChange = (e) => {
     setSelectedPropertyType(e.target.value);
     setSelectedBuilding('');
     setSelectedUnit('');
     setCalculationResult(null);
   };
 
-  const handleBuildingChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleBuildingChange = (e) => {
     setSelectedBuilding(e.target.value);
     setSelectedUnit('');
     setCalculationResult(null);
   };
 
-  const handleUnitChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleUnitChange = (e) => {
     setSelectedUnit(e.target.value);
     setCalculationResult(null);
   };
 
-  const handleYearChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleYearChange = (e) => {
     setSelectedYear(e.target.value);
     setCalculationResult(null);
   };
@@ -246,17 +231,15 @@ const Calculator: React.FC<CalculatorProps> = ({ compactView = false, darkMode =
           Reset
         </button>
       </div>
-      
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Selection Form */}
         <div className={`rounded-lg shadow-md p-6 ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
-          <h3 className={`text-lg font-medium mb-4 ${darkMode ? 'text-[#AD9BBD]' : 'text-[#4E4456]'}`}>
-            Property Selection
-          </h3>
+          <h3 className={`text-lg font-medium mb-4 ${darkMode ? 'text-[#AD9BBD]' : 'text-[#4E4456]'}`}>Property Selection</h3>
           <div className="space-y-4">
+            {/* Year selection */}
             <div>
-              <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                Calculation Year
-              </label>
+              <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Calculation Year</label>
               <select
                 value={selectedYear}
                 onChange={handleYearChange}
@@ -266,18 +249,17 @@ const Calculator: React.FC<CalculatorProps> = ({ compactView = false, darkMode =
                     : 'border-gray-300 focus:border-[#4E4456]'
                 }`}
               >
-                {Array.from({ length: 20 }, (_, i) => 2025 + i).map((year) => (
+                {Array.from({ length: 16 }, (_, i) => 2025 + i).map((year) => (
                   <option key={year} value={year}>
                     {year}{year === 2025 ? ' (Base Year)' : ''}
                   </option>
                 ))}
               </select>
             </div>
-            
+
+            {/* Zone selection */}
             <div>
-              <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                Zone
-              </label>
+              <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Zone</label>
               <select
                 value={selectedZone}
                 onChange={handleZoneChange}
@@ -289,17 +271,14 @@ const Calculator: React.FC<CalculatorProps> = ({ compactView = false, darkMode =
               >
                 <option value="">Select Zone</option>
                 {mockZones.map((zone) => (
-                  <option key={zone.id} value={zone.id}>
-                    {zone.name}
-                  </option>
+                  <option key={zone.id} value={zone.id}>{zone.name}</option>
                 ))}
               </select>
             </div>
-            
+
+            {/* Property Type selection */}
             <div>
-              <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                Property Type
-              </label>
+              <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Property Type</label>
               <select
                 value={selectedPropertyType}
                 onChange={handlePropertyTypeChange}
@@ -312,18 +291,15 @@ const Calculator: React.FC<CalculatorProps> = ({ compactView = false, darkMode =
               >
                 <option value="">Select Property Type</option>
                 {propertyTypes.map((type) => (
-                  <option key={type} value={type}>
-                    {type}
-                  </option>
+                  <option key={type} value={type}>{type}</option>
                 ))}
               </select>
             </div>
-            
+
+            {/* Building selection (for apartments) */}
             {selectedPropertyType === 'Apartment' && buildings.length > 0 && (
               <div>
-                <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                  Building
-                </label>
+                <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Building</label>
                 <select
                   value={selectedBuilding}
                   onChange={handleBuildingChange}
@@ -336,18 +312,15 @@ const Calculator: React.FC<CalculatorProps> = ({ compactView = false, darkMode =
                 >
                   <option value="">Select Building</option>
                   {buildings.map((building) => (
-                    <option key={building} value={building}>
-                      Building {building}
-                    </option>
+                    <option key={building} value={building}>Building {building}</option>
                   ))}
                 </select>
               </div>
             )}
-            
+
+            {/* Unit selection */}
             <div>
-              <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                Unit
-              </label>
+              <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Unit</label>
               <select
                 value={selectedUnit}
                 onChange={handleUnitChange}
@@ -360,42 +333,23 @@ const Calculator: React.FC<CalculatorProps> = ({ compactView = false, darkMode =
               >
                 <option value="">Select Unit</option>
                 {Array.isArray(units) && units.map((unit) => (
-                  <option key={unit.id} value={unit.id}>
-                    {unit.unitNo} - {unit.type}
-                  </option>
+                  <option key={unit.id} value={unit.id}>{unit.unitNo} - {unit.type}</option>
                 ))}
               </select>
             </div>
-            
+
+            {/* Calculate button */}
             <div className="pt-4 flex gap-2">
               <button
                 onClick={calculateContribution}
                 disabled={!selectedUnit || loading}
-                className={`flex-1 bg-gradient-to-r from-[#4E4456] to-[#6D5D7B] text-white rounded-md py-2 px-4 font-medium hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[#4E4456]/50 disabled:opacity-50 disabled:cursor-not-allowed transition-all ${
-                  loading ? 'animate-pulse' : ''
-                }`}
+                className={`flex-1 bg-gradient-to-r from-[#4E4456] to-[#6D5D7B] text-white rounded-md py-2 px-4 font-medium hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[#4E4456]/50 disabled:opacity-50 disabled:cursor-not-allowed transition-all ${loading ? 'animate-pulse' : ''}`}
               >
                 {loading ? (
                   <span className="flex items-center justify-center">
-                    <svg
-                      className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      ></circle>
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      ></path>
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
                     Calculating...
                   </span>
@@ -405,60 +359,58 @@ const Calculator: React.FC<CalculatorProps> = ({ compactView = false, darkMode =
               </button>
             </div>
           </div>
-          
+
+          {/* Rates information */}
           <div className={`mt-6 pt-4 border-t ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-            <h4 className={`text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-              Reserve Fund Rates ({selectedYear})
-            </h4>
+            <h4 className={`text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Reserve Fund Rates ({selectedYear})</h4>
             <div className="grid grid-cols-2 gap-x-4 gap-y-2">
               <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                Master Community:{' '}
+                Master Community: 
                 <span className={`ml-1 font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                   OMR {getInflationAdjustedRates(selectedYear).masterCommunity.toFixed(2)}/m²
                 </span>
               </div>
               <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                Typical Building:{' '}
+                Typical Building: 
                 <span className={`ml-1 font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                   OMR {getInflationAdjustedRates(selectedYear).typicalBuilding.toFixed(2)}/m²
                 </span>
               </div>
               <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                Zone 3 (Al Zaha):{' '}
+                Zone 3 (Al Zaha): 
                 <span className={`ml-1 font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                   OMR {getInflationAdjustedRates(selectedYear).zone3.toFixed(2)}/m²
                 </span>
               </div>
               <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                Zone 5 (Al Nameer):{' '}
+                Zone 5 (Al Nameer): 
                 <span className={`ml-1 font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                   OMR {getInflationAdjustedRates(selectedYear).zone5.toFixed(2)}/m²
                 </span>
               </div>
               <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                Zone 8 (Al Wajd):{' '}
+                Zone 8 (Al Wajd): 
                 <span className={`ml-1 font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                   OMR {getInflationAdjustedRates(selectedYear).zone8.toFixed(2)}/m²
                 </span>
               </div>
               <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                Staff Accommodation:{' '}
+                Staff Accommodation: 
                 <span className={`ml-1 font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                   OMR {getInflationAdjustedRates(selectedYear).staffAccommodation.toFixed(2)}/m²
                 </span>
               </div>
             </div>
             <div className={`mt-2 text-xs italic ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-              *Rates adjusted for 0.5% annual inflation from 2025 base year. Master Community rate shown as OMR
-              equivalent.
+              *Rates adjusted for 0.5% annual inflation from 2025 base year. Master Community rate shown as OMR equivalent.
             </div>
           </div>
         </div>
-        
+
+        {/* Results section */}
         <div className={`rounded-lg shadow-md p-6 ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
-          <h3 className={`text-lg font-medium mb-4 ${darkMode ? 'text-[#AD9BBD]' : 'text-[#4E4456]'}`}>
-            Calculation Results
-          </h3>
+          <h3 className={`text-lg font-medium mb-4 ${darkMode ? 'text-[#AD9BBD]' : 'text-[#4E4456]'}`}>Calculation Results</h3>
+          
           <Transition
             show={calculationResult !== null}
             enter="transition-opacity duration-300"
@@ -471,6 +423,7 @@ const Calculator: React.FC<CalculatorProps> = ({ compactView = false, darkMode =
           >
             {calculationResult ? (
               <div className="space-y-6 animate-fadeIn">
+                {/* Result header */}
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                   <div>
                     <h4 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-800'}`}>
@@ -489,10 +442,10 @@ const Calculator: React.FC<CalculatorProps> = ({ compactView = false, darkMode =
                     </div>
                   </div>
                 </div>
+
+                {/* Property details */}
                 <div>
-                  <h4 className={`text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-500'}`}>
-                    Property Details
-                  </h4>
+                  <h4 className={`text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-500'}`}>Property Details</h4>
                   <div className={`rounded-md p-4 ${darkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
@@ -508,9 +461,7 @@ const Calculator: React.FC<CalculatorProps> = ({ compactView = false, darkMode =
                         </p>
                       </div>
                       <div>
-                        <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                          Built-Up Area
-                        </p>
+                        <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Built-Up Area</p>
                         <p className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-800'}`}>
                           {calculationResult.unitDetails.bua.toFixed(2)} sq.m.
                         </p>
@@ -524,6 +475,8 @@ const Calculator: React.FC<CalculatorProps> = ({ compactView = false, darkMode =
                     </div>
                   </div>
                 </div>
+
+                {/* Contribution summary */}
                 <div>
                   <h4 className={`text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-500'}`}>
                     Contribution Summary ({calculationResult.year})
@@ -532,9 +485,7 @@ const Calculator: React.FC<CalculatorProps> = ({ compactView = false, darkMode =
                     <div className="space-y-2">
                       {calculationResult.masterContribution > 0 && (
                         <div className="flex justify-between">
-                          <span className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                            Master Community:
-                          </span>
+                          <span className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>Master Community:</span>
                           <span className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-800'}`}>
                             OMR {calculationResult.masterContribution.toFixed(2)}
                           </span>
@@ -550,9 +501,7 @@ const Calculator: React.FC<CalculatorProps> = ({ compactView = false, darkMode =
                       </div>
                       {calculationResult.buildingContribution > 0 && (
                         <div className="flex justify-between">
-                          <span className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                            Building Specific:
-                          </span>
+                          <span className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>Building Specific:</span>
                           <span className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-800'}`}>
                             OMR {calculationResult.buildingContribution.toFixed(2)}
                           </span>
@@ -560,17 +509,13 @@ const Calculator: React.FC<CalculatorProps> = ({ compactView = false, darkMode =
                       )}
                       <div className={`border-t pt-2 mt-2 ${darkMode ? 'border-gray-600' : 'border-gray-200'}`}>
                         <div className="flex justify-between font-medium">
-                          <span className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-800'}`}>
-                            Total Annual Contribution:
-                          </span>
+                          <span className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-800'}`}>Total Annual Contribution:</span>
                           <span className="text-sm text-[#4E4456] dark:text-[#AD9BBD]">
                             OMR {calculationResult.totalAnnualContribution.toFixed(2)}
                           </span>
                         </div>
                         <div className="flex justify-between text-sm mt-1">
-                          <span className={`${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                            Monthly Payment:
-                          </span>
+                          <span className={`${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Monthly Payment:</span>
                           <span className={`${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                             OMR {(calculationResult.totalAnnualContribution / 12).toFixed(2)}
                           </span>
@@ -579,6 +524,8 @@ const Calculator: React.FC<CalculatorProps> = ({ compactView = false, darkMode =
                     </div>
                   </div>
                 </div>
+
+                {/* Contribution breakdown */}
                 <div>
                   <h4 className={`text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-500'}`}>
                     Contribution Breakdown (Approx.)
@@ -610,70 +557,41 @@ const Calculator: React.FC<CalculatorProps> = ({ compactView = false, darkMode =
                     </div>
                   </div>
                 </div>
+
+                {/* Action buttons */}
                 <div className="flex justify-end space-x-3 pt-2">
                   <button
                     onClick={generatePDFReport}
                     className={`px-4 py-2 text-sm font-medium rounded-md ${
-                      darkMode
-                        ? 'bg-gray-700 text-white hover:bg-gray-600'
-                        : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                      darkMode ? 'bg-gray-700 text-white hover:bg-gray-600' : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
                     } transition-colors`}
                   >
                     <span className="flex items-center">
-                      <svg
-                        className="w-4 h-4 mr-1"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
-                        />
+                      <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                       </svg>
                       Generate PDF
                     </span>
                   </button>
                   <button className="px-4 py-2 text-sm font-medium rounded-md bg-gradient-to-r from-[#4E4456] to-[#6D5D7B] text-white hover:opacity-90 transition-colors">
                     <span className="flex items-center">
-                      <svg
-                        className="w-4 h-4 mr-1"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"
-                        />
+                      <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
                       </svg>
                       Save Calculation
                     </span>
                   </button>
                 </div>
+
+                {/* Notes */}
                 <div className={`text-xs italic ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                  <p>
-                    * Calculation based on {calculationResult.year} rates adjusted for 0.5% annual inflation
-                    since 2025 base year.
-                  </p>
+                  <p>* Calculation based on {calculationResult.year} rates adjusted for 0.5% annual inflation since 2025 base year.</p>
                   <p>* Component breakdown is an approximation based on the 2021 Reserve Fund Study.</p>
-                  <p>
-                    * Master Community contribution shown as OMR equivalent; actual billing may differ.
-                  </p>
+                  <p>* Master Community contribution shown as OMR equivalent; actual billing may differ.</p>
                 </div>
               </div>
             ) : (
-              <div
-                className={`flex flex-col items-center justify-center py-12 text-center ${
-                  darkMode ? 'text-gray-500' : 'text-gray-400'
-                }`}
-              >
+              <div className={`flex flex-col items-center justify-center py-12 text-center ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
                 <svg
                   className={`w-16 h-16 mb-4 ${darkMode ? 'text-gray-600' : 'text-gray-300'}`}
                   fill="none"
@@ -688,9 +606,7 @@ const Calculator: React.FC<CalculatorProps> = ({ compactView = false, darkMode =
                     d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"
                   />
                 </svg>
-                <p className="text-sm">
-                  Select a property from the form to calculate the reserve fund contribution.
-                </p>
+                <p className="text-sm">Select a property from the form to calculate the reserve fund contribution.</p>
               </div>
             )}
           </Transition>

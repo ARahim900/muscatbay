@@ -1,8 +1,8 @@
 
 import React, { useState, useMemo } from 'react';
-import { LineChart, Line, BarChart, Bar, PieChart, Pie, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
-import ChartCard from './ChartCard';
+import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import KpiCard from './KpiCard';
+import ChartCard from './ChartCard';
 import { mockYearlyData, mockZoneBalances, mockAssetCategories, mockUpcomingReplacements } from '@/data/reserveFundData';
 
 interface DashboardProps {
@@ -10,11 +10,13 @@ interface DashboardProps {
   darkMode?: boolean;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ compactView = false, darkMode = false }) => {
+const Dashboard: React.FC<DashboardProps> = ({ compactView, darkMode }) => {
   const [selectedYear, setSelectedYear] = useState('2025');
   const [yearsToShow, setYearsToShow] = useState(10);
   const [selectedChart, setSelectedChart] = useState('balance');
+  
   const filteredYearlyData = useMemo(() => mockYearlyData.slice(0, yearsToShow), [yearsToShow]);
+  
   const currentYearData = useMemo(() => 
     mockYearlyData.find(data => data.year === selectedYear) || mockYearlyData[4], 
     [selectedYear]
@@ -22,16 +24,13 @@ const Dashboard: React.FC<DashboardProps> = ({ compactView = false, darkMode = f
   
   const fundingPercentage = 72;
   
-  // Filter critical components; convert year strings to numbers for comparison
   const criticalComponents = useMemo(() => 
-    mockUpcomingReplacements.filter(item => 
-      item.year <= parseInt(selectedYear) + 2
-    ).length, 
+    mockUpcomingReplacements.filter(item => parseInt(item.year.toString()) <= parseInt(selectedYear) + 2).length, 
     [selectedYear]
   );
   
   const chartColors = { balance: '#4E4456', contribution: '#6D5D7B', expenditure: '#AD9BBD' };
-  
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -42,9 +41,7 @@ const Dashboard: React.FC<DashboardProps> = ({ compactView = false, darkMode = f
           <div className="flex items-center gap-2">
             <label className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>Year:</label>
             <select
-              className={`border rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-[#4E4456]/50 ${
-                darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'
-              }`}
+              className={`border rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-[#4E4456]/50 ${ darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300' }`}
               value={selectedYear}
               onChange={(e) => setSelectedYear(e.target.value)}
             >
@@ -56,20 +53,19 @@ const Dashboard: React.FC<DashboardProps> = ({ compactView = false, darkMode = f
           <div className="flex items-center gap-2">
             <label className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>Forecast:</label>
             <select
-              className={`border rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-[#4E4456]/50 ${
-                darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'
-              }`}
-              value={yearsToShow.toString()}
+              className={`border rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-[#4E4456]/50 ${ darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300' }`}
+              value={yearsToShow}
               onChange={(e) => setYearsToShow(parseInt(e.target.value))}
             >
-              <option value="5">5 Years</option>
-              <option value="10">10 Years</option>
-              <option value="20">20 Years</option>
+              <option value={5}>5 Years</option>
+              <option value={10}>10 Years</option>
+              <option value={20}>20 Years</option>
             </select>
           </div>
         </div>
       </div>
 
+      {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiCard
           title="Total Reserve Balance"
@@ -125,18 +121,16 @@ const Dashboard: React.FC<DashboardProps> = ({ compactView = false, darkMode = f
         />
       </div>
 
+      {/* Chart and table sections */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Reserve Fund Overview Chart */}
         <ChartCard title="Reserve Fund Overview" darkMode={darkMode}>
           <div className="flex justify-center mb-4">
             <div className="inline-flex rounded-md border border-gray-200 dark:border-gray-700 p-1">
               {['balance', 'contribution', 'expenditure'].map((chart) => (
                 <button
                   key={chart}
-                  className={`px-3 py-1 text-sm font-medium rounded transition-colors ${
-                    selectedChart === chart
-                      ? 'bg-[#4E4456] text-white'
-                      : `${darkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'}`
-                  }`}
+                  className={`px-3 py-1 text-sm font-medium rounded transition-colors ${ selectedChart === chart ? 'bg-[#4E4456] text-white' : `${darkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'}` }`}
                   onClick={() => setSelectedChart(chart)}
                 >
                   {chart.charAt(0).toUpperCase() + chart.slice(1)}
@@ -153,11 +147,7 @@ const Dashboard: React.FC<DashboardProps> = ({ compactView = false, darkMode = f
                 <Tooltip
                   formatter={(value) => [`OMR ${value.toLocaleString()}`, 'Expenditure']}
                   labelFormatter={(label) => `Year: ${label}`}
-                  contentStyle={{
-                    backgroundColor: darkMode ? '#1F2937' : '#FFFFFF',
-                    borderColor: darkMode ? '#374151' : '#E5E7EB',
-                    borderRadius: '0.5rem'
-                  }}
+                  contentStyle={{ backgroundColor: darkMode ? '#1F2937' : '#FFFFFF', borderColor: darkMode ? '#374151' : '#E5E7EB', borderRadius: '0.5rem' }}
                   itemStyle={{ color: darkMode ? '#E5E7EB' : '#1F2937' }}
                   labelStyle={{ color: darkMode ? '#E5E7EB' : '#1F2937' }}
                 />
@@ -174,16 +164,9 @@ const Dashboard: React.FC<DashboardProps> = ({ compactView = false, darkMode = f
                 <XAxis dataKey="year" tick={{ fill: darkMode ? '#9CA3AF' : '#4B5563' }} />
                 <YAxis tickFormatter={(value) => `${value / 1000}k`} tick={{ fill: darkMode ? '#9CA3AF' : '#4B5563' }} />
                 <Tooltip
-                  formatter={(value, name) => [
-                    `OMR ${value.toLocaleString()}`,
-                    name === 'balance' ? 'Balance' : 'Contribution'
-                  ]}
+                  formatter={(value, name) => [`OMR ${value.toLocaleString()}`, name === 'balance' ? 'Balance' : 'Contribution']}
                   labelFormatter={(label) => `Year: ${label}`}
-                  contentStyle={{
-                    backgroundColor: darkMode ? '#1F2937' : '#FFFFFF',
-                    borderColor: darkMode ? '#374151' : '#E5E7EB',
-                    borderRadius: '0.5rem'
-                  }}
+                  contentStyle={{ backgroundColor: darkMode ? '#1F2937' : '#FFFFFF', borderColor: darkMode ? '#374151' : '#E5E7EB', borderRadius: '0.5rem' }}
                   itemStyle={{ color: darkMode ? '#E5E7EB' : '#1F2937' }}
                   labelStyle={{ color: darkMode ? '#E5E7EB' : '#1F2937' }}
                 />
@@ -202,6 +185,7 @@ const Dashboard: React.FC<DashboardProps> = ({ compactView = false, darkMode = f
           </ResponsiveContainer>
         </ChartCard>
 
+        {/* Fund Distribution by Zone Chart */}
         <ChartCard title="Fund Distribution by Zone (EOY 2025)" darkMode={darkMode}>
           <div className="flex flex-col md:flex-row items-center justify-center">
             <div className="w-full md:w-1/2">
@@ -216,7 +200,7 @@ const Dashboard: React.FC<DashboardProps> = ({ compactView = false, darkMode = f
                     fill="#8884d8"
                     dataKey="value"
                     nameKey="name"
-                    label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
+                    label={({ name, percent }) => `${(percent * 100).toFixed(0)}%`}
                   >
                     {mockZoneBalances.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
@@ -224,11 +208,7 @@ const Dashboard: React.FC<DashboardProps> = ({ compactView = false, darkMode = f
                   </Pie>
                   <Tooltip
                     formatter={(value) => `OMR ${value.toLocaleString()}`}
-                    contentStyle={{
-                      backgroundColor: darkMode ? '#1F2937' : '#FFFFFF',
-                      borderColor: darkMode ? '#374151' : '#E5E7EB',
-                      borderRadius: '0.5rem'
-                    }}
+                    contentStyle={{ backgroundColor: darkMode ? '#1F2937' : '#FFFFFF', borderColor: darkMode ? '#374151' : '#E5E7EB', borderRadius: '0.5rem' }}
                     itemStyle={{ color: darkMode ? '#E5E7EB' : '#1F2937' }}
                     labelStyle={{ color: darkMode ? '#E5E7EB' : '#1F2937' }}
                   />
@@ -244,9 +224,7 @@ const Dashboard: React.FC<DashboardProps> = ({ compactView = false, darkMode = f
                         className="w-3 h-3 rounded-full mr-2"
                         style={{ backgroundColor: zone.color }}
                       ></div>
-                      <span className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                        {zone.name}
-                      </span>
+                      <span className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>{zone.name}</span>
                     </div>
                     <span className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-800'}`}>
                       OMR {zone.value.toLocaleString()}
@@ -258,6 +236,7 @@ const Dashboard: React.FC<DashboardProps> = ({ compactView = false, darkMode = f
           </div>
         </ChartCard>
 
+        {/* Asset Categories Chart */}
         <ChartCard title="Asset Categories by Replacement Value" darkMode={darkMode}>
           <div className="flex flex-col md:flex-row items-center justify-center">
             <div className="w-full md:w-1/2">
@@ -280,11 +259,7 @@ const Dashboard: React.FC<DashboardProps> = ({ compactView = false, darkMode = f
                   </Pie>
                   <Tooltip
                     formatter={(value) => `OMR ${value.toLocaleString()}`}
-                    contentStyle={{
-                      backgroundColor: darkMode ? '#1F2937' : '#FFFFFF',
-                      borderColor: darkMode ? '#374151' : '#E5E7EB',
-                      borderRadius: '0.5rem'
-                    }}
+                    contentStyle={{ backgroundColor: darkMode ? '#1F2937' : '#FFFFFF', borderColor: darkMode ? '#374151' : '#E5E7EB', borderRadius: '0.5rem' }}
                     itemStyle={{ color: darkMode ? '#E5E7EB' : '#1F2937' }}
                     labelStyle={{ color: darkMode ? '#E5E7EB' : '#1F2937' }}
                   />
@@ -300,9 +275,7 @@ const Dashboard: React.FC<DashboardProps> = ({ compactView = false, darkMode = f
                         className="w-3 h-3 rounded-full mr-2"
                         style={{ backgroundColor: category.color }}
                       ></div>
-                      <span className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                        {category.name}
-                      </span>
+                      <span className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>{category.name}</span>
                     </div>
                     <span className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-800'}`}>
                       OMR {(category.value / 1000000).toFixed(1)}M
@@ -314,95 +287,49 @@ const Dashboard: React.FC<DashboardProps> = ({ compactView = false, darkMode = f
           </div>
         </ChartCard>
 
+        {/* Upcoming Component Replacements */}
         <ChartCard title="Upcoming Component Replacements" darkMode={darkMode}>
           <div className="overflow-x-auto">
             <table className={`min-w-full divide-y ${darkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
               <thead className={darkMode ? 'bg-gray-800' : 'bg-gray-50'}>
                 <tr>
-                  <th
-                    scope="col"
-                    className={`px-6 py-3 text-left text-xs font-medium ${
-                      darkMode ? 'text-gray-400' : 'text-gray-500'
-                    } uppercase tracking-wider`}
-                  >
-                    Component
-                  </th>
-                  <th
-                    scope="col"
-                    className={`px-6 py-3 text-left text-xs font-medium ${
-                      darkMode ? 'text-gray-400' : 'text-gray-500'
-                    } uppercase tracking-wider`}
-                  >
-                    Location
-                  </th>
-                  <th
-                    scope="col"
-                    className={`px-6 py-3 text-left text-xs font-medium ${
-                      darkMode ? 'text-gray-400' : 'text-gray-500'
-                    } uppercase tracking-wider`}
-                  >
-                    Est. Replace Year
-                  </th>
-                  <th
-                    scope="col"
-                    className={`px-6 py-3 text-right text-xs font-medium ${
-                      darkMode ? 'text-gray-400' : 'text-gray-500'
-                    } uppercase tracking-wider`}
-                  >
-                    Est. Cost (OMR)
-                  </th>
-                  <th
-                    scope="col"
-                    className={`px-6 py-3 text-left text-xs font-medium ${
-                      darkMode ? 'text-gray-400' : 'text-gray-500'
-                    } uppercase tracking-wider`}
-                  >
-                    Status
-                  </th>
+                  <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'} uppercase tracking-wider`}>Component</th>
+                  <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'} uppercase tracking-wider`}>Location</th>
+                  <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'} uppercase tracking-wider`}>Est. Replace Year</th>
+                  <th scope="col" className={`px-6 py-3 text-right text-xs font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'} uppercase tracking-wider`}>Est. Cost (OMR)</th>
+                  <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'} uppercase tracking-wider`}>Status</th>
                 </tr>
               </thead>
-              <tbody
-                className={`${darkMode ? 'bg-gray-900 divide-y divide-gray-700' : 'bg-white divide-y divide-gray-200'}`}
-              >
+              <tbody className={`${darkMode ? 'bg-gray-900 divide-y divide-gray-700' : 'bg-white divide-y divide-gray-200'}`}>
                 {mockUpcomingReplacements
                   .sort((a, b) => a.year - b.year)
                   .map((replacement, index) => (
                     <tr key={index} className={`transition-colors ${darkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-50'}`}>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                          {replacement.component}
-                        </div>
+                        <div className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>{replacement.component}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                          {replacement.location}
-                        </div>
+                        <div className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>{replacement.location}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                          {replacement.year}
-                        </div>
+                        <div className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>{replacement.year}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right">
-                        <div className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                          {replacement.cost.toLocaleString()}
-                        </div>
+                        <div className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>{replacement.cost.toLocaleString()}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span
-                          className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                            replacement.year <= parseInt(selectedYear) + 1
-                              ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-                              : replacement.year <= parseInt(selectedYear) + 3
-                              ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
-                              : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                          }`}
-                        >
-                          {replacement.year <= parseInt(selectedYear) + 1
-                            ? 'Critical'
-                            : replacement.year <= parseInt(selectedYear) + 3
-                            ? 'Warning'
-                            : 'Good'}
+                        <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${ 
+                          replacement.year <= parseInt(selectedYear) + 1 
+                            ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' 
+                            : replacement.year <= parseInt(selectedYear) + 3 
+                              ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' 
+                              : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
+                        }`}>
+                          {replacement.year <= parseInt(selectedYear) + 1 
+                            ? 'Critical' 
+                            : replacement.year <= parseInt(selectedYear) + 3 
+                              ? 'Warning' 
+                              : 'Good'}
                         </span>
                       </td>
                     </tr>
