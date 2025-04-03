@@ -25,7 +25,9 @@ const Dashboard: React.FC<DashboardProps> = ({ compactView, darkMode }) => {
   const fundingPercentage = 72;
   
   const criticalComponents = useMemo(() => 
-    mockUpcomingReplacements.filter(item => parseInt(item.year.toString()) <= parseInt(selectedYear) + 2).length, 
+    mockUpcomingReplacements.filter(item => 
+      parseInt(item.year.toString()) <= parseInt(selectedYear) + 2
+    ).length, 
     [selectedYear]
   );
   
