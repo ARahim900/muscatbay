@@ -14,14 +14,14 @@ const zones = [
   { id: 'staff', name: 'Staff Accommodation' }
 ];
 
-const propertyTypes = {
+const propertyTypes: Record<string, string[]> = {
   '3': ['Apartment', 'Villa'],
   '5': ['Villa'],
   '8': ['Villa'],
   'staff': ['Staff Accommodation']
 };
 
-const buildings = {
+const buildings: Record<string, Record<string, string[]>> = {
   '3': {
     'Apartment': ['Building D44', 'Building D45', 'Building D46', 'Building D47', 'Building D48', 'Building D49', 'Building D50', 'Building D51', 'Building D52', 'Building D53', 'Building D54', 'Building D55', 'Building D56', 'Building D57', 'Building D58', 'Building D59', 'Building D60', 'Building D61', 'Building D62', 'Building D74', 'Building D75']
   }
@@ -185,7 +185,7 @@ const ReserveFundCalculator: React.FC = () => {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {propertyTypes[selectedZone as keyof typeof propertyTypes]?.map(type => (
+                      {propertyTypes[selectedZone]?.map(type => (
                         <SelectItem key={type} value={type}>{type}</SelectItem>
                       ))}
                     </SelectContent>
@@ -199,7 +199,7 @@ const ReserveFundCalculator: React.FC = () => {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {buildings[selectedZone as keyof typeof buildings]?.[selectedType as keyof typeof buildings[typeof selectedZone]]?.map(building => (
+                      {buildings[selectedZone]?.[selectedType]?.map(building => (
                         <SelectItem key={building} value={building}>{building}</SelectItem>
                       ))}
                     </SelectContent>
