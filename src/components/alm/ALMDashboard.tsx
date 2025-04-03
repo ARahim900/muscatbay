@@ -1,4 +1,3 @@
-
 import React, { useMemo } from 'react';
 import { BarChart3, FileSpreadsheet, Calendar, Download, LineChart, PieChart, BarChart, Activity, Clock, Package, Building, Landmark, Wrench, AlertTriangle, Zap, Droplets, Calculator } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -102,7 +101,7 @@ export const GlobalStyles = () => {
   );
 };
 
-// ALM Dashboard Props Interface
+// Define ALMDashboard Props Interface
 interface ALMDashboardProps {
   summaryStats: {
     totalAssets: number;
@@ -129,26 +128,54 @@ interface ALMDashboardProps {
   categoryOptions: { value: string; label: string }[];
 }
 
+// Default props for the component
+const defaultProps: Partial<ALMDashboardProps> = {
+  summaryStats: {
+    totalAssets: 0,
+    criticalCount: 0,
+    upcomingMaintenance: 0,
+    totalReplacementCost: 0
+  },
+  year: '2025',
+  zone: 'all',
+  category: 'all',
+  activeTab: 'overview',
+  darkMode: false,
+  filteredReplacements: [],
+  assetCategoryData: [],
+  zoneBalancesData: [],
+  reserveFundData: [],
+  yearOptions: [{ value: '2025', label: '2025' }],
+  zoneOptions: [{ value: 'all', label: 'All Zones' }],
+  categoryOptions: [{ value: 'all', label: 'All Categories' }],
+  handleYearChange: () => {},
+  handleZoneChange: () => {},
+  handleCategoryChange: () => {},
+  handleExport: () => {},
+  setActiveTab: () => {}
+};
+
 const ALMDashboard: React.FC<ALMDashboardProps> = ({
-  summaryStats,
-  year,
-  zone,
-  category,
-  activeTab,
-  darkMode,
-  filteredReplacements,
-  assetCategoryData,
-  zoneBalancesData,
-  reserveFundData,
-  handleYearChange,
-  handleZoneChange,
-  handleCategoryChange,
-  handleExport,
-  setActiveTab,
-  yearOptions,
-  zoneOptions,
-  categoryOptions
+  summaryStats = defaultProps.summaryStats,
+  year = defaultProps.year,
+  zone = defaultProps.zone,
+  category = defaultProps.category,
+  activeTab = defaultProps.activeTab,
+  darkMode = defaultProps.darkMode,
+  filteredReplacements = defaultProps.filteredReplacements,
+  assetCategoryData = defaultProps.assetCategoryData,
+  zoneBalancesData = defaultProps.zoneBalancesData,
+  reserveFundData = defaultProps.reserveFundData,
+  handleYearChange = defaultProps.handleYearChange,
+  handleZoneChange = defaultProps.handleZoneChange,
+  handleCategoryChange = defaultProps.handleCategoryChange,
+  handleExport = defaultProps.handleExport,
+  setActiveTab = defaultProps.setActiveTab,
+  yearOptions = defaultProps.yearOptions,
+  zoneOptions = defaultProps.zoneOptions,
+  categoryOptions = defaultProps.categoryOptions
 }) => {
+  
   return (
     <>
       <GlobalStyles />
