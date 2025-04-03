@@ -1,450 +1,267 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
-import { BarChart3, FileSpreadsheet, Calendar, Download, LineChart, PieChart, BarChart, Activity, Clock, Package, Building, Landmark, Wrench, AlertTriangle, Zap, Droplets, Calculator } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { LineChart, Line, BarChart, Bar, PieChart, Pie, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
+import { BarChart3, FileSpreadsheet, Calendar, Download, LineChart as LineChartIcon, PieChart as PieChartIcon, BarChart as BarChartIcon, Activity, Clock, Package, Building, Landmark, Wrench, AlertTriangle, Zap, Droplets, Calculator } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useAssets } from '@/hooks/useAssets';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Link } from 'react-router-dom';
-import { toast } from 'sonner';
-import ALMDashboard from '@/components/alm/ALMDashboard';
-import StandardPageLayout from '@/components/layout/StandardPageLayout';
-import { AssetLifecycleIcon } from '@/components/layout/sidebar/CustomIcons';
-
-const mockYearlyData = [
-  { year: '2021', balance: 52636, contribution: 52636, expenditure: 0 }, 
-  { year: '2022', balance: 106324, contribution: 52899, expenditure: 0 }, 
-  { year: '2023', balance: 161082, contribution: 53163, expenditure: 0 }, 
-  { year: '2024', balance: 216927, contribution: 53429, expenditure: 0 }, 
-  { year: '2025', balance: 273878, contribution: 53696, expenditure: 0 }, 
-  { year: '2026', balance: 331951, contribution: 53965, expenditure: 0 }, 
-  { year: '2027', balance: 391164, contribution: 54235, expenditure: 0 }, 
-  { year: '2028', balance: 451538, contribution: 54506, expenditure: 0 }, 
-  { year: '2029', balance: 513089, contribution: 54778, expenditure: 0 }, 
-  { year: '2030', balance: 559944, contribution: 55052, expenditure: 15893 }, 
-  { year: '2031', balance: 619783, contribution: 55327, expenditure: 3888 }, 
-  { year: '2032', balance: 541103, contribution: 55604, expenditure: 143581 }, 
-  { year: '2033', balance: 452039, contribution: 55882, expenditure: 153062 }, 
-  { year: '2034', balance: 509909, contribution: 56161, expenditure: 5072 }, 
-  { year: '2035', balance: 305725, contribution: 56442, expenditure: 268275 }, 
-  { year: '2036', balance: 254388, contribution: 56725, expenditure: 112647 }, 
-  { year: '2037', balance: 285738, contribution: 57008, expenditure: 29474 }, 
-  { year: '2038', balance: 125242, contribution: 57293, expenditure: 222075 }, 
-  { year: '2039', balance: 184700, contribution: 57580, expenditure: 0 }, 
-  { year: '2040', balance: 34961, contribution: 57868, expenditure: 210377 }
-];
-
-const mockZoneBalances = [
-  { name: 'Master Community', value: 798352, color: '#4E4456' }, 
-  { name: 'Typical Buildings', value: 227018, color: '#6D5D7B' }, 
-  { name: 'Zone 3 (Al Zaha)', value: 63604, color: '#8F7C9B' }, 
-  { name: 'Zone 5 (Al Nameer)', value: 63581, color: '#AD9BBD' }, 
-  { name: 'Zone 8 (Al Wajd)', value: 37884, color: '#CBB9DB' }, 
-  { name: 'Staff Accommodation', value: 273878, color: '#E9D7F5' }
-];
-
-const mockAssetCategories = [
-  { name: 'Infrastructure', value: 2000000, color: '#4E4456' }, 
-  { name: 'MEP Systems', value: 1500000, color: '#6D5D7B' }, 
-  { name: 'Finishes/Structure', value: 500000, color: '#8F7C9B' }, 
-  { name: 'Landscaping', value: 500000, color: '#CBB9DB' }
-];
-
-const mockUpcomingReplacements = [
-  { component: 'Helipad Electrical Works', location: 'Master Community', year: 2025, cost: 10920 }, 
-  { component: 'Fire Extinguishers', location: 'Typical Buildings', year: 2026, cost: 129 }, 
-  { component: 'Lagoon Infrastructure', location: 'Master Community', year: 2027, cost: 42000 }, 
-  { component: 'Elevator Wire Ropes', location: 'Typical Buildings', year: 2027, cost: 2450 }, 
-  { component: 'External Wall Paint', location: 'Typical Buildings', year: 2028, cost: 1465 }, 
-  { component: 'Tree Uplighters', location: 'Zone 3', year: 2031, cost: 1120 }
-];
-
-const mockZones = [
-  { id: '3', name: 'Zone 3 (Al Zaha)', propertyTypes: ['Apartment', 'Villa'] }, 
-  { id: '5', name: 'Zone 5 (Al Nameer)', propertyTypes: ['Villa'] }, 
-  { id: '8', name: 'Zone 8 (Al Wajd)', propertyTypes: ['Villa'] }, 
-  { id: 'staff', name: 'Staff Accommodation', propertyTypes: ['Staff Accommodation'] }
-];
-
-const mockBuildings = {
-  '3': {
-    'Apartment': [
-      'D44', 'D45', 'D46', 'D47', 'D48', 'D49', 'D50', 'D51', 'D52', 'D53',
-      'D54', 'D55', 'D56', 'D57', 'D58', 'D59', 'D60', 'D61', 'D62', 'D74', 'D75'
-    ]
-  },
-  'staff': {
-    'Staff Accommodation': ['B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8', 'CIF']
-  }
-};
-
-const mockUnits = {
-  '3': {
-    'Villa': [
-      { id: 'Z3-001', unitNo: 'Z3 001', type: '4 Bedroom Zaha Villa', bua: 422 },
-      { id: 'Z3-002', unitNo: 'Z3 002', type: '4 Bedroom Zaha Villa', bua: 422 },
-      { id: 'Z3-003', unitNo: 'Z3 003', type: '4 Bedroom Zaha Villa', bua: 422 },
-      { id: 'Z3-004', unitNo: 'Z3 004', type: '4 Bedroom Zaha Villa', bua: 422 },
-      { id: 'Z3-005', unitNo: 'Z3 005', type: '4 Bedroom Zaha Villa', bua: 422 },
-      { id: 'Z3-006', unitNo: 'Z3 006', type: '4 Bedroom Zaha Villa', bua: 422 },
-      { id: 'Z3-007', unitNo: 'Z3 007', type: '4 Bedroom Zaha Villa', bua: 422 },
-      { id: 'Z3-008', unitNo: 'Z3 008', type: '4 Bedroom Zaha Villa', bua: 422 },
-      { id: 'Z3-009', unitNo: 'Z3 009', type: '4 Bedroom Zaha Villa', bua: 422 },
-      { id: 'Z3-010', unitNo: 'Z3 010', type: '4 Bedroom Zaha Villa', bua: 422 },
-      { id: 'Z3-011', unitNo: 'Z3 011', type: '4 Bedroom Zaha Villa', bua: 422 },
-      { id: 'Z3-012', unitNo: 'Z3 012', type: '4 Bedroom Zaha Villa', bua: 422 },
-      { id: 'Z3-013', unitNo: 'Z3 013', type: '4 Bedroom Zaha Villa', bua: 422 },
-      { id: 'Z3-014', unitNo: 'Z3 014', type: '4 Bedroom Zaha Villa', bua: 422 },
-      { id: 'Z3-015', unitNo: 'Z3 015', type: '4 Bedroom Zaha Villa', bua: 422 },
-      { id: 'Z3-016', unitNo: 'Z3 016', type: '4 Bedroom Zaha Villa', bua: 422 },
-      { id: 'Z3-017', unitNo: 'Z3 017', type: '3 Bedroom Zaha Villa', bua: 357 },
-      { id: 'Z3-018', unitNo: 'Z3 018', type: '3 Bedroom Zaha Villa', bua: 357 },
-      { id: 'Z3-019', unitNo: 'Z3 019', type: '3 Bedroom Zaha Villa', bua: 357 },
-      { id: 'Z3-020', unitNo: 'Z3 020', type: '3 Bedroom Zaha Villa', bua: 357 },
-      { id: 'Z3-021', unitNo: 'Z3 021', type: '3 Bedroom Zaha Villa', bua: 357 },
-      { id: 'Z3-022', unitNo: 'Z3 022', type: '3 Bedroom Zaha Villa', bua: 357 },
-      { id: 'Z3-023', unitNo: 'Z3 023', type: '3 Bedroom Zaha Villa', bua: 357 },
-      { id: 'Z3-024', unitNo: 'Z3 024', type: '3 Bedroom Zaha Villa', bua: 357 },
-      { id: 'Z3-025', unitNo: 'Z3 025', type: '3 Bedroom Zaha Villa', bua: 357 },
-      { id: 'Z3-026', unitNo: 'Z3 026', type: '3 Bedroom Zaha Villa', bua: 357 },
-      { id: 'Z3-027', unitNo: 'Z3 027', type: '3 Bedroom Zaha Villa', bua: 357 },
-      { id: 'Z3-028', unitNo: 'Z3 028', type: '3 Bedroom Zaha Villa', bua: 357 },
-      { id: 'Z3-029', unitNo: 'Z3 029', type: '3 Bedroom Zaha Villa', bua: 357 },
-      { id: 'Z3-030', unitNo: 'Z3 030', type: '3 Bedroom Zaha Villa', bua: 357 },
-      { id: 'Z3-031', unitNo: 'Z3 031', type: '4 Bedroom Zaha Villa', bua: 422 },
-      { id: 'Z3-032', unitNo: 'Z3 032', type: '4 Bedroom Zaha Villa', bua: 422 },
-      { id: 'Z3-033', unitNo: 'Z3 033', type: '4 Bedroom Zaha Villa', bua: 422 },
-      { id: 'Z3-034', unitNo: 'Z3 034', type: '4 Bedroom Zaha Villa', bua: 422 },
-      { id: 'Z3-035', unitNo: 'Z3 035', type: '4 Bedroom Zaha Villa', bua: 422 },
-      { id: 'Z3-036', unitNo: 'Z3 036', type: '4 Bedroom Zaha Villa', bua: 422 },
-      { id: 'Z3-037', unitNo: 'Z3 037', type: '4 Bedroom Zaha Villa', bua: 422 },
-      { id: 'Z3-038', unitNo: 'Z3 038', type: '4 Bedroom Zaha Villa', bua: 422 },
-      { id: 'Z3-039', unitNo: 'Z3 039', type: '4 Bedroom Zaha Villa', bua: 422 },
-      { id: 'Z3-040', unitNo: 'Z3 040', type: '4 Bedroom Zaha Villa', bua: 422 },
-      { id: 'Z3-041', unitNo: 'Z3 041', type: '4 Bedroom Zaha Villa', bua: 422 },
-      { id: 'Z3-042', unitNo: 'Z3 042', type: '4 Bedroom Zaha Villa', bua: 422 },
-      { id: 'Z3-043', unitNo: 'Z3 043', type: '4 Bedroom Zaha Villa', bua: 422 },
-    ],
-    'Apartment': {
-      'D44': [
-        { id: 'Z3-044-1', unitNo: 'Z3 044(1)', type: '2 Bedroom Premium Apartment', bua: 199 },
-        { id: 'Z3-044-2', unitNo: 'Z3 044(2)', type: '2 Bedroom Premium Apartment', bua: 199 },
-        { id: 'Z3-044-3', unitNo: 'Z3 044(3)', type: '2 Bedroom Premium Apartment', bua: 199 },
-        { id: 'Z3-044-4', unitNo: 'Z3 044(4)', type: '2 Bedroom Premium Apartment', bua: 199 },
-        { id: 'Z3-044-5', unitNo: 'Z3 044(5)', type: '3 Bedroom Zaha Apartment', bua: 355 },
-        { id: 'Z3-044-6', unitNo: 'Z3 044(6)', type: '3 Bedroom Zaha Apartment', bua: 361 },
-      ],
-      'D45': [
-        { id: 'Z3-045-1', unitNo: 'Z3 045(1)', type: '2 Bedroom Premium Apartment', bua: 199 },
-        { id: 'Z3-045-2', unitNo: 'Z3 045(2)', type: '2 Bedroom Premium Apartment', bua: 199 },
-        { id: 'Z3-045-3', unitNo: 'Z3 045(3)', type: '2 Bedroom Premium Apartment', bua: 199 },
-        { id: 'Z3-045-4', unitNo: 'Z3 045(4)', type: '2 Bedroom Premium Apartment', bua: 199 },
-        { id: 'Z3-045-5', unitNo: 'Z3 045(5)', type: '3 Bedroom Zaha Apartment', bua: 355 },
-        { id: 'Z3-045-6', unitNo: 'Z3 045(6)', type: '3 Bedroom Zaha Apartment', bua: 361 },
-      ],
-      'D46': [],
-      'D47': [],
-      'D48': [],
-      'D49': [],
-      'D50': [],
-      'D51': [],
-      'D52': [],
-      'D53': [],
-      'D54': [],
-      'D55': [],
-      'D56': [],
-      'D57': [],
-      'D58': [],
-      'D59': [],
-      'D60': [],
-      'D61': [],
-      'D62': [],
-      'D74': [],
-      'D75': []
-    }
-  },
-  '5': {
-    'Villa': [
-      { id: 'Z5-001', unitNo: 'Z5 001', type: '4 Bedroom Nameer Villa', bua: 498 },
-      { id: 'Z5-002', unitNo: 'Z5 002', type: '3 Bedroom Nameer Villa', bua: 427 },
-      { id: 'Z5-003', unitNo: 'Z5 003', type: '4 Bedroom Nameer Villa', bua: 498 },
-      { id: 'Z5-004', unitNo: 'Z5 004', type: '3 Bedroom Nameer Villa', bua: 427 },
-      { id: 'Z5-005', unitNo: 'Z5 005', type: '4 Bedroom Nameer Villa', bua: 498 },
-      { id: 'Z5-006', unitNo: 'Z5 006', type: '4 Bedroom Nameer Villa', bua: 498 },
-      { id: 'Z5-007', unitNo: 'Z5 007', type: '3 Bedroom Nameer Villa', bua: 427 },
-      { id: 'Z5-008', unitNo: 'Z5 008', type: '4 Bedroom Nameer Villa', bua: 498 },
-      { id: 'Z5-009', unitNo: 'Z5 009', type: '3 Bedroom Nameer Villa', bua: 427 },
-      { id: 'Z5-010', unitNo: 'Z5 010', type: '4 Bedroom Nameer Villa', bua: 498 },
-      { id: 'Z5-011', unitNo: 'Z5 011', type: '4 Bedroom Nameer Villa', bua: 498 },
-      { id: 'Z5-012', unitNo: 'Z5 012', type: '4 Bedroom Nameer Villa', bua: 498 },
-      { id: 'Z5-013', unitNo: 'Z5 013', type: '4 Bedroom Nameer Villa', bua: 498 },
-      { id: 'Z5-014', unitNo: 'Z5 014', type: '4 Bedroom Nameer Villa', bua: 498 },
-      { id: 'Z5-015', unitNo: 'Z5 015', type: '4 Bedroom Nameer Villa', bua: 498 },
-      { id: 'Z5-016', unitNo: 'Z5 016', type: '4 Bedroom Nameer Villa', bua: 498 },
-      { id: 'Z5-017', unitNo: 'Z5 017', type: '4 Bedroom Nameer Villa', bua: 498 },
-      { id: 'Z5-018', unitNo: 'Z5 018', type: '4 Bedroom Nameer Villa', bua: 498 },
-      { id: 'Z5-019', unitNo: 'Z5 019', type: '4 Bedroom Nameer Villa', bua: 498 },
-      { id: 'Z5-020', unitNo: 'Z5 020', type: '4 Bedroom Nameer Villa', bua: 498 },
-      { id: 'Z5-021', unitNo: 'Z5 021', type: '3 Bedroom Nameer Villa', bua: 427 },
-      { id: 'Z5-022', unitNo: 'Z5 022', type: '4 Bedroom Nameer Villa', bua: 498 },
-      { id: 'Z5-023', unitNo: 'Z5 023', type: '4 Bedroom Nameer Villa', bua: 498 },
-      { id: 'Z5-024', unitNo: 'Z5 024', type: '3 Bedroom Nameer Villa', bua: 427 },
-      { id: 'Z5-025', unitNo: 'Z5 025', type: '4 Bedroom Nameer Villa', bua: 498 },
-      { id: 'Z5-026', unitNo: 'Z5 026', type: '4 Bedroom Nameer Villa', bua: 498 },
-      { id: 'Z5-027', unitNo: 'Z5 027', type: '3 Bedroom Nameer Villa', bua: 427 },
-      { id: 'Z5-028', unitNo: 'Z5 028', type: '4 Bedroom Nameer Villa', bua: 498 },
-      { id: 'Z5-029', unitNo: 'Z5 029', type: '4 Bedroom Nameer Villa', bua: 498 },
-      { id: 'Z5-030', unitNo: 'Z5 030', type: '4 Bedroom Nameer Villa', bua: 498 },
-      { id: 'Z5-031', unitNo: 'Z5 031', type: '4 Bedroom Nameer Villa', bua: 498 },
-      { id: 'Z5-032', unitNo: 'Z5 032', type: '4 Bedroom Nameer Villa', bua: 498 },
-      { id: 'Z5-033', unitNo: 'Z5 033', type: '4 Bedroom Nameer Villa', bua: 498 },
-    ]
-  },
-  '8': {
-    'Villa': [
-      { id: 'Z8-001', unitNo: 'Z8 001', type: '5 Bedroom Wajd Villa', bua: 750 },
-      { id: 'Z8-002', unitNo: 'Z8 002', type: '5 Bedroom Wajd Villa', bua: 750 },
-      { id: 'Z8-003', unitNo: 'Z8 003', type: '5 Bedroom Wajd Villa', bua: 750 },
-      { id: 'Z8-004', unitNo: 'Z8 004', type: '5 Bedroom Wajd Villa', bua: 750 },
-      { id: 'Z8-005', unitNo: 'Z8 005', type: '5 Bedroom Wajd Villa', bua: 943 },
-      { id: 'Z8-006', unitNo: 'Z8 006', type: '5 Bedroom Wajd Villa', bua: 760 },
-      { id: 'Z8-007', unitNo: 'Z8 007', type: '5 Bedroom Wajd Villa', bua: 750 },
-      { id: 'Z8-008', unitNo: 'Z8 008', type: '5 Bedroom Wajd Villa', bua: 760 },
-      { id: 'Z8-009', unitNo: 'Z8 009', type: '5 Bedroom Wajd Villa', bua: 1187 },
-      { id: 'Z8-010', unitNo: 'Z8 010', type: '5 Bedroom Wajd Villa', bua: 760 },
-      { id: 'Z8-011', unitNo: 'Z8 011', type: '5 Bedroom Wajd Villa', bua: 750 },
-      { id: 'Z8-012', unitNo: 'Z8 012', type: '5 Bedroom Wajd Villa', bua: 760 },
-      { id: 'Z8-013', unitNo: 'Z8 013', type: '5 Bedroom Wajd Villa', bua: 760 },
-      { id: 'Z8-014', unitNo: 'Z8 014', type: '5 Bedroom Wajd Villa', bua: 760 },
-      { id: 'Z8-015', unitNo: 'Z8 015', type: '5 Bedroom Wajd Villa', bua: 760 },
-      { id: 'Z8-016', unitNo: 'Z8 016', type: '5 Bedroom Wajd Villa', bua: 760 },
-      { id: 'Z8-017', unitNo: 'Z8 017', type: '5 Bedroom Wajd Villa', bua: 750 },
-      { id: 'Z8-018', unitNo: 'Z8 018', type: '5 Bedroom Wajd Villa', bua: 760 },
-      { id: 'Z8-019', unitNo: 'Z8 019', type: '5 Bedroom Wajd Villa', bua: 750 },
-      { id: 'Z8-020', unitNo: 'Z8 020', type: '5 Bedroom Wajd Villa', bua: 760 },
-      { id: 'Z8-021', unitNo: 'Z8 021', type: '5 Bedroom Wajd Villa', bua: 750 },
-      { id: 'Z8-022', unitNo: 'Z8 022', type: 'King Villa', bua: 1845 },
-    ]
-  },
-  'staff': {
-    'Staff Accommodation': {
-      'B1': [],
-      'B2': [],
-      'B3': [],
-      'B4': [],
-      'B5': [],
-      'B6': [],
-      'B7': [],
-      'B8': [],
-      'CIF': []
-    }
-  }
-};
-
-const rates2025 = {
-  masterCommunity: 1.75,
-  typicalBuilding: 1.65,
-  zone3: 0.44,
-  zone5: 1.10,
-  zone8: 0.33,
-  staffAccommodation: 3.95
-};
-
-const Transition = ({ show, enter, enterFrom, enterTo, leave, leaveFrom, leaveTo, children, className, unmount = true }) => {
-  const [shouldRender, setShouldRender] = useState(show);
-  const [transitionState, setTransitionState] = useState(show ? 'enterTo' : 'leaveTo');
-
-  useEffect(() => {
-    let timeoutId;
-    if (show) {
-      setShouldRender(true);
-      requestAnimationFrame(() => {
-        setTransitionState('enterFrom');
-        requestAnimationFrame(() => {
-           setTransitionState('enterTo');
-        });
-      });
-    } else {
-      setTransitionState('leaveFrom');
-      timeoutId = setTimeout(() => {
-        setTransitionState('leaveTo');
-        if (unmount) {
-             setShouldRender(false);
-        }
-      }, 300); // Match transition duration
-    }
-    return () => clearTimeout(timeoutId);
-  }, [show, unmount]);
-
-  if (!shouldRender) {
-    return null;
-  }
-
-  let currentTransitionClasses = '';
-  switch (transitionState) {
-    case 'enterFrom': currentTransitionClasses = `${enter} ${enterFrom}`; break;
-    case 'enterTo': currentTransitionClasses = `${enter} ${enterTo}`; break;
-    case 'leaveFrom': currentTransitionClasses = `${leave} ${leaveFrom}`; break;
-    case 'leaveTo': currentTransitionClasses = `${leave} ${leaveTo}`; break;
-    default: break;
-  }
-
-  return (
-    <div className={`${className || ''} ${currentTransitionClasses}`}>
-      {children}
-    </div>
-  );
-};
 
 const ALM = () => {
-  const [show, setShow] = useState(false);
+  const [selectedYear, setSelectedYear] = useState('2025');
+  const [yearsToShow, setYearsToShow] = useState(10);
+  const [selectedChart, setSelectedChart] = useState('balance');
+  const [activeTab, setActiveTab] = useState('overview');
   const [darkMode, setDarkMode] = useState(false);
-  const [year, setYear] = useState("2025");
-  const [zone, setZone] = useState("all");
-  const [category, setCategory] = useState("all");
-  const [activeTab, setActiveTab] = useState("overview");
+  const [compactView, setCompactView] = useState(false);
 
-  const { 
-    assets, 
-    categorySummary, 
-    locationSummary, 
-    criticalAssets, 
-    assetConditions,
-    maintenanceSchedule,
-    lifecycleForecast,
-    loading, 
-    error 
-  } = useAssets();
+  const filteredYearlyData = useMemo(() => mockYearlyData.slice(0, yearsToShow), [yearsToShow]);
+  const currentYearData = useMemo(() => mockYearlyData.find(data => data.year === selectedYear) || mockYearlyData[4], [selectedYear]);
+  const fundingPercentage = 72;
+  const criticalComponents = useMemo(() => mockUpcomingReplacements.filter(item => parseInt(item.year) <= parseInt(selectedYear) + 2 ).length, [selectedYear]);
+  const chartColors = { balance: '#4E4456', contribution: '#6D5D7B', expenditure: '#AD9BBD' };
 
-  const yearOptions = [
-    { value: "2024", label: "2024" },
-    { value: "2025", label: "2025" },
-    { value: "2026", label: "2026" },
-    { value: "2027", label: "2027" },
-    { value: "2028", label: "2028" },
-  ];
-
-  const zoneOptions = [
-    { value: "all", label: "All Zones" },
-    { value: "master", label: "Master Community" },
-    { value: "typical", label: "Typical Buildings" },
-    { value: "zone3", label: "Zone 3 (Al Zaha)" },
-    { value: "zone5", label: "Zone 5 (Al Nameer)" },
-    { value: "zone8", label: "Zone 8 (Al Wajd)" },
-    { value: "staff", label: "Staff Accommodation" },
-  ];
-
-  const categoryOptions = [
-    { value: "all", label: "All Categories" },
-    { value: "infrastructure", label: "Infrastructure" },
-    { value: "mep", label: "MEP Systems" },
-    { value: "finishes", label: "Finishes/Structure" },
-    { value: "landscaping", label: "Landscaping" },
-  ];
-
-  const summaryStats = useMemo(() => {
-    if (loading) return {
-      totalAssets: 0,
-      criticalCount: 0,
-      upcomingMaintenance: 0,
-      totalReplacementCost: 0
-    };
-
-    return {
-      totalAssets: assets?.length || 0,
-      criticalCount: criticalAssets?.length || 0,
-      upcomingMaintenance: maintenanceSchedule?.filter(m => 
-        m.status === 'Scheduled' || m.status === 'Overdue'
-      ).length || 0,
-      totalReplacementCost: lifecycleForecast?.reduce((sum, item) => 
-        sum + (item.replacementCost || 0), 0) || 0
-    };
-  }, [assets, criticalAssets, maintenanceSchedule, lifecycleForecast, loading]);
-
-  const filteredReplacements = useMemo(() => {
-    return mockUpcomingReplacements.filter(item => 
-      (year === "all" || parseInt(year) === item.year) &&
-      (zone === "all" || 
-        (zone === "master" && item.location === "Master Community") ||
-        (zone === "typical" && item.location === "Typical Buildings") ||
-        (zone === "zone3" && item.location === "Zone 3") ||
-        (zone === "zone5" && item.location === "Zone 5") ||
-        (zone === "zone8" && item.location === "Zone 8") ||
-        (zone === "staff" && item.location === "Staff Accommodation"))
-    );
-  }, [year, zone]);
-
-  const assetCategoryData = useMemo(() => {
-    return mockAssetCategories.filter(item => 
-      category === "all" || 
-      (category === "infrastructure" && item.name === "Infrastructure") ||
-      (category === "mep" && item.name === "MEP Systems") ||
-      (category === "finishes" && item.name === "Finishes/Structure") ||
-      (category === "landscaping" && item.name === "Landscaping")
-    );
-  }, [category]);
-
-  const zoneBalancesData = useMemo(() => {
-    return mockZoneBalances.filter(item => 
-      zone === "all" || 
-      (zone === "master" && item.name === "Master Community") ||
-      (zone === "typical" && item.name === "Typical Buildings") ||
-      (zone === "zone3" && item.name === "Zone 3 (Al Zaha)") ||
-      (zone === "zone5" && item.name === "Zone 5 (Al Nameer)") ||
-      (zone === "zone8" && item.name === "Zone 8 (Al Wajd)") ||
-      (zone === "staff" && item.name === "Staff Accommodation")
-    );
-  }, [zone]);
-
-  const reserveFundData = useMemo(() => {
-    return mockYearlyData.filter(item => parseInt(item.year) <= parseInt(year) + 5);
-  }, [year]);
-
-  const handleYearChange = (newYear) => {
-    setYear(newYear);
-  };
-
-  const handleZoneChange = (newZone) => {
-    setZone(newZone);
-  };
-
-  const handleCategoryChange = (newCategory) => {
-    setCategory(newCategory);
-  };
-
-  const handleExport = () => {
-    toast.success("Exporting data to Excel...");
-  };
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', darkMode);
+  }, [darkMode]);
 
   return (
-    <StandardPageLayout
-      title="Asset Lifecycle Management"
-      description="Track and manage all assets across Muscat Bay"
-      icon={<AssetLifecycleIcon className="h-6 w-6" />}
-      headerColor="bg-gradient-to-r from-purple-50/40 to-purple-100/20 dark:from-purple-900/20 dark:to-purple-800/10"
-    >
-      <div className="container mx-auto">
-        <ALMDashboard
-          summaryStats={summaryStats}
-          year={year}
-          zone={zone}
-          category={category}
-          activeTab={activeTab}
-          darkMode={darkMode}
-          filteredReplacements={filteredReplacements}
-          assetCategoryData={assetCategoryData}
-          zoneBalancesData={zoneBalancesData}
-          reserveFundData={reserveFundData}
-          handleYearChange={handleYearChange}
-          handleZoneChange={handleZoneChange}
-          handleCategoryChange={handleCategoryChange}
-          handleExport={handleExport}
-          setActiveTab={setActiveTab}
-          yearOptions={yearOptions}
-          zoneOptions={zoneOptions}
-          categoryOptions={categoryOptions}
-        />
-      </div>
-    </StandardPageLayout>
+    <div className={`min-h-screen ${darkMode ? 'bg-gray-900 text-gray-100' : 'bg-gray-50 text-gray-800'} flex flex-col transition-colors duration-300`}>
+      <header className={`bg-gradient-to-r from-[#4E4456] to-[#6D5D7B] text-white shadow-lg sticky top-0 z-10 transition-all duration-300 ${compactView ? 'py-1' : 'py-3'}`}>
+        <div className="container mx-auto px-4">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center space-x-2 flex-shrink-0">
+              <div className="h-9 w-9 rounded-full bg-white/20 flex items-center justify-center">
+                <Package className="h-6 w-6" />
+              </div>
+              <h1 className={`font-bold tracking-tight transition-all duration-300 ${compactView ? 'text-lg' : 'text-xl'}`}>Asset Lifecycle Management</h1>
+            </div>
+            <nav className="hidden md:flex space-x-1 flex-grow justify-center px-4">
+              {['overview', 'analysis', 'categories', 'zones', 'maintenance'].map((tab) => (
+                <button 
+                  key={tab} 
+                  className={`px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 whitespace-nowrap ${
+                    activeTab === tab ? 'bg-white/20 text-white' : 'text-white/80 hover:bg-white/10 hover:text-white'
+                  }`} 
+                  onClick={() => setActiveTab(tab)}
+                >
+                  {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                </button>
+              ))}
+            </nav>
+            <div className="flex items-center space-x-2">
+              <Select value={selectedYear} onValueChange={setSelectedYear}>
+                <SelectTrigger className="w-[120px] bg-white/10 border-none text-white">
+                  <SelectValue placeholder="Select Year" />
+                </SelectTrigger>
+                <SelectContent>
+                  {mockYearlyData.map(data => (
+                    <SelectItem key={data.year} value={data.year}>{data.year}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button variant="ghost" className="text-white hover:bg-white/10">
+                <Download className="h-4 w-4 mr-2" />
+                Export
+              </Button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main className={`flex-1 container mx-auto px-4 transition-all duration-300 ${compactView ? 'py-3' : 'py-6'} relative`}>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <Card className="bg-white dark:bg-gray-800">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Total Assets</p>
+                  <h3 className="text-2xl font-bold mt-1">{currentYearData.balance.toLocaleString()}</h3>
+                  <p className="text-xs text-gray-500">Across all categories</p>
+                </div>
+                <div className="h-12 w-12 rounded-lg bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
+                  <Package className="h-6 w-6 text-blue-600 dark:text-blue-300" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white dark:bg-gray-800">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Critical Assets</p>
+                  <h3 className="text-2xl font-bold mt-1">{criticalComponents}</h3>
+                  <p className="text-xs text-gray-500">Require immediate attention</p>
+                </div>
+                <div className="h-12 w-12 rounded-lg bg-red-100 dark:bg-red-900 flex items-center justify-center">
+                  <AlertTriangle className="h-6 w-6 text-red-600 dark:text-red-300" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white dark:bg-gray-800">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Maintenance Due</p>
+                  <h3 className="text-2xl font-bold mt-1">{currentYearData.expenditure.toLocaleString()}</h3>
+                  <p className="text-xs text-gray-500">Scheduled this month</p>
+                </div>
+                <div className="h-12 w-12 rounded-lg bg-yellow-100 dark:bg-yellow-900 flex items-center justify-center">
+                  <Wrench className="h-6 w-6 text-yellow-600 dark:text-yellow-300" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white dark:bg-gray-800">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Asset Health</p>
+                  <h3 className="text-2xl font-bold mt-1">{fundingPercentage}%</h3>
+                  <p className="text-xs text-gray-500">Overall condition score</p>
+                </div>
+                <div className="h-12 w-12 rounded-lg bg-green-100 dark:bg-green-900 flex items-center justify-center">
+                  <Activity className="h-6 w-6 text-green-600 dark:text-green-300" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          <Card className="bg-white dark:bg-gray-800">
+            <CardContent className="p-6">
+              <h3 className="text-lg font-medium mb-4">Asset Distribution</h3>
+              <div className="h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={mockAssetCategories}
+                      dataKey="value"
+                      nameKey="name"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={80}
+                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                    >
+                      {mockAssetCategories.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value) => [value.toLocaleString() + ' OMR', '']} />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white dark:bg-gray-800">
+            <CardContent className="p-6">
+              <h3 className="text-lg font-medium mb-4">Maintenance Forecast</h3>
+              <div className="h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={filteredYearlyData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="year" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Line type="monotone" dataKey="expenditure" stroke={chartColors.expenditure} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="grid grid-cols-1 gap-6 mb-6">
+          <Card className="bg-white dark:bg-gray-800">
+            <CardContent className="p-6">
+              <h3 className="text-lg font-medium mb-4">Asset Registry</h3>
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                  <thead>
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Asset ID</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                    {mockUpcomingReplacements.map((item, index) => (
+                      <tr key={index}>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">{`AST-${index + 1}`}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">{item.component}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">Infrastructure</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">{item.location}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`px-2 py-1 text-xs rounded-full ${
+                            item.year === 2025 ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
+                          }`}>
+                            {item.year === 2025 ? 'Critical' : 'Operational'}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Link to="/water-system" className="block">
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardContent className="p-4 flex items-center space-x-3">
+                <div className="rounded-full bg-blue-100 p-3">
+                  <Droplets className="h-5 w-5 text-blue-600" />
+                </div>
+                <div>
+                  <h3 className="font-medium">Water System</h3>
+                  <p className="text-sm text-gray-500">Manage water assets</p>
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
+
+          <Link to="/electricity-system" className="block">
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardContent className="p-4 flex items-center space-x-3">
+                <div className="rounded-full bg-yellow-100 p-3">
+                  <Zap className="h-5 w-5 text-yellow-600" />
+                </div>
+                <div>
+                  <h3 className="font-medium">Electricity System</h3>
+                  <p className="text-sm text-gray-500">Manage electrical assets</p>
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
+
+          <Link to="/reserve-fund-calculator" className="block">
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardContent className="p-4 flex items-center space-x-3">
+                <div className="rounded-full bg-purple-100 p-3">
+                  <Calculator className="h-5 w-5 text-purple-600" />
+                </div>
+                <div>
+                  <h3 className="font-medium">Reserve Calculator</h3>
+                  <p className="text-sm text-gray-500">Calculate asset reserves</p>
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
+        </div>
+      </main>
+    </div>
   );
 };
 
