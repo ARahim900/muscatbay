@@ -24,8 +24,9 @@ const Dashboard: React.FC<DashboardProps> = ({ compactView = false, darkMode = f
   
   const fundingPercentage = 72;
   
+  // Fix: Convert the number to string before comparing with selectedYear
   const criticalComponents = useMemo(
-    () => mockUpcomingReplacements.filter(item => parseInt(item.year) <= parseInt(selectedYear) + 2).length,
+    () => mockUpcomingReplacements.filter(item => item.year <= parseInt(selectedYear) + 2).length,
     [selectedYear]
   );
   
