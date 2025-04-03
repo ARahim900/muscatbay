@@ -7,7 +7,8 @@ import {
   Factory, 
   AirVent, 
   FileText, 
-  Star
+  Star,
+  Database
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -60,13 +61,22 @@ const quickLinks: QuickAccessLink[] = [
     bgColor: 'bg-orange-50'
   },
   {
+    id: 'reserve-fund',
+    title: 'Asset Reserve Fund',
+    description: 'Reserve fund management',
+    icon: <Database className="h-5 w-5 text-purple-500" />,
+    url: '/asset-reserve-fund',
+    color: 'text-purple-500',
+    bgColor: 'bg-purple-50'
+  },
+  {
     id: 'contracts',
     title: 'Contracts',
     description: 'Contract management and tracking',
-    icon: <FileText className="h-5 w-5 text-purple-500" />,
+    icon: <FileText className="h-5 w-5 text-indigo-500" />,
     url: '/contracts',
-    color: 'text-purple-500',
-    bgColor: 'bg-purple-50'
+    color: 'text-indigo-500',
+    bgColor: 'bg-indigo-50'
   }
 ];
 
