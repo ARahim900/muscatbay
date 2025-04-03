@@ -351,7 +351,7 @@ const Calculator: React.FC<CalculatorProps> = ({ compactView = false, darkMode =
               <select
                 value={selectedUnit}
                 onChange={handleUnitChange}
-                disabled={units.length === 0}
+                disabled={!Array.isArray(units) || units.length === 0}
                 className={`w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#4E4456]/50 ${
                   darkMode
                     ? 'bg-gray-700 border-gray-600 text-white focus:border-[#6D5D7B] disabled:bg-gray-800 disabled:border-gray-700'
@@ -359,7 +359,7 @@ const Calculator: React.FC<CalculatorProps> = ({ compactView = false, darkMode =
                 }`}
               >
                 <option value="">Select Unit</option>
-                {units.map((unit) => (
+                {Array.isArray(units) && units.map((unit) => (
                   <option key={unit.id} value={unit.id}>
                     {unit.unitNo} - {unit.type}
                   </option>

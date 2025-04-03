@@ -2,10 +2,17 @@
 import React, { useState } from 'react';
 import { PackageOpen } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AssetCategoriesTable, AssetConditionsTable, CriticalAssetsTable, UpcomingMaintenanceTable, MaintenanceForecastTable } from '@/components/alm/tables';
+import { 
+  AssetCategoriesTable, 
+  AssetConditionsTable, 
+  CriticalAssetsTable, 
+  UpcomingMaintenanceTable, 
+  MaintenanceForecastTable 
+} from '@/components/alm/tables';
 import ALMDashboard from '@/components/alm/ALMDashboard';
 import ReserveFundCalculator from '@/components/alm/ReserveFundCalculator';
 import PropertyServiceChargeCalculator from '@/components/alm/PropertyServiceChargeCalculator';
+import { AssetCondition, CriticalAsset, UpcomingMaintenance, MaintenanceForecast, AssetCategory } from '@/types/assets';
 
 const ALM = () => {
   // Initialize dashboard state variables
@@ -69,48 +76,194 @@ const ALM = () => {
   };
 
   // Create mock data for tables to fix the missing data properties
-  const criticalAssetsData = [
-    { id: "1", assetName: "Electrical Generator", location: "Master Community", criticality: "High", riskScore: 85, lastInspectionDate: "2024-12-01", nextInspectionDate: "2025-01-15", replacementValue: 75000 },
-    { id: "2", assetName: "Water Pump System", location: "Zone 3", criticality: "High", riskScore: 78, lastInspectionDate: "2024-11-15", nextInspectionDate: "2025-02-15", replacementValue: 45000 },
-    { id: "3", assetName: "HVAC Cooling Tower", location: "Typical Buildings", criticality: "Medium", riskScore: 65, lastInspectionDate: "2024-10-20", nextInspectionDate: "2025-01-20", replacementValue: 98000 }
+  const criticalAssetsData: CriticalAsset[] = [
+    { 
+      id: "1", 
+      assetName: "Electrical Generator", 
+      location: "Master Community", 
+      criticality: "High", 
+      riskScore: 85, 
+      lastInspectionDate: "2024-12-01", 
+      nextInspectionDate: "2025-01-15", 
+      replacementValue: 75000 
+    },
+    { 
+      id: "2", 
+      assetName: "Water Pump System", 
+      location: "Zone 3", 
+      criticality: "High", 
+      riskScore: 78, 
+      lastInspectionDate: "2024-11-15", 
+      nextInspectionDate: "2025-02-15", 
+      replacementValue: 45000 
+    },
+    { 
+      id: "3", 
+      assetName: "HVAC Cooling Tower", 
+      location: "Typical Buildings", 
+      criticality: "Medium", 
+      riskScore: 65, 
+      lastInspectionDate: "2024-10-20", 
+      nextInspectionDate: "2025-01-20", 
+      replacementValue: 98000 
+    }
   ];
 
-  const assetConditionsData = [
-    { id: "1", conditionRating: "Excellent", description: "New or like-new condition", assetCount: 1250, percentage: 26, recommendedAction: "Regular maintenance only" },
-    { id: "2", conditionRating: "Good", description: "Minor wear, fully functional", assetCount: 2145, percentage: 45, recommendedAction: "Standard maintenance schedule" },
-    { id: "3", conditionRating: "Fair", description: "Visible wear, still functional", assetCount: 856, percentage: 18, recommendedAction: "Enhanced monitoring" },
-    { id: "4", conditionRating: "Poor", description: "Significant deterioration", assetCount: 415, percentage: 9, recommendedAction: "Plan for replacement" },
-    { id: "5", conditionRating: "Critical", description: "Failure imminent", assetCount: 147, percentage: 3, recommendedAction: "Immediate replacement" }
+  const assetConditionsData: AssetCondition[] = [
+    { 
+      id: "1", 
+      conditionRating: "Excellent", 
+      description: "New or like-new condition", 
+      assetCount: 1250, 
+      percentage: 26, 
+      recommendedAction: "Regular maintenance only" 
+    },
+    { 
+      id: "2", 
+      conditionRating: "Good", 
+      description: "Minor wear, fully functional", 
+      assetCount: 2145, 
+      percentage: 45, 
+      recommendedAction: "Standard maintenance schedule" 
+    },
+    { 
+      id: "3", 
+      conditionRating: "Fair", 
+      description: "Visible wear, still functional", 
+      assetCount: 856, 
+      percentage: 18, 
+      recommendedAction: "Enhanced monitoring" 
+    },
+    { 
+      id: "4", 
+      conditionRating: "Poor", 
+      description: "Significant deterioration", 
+      assetCount: 415, 
+      percentage: 9, 
+      recommendedAction: "Plan for replacement" 
+    },
+    { 
+      id: "5", 
+      conditionRating: "Critical", 
+      description: "Failure imminent", 
+      assetCount: 147, 
+      percentage: 3, 
+      recommendedAction: "Immediate replacement" 
+    }
   ];
 
-  const upcomingMaintenanceData = [
-    { id: "1", assetName: "Irrigation Pumps", zone: "Master Community", scheduledDate: "2025-01-15", maintenanceType: "Preventive", estimatedCost: 2500, duration: 3, resourceRequirements: "2 Technicians", priority: "Medium" },
-    { id: "2", assetName: "Fire Alarm System", zone: "Zone 3", scheduledDate: "2025-01-20", maintenanceType: "Regulatory", estimatedCost: 1800, duration: 2, resourceRequirements: "Specialist Contractor", priority: "High" },
-    { id: "3", assetName: "Elevator Systems", zone: "Typical Buildings", scheduledDate: "2025-02-05", maintenanceType: "Preventive", estimatedCost: 3500, duration: 4, resourceRequirements: "Elevator Technician", priority: "Medium" }
+  const upcomingMaintenanceData: UpcomingMaintenance[] = [
+    { 
+      id: "1", 
+      assetName: "Irrigation Pumps", 
+      zone: "Master Community", 
+      scheduledDate: "2025-01-15", 
+      maintenanceType: "Preventive", 
+      estimatedCost: 2500, 
+      duration: 3, 
+      resourceRequirements: "2 Technicians", 
+      priority: "Medium" 
+    },
+    { 
+      id: "2", 
+      assetName: "Fire Alarm System", 
+      zone: "Zone 3", 
+      scheduledDate: "2025-01-20", 
+      maintenanceType: "Regulatory", 
+      estimatedCost: 1800, 
+      duration: 2, 
+      resourceRequirements: "Specialist Contractor", 
+      priority: "High" 
+    },
+    { 
+      id: "3", 
+      assetName: "Elevator Systems", 
+      zone: "Typical Buildings", 
+      scheduledDate: "2025-02-05", 
+      maintenanceType: "Preventive", 
+      estimatedCost: 3500, 
+      duration: 4, 
+      resourceRequirements: "Elevator Technician", 
+      priority: "Medium" 
+    }
   ];
 
-  const maintenanceForecastData = [
-    { id: "1", assetName: "Swimming Pool Equipment", zone: "Zone 5", installationYear: 2020, currentCondition: "Good", nextMaintenanceYear: 2025, maintenanceType: "Major Service", estimatedCost: 12500, lifeExpectancy: 15 },
-    { id: "2", assetName: "Road Surface", zone: "Master Community", installationYear: 2018, currentCondition: "Fair", nextMaintenanceYear: 2026, maintenanceType: "Resurfacing", estimatedCost: 85000, lifeExpectancy: 12 },
-    { id: "3", assetName: "Landscaping - Palm Trees", zone: "Zone 8", installationYear: 2019, currentCondition: "Excellent", nextMaintenanceYear: 2025, maintenanceType: "Specialized Treatment", estimatedCost: 18200, lifeExpectancy: 25 }
+  const maintenanceForecastData: MaintenanceForecast[] = [
+    { 
+      id: "1", 
+      assetName: "Swimming Pool Equipment", 
+      zone: "Zone 5", 
+      installationYear: 2020, 
+      currentCondition: "Good", 
+      nextMaintenanceYear: 2025, 
+      maintenanceType: "Major Service", 
+      estimatedCost: 12500, 
+      lifeExpectancy: 15 
+    },
+    { 
+      id: "2", 
+      assetName: "Road Surface", 
+      zone: "Master Community", 
+      installationYear: 2018, 
+      currentCondition: "Fair", 
+      nextMaintenanceYear: 2026, 
+      maintenanceType: "Resurfacing", 
+      estimatedCost: 85000, 
+      lifeExpectancy: 12 
+    },
+    { 
+      id: "3", 
+      assetName: "Landscaping - Palm Trees", 
+      zone: "Zone 8", 
+      installationYear: 2019, 
+      currentCondition: "Excellent", 
+      nextMaintenanceYear: 2025, 
+      maintenanceType: "Specialized Treatment", 
+      estimatedCost: 18200, 
+      lifeExpectancy: 25 
+    }
   ];
 
-  const assetCategoriesData = [
-    { id: "1", name: "Infrastructure", subCategory: "Roads & Pathways", assetCount: 124, totalReplacementCost: 1250000, lifeExpectancyRange: "15-25 years", zoneCoverage: "All Zones" },
-    { id: "2", name: "MEP Systems", subCategory: "HVAC Equipment", assetCount: 356, totalReplacementCost: 750000, lifeExpectancyRange: "10-15 years", zoneCoverage: "Zones 3, 5" },
-    { id: "3", name: "Finishes/Structure", subCategory: "External Facades", assetCount: 215, totalReplacementCost: 320000, lifeExpectancyRange: "20-30 years", zoneCoverage: "All Zones" }
+  const assetCategoriesData: AssetCategory[] = [
+    { 
+      id: "1", 
+      name: "Infrastructure", 
+      subCategory: "Roads & Pathways", 
+      assetCount: 124, 
+      totalReplacementCost: 1250000, 
+      lifeExpectancyRange: "15-25 years", 
+      zoneCoverage: "All Zones" 
+    },
+    { 
+      id: "2", 
+      name: "MEP Systems", 
+      subCategory: "HVAC Equipment", 
+      assetCount: 356, 
+      totalReplacementCost: 750000, 
+      lifeExpectancyRange: "10-15 years", 
+      zoneCoverage: "Zones 3, 5" 
+    },
+    { 
+      id: "3", 
+      name: "Finishes/Structure", 
+      subCategory: "External Facades", 
+      assetCount: 215, 
+      totalReplacementCost: 320000, 
+      lifeExpectancyRange: "20-30 years", 
+      zoneCoverage: "All Zones" 
+    }
   ];
 
   // Event handlers
-  const handleYearChange = (value) => {
+  const handleYearChange = (value: string) => {
     setYear(value);
   };
 
-  const handleZoneChange = (value) => {
+  const handleZoneChange = (value: string) => {
     setZone(value);
   };
 
-  const handleCategoryChange = (value) => {
+  const handleCategoryChange = (value: string) => {
     setCategory(value);
   };
 

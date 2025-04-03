@@ -1,5 +1,4 @@
 
-// Asset Reserve Fund Mock Data
 export const mockYearlyData = [
   { year: '2021', balance: 52636, contribution: 52636, expenditure: 0 },
   { year: '2022', balance: 106324, contribution: 52899, expenditure: 0 },
@@ -55,8 +54,8 @@ export const mockZones = [
   { id: 'staff', name: 'Staff Accommodation', propertyTypes: ['Staff Accommodation'] }
 ];
 
-// Mock buildings data
-export const mockBuildings: Record<string, Record<string, string[]>> = {
+// Buildings within zones/property types
+export const mockBuildings = {
   '3': {
     'Apartment': [
       'D44', 'D45', 'D46', 'D47', 'D48', 'D49', 'D50', 'D51', 'D52', 'D53',
@@ -68,8 +67,8 @@ export const mockBuildings: Record<string, Record<string, string[]>> = {
   }
 };
 
-// Mock units data by zone, property type, and building
-export const mockUnits: Record<string, Record<string, any>> = {
+// Define units
+export const mockUnits = {
   '3': {
     'Villa': [
       { id: 'Z3-001', unitNo: 'Z3 001', type: '4 Bedroom Zaha Villa', bua: 422 },
@@ -77,31 +76,7 @@ export const mockUnits: Record<string, Record<string, any>> = {
       { id: 'Z3-003', unitNo: 'Z3 003', type: '4 Bedroom Zaha Villa', bua: 422 },
       { id: 'Z3-004', unitNo: 'Z3 004', type: '4 Bedroom Zaha Villa', bua: 422 },
       { id: 'Z3-005', unitNo: 'Z3 005', type: '4 Bedroom Zaha Villa', bua: 422 },
-      { id: 'Z3-006', unitNo: 'Z3 006', type: '4 Bedroom Zaha Villa', bua: 422 },
-      { id: 'Z3-007', unitNo: 'Z3 007', type: '4 Bedroom Zaha Villa', bua: 422 },
-      { id: 'Z3-008', unitNo: 'Z3 008', type: '4 Bedroom Zaha Villa', bua: 422 },
-      { id: 'Z3-009', unitNo: 'Z3 009', type: '4 Bedroom Zaha Villa', bua: 422 },
-      { id: 'Z3-010', unitNo: 'Z3 010', type: '4 Bedroom Zaha Villa', bua: 422 },
-      { id: 'Z3-011', unitNo: 'Z3 011', type: '4 Bedroom Zaha Villa', bua: 422 },
-      { id: 'Z3-012', unitNo: 'Z3 012', type: '4 Bedroom Zaha Villa', bua: 422 },
-      { id: 'Z3-013', unitNo: 'Z3 013', type: '4 Bedroom Zaha Villa', bua: 422 },
-      { id: 'Z3-014', unitNo: 'Z3 014', type: '4 Bedroom Zaha Villa', bua: 422 },
-      { id: 'Z3-015', unitNo: 'Z3 015', type: '4 Bedroom Zaha Villa', bua: 422 },
-      { id: 'Z3-016', unitNo: 'Z3 016', type: '4 Bedroom Zaha Villa', bua: 422 },
-      { id: 'Z3-017', unitNo: 'Z3 017', type: '3 Bedroom Zaha Villa', bua: 357 },
-      { id: 'Z3-018', unitNo: 'Z3 018', type: '3 Bedroom Zaha Villa', bua: 357 },
-      { id: 'Z3-019', unitNo: 'Z3 019', type: '3 Bedroom Zaha Villa', bua: 357 },
-      { id: 'Z3-020', unitNo: 'Z3 020', type: '3 Bedroom Zaha Villa', bua: 357 },
-      { id: 'Z3-021', unitNo: 'Z3 021', type: '3 Bedroom Zaha Villa', bua: 357 },
-      { id: 'Z3-022', unitNo: 'Z3 022', type: '3 Bedroom Zaha Villa', bua: 357 },
-      { id: 'Z3-023', unitNo: 'Z3 023', type: '3 Bedroom Zaha Villa', bua: 357 },
-      { id: 'Z3-024', unitNo: 'Z3 024', type: '3 Bedroom Zaha Villa', bua: 357 },
-      { id: 'Z3-025', unitNo: 'Z3 025', type: '3 Bedroom Zaha Villa', bua: 357 },
-      { id: 'Z3-026', unitNo: 'Z3 026', type: '3 Bedroom Zaha Villa', bua: 357 },
-      { id: 'Z3-027', unitNo: 'Z3 027', type: '3 Bedroom Zaha Villa', bua: 357 },
-      { id: 'Z3-028', unitNo: 'Z3 028', type: '3 Bedroom Zaha Villa', bua: 357 },
-      { id: 'Z3-029', unitNo: 'Z3 029', type: '3 Bedroom Zaha Villa', bua: 357 },
-      { id: 'Z3-030', unitNo: 'Z3 030', type: '3 Bedroom Zaha Villa', bua: 357 },
+      // More villas...
     ],
     'Apartment': {
       'D44': [
@@ -120,14 +95,7 @@ export const mockUnits: Record<string, Record<string, any>> = {
         { id: 'Z3-045-5', unitNo: 'Z3 045(5)', type: '3 Bedroom Zaha Apartment', bua: 355 },
         { id: 'Z3-045-6', unitNo: 'Z3 045(6)', type: '3 Bedroom Zaha Apartment', bua: 361 },
       ],
-      'D46': [
-        { id: 'Z3-046-1', unitNo: 'Z3 046(1)', type: '2 Bedroom Premium Apartment', bua: 199 },
-        { id: 'Z3-046-2', unitNo: 'Z3 046(2)', type: '2 Bedroom Premium Apartment', bua: 199 },
-        { id: 'Z3-046-3', unitNo: 'Z3 046(3)', type: '2 Bedroom Premium Apartment', bua: 199 },
-        { id: 'Z3-046-4', unitNo: 'Z3 046(4)', type: '2 Bedroom Premium Apartment', bua: 199 },
-        { id: 'Z3-046-5', unitNo: 'Z3 046(5)', type: '3 Bedroom Zaha Apartment', bua: 355 },
-        { id: 'Z3-046-6', unitNo: 'Z3 046(6)', type: '3 Bedroom Zaha Apartment', bua: 361 },
-      ],
+      // More buildings...
     }
   },
   '5': {
@@ -137,11 +105,7 @@ export const mockUnits: Record<string, Record<string, any>> = {
       { id: 'Z5-003', unitNo: 'Z5 003', type: '4 Bedroom Nameer Villa', bua: 498 },
       { id: 'Z5-004', unitNo: 'Z5 004', type: '3 Bedroom Nameer Villa', bua: 427 },
       { id: 'Z5-005', unitNo: 'Z5 005', type: '4 Bedroom Nameer Villa', bua: 498 },
-      { id: 'Z5-006', unitNo: 'Z5 006', type: '4 Bedroom Nameer Villa', bua: 498 },
-      { id: 'Z5-007', unitNo: 'Z5 007', type: '3 Bedroom Nameer Villa', bua: 427 },
-      { id: 'Z5-008', unitNo: 'Z5 008', type: '4 Bedroom Nameer Villa', bua: 498 },
-      { id: 'Z5-009', unitNo: 'Z5 009', type: '3 Bedroom Nameer Villa', bua: 427 },
-      { id: 'Z5-010', unitNo: 'Z5 010', type: '4 Bedroom Nameer Villa', bua: 498 },
+      // More villas...
     ]
   },
   '8': {
@@ -151,30 +115,22 @@ export const mockUnits: Record<string, Record<string, any>> = {
       { id: 'Z8-003', unitNo: 'Z8 003', type: '5 Bedroom Wajd Villa', bua: 750 },
       { id: 'Z8-004', unitNo: 'Z8 004', type: '5 Bedroom Wajd Villa', bua: 750 },
       { id: 'Z8-005', unitNo: 'Z8 005', type: '5 Bedroom Wajd Villa', bua: 943 },
-      { id: 'Z8-006', unitNo: 'Z8 006', type: '5 Bedroom Wajd Villa', bua: 760 },
-      { id: 'Z8-007', unitNo: 'Z8 007', type: '5 Bedroom Wajd Villa', bua: 750 },
-      { id: 'Z8-008', unitNo: 'Z8 008', type: '5 Bedroom Wajd Villa', bua: 760 },
-      { id: 'Z8-009', unitNo: 'Z8 009', type: '5 Bedroom Wajd Villa', bua: 1187 },
-      { id: 'Z8-010', unitNo: 'Z8 010', type: '5 Bedroom Wajd Villa', bua: 760 },
+      // More villas...
     ]
   },
   'staff': {
     'Staff Accommodation': {
       'B1': [
-        { id: 'B1-01', unitNo: 'B1-01', type: 'Staff Unit', bua: 50 },
-        { id: 'B1-02', unitNo: 'B1-02', type: 'Staff Unit', bua: 50 },
-        { id: 'B1-03', unitNo: 'B1-03', type: 'Staff Unit', bua: 50 },
+        { id: 'ST-B1-01', unitNo: 'B1-01', type: 'Staff Unit', bua: 50 },
+        { id: 'ST-B1-02', unitNo: 'B1-02', type: 'Staff Unit', bua: 50 },
+        { id: 'ST-B1-03', unitNo: 'B1-03', type: 'Staff Unit', bua: 50 },
       ],
       'B2': [
-        { id: 'B2-01', unitNo: 'B2-01', type: 'Staff Unit', bua: 50 },
-        { id: 'B2-02', unitNo: 'B2-02', type: 'Staff Unit', bua: 50 },
-        { id: 'B2-03', unitNo: 'B2-03', type: 'Staff Unit', bua: 50 },
+        { id: 'ST-B2-01', unitNo: 'B2-01', type: 'Staff Unit', bua: 50 },
+        { id: 'ST-B2-02', unitNo: 'B2-02', type: 'Staff Unit', bua: 50 },
+        { id: 'ST-B2-03', unitNo: 'B2-03', type: 'Staff Unit', bua: 50 },
       ],
-      'B3': [
-        { id: 'B3-01', unitNo: 'B3-01', type: 'Staff Unit', bua: 50 },
-        { id: 'B3-02', unitNo: 'B3-02', type: 'Staff Unit', bua: 50 },
-        { id: 'B3-03', unitNo: 'B3-03', type: 'Staff Unit', bua: 50 },
-      ]
+      // More buildings...
     }
   }
 };

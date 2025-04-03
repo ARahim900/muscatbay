@@ -1,8 +1,8 @@
 
 import React, { useState, useMemo } from 'react';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
-import KpiCard from './KpiCard';
 import ChartCard from './ChartCard';
+import KpiCard from './KpiCard';
 import { mockYearlyData, mockZoneBalances, mockAssetCategories, mockUpcomingReplacements } from '@/data/reserveFundData';
 
 interface DashboardProps {
@@ -14,19 +14,19 @@ const Dashboard: React.FC<DashboardProps> = ({ compactView = false, darkMode = f
   const [selectedYear, setSelectedYear] = useState('2025');
   const [yearsToShow, setYearsToShow] = useState(10);
   const [selectedChart, setSelectedChart] = useState('balance');
-  
   const filteredYearlyData = useMemo(() => mockYearlyData.slice(0, yearsToShow), [yearsToShow]);
-  
-  const currentYearData = useMemo(
-    () => mockYearlyData.find(data => data.year === selectedYear) || mockYearlyData[4],
+  const currentYearData = useMemo(() => 
+    mockYearlyData.find(data => data.year === selectedYear) || mockYearlyData[4], 
     [selectedYear]
   );
   
   const fundingPercentage = 72;
   
-  // Fix: Convert the number to string before comparing with selectedYear
-  const criticalComponents = useMemo(
-    () => mockUpcomingReplacements.filter(item => item.year <= parseInt(selectedYear) + 2).length,
+  // Filter critical components; convert year strings to numbers for comparison
+  const criticalComponents = useMemo(() => 
+    mockUpcomingReplacements.filter(item => 
+      item.year <= parseInt(selectedYear) + 2
+    ).length, 
     [selectedYear]
   );
   
@@ -59,17 +59,17 @@ const Dashboard: React.FC<DashboardProps> = ({ compactView = false, darkMode = f
               className={`border rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-[#4E4456]/50 ${
                 darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'
               }`}
-              value={yearsToShow}
+              value={yearsToShow.toString()}
               onChange={(e) => setYearsToShow(parseInt(e.target.value))}
             >
-              <option value={5}>5 Years</option>
-              <option value={10}>10 Years</option>
-              <option value={20}>20 Years</option>
+              <option value="5">5 Years</option>
+              <option value="10">10 Years</option>
+              <option value="20">20 Years</option>
             </select>
           </div>
         </div>
       </div>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiCard
           title="Total Reserve Balance"
@@ -84,7 +84,6 @@ const Dashboard: React.FC<DashboardProps> = ({ compactView = false, darkMode = f
           compactView={compactView}
           darkMode={darkMode}
         />
-        
         <KpiCard
           title="Annual Contribution"
           value={`OMR ${currentYearData.contribution.toLocaleString()}`}
@@ -98,7 +97,6 @@ const Dashboard: React.FC<DashboardProps> = ({ compactView = false, darkMode = f
           compactView={compactView}
           darkMode={darkMode}
         />
-        
         <KpiCard
           title="Funding Percentage"
           value={`${fundingPercentage}%`}
@@ -112,7 +110,6 @@ const Dashboard: React.FC<DashboardProps> = ({ compactView = false, darkMode = f
           compactView={compactView}
           darkMode={darkMode}
         />
-        
         <KpiCard
           title="Critical Components"
           value={criticalComponents.toString()}
@@ -127,7 +124,7 @@ const Dashboard: React.FC<DashboardProps> = ({ compactView = false, darkMode = f
           darkMode={darkMode}
         />
       </div>
-      
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <ChartCard title="Reserve Fund Overview" darkMode={darkMode}>
           <div className="flex justify-center mb-4">
@@ -147,16 +144,12 @@ const Dashboard: React.FC<DashboardProps> = ({ compactView = false, darkMode = f
               ))}
             </div>
           </div>
-          
           <ResponsiveContainer width="100%" height={300}>
             {selectedChart === 'expenditure' ? (
               <BarChart data={filteredYearlyData}>
                 <CartesianGrid strokeDasharray="3 3" stroke={darkMode ? '#374151' : '#E5E7EB'} />
                 <XAxis dataKey="year" tick={{ fill: darkMode ? '#9CA3AF' : '#4B5563' }} />
-                <YAxis
-                  tickFormatter={(value) => `${value / 1000}k`}
-                  tick={{ fill: darkMode ? '#9CA3AF' : '#4B5563' }}
-                />
+                <YAxis tickFormatter={(value) => `${value / 1000}k`} tick={{ fill: darkMode ? '#9CA3AF' : '#4B5563' }} />
                 <Tooltip
                   formatter={(value) => [`OMR ${value.toLocaleString()}`, 'Expenditure']}
                   labelFormatter={(label) => `Year: ${label}`}
@@ -179,10 +172,7 @@ const Dashboard: React.FC<DashboardProps> = ({ compactView = false, darkMode = f
               <LineChart data={filteredYearlyData}>
                 <CartesianGrid strokeDasharray="3 3" stroke={darkMode ? '#374151' : '#E5E7EB'} />
                 <XAxis dataKey="year" tick={{ fill: darkMode ? '#9CA3AF' : '#4B5563' }} />
-                <YAxis
-                  tickFormatter={(value) => `${value / 1000}k`}
-                  tick={{ fill: darkMode ? '#9CA3AF' : '#4B5563' }}
-                />
+                <YAxis tickFormatter={(value) => `${value / 1000}k`} tick={{ fill: darkMode ? '#9CA3AF' : '#4B5563' }} />
                 <Tooltip
                   formatter={(value, name) => [
                     `OMR ${value.toLocaleString()}`,
@@ -211,7 +201,7 @@ const Dashboard: React.FC<DashboardProps> = ({ compactView = false, darkMode = f
             )}
           </ResponsiveContainer>
         </ChartCard>
-        
+
         <ChartCard title="Fund Distribution by Zone (EOY 2025)" darkMode={darkMode}>
           <div className="flex flex-col md:flex-row items-center justify-center">
             <div className="w-full md:w-1/2">
@@ -250,7 +240,10 @@ const Dashboard: React.FC<DashboardProps> = ({ compactView = false, darkMode = f
                 {mockZoneBalances.map((zone, index) => (
                   <div key={index} className="flex items-center justify-between">
                     <div className="flex items-center">
-                      <div className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: zone.color }}></div>
+                      <div
+                        className="w-3 h-3 rounded-full mr-2"
+                        style={{ backgroundColor: zone.color }}
+                      ></div>
                       <span className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                         {zone.name}
                       </span>
@@ -264,7 +257,7 @@ const Dashboard: React.FC<DashboardProps> = ({ compactView = false, darkMode = f
             </div>
           </div>
         </ChartCard>
-        
+
         <ChartCard title="Asset Categories by Replacement Value" darkMode={darkMode}>
           <div className="flex flex-col md:flex-row items-center justify-center">
             <div className="w-full md:w-1/2">
@@ -320,7 +313,7 @@ const Dashboard: React.FC<DashboardProps> = ({ compactView = false, darkMode = f
             </div>
           </div>
         </ChartCard>
-        
+
         <ChartCard title="Upcoming Component Replacements" darkMode={darkMode}>
           <div className="overflow-x-auto">
             <table className={`min-w-full divide-y ${darkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
@@ -369,21 +362,14 @@ const Dashboard: React.FC<DashboardProps> = ({ compactView = false, darkMode = f
                 </tr>
               </thead>
               <tbody
-                className={`${
-                  darkMode ? 'bg-gray-900 divide-y divide-gray-700' : 'bg-white divide-y divide-gray-200'
-                }`}
+                className={`${darkMode ? 'bg-gray-900 divide-y divide-gray-700' : 'bg-white divide-y divide-gray-200'}`}
               >
                 {mockUpcomingReplacements
                   .sort((a, b) => a.year - b.year)
                   .map((replacement, index) => (
-                    <tr
-                      key={index}
-                      className={`transition-colors ${darkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-50'}`}
-                    >
+                    <tr key={index} className={`transition-colors ${darkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-50'}`}>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div
-                          className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}
-                        >
+                        <div className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
                           {replacement.component}
                         </div>
                       </td>
@@ -398,9 +384,7 @@ const Dashboard: React.FC<DashboardProps> = ({ compactView = false, darkMode = f
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right">
-                        <div
-                          className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}
-                        >
+                        <div className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
                           {replacement.cost.toLocaleString()}
                         </div>
                       </td>
