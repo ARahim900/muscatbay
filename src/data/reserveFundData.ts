@@ -13,94 +13,245 @@ export const rates2025 = {
 
 // Zones data
 export const mockZones = [
-  { id: '3', name: 'Zone 3 (Al Zaha)', propertyTypes: ['Apartment', 'Villa'] },
-  { id: '5', name: 'Zone 5 (Al Nameer)', propertyTypes: ['Apartment', 'Villa'] },
-  { id: '8', name: 'Zone 8 (Al Wajd)', propertyTypes: ['Villa'] },
-  { id: 'staff', name: 'Staff Accommodation', propertyTypes: ['Studio', 'One Bedroom', 'Shared'] }
+  { id: '1', name: 'Zone 1 (Staff Accommodation)', propertyTypes: ['Staff Accommodation', 'CIF Building'] },
+  { id: '3', name: 'Zone 3 (Al Zaha)', propertyTypes: ['Villa', 'Apartment'] },
+  { id: '5', name: 'Zone 5 (Al Nameer)', propertyTypes: ['Villa'] },
+  { id: '8', name: 'Zone 8 (Al Wajd)', propertyTypes: ['Villa'] }
 ];
 
 // Building data per zone and property type
 export const mockBuildings = {
+  '1': {
+    'Staff Accommodation': ['Building 1', 'Building 2', 'Building 3', 'Building 4', 'Building 5', 'Building 6', 'Building 7', 'Building 8'],
+    'CIF Building': ['CIF']
+  },
   '3': {
-    'Apartment': ['A', 'B', 'C', 'D']
+    'Apartment': ['Building A', 'Building B', 'Building C', 'Building D'],
+    'Villa': []
   },
   '5': {
-    'Apartment': ['E', 'F', 'G']
+    'Villa': []
+  },
+  '8': {
+    'Villa': []
   }
 };
 
 // Mock units data
 export const mockUnits = {
-  '3': {
-    'Apartment': {
-      'A': [
-        { id: '3A1', unitNo: 'Z3-A-101', type: 'Apartment 2BR', bua: 120.5 },
-        { id: '3A2', unitNo: 'Z3-A-102', type: 'Apartment 3BR', bua: 150.8 },
-        { id: '3A3', unitNo: 'Z3-A-103', type: 'Apartment 1BR', bua: 85.2 }
+  '1': {
+    'Staff Accommodation': {
+      'Building 1': [
+        { id: 'B1-1', unitNo: 'B1-001', type: 'Studio', bua: 35.0 },
+        { id: 'B1-2', unitNo: 'B1-002', type: 'Studio', bua: 35.0 },
+        { id: 'B1-3', unitNo: 'B1-003', type: 'One Bedroom', bua: 55.0 },
+        { id: 'B1-4', unitNo: 'B1-004', type: 'One Bedroom', bua: 55.0 }
       ],
-      'B': [
-        { id: '3B1', unitNo: 'Z3-B-101', type: 'Apartment 2BR', bua: 122.0 },
-        { id: '3B2', unitNo: 'Z3-B-102', type: 'Apartment 3BR', bua: 148.5 }
+      'Building 2': [
+        { id: 'B2-1', unitNo: 'B2-001', type: 'Studio', bua: 32.5 },
+        { id: 'B2-2', unitNo: 'B2-002', type: 'Studio', bua: 32.5 },
+        { id: 'B2-3', unitNo: 'B2-003', type: 'One Bedroom', bua: 56.5 },
+        { id: 'B2-4', unitNo: 'B2-004', type: 'One Bedroom', bua: 56.5 }
       ],
-      'C': [
-        { id: '3C1', unitNo: 'Z3-C-101', type: 'Apartment 2BR', bua: 121.7 },
-        { id: '3C2', unitNo: 'Z3-C-102', type: 'Apartment 3BR', bua: 151.2 }
+      'Building 3': [
+        { id: 'B3-1', unitNo: 'B3-001', type: 'Studio', bua: 34.0 },
+        { id: 'B3-2', unitNo: 'B3-002', type: 'Studio', bua: 34.0 },
+        { id: 'B3-3', unitNo: 'B3-003', type: 'One Bedroom', bua: 54.0 },
+        { id: 'B3-4', unitNo: 'B3-004', type: 'Shared Unit', bua: 75.0 }
       ],
-      'D': [
-        { id: '3D1', unitNo: 'Z3-D-101', type: 'Apartment 2BR', bua: 119.8 },
-        { id: '3D2', unitNo: 'Z3-D-102', type: 'Apartment 3BR', bua: 149.3 }
+      'Building 4': [
+        { id: 'B4-1', unitNo: 'B4-001', type: 'Studio', bua: 35.0 },
+        { id: 'B4-2', unitNo: 'B4-002', type: 'One Bedroom', bua: 55.0 },
+        { id: 'B4-3', unitNo: 'B4-003', type: 'Shared Unit', bua: 72.5 }
+      ],
+      'Building 5': [
+        { id: 'B5-1', unitNo: 'B5-001', type: 'Studio', bua: 35.0 },
+        { id: 'B5-2', unitNo: 'B5-002', type: 'One Bedroom', bua: 55.0 },
+        { id: 'B5-3', unitNo: 'B5-003', type: 'Shared Unit', bua: 78.0 }
+      ],
+      'Building 6': [
+        { id: 'B6-1', unitNo: 'B6-001', type: 'Studio', bua: 35.0 },
+        { id: 'B6-2', unitNo: 'B6-002', type: 'One Bedroom', bua: 55.0 },
+        { id: 'B6-3', unitNo: 'B6-003', type: 'Shared Unit', bua: 78.0 }
+      ],
+      'Building 7': [
+        { id: 'B7-1', unitNo: 'B7-001', type: 'Studio', bua: 35.0 },
+        { id: 'B7-2', unitNo: 'B7-002', type: 'One Bedroom', bua: 55.0 },
+        { id: 'B7-3', unitNo: 'B7-003', type: 'Shared Unit', bua: 78.0 }
+      ],
+      'Building 8': [
+        { id: 'B8-1', unitNo: 'B8-001', type: 'Studio', bua: 35.0 },
+        { id: 'B8-2', unitNo: 'B8-002', type: 'One Bedroom', bua: 55.0 },
+        { id: 'B8-3', unitNo: 'B8-003', type: 'Shared Unit', bua: 78.0 }
       ]
     },
+    'CIF Building': {
+      'CIF': [
+        { id: 'CIF-1', unitNo: 'CIF-001', type: 'Office', bua: 120.0 },
+        { id: 'CIF-2', unitNo: 'CIF-002', type: 'Office', bua: 150.0 },
+        { id: 'CIF-3', unitNo: 'CIF-003', type: 'Meeting Space', bua: 200.0 }
+      ]
+    }
+  },
+  '3': {
     'Villa': [
-      { id: '3V1', unitNo: 'Z3-V-01', type: 'Villa 4BR', bua: 280.5 },
-      { id: '3V2', unitNo: 'Z3-V-02', type: 'Villa 5BR', bua: 350.8 },
-      { id: '3V3', unitNo: 'Z3-V-03', type: 'Villa 3BR', bua: 225.3 }
-    ]
+      // 4 Bedroom Zaha Villas
+      { id: 'Z3-001', unitNo: 'Z3 001', type: '4 Bedroom Zaha Villa', bua: 422.0 },
+      { id: 'Z3-002', unitNo: 'Z3 002', type: '4 Bedroom Zaha Villa', bua: 422.0 },
+      { id: 'Z3-003', unitNo: 'Z3 003', type: '4 Bedroom Zaha Villa', bua: 422.0 },
+      { id: 'Z3-004', unitNo: 'Z3 004', type: '4 Bedroom Zaha Villa', bua: 422.0 },
+      { id: 'Z3-005', unitNo: 'Z3 005', type: '4 Bedroom Zaha Villa', bua: 422.0 },
+      { id: 'Z3-006', unitNo: 'Z3 006', type: '4 Bedroom Zaha Villa', bua: 422.0 },
+      { id: 'Z3-007', unitNo: 'Z3 007', type: '4 Bedroom Zaha Villa', bua: 422.0 },
+      { id: 'Z3-008', unitNo: 'Z3 008', type: '4 Bedroom Zaha Villa', bua: 422.0 },
+      { id: 'Z3-009', unitNo: 'Z3 009', type: '4 Bedroom Zaha Villa', bua: 422.0 },
+      { id: 'Z3-010', unitNo: 'Z3 010', type: '4 Bedroom Zaha Villa', bua: 422.0 },
+      { id: 'Z3-011', unitNo: 'Z3 011', type: '4 Bedroom Zaha Villa', bua: 422.0 },
+      { id: 'Z3-012', unitNo: 'Z3 012', type: '4 Bedroom Zaha Villa', bua: 422.0 },
+      { id: 'Z3-013', unitNo: 'Z3 013', type: '4 Bedroom Zaha Villa', bua: 422.0 },
+      { id: 'Z3-014', unitNo: 'Z3 014', type: '4 Bedroom Zaha Villa', bua: 422.0 },
+      { id: 'Z3-015', unitNo: 'Z3 015', type: '4 Bedroom Zaha Villa', bua: 422.0 },
+      { id: 'Z3-016', unitNo: 'Z3 016', type: '4 Bedroom Zaha Villa', bua: 422.0 },
+      
+      // 3 Bedroom Zaha Villas
+      { id: 'Z3-017', unitNo: 'Z3 017', type: '3 Bedroom Zaha Villa', bua: 357.0 },
+      { id: 'Z3-018', unitNo: 'Z3 018', type: '3 Bedroom Zaha Villa', bua: 357.0 },
+      { id: 'Z3-019', unitNo: 'Z3 019', type: '3 Bedroom Zaha Villa', bua: 357.0 },
+      { id: 'Z3-020', unitNo: 'Z3 020', type: '3 Bedroom Zaha Villa', bua: 357.0 },
+      { id: 'Z3-021', unitNo: 'Z3 021', type: '3 Bedroom Zaha Villa', bua: 357.0 },
+      { id: 'Z3-022', unitNo: 'Z3 022', type: '3 Bedroom Zaha Villa', bua: 357.0 },
+      { id: 'Z3-023', unitNo: 'Z3 023', type: '3 Bedroom Zaha Villa', bua: 357.0 },
+      { id: 'Z3-024', unitNo: 'Z3 024', type: '3 Bedroom Zaha Villa', bua: 357.0 },
+      { id: 'Z3-025', unitNo: 'Z3 025', type: '3 Bedroom Zaha Villa', bua: 357.0 },
+      { id: 'Z3-026', unitNo: 'Z3 026', type: '3 Bedroom Zaha Villa', bua: 357.0 },
+      { id: 'Z3-027', unitNo: 'Z3 027', type: '3 Bedroom Zaha Villa', bua: 357.0 },
+      { id: 'Z3-028', unitNo: 'Z3 028', type: '3 Bedroom Zaha Villa', bua: 357.0 },
+      { id: 'Z3-029', unitNo: 'Z3 029', type: '3 Bedroom Zaha Villa', bua: 357.0 },
+      { id: 'Z3-030', unitNo: 'Z3 030', type: '3 Bedroom Zaha Villa', bua: 357.0 },
+      
+      // More 4 Bedroom Zaha Villas
+      { id: 'Z3-031', unitNo: 'Z3 031', type: '4 Bedroom Zaha Villa', bua: 422.0 },
+      { id: 'Z3-032', unitNo: 'Z3 032', type: '4 Bedroom Zaha Villa', bua: 422.0 },
+      { id: 'Z3-033', unitNo: 'Z3 033', type: '4 Bedroom Zaha Villa', bua: 422.0 },
+      { id: 'Z3-034', unitNo: 'Z3 034', type: '4 Bedroom Zaha Villa', bua: 422.0 },
+      { id: 'Z3-035', unitNo: 'Z3 035', type: '4 Bedroom Zaha Villa', bua: 422.0 },
+      { id: 'Z3-036', unitNo: 'Z3 036', type: '4 Bedroom Zaha Villa', bua: 422.0 },
+      { id: 'Z3-037', unitNo: 'Z3 037', type: '4 Bedroom Zaha Villa', bua: 422.0 },
+      { id: 'Z3-038', unitNo: 'Z3 038', type: '4 Bedroom Zaha Villa', bua: 422.0 },
+      { id: 'Z3-039', unitNo: 'Z3 039', type: '4 Bedroom Zaha Villa', bua: 422.0 },
+      { id: 'Z3-040', unitNo: 'Z3 040', type: '4 Bedroom Zaha Villa', bua: 422.0 },
+      { id: 'Z3-041', unitNo: 'Z3 041', type: '4 Bedroom Zaha Villa', bua: 422.0 },
+      { id: 'Z3-042', unitNo: 'Z3 042', type: '4 Bedroom Zaha Villa', bua: 422.0 },
+      { id: 'Z3-043', unitNo: 'Z3 043', type: '4 Bedroom Zaha Villa', bua: 422.0 }
+    ],
+    'Apartment': {
+      'Building A': [
+        // Premium apartments for buildings 44-52
+        { id: 'Z3-044-1', unitNo: 'Z3 044(1)', type: '2 Bedroom Premium Apartment', bua: 199.0 },
+        { id: 'Z3-044-2', unitNo: 'Z3 044(2)', type: '2 Bedroom Premium Apartment', bua: 199.0 },
+        { id: 'Z3-044-3', unitNo: 'Z3 044(3)', type: '2 Bedroom Premium Apartment', bua: 199.0 },
+        { id: 'Z3-044-4', unitNo: 'Z3 044(4)', type: '2 Bedroom Premium Apartment', bua: 199.0 },
+        { id: 'Z3-044-5', unitNo: 'Z3 044(5)', type: '3 Bedroom Zaha Apartment', bua: 355.0 },
+        { id: 'Z3-044-6', unitNo: 'Z3 044(6)', type: '3 Bedroom Zaha Apartment', bua: 361.0 }
+      ],
+      'Building B': [
+        { id: 'Z3-045-1', unitNo: 'Z3 045(1)', type: '2 Bedroom Premium Apartment', bua: 199.0 },
+        { id: 'Z3-045-2', unitNo: 'Z3 045(2)', type: '2 Bedroom Premium Apartment', bua: 199.0 },
+        { id: 'Z3-045-3', unitNo: 'Z3 045(3)', type: '2 Bedroom Premium Apartment', bua: 199.0 },
+        { id: 'Z3-045-4', unitNo: 'Z3 045(4)', type: '2 Bedroom Premium Apartment', bua: 199.0 },
+        { id: 'Z3-045-5', unitNo: 'Z3 045(5)', type: '3 Bedroom Zaha Apartment', bua: 355.0 },
+        { id: 'Z3-045-6', unitNo: 'Z3 045(6)', type: '3 Bedroom Zaha Apartment', bua: 361.0 }
+      ],
+      'Building C': [
+        // Small apartments and 1-bedroom apartments for buildings 53-61
+        { id: 'Z3-053-1A', unitNo: 'Z3 053(1A)', type: '2 Bedroom Small Apartment', bua: 115.0 },
+        { id: 'Z3-053-1B', unitNo: 'Z3 053(1B)', type: '1 Bedroom Apartment', bua: 79.0 },
+        { id: 'Z3-053-2A', unitNo: 'Z3 053(2A)', type: '2 Bedroom Small Apartment', bua: 115.0 },
+        { id: 'Z3-053-2B', unitNo: 'Z3 053(2B)', type: '1 Bedroom Apartment', bua: 79.0 },
+        { id: 'Z3-053-3A', unitNo: 'Z3 053(3A)', type: '2 Bedroom Small Apartment', bua: 115.0 },
+        { id: 'Z3-053-3B', unitNo: 'Z3 053(3B)', type: '1 Bedroom Apartment', bua: 79.0 },
+        { id: 'Z3-053-4A', unitNo: 'Z3 053(4A)', type: '2 Bedroom Small Apartment', bua: 115.0 },
+        { id: 'Z3-053-4B', unitNo: 'Z3 053(4B)', type: '1 Bedroom Apartment', bua: 79.0 },
+        { id: 'Z3-053-5', unitNo: 'Z3 053(5)', type: '3 Bedroom Zaha Apartment', bua: 355.0 },
+        { id: 'Z3-053-6', unitNo: 'Z3 053(6)', type: '3 Bedroom Zaha Apartment', bua: 361.0 }
+      ],
+      'Building D': [
+        { id: 'Z3-054-1A', unitNo: 'Z3 054(1A)', type: '2 Bedroom Small Apartment', bua: 115.0 },
+        { id: 'Z3-054-1B', unitNo: 'Z3 054(1B)', type: '1 Bedroom Apartment', bua: 79.0 },
+        { id: 'Z3-054-2A', unitNo: 'Z3 054(2A)', type: '2 Bedroom Small Apartment', bua: 115.0 },
+        { id: 'Z3-054-2B', unitNo: 'Z3 054(2B)', type: '1 Bedroom Apartment', bua: 79.0 },
+        { id: 'Z3-054-3A', unitNo: 'Z3 054(3A)', type: '2 Bedroom Small Apartment', bua: 115.0 },
+        { id: 'Z3-054-3B', unitNo: 'Z3 054(3B)', type: '1 Bedroom Apartment', bua: 79.0 },
+        { id: 'Z3-054-4A', unitNo: 'Z3 054(4A)', type: '2 Bedroom Small Apartment', bua: 115.0 },
+        { id: 'Z3-054-4B', unitNo: 'Z3 054(4B)', type: '1 Bedroom Apartment', bua: 79.0 },
+        { id: 'Z3-054-5', unitNo: 'Z3 054(5)', type: '3 Bedroom Zaha Apartment', bua: 355.0 },
+        { id: 'Z3-054-6', unitNo: 'Z3 054(6)', type: '3 Bedroom Zaha Apartment', bua: 361.0 }
+      ]
+    }
   },
   '5': {
-    'Apartment': {
-      'E': [
-        { id: '5E1', unitNo: 'Z5-E-101', type: 'Apartment 2BR', bua: 118.4 },
-        { id: '5E2', unitNo: 'Z5-E-102', type: 'Apartment 3BR', bua: 152.1 }
-      ],
-      'F': [
-        { id: '5F1', unitNo: 'Z5-F-101', type: 'Apartment 2BR', bua: 117.9 },
-        { id: '5F2', unitNo: 'Z5-F-102', type: 'Apartment 3BR', bua: 150.6 }
-      ],
-      'G': [
-        { id: '5G1', unitNo: 'Z5-G-101', type: 'Apartment 2BR', bua: 119.2 },
-        { id: '5G2', unitNo: 'Z5-G-102', type: 'Apartment 3BR', bua: 151.7 }
-      ]
-    },
     'Villa': [
-      { id: '5V1', unitNo: 'Z5-V-01', type: 'Villa 4BR', bua: 275.2 },
-      { id: '5V2', unitNo: 'Z5-V-02', type: 'Villa 5BR', bua: 345.1 },
-      { id: '5V3', unitNo: 'Z5-V-03', type: 'Villa 3BR', bua: 220.7 }
+      // Nameer Villas
+      { id: 'Z5-001', unitNo: 'Z5 001', type: '4 Bedroom Nameer Villa', bua: 498.0 },
+      { id: 'Z5-002', unitNo: 'Z5 002', type: '3 Bedroom Nameer Villa', bua: 427.0 },
+      { id: 'Z5-003', unitNo: 'Z5 003', type: '4 Bedroom Nameer Villa', bua: 498.0 },
+      { id: 'Z5-004', unitNo: 'Z5 004', type: '3 Bedroom Nameer Villa', bua: 427.0 },
+      { id: 'Z5-005', unitNo: 'Z5 005', type: '4 Bedroom Nameer Villa', bua: 498.0 },
+      { id: 'Z5-006', unitNo: 'Z5 006', type: '4 Bedroom Nameer Villa', bua: 498.0 },
+      { id: 'Z5-007', unitNo: 'Z5 007', type: '3 Bedroom Nameer Villa', bua: 427.0 },
+      { id: 'Z5-008', unitNo: 'Z5 008', type: '4 Bedroom Nameer Villa', bua: 498.0 },
+      { id: 'Z5-009', unitNo: 'Z5 009', type: '3 Bedroom Nameer Villa', bua: 427.0 },
+      { id: 'Z5-010', unitNo: 'Z5 010', type: '4 Bedroom Nameer Villa', bua: 498.0 },
+      { id: 'Z5-011', unitNo: 'Z5 011', type: '4 Bedroom Nameer Villa', bua: 498.0 },
+      { id: 'Z5-012', unitNo: 'Z5 012', type: '4 Bedroom Nameer Villa', bua: 498.0 },
+      { id: 'Z5-013', unitNo: 'Z5 013', type: '4 Bedroom Nameer Villa', bua: 498.0 },
+      { id: 'Z5-014', unitNo: 'Z5 014', type: '4 Bedroom Nameer Villa', bua: 498.0 },
+      { id: 'Z5-015', unitNo: 'Z5 015', type: '4 Bedroom Nameer Villa', bua: 498.0 },
+      { id: 'Z5-016', unitNo: 'Z5 016', type: '4 Bedroom Nameer Villa', bua: 498.0 },
+      { id: 'Z5-017', unitNo: 'Z5 017', type: '4 Bedroom Nameer Villa', bua: 498.0 },
+      { id: 'Z5-018', unitNo: 'Z5 018', type: '4 Bedroom Nameer Villa', bua: 498.0 },
+      { id: 'Z5-019', unitNo: 'Z5 019', type: '4 Bedroom Nameer Villa', bua: 498.0 },
+      { id: 'Z5-020', unitNo: 'Z5 020', type: '4 Bedroom Nameer Villa', bua: 498.0 },
+      { id: 'Z5-021', unitNo: 'Z5 021', type: '3 Bedroom Nameer Villa', bua: 427.0 },
+      { id: 'Z5-022', unitNo: 'Z5 022', type: '4 Bedroom Nameer Villa', bua: 498.0 },
+      { id: 'Z5-023', unitNo: 'Z5 023', type: '4 Bedroom Nameer Villa', bua: 498.0 },
+      { id: 'Z5-024', unitNo: 'Z5 024', type: '3 Bedroom Nameer Villa', bua: 427.0 },
+      { id: 'Z5-025', unitNo: 'Z5 025', type: '4 Bedroom Nameer Villa', bua: 498.0 },
+      { id: 'Z5-026', unitNo: 'Z5 026', type: '4 Bedroom Nameer Villa', bua: 498.0 },
+      { id: 'Z5-027', unitNo: 'Z5 027', type: '3 Bedroom Nameer Villa', bua: 427.0 },
+      { id: 'Z5-028', unitNo: 'Z5 028', type: '4 Bedroom Nameer Villa', bua: 498.0 },
+      { id: 'Z5-029', unitNo: 'Z5 029', type: '4 Bedroom Nameer Villa', bua: 498.0 },
+      { id: 'Z5-030', unitNo: 'Z5 030', type: '4 Bedroom Nameer Villa', bua: 498.0 },
+      { id: 'Z5-031', unitNo: 'Z5 031', type: '4 Bedroom Nameer Villa', bua: 498.0 },
+      { id: 'Z5-032', unitNo: 'Z5 032', type: '4 Bedroom Nameer Villa', bua: 498.0 },
+      { id: 'Z5-033', unitNo: 'Z5 033', type: '4 Bedroom Nameer Villa', bua: 498.0 }
     ]
   },
   '8': {
     'Villa': [
-      { id: '8V1', unitNo: 'Z8-V-01', type: 'Villa 4BR', bua: 270.8 },
-      { id: '8V2', unitNo: 'Z8-V-02', type: 'Villa 5BR', bua: 340.5 },
-      { id: '8V3', unitNo: 'Z8-V-03', type: 'Villa 6BR', bua: 410.3 },
-      { id: '8V4', unitNo: 'Z8-V-04', type: 'Villa 3BR', bua: 215.2 }
-    ]
-  },
-  'staff': {
-    'Studio': [
-      { id: 'S1', unitNo: 'SA-S-01', type: 'Studio', bua: 35.0 },
-      { id: 'S2', unitNo: 'SA-S-02', type: 'Studio', bua: 32.5 },
-      { id: 'S3', unitNo: 'SA-S-03', type: 'Studio', bua: 34.0 }
-    ],
-    'One Bedroom': [
-      { id: 'O1', unitNo: 'SA-1B-01', type: 'One Bedroom', bua: 55.0 },
-      { id: 'O2', unitNo: 'SA-1B-02', type: 'One Bedroom', bua: 56.5 },
-      { id: 'O3', unitNo: 'SA-1B-03', type: 'One Bedroom', bua: 54.0 }
-    ],
-    'Shared': [
-      { id: 'SH1', unitNo: 'SA-SH-01', type: 'Shared Unit', bua: 75.0 },
-      { id: 'SH2', unitNo: 'SA-SH-02', type: 'Shared Unit', bua: 72.5 },
-      { id: 'SH3', unitNo: 'SA-SH-03', type: 'Shared Unit', bua: 78.0 }
+      // Wajd Villas
+      { id: 'Z8-001', unitNo: 'Z8 001', type: '5 Bedroom Wajd Villa', bua: 750.0 },
+      { id: 'Z8-002', unitNo: 'Z8 002', type: '5 Bedroom Wajd Villa', bua: 750.0 },
+      { id: 'Z8-003', unitNo: 'Z8 003', type: '5 Bedroom Wajd Villa', bua: 750.0 },
+      { id: 'Z8-004', unitNo: 'Z8 004', type: '5 Bedroom Wajd Villa', bua: 750.0 },
+      { id: 'Z8-005', unitNo: 'Z8 005', type: '5 Bedroom Wajd Villa', bua: 943.0 },
+      { id: 'Z8-006', unitNo: 'Z8 006', type: '5 Bedroom Wajd Villa', bua: 760.0 },
+      { id: 'Z8-007', unitNo: 'Z8 007', type: '5 Bedroom Wajd Villa', bua: 750.0 },
+      { id: 'Z8-008', unitNo: 'Z8 008', type: '5 Bedroom Wajd Villa', bua: 760.0 },
+      { id: 'Z8-009', unitNo: 'Z8 009', type: '5 Bedroom Wajd Villa', bua: 1187.0 },
+      { id: 'Z8-010', unitNo: 'Z8 010', type: '5 Bedroom Wajd Villa', bua: 760.0 },
+      { id: 'Z8-011', unitNo: 'Z8 011', type: '5 Bedroom Wajd Villa', bua: 750.0 },
+      { id: 'Z8-012', unitNo: 'Z8 012', type: '5 Bedroom Wajd Villa', bua: 760.0 },
+      { id: 'Z8-013', unitNo: 'Z8 013', type: '5 Bedroom Wajd Villa', bua: 760.0 },
+      { id: 'Z8-014', unitNo: 'Z8 014', type: '5 Bedroom Wajd Villa', bua: 760.0 },
+      { id: 'Z8-015', unitNo: 'Z8 015', type: '5 Bedroom Wajd Villa', bua: 760.0 },
+      { id: 'Z8-016', unitNo: 'Z8 016', type: '5 Bedroom Wajd Villa', bua: 760.0 },
+      { id: 'Z8-017', unitNo: 'Z8 017', type: '5 Bedroom Wajd Villa', bua: 750.0 },
+      { id: 'Z8-018', unitNo: 'Z8 018', type: '5 Bedroom Wajd Villa', bua: 760.0 },
+      { id: 'Z8-019', unitNo: 'Z8 019', type: '5 Bedroom Wajd Villa', bua: 750.0 },
+      { id: 'Z8-020', unitNo: 'Z8 020', type: '5 Bedroom Wajd Villa', bua: 760.0 },
+      { id: 'Z8-021', unitNo: 'Z8 021', type: '5 Bedroom Wajd Villa', bua: 750.0 },
+      { id: 'Z8-022', unitNo: 'Z8 022', type: 'King Villa', bua: 1845.0 }
     ]
   }
 };

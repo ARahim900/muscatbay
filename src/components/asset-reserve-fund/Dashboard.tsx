@@ -24,12 +24,12 @@ const Dashboard: React.FC<DashboardProps> = ({ compactView, darkMode }) => {
   
   const fundingPercentage = 72;
   
-  const criticalComponents = useMemo(() => 
-    mockUpcomingReplacements.filter(item => 
-      parseInt(item.year.toString()) <= parseInt(selectedYear) + 2
-    ).length, 
-    [selectedYear]
-  );
+  const criticalComponents = useMemo(() => {
+    const selectedYearNum = parseInt(selectedYear);
+    return mockUpcomingReplacements.filter(item => {
+      return item.year <= selectedYearNum + 2;
+    }).length;
+  }, [selectedYear]);
   
   const chartColors = { balance: '#4E4456', contribution: '#6D5D7B', expenditure: '#AD9BBD' };
 
@@ -305,37 +305,42 @@ const Dashboard: React.FC<DashboardProps> = ({ compactView, darkMode }) => {
               <tbody className={`${darkMode ? 'bg-gray-900 divide-y divide-gray-700' : 'bg-white divide-y divide-gray-200'}`}>
                 {mockUpcomingReplacements
                   .sort((a, b) => a.year - b.year)
-                  .map((replacement, index) => (
-                    <tr key={index} className={`transition-colors ${darkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-50'}`}>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>{replacement.component}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>{replacement.location}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>{replacement.year}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right">
-                        <div className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>{replacement.cost.toLocaleString()}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${ 
-                          replacement.year <= parseInt(selectedYear) + 1 
-                            ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' 
-                            : replacement.year <= parseInt(selectedYear) + 3 
-                              ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' 
-                              : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
-                        }`}>
-                          {replacement.year <= parseInt(selectedYear) + 1 
-                            ? 'Critical' 
-                            : replacement.year <= parseInt(selectedYear) + 3 
-                              ? 'Warning' 
-                              : 'Good'}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
+                  .map((replacement, index) => {
+                    const selectedYearNum = parseInt(selectedYear);
+                    const status = replacement.year <= selectedYearNum + 1 
+                      ? 'Critical' 
+                      : replacement.year <= selectedYearNum + 3 
+                        ? 'Warning' 
+                        : 'Good';
+                        
+                    return (
+                      <tr key={index} className={`transition-colors ${darkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-50'}`}>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>{replacement.component}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>{replacement.location}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>{replacement.year}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right">
+                          <div className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>{replacement.cost.toLocaleString()}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${ 
+                            status === 'Critical'
+                              ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' 
+                              : status === 'Warning'
+                                ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' 
+                                : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
+                          }`}>
+                            {status}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
               </tbody>
             </table>
           </div>
