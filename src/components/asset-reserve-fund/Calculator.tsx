@@ -71,10 +71,12 @@ const Calculator: React.FC<CalculatorProps> = ({ compactView, darkMode }) => {
   const getBuildings = () => {
     if (!selectedZone || !selectedPropertyType) return [];
     
-    const buildingsInZone = mockBuildings[selectedZone];
-    if (!buildingsInZone) return [];
+    // Check if we need to show buildings for this zone+property type
+    if (mockBuildings[selectedZone] && mockBuildings[selectedZone][selectedPropertyType]) {
+      return mockBuildings[selectedZone][selectedPropertyType];
+    }
     
-    return buildingsInZone[selectedPropertyType] || [];
+    return [];
   };
 
   // Get available units based on selection
@@ -83,11 +85,12 @@ const Calculator: React.FC<CalculatorProps> = ({ compactView, darkMode }) => {
     
     if (selectedPropertyType && mockUnits[selectedZone] && mockUnits[selectedZone][selectedPropertyType]) {
       // For property types that require building selection (like apartments)
-      if (selectedBuilding && 
-          typeof mockUnits[selectedZone][selectedPropertyType] === 'object' && 
-          !Array.isArray(mockUnits[selectedZone][selectedPropertyType])) {
-        // For apartments that are organized by buildings
-        return mockUnits[selectedZone][selectedPropertyType][selectedBuilding] || [];
+      if (requiresBuildingSelection()) {
+        if (selectedBuilding && typeof mockUnits[selectedZone][selectedPropertyType] === 'object') {
+          // For apartments that are organized by buildings
+          return mockUnits[selectedZone][selectedPropertyType][selectedBuilding] || [];
+        }
+        return [];
       } else if (Array.isArray(mockUnits[selectedZone][selectedPropertyType])) {
         // For villas that are just in an array
         return mockUnits[selectedZone][selectedPropertyType];
@@ -353,7 +356,7 @@ const Calculator: React.FC<CalculatorProps> = ({ compactView, darkMode }) => {
                   <option value="">-- Select Unit --</option>
                   {getUnits().map((unit) => (
                     <option key={unit.id} value={unit.id}>
-                      {unit.unitNo} - {unit.type}
+                      {unit.unitNo} - {unit.type} ({unit.bua} sqm)
                     </option>
                   ))}
                 </select>
