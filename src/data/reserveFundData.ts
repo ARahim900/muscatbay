@@ -21,16 +21,14 @@ export const mockZones = [
 // Mock buildings data by zone and property type
 export const mockBuildings = {
   '1': {
-    'Staff Accommodation': ['B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8', 'CIF']
+    'Staff Accommodation': ['Building B1', 'Building B2', 'Building B3', 'Building B4', 'Building B5', 'Building B6', 'Building B7', 'Building B8', 'CIF Building']
   },
   '3': {
-    'Apartment': [
-      'Building 044', 'Building 045', 'Building 046', 'Building 047', 'Building 048', 
+    'Apartment': ['Building 044', 'Building 045', 'Building 046', 'Building 047', 'Building 048', 
       'Building 049', 'Building 050', 'Building 051', 'Building 052', 'Building 053', 
       'Building 054', 'Building 055', 'Building 056', 'Building 057', 'Building 058', 
       'Building 059', 'Building 060', 'Building 061', 'Building 062', 'Building 074', 
-      'Building 075'
-    ]
+      'Building 075']
   }
 };
 
@@ -38,31 +36,31 @@ export const mockBuildings = {
 export const mockUnits = {
   '1': {
     'Staff Accommodation': {
-      'B1': [
+      'Building B1': [
         { id: 'FM-B1', unitNo: 'FM B1', type: 'Staff Building B1', bua: 1615.44 }
       ],
-      'B2': [
+      'Building B2': [
         { id: 'FM-B2', unitNo: 'FM B2', type: 'Staff Building B2', bua: 1615.44 }
       ],
-      'B3': [
+      'Building B3': [
         { id: 'FM-B3', unitNo: 'FM B3', type: 'Staff Building B3', bua: 1615.44 }
       ],
-      'B4': [
+      'Building B4': [
         { id: 'FM-B4', unitNo: 'FM B4', type: 'Staff Building B4', bua: 1615.44 }
       ],
-      'B5': [
+      'Building B5': [
         { id: 'FM-B5', unitNo: 'FM B5', type: 'Staff Building B5', bua: 1615.44 }
       ],
-      'B6': [
+      'Building B6': [
         { id: 'FM-B6', unitNo: 'FM B6', type: 'Staff Building B6', bua: 1615.44 }
       ],
-      'B7': [
+      'Building B7': [
         { id: 'FM-B7', unitNo: 'FM B7', type: 'Staff Building B7', bua: 1615.44 }
       ],
-      'B8': [
+      'Building B8': [
         { id: 'FM-B8', unitNo: 'FM B8', type: 'Staff Building B8', bua: 1615.44 }
       ],
-      'CIF': [
+      'CIF Building': [
         { id: 'FM-CIF', unitNo: 'FM CIF', type: 'CIF Building', bua: 548.5 }
       ]
     }
@@ -398,3 +396,58 @@ export const mockUnits = {
     ]
   }
 };
+
+// Add the missing mock data needed for the Dashboard component
+export const mockYearlyData = [
+  { year: '2022', balance: 435000, contribution: 180000, expenditure: 65000 },
+  { year: '2023', balance: 550000, contribution: 190000, expenditure: 75000 },
+  { year: '2024', balance: 665000, contribution: 195000, expenditure: 80000 },
+  { year: '2025', balance: 795000, contribution: 200000, expenditure: 70000 },
+  { year: '2026', balance: 950000, contribution: 205000, expenditure: 50000 },
+  { year: '2027', balance: 1100000, contribution: 210000, expenditure: 60000 },
+  { year: '2028', balance: 1235000, contribution: 215000, expenditure: 80000 },
+  { year: '2029', balance: 1345000, contribution: 220000, expenditure: 110000 },
+  { year: '2030', balance: 1420000, contribution: 225000, expenditure: 150000 },
+  { year: '2031', balance: 1480000, contribution: 230000, expenditure: 170000 },
+  { year: '2032', balance: 1525000, contribution: 235000, expenditure: 190000 },
+  { year: '2033', balance: 1560000, contribution: 240000, expenditure: 205000 },
+  { year: '2034', balance: 1585000, contribution: 245000, expenditure: 220000 },
+  { year: '2035', balance: 1600000, contribution: 250000, expenditure: 235000 },
+  { year: '2036', balance: 1605000, contribution: 255000, expenditure: 250000 },
+  { year: '2037', balance: 1600000, contribution: 260000, expenditure: 265000 },
+  { year: '2038', balance: 1580000, contribution: 265000, expenditure: 285000 },
+  { year: '2039', balance: 1550000, contribution: 270000, expenditure: 300000 },
+  { year: '2040', balance: 1510000, contribution: 275000, expenditure: 315000 },
+  { year: '2041', balance: 1460000, contribution: 280000, expenditure: 330000 }
+];
+
+export const mockZoneBalances = [
+  { name: 'Zone 1 (Staff Accommodation)', value: 120000, color: '#4E4456' },
+  { name: 'Zone 2 (Village Square)', value: 80000, color: '#6D5D7B' },
+  { name: 'Zone 3 (Zaha)', value: 290000, color: '#AD9BBD' },
+  { name: 'Zone 5 (Nameer)', value: 195000, color: '#E4BCF7' },
+  { name: 'Zone 8 (Wajd)', value: 110000, color: '#8C7A99' }
+];
+
+export const mockAssetCategories = [
+  { name: 'Structural', value: 3100000, color: '#4E4456' },
+  { name: 'MEP', value: 2700000, color: '#6D5D7B' },
+  { name: 'Civil Works', value: 1800000, color: '#AD9BBD' },
+  { name: 'Landscape', value: 950000, color: '#E4BCF7' },
+  { name: 'Common Areas', value: 650000, color: '#8C7A99' }
+];
+
+export const mockUpcomingReplacements = [
+  { component: 'Swimming Pool Pump System', location: 'Zone 3 Community Pool', year: 2025, cost: 12500 },
+  { component: 'HVAC System', location: 'Village Square', year: 2025, cost: 85000 },
+  { component: 'External Painting', location: 'Zone 1 Staff Buildings', year: 2025, cost: 45000 },
+  { component: 'Landscaping Renovation', location: 'Zone 5 Common Areas', year: 2026, cost: 32000 },
+  { component: 'Security System Upgrade', location: 'All Zones', year: 2026, cost: 65000 },
+  { component: 'Tennis Court Resurfacing', location: 'Zone 3 Sports Area', year: 2026, cost: 18500 },
+  { component: 'Walkway & Pavement Renovation', location: 'Zones 3 & 5', year: 2027, cost: 42000 },
+  { component: 'Clubhouse Renovation', location: 'Zone 8', year: 2027, cost: 125000 },
+  { component: 'Water Feature Repair', location: 'Main Entrance', year: 2027, cost: 28000 },
+  { component: 'Street Lighting Replacement', location: 'All Zones', year: 2028, cost: 56000 },
+  { component: 'Irrigation System Upgrade', location: 'All Landscaped Areas', year: 2028, cost: 41500 },
+  { component: 'Gym Equipment Replacement', location: 'Fitness Center', year: 2028, cost: 35000 }
+];
