@@ -20,9 +20,7 @@ import STPAnalytics from '@/pages/STPAnalytics';
 import Reports from '@/pages/Reports';
 import Admin from '@/pages/Admin';
 import OperatingExpenses from '@/pages/OperatingExpenses';
-import PropertyManagement from '@/pages/PropertyManagement';
 import ServiceCharges from '@/pages/ServiceCharges';
-import ALM from '@/pages/ALM';
 import NotFound from '@/pages/NotFound';
 import Layout from '@/components/layout/Layout';
 
@@ -30,7 +28,6 @@ function App() {
   return (
     <Routes>
       <Route path="/" element={<Layout><Index /></Layout>} />
-      <Route path="/alm" element={<Layout><ALM /></Layout>} />
       <Route path="/contracts" element={<Layout><Contracts /></Layout>} />
       <Route path="/projects" element={<Layout><Projects /></Layout>} />
       <Route path="/water" element={<Layout><Water /></Layout>} />
@@ -47,7 +44,6 @@ function App() {
       <Route path="/reports" element={<Layout><Reports /></Layout>} />
       <Route path="/admin" element={<Layout><Admin /></Layout>} />
       <Route path="/operating-expenses" element={<Layout><OperatingExpenses /></Layout>} />
-      <Route path="/property-management" element={<Layout><PropertyManagement /></Layout>} />
       <Route path="/service-charges" element={<Layout><ServiceCharges /></Layout>} />
       <Route path="/auth" element={<Auth />} />
       <Route path="*" element={<NotFound />} />

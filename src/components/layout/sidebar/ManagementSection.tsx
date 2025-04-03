@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { PackageOpen, FileCog, FileSpreadsheet, Building2, Calculator, CreditCard } from 'lucide-react';
+import { FileCog, FileSpreadsheet, Calculator, CreditCard } from 'lucide-react';
 import SidebarSection from './SidebarSection';
 import SidebarLink, { SidebarLinkProps } from './SidebarLink';
 
@@ -25,15 +25,6 @@ const ManagementSection: React.FC<ManagementSectionProps> = ({
       collapsed={collapsed}
     >
       <SidebarLink 
-        to="/alm" 
-        icon={PackageOpen} 
-        label="Asset Lifecycle" 
-        collapsed={collapsed} 
-        isMobile={isMobile}
-        iconColor="purple"
-        bgColor="purple"
-      />
-      <SidebarLink 
         to="/contracts" 
         icon={FileCog} 
         label="Contracts" 
@@ -44,13 +35,6 @@ const ManagementSection: React.FC<ManagementSectionProps> = ({
         to="/operating-expenses" 
         icon={FileSpreadsheet} 
         label="Operating Expenses" 
-        collapsed={collapsed} 
-        isMobile={isMobile} 
-      />
-      <SidebarLink 
-        to="/property-management" 
-        icon={Building2} 
-        label="Property Management" 
         collapsed={collapsed} 
         isMobile={isMobile} 
       />

@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
-import { Building2, Droplets, Zap, Package } from 'lucide-react';
+import { Droplets, Zap } from 'lucide-react';
 import QuickAccessLinks from '@/components/dashboard/QuickAccessLinks';
 
 const Index = () => {
@@ -17,28 +17,6 @@ const Index = () => {
         <QuickAccessLinks className="mb-6" />
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <Card className="p-6 hover:shadow-lg transition-shadow">
-            <div className="flex flex-col items-center">
-              <div className="w-16 h-16 rounded-full bg-purple-100 flex items-center justify-center mb-4">
-                <Package className="h-8 w-8 text-purple-600" />
-              </div>
-              <h2 className="text-xl font-semibold mb-2">Asset Lifecycle Management</h2>
-              <p className="text-center text-muted-foreground mb-4">Track and manage all assets across the property</p>
-              <Link to="/alm" className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors">Access Module</Link>
-            </div>
-          </Card>
-          
-          <Card className="p-6 hover:shadow-lg transition-shadow">
-            <div className="flex flex-col items-center">
-              <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center mb-4">
-                <Building2 className="h-8 w-8 text-blue-600" />
-              </div>
-              <h2 className="text-xl font-semibold mb-2">Property Management</h2>
-              <p className="text-center text-muted-foreground mb-4">Manage properties, tenants, and maintenance requests</p>
-              <Link to="/property-management" className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">Access Module</Link>
-            </div>
-          </Card>
-          
           <Card className="p-6 hover:shadow-lg transition-shadow">
             <div className="flex flex-col items-center">
               <div className="w-16 h-16 rounded-full bg-amber-100 flex items-center justify-center mb-4">

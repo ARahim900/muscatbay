@@ -5,12 +5,8 @@ import {
   Droplets, 
   Zap, 
   Factory, 
-  Wind, 
-  FileText, 
   AirVent, 
-  Shield, 
-  FolderKanban,
-  Clock,
+  FileText, 
   Star
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -71,15 +67,6 @@ const quickLinks: QuickAccessLink[] = [
     url: '/contracts',
     color: 'text-purple-500',
     bgColor: 'bg-purple-50'
-  },
-  {
-    id: 'asset-lifecycle',
-    title: 'Asset Lifecycle',
-    description: 'Manage asset lifecycle and maintenance',
-    icon: <Clock className="h-5 w-5 text-sky-500" />,
-    url: '/alm',
-    color: 'text-sky-500',
-    bgColor: 'bg-sky-50'
   }
 ];
 
