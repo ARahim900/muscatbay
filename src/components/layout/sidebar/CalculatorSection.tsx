@@ -1,8 +1,6 @@
 
 import React from 'react';
-import { Calculator } from 'lucide-react';
 import SidebarSection from './SidebarSection';
-import SidebarLink, { SidebarLinkProps } from './SidebarLink';
 
 interface CalculatorSectionProps {
   collapsed?: boolean;
@@ -19,22 +17,8 @@ const CalculatorSection: React.FC<CalculatorSectionProps> = ({
   openEmbeddedApp,
   externalApps = {}
 }) => {
-  return (
-    <SidebarSection
-      title="Calculator"
-      collapsed={collapsed}
-    >
-      <SidebarLink 
-        to="/reserve-fund-calculator" 
-        icon={Calculator} 
-        label="Reserve Fund Calculator" 
-        collapsed={collapsed} 
-        isMobile={isMobile} 
-        iconColor="green" 
-        bgColor="green" 
-      />
-    </SidebarSection>
-  );
+  // Return an empty section since we're removing the calculator functionality
+  return null;
 };
 
 export default CalculatorSection;
