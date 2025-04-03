@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
 import { BarChart3, FileSpreadsheet, Calendar, Download, LineChart as LineChartIcon, PieChart as PieChartIcon, BarChart as BarChartIcon, Activity, Clock, Package, Building, Landmark, Wrench, AlertTriangle, Zap, Droplets, Calculator } from 'lucide-react';
@@ -6,6 +7,36 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Link } from 'react-router-dom';
+
+// Mock data for ALM page
+const mockYearlyData = [
+  { year: '2021', balance: 52636, contribution: 52636, expenditure: 0 },
+  { year: '2022', balance: 106324, contribution: 52899, expenditure: 0 },
+  { year: '2023', balance: 161082, contribution: 53163, expenditure: 0 },
+  { year: '2024', balance: 216927, contribution: 53429, expenditure: 0 },
+  { year: '2025', balance: 273878, contribution: 53696, expenditure: 0 },
+  { year: '2026', balance: 331951, contribution: 53965, expenditure: 0 },
+  { year: '2027', balance: 391164, contribution: 54235, expenditure: 0 },
+  { year: '2028', balance: 451538, contribution: 54506, expenditure: 0 },
+  { year: '2029', balance: 513089, contribution: 54778, expenditure: 0 },
+  { year: '2030', balance: 559944, contribution: 55052, expenditure: 15893 }
+];
+
+const mockAssetCategories = [
+  { name: 'Infrastructure', value: 2000000, color: '#4E4456' },
+  { name: 'MEP Systems', value: 1500000, color: '#6D5D7B' },
+  { name: 'Finishes/Structure', value: 500000, color: '#8F7C9B' },
+  { name: 'Landscaping', value: 500000, color: '#CBB9DB' }
+];
+
+const mockUpcomingReplacements = [
+  { component: 'Helipad Electrical Works', location: 'Master Community', year: 2025, cost: 10920 },
+  { component: 'Fire Extinguishers', location: 'Typical Buildings', year: 2026, cost: 129 },
+  { component: 'Lagoon Infrastructure', location: 'Master Community', year: 2027, cost: 42000 },
+  { component: 'Elevator Wire Ropes', location: 'Typical Buildings', year: 2027, cost: 2450 },
+  { component: 'External Wall Paint', location: 'Typical Buildings', year: 2028, cost: 1465 },
+  { component: 'Tree Uplighters', location: 'Zone 3', year: 2031, cost: 1120 }
+];
 
 const ALM = () => {
   const [selectedYear, setSelectedYear] = useState('2025');
