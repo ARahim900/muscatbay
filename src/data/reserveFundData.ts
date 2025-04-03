@@ -26,7 +26,12 @@ export const mockBuildings = {
     'CIF Building': ['CIF']
   },
   '3': {
-    'Apartment': ['Building A', 'Building B', 'Building C', 'Building D'],
+    'Apartment': [
+      'Z3 044-052 (Premium Apartments)', 
+      'Z3 053-061 (Small Apartments)', 
+      'Z3 062 (Premium Apartments)',
+      'Z3 074-075 (Premium Apartments)'
+    ],
     'Villa': []
   },
   '5': {
@@ -42,54 +47,54 @@ export const mockUnits = {
   '1': {
     'Staff Accommodation': {
       'Building 1': [
-        { id: 'B1-1', unitNo: 'B1-001', type: 'Studio', bua: 35.0 },
-        { id: 'B1-2', unitNo: 'B1-002', type: 'Studio', bua: 35.0 },
-        { id: 'B1-3', unitNo: 'B1-003', type: 'One Bedroom', bua: 55.0 },
-        { id: 'B1-4', unitNo: 'B1-004', type: 'One Bedroom', bua: 55.0 }
+        { id: 'B1-001', unitNo: 'B1-001', type: 'Studio', bua: 35.0 },
+        { id: 'B1-002', unitNo: 'B1-002', type: 'Studio', bua: 35.0 },
+        { id: 'B1-003', unitNo: 'B1-003', type: 'One Bedroom', bua: 55.0 },
+        { id: 'B1-004', unitNo: 'B1-004', type: 'One Bedroom', bua: 55.0 }
       ],
       'Building 2': [
-        { id: 'B2-1', unitNo: 'B2-001', type: 'Studio', bua: 32.5 },
-        { id: 'B2-2', unitNo: 'B2-002', type: 'Studio', bua: 32.5 },
-        { id: 'B2-3', unitNo: 'B2-003', type: 'One Bedroom', bua: 56.5 },
-        { id: 'B2-4', unitNo: 'B2-004', type: 'One Bedroom', bua: 56.5 }
+        { id: 'B2-001', unitNo: 'B2-001', type: 'Studio', bua: 32.5 },
+        { id: 'B2-002', unitNo: 'B2-002', type: 'Studio', bua: 32.5 },
+        { id: 'B2-003', unitNo: 'B2-003', type: 'One Bedroom', bua: 56.5 },
+        { id: 'B2-004', unitNo: 'B2-004', type: 'One Bedroom', bua: 56.5 }
       ],
       'Building 3': [
-        { id: 'B3-1', unitNo: 'B3-001', type: 'Studio', bua: 34.0 },
-        { id: 'B3-2', unitNo: 'B3-002', type: 'Studio', bua: 34.0 },
-        { id: 'B3-3', unitNo: 'B3-003', type: 'One Bedroom', bua: 54.0 },
-        { id: 'B3-4', unitNo: 'B3-004', type: 'Shared Unit', bua: 75.0 }
+        { id: 'B3-001', unitNo: 'B3-001', type: 'Studio', bua: 34.0 },
+        { id: 'B3-002', unitNo: 'B3-002', type: 'Studio', bua: 34.0 },
+        { id: 'B3-003', unitNo: 'B3-003', type: 'One Bedroom', bua: 54.0 },
+        { id: 'B3-004', unitNo: 'B3-004', type: 'Shared Unit', bua: 75.0 }
       ],
       'Building 4': [
-        { id: 'B4-1', unitNo: 'B4-001', type: 'Studio', bua: 35.0 },
-        { id: 'B4-2', unitNo: 'B4-002', type: 'One Bedroom', bua: 55.0 },
-        { id: 'B4-3', unitNo: 'B4-003', type: 'Shared Unit', bua: 72.5 }
+        { id: 'B4-001', unitNo: 'B4-001', type: 'Studio', bua: 35.0 },
+        { id: 'B4-002', unitNo: 'B4-002', type: 'One Bedroom', bua: 55.0 },
+        { id: 'B4-003', unitNo: 'B4-003', type: 'Shared Unit', bua: 72.5 }
       ],
       'Building 5': [
-        { id: 'B5-1', unitNo: 'B5-001', type: 'Studio', bua: 35.0 },
-        { id: 'B5-2', unitNo: 'B5-002', type: 'One Bedroom', bua: 55.0 },
-        { id: 'B5-3', unitNo: 'B5-003', type: 'Shared Unit', bua: 78.0 }
+        { id: 'B5-001', unitNo: 'B5-001', type: 'Studio', bua: 35.0 },
+        { id: 'B5-002', unitNo: 'B5-002', type: 'One Bedroom', bua: 55.0 },
+        { id: 'B5-003', unitNo: 'B5-003', type: 'Shared Unit', bua: 78.0 }
       ],
       'Building 6': [
-        { id: 'B6-1', unitNo: 'B6-001', type: 'Studio', bua: 35.0 },
-        { id: 'B6-2', unitNo: 'B6-002', type: 'One Bedroom', bua: 55.0 },
-        { id: 'B6-3', unitNo: 'B6-003', type: 'Shared Unit', bua: 78.0 }
+        { id: 'B6-001', unitNo: 'B6-001', type: 'Studio', bua: 35.0 },
+        { id: 'B6-002', unitNo: 'B6-002', type: 'One Bedroom', bua: 55.0 },
+        { id: 'B6-003', unitNo: 'B6-003', type: 'Shared Unit', bua: 78.0 }
       ],
       'Building 7': [
-        { id: 'B7-1', unitNo: 'B7-001', type: 'Studio', bua: 35.0 },
-        { id: 'B7-2', unitNo: 'B7-002', type: 'One Bedroom', bua: 55.0 },
-        { id: 'B7-3', unitNo: 'B7-003', type: 'Shared Unit', bua: 78.0 }
+        { id: 'B7-001', unitNo: 'B7-001', type: 'Studio', bua: 35.0 },
+        { id: 'B7-002', unitNo: 'B7-002', type: 'One Bedroom', bua: 55.0 },
+        { id: 'B7-003', unitNo: 'B7-003', type: 'Shared Unit', bua: 78.0 }
       ],
       'Building 8': [
-        { id: 'B8-1', unitNo: 'B8-001', type: 'Studio', bua: 35.0 },
-        { id: 'B8-2', unitNo: 'B8-002', type: 'One Bedroom', bua: 55.0 },
-        { id: 'B8-3', unitNo: 'B8-003', type: 'Shared Unit', bua: 78.0 }
+        { id: 'B8-001', unitNo: 'B8-001', type: 'Studio', bua: 35.0 },
+        { id: 'B8-002', unitNo: 'B8-002', type: 'One Bedroom', bua: 55.0 },
+        { id: 'B8-003', unitNo: 'B8-003', type: 'Shared Unit', bua: 78.0 }
       ]
     },
     'CIF Building': {
       'CIF': [
-        { id: 'CIF-1', unitNo: 'CIF-001', type: 'Office', bua: 120.0 },
-        { id: 'CIF-2', unitNo: 'CIF-002', type: 'Office', bua: 150.0 },
-        { id: 'CIF-3', unitNo: 'CIF-003', type: 'Meeting Space', bua: 200.0 }
+        { id: 'CIF-001', unitNo: 'CIF-001', type: 'Office', bua: 120.0 },
+        { id: 'CIF-002', unitNo: 'CIF-002', type: 'Office', bua: 150.0 },
+        { id: 'CIF-003', unitNo: 'CIF-003', type: 'Meeting Space', bua: 200.0 }
       ]
     }
   },
@@ -145,24 +150,72 @@ export const mockUnits = {
       { id: 'Z3-043', unitNo: 'Z3 043', type: '4 Bedroom Zaha Villa', bua: 422.0 }
     ],
     'Apartment': {
-      'Building A': [
+      'Z3 044-052 (Premium Apartments)': [
         // Premium apartments for buildings 44-52
         { id: 'Z3-044-1', unitNo: 'Z3 044(1)', type: '2 Bedroom Premium Apartment', bua: 199.0 },
         { id: 'Z3-044-2', unitNo: 'Z3 044(2)', type: '2 Bedroom Premium Apartment', bua: 199.0 },
         { id: 'Z3-044-3', unitNo: 'Z3 044(3)', type: '2 Bedroom Premium Apartment', bua: 199.0 },
         { id: 'Z3-044-4', unitNo: 'Z3 044(4)', type: '2 Bedroom Premium Apartment', bua: 199.0 },
         { id: 'Z3-044-5', unitNo: 'Z3 044(5)', type: '3 Bedroom Zaha Apartment', bua: 355.0 },
-        { id: 'Z3-044-6', unitNo: 'Z3 044(6)', type: '3 Bedroom Zaha Apartment', bua: 361.0 }
-      ],
-      'Building B': [
+        { id: 'Z3-044-6', unitNo: 'Z3 044(6)', type: '3 Bedroom Zaha Apartment', bua: 361.0 },
+        
         { id: 'Z3-045-1', unitNo: 'Z3 045(1)', type: '2 Bedroom Premium Apartment', bua: 199.0 },
         { id: 'Z3-045-2', unitNo: 'Z3 045(2)', type: '2 Bedroom Premium Apartment', bua: 199.0 },
         { id: 'Z3-045-3', unitNo: 'Z3 045(3)', type: '2 Bedroom Premium Apartment', bua: 199.0 },
         { id: 'Z3-045-4', unitNo: 'Z3 045(4)', type: '2 Bedroom Premium Apartment', bua: 199.0 },
         { id: 'Z3-045-5', unitNo: 'Z3 045(5)', type: '3 Bedroom Zaha Apartment', bua: 355.0 },
-        { id: 'Z3-045-6', unitNo: 'Z3 045(6)', type: '3 Bedroom Zaha Apartment', bua: 361.0 }
+        { id: 'Z3-045-6', unitNo: 'Z3 045(6)', type: '3 Bedroom Zaha Apartment', bua: 361.0 },
+        
+        { id: 'Z3-046-1', unitNo: 'Z3 046(1)', type: '2 Bedroom Premium Apartment', bua: 199.0 },
+        { id: 'Z3-046-2', unitNo: 'Z3 046(2)', type: '2 Bedroom Premium Apartment', bua: 199.0 },
+        { id: 'Z3-046-3', unitNo: 'Z3 046(3)', type: '2 Bedroom Premium Apartment', bua: 199.0 },
+        { id: 'Z3-046-4', unitNo: 'Z3 046(4)', type: '2 Bedroom Premium Apartment', bua: 199.0 },
+        { id: 'Z3-046-5', unitNo: 'Z3 046(5)', type: '3 Bedroom Zaha Apartment', bua: 355.0 },
+        { id: 'Z3-046-6', unitNo: 'Z3 046(6)', type: '3 Bedroom Zaha Apartment', bua: 361.0 },
+        
+        { id: 'Z3-047-1', unitNo: 'Z3 047(1)', type: '2 Bedroom Premium Apartment', bua: 199.0 },
+        { id: 'Z3-047-2', unitNo: 'Z3 047(2)', type: '2 Bedroom Premium Apartment', bua: 199.0 },
+        { id: 'Z3-047-3', unitNo: 'Z3 047(3)', type: '2 Bedroom Premium Apartment', bua: 199.0 },
+        { id: 'Z3-047-4', unitNo: 'Z3 047(4)', type: '2 Bedroom Premium Apartment', bua: 199.0 },
+        { id: 'Z3-047-5', unitNo: 'Z3 047(5)', type: '3 Bedroom Zaha Apartment', bua: 355.0 },
+        { id: 'Z3-047-6', unitNo: 'Z3 047(6)', type: '3 Bedroom Zaha Apartment', bua: 361.0 },
+        
+        { id: 'Z3-048-1', unitNo: 'Z3 048(1)', type: '2 Bedroom Premium Apartment', bua: 199.0 },
+        { id: 'Z3-048-2', unitNo: 'Z3 048(2)', type: '2 Bedroom Premium Apartment', bua: 199.0 },
+        { id: 'Z3-048-3', unitNo: 'Z3 048(3)', type: '2 Bedroom Premium Apartment', bua: 199.0 },
+        { id: 'Z3-048-4', unitNo: 'Z3 048(4)', type: '2 Bedroom Premium Apartment', bua: 199.0 },
+        { id: 'Z3-048-5', unitNo: 'Z3 048(5)', type: '3 Bedroom Zaha Apartment', bua: 355.0 },
+        { id: 'Z3-048-6', unitNo: 'Z3 048(6)', type: '3 Bedroom Zaha Apartment', bua: 361.0 },
+        
+        { id: 'Z3-049-1', unitNo: 'Z3 049(1)', type: '2 Bedroom Premium Apartment', bua: 199.0 },
+        { id: 'Z3-049-2', unitNo: 'Z3 049(2)', type: '2 Bedroom Premium Apartment', bua: 199.0 },
+        { id: 'Z3-049-3', unitNo: 'Z3 049(3)', type: '2 Bedroom Premium Apartment', bua: 199.0 },
+        { id: 'Z3-049-4', unitNo: 'Z3 049(4)', type: '2 Bedroom Premium Apartment', bua: 199.0 },
+        { id: 'Z3-049-5', unitNo: 'Z3 049(5)', type: '3 Bedroom Zaha Apartment', bua: 355.0 },
+        { id: 'Z3-049-6', unitNo: 'Z3 049(6)', type: '3 Bedroom Zaha Apartment', bua: 361.0 },
+        
+        { id: 'Z3-050-1', unitNo: 'Z3 050(1)', type: '2 Bedroom Premium Apartment', bua: 199.0 },
+        { id: 'Z3-050-2', unitNo: 'Z3 050(2)', type: '2 Bedroom Premium Apartment', bua: 199.0 },
+        { id: 'Z3-050-3', unitNo: 'Z3 050(3)', type: '2 Bedroom Premium Apartment', bua: 199.0 },
+        { id: 'Z3-050-4', unitNo: 'Z3 050(4)', type: '2 Bedroom Premium Apartment', bua: 199.0 },
+        { id: 'Z3-050-5', unitNo: 'Z3 050(5)', type: '3 Bedroom Zaha Apartment', bua: 355.0 },
+        { id: 'Z3-050-6', unitNo: 'Z3 050(6)', type: '3 Bedroom Zaha Apartment', bua: 361.0 },
+        
+        { id: 'Z3-051-1', unitNo: 'Z3 051(1)', type: '2 Bedroom Premium Apartment', bua: 199.0 },
+        { id: 'Z3-051-2', unitNo: 'Z3 051(2)', type: '2 Bedroom Premium Apartment', bua: 199.0 },
+        { id: 'Z3-051-3', unitNo: 'Z3 051(3)', type: '2 Bedroom Premium Apartment', bua: 199.0 },
+        { id: 'Z3-051-4', unitNo: 'Z3 051(4)', type: '2 Bedroom Premium Apartment', bua: 199.0 },
+        { id: 'Z3-051-5', unitNo: 'Z3 051(5)', type: '3 Bedroom Zaha Apartment', bua: 355.0 },
+        { id: 'Z3-051-6', unitNo: 'Z3 051(6)', type: '3 Bedroom Zaha Apartment', bua: 361.0 },
+        
+        { id: 'Z3-052-1', unitNo: 'Z3 052(1)', type: '2 Bedroom Premium Apartment', bua: 199.0 },
+        { id: 'Z3-052-2', unitNo: 'Z3 052(2)', type: '2 Bedroom Premium Apartment', bua: 199.0 },
+        { id: 'Z3-052-3', unitNo: 'Z3 052(3)', type: '2 Bedroom Premium Apartment', bua: 199.0 },
+        { id: 'Z3-052-4', unitNo: 'Z3 052(4)', type: '2 Bedroom Premium Apartment', bua: 199.0 },
+        { id: 'Z3-052-5', unitNo: 'Z3 052(5)', type: '3 Bedroom Zaha Apartment', bua: 355.0 },
+        { id: 'Z3-052-6', unitNo: 'Z3 052(6)', type: '3 Bedroom Zaha Apartment', bua: 361.0 },
       ],
-      'Building C': [
+      'Z3 053-061 (Small Apartments)': [
         // Small apartments and 1-bedroom apartments for buildings 53-61
         { id: 'Z3-053-1A', unitNo: 'Z3 053(1A)', type: '2 Bedroom Small Apartment', bua: 115.0 },
         { id: 'Z3-053-1B', unitNo: 'Z3 053(1B)', type: '1 Bedroom Apartment', bua: 79.0 },
@@ -173,9 +226,8 @@ export const mockUnits = {
         { id: 'Z3-053-4A', unitNo: 'Z3 053(4A)', type: '2 Bedroom Small Apartment', bua: 115.0 },
         { id: 'Z3-053-4B', unitNo: 'Z3 053(4B)', type: '1 Bedroom Apartment', bua: 79.0 },
         { id: 'Z3-053-5', unitNo: 'Z3 053(5)', type: '3 Bedroom Zaha Apartment', bua: 355.0 },
-        { id: 'Z3-053-6', unitNo: 'Z3 053(6)', type: '3 Bedroom Zaha Apartment', bua: 361.0 }
-      ],
-      'Building D': [
+        { id: 'Z3-053-6', unitNo: 'Z3 053(6)', type: '3 Bedroom Zaha Apartment', bua: 361.0 },
+        
         { id: 'Z3-054-1A', unitNo: 'Z3 054(1A)', type: '2 Bedroom Small Apartment', bua: 115.0 },
         { id: 'Z3-054-1B', unitNo: 'Z3 054(1B)', type: '1 Bedroom Apartment', bua: 79.0 },
         { id: 'Z3-054-2A', unitNo: 'Z3 054(2A)', type: '2 Bedroom Small Apartment', bua: 115.0 },
@@ -185,7 +237,107 @@ export const mockUnits = {
         { id: 'Z3-054-4A', unitNo: 'Z3 054(4A)', type: '2 Bedroom Small Apartment', bua: 115.0 },
         { id: 'Z3-054-4B', unitNo: 'Z3 054(4B)', type: '1 Bedroom Apartment', bua: 79.0 },
         { id: 'Z3-054-5', unitNo: 'Z3 054(5)', type: '3 Bedroom Zaha Apartment', bua: 355.0 },
-        { id: 'Z3-054-6', unitNo: 'Z3 054(6)', type: '3 Bedroom Zaha Apartment', bua: 361.0 }
+        { id: 'Z3-054-6', unitNo: 'Z3 054(6)', type: '3 Bedroom Zaha Apartment', bua: 361.0 },
+        
+        { id: 'Z3-055-1A', unitNo: 'Z3 055(1A)', type: '2 Bedroom Small Apartment', bua: 115.0 },
+        { id: 'Z3-055-1B', unitNo: 'Z3 055(1B)', type: '1 Bedroom Apartment', bua: 79.0 },
+        { id: 'Z3-055-2A', unitNo: 'Z3 055(2A)', type: '2 Bedroom Small Apartment', bua: 115.0 },
+        { id: 'Z3-055-2B', unitNo: 'Z3 055(2B)', type: '1 Bedroom Apartment', bua: 79.0 },
+        { id: 'Z3-055-3A', unitNo: 'Z3 055(3A)', type: '2 Bedroom Small Apartment', bua: 115.0 },
+        { id: 'Z3-055-3B', unitNo: 'Z3 055(3B)', type: '1 Bedroom Apartment', bua: 79.0 },
+        { id: 'Z3-055-4A', unitNo: 'Z3 055(4A)', type: '2 Bedroom Small Apartment', bua: 115.0 },
+        { id: 'Z3-055-4B', unitNo: 'Z3 055(4B)', type: '1 Bedroom Apartment', bua: 79.0 },
+        { id: 'Z3-055-5', unitNo: 'Z3 055(5)', type: '3 Bedroom Zaha Apartment', bua: 355.0 },
+        { id: 'Z3-055-6', unitNo: 'Z3 055(6)', type: '3 Bedroom Zaha Apartment', bua: 361.0 },
+        
+        { id: 'Z3-056-1A', unitNo: 'Z3 056(1A)', type: '2 Bedroom Small Apartment', bua: 115.0 },
+        { id: 'Z3-056-1B', unitNo: 'Z3 056(1B)', type: '1 Bedroom Apartment', bua: 79.0 },
+        { id: 'Z3-056-2A', unitNo: 'Z3 056(2A)', type: '2 Bedroom Small Apartment', bua: 115.0 },
+        { id: 'Z3-056-2B', unitNo: 'Z3 056(2B)', type: '1 Bedroom Apartment', bua: 79.0 },
+        { id: 'Z3-056-3A', unitNo: 'Z3 056(3A)', type: '2 Bedroom Small Apartment', bua: 115.0 },
+        { id: 'Z3-056-3B', unitNo: 'Z3 056(3B)', type: '1 Bedroom Apartment', bua: 79.0 },
+        { id: 'Z3-056-4A', unitNo: 'Z3 056(4A)', type: '2 Bedroom Small Apartment', bua: 115.0 },
+        { id: 'Z3-056-4B', unitNo: 'Z3 056(4B)', type: '1 Bedroom Apartment', bua: 79.0 },
+        { id: 'Z3-056-5', unitNo: 'Z3 056(5)', type: '3 Bedroom Zaha Apartment', bua: 355.0 },
+        { id: 'Z3-056-6', unitNo: 'Z3 056(6)', type: '3 Bedroom Zaha Apartment', bua: 361.0 },
+        
+        { id: 'Z3-057-1A', unitNo: 'Z3 057(1A)', type: '2 Bedroom Small Apartment', bua: 115.0 },
+        { id: 'Z3-057-1B', unitNo: 'Z3 057(1B)', type: '1 Bedroom Apartment', bua: 79.0 },
+        { id: 'Z3-057-2A', unitNo: 'Z3 057(2A)', type: '2 Bedroom Small Apartment', bua: 115.0 },
+        { id: 'Z3-057-2B', unitNo: 'Z3 057(2B)', type: '1 Bedroom Apartment', bua: 79.0 },
+        { id: 'Z3-057-3A', unitNo: 'Z3 057(3A)', type: '2 Bedroom Small Apartment', bua: 115.0 },
+        { id: 'Z3-057-3B', unitNo: 'Z3 057(3B)', type: '1 Bedroom Apartment', bua: 79.0 },
+        { id: 'Z3-057-4A', unitNo: 'Z3 057(4A)', type: '2 Bedroom Small Apartment', bua: 115.0 },
+        { id: 'Z3-057-4B', unitNo: 'Z3 057(4B)', type: '1 Bedroom Apartment', bua: 79.0 },
+        { id: 'Z3-057-5', unitNo: 'Z3 057(5)', type: '3 Bedroom Zaha Apartment', bua: 355.0 },
+        { id: 'Z3-057-6', unitNo: 'Z3 057(6)', type: '3 Bedroom Zaha Apartment', bua: 361.0 },
+        
+        { id: 'Z3-058-1A', unitNo: 'Z3 058(1A)', type: '2 Bedroom Small Apartment', bua: 115.0 },
+        { id: 'Z3-058-1B', unitNo: 'Z3 058(1B)', type: '1 Bedroom Apartment', bua: 79.0 },
+        { id: 'Z3-058-2A', unitNo: 'Z3 058(2A)', type: '2 Bedroom Small Apartment', bua: 115.0 },
+        { id: 'Z3-058-2B', unitNo: 'Z3 058(2B)', type: '1 Bedroom Apartment', bua: 79.0 },
+        { id: 'Z3-058-3A', unitNo: 'Z3 058(3A)', type: '2 Bedroom Small Apartment', bua: 115.0 },
+        { id: 'Z3-058-3B', unitNo: 'Z3 058(3B)', type: '1 Bedroom Apartment', bua: 79.0 },
+        { id: 'Z3-058-4A', unitNo: 'Z3 058(4A)', type: '2 Bedroom Small Apartment', bua: 115.0 },
+        { id: 'Z3-058-4B', unitNo: 'Z3 058(4B)', type: '1 Bedroom Apartment', bua: 79.0 },
+        { id: 'Z3-058-5', unitNo: 'Z3 058(5)', type: '3 Bedroom Zaha Apartment', bua: 355.0 },
+        { id: 'Z3-058-6', unitNo: 'Z3 058(6)', type: '3 Bedroom Zaha Apartment', bua: 361.0 },
+        
+        { id: 'Z3-059-1A', unitNo: 'Z3 059(1A)', type: '2 Bedroom Small Apartment', bua: 115.0 },
+        { id: 'Z3-059-1B', unitNo: 'Z3 059(1B)', type: '1 Bedroom Apartment', bua: 79.0 },
+        { id: 'Z3-059-2A', unitNo: 'Z3 059(2A)', type: '2 Bedroom Small Apartment', bua: 115.0 },
+        { id: 'Z3-059-2B', unitNo: 'Z3 059(2B)', type: '1 Bedroom Apartment', bua: 79.0 },
+        { id: 'Z3-059-3A', unitNo: 'Z3 059(3A)', type: '2 Bedroom Small Apartment', bua: 115.0 },
+        { id: 'Z3-059-3B', unitNo: 'Z3 059(3B)', type: '1 Bedroom Apartment', bua: 79.0 },
+        { id: 'Z3-059-4A', unitNo: 'Z3 059(4A)', type: '2 Bedroom Small Apartment', bua: 115.0 },
+        { id: 'Z3-059-4B', unitNo: 'Z3 059(4B)', type: '1 Bedroom Apartment', bua: 79.0 },
+        { id: 'Z3-059-5', unitNo: 'Z3 059(5)', type: '3 Bedroom Zaha Apartment', bua: 355.0 },
+        { id: 'Z3-059-6', unitNo: 'Z3 059(6)', type: '3 Bedroom Zaha Apartment', bua: 361.0 },
+        
+        { id: 'Z3-060-1A', unitNo: 'Z3 060(1A)', type: '2 Bedroom Small Apartment', bua: 115.0 },
+        { id: 'Z3-060-1B', unitNo: 'Z3 060(1B)', type: '1 Bedroom Apartment', bua: 79.0 },
+        { id: 'Z3-060-2A', unitNo: 'Z3 060(2A)', type: '2 Bedroom Small Apartment', bua: 115.0 },
+        { id: 'Z3-060-2B', unitNo: 'Z3 060(2B)', type: '1 Bedroom Apartment', bua: 79.0 },
+        { id: 'Z3-060-3A', unitNo: 'Z3 060(3A)', type: '2 Bedroom Small Apartment', bua: 115.0 },
+        { id: 'Z3-060-3B', unitNo: 'Z3 060(3B)', type: '1 Bedroom Apartment', bua: 79.0 },
+        { id: 'Z3-060-4A', unitNo: 'Z3 060(4A)', type: '2 Bedroom Small Apartment', bua: 115.0 },
+        { id: 'Z3-060-4B', unitNo: 'Z3 060(4B)', type: '1 Bedroom Apartment', bua: 79.0 },
+        { id: 'Z3-060-5', unitNo: 'Z3 060(5)', type: '3 Bedroom Zaha Apartment', bua: 355.0 },
+        { id: 'Z3-060-6', unitNo: 'Z3 060(6)', type: '3 Bedroom Zaha Apartment', bua: 361.0 },
+        
+        { id: 'Z3-061-1A', unitNo: 'Z3 061(1A)', type: '2 Bedroom Small Apartment', bua: 115.0 },
+        { id: 'Z3-061-1B', unitNo: 'Z3 061(1B)', type: '1 Bedroom Apartment', bua: 79.0 },
+        { id: 'Z3-061-2A', unitNo: 'Z3 061(2A)', type: '2 Bedroom Small Apartment', bua: 115.0 },
+        { id: 'Z3-061-2B', unitNo: 'Z3 061(2B)', type: '1 Bedroom Apartment', bua: 79.0 },
+        { id: 'Z3-061-3A', unitNo: 'Z3 061(3A)', type: '2 Bedroom Small Apartment', bua: 115.0 },
+        { id: 'Z3-061-3B', unitNo: 'Z3 061(3B)', type: '1 Bedroom Apartment', bua: 79.0 },
+        { id: 'Z3-061-4A', unitNo: 'Z3 061(4A)', type: '2 Bedroom Small Apartment', bua: 115.0 },
+        { id: 'Z3-061-4B', unitNo: 'Z3 061(4B)', type: '1 Bedroom Apartment', bua: 79.0 },
+        { id: 'Z3-061-5', unitNo: 'Z3 061(5)', type: '3 Bedroom Zaha Apartment', bua: 355.0 },
+        { id: 'Z3-061-6', unitNo: 'Z3 061(6)', type: '3 Bedroom Zaha Apartment', bua: 361.0 }
+      ],
+      'Z3 062 (Premium Apartments)': [
+        { id: 'Z3-062-1', unitNo: 'Z3 062(1)', type: '2 Bedroom Premium Apartment', bua: 199.0 },
+        { id: 'Z3-062-2', unitNo: 'Z3 062(2)', type: '2 Bedroom Premium Apartment', bua: 199.0 },
+        { id: 'Z3-062-3', unitNo: 'Z3 062(3)', type: '2 Bedroom Premium Apartment', bua: 199.0 },
+        { id: 'Z3-062-4', unitNo: 'Z3 062(4)', type: '2 Bedroom Premium Apartment', bua: 199.0 },
+        { id: 'Z3-062-5', unitNo: 'Z3 062(5)', type: '3 Bedroom Zaha Apartment', bua: 355.0 },
+        { id: 'Z3-062-6', unitNo: 'Z3 062(6)', type: '3 Bedroom Zaha Apartment', bua: 361.0 }
+      ],
+      'Z3 074-075 (Premium Apartments)': [
+        { id: 'Z3-074-1', unitNo: 'Z3 074(1)', type: '2 Bedroom Premium Apartment', bua: 199.0 },
+        { id: 'Z3-074-2', unitNo: 'Z3 074(2)', type: '2 Bedroom Premium Apartment', bua: 199.0 },
+        { id: 'Z3-074-3', unitNo: 'Z3 074(3)', type: '2 Bedroom Premium Apartment', bua: 199.0 },
+        { id: 'Z3-074-4', unitNo: 'Z3 074(4)', type: '2 Bedroom Premium Apartment', bua: 199.0 },
+        { id: 'Z3-074-5', unitNo: 'Z3 074(5)', type: '3 Bedroom Zaha Apartment', bua: 355.0 },
+        { id: 'Z3-074-6', unitNo: 'Z3 074(6)', type: '3 Bedroom Zaha Apartment', bua: 361.0 },
+        
+        { id: 'Z3-075-1', unitNo: 'Z3 075(1)', type: '2 Bedroom Premium Apartment', bua: 199.0 },
+        { id: 'Z3-075-2', unitNo: 'Z3 075(2)', type: '2 Bedroom Premium Apartment', bua: 199.0 },
+        { id: 'Z3-075-3', unitNo: 'Z3 075(3)', type: '2 Bedroom Premium Apartment', bua: 199.0 },
+        { id: 'Z3-075-4', unitNo: 'Z3 075(4)', type: '2 Bedroom Premium Apartment', bua: 199.0 },
+        { id: 'Z3-075-5', unitNo: 'Z3 075(5)', type: '3 Bedroom Zaha Apartment', bua: 355.0 },
+        { id: 'Z3-075-6', unitNo: 'Z3 075(6)', type: '3 Bedroom Zaha Apartment', bua: 361.0 }
       ]
     }
   },

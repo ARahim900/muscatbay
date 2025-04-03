@@ -82,7 +82,10 @@ const Calculator: React.FC<CalculatorProps> = ({ compactView, darkMode }) => {
     if (!selectedZone || !selectedPropertyType) return [];
     
     if (selectedPropertyType && mockUnits[selectedZone] && mockUnits[selectedZone][selectedPropertyType]) {
-      if (selectedBuilding && typeof mockUnits[selectedZone][selectedPropertyType] === 'object' && !Array.isArray(mockUnits[selectedZone][selectedPropertyType])) {
+      // For property types that require building selection (like apartments)
+      if (selectedBuilding && 
+          typeof mockUnits[selectedZone][selectedPropertyType] === 'object' && 
+          !Array.isArray(mockUnits[selectedZone][selectedPropertyType])) {
         // For apartments that are organized by buildings
         return mockUnits[selectedZone][selectedPropertyType][selectedBuilding] || [];
       } else if (Array.isArray(mockUnits[selectedZone][selectedPropertyType])) {
@@ -92,6 +95,16 @@ const Calculator: React.FC<CalculatorProps> = ({ compactView, darkMode }) => {
     }
     
     return [];
+  };
+
+  // Check if building selection is required for this property type
+  const requiresBuildingSelection = () => {
+    return selectedZone && 
+           selectedPropertyType && 
+           mockUnits[selectedZone] && 
+           mockUnits[selectedZone][selectedPropertyType] && 
+           typeof mockUnits[selectedZone][selectedPropertyType] === 'object' && 
+           !Array.isArray(mockUnits[selectedZone][selectedPropertyType]);
   };
 
   // Handle calculation
@@ -270,11 +283,11 @@ const Calculator: React.FC<CalculatorProps> = ({ compactView, darkMode }) => {
               </select>
             </div>
             
-            {/* Building Selection (for apartments) */}
-            {selectedPropertyType === 'Apartment' && (
+            {/* Building Selection (for apartments and other types that need it) */}
+            {requiresBuildingSelection() && (
               <div>
                 <label htmlFor="building" className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                  Building
+                  Building/Block
                 </label>
                 <select
                   id="building"
@@ -335,7 +348,7 @@ const Calculator: React.FC<CalculatorProps> = ({ compactView, darkMode }) => {
                   className={`mt-1 block w-full px-3 py-2 border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'} rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
                   value={selectedUnitId}
                   onChange={(e) => setSelectedUnitId(e.target.value)}
-                  disabled={!selectedPropertyType || (selectedPropertyType === 'Apartment' && !selectedBuilding)}
+                  disabled={!selectedPropertyType || (requiresBuildingSelection() && !selectedBuilding)}
                 >
                   <option value="">-- Select Unit --</option>
                   {getUnits().map((unit) => (
