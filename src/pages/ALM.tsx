@@ -22,11 +22,20 @@ const mockYearlyData = [
   { year: '2030', balance: 559944, contribution: 55052, expenditure: 15893 }
 ];
 
+const mockZoneBalances = [
+  { name: 'Master Community', value: 798352, color: '#4E4456', percentage: 55 },
+  { name: 'Typical Buildings', value: 227018, color: '#6D5D7B', percentage: 16 },
+  { name: 'Zone 3 (Al Zaha)', value: 63604, color: '#8F7C9B', percentage: 4 },
+  { name: 'Zone 5 (Al Nameer)', value: 63581, color: '#AD9BBD', percentage: 4 },
+  { name: 'Zone 8 (Al Wajd)', value: 37884, color: '#CBB9DB', percentage: 3 },
+  { name: 'Staff Accommodation', value: 273878, color: '#E9D7F5', percentage: 19 }
+];
+
 const mockAssetCategories = [
-  { name: 'Infrastructure', value: 2000000, color: '#4E4456' },
-  { name: 'MEP Systems', value: 1500000, color: '#6D5D7B' },
-  { name: 'Finishes/Structure', value: 500000, color: '#8F7C9B' },
-  { name: 'Landscaping', value: 500000, color: '#CBB9DB' }
+  { name: 'Infrastructure', value: 2000000, color: '#4E4456', percentage: 44 },
+  { name: 'MEP Systems', value: 1500000, color: '#6D5D7B', percentage: 33 },
+  { name: 'Finishes/Structure', value: 500000, color: '#8F7C9B', percentage: 11 },
+  { name: 'Landscaping', value: 500000, color: '#CBB9DB', percentage: 11 }
 ];
 
 const mockUpcomingReplacements = [
@@ -49,7 +58,7 @@ const ALM = () => {
   const filteredYearlyData = useMemo(() => mockYearlyData.slice(0, yearsToShow), [yearsToShow]);
   const currentYearData = useMemo(() => mockYearlyData.find(data => data.year === selectedYear) || mockYearlyData[4], [selectedYear]);
   const fundingPercentage = 72;
-  const criticalComponents = useMemo(() => mockUpcomingReplacements.filter(item => parseInt(item.year) <= parseInt(selectedYear) + 2 ).length, [selectedYear]);
+  const criticalComponents = useMemo(() => mockUpcomingReplacements.filter(item => item.year <= parseInt(selectedYear) + 2).length, [selectedYear]);
   const chartColors = { balance: '#4E4456', contribution: '#6D5D7B', expenditure: '#AD9BBD' };
 
   useEffect(() => {
@@ -57,33 +66,49 @@ const ALM = () => {
   }, [darkMode]);
 
   return (
-    <div className={`min-h-screen ${darkMode ? 'bg-gray-900 text-gray-100' : 'bg-gray-50 text-gray-800'} flex flex-col transition-colors duration-300`}>
-      <header className={`bg-gradient-to-r from-[#4E4456] to-[#6D5D7B] text-white shadow-lg sticky top-0 z-10 transition-all duration-300 ${compactView ? 'py-1' : 'py-3'}`}>
+    <div className={`min-h-screen ${darkMode ? 'bg-gray-900 text-gray-100' : 'bg-gray-50 text-gray-800'} transition-colors duration-300`}>
+      <header className={`bg-[#4E4456] text-white shadow-lg sticky top-0 z-10 transition-all duration-300 py-4`}>
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-center">
             <div className="flex items-center space-x-2 flex-shrink-0">
               <div className="h-9 w-9 rounded-full bg-white/20 flex items-center justify-center">
                 <Package className="h-6 w-6" />
               </div>
-              <h1 className={`font-bold tracking-tight transition-all duration-300 ${compactView ? 'text-lg' : 'text-xl'}`}>Asset Lifecycle Management</h1>
+              <h1 className="font-bold tracking-tight text-xl">Muscat Bay Reserve Fund</h1>
             </div>
             <nav className="hidden md:flex space-x-1 flex-grow justify-center px-4">
-              {['overview', 'analysis', 'categories', 'zones', 'maintenance'].map((tab) => (
+              {['Dashboard', 'Calculator', 'Reports', 'Assets'].map((tab) => (
                 <button 
                   key={tab} 
                   className={`px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 whitespace-nowrap ${
-                    activeTab === tab ? 'bg-white/20 text-white' : 'text-white/80 hover:bg-white/10 hover:text-white'
+                    tab === 'Dashboard' ? 'bg-white/20 text-white' : 'text-white/80 hover:bg-white/10 hover:text-white'
                   }`} 
-                  onClick={() => setActiveTab(tab)}
                 >
-                  {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                  {tab}
                 </button>
               ))}
             </nav>
+            <div className="flex items-center">
+              <button className="p-2 rounded-md text-white hover:bg-white/20 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main className="container mx-auto px-4 py-6">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold text-[#4E4456]">Reserve Fund Dashboard</h2>
+          <div className="flex space-x-4">
             <div className="flex items-center space-x-2">
+              <span className="text-sm font-medium">Year:</span>
               <Select value={selectedYear} onValueChange={setSelectedYear}>
-                <SelectTrigger className="w-[120px] bg-white/10 border-none text-white">
-                  <SelectValue placeholder="Select Year" />
+                <SelectTrigger className="w-[90px] h-9">
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   {mockYearlyData.map(data => (
@@ -91,72 +116,86 @@ const ALM = () => {
                   ))}
                 </SelectContent>
               </Select>
-              <Button variant="ghost" className="text-white hover:bg-white/10">
-                <Download className="h-4 w-4 mr-2" />
-                Export
-              </Button>
+            </div>
+            <div className="flex items-center space-x-2">
+              <span className="text-sm font-medium">Forecast:</span>
+              <Select value={yearsToShow.toString()} onValueChange={(value) => setYearsToShow(parseInt(value))}>
+                <SelectTrigger className="w-[120px] h-9">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="5">5 Years</SelectItem>
+                  <SelectItem value="10">10 Years</SelectItem>
+                  <SelectItem value="15">15 Years</SelectItem>
+                  <SelectItem value="20">20 Years</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </div>
-      </header>
 
-      <main className={`flex-1 container mx-auto px-4 transition-all duration-300 ${compactView ? 'py-3' : 'py-6'} relative`}>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <Card className="bg-white dark:bg-gray-800">
+          <Card className="bg-white">
             <CardContent className="p-6">
-              <div className="flex items-center justify-between">
+              <div className="flex justify-between items-start">
                 <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Total Assets</p>
-                  <h3 className="text-2xl font-bold mt-1">{currentYearData.balance.toLocaleString()}</h3>
-                  <p className="text-xs text-gray-500">Across all categories</p>
+                  <p className="text-sm text-gray-500">Total Reserve Balance</p>
+                  <div className="flex items-baseline mt-1">
+                    <h3 className="text-2xl font-bold">OMR</h3>
+                  </div>
+                  <h3 className="text-3xl font-bold text-[#4E4456]">{currentYearData.balance.toLocaleString()}</h3>
+                  <p className="text-xs text-gray-500 mt-1">Projected EOY Balance</p>
                 </div>
-                <div className="h-12 w-12 rounded-lg bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
-                  <Package className="h-6 w-6 text-blue-600 dark:text-blue-300" />
+                <div className="h-10 w-10 rounded-lg bg-gray-100 flex items-center justify-center">
+                  <Landmark className="h-6 w-6 text-[#4E4456]" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-white dark:bg-gray-800">
+          <Card className="bg-white">
             <CardContent className="p-6">
-              <div className="flex items-center justify-between">
+              <div className="flex justify-between items-start">
                 <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Critical Assets</p>
-                  <h3 className="text-2xl font-bold mt-1">{criticalComponents}</h3>
-                  <p className="text-xs text-gray-500">Require immediate attention</p>
+                  <p className="text-sm text-gray-500">Annual Contribution</p>
+                  <div className="flex items-baseline mt-1">
+                    <h3 className="text-2xl font-bold">OMR</h3>
+                  </div>
+                  <h3 className="text-3xl font-bold text-[#4E4456]">{currentYearData.contribution.toLocaleString()}</h3>
+                  <p className="text-xs text-gray-500 mt-1">Projected for the year</p>
                 </div>
-                <div className="h-12 w-12 rounded-lg bg-red-100 dark:bg-red-900 flex items-center justify-center">
-                  <AlertTriangle className="h-6 w-6 text-red-600 dark:text-red-300" />
+                <div className="h-10 w-10 rounded-lg bg-gray-100 flex items-center justify-center">
+                  <Activity className="h-6 w-6 text-[#4E4456]" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-white dark:bg-gray-800">
+          <Card className="bg-white">
             <CardContent className="p-6">
-              <div className="flex items-center justify-between">
+              <div className="flex justify-between items-start">
                 <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Maintenance Due</p>
-                  <h3 className="text-2xl font-bold mt-1">{currentYearData.expenditure.toLocaleString()}</h3>
-                  <p className="text-xs text-gray-500">Scheduled this month</p>
+                  <p className="text-sm text-gray-500">Funding Percentage</p>
+                  <h3 className="text-3xl font-bold text-[#4E4456] mt-1">{fundingPercentage}%</h3>
+                  <p className="text-xs text-gray-500 mt-1">Current funding adequacy</p>
                 </div>
-                <div className="h-12 w-12 rounded-lg bg-yellow-100 dark:bg-yellow-900 flex items-center justify-center">
-                  <Wrench className="h-6 w-6 text-yellow-600 dark:text-yellow-300" />
+                <div className="h-10 w-10 rounded-lg bg-gray-100 flex items-center justify-center">
+                  <BarChart3 className="h-6 w-6 text-[#4E4456]" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-white dark:bg-gray-800">
+          <Card className="bg-white">
             <CardContent className="p-6">
-              <div className="flex items-center justify-between">
+              <div className="flex justify-between items-start">
                 <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Asset Health</p>
-                  <h3 className="text-2xl font-bold mt-1">{fundingPercentage}%</h3>
-                  <p className="text-xs text-gray-500">Overall condition score</p>
+                  <p className="text-sm text-gray-500">Critical Components</p>
+                  <h3 className="text-3xl font-bold text-[#4E4456] mt-1">{criticalComponents}</h3>
+                  <p className="text-xs text-gray-500 mt-1">Requiring replacement soon</p>
                 </div>
-                <div className="h-12 w-12 rounded-lg bg-green-100 dark:bg-green-900 flex items-center justify-center">
-                  <Activity className="h-6 w-6 text-green-600 dark:text-green-300" />
+                <div className="h-10 w-10 rounded-lg bg-gray-100 flex items-center justify-center">
+                  <AlertTriangle className="h-6 w-6 text-[#4E4456]" />
                 </div>
               </div>
             </CardContent>
@@ -164,9 +203,94 @@ const ALM = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          <Card className="bg-white dark:bg-gray-800">
+          <Card className="bg-white">
             <CardContent className="p-6">
-              <h3 className="text-lg font-medium mb-4">Asset Distribution</h3>
+              <h3 className="text-lg font-medium mb-4">Reserve Fund Overview</h3>
+              <div className="flex mb-4">
+                <button 
+                  className={`px-3 py-1 text-sm rounded-md ${selectedChart === 'balance' ? 'bg-[#4E4456] text-white' : 'bg-gray-100 text-gray-600'}`}
+                  onClick={() => setSelectedChart('balance')}
+                >
+                  Balance
+                </button>
+                <button 
+                  className={`px-3 py-1 text-sm rounded-md ml-2 ${selectedChart === 'contribution' ? 'bg-[#4E4456] text-white' : 'bg-gray-100 text-gray-600'}`}
+                  onClick={() => setSelectedChart('contribution')}
+                >
+                  Contribution
+                </button>
+                <button 
+                  className={`px-3 py-1 text-sm rounded-md ml-2 ${selectedChart === 'expenditure' ? 'bg-[#4E4456] text-white' : 'bg-gray-100 text-gray-600'}`}
+                  onClick={() => setSelectedChart('expenditure')}
+                >
+                  Expenditure
+                </button>
+              </div>
+              <div className="h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={filteredYearlyData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="year" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    {selectedChart === 'balance' && <Line type="monotone" dataKey="balance" stroke={chartColors.balance} activeDot={{ r: 8 }} />}
+                    {selectedChart === 'contribution' && <Line type="monotone" dataKey="contribution" stroke={chartColors.contribution} activeDot={{ r: 8 }} />}
+                    {selectedChart === 'expenditure' && <Line type="monotone" dataKey="expenditure" stroke={chartColors.expenditure} activeDot={{ r: 8 }} />}
+                    {selectedChart === 'all' && (
+                      <>
+                        <Line type="monotone" dataKey="balance" stroke={chartColors.balance} />
+                        <Line type="monotone" dataKey="contribution" stroke={chartColors.contribution} />
+                        <Line type="monotone" dataKey="expenditure" stroke={chartColors.expenditure} />
+                      </>
+                    )}
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="text-center text-sm text-gray-500 mt-2">Reserve Balance</div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white">
+            <CardContent className="p-6">
+              <h3 className="text-lg font-medium mb-4">Fund Distribution by Zone (EOY 2025)</h3>
+              <div className="h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={mockZoneBalances}
+                      dataKey="value"
+                      nameKey="name"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={100}
+                      label={({ name, percent }) => `${(percent * 100).toFixed(0)}%`}
+                    >
+                      {mockZoneBalances.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value) => [value.toLocaleString() + ' OMR', '']} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="grid grid-cols-2 gap-2 mt-4">
+                {mockZoneBalances.map((zone, index) => (
+                  <div key={index} className="flex items-center text-sm">
+                    <div className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: zone.color }}></div>
+                    <span className="mr-2">{zone.name}</span>
+                    <span className="ml-auto font-medium">OMR {zone.value.toLocaleString()}</span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          <Card className="bg-white">
+            <CardContent className="p-6">
+              <h3 className="text-lg font-medium mb-4">Asset Categories by Replacement Value</h3>
               <div className="h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
@@ -176,73 +300,56 @@ const ALM = () => {
                       nameKey="name"
                       cx="50%"
                       cy="50%"
-                      outerRadius={80}
-                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                      outerRadius={100}
+                      label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
                     >
                       {mockAssetCategories.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
                     <Tooltip formatter={(value) => [value.toLocaleString() + ' OMR', '']} />
-                    <Legend />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-white dark:bg-gray-800">
-            <CardContent className="p-6">
-              <h3 className="text-lg font-medium mb-4">Maintenance Forecast</h3>
-              <div className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={filteredYearlyData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="year" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Line type="monotone" dataKey="expenditure" stroke={chartColors.expenditure} />
-                  </LineChart>
-                </ResponsiveContainer>
+              <div className="grid grid-cols-2 gap-2 mt-4">
+                {mockAssetCategories.map((category, index) => (
+                  <div key={index} className="flex items-center text-sm">
+                    <div className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: category.color }}></div>
+                    <span className="mr-2">{category.name}</span>
+                    <span className="ml-auto font-medium">OMR {(category.value / 1000000).toFixed(1)}M</span>
+                  </div>
+                ))}
               </div>
             </CardContent>
           </Card>
-        </div>
 
-        <div className="grid grid-cols-1 gap-6 mb-6">
-          <Card className="bg-white dark:bg-gray-800">
+          <Card className="bg-white">
             <CardContent className="p-6">
-              <h3 className="text-lg font-medium mb-4">Asset Registry</h3>
+              <h3 className="text-lg font-medium mb-4">Upcoming Component Replacements</h3>
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <table className="min-w-full">
                   <thead>
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Asset ID</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    <tr className="border-b text-left text-sm text-gray-500 uppercase">
+                      <th className="pb-2">Component</th>
+                      <th className="pb-2">Location</th>
+                      <th className="pb-2 text-right">Est. Replace Year</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                  <tbody>
                     {mockUpcomingReplacements.map((item, index) => (
-                      <tr key={index}>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">{`AST-${index + 1}`}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">{item.component}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">Infrastructure</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">{item.location}</td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2 py-1 text-xs rounded-full ${
-                            item.year === 2025 ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
-                          }`}>
-                            {item.year === 2025 ? 'Critical' : 'Operational'}
-                          </span>
-                        </td>
+                      <tr key={index} className="border-b">
+                        <td className="py-3">{item.component}</td>
+                        <td className="py-3">{item.location}</td>
+                        <td className="py-3 text-right">{item.year}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
+              </div>
+              <div className="mt-4 text-right">
+                <Button variant="outline" className="bg-[#4E4456] text-white hover:bg-[#6D5D7B] border-none">
+                  View All Components
+                </Button>
               </div>
             </CardContent>
           </Card>
