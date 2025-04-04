@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { Search, Building2, User2, SquareKilometer, Wallet } from 'lucide-react';
+import { Search, Building2, User2, SquareFootage, Wallet } from 'lucide-react';
 import { 
   propertyDatabase, 
   getZones, 
@@ -271,7 +271,7 @@ const ReserveFundLookup: React.FC<ReserveFundLookupProps> = ({
                   <div className="space-y-1 col-span-2">
                     <p className="text-sm text-muted-foreground">Built-up Area (BUA)</p>
                     <p className="font-medium flex items-center">
-                      <SquareKilometer className="h-4 w-4 mr-1.5" />
+                      <SquareFootage className="h-4 w-4 mr-1.5" />
                       {selectedUnit.buaSqm ? `${selectedUnit.buaSqm.toFixed(2)} sq.m` : 'Not Applicable'}
                     </p>
                   </div>
