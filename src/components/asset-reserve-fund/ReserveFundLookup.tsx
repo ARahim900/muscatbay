@@ -1,6 +1,5 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
-import { Search, Building2, User2, SquareFootage, Wallet } from 'lucide-react';
+import { Search, Building2, User2, SquareStack, Wallet } from 'lucide-react';
 import { 
   propertyDatabase, 
   getZones, 
@@ -24,26 +23,21 @@ const ReserveFundLookup: React.FC<ReserveFundLookupProps> = ({
   compactView = false, 
   darkMode = false 
 }) => {
-  // State for filters
   const [selectedZone, setSelectedZone] = useState<string>('');
   const [selectedPropertyType, setSelectedPropertyType] = useState<string>('');
   const [selectedUnitId, setSelectedUnitId] = useState<string>('');
   const [searchTerm, setSearchTerm] = useState<string>('');
   
-  // State for results
   const [selectedUnit, setSelectedUnit] = useState<PropertyUnit | null>(null);
   const [filteredUnits, setFilteredUnits] = useState<PropertyUnit[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   
-  // Get all available zones
   const zones = useMemo(() => getZones(), []);
   
-  // Get property types for selected zone
   const propertyTypes = useMemo(() => 
     selectedZone ? getPropertyTypes(selectedZone) : []
   , [selectedZone]);
   
-  // Reset dependent selections when zone changes
   useEffect(() => {
     setSelectedPropertyType('');
     setSelectedUnitId('');
@@ -51,22 +45,18 @@ const ReserveFundLookup: React.FC<ReserveFundLookupProps> = ({
     setSelectedUnit(null);
   }, [selectedZone]);
   
-  // Reset unit selection when property type changes
   useEffect(() => {
     setSelectedUnitId('');
     setSearchTerm('');
     setSelectedUnit(null);
   }, [selectedPropertyType]);
   
-  // Update filtered units based on selections
   useEffect(() => {
-    // If search is active, use search
     if (searchTerm) {
       setFilteredUnits(searchProperties(searchTerm));
       return;
     }
     
-    // Otherwise filter by zone and type if both are selected
     if (selectedZone && selectedPropertyType) {
       setFilteredUnits(getUnitsByZoneAndType(selectedZone, selectedPropertyType));
       return;
@@ -75,11 +65,9 @@ const ReserveFundLookup: React.FC<ReserveFundLookupProps> = ({
     setFilteredUnits([]);
   }, [selectedZone, selectedPropertyType, searchTerm]);
   
-  // Update selected unit when unit ID changes
   useEffect(() => {
     if (selectedUnitId) {
       setLoading(true);
-      // Simulate API call with setTimeout
       setTimeout(() => {
         const unit = getPropertyById(selectedUnitId);
         setSelectedUnit(unit || null);
@@ -90,7 +78,6 @@ const ReserveFundLookup: React.FC<ReserveFundLookupProps> = ({
     }
   }, [selectedUnitId]);
   
-  // Handle form submission
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (selectedUnitId) {
@@ -99,7 +86,6 @@ const ReserveFundLookup: React.FC<ReserveFundLookupProps> = ({
     }
   };
 
-  // Get zone display name for better readability
   const getZoneDisplayName = (zoneCode: string) => {
     switch (zoneCode) {
       case '1': return 'Zone 1 (Staff Accommodation)';
@@ -271,7 +257,7 @@ const ReserveFundLookup: React.FC<ReserveFundLookupProps> = ({
                   <div className="space-y-1 col-span-2">
                     <p className="text-sm text-muted-foreground">Built-up Area (BUA)</p>
                     <p className="font-medium flex items-center">
-                      <SquareFootage className="h-4 w-4 mr-1.5" />
+                      <SquareStack className="h-4 w-4 mr-1.5" />
                       {selectedUnit.buaSqm ? `${selectedUnit.buaSqm.toFixed(2)} sq.m` : 'Not Applicable'}
                     </p>
                   </div>
