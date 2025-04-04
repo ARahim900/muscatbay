@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import {
   mockZones,
@@ -31,7 +30,6 @@ const Calculator: React.FC<CalculatorProps> = ({ compactView, darkMode }) => {
   const [useCustomBua, setUseCustomBua] = useState<boolean>(false);
   const [selectedUnitDetails, setSelectedUnitDetails] = useState<any>(null);
 
-  // Reset property type when zone changes
   useEffect(() => {
     setSelectedPropertyType('');
     setSelectedBuilding('');
@@ -40,7 +38,6 @@ const Calculator: React.FC<CalculatorProps> = ({ compactView, darkMode }) => {
     setErrorMessage('');
   }, [selectedZone]);
 
-  // Reset building when property type changes
   useEffect(() => {
     setSelectedBuilding('');
     setSelectedUnitId('');
@@ -48,18 +45,15 @@ const Calculator: React.FC<CalculatorProps> = ({ compactView, darkMode }) => {
     setErrorMessage('');
   }, [selectedPropertyType]);
 
-  // Reset unit when building changes
   useEffect(() => {
     setSelectedUnitId('');
     setCalculationResult(null);
     setErrorMessage('');
   }, [selectedBuilding]);
 
-  // Get available property types for selected zone
   const getPropertyTypes = () => {
     if (!selectedZone) return [];
     
-    // Get property types from the mockUnits based on the selected zone
     if (mockUnits[selectedZone]) {
       return Object.keys(mockUnits[selectedZone]);
     }
@@ -67,11 +61,9 @@ const Calculator: React.FC<CalculatorProps> = ({ compactView, darkMode }) => {
     return [];
   };
 
-  // Get available buildings for selected zone and property type
   const getBuildings = () => {
     if (!selectedZone || !selectedPropertyType) return [];
     
-    // Check if we need to show buildings for this zone+property type
     if (mockBuildings[selectedZone] && mockBuildings[selectedZone][selectedPropertyType]) {
       return mockBuildings[selectedZone][selectedPropertyType];
     }
@@ -79,20 +71,16 @@ const Calculator: React.FC<CalculatorProps> = ({ compactView, darkMode }) => {
     return [];
   };
 
-  // Get available units based on selection
   const getUnits = () => {
     if (!selectedZone || !selectedPropertyType) return [];
     
     if (selectedPropertyType && mockUnits[selectedZone] && mockUnits[selectedZone][selectedPropertyType]) {
-      // For property types that require building selection (like apartments)
       if (requiresBuildingSelection()) {
         if (selectedBuilding && typeof mockUnits[selectedZone][selectedPropertyType] === 'object') {
-          // For apartments that are organized by buildings
           return mockUnits[selectedZone][selectedPropertyType][selectedBuilding] || [];
         }
         return [];
       } else if (Array.isArray(mockUnits[selectedZone][selectedPropertyType])) {
-        // For villas that are just in an array
         return mockUnits[selectedZone][selectedPropertyType];
       }
     }
@@ -100,7 +88,6 @@ const Calculator: React.FC<CalculatorProps> = ({ compactView, darkMode }) => {
     return [];
   };
 
-  // Check if building selection is required for this property type
   const requiresBuildingSelection = () => {
     return selectedZone && 
            selectedPropertyType && 
@@ -110,14 +97,12 @@ const Calculator: React.FC<CalculatorProps> = ({ compactView, darkMode }) => {
            !Array.isArray(mockUnits[selectedZone][selectedPropertyType]);
   };
 
-  // Calculate using the updated RFS-based logic
   const calculateContribution = () => {
     setCalculating(true);
     setErrorMessage('');
     setCalculationResult(null);
     setSelectedUnitDetails(null);
 
-    // Validate inputs
     if ((!selectedUnitId && !useCustomBua) || (useCustomBua && !manualBua)) {
       setErrorMessage('Please select a unit or enter a custom BUA value.');
       setCalculating(false);
@@ -128,7 +113,6 @@ const Calculator: React.FC<CalculatorProps> = ({ compactView, darkMode }) => {
       let bua = 0;
       let unitInfo = { unitNo: 'Custom Unit', type: 'Custom' };
 
-      // Get BUA either from selected unit or manual entry
       if (useCustomBua) {
         bua = parseFloat(manualBua);
         if (isNaN(bua) || bua <= 0) {
@@ -137,12 +121,10 @@ const Calculator: React.FC<CalculatorProps> = ({ compactView, darkMode }) => {
           return;
         }
         
-        // For custom BUA, we use the selected zone
-        const totalContribution = calculateTotalContribution(bua, selectedZone, calculationYear);
+        const totalContribution = calculateTotalContribution(bua, selectedZone, selectedPropertyType, calculationYear);
         setCalculationResult(totalContribution);
         
       } else {
-        // Find the selected unit
         const units = getUnits();
         const unit = units.find(u => u.id === selectedUnitId);
         
@@ -156,12 +138,10 @@ const Calculator: React.FC<CalculatorProps> = ({ compactView, darkMode }) => {
         unitInfo = unit;
         setSelectedUnitDetails(unit);
         
-        // Calculate using the RFS method
-        const totalContribution = calculateTotalContribution(bua, selectedZone, calculationYear);
+        const totalContribution = calculateTotalContribution(bua, selectedZone, unit.type, calculationYear);
         setCalculationResult(totalContribution);
       }
 
-      // Simulate a short delay for better UX
       setTimeout(() => {
         setCalculating(false);
       }, 500);
@@ -172,7 +152,6 @@ const Calculator: React.FC<CalculatorProps> = ({ compactView, darkMode }) => {
     }
   };
 
-  // Get rate display for information purposes
   const getRateDisplay = () => {
     if (!selectedZone) return null;
     
@@ -190,7 +169,6 @@ const Calculator: React.FC<CalculatorProps> = ({ compactView, darkMode }) => {
 
   return (
     <div className="space-y-6">
-      {/* Calculator Form */}
       <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-md transition-all duration-300`}>
         <div className={`p-4 ${compactView ? 'sm:p-5' : 'sm:p-6'} border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
           <h3 className={`text-lg font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>Reserve Fund Contribution Calculator</h3>
@@ -201,7 +179,6 @@ const Calculator: React.FC<CalculatorProps> = ({ compactView, darkMode }) => {
         
         <div className={`p-4 ${compactView ? 'sm:p-5' : 'sm:p-6'}`}>
           <div className="space-y-4">
-            {/* Calculation Year Selection */}
             <div>
               <label htmlFor="calculationYear" className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                 Calculation Year
@@ -220,7 +197,6 @@ const Calculator: React.FC<CalculatorProps> = ({ compactView, darkMode }) => {
               </select>
             </div>
             
-            {/* Zone Selection */}
             <div>
               <label htmlFor="zone" className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                 Zone
@@ -240,7 +216,6 @@ const Calculator: React.FC<CalculatorProps> = ({ compactView, darkMode }) => {
               </select>
             </div>
             
-            {/* Property Type Selection */}
             <div>
               <label htmlFor="propertyType" className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                 Property Type
@@ -261,7 +236,6 @@ const Calculator: React.FC<CalculatorProps> = ({ compactView, darkMode }) => {
               </select>
             </div>
             
-            {/* Building Selection (for apartments and other types that need it) */}
             {requiresBuildingSelection() && (
               <div>
                 <label htmlFor="building" className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
@@ -284,7 +258,6 @@ const Calculator: React.FC<CalculatorProps> = ({ compactView, darkMode }) => {
               </div>
             )}
             
-            {/* Toggle for manual BUA entry */}
             <div className="flex items-center">
               <input
                 id="customBua"
@@ -299,7 +272,6 @@ const Calculator: React.FC<CalculatorProps> = ({ compactView, darkMode }) => {
               </label>
             </div>
             
-            {/* Unit Selection or Custom BUA Input */}
             {useCustomBua ? (
               <div>
                 <label htmlFor="manualBua" className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
@@ -338,7 +310,6 @@ const Calculator: React.FC<CalculatorProps> = ({ compactView, darkMode }) => {
               </div>
             )}
             
-            {/* Calculate Button */}
             <button
               type="button"
               onClick={calculateContribution}
@@ -358,14 +329,12 @@ const Calculator: React.FC<CalculatorProps> = ({ compactView, darkMode }) => {
               )}
             </button>
             
-            {/* Error Message */}
             {errorMessage && (
               <div className="mt-3 text-sm text-red-600 dark:text-red-400">
                 {errorMessage}
               </div>
             )}
             
-            {/* Rate Information */}
             {selectedZone && rateInfo && (
               <div className={`mt-3 text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'} p-3 rounded-md ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
                 <p>Using {getZoneDisplayName(selectedZone)} rate for {rateInfo.year}:</p>
@@ -377,7 +346,6 @@ const Calculator: React.FC<CalculatorProps> = ({ compactView, darkMode }) => {
         </div>
       </div>
 
-      {/* Results Section */}
       {calculationResult !== null && (
         <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-md transition-all duration-300`}>
           <div className={`p-4 ${compactView ? 'sm:p-5' : 'sm:p-6'} border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
@@ -388,7 +356,6 @@ const Calculator: React.FC<CalculatorProps> = ({ compactView, darkMode }) => {
           </div>
           
           <div className={`p-4 ${compactView ? 'sm:p-5' : 'sm:p-6'}`}>
-            {/* Unit Details */}
             {selectedUnitDetails && (
               <div className={`mb-6 p-4 rounded-md ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
                 <h4 className={`text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
@@ -411,7 +378,6 @@ const Calculator: React.FC<CalculatorProps> = ({ compactView, darkMode }) => {
               </div>
             )}
             
-            {/* Annual Contribution */}
             <div className="text-center mb-6">
               <p className={`text-sm font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                 Total Annual Contribution ({calculationYear})
@@ -424,7 +390,6 @@ const Calculator: React.FC<CalculatorProps> = ({ compactView, darkMode }) => {
               </p>
             </div>
             
-            {/* Notes and disclaimer */}
             <div className="mt-4 text-xs text-center text-gray-500 dark:text-gray-400">
               <p>
                 Note: These calculations are based on the Land Sterling Reserve Fund Study (RFS) Draft Report dated 31 March 2021 (Ref: LS/IB/2021/6003/REV.0), with the applicable {calculationYear} rates adjusted from 2021 base rates using an annual growth factor of 0.5%.

@@ -57,7 +57,7 @@ export const calculateTotalContribution = (
   buaSqm: number,
   zone: string,
   propertyType?: string,
-  year: number = 2025 // Default to 2025
+  year: number = 2025 // Updated to accept a number directly
 ): number => {
   if (!buaSqm || buaSqm <= 0) {
     return 0;
