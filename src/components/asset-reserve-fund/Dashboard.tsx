@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+
+import React, { useState, useMemo } from 'react';
 import ChartCard from './ChartCard';
+import KpiCard from './KpiCard';
 import {
   Chart,
   ChartContainer,
@@ -16,9 +18,64 @@ import {
   ResponsiveContainer,
   PieChart,
   Pie,
-  Cell 
+  Cell,
+  CartesianGrid 
 } from 'recharts';
 import { getZoneDisplayName } from '@/utils/reserveFundCalculator';
+
+// Mock data for yearly reserve fund balances
+const mockYearlyData = [
+  { year: '2021', balance: 750000, contribution: 175000, expenditure: 50000 },
+  { year: '2022', balance: 875000, contribution: 180000, expenditure: 45000 },
+  { year: '2023', balance: 1010000, contribution: 185000, expenditure: 60000 },
+  { year: '2024', balance: 1135000, contribution: 190000, expenditure: 75000 },
+  { year: '2025', balance: 1250000, contribution: 197500, expenditure: 90000 },
+  { year: '2026', balance: 1357500, contribution: 205000, expenditure: 110000 },
+  { year: '2027', balance: 1452500, contribution: 210000, expenditure: 125000 },
+  { year: '2028', balance: 1537500, contribution: 215000, expenditure: 140000 },
+  { year: '2029', balance: 1612500, contribution: 220000, expenditure: 155000 },
+  { year: '2030', balance: 1677500, contribution: 225000, expenditure: 170000 },
+  { year: '2031', balance: 1732500, contribution: 230000, expenditure: 185000 },
+  { year: '2032', balance: 1777500, contribution: 235000, expenditure: 200000 },
+  { year: '2033', balance: 1812500, contribution: 240000, expenditure: 215000 },
+  { year: '2034', balance: 1837500, contribution: 245000, expenditure: 230000 },
+  { year: '2035', balance: 1852500, contribution: 250000, expenditure: 245000 },
+  { year: '2036', balance: 1857500, contribution: 255000, expenditure: 260000 },
+  { year: '2037', balance: 1852500, contribution: 260000, expenditure: 275000 },
+  { year: '2038', balance: 1837500, contribution: 265000, expenditure: 290000 },
+  { year: '2039', balance: 1812500, contribution: 270000, expenditure: 305000 },
+  { year: '2040', balance: 1777500, contribution: 275000, expenditure: 320000 },
+];
+
+// Mock data for zone balances
+const mockZoneBalances = [
+  { name: 'Zone 3 (Zaha)', value: 525000, color: '#4E4456' },
+  { name: 'Zone 5 (Nameer)', value: 312500, color: '#6D5D7B' },
+  { name: 'Zone 8 (Wajd)', value: 187500, color: '#AD9BBD' },
+  { name: 'Staff Accommodation', value: 125000, color: '#E9D7F5' },
+  { name: 'Master Community', value: 100000, color: '#C7B8D2' },
+];
+
+// Mock data for asset categories
+const mockAssetCategories = [
+  { name: 'Building Exterior', value: 4500000, color: '#4E4456' },
+  { name: 'Mechanical Systems', value: 3200000, color: '#6D5D7B' },
+  { name: 'Electrical Systems', value: 2800000, color: '#AD9BBD' },
+  { name: 'Plumbing', value: 1900000, color: '#E9D7F5' },
+  { name: 'Amenities', value: 1200000, color: '#C7B8D2' },
+];
+
+// Mock data for upcoming replacements
+const mockUpcomingReplacements = [
+  { component: 'Chiller System', location: 'Zone 3 - Building A', year: 2025, cost: 120000 },
+  { component: 'Roofing', location: 'Staff Accommodation', year: 2026, cost: 85000 },
+  { component: 'Pool Equipment', location: 'Village Square', year: 2026, cost: 42000 },
+  { component: 'Elevator Modernization', location: 'Zone 3 - Building B', year: 2027, cost: 75000 },
+  { component: 'Fire Alarm System', location: 'Zone 5', year: 2027, cost: 68000 },
+  { component: 'Exterior Painting', location: 'Zone 8', year: 2028, cost: 92000 },
+  { component: 'Common Area Flooring', location: 'Master Community', year: 2028, cost: 38000 },
+  { component: 'Landscape Irrigation', location: 'Master Community', year: 2029, cost: 45000 },
+];
 
 interface DashboardProps {
   compactView?: boolean;
