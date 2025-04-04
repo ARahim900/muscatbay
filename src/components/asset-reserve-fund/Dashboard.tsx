@@ -1,9 +1,13 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import KpiCard from './KpiCard';
 import ChartCard from './ChartCard';
-import { mockYearlyData, mockZoneBalances, mockAssetCategories, mockUpcomingReplacements } from '@/data/reserveFundData';
+import { rfsFullData, mockYearlyData, mockZoneBalances, mockAssetCategories, mockUpcomingReplacements } from '@/data/reserveFundData';
+import { RFSYearData } from '@/data/reserveFundData';
+import { Chart, ChartContainer, ChartTooltip } from '@/components/ui/chart';
+import { AreaChart, Area } from 'recharts';
+import { Calculator, Calendar, ChartPieIcon, AlertTriangle } from 'lucide-react';
 
 interface DashboardProps {
   compactView?: boolean;
@@ -15,23 +19,81 @@ const Dashboard: React.FC<DashboardProps> = ({ compactView, darkMode }) => {
   const [yearsToShow, setYearsToShow] = useState(10);
   const [selectedChart, setSelectedChart] = useState('balance');
   
-  const filteredYearlyData = useMemo(() => mockYearlyData.slice(0, yearsToShow), [yearsToShow]);
+  // Get available years from the RFS data
+  const availableYears = useMemo(() => Object.keys(rfsFullData).sort(), []);
   
-  const currentYearData = useMemo(() => 
-    mockYearlyData.find(data => data.year === selectedYear) || mockYearlyData[4], 
+  // If the selected year doesn't exist in the data, default to the first available year
+  useEffect(() => {
+    if (!availableYears.includes(selectedYear) && availableYears.length > 0) {
+      setSelectedYear(availableYears[0]);
+    }
+  }, [selectedYear, availableYears]);
+  
+  // Get the current year data
+  const currentYearData: RFSYearData | undefined = useMemo(() => 
+    rfsFullData[selectedYear], 
     [selectedYear]
   );
   
-  const fundingPercentage = 72;
+  // Calculate remaining years based on current selection
+  const filteredYearlyData = useMemo(() => {
+    return mockYearlyData.slice(0, yearsToShow);
+  }, [yearsToShow]);
   
+  // Calculate funding percentage (simplified calculation)
+  const fundingPercentage = useMemo(() => {
+    if (!currentYearData) return 0;
+    
+    // This is a simplified calculation - ideally should be based on actual RFS methodology
+    // General formula: Current Balance / Total Replacement Value (not provided in the data)
+    // Using 72% as placeholder, based on image
+    return 72;
+  }, [currentYearData]);
+  
+  // Calculate critical components (components due within 2 years of selected year)
   const criticalComponents = useMemo(() => {
+    if (!currentYearData) return 0;
+    
     const selectedYearNum = parseInt(selectedYear);
     return mockUpcomingReplacements.filter(item => {
-      return item.year <= selectedYearNum + 2;
+      return item.year <= selectedYearNum + 2 && item.year >= selectedYearNum;
     }).length;
-  }, [selectedYear]);
+  }, [selectedYear, currentYearData]);
   
+  // Calculate upcoming replacements for the selected year (and possibly next year)
+  const upcomingReplacements = useMemo(() => {
+    if (!currentYearData) return [];
+    
+    const selectedYearNum = parseInt(selectedYear);
+    return mockUpcomingReplacements
+      .filter(item => item.year >= selectedYearNum && item.year <= selectedYearNum + 2)
+      .sort((a, b) => a.year - b.year || a.component.localeCompare(b.component));
+  }, [selectedYear, currentYearData]);
+  
+  // Prepare zone balance data for pie chart
+  const zoneBalanceData = useMemo(() => {
+    if (!currentYearData) return mockZoneBalances;
+    
+    // Transform the currentYearData zones into the format needed for the pie chart
+    const colors = ['#4E4456', '#6D5D7B', '#AD9BBD', '#866E96', '#B6A4C2', '#3A333F'];
+    
+    return Object.entries(currentYearData.zones).map(([zoneName, zoneData], index) => ({
+      name: zoneName,
+      value: zoneData.balance,
+      color: colors[index % colors.length]
+    }));
+  }, [currentYearData]);
+  
+  // Chart colors
   const chartColors = { balance: '#4E4456', contribution: '#6D5D7B', expenditure: '#AD9BBD' };
+
+  if (!currentYearData) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <p className="text-lg text-gray-500">Loading data...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -47,8 +109,8 @@ const Dashboard: React.FC<DashboardProps> = ({ compactView, darkMode }) => {
               value={selectedYear}
               onChange={(e) => setSelectedYear(e.target.value)}
             >
-              {mockYearlyData.map(data => (
-                <option key={data.year} value={data.year}>{data.year}</option>
+              {availableYears.map(year => (
+                <option key={year} value={year}>{year}</option>
               ))}
             </select>
           </div>
@@ -71,26 +133,22 @@ const Dashboard: React.FC<DashboardProps> = ({ compactView, darkMode }) => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiCard
           title="Total Reserve Balance"
-          value={`OMR ${currentYearData.balance.toLocaleString()}`}
+          value={`OMR ${currentYearData.totalBalance.toLocaleString()}`}
           description="Projected EOY Balance"
           trend="up"
           icon={
-            <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+            <Calculator className="w-7 h-7" />
           }
           compactView={compactView}
           darkMode={darkMode}
         />
         <KpiCard
           title="Annual Contribution"
-          value={`OMR ${currentYearData.contribution.toLocaleString()}`}
+          value={`OMR ${currentYearData.totalContribution.toLocaleString()}`}
           description="Projected for the year"
           trend="up"
           icon={
-            <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 11l3-3m0 0l3 3m-3-3v8m0-13a9 9 0 110 18 9 9 0 010-18z" />
-            </svg>
+            <Calendar className="w-7 h-7" />
           }
           compactView={compactView}
           darkMode={darkMode}
@@ -101,9 +159,7 @@ const Dashboard: React.FC<DashboardProps> = ({ compactView, darkMode }) => {
           description="Current funding adequacy"
           trend={fundingPercentage >= 70 ? "up" : "down"}
           icon={
-            <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
+            <ChartPieIcon className="w-7 h-7" />
           }
           compactView={compactView}
           darkMode={darkMode}
@@ -114,9 +170,7 @@ const Dashboard: React.FC<DashboardProps> = ({ compactView, darkMode }) => {
           description="Requiring replacement soon"
           trend={criticalComponents <= 5 ? "up" : "down"}
           icon={
-            <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
+            <AlertTriangle className="w-7 h-7" />
           }
           compactView={compactView}
           darkMode={darkMode}
@@ -156,12 +210,12 @@ const Dashboard: React.FC<DashboardProps> = ({ compactView, darkMode }) => {
                 <Legend />
                 <Bar dataKey="expenditure" name="Expenditure" fill="#AD9BBD" radius={[4, 4, 0, 0]}>
                   {filteredYearlyData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.expenditure > 100000 ? '#4E4456' : '#AD9BBD'} />
+                    <Cell key={`cell-${index}`} fill={entry.year === selectedYear ? '#4E4456' : '#AD9BBD'} />
                   ))}
                 </Bar>
               </BarChart>
             ) : (
-              <LineChart data={filteredYearlyData}>
+              <AreaChart data={filteredYearlyData}>
                 <CartesianGrid strokeDasharray="3 3" stroke={darkMode ? '#374151' : '#E5E7EB'} />
                 <XAxis dataKey="year" tick={{ fill: darkMode ? '#9CA3AF' : '#4B5563' }} />
                 <YAxis tickFormatter={(value) => `${value / 1000}k`} tick={{ fill: darkMode ? '#9CA3AF' : '#4B5563' }} />
@@ -173,28 +227,29 @@ const Dashboard: React.FC<DashboardProps> = ({ compactView, darkMode }) => {
                   labelStyle={{ color: darkMode ? '#E5E7EB' : '#1F2937' }}
                 />
                 <Legend />
-                <Line
+                <Area
                   type="monotone"
                   dataKey={selectedChart}
                   name={selectedChart === 'balance' ? 'Reserve Balance' : 'Annual Contribution'}
                   stroke={chartColors[selectedChart]}
+                  fill={`${chartColors[selectedChart]}20`}
                   strokeWidth={2}
                   dot={{ r: 4, strokeWidth: 2 }}
                   activeDot={{ r: 6, strokeWidth: 2 }}
                 />
-              </LineChart>
+              </AreaChart>
             )}
           </ResponsiveContainer>
         </ChartCard>
 
         {/* Fund Distribution by Zone Chart */}
-        <ChartCard title="Fund Distribution by Zone (EOY 2025)" darkMode={darkMode}>
+        <ChartCard title={`Fund Distribution by Zone (EOY ${selectedYear})`} darkMode={darkMode}>
           <div className="flex flex-col md:flex-row items-center justify-center">
             <div className="w-full md:w-1/2">
               <ResponsiveContainer width="100%" height={260}>
                 <PieChart>
                   <Pie
-                    data={mockZoneBalances}
+                    data={zoneBalanceData}
                     cx="50%"
                     cy="50%"
                     labelLine={false}
@@ -204,7 +259,7 @@ const Dashboard: React.FC<DashboardProps> = ({ compactView, darkMode }) => {
                     nameKey="name"
                     label={({ name, percent }) => `${(percent * 100).toFixed(0)}%`}
                   >
-                    {mockZoneBalances.map((entry, index) => (
+                    {zoneBalanceData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
@@ -219,7 +274,7 @@ const Dashboard: React.FC<DashboardProps> = ({ compactView, darkMode }) => {
             </div>
             <div className="w-full md:w-1/2 mt-4 md:mt-0">
               <div className="space-y-2">
-                {mockZoneBalances.map((zone, index) => (
+                {zoneBalanceData.map((zone, index) => (
                   <div key={index} className="flex items-center justify-between">
                     <div className="flex items-center">
                       <div
@@ -297,50 +352,38 @@ const Dashboard: React.FC<DashboardProps> = ({ compactView, darkMode }) => {
                 <tr>
                   <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'} uppercase tracking-wider`}>Component</th>
                   <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'} uppercase tracking-wider`}>Location</th>
-                  <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'} uppercase tracking-wider`}>Est. Replace Year</th>
+                  <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'} uppercase tracking-wider`}>Year</th>
                   <th scope="col" className={`px-6 py-3 text-right text-xs font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'} uppercase tracking-wider`}>Est. Cost (OMR)</th>
-                  <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'} uppercase tracking-wider`}>Status</th>
                 </tr>
               </thead>
               <tbody className={`${darkMode ? 'bg-gray-900 divide-y divide-gray-700' : 'bg-white divide-y divide-gray-200'}`}>
-                {mockUpcomingReplacements
-                  .sort((a, b) => a.year - b.year)
-                  .map((replacement, index) => {
-                    const selectedYearNum = parseInt(selectedYear);
-                    const status = replacement.year <= selectedYearNum + 1 
-                      ? 'Critical' 
-                      : replacement.year <= selectedYearNum + 3 
-                        ? 'Warning' 
-                        : 'Good';
-                        
-                    return (
-                      <tr key={index} className={`transition-colors ${darkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-50'}`}>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>{replacement.component}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>{replacement.location}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>{replacement.year}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right">
-                          <div className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>{replacement.cost.toLocaleString()}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${ 
-                            status === 'Critical'
-                              ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' 
-                              : status === 'Warning'
-                                ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' 
-                                : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
-                          }`}>
-                            {status}
-                          </span>
-                        </td>
-                      </tr>
-                    );
-                  })}
+                {upcomingReplacements.map((replacement, index) => {
+                  const isCurrentYear = replacement.year === parseInt(selectedYear);
+                  
+                  return (
+                    <tr key={index} className={`transition-colors ${isCurrentYear ? (darkMode ? 'bg-[#4E4456]/20' : 'bg-[#4E4456]/5') : ''} ${darkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-50'}`}>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className={`text-sm font-medium ${isCurrentYear ? 'text-[#4E4456] dark:text-[#AD9BBD]' : darkMode ? 'text-white' : 'text-gray-900'}`}>{replacement.component}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>{replacement.location}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className={`text-sm ${isCurrentYear ? 'font-bold' : ''} ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>{replacement.year}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right">
+                        <div className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>{replacement.cost?.toLocaleString()}</div>
+                      </td>
+                    </tr>
+                  );
+                })}
+                {upcomingReplacements.length === 0 && (
+                  <tr>
+                    <td colSpan={4} className="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
+                      No major component replacements scheduled for this period.
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
