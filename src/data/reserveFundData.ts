@@ -1,3 +1,4 @@
+
 // Define types for our data model
 export interface RFSZoneData {
   balance: number;
@@ -245,3 +246,71 @@ export const propertyData = [
     monthlyCharge: 348.56
   }
 ];
+
+// Define zones for the calculator
+export const mockZones = [
+  { id: '1', name: 'Zone 1 (Staff Accommodation)' },
+  { id: '3', name: 'Zone 3 (Al Zaha)' },
+  { id: '5', name: 'Zone 5 (Al Nameer)' },
+  { id: '8', name: 'Zone 8 (Al Wajd)' }
+];
+
+// Define property types per zone for the calculator
+export const mockBuildings = {
+  '3': {
+    'Apartment': ['Building A', 'Building B', 'Building C', 'Building D', 'Building E']
+  }
+};
+
+// Define units for the calculator
+export const mockUnits = {
+  '1': {
+    'Staff Accommodation': [
+      { id: 'sa-1', unitNo: 'SA-001', type: 'Staff Accommodation Unit', bua: 75.0 },
+      { id: 'sa-2', unitNo: 'SA-002', type: 'Staff Accommodation Unit', bua: 75.0 },
+      { id: 'sa-3', unitNo: 'SA-003', type: 'Staff Accommodation Unit', bua: 75.0 }
+    ]
+  },
+  '3': {
+    'Villa': [
+      { id: 'z3-v1', unitNo: 'Z3-001', type: '4 Bedroom Zaha Villa', bua: 422.0 },
+      { id: 'z3-v2', unitNo: 'Z3-002', type: '4 Bedroom Zaha Villa', bua: 422.0 },
+      { id: 'z3-v3', unitNo: 'Z3-017', type: '3 Bedroom Zaha Villa', bua: 357.0 }
+    ],
+    'Apartment': {
+      'Building A': [
+        { id: 'z3-a1', unitNo: 'Z3-044(1)', type: '2 Bedroom Premium Apartment', bua: 199.0 },
+        { id: 'z3-a2', unitNo: 'Z3-044(5)', type: '3 Bedroom Zaha Apartment', bua: 355.0 },
+        { id: 'z3-a3', unitNo: 'Z3-044(6)', type: '3 Bedroom Zaha Apartment', bua: 361.0 }
+      ],
+      'Building B': [
+        { id: 'z3-b1', unitNo: 'Z3-053(1A)', type: '2 Bedroom Small Apartment', bua: 115.0 },
+        { id: 'z3-b2', unitNo: 'Z3-053(1B)', type: '1 Bedroom Apartment', bua: 79.0 }
+      ]
+    }
+  },
+  '5': {
+    'Villa': [
+      { id: 'z5-v1', unitNo: 'Z5-001', type: '4 Bedroom Nameer Villa', bua: 498.0 },
+      { id: 'z5-v2', unitNo: 'Z5-002', type: '3 Bedroom Nameer Villa', bua: 427.0 },
+      { id: 'z5-v3', unitNo: 'Z5-003', type: '4 Bedroom Nameer Villa', bua: 498.0 }
+    ]
+  },
+  '8': {
+    'Villa': [
+      { id: 'z8-v1', unitNo: 'Z8-001', type: '5 Bedroom Wajd Villa', bua: 750.0 },
+      { id: 'z8-v2', unitNo: 'Z8-002', type: '5 Bedroom Wajd Villa', bua: 750.0 },
+      { id: 'z8-v3', unitNo: 'Z8-005', type: '5 Bedroom Wajd Villa', bua: 943.0 }
+    ]
+  }
+};
+
+// Reserve fund rates for 2025 (OMR per sqm)
+export const rates2025 = {
+  masterCommunity: 1.75,
+  typicalBuilding: 1.65,
+  zone3: 0.44,
+  zone5: 1.10,
+  zone8: 0.33,
+  staffAccommodation: 3.95
+};
