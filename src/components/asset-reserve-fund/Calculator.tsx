@@ -65,6 +65,11 @@ const Calculator: React.FC<CalculatorProps> = ({ compactView, darkMode }) => {
     if (!selectedZone || !selectedPropertyType) return [];
     
     if (mockBuildings[selectedZone] && mockBuildings[selectedZone][selectedPropertyType]) {
+      if (selectedZone === '3' && selectedPropertyType.includes('Apartment')) {
+        return mockBuildings[selectedZone][selectedPropertyType].map(buildingId => {
+          return `Building ${buildingId}`;
+        });
+      }
       return mockBuildings[selectedZone][selectedPropertyType];
     }
     
@@ -77,7 +82,12 @@ const Calculator: React.FC<CalculatorProps> = ({ compactView, darkMode }) => {
     if (selectedPropertyType && mockUnits[selectedZone] && mockUnits[selectedZone][selectedPropertyType]) {
       if (requiresBuildingSelection()) {
         if (selectedBuilding && typeof mockUnits[selectedZone][selectedPropertyType] === 'object') {
-          return mockUnits[selectedZone][selectedPropertyType][selectedBuilding] || [];
+          let buildingId = selectedBuilding;
+          if (selectedZone === '3' && selectedPropertyType.includes('Apartment')) {
+            buildingId = selectedBuilding.replace('Building ', '');
+          }
+          
+          return mockUnits[selectedZone][selectedPropertyType][buildingId] || [];
         }
         return [];
       } else if (Array.isArray(mockUnits[selectedZone][selectedPropertyType])) {
@@ -239,7 +249,7 @@ const Calculator: React.FC<CalculatorProps> = ({ compactView, darkMode }) => {
             {requiresBuildingSelection() && (
               <div>
                 <label htmlFor="building" className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                  Building/Block
+                  {selectedZone === '3' && selectedPropertyType.includes('Apartment') ? 'Building' : 'Building/Block'}
                 </label>
                 <select
                   id="building"
@@ -338,8 +348,8 @@ const Calculator: React.FC<CalculatorProps> = ({ compactView, darkMode }) => {
             {selectedZone && rateInfo && (
               <div className={`mt-3 text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'} p-3 rounded-md ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
                 <p>Using {getZoneDisplayName(selectedZone)} rate for {rateInfo.year}:</p>
-                <p>Base rate (2021): {rateInfo.baseRate} OMR/SqFt</p>
-                <p>Adjusted rate ({rateInfo.year}): {rateInfo.adjustedRate} OMR/SqFt</p>
+                <p>Base rate (2021): {rateInfo.baseRate} OMR/sqm</p>
+                <p>Adjusted rate ({rateInfo.year}): {rateInfo.adjustedRate} OMR/sqm</p>
               </div>
             )}
           </div>
