@@ -1,9 +1,24 @@
-
-import React, { useState, useMemo } from 'react';
-import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import KpiCard from './KpiCard';
+import React, { useState } from 'react';
 import ChartCard from './ChartCard';
-import { mockYearlyData, mockZoneBalances, mockAssetCategories, mockUpcomingReplacements } from '@/data/reserveFundData';
+import {
+  Chart,
+  ChartContainer,
+} from '@/components/ui/chart';
+import { 
+  BarChart, 
+  Bar, 
+  XAxis, 
+  YAxis, 
+  Tooltip, 
+  Legend, 
+  LineChart, 
+  Line, 
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell 
+} from 'recharts';
+import { getZoneDisplayName } from '@/utils/reserveFundCalculator';
 
 interface DashboardProps {
   compactView?: boolean;

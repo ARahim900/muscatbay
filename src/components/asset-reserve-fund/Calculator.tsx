@@ -4,25 +4,18 @@ import {
   mockZones,
   mockBuildings,
   mockUnits,
-  rates2025
 } from '@/data/reserveFundData';
+import { 
+  calculateTotalContribution, 
+  getZoneDisplayName, 
+  SQM_TO_SQFT,
+  getBaseRateForZone,
+  calculateAdjustedRate
+} from '@/utils/reserveFundCalculator';
 
 interface CalculatorProps {
   compactView?: boolean;
   darkMode?: boolean;
-}
-
-interface ContributionBreakdown {
-  name: string;
-  rateApplied: number;
-  buaSqm: number;
-  contribution: number;
-}
-
-interface CalculationResult {
-  totalAnnualContribution: number;
-  monthlyContribution: number;
-  breakdown: ContributionBreakdown[];
 }
 
 const Calculator: React.FC<CalculatorProps> = ({ compactView, darkMode }) => {
@@ -31,10 +24,12 @@ const Calculator: React.FC<CalculatorProps> = ({ compactView, darkMode }) => {
   const [selectedBuilding, setSelectedBuilding] = useState<string>('');
   const [selectedUnitId, setSelectedUnitId] = useState<string>('');
   const [manualBua, setManualBua] = useState<string>('');
-  const [calculationResult, setCalculationResult] = useState<CalculationResult | null>(null);
+  const [calculationYear, setCalculationYear] = useState<number>(2025);
+  const [calculationResult, setCalculationResult] = useState<number | null>(null);
   const [calculating, setCalculating] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [useCustomBua, setUseCustomBua] = useState<boolean>(false);
+  const [selectedUnitDetails, setSelectedUnitDetails] = useState<any>(null);
 
   // Reset property type when zone changes
   useEffect(() => {
@@ -63,8 +58,13 @@ const Calculator: React.FC<CalculatorProps> = ({ compactView, darkMode }) => {
   // Get available property types for selected zone
   const getPropertyTypes = () => {
     if (!selectedZone) return [];
-    const zone = mockZones.find(z => z.id === selectedZone);
-    return zone ? zone.propertyTypes : [];
+    
+    // Get property types from the mockUnits based on the selected zone
+    if (mockUnits[selectedZone]) {
+      return Object.keys(mockUnits[selectedZone]);
+    }
+    
+    return [];
   };
 
   // Get available buildings for selected zone and property type
@@ -110,11 +110,12 @@ const Calculator: React.FC<CalculatorProps> = ({ compactView, darkMode }) => {
            !Array.isArray(mockUnits[selectedZone][selectedPropertyType]);
   };
 
-  // Handle calculation
+  // Calculate using the updated RFS-based logic
   const calculateContribution = () => {
     setCalculating(true);
     setErrorMessage('');
     setCalculationResult(null);
+    setSelectedUnitDetails(null);
 
     // Validate inputs
     if ((!selectedUnitId && !useCustomBua) || (useCustomBua && !manualBua)) {
@@ -135,6 +136,11 @@ const Calculator: React.FC<CalculatorProps> = ({ compactView, darkMode }) => {
           setCalculating(false);
           return;
         }
+        
+        // For custom BUA, we use the selected zone
+        const totalContribution = calculateTotalContribution(bua, selectedZone, calculationYear);
+        setCalculationResult(totalContribution);
+        
       } else {
         // Find the selected unit
         const units = getUnits();
@@ -148,78 +154,12 @@ const Calculator: React.FC<CalculatorProps> = ({ compactView, darkMode }) => {
         
         bua = unit.bua;
         unitInfo = unit;
+        setSelectedUnitDetails(unit);
+        
+        // Calculate using the RFS method
+        const totalContribution = calculateTotalContribution(bua, selectedZone, calculationYear);
+        setCalculationResult(totalContribution);
       }
-
-      // Calculate contributions based on rates
-      const breakdown: ContributionBreakdown[] = [];
-      let totalContribution = 0;
-
-      // 1. Master Community contribution (applies to all except Zone 1)
-      if (selectedZone !== '1') {
-        const masterRate = rates2025.masterCommunity;
-        const masterContribution = masterRate * bua;
-        breakdown.push({
-          name: 'Master Community',
-          rateApplied: masterRate,
-          buaSqm: bua,
-          contribution: masterContribution
-        });
-        totalContribution += masterContribution;
-      }
-
-      // 2. Zone-specific contribution
-      let zoneRate = 0;
-      let zoneName = '';
-
-      switch (selectedZone) {
-        case '1':
-          zoneRate = rates2025.staffAccommodation;
-          zoneName = 'Staff Accommodation';
-          break;
-        case '3':
-          zoneRate = rates2025.zone3;
-          zoneName = 'Zone 3 (Al Zaha)';
-          break;
-        case '5':
-          zoneRate = rates2025.zone5;
-          zoneName = 'Zone 5 (Al Nameer)';
-          break;
-        case '8':
-          zoneRate = rates2025.zone8;
-          zoneName = 'Zone 8 (Al Wajd)';
-          break;
-      }
-
-      if (zoneRate > 0) {
-        const zoneContribution = zoneRate * bua;
-        breakdown.push({
-          name: zoneName,
-          rateApplied: zoneRate,
-          buaSqm: bua,
-          contribution: zoneContribution
-        });
-        totalContribution += zoneContribution;
-      }
-
-      // 3. Add typical building rate for apartments in Zone 3
-      if (selectedZone === '3' && selectedPropertyType === 'Apartment') {
-        const buildingRate = rates2025.typicalBuilding;
-        const buildingContribution = buildingRate * bua;
-        breakdown.push({
-          name: 'Typical Building',
-          rateApplied: buildingRate,
-          buaSqm: bua,
-          contribution: buildingContribution
-        });
-        totalContribution += buildingContribution;
-      }
-
-      // Set the calculation result
-      setCalculationResult({
-        totalAnnualContribution: totalContribution,
-        monthlyContribution: totalContribution / 12,
-        breakdown
-      });
 
       // Simulate a short delay for better UX
       setTimeout(() => {
@@ -232,6 +172,22 @@ const Calculator: React.FC<CalculatorProps> = ({ compactView, darkMode }) => {
     }
   };
 
+  // Get rate display for information purposes
+  const getRateDisplay = () => {
+    if (!selectedZone) return null;
+    
+    const baseRate = getBaseRateForZone(selectedZone);
+    const adjustedRate = calculateAdjustedRate(baseRate, calculationYear);
+    
+    return {
+      baseRate: baseRate.toFixed(2),
+      adjustedRate: adjustedRate.toFixed(3),
+      year: calculationYear
+    };
+  };
+
+  const rateInfo = getRateDisplay();
+
   return (
     <div className="space-y-6">
       {/* Calculator Form */}
@@ -239,12 +195,31 @@ const Calculator: React.FC<CalculatorProps> = ({ compactView, darkMode }) => {
         <div className={`p-4 ${compactView ? 'sm:p-5' : 'sm:p-6'} border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
           <h3 className={`text-lg font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>Reserve Fund Contribution Calculator</h3>
           <p className={`mt-1 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-            Estimate the annual reserve fund contribution for any property based on 2025 rates.
+            Calculate annual reserve fund contribution based on the Land Sterling Reserve Fund Study.
           </p>
         </div>
         
         <div className={`p-4 ${compactView ? 'sm:p-5' : 'sm:p-6'}`}>
           <div className="space-y-4">
+            {/* Calculation Year Selection */}
+            <div>
+              <label htmlFor="calculationYear" className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                Calculation Year
+              </label>
+              <select
+                id="calculationYear"
+                className={`mt-1 block w-full px-3 py-2 border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'} rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
+                value={calculationYear}
+                onChange={(e) => setCalculationYear(parseInt(e.target.value))}
+              >
+                {[2021, 2022, 2023, 2024, 2025, 2026, 2027, 2028, 2029, 2030].map((year) => (
+                  <option key={year} value={year}>
+                    {year}
+                  </option>
+                ))}
+              </select>
+            </div>
+            
             {/* Zone Selection */}
             <div>
               <label htmlFor="zone" className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
@@ -389,58 +364,70 @@ const Calculator: React.FC<CalculatorProps> = ({ compactView, darkMode }) => {
                 {errorMessage}
               </div>
             )}
+            
+            {/* Rate Information */}
+            {selectedZone && rateInfo && (
+              <div className={`mt-3 text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'} p-3 rounded-md ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                <p>Using {getZoneDisplayName(selectedZone)} rate for {rateInfo.year}:</p>
+                <p>Base rate (2021): {rateInfo.baseRate} OMR/SqFt</p>
+                <p>Adjusted rate ({rateInfo.year}): {rateInfo.adjustedRate} OMR/SqFt</p>
+              </div>
+            )}
           </div>
         </div>
       </div>
 
       {/* Results Section */}
-      {calculationResult && (
+      {calculationResult !== null && (
         <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-md transition-all duration-300`}>
           <div className={`p-4 ${compactView ? 'sm:p-5' : 'sm:p-6'} border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
             <h3 className={`text-lg font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>Calculation Results</h3>
             <p className={`mt-1 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-              Projected reserve fund contributions based on 2025 rates.
+              Projected reserve fund contributions based on the {calculationYear} RFS-adjusted rates.
             </p>
           </div>
           
           <div className={`p-4 ${compactView ? 'sm:p-5' : 'sm:p-6'}`}>
+            {/* Unit Details */}
+            {selectedUnitDetails && (
+              <div className={`mb-6 p-4 rounded-md ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                <h4 className={`text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                  Selected Unit Details
+                </h4>
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div>
+                    <span className={`${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Unit No:</span> {selectedUnitDetails.unitNo}
+                  </div>
+                  <div>
+                    <span className={`${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Type:</span> {selectedUnitDetails.type}
+                  </div>
+                  <div>
+                    <span className={`${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>BUA:</span> {selectedUnitDetails.bua} sqm <span className="text-xs">({(selectedUnitDetails.bua * SQM_TO_SQFT).toFixed(2)} sqft)</span>
+                  </div>
+                  <div>
+                    <span className={`${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Zone:</span> {getZoneDisplayName(selectedZone)}
+                  </div>
+                </div>
+              </div>
+            )}
+            
             {/* Annual Contribution */}
             <div className="text-center mb-6">
               <p className={`text-sm font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                Total Annual Contribution
+                Total Annual Contribution ({calculationYear})
               </p>
               <p className="mt-1 text-3xl font-bold text-[#4E4456] dark:text-[#AD9BBD]">
-                OMR {calculationResult.totalAnnualContribution.toFixed(2)}
+                OMR {calculationResult.toFixed(2)}
               </p>
               <p className={`mt-1 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                (Approx. OMR {calculationResult.monthlyContribution.toFixed(2)} per month)
+                (Approx. OMR {(calculationResult / 12).toFixed(2)} per month)
               </p>
-            </div>
-            
-            {/* Contribution Breakdown */}
-            <div className={`rounded-md ${darkMode ? 'bg-gray-700' : 'bg-gray-50'} p-4`}>
-              <h4 className={`text-sm font-medium mb-3 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                Contribution Breakdown
-              </h4>
-              <ul className="space-y-2">
-                {calculationResult.breakdown.map((item, index) => (
-                  <li key={index} className={`flex justify-between px-2 py-1 text-sm rounded ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
-                    <span className={darkMode ? 'text-gray-300' : 'text-gray-700'}>
-                      {item.name} ({item.rateApplied.toFixed(2)} OMR/m²)
-                    </span>
-                    <span className="font-medium">OMR {item.contribution.toFixed(2)}</span>
-                  </li>
-                ))}
-              </ul>
             </div>
             
             {/* Notes and disclaimer */}
             <div className="mt-4 text-xs text-center text-gray-500 dark:text-gray-400">
               <p>
-                Note: These calculations are based on the 2025 projected reserve fund rates and are subject to change.
-                {selectedZone === '3' && selectedPropertyType === 'Apartment' && (
-                  <span> Apartments in Zone 3 include typical building contributions.</span>
-                )}
+                Note: These calculations are based on the Land Sterling Reserve Fund Study (RFS) Draft Report dated 31 March 2021 (Ref: LS/IB/2021/6003/REV.0), with the applicable {calculationYear} rates adjusted from 2021 base rates using an annual growth factor of 0.5%.
               </p>
             </div>
           </div>
