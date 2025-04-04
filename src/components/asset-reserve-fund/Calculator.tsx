@@ -63,13 +63,8 @@ const Calculator: React.FC<CalculatorProps> = ({ compactView, darkMode }) => {
   // Get available property types for selected zone
   const getPropertyTypes = () => {
     if (!selectedZone) return [];
-    
-    // Get property types from mockUnits data structure instead of trying to access a non-existent property
-    if (mockUnits[selectedZone]) {
-      return Object.keys(mockUnits[selectedZone]);
-    }
-    
-    return [];
+    const zone = mockZones.find(z => z.id === selectedZone);
+    return zone ? zone.propertyTypes : [];
   };
 
   // Get available buildings for selected zone and property type
@@ -209,16 +204,14 @@ const Calculator: React.FC<CalculatorProps> = ({ compactView, darkMode }) => {
       // 3. Add typical building rate for apartments in Zone 3
       if (selectedZone === '3' && selectedPropertyType === 'Apartment') {
         const buildingRate = rates2025.typicalBuilding;
-        if (buildingRate !== undefined) {
-          const buildingContribution = buildingRate * bua;
-          breakdown.push({
-            name: 'Typical Building',
-            rateApplied: buildingRate,
-            buaSqm: bua,
-            contribution: buildingContribution
-          });
-          totalContribution += buildingContribution;
-        }
+        const buildingContribution = buildingRate * bua;
+        breakdown.push({
+          name: 'Typical Building',
+          rateApplied: buildingRate,
+          buaSqm: bua,
+          contribution: buildingContribution
+        });
+        totalContribution += buildingContribution;
       }
 
       // Set the calculation result
