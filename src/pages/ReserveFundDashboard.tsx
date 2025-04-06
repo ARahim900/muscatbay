@@ -1,7 +1,8 @@
+
 import React from 'react';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ChartOptions } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
-import { faker } from '@faker-js/faker';
+import { faker } from '@faker-js/faker/locale/en';
 import Layout from '@/components/layout/Layout';
 
 ChartJS.register(
@@ -26,7 +27,9 @@ const options: ChartOptions<'bar'> = {
       beginAtZero: true,
       ticks: {
         callback: function(value) {
-          return formatter.format(value);
+          return typeof value === 'number' 
+            ? formatter.format(value) 
+            : value;
         }
       },
       grid: {
