@@ -1,3 +1,4 @@
+
 import { STPDailyData, STPMonthlyData, ProcessingMetrics } from '@/types/stp';
 import { format, parse, isValid, parseISO } from 'date-fns';
 
@@ -123,4 +124,184 @@ export const stpDailyData: STPDailyData[] = [
   { date: '2024-10-06', tankerTrips: 8, expectedVolumeTankers: 160, directSewageMB: 297, totalInfluent: 457, totalWaterProcessed: 425, tseToIrrigation: 365 },
   { date: '2024-10-07', tankerTrips: 11, expectedVolumeTankers: 220, directSewageMB: 324, totalInfluent: 544, totalWaterProcessed: 592, tseToIrrigation: 533 },
   { date: '2024-10-08', tankerTrips: 11, expectedVolumeTankers: 220, directSewageMB: 269, totalInfluent: 489, totalWaterProcessed: 524, tseToIrrigation: 462 },
-  { date: '2024-10-09', tankerTrips: 11, expectedVolumeTankers: 220, directSewageMB: 312, totalInfluent: 532, totalWaterProcessed: 580
+  { date: '2024-10-09', tankerTrips: 11, expectedVolumeTankers: 220, directSewageMB: 312, totalInfluent: 532, totalWaterProcessed: 580, tseToIrrigation: 510 },
+  { date: '2024-10-10', tankerTrips: 10, expectedVolumeTankers: 200, directSewageMB: 326, totalInfluent: 526, totalWaterProcessed: 565, tseToIrrigation: 493 },
+  { date: '2024-10-11', tankerTrips: 12, expectedVolumeTankers: 240, directSewageMB: 342, totalInfluent: 582, totalWaterProcessed: 601, tseToIrrigation: 530 },
+  { date: '2024-10-12', tankerTrips: 9, expectedVolumeTankers: 180, directSewageMB: 372, totalInfluent: 552, totalWaterProcessed: 580, tseToIrrigation: 513 },
+  { date: '2024-10-13', tankerTrips: 8, expectedVolumeTankers: 160, directSewageMB: 335, totalInfluent: 495, totalWaterProcessed: 531, tseToIrrigation: 468 },
+  { date: '2024-10-14', tankerTrips: 13, expectedVolumeTankers: 260, directSewageMB: 302, totalInfluent: 562, totalWaterProcessed: 587, tseToIrrigation: 517 },
+  { date: '2024-10-15', tankerTrips: 14, expectedVolumeTankers: 280, directSewageMB: 355, totalInfluent: 635, totalWaterProcessed: 671, tseToIrrigation: 590 },
+  { date: '2024-10-16', tankerTrips: 10, expectedVolumeTankers: 200, directSewageMB: 361, totalInfluent: 561, totalWaterProcessed: 602, tseToIrrigation: 521 },
+  { date: '2024-10-17', tankerTrips: 11, expectedVolumeTankers: 220, directSewageMB: 346, totalInfluent: 566, totalWaterProcessed: 589, tseToIrrigation: 520 },
+  { date: '2024-10-18', tankerTrips: 10, expectedVolumeTankers: 200, directSewageMB: 369, totalInfluent: 569, totalWaterProcessed: 595, tseToIrrigation: 522 },
+  { date: '2024-10-19', tankerTrips: 12, expectedVolumeTankers: 240, directSewageMB: 345, totalInfluent: 585, totalWaterProcessed: 612, tseToIrrigation: 537 },
+  { date: '2024-10-20', tankerTrips: 8, expectedVolumeTankers: 160, directSewageMB: 376, totalInfluent: 536, totalWaterProcessed: 573, tseToIrrigation: 502 },
+  { date: '2024-10-21', tankerTrips: 9, expectedVolumeTankers: 180, directSewageMB: 378, totalInfluent: 558, totalWaterProcessed: 590, tseToIrrigation: 515 },
+  { date: '2024-10-22', tankerTrips: 12, expectedVolumeTankers: 240, directSewageMB: 359, totalInfluent: 599, totalWaterProcessed: 621, tseToIrrigation: 545 },
+  { date: '2024-10-23', tankerTrips: 10, expectedVolumeTankers: 200, directSewageMB: 359, totalInfluent: 559, totalWaterProcessed: 585, tseToIrrigation: 515 },
+  { date: '2024-10-24', tankerTrips: 13, expectedVolumeTankers: 260, directSewageMB: 348, totalInfluent: 608, totalWaterProcessed: 630, tseToIrrigation: 550 },
+  { date: '2024-10-25', tankerTrips: 12, expectedVolumeTankers: 240, directSewageMB: 352, totalInfluent: 592, totalWaterProcessed: 615, tseToIrrigation: 540 },
+  { date: '2024-10-26', tankerTrips: 9, expectedVolumeTankers: 180, directSewageMB: 366, totalInfluent: 546, totalWaterProcessed: 570, tseToIrrigation: 500 },
+  { date: '2024-10-27', tankerTrips: 7, expectedVolumeTankers: 140, directSewageMB: 382, totalInfluent: 522, totalWaterProcessed: 560, tseToIrrigation: 490 },
+  { date: '2024-10-28', tankerTrips: 10, expectedVolumeTankers: 200, directSewageMB: 375, totalInfluent: 575, totalWaterProcessed: 600, tseToIrrigation: 525 },
+  { date: '2024-10-29', tankerTrips: 11, expectedVolumeTankers: 220, directSewageMB: 352, totalInfluent: 572, totalWaterProcessed: 595, tseToIrrigation: 520 },
+  { date: '2024-10-30', tankerTrips: 12, expectedVolumeTankers: 240, directSewageMB: 348, totalInfluent: 588, totalWaterProcessed: 610, tseToIrrigation: 535 },
+  { date: '2024-10-31', tankerTrips: 13, expectedVolumeTankers: 260, directSewageMB: 355, totalInfluent: 615, totalWaterProcessed: 630, tseToIrrigation: 555 },
+  
+  // Added March 2025 data based on the table provided by the user
+  { date: '2025-03-01', tankerTrips: 0, expectedVolumeTankers: 0, directSewageMB: 487, totalInfluent: 487, totalWaterProcessed: 583, tseToIrrigation: 476 },
+  { date: '2025-03-02', tankerTrips: 1, expectedVolumeTankers: 20, directSewageMB: 473, totalInfluent: 493, totalWaterProcessed: 592, tseToIrrigation: 514 },
+  { date: '2025-03-03', tankerTrips: 1, expectedVolumeTankers: 20, directSewageMB: 477, totalInfluent: 497, totalWaterProcessed: 598, tseToIrrigation: 517 },
+  { date: '2025-03-04', tankerTrips: 5, expectedVolumeTankers: 100, directSewageMB: 461, totalInfluent: 561, totalWaterProcessed: 600, tseToIrrigation: 516 },
+  { date: '2025-03-05', tankerTrips: 3, expectedVolumeTankers: 60, directSewageMB: 443, totalInfluent: 503, totalWaterProcessed: 608, tseToIrrigation: 521 },
+  { date: '2025-03-06', tankerTrips: 6, expectedVolumeTankers: 120, directSewageMB: 424, totalInfluent: 544, totalWaterProcessed: 607, tseToIrrigation: 530 },
+  { date: '2025-03-07', tankerTrips: 5, expectedVolumeTankers: 100, directSewageMB: 452, totalInfluent: 552, totalWaterProcessed: 621, tseToIrrigation: 532 },
+  { date: '2025-03-08', tankerTrips: 6, expectedVolumeTankers: 120, directSewageMB: 450, totalInfluent: 570, totalWaterProcessed: 617, tseToIrrigation: 531 },
+  { date: '2025-03-09', tankerTrips: 4, expectedVolumeTankers: 80, directSewageMB: 388, totalInfluent: 468, totalWaterProcessed: 607, tseToIrrigation: 521 },
+  { date: '2025-03-10', tankerTrips: 6, expectedVolumeTankers: 120, directSewageMB: 480, totalInfluent: 600, totalWaterProcessed: 610, tseToIrrigation: 524 },
+  { date: '2025-03-11', tankerTrips: 3, expectedVolumeTankers: 60, directSewageMB: 476, totalInfluent: 536, totalWaterProcessed: 607, tseToIrrigation: 511 },
+  { date: '2025-03-12', tankerTrips: 6, expectedVolumeTankers: 120, directSewageMB: 391, totalInfluent: 511, totalWaterProcessed: 601, tseToIrrigation: 509 },
+  { date: '2025-03-13', tankerTrips: 3, expectedVolumeTankers: 60, directSewageMB: 472, totalInfluent: 532, totalWaterProcessed: 606, tseToIrrigation: 508 },
+  { date: '2025-03-14', tankerTrips: 6, expectedVolumeTankers: 120, directSewageMB: 399, totalInfluent: 519, totalWaterProcessed: 609, tseToIrrigation: 507 },
+  { date: '2025-03-15', tankerTrips: 2, expectedVolumeTankers: 40, directSewageMB: 494, totalInfluent: 534, totalWaterProcessed: 602, tseToIrrigation: 504 },
+  { date: '2025-03-16', tankerTrips: 4, expectedVolumeTankers: 80, directSewageMB: 434, totalInfluent: 514, totalWaterProcessed: 591, tseToIrrigation: 494 },
+  { date: '2025-03-17', tankerTrips: 4, expectedVolumeTankers: 80, directSewageMB: 442, totalInfluent: 522, totalWaterProcessed: 591, tseToIrrigation: 500 },
+  { date: '2025-03-18', tankerTrips: 5, expectedVolumeTankers: 100, directSewageMB: 369, totalInfluent: 469, totalWaterProcessed: 578, tseToIrrigation: 480 },
+  { date: '2025-03-19', tankerTrips: 3, expectedVolumeTankers: 60, directSewageMB: 466, totalInfluent: 526, totalWaterProcessed: 565, tseToIrrigation: 467 },
+  { date: '2025-03-20', tankerTrips: 4, expectedVolumeTankers: 80, directSewageMB: 424, totalInfluent: 504, totalWaterProcessed: 610, tseToIrrigation: 511 },
+  { date: '2025-03-21', tankerTrips: 4, expectedVolumeTankers: 80, directSewageMB: 425, totalInfluent: 505, totalWaterProcessed: 619, tseToIrrigation: 519 },
+  { date: '2025-03-22', tankerTrips: 5, expectedVolumeTankers: 100, directSewageMB: 435, totalInfluent: 535, totalWaterProcessed: 616, tseToIrrigation: 523 },
+  { date: '2025-03-23', tankerTrips: 6, expectedVolumeTankers: 120, directSewageMB: 466, totalInfluent: 586, totalWaterProcessed: 627, tseToIrrigation: 541 },
+  { date: '2025-03-24', tankerTrips: 6, expectedVolumeTankers: 120, directSewageMB: 422, totalInfluent: 542, totalWaterProcessed: 630, tseToIrrigation: 540 },
+  { date: '2025-03-25', tankerTrips: 5, expectedVolumeTankers: 100, directSewageMB: 488, totalInfluent: 588, totalWaterProcessed: 613, tseToIrrigation: 522 },
+  { date: '2025-03-26', tankerTrips: 8, expectedVolumeTankers: 160, directSewageMB: 353, totalInfluent: 513, totalWaterProcessed: 631, tseToIrrigation: 541 },
+  { date: '2025-03-27', tankerTrips: 7, expectedVolumeTankers: 140, directSewageMB: 513, totalInfluent: 653, totalWaterProcessed: 627, tseToIrrigation: 538 },
+  { date: '2025-03-28', tankerTrips: 3, expectedVolumeTankers: 60, directSewageMB: 478, totalInfluent: 538, totalWaterProcessed: 631, tseToIrrigation: 546 },
+  { date: '2025-03-29', tankerTrips: 4, expectedVolumeTankers: 80, directSewageMB: 559, totalInfluent: 639, totalWaterProcessed: 623, tseToIrrigation: 534 },
+  { date: '2025-03-30', tankerTrips: 3, expectedVolumeTankers: 60, directSewageMB: 471, totalInfluent: 531, totalWaterProcessed: 640, tseToIrrigation: 558 },
+  { date: '2025-03-31', tankerTrips: 3, expectedVolumeTankers: 60, directSewageMB: 471, totalInfluent: 531, totalWaterProcessed: 640, tseToIrrigation: 558 }
+];
+
+// Helper function to format month display
+export const formatMonth = (monthStr: string): string => {
+  try {
+    const date = parseISO(monthStr + '-01');
+    if (!isValid(date)) {
+      throw new Error('Invalid date');
+    }
+    return format(date, 'MMMM yyyy');
+  } catch (error) {
+    console.error("Error formatting month:", error);
+    return monthStr; // Return the original string if parsing fails
+  }
+};
+
+// Helper function to format date display
+export const formatDate = (dateStr: string): string => {
+  try {
+    const date = parseISO(dateStr);
+    if (!isValid(date)) {
+      throw new Error('Invalid date');
+    }
+    return format(date, 'dd MMM yyyy');
+  } catch (error) {
+    console.error("Error formatting date:", error);
+    return dateStr; // Return the original string if parsing fails
+  }
+};
+
+// Function to calculate monthly metrics
+export const calculateMonthlyMetrics = (selectedMonth: string): ProcessingMetrics => {
+  const monthData = stpMonthlyData.find(m => m.month === selectedMonth);
+  
+  if (!monthData) {
+    console.warn(`No monthly data found for ${selectedMonth}`);
+    return {
+      processingEfficiency: 0,
+      irrigationUtilization: 0,
+      directSewagePercentage: 0,
+      tankerPercentage: 0
+    };
+  }
+  
+  // Calculate processing efficiency (water processed / total influent)
+  const processingEfficiency = monthData.totalInfluent > 0 
+    ? monthData.totalWaterProcessed / monthData.totalInfluent 
+    : 0;
+  
+  // Calculate irrigation utilization (water to irrigation / water processed)
+  const irrigationUtilization = monthData.totalWaterProcessed > 0 
+    ? monthData.tseToIrrigation / monthData.totalWaterProcessed 
+    : 0;
+  
+  // Calculate direct sewage percentage
+  const directSewagePercentage = monthData.totalInfluent > 0 
+    ? monthData.directSewageMB / monthData.totalInfluent 
+    : 0;
+  
+  // Calculate tanker percentage
+  const tankerPercentage = monthData.totalInfluent > 0 
+    ? monthData.expectedVolumeTankers / monthData.totalInfluent 
+    : 0;
+  
+  return {
+    processingEfficiency,
+    irrigationUtilization,
+    directSewagePercentage,
+    tankerPercentage
+  };
+};
+
+// Function to get daily data for a specific month
+export const getDailyDataForMonth = (month: string): STPDailyData[] => {
+  if (!month || month === 'all') {
+    return stpDailyData;
+  }
+  
+  return stpDailyData.filter(day => day.date.startsWith(month));
+};
+
+// Function to calculate efficiency statistics
+export const calculateEfficiencyStats = (data: STPDailyData[]): { 
+  avgProcessingEfficiency: number; 
+  maxProcessingEfficiency: number; 
+  minProcessingEfficiency: number;
+  avgIrrigationUtilization: number;
+} => {
+  if (!data || data.length === 0) {
+    return {
+      avgProcessingEfficiency: 0,
+      maxProcessingEfficiency: 0,
+      minProcessingEfficiency: 0,
+      avgIrrigationUtilization: 0
+    };
+  }
+  
+  // Calculate efficiencies for each day
+  const efficiencies = data.map(day => ({
+    processingEfficiency: day.totalInfluent > 0 ? day.totalWaterProcessed / day.totalInfluent : 0,
+    irrigationUtilization: day.totalWaterProcessed > 0 ? day.tseToIrrigation / day.totalWaterProcessed : 0
+  }));
+  
+  // Calculate average processing efficiency
+  const avgProcessingEfficiency = efficiencies.reduce(
+    (sum, item) => sum + item.processingEfficiency, 0
+  ) / efficiencies.length;
+  
+  // Calculate max and min processing efficiency
+  const processingEfficiencyValues = efficiencies.map(e => e.processingEfficiency);
+  const maxProcessingEfficiency = Math.max(...processingEfficiencyValues);
+  const minProcessingEfficiency = Math.min(...processingEfficiencyValues);
+  
+  // Calculate average irrigation utilization
+  const avgIrrigationUtilization = efficiencies.reduce(
+    (sum, item) => sum + item.irrigationUtilization, 0
+  ) / efficiencies.length;
+  
+  return {
+    avgProcessingEfficiency,
+    maxProcessingEfficiency,
+    minProcessingEfficiency,
+    avgIrrigationUtilization
+  };
+};
