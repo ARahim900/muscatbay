@@ -51,25 +51,26 @@ const ElectricityDataEntryForm: React.FC<ElectricityDataEntryFormProps> = ({ onS
     try {
       setIsSubmitting(true);
 
-      // First, check if the table exists by trying to access its schema
+      // Create a custom query to check if the table exists
       const { error: schemaError } = await supabase
-        .rpc('get_schema_definition', { table_name: 'electricity_records' })
+        .from('MB-Electrical')
+        .select('*')
+        .limit(1)
         .single();
       
-      // Create the table if it doesn't exist
-      if (schemaError) {
-        // Here we should actually run a migration to create the table
-        toast.error("Electricity records table doesn't exist. Please contact the administrator.");
+      // If there's an error, show appropriate message
+      if (schemaError && schemaError.code === 'PGRST116') {
+        toast.error("Electricity table doesn't exist. Please contact the administrator.");
         setIsSubmitting(false);
         return;
       }
 
-      // Check if a record with this meter label and date already exists
+      // Check if a record with this meter label and date already exists in MB-Electrical
       const { data: existingData, error: fetchError } = await supabase
-        .from('electricity_records')
+        .from('MB-Electrical')
         .select('*')
-        .eq('meter_label', data.meterLabel)
-        .eq('reading_date', data.readingDate);
+        .eq('Electrical Meter Account No', data.accountNumber)
+        .eq('Zone', data.zone);
 
       if (fetchError) {
         toast.error(`Error checking existing records: ${fetchError.message}`);
@@ -77,19 +78,21 @@ const ElectricityDataEntryForm: React.FC<ElectricityDataEntryFormProps> = ({ onS
         return;
       }
 
+      // Determine which month column to update based on reading date
+      const readingDate = new Date(data.readingDate);
+      const monthYear = new Intl.DateTimeFormat('en-US', { month: 'long', year: '2-digit' }).format(readingDate);
+      const columnName = `${monthYear}-${readingDate.getFullYear()}`;
+
       if (existingData && existingData.length > 0) {
-        // Update existing record
+        // Update existing record - Need to handle this with a different approach since we're updating specific columns
+        const updateObj: Record<string, any> = {};
+        updateObj[columnName] = data.consumption;
+
         const { error: updateError } = await supabase
-          .from('electricity_records')
-          .update({
-            account_number: data.accountNumber,
-            zone: data.zone,
-            type: data.type,
-            consumption: data.consumption,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('meter_label', data.meterLabel)
-          .eq('reading_date', data.readingDate);
+          .from('MB-Electrical')
+          .update(updateObj)
+          .eq('Electrical Meter Account No', data.accountNumber)
+          .eq('Zone', data.zone);
 
         if (updateError) {
           toast.error(`Error updating record: ${updateError.message}`);
@@ -100,16 +103,16 @@ const ElectricityDataEntryForm: React.FC<ElectricityDataEntryFormProps> = ({ onS
         toast.success('Record updated successfully!');
       } else {
         // Insert new record
+        const insertObj: Record<string, any> = {
+          'Electrical Meter Account No': data.accountNumber,
+          'Zone': data.zone,
+          'Type': data.type,
+        };
+        insertObj[columnName] = data.consumption;
+
         const { error: insertError } = await supabase
-          .from('electricity_records')
-          .insert({
-            meter_label: data.meterLabel,
-            account_number: data.accountNumber,
-            zone: data.zone,
-            type: data.type,
-            consumption: data.consumption,
-            reading_date: data.readingDate,
-          });
+          .from('MB-Electrical')
+          .insert(insertObj);
 
         if (insertError) {
           toast.error(`Error creating record: ${insertError.message}`);

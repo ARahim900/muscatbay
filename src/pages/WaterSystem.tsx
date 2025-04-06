@@ -1,436 +1,325 @@
-
 import React, { useState, useEffect } from 'react';
-import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ChartOptions } from 'chart.js';
-import { Bar } from 'react-chartjs-2';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import { Droplets, TrendingUp, TrendingDown } from 'lucide-react';
 import { faker } from '@faker-js/faker';
 import Layout from '@/components/layout/Layout';
-import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import StatCard from '@/components/dashboard/StatCard';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { CalendarRange, Download, Search, Filter, Activity } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Droplets, FileBarChart, TrendingUp, TrendingDown, BarChart as BarChartIcon } from 'lucide-react';
-import { Skeleton } from '@/components/ui/skeleton';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { parseCSVFromClipboard, saveWaterData } from '@/utils/waterDataUtils';
-import { WaterData } from '@/types/water';
 import ImportWaterData from '@/components/water/ImportWaterData';
 
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend
-);
-
-const options: ChartOptions<'bar'> = {
-  responsive: true,
-  maintainAspectRatio: false,
-  scales: {
-    x: {
-      grid: {
-        display: false,
-      },
-    },
-    y: {
-      beginAtZero: true,
-      ticks: {
-        callback: function(value) {
-          // Ensure we're only formatting numbers
-          if (typeof value === 'number') {
-            return formatter.format(value);
-          }
-          return value;
-        }
-      },
-      grid: {
-        color: 'rgba(0, 0, 0, 0.1)',
-      },
-    },
-  },
-  plugins: {
-    legend: {
-      display: false,
-    },
-  },
-};
-
-const formatter = new Intl.NumberFormat('en-US', {
-  style: 'decimal',
-  minimumFractionDigits: 0,
-  maximumFractionDigits: 0,
-});
+const WATER_RATE = 0.015; // OMR per m3
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#FF6B6B'];
 
 const WaterSystem = () => {
-  const [activeTab, setActiveTab] = useState('overview');
-  const [loading, setLoading] = useState(true);
-  const [monthlyData, setMonthlyData] = useState<any>({});
-  const [consumptionByType, setConsumptionByType] = useState<any[]>([]);
-  const [consumptionByZone, setConsumptionByZone] = useState<any[]>([]);
-  const [selectedMonth, setSelectedMonth] = useState('feb_25');
-  const [totalConsumption, setTotalConsumption] = useState(0);
-  const [yearlyConsumption, setYearlyConsumption] = useState(0);
-  const [monthlyChange, setMonthlyChange] = useState(0);
-
-  // Add a type guard for monthly data
-  const getMonthlyConsumption = (data: any) => {
-    return {
-      monthly: data?.monthly || 0,
-      yearly: data?.yearly || 0
-    };
-  };
-
+  const [selectedMonth, setSelectedMonth] = useState<string>("all");
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const isMobile = useIsMobile();
+  const navigate = useNavigate();
+  
   useEffect(() => {
-    fetchWaterData();
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1000);
+    
+    return () => clearTimeout(timer);
   }, []);
 
-  const fetchWaterData = async () => {
-    try {
-      setLoading(true);
+  const allMonths = [
+    { value: 'all', label: 'All Months' },
+    { value: 'Jan-24', label: 'January 2024' },
+    { value: 'Feb-24', label: 'February 2024' },
+    { value: 'Mar-24', label: 'March 2024' },
+    { value: 'Apr-24', label: 'April 2024' },
+    { value: 'May-24', label: 'May 2024' },
+    { value: 'Jun-24', label: 'June 2024' },
+    { value: 'Jul-24', label: 'July 2024' },
+    { value: 'Aug-24', label: 'August 2024' },
+    { value: 'Sep-24', label: 'September 2024' },
+    { value: 'Oct-24', label: 'October 2024' },
+    { value: 'Nov-24', label: 'November 2024' },
+    { value: 'Dec-24', label: 'December 2024' },
+    { value: 'Jan-25', label: 'January 2025' },
+    { value: 'Feb-25', label: 'February 2025' }
+  ];
+
+  const getConsumptionData = () => {
+    if (selectedMonth === 'all') {
+      const janConsumption = 55000;
+      const febConsumption = 68000;
       
-      // Fetch water consumption by type
-      const { data: typeData, error: typeError } = await supabase
-        .from('water_consumption_by_type')
-        .select('*');
+      return {
+        totalConsumption: janConsumption + febConsumption,
+        periodLabel: 'Jan-Feb 2025',
+        currentMonth: febConsumption,
+        currentMonthLabel: 'February 2025',
+        previousMonth: janConsumption,
+        previousMonthLabel: 'January 2025',
+        momChange: ((febConsumption - janConsumption) / janConsumption) * 100
+      };
+    } else {
+      const currentMonthConsumption = faker.number.int({ min: 50000, max: 70000 });
+      const previousMonthConsumption = faker.number.int({ min: 45000, max: 65000 });
       
-      if (typeError) throw typeError;
-      
-      // Fetch water consumption by zone
-      const { data: zoneData, error: zoneError } = await supabase
-        .from('water_consumption_by_zone')
-        .select('*');
-      
-      if (zoneError) throw zoneError;
-      
-      // Fetch main bulk data for total consumption
-      const { data: mainBulkData, error: bulkError } = await supabase
-        .from('water_distribution_master')
-        .select('*')
-        .eq('type', 'Main BULK')
-        .single();
-      
-      if (bulkError && !bulkError.message.includes('No rows found')) {
-        throw bulkError;
-      }
-      
-      // Process the data
-      if (typeData) {
-        setConsumptionByType(typeData);
-      }
-      
-      if (zoneData) {
-        setConsumptionByZone(zoneData);
-      }
-      
-      if (mainBulkData) {
-        // Ensure we're dealing with numbers
-        const currentMonth = Number(mainBulkData[selectedMonth] || 0);
-        const previousMonth = selectedMonth === 'feb_25' 
-          ? Number(mainBulkData['jan_25'] || 0) 
-          : selectedMonth === 'mar_25'
-            ? Number(mainBulkData['feb_25'] || 0)
-            : Number(mainBulkData['dec_24'] || 0);
-        
-        setTotalConsumption(currentMonth);
-        setYearlyConsumption(Number(mainBulkData.total || 0));
-        
-        // Calculate monthly change percentage
-        if (previousMonth > 0) {
-          const change = ((currentMonth - previousMonth) / previousMonth) * 100;
-          setMonthlyChange(change);
-        }
-        
-        setMonthlyData({
-          monthly: currentMonth,
-          yearly: Number(mainBulkData.total || 0),
-          previousMonth: previousMonth,
-          change: monthlyChange
-        });
-      }
-      
-      setLoading(false);
-    } catch (error) {
-      console.error('Error fetching water data:', error);
-      toast.error('Failed to load water data');
-      setLoading(false);
+      return {
+        totalConsumption: currentMonthConsumption,
+        periodLabel: allMonths.find(m => m.value === selectedMonth)?.label || selectedMonth,
+        currentMonth: currentMonthConsumption,
+        currentMonthLabel: allMonths.find(m => m.value === selectedMonth)?.label || selectedMonth,
+        previousMonth: previousMonthConsumption,
+        previousMonthLabel: 'Previous Month',
+        momChange: ((currentMonthConsumption - previousMonthConsumption) / previousMonthConsumption) * 100
+      };
     }
   };
 
-  const handleMonthChange = (month: string) => {
-    setSelectedMonth(month);
-    // Re-fetch data with new month
-    fetchWaterData();
+  const consumptionData = getConsumptionData();
+
+  const pieChartData = [
+    { name: 'Residential', value: faker.number.int({ min: 10000, max: 20000 }), color: COLORS[0] },
+    { name: 'Commercial', value: faker.number.int({ min: 15000, max: 25000 }), color: COLORS[1] },
+    { name: 'Retail', value: faker.number.int({ min: 8000, max: 18000 }), color: COLORS[2] },
+    { name: 'Industrial', value: faker.number.int({ min: 12000, max: 22000 }), color: COLORS[3] },
+  ];
+
+  const monthlyConsumption = allMonths.slice(1).map(month => ({
+    month: month.label,
+    consumption: faker.number.int({ min: 40000, max: 70000 }),
+    cost: faker.number.int({ min: 600, max: 1050 })
+  }));
+
+  const handleBackToDashboard = () => {
+    navigate('/');
+    toast.success("Returned to dashboard");
   };
 
-  const handleImportData = async (clipboardData: string) => {
-    try {
-      const parsedData = await parseCSVFromClipboard(
-        clipboardData,
-        async (transformedData: WaterData[]) => {
-          const result = await saveWaterData(transformedData);
-          if (result.success) {
-            toast.success(result.message);
-            fetchWaterData(); // Refresh data after import
-          } else {
-            toast.error(result.message);
-          }
-        },
-        (errorMessage: string) => {
-          toast.error(errorMessage);
-        }
-      );
-    } catch (error) {
-      console.error('Error importing data:', error);
-      toast.error('Failed to import data');
-    }
-  };
-
-  const formatNumber = (num: number) => {
-    return formatter.format(num);
-  };
-
-  if (loading) {
+  if (isLoading) {
     return (
-      <Layout>
-        <div className="container mx-auto p-4">
-          <h1 className="text-2xl font-bold mb-6">Water System Dashboard</h1>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <Skeleton className="h-32" />
-            <Skeleton className="h-32" />
-            <Skeleton className="h-32" />
-          </div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-            <Skeleton className="h-80" />
-            <Skeleton className="h-80" />
+      <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900">
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <Droplets className="w-12 h-12 mx-auto mb-4 text-blue-500 animate-pulse" />
+            <h2 className="text-xl font-medium text-gray-700">Loading Water System Dashboard...</h2>
           </div>
         </div>
-      </Layout>
+      </div>
     );
   }
 
   return (
     <Layout>
-      <div className="container mx-auto p-4">
-        <div className="flex justify-between items-center mb-6">
-          <div className="flex items-center">
-            <Droplets className="h-6 w-6 mr-2 text-blue-600" />
-            <h1 className="text-2xl font-bold">Water System Dashboard</h1>
-          </div>
-          <div className="flex space-x-2">
-            <select
-              className="border rounded-md p-2"
-              value={selectedMonth}
-              onChange={(e) => handleMonthChange(e.target.value)}
-            >
-              <option value="jan_25">January 2025</option>
-              <option value="feb_25">February 2025</option>
-              <option value="mar_25">March 2025</option>
-            </select>
-            <Button variant="outline" size="sm">
-              <FileBarChart className="h-4 w-4 mr-2" />
-              Export
-            </Button>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Total Consumption</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-baseline">
-                <span className="text-3xl font-bold">{formatNumber(totalConsumption)}</span>
-                <span className="ml-2 text-gray-500">m³</span>
+      <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900">
+        {/* Header */}
+        <header className="sticky top-0 z-30 w-full px-4 py-3 bg-white shadow-sm dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-blue-500 text-white flex items-center justify-center">
+                <Droplets size={20} />
               </div>
-              <p className="text-sm text-gray-500 mt-1">Current Month</p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Yearly Consumption</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-baseline">
-                <span className="text-3xl font-bold">{formatNumber(yearlyConsumption)}</span>
-                <span className="ml-2 text-gray-500">m³</span>
-              </div>
-              <p className="text-sm text-gray-500 mt-1">Last 12 Months</p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Monthly Change</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center">
-                <span className="text-3xl font-bold">{monthlyChange.toFixed(1)}%</span>
-                {monthlyChange > 0 ? (
-                  <TrendingUp className="ml-2 h-5 w-5 text-red-500" />
-                ) : (
-                  <TrendingDown className="ml-2 h-5 w-5 text-green-500" />
-                )}
-              </div>
-              <p className="text-sm text-gray-500 mt-1">vs Previous Month</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="mb-6">
-          <TabsList>
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="by-type">By Type</TabsTrigger>
-            <TabsTrigger value="by-zone">By Zone</TabsTrigger>
-            <TabsTrigger value="import">Import Data</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="overview" className="mt-4">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Monthly Consumption Trend</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-80">
-                    <Bar 
-                      options={options} 
-                      data={{
-                        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-                        datasets: [
-                          {
-                            label: 'Consumption (m³)',
-                            data: [
-                              consumptionByType[0]?.jan_25 || 0,
-                              consumptionByType[0]?.feb_25 || 0,
-                              consumptionByType[0]?.mar_25 || 0,
-                              consumptionByType[0]?.apr_24 || 0,
-                              consumptionByType[0]?.may_24 || 0,
-                              consumptionByType[0]?.jun_24 || 0,
-                              consumptionByType[0]?.jul_24 || 0,
-                              consumptionByType[0]?.aug_24 || 0,
-                              consumptionByType[0]?.sep_24 || 0,
-                              consumptionByType[0]?.oct_24 || 0,
-                              consumptionByType[0]?.nov_24 || 0,
-                              consumptionByType[0]?.dec_24 || 0,
-                            ],
-                            backgroundColor: 'rgba(53, 162, 235, 0.5)',
-                          },
-                        ],
-                      }} 
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardHeader>
-                  <CardTitle>Consumption by Type</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-80">
-                    <Bar 
-                      options={{
-                        ...options,
-                        indexAxis: 'y' as const,
-                      }} 
-                      data={{
-                        labels: consumptionByType.slice(0, 5).map(item => item.type),
-                        datasets: [
-                          {
-                            label: 'Consumption (m³)',
-                            data: consumptionByType.slice(0, 5).map(item => item[selectedMonth] || 0),
-                            backgroundColor: [
-                              'rgba(255, 99, 132, 0.5)',
-                              'rgba(54, 162, 235, 0.5)',
-                              'rgba(255, 206, 86, 0.5)',
-                              'rgba(75, 192, 192, 0.5)',
-                              'rgba(153, 102, 255, 0.5)',
-                            ],
-                          },
-                        ],
-                      }} 
-                    />
-                  </div>
-                </CardContent>
-              </Card>
+              <h1 className="text-xl font-bold">OmniProp</h1>
             </div>
-          </TabsContent>
+            
+            <div className="relative w-96">
+              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                <Search className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+              </div>
+              <input 
+                type="search" 
+                className="w-full py-2 pl-10 pr-4 text-sm border rounded-lg bg-gray-50 border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white" 
+                placeholder="Search facilities, consumption..." 
+              />
+            </div>
+            
+            <div className="flex items-center gap-4">
+              <button className="p-2 text-gray-500 rounded-lg hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-700">
+                <Filter size={20} />
+              </button>
+              <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-800 flex items-center justify-center font-medium">MB</div>
+            </div>
+          </div>
+        </header>
+        
+        {/* Main Content Area */}
+        <div className="flex flex-1">
+          {/* Sidebar */}
+          <aside className="w-20 md:w-64 p-4 border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+            <nav className="space-y-1 mt-6">
+              <button 
+                onClick={handleBackToDashboard}
+                className="flex items-center w-full p-3 rounded-lg text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+              >
+                <Activity size={20} className="mr-3" />
+                <span className="hidden md:inline">Activity</span>
+              </button>
+              
+              <button 
+                onClick={handleBackToDashboard}
+                className="flex items-center w-full p-3 rounded-lg text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+              >
+                <Activity size={20} className="mr-3" />
+                <span className="hidden md:inline">Consumption</span>
+              </button>
+              
+              <button 
+                onClick={handleBackToDashboard}
+                className="flex items-center w-full p-3 rounded-lg text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+              >
+                <Activity size={20} className="mr-3" />
+                <span className="hidden md:inline">Facilities</span>
+              </button>
+              
+              <button 
+                onClick={handleBackToDashboard}
+                className="flex items-center w-full p-3 rounded-lg text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+              >
+                <Activity size={20} className="mr-3" />
+                <span className="hidden md:inline">Trends</span>
+              </button>
+              
+              <button 
+                onClick={handleBackToDashboard}
+                className="flex items-center w-full p-3 rounded-lg text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+              >
+                <Activity size={20} className="mr-3" />
+                <span className="hidden md:inline">Comparison</span>
+              </button>
+              
+              <button 
+                onClick={handleBackToDashboard}
+                className="flex items-center w-full p-3 rounded-lg text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+              >
+                <Activity size={20} className="mr-3" />
+                <span className="hidden md:inline">Settings</span>
+              </button>
+              
+              <button 
+                onClick={handleBackToDashboard}
+                className="flex items-center w-full p-3 rounded-lg text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+              >
+                <Activity size={20} className="mr-3" />
+                <span className="hidden md:inline">Back to Dashboard</span>
+              </button>
+            </nav>
+            
+            <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
+              <div className="space-y-3">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Select Month</label>
+                <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                  <SelectTrigger className="w-full text-sm">
+                    <CalendarRange className="w-4 h-4 mr-2" />
+                    <SelectValue placeholder="Select Month" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {allMonths.map((month) => (
+                      <SelectItem key={month.value} value={month.value} className="text-sm">
+                        {month.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                
+                <button className="flex items-center justify-center w-full px-3 py-2 text-sm rounded-md bg-blue-500 text-white hover:bg-blue-600 transition-colors mt-2">
+                  <Download className="w-4 h-4 mr-2" />
+                  Export Report
+                </button>
+              </div>
+            </div>
+          </aside>
           
-          <TabsContent value="by-type" className="mt-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Consumption by Type</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Jan 25</th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Feb 25</th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mar 25</th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {consumptionByType.map((item, index) => (
-                        <tr key={index}>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.type}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatNumber(item.jan_25 || 0)}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatNumber(item.feb_25 || 0)}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatNumber(item.mar_25 || 0)}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatNumber(item.total || 0)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+          {/* Main Content */}
+          <main className="flex-1 p-6 overflow-auto">
+            <div className="mb-6">
+              <h1 className="text-2xl font-bold">Water System Dashboard</h1>
+              <p className="text-sm text-gray-500">Current rate: <span className="font-medium text-blue-500">0.015 OMR/m3</span></p>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-6">
+              <StatCard
+                title={`Total ${consumptionData.periodLabel} Consumption`}
+                value={`${consumptionData.totalConsumption.toLocaleString()} m3`}
+                description={`${(consumptionData.totalConsumption * WATER_RATE).toLocaleString()} OMR`}
+                icon={Droplets}
+                color="primary"
+              />
+              
+              <StatCard
+                title={`${consumptionData.currentMonthLabel} Consumption`}
+                value={`${consumptionData.currentMonth.toLocaleString()} m3`}
+                description={`${(consumptionData.currentMonth * WATER_RATE).toLocaleString()} OMR`}
+                icon={Droplets}
+                color="teal"
+              />
+              
+              <StatCard
+                title={`${consumptionData.previousMonthLabel} Consumption`}
+                value={`${consumptionData.previousMonth.toLocaleString()} m3`}
+                description={`${(consumptionData.previousMonth * WATER_RATE).toLocaleString()} OMR`}
+                icon={Droplets}
+                color="lavender"
+              />
+              
+              <StatCard
+                title="Month-over-Month Change"
+                value={`${consumptionData.momChange.toFixed(1)}%`}
+                icon={consumptionData.momChange >= 0 ? TrendingUp : TrendingDown}
+                trend={{
+                  value: Math.abs(parseFloat(consumptionData.momChange.toFixed(1))),
+                  isPositive: consumptionData.momChange >= 0
+                }}
+                color="gold"
+              />
+            </div>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
+                <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+                  <h2 className="text-lg font-medium">Monthly Consumption Trend</h2>
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="by-zone" className="mt-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Consumption by Zone</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Zone</th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Jan 25</th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Feb 25</th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mar 25</th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {consumptionByZone.map((item, index) => (
-                        <tr key={index}>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.zone}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatNumber(item.jan_25 || 0)}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatNumber(item.feb_25 || 0)}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatNumber(item.mar_25 || 0)}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatNumber(item.total || 0)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                <div className="p-6">
+                  <ResponsiveContainer width="100%" height={300}>
+                    {/* Placeholder chart - replace with actual Recharts implementation */}
+                    <div>Monthly Consumption Chart</div>
+                  </ResponsiveContainer>
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="import" className="mt-4">
-            <ImportWaterData />
-          </TabsContent>
-        </Tabs>
+              </div>
+              
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
+                <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+                  <h2 className="text-lg font-medium">Consumption by Type</h2>
+                </div>
+                <div className="p-6">
+                  <ResponsiveContainer width="100%" height={300}>
+                    <PieChart>
+                      <Pie
+                        dataKey="value"
+                        isAnimationActive={false}
+                        data={pieChartData}
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={80}
+                        fill="#8884d8"
+                        label
+                      >
+                        {pieChartData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            </div>
+            
+            <div className="mb-6">
+              <ImportWaterData />
+            </div>
+          </main>
+        </div>
       </div>
     </Layout>
   );

@@ -8,15 +8,19 @@ export interface ElectricityRecord {
   consumption: number;
   reading_date: string;
   created_at?: string;
-  // Additional properties for the structured data from electricityData.ts
-  name?: string;
-  meterAccountNo?: string;
-  consumption?: {
+}
+
+// Define the interface for data from electricityData.ts
+export interface ElectricityFacility {
+  name: string;
+  type: string;
+  meterAccountNo: string;
+  consumption: {
     [key: string]: number;
   };
 }
 
-// Define the additional types needed for the electricity components
+// Define additional types needed for the electricity components
 export interface FacilityConsumption {
   name: string;
   type: string;
@@ -34,6 +38,13 @@ export interface MonthlyTypeConsumption {
 
 export interface TopConsumer {
   name: string;
+  type: string;
+  consumption: number;
+  cost: number;
+}
+
+// Utility type for type consumption
+export interface TypeConsumption {
   type: string;
   consumption: number;
   cost: number;

@@ -1437,6 +1437,7 @@ export type Database = {
           jul_24: number | null
           jun_24: number | null
           mar_24: number | null
+          mar_25: number | null
           may_24: number | null
           meter_label: string | null
           nov_24: number | null
@@ -1461,6 +1462,7 @@ export type Database = {
           jul_24?: number | null
           jun_24?: number | null
           mar_24?: number | null
+          mar_25?: number | null
           may_24?: number | null
           meter_label?: string | null
           nov_24?: number | null
@@ -1485,6 +1487,7 @@ export type Database = {
           jul_24?: number | null
           jun_24?: number | null
           mar_24?: number | null
+          mar_25?: number | null
           may_24?: number | null
           meter_label?: string | null
           nov_24?: number | null
@@ -2176,6 +2179,7 @@ export type Database = {
           jul_24: number | null
           jun_24: number | null
           mar_24: number | null
+          mar_25: number | null
           may_24: number | null
           nov_24: number | null
           oct_24: number | null
@@ -2197,6 +2201,7 @@ export type Database = {
           jul_24: number | null
           jun_24: number | null
           mar_24: number | null
+          mar_25: number | null
           may_24: number | null
           nov_24: number | null
           oct_24: number | null
@@ -2242,6 +2247,10 @@ export type Database = {
         Returns: undefined
       }
       refresh_all_materialized_views: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      refresh_water_consumption_views: {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }

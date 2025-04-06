@@ -463,11 +463,20 @@ const ElectricitySystem = () => {
           </div>
         );
       case 'facilities':
-        return <ElectricityFacilitiesTable electricityData={electricityData} electricityRate={ELECTRICITY_RATE} />;
+        return <ElectricityFacilitiesTable 
+                 electricityData={electricityData as unknown as ElectricityFacility[]} 
+                 electricityRate={ELECTRICITY_RATE} 
+               />;
       case 'trends':
-        return <ElectricityTrends electricityData={electricityData} electricityRate={ELECTRICITY_RATE} />;
+        return <ElectricityTrends 
+                 electricityData={electricityData as unknown as ElectricityFacility[]} 
+                 electricityRate={ELECTRICITY_RATE} 
+               />;
       case 'comparison':
-        return <ElectricityComparison electricityData={electricityData} electricityRate={ELECTRICITY_RATE} />;
+        return <ElectricityComparison 
+                 electricityData={electricityData as unknown as ElectricityFacility[]} 
+                 electricityRate={ELECTRICITY_RATE} 
+               />;
       default:
         return null;
     }
