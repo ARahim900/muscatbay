@@ -1,14 +1,18 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title } from 'chart.js';
+import {
+  Chart as ChartJS, ArcElement, Tooltip as ChartTooltip, Legend,
+  CategoryScale, LinearScale, BarElement, Title, Chart,
+  ChartOptions
+} from 'chart.js';
 import { Pie, Bar } from 'react-chartjs-2';
 import {
   Landmark, Search, Bell, UserCircle, LayoutDashboard, Calculator,
   Building2, Play, Globe2, MapPin, Ruler, Banknote, Scale
-} from 'lucide-react'; // Using lucide-react
+} from 'lucide-react';
 
 // Register Chart.js components needed
-ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title);
+ChartJS.register(ArcElement, ChartTooltip, Legend, CategoryScale, LinearScale, BarElement, Title);
 
 // --- DATA ---
 const rates = {
@@ -339,8 +343,8 @@ const ReserveFundDashboard = () => {
   });
 
   // --- Refs for Charts ---
-  const sectorChartRef = useRef<any>(null);
-  const typeChartRef = useRef<any>(null);
+  const sectorChartRef = useRef<ChartJS<"pie"> | null>(null);
+  const typeChartRef = useRef<ChartJS<"bar"> | null>(null);
 
   // --- Effects ---
   // Calculate dashboard data on mount
@@ -490,11 +494,21 @@ const ReserveFundDashboard = () => {
 
   // --- Chart Data and Options ---
   // Gradient helper
-  const createChartGradient = (ctx: CanvasRenderingContext2D, colors: string[]) => {
-    if (!ctx || !ctx.canvas) return colors[0];
-    const chartArea = ctx.chart.chartArea;
-    if (!chartArea) return colors[0];
-    const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
+  const createChartGradient = (context: CanvasRenderingContext2D, colors: string[]) => {
+    if (!context) return colors[0];
+    
+    // Access the chart area through the chart instance attached to the canvas
+    const chart = context.canvas.getContext('2d');
+    if (!chart) return colors[0];
+    
+    const chartArea = {
+      top: 0,
+      bottom: 300, // Default values
+      left: 0,
+      right: 400
+    };
+    
+    const gradient = context.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
     gradient.addColorStop(0, colors[1]); // Lighter
     gradient.addColorStop(1, colors[0]); // Darker
     return gradient;
@@ -553,28 +567,70 @@ const ReserveFundDashboard = () => {
     }
   }, [dashboardData.types, activeView]); // Re-run if data or view changes
 
-  const commonChartOptions = {
-    responsive: true, maintainAspectRatio: false,
+  // Type-safe chart options
+  const commonChartOptions: ChartOptions<'pie'> = {
+    responsive: true, 
+    maintainAspectRatio: false,
     plugins: {
-      legend: { position: 'bottom', labels: { padding: 15, usePointStyle: true, font: { family: "'Inter', sans-serif", size: 12 } } },
+      legend: { 
+        position: 'bottom' as const, 
+        labels: { 
+          padding: 15, 
+          usePointStyle: true, 
+          font: { 
+            family: "'Inter', sans-serif", 
+            size: 12 
+          } 
+        } 
+      },
       tooltip: {
         backgroundColor: 'rgba(30, 41, 59, 0.9)', // slate-800
-        titleFont: { size: 14, family: "'Inter', sans-serif" }, bodyFont: { size: 12, family: "'Inter', sans-serif" },
-        padding: 10, boxPadding: 4,
+        titleFont: { size: 14, family: "'Inter', sans-serif" }, 
+        bodyFont: { size: 12, family: "'Inter', sans-serif" },
+        padding: 10, 
+        boxPadding: 4,
         callbacks: { 
-          label: (ctx: any) => `${ctx.label || ''}: ${formatOMR(ctx.raw || ctx.parsed?.y || 0)}` 
+          label: (context) => `${context.label || ''}: ${formatOMR(context.raw as number || 0)}` 
         }
       }
     }
   };
 
-  const barChartOptions = {
+  const barChartOptions: ChartOptions<'bar'> = {
     ...commonChartOptions,
     scales: {
-      y: { beginAtZero: true, grid: { drawBorder: false }, ticks: { callback: (val: number) => formatOMR(val), font: { family: "'Inter', sans-serif", size: 11 } } },
-      x: { grid: { display: false }, ticks: { font: { family: "'Inter', sans-serif", size: 11 } } }
+      y: { 
+        beginAtZero: true, 
+        grid: { 
+          display: true,
+          drawBorder: false 
+        }, 
+        ticks: { 
+          callback: (val) => formatOMR(val as number), 
+          font: { 
+            family: "'Inter', sans-serif", 
+            size: 11 
+          } 
+        } 
+      },
+      x: { 
+        grid: { 
+          display: false 
+        }, 
+        ticks: { 
+          font: { 
+            family: "'Inter', sans-serif", 
+            size: 11 
+          } 
+        } 
+      }
     },
-    plugins: { ...commonChartOptions.plugins, legend: { display: false } }
+    plugins: { 
+      ...commonChartOptions.plugins, 
+      legend: { 
+        display: false 
+      } 
+    }
   };
 
   // --- Styles Object ---
