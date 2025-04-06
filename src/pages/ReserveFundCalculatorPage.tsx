@@ -1,7 +1,8 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import ReserveFundLookup from '@/components/asset-reserve-fund/ReserveFundLookup';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
 
 const ReserveFundCalculatorPage = () => {
   return (
@@ -16,7 +17,30 @@ const ReserveFundCalculatorPage = () => {
           <CardTitle>Property Reserve Fund Details</CardTitle>
         </CardHeader>
         <CardContent>
-          <ReserveFundLookup />
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Select Property Zone</label>
+              <Select>
+                <SelectTrigger>
+                  <SelectValue placeholder="Choose a zone" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="zone1">Zone 1</SelectItem>
+                  <SelectItem value="zone2">Zone 2</SelectItem>
+                  <SelectItem value="zone3">Zone 3</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Property Unit Number</label>
+              <Input placeholder="Enter property unit number" />
+            </div>
+            <div>
+              <p className="text-sm text-gray-600">
+                Use this calculator to estimate your property's reserve fund contribution based on its built-up area and location.
+              </p>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>
