@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { Search, Building2, User2, SquareStack, Wallet } from 'lucide-react';
 import { 
@@ -121,7 +122,7 @@ const ReserveFundLookup: React.FC<ReserveFundLookupProps> = ({
                   <SelectValue placeholder="Select Zone" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Zones</SelectItem>
+                  <SelectItem value="all">All Zones</SelectItem>
                   {zones.map((zone) => (
                     <SelectItem key={zone} value={zone}>
                       {getZoneDisplayName(zone)}
@@ -144,7 +145,7 @@ const ReserveFundLookup: React.FC<ReserveFundLookupProps> = ({
                   <SelectValue placeholder="Select Property Type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Types</SelectItem>
+                  <SelectItem value="all">All Types</SelectItem>
                   {propertyTypes.map((type) => (
                     <SelectItem key={type} value={type}>
                       {type}
@@ -187,7 +188,7 @@ const ReserveFundLookup: React.FC<ReserveFundLookupProps> = ({
               </SelectTrigger>
               <SelectContent className="max-h-80">
                 {filteredUnits.length === 0 ? (
-                  <SelectItem value="no-results" disabled>
+                  <SelectItem value="no-results">
                     {selectedZone || searchTerm ? "No properties match your criteria" : "Please select a zone or search first"}
                   </SelectItem>
                 ) : (
