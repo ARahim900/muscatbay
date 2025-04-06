@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useRef } from 'react';
 import Layout from '@/components/layout/Layout';
 import { stpMonthlyData, formatMonth, getDailyDataForMonth } from '@/utils/stpDataUtils';
@@ -26,7 +25,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const STPDashboard = () => {
-  const [selectedMonth, setSelectedMonth] = useState<string>(stpMonthlyData[stpMonthlyData.length - 1].month);
+  const [selectedMonth, setSelectedMonth] = useState<string>('2025-03');
   const [activeTab, setActiveTab] = useState<string>("monthly");
   const [isCompactView, setIsCompactView] = useState<boolean>(false);
   const dashboardRef = useRef<HTMLDivElement>(null);
