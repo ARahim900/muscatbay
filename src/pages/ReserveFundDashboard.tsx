@@ -1,451 +1,449 @@
-
-import React, { useState, useMemo } from 'react';
-import Layout from '@/components/layout/Layout';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { 
-  LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, 
-  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, 
-} from 'recharts';
-import { 
-  TrendingUp, Wallet, PiggyBank, BarChart2, PieChart as PieChartIcon,
-  LineChart as LineChartIcon, Download, Calendar, Building
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import {
+  Chart as ChartJS, ArcElement, Tooltip as ChartTooltip, Legend,
+  CategoryScale, LinearScale, BarElement, Title, Chart,
+  ChartOptions
+} from 'chart.js';
+import { Pie, Bar } from 'react-chartjs-2';
+import {
+  Landmark, Search, Bell, UserCircle, LayoutDashboard, Calculator,
+  Building2, Play, Globe2, MapPin, Ruler, Banknote, Scale
 } from 'lucide-react';
 
-const ReserveFundDashboard = () => {
-  const [selectedYear, setSelectedYear] = useState<string>("2025");
-  const [selectedTab, setSelectedTab] = useState<string>("overview");
-  const currentYear = new Date().getFullYear();
+// Register Chart.js components needed
+ChartJS.register(ArcElement, ChartTooltip, Legend, CategoryScale, LinearScale, BarElement, Title);
 
-  // Sample Reserve Fund Data
-  const reserveFundData = useMemo(() => [
-    { year: "2022", collected: 481310, spent: 346200, allocated: 520000, balance: 135110 },
-    { year: "2023", collected: 552750, spent: 398120, allocated: 580000, balance: 154630 },
-    { year: "2024", collected: 648340, spent: 485900, allocated: 670000, balance: 162440 },
-    { year: "2025", collected: 731200, spent: 512500, allocated: 750000, balance: 218700 },
-  ], []);
-  
-  // Projected Reserve Fund Data
-  const projectedData = useMemo(() => [
-    { year: "2025", amount: 218700 },
-    { year: "2026", amount: 328050 },
-    { year: "2027", amount: 458470 },
-    { year: "2028", amount: 607980 },
-    { year: "2029", amount: 778650 },
-    { year: "2030", amount: 970120 }
-  ], []);
-  
-  // Asset Categories Data
-  const assetCategoriesData = useMemo(() => [
-    { name: "Building Envelope", value: 35 },
-    { name: "Mechanical Systems", value: 25 },
-    { name: "Electrical Systems", value: 15 },
-    { name: "Common Areas", value: 12 },
-    { name: "Landscaping", value: 8 },
-    { name: "Other", value: 5 }
-  ], []);
-  
-  // Monthly Contribution Data
-  const monthlyContributionData = useMemo(() => [
-    { month: "Jan", amount: 62500 },
-    { month: "Feb", amount: 62500 },
-    { month: "Mar", amount: 62500 },
-    { month: "Apr", amount: 62500 },
-    { month: "May", amount: 62500 },
-    { month: "Jun", amount: 62500 },
-    { month: "Jul", amount: 62500 },
-    { month: "Aug", amount: 62500 },
-    { month: "Sep", amount: 62500 },
-    { month: "Oct", amount: 62500 },
-    { month: "Nov", amount: 62500 },
-    { month: "Dec", amount: 62500 }
-  ], []);
-  
-  // Monthly Expenditure Data
-  const monthlyExpenditureData = useMemo(() => [
-    { month: "Jan", amount: 42300 },
-    { month: "Feb", amount: 38650 },
-    { month: "Mar", amount: 47220 },
-    { month: "Apr", amount: 52940 },
-    { month: "May", amount: 31250 },
-    { month: "Jun", amount: 44320 },
-    { month: "Jul", amount: 48750 },
-    { month: "Aug", amount: 55300 },
-    { month: "Sep", amount: 61200 },
-    { month: "Oct", amount: 35670 },
-    { month: "Nov", amount: 29580 },
-    { month: "Dec", amount: 25320 }
-  ], []);
-  
-  // Expenditure Categories Data
-  const expenditureCategoriesData = useMemo(() => [
-    { name: "Maintenance", value: 203500 },
-    { name: "Replacements", value: 168300 },
-    { name: "Upgrades", value: 115200 },
-    { name: "Emergency Repairs", value: 25500 }
-  ], []);
-  
-  // Colors for charts
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
-  
-  // Get filtered data based on selected year
-  const filteredData = useMemo(() => 
-    reserveFundData.find(item => item.year === selectedYear) || reserveFundData[3], 
-  [reserveFundData, selectedYear]);
-  
+// --- DATA ---
+const ratesOMRPerSqm2025 = {
+  masterCommunity: 1.75,
+  typicalBuilding: 1.65,
+  zone3: 0.44,
+  zone5: 1.10,
+  zone8: 0.33,
+  zone1: 3.95,
+  zone2: 0.0,
+};
+
+const propertyDatabase = [
+  { id: "FM-B1", unitNo: "FM B1", sector: "FM", zone: '1', propertyType: "Staff Accommodation", unitTypeDetail: "Staff Building B1", buaSqm: 1615.44, plot: "FM-101", status: "Occupied", ownerName: "Muscat Bay" },
+  { id: "FM-B2", unitNo: "FM B2", sector: "FM", zone: '1', propertyType: "Staff Accommodation", unitTypeDetail: "Staff Building B2", buaSqm: 1615.44, plot: "FM-102", status: "Occupied", ownerName: "Muscat Bay" },
+  { id: "FM-B3", unitNo: "FM B3", sector: "FM", zone: '1', propertyType: "Staff Accommodation", unitTypeDetail: "Staff Building B3", buaSqm: 1615.44, plot: "FM-103", status: "Occupied", ownerName: "Muscat Bay" },
+  { id: "FM-B4", unitNo: "FM B4", sector: "FM", zone: '1', propertyType: "Staff Accommodation", unitTypeDetail: "Staff Building B4", buaSqm: 1615.44, plot: "FM-104", status: "Occupied", ownerName: "Muscat Bay" },
+  { id: "FM-B5", unitNo: "FM B5", sector: "FM", zone: '1', propertyType: "Staff Accommodation", unitTypeDetail: "Staff Building B5", buaSqm: 1615.44, plot: "FM-105", status: "Occupied", ownerName: "Muscat Bay" },
+  { id: "FM-B6", unitNo: "FM B6", sector: "FM", zone: '1', propertyType: "Staff Accommodation", unitTypeDetail: "Staff Building B6", buaSqm: 1615.44, plot: "FM-106", status: "Occupied", ownerName: "Muscat Bay" },
+  { id: "FM-B7", unitNo: "FM B7", sector: "FM", zone: '1', propertyType: "Staff Accommodation", unitTypeDetail: "Staff Building B7", buaSqm: 1615.44, plot: "FM-107", status: "Occupied", ownerName: "Muscat Bay" },
+  { id: "FM-B8", unitNo: "FM B8", sector: "FM", zone: '1', propertyType: "Staff Accommodation", unitTypeDetail: "Staff Building B8", buaSqm: 1615.44, plot: "FM-108", status: "Occupied", ownerName: "Muscat Bay" },
+  { id: "FM-CIF", unitNo: "FM CIF", sector: "FM", zone: '1', propertyType: "Staff Accommodation", unitTypeDetail: "CIF Building", buaSqm: 548.5, plot: "FM-109", status: "Occupied", ownerName: "Muscat Bay" },
+  { id: "Z2-VS-01", unitNo: "Z2 VS-01", sector: "Village Square", zone: '2', propertyType: "Commercial", unitTypeDetail: "Commercial Unit (e.g., Spar)", buaSqm: 150, plot: "VS-01", status: "Operational", ownerName: "Tenant A" },
+  { id: "Z2-VS-02", unitNo: "Z2 VS-02", sector: "Village Square", zone: '2', propertyType: "Commercial", unitTypeDetail: "Commercial Unit (e.g., Laundry)", buaSqm: 80, plot: "VS-02", status: "Operational", ownerName: "Tenant B" },
+  { id: "Z2-VS-03", unitNo: "Z2 VS-03", sector: "Village Square", zone: '2', propertyType: "Commercial", unitTypeDetail: "Commercial Unit (e.g., Gym)", buaSqm: 200, plot: "VS-03", status: "Operational", ownerName: "Tenant C" },
+  { id: "Z3 061(1A)", unitNo: "Z3 061(1A)", sector: "Zaha", zone: '3', propertyType: "Apartment", unitTypeDetail: "2 Bedroom Small Apartment", buaSqm: 115.47, plot: "1232", status: "Sold", ownerName: "Abdullah Al-Farsi" },
+  { id: "Z3 054(4A)", unitNo: "Z3 054(4A)", sector: "Zaha", zone: '3', propertyType: "Apartment", unitTypeDetail: "2 Bedroom Small Apartment", buaSqm: 115.47, plot: "1275", status: "Sold", ownerName: "Fatima Al-Balushi" },
+  { id: "Z3 057(5)", unitNo: "Z3 057(5)", sector: "Zaha", zone: '3', propertyType: "Apartment", unitTypeDetail: "3 Bedroom Zaha Apartment", buaSqm: 355.07, plot: "1290", status: "Sold", ownerName: "Mohammed Al-Habsi" },
+  { id: "Z3 050(1)", unitNo: "Z3 050(1)", sector: "Zaha", zone: '3', propertyType: "Apartment", unitTypeDetail: "2 Bedroom Premium Apartment", buaSqm: 199.13, plot: "1144", status: "Sold", ownerName: "Aisha Al-Riyami" },
+  { id: "Z3 019", unitNo: "Z3 019", sector: "Zaha", zone: '3', propertyType: "Villa", unitTypeDetail: "3 Bedroom Zaha Villa", buaSqm: 357.12, plot: "471", status: "Sold", ownerName: "Khalid Al-Maskari" },
+  { id: "Z5 019", unitNo: "Z5 019", sector: "Nameer", zone: '5', propertyType: "Villa", unitTypeDetail: "4 Bedroom Nameer Villa", buaSqm: 497.62, plot: "769", status: "Sold", ownerName: "Hamad Al-Rawahi" },
+  { id: "Z5 018", unitNo: "Z5 018", sector: "Nameer", zone: '5', propertyType: "Villa", unitTypeDetail: "4 Bedroom Nameer Villa", buaSqm: 497.62, plot: "769", status: "Sold", ownerName: "Alya Al-Sinani" },
+  { id: "Z5 020", unitNo: "Z5 020", sector: "Nameer", zone: '5', propertyType: "Villa", unitTypeDetail: "4 Bedroom Nameer Villa", buaSqm: 497.62, plot: "770", status: "Sold", ownerName: "Qais Al-Khusaibi" },
+  { id: "Z8 002", unitNo: "Z8 002", sector: "Wajd", zone: '8', propertyType: "Villa", unitTypeDetail: "5 Bedroom Wajd Villa", buaSqm: 750.35, plot: "1418.7", status: "Inventory", ownerName: "Muscat Bay Holding" },
+  { id: "Z8 003", unitNo: "Z8 003", sector: "Wajd", zone: '8', propertyType: "Villa", unitTypeDetail: "5 Bedroom Wajd Villa", buaSqm: 750.35, plot: "1373", status: "Sold", ownerName: "Owner Name 003" },
+  { id: "Z8 005", unitNo: "Z8 005", sector: "Wajd", zone: '8', propertyType: "Villa", unitTypeDetail: "5 Bedroom Wajd Villa", buaSqm: 943, plot: "1684.4", status: "Sold", ownerName: "Owner Name 005" },
+  { id: "3C", unitNo: "3C", sector: "C Sector", zone: 'MC', propertyType: "Development Land", unitTypeDetail: "Development Land", buaSqm: 5656, plot: "N/A", status: "Sold" },
+];
+
+// Component
+const ReserveFundDashboard: React.FC = () => {
+  // --- State ---
+  const [activeView, setActiveView] = useState<'dashboard' | 'calculator' | 'assets'>('dashboard');
+  const [dashboardData, setDashboardData] = useState({
+    totalUnits: 261,
+    totalContribution: 580000,
+    totalBUA: 34000,
+    sectors: {
+      'Zaha': 200000,
+      'Nameer': 180000,
+      'Wajd': 120000,
+      'C Sector': 80000
+    },
+    types: {
+      'Apartment': 250000,
+      'Villa': 200000,
+      'Commercial': 130000
+    }
+  });
+
+  // --- Refs for Charts ---
+  const sectorChartRef = useRef<HTMLCanvasElement | null>(null);
+  const typeChartRef = useRef<HTMLCanvasElement | null>(null);
+
+  // --- Effects ---
+  useEffect(() => {
+    // Simulate fetching dashboard data
+    setTimeout(() => {
+      setDashboardData({
+        totalUnits: 261,
+        totalContribution: 580000,
+        totalBUA: 34000,
+        sectors: {
+          'Zaha': 200000,
+          'Nameer': 180000,
+          'Wajd': 120000,
+          'C Sector': 80000
+        },
+        types: {
+          'Apartment': 250000,
+          'Villa': 200000,
+          'Commercial': 130000
+        }
+      });
+    }, 500);
+  }, []);
+
+  // --- Gradient helper ---
+  const createChartGradient = (context: CanvasRenderingContext2D, colors: string[]) => {
+    if (!context || !context.canvas) return colors[0];
+    
+    const chartHeight = context.canvas.height;
+    const chartWidth = context.canvas.width;
+    
+    const gradient = context.createLinearGradient(0, chartHeight, 0, 0);
+    gradient.addColorStop(0, colors[1]); // Lighter
+    gradient.addColorStop(1, colors[0]); // Darker
+    return gradient;
+  };
+
+  // --- Utility functions ---
+  const formatOMR = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'decimal',
+      currency: 'OMR',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(amount);
+  };
+
+  const formatNumber = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'decimal',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount);
+  };
+
+  // Enhanced color palette
+  const enhancedColors = {
+    purple: {
+      main: '#8764f8',
+      light: '#a78dfb',
+      gradient: ['#8764f8', '#a78dfb']
+    },
+    teal: {
+      main: '#16b8a0',
+      light: '#47d6c2',
+      gradient: ['#16b8a0', '#47d6c2']
+    },
+    orange: {
+      main: '#ff9747',
+      light: '#ffb77b',
+      gradient: ['#ff9747', '#ffb77b']
+    },
+    blue: {
+      main: '#4886fc',
+      light: '#70a1fd',
+      gradient: ['#4886fc', '#70a1fd']
+    },
+    sectors: {
+      'Zaha': ['#8764f8', '#a78dfb'],     // Purple
+      'Nameer': ['#16b8a0', '#47d6c2'],   // Teal
+      'Wajd': ['#ff9747', '#ffb77b'],     // Orange
+      'C Sector': ['#4886fc', '#70a1fd']  // Blue
+    },
+    types: {
+      'Apartment': ['#8764f8', '#a78dfb'],      // Purple
+      'Villa': ['#16b8a0', '#47d6c2'],          // Teal
+      'Commercial': ['#ff9747', '#ffb77b']      // Orange
+    }
+  };
+
+  // Type-safe chart options
+  const pieChartOptions: ChartOptions<'pie'> = {
+    responsive: true, 
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { 
+        position: 'bottom' as const, 
+        labels: { 
+          padding: 20, 
+          usePointStyle: true, 
+          font: { 
+            family: "'Inter', sans-serif", 
+            size: 13 
+          } 
+        } 
+      },
+      tooltip: {
+        backgroundColor: 'rgba(30, 41, 59, 0.9)', // slate-800
+        titleFont: { size: 14, family: "'Inter', sans-serif" }, 
+        bodyFont: { size: 13, family: "'Inter', sans-serif" },
+        padding: 12, 
+        boxPadding: 5,
+        callbacks: { 
+          label: function(context) {
+            return `${context.label || ''}: ${formatOMR(context.parsed as number)}`;
+          }
+        }
+      }
+    }
+  };
+
+  const barChartOptions: ChartOptions<'bar'> = {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      y: { 
+        beginAtZero: true, 
+        grid: { 
+          display: true,
+          color: 'rgba(210, 210, 210, 0.3)'
+        }, 
+        ticks: { 
+          callback: function(value) {
+            return formatOMR(value as number);
+          }, 
+          font: { 
+            family: "'Inter', sans-serif", 
+            size: 12 
+          } 
+        } 
+      },
+      x: { 
+        grid: { 
+          display: false 
+        }, 
+        ticks: { 
+          font: { 
+            family: "'Inter', sans-serif", 
+            size: 12 
+          } 
+        } 
+      }
+    },
+    plugins: {
+      legend: { 
+        display: false 
+      },
+      tooltip: {
+        backgroundColor: 'rgba(30, 41, 59, 0.9)', // slate-800
+        titleFont: { size: 14, family: "'Inter', sans-serif" }, 
+        bodyFont: { size: 13, family: "'Inter', sans-serif" },
+        padding: 12, 
+        boxPadding: 5,
+        callbacks: { 
+          label: function(context) {
+            return `${context.dataset.label || ''}: ${formatOMR(context.parsed.y)}`;
+          }
+        }
+      }
+    }
+  };
+
+  // --- Render ---
   return (
-    <Layout>
-      <div className="container mx-auto py-6">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-muscat-primary flex items-center">
-              <PiggyBank className="mr-2 h-6 w-6" />
-              Reserve Fund Dashboard
-            </h1>
-            <p className="text-gray-500 mt-1">Comprehensive overview of the reserve fund status and projections</p>
-          </div>
-          
-          <div className="flex items-center mt-4 md:mt-0 space-x-2">
-            <div className="flex items-center">
-              <Select 
-                value={selectedYear} 
-                onValueChange={setSelectedYear}
-              >
-                <SelectTrigger className="w-[120px]">
-                  <Calendar className="mr-2 h-4 w-4" />
-                  <SelectValue placeholder="Year" />
-                </SelectTrigger>
-                <SelectContent>
-                  {reserveFundData.map(item => (
-                    <SelectItem key={item.year} value={item.year}>
-                      {item.year}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <Button variant="outline" className="flex items-center">
-              <Download className="mr-2 h-4 w-4" />
-              Export
-            </Button>
-          </div>
+    <div className="space-y-6 p-6 max-w-7xl mx-auto">
+      {/* Dashboard header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-800">Reserve Fund Dashboard</h1>
+          <p className="text-gray-500 mt-1">Projections and analytics for 2025</p>
         </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Annual Collection</CardTitle>
-              <Wallet className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{filteredData.collected.toLocaleString()} OMR</div>
-              <p className="text-xs text-muted-foreground mt-1">
-                {Math.round((filteredData.collected / filteredData.allocated) * 100)}% of allocation
-              </p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Annual Expenditure</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{filteredData.spent.toLocaleString()} OMR</div>
-              <p className="text-xs text-muted-foreground mt-1">
-                {Math.round((filteredData.spent / filteredData.collected) * 100)}% of collections
-              </p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Current Balance</CardTitle>
-              <PiggyBank className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{filteredData.balance.toLocaleString()} OMR</div>
-              <p className="text-xs text-muted-foreground mt-1">
-                As of end of {selectedYear}
-              </p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Funding Level</CardTitle>
-              <Building className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {Math.round((filteredData.balance / (filteredData.allocated * 5)) * 100)}%
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                Based on 5-year target
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-        
-        <div className="mb-6">
-          <Tabs defaultValue="overview" value={selectedTab} onValueChange={setSelectedTab}>
-            <TabsList className="grid w-full grid-cols-3 lg:w-auto lg:inline-flex">
-              <TabsTrigger value="overview">Overview</TabsTrigger>
-              <TabsTrigger value="analysis">Analysis</TabsTrigger>
-              <TabsTrigger value="projections">Projections</TabsTrigger>
-            </TabsList>
-            
-            <div className="mt-1">
-              <Badge variant="outline" className="text-xs">
-                Showing: {selectedTab === "overview" ? "Fund Overview" : 
-                  selectedTab === "analysis" ? "Detailed Analysis" : "Future Projections"}
-              </Badge>
-            </div>
-            
-            <TabsContent value="overview" className="mt-4">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <Card>
-                  <CardHeader>
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <CardTitle>Historical Performance</CardTitle>
-                        <CardDescription>Reserve fund trend over years</CardDescription>
-                      </div>
-                      <LineChartIcon className="h-5 w-5 text-muted-foreground" />
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <ResponsiveContainer width="100%" height={350}>
-                      <LineChart data={reserveFundData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="year" />
-                        <YAxis />
-                        <Tooltip formatter={(value) => [`${value.toLocaleString()} OMR`, ""]} />
-                        <Legend />
-                        <Line type="monotone" dataKey="collected" name="Collected" stroke="#8884d8" activeDot={{ r: 8 }} />
-                        <Line type="monotone" dataKey="spent" name="Spent" stroke="#82ca9d" />
-                        <Line type="monotone" dataKey="balance" name="Balance" stroke="#ffc658" />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </CardContent>
-                </Card>
-                
-                <Card>
-                  <CardHeader>
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <CardTitle>Expenditure Categories</CardTitle>
-                        <CardDescription>Breakdown by category in {selectedYear}</CardDescription>
-                      </div>
-                      <PieChartIcon className="h-5 w-5 text-muted-foreground" />
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <ResponsiveContainer width="100%" height={350}>
-                      <PieChart>
-                        <Pie
-                          data={expenditureCategoriesData}
-                          cx="50%"
-                          cy="50%"
-                          labelLine={true}
-                          outerRadius={120}
-                          fill="#8884d8"
-                          dataKey="value"
-                          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                        >
-                          {expenditureCategoriesData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                          ))}
-                        </Pie>
-                        <Tooltip formatter={(value) => [`${value.toLocaleString()} OMR`, ""]} />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </CardContent>
-                </Card>
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="analysis" className="mt-4">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <Card>
-                  <CardHeader>
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <CardTitle>Monthly Contributions</CardTitle>
-                        <CardDescription>Contribution trend for {selectedYear}</CardDescription>
-                      </div>
-                      <BarChart2 className="h-5 w-5 text-muted-foreground" />
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <ResponsiveContainer width="100%" height={350}>
-                      <BarChart data={monthlyContributionData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="month" />
-                        <YAxis />
-                        <Tooltip formatter={(value) => [`${value.toLocaleString()} OMR`, ""]} />
-                        <Legend />
-                        <Bar dataKey="amount" name="Contribution" fill="#8884d8" />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </CardContent>
-                </Card>
-                
-                <Card>
-                  <CardHeader>
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <CardTitle>Monthly Expenditures</CardTitle>
-                        <CardDescription>Expenditure trend for {selectedYear}</CardDescription>
-                      </div>
-                      <BarChart2 className="h-5 w-5 text-muted-foreground" />
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <ResponsiveContainer width="100%" height={350}>
-                      <BarChart data={monthlyExpenditureData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="month" />
-                        <YAxis />
-                        <Tooltip formatter={(value) => [`${value.toLocaleString()} OMR`, ""]} />
-                        <Legend />
-                        <Bar dataKey="amount" name="Expenditure" fill="#82ca9d" />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </CardContent>
-                </Card>
-              </div>
-              
-              <div className="mt-4">
-                <Card>
-                  <CardHeader>
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <CardTitle>Asset Category Allocation</CardTitle>
-                        <CardDescription>Reserve fund allocation by asset category</CardDescription>
-                      </div>
-                      <PieChartIcon className="h-5 w-5 text-muted-foreground" />
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <ResponsiveContainer width="100%" height={350}>
-                      <PieChart>
-                        <Pie
-                          data={assetCategoriesData}
-                          cx="50%"
-                          cy="50%"
-                          labelLine={true}
-                          outerRadius={120}
-                          fill="#8884d8"
-                          dataKey="value"
-                          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                        >
-                          {assetCategoriesData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                          ))}
-                        </Pie>
-                        <Tooltip formatter={(value) => [`${value}%`, ""]} />
-                        <Legend />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </CardContent>
-                </Card>
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="projections" className="mt-4">
-              <div className="grid grid-cols-1 gap-4">
-                <Card>
-                  <CardHeader>
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <CardTitle>5-Year Reserve Fund Projection</CardTitle>
-                        <CardDescription>Estimated reserve fund balance for next 5 years</CardDescription>
-                      </div>
-                      <LineChartIcon className="h-5 w-5 text-muted-foreground" />
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <ResponsiveContainer width="100%" height={400}>
-                      <BarChart data={projectedData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="year" />
-                        <YAxis />
-                        <Tooltip formatter={(value) => [`${value.toLocaleString()} OMR`, ""]} />
-                        <Legend />
-                        <Bar dataKey="amount" name="Projected Balance" fill="#8884d8" />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </CardContent>
-                  <CardFooter className="border-t pt-4">
-                    <div className="text-sm text-muted-foreground">
-                      Projections are based on historical trends and planned maintenance schedules
-                    </div>
-                  </CardFooter>
-                </Card>
-                
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Funding Level Assessment</CardTitle>
-                    <CardDescription>
-                      Current funding status against industry benchmarks
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-6">
-                      <div>
-                        <div className="flex justify-between mb-1">
-                          <span className="text-sm font-medium">Current Funding Level</span>
-                          <span className="text-sm font-medium">{Math.round((filteredData.balance / (filteredData.allocated * 5)) * 100)}%</span>
-                        </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2.5">
-                          <div 
-                            className="bg-green-600 h-2.5 rounded-full" 
-                            style={{ width: `${Math.min(Math.round((filteredData.balance / (filteredData.allocated * 5)) * 100), 100)}%` }}
-                          ></div>
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-1">Based on 5-year target of {(filteredData.allocated * 5).toLocaleString()} OMR</p>
-                      </div>
-                      
-                      <div>
-                        <div className="flex justify-between mb-1">
-                          <span className="text-sm font-medium">Industry Recommended (70%)</span>
-                          <span className="text-sm font-medium">70%</span>
-                        </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2.5">
-                          <div className="bg-blue-600 h-2.5 rounded-full" style={{ width: '70%' }}></div>
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-1">Minimum recommended funding level</p>
-                      </div>
-                      
-                      <div>
-                        <div className="flex justify-between mb-1">
-                          <span className="text-sm font-medium">Optimal Level (100%)</span>
-                          <span className="text-sm font-medium">100%</span>
-                        </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2.5">
-                          <div className="bg-violet-600 h-2.5 rounded-full" style={{ width: '100%' }}></div>
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-1">Fully funded reserve</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                  <CardFooter className="border-t pt-4">
-                    <div className="text-sm text-muted-foreground">
-                      Assessment based on current balance of {filteredData.balance.toLocaleString()} OMR
-                    </div>
-                  </CardFooter>
-                </Card>
-              </div>
-            </TabsContent>
-          </Tabs>
+        <div className="flex gap-2">
+          <button className="flex items-center gap-1 bg-white rounded-md border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-600 shadow-sm hover:bg-gray-50">
+            <Play className="h-3.5 w-3.5" />
+            <span>2025</span>
+          </button>
+          <button className="flex items-center gap-1 bg-white rounded-md border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-600 shadow-sm hover:bg-gray-50">
+            <MapPin className="h-3.5 w-3.5" />
+            <span>All Zones</span>
+          </button>
         </div>
       </div>
-    </Layout>
+
+      {/* Tabs */}
+      <div className="flex gap-2 border-b border-gray-200">
+        <button
+          className={`px-4 py-2 font-medium text-sm rounded-t-lg transition-colors ${
+            activeView === 'dashboard' 
+              ? 'text-primary border-b-2 border-primary bg-primary/5' 
+              : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'
+          }`}
+          onClick={() => setActiveView('dashboard')}
+        >
+          <div className="flex items-center gap-1.5">
+            <LayoutDashboard className="h-4 w-4" />
+            <span>Dashboard</span>
+          </div>
+        </button>
+        <button
+          className={`px-4 py-2 font-medium text-sm rounded-t-lg transition-colors ${
+            activeView === 'calculator' 
+              ? 'text-primary border-b-2 border-primary bg-primary/5' 
+              : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'
+          }`}
+          onClick={() => setActiveView('calculator')}
+        >
+          <div className="flex items-center gap-1.5">
+            <Calculator className="h-4 w-4" />
+            <span>Calculator</span>
+          </div>
+        </button>
+        <button
+          className={`px-4 py-2 font-medium text-sm rounded-t-lg transition-colors ${
+            activeView === 'assets' 
+              ? 'text-primary border-b-2 border-primary bg-primary/5' 
+              : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'
+          }`}
+          onClick={() => setActiveView('assets')}
+        >
+          <div className="flex items-center gap-1.5">
+            <Building2 className="h-4 w-4" />
+            <span>Assets</span>
+          </div>
+        </button>
+      </div>
+
+      {/* Dashboard View */}
+      <div className={activeView !== 'dashboard' ? 'hidden' : ''}>
+        <h2 className="text-xl font-semibold mb-4 text-gray-800">Dashboard Overview (2025 Projections)</h2>
+        
+        {/* Summary Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+          {/* Total Properties Card */}
+          <div className="bg-gradient-to-br from-[#8764f8] to-[#a78dfb] rounded-lg shadow-md overflow-hidden text-white">
+            <div className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-white/80 text-sm font-medium mb-1">Total Properties</p>
+                  <p className="text-3xl font-bold">{dashboardData.totalUnits || 261}</p>
+                </div>
+                <div className="bg-white/20 p-3 rounded-lg">
+                  <Landmark className="h-6 w-6 text-white" />
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Total Contribution Card */}
+          <div className="bg-gradient-to-br from-[#4886fc] to-[#70a1fd] rounded-lg shadow-md overflow-hidden text-white">
+            <div className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-white/80 text-sm font-medium mb-1">Total 2025 Contribution</p>
+                  <p className="text-3xl font-bold">OMR {formatOMR(dashboardData.totalContribution)}</p>
+                </div>
+                <div className="bg-white/20 p-3 rounded-lg">
+                  <Banknote className="h-6 w-6 text-white" />
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Average Contribution Card */}
+          <div className="bg-gradient-to-br from-[#16b8a0] to-[#47d6c2] rounded-lg shadow-md overflow-hidden text-white">
+            <div className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-white/80 text-sm font-medium mb-1">Avg. Contribution / Unit</p>
+                  <p className="text-3xl font-bold">OMR {dashboardData.totalUnits ? formatOMR(dashboardData.totalContribution / dashboardData.totalUnits) : '0.00'}</p>
+                </div>
+                <div className="bg-white/20 p-3 rounded-lg">
+                  <Scale className="h-6 w-6 text-white" />
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Total BUA Card */}
+          <div className="bg-gradient-to-br from-[#ff9747] to-[#ffb77b] rounded-lg shadow-md overflow-hidden text-white">
+            <div className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-white/80 text-sm font-medium mb-1">Total BUA (sqm)</p>
+                  <p className="text-3xl font-bold">{formatNumber(dashboardData.totalBUA)}</p>
+                </div>
+                <div className="bg-white/20 p-3 rounded-lg">
+                  <Ruler className="h-6 w-6 text-white" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        {/* Charts Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          {/* Chart 1: Contribution by Sector */}
+          <div className="bg-white rounded-lg shadow-md p-5 border border-gray-100">
+            <h3 className="text-lg font-semibold mb-4 text-gray-800">Contribution by Sector</h3>
+            <div className="h-72">
+              <Pie 
+                data={{
+                  labels: Object.keys(dashboardData.sectors),
+                  datasets: [{
+                    data: Object.values(dashboardData.sectors),
+                    backgroundColor: Object.keys(dashboardData.sectors).map(
+                      (sector) => enhancedColors.sectors[sector as keyof typeof enhancedColors.sectors]?.[0] || '#8764f8'
+                    ),
+                    borderColor: Object.keys(dashboardData.sectors).map(
+                      (sector) => enhancedColors.sectors[sector as keyof typeof enhancedColors.sectors]?.[0] || '#8764f8'
+                    ),
+                    borderWidth: 1,
+                    hoverOffset: 10
+                  }]
+                }}
+                options={pieChartOptions}
+              />
+            </div>
+          </div>
+          
+          {/* Chart 2: Contribution by Property Type */}
+          <div className="bg-white rounded-lg shadow-md p-5 border border-gray-100">
+            <h3 className="text-lg font-semibold mb-4 text-gray-800">Contribution by Property Type</h3>
+            <div className="h-72">
+              <Bar 
+                data={{
+                  labels: Object.keys(dashboardData.types),
+                  datasets: [{
+                    label: 'Contribution (OMR)',
+                    data: Object.values(dashboardData.types),
+                    backgroundColor: Object.keys(dashboardData.types).map(
+                      (type) => enhancedColors.types[type as keyof typeof enhancedColors.types]?.[0] || '#8764f8'
+                    ),
+                    borderRadius: 6,
+                    maxBarThickness: 70
+                  }]
+                }}
+                options={barChartOptions}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Calculator View */}
+      <div className={activeView !== 'calculator' ? 'hidden' : ''}>
+        <div className="p-4">
+          <h2 className="text-xl font-semibold mb-4 text-gray-800">Calculator View</h2>
+          <p className="text-gray-500">This section is under development.</p>
+        </div>
+      </div>
+      
+      {/* Assets View */}
+      <div className={activeView !== 'assets' ? 'hidden' : ''}>
+        <div className="p-4">
+          <h2 className="text-xl font-semibold mb-4 text-gray-800">Assets View</h2>
+          <p className="text-gray-500">This section is under development.</p>
+        </div>
+      </div>
+    </div>
   );
 };
 

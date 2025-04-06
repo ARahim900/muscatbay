@@ -3,6 +3,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import Layout from '@/components/layout/Layout';
 import { stpMonthlyData, formatMonth, getDailyDataForMonth } from '@/utils/stpDataUtils';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { STPMonthlyOverview } from '@/components/stp/STPMonthlyOverview';
@@ -25,7 +26,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const STPDashboard = () => {
-  const [selectedMonth, setSelectedMonth] = useState<string>('2025-03');
+  const [selectedMonth, setSelectedMonth] = useState<string>(stpMonthlyData[stpMonthlyData.length - 1].month);
   const [activeTab, setActiveTab] = useState<string>("monthly");
   const [isCompactView, setIsCompactView] = useState<boolean>(false);
   const dashboardRef = useRef<HTMLDivElement>(null);
