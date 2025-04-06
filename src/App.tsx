@@ -23,7 +23,6 @@ import OperatingExpenses from '@/pages/OperatingExpenses';
 import ServiceCharges from '@/pages/ServiceCharges';
 import ReserveFundCalculatorPage from '@/pages/ReserveFundCalculatorPage';
 import ReserveFundDashboard from '@/pages/ReserveFundDashboard';
-import DataManagement from '@/pages/DataManagement';
 import NotFound from '@/pages/NotFound';
 import Layout from '@/components/layout/Layout';
 
@@ -50,7 +49,6 @@ function App() {
       <Route path="/service-charges" element={<ServiceCharges />} />
       <Route path="/reserve-fund-calculator" element={<ReserveFundCalculatorPage />} />
       <Route path="/reserve-fund-dashboard" element={<ReserveFundDashboard />} />
-      <Route path="/data-management" element={<DataManagement />} />
       <Route path="/auth" element={<Auth />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
