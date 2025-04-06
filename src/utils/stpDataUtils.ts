@@ -324,6 +324,19 @@ export const formatMonth = (month: string): string => {
   }
 };
 
+export const formatDate = (dateString: string): string => {
+  try {
+    const date = parseISO(dateString);
+    if (!isValid(date)) {
+      return dateString;
+    }
+    return format(date, 'MMM dd, yyyy');
+  } catch (e) {
+    console.error('Error formatting date:', e);
+    return dateString;
+  }
+};
+
 export const getDailyDataForMonth = (selectedMonth: string): STPDailyData[] => {
   return stpDailyData.filter(data => data.date.startsWith(selectedMonth));
 };
@@ -345,10 +358,50 @@ export const calculateProcessingMetrics = (data: STPDailyData[]): ProcessingMetr
   const totalTankerVolume = data.reduce((sum, record) => sum + record.expectedVolumeTankers, 0);
 
   return {
-    processingEfficiency: totalInfluent > 0 ? (totalWaterProcessed / totalInfluent) * 100 : 0,
-    irrigationUtilization: totalWaterProcessed > 0 ? (totalTSEIrrigation / totalWaterProcessed) * 100 : 0,
-    directSewagePercentage: totalInfluent > 0 ? (totalDirectSewage / totalInfluent) * 100 : 0,
-    tankerPercentage: totalInfluent > 0 ? (totalTankerVolume / totalInfluent) * 100 : 0
+    processingEfficiency: totalInfluent > 0 ? (totalWaterProcessed / totalInfluent) : 0,
+    irrigationUtilization: totalWaterProcessed > 0 ? (totalTSEIrrigation / totalWaterProcessed) : 0,
+    directSewagePercentage: totalInfluent > 0 ? (totalDirectSewage / totalInfluent) : 0,
+    tankerPercentage: totalInfluent > 0 ? (totalTankerVolume / totalInfluent) : 0
+  };
+};
+
+export const calculateMonthlyMetrics = (selectedMonth: string) => {
+  const monthData = stpMonthlyData.find(m => m.month === selectedMonth);
+  
+  if (!monthData) {
+    return null;
+  }
+  
+  const processingEfficiency = Number(monthData.totalWaterProcessed) / Number(monthData.totalInfluent);
+  const irrigationUtilization = Number(monthData.tseToIrrigation) / Number(monthData.totalWaterProcessed);
+  
+  return {
+    processingEfficiency,
+    irrigationUtilization,
+    directSewagePercentage: monthData.directSewageMB / monthData.totalInfluent,
+    tankerPercentage: monthData.expectedVolumeTankers / monthData.totalInfluent
+  };
+};
+
+export const calculateEfficiencyStats = (data: STPDailyData[]) => {
+  if (data.length === 0) {
+    return {
+      processingEfficiency: 0,
+      irrigationUtilization: 0,
+      averageProcessingVolume: 0,
+      averageInfluentVolume: 0
+    };
+  }
+
+  const totalInfluent = data.reduce((sum, record) => sum + record.totalInfluent, 0);
+  const totalWaterProcessed = data.reduce((sum, record) => sum + record.totalWaterProcessed, 0);
+  const totalTSEIrrigation = data.reduce((sum, record) => sum + record.tseToIrrigation, 0);
+
+  return {
+    processingEfficiency: totalInfluent > 0 ? totalWaterProcessed / totalInfluent : 0,
+    irrigationUtilization: totalWaterProcessed > 0 ? totalTSEIrrigation / totalWaterProcessed : 0,
+    averageProcessingVolume: totalWaterProcessed / data.length,
+    averageInfluentVolume: totalInfluent / data.length
   };
 };
 
