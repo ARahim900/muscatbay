@@ -299,35 +299,48 @@ const propertyDatabase = [
 ];
 
 // --- Utility Functions ---
-const formatOMR = (value) => {
-  if (isNaN(value) || value === null || typeof value === 'undefined') return 'OMR --';
-  return `OMR ${value.toFixed(2)}`;
+const formatOMR = (value: number | null | undefined): string => {
+  if (isNaN(Number(value)) || value === null || typeof value === 'undefined') return 'OMR --';
+  return `OMR ${Number(value).toFixed(2)}`;
 };
 
-const getUniqueValues = (data, key) => {
+const getUniqueValues = (data: Array<{[key: string]: any}>, key: string): Array<string> => {
   return [...new Set(data.map(item => item[key]).filter(item => item != null))].sort();
 };
 
 // --- Main App Component ---
 const ReserveFundDashboard = () => {
   // --- State ---
-  const [activeView, setActiveView] = useState('dashboard');
-  const [zone, setZone] = useState('');
-  const [propertyType, setPropertyType] = useState('');
-  const [unit, setUnit] = useState('');
-  const [customBUAEnabled, setCustomBUAEnabled] = useState(false);
-  const [customBUA, setCustomBUA] = useState('');
-  const [showResults, setShowResults] = useState(false);
-  const [calculationResult, setCalculationResult] = useState({
+  const [activeView, setActiveView] = useState<'dashboard' | 'calculator' | 'assets'>('dashboard');
+  const [zone, setZone] = useState<string>('');
+  const [propertyType, setPropertyType] = useState<string>('');
+  const [unit, setUnit] = useState<string>('');
+  const [customBUAEnabled, setCustomBUAEnabled] = useState<boolean>(false);
+  const [customBUA, setCustomBUA] = useState<string>('');
+  const [showResults, setShowResults] = useState<boolean>(false);
+  const [calculationResult, setCalculationResult] = useState<{
+    totalContrib: number | null;
+    zoneContrib: number | null;
+    masterContrib: number | null;
+    zoneRate: number | null;
+    zoneName: string;
+  }>({
     totalContrib: null, zoneContrib: null, masterContrib: null, zoneRate: null, zoneName: ''
   });
-  const [dashboardData, setDashboardData] = useState({
+  const [dashboardData, setDashboardData] = useState<{
+    totalProperties: number;
+    totalBUA: number;
+    totalContribution: number;
+    avgContribution: number;
+    sectors: {[key: string]: {total: number; count: number}};
+    types: {[key: string]: {total: number; count: number}};
+  }>({
     totalProperties: 0, totalBUA: 0, totalContribution: 0, avgContribution: 0, sectors: {}, types: {}
   });
 
   // --- Refs for Charts ---
-  const sectorChartRef = useRef(null);
-  const typeChartRef = useRef(null);
+  const sectorChartRef = useRef<any>(null);
+  const typeChartRef = useRef<any>(null);
 
   // --- Effects ---
   // Calculate dashboard data on mount
@@ -355,20 +368,20 @@ const ReserveFundDashboard = () => {
   }, [zone, propertyType]);
 
   // --- Event Handlers ---
-  const handleZoneChange = (e) => {
+  const handleZoneChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setZone(e.target.value);
     setPropertyType(''); // Reset dependent filters
     setUnit('');
     setShowResults(false);
   };
 
-  const handlePropertyTypeChange = (e) => {
+  const handlePropertyTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setPropertyType(e.target.value);
     setUnit(''); // Reset unit
     setShowResults(false);
   };
 
-  const handleUnitChange = (e) => {
+  const handleUnitChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setUnit(e.target.value);
     if (e.target.value) { // If a unit is selected, disable custom BUA
       setCustomBUAEnabled(false);
@@ -377,7 +390,7 @@ const ReserveFundDashboard = () => {
     setShowResults(false);
   };
 
-  const handleCustomBUACheckboxChange = (e) => {
+  const handleCustomBUACheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const isChecked = e.target.checked;
     setCustomBUAEnabled(isChecked);
     if (isChecked) {
@@ -389,11 +402,21 @@ const ReserveFundDashboard = () => {
   };
 
   // --- Calculation Logic ---
-  const calculateContribution = (bua, sector, type) => {
+  const calculateContribution = (
+    bua: number, 
+    sector: string, 
+    type: string
+  ): {
+    zoneContrib: number | null;
+    masterContrib: number | null;
+    totalContrib: number | null;
+    zoneRate: number | null;
+    zoneName: string;
+  } => {
     if (isNaN(bua) || bua <= 0 || !sector) {
       return { zoneContrib: null, masterContrib: null, totalContrib: null, zoneRate: null, zoneName: sector || 'N/A' };
     }
-    let zoneRate = rates.zone[sector];
+    let zoneRate = rates.zone[sector as keyof typeof rates.zone];
     if (typeof zoneRate === 'undefined') zoneRate = 0;
 
     const zoneContrib = bua * zoneRate;
@@ -414,7 +437,7 @@ const ReserveFundDashboard = () => {
     } else {
       const selectedProp = propertyDatabase.find(p => p.unitNo === unit);
       if (selectedProp) {
-        bua = selectedProp.bua;
+        bua = selectedProp.bua as number;
         selectedSector = selectedProp.sector; // Ensure sector/type match selected unit
         selectedType = selectedProp.type;
       } else { alert("Please select a unit or check the box and enter a custom BUA."); return; }
@@ -434,7 +457,8 @@ const ReserveFundDashboard = () => {
   const updateDashboard = () => {
     let totalProps = 0, totalBua = 0, totalZoneContrib = 0, totalMasterContrib = 0;
     let totalOverallContrib = 0, validPropsCount = 0;
-    let contributionsBySector = {}, contributionsByType = {};
+    let contributionsBySector: {[key: string]: {total: number, count: number}} = {};
+    let contributionsByType: {[key: string]: {total: number, count: number}} = {};
 
     propertyDatabase.forEach(prop => {
       if (prop.type !== "Staff Accomm") totalProps++;
@@ -443,8 +467,8 @@ const ReserveFundDashboard = () => {
         totalBua += prop.bua;
         const contrib = calculateContribution(prop.bua, prop.sector, prop.type);
         if (contrib.totalContrib !== null) {
-          totalZoneContrib += contrib.zoneContrib;
-          totalMasterContrib += contrib.masterContrib;
+          totalZoneContrib += contrib.zoneContrib || 0;
+          totalMasterContrib += contrib.masterContrib || 0;
           totalOverallContrib += contrib.totalContrib;
           // Aggregate by sector
           if (!contributionsBySector[prop.sector]) contributionsBySector[prop.sector] = { total: 0, count: 0 };
@@ -466,7 +490,7 @@ const ReserveFundDashboard = () => {
 
   // --- Chart Data and Options ---
   // Gradient helper
-  const createChartGradient = (ctx, colors) => {
+  const createChartGradient = (ctx: CanvasRenderingContext2D, colors: string[]) => {
     if (!ctx || !ctx.canvas) return colors[0];
     const chartArea = ctx.chart.chartArea;
     if (!chartArea) return colors[0];
@@ -537,7 +561,9 @@ const ReserveFundDashboard = () => {
         backgroundColor: 'rgba(30, 41, 59, 0.9)', // slate-800
         titleFont: { size: 14, family: "'Inter', sans-serif" }, bodyFont: { size: 12, family: "'Inter', sans-serif" },
         padding: 10, boxPadding: 4,
-        callbacks: { label: (ctx) => `${ctx.label || ''}: ${formatOMR(ctx.raw || ctx.parsed?.y || 0)}` }
+        callbacks: { 
+          label: (ctx: any) => `${ctx.label || ''}: ${formatOMR(ctx.raw || ctx.parsed?.y || 0)}` 
+        }
       }
     }
   };
@@ -545,7 +571,7 @@ const ReserveFundDashboard = () => {
   const barChartOptions = {
     ...commonChartOptions,
     scales: {
-      y: { beginAtZero: true, grid: { drawBorder: false }, ticks: { callback: (val) => formatOMR(val), font: { family: "'Inter', sans-serif", size: 11 } } },
+      y: { beginAtZero: true, grid: { drawBorder: false }, ticks: { callback: (val: number) => formatOMR(val), font: { family: "'Inter', sans-serif", size: 11 } } },
       x: { grid: { display: false }, ticks: { font: { family: "'Inter', sans-serif", size: 11 } } }
     },
     plugins: { ...commonChartOptions.plugins, legend: { display: false } }
@@ -761,7 +787,7 @@ const ReserveFundDashboard = () => {
                   <label htmlFor="zone-select" className={styles.label}>Zone</label>
                   <select id="zone-select" value={zone} onChange={handleZoneChange} className={styles.select}>
                     <option value="">Select Zone</option>
-                    {availableZones.map(z => <option key={z} value={z}>{z}</option>)}
+                    {availableZones.map((z) => <option key={z} value={z}>{z}</option>)}
                   </select>
                 </div>
                 {/* Type */}
@@ -769,7 +795,7 @@ const ReserveFundDashboard = () => {
                   <label htmlFor="type-select" className={styles.label}>Property Type</label>
                   <select id="type-select" value={propertyType} onChange={handlePropertyTypeChange} className={styles.select} disabled={!zone}>
                     <option value="">Select Type</option>
-                    {availableTypes.map(t => <option key={t} value={t}>{t}</option>)}
+                    {availableTypes.map((t) => <option key={t} value={t}>{t}</option>)}
                   </select>
                 </div>
                 {/* Unit */}
@@ -777,7 +803,7 @@ const ReserveFundDashboard = () => {
                   <label htmlFor="unit-select" className={styles.label}>Unit</label>
                   <select id="unit-select" value={unit} onChange={handleUnitChange} className={styles.select} disabled={!zone || !propertyType || customBUAEnabled}>
                     <option value="">Select Unit</option>
-                    {availableUnits.map(u => (
+                    {availableUnits.map((u) => (
                       <option key={u.unitNo} value={u.unitNo}>
                         {u.unitNo} - {u.unitType} ({u.bua.toFixed(2)} sqm)
                       </option>
@@ -812,7 +838,7 @@ const ReserveFundDashboard = () => {
                   <div className={styles.resultsTotalSection}>
                     <p className={styles.resultsTotalLabel}>Total Annual Contribution</p>
                     <p className={styles.resultsTotalValue}>{formatOMR(calculationResult.totalContrib)}</p>
-                    <p className={styles.resultsMonthly}>{`(Approx. ${formatOMR(calculationResult.totalContrib / 12)} per month)`}</p>
+                    <p className={styles.resultsMonthly}>{`(Approx. ${formatOMR(calculationResult.totalContrib ? calculationResult.totalContrib / 12 : null)} per month)`}</p>
                   </div>
                   <div className="border-t border-slate-200 pt-6">
                     <h4 className={styles.resultsBreakdownTitle}>Contribution Breakdown</h4>
@@ -860,7 +886,7 @@ const ReserveFundDashboard = () => {
                     </thead>
                     <tbody className="bg-white divide-y divide-slate-200">
                       {propertyDatabase.map((prop, index) => (
-                        <tr key={prop.unitNo + index} className={styles.tableRow}>
+                        <tr key={`${prop.unitNo}-${index}`} className={styles.tableRow}>
                           <td className={styles.tableCellBold}>{prop.unitNo}</td>
                           <td className={styles.tableCell}>{prop.sector}</td>
                           <td className={styles.tableCell}>{prop.type}</td>
