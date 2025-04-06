@@ -175,7 +175,6 @@ const ElectricitySystem = () => {
     }))
     .sort((a, b) => b.consumption - a.consumption);
 
-  // Format for Enhanced Pie Chart
   const pieChartData = consumptionByTypeArray.map((item, index) => ({
     name: item.type,
     value: item.consumption,

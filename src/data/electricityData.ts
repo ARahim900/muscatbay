@@ -1,8 +1,18 @@
 
 import { ElectricityRecord } from '@/types/electricity';
 
+// Define a more specific type for the electricity data
+interface ElectricityFacility {
+  name: string;
+  type: string;
+  meterAccountNo: string;
+  consumption: {
+    [key: string]: number;
+  };
+}
+
 // Electricity data from the provided tables
-export const electricityData: ElectricityRecord[] = [
+export const electricityData: ElectricityFacility[] = [
   {
     name: "Pumping Station 01",
     type: "PS",

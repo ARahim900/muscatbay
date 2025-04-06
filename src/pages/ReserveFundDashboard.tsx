@@ -2,7 +2,7 @@
 import React from 'react';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ChartOptions } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
-import { faker } from '@faker-js/faker/locale/en';
+import { faker } from '@faker-js/faker';
 import Layout from '@/components/layout/Layout';
 
 ChartJS.register(

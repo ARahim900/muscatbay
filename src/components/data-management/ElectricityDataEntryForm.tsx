@@ -51,13 +51,13 @@ const ElectricityDataEntryForm: React.FC<ElectricityDataEntryFormProps> = ({ onS
     try {
       setIsSubmitting(true);
 
-      // Check if the electricity_records table exists
-      const { error: tableCheckError } = await supabase
-        .from('electricity_records')
-        .select('count(*)', { count: 'exact', head: true });
+      // First, check if the table exists by trying to access its schema
+      const { error: schemaError } = await supabase
+        .rpc('get_schema_definition', { table_name: 'electricity_records' })
+        .single();
       
       // Create the table if it doesn't exist
-      if (tableCheckError && tableCheckError.message.includes('relation "electricity_records" does not exist')) {
+      if (schemaError) {
         // Here we should actually run a migration to create the table
         toast.error("Electricity records table doesn't exist. Please contact the administrator.");
         setIsSubmitting(false);

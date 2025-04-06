@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ChartOptions } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
@@ -36,7 +37,11 @@ const options: ChartOptions<'bar'> = {
       beginAtZero: true,
       ticks: {
         callback: function(value) {
-          return formatter.format(value);
+          // Ensure we're only formatting numbers
+          if (typeof value === 'number') {
+            return formatter.format(value);
+          }
+          return value;
         }
       },
       grid: {
@@ -119,13 +124,16 @@ const WaterSystem = () => {
       }
       
       if (mainBulkData) {
-        const currentMonth = mainBulkData[selectedMonth] || 0;
+        // Ensure we're dealing with numbers
+        const currentMonth = Number(mainBulkData[selectedMonth] || 0);
         const previousMonth = selectedMonth === 'feb_25' 
-          ? (mainBulkData['jan_25'] || 0) 
-          : (mainBulkData['dec_24'] || 0);
+          ? Number(mainBulkData['jan_25'] || 0) 
+          : selectedMonth === 'mar_25'
+            ? Number(mainBulkData['feb_25'] || 0)
+            : Number(mainBulkData['dec_24'] || 0);
         
         setTotalConsumption(currentMonth);
-        setYearlyConsumption(mainBulkData.total || 0);
+        setYearlyConsumption(Number(mainBulkData.total || 0));
         
         // Calculate monthly change percentage
         if (previousMonth > 0) {
@@ -135,7 +143,7 @@ const WaterSystem = () => {
         
         setMonthlyData({
           monthly: currentMonth,
-          yearly: mainBulkData.total || 0,
+          yearly: Number(mainBulkData.total || 0),
           previousMonth: previousMonth,
           change: monthlyChange
         });
