@@ -70,6 +70,16 @@ export default {
 					lavender: '#9D8EB7',
 					light: '#F7F5F9',
 					dark: '#2A262E',
+					
+					// Enhanced color palette
+					'purple-main': '#8764f8',
+					'purple-light': '#a78dfb',
+					'teal-main': '#16b8a0',
+					'teal-light': '#47d6c2',
+					'orange-main': '#ff9747',
+					'orange-light': '#ffb77b',
+					'blue-main': '#4886fc',
+					'blue-light': '#70a1fd',
 				}
 			},
 			borderRadius: {
