@@ -2,461 +2,97 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
+ 
 @layer base {
   :root {
-    --background: 0 0% 98%;
-    --foreground: 240 10% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
+    --background: 0 0% 100%;
+    --foreground: 222.2 47.4% 11.2%;
+ 
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+ 
     --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
-    --primary: 318 15% 30%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
-    --accent: 240 4.8% 95.9%;
-    --accent-foreground: 240 5.9% 10%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 318 15% 30%;
-    
-    /* Custom Colors */
-    --muscat-primary: 318 15% 30%;
-    --muscat-teal: 178 53% 61%;
-    --muscat-gold: 43 51% 69%;
-    --muscat-lavender: 267 19% 64%;
-    
-    /* System Colors */
-    --water: 195 100% 50%;
-    --electricity: 45 100% 60%;
-    --stp: 142 76% 45%;
-    --hvac: 25 100% 60%;
-    --contracts: 273 68% 59%;
-    --projects: 230 68% 59%;
-    
+    --popover-foreground: 222.2 47.4% 11.2%;
+ 
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+ 
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 47.4% 11.2%;
+ 
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+ 
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+ 
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+ 
+    --destructive: 0 100% 50%;
+    --destructive-foreground: 210 40% 98%;
+ 
+    --ring: 215 20.2% 65.1%;
+ 
     --radius: 0.5rem;
     
-    /* Chart Design Tokens */
-    --chart-grid: 240 5.9% 90%;
-    --chart-axis: 240 3.8% 46.1%;
-    --chart-tooltip-bg: 0 0% 100%;
-    --chart-tooltip-border: 240 5.9% 90%;
+    /* Reserve Fund Dashboard variables */
+    --brand-primary: #6366f1;
+    --brand-primary-text: #ffffff;
+    --brand-accent: #4e4456;
+    --brand-accent-text: #ffffff;
   }
-
+ 
   .dark {
-    --background: 240 10% 10%;
-    --foreground: 0 0% 98%;
-    --card: 240 10% 13%;
-    --card-foreground: 0 0% 98%;
-    --popover: 240 10% 13%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 318 54% 40%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
-    --accent: 240 3.7% 15.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 318 54% 40%;
-    
-    /* Chart Design Tokens - Dark Mode */
-    --chart-grid: 240 3.7% 15.9%;
-    --chart-axis: 240 5% 64.9%;
-    --chart-tooltip-bg: 240 10% 13%;
-    --chart-tooltip-border: 240 3.7% 25%;
+    --background: 224 71% 4%;
+    --foreground: 213 31% 91%;
+ 
+    --muted: 223 47% 11%;
+    --muted-foreground: 215.4 16.3% 56.9%;
+ 
+    --accent: 216 34% 17%;
+    --accent-foreground: 210 40% 98%;
+ 
+    --popover: 224 71% 4%;
+    --popover-foreground: 215 20.2% 65.1%;
+ 
+    --border: 216 34% 17%;
+    --input: 216 34% 17%;
+ 
+    --card: 224 71% 4%;
+    --card-foreground: 213 31% 91%;
+ 
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 1.2%;
+ 
+    --secondary: 222.2 47.4% 11.2%;
+    --secondary-foreground: 210 40% 98%;
+ 
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 210 40% 98%;
+ 
+    --ring: 216 34% 17%;
+ 
+    --radius: 0.5rem;
   }
-
+}
+ 
+@layer base {
   * {
     @apply border-border;
   }
-
-  html {
-    scroll-behavior: smooth;
-    font-size: 16px; /* Base font size for consistency */
-  }
-
   body {
-    @apply bg-background text-foreground antialiased font-sans;
-    font-feature-settings: "ss01", "ss02", "cv01", "cv02";
-    text-rendering: optimizeLegibility;
-  }
-
-  h1 {
-    @apply text-2xl sm:text-3xl font-bold tracking-tight;
-    line-height: 1.2;
-  }
-
-  h2 {
-    @apply text-xl sm:text-2xl font-semibold tracking-tight;
-    line-height: 1.3;
-  }
-
-  h3 {
-    @apply text-lg sm:text-xl font-semibold;
-    line-height: 1.4;
-  }
-
-  h4 {
-    @apply text-base sm:text-lg font-medium;
-    line-height: 1.5;
-  }
-
-  p, li, td, th, label, input, select, textarea {
-    @apply text-sm sm:text-base leading-relaxed;
-  }
-
-  small {
-    @apply text-xs sm:text-sm;
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
 
-@layer components {
-  /* Navigation styles */
-  .top-nav-link {
-    @apply relative px-3 py-2 text-foreground/80 hover:text-foreground transition-colors 
-      after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:w-0 
-      after:bg-primary after:transition-all after:duration-300 hover:after:w-full;
-  }
-
-  .top-nav-link.active {
-    @apply text-foreground after:w-full;
-  }
-  
-  /* Standardized Card styles */
-  .metric-card {
-    @apply p-6 rounded-xl border flex flex-col gap-2 transition-all duration-300
-      hover:shadow-md hover:-translate-y-1;
-  }
-  
-  .metric-card-title {
-    @apply text-sm font-medium text-muted-foreground;
-  }
-  
-  .metric-card-value {
-    @apply text-3xl font-bold;
-  }
-  
-  .metric-card-trend {
-    @apply text-xs font-medium flex items-center gap-1;
-  }
-  
-  .trend-up {
-    @apply text-green-500;
-  }
-  
-  .trend-down {
-    @apply text-red-500;
-  }
-  
-  .trend-neutral {
-    @apply text-muted-foreground;
-  }
-  
-  /* Chart standardization */
-  .chart-container {
-    @apply p-4 rounded-lg border bg-card w-full h-full min-h-[300px];
-  }
-  
-  /* Table standardization */
-  .data-table-container {
-    @apply w-full overflow-hidden rounded-lg border;
-  }
-  
-  .data-table {
-    @apply w-full border-collapse;
-  }
-  
-  .data-table th {
-    @apply bg-muted/50 py-3 px-4 text-left text-sm font-semibold text-foreground;
-  }
-  
-  .data-table td {
-    @apply border-t border-border py-3 px-4 text-sm;
-  }
-  
-  .data-table tr:hover {
-    @apply bg-muted/20;
-  }
-  
-  /* Parameter status indicators */
-  .parameter-normal {
-    @apply text-green-600 dark:text-green-400;
-  }
-  
-  .parameter-warning {
-    @apply text-amber-500;
-  }
-  
-  .parameter-critical {
-    @apply text-red-500;
-  }
-
-  /* Responsive containers */
-  .content-container {
-    @apply w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
-  }
-  
-  /* Card hover effects */
-  .card-hover {
-    @apply transition-all duration-300 hover:shadow-md hover:translate-y-[-2px];
-  }
-  
-  /* Chart Standardization */
-  .recharts-default-tooltip {
-    @apply !bg-card !border !border-border !rounded-md !shadow-md !px-3 !py-2;
-  }
-  
-  .recharts-tooltip-label {
-    @apply !text-sm !font-medium !text-foreground !mb-1;
-  }
-  
-  .recharts-tooltip-item {
-    @apply !text-xs;
-  }
-  
-  .recharts-cartesian-grid-horizontal line,
-  .recharts-cartesian-grid-vertical line {
-    @apply !stroke-[hsl(var(--chart-grid))];
-  }
-  
-  .recharts-cartesian-axis-line {
-    @apply !stroke-[hsl(var(--chart-axis))];
-  }
-  
-  .recharts-cartesian-axis-tick-line {
-    @apply !stroke-[hsl(var(--chart-axis))];
-  }
-  
-  .recharts-cartesian-axis-tick-value {
-    @apply !fill-[hsl(var(--chart-axis))];
-  }
-  
-  /* Standardized page layouts */
-  .page-header {
-    @apply mb-6 pb-4 border-b;
-  }
-  
-  .page-title {
-    @apply text-2xl font-bold;
-  }
-  
-  .page-description {
-    @apply text-muted-foreground mt-1;
-  }
-  
-  .page-content {
-    @apply space-y-6;
-  }
-  
-  .section-title {
-    @apply text-xl font-semibold mb-4;
-  }
-  
-  /* Standardized metrics grid */
-  .metrics-grid {
-    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4;
-  }
-  
-  /* Standardized chart grids */
-  .charts-grid {
-    @apply grid grid-cols-1 lg:grid-cols-2 gap-6;
-  }
-  
-  /* Standardized data tables */
-  .data-table-wrapper {
-    @apply mt-6 rounded-lg border bg-card overflow-hidden;
-  }
-}
-
-@layer utilities {
-  /* Animation utilities */
-  .animate-appear {
-    animation: appear 0.5s ease-out forwards;
-  }
-  
-  .animate-appear-zoom {
-    animation: appear-zoom 0.5s ease-out forwards;
-  }
-  
-  .animate-appear-drop {
-    animation: appear-drop 0.5s ease-out forwards;
-  }
-  
-  .animate-pulse-subtle {
-    animation: pulse-subtle 2s ease-in-out infinite;
-  }
-  
-  .animate-slide-in {
-    animation: slide-in 0.3s ease-out forwards;
-  }
-  
-  .animate-float {
-    animation: float 3s ease-in-out infinite;
-  }
-  
-  /* Micro-animations */
-  .hover-scale {
-    @apply transition-transform duration-200 hover:scale-105;
-  }
-  
-  .hover-lift {
-    @apply transition-transform duration-200 hover:-translate-y-1;
-  }
-  
-  .hover-glow {
-    @apply transition-shadow duration-200 hover:shadow-lg;
-  }
-  
-  .hover-bright {
-    @apply transition-all duration-200 hover:brightness-110;
-  }
-  
-  /* Enhanced box shadows */
-  .shadow-card {
-    @apply shadow-[0_4px_12px_rgba(0,0,0,0.05)];
-  }
-  
-  .shadow-card-hover {
-    @apply shadow-[0_8px_16px_rgba(0,0,0,0.08)];
-  }
-  
-  @keyframes appear {
-    0% {
-      opacity: 0;
-      transform: translateY(10px);
-    }
-    100% {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-  
-  @keyframes appear-zoom {
-    0% {
-      opacity: 0;
-      transform: scale(0.95);
-    }
-    100% {
-      opacity: 1;
-      transform: scale(1);
-    }
-  }
-  
-  @keyframes appear-drop {
-    0% {
-      opacity: 0;
-      transform: translateY(-10px);
-    }
-    100% {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-  
-  @keyframes pulse-subtle {
-    0%, 100% {
-      opacity: 1;
-    }
-    50% {
-      opacity: 0.8;
-    }
-  }
-  
-  @keyframes slide-in {
-    0% {
-      transform: translateX(-100%);
-    }
-    100% {
-      transform: translateX(0);
-    }
-  }
-  
-  @keyframes float {
-    0%, 100% {
-      transform: translateY(0);
-    }
-    50% {
-      transform: translateY(-5px);
-    }
-  }
-  
-  /* Improved scrollbars */
-  .scrollbar-thin {
-    scrollbar-width: thin;
-  }
-  
-  .scrollbar-thin::-webkit-scrollbar {
-    width: 4px;
-  }
-  
-  .scrollbar-thin::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.1);
-  }
-  
-  .scrollbar-thin::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 4px;
-  }
-  
-  .scrollbar-thumb-white\/20::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.2);
-  }
-  
-  /* Mobile touch optimizations */
-  .touch-opt {
-    @apply touch-manipulation min-h-[44px] min-w-[44px];
-  }
-  
-  /* Chart utility classes */
-  .chart-full-width {
-    @apply w-full max-w-full overflow-visible;
-  }
-  
-  .chart-responsive {
-    @apply w-full h-[300px] sm:h-[350px] md:h-[400px];
-  }
-  
-  .chart-tooltip {
-    @apply rounded-md bg-card shadow-md border border-border p-2 text-sm;
-  }
-}
-
-/* Print styles for reports */
-@media print {
-  .no-print {
-    display: none !important;
-  }
-  
-  .print-content {
-    display: block !important;
-    width: 100% !important;
-    margin: 0 !important;
-    padding: 0 !important;
-  }
-  
-  @page {
-    size: A4;
-    margin: 1cm;
-  }
-}
-
-/* Responsive grid adjustments */
-@media (max-width: 640px) {
-  .grid {
-    grid-template-columns: 1fr !important;
-  }
-  
-  .dashboard-card {
-    width: 100% !important;
+/* Animation for fadeIn (used in Reserve Fund Dashboard) */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
   }
 }

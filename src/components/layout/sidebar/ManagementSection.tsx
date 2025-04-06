@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { FileCog, FileSpreadsheet, Calculator, CreditCard } from 'lucide-react';
+import { FileCog, FileSpreadsheet, Calculator, CreditCard, Landmark } from 'lucide-react';
 import SidebarSection from './SidebarSection';
 import SidebarLink, { SidebarLinkProps } from './SidebarLink';
 
@@ -42,6 +42,13 @@ const ManagementSection: React.FC<ManagementSectionProps> = ({
         to="/service-charges" 
         icon={Calculator} 
         label="Service Charges" 
+        collapsed={collapsed} 
+        isMobile={isMobile} 
+      />
+      <SidebarLink 
+        to="/reserve-fund-dashboard" 
+        icon={Landmark} 
+        label="Reserve Fund Dashboard" 
         collapsed={collapsed} 
         isMobile={isMobile} 
       />
