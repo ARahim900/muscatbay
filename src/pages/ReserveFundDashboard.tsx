@@ -1,451 +1,452 @@
-import React, { useEffect, useState, useMemo } from 'react';
+
+import React, { useState, useMemo } from 'react';
 import Layout from '@/components/layout/Layout';
-import { stpDailyData, stpMonthlyData, formatMonth, calculateEfficiencyStats, formatDate } from '@/utils/stpDataUtils';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { format, differenceInDays } from 'date-fns';
-import { STPDailyData } from '@/types/stp';
+import { Badge } from "@/components/ui/badge";
 import { 
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, 
-  Scatter, ComposedChart, ScatterChart, XAxis, YAxis, 
-  CartesianGrid, Tooltip, Legend, ResponsiveContainer, 
-  Area, ZAxis 
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, 
 } from 'recharts';
-import { BarChart2, CalendarRange, DropletIcon, FlaskConical, PieChart as PieChartIcon, LineChart as LineChartIcon, Sigma, TrendingUp } from 'lucide-react';
+import { 
+  TrendingUp, Wallet, PiggyBank, BarChart2, PieChart as PieChartIcon,
+  LineChart as LineChartIcon, Download, Calendar, Building
+} from 'lucide-react';
 
-const STPAnalytics = () => {
-  const [dateRange, setDateRange] = useState<[Date | undefined, Date | undefined]>([
-    new Date(stpDailyData[0].date),
-    new Date(stpDailyData[stpDailyData.length - 1].date)
-  ]);
-  const [comparisonRange, setComparisonRange] = useState<[Date | undefined, Date | undefined]>([undefined, undefined]);
-  const [chartType, setChartType] = useState<'volume' | 'efficiency' | 'source' | 'correlation'>('volume');
+const ReserveFundDashboard = () => {
+  const [selectedYear, setSelectedYear] = useState<string>("2025");
+  const [selectedTab, setSelectedTab] = useState<string>("overview");
+  const currentYear = new Date().getFullYear();
 
-  useEffect(() => {
-    document.title = 'STP Analytics | Muscat Bay Asset Manager';
-  }, []);
-
-  const filteredData = useMemo(() => {
-    if (!dateRange[0] || !dateRange[1]) return stpDailyData;
-    
-    return stpDailyData.filter(day => {
-      const date = new Date(day.date);
-      return date >= dateRange[0]! && date <= dateRange[1]!;
-    });
-  }, [dateRange]);
-
-  const comparisonData = useMemo(() => {
-    if (!comparisonRange[0] || !comparisonRange[1]) return [];
-    
-    return stpDailyData.filter(day => {
-      const date = new Date(day.date);
-      return date >= comparisonRange[0]! && date <= comparisonRange[1]!;
-    });
-  }, [comparisonRange]);
-
-  const statsData = useMemo(() => {
-    const currentStats = calculateEfficiencyStats(filteredData);
-    const comparisonStats = comparisonRange[0] && comparisonRange[1] ? 
-      calculateEfficiencyStats(comparisonData) : null;
-    
-    return { currentStats, comparisonStats };
-  }, [filteredData, comparisonData, comparisonRange]);
-
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
-
-  const getPieData = () => {
-    const totalInfluent = filteredData.reduce((sum, day) => sum + day.totalInfluent, 0);
-    const totalTankers = filteredData.reduce((sum, day) => sum + day.expectedVolumeTankers, 0);
-    const totalDirect = filteredData.reduce((sum, day) => sum + day.directSewageMB, 0);
-    const otherSources = totalInfluent - totalTankers - totalDirect;
-    
-    return [
-      { name: 'Tanker Deliveries', value: totalTankers },
-      { name: 'Direct Sewage', value: totalDirect },
-      { name: 'Other Sources', value: otherSources > 0 ? otherSources : 0 }
-    ];
-  };
-
-  const getVolumeChartData = () => {
-    return filteredData.map(day => ({
-      date: formatDate(day.date),
-      totalWaterProcessed: day.totalWaterProcessed,
-      tseToIrrigation: day.tseToIrrigation,
-      totalInfluent: day.totalInfluent,
-      efficiency: (day.totalWaterProcessed / day.totalInfluent * 100).toFixed(1)
-    }));
-  };
-
-  const getCorrelationData = () => {
-    return filteredData.map(day => ({
-      influent: day.totalInfluent,
-      processed: day.totalWaterProcessed,
-      tankerVolume: day.expectedVolumeTankers,
-      directSewage: day.directSewageMB,
-      efficiency: (day.totalWaterProcessed / day.totalInfluent * 100),
-      irrigation: day.tseToIrrigation,
-      date: formatDate(day.date)
-    }));
-  };
-
-  const getMonthTotals = () => {
-    const monthMap = new Map<string, {
-      totalWaterProcessed: number,
-      tseToIrrigation: number,
-      totalInfluent: number,
-      efficiency: number
-    }>();
-    
-    filteredData.forEach(day => {
-      const monthYear = day.date.substring(0, 7); // YYYY-MM
-      const current = monthMap.get(monthYear) || {
-        totalWaterProcessed: 0,
-        tseToIrrigation: 0,
-        totalInfluent: 0,
-        efficiency: 0
-      };
-      
-      current.totalWaterProcessed += day.totalWaterProcessed;
-      current.tseToIrrigation += day.tseToIrrigation;
-      current.totalInfluent += day.totalInfluent;
-      
-      monthMap.set(monthYear, current);
-    });
-    
-    // Calculate efficiency for each month
-    const result = Array.from(monthMap.entries()).map(([month, data]) => ({
-      month: formatMonth(month),
-      totalWaterProcessed: data.totalWaterProcessed,
-      tseToIrrigation: data.tseToIrrigation,
-      totalInfluent: data.totalInfluent,
-      efficiency: (data.totalWaterProcessed / data.totalInfluent * 100).toFixed(1)
-    }));
-    
-    return result;
-  };
-
-  const renderVolumeChart = () => (
-    <ResponsiveContainer width="100%" height={400}>
-      <ComposedChart data={getVolumeChartData()} margin={{ top: 20, right: 30, left: 20, bottom: 40 }}>
-        <CartesianGrid strokeDasharray="3 3" />
-        <XAxis 
-          dataKey="date" 
-          angle={-45} 
-          textAnchor="end" 
-          height={70} 
-          interval={Math.floor(filteredData.length / 20)}
-        />
-        <YAxis yAxisId="left" />
-        <YAxis yAxisId="right" orientation="right" domain={[0, 100]} />
-        <Tooltip />
-        <Legend />
-        <Bar yAxisId="left" dataKey="totalInfluent" name="Total Influent" fill="#8884d8" />
-        <Bar yAxisId="left" dataKey="totalWaterProcessed" name="Water Processed" fill="#82ca9d" />
-        <Bar yAxisId="left" dataKey="tseToIrrigation" name="TSE to Irrigation" fill="#ffc658" />
-        <Line yAxisId="right" type="monotone" dataKey="efficiency" name="Efficiency %" stroke="#ff7300" />
-      </ComposedChart>
-    </ResponsiveContainer>
-  );
-
-  const renderEfficiencyChart = () => (
-    <ResponsiveContainer width="100%" height={400}>
-      <LineChart data={getMonthTotals()} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-        <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="month" />
-        <YAxis />
-        <Tooltip />
-        <Legend />
-        <Line type="monotone" dataKey="efficiency" name="Processing Efficiency %" stroke="#ff7300" activeDot={{ r: 8 }} />
-      </LineChart>
-    </ResponsiveContainer>
-  );
-
-  const renderSourcesPieChart = () => (
-    <ResponsiveContainer width="100%" height={400}>
-      <PieChart>
-        <Pie
-          data={getPieData()}
-          cx="50%"
-          cy="50%"
-          labelLine={true}
-          outerRadius={150}
-          fill="#8884d8"
-          dataKey="value"
-          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(1)}%`}
-        >
-          {getPieData().map((entry, index) => (
-            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-          ))}
-        </Pie>
-        <Tooltip formatter={(value) => [`${value.toLocaleString()} m³`, '']} />
-        <Legend />
-      </PieChart>
-    </ResponsiveContainer>
-  );
-
-  const renderCorrelationChart = () => (
-    <ResponsiveContainer width="100%" height={400}>
-      <ScatterChart margin={{ top: 20, right: 30, left: 20, bottom: 10 }}>
-        <CartesianGrid strokeDasharray="3 3" />
-        <XAxis 
-          type="number" 
-          dataKey="influent" 
-          name="Total Influent" 
-          unit=" m³" 
-        />
-        <YAxis 
-          type="number" 
-          dataKey="processed" 
-          name="Water Processed" 
-          unit=" m³" 
-        />
-        <ZAxis type="number" dataKey="efficiency" range={[20, 200]} name="Efficiency" unit="%" />
-        <Tooltip cursor={{ strokeDasharray: '3 3' }} formatter={(value, name) => [
-          name === 'Efficiency' ? `${value}%` : `${value} m³`, 
-          name
-        ]} />
-        <Legend />
-        <Scatter 
-          name="Processing Correlation" 
-          data={getCorrelationData()} 
-          fill="#8884d8"
-          shape="circle"
-        />
-      </ScatterChart>
-    </ResponsiveContainer>
-  );
-
+  // Sample Reserve Fund Data
+  const reserveFundData = useMemo(() => [
+    { year: "2022", collected: 481310, spent: 346200, allocated: 520000, balance: 135110 },
+    { year: "2023", collected: 552750, spent: 398120, allocated: 580000, balance: 154630 },
+    { year: "2024", collected: 648340, spent: 485900, allocated: 670000, balance: 162440 },
+    { year: "2025", collected: 731200, spent: 512500, allocated: 750000, balance: 218700 },
+  ], []);
+  
+  // Projected Reserve Fund Data
+  const projectedData = useMemo(() => [
+    { year: "2025", amount: 218700 },
+    { year: "2026", amount: 328050 },
+    { year: "2027", amount: 458470 },
+    { year: "2028", amount: 607980 },
+    { year: "2029", amount: 778650 },
+    { year: "2030", amount: 970120 }
+  ], []);
+  
+  // Asset Categories Data
+  const assetCategoriesData = useMemo(() => [
+    { name: "Building Envelope", value: 35 },
+    { name: "Mechanical Systems", value: 25 },
+    { name: "Electrical Systems", value: 15 },
+    { name: "Common Areas", value: 12 },
+    { name: "Landscaping", value: 8 },
+    { name: "Other", value: 5 }
+  ], []);
+  
+  // Monthly Contribution Data
+  const monthlyContributionData = useMemo(() => [
+    { month: "Jan", amount: 62500 },
+    { month: "Feb", amount: 62500 },
+    { month: "Mar", amount: 62500 },
+    { month: "Apr", amount: 62500 },
+    { month: "May", amount: 62500 },
+    { month: "Jun", amount: 62500 },
+    { month: "Jul", amount: 62500 },
+    { month: "Aug", amount: 62500 },
+    { month: "Sep", amount: 62500 },
+    { month: "Oct", amount: 62500 },
+    { month: "Nov", amount: 62500 },
+    { month: "Dec", amount: 62500 }
+  ], []);
+  
+  // Monthly Expenditure Data
+  const monthlyExpenditureData = useMemo(() => [
+    { month: "Jan", amount: 42300 },
+    { month: "Feb", amount: 38650 },
+    { month: "Mar", amount: 47220 },
+    { month: "Apr", amount: 52940 },
+    { month: "May", amount: 31250 },
+    { month: "Jun", amount: 44320 },
+    { month: "Jul", amount: 48750 },
+    { month: "Aug", amount: 55300 },
+    { month: "Sep", amount: 61200 },
+    { month: "Oct", amount: 35670 },
+    { month: "Nov", amount: 29580 },
+    { month: "Dec", amount: 25320 }
+  ], []);
+  
+  // Expenditure Categories Data
+  const expenditureCategoriesData = useMemo(() => [
+    { name: "Maintenance", value: 203500 },
+    { name: "Replacements", value: 168300 },
+    { name: "Upgrades", value: 115200 },
+    { name: "Emergency Repairs", value: 25500 }
+  ], []);
+  
+  // Colors for charts
+  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
+  
+  // Get filtered data based on selected year
+  const filteredData = useMemo(() => 
+    reserveFundData.find(item => item.year === selectedYear) || reserveFundData[3], 
+  [reserveFundData, selectedYear]);
+  
   return (
     <Layout>
       <div className="container mx-auto py-6">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-muscat-primary flex items-center">
-              <FlaskConical className="mr-2 h-6 w-6" />
-              STP Analytics & Insights
+              <PiggyBank className="mr-2 h-6 w-6" />
+              Reserve Fund Dashboard
             </h1>
-            <p className="text-gray-500 mt-1">Advanced analytics and trend analysis for the STP plant operations</p>
+            <p className="text-gray-500 mt-1">Comprehensive overview of the reserve fund status and projections</p>
+          </div>
+          
+          <div className="flex items-center mt-4 md:mt-0 space-x-2">
+            <div className="flex items-center">
+              <Select 
+                value={selectedYear} 
+                onValueChange={setSelectedYear}
+              >
+                <SelectTrigger className="w-[120px]">
+                  <Calendar className="mr-2 h-4 w-4" />
+                  <SelectValue placeholder="Year" />
+                </SelectTrigger>
+                <SelectContent>
+                  {reserveFundData.map(item => (
+                    <SelectItem key={item.year} value={item.year}>
+                      {item.year}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <Button variant="outline" className="flex items-center">
+              <Download className="mr-2 h-4 w-4" />
+              Export
+            </Button>
           </div>
         </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
-          <Card className="col-span-2 lg:col-span-1">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base font-medium">Primary Analysis Period</CardTitle>
-              <CardDescription>
-                Select date range for analysis
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className="w-full justify-start text-left">
-                    <CalendarRange className="mr-2 h-4 w-4" />
-                    {dateRange[0] && dateRange[1] ? (
-                      `${format(dateRange[0], 'PPP')} - ${format(dateRange[1], 'PPP')}`
-                    ) : (
-                      "Select date range"
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="range"
-                    selected={{
-                      from: dateRange[0],
-                      to: dateRange[1],
-                    }}
-                    onSelect={(selected) => {
-                      setDateRange([selected?.from, selected?.to]);
-                    }}
-                    className="rounded-md border"
-                  />
-                </PopoverContent>
-              </Popover>
-              {dateRange[0] && dateRange[1] && (
-                <div className="text-xs text-muted-foreground mt-2">
-                  Period: {differenceInDays(dateRange[1], dateRange[0])} days
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card className="col-span-2 lg:col-span-1">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base font-medium">Comparison Period (Optional)</CardTitle>
-              <CardDescription>
-                Select another period to compare
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className="w-full justify-start text-left">
-                    <CalendarRange className="mr-2 h-4 w-4" />
-                    {comparisonRange[0] && comparisonRange[1] ? (
-                      `${format(comparisonRange[0], 'PPP')} - ${format(comparisonRange[1], 'PPP')}`
-                    ) : (
-                      "Select comparison range"
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="range"
-                    selected={{
-                      from: comparisonRange[0],
-                      to: comparisonRange[1],
-                    }}
-                    onSelect={(selected) => {
-                      setComparisonRange([selected?.from, selected?.to]);
-                    }}
-                    className="rounded-md border"
-                  />
-                  <div className="p-3 border-t border-border/20">
-                    <Button 
-                      size="sm" 
-                      variant="ghost" 
-                      onClick={() => setComparisonRange([undefined, undefined])}
-                      className="w-full"
-                    >
-                      Clear
-                    </Button>
-                  </div>
-                </PopoverContent>
-              </Popover>
-              {comparisonRange[0] && comparisonRange[1] && (
-                <div className="text-xs text-muted-foreground mt-2">
-                  Period: {differenceInDays(comparisonRange[1], comparisonRange[0])} days
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base font-medium">Summary Statistics</CardTitle>
-              <CardDescription>
-                Key performance metrics
-              </CardDescription>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Annual Collection</CardTitle>
+              <Wallet className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent className="pt-0">
-              <div className="grid grid-cols-2 gap-2 mt-4">
-                <div className="text-center p-2 rounded-md bg-slate-50">
-                  <div className="text-xs text-muted-foreground">Processing Efficiency</div>
-                  <div className="text-xl font-bold text-muscat-primary">
-                    {(statsData.currentStats?.processingEfficiency || 0) * 100}%
-                  </div>
-                  {statsData.comparisonStats && (
-                    <div className="text-xs text-muted-foreground">
-                      vs {(statsData.comparisonStats.processingEfficiency || 0) * 100}%
-                    </div>
-                  )}
-                </div>
-                <div className="text-center p-2 rounded-md bg-slate-50">
-                  <div className="text-xs text-muted-foreground">Irrigation Usage</div>
-                  <div className="text-xl font-bold text-green-600">
-                    {(statsData.currentStats?.irrigationUtilization || 0) * 100}%
-                  </div>
-                  {statsData.comparisonStats && (
-                    <div className="text-xs text-muted-foreground">
-                      vs {(statsData.comparisonStats.irrigationUtilization || 0) * 100}%
-                    </div>
-                  )}
-                </div>
-                <div className="text-center p-2 rounded-md bg-slate-50">
-                  <div className="text-xs text-muted-foreground">Avg. Processed</div>
-                  <div className="text-xl font-bold text-blue-600">
-                    {Math.round(statsData.currentStats?.averageProcessingVolume || 0)} m³
-                  </div>
-                  {statsData.comparisonStats && (
-                    <div className="text-xs text-muted-foreground">
-                      vs {Math.round(statsData.comparisonStats.averageProcessingVolume || 0)} m³
-                    </div>
-                  )}
-                </div>
-                <div className="text-center p-2 rounded-md bg-slate-50">
-                  <div className="text-xs text-muted-foreground">Avg. Influent</div>
-                  <div className="text-xl font-bold text-purple-600">
-                    {Math.round(statsData.currentStats?.averageInfluentVolume || 0)} m³
-                  </div>
-                  {statsData.comparisonStats && (
-                    <div className="text-xs text-muted-foreground">
-                      vs {Math.round(statsData.comparisonStats.averageInfluentVolume || 0)} m³
-                    </div>
-                  )}
-                </div>
+            <CardContent>
+              <div className="text-2xl font-bold">{filteredData.collected.toLocaleString()} OMR</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                {Math.round((filteredData.collected / filteredData.allocated) * 100)}% of allocation
+              </p>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Annual Expenditure</CardTitle>
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{filteredData.spent.toLocaleString()} OMR</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                {Math.round((filteredData.spent / filteredData.collected) * 100)}% of collections
+              </p>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Current Balance</CardTitle>
+              <PiggyBank className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{filteredData.balance.toLocaleString()} OMR</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                As of end of {selectedYear}
+              </p>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Funding Level</CardTitle>
+              <Building className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {Math.round((filteredData.balance / (filteredData.allocated * 5)) * 100)}%
               </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Based on 5-year target
+              </p>
             </CardContent>
           </Card>
         </div>
-
-        <div className="grid grid-cols-1 gap-4">
-          <Card>
-            <CardHeader>
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
-                <div>
-                  <CardTitle>Advanced STP Analytics</CardTitle>
-                  <CardDescription>
-                    Detailed analytics for the selected time period
-                  </CardDescription>
-                </div>
-                <div className="flex flex-wrap mt-4 sm:mt-0 gap-2">
-                  <Button
-                    size="sm"
-                    variant={chartType === 'volume' ? 'default' : 'outline'}
-                    onClick={() => setChartType('volume')}
-                  >
-                    <BarChart2 className="h-4 w-4 mr-1" />
-                    Volumes
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant={chartType === 'efficiency' ? 'default' : 'outline'}
-                    onClick={() => setChartType('efficiency')}
-                  >
-                    <TrendingUp className="h-4 w-4 mr-1" />
-                    Efficiency
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant={chartType === 'source' ? 'default' : 'outline'}
-                    onClick={() => setChartType('source')}
-                  >
-                    <PieChartIcon className="h-4 w-4 mr-1" />
-                    Sources
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant={chartType === 'correlation' ? 'default' : 'outline'}
-                    onClick={() => setChartType('correlation')}
-                  >
-                    <Sigma className="h-4 w-4 mr-1" />
-                    Correlation
-                  </Button>
-                </div>
+        
+        <div className="mb-6">
+          <Tabs defaultValue="overview" value={selectedTab} onValueChange={setSelectedTab}>
+            <TabsList className="grid w-full grid-cols-3 lg:w-auto lg:inline-flex">
+              <TabsTrigger value="overview">Overview</TabsTrigger>
+              <TabsTrigger value="analysis">Analysis</TabsTrigger>
+              <TabsTrigger value="projections">Projections</TabsTrigger>
+            </TabsList>
+            
+            <div className="mt-1">
+              <Badge variant="outline" className="text-xs">
+                Showing: {selectedTab === "overview" ? "Fund Overview" : 
+                  selectedTab === "analysis" ? "Detailed Analysis" : "Future Projections"}
+              </Badge>
+            </div>
+            
+            <TabsContent value="overview" className="mt-4">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <Card>
+                  <CardHeader>
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <CardTitle>Historical Performance</CardTitle>
+                        <CardDescription>Reserve fund trend over years</CardDescription>
+                      </div>
+                      <LineChartIcon className="h-5 w-5 text-muted-foreground" />
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <ResponsiveContainer width="100%" height={350}>
+                      <LineChart data={reserveFundData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="year" />
+                        <YAxis />
+                        <Tooltip formatter={(value) => [`${value.toLocaleString()} OMR`, ""]} />
+                        <Legend />
+                        <Line type="monotone" dataKey="collected" name="Collected" stroke="#8884d8" activeDot={{ r: 8 }} />
+                        <Line type="monotone" dataKey="spent" name="Spent" stroke="#82ca9d" />
+                        <Line type="monotone" dataKey="balance" name="Balance" stroke="#ffc658" />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardHeader>
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <CardTitle>Expenditure Categories</CardTitle>
+                        <CardDescription>Breakdown by category in {selectedYear}</CardDescription>
+                      </div>
+                      <PieChartIcon className="h-5 w-5 text-muted-foreground" />
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <ResponsiveContainer width="100%" height={350}>
+                      <PieChart>
+                        <Pie
+                          data={expenditureCategoriesData}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={true}
+                          outerRadius={120}
+                          fill="#8884d8"
+                          dataKey="value"
+                          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                        >
+                          {expenditureCategoriesData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip formatter={(value) => [`${value.toLocaleString()} OMR`, ""]} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
               </div>
-            </CardHeader>
-            <CardContent>
-              {chartType === 'volume' && renderVolumeChart()}
-              {chartType === 'efficiency' && renderEfficiencyChart()}
-              {chartType === 'source' && renderSourcesPieChart()}
-              {chartType === 'correlation' && renderCorrelationChart()}
-            </CardContent>
-            <CardFooter className="border-t pt-4">
-              <div className="text-sm text-muted-foreground">
-                Showing data from {dateRange[0] ? format(dateRange[0], 'PPP') : 'beginning'} to {dateRange[1] ? format(dateRange[1], 'PPP') : 'end'}
+            </TabsContent>
+            
+            <TabsContent value="analysis" className="mt-4">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <Card>
+                  <CardHeader>
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <CardTitle>Monthly Contributions</CardTitle>
+                        <CardDescription>Contribution trend for {selectedYear}</CardDescription>
+                      </div>
+                      <BarChart2 className="h-5 w-5 text-muted-foreground" />
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <ResponsiveContainer width="100%" height={350}>
+                      <BarChart data={monthlyContributionData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="month" />
+                        <YAxis />
+                        <Tooltip formatter={(value) => [`${value.toLocaleString()} OMR`, ""]} />
+                        <Legend />
+                        <Bar dataKey="amount" name="Contribution" fill="#8884d8" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardHeader>
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <CardTitle>Monthly Expenditures</CardTitle>
+                        <CardDescription>Expenditure trend for {selectedYear}</CardDescription>
+                      </div>
+                      <BarChart2 className="h-5 w-5 text-muted-foreground" />
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <ResponsiveContainer width="100%" height={350}>
+                      <BarChart data={monthlyExpenditureData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="month" />
+                        <YAxis />
+                        <Tooltip formatter={(value) => [`${value.toLocaleString()} OMR`, ""]} />
+                        <Legend />
+                        <Bar dataKey="amount" name="Expenditure" fill="#82ca9d" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
               </div>
-            </CardFooter>
-          </Card>
+              
+              <div className="mt-4">
+                <Card>
+                  <CardHeader>
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <CardTitle>Asset Category Allocation</CardTitle>
+                        <CardDescription>Reserve fund allocation by asset category</CardDescription>
+                      </div>
+                      <PieChartIcon className="h-5 w-5 text-muted-foreground" />
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <ResponsiveContainer width="100%" height={350}>
+                      <PieChart>
+                        <Pie
+                          data={assetCategoriesData}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={true}
+                          outerRadius={120}
+                          fill="#8884d8"
+                          dataKey="value"
+                          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                        >
+                          {assetCategoriesData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip formatter={(value) => [`${value}%`, ""]} />
+                        <Legend />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="projections" className="mt-4">
+              <div className="grid grid-cols-1 gap-4">
+                <Card>
+                  <CardHeader>
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <CardTitle>5-Year Reserve Fund Projection</CardTitle>
+                        <CardDescription>Estimated reserve fund balance for next 5 years</CardDescription>
+                      </div>
+                      <LineChartIcon className="h-5 w-5 text-muted-foreground" />
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <ResponsiveContainer width="100%" height={400}>
+                      <BarChart data={projectedData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="year" />
+                        <YAxis />
+                        <Tooltip formatter={(value) => [`${value.toLocaleString()} OMR`, ""]} />
+                        <Legend />
+                        <Bar dataKey="amount" name="Projected Balance" fill="#8884d8" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                  <CardFooter className="border-t pt-4">
+                    <div className="text-sm text-muted-foreground">
+                      Projections are based on historical trends and planned maintenance schedules
+                    </div>
+                  </CardFooter>
+                </Card>
+                
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Funding Level Assessment</CardTitle>
+                    <CardDescription>
+                      Current funding status against industry benchmarks
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-6">
+                      <div>
+                        <div className="flex justify-between mb-1">
+                          <span className="text-sm font-medium">Current Funding Level</span>
+                          <span className="text-sm font-medium">{Math.round((filteredData.balance / (filteredData.allocated * 5)) * 100)}%</span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2.5">
+                          <div 
+                            className="bg-green-600 h-2.5 rounded-full" 
+                            style={{ width: `${Math.min(Math.round((filteredData.balance / (filteredData.allocated * 5)) * 100), 100)}%` }}
+                          ></div>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">Based on 5-year target of {(filteredData.allocated * 5).toLocaleString()} OMR</p>
+                      </div>
+                      
+                      <div>
+                        <div className="flex justify-between mb-1">
+                          <span className="text-sm font-medium">Industry Recommended (70%)</span>
+                          <span className="text-sm font-medium">70%</span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2.5">
+                          <div className="bg-blue-600 h-2.5 rounded-full" style={{ width: '70%' }}></div>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">Minimum recommended funding level</p>
+                      </div>
+                      
+                      <div>
+                        <div className="flex justify-between mb-1">
+                          <span className="text-sm font-medium">Optimal Level (100%)</span>
+                          <span className="text-sm font-medium">100%</span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2.5">
+                          <div className="bg-violet-600 h-2.5 rounded-full" style={{ width: '100%' }}></div>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">Fully funded reserve</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                  <CardFooter className="border-t pt-4">
+                    <div className="text-sm text-muted-foreground">
+                      Assessment based on current balance of {filteredData.balance.toLocaleString()} OMR
+                    </div>
+                  </CardFooter>
+                </Card>
+              </div>
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
     </Layout>
   );
 };
 
-export default STPAnalytics;
+export default ReserveFundDashboard;
