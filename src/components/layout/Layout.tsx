@@ -15,11 +15,7 @@ interface EmbeddedAppState {
   isOpen: boolean;
 }
 
-interface LayoutProps {
-  children: React.ReactNode;
-}
-
-const Layout: React.FC<LayoutProps> = ({ children }) => {
+const Layout = ({ children }: { children: React.ReactNode }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [embeddedApp, setEmbeddedApp] = useState<EmbeddedAppState>({
     url: '',
