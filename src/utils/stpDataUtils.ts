@@ -267,13 +267,21 @@ export const calculateEfficiencyStats = (data: STPDailyData[]): {
   maxProcessingEfficiency: number; 
   minProcessingEfficiency: number;
   avgIrrigationUtilization: number;
+  processingEfficiency: number; // Added to match STPAnalytics.tsx usage
+  irrigationUtilization: number; // Added to match STPAnalytics.tsx usage
+  averageProcessingVolume: number; // Added to match STPAnalytics.tsx usage
+  averageInfluentVolume: number; // Added to match STPAnalytics.tsx usage
 } => {
   if (!data || data.length === 0) {
     return {
       avgProcessingEfficiency: 0,
       maxProcessingEfficiency: 0,
       minProcessingEfficiency: 0,
-      avgIrrigationUtilization: 0
+      avgIrrigationUtilization: 0,
+      processingEfficiency: 0,
+      irrigationUtilization: 0,
+      averageProcessingVolume: 0,
+      averageInfluentVolume: 0
     };
   }
   
@@ -298,10 +306,21 @@ export const calculateEfficiencyStats = (data: STPDailyData[]): {
     (sum, item) => sum + item.irrigationUtilization, 0
   ) / efficiencies.length;
   
+  // Calculate average volumes
+  const totalProcessingVolume = data.reduce((sum, day) => sum + day.totalWaterProcessed, 0);
+  const totalInfluentVolume = data.reduce((sum, day) => sum + day.totalInfluent, 0);
+  const averageProcessingVolume = totalProcessingVolume / data.length;
+  const averageInfluentVolume = totalInfluentVolume / data.length;
+  
   return {
     avgProcessingEfficiency,
     maxProcessingEfficiency,
     minProcessingEfficiency,
-    avgIrrigationUtilization
+    avgIrrigationUtilization,
+    // Add properties with names expected by STPAnalytics.tsx and ReserveFundDashboard.tsx
+    processingEfficiency: avgProcessingEfficiency,
+    irrigationUtilization: avgIrrigationUtilization,
+    averageProcessingVolume,
+    averageInfluentVolume
   };
 };
