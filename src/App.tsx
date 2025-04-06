@@ -29,26 +29,26 @@ import Layout from '@/components/layout/Layout';
 function App() {
   return (
     <Routes>
-      <Route path="/" element={<Layout><Index /></Layout>} />
-      <Route path="/contracts" element={<Layout><Contracts /></Layout>} />
-      <Route path="/projects" element={<Layout><Projects /></Layout>} />
-      <Route path="/water" element={<Layout><Water /></Layout>} />
-      <Route path="/water-system" element={<Layout><WaterSystem /></Layout>} />
-      <Route path="/water-consumption-types" element={<Layout><WaterConsumptionTypes /></Layout>} />
-      <Route path="/electricity" element={<Layout><Electricity /></Layout>} />
-      <Route path="/electricity-system" element={<Layout><ElectricitySystem /></Layout>} />
-      <Route path="/hvac" element={<Layout><HVAC /></Layout>} />
-      <Route path="/pumping-stations" element={<Layout><PumpingStations /></Layout>} />
-      <Route path="/stp" element={<Layout><STP /></Layout>} />
-      <Route path="/stp-plant" element={<Layout><STPPlant /></Layout>} />
-      <Route path="/stp-dashboard" element={<Layout><STPDashboard /></Layout>} />
-      <Route path="/stp-analytics" element={<Layout><STPAnalytics /></Layout>} />
-      <Route path="/reports" element={<Layout><Reports /></Layout>} />
-      <Route path="/admin" element={<Layout><Admin /></Layout>} />
-      <Route path="/operating-expenses" element={<Layout><OperatingExpenses /></Layout>} />
-      <Route path="/service-charges" element={<Layout><ServiceCharges /></Layout>} />
-      <Route path="/reserve-fund-calculator" element={<Layout><ReserveFundCalculatorPage /></Layout>} />
-      <Route path="/reserve-fund-dashboard" element={<Layout><ReserveFundDashboard /></Layout>} />
+      <Route path="/" element={<Index />} />
+      <Route path="/contracts" element={<Contracts />} />
+      <Route path="/projects" element={<Projects />} />
+      <Route path="/water" element={<Water />} />
+      <Route path="/water-system" element={<WaterSystem />} />
+      <Route path="/water-consumption-types" element={<WaterConsumptionTypes />} />
+      <Route path="/electricity" element={<Electricity />} />
+      <Route path="/electricity-system" element={<ElectricitySystem />} />
+      <Route path="/hvac" element={<HVAC />} />
+      <Route path="/pumping-stations" element={<PumpingStations />} />
+      <Route path="/stp" element={<STP />} />
+      <Route path="/stp-plant" element={<STPPlant />} />
+      <Route path="/stp-dashboard" element={<STPDashboard />} />
+      <Route path="/stp-analytics" element={<STPAnalytics />} />
+      <Route path="/reports" element={<Reports />} />
+      <Route path="/admin" element={<Admin />} />
+      <Route path="/operating-expenses" element={<OperatingExpenses />} />
+      <Route path="/service-charges" element={<ServiceCharges />} />
+      <Route path="/reserve-fund-calculator" element={<ReserveFundCalculatorPage />} />
+      <Route path="/reserve-fund-dashboard" element={<ReserveFundDashboard />} />
       <Route path="/auth" element={<Auth />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
