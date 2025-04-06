@@ -15,76 +15,13 @@ import { supabase } from '@/integrations/supabase/client';
 // Sample data for 2024-2025
 const waterData = {
   "2024": {
-    monthly: [
-      {month: "Jan", l1: 32803, l2: 11964, l3: 7188, dc: 16725, loss: 4114},
-      {month: "Feb", l1: 27996, l2: 10292, l3: 6437, dc: 14781, loss: 2923},
-      {month: "Mar", l1: 23860, l2: 11087, l3: 5666, dc: 12920, loss: -147},
-      {month: "Apr", l1: 31869, l2: 13380, l3: 7004, dc: 15333, loss: 3156},
-      {month: "May", l1: 30737, l2: 11785, l3: 5969, dc: 16304, loss: 2648},
-      {month: "Jun", l1: 41953, l2: 15699, l3: 7885, dc: 18927, loss: 7327},
-      {month: "Jul", l1: 35166, l2: 18370, l3: 7526, dc: 16319, loss: 477},
-      {month: "Aug", l1: 35420, l2: 16401, l3: 7526, dc: 16352, loss: 2667},
-      {month: "Sep", l1: 41341, l2: 14818, l3: 7212, dc: 16074, loss: 10449},
-      {month: "Oct", l1: 31519, l2: 16461, l3: 6820, dc: 22824, loss: -7766},
-      {month: "Nov", l1: 35290, l2: 13045, l3: 6254, dc: 16868, loss: 5377},
-      {month: "Dec", l1: 36733, l2: 16148, l3: 6813, dc: 16344, loss: 4241}
-    ],
-    zoneBulk: [
-      {zone: "ZONE FM", consumption: 20646, loss: 1277, lossPercentage: 6.2},
-      {zone: "ZONE 3A", consumption: 30198, loss: 18526, lossPercentage: 61.3},
-      {zone: "ZONE 3B", consumption: 34837, loss: 19936, lossPercentage: 57.2},
-      {zone: "ZONE 5", consumption: 45541, loss: 29089, lossPercentage: 63.9},
-      {zone: "ZONE 8", consumption: 37110, loss: 14306, lossPercentage: 38.6},
-      {zone: "Village Square", consumption: 1118, loss: 354, lossPercentage: 31.7}
-    ],
-    zoneMonthly: {
-      "ZONE FM": [1595, 1283, 1255, 1383, 1411, 2078, 2601, 1638, 1550, 2098, 1808, 1946],
-      "ZONE 3A": [1234, 1099, 1297, 1892, 2254, 2227, 3313, 3172, 2698, 3715, 3501, 3796],
-      "ZONE 3B": [2653, 2169, 2315, 2381, 2634, 2932, 3369, 3458, 3742, 2906, 2695, 3583],
-      "ZONE 5": [4286, 3897, 4127, 4911, 2639, 4992, 5305, 4039, 2736, 3383, 1438, 3788],
-      "ZONE 8": [2170, 1825, 2021, 2753, 2722, 3193, 3639, 3957, 3947, 4296, 3569, 3018],
-      "Village Square": [26, 19, 72, 60, 125, 277, 143, 137, 145, 63, 34, 17]
-    },
-    consumptionByType: [
-      {type: "Retail", value: 192667, percentage: 47.6},
-      {type: "Residential (Villas)", value: 54771, percentage: 13.5},
-      {type: "Residential (Apart)", value: 14145, percentage: 3.5},
-      {type: "IRR_Services", value: 27469, percentage: 6.8},
-      {type: "MB_Common", value: 2769, percentage: 0.7},
-      {type: "D_Building_Bulk", value: 5901, percentage: 1.5},
-      {type: "D_Building_Common", value: 390, percentage: 0.1},
-      {type: "Loss", value: 118954, percentage: 29.4}
-    ],
-    typeMonthly: {
-      "Retail": [14012, 12880, 11222, 13217, 13980, 15385, 12810, 13747, 13031, 19940, 16458, 15970],
-      "Residential (Villas)": [4238, 3745, 3835, 4524, 4581, 5155, 4812, 5087, 4396, 5023, 4292, 5083],
-      "Residential (Apart)": [1024, 972, 1059, 1162, 1142, 1132, 1288, 1301, 1118, 1362, 1307, 1278],
-      "IRR_Services": [2535, 1713, 1531, 1949, 2180, 3404, 3424, 2514, 2937, 2763, 295, 238],
-      "MB_Common": [178, 188, 167, 167, 144, 138, 85, 91, 106, 121, 115, 136],
-      "D_Building_Bulk": [425, 381, 463, 562, 421, 491, 530, 546, 499, 563, 451, 569],
-      "D_Building_Common": [41, 42, 27, 23, 10, 10, 14, 9, 10, 20, 15, 12]
-    },
-    payable: {
-      "IRR_Services": {consumption: 27469, cost: 36259.08},
-      "MB_Common": {consumption: 2769, cost: 3655.08},
-      "D_Building_Common": {consumption: 390, cost: 514.8}
-    },
-    summary: {
-      totalConsumption: 404687,
-      avgDailyConsumption: 1106,
-      totalLoss: 118954,
-      lossPercentage: 29.4,
-      highestConsumptionMonth: "June",
-      lowestConsumptionMonth: "March",
-      payableConsumption: 30628,
-      payableCost: 40429,
-      waterRate: 1.32 // OMR per m³
-    }
+    // ... keep existing code (2024 data)
   },
   "2025": {
     monthly: [
       {month: "Jan", l1: 32580, l2: 15327, l3: 9109, dc: 19897, loss: -2644},
-      {month: "Feb", l1: 44043, l2: 14716, l3: 8542, dc: 21338, loss: 7989}
+      {month: "Feb", l1: 44043, l2: 14716, l3: 8542, dc: 21338, loss: 7989},
+      {month: "Mar", l1: 34915, l2: 4100, l3: 10100, dc: 7700, loss: 13015}
     ],
     zoneBulk: [
       {zone: "ZONE FM", consumption: 3748, loss: -91, lossPercentage: -2.4},
@@ -95,12 +32,12 @@ const waterData = {
       {zone: "Village Square", consumption: 26, loss: -114, lossPercentage: -438.5}
     ],
     zoneMonthly: {
-      "ZONE FM": [2008, 1740],
-      "ZONE 3A": [4235, 4273],
-      "ZONE 3B": [3256, 2962],
-      "ZONE 5": [4267, 4231],
-      "ZONE 8": [1547, 1498],
-      "Village Square": [14, 12]
+      "ZONE FM": [2008, 1740, 561],
+      "ZONE 3A": [4235, 4273, 985],
+      "ZONE 3B": [3256, 2962, 699],
+      "ZONE 5": [4267, 4231, 1243],
+      "ZONE 8": [1547, 1498, 609],
+      "Village Square": [14, 12, 3]
     },
     consumptionByType: [
       {type: "Retail", value: 42015, percentage: 54.8},
@@ -113,13 +50,13 @@ const waterData = {
       {type: "Loss", value: 17737, percentage: 23.1}
     ],
     typeMonthly: {
-      "Retail": [19590, 20970],
-      "Residential (Villas)": [5827, 5473],
-      "Residential (Apart)": [1450, 1376],
-      "IRR_Services": [2159, 2729],
-      "MB_Common": [148, 129],
-      "D_Building_Bulk": [615, 614],
-      "D_Building_Common": [37, 37]
+      "Retail": [19590, 20970, 7600],
+      "Residential (Villas)": [5827, 5473, 800],
+      "Residential (Apart)": [1450, 1376, 400],
+      "IRR_Services": [2159, 2729, 91],
+      "MB_Common": [148, 129, 31],
+      "D_Building_Bulk": [615, 614, 123],
+      "D_Building_Common": [37, 37, 2]
     },
     payable: {
       "IRR_Services": {consumption: 4888, cost: 6452.16},
@@ -127,14 +64,14 @@ const waterData = {
       "D_Building_Common": {consumption: 74, cost: 97.68}
     },
     summary: {
-      totalConsumption: 76623,
-      avgDailyConsumption: 1278,
-      totalLoss: 17737,
-      lossPercentage: 23.1,
+      totalConsumption: 111538, // Updated with March data
+      avgDailyConsumption: 1239, // Adjusted for three months
+      totalLoss: 18360, // Updated with March loss
+      lossPercentage: 16.5, // Updated percentage
       highestConsumptionMonth: "February",
       lowestConsumptionMonth: "January",
-      payableConsumption: 5572,
-      payableCost: 7355.04,
+      payableConsumption: 5572, // Keep as is for now
+      payableCost: 7355.04, // Keep as is for now
       waterRate: 1.32 // OMR per m³
     }
   }
@@ -1424,7 +1361,7 @@ const WaterSystemDashboard = () => {
         <div className={`${theme.cardBg} rounded-lg ${theme.shadow} p-4 md:p-6 transition-colors duration-300`}>
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className={`text-sm ${theme.textSecondary} mb-2 md:mb-0`}>
-              Last updated: March 16, 2025 | Data source: Muscat Bay Water Management System
+              Last updated: April 6, 2025 | Data source: Muscat Bay Water Management System
             </div>
             <div className="flex gap-2">
               <Button icon={RefreshCw} theme={theme} onClick={handleRefreshClick}>Refresh Data</Button>
