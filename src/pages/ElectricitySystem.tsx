@@ -48,7 +48,6 @@ import { toast } from 'sonner';
 import EnhancedPieChart from '@/components/ui/enhanced-pie-chart';
 import ResponsiveBarChart from '@/components/ui/responsive-chart';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ElectricityFacility } from '@/types/electricity';
 
 const ELECTRICITY_RATE = 0.025; // OMR per kWh
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#FF6B6B'];
@@ -176,6 +175,7 @@ const ElectricitySystem = () => {
     }))
     .sort((a, b) => b.consumption - a.consumption);
 
+  // Format for Enhanced Pie Chart
   const pieChartData = consumptionByTypeArray.map((item, index) => ({
     name: item.type,
     value: item.consumption,
@@ -464,20 +464,11 @@ const ElectricitySystem = () => {
           </div>
         );
       case 'facilities':
-        return <ElectricityFacilitiesTable 
-                 electricityData={electricityData as ElectricityFacility[]} 
-                 electricityRate={ELECTRICITY_RATE} 
-               />;
+        return <ElectricityFacilitiesTable electricityData={electricityData} electricityRate={ELECTRICITY_RATE} />;
       case 'trends':
-        return <ElectricityTrends 
-                 electricityData={electricityData as ElectricityFacility[]} 
-                 electricityRate={ELECTRICITY_RATE} 
-               />;
+        return <ElectricityTrends electricityData={electricityData} electricityRate={ELECTRICITY_RATE} />;
       case 'comparison':
-        return <ElectricityComparison 
-                 electricityData={electricityData as ElectricityFacility[]} 
-                 electricityRate={ELECTRICITY_RATE} 
-               />;
+        return <ElectricityComparison electricityData={electricityData} electricityRate={ELECTRICITY_RATE} />;
       default:
         return null;
     }

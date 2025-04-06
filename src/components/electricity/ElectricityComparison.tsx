@@ -14,11 +14,11 @@ import {
   ResponsiveContainer,
   Cell
 } from 'recharts';
-import { ElectricityFacility, TypeConsumption, TopConsumer } from '@/types/electricity';
+import { ElectricityRecord, TypeConsumption, TopConsumer } from '@/types/electricity';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 
 interface ElectricityComparisonProps {
-  electricityData: ElectricityFacility[];
+  electricityData: ElectricityRecord[];
   electricityRate: number;
 }
 

@@ -14,10 +14,10 @@ import {
   ResponsiveContainer,
   Cell
 } from 'recharts';
-import { ElectricityFacility, MonthlyTypeConsumption, TopConsumer } from '@/types/electricity';
+import { ElectricityRecord, MonthlyTypeConsumption, TopConsumer } from '@/types/electricity';
 
 interface ElectricityTrendsProps {
-  electricityData: ElectricityFacility[];
+  electricityData: ElectricityRecord[];
   electricityRate: number;
 }
 
