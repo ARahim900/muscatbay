@@ -41,16 +41,6 @@
     --brand-primary-text: #ffffff;
     --brand-accent: #4e4456;
     --brand-accent-text: #ffffff;
-    
-    /* Enhanced color palette */
-    --muscat-purple-main: #8764f8;
-    --muscat-purple-light: #a78dfb;
-    --muscat-teal-main: #16b8a0;
-    --muscat-teal-light: #47d6c2;
-    --muscat-orange-main: #ff9747;
-    --muscat-orange-light: #ffb77b;
-    --muscat-blue-main: #4886fc;
-    --muscat-blue-light: #70a1fd;
   }
  
   .dark {
@@ -105,33 +95,4 @@
   to {
     opacity: 1;
   }
-}
-
-.animate-fadeIn {
-  animation: fadeIn 0.5s ease-out forwards;
-}
-
-/* Enhanced card styles */
-.stats-card {
-  @apply rounded-lg shadow-md overflow-hidden transition-transform hover:shadow-lg hover:translate-y-[-2px];
-}
-
-.stats-card-purple {
-  @apply bg-gradient-to-br from-[#8764f8] to-[#a78dfb] text-white;
-}
-
-.stats-card-teal {
-  @apply bg-gradient-to-br from-[#16b8a0] to-[#47d6c2] text-white;
-}
-
-.stats-card-orange {
-  @apply bg-gradient-to-br from-[#ff9747] to-[#ffb77b] text-white;
-}
-
-.stats-card-blue {
-  @apply bg-gradient-to-br from-[#4886fc] to-[#70a1fd] text-white;
-}
-
-.icon-container {
-  @apply bg-white/20 p-3 rounded-lg;
 }
