@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from "react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
@@ -9,7 +10,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import StandardPageLayout from "@/components/layout/StandardPageLayout";
-import { electricityRecords2024 } from "@/data/electricityData";
 
 // --- Configuration ---
 // Color Palette
@@ -67,25 +67,42 @@ interface ElectricityRecord {
   mar25: number;
 }
 
-interface ElectricityRecord2024 {
-  id: number;
+interface ChartDataItem {
   name: string;
-  type: string;
-  meterAccountNo: string;
-  consumption: {
-    jan2024: number;
-    feb2024: number;
-    mar2024: number;
-    apr2024: number;
-    may2024: number;
-    jun2024: number;
-    jul2024: number;
-    aug2024: number;
-    sep2024: number;
-    oct2024: number;
-    nov2024: number;
-    dec2024: number;
+  value: number;
+  color: string;
+}
+
+interface MonthlyConsumption {
+  month: string;
+  kWh: number;
+}
+
+interface ProcessedElectricityData {
+  monthlyConsumption: MonthlyConsumption[];
+  marchData: {
+    totalKWh: number;
+    totalCost: number;
+    averageKWh: number;
+    peakMeter: {
+      name: string;
+      consumption: number;
+    };
+    breakdownByCategory: ChartDataItem[];
+    breakdownByType: ChartDataItem[];
   };
+  meterDetails: Array<{
+    id: string;
+    zone: string;
+    type: string;
+    name: string;
+    consumptionJan25: number;
+    consumptionFeb25: number;
+    consumption: number;
+    cost: number;
+  }>;
+  categories: string[];
+  types: string[];
 }
 
 // --- Reusable Components ---
@@ -254,7 +271,6 @@ const processElectricityData = (rawData: ElectricityRecord[]): ProcessedElectric
   const meterDetails = [];
   const uniqueCategories = new Set<string>();
   const uniqueTypes = new Set<string>();
-  const typesByCategory: Record<string, string[]> = {};
 
   rawData.forEach(item => {
     const jan = parseFloat(item.jan25.toString()) || 0;
@@ -273,14 +289,6 @@ const processElectricityData = (rawData: ElectricityRecord[]): ProcessedElectric
     
     categoryTotalsMar[category] = (categoryTotalsMar[category] || 0) + mar;
     typeTotalsMar[type] = (typeTotalsMar[type] || 0) + mar;
-    
-    // Group types by category
-    if (!typesByCategory[category]) {
-      typesByCategory[category] = [];
-    }
-    if (!typesByCategory[category].includes(type)) {
-      typesByCategory[category].push(type);
-    }
     
     meterDetails.push({
       id: item.meter || `SL-${item.sl}`,
@@ -327,109 +335,11 @@ const processElectricityData = (rawData: ElectricityRecord[]): ProcessedElectric
     meterDetails: meterDetails,
     categories: Array.from(uniqueCategories).sort(),
     types: Array.from(uniqueTypes).sort(),
-    typesByCategory: typesByCategory,
-  };
-};
-
-// Function to process 2024 data
-const process2024ElectricityData = (rawData: ElectricityRecord2024[]): ProcessedElectricityData => {
-  const monthlyTotals = { jan24: 0, feb24: 0, mar24: 0 };
-  const categoryTotalsMar: Record<string, number> = {};
-  const typeTotalsMar: Record<string, number> = {};
-  const meterDetails = [];
-  const uniqueCategories = new Set<string>();
-  const uniqueTypes = new Set<string>();
-  const typesByCategory: Record<string, string[]> = {};
-
-  rawData.forEach(item => {
-    const jan = item.consumption.jan2024 || 0;
-    const feb = item.consumption.feb2024 || 0;
-    const mar = item.consumption.mar2024 || 0;
-    
-    monthlyTotals.jan24 += jan;
-    monthlyTotals.feb24 += feb;
-    monthlyTotals.mar24 += mar;
-    
-    // Extract category from name or use type as fallback
-    let category = "Infrastructure";
-    if (item.name.includes("Zone")) {
-      category = "Zone";
-    } else if (item.name.includes("Village")) {
-      category = "Village Square";
-    } else if (item.name.includes("Central")) {
-      category = "Central Park";
-    } else if (item.type === "Kitchen" || item.type === "Bank") {
-      category = "Ancillary";
-    }
-    
-    const type = item.type || "Unknown";
-    
-    uniqueCategories.add(category);
-    uniqueTypes.add(type);
-    
-    categoryTotalsMar[category] = (categoryTotalsMar[category] || 0) + mar;
-    typeTotalsMar[type] = (typeTotalsMar[type] || 0) + mar;
-    
-    // Group types by category
-    if (!typesByCategory[category]) {
-      typesByCategory[category] = [];
-    }
-    if (!typesByCategory[category].includes(type)) {
-      typesByCategory[category].push(type);
-    }
-    
-    meterDetails.push({
-      id: item.meterAccountNo || `SL-${item.id}`,
-      zone: category,
-      type: type,
-      name: item.name,
-      consumptionJan25: jan,
-      consumptionFeb25: feb,
-      consumption: mar,
-      cost: mar * ELECTRICITY_COST_RATE,
-    });
-  });
-
-  const formatBreakdown = (totals: Record<string, number>) => {
-    return Object.entries(totals)
-      .map(([name, value], index) => ({
-        name: name,
-        value: value,
-        color: COLORS.chartColors[index % COLORS.chartColors.length] || COLORS.primary
-      }))
-      .sort((a, b) => b.value - a.value);
-  };
-
-  const totalMar = monthlyTotals.mar24;
-  const meterCount = meterDetails.length;
-  const avgMar = meterCount > 0 ? totalMar / meterCount : 0;
-  const totalCostMar = totalMar * ELECTRICITY_COST_RATE;
-  const peakMeterMar = [...meterDetails].sort((a, b) => b.consumption - a.consumption)[0] || { name: 'N/A', consumption: 0 };
-
-  return {
-    monthlyConsumption: [
-      { month: "Jan-24", kWh: monthlyTotals.jan24 },
-      { month: "Feb-24", kWh: monthlyTotals.feb24 },
-      { month: "Mar-24", kWh: monthlyTotals.mar24 },
-    ],
-    marchData: {
-      totalKWh: totalMar,
-      totalCost: totalCostMar,
-      averageKWh: avgMar,
-      peakMeter: peakMeterMar,
-      breakdownByCategory: formatBreakdown(categoryTotalsMar),
-      breakdownByType: formatBreakdown(typeTotalsMar),
-    },
-    meterDetails: meterDetails,
-    categories: Array.from(uniqueCategories).sort(),
-    types: Array.from(uniqueTypes).sort(),
-    typesByCategory: typesByCategory,
   };
 };
 
 // Process the raw data
-const electricityData2025 = processElectricityData(electricityRawData);
-const electricityData2024 = process2024ElectricityData(electricityRecords2024);
+const electricityData = processElectricityData(electricityRawData);
 
 // --- Main Dashboard Component ---
 const ElectricityAnalytics: React.FC = () => {
@@ -440,29 +350,6 @@ const ElectricityAnalytics: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedType, setSelectedType] = useState("All");
   const [selectedYear, setSelectedYear] = useState(2025);
-  const [availableTypes, setAvailableTypes] = useState<string[]>(electricityData2025.types);
-
-  // Get current data based on selected year
-  const electricityData = useMemo(() => {
-    return selectedYear === 2025 ? electricityData2025 : electricityData2024;
-  }, [selectedYear]);
-
-  // Update available types when category changes
-  useEffect(() => {
-    if (selectedCategory === "All") {
-      setAvailableTypes(electricityData.types);
-    } else {
-      setAvailableTypes(electricityData.typesByCategory[selectedCategory] || []);
-    }
-    
-    // Reset type selection if the current selection isn't available in the new category
-    if (selectedCategory !== "All" && selectedType !== "All") {
-      const typesInCategory = electricityData.typesByCategory[selectedCategory] || [];
-      if (!typesInCategory.includes(selectedType)) {
-        setSelectedType("All");
-      }
-    }
-  }, [selectedCategory, electricityData]);
 
   // --- Memoized Data Processing ---
   const filteredMeterDetails = useMemo(() => {
@@ -495,7 +382,7 @@ const ElectricityAnalytics: React.FC = () => {
         return 0;
       }
     });
-  }, [searchTerm, sortConfig, selectedCategory, selectedType, electricityData]);
+  }, [searchTerm, sortConfig, selectedCategory, selectedType]);
 
   const filteredTrendData = useMemo(() => {
     const monthlySums = { jan: 0, feb: 0, mar: 0 };
@@ -507,11 +394,11 @@ const ElectricityAnalytics: React.FC = () => {
     });
     
     return [
-      { month: `Jan-${selectedYear.toString().substring(2)}`, kWh: monthlySums.jan },
-      { month: `Feb-${selectedYear.toString().substring(2)}`, kWh: monthlySums.feb },
-      { month: `Mar-${selectedYear.toString().substring(2)}`, kWh: monthlySums.mar },
+      { month: "Jan-25", kWh: monthlySums.jan },
+      { month: "Feb-25", kWh: monthlySums.feb },
+      { month: "Mar-25", kWh: monthlySums.mar },
     ];
-  }, [filteredMeterDetails, selectedYear]);
+  }, [filteredMeterDetails]);
 
   const topFilteredMeters = useMemo(() => {
     return filteredMeterDetails
@@ -536,13 +423,12 @@ const ElectricityAnalytics: React.FC = () => {
   };
   
   const handleYearSelect = (year: number) => {
-    setSelectedYear(year);
-    console.log("Selected Year:", year);
-  };
-
-  // Handle category change
-  const handleCategoryChange = (value: string) => {
-    setSelectedCategory(value);
+    if (year === 2025) {
+      setSelectedYear(year);
+      console.log("Selected Year:", year);
+    } else {
+      console.log("Data for year", year, "is not available in this demo.");
+    }
   };
 
   // --- Common Chart Styles ---
@@ -588,7 +474,7 @@ const ElectricityAnalytics: React.FC = () => {
               <SelectValue placeholder="Select Year" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="2024">2024</SelectItem>
+              <SelectItem value="2024" disabled>2024</SelectItem>
               <SelectItem value="2025">2025</SelectItem>
             </SelectContent>
           </Select>
@@ -725,7 +611,7 @@ const ElectricityAnalytics: React.FC = () => {
                         <Tooltip 
                           content={
                             <CustomTooltip 
-                              valueFormatter={(v) => formatNumber(v, 0)} 
+                              formatter={(v) => formatNumber(v, 0)} 
                               showCost={true}
                             />
                           } 
@@ -760,7 +646,7 @@ const ElectricityAnalytics: React.FC = () => {
                         <Tooltip 
                           content={
                             <CustomTooltip 
-                              valueFormatter={(v) => formatNumber(v, 0)} 
+                              formatter={(v) => formatNumber(v, 0)} 
                               showCost={true}
                             />
                           } 
@@ -821,7 +707,7 @@ const ElectricityAnalytics: React.FC = () => {
                         <Tooltip 
                           content={
                             <CustomTooltip 
-                              valueFormatter={(v) => formatNumber(v, 0)} 
+                              formatter={(v) => formatNumber(v, 0)} 
                               showCost={true}
                             />
                           } 
@@ -856,7 +742,7 @@ const ElectricityAnalytics: React.FC = () => {
                         <Tooltip 
                           content={
                             <CustomTooltip 
-                              valueFormatter={(v) => formatNumber(v, 0)} 
+                              formatter={(v) => formatNumber(v, 0)} 
                               showCost={true}
                             />
                           } 
@@ -893,7 +779,7 @@ const ElectricityAnalytics: React.FC = () => {
                     <Button 
                       size="sm" 
                       variant={selectedCategory === 'All' ? 'default' : 'outline'} 
-                      onClick={() => handleCategoryChange("All")}
+                      onClick={() => setSelectedCategory("All")}
                       className="rounded-full text-xs h-8"
                     >
                       All
@@ -903,7 +789,7 @@ const ElectricityAnalytics: React.FC = () => {
                         key={cat} 
                         size="sm"
                         variant={selectedCategory === cat ? 'default' : 'outline'}
-                        onClick={() => handleCategoryChange(cat)}
+                        onClick={() => setSelectedCategory(cat)}
                         className="rounded-full text-xs h-8"
                       >
                         {cat}
@@ -911,7 +797,7 @@ const ElectricityAnalytics: React.FC = () => {
                     ))}
                   </div>
                   
-                  {/* Type Filters - Now filtered based on selected category */}
+                  {/* Type Filters */}
                   <div className="flex items-center flex-wrap gap-2">
                     <span className="text-sm font-medium text-gray-600 mr-2 flex-shrink-0">Type:</span>
                     <Button 
@@ -922,7 +808,7 @@ const ElectricityAnalytics: React.FC = () => {
                     >
                       All
                     </Button>
-                    {availableTypes.map(type => (
+                    {electricityData.types.map(type => (
                       <Button 
                         key={type} 
                         size="sm"
