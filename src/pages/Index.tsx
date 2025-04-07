@@ -1,256 +1,40 @@
-"use client"
 
-import React, { useState, useEffect, useMemo } from "react"
-// Importing necessary components from recharts
-import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
-  ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, AreaChart, Area,
-} from "recharts"
+import React from 'react';
+import { Card } from '@/components/ui/card';
+import { Link } from 'react-router-dom';
+import { Zap } from 'lucide-react';
+import QuickAccessLinks from '@/components/dashboard/QuickAccessLinks';
 
-// --- Configuration ---
-// Color Palette (Consistent with v9)
-const COLORS = { /* ... (same as v9) ... */
-  primary: "#8BBABB", secondary: "#4E4456", accentTeal: "#6A8D92", accentAmber: "#F59E0B",
-  accentSky: "#38BDF8", danger: "#EF4444", success: "#10B981", bgBase: "#F8FAFC",
-  bgCard: "#FFFFFF", bgSubtle: "#F1F5F9", bgHeader: "#4E4456", textDark: "#1E293B",
-  textMedium: "#475569", textLight: "#64748B", textWhite: "#FFFFFF", textHeader: "#F1F5F9",
-  textHeaderSecondary: "#CBD5E1", chartGrid: "#E2E8F0", axisLine: "#CBD5E1", axisText: "#475569",
-  chartColors: ["#8BBABB", "#6A8D92", "#F59E0B", "#38BDF8", "#A4BFBF", "#5E7B7F", "#CBD5E1", "#EF4444", "#10B981", "#4E4456"],
-};
-
-// --- Constants ---
-const ELECTRICITY_COST_RATE = 0.025; // OMR per kWh
-
-// --- Utility Functions ---
-const formatNumber = (num, decimals = 0) => { /* ... (same as v9) ... */
-  if (num === undefined || num === null || isNaN(num)) { return (0).toLocaleString("en-US", { minimumFractionDigits: decimals, maximumFractionDigits: decimals }); }
-  return num.toLocaleString("en-US", { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
-};
-const formatCurrency = (num) => { /* ... (same as v9) ... */
-    if (num === undefined || num === null || isNaN(num)) { return formatNumber(0, 3); } return formatNumber(num, 3);
-};
-
-// --- Reusable Components ---
-const CustomTooltip = ({ active, payload, label, valueFormatter = (val) => formatNumber(val, 1), unit = "kWh", showCost = false }) => { /* ... (same as v9) ... */
-  if (active && payload && payload.length) { const cost = showCost ? (payload[0].value || 0) * ELECTRICITY_COST_RATE : null; return ( <div className="bg-white/90 backdrop-blur-sm p-3 border border-gray-200 rounded-lg shadow-lg text-sm"> <p className="font-bold text-gray-700 mb-2">{label}</p> {payload.map((entry, index) => ( <p key={index} className="flex items-center py-0.5"> <span className="inline-block w-2.5 h-2.5 mr-2 rounded-full" style={{ backgroundColor: entry.color || entry.fill }}></span> <span className="font-medium text-gray-600 mr-1">{`${entry.name}: `}</span> <span className="text-gray-800 font-semibold">{`${valueFormatter(entry.value)} ${entry.unit || unit}`}</span> </p> ))} {cost !== null && ( <p className="flex items-center py-0.5 mt-1 pt-1 border-t border-gray-200/60"> <span className="inline-block w-2.5 h-2.5 mr-2 rounded-full bg-green-500"></span> <span className="font-medium text-gray-600 mr-1">Est. Cost: </span> <span className="text-gray-800 font-semibold">{`${formatCurrency(cost)} OMR`}</span> </p> )} </div> ) } return null
-};
-const KpiCard = ({ title, value, unit, color, icon, isCurrency = false }) => { /* ... (same as v9) ... */
-   const displayValue = (value !== undefined && value !== null) ? (isCurrency ? formatCurrency(value) : value) : "N/A"; return ( <div className="bg-bgCard rounded-xl shadow-sm overflow-hidden transition-all duration-300 hover:shadow-lg transform hover:-translate-y-1 border border-gray-100 hover:border-gray-200"> <div className="px-4 py-5 sm:p-6"> <div className="flex items-center"> <div className="flex-shrink-0 bg-opacity-10 rounded-md p-3" style={{ backgroundColor: color }}> {icon && (<span className="text-2xl" style={{ color }}>{icon}</span>)} </div> <div className="ml-4 sm:ml-5 w-0 flex-1"> <dl> <dt className="text-sm font-medium text-textLight truncate">{title}</dt> <dd> <div className="text-xl font-semibold text-textDark"> {isCurrency && displayValue !== "N/A" && <span className="text-sm font-medium text-textLight mr-1">OMR</span>} {displayValue} {!isCurrency && unit && <span className="text-xs font-medium text-textLight ml-1">{unit}</span>} </div> </dd> </dl> </div> </div> </div> </div> )
-};
-
-// --- Data Definition ---
-const electricityRawData = [ /* ... (Full raw data array from v9) ... */
-  { sl: 1, zone: "Infrastructure", type: "Pumping Station", name: "Pumping Station 01", meter: "R52330", jan25: 1903, feb25: 2095, mar25: 3032 }, { sl: 2, zone: "Infrastructure", type: "Pumping Station", name: "Pumping Station 03", meter: "RS2329", jan25: 32.5, feb25: 137.2, mar25: 130.7 }, { sl: 3, zone: "Infrastructure", type: "Pumping Station", name: "Pumping Station 04", meter: "852327", jan25: 245.1, feb25: 869.5, mar25: 646.1 }, { sl: 4, zone: "Infrastructure", type: "Pumping Station", name: "Pumping Station 05", meter: "R52325", jan25: 2069, feb25: 2521, mar25: 2601 }, { sl: 5, zone: "Infrastructure", type: "Lifting Station", name: "Lifting Station 02", meter: "R52328", jan25: 0, feb25: 0, mar25: 0 }, { sl: 6, zone: "Infrastructure", type: "Lifting Station", name: "Lifting Station 03", meter: "R52333", jan25: 28, feb25: 40, mar25: 58 }, { sl: 7, zone: "Infrastructure", type: "Lifting Station", name: "Lifting Station 04", meter: "R52324", jan25: 701, feb25: 638, mar25: 572 }, { sl: 8, zone: "Infrastructure", type: "Lifting Station", name: "Lifting Station 05", meter: "R52332", jan25: 2873, feb25: 3665, mar25: 3069 }, { sl: 9, zone: "Infrastructure", type: "Irrigation Tank", name: "Irrigation Tank 01", meter: "R52324 (RS2326)", jan25: 1689, feb25: 2214, mar25: 1718 }, { sl: 10, zone: "Infrastructure", type: "Irrigation Tank", name: "Irrigation Tank 02", meter: "R52331", jan25: 983, feb25: 1124, mar25: 1110 }, { sl: 11, zone: "Infrastructure", type: "Irrigation Tank", name: "Irrigation Tank 03", meter: "R52323", jan25: 840, feb25: 1009, mar25: 845 }, { sl: 12, zone: "Infrastructure", type: "Irrigation Tank", name: "Irrigation Tank 04", meter: "R53195", jan25: 39.7, feb25: 233.2, mar25: 234.9 }, { sl: 13, zone: "Infrastructure", type: "Actuator DB", name: "Actuator DB 01 (28)", meter: "R53196", jan25: 7.3, feb25: 27.7, mar25: 24.4 }, { sl: 14, zone: "Infrastructure", type: "Actuator DB", name: "Actuator DB 02", meter: "R51900", jan25: 33, feb25: 134, mar25: 138.5 }, { sl: 15, zone: "Infrastructure", type: "Actuator DB", name: "Actuator DB 03", meter: "R51904", jan25: 55.7, feb25: 203.3, mar25: 196 }, { sl: 16, zone: "Infrastructure", type: "Actuator DB", name: "Actuator DB 04", meter: "R51901", jan25: 186, feb25: 161, mar25: 227 }, { sl: 17, zone: "Infrastructure", type: "Actuator DB", name: "Actuator DB 05", meter: "R51907", jan25: 42, feb25: 17.8, mar25: 14 }, { sl: 18, zone: "Infrastructure", type: "Actuator DB", name: "Actuator DB 06", meter: "R51909", jan25: 47, feb25: 45, mar25: 38 }, { sl: 19, zone: "Infrastructure", type: "Street Light", name: "Street Light FP 01 (28)", meter: "R53197", jan25: 787, feb25: 3228, mar25: 2663 }, { sl: 20, zone: "Infrastructure", type: "Street Light", name: "Street Light FP 02", meter: "R51906", jan25: 633, feb25: 2298, mar25: 1812 }, { sl: 21, zone: "Infrastructure", type: "Street Light", name: "Street Light FP 03", meter: "R51905", jan25: 1868, feb25: 1974, mar25: 1562 }, { sl: 22, zone: "Infrastructure", type: "Street Light", name: "Street Light FP 04", meter: "R51908", jan25: 325, feb25: 1406, mar25: 1401 }, { sl: 23, zone: "Infrastructure", type: "Street Light", name: "Street Light FP 05", meter: "R51902", jan25: 449, feb25: 2069.9, mar25: 1870.1 }, { sl: 24, zone: "Infrastructure", type: "Beachwell", name: "Beachwell", meter: "R51903", jan25: 38168, feb25: 18422, mar25: 40 }, { sl: 25, zone: "Infrastructure", type: "Helipad", name: "Helipad", meter: "R52334", jan25: 0, feb25: 0, mar25: 0 }, { sl: 26, zone: "Central Park", type: "Park", name: "Central Park", meter: "R54672", jan25: 22819, feb25: 19974, mar25: 14190 }, { sl: 27, zone: "Ancillary", type: "Building", name: "Guard House", meter: "R53651", jan25: 798, feb25: 936, mar25: 879 }, { sl: 28, zone: "Ancillary", type: "Building", name: "Security Building", meter: "R53649", jan25: 5559, feb25: 5417, mar25: 4504 }, { sl: 29, zone: "Ancillary", type: "Building", name: "ROP Building", meter: "R53648", jan25: 2090, feb25: 2246, mar25: 1939 }, { sl: 30, zone: "Zone 3", type: "Apartment Common", name: "SB3 Common Meter D44", meter: "R53705", jan25: 647, feb25: 657, mar25: 650 }, { sl: 31, zone: "Zone 3", type: "Apartment Common", name: "SB3 Common Meter D45", meter: "R53665", jan25: 670, feb25: 556, mar25: 608 }, { sl: 32, zone: "Zone 3", type: "Apartment Common", name: "SB3 Common Meter D46", meter: "R53700", jan25: 724, feb25: 690, mar25: 752 }, { sl: 33, zone: "Zone 3", type: "Apartment Common", name: "SB3 Common Meter D47", meter: "R53690", jan25: 887, feb25: 738, mar25: 792 }, { sl: 34, zone: "Zone 3", type: "Apartment Common", name: "SB3 Common Meter D48", meter: "R53666", jan25: 826, feb25: 676, mar25: 683 }, { sl: 35, zone: "Zone 3", type: "Apartment Common", name: "SB3 Common Meter D49", meter: "R53715", jan25: 860, feb25: 837, mar25: 818 }, { sl: 36, zone: "Zone 3", type: "Apartment Common", name: "SB3 Common Meter D50", meter: "R53672", jan25: 765, feb25: 785, mar25: 707 }, { sl: 37, zone: "Zone 3", type: "Apartment Common", name: "SB3 Common Meter D51", meter: "853657", jan25: 661, feb25: 682, mar25: 642 }, { sl: 38, zone: "Zone 3", type: "Apartment Common", name: "SB3 Common Meter D52", meter: "R53699", jan25: 979, feb25: 896, mar25: 952 }, { sl: 39, zone: "Zone 3", type: "Apartment Common", name: "SB3 Common Meter D53", meter: "R54782", jan25: 693, feb25: 732, mar25: 760 }, { sl: 40, zone: "Zone 3", type: "Apartment Common", name: "SB3 Common Meter D54", meter: "R54793", jan25: 681, feb25: 559, mar25: 531 }, { sl: 41, zone: "Zone 3", type: "Apartment Common", name: "SB3 Common Meter D55", meter: "R54804", jan25: 677, feb25: 616, mar25: 719 }, { sl: 42, zone: "Zone 3", type: "Apartment Common", name: "SB3 Common Meter D56", meter: "R54815", jan25: 683, feb25: 731, mar25: 765 }, { sl: 43, zone: "Zone 3", type: "Apartment Common", name: "SB3 Common Meter D57", meter: "R54826", jan25: 990, feb25: 846, mar25: 795 }, { sl: 44, zone: "Zone 3", type: "Apartment Common", name: "SB3 Common Meter D58", meter: "R54836", jan25: 593, feb25: 535, mar25: 594 }, { sl: 45, zone: "Zone 3", type: "Apartment Common", name: "SB3 Common Meter D59", meter: "R54847", jan25: 628, feb25: 582, mar25: 697 }, { sl: 46, zone: "Zone 3", type: "Apartment Common", name: "SB3 Common Meter D60", meter: "R54858", jan25: 674, feb25: 612, mar25: 679 }, { sl: 47, zone: "Zone 3", type: "Apartment Common", name: "SB3 Common Meter D61", meter: "R54869", jan25: 767, feb25: 800, mar25: 719 }, { sl: 48, zone: "Zone 3", type: "Apartment Common", name: "SB3 Common Meter D62", meter: "R53717", jan25: 715, feb25: 677, mar25: 595 }, { sl: 49, zone: "Zone 3", type: "Apartment Common", name: "SB3 Common Meter D74", meter: "R53675", jan25: 639, feb25: 566, mar25: 463 }, { sl: 50, zone: "Zone 3", type: "Apartment Common", name: "SB3 Common Meter D75", meter: "R53668", jan25: 475, feb25: 508, mar25: 554 }, { sl: 51, zone: "Village Square", type: "Common Area", name: "Village Square Common", meter: "R56628", jan25: 3304, feb25: 3335, mar25: 3383 }, { sl: 52, zone: "Zone 3", type: "Landscape Light", name: "FP-17", meter: "R54872", jan25: 0, feb25: 0, mar25: 0 }, { sl: 53, zone: "Zone 3", type: "Landscape Light", name: "FP-21", meter: "R54873", jan25: 12.9, feb25: 56.6, mar25: 46.5 }, { sl: 54, zone: "Zone 3", type: "Landscape Light", name: "FP-22", meter: "R54874", jan25: 0, feb25: 0, mar25: 0 }, { sl: 55, zone: "Bank Muscat", type: "Bank", name: "Bank Muscat", meter: "", jan25: 59, feb25: 98, mar25: 88 }, { sl: 56, zone: "CIF Kitchen", type: "Kitchen", name: "CIF kitchen", meter: "", jan25: 16788, feb25: 16154, mar25: 14971 },
-];
-
-// Function to process raw data (same as v7)
-const processElectricityData = (rawData) => { /* ... (same as v7) ... */
-    const monthlyTotals = { jan25: 0, feb25: 0, mar25: 0 }; const categoryTotalsMar = {}; const typeTotalsMar = {}; const meterDetails = []; const uniqueCategories = new Set(); const uniqueTypes = new Set();
-    rawData.forEach(item => { const jan = parseFloat(item.jan25) || 0; const feb = parseFloat(item.feb25) || 0; const mar = parseFloat(item.mar25) || 0; monthlyTotals.jan25 += jan; monthlyTotals.feb25 += feb; monthlyTotals.mar25 += mar; const category = item.zone || "Unknown"; const type = item.type || "Unknown"; uniqueCategories.add(category); uniqueTypes.add(type); categoryTotalsMar[category] = (categoryTotalsMar[category] || 0) + mar; typeTotalsMar[type] = (typeTotalsMar[type] || 0) + mar; meterDetails.push({ id: item.meter || `SL-${item.sl}`, zone: category, type: type, name: item.name || `Meter ${item.meter || item.sl}`, consumptionJan25: jan, consumptionFeb25: feb, consumption: mar, cost: mar * ELECTRICITY_COST_RATE, }); });
-    const formatBreakdown = (totals) => { return Object.entries(totals).map(([name, value], index) => ({ name: name, value: value, color: COLORS.chartColors[index % COLORS.chartColors.length] || COLORS.primary })).sort((a, b) => b.value - a.value); };
-    const totalMar = monthlyTotals.mar25; const meterCount = meterDetails.length; const avgMar = meterCount > 0 ? totalMar / meterCount : 0; const totalCostMar = totalMar * ELECTRICITY_COST_RATE; const peakMeterMar = [...meterDetails].sort((a, b) => b.consumption - a.consumption)[0] || { name: 'N/A', consumption: 0 };
-    return { monthlyConsumption: [ { month: "Jan-25", kWh: monthlyTotals.jan25 }, { month: "Feb-25", kWh: monthlyTotals.feb25 }, { month: "Mar-25", kWh: monthlyTotals.mar25 }, ], marchData: { totalKWh: totalMar, totalCost: totalCostMar, averageKWh: avgMar, peakMeter: peakMeterMar, breakdownByCategory: formatBreakdown(categoryTotalsMar), breakdownByType: formatBreakdown(typeTotalsMar), }, meterDetails: meterDetails, categories: Array.from(uniqueCategories).sort(), types: Array.from(uniqueTypes).sort(), };
-};
-
-// Process the raw data
-const electricityData = processElectricityData(electricityRawData);
-
-
-// --- Main Dashboard Component ---
-const ElectricityDashboard = () => {
-  // --- State Variables ---
-  const [activeTab, setActiveTab] = useState("overview");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [sortConfig, setSortConfig] = useState({ key: "consumption", direction: "desc" });
-  const [selectedCategory, setSelectedCategory] = useState("All");
-  const [selectedType, setSelectedType] = useState("All");
-  const [selectedYear, setSelectedYear] = useState(2025);
-
-  // --- Memoized Data Processing ---
-  const filteredMeterDetails = useMemo(() => { /* ... (same filtering logic as v7) ... */
-     const filtered = electricityData.meterDetails.filter( (item) => (selectedCategory === "All" || item.zone === selectedCategory) && (selectedType === "All" || item.type === selectedType) && (item.name.toLowerCase().includes(searchTerm.toLowerCase()) || item.id.toLowerCase().includes(searchTerm.toLowerCase()) || item.zone.toLowerCase().includes(searchTerm.toLowerCase()) || item.type.toLowerCase().includes(searchTerm.toLowerCase())) );
-     return [...filtered].sort((a, b) => { const aValue = a[sortConfig.key]; const bValue = b[sortConfig.key]; const valA = sortConfig.key === 'cost' ? (a.consumption * ELECTRICITY_COST_RATE) : aValue; const valB = sortConfig.key === 'cost' ? (b.consumption * ELECTRICITY_COST_RATE) : bValue; if (typeof valA === 'string' && typeof valB === 'string') { if (valA.toLowerCase() < valB.toLowerCase()) return sortConfig.direction === "asc" ? -1 : 1; if (valA.toLowerCase() > valB.toLowerCase()) return sortConfig.direction === "asc" ? 1 : -1; return 0; } else { const numA = parseFloat(valA) || 0; const numB = parseFloat(valB) || 0; if (numA < numB) return sortConfig.direction === "asc" ? -1 : 1; if (numA > numB) return sortConfig.direction === "asc" ? 1 : -1; return 0; } });
-   }, [searchTerm, sortConfig, selectedCategory, selectedType]);
-
-   const filteredTrendData = useMemo(() => { /* ... (same trend calculation as v7) ... */
-       const monthlySums = { jan: 0, feb: 0, mar: 0 }; filteredMeterDetails.forEach(meter => { monthlySums.jan += meter.consumptionJan25 || 0; monthlySums.feb += meter.consumptionFeb25 || 0; monthlySums.mar += meter.consumption || 0; }); return [ { month: "Jan-25", kWh: monthlySums.jan }, { month: "Feb-25", kWh: monthlySums.feb }, { month: "Mar-25", kWh: monthlySums.mar }, ];
-   }, [filteredMeterDetails]);
-
-   const topFilteredMeters = useMemo(() => { /* ... (same top 5 calculation as v7) ... */
-       return filteredMeterDetails.slice().sort((a, b) => b.consumption - a.consumption).slice(0, 5);
-   }, [filteredMeterDetails]);
-
-
-  // --- Event Handlers ---
-  const requestSort = (key) => { /* ... (same as v7) ... */
-     let direction = "asc"; if (sortConfig.key === key && sortConfig.direction === "asc") { direction = "desc"; } setSortConfig({ key, direction });
-   };
-   const resetFilters = () => { /* ... (same as v7) ... */
-       setSelectedCategory("All"); setSelectedType("All"); setSearchTerm("");
-   };
-   const handleYearSelect = (year) => { /* ... (same as v7) ... */
-       if (year === 2025) { setSelectedYear(year); console.log("Selected Year:", year); } else { console.log("Data for year", year, "is not available in this demo."); }
-   };
-
-  // --- Common Chart Styles ---
-  const commonAxisStyle = { tick: { fill: COLORS.axisText, fontSize: 11 }, axisLine: { stroke: COLORS.axisLine }, tickLine: { stroke: COLORS.axisLine, opacity: 0.6 } };
-  const commonLegendStyle = { wrapperStyle: { paddingTop: 15, fontSize: 11, color: COLORS.textMedium } };
-  const commonChartMargin = { top: 10, right: 20, left: 5, bottom: 0 };
-
-  // --- JSX Rendering ---
+const Index = () => {
   return (
-    <div className="min-h-screen bg-bgBase font-sans">
-      {/* Header Section (Verified BG Color: #4E4456) */}
-      <div className="bg-bgHeader text-textHeader shadow-lg">
-         <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8">
-           <div className="flex justify-between items-center mb-3">
-             <div className="flex items-center space-x-3 sm:space-x-4">
-               <div className="h-10 w-10 sm:h-12 sm:w-12 relative flex items-center justify-center bg-white rounded-full shadow">
-                  <span className="text-lg sm:text-xl font-bold text-bgHeader">MB</span>
-               </div>
-               <div>
-                 <h1 className="text-lg sm:text-xl font-bold">Muscat Bay Electricity Monitoring</h1>
-                 <p className="text-gray-300 text-xs sm:text-sm">Consumption Analysis Dashboard</p>
-               </div>
-             </div>
-             <div className="text-right">
-                <span className="text-sm font-medium text-white/80 block">Period</span>
-                <span className="text-xs text-white/60 block">
-                    {selectedYear === 2025 ? "Q1 2025" : selectedYear}
-                </span>
-             </div>
-           </div>
-           {/* Year Selector Buttons */}
-           <div className="flex justify-center space-x-2 mt-2">
-               <button onClick={() => handleYearSelect(2024)} disabled className={`px-3 py-1 rounded-md text-sm font-medium transition-colors duration-200 ${ selectedYear === 2024 ? 'bg-white/20 text-white' : 'bg-white/5 text-white/50 cursor-not-allowed opacity-60' }`} > 2024 </button>
-               <button onClick={() => handleYearSelect(2025)} className={`px-3 py-1 rounded-md text-sm font-medium transition-colors duration-200 ${ selectedYear === 2025 ? 'bg-white/20 text-white' : 'bg-white/5 text-white/80 hover:bg-white/10' }`} > 2025 </button>
-           </div>
-         </div>
-      </div>
-
-      {/* Navigation Tabs Section (Non-Sticky, Enhanced Hover) */}
-      <div className="bg-bgCard shadow-sm border-b border-gray-200"> {/* Added border-b */}
-         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex space-x-6 sm:space-x-8 overflow-x-auto">
-                {["Overview", "Category Breakdown", "Type Breakdown", "Meter Details"].map((tabName) => {
-                const tabId = tabName.toLowerCase().replace(/ /g, "");
-                const isActive = activeTab === tabId;
-                return (
-                    <button
-                        key={tabId}
-                        className={`px-1 py-3 sm:py-4 text-sm border-b-2 -mb-px transition-all duration-200 whitespace-nowrap focus:outline-none ${
-                            isActive
-                            ? "border-secondary text-secondary font-semibold bg-secondary/5" // Active tab style (Muscat Bay Color + BG Tint + Bold)
-                            : "border-transparent text-textLight hover:bg-primary/10 hover:text-primary hover:border-primary/50" // Enhanced hover (Primary Color)
-                        }`}
-                        onClick={() => setActiveTab(tabId)}
-                    >
-                        {tabName}
-                    </button>
-                )
-                })}
+    <div className="container mx-auto p-4">
+      <div className="flex flex-col gap-6">
+        <div className="text-center my-8">
+          <h1 className="text-3xl font-bold mb-2">Muscat Bay Management Portal</h1>
+          <p className="text-muted-foreground">Welcome to the Muscat Bay property management and utilities dashboard</p>
+        </div>
+        
+        <QuickAccessLinks className="mb-6" />
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <Card className="p-6 hover:shadow-lg transition-shadow">
+            <div className="flex flex-col items-center">
+              <div className="w-16 h-16 rounded-full bg-amber-100 flex items-center justify-center mb-4">
+                <Zap className="h-8 w-8 text-amber-600" />
+              </div>
+              <h2 className="text-xl font-semibold mb-2">Electricity System</h2>
+              <p className="text-center text-muted-foreground mb-4">Monitor and manage electricity distribution</p>
+              <Link to="/electricity-system" className="px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700 transition-colors">Access Module</Link>
             </div>
-         </div>
+          </Card>
+        </div>
+        
+        <div className="mt-6 text-center">
+          <p className="text-sm text-muted-foreground">© {new Date().getFullYear()} Muscat Bay Management | Version 1.5.0</p>
+        </div>
       </div>
-
-      {/* Main Content Area */}
-      <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-        {/* --- Overview Tab --- */}
-        {activeTab === "overview" && ( /* ... (Overview Tab JSX same as v8) ... */
-           <div className="space-y-6"> <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6"> <KpiCard title={`Total Consumption (Q1 ${selectedYear})`} value={formatNumber(electricityData.marchData.totalKWh, 0)} unit="kWh" color={COLORS.primary} icon="⚡"/> <KpiCard title={`Total Est. Cost (Q1 ${selectedYear})`} value={electricityData.marchData.totalCost} isCurrency={true} color={COLORS.success} icon="💰"/> <KpiCard title={`Avg. per Meter (Mar ${selectedYear})`} value={formatNumber(electricityData.marchData.averageKWh, 1)} unit="kWh" color={COLORS.secondary} icon="💡"/> <KpiCard title={`Peak Meter (Mar ${selectedYear})`} value={electricityData.marchData.peakMeter.name} unit={`(${formatNumber(electricityData.marchData.peakMeter.consumption, 0)} kWh)`} color={COLORS.accentAmber} icon="🔥"/> </div> <div className="bg-bgCard rounded-xl shadow-md p-4 sm:p-6 border border-gray-100"> <h3 className="text-base sm:text-lg font-medium text-textDark mb-4">{`Monthly Consumption Trend (Q1 ${selectedYear})`}</h3> <div className="h-80"> <ResponsiveContainer width="100%" height="100%"> <AreaChart data={electricityData.monthlyConsumption} margin={commonChartMargin}> <defs><linearGradient id="colorKWh" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor={COLORS.primary} stopOpacity={0.7}/><stop offset="95%" stopColor={COLORS.primary} stopOpacity={0.05}/></linearGradient></defs> <CartesianGrid strokeDasharray="3 3" opacity={0.5} stroke={COLORS.chartGrid} /> <XAxis dataKey="month" {...commonAxisStyle} /> <YAxis {...commonAxisStyle} /> <Tooltip content={<CustomTooltip valueFormatter={(v) => formatNumber(v, 0)} showCost={true}/>} /> <Area type="monotone" dataKey="kWh" name="Total Consumption" stroke={COLORS.primary} strokeWidth={2} fillOpacity={1} fill="url(#colorKWh)" activeDot={{ r: 5, strokeWidth: 1, stroke: COLORS.primary }} dot={{ r: 3, fill: COLORS.primary, strokeWidth: 0 }}/> </AreaChart> </ResponsiveContainer> </div> </div> </div>
-        )}
-
-        {/* --- Category Breakdown Tab --- */}
-        {activeTab === "categorybreakdown" && ( /* ... (Category Breakdown JSX same as v8) ... */
-            <div className="bg-bgCard rounded-xl shadow-md p-4 sm:p-6 border border-gray-100"> <h3 className="text-base sm:text-lg font-medium text-textDark mb-4">{`Consumption by Category (March ${selectedYear})`}</h3> <div className="grid grid-cols-1 lg:grid-cols-2 gap-6"> <div className="h-96"> <ResponsiveContainer width="100%" height="100%"> <PieChart> <Pie data={electricityData.marchData.breakdownByCategory} cx="50%" cy="50%" labelLine={false} outerRadius={110} innerRadius={50} paddingAngle={1} dataKey="value" nameKey="name" label={({ percent }) => (percent > 0.03 ? `${(percent * 100).toFixed(0)}%` : '')}> {electricityData.marchData.breakdownByCategory.map((entry, index) => ( <Cell key={`cell-${index}`} fill={entry.color || COLORS.chartColors[index % COLORS.chartColors.length]} stroke={COLORS.bgCard} strokeWidth={1} /> ))} </Pie> <Tooltip content={<CustomTooltip formatter={(v) => formatNumber(v, 0)} showCost={true}/>} /> <Legend iconType="circle" layout="vertical" verticalAlign="middle" align="right" {...commonLegendStyle} wrapperStyle={{...commonLegendStyle.wrapperStyle, paddingLeft: "10px"}}/> </PieChart> </ResponsiveContainer> </div> <div className="h-96"> <ResponsiveContainer width="100%" height="100%"> <BarChart data={electricityData.marchData.breakdownByCategory} margin={{ top: 5, right: 10, left: 10, bottom: 5 }} layout="vertical"> <CartesianGrid strokeDasharray="3 3" opacity={0.5} stroke={COLORS.chartGrid}/> <XAxis type="number" {...commonAxisStyle} /> <YAxis type="category" dataKey="name" width={120} {...commonAxisStyle} style={{fontSize: '11px'}}/> <Tooltip content={<CustomTooltip formatter={(v) => formatNumber(v, 0)} showCost={true}/>} /> <Bar dataKey="value" name="Consumption (kWh)" background={{ fill: COLORS.bgSubtle, radius: 4 }} radius={[0, 4, 4, 0]}> {electricityData.marchData.breakdownByCategory.map((entry, index) => ( <Cell key={`cell-${index}`} fill={entry.color || COLORS.chartColors[index % COLORS.chartColors.length]} /> ))} </Bar> </BarChart> </ResponsiveContainer> </div> </div> </div>
-        )}
-
-         {/* --- Type Breakdown Tab --- */}
-        {activeTab === "typebreakdown" && ( /* ... (Type Breakdown JSX same as v8) ... */
-            <div className="bg-bgCard rounded-xl shadow-md p-4 sm:p-6 border border-gray-100"> <h3 className="text-base sm:text-lg font-medium text-textDark mb-4">{`Consumption by Type (March ${selectedYear})`}</h3> <div className="grid grid-cols-1 lg:grid-cols-2 gap-6"> <div className="h-96"> <ResponsiveContainer width="100%" height="100%"> <PieChart> <Pie data={electricityData.marchData.breakdownByType} cx="50%" cy="50%" labelLine={false} outerRadius={110} innerRadius={50} paddingAngle={1} dataKey="value" nameKey="name" label={({ percent }) => (percent > 0.02 ? `${(percent * 100).toFixed(0)}%` : '')}> {electricityData.marchData.breakdownByType.map((entry, index) => ( <Cell key={`cell-${index}`} fill={entry.color || COLORS.chartColors[index % COLORS.chartColors.length]} stroke={COLORS.bgCard} strokeWidth={1} /> ))} </Pie> <Tooltip content={<CustomTooltip formatter={(v) => formatNumber(v, 0)} showCost={true}/>} /> <Legend iconType="circle" layout="vertical" verticalAlign="middle" align="right" {...commonLegendStyle} wrapperStyle={{...commonLegendStyle.wrapperStyle, paddingLeft: "10px", fontSize: '10px'}}/> </PieChart> </ResponsiveContainer> </div> <div className="h-96"> <ResponsiveContainer width="100%" height="100%"> <BarChart data={electricityData.marchData.breakdownByType} margin={{ top: 5, right: 10, left: 10, bottom: 5 }} layout="vertical"> <CartesianGrid strokeDasharray="3 3" opacity={0.5} stroke={COLORS.chartGrid}/> <XAxis type="number" {...commonAxisStyle} /> <YAxis type="category" dataKey="name" width={130} {...commonAxisStyle} style={{fontSize: '11px'}}/> <Tooltip content={<CustomTooltip formatter={(v) => formatNumber(v, 0)} showCost={true}/>} /> <Bar dataKey="value" name="Consumption (kWh)" background={{ fill: COLORS.bgSubtle, radius: 4 }} radius={[0, 4, 4, 0]}> {electricityData.marchData.breakdownByType.map((entry, index) => ( <Cell key={`cell-${index}`} fill={entry.color || COLORS.chartColors[index % COLORS.chartColors.length]} /> ))} </Bar> </BarChart> </ResponsiveContainer> </div> </div> </div>
-        )}
-
-        {/* --- Meter Details Tab --- */}
-        {activeTab === "meterdetails" && (
-          <div className="space-y-6">
-             {/* Enhanced Filters Section with Chips */}
-             <div className="bg-bgCard rounded-xl shadow-md p-4 sm:p-5 border border-gray-100">
-                <div className="space-y-4">
-                    {/* Category Filters */}
-                    <div className="flex items-center flex-wrap gap-2">
-                        <span className="text-sm font-medium text-textMedium mr-2 flex-shrink-0">Category:</span>
-                        {/* Use secondary color for active chip */}
-                        <button onClick={() => setSelectedCategory("All")} className={`px-3 py-1 rounded-full text-xs font-medium transition-colors duration-150 ${selectedCategory === 'All' ? 'bg-secondary text-white' : 'bg-bgSubtle text-textMedium hover:bg-gray-300'}`}>All</button>
-                        {electricityData.categories.map(cat => (
-                            <button key={cat} onClick={() => setSelectedCategory(cat)} className={`px-3 py-1 rounded-full text-xs font-medium transition-colors duration-150 ${selectedCategory === cat ? 'bg-secondary text-white' : 'bg-bgSubtle text-textMedium hover:bg-gray-300'}`}>{cat}</button>
-                        ))}
-                    </div>
-                    {/* Type Filters */}
-                     <div className="flex items-center flex-wrap gap-2">
-                        <span className="text-sm font-medium text-textMedium mr-2 flex-shrink-0">Type:</span>
-                         {/* Use secondary color for active chip */}
-                        <button onClick={() => setSelectedType("All")} className={`px-3 py-1 rounded-full text-xs font-medium transition-colors duration-150 ${selectedType === 'All' ? 'bg-secondary text-white' : 'bg-bgSubtle text-textMedium hover:bg-gray-300'}`}>All</button>
-                        {electricityData.types.map(type => (
-                            <button key={type} onClick={() => setSelectedType(type)} className={`px-3 py-1 rounded-full text-xs font-medium transition-colors duration-150 ${selectedType === type ? 'bg-secondary text-white' : 'bg-bgSubtle text-textMedium hover:bg-gray-300'}`}>{type}</button>
-                        ))}
-                    </div>
-                     {/* Search and Reset */}
-                     <div className="flex flex-col sm:flex-row gap-3 pt-2">
-                         <div className="relative flex-grow">
-                            <label htmlFor="searchFilter" className="sr-only">Search</label>
-                            <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-textLight"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></span>
-                            <input id="searchFilter" type="text" placeholder="Search meters..." className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-secondary focus:border-secondary transition-all duration-150 text-sm" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
-                         </div>
-                         <button
-                            onClick={resetFilters}
-                            className="px-4 py-2 border border-gray-300 rounded-md text-sm text-textMedium bg-white hover:bg-gray-100 transition-colors duration-150 flex-shrink-0 shadow-sm"
-                         >
-                            Reset Filters
-                        </button>
-                     </div>
-                </div>
-             </div>
-
-             {/* Charts for Filtered Data */}
-             {filteredMeterDetails.length > 0 && selectedYear === 2025 && ( /* ... (Charts JSX same as v7) ... */
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6"> <div className="bg-bgCard rounded-xl shadow-md p-4 sm:p-6 border border-gray-100"> <h4 className="text-base font-medium text-textDark mb-3">{`Filtered Trend (Q1 ${selectedYear})`}</h4> <p className="text-xs text-textLight mb-3">Total consumption of the {filteredMeterDetails.length} meter(s) shown below.</p> <div className="h-64"> <ResponsiveContainer width="100%" height="100%"> <AreaChart data={filteredTrendData} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}> <defs><linearGradient id="colorFilteredKWh" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor={COLORS.accentSky} stopOpacity={0.7}/><stop offset="95%" stopColor={COLORS.accentSky} stopOpacity={0.05}/></linearGradient></defs> <CartesianGrid strokeDasharray="3 3" opacity={0.5} stroke={COLORS.chartGrid} /> <XAxis dataKey="month" {...commonAxisStyle} /> <YAxis {...commonAxisStyle} /> <Tooltip content={<CustomTooltip valueFormatter={(v) => formatNumber(v, 0)} showCost={true}/>} /> <Area type="monotone" dataKey="kWh" name="Filtered Consumption" stroke={COLORS.accentSky} strokeWidth={2} fillOpacity={1} fill="url(#colorFilteredKWh)" activeDot={{ r: 5, strokeWidth: 1, stroke: COLORS.accentSky }} dot={{ r: 3, fill: COLORS.accentSky, strokeWidth: 0 }}/> </AreaChart> </ResponsiveContainer> </div> </div> <div className="bg-bgCard rounded-xl shadow-md p-4 sm:p-6 border border-gray-100"> <h4 className="text-base font-medium text-textDark mb-3">{`Top 5 Meters in Selection (Mar ${selectedYear})`}</h4> <p className="text-xs text-textLight mb-3">Highest consuming meters from the table below.</p> <div className="h-64"> <ResponsiveContainer width="100%" height="100%"> <BarChart data={topFilteredMeters} layout="vertical" margin={{ top: 5, right: 10, left: 10, bottom: 0 }}> <CartesianGrid strokeDasharray="3 3" opacity={0.5} stroke={COLORS.chartGrid}/> <XAxis type="number" {...commonAxisStyle} /> <YAxis type="category" dataKey="name" width={140} {...commonAxisStyle} style={{fontSize: '10px'}}/> <Tooltip content={<CustomTooltip formatter={(v) => formatNumber(v, 0)} showCost={true}/>} /> <Bar dataKey="consumption" name="Consumption (kWh)" background={{ fill: COLORS.bgSubtle, radius: 4 }} radius={[0, 4, 4, 0]}> {topFilteredMeters.map((entry, index) => ( <Cell key={`cell-${index}`} fill={COLORS.chartColors[index % COLORS.chartColors.length]} /> ))} </Bar> </BarChart> </ResponsiveContainer> </div> </div> </div>
-             )}
-             {/* Message if 2024 is selected */}
-              {selectedYear === 2024 && ( <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded-md text-sm"> Data for 2024 is not available in this demonstration version. Please select 2025. </div> )}
-
-             {/* Meter Details Table (Verified Header Color) */}
-             <div className="bg-bgCard rounded-xl shadow-md p-0 border border-gray-100 overflow-hidden">
-                 <div className="overflow-x-auto">
-                   <table className="min-w-full divide-y divide-gray-200">
-                     <thead className="bg-secondary"> {/* Header uses bg-secondary (#4E4456) */}
-                       <tr>
-                         {[ { key: "name", label: "Meter Name" }, { key: "id", label: "Meter ID" }, { key: "zone", label: "Category/Zone" }, { key: "type", label: "Type" }, { key: "consumption", label: `Consumption (Mar ${selectedYear})` }, { key: "cost", label: `Est. Cost (Mar ${selectedYear})` } ].map(col => (
-                             <th key={col.key} scope="col" className="px-6 py-3 text-left text-xs font-semibold text-textHeaderSecondary uppercase tracking-wider cursor-pointer hover:bg-secondary/80" onClick={() => requestSort(col.key)}> {/* Text uses textHeaderSecondary */}
-                                {col.label} {sortConfig.key === col.key && (<span>{sortConfig.direction === "asc" ? "↑" : "↓"}</span>)}
-                             </th>
-                         ))}
-                       </tr>
-                     </thead>
-                     <tbody className="bg-bgCard divide-y divide-gray-200">
-                       {filteredMeterDetails.length > 0 && selectedYear === 2025 ? ( /* ... (Table body same as v7) ... */
-                         filteredMeterDetails.map((item) => ( <tr key={item.id} className="hover:bg-bgSubtle transition-colors duration-150"> <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-textDark">{item.name}</td> <td className="px-6 py-4 whitespace-nowrap text-sm text-textMedium">{item.id}</td> <td className="px-6 py-4 whitespace-nowrap text-sm text-textMedium">{item.zone}</td> <td className="px-6 py-4 whitespace-nowrap text-sm text-textMedium">{item.type}</td> <td className="px-6 py-4 whitespace-nowrap text-sm text-textDark font-medium text-right">{formatNumber(item.consumption, 1)}</td> <td className="px-6 py-4 whitespace-nowrap text-sm text-textMedium text-right">{formatCurrency(item.cost)}</td> </tr> ))
-                       ) : ( <tr><td colSpan="6" className="text-center py-6 text-textLight text-sm">{selectedYear === 2024 ? "Select 2025 to view data." : "No meters found matching your criteria."}</td></tr> )}
-                     </tbody>
-                   </table>
-                 </div>
-             </div>
-          </div>
-        )}
-      </div>
-
-       {/* Footer */}
-       <footer className="bg-gray-100 mt-10 py-5 border-t border-gray-200">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-xs text-textLight">
-             Muscat Bay Electricity Monitoring Dashboard | Data Period: Jan-Mar 2025 | All values in kWh | Est. Cost @ {ELECTRICITY_COST_RATE} OMR/kWh
-          </div>
-       </footer>
     </div>
-  )
-}
+  );
+};
 
-export default ElectricityDashboard;
+export default Index;
