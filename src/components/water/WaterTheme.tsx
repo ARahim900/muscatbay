@@ -1,14 +1,13 @@
-
 import { createContext, useContext, ReactNode } from 'react';
 
 // Water system color palette
 export const waterColors = {
-  primary: '#2563eb', // Main blue
-  secondary: '#0ea5e9', // Light blue
-  accent: '#38bdf8', // Sky blue
-  warning: '#f59e0b', // Amber
-  danger: '#ef4444', // Red
-  success: '#10b981', // Green
+  primary: '#4E4456', // Updated primary color
+  secondary: '#68D1CC', // Keeping other colors from existing palette
+  accent: '#38bdf8', 
+  warning: '#f59e0b', 
+  danger: '#ef4444', 
+  success: '#10b981', 
   
   // Neutral colors
   background: '#f8fafc',

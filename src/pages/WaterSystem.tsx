@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import useAirtableData from '@/hooks/useAirtableData';
@@ -25,7 +24,6 @@ import {
   getReadingValue
 } from '@/utils/waterSystemUtils';
 
-// Import components
 import WaterOverview from '@/components/water/WaterOverview';
 import WaterZones from '@/components/water/WaterZones';
 import WaterLossAnalysis from '@/components/water/WaterLossAnalysis';
@@ -35,7 +33,6 @@ import DataTablePagination from '@/components/water/DataTablePagination';
 import { WaterThemeProvider } from '@/components/water/WaterTheme';
 
 const WaterSystem = () => {
-  // State
   const [filters, setFilters] = useState<WaterDashboardFilters>({
     selectedMonth: "all",
     selectedZone: "all",
@@ -47,17 +44,14 @@ const WaterSystem = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   
-  // Fetch data from Airtable
   const { data: waterData, isLoading, error, refetch } = useAirtableData<WaterConsumptionData>(
     WATER_TABLE_ID
   );
 
-  // Reset pagination when filters change
   useEffect(() => {
     setCurrentPage(1);
   }, [filters.selectedMonth, filters.selectedZone, filters.selectedType]);
 
-  // Handle manual fetch
   const handleManualFetch = async () => {
     setIsManualLoading(true);
     try {
@@ -74,44 +68,41 @@ const WaterSystem = () => {
       setIsManualLoading(false);
     }
   };
-  
-  // Animation variants
+
   const pageVariants = {
     initial: { opacity: 0, y: 20 },
     animate: { opacity: 1, y: 0, transition: { duration: 0.3 } },
     exit: { opacity: 0, y: -20, transition: { duration: 0.2 } }
   };
-  
-  // Initialize default values for metrics to prevent conditional hook calls
+
   const emptyData: WaterConsumptionData[] = useMemo(() => [], []);
   const defaultAvailableMonths = useMemo(() => ['all'], []);
-  
-  // Transform and prepare data - always compute these regardless of conditions
+
   const transformedData = useMemo(() => 
     waterData ? transformWaterData(waterData) : emptyData, 
     [waterData, emptyData]
   );
-  
+
   const availableMonths = useMemo(() => 
     waterData ? getAvailableMonths(transformedData) : defaultAvailableMonths, 
     [transformedData, defaultAvailableMonths]
   );
-  
+
   const zones = useMemo(() => 
     waterData ? getZones(transformedData) : ['all'], 
     [transformedData]
   );
-  
+
   const types = useMemo(() => 
     waterData ? getTypes(transformedData) : ['all'], 
     [transformedData]
   );
-  
+
   const filteredData = useMemo(() => 
     waterData ? filterWaterData(transformedData, filters.selectedMonth, filters.selectedZone, filters.selectedType) : [], 
     [transformedData, filters.selectedMonth, filters.selectedZone, filters.selectedType]
   );
-  
+
   const levelMetrics = useMemo(() => 
     waterData ? calculateLevelMetrics(transformedData, filters.selectedMonth) : {
       l1Supply: 0,
@@ -126,34 +117,32 @@ const WaterSystem = () => {
     }, 
     [transformedData, filters.selectedMonth]
   );
-  
+
   const zoneMetrics = useMemo(() => 
     waterData ? calculateZoneMetrics(transformedData, filters.selectedMonth) : [],
     [transformedData, filters.selectedMonth]
   );
-  
+
   const typeConsumption = useMemo(() => 
     waterData ? calculateTypeConsumption(transformedData, filters.selectedMonth) : [],
     [transformedData, filters.selectedMonth]
   );
-  
+
   const monthlyTrends = useMemo(() => 
     waterData ? calculateMonthlyTrends(transformedData, availableMonths) : [],
     [transformedData, availableMonths]
   );
-  
-  // Calculate pagination - moved out of conditional rendering to be consistent
+
   const totalPages = useMemo(() => 
     Math.ceil(filteredData.length / pageSize),
     [filteredData.length, pageSize]
   );
-  
+
   const paginatedData = useMemo(() => 
     filteredData.slice((currentPage - 1) * pageSize, currentPage * pageSize),
     [filteredData, currentPage, pageSize]
   );
-  
-  // Handle loading state
+
   if (isLoading) {
     return (
       <Layout>
@@ -166,8 +155,7 @@ const WaterSystem = () => {
       </Layout>
     );
   }
-  
-  // Handle error state
+
   if (error) {
     return (
       <Layout>
@@ -245,8 +233,7 @@ const WaterSystem = () => {
       </Layout>
     );
   }
-  
-  // Handle empty data
+
   if (!waterData || waterData.length === 0) {
     return (
       <Layout>
@@ -286,10 +273,8 @@ const WaterSystem = () => {
       </Layout>
     );
   }
-  
-  // Handle export data
+
   const handleExportData = () => {
-    // Create CSV content
     const headers = ["Meter Label", "Zone", "Type", "Level", `${filters.selectedMonth} (m³)`, "Parent Meter"];
     const rows = filteredData.map(record => [
       record['Meter Label'] || '-',
@@ -305,7 +290,6 @@ const WaterSystem = () => {
       ...rows.map(row => row.join(','))
     ].join('\n');
     
-    // Create and download the file
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -317,37 +301,35 @@ const WaterSystem = () => {
     
     toast.success("Data exported successfully");
   };
-  
-  // Handle tab change
+
   const handleTabChange = (value: string) => {
     setFilters(prev => ({
       ...prev,
       selectedView: value
     }));
   };
-  
-  // Handle filter changes
+
   const handleMonthChange = (value: string) => {
     setFilters(prev => ({
       ...prev,
       selectedMonth: value
     }));
   };
-  
+
   const handleZoneChange = (value: string) => {
     setFilters(prev => ({
       ...prev,
       selectedZone: value
     }));
   };
-  
+
   const handleTypeChange = (value: string) => {
     setFilters(prev => ({
       ...prev,
       selectedType: value
     }));
   };
-  
+
   return (
     <WaterThemeProvider>
       <Layout>
@@ -359,8 +341,7 @@ const WaterSystem = () => {
           variants={pageVariants}
         >
           <div className="flex flex-col space-y-6">
-            {/* Header with beautiful gradient background */}
-            <div className="rounded-xl bg-gradient-to-r from-blue-50 via-blue-100 to-indigo-100 dark:from-blue-900/30 dark:via-blue-800/30 dark:to-indigo-900/30 p-6 shadow-md">
+            <div className="rounded-xl bg-gradient-to-r from-[#4E4456]/10 via-[#4E4456]/20 to-[#4E4456]/30 dark:from-[#4E4456]/30 dark:via-[#4E4456]/40 dark:to-[#4E4456]/50 p-6 shadow-md">
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">
                 <div>
                   <h1 className="text-2xl font-bold tracking-tight flex items-center text-blue-800 dark:text-blue-300">
@@ -403,16 +384,15 @@ const WaterSystem = () => {
                 </div>
               </div>
               
-              {/* Tabs with enhanced styling */}
               <Tabs 
                 value={filters.selectedView} 
                 onValueChange={handleTabChange}
                 className="mt-6"
               >
-                <TabsList className="grid w-full max-w-2xl grid-cols-4 bg-white/70 dark:bg-gray-800/50 p-1 rounded-lg shadow-sm">
+                <TabsList className={`grid w-full max-w-2xl grid-cols-4 bg-white/70 dark:bg-gray-800/50 p-1 rounded-lg shadow-sm`}>
                   <TabsTrigger 
                     value="overview" 
-                    className="flex items-center gap-2 data-[state=active]:bg-blue-600 data-[state=active]:text-white dark:data-[state=active]:bg-blue-700"
+                    className="flex items-center gap-2 data-[state=active]:bg-[#4E4456] data-[state=active]:text-white dark:data-[state=active]:bg-[#4E4456]/90"
                   >
                     <BarChart2 className="h-4 w-4" />
                     <span className="hidden md:inline">Overview</span>
@@ -450,7 +430,6 @@ const WaterSystem = () => {
                   {filters.selectedType !== 'all' && ` | Type: ${filters.selectedType}`}
                 </div>
                 
-                {/* Fix: Ensure TabsContent components are ALWAYS within the Tabs component */}
                 <TabsContent value="overview" className="mt-0">
                   <WaterOverview 
                     levelMetrics={levelMetrics}
@@ -492,7 +471,6 @@ const WaterSystem = () => {
               </Tabs>
             </div>
             
-            {/* Data Table with improved styling */}
             <Card className="shadow-md bg-white border-0 rounded-xl overflow-hidden">
               <CardHeader className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800/50 dark:to-gray-700/50 border-b">
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
