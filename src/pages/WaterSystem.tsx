@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Droplets, FileDown, Loader2, AlertTriangle, RefreshCw, AreaChart, PieChart, BarChart2 } from 'lucide-react';
+import { Droplets, FileDown, Loader2, AlertTriangle, RefreshCw, AreaChart, PieChart, BarChart2, FlaskConical } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import Layout from '@/components/layout/Layout';
 import { toast } from 'sonner';
@@ -29,7 +29,9 @@ import {
 import WaterOverview from '@/components/water/WaterOverview';
 import WaterZones from '@/components/water/WaterZones';
 import WaterLossAnalysis from '@/components/water/WaterLossAnalysis';
+import WaterTypeAnalysis from '@/components/water/WaterTypeAnalysis';
 import WaterDataRefresh from '@/components/water/WaterDataRefresh';
+import DataTablePagination from '@/components/water/DataTablePagination';
 import { WaterThemeProvider } from '@/components/water/WaterTheme';
 
 const WaterSystem = () => {
@@ -42,11 +44,18 @@ const WaterSystem = () => {
   });
   const [isManualLoading, setIsManualLoading] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | undefined>(undefined);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   
   // Fetch data from Airtable
   const { data: waterData, isLoading, error, refetch } = useAirtableData<WaterConsumptionData>(
     WATER_TABLE_ID
   );
+
+  // Reset pagination when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filters.selectedMonth, filters.selectedZone, filters.selectedType]);
 
   // Handle manual fetch
   const handleManualFetch = async () => {
@@ -229,6 +238,13 @@ const WaterSystem = () => {
   const typeConsumption = calculateTypeConsumption(transformedData, filters.selectedMonth);
   const monthlyTrends = calculateMonthlyTrends(transformedData, availableMonths);
   
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredData.length / pageSize);
+  const paginatedData = filteredData.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+  
   // Handle export data
   const handleExportData = () => {
     // Create CSV content
@@ -362,7 +378,7 @@ const WaterSystem = () => {
               onValueChange={handleTabChange}
               className="space-y-6"
             >
-              <TabsList className="grid w-full max-w-md grid-cols-3 mb-6">
+              <TabsList className="grid w-full max-w-md grid-cols-4 mb-6">
                 <TabsTrigger value="overview" className="flex items-center gap-2">
                   <BarChart2 className="h-4 w-4" />
                   <span>Overview</span>
@@ -370,6 +386,10 @@ const WaterSystem = () => {
                 <TabsTrigger value="zones" className="flex items-center gap-2">
                   <AreaChart className="h-4 w-4" />
                   <span>Zones</span>
+                </TabsTrigger>
+                <TabsTrigger value="types" className="flex items-center gap-2">
+                  <FlaskConical className="h-4 w-4" />
+                  <span>Types</span>
                 </TabsTrigger>
                 <TabsTrigger value="loss" className="flex items-center gap-2">
                   <PieChart className="h-4 w-4" />
@@ -397,6 +417,17 @@ const WaterSystem = () => {
                 />
               </TabsContent>
               
+              <TabsContent value="types" className="space-y-6">
+                <WaterTypeAnalysis
+                  typeConsumption={typeConsumption}
+                  waterData={transformedData}
+                  selectedMonth={filters.selectedMonth}
+                  selectedType={filters.selectedType}
+                  onSelectType={handleTypeChange}
+                  types={types}
+                />
+              </TabsContent>
+              
               <TabsContent value="loss" className="space-y-6">
                 <WaterLossAnalysis 
                   zoneMetrics={zoneMetrics}
@@ -407,11 +438,11 @@ const WaterSystem = () => {
             </Tabs>
             
             {/* Data Table */}
-            <Card className="shadow-sm">
+            <Card className="shadow-md bg-white">
               <CardHeader className="bg-gray-50 dark:bg-gray-800/50 border-b">
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
                   <div>
-                    <CardTitle className="text-lg">Water Consumption Details</CardTitle>
+                    <CardTitle className="text-lg font-semibold">Water Consumption Details</CardTitle>
                     <CardDescription>
                       Showing {filteredData.length} records {filters.selectedMonth !== 'all' && `for ${filters.selectedMonth}`}
                       {filters.selectedZone !== 'all' && ` in ${filters.selectedZone}`}
@@ -456,7 +487,7 @@ const WaterSystem = () => {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                      {filteredData.map((record, index) => (
+                      {paginatedData.map((record, index) => (
                         <tr 
                           key={record.id || index}
                           className="bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
@@ -515,6 +546,17 @@ const WaterSystem = () => {
                       )}
                     </tbody>
                   </table>
+                  
+                  {filteredData.length > 0 && (
+                    <DataTablePagination
+                      currentPage={currentPage}
+                      totalPages={totalPages}
+                      totalItems={filteredData.length}
+                      pageSize={pageSize}
+                      onPageChange={setCurrentPage}
+                      onPageSizeChange={setPageSize}
+                    />
+                  )}
                 </div>
               </CardContent>
             </Card>

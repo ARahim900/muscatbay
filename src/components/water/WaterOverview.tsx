@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { CircleDollarSign, PackageCheck, PercentCircle, TrendingUp } from 'lucide-react';
 import { LevelMetrics, ZoneMetrics, TypeConsumption, MonthlyConsumption } from '@/types/waterSystem';
 import { 
@@ -46,30 +45,30 @@ const WaterOverview: React.FC<WaterOverviewProps> = ({
 }) => {
   // Format monthly trends data for the area chart - fixing the date parsing issue
   const monthlyTrendData = monthlyTrends.map(trend => {
-    // Extract the month abbreviation from the month string (e.g., "Jan" from "Jan-25")
-    const monthAbbr = trend.month.substring(0, 3);
+    // Extract just the month abbreviation from the month string (e.g., "Jan" from "Jan-25")
+    const monthAbbr = trend.month.split('-')[0] || trend.month;
     
     return {
       month: monthAbbr,
-      'Bulk Supply': trend.l1Supply,
-      'Consumption': trend.l3Volume,
-      'Loss': trend.loss
+      'Bulk Supply': trend.l1Supply || 0,
+      'Consumption': trend.l3Volume || 0,
+      'Loss': trend.loss || 0
     };
   });
   
   // Prepare zone data for the pie chart
   const zoneDataForChart = zoneMetrics.map(zone => ({
     name: zone.zone,
-    value: zone.bulkSupply,
-    consumption: zone.individualMeters,
-    loss: zone.loss,
-    lossPercentage: zone.lossPercentage
+    value: zone.bulkSupply || 0,
+    consumption: zone.individualMeters || 0,
+    loss: zone.loss || 0,
+    lossPercentage: zone.lossPercentage || 0
   }));
   
   // Prepare type consumption data for the pie chart
   const typeConsumptionData = typeConsumption.map(item => ({
     name: item.type,
-    value: item.consumption
+    value: item.consumption || 0
   }));
   
   // Define colors for the pie chart
@@ -114,9 +113,9 @@ const WaterOverview: React.FC<WaterOverviewProps> = ({
       />
       
       {/* Monthly Trends Chart */}
-      <Card className="col-span-2">
+      <Card className="col-span-2 bg-white shadow-md">
         <CardHeader>
-          <CardTitle>Monthly Water Trends</CardTitle>
+          <CardTitle className="text-lg font-semibold">Monthly Water Trends</CardTitle>
           <CardDescription>
             Trends in bulk supply, consumption, and loss over the past months
           </CardDescription>
@@ -138,9 +137,9 @@ const WaterOverview: React.FC<WaterOverviewProps> = ({
       </Card>
       
       {/* Zone Distribution Chart */}
-      <Card>
+      <Card className="bg-white shadow-md">
         <CardHeader>
-          <CardTitle>Zone Distribution</CardTitle>
+          <CardTitle className="text-lg font-semibold">Zone Distribution</CardTitle>
           <CardDescription>
             Distribution of water supply across different zones
           </CardDescription>
@@ -172,9 +171,9 @@ const WaterOverview: React.FC<WaterOverviewProps> = ({
       </Card>
       
       {/* Type Consumption Chart */}
-      <Card>
+      <Card className="bg-white shadow-md">
         <CardHeader>
-          <CardTitle>Consumption by Type</CardTitle>
+          <CardTitle className="text-lg font-semibold">Consumption by Type</CardTitle>
           <CardDescription>
             Distribution of water consumption by different types
           </CardDescription>

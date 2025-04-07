@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -10,6 +11,7 @@ import WaterConsumptionChart from './WaterConsumptionChart';
 import ZoneSelector from './ZoneSelector';
 import { waterColors } from './WaterTheme';
 import { getReadingValue } from '@/utils/waterSystemUtils';
+import DataTablePagination from './DataTablePagination';
 
 interface WaterZonesProps {
   zoneMetrics: ZoneMetrics[];
@@ -26,6 +28,10 @@ const WaterZones: React.FC<WaterZonesProps> = ({
   selectedZone,
   onSelectZone
 }) => {
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const [pageSize, setPageSize] = React.useState(10);
+  const [activeTab, setActiveTab] = React.useState('all');
+  
   // Find the selected zone's metrics
   const selectedZoneMetrics = zoneMetrics.find(zone => zone.zone === selectedZone);
   
@@ -105,13 +111,34 @@ const WaterZones: React.FC<WaterZonesProps> = ({
     show: { opacity: 1, y: 0 }
   };
   
+  // Filter meters by tab
+  const filteredMeters = React.useMemo(() => {
+    if (activeTab === 'all') return zoneMeters;
+    if (activeTab === 'bulk') return zoneMeters.filter(meter => meter.Label === 'L2');
+    if (activeTab === 'direct') return zoneMeters.filter(meter => meter.Label === 'DC');
+    if (activeTab === 'individual') return zoneMeters.filter(meter => meter.Label === 'L3');
+    return zoneMeters;
+  }, [zoneMeters, activeTab]);
+  
+  // Pagination
+  const totalPages = Math.ceil(filteredMeters.length / pageSize);
+  const paginatedMeters = filteredMeters.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+  
+  // Reset pagination when tab changes
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab, selectedZone]);
+  
   // If no zone is selected or available
   if (!selectedZone || !selectedZoneMetrics) {
     return (
       <div className="space-y-6">
-        <Card>
+        <Card className="bg-white shadow-md">
           <CardHeader>
-            <CardTitle>Select a Zone</CardTitle>
+            <CardTitle className="text-lg font-semibold">Select a Zone</CardTitle>
             <CardDescription>Choose a zone to view detailed water consumption information</CardDescription>
           </CardHeader>
           <CardContent>
@@ -192,38 +219,59 @@ const WaterZones: React.FC<WaterZonesProps> = ({
         className="grid grid-cols-1 lg:grid-cols-2 gap-6"
         variants={itemVariants}
       >
-        <WaterConsumptionChart
-          title="Water Distribution"
-          description={`${selectedZone} zone distribution breakdown`}
-          data={meteringData}
-          type="pie"
-          colors={[
-            waterColors.chart.blue,
-            waterColors.chart.purple,
-            waterColors.chart.green,
-            waterColors.chart.red
-          ]}
-        />
+        <Card className="bg-white shadow-md">
+          <CardHeader>
+            <CardTitle className="text-lg font-semibold">Water Distribution</CardTitle>
+            <CardDescription>{selectedZone} zone distribution breakdown</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <WaterConsumptionChart
+              title=""
+              description=""
+              data={meteringData}
+              type="pie"
+              colors={[
+                waterColors.chart.blue,
+                waterColors.chart.purple,
+                waterColors.chart.green,
+                waterColors.chart.red
+              ]}
+            />
+          </CardContent>
+        </Card>
         
-        <WaterConsumptionChart
-          title="Consumption by Type"
-          description={`${selectedZone} zone consumption by type`}
-          data={typeConsumptionData}
-          type="bar"
-          horizontal={true}
-        />
+        <Card className="bg-white shadow-md">
+          <CardHeader>
+            <CardTitle className="text-lg font-semibold">Consumption by Type</CardTitle>
+            <CardDescription>{selectedZone} zone consumption by type</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <WaterConsumptionChart
+              title=""
+              description=""
+              data={typeConsumptionData}
+              type="bar"
+              horizontal={true}
+            />
+          </CardContent>
+        </Card>
       </motion.div>
       
       <motion.div variants={itemVariants}>
-        <Card>
+        <Card className="bg-white shadow-md">
           <CardHeader>
-            <CardTitle>All Meters in {selectedZone}</CardTitle>
+            <CardTitle className="text-lg font-semibold">All Meters in {selectedZone}</CardTitle>
             <CardDescription>
               Total of {zoneMeters.length} meters found
             </CardDescription>
           </CardHeader>
           <CardContent className="p-0">
-            <Tabs defaultValue="all" className="w-full">
+            <Tabs 
+              defaultValue="all" 
+              className="w-full"
+              value={activeTab}
+              onValueChange={setActiveTab}
+            >
               <div className="px-6 border-b">
                 <TabsList className="w-auto h-auto bg-transparent p-0 mb-0">
                   <TabsTrigger 
@@ -266,7 +314,7 @@ const WaterZones: React.FC<WaterZonesProps> = ({
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                      {zoneMeters.map((meter, index) => (
+                      {paginatedMeters.map((meter, index) => (
                         <tr 
                           key={meter.id || index}
                           className="bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
@@ -295,8 +343,27 @@ const WaterZones: React.FC<WaterZonesProps> = ({
                           </td>
                         </tr>
                       ))}
+                      
+                      {filteredMeters.length === 0 && (
+                        <tr>
+                          <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
+                            No meters found for this selection
+                          </td>
+                        </tr>
+                      )}
                     </tbody>
                   </table>
+                  
+                  {filteredMeters.length > 0 && (
+                    <DataTablePagination
+                      currentPage={currentPage}
+                      totalPages={totalPages}
+                      totalItems={filteredMeters.length}
+                      pageSize={pageSize}
+                      onPageChange={setCurrentPage}
+                      onPageSizeChange={setPageSize}
+                    />
+                  )}
                 </div>
               </TabsContent>
               
@@ -312,25 +379,23 @@ const WaterZones: React.FC<WaterZonesProps> = ({
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                      {zoneMeters
-                        .filter(meter => meter.Label === 'L2')
-                        .map((meter, index) => (
-                          <tr 
-                            key={meter.id || index}
-                            className="bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
-                          >
-                            <td className="px-4 py-3 text-sm whitespace-nowrap">{meter['Meter Label'] || '-'}</td>
-                            <td className="px-4 py-3 text-sm whitespace-nowrap">{meter.Type || '-'}</td>
-                            <td className="px-4 py-3 text-sm whitespace-nowrap text-right font-medium">
-                              {getReadingValue(meter, selectedMonth).toLocaleString()}
-                            </td>
-                            <td className="px-4 py-3 text-sm whitespace-nowrap text-gray-600 dark:text-gray-400">
-                              {meter['Parent Meter'] || '-'}
-                            </td>
-                          </tr>
+                      {paginatedMeters.map((meter, index) => (
+                        <tr 
+                          key={meter.id || index}
+                          className="bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+                        >
+                          <td className="px-4 py-3 text-sm whitespace-nowrap">{meter['Meter Label'] || '-'}</td>
+                          <td className="px-4 py-3 text-sm whitespace-nowrap">{meter.Type || '-'}</td>
+                          <td className="px-4 py-3 text-sm whitespace-nowrap text-right font-medium">
+                            {getReadingValue(meter, selectedMonth).toLocaleString()}
+                          </td>
+                          <td className="px-4 py-3 text-sm whitespace-nowrap text-gray-600 dark:text-gray-400">
+                            {meter['Parent Meter'] || '-'}
+                          </td>
+                        </tr>
                       ))}
                       
-                      {!zoneMeters.some(meter => meter.Label === 'L2') && (
+                      {filteredMeters.length === 0 && (
                         <tr>
                           <td colSpan={4} className="px-4 py-8 text-center text-gray-500">
                             No bulk meters found for this zone
@@ -339,6 +404,17 @@ const WaterZones: React.FC<WaterZonesProps> = ({
                       )}
                     </tbody>
                   </table>
+                  
+                  {filteredMeters.length > 0 && (
+                    <DataTablePagination
+                      currentPage={currentPage}
+                      totalPages={totalPages}
+                      totalItems={filteredMeters.length}
+                      pageSize={pageSize}
+                      onPageChange={setCurrentPage}
+                      onPageSizeChange={setPageSize}
+                    />
+                  )}
                 </div>
               </TabsContent>
               
@@ -354,25 +430,23 @@ const WaterZones: React.FC<WaterZonesProps> = ({
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                      {zoneMeters
-                        .filter(meter => meter.Label === 'DC')
-                        .map((meter, index) => (
-                          <tr 
-                            key={meter.id || index}
-                            className="bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
-                          >
-                            <td className="px-4 py-3 text-sm whitespace-nowrap">{meter['Meter Label'] || '-'}</td>
-                            <td className="px-4 py-3 text-sm whitespace-nowrap">{meter.Type || '-'}</td>
-                            <td className="px-4 py-3 text-sm whitespace-nowrap text-right font-medium">
-                              {getReadingValue(meter, selectedMonth).toLocaleString()}
-                            </td>
-                            <td className="px-4 py-3 text-sm whitespace-nowrap text-gray-600 dark:text-gray-400">
-                              {meter['Parent Meter'] || '-'}
-                            </td>
-                          </tr>
+                      {paginatedMeters.map((meter, index) => (
+                        <tr 
+                          key={meter.id || index}
+                          className="bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+                        >
+                          <td className="px-4 py-3 text-sm whitespace-nowrap">{meter['Meter Label'] || '-'}</td>
+                          <td className="px-4 py-3 text-sm whitespace-nowrap">{meter.Type || '-'}</td>
+                          <td className="px-4 py-3 text-sm whitespace-nowrap text-right font-medium">
+                            {getReadingValue(meter, selectedMonth).toLocaleString()}
+                          </td>
+                          <td className="px-4 py-3 text-sm whitespace-nowrap text-gray-600 dark:text-gray-400">
+                            {meter['Parent Meter'] || '-'}
+                          </td>
+                        </tr>
                       ))}
                       
-                      {!zoneMeters.some(meter => meter.Label === 'DC') && (
+                      {filteredMeters.length === 0 && (
                         <tr>
                           <td colSpan={4} className="px-4 py-8 text-center text-gray-500">
                             No direct connections found for this zone
@@ -381,6 +455,17 @@ const WaterZones: React.FC<WaterZonesProps> = ({
                       )}
                     </tbody>
                   </table>
+                  
+                  {filteredMeters.length > 0 && (
+                    <DataTablePagination
+                      currentPage={currentPage}
+                      totalPages={totalPages}
+                      totalItems={filteredMeters.length}
+                      pageSize={pageSize}
+                      onPageChange={setCurrentPage}
+                      onPageSizeChange={setPageSize}
+                    />
+                  )}
                 </div>
               </TabsContent>
               
@@ -396,25 +481,23 @@ const WaterZones: React.FC<WaterZonesProps> = ({
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                      {zoneMeters
-                        .filter(meter => meter.Label === 'L3')
-                        .map((meter, index) => (
-                          <tr 
-                            key={meter.id || index}
-                            className="bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
-                          >
-                            <td className="px-4 py-3 text-sm whitespace-nowrap">{meter['Meter Label'] || '-'}</td>
-                            <td className="px-4 py-3 text-sm whitespace-nowrap">{meter.Type || '-'}</td>
-                            <td className="px-4 py-3 text-sm whitespace-nowrap text-right font-medium">
-                              {getReadingValue(meter, selectedMonth).toLocaleString()}
-                            </td>
-                            <td className="px-4 py-3 text-sm whitespace-nowrap text-gray-600 dark:text-gray-400">
-                              {meter['Parent Meter'] || '-'}
-                            </td>
-                          </tr>
+                      {paginatedMeters.map((meter, index) => (
+                        <tr 
+                          key={meter.id || index}
+                          className="bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+                        >
+                          <td className="px-4 py-3 text-sm whitespace-nowrap">{meter['Meter Label'] || '-'}</td>
+                          <td className="px-4 py-3 text-sm whitespace-nowrap">{meter.Type || '-'}</td>
+                          <td className="px-4 py-3 text-sm whitespace-nowrap text-right font-medium">
+                            {getReadingValue(meter, selectedMonth).toLocaleString()}
+                          </td>
+                          <td className="px-4 py-3 text-sm whitespace-nowrap text-gray-600 dark:text-gray-400">
+                            {meter['Parent Meter'] || '-'}
+                          </td>
+                        </tr>
                       ))}
                       
-                      {!zoneMeters.some(meter => meter.Label === 'L3') && (
+                      {filteredMeters.length === 0 && (
                         <tr>
                           <td colSpan={4} className="px-4 py-8 text-center text-gray-500">
                             No individual meters found for this zone
@@ -423,6 +506,17 @@ const WaterZones: React.FC<WaterZonesProps> = ({
                       )}
                     </tbody>
                   </table>
+                  
+                  {filteredMeters.length > 0 && (
+                    <DataTablePagination
+                      currentPage={currentPage}
+                      totalPages={totalPages}
+                      totalItems={filteredMeters.length}
+                      pageSize={pageSize}
+                      onPageChange={setCurrentPage}
+                      onPageSizeChange={setPageSize}
+                    />
+                  )}
                 </div>
               </TabsContent>
             </Tabs>
