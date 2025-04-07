@@ -14,14 +14,18 @@ const WaterSystem = () => {
       </div>
 
       <Card className="w-full overflow-hidden border-0 shadow-sm">
-        <div className="w-full h-[calc(100vh-180px)]">
+        <div className="w-full h-[calc(100vh-180px)] p-0">
           <iframe 
-            className="w-full h-full border-0"
             src="https://airtable.com/invite/l?inviteId=invvDirI6RN11wYFC&inviteToken=61180faba6a3d90cca1d18e78c06893ecb6a994e80f19ac9f613a5904ecb299f"
-            frameBorder="0"
+            style={{ 
+              width: '100%', 
+              height: '100%', 
+              border: 'none' 
+            }}
+            frameBorder="0" 
             allowFullScreen
-            title="Muscat Bay Water System"
-          ></iframe>
+            title="Water System Dashboard"
+          />
         </div>
       </Card>
     </div>
