@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Zap, Droplets, BarChart3 } from 'lucide-react';
+import { Zap, Droplets } from 'lucide-react';
 import SidebarLink from './SidebarLink';
 import SidebarSection from './SidebarSection';
 import { useNavigate } from 'react-router-dom';
@@ -41,19 +41,6 @@ const UtilitiesSection: React.FC<UtilitiesSectionProps> = ({
         bgColor="amber-100"
         onClick={() => handleClick('/electricity-system')}
       />
-      
-      <SidebarLink 
-        to="/electricity-analytics" 
-        icon={BarChart3} 
-        label="Electricity Analytics" 
-        collapsed={collapsed} 
-        external={false}
-        isMobile={isMobile}
-        iconColor="blue-500"
-        bgColor="blue-100"
-        onClick={() => handleClick('/electricity-analytics')}
-      />
-      
       <SidebarLink 
         to="/water-system" 
         icon={Droplets} 

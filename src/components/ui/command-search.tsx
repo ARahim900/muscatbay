@@ -12,7 +12,6 @@ import {
   Droplets,
   Factory,
   Search,
-  BarChart3,
 } from "lucide-react";
 
 import {
@@ -67,10 +66,6 @@ export function CommandMenu({ open, onOpenChange }: { open?: boolean; onOpenChan
           <CommandItem onSelect={() => handleNavigate('/electricity-system')}>
             <Zap className="mr-2 h-4 w-4 text-amber-500" />
             <span>Electricity System</span>
-          </CommandItem>
-          <CommandItem onSelect={() => handleNavigate('/electricity-analytics')}>
-            <BarChart3 className="mr-2 h-4 w-4 text-blue-500" />
-            <span>Electricity Analytics</span>
           </CommandItem>
           <CommandItem onSelect={() => handleNavigate('/water-system')}>
             <Droplets className="mr-2 h-4 w-4 text-blue-500" />
