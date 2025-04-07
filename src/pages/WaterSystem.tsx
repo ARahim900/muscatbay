@@ -1478,30 +1478,30 @@ const Dashboard = () => {
             <div className="bg-white rounded-xl shadow-md p-4 mb-6">
               <h3 className="text-lg font-medium text-gray-900 mb-4">Loss Breakdown in Volume (m³)</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
-                <div className="bg-blue-50 rounded-lg p-4">
-                  <p className="text-sm text-blue-700 font-medium">Stage 1 Loss (Trunk Main)</p>
-                  <p className="text-2xl font-bold text-blue-900">
+                <div className="rounded-lg p-4 bg-zinc-300">
+                  <p className="font-medium text-muscat-primary text-base text-center">Stage 1 Loss (Trunk Main)</p>
+                  <p className="text-2xl font-bold text-muscat-dark text-center">
                     {formatNumber(actualData.lossMetrics[selectedPeriod].stage1Loss)} m³
                   </p>
-                  <p className="text-xs text-blue-600 mt-1">
+                  <p className="text-xs mt-1 text-muscat-dark text-center">
                     Loss between Main Bulk and L2/DC meters
                   </p>
                 </div>
-                <div className="bg-purple-50 rounded-lg p-4">
-                  <p className="text-sm text-purple-700 font-medium">Stage 2 Loss (Distribution)</p>
-                  <p className="text-2xl font-bold text-purple-900">
+                <div className="rounded-lg p-4 bg-zinc-300">
+                  <p className="font-medium text-muscat-primary text-base text-center">Stage 2 Loss (Distribution)</p>
+                  <p className="text-2xl text-muscat-dark font-bold text-center">
                     {formatNumber(actualData.lossMetrics[selectedPeriod].stage2Loss)} m³
                   </p>
-                  <p className="text-xs text-purple-600 mt-1">
+                  <p className="text-xs mt-1 text-center text-muscat-dark">
                     Loss between L2 meters and L3 consumption
                   </p>
                 </div>
-                <div className="bg-red-50 rounded-lg p-4">
-                  <p className="text-sm text-red-700 font-medium">Total Loss (NRW)</p>
-                  <p className="text-2xl font-bold text-red-900">
+                <div className="rounded-lg p-4 bg-zinc-300">
+                  <p className="font-medium text-muscat-primary text-base text-center">Total Loss (NRW)</p>
+                  <p className="text-2xl font-bold text-center text-muscat-dark">
                     {formatNumber(actualData.lossMetrics[selectedPeriod].totalLoss)} m³
                   </p>
-                  <p className="text-xs text-red-600 mt-1">
+                  <p className="text-xs mt-1 text-center text-muscat-dark">
                     Total Non-Revenue Water
                   </p>
                 </div>
