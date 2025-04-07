@@ -1,38 +1,26 @@
 
 import React from 'react';
-import { Droplet } from 'lucide-react';
 
-export const WaterDropIcon = () => (
-  <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
-    <Droplet className="w-5 h-5 text-blue-600" />
-  </div>
+export const WaterDropIcon: React.FC = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+  </svg>
 );
 
-export const EfficiencyIcon = () => (
-  <div className="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center">
-    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-green-600">
-      <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
-    </svg>
-  </div>
+export const EfficiencyIcon: React.FC = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+  </svg>
 );
 
-export const IrrigationIcon = () => (
-  <div className="w-8 h-8 rounded-lg bg-teal-100 flex items-center justify-center">
-    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-teal-600">
-      <path d="M8 16a4 4 0 0 1-8 0c0-2.5 4-6 4-6s4 3.5 4 6Z" />
-      <path d="M16 16a4 4 0 0 1-8 0c0-2.5 4-6 4-6s4 3.5 4 6Z" />
-      <path d="M24 16a4 4 0 0 1-8 0c0-2.5 4-6 4-6s4 3.5 4 6Z" />
-    </svg>
-  </div>
+export const IrrigationIcon: React.FC = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+  </svg>
 );
 
-export const TankerIcon = () => (
-  <div className="w-8 h-8 rounded-lg bg-orange-100 flex items-center justify-center">
-    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-orange-500">
-      <path d="M4 2a2 2 0 0 0-2 2v10a4 4 0 0 0 4 4h16" />
-      <path d="M8 4V2" />
-      <path d="M12 4V2" />
-      <path d="M18 9v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-1" />
-    </svg>
-  </div>
+export const TankerIcon: React.FC = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+  </svg>
 );
