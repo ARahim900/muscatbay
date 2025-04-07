@@ -1,734 +1,927 @@
 
 import React, { useState, useEffect } from 'react';
-import {
-  AreaChart, 
-  Area, 
-  BarChart, 
-  Bar, 
-  PieChart, 
-  Pie, 
-  LineChart, 
-  Line,
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  Legend, 
-  ResponsiveContainer,
-  Cell
-} from 'recharts';
+import { Droplets } from 'lucide-react';
 import { 
-  DropletIcon, 
-  Download, 
-  TrendingUp, 
-  TrendingDown, 
-  CalendarRange,
-  Building,
-  BarChart as BarChartIcon,
-  PieChart as PieChartIcon,
-  AreaChart as AreaChartIcon,
-  ChevronLeft,
-  Search,
-  Filter,
-  DropletIcon01
-} from 'lucide-react';
+  BarChart, Bar, 
+  LineChart, Line,
+  PieChart, Pie, Cell,
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer 
+} from 'recharts';
 import StandardPageLayout from '@/components/layout/StandardPageLayout';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableFooter,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import { CalendarIcon } from "lucide-react";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
-import { format } from "date-fns";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Progress } from "@/components/ui/progress";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
-import { useToast } from "@/hooks/use-toast";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { useNavigate } from 'react-router-dom';
-import { AnimatePresence, motion } from 'framer-motion';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-// Define types
-interface WaterMeter {
-  id: string;
+// Define interfaces for our data structures
+interface KpiCardProps {
+  title: string;
+  value: number;
+  formatter: (num: number) => string;
+  color: string;
+  icon: string;
+  trend?: string; // Making trend optional
+}
+
+interface ProgressCardProps {
+  value: number;
+  max: number;
   label: string;
-  location: string;
-  zone: string;
-  type: string;
-  acctNum: string;
+  color: string;
+  percentage?: number; // Making percentage optional
+  size?: string;
 }
 
-interface WaterReading {
-  meterId: string;
-  date: string;
-  reading: number;
-  consumption: number;
+interface TooltipProps {
+  active?: boolean;
+  payload?: any[];
+  label?: string;
 }
 
-interface WaterAccount {
-  acctNum: string;
-  meterLabel: string;
-  zone: string;
-  type: string;
-  consumption: Record<string, number>;
-}
-
-interface WaterReport {
-  date: string;
+// Define types for the data metrics
+interface ZoneDetail {
   l2Reading: number;
   l3Sum: number;
   loss: number;
   lossPercent: number;
 }
 
-// Mock data
-const waterMeters: WaterMeter[] = [
-  { id: 'L2-001', label: 'Main Meter', location: 'Main Inlet', zone: 'Master', type: 'Master', acctNum: 'MB-MAIN-001' },
-  { id: 'L3-Z3-001', label: 'Zone 3 Meter', location: 'Zone 3 Inlet', zone: 'Zone 3', type: 'Zone', acctNum: 'MB-Z3-001' },
-  { id: 'L3-Z5-001', label: 'Zone 5 Meter', location: 'Zone 5 Inlet', zone: 'Zone 5', type: 'Zone', acctNum: 'MB-Z5-001' },
-  { id: 'L3-Z8-001', label: 'Zone 8 Meter', location: 'Zone 8 Inlet', zone: 'Zone 8', type: 'Zone', acctNum: 'MB-Z8-001' },
-  { id: 'L3-SA-001', label: 'Staff Acc. Meter', location: 'Staff Housing Inlet', zone: 'Staff', type: 'Zone', acctNum: 'MB-SA-001' },
-  { id: 'L3-COM-001', label: 'Commercial Meter', location: 'Commercial Zone Inlet', zone: 'Commercial', type: 'Zone', acctNum: 'MB-COM-001' },
-  { id: 'L4-Z3-101', label: 'Villa Z3-101', location: 'Zone 3', zone: 'Zone 3', type: 'Villa', acctNum: 'MB-Z3-V101' },
-  { id: 'L4-Z3-102', label: 'Villa Z3-102', location: 'Zone 3', zone: 'Zone 3', type: 'Villa', acctNum: 'MB-Z3-V102' },
-  { id: 'L4-Z5-101', label: 'Villa Z5-101', location: 'Zone 5', zone: 'Zone 5', type: 'Villa', acctNum: 'MB-Z5-V101' },
-  { id: 'L4-Z8-101', label: 'Villa Z8-101', location: 'Zone 8', zone: 'Zone 8', type: 'Villa', acctNum: 'MB-Z8-V101' },
-];
+interface MonthlyMetric {
+  L1: number;
+  L2: number;
+  L3: number;
+  DC: number;
+}
 
-const waterAccounts: WaterAccount[] = [
-  { 
-    acctNum: 'MB-MAIN-001', 
-    meterLabel: 'Main Meter', 
-    zone: 'Master', 
-    type: 'Master',
-    consumption: { 'Mar-24': 124500, 'Apr-24': 126800, 'May-24': 135200, 'Jun-24': 145800, 'Jul-24': 152400, 'Aug-24': 158900 } 
+interface LossMetric {
+  stage1Loss: number;
+  stage2Loss: number;
+  totalLoss: number;
+  stage1LossPercent: number;
+  stage2LossPercent: number;
+  totalLossPercent: number;
+}
+
+// Colors for charts
+const COLORS = {
+  primary: '#0072CE',
+  secondary: '#6B8E23',
+  tertiary: '#B22222',
+  quaternary: '#4682B4',
+  danger: '#D14343',
+  success: '#4CAF50',
+  warning: '#FFC107',
+  info: '#2196F3',
+  light: '#f8f9fa',
+  dark: '#343a40',
+};
+
+// Sample data
+const actualData = {
+  monthlyMetrics: {
+    'Jan-25': { L1: 19824, L2: 19136, L3: 14805, DC: 2425 },
+    'Feb-25': { L1: 18712, L2: 18011, L3: 14255, DC: 2136 },
+    'Mar-25': { L1: 20516, L2: 19802, L3: 15488, DC: 2355 },
+    'Total': { L1: 59052, L2: 56949, L3: 44548, DC: 6916 }
   },
-  { 
-    acctNum: 'MB-Z3-001', 
-    meterLabel: 'Zone 3 Meter', 
-    zone: 'Zone 3', 
-    type: 'Zone',
-    consumption: { 'Mar-24': 45200, 'Apr-24': 46500, 'May-24': 49300, 'Jun-24': 53100, 'Jul-24': 55400, 'Aug-24': 58200 } 
-  },
-  { 
-    acctNum: 'MB-Z5-001', 
-    meterLabel: 'Zone 5 Meter', 
-    zone: 'Zone 5', 
-    type: 'Zone',
-    consumption: { 'Mar-24': 38700, 'Apr-24': 39400, 'May-24': 42100, 'Jun-24': 45300, 'Jul-24': 47200, 'Aug-24': 49600 } 
-  },
-  { 
-    acctNum: 'MB-Z8-001', 
-    meterLabel: 'Zone 8 Meter', 
-    zone: 'Zone 8', 
-    type: 'Zone',
-    consumption: { 'Mar-24': 22300, 'Apr-24': 22800, 'May-24': 24200, 'Jun-24': 26100, 'Jul-24': 27300, 'Aug-24': 28500 } 
-  },
-  { 
-    acctNum: 'MB-SA-001', 
-    meterLabel: 'Staff Acc. Meter', 
-    zone: 'Staff', 
-    type: 'Zone',
-    consumption: { 'Mar-24': 8500, 'Apr-24': 8700, 'May-24': 9200, 'Jun-24': 9800, 'Jul-24': 10300, 'Aug-24': 10700 } 
-  },
-  { 
-    acctNum: 'MB-COM-001', 
-    meterLabel: 'Commercial Meter', 
-    zone: 'Commercial', 
-    type: 'Zone',
-    consumption: { 'Mar-24': 5300, 'Apr-24': 5400, 'May-24': 5800, 'Jun-24': 6200, 'Jul-24': 6500, 'Aug-24': 6800 } 
-  },
-];
+  lossMetrics: {
+    'Jan-25': { 
+      stage1Loss: 688, stage2Loss: 1906, totalLoss: 2594,
+      stage1LossPercent: 3.47, stage2LossPercent: 9.96, totalLossPercent: 13.08
+    },
+    'Feb-25': { 
+      stage1Loss: 701, stage2Loss: 1620, totalLoss: 2321,
+      stage1LossPercent: 3.75, stage2LossPercent: 8.99, totalLossPercent: 12.40
+    },
+    'Mar-25': { 
+      stage1Loss: 714, stage2Loss: 1959, totalLoss: 2673,
+      stage1LossPercent: 3.48, stage2LossPercent: 9.89, totalLossPercent: 13.03
+    },
+    'Total': { 
+      stage1Loss: 2103, stage2Loss: 5485, totalLoss: 7588,
+      stage1LossPercent: 3.56, stage2LossPercent: 9.62, totalLossPercent: 12.85
+    }
+  }
+};
 
-const waterReports: WaterReport[] = [
-  { date: 'Mar-24', l2Reading: 124500, l3Sum: 120000, loss: 4500, lossPercent: 3.6 },
-  { date: 'Apr-24', l2Reading: 126800, l3Sum: 122800, loss: 4000, lossPercent: 3.2 },
-  { date: 'May-24', l2Reading: 135200, l3Sum: 130600, loss: 4600, lossPercent: 3.4 },
-  { date: 'Jun-24', l2Reading: 145800, l3Sum: 140500, loss: 5300, lossPercent: 3.6 },
-  { date: 'Jul-24', l2Reading: 152400, l3Sum: 146700, loss: 5700, lossPercent: 3.7 },
-  { date: 'Aug-24', l2Reading: 158900, l3Sum: 153800, loss: 5100, lossPercent: 3.2 },
-];
-
-const COLORS = ['#68D1CC', '#9D8EB7', '#D4B98C', '#4E4456', '#FF6B6B'];
-
-const WaterSystem = () => {
-  const { toast } = useToast();
-  const [selectedMonth, setSelectedMonth] = useState<string>("Aug-24");
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [activeTab, setActiveTab] = useState("overview");
-  const navigate = useNavigate();
-  
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 1000);
-    
-    return () => clearTimeout(timer);
-  }, []);
-
-  const allMonths = [
-    { value: 'Mar-24', label: 'March 2024' },
-    { value: 'Apr-24', label: 'April 2024' },
-    { value: 'May-24', label: 'May 2024' },
-    { value: 'Jun-24', label: 'June 2024' },
-    { value: 'Jul-24', label: 'July 2024' },
-    { value: 'Aug-24', label: 'August 2024' },
-  ];
-
-  // Filter accounts and calculate zone consumption data
-  const getZoneConsumptionData = React.useMemo(() => {
-    // Get zone-level accounts only
-    const zoneAccounts = waterAccounts.filter(account => account.type === 'Zone');
-    
-    // Map to data format needed for charts
-    return zoneAccounts.map(account => ({
-      name: account.zone,
-      value: account.consumption[selectedMonth] || 0,
-      color: account.zone === 'Zone 3' ? COLORS[0] : 
-            account.zone === 'Zone 5' ? COLORS[1] :
-            account.zone === 'Zone 8' ? COLORS[2] :
-            account.zone === 'Staff' ? COLORS[3] : COLORS[4]
-    }));
-  }, [selectedMonth]);
-  
-  // Get current report
-  const currentReport = waterReports.find(report => report.date === selectedMonth);
-  
-  // Get trend data for charts
-  const getTrendData = () => {
-    return waterReports.map(report => ({
-      month: report.date,
-      consumption: report.l2Reading,
-      loss: report.loss,
-      lossPercent: report.lossPercent
-    }));
-  };
-  
-  const trendData = getTrendData();
-  
-  // Calculate water loss status/color
-  const getLossStatusColor = (lossPercent: number) => {
-    if (lossPercent < 3) return 'text-green-500';
-    if (lossPercent < 4) return 'text-yellow-500';
-    return 'text-red-500';
-  };
-  
-  const getLossStatus = (lossPercent: number) => {
-    if (lossPercent < 3) return 'Good';
-    if (lossPercent < 4) return 'Fair';
-    return 'Poor';
-  };
-  
-  const lossPercentColor = currentReport ? getLossStatusColor(currentReport.lossPercent) : 'text-gray-500';
-  const lossStatus = currentReport ? getLossStatus(currentReport.lossPercent) : 'Unknown';
-  
-  const handleMonthChange = (month: string) => {
-    setSelectedMonth(month);
-    toast({
-      title: "Month updated",
-      description: `Water system data updated for ${month}`,
-    });
-  };
-  
-  const handleExport = () => {
-    toast({
-      title: "Export started",
-      description: "Your data is being exported to Excel",
-    });
-  };
-
-  if (isLoading) {
-    return (
-      <div className="flex flex-col min-h-screen">
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="text-center">
-            <DropletIcon className="w-12 h-12 mx-auto mb-4 text-muscat-teal animate-pulse" />
-            <h2 className="text-xl font-medium text-muscat-primary">Loading Water System Dashboard...</h2>
+// KPI Card Component
+const KpiCard: React.FC<KpiCardProps> = ({ title, value, formatter, color, icon }) => {
+  return (
+    <div className={`rounded-xl overflow-hidden shadow-md bg-white`}>
+      <div className={`p-4 border-l-4 border-${color}`}>
+        <div className="flex justify-between items-center">
+          <div>
+            <p className="text-sm text-gray-500 font-medium mb-1">{title}</p>
+            <p className={`text-2xl sm:text-3xl font-bold text-${color}`}>{formatter(value)}</p>
+          </div>
+          <div className={`w-12 h-12 rounded-full flex items-center justify-center bg-${color}/10 text-${color}`}>
+            <span className="text-2xl">{icon}</span>
           </div>
         </div>
+      </div>
+    </div>
+  );
+};
+
+// Progress Card Component
+const ProgressCard: React.FC<ProgressCardProps> = ({ value, max, label, color, size = "md" }) => {
+  const percentage = Math.round((value / max) * 100);
+  
+  return (
+    <div className={`rounded-xl overflow-hidden shadow-md bg-white p-4`}>
+      <div className="mb-2 flex justify-between">
+        <p className="text-sm text-gray-500 font-medium">{label}</p>
+        <p className="text-sm text-gray-700 font-medium">{value.toLocaleString()} / {max.toLocaleString()}</p>
+      </div>
+      <div className="w-full bg-gray-200 rounded-full h-3">
+        <div 
+          className={`bg-${color} h-3 rounded-full`}
+          style={{ width: `${percentage}%` }}
+        >
+        </div>
+      </div>
+      <p className={`text-right mt-1 text-${color} font-medium`}>{percentage}%</p>
+    </div>
+  );
+};
+
+// Custom tooltip component for charts
+const CustomTooltip: React.FC<TooltipProps> = ({ active, payload, label }) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="p-2 bg-white/90 backdrop-blur-sm shadow-lg border border-gray-200 rounded-lg">
+        <p className="font-medium text-gray-900">{label}</p>
+        {payload.map((entry, index) => (
+          <p key={`item-${index}`} style={{ color: entry.color }}>
+            {`${entry.name}: ${typeof entry.value === 'number' ? entry.value.toFixed(2) : entry.value}`}
+          </p>
+        ))}
       </div>
     );
   }
 
-  const renderTabContent = () => {
-    switch (activeTab) {
-      case 'overview':
-        return (
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <Card className="border-muscat-teal/20 shadow-md hover:shadow-lg transition-shadow duration-300 bg-gradient-to-br from-white to-muscat-light">
-                <CardHeader className="p-4 pb-2">
-                  <CardTitle className="text-sm font-medium text-muscat-primary">Total Consumption</CardTitle>
-                </CardHeader>
-                <CardContent className="p-4 pt-1">
-                  <div className="text-2xl font-bold text-muscat-dark">
-                    {currentReport?.l2Reading.toLocaleString()} m³
+  return null;
+};
+
+// Water System Dashboard component
+const Dashboard: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<string>('overview');
+  const [selectedPeriod, setSelectedPeriod] = useState<string>('Total');
+  const [selectedZone, setSelectedZone] = useState<string>('Zone A');
+  const [showParentDetails, setShowParentDetails] = useState<string | null>(null);
+  
+  // Data manipulations based on selected period
+  const currentData = useMemo(() => {
+    // Helper functions
+    const formatNumber = (num: number) => num.toLocaleString();
+    const formatPercent = (num: number) => `${num.toFixed(1)}%`;
+    
+    // Get loss color based on percentage
+    const getLossColor = (lossPercent: number) => {
+      if (lossPercent < 0) return 'success';
+      if (lossPercent < 10) return 'info';
+      if (lossPercent < 25) return 'warning';
+      return 'danger';
+    };
+    
+    // Calculate KPIs based on the selected period
+    const selectedMetrics = actualData.monthlyMetrics[selectedPeriod];
+    const lossMetrics = actualData.lossMetrics[selectedPeriod];
+    
+    // Dummy zone details
+    const zoneDetails: Record<string, ZoneDetail> = {
+      'Zone A': { 
+        l2Reading: 8500, 
+        l3Sum: 7200, 
+        loss: 1300, 
+        lossPercent: 15.3 
+      },
+      'Zone B': { 
+        l2Reading: 5200, 
+        l3Sum: 4900, 
+        loss: 300, 
+        lossPercent: 5.8 
+      },
+      'Zone C': { 
+        l2Reading: 7800, 
+        l3Sum: 8100, 
+        loss: -300, 
+        lossPercent: -3.8 
+      },
+      'Zone D': { 
+        l2Reading: 6300, 
+        l3Sum: 4600, 
+        loss: 1700, 
+        lossPercent: 27.0 
+      },
+      'Zone E': { 
+        l2Reading: 4100, 
+        l3Sum: 3800, 
+        loss: 300, 
+        lossPercent: 7.3 
+      }
+    };
+    
+    // Top loss zones
+    const topLossZones = Object.entries(zoneDetails)
+      .map(([zone, data]) => ({
+        zone,
+        lossPercent: data.lossPercent,
+        loss: data.loss
+      }))
+      .filter(z => z.lossPercent > 0)
+      .sort((a, b) => b.lossPercent - a.lossPercent)
+      .slice(0, 5);
+    
+    // Consumption data by type
+    const typeBreakdown = [
+      { type: 'Residential', value: 30750, color: '#4682B4' },
+      { type: 'Commercial', value: 8642, color: '#6B8E23' },
+      { type: 'Irrigation', value: 12072, color: '#B22222' },
+      { type: 'Community', value: 6750, color: '#DAA520' },
+      { type: 'Other', value: 3800, color: '#808080' }
+    ];
+    
+    // Monthly consumption
+    const monthlyData = [
+      { month: 'Jan-25', Supply: selectedMetrics.L1, Consumption: selectedMetrics.L3 + selectedMetrics.DC },
+      { month: 'Feb-25', Supply: actualData.monthlyMetrics['Feb-25'].L1, Consumption: actualData.monthlyMetrics['Feb-25'].L3 + actualData.monthlyMetrics['Feb-25'].DC },
+      { month: 'Mar-25', Supply: actualData.monthlyMetrics['Mar-25'].L1, Consumption: actualData.monthlyMetrics['Mar-25'].L3 + actualData.monthlyMetrics['Mar-25'].DC }
+    ];
+    
+    // Mock parent data and their consumers
+    const parentMeters = {
+      'L2-ZA-01': { acctNum: 'L2-ZA-01', meterLabel: 'Zone A Main', type: 'L2', zone: 'Zone A', consumption: 8500 },
+      'L2-ZB-01': { acctNum: 'L2-ZB-01', meterLabel: 'Zone B Main', type: 'L2', zone: 'Zone B', consumption: 5200 },
+      'L2-ZC-01': { acctNum: 'L2-ZC-01', meterLabel: 'Zone C Main', type: 'L2', zone: 'Zone C', consumption: 7800 },
+      'L2-ZD-01': { acctNum: 'L2-ZD-01', meterLabel: 'Zone D Main', type: 'L2', zone: 'Zone D', consumption: 6300 },
+      'L2-ZE-01': { acctNum: 'L2-ZE-01', meterLabel: 'Zone E Main', type: 'L2', zone: 'Zone E', consumption: 4100 }
+    };
+    
+    const consumersByParent: Record<string, Array<{acctNum: string, meterLabel: string, type: string, consumption: number}>> = {
+      'L2-ZA-01': [
+        { acctNum: 'L3-ZA-01', meterLabel: 'Residential Block A', type: 'Residential', consumption: 2430 },
+        { acctNum: 'L3-ZA-02', meterLabel: 'Residential Block B', type: 'Residential', consumption: 2180 },
+        { acctNum: 'L3-ZA-03', meterLabel: 'Mall', type: 'Commercial', consumption: 1650 },
+        { acctNum: 'L3-ZA-04', meterLabel: 'Park Irrigation', type: 'Irrigation', consumption: 940 }
+      ],
+      'L2-ZB-01': [
+        { acctNum: 'L3-ZB-01', meterLabel: 'Residential Block C', type: 'Residential', consumption: 2100 },
+        { acctNum: 'L3-ZB-02', meterLabel: 'Office Complex', type: 'Commercial', consumption: 1280 },
+        { acctNum: 'L3-ZB-03', meterLabel: 'Community Center', type: 'Community', consumption: 1520 }
+      ]
+    };
+    
+    // Return all calculated data
+    return {
+      kpis: {
+        totalSupply: selectedMetrics.L1,
+        totalConsumption: selectedMetrics.L3 + selectedMetrics.DC,
+        waterLoss: lossMetrics.totalLoss,
+        lossPercent: lossMetrics.totalLossPercent,
+        stage1LossPercent: lossMetrics.stage1LossPercent,
+        stage2LossPercent: lossMetrics.stage2LossPercent,
+        totalLossPercent: lossMetrics.totalLossPercent
+      },
+      zoneDetails,
+      topLossZones,
+      typeBreakdown,
+      monthlyData,
+      parentMeters,
+      consumersByParent
+    };
+  }, [selectedPeriod, selectedZone, showParentDetails]);
+
+  // Format helpers
+  const formatNumber = (num: number) => num.toLocaleString();
+  const formatPercent = (num: number) => `${num.toFixed(1)}%`;
+  
+  // Get loss color based on percentage
+  const getLossColor = (lossPercent: number) => {
+    if (lossPercent < 0) return 'success';
+    if (lossPercent < 10) return 'info';
+    if (lossPercent < 25) return 'warning';
+    return 'danger';
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <StandardPageLayout
+        title="Water System"
+        description="Monitor and analyze water distribution and losses"
+        icon={<Droplets className="h-6 w-6 text-blue-600" />}
+        headerColor="bg-gradient-to-r from-blue-50 to-blue-100"
+        actions={
+          <div className="flex flex-col md:flex-row gap-2">
+            <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Select period" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Jan-25">January 2025</SelectItem>
+                <SelectItem value="Feb-25">February 2025</SelectItem>
+                <SelectItem value="Mar-25">March 2025</SelectItem>
+                <SelectItem value="Total">Q1 2025 Total</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        }
+      >
+      <div className="space-y-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid grid-cols-3 w-full max-w-md">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="losses">Loss Analysis</TabsTrigger>
+            <TabsTrigger value="consumption">Consumption</TabsTrigger>
+          </TabsList>
+          
+          {/* Overview Tab */}
+          {activeTab === 'overview' && (
+            <div className="space-y-6 mt-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <KpiCard 
+                  title={`Total Supply (${selectedPeriod})`}
+                  value={currentData.kpis.totalSupply} 
+                  formatter={formatNumber} 
+                  color="primary" 
+                  icon="💧" 
+                />
+                <KpiCard 
+                  title={`Total Consumption (${selectedPeriod})`}
+                  value={currentData.kpis.totalConsumption} 
+                  formatter={formatNumber} 
+                  color="secondary" 
+                  icon="🏠" 
+                />
+                <KpiCard 
+                  title={`Water Loss (${selectedPeriod})`}
+                  value={currentData.kpis.waterLoss} 
+                  formatter={formatNumber} 
+                  color="tertiary" 
+                  icon="📉" 
+                />
+                <KpiCard 
+                  title={`NRW % (${selectedPeriod})`}
+                  value={currentData.kpis.lossPercent} 
+                  formatter={formatPercent} 
+                  color={getLossColor(currentData.kpis.lossPercent)} 
+                  icon="%" 
+                />
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="col-span-1 bg-white rounded-xl shadow-md p-4">
+                  <h3 className="text-lg font-medium text-gray-900 mb-4">Loss Breakdown</h3>
+                  <div className="space-y-4">
+                    <ProgressCard 
+                      value={actualData.lossMetrics[selectedPeriod].stage1Loss} 
+                      max={currentData.kpis.totalSupply * 0.05} 
+                      label="Stage 1 Loss (Target: 5%)" 
+                      color="blue-500" 
+                    />
+                    <ProgressCard 
+                      value={actualData.lossMetrics[selectedPeriod].stage2Loss} 
+                      max={currentData.kpis.totalSupply * 0.10} 
+                      label="Stage 2 Loss (Target: 10%)" 
+                      color="purple-500" 
+                    />
+                    <ProgressCard 
+                      value={actualData.lossMetrics[selectedPeriod].totalLoss} 
+                      max={currentData.kpis.totalSupply * 0.15} 
+                      label="Total NRW (Target: 15%)" 
+                      color="red-500" 
+                    />
                   </div>
-                  <p className="text-xs text-muscat-primary/70 mt-1">
-                    Main meter reading for {allMonths.find(m => m.value === selectedMonth)?.label}
-                  </p>
-                </CardContent>
-              </Card>
+                </div>
+
+                <div className="col-span-2 bg-white rounded-xl shadow-md p-4">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-lg font-medium text-gray-900">Zone Analysis</h3>
+                    <Select value={selectedZone} onValueChange={setSelectedZone}>
+                      <SelectTrigger className="w-[160px]">
+                        <SelectValue placeholder="Select Zone" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.keys(currentData.zoneDetails).map((zone) => (
+                          <SelectItem key={zone} value={zone}>{zone}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <p className="text-sm text-gray-500 font-medium">L2 Reading</p>
+                      <p className="text-2xl font-bold text-gray-900">{formatNumber(currentData.zoneDetails[selectedZone].l2Reading)} m³</p>
+                      <p className="text-xs text-gray-500 mt-1">Supply meter reading</p>
+                    </div>
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <p className="text-sm text-gray-500 font-medium">L3 Sum</p>
+                      <p className="text-2xl font-bold text-gray-900">{formatNumber(currentData.zoneDetails[selectedZone].l3Sum)} m³</p>
+                      <p className="text-xs text-gray-500 mt-1">Sum of all consumption</p>
+                    </div>
+                    <div className={`p-4 rounded-lg ${
+                      currentData.zoneDetails[selectedZone].lossPercent < 0 ? 'bg-green-50' :
+                      currentData.zoneDetails[selectedZone].lossPercent < 10 ? 'bg-blue-50' :
+                      currentData.zoneDetails[selectedZone].lossPercent < 25 ? 'bg-yellow-50' :
+                      'bg-red-50'
+                    }`}>
+                      <p className="text-sm text-gray-500 font-medium">Loss / NRW</p>
+                      <p className="text-2xl font-bold text-gray-900">
+                        {formatNumber(currentData.zoneDetails[selectedZone].loss)} m³ ({formatPercent(currentData.zoneDetails[selectedZone].lossPercent)})
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">Non-revenue water</p>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-6">
+                    <h4 className="text-md font-medium text-gray-800 mb-2">Distribution Meters</h4>
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Account #</th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Meter Label</th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Zone</th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Consumption</th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                          {Object.values(currentData.parentMeters)
+                            .filter(meter => meter.zone === selectedZone)
+                            .map((meter) => (
+                              <tr key={meter.acctNum} className="hover:bg-gray-50">
+                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{meter.acctNum}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{meter.meterLabel}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{meter.type}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{meter.zone}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatNumber(meter.consumption)} m³</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                  <button
+                                    onClick={() => setShowParentDetails(meter.acctNum)}
+                                    className="text-blue-600 hover:text-blue-800"
+                                  >
+                                    View Details
+                                  </button>
+                                </td>
+                              </tr>
+                            ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
               
-              <Card className="border-muscat-teal/20 shadow-md hover:shadow-lg transition-shadow duration-300 bg-gradient-to-br from-white to-muscat-light">
-                <CardHeader className="p-4 pb-2">
-                  <CardTitle className="text-sm font-medium text-muscat-primary">Zone Consumption</CardTitle>
-                </CardHeader>
-                <CardContent className="p-4 pt-1">
-                  <div className="text-2xl font-bold text-muscat-dark">
-                    {currentReport?.l3Sum.toLocaleString()} m³
-                  </div>
-                  <p className="text-xs text-muscat-primary/70 mt-1">
-                    Sum of all zone meters
-                  </p>
-                </CardContent>
-              </Card>
-              
-              <Card className="border-muscat-teal/20 shadow-md hover:shadow-lg transition-shadow duration-300 bg-gradient-to-br from-white to-muscat-light">
-                <CardHeader className="p-4 pb-2">
-                  <CardTitle className="text-sm font-medium text-muscat-primary">Water Loss</CardTitle>
-                </CardHeader>
-                <CardContent className="p-4 pt-1">
-                  <div className="text-2xl font-bold text-muscat-dark">
-                    {currentReport?.loss.toLocaleString()} m³
-                  </div>
-                  <p className="text-xs text-muscat-primary/70 mt-1">
-                    Difference between main meter and zone meters
-                  </p>
-                </CardContent>
-              </Card>
-              
-              <Card className="border-muscat-teal/20 shadow-md hover:shadow-lg transition-shadow duration-300 bg-gradient-to-br from-white to-muscat-light">
-                <CardHeader className="p-4 pb-2">
-                  <CardTitle className="text-sm font-medium text-muscat-primary">Loss Percentage</CardTitle>
-                </CardHeader>
-                <CardContent className="p-4 pt-1">
-                  <div className={`text-2xl font-bold ${lossPercentColor}`}>
-                    {currentReport?.lossPercent.toFixed(1)}%
-                  </div>
-                  <p className="text-xs text-muscat-primary/70 mt-1">
-                    Status: <span className={lossPercentColor}>{lossStatus}</span>
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
-            
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card className="border-muscat-primary/20 shadow-md hover:shadow-lg transition-shadow duration-300 bg-white">
-                <CardHeader className="bg-muscat-primary text-white rounded-t-lg">
-                  <CardTitle>Zone Distribution</CardTitle>
-                </CardHeader>
-                <CardContent className="p-6">
-                  <div className="h-[300px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={getZoneConsumptionData}
-                          cx="50%"
-                          cy="50%"
-                          labelLine={false}
-                          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                          outerRadius={100}
-                          fill="#8884d8"
-                          dataKey="value"
-                        >
-                          {getZoneConsumptionData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color || COLORS[index % COLORS.length]} />
-                          ))}
-                        </Pie>
-                        <Tooltip 
-                          formatter={(value: number) => [`${value.toLocaleString()} m³`, 'Consumption']}
-                        />
-                        <Legend />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </div>
-                </CardContent>
-              </Card>
-              
-              <Card className="border-muscat-primary/20 shadow-md hover:shadow-lg transition-shadow duration-300 bg-white">
-                <CardHeader className="bg-muscat-primary text-white rounded-t-lg">
-                  <CardTitle>Monthly Consumption</CardTitle>
-                </CardHeader>
-                <CardContent className="p-6">
-                  <div className="h-[300px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart 
-                        data={trendData}
-                        margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+              {/* Parent Meter Details Modal */}
+              {showParentDetails && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                  <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                    <div className="px-4 py-5 sm:px-6 border-b">
+                      <h3 className="text-lg leading-6 font-medium text-gray-900">
+                        {currentData.parentMeters[showParentDetails]?.meterLabel} Details
+                      </h3>
+                      <p className="mt-1 max-w-2xl text-sm text-gray-500">
+                        Account #: {currentData.parentMeters[showParentDetails]?.acctNum}
+                      </p>
+                    </div>
+                    <div className="px-4 py-5 sm:p-6">
+                      {/* Child meters section */}
+                      <h4 className="text-md font-medium text-gray-700 mb-2">Child Meters</h4>
+                      {currentData.consumersByParent[showParentDetails] && currentData.consumersByParent[showParentDetails].length > 0 ? (
+                        <div className="overflow-x-auto">
+                          <table className="min-w-full divide-y divide-gray-200">
+                            <thead className="bg-gray-50">
+                              <tr>
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                  Account #
+                                </th>
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                  Meter Label
+                                </th>
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                  Type
+                                </th>
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                  Consumption
+                                </th>
+                              </tr>
+                            </thead>
+                            <tbody className="bg-white divide-y divide-gray-200">
+                              {currentData.consumersByParent[showParentDetails].map((child) => (
+                                <tr key={child.acctNum} className="hover:bg-gray-50">
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                    {child.acctNum}
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {child.meterLabel}
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {child.type}
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    {formatNumber(child.consumption)} m³
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      ) : (
+                        <p className="text-gray-500">No child meters found</p>
+                      )}
+                      
+                      {/* Total consumption of children */}
+                      {currentData.consumersByParent[showParentDetails] && currentData.consumersByParent[showParentDetails].length > 0 && (
+                        <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                          <div className="flex justify-between">
+                            <p className="font-medium text-gray-700">Total Consumption:</p>
+                            <p className="font-bold text-gray-900">
+                              {formatNumber(
+                                currentData.consumersByParent[showParentDetails].reduce(
+                                  (sum, child) => sum + child.consumption, 0
+                                )
+                              )} m³
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    <div className="px-4 py-3 bg-gray-50 sm:px-6 sm:flex sm:flex-row-reverse rounded-b-lg">
+                      <button
+                        type="button"
+                        className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm"
+                        onClick={() => setShowParentDetails(null)}
                       >
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="month" />
-                        <YAxis 
-                          tickFormatter={(value) => `${(value/1000).toFixed(0)}k`}
-                          label={{ value: 'm³', angle: -90, position: 'insideLeft' }}
-                        />
+                        Close
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              <div className="mt-6">
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h4 className="text-md font-medium text-gray-800 mb-2">Analysis Notes</h4>
+                  {currentData.zoneDetails[selectedZone].lossPercent < -10 ? (
+                    <p className="text-sm text-gray-600">
+                      This zone shows a significant surplus, with L3 consumption exceeding L2 bulk readings. This could indicate:
+                      <ul className="list-disc ml-5 mt-2">
+                        <li>Potential metering inaccuracies at the L2 bulk meter</li>
+                        <li>Possible cross-zone supply not captured by this zone's bulk meter</li>
+                        <li>Data recording or calculation issues</li>
+                      </ul>
+                    </p>
+                  ) : currentData.zoneDetails[selectedZone].lossPercent < 0 ? (
+                    <p className="text-sm text-gray-600">
+                      This zone shows a small surplus, with L3 consumption slightly exceeding L2 bulk readings. This is generally within acceptable metering tolerances.
+                    </p>
+                  ) : currentData.zoneDetails[selectedZone].lossPercent < 10 ? (
+                    <p className="text-sm text-gray-600">
+                      This zone shows excellent performance with very low water losses, well within industry best practices.
+                    </p>
+                  ) : currentData.zoneDetails[selectedZone].lossPercent < 25 ? (
+                    <p className="text-sm text-gray-600">
+                      This zone shows moderate water losses that could be improved with targeted interventions.
+                    </p>
+                  ) : (
+                    <p className="text-sm text-gray-600">
+                      This zone shows significantly high water losses that require immediate investigation. Possible causes include:
+                      <ul className="list-disc ml-5 mt-2">
+                        <li>Physical leaks in the distribution network</li>
+                        <li>Unauthorized connections or water theft</li>
+                        <li>Metering inaccuracies or calibration issues</li>
+                        <li>Data recording errors</li>
+                      </ul>
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Loss Analysis Tab */}
+          {activeTab === 'losses' && (
+            <div className="space-y-6 mt-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <KpiCard 
+                  title={`Stage 1 Loss (${selectedPeriod})`}
+                  value={currentData.kpis.stage1LossPercent} 
+                  formatter={formatPercent} 
+                  color={getLossColor(currentData.kpis.stage1LossPercent)} 
+                  icon="🔍" 
+                />
+                <KpiCard 
+                  title={`Stage 2 Loss (${selectedPeriod})`}
+                  value={currentData.kpis.stage2LossPercent} 
+                  formatter={formatPercent} 
+                  color={getLossColor(currentData.kpis.stage2LossPercent)} 
+                  icon="🔎" 
+                />
+                <KpiCard 
+                  title={`Total Loss (NRW) (${selectedPeriod})`}
+                  value={currentData.kpis.totalLossPercent} 
+                  formatter={formatPercent} 
+                  color={getLossColor(currentData.kpis.totalLossPercent)} 
+                  icon="📉" 
+                />
+              </div>
+
+              <div className="bg-white rounded-xl shadow-md p-4 mb-6">
+                <h3 className="text-lg font-medium text-gray-900 mb-4">Loss Breakdown in Volume (m³)</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
+                  <div className="bg-blue-50 rounded-lg p-4">
+                    <p className="text-sm text-blue-700 font-medium">Stage 1 Loss (Trunk Main)</p>
+                    <p className="text-2xl font-bold text-blue-900">
+                      {formatNumber(actualData.lossMetrics[selectedPeriod].stage1Loss)} m³
+                    </p>
+                    <p className="text-xs text-blue-600 mt-1">
+                      Loss between Main Bulk and L2/DC meters
+                    </p>
+                  </div>
+                  <div className="bg-purple-50 rounded-lg p-4">
+                    <p className="text-sm text-purple-700 font-medium">Stage 2 Loss (Distribution)</p>
+                    <p className="text-2xl font-bold text-purple-900">
+                      {formatNumber(actualData.lossMetrics[selectedPeriod].stage2Loss)} m³
+                    </p>
+                    <p className="text-xs text-purple-600 mt-1">
+                      Loss between L2 meters and L3 consumption
+                    </p>
+                  </div>
+                  <div className="bg-red-50 rounded-lg p-4">
+                    <p className="text-sm text-red-700 font-medium">Total Loss (NRW)</p>
+                    <p className="text-2xl font-bold text-red-900">
+                      {formatNumber(actualData.lossMetrics[selectedPeriod].totalLoss)} m³
+                    </p>
+                    <p className="text-xs text-red-600 mt-1">
+                      Total Non-Revenue Water
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="bg-white rounded-xl shadow-md p-4">
+                  <h3 className="text-lg font-medium text-gray-900 mb-4">Top Water Loss Zones ({selectedPeriod})</h3>
+                  <div className="h-72">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart
+                        data={currentData.topLossZones}
+                        margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+                        <XAxis dataKey="zone" />
+                        <YAxis />
                         <Tooltip 
-                          formatter={(value: number) => [value.toLocaleString() + ' m³', 'Consumption']}
+                          content={<CustomTooltip />}
+                          formatter={(value: number) => [
+                            `${value.toFixed(2)}%`,
+                            'Loss Percentage'
+                          ]}
                         />
                         <Legend />
-                        <Bar 
-                          dataKey="consumption" 
-                          fill="#68D1CC" 
-                          name="Total Consumption"
-                          radius={[4, 4, 0, 0]}
-                        />
+                        <Bar dataKey="lossPercent" name="Loss Percentage (%)" fill={COLORS.danger} />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+
+                <div className="bg-white rounded-xl shadow-md p-4">
+                  <h3 className="text-lg font-medium text-gray-900 mb-4">Loss Trend (Q1 2025)</h3>
+                  <div className="h-72">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart
+                        data={[
+                          { month: 'Jan-25', Stage1: actualData.lossMetrics['Jan-25'].stage1LossPercent, Stage2: actualData.lossMetrics['Jan-25'].stage2LossPercent, Total: actualData.lossMetrics['Jan-25'].totalLossPercent },
+                          { month: 'Feb-25', Stage1: actualData.lossMetrics['Feb-25'].stage1LossPercent, Stage2: actualData.lossMetrics['Feb-25'].stage2LossPercent, Total: actualData.lossMetrics['Feb-25'].totalLossPercent },
+                          { month: 'Mar-25', Stage1: actualData.lossMetrics['Mar-25'].stage1LossPercent, Stage2: actualData.lossMetrics['Mar-25'].stage2LossPercent, Total: actualData.lossMetrics['Mar-25'].totalLossPercent }
+                        ]}
+                        margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+                        <XAxis dataKey="month" />
+                        <YAxis />
+                        <Tooltip content={<CustomTooltip />} formatter={(value: number) => `${value.toFixed(2)}%`} />
+                        <Legend />
+                        <Line 
+                          type="monotone" 
+                          dataKey="Stage1" 
+                          name="Stage 1 Loss %" 
+                          stroke={COLORS.primary} 
+                          activeDot={{ r: 8 }} 
+                          strokeWidth={2}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="Stage2" 
+                          name="Stage 2 Loss %" 
+                          stroke={COLORS.secondary} 
+                          activeDot={{ r: 8 }} 
+                          strokeWidth={2}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="Total" 
+                          name="Total Loss %" 
+                          stroke={COLORS.danger} 
+                          activeDot={{ r: 8 }} 
+                          strokeWidth={2}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="bg-white rounded-xl shadow-md p-4">
+                <h3 className="text-lg font-medium text-gray-900 mb-4">All Zones Loss Analysis ({selectedPeriod})</h3>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Zone</th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">L2 Reading (m³)</th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">L3 Sum (m³)</th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Loss (m³)</th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Loss %</th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {Object.entries(currentData.zoneDetails)
+                        .sort(([, a], [, b]) => b.lossPercent - a.lossPercent)
+                        .map(([zone, data]) => (
+                          <tr key={zone} className="hover:bg-gray-50">
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{zone}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatNumber(data.l2Reading)}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatNumber(data.l3Sum)}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatNumber(data.loss)}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatPercent(data.lossPercent)}</td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                ${data.lossPercent < 0 ? 'bg-green-100 text-green-800' : 
+                                  data.lossPercent < 10 ? 'bg-blue-100 text-blue-800' : 
+                                  data.lossPercent < 30 ? 'bg-yellow-100 text-yellow-800' : 
+                                  'bg-red-100 text-red-800'}`}>
+                                {data.lossPercent < 0 ? 'Surplus' : 
+                                  data.lossPercent < 10 ? 'Excellent' : 
+                                  data.lossPercent < 30 ? 'Moderate' : 
+                                  'Critical'}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </div>
-            
-            <Card className="border-muscat-primary/20 shadow-md hover:shadow-lg transition-shadow duration-300 bg-white">
-              <CardHeader className="bg-muscat-primary text-white rounded-t-lg">
-                <CardTitle>Water Loss Trend</CardTitle>
-              </CardHeader>
-              <CardContent className="p-6">
-                <div className="h-[300px]">
+          )}
+
+          {/* Consumption Patterns Tab */}
+          {activeTab === 'consumption' && (
+            <div className="space-y-6 mt-6">
+              <div className="bg-white rounded-xl shadow-md p-4">
+                <h3 className="text-lg font-medium text-gray-900 mb-4">Consumption by Type ({selectedPeriod})</h3>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div className="h-72">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={currentData.typeBreakdown}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={false}
+                          outerRadius={100}
+                          fill="#8884d8"
+                          dataKey="value"
+                          nameKey="type"
+                          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(1)}%`}
+                        >
+                          {currentData.typeBreakdown.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <Tooltip content={<CustomTooltip />} formatter={(value: number) => formatNumber(value) + ' m³'} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div className="h-72">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart
+                        data={currentData.typeBreakdown}
+                        margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                        layout="vertical"
+                      >
+                        <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+                        <XAxis type="number" />
+                        <YAxis type="category" dataKey="type" width={150} />
+                        <Tooltip content={<CustomTooltip />} formatter={(value: number) => formatNumber(value) + ' m³'} />
+                        <Legend />
+                        <Bar dataKey="value" name="Consumption (m³)" fill={COLORS.secondary} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-xl shadow-md p-4">
+                <h3 className="text-lg font-medium text-gray-900 mb-4">Monthly Consumption Trend (Q1 2025)</h3>
+                <div className="h-72">
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart 
-                      data={trendData}
-                      margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+                    <LineChart
+                      data={currentData.monthlyData}
+                      margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                     >
                       <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
                       <XAxis dataKey="month" />
-                      <YAxis 
-                        yAxisId="left"
-                        tickFormatter={(value) => `${value.toFixed(1)}%`}
-                        domain={[0, 5]}
-                      />
-                      <YAxis 
-                        yAxisId="right" 
-                        orientation="right" 
-                        tickFormatter={(value) => `${(value/1000).toFixed(0)}k`}
-                        domain={['dataMin - 1000', 'dataMax + 1000']}
-                      />
-                      <Tooltip 
-                        formatter={(value: number, name) => {
-                          if (name === 'lossPercent') return [`${value.toFixed(1)}%`, 'Loss Percentage'];
-                          return [`${value.toLocaleString()} m³`, name === 'loss' ? 'Water Loss' : 'Consumption'];
-                        }}
-                      />
+                      <YAxis />
+                      <Tooltip content={<CustomTooltip />} formatter={(value: number) => formatNumber(value) + ' m³'} />
                       <Legend />
                       <Line 
                         type="monotone" 
-                        dataKey="lossPercent" 
-                        stroke="#FF6B6B" 
-                        strokeWidth={2} 
-                        yAxisId="left"
-                        dot={{ r: 4 }}
-                        activeDot={{ r: 6 }}
-                        name="Loss Percentage"
+                        dataKey="Consumption" 
+                        name="Consumption (m³)" 
+                        stroke={COLORS.secondary} 
+                        activeDot={{ r: 8 }} 
+                        strokeWidth={2}
                       />
                       <Line 
                         type="monotone" 
-                        dataKey="loss" 
-                        stroke="#9D8EB7" 
-                        strokeWidth={2} 
-                        yAxisId="right"
-                        dot={{ r: 4 }}
-                        activeDot={{ r: 6 }}
-                        name="Water Loss"
+                        dataKey="Supply" 
+                        name="Supply (m³)" 
+                        stroke={COLORS.primary} 
+                        activeDot={{ r: 8 }} 
+                        strokeWidth={2}
                       />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
-              </CardContent>
-            </Card>
-            
-            <Card className="border-muscat-primary/20 shadow-md hover:shadow-lg transition-shadow duration-300 bg-white">
-              <CardHeader className="bg-muscat-primary text-white rounded-t-lg">
-                <CardTitle>Monthly Report</CardTitle>
-              </CardHeader>
-              <CardContent className="p-6">
-                <ScrollArea className="h-[400px]">
-                  <Table>
-                    <TableHeader className="bg-muscat-primary/5 sticky top-0">
-                      <TableRow>
-                        <TableHead className="font-semibold text-muscat-primary">Month</TableHead>
-                        <TableHead className="font-semibold text-muscat-primary">Main Meter (m³)</TableHead>
-                        <TableHead className="font-semibold text-muscat-primary">Zones Sum (m³)</TableHead>
-                        <TableHead className="font-semibold text-muscat-primary">Water Loss (m³)</TableHead>
-                        <TableHead className="font-semibold text-muscat-primary">Loss %</TableHead>
-                        <TableHead className="font-semibold text-muscat-primary">Status</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {waterReports.map((report) => {
-                        const statusColor = getLossStatusColor(report.lossPercent);
-                        const status = getLossStatus(report.lossPercent);
-                        
-                        return (
-                          <TableRow key={report.date} className="hover:bg-muscat-light transition-colors">
-                            <TableCell className="font-medium">{
-                              allMonths.find(m => m.value === report.date)?.label || report.date
-                            }</TableCell>
-                            <TableCell>{report.l2Reading.toLocaleString()}</TableCell>
-                            <TableCell>{report.l3Sum.toLocaleString()}</TableCell>
-                            <TableCell>{report.loss.toLocaleString()}</TableCell>
-                            <TableCell className={statusColor}>{report.lossPercent.toFixed(1)}%</TableCell>
-                            <TableCell>
-                              <Badge className={`
-                                ${status === 'Good' ? 'bg-green-100 text-green-800 hover:bg-green-200' : 
-                                  status === 'Fair' ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200' : 
-                                  'bg-red-100 text-red-800 hover:bg-red-200'}
-                              `}>
-                                {status}
-                              </Badge>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
-                </ScrollArea>
-              </CardContent>
-            </Card>
-          </div>
-        );
-        
-      case 'meters':
-        return (
-          <Card className="border-muscat-primary/20 shadow-md hover:shadow-lg transition-shadow duration-300 bg-white">
-            <CardHeader className="bg-muscat-primary text-white rounded-t-lg">
-              <CardTitle>Water Meters</CardTitle>
-              <CardDescription className="text-white/80">All water meters in the system</CardDescription>
-            </CardHeader>
-            <CardContent className="p-6">
-              <ScrollArea className="h-[600px]">
-                <Table>
-                  <TableHeader className="bg-muscat-primary/5 sticky top-0">
-                    <TableRow>
-                      <TableHead className="font-semibold text-muscat-primary">Meter ID</TableHead>
-                      <TableHead className="font-semibold text-muscat-primary">Label</TableHead>
-                      <TableHead className="font-semibold text-muscat-primary">Location</TableHead>
-                      <TableHead className="font-semibold text-muscat-primary">Zone</TableHead>
-                      <TableHead className="font-semibold text-muscat-primary">Type</TableHead>
-                      <TableHead className="font-semibold text-muscat-primary">Account</TableHead>
-                      <TableHead className="font-semibold text-muscat-primary">Status</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {waterMeters.map((meter) => (
-                      <TableRow key={meter.id} className="hover:bg-muscat-light transition-colors">
-                        <TableCell className="font-medium">{meter.id}</TableCell>
-                        <TableCell>{meter.label}</TableCell>
-                        <TableCell>{meter.location}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className="bg-muscat-primary/10 text-muscat-primary border-muscat-primary/20">
-                            {meter.zone}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{meter.type}</TableCell>
-                        <TableCell>{meter.acctNum}</TableCell>
-                        <TableCell>
-                          <Badge className="bg-green-100 text-green-800 hover:bg-green-200">
-                            Active
-                          </Badge>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </ScrollArea>
-            </CardContent>
-          </Card>
-        );
-        
-      case 'accounts':
-        return (
-          <Card className="border-muscat-primary/20 shadow-md hover:shadow-lg transition-shadow duration-300 bg-white">
-            <CardHeader className="bg-muscat-primary text-white rounded-t-lg">
-              <CardTitle>Water Accounts</CardTitle>
-              <CardDescription className="text-white/80">Water consumption by account</CardDescription>
-            </CardHeader>
-            <CardContent className="p-6">
-              <ScrollArea className="h-[600px]">
-                <Table>
-                  <TableHeader className="bg-muscat-primary/5 sticky top-0">
-                    <TableRow>
-                      <TableHead className="font-semibold text-muscat-primary">Account</TableHead>
-                      <TableHead className="font-semibold text-muscat-primary">Meter</TableHead>
-                      <TableHead className="font-semibold text-muscat-primary">Zone</TableHead>
-                      <TableHead className="font-semibold text-muscat-primary">Type</TableHead>
-                      <TableHead className="font-semibold text-muscat-primary text-right">
-                        {allMonths.find(m => m.value === selectedMonth)?.label || selectedMonth} (m³)
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {waterAccounts.map((account) => (
-                      <TableRow key={account.acctNum} className="hover:bg-muscat-light transition-colors">
-                        <TableCell className="font-medium">{account.acctNum}</TableCell>
-                        <TableCell>{account.meterLabel}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className="bg-muscat-primary/10 text-muscat-primary border-muscat-primary/20">
-                            {account.zone}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{account.type}</TableCell>
-                        <TableCell className="text-right">
-                          {(account.consumption[selectedMonth] || 0).toLocaleString()}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </ScrollArea>
-            </CardContent>
-          </Card>
-        );
-        
-      default:
-        return null;
-    }
-  };
-
-  return (
-    <StandardPageLayout
-      title="Water System Dashboard"
-      description="Track and analyze water consumption, distribution, and network efficiency"
-      icon={<DropletIcon className="h-6 w-6 text-muscat-teal" />}
-    >
-      <div className="grid grid-cols-1 gap-6">
-        {/* Filters Section */}
-        <Card className="border-muscat-primary/20 shadow-md bg-white">
-          <CardHeader className="pb-2 bg-muscat-primary text-white rounded-t-lg">
-            <CardTitle className="text-lg font-medium">Filters & Controls</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2 p-6">
-            <div className="flex flex-wrap gap-4 items-end">
-              <div className="flex flex-col space-y-1.5">
-                <Label htmlFor="month" className="font-medium text-muscat-dark">Month</Label>
-                <Select
-                  value={selectedMonth}
-                  onValueChange={handleMonthChange}
-                >
-                  <SelectTrigger className="w-[180px] border-muscat-primary/30 focus:ring-muscat-primary/20">
-                    <SelectValue placeholder="Select Month" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {allMonths.map((month) => (
-                      <SelectItem key={month.value} value={month.value}>
-                        {month.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
               </div>
               
-              <div className="ml-auto">
-                <Button onClick={handleExport} className="bg-muscat-teal hover:bg-muscat-teal/90 text-white">
-                  <Download className="w-4 h-4 mr-2" />
-                  Export Data
-                </Button>
+              <div className="bg-white rounded-xl shadow-md p-4">
+                <h3 className="text-lg font-medium text-gray-900 mb-4">Consumption by Zone ({selectedPeriod})</h3>
+                <div className="h-96">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      data={Object.entries(currentData.zoneDetails).map(([zone, data]) => ({
+                        zone,
+                        consumption: data.l3Sum
+                      }))}
+                      margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+                      <XAxis dataKey="zone" />
+                      <YAxis />
+                      <Tooltip content={<CustomTooltip />} formatter={(value: number) => formatNumber(value) + ' m³'} />
+                      <Legend />
+                      <Bar dataKey="consumption" name="Consumption (m³)" fill={COLORS.secondary} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+              
+              <div className="bg-white rounded-xl shadow-md p-4">
+                <h3 className="text-lg font-medium text-gray-900 mb-4">Consumption Statistics</h3>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Month</th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Supply (m³)</th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Consumption (m³)</th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Loss (m³)</th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Loss %</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {['Jan-25', 'Feb-25', 'Mar-25', 'Total'].map((month) => {
+                        const supply = actualData.monthlyMetrics[month].L1;
+                        const consumption = actualData.monthlyMetrics[month].L3 + actualData.monthlyMetrics[month].DC;
+                        const loss = actualData.lossMetrics[month].totalLoss;
+                        const lossPercent = actualData.lossMetrics[month].totalLossPercent;
+                        
+                        return (
+                          <tr key={month} className={month === selectedPeriod ? "bg-blue-50" : "hover:bg-gray-50"}>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{month}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatNumber(supply)}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatNumber(consumption)}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatNumber(loss)}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatPercent(lossPercent)}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
-          </CardContent>
-        </Card>
-        
-        {/* Tabs */}
-        <Card className="shadow-md overflow-hidden">
-          <Tabs 
-            value={activeTab} 
-            onValueChange={setActiveTab}
-            className="w-full"
-          >
-            <div className="bg-muscat-primary text-white px-6 py-3">
-              <TabsList className="grid w-full grid-cols-3 bg-muscat-primary/30">
-                <TabsTrigger 
-                  value="overview" 
-                  className="data-[state=active]:bg-white data-[state=active]:text-muscat-primary"
-                >
-                  Overview
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="meters" 
-                  className="data-[state=active]:bg-white data-[state=active]:text-muscat-primary"
-                >
-                  Meters
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="accounts" 
-                  className="data-[state=active]:bg-white data-[state=active]:text-muscat-primary"
-                >
-                  Accounts
-                </TabsTrigger>
-              </TabsList>
-            </div>
-            
-            <TabsContent value="overview" className="p-6 m-0">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key="overview"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  {renderTabContent()}
-                </motion.div>
-              </AnimatePresence>
-            </TabsContent>
-            
-            <TabsContent value="meters" className="p-6 m-0">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key="meters"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  {renderTabContent()}
-                </motion.div>
-              </AnimatePresence>
-            </TabsContent>
-            
-            <TabsContent value="accounts" className="p-6 m-0">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key="accounts"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  {renderTabContent()}
-                </motion.div>
-              </AnimatePresence>
-            </TabsContent>
-          </Tabs>
-        </Card>
+          )}
+        </Tabs>
       </div>
-    </StandardPageLayout>
+      </StandardPageLayout>
+    </div>
   );
 };
 
-export default WaterSystem;
+export default Dashboard;

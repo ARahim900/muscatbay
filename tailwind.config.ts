@@ -64,7 +64,7 @@ export default {
 					ring: 'hsl(var(--sidebar-ring))'
 				},
 				muscat: {
-					primary: '#4E4456', // Main title background
+					primary: '#4E4456', // Updated to exact hex code
 					teal: '#68D1CC',
 					gold: '#D4B98C',
 					lavender: '#9D8EB7',
@@ -148,13 +148,7 @@ export default {
 				'button': '0 2px 10px rgba(78, 68, 86, 0.2)',
 				'card': '0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025)',
 				'elevated': '0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.01)'
-			},
-			backgroundImage: {
-				'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
-				'gradient-conic': 'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
-				'gradient-primary': 'linear-gradient(to right, #4E4456, #9D8EB7)',
-				'gradient-secondary': 'linear-gradient(to right, #68D1CC, #D4B98C)',
-			},
+			}
 		}
 	},
 	plugins: [require("tailwindcss-animate")],
