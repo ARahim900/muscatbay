@@ -1,11 +1,9 @@
-
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { LucideIcon } from 'lucide-react';
 import { waterColors } from './WaterTheme';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
-
 export interface EnhancedKpiCardProps {
   title: string;
   value: string | number;
@@ -23,7 +21,6 @@ export interface EnhancedKpiCardProps {
   onClick?: () => void;
   isActive?: boolean;
 }
-
 const EnhancedKpiCard: React.FC<EnhancedKpiCardProps> = ({
   title,
   value,
@@ -36,7 +33,7 @@ const EnhancedKpiCard: React.FC<EnhancedKpiCardProps> = ({
   variant = 'primary',
   className,
   onClick,
-  isActive = false,
+  isActive = false
 }) => {
   // Define elegant variant styles with gradients and better contrast
   const variantStyles = {
@@ -99,28 +96,19 @@ const EnhancedKpiCard: React.FC<EnhancedKpiCardProps> = ({
       titleColor: 'text-gray-700 dark:text-gray-300',
       valueColor: 'text-gray-900 dark:text-gray-50',
       descColor: 'text-gray-600/70 dark:text-gray-400/70'
-    },
+    }
   };
-
   const styles = variantStyles[variant];
-
-  return (
-    <motion.div
-      whileHover={{ scale: 1.02 }}
-      transition={{ type: "spring", stiffness: 400, damping: 10 }}
-    >
-      <Card 
-        className={cn(
-          'transition-all duration-300 border-0 shadow-md overflow-hidden rounded-xl',
-          styles.gradient,
-          styles.borderColor,
-          onClick ? `cursor-pointer ${styles.hoverBg}` : '',
-          className
-        )}
-        onClick={onClick}
-      >
+  return <motion.div whileHover={{
+    scale: 1.02
+  }} transition={{
+    type: "spring",
+    stiffness: 400,
+    damping: 10
+  }}>
+      <Card className={cn('transition-all duration-300 border-0 shadow-md overflow-hidden rounded-xl', styles.gradient, styles.borderColor, onClick ? `cursor-pointer ${styles.hoverBg}` : '', className)} onClick={onClick}>
         <CardContent className="p-0">
-          <div className="p-6">
+          <div className="p-6 bg-neutral-50">
             <div className="flex justify-between items-start">
               <div>
                 <p className={cn("text-sm font-medium mb-1", styles.titleColor)}>{title}</p>
@@ -128,22 +116,14 @@ const EnhancedKpiCard: React.FC<EnhancedKpiCardProps> = ({
                   <h3 className={cn("text-2xl font-bold leading-none", styles.valueColor)}>{value}</h3>
                   {valueUnit && <span className={cn("ml-1 text-sm", styles.descColor)}>{valueUnit}</span>}
                 </div>
-                {subValue !== undefined && (
-                  <div className="flex items-baseline mt-1">
+                {subValue !== undefined && <div className="flex items-baseline mt-1">
                     <span className={cn("text-base font-medium", styles.valueColor)}>{subValue}</span>
                     {subValueUnit && <span className={cn("ml-1 text-xs", styles.descColor)}>{subValueUnit}</span>}
-                  </div>
-                )}
-                {description && (
-                  <p className={cn("text-xs mt-2", styles.descColor)}>{description}</p>
-                )}
-                {trend && (
-                  <div className={`flex items-center mt-2 text-xs ${
-                    trend.isPositive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
-                  }`}>
+                  </div>}
+                {description && <p className={cn("text-xs mt-2", styles.descColor)}>{description}</p>}
+                {trend && <div className={`flex items-center mt-2 text-xs ${trend.isPositive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                     <span>{trend.isPositive ? '↑' : '↓'} {trend.value}%</span>
-                  </div>
-                )}
+                  </div>}
               </div>
               <div className={cn("p-2.5 rounded-full", styles.iconBg)}>
                 <Icon className={cn("h-5 w-5", styles.iconColor)} />
@@ -151,19 +131,9 @@ const EnhancedKpiCard: React.FC<EnhancedKpiCardProps> = ({
             </div>
           </div>
           {/* Add a colored bottom border accent for visual appeal */}
-          <div className={cn(
-            "h-1 w-full",
-            variant === 'primary' ? 'bg-blue-500' : 
-            variant === 'secondary' ? 'bg-sky-500' : 
-            variant === 'success' ? 'bg-green-500' : 
-            variant === 'warning' ? 'bg-amber-500' : 
-            variant === 'danger' ? 'bg-red-500' : 
-            'bg-gray-500'
-          )} />
+          <div className={cn("h-1 w-full", variant === 'primary' ? 'bg-blue-500' : variant === 'secondary' ? 'bg-sky-500' : variant === 'success' ? 'bg-green-500' : variant === 'warning' ? 'bg-amber-500' : variant === 'danger' ? 'bg-red-500' : 'bg-gray-500')} />
         </CardContent>
       </Card>
-    </motion.div>
-  );
+    </motion.div>;
 };
-
 export default EnhancedKpiCard;
