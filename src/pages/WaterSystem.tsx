@@ -216,47 +216,40 @@ const WaterSystem = () => {
     );
   }
   
-  // Transform and prepare data
+  // Transform and prepare data - always compute these regardless of conditions
   const transformedData = useMemo(() => transformWaterData(waterData), [waterData]);
-  
-  // Get available filters
   const availableMonths = useMemo(() => getAvailableMonths(transformedData), [transformedData]);
   const zones = useMemo(() => getZones(transformedData), [transformedData]);
   const types = useMemo(() => getTypes(transformedData), [transformedData]);
-  
-  // Filter data based on selections
   const filteredData = useMemo(() => 
     filterWaterData(transformedData, filters.selectedMonth, filters.selectedZone, filters.selectedType),
     [transformedData, filters.selectedMonth, filters.selectedZone, filters.selectedType]
   );
-  
-  // Calculate metrics
   const levelMetrics = useMemo(() => 
     calculateLevelMetrics(transformedData, filters.selectedMonth),
     [transformedData, filters.selectedMonth]
   );
-  
   const zoneMetrics = useMemo(() => 
     calculateZoneMetrics(transformedData, filters.selectedMonth),
     [transformedData, filters.selectedMonth]
   );
-  
   const typeConsumption = useMemo(() => 
     calculateTypeConsumption(transformedData, filters.selectedMonth),
     [transformedData, filters.selectedMonth]
   );
-  
   const monthlyTrends = useMemo(() => 
     calculateMonthlyTrends(transformedData, availableMonths),
     [transformedData, availableMonths]
   );
   
-  // Calculate pagination
+  // Calculate pagination - moved out of conditional rendering to be consistent
   const totalPages = Math.ceil(filteredData.length / pageSize);
-  const paginatedData = filteredData.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
+  const paginatedData = useMemo(() => {
+    return filteredData.slice(
+      (currentPage - 1) * pageSize,
+      currentPage * pageSize
+    );
+  }, [filteredData, currentPage, pageSize]);
   
   // Handle export data
   const handleExportData = () => {
