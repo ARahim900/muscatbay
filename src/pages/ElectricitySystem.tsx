@@ -587,14 +587,13 @@ const ElectricitySystem = () => {
         
         {/* Main Content */}
         <main className="flex-1 p-6 overflow-auto">
-          <AnimatePresence mode="wait">
+          <AnimatePresence>
             <motion.div
-              key={activeTab}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.2 }}
-              className="h-full"
+              className="container mx-auto p-4"
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              variants={pageVariants}
             >
               <div className="mb-6">
                 <h1 className="text-2xl font-bold">Electricity System Dashboard</h1>

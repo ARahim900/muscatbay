@@ -1,10 +1,9 @@
-
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { Building, Home, Droplet, Water } from 'lucide-react';
+import { Building, Home, Droplet, Droplets } from 'lucide-react';
 import { ZoneMetrics, WaterConsumptionData } from '@/types/waterSystem';
 import EnhancedKpiCard from './EnhancedKpiCard';
 import WaterConsumptionChart from './WaterConsumptionChart';
@@ -184,7 +183,7 @@ const WaterZones: React.FC<WaterZonesProps> = ({
           valueUnit="m³"
           subValue={selectedZoneMetrics.lossPercentage.toFixed(1)}
           subValueUnit="% of bulk supply"
-          icon={Water}
+          icon={Droplets}
           variant={selectedZoneMetrics.lossPercentage > 15 ? "danger" : "warning"}
         />
       </motion.div>
