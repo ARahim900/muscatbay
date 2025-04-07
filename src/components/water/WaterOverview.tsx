@@ -1,9 +1,9 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { CircleDollarSign, PackageCheck, PercentCircle, TrendingUp } from 'lucide-react';
 import { LevelMetrics, ZoneMetrics, TypeConsumption, MonthlyConsumption } from '@/types/waterSystem';
-import { format, parseISO } from 'date-fns';
 import { 
   ResponsiveContainer, 
   AreaChart, 
@@ -44,13 +44,18 @@ const WaterOverview: React.FC<WaterOverviewProps> = ({
   monthlyTrends,
   selectedMonth
 }) => {
-  // Format monthly trends data for the area chart
-  const monthlyTrendData = monthlyTrends.map(trend => ({
-    month: format(parseISO(`2025-${trend.month.substring(4, 6)}-01`), 'MMM'),
-    'Bulk Supply': trend.l1Supply,
-    'Consumption': trend.l3Volume,
-    'Loss': trend.loss
-  }));
+  // Format monthly trends data for the area chart - fixing the date parsing issue
+  const monthlyTrendData = monthlyTrends.map(trend => {
+    // Extract the month abbreviation from the month string (e.g., "Jan" from "Jan-25")
+    const monthAbbr = trend.month.substring(0, 3);
+    
+    return {
+      month: monthAbbr,
+      'Bulk Supply': trend.l1Supply,
+      'Consumption': trend.l3Volume,
+      'Loss': trend.loss
+    };
+  });
   
   // Prepare zone data for the pie chart
   const zoneDataForChart = zoneMetrics.map(zone => ({
