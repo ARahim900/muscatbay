@@ -27,6 +27,12 @@ export default function useAirtableData<T = any>(
   
   const { enabled = true, ...queryOptions } = options;
 
+  // Remove 'Grid view' from options if present
+  const finalQueryOptions = {...queryOptions};
+  if (finalQueryOptions.view === 'Grid view') {
+    delete finalQueryOptions.view;
+  }
+
   const fetchData = async () => {
     if (!enabled) return;
     
@@ -35,7 +41,7 @@ export default function useAirtableData<T = any>(
     
     try {
       console.log(`Fetching data from Airtable table: ${tableName}`);
-      const fetchedData = await fetchTableData(tableName, queryOptions);
+      const fetchedData = await fetchTableData(tableName, finalQueryOptions);
       console.log('Fetched data:', fetchedData);
       setData(fetchedData as T[]);
     } catch (err) {
@@ -53,6 +59,20 @@ export default function useAirtableData<T = any>(
             errorMessage = 'Authentication error: Please check your Airtable API key and permissions';
           } else if (err.statusCode === 404) {
             errorMessage = `Table "${tableName}" not found. Please check table name`;
+          } else if (err.statusCode === 422) {
+            errorMessage = `Table view issue. Using default view instead.`;
+            // Try again without specifying a view
+            try {
+              const retryOptions = {...finalQueryOptions};
+              delete retryOptions.view;
+              const fetchedData = await fetchTableData(tableName, retryOptions);
+              setData(fetchedData as T[]);
+              setIsLoading(false);
+              return; // Exit early if successful
+            } catch (retryErr) {
+              console.error('Retry failed:', retryErr);
+              errorMessage = `Unable to access table "${tableName}" after retry`;
+            }
           }
         }
         
@@ -81,7 +101,7 @@ export default function useAirtableData<T = any>(
 
   useEffect(() => {
     fetchData();
-  }, [tableName, JSON.stringify(queryOptions), enabled]);
+  }, [tableName, JSON.stringify(finalQueryOptions), enabled]);
 
   return { data, isLoading, error, refetch: fetchData };
 }

@@ -1,3 +1,4 @@
+
 import Airtable from 'airtable';
 
 // Initialize Airtable with your API key
@@ -28,11 +29,15 @@ export const fetchTableData = async (
   try {
     console.log(`Attempting to fetch data from Airtable table "${tableIdOrName}" with options:`, options);
     
+    // Remove the view option if it's 'Grid view' to avoid the error
+    const finalOptions = {...options};
+    if (finalOptions.view === 'Grid view') {
+      delete finalOptions.view;
+      console.log('Removed "Grid view" from options to avoid Airtable error');
+    }
+    
     const records = await base(tableIdOrName)
-      .select({
-        view: options.view || 'Grid view',  // Default to 'Grid view' if not specified
-        ...options
-      })
+      .select(finalOptions)
       .all();
     
     console.log(`Successfully fetched ${records.length} records from "${tableIdOrName}"`);

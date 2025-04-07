@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState } from 'react';
 import useAirtableData from '@/hooks/useAirtableData';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -47,11 +48,11 @@ const WaterSystem = () => {
   const [selectedZone, setSelectedZone] = useState("all");
   const [isManualLoading, setIsManualLoading] = useState(false);
   
-  // Fetch water consumption data from Airtable using the table ID instead of name
+  // Fetch water consumption data from Airtable using the table ID
+  // Remove the view parameter to avoid the "View Grid view not found" error
   const { data: waterData, isLoading, error, refetch } = useAirtableData<WaterConsumptionData>(
     WATER_TABLE_ID,
     {
-      view: 'Grid view',
       sort: [{ field: 'Date', direction: 'desc' }],
     }
   );
@@ -60,9 +61,8 @@ const WaterSystem = () => {
   const handleManualFetch = async () => {
     setIsManualLoading(true);
     try {
-      // Let's verify the table actually exists by trying to fetch it directly
+      // Let's verify the table actually exists by trying to fetch it directly without specifying a view
       const data = await fetchTableData(WATER_TABLE_ID, {
-        view: 'Grid view',
         maxRecords: 1
       });
       console.log('Manual fetch successful:', data);
