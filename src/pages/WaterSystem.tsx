@@ -368,7 +368,7 @@ const WaterSystem = () => {
                       {paginatedData.map((record, index) => <tr key={record.id || index} className="bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                           <td className="px-4 py-3 text-sm whitespace-nowrap">{record['Meter Label'] || '-'}</td>
                           <td className="px-4 py-3 text-sm whitespace-nowrap">
-                            <Badge variant="outline" className="font-normal bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800">
+                            <Badge variant="outline" className="font-normal text-blue-700 border-blue-200 dark:text-blue-300 dark:border-blue-800 bg-zinc-50">
                               {record.Zone || '-'}
                             </Badge>
                           </td>

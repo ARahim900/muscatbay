@@ -110,8 +110,8 @@ const WaterOverview: React.FC<WaterOverviewProps> = ({
       {/* Monthly Trends Chart */}
       <Card className="overflow-hidden bg-white dark:bg-gray-800 shadow-md border-0 rounded-xl">
         <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 border-b pb-4 bg-muscat-dark">
-          <CardTitle className="text-lg font-semibold text-blue-800 dark:text-blue-300">Monthly Water Trends</CardTitle>
-          <CardDescription className="text-blue-600/70 dark:text-blue-400/70">
+          <CardTitle className="text-lg font-semibold text-muscat-primary">Monthly Water Trends</CardTitle>
+          <CardDescription className="text-muscat-dark">
             Trends in bulk supply, consumption, and loss over time
           </CardDescription>
         </CardHeader>
@@ -192,7 +192,7 @@ const WaterOverview: React.FC<WaterOverviewProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Zone Distribution Chart */}
         <Card className="overflow-hidden bg-white dark:bg-gray-800 shadow-md border-0 rounded-xl">
-          <CardHeader className="bg-gradient-to-r from-green-50 to-teal-100 dark:from-green-900/20 dark:to-teal-800/20 border-b pb-4">
+          <CardHeader className="bg-gradient-to-r from-green-50 to-teal-100 dark:from-green-900/20 dark:to-teal-800/20 border-b pb-4 bg-zinc-50">
             <CardTitle className="text-lg font-semibold text-teal-800 dark:text-teal-300">Zone Distribution</CardTitle>
             <CardDescription className="text-teal-600/70 dark:text-teal-400/70">
               Distribution of water supply across different zones
