@@ -56,6 +56,10 @@ export default function useAirtableData<T = any>(
           }
         }
         
+        if ('error' in err && typeof err.error === 'string') {
+          errorMessage = `API Error: ${err.error}`;
+        }
+        
         if ('message' in err && typeof err.message === 'string') {
           errorMessage = err.message;
         }

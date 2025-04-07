@@ -25,8 +25,12 @@ export const fetchTableData = async (
 ) => {
   try {
     console.log(`Attempting to fetch data from Airtable table "${tableName}" with options:`, options);
+    
     const records = await base(tableName)
-      .select(options)
+      .select({
+        view: options.view || 'Grid view',  // Default to 'Grid view' if not specified
+        ...options
+      })
       .all();
     
     console.log(`Successfully fetched ${records.length} records from "${tableName}"`);

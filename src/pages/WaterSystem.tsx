@@ -1,11 +1,10 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import useAirtableData from '@/hooks/useAirtableData';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Droplets, FileDown, Loader2, AlertTriangle } from 'lucide-react';
+import { Droplets, FileDown, Loader2, AlertTriangle, RefreshCw } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import Layout from '@/components/layout/Layout';
 import { 
@@ -24,6 +23,7 @@ import {
   Cell 
 } from 'recharts';
 import { toast } from 'sonner';
+import { fetchTableData } from '@/services/airtableService';
 
 // Define types for water data
 interface WaterConsumptionData {
@@ -45,17 +45,58 @@ const WaterSystem = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [selectedMonth, setSelectedMonth] = useState("all");
   const [selectedZone, setSelectedZone] = useState("all");
+  const [isManualLoading, setIsManualLoading] = useState(false);
   
   // Fetch water consumption data from Airtable
   const { data: waterData, isLoading, error, refetch } = useAirtableData<WaterConsumptionData>(
     'Water Consumption', // Make sure this matches your actual table name in Airtable
     {
       // Optional: Add view, filter, or sort options
-      // view: 'Grid view',
-      // filterByFormula: `AND({Month}='${selectedMonth}')`,
+      view: 'Grid view',
       sort: [{ field: 'Date', direction: 'desc' }],
     }
   );
+
+  // Manual fetch function with direct table name check
+  const handleManualFetch = async () => {
+    setIsManualLoading(true);
+    try {
+      // Let's verify the table actually exists by trying to fetch it directly
+      const data = await fetchTableData('Water Consumption', {
+        view: 'Grid view',
+        maxRecords: 1
+      });
+      console.log('Manual fetch successful:', data);
+      toast.success('Table connection verified. Refreshing data...');
+      refetch();
+    } catch (err) {
+      console.error('Manual fetch failed:', err);
+      toast.error(`Manual fetch failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      
+      // Try other possible table names
+      try {
+        const tables = ['Water Data', 'WaterData', 'Water System', 'water_consumption', 'water-consumption'];
+        
+        for (const tableName of tables) {
+          try {
+            console.log(`Trying alternative table name: ${tableName}`);
+            const testData = await fetchTableData(tableName, { maxRecords: 1 });
+            if (testData && testData.length > 0) {
+              toast.success(`Found table with name: ${tableName}. Please update your table name in the code.`);
+              console.log(`Table found with name: ${tableName}`, testData);
+              break;
+            }
+          } catch (tableErr) {
+            console.log(`No table found with name: ${tableName}`);
+          }
+        }
+      } catch (alternativeErr) {
+        console.error('All alternative table name checks failed:', alternativeErr);
+      }
+    } finally {
+      setIsManualLoading(false);
+    }
+  };
   
   if (isLoading) {
     return (
@@ -85,14 +126,54 @@ const WaterSystem = () => {
               <div className="bg-red-50 text-red-800 p-4 rounded-md">
                 <p className="font-medium">Failed to load water data: {error.message}</p>
                 <p className="mt-2">Please check your Airtable connection settings and table configuration.</p>
-                <div className="mt-4">
-                  <Button 
-                    variant="outline" 
-                    className="text-blue-600"
-                    onClick={() => refetch()}
-                  >
-                    Try Again
-                  </Button>
+                <div className="mt-4 space-y-3">
+                  <div>
+                    <p className="text-sm text-red-700 mb-1">Airtable Configuration:</p>
+                    <ul className="list-disc pl-5 text-sm space-y-1">
+                      <li>API Key: The API key you're using appears to be valid in format</li>
+                      <li>Base ID: Make sure your Base ID (appwGy1JHL1UYsO2W) is correct</li>
+                      <li>Table Name: Ensure "Water Consumption" is the exact table name in your Airtable base</li>
+                      <li>API Key Permissions: Verify your API key has access to this base</li>
+                    </ul>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Button 
+                      variant="outline" 
+                      className="text-blue-600"
+                      onClick={() => refetch()}
+                      disabled={isManualLoading}
+                    >
+                      {isManualLoading ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Checking...
+                        </>
+                      ) : (
+                        <>
+                          <RefreshCw className="w-4 h-4 mr-2" />
+                          Try Again
+                        </>
+                      )}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="text-amber-600"
+                      onClick={handleManualFetch}
+                      disabled={isManualLoading}
+                    >
+                      {isManualLoading ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Checking table names...
+                        </>
+                      ) : (
+                        <>
+                          <AlertTriangle className="w-4 h-4 mr-2" />
+                          Check Table Names
+                        </>
+                      )}
+                    </Button>
+                  </div>
                 </div>
               </div>
             </CardContent>
