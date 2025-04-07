@@ -76,7 +76,7 @@ export const getTypes = (data: WaterConsumptionData[]): string[] => {
   const types = ['all'];
   
   data.forEach(item => {
-    if (item.Type && !zones.includes(item.Type)) {
+    if (item.Type && !types.includes(item.Type)) {
       types.push(item.Type);
     }
   });
