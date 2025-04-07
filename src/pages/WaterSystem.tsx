@@ -23,7 +23,7 @@ import {
   Cell 
 } from 'recharts';
 import { toast } from 'sonner';
-import { fetchTableData, WATER_TABLE_ID } from '@/services/airtableService';
+import { fetchTableData, WATER_TABLE_ID, AIRTABLE_BASE_ID } from '@/services/airtableService';
 
 interface WaterConsumptionData {
   id: string;
