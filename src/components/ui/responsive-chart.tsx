@@ -1,132 +1,86 @@
 
 import React from 'react';
-import { useIsMobile, useIsTablet } from '@/hooks/use-mobile';
-import { cn } from '@/lib/utils';
 import {
-  BarChart,
+  ResponsiveContainer,
+  BarChart as RechartsBarChart,
   Bar,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
-  ResponsiveContainer,
-  TooltipProps
+  Legend
 } from 'recharts';
 
-// Enhanced responsive bar chart component
-export const ResponsiveBarChart = ({
-  data,
-  xKey,
-  yKey,
-  barColor = '#0088FE',
-  className,
-  xLabel,
-  yLabel,
-  xFormatter,
-  yFormatter,
-  barSize,
-  legend,
-  tooltip,
-  horizontal = false,
-  height = 300,
-  margin,
-  barRadius = [0, 0, 0, 0]
-}: {
+interface ResponsiveBarChartProps {
   data: any[];
   xKey: string;
   yKey: string;
+  horizontal?: boolean;
   barColor?: string;
-  className?: string;
   xLabel?: string;
   yLabel?: string;
+  height?: number;
+  barRadius?: [number, number, number, number];
   xFormatter?: (value: any) => string;
   yFormatter?: (value: any) => string;
-  barSize?: number;
-  legend?: boolean;
-  tooltip?: React.FC<TooltipProps<any, any>>;
-  horizontal?: boolean;
-  height?: number;
-  margin?: { top?: number; right?: number; bottom?: number; left?: number };
-  barRadius?: [number, number, number, number]; // top-left, top-right, bottom-right, bottom-left
+  tooltip?: (props: any) => React.ReactNode;
+}
+
+const ResponsiveBarChart: React.FC<ResponsiveBarChartProps> = ({
+  data,
+  xKey,
+  yKey,
+  horizontal = false,
+  barColor = '#0088FE',
+  xLabel,
+  yLabel,
+  height = 300,
+  barRadius = [0, 0, 0, 0],
+  xFormatter,
+  yFormatter,
+  tooltip
 }) => {
-  const isMobile = useIsMobile();
-  const isTablet = useIsTablet();
-  
-  // Default margins that work well on different screen sizes
-  const defaultMargin = {
-    top: 20,
-    right: isMobile ? 10 : 30,
-    left: isMobile ? (horizontal ? 60 : 10) : (horizontal ? 100 : 40),
-    bottom: isMobile ? 60 : 30,
-    ...margin
-  };
-  
-  // Adjust tick sizes for mobile
-  const tickFontSize = isMobile ? 10 : 12;
+  if (!data || data.length === 0) {
+    return (
+      <div 
+        style={{ height: height }} 
+        className="flex items-center justify-center text-gray-500 bg-gray-50 rounded-lg"
+      >
+        No data available
+      </div>
+    );
+  }
 
   return (
-    <div className={cn('w-full', className)} style={{ height }}>
-      <ResponsiveContainer width="100%" height="100%">
-        {horizontal ? (
-          <BarChart
-            data={data}
-            layout="vertical"
-            margin={defaultMargin}
-          >
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis 
-              type="number"
-              tick={{ fontSize: tickFontSize }}
-              label={xLabel && !isMobile ? { value: xLabel, position: 'bottom', offset: 0 } : undefined}
-              tickFormatter={xFormatter}
-            />
-            <YAxis 
-              type="category" 
-              dataKey={xKey}
-              width={defaultMargin.left}
-              tick={{ fontSize: tickFontSize }}
-              label={yLabel && !isMobile ? { value: yLabel, angle: -90, position: 'left', offset: -10 } : undefined}
-            />
-            {tooltip ? <Tooltip content={tooltip} /> : <Tooltip />}
-            {legend && <Legend wrapperStyle={{ fontSize: tickFontSize }} />}
-            <Bar 
-              dataKey={yKey} 
-              fill={barColor} 
-              barSize={barSize || (isMobile ? 20 : 30)} 
-              radius={barRadius}
-            />
-          </BarChart>
-        ) : (
-          <BarChart
-            data={data}
-            margin={defaultMargin}
-          >
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis 
-              dataKey={xKey} 
-              tick={{ fontSize: tickFontSize }}
-              label={xLabel && !isMobile ? { value: xLabel, position: 'bottom', offset: 0 } : undefined}
-              tickFormatter={xFormatter}
-              angle={isMobile ? -45 : undefined}
-              textAnchor={isMobile ? "end" : "middle"}
-              height={isMobile ? 80 : 30}
-            />
-            <YAxis 
-              tick={{ fontSize: tickFontSize }}
-              label={yLabel && !isMobile ? { value: yLabel, angle: -90, position: 'left', offset: -10 } : undefined}
-              tickFormatter={yFormatter}
-            />
-            {tooltip ? <Tooltip content={tooltip} /> : <Tooltip />}
-            {legend && <Legend wrapperStyle={{ fontSize: tickFontSize }} />}
-            <Bar 
-              dataKey={yKey} 
-              fill={barColor} 
-              barSize={barSize || (isMobile ? 20 : 30)} 
-              radius={barRadius}
-            />
-          </BarChart>
-        )}
+    <div style={{ width: '100%', height: height }}>
+      <ResponsiveContainer>
+        <RechartsBarChart
+          data={data}
+          layout={horizontal ? 'vertical' : 'horizontal'}
+          margin={{ top: 10, right: 30, left: 20, bottom: 20 }}
+        >
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis 
+            dataKey={horizontal ? undefined : xKey}
+            type={horizontal ? 'number' : 'category'}
+            label={xLabel ? { value: xLabel, position: 'insideBottom', offset: -5 } : undefined}
+            tickFormatter={xFormatter}
+          />
+          <YAxis 
+            dataKey={horizontal ? xKey : undefined}
+            type={horizontal ? 'category' : 'number'}
+            label={yLabel ? { value: yLabel, angle: -90, position: 'insideLeft' } : undefined}
+            tickFormatter={yFormatter}
+          />
+          <Tooltip content={tooltip} />
+          <Legend />
+          <Bar 
+            dataKey={yKey} 
+            name={yKey} 
+            fill={barColor} 
+            radius={barRadius}
+          />
+        </RechartsBarChart>
       </ResponsiveContainer>
     </div>
   );
