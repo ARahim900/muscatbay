@@ -1,3 +1,4 @@
+
 import Airtable from 'airtable';
 
 // Initialize Airtable with your API key
@@ -23,9 +24,12 @@ export const fetchTableData = async (
   } = {}
 ) => {
   try {
+    console.log(`Attempting to fetch data from Airtable table "${tableName}" with options:`, options);
     const records = await base(tableName)
       .select(options)
       .all();
+    
+    console.log(`Successfully fetched ${records.length} records from "${tableName}"`);
     
     return records.map(record => ({
       id: record.id,

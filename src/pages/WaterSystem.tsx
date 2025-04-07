@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import useAirtableData from '@/hooks/useAirtableData';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -45,8 +44,17 @@ const WaterSystem = () => {
   const [selectedMonth, setSelectedMonth] = useState("all");
   const [selectedZone, setSelectedZone] = useState("all");
   
-  // Fetch water consumption data from Airtable
-  const { data: waterData, isLoading, error, refetch } = useAirtableData<WaterConsumptionData>('Water Consumption');
+  // Fetch water consumption data from Airtable using the updated hook
+  // The table name should match your Airtable base table name
+  const { data: waterData, isLoading, error, refetch } = useAirtableData<WaterConsumptionData>(
+    'Water Consumption', // Make sure this matches your actual table name in Airtable
+    {
+      // Optional: Add view, filter, or sort options
+      // view: 'Grid view',
+      // filterByFormula: `AND({Month}='${selectedMonth}')`,
+      // sort: [{ field: 'Date', direction: 'desc' }],
+    }
+  );
   
   if (isLoading) {
     return (
