@@ -1,16 +1,15 @@
 
-import React from 'react';
-import { motion } from 'framer-motion';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
-import { BarChart, FilterX, Droplets, PieChart } from 'lucide-react';
+import { FlaskConical, PercentCircle, TrendingUp, Droplet } from 'lucide-react';
 import { TypeConsumption, WaterConsumptionData } from '@/types/waterSystem';
-import EnhancedKpiCard from './EnhancedKpiCard';
-import WaterConsumptionChart from './WaterConsumptionChart';
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Cell, PieChart, Pie } from 'recharts';
+import EnhancedPieChart from '@/components/ui/enhanced-pie-chart';
 import { waterColors } from './WaterTheme';
+import { motion } from 'framer-motion';
 import { getReadingValue } from '@/utils/waterSystemUtils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import EnhancedKpiCard from './EnhancedKpiCard';
 
 interface WaterTypeAnalysisProps {
   typeConsumption: TypeConsumption[];
@@ -21,7 +20,7 @@ interface WaterTypeAnalysisProps {
   types: string[];
 }
 
-const WaterTypeAnalysis: React.FC<WaterTypeAnalysisProps> = ({ 
+const WaterTypeAnalysis: React.FC<WaterTypeAnalysisProps> = ({
   typeConsumption,
   waterData,
   selectedMonth,
@@ -29,305 +28,330 @@ const WaterTypeAnalysis: React.FC<WaterTypeAnalysisProps> = ({
   onSelectType,
   types
 }) => {
-  // Animation variants
+  const [chartView, setChartView] = useState<'pie' | 'bar'>('pie');
+  
+  const getTypeColor = (typeName: string, index: number): string => {
+    const typeColors: {[key: string]: string} = {
+      'Retail': waterColors.chart.blue,
+      'Residential (Villa)': waterColors.chart.green,
+      'Residential (Apart)': waterColors.chart.amber,
+      'IRR_Servies': waterColors.chart.red,
+      'MB_Common': waterColors.chart.purple,
+      'Zone Bulk': waterColors.chart.teal,
+      'Building': waterColors.chart.lightBlue,
+      'D_Building_Common': waterColors.chart.indigo
+    };
+    
+    const colorArray = [
+      waterColors.chart.blue,
+      waterColors.chart.green,
+      waterColors.chart.amber,
+      waterColors.chart.red,
+      waterColors.chart.purple,
+      waterColors.chart.teal,
+      waterColors.chart.lightBlue,
+      waterColors.chart.indigo
+    ];
+    
+    return typeColors[typeName] || colorArray[index % colorArray.length];
+  };
+  
+  const typeDataForChart = typeConsumption
+    .filter(item => item.consumption > 0)
+    .map((item, index) => ({
+      name: item.type,
+      value: item.consumption,
+      percentage: item.percentage,
+      color: getTypeColor(item.type, index)
+    }));
+  
+  // Get data for the selected type
+  const typeMeters = selectedType !== 'all'
+    ? waterData.filter(meter => meter.Type === selectedType && (meter.Label === 'L3' || meter.Label === 'DC'))
+    : [];
+  
+  const typeTotal = typeConsumption.find(t => t.type === selectedType)?.consumption || 0;
+  const typePercentage = typeConsumption.find(t => t.type === selectedType)?.percentage || 0;
+  
+  // Calculate active meters count
+  const activeMeterCount = typeMeters.filter(meter => 
+    selectedMonth === 'all' || getReadingValue(meter, selectedMonth) > 0
+  ).length;
+  
+  // Calculate average consumption per meter
+  const avgConsumption = activeMeterCount > 0 
+    ? typeTotal / activeMeterCount 
+    : 0;
+  
+  // Prepare meters data for bar chart
+  const metersData = typeMeters
+    .map(meter => ({
+      name: meter['Meter Label'] || `Meter ${meter['Acct #']}`,
+      value: selectedMonth === 'all' 
+        ? Object.keys(meter)
+            .filter(key => /^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)-\d{2}$/.test(key))
+            .reduce((sum, month) => sum + getReadingValue(meter, month), 0) / 12 // Average monthly consumption
+        : getReadingValue(meter, selectedMonth),
+      zone: meter.Zone || 'Unknown'
+    }))
+    .filter(item => item.value > 0)
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 10); // Top 10 meters
+  
   const containerVariants = {
     hidden: { opacity: 0 },
-    show: {
+    visible: { 
       opacity: 1,
-      transition: {
-        staggerChildren: 0.1
-      }
+      transition: { staggerChildren: 0.1 }
     }
   };
   
   const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    show: { opacity: 1, y: 0 }
-  };
-  
-  // Get all meters for the selected type
-  const typeMeters = waterData.filter(meter => 
-    meter.Type === selectedType || selectedType === 'all'
-  );
-  
-  // Group meters by zone for the selected type
-  const metersByZone: Record<string, WaterConsumptionData[]> = {};
-  typeMeters.forEach(meter => {
-    const zone = meter.Zone || 'Unknown';
-    if (!metersByZone[zone]) {
-      metersByZone[zone] = [];
+    hidden: { y: 20, opacity: 0 },
+    visible: { 
+      y: 0, 
+      opacity: 1,
+      transition: { duration: 0.3 }
     }
-    metersByZone[zone].push(meter);
-  });
-  
-  // Calculate consumption by zone for the selected type
-  const zoneConsumption = Object.entries(metersByZone).map(([zone, meters]) => {
-    const consumption = meters.reduce((sum, meter) => {
-      return sum + getReadingValue(meter, selectedMonth);
-    }, 0);
-    
-    return { zone, consumption };
-  }).sort((a, b) => b.consumption - a.consumption);
-  
-  // Find the selected type's metrics
-  const selectedTypeMetrics = typeConsumption.find(t => t.type === selectedType) || 
-    { type: selectedType || 'All Types', consumption: 0, percentage: 0 };
-  
-  // Format data for charts
-  const typeBarData = typeConsumption.map(item => ({
-    name: item.type,
-    value: item.consumption
-  }));
-  
-  const zoneConsumptionData = zoneConsumption.map(item => ({
-    name: item.zone,
-    value: item.consumption
-  }));
-  
-  // Calculate total consumption for the filter combination
-  const totalConsumption = typeConsumption.reduce((sum, t) => sum + t.consumption, 0);
-  const filteredConsumption = selectedType === 'all' ? 
-    totalConsumption : (selectedTypeMetrics?.consumption || 0);
-  
-  // Determine top consumers for this type
-  const topMeters = [...typeMeters]
-    .sort((a, b) => 
-      getReadingValue(b, selectedMonth) - getReadingValue(a, selectedMonth)
-    )
-    .slice(0, 5);
+  };
   
   return (
     <motion.div 
       className="space-y-6"
-      variants={containerVariants}
       initial="hidden"
-      animate="show"
+      animate="visible"
+      variants={containerVariants}
     >
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <h2 className="text-xl font-semibold">Type Analysis</h2>
+      {/* Type selection and overall statistics */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex-1">
+          <h2 className="text-xl font-semibold mb-2 flex items-center gap-2">
+            <FlaskConical className="h-5 w-5 text-indigo-500" />
+            Water Consumption by Type
+          </h2>
+          <p className="text-muted-foreground">
+            Analysis of water consumption patterns across different usage types
+          </p>
+        </div>
         
-        <Select value={selectedType} onValueChange={onSelectType}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Select Type" />
-          </SelectTrigger>
-          <SelectContent>
-            {types.map((type) => (
-              <SelectItem key={type} value={type}>
-                {type === 'all' ? 'All Types' : type}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="flex flex-col sm:flex-row gap-3">
+          <Select value={selectedType} onValueChange={onSelectType}>
+            <SelectTrigger className="w-[200px] bg-white shadow-sm">
+              <SelectValue placeholder="Select Type" />
+            </SelectTrigger>
+            <SelectContent>
+              {types.map((type) => (
+                <SelectItem key={type} value={type} className="cursor-pointer">
+                  {type === 'all' ? 'All Types' : type}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          
+          <div className="flex rounded-md overflow-hidden border shadow-sm">
+            <button
+              className={`px-3 py-2 text-sm font-medium ${
+                chartView === 'pie' 
+                  ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300' 
+                  : 'bg-white text-gray-600 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300'
+              }`}
+              onClick={() => setChartView('pie')}
+            >
+              Pie Chart
+            </button>
+            <button
+              className={`px-3 py-2 text-sm font-medium ${
+                chartView === 'bar' 
+                  ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300' 
+                  : 'bg-white text-gray-600 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300'
+              }`}
+              onClick={() => setChartView('bar')}
+            >
+              Bar Chart
+            </button>
+          </div>
+        </div>
       </div>
       
-      <motion.div
-        className="grid grid-cols-1 md:grid-cols-3 gap-4"
-        variants={itemVariants}
-      >
-        <EnhancedKpiCard
-          title="Total Consumption"
-          value={filteredConsumption.toLocaleString()}
-          valueUnit="m³"
-          icon={Droplets}
-          variant="primary"
-          description={selectedType === 'all' ? "All water types" : `${selectedType} consumption`}
-        />
-        
-        <EnhancedKpiCard
-          title="Percentage of Total"
-          value={selectedType === 'all' ? "100" : (selectedTypeMetrics?.percentage || 0).toFixed(1)}
-          valueUnit="%"
-          icon={PieChart}
-          variant="success"
-          description="Share of total water consumption"
-        />
-        
-        <EnhancedKpiCard
-          title="Unique Meters"
-          value={typeMeters.length.toString()}
-          valueUnit="meters"
-          icon={FilterX}
-          variant="warning"
-          description={`Number of ${selectedType === 'all' ? 'all' : selectedType} meters`}
-        />
-      </motion.div>
+      {/* Type statistics cards */}
+      {selectedType !== 'all' && (
+        <motion.div 
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
+          variants={itemVariants}
+        >
+          <EnhancedKpiCard
+            title={`Total ${selectedType} Consumption`}
+            value={typeTotal.toLocaleString()}
+            valueUnit="m³"
+            icon={Droplet}
+            variant="primary"
+            className="shadow-md border-0 bg-white"
+          />
+          
+          <EnhancedKpiCard
+            title="Percentage of Total"
+            value={typePercentage.toFixed(1)}
+            valueUnit="%"
+            icon={PercentCircle}
+            variant="secondary"
+            className="shadow-md border-0 bg-white"
+          />
+          
+          <EnhancedKpiCard
+            title="Active Meters"
+            value={activeMeterCount}
+            icon={FlaskConical}
+            variant="success"
+            className="shadow-md border-0 bg-white"
+          />
+          
+          <EnhancedKpiCard
+            title="Avg. Consumption per Meter"
+            value={avgConsumption.toLocaleString(undefined, { maximumFractionDigits: 1 })}
+            valueUnit="m³"
+            icon={TrendingUp}
+            variant="warning"
+            className="shadow-md border-0 bg-white"
+          />
+        </motion.div>
+      )}
       
-      <motion.div
-        className="grid grid-cols-1 lg:grid-cols-2 gap-6"
-        variants={itemVariants}
-      >
-        <WaterConsumptionChart
-          title="Consumption by Type"
-          description="Distribution of water across types"
-          data={typeBarData}
-          type="bar"
-          horizontal={true}
-        />
-        
-        <WaterConsumptionChart
-          title="Zone Distribution"
-          description={`Where ${selectedType === 'all' ? 'water' : selectedType} is consumed`}
-          data={zoneConsumptionData}
-          type="pie"
-          colors={[
-            waterColors.chart.blue,
-            waterColors.chart.purple,
-            waterColors.chart.green,
-            waterColors.chart.amber,
-            waterColors.chart.red
-          ]}
-        />
-      </motion.div>
-      
-      <motion.div variants={itemVariants}>
-        <Card className="bg-white shadow-md">
-          <CardHeader>
-            <CardTitle className="text-lg font-semibold">Top Consumers</CardTitle>
-            <CardDescription>
-              Highest consumption meters {selectedType !== 'all' && `for ${selectedType}`}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr className="bg-gray-100 dark:bg-gray-800 text-left text-xs">
-                    <th className="px-4 py-3 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap">Meter Label</th>
-                    <th className="px-4 py-3 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap">Zone</th>
-                    <th className="px-4 py-3 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap">Type</th>
-                    <th className="px-4 py-3 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap">Level</th>
-                    <th className="px-4 py-3 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap text-right">Consumption (m³)</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                  {topMeters.map((meter, index) => (
-                    <tr 
-                      key={meter.id || index}
-                      className="bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+      {/* Charts section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <motion.div variants={itemVariants}>
+          <Card className="overflow-hidden bg-white dark:bg-gray-800 shadow-md border-0 rounded-xl">
+            <CardHeader className="bg-gradient-to-r from-indigo-50 to-purple-100 dark:from-indigo-900/20 dark:to-purple-800/20 border-b pb-4">
+              <CardTitle className="text-lg font-semibold text-indigo-800 dark:text-indigo-300">
+                Consumption Distribution by Type
+              </CardTitle>
+              <CardDescription className="text-indigo-600/70 dark:text-indigo-400/70">
+                {selectedMonth === 'all' 
+                  ? 'Average monthly distribution across all types' 
+                  : `Distribution for ${selectedMonth} across all types`}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-6">
+              {typeDataForChart.length > 0 ? (
+                chartView === 'pie' ? (
+                  <EnhancedPieChart
+                    data={typeDataForChart}
+                    innerRadius={60}
+                    outerRadius={130}
+                    className="h-[380px] w-full"
+                    showLegend
+                    valueFormatter={(value) => `${value.toLocaleString()} m³`}
+                  />
+                ) : (
+                  <ResponsiveContainer width="100%" height={380}>
+                    <BarChart
+                      data={typeDataForChart}
+                      margin={{ top: 20, right: 30, left: 20, bottom: 70 }}
+                      layout="vertical"
                     >
-                      <td className="px-4 py-3 text-sm whitespace-nowrap">{meter['Meter Label'] || '-'}</td>
-                      <td className="px-4 py-3 text-sm whitespace-nowrap">
-                        <Badge 
-                          variant="outline" 
-                          className="font-normal"
-                        >
-                          {meter.Zone || '-'}
-                        </Badge>
-                      </td>
-                      <td className="px-4 py-3 text-sm whitespace-nowrap">{meter.Type || '-'}</td>
-                      <td className="px-4 py-3 text-sm whitespace-nowrap">
-                        <Badge 
-                          variant="outline" 
-                          className={`font-normal ${
-                            meter.Label === 'L1' ? 'bg-purple-50 text-purple-700 dark:bg-purple-900/20 dark:text-purple-300' :
-                            meter.Label === 'L2' ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300' :
-                            meter.Label === 'L3' ? 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-300' :
-                            meter.Label === 'DC' ? 'bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300' :
-                            ''
-                          }`}
-                        >
-                          {meter.Label || '-'}
-                        </Badge>
-                      </td>
-                      <td className="px-4 py-3 text-sm whitespace-nowrap text-right font-medium">
-                        {getReadingValue(meter, selectedMonth).toLocaleString()}
-                      </td>
-                    </tr>
-                  ))}
-                  
-                  {topMeters.length === 0 && (
-                    <tr>
-                      <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
-                        No meters found for the selected type
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
-      </motion.div>
-      
-      <motion.div variants={itemVariants}>
-        <Card className="bg-white shadow-md">
-          <CardHeader>
-            <CardTitle className="text-lg font-semibold">All {selectedType === 'all' ? 'Types' : selectedType} Meters</CardTitle>
-            <CardDescription>
-              Total of {typeMeters.length} meters found
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr className="bg-gray-100 dark:bg-gray-800 text-left text-xs">
-                    <th className="px-4 py-3 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap">Meter Label</th>
-                    <th className="px-4 py-3 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap">Zone</th>
-                    <th className="px-4 py-3 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap">Type</th>
-                    <th className="px-4 py-3 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap">Level</th>
-                    <th className="px-4 py-3 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap text-right">Consumption (m³)</th>
-                    <th className="px-4 py-3 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap">Parent Meter</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                  {typeMeters.slice(0, 10).map((meter, index) => (
-                    <tr 
-                      key={meter.id || index}
-                      className="bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
-                    >
-                      <td className="px-4 py-3 text-sm whitespace-nowrap">{meter['Meter Label'] || '-'}</td>
-                      <td className="px-4 py-3 text-sm whitespace-nowrap">
-                        <Badge 
-                          variant="outline" 
-                          className="font-normal"
-                        >
-                          {meter.Zone || '-'}
-                        </Badge>
-                      </td>
-                      <td className="px-4 py-3 text-sm whitespace-nowrap">{meter.Type || '-'}</td>
-                      <td className="px-4 py-3 text-sm whitespace-nowrap">
-                        <Badge 
-                          variant="outline" 
-                          className={`font-normal ${
-                            meter.Label === 'L1' ? 'bg-purple-50 text-purple-700 dark:bg-purple-900/20 dark:text-purple-300' :
-                            meter.Label === 'L2' ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300' :
-                            meter.Label === 'L3' ? 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-300' :
-                            meter.Label === 'DC' ? 'bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300' :
-                            ''
-                          }`}
-                        >
-                          {meter.Label || '-'}
-                        </Badge>
-                      </td>
-                      <td className="px-4 py-3 text-sm whitespace-nowrap text-right font-medium">
-                        {getReadingValue(meter, selectedMonth).toLocaleString()}
-                      </td>
-                      <td className="px-4 py-3 text-sm whitespace-nowrap text-gray-600 dark:text-gray-400">
-                        {meter['Parent Meter'] || '-'}
-                      </td>
-                    </tr>
-                  ))}
-                  
-                  {typeMeters.length === 0 && (
-                    <tr>
-                      <td colSpan={6} className="px-4 py-8 text-center text-gray-500">
-                        No meters found for the selected type
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-              
-              {typeMeters.length > 10 && (
-                <div className="px-4 py-3 text-xs font-semibold text-gray-500 border-t">
-                  Showing 10 of {typeMeters.length} entries
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                      <XAxis 
+                        type="number"
+                        tick={{ fill: '#64748b', fontSize: 12 }}
+                        axisLine={{ stroke: '#cbd5e1' }}
+                      />
+                      <YAxis 
+                        type="category"
+                        dataKey="name"
+                        tick={{ fill: '#64748b', fontSize: 12 }}
+                        axisLine={{ stroke: '#cbd5e1' }}
+                        width={150}
+                      />
+                      <Tooltip 
+                        formatter={(value: any) => [`${value.toLocaleString()} m³`, 'Consumption']}
+                        contentStyle={{ 
+                          backgroundColor: 'rgba(255, 255, 255, 0.95)', 
+                          borderRadius: '8px', 
+                          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)', 
+                          border: '1px solid #e2e8f0' 
+                        }}
+                      />
+                      <Legend />
+                      <Bar dataKey="value" name="Consumption (m³)">
+                        {typeDataForChart.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                )
+              ) : (
+                <div className="h-[380px] flex items-center justify-center bg-gray-50 rounded-lg">
+                  <p className="text-gray-500">No consumption data available for the selected month</p>
                 </div>
               )}
-            </div>
-          </CardContent>
-        </Card>
-      </motion.div>
+            </CardContent>
+          </Card>
+        </motion.div>
+        
+        <motion.div variants={itemVariants}>
+          <Card className="overflow-hidden bg-white dark:bg-gray-800 shadow-md border-0 rounded-xl">
+            <CardHeader className="bg-gradient-to-r from-blue-50 to-cyan-100 dark:from-blue-900/20 dark:to-cyan-800/20 border-b pb-4">
+              <CardTitle className="text-lg font-semibold text-blue-800 dark:text-blue-300">
+                {selectedType === 'all' ? 'Top Consumers Across All Types' : `Top ${selectedType} Consumers`}
+              </CardTitle>
+              <CardDescription className="text-blue-600/70 dark:text-blue-400/70">
+                {selectedMonth === 'all' 
+                  ? 'Average monthly consumption for top meters' 
+                  : `Top consumers for ${selectedMonth}`}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-6">
+              {metersData.length > 0 ? (
+                <ResponsiveContainer width="100%" height={380}>
+                  <BarChart
+                    data={metersData}
+                    margin={{ top: 20, right: 30, left: 20, bottom: 70 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                    <XAxis 
+                      dataKey="name"
+                      tick={{ fill: '#64748b', fontSize: 12 }}
+                      axisLine={{ stroke: '#cbd5e1' }}
+                      angle={-45}
+                      textAnchor="end"
+                      height={80}
+                    />
+                    <YAxis 
+                      tick={{ fill: '#64748b', fontSize: 12 }}
+                      axisLine={{ stroke: '#cbd5e1' }}
+                      tickFormatter={(value) => `${value.toLocaleString()}`}
+                    />
+                    <Tooltip 
+                      formatter={(value: any) => [`${value.toLocaleString()} m³`, 'Consumption']}
+                      contentStyle={{ 
+                        backgroundColor: 'rgba(255, 255, 255, 0.95)', 
+                        borderRadius: '8px', 
+                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)', 
+                        border: '1px solid #e2e8f0' 
+                      }}
+                    />
+                    <Legend />
+                    <Bar 
+                      dataKey="value" 
+                      name="Consumption (m³)" 
+                      fill={waterColors.chart.blue}
+                      radius={[4, 4, 0, 0]}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-[380px] flex items-center justify-center bg-gray-50 rounded-lg">
+                  <p className="text-gray-500">
+                    {selectedType === 'all' 
+                      ? 'No consumption data available for any type' 
+                      : `No ${selectedType} consumption data available`}
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </motion.div>
+      </div>
     </motion.div>
   );
 };

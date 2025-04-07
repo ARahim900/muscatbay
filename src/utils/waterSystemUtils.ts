@@ -1,4 +1,3 @@
-
 import { WaterConsumptionData, ZoneMetrics, LevelMetrics, TypeConsumption, MonthlyConsumption } from '@/types/waterSystem';
 
 // Constants for excluded meters
@@ -15,6 +14,8 @@ export const transformWaterData = (data: WaterConsumptionData[]): WaterConsumpti
  * Calculate reading for a specific month, handling different data types
  */
 export const getReadingValue = (item: WaterConsumptionData, month: string): number => {
+  if (month === 'all') return 0; // Return 0 for 'all' selection to fix zero display issue
+  
   const value = item[month];
   
   if (typeof value === 'number') return value;
@@ -94,6 +95,7 @@ export const filterWaterData = (
   selectedType: string
 ): WaterConsumptionData[] => {
   return data.filter(record => {
+    // Fix for 'all' month selection - if 'all' is selected, include all records regardless of month data
     const monthMatch = selectedMonth === 'all' || 
                       (record[selectedMonth] !== undefined && 
                        record[selectedMonth] !== null);
@@ -115,9 +117,9 @@ export const calculateLevelMetrics = (
   
   // L1: Main Bulk meter
   const l1Meters = data.filter(meter => meter.Label === 'L1');
-  const l1Supply = l1Meters.reduce((sum, meter) => {
-    return sum + getReadingValue(meter, selectedMonth);
-  }, 0);
+  const l1Supply = selectedMonth === 'all' 
+    ? getAverageMonthlyValue(l1Meters)  // For 'all', use the average of all months
+    : l1Meters.reduce((sum, meter) => sum + getReadingValue(meter, selectedMonth), 0);
   
   // L2: Zone Bulk meters + Direct Connections from L1
   const l2Meters = data.filter(meter => meter.Label === 'L2');
@@ -126,23 +128,17 @@ export const calculateLevelMetrics = (
     l1Meters.some(l1 => l1['Meter Label'] === meter['Parent Meter'])
   );
   
-  const l2Volume = [
-    ...l2Meters,
-    ...dcMetersFromL1
-  ].reduce((sum, meter) => {
-    return sum + getReadingValue(meter, selectedMonth);
-  }, 0);
+  const l2Volume = selectedMonth === 'all'
+    ? getAverageMonthlyValue([...l2Meters, ...dcMetersFromL1])
+    : [...l2Meters, ...dcMetersFromL1].reduce((sum, meter) => sum + getReadingValue(meter, selectedMonth), 0);
   
   // L3: Individual meters (L3) + All Direct Connections
   const l3Meters = data.filter(meter => meter.Label === 'L3');
   const dcMeters = data.filter(meter => meter.Label === 'DC');
   
-  const l3Volume = [
-    ...l3Meters,
-    ...dcMeters
-  ].reduce((sum, meter) => {
-    return sum + getReadingValue(meter, selectedMonth);
-  }, 0);
+  const l3Volume = selectedMonth === 'all'
+    ? getAverageMonthlyValue([...l3Meters, ...dcMeters])
+    : [...l3Meters, ...dcMeters].reduce((sum, meter) => sum + getReadingValue(meter, selectedMonth), 0);
   
   // Calculate losses
   const stage1Loss = l1Supply - l2Volume;
@@ -166,6 +162,42 @@ export const calculateLevelMetrics = (
     totalLossPercentage
   };
 };
+
+/**
+ * Helper function to calculate average monthly value across all months for a set of meters
+ */
+function getAverageMonthlyValue(meters: WaterConsumptionData[]): number {
+  if (meters.length === 0) return 0;
+  
+  // Get all month fields from the first meter
+  const firstMeter = meters[0];
+  if (!firstMeter) return 0;
+  
+  const monthFields = Object.keys(firstMeter).filter(key => 
+    /^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)-\d{2}$/.test(key)
+  );
+  
+  if (monthFields.length === 0) return 0;
+  
+  // Calculate total for all months
+  let totalValue = 0;
+  let monthCount = 0;
+  
+  monthFields.forEach(month => {
+    let monthTotal = 0;
+    meters.forEach(meter => {
+      monthTotal += getReadingValue(meter, month);
+    });
+    
+    if (monthTotal > 0) {
+      totalValue += monthTotal;
+      monthCount++;
+    }
+  });
+  
+  // Return average
+  return monthCount > 0 ? totalValue / monthCount : 0;
+}
 
 /**
  * Calculate zone-specific metrics

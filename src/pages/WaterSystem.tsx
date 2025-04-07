@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import useAirtableData from '@/hooks/useAirtableData';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -217,26 +217,39 @@ const WaterSystem = () => {
   }
   
   // Transform and prepare data
-  const transformedData = transformWaterData(waterData);
+  const transformedData = useMemo(() => transformWaterData(waterData), [waterData]);
   
   // Get available filters
-  const availableMonths = getAvailableMonths(transformedData);
-  const zones = getZones(transformedData);
-  const types = getTypes(transformedData);
+  const availableMonths = useMemo(() => getAvailableMonths(transformedData), [transformedData]);
+  const zones = useMemo(() => getZones(transformedData), [transformedData]);
+  const types = useMemo(() => getTypes(transformedData), [transformedData]);
   
   // Filter data based on selections
-  const filteredData = filterWaterData(
-    transformedData, 
-    filters.selectedMonth, 
-    filters.selectedZone,
-    filters.selectedType
+  const filteredData = useMemo(() => 
+    filterWaterData(transformedData, filters.selectedMonth, filters.selectedZone, filters.selectedType),
+    [transformedData, filters.selectedMonth, filters.selectedZone, filters.selectedType]
   );
   
   // Calculate metrics
-  const levelMetrics = calculateLevelMetrics(transformedData, filters.selectedMonth);
-  const zoneMetrics = calculateZoneMetrics(transformedData, filters.selectedMonth);
-  const typeConsumption = calculateTypeConsumption(transformedData, filters.selectedMonth);
-  const monthlyTrends = calculateMonthlyTrends(transformedData, availableMonths);
+  const levelMetrics = useMemo(() => 
+    calculateLevelMetrics(transformedData, filters.selectedMonth),
+    [transformedData, filters.selectedMonth]
+  );
+  
+  const zoneMetrics = useMemo(() => 
+    calculateZoneMetrics(transformedData, filters.selectedMonth),
+    [transformedData, filters.selectedMonth]
+  );
+  
+  const typeConsumption = useMemo(() => 
+    calculateTypeConsumption(transformedData, filters.selectedMonth),
+    [transformedData, filters.selectedMonth]
+  );
+  
+  const monthlyTrends = useMemo(() => 
+    calculateMonthlyTrends(transformedData, availableMonths),
+    [transformedData, availableMonths]
+  );
   
   // Calculate pagination
   const totalPages = Math.ceil(filteredData.length / pageSize);
@@ -317,153 +330,184 @@ const WaterSystem = () => {
           variants={pageVariants}
         >
           <div className="flex flex-col space-y-6">
-            {/* Header */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">
-              <div>
-                <h1 className="text-2xl font-bold tracking-tight flex items-center">
-                  <Droplets className="mr-2 h-6 w-6 text-blue-500" />
-                  Water System Dashboard
-                </h1>
-                <p className="text-muted-foreground mt-1">
-                  Monitor water consumption, distribution, and losses across Muscat Bay
-                </p>
+            {/* Header with beautiful gradient background */}
+            <div className="rounded-xl bg-gradient-to-r from-blue-50 via-blue-100 to-indigo-100 dark:from-blue-900/30 dark:via-blue-800/30 dark:to-indigo-900/30 p-6 shadow-md">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">
+                <div>
+                  <h1 className="text-2xl font-bold tracking-tight flex items-center text-blue-800 dark:text-blue-300">
+                    <Droplets className="mr-2 h-8 w-8 text-blue-600 dark:text-blue-400" />
+                    Water System Dashboard
+                  </h1>
+                  <p className="text-blue-700/70 dark:text-blue-400/70 mt-1 max-w-2xl">
+                    Monitor water consumption, distribution, and losses across Muscat Bay
+                  </p>
+                </div>
+                
+                <div className="flex flex-wrap items-center gap-3">
+                  <Select value={filters.selectedMonth} onValueChange={handleMonthChange}>
+                    <SelectTrigger className="w-[160px] bg-white/90 shadow-sm">
+                      <SelectValue placeholder="Select Month" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableMonths.map((month) => (
+                        <SelectItem key={month} value={month}>
+                          {month === 'all' ? 'All Months' : month}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  
+                  <Button 
+                    variant="outline" 
+                    size="icon"
+                    onClick={handleExportData}
+                    title="Export Data"
+                    className="bg-white/90 shadow-sm"
+                  >
+                    <FileDown className="h-4 w-4" />
+                  </Button>
+                  
+                  <WaterDataRefresh 
+                    onRefresh={handleManualFetch}
+                    lastUpdated={lastUpdated}
+                  />
+                </div>
               </div>
               
-              <div className="flex flex-wrap items-center gap-3">
-                <Select value={filters.selectedMonth} onValueChange={handleMonthChange}>
-                  <SelectTrigger className="w-[160px]">
-                    <SelectValue placeholder="Select Month" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availableMonths.map((month) => (
-                      <SelectItem key={month} value={month}>
-                        {month === 'all' ? 'All Months' : month}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              {/* Tabs with enhanced styling */}
+              <Tabs 
+                value={filters.selectedView} 
+                onValueChange={handleTabChange}
+                className="mt-6"
+              >
+                <TabsList className="grid w-full max-w-2xl grid-cols-4 bg-white/70 dark:bg-gray-800/50 p-1 rounded-lg shadow-sm">
+                  <TabsTrigger 
+                    value="overview" 
+                    className="flex items-center gap-2 data-[state=active]:bg-blue-600 data-[state=active]:text-white dark:data-[state=active]:bg-blue-700"
+                  >
+                    <BarChart2 className="h-4 w-4" />
+                    <span className="hidden md:inline">Overview</span>
+                    <span className="md:hidden">Overview</span>
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="zones" 
+                    className="flex items-center gap-2 data-[state=active]:bg-teal-600 data-[state=active]:text-white dark:data-[state=active]:bg-teal-700"
+                  >
+                    <AreaChart className="h-4 w-4" />
+                    <span className="hidden md:inline">Zones</span>
+                    <span className="md:hidden">Zones</span>
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="types" 
+                    className="flex items-center gap-2 data-[state=active]:bg-indigo-600 data-[state=active]:text-white dark:data-[state=active]:bg-indigo-700"
+                  >
+                    <FlaskConical className="h-4 w-4" />
+                    <span className="hidden md:inline">Types</span>
+                    <span className="md:hidden">Types</span>
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="loss" 
+                    className="flex items-center gap-2 data-[state=active]:bg-amber-600 data-[state=active]:text-white dark:data-[state=active]:bg-amber-700"
+                  >
+                    <PieChart className="h-4 w-4" />
+                    <span className="hidden md:inline">Loss Analysis</span>
+                    <span className="md:hidden">Loss</span>
+                  </TabsTrigger>
+                </TabsList>
                 
-                <Select value={filters.selectedZone} onValueChange={handleZoneChange}>
-                  <SelectTrigger className="w-[160px]">
-                    <SelectValue placeholder="Select Zone" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {zones.map((zone) => (
-                      <SelectItem key={zone} value={zone}>
-                        {zone === 'all' ? 'All Zones' : zone}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                
-                <Button 
-                  variant="outline" 
-                  size="icon"
-                  onClick={handleExportData}
-                  title="Export Data"
-                >
-                  <FileDown className="h-4 w-4" />
-                </Button>
-                
-                <WaterDataRefresh 
-                  onRefresh={handleManualFetch}
-                  lastUpdated={lastUpdated}
-                />
-              </div>
+                <div className="mt-2 text-sm text-blue-700/70 dark:text-blue-400/70 pl-2">
+                  <span className="font-medium">Showing:</span> {filters.selectedMonth === 'all' ? 'All Months' : filters.selectedMonth}
+                  {filters.selectedView === 'zones' && filters.selectedZone !== 'all' && ` | Zone: ${filters.selectedZone}`}
+                  {filters.selectedType !== 'all' && ` | Type: ${filters.selectedType}`}
+                </div>
+              </Tabs>
             </div>
             
-            {/* Tabs */}
-            <Tabs 
-              value={filters.selectedView} 
-              onValueChange={handleTabChange}
-              className="space-y-6"
-            >
-              <TabsList className="grid w-full max-w-md grid-cols-4 mb-6">
-                <TabsTrigger value="overview" className="flex items-center gap-2">
-                  <BarChart2 className="h-4 w-4" />
-                  <span>Overview</span>
-                </TabsTrigger>
-                <TabsTrigger value="zones" className="flex items-center gap-2">
-                  <AreaChart className="h-4 w-4" />
-                  <span>Zones</span>
-                </TabsTrigger>
-                <TabsTrigger value="types" className="flex items-center gap-2">
-                  <FlaskConical className="h-4 w-4" />
-                  <span>Types</span>
-                </TabsTrigger>
-                <TabsTrigger value="loss" className="flex items-center gap-2">
-                  <PieChart className="h-4 w-4" />
-                  <span>Loss Analysis</span>
-                </TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="overview" className="space-y-6">
-                <WaterOverview 
-                  levelMetrics={levelMetrics}
-                  zoneMetrics={zoneMetrics}
-                  typeConsumption={typeConsumption}
-                  monthlyTrends={monthlyTrends}
-                  selectedMonth={filters.selectedMonth}
-                />
-              </TabsContent>
-              
-              <TabsContent value="zones" className="space-y-6">
-                <WaterZones 
-                  zoneMetrics={zoneMetrics}
-                  waterData={transformedData}
-                  selectedMonth={filters.selectedMonth}
-                  selectedZone={filters.selectedZone || zones[1] || ''}
-                  onSelectZone={handleZoneChange}
-                />
-              </TabsContent>
-              
-              <TabsContent value="types" className="space-y-6">
-                <WaterTypeAnalysis
-                  typeConsumption={typeConsumption}
-                  waterData={transformedData}
-                  selectedMonth={filters.selectedMonth}
-                  selectedType={filters.selectedType}
-                  onSelectType={handleTypeChange}
-                  types={types}
-                />
-              </TabsContent>
-              
-              <TabsContent value="loss" className="space-y-6">
-                <WaterLossAnalysis 
-                  zoneMetrics={zoneMetrics}
-                  levelMetrics={levelMetrics}
-                  selectedMonth={filters.selectedMonth}
-                />
-              </TabsContent>
-            </Tabs>
+            {/* Tab content */}
+            <TabsContent value="overview" className="mt-0">
+              <WaterOverview 
+                levelMetrics={levelMetrics}
+                zoneMetrics={zoneMetrics}
+                typeConsumption={typeConsumption}
+                monthlyTrends={monthlyTrends}
+                selectedMonth={filters.selectedMonth}
+              />
+            </TabsContent>
             
-            {/* Data Table */}
-            <Card className="shadow-md bg-white">
-              <CardHeader className="bg-gray-50 dark:bg-gray-800/50 border-b">
+            <TabsContent value="zones" className="mt-0">
+              <WaterZones 
+                zoneMetrics={zoneMetrics}
+                waterData={transformedData}
+                selectedMonth={filters.selectedMonth}
+                selectedZone={filters.selectedZone || zones[1] || ''}
+                onSelectZone={handleZoneChange}
+              />
+            </TabsContent>
+            
+            <TabsContent value="types" className="mt-0">
+              <WaterTypeAnalysis
+                typeConsumption={typeConsumption}
+                waterData={transformedData}
+                selectedMonth={filters.selectedMonth}
+                selectedType={filters.selectedType}
+                onSelectType={handleTypeChange}
+                types={types}
+              />
+            </TabsContent>
+            
+            <TabsContent value="loss" className="mt-0">
+              <WaterLossAnalysis 
+                zoneMetrics={zoneMetrics}
+                levelMetrics={levelMetrics}
+                selectedMonth={filters.selectedMonth}
+              />
+            </TabsContent>
+            
+            {/* Data Table with improved styling */}
+            <Card className="shadow-md bg-white border-0 rounded-xl overflow-hidden">
+              <CardHeader className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800/50 dark:to-gray-700/50 border-b">
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
                   <div>
                     <CardTitle className="text-lg font-semibold">Water Consumption Details</CardTitle>
                     <CardDescription>
-                      Showing {filteredData.length} records {filters.selectedMonth !== 'all' && `for ${filters.selectedMonth}`}
+                      Showing {filteredData.length} records 
+                      {filters.selectedMonth !== 'all' && ` for ${filters.selectedMonth}`}
                       {filters.selectedZone !== 'all' && ` in ${filters.selectedZone}`}
                       {filters.selectedType !== 'all' && ` of type ${filters.selectedType}`}
                     </CardDescription>
                   </div>
                   
-                  {types.length > 1 && (
-                    <Select value={filters.selectedType} onValueChange={handleTypeChange}>
-                      <SelectTrigger className="w-[160px]">
-                        <SelectValue placeholder="Filter by Type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {types.map((type) => (
-                          <SelectItem key={type} value={type}>
-                            {type === 'all' ? 'All Types' : type}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
+                  <div className="flex gap-3">
+                    {zones.length > 1 && (
+                      <Select value={filters.selectedZone} onValueChange={handleZoneChange}>
+                        <SelectTrigger className="w-[160px] bg-white shadow-sm">
+                          <SelectValue placeholder="Filter by Zone" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {zones.map((zone) => (
+                            <SelectItem key={zone} value={zone}>
+                              {zone === 'all' ? 'All Zones' : zone}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                    
+                    {types.length > 1 && (
+                      <Select value={filters.selectedType} onValueChange={handleTypeChange}>
+                        <SelectTrigger className="w-[160px] bg-white shadow-sm">
+                          <SelectValue placeholder="Filter by Type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {types.map((type) => (
+                            <SelectItem key={type} value={type}>
+                              {type === 'all' ? 'All Types' : type}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  </div>
                 </div>
               </CardHeader>
               <CardContent className="p-0">
@@ -494,7 +538,7 @@ const WaterSystem = () => {
                         >
                           <td className="px-4 py-3 text-sm whitespace-nowrap">{record['Meter Label'] || '-'}</td>
                           <td className="px-4 py-3 text-sm whitespace-nowrap">
-                            <Badge variant="outline" className="font-normal">
+                            <Badge variant="outline" className="font-normal bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800">
                               {record.Zone || '-'}
                             </Badge>
                           </td>
@@ -503,10 +547,10 @@ const WaterSystem = () => {
                             <Badge 
                               variant="outline" 
                               className={`font-normal ${
-                                record.Label === 'L1' ? 'bg-purple-50 text-purple-700 dark:bg-purple-900/20 dark:text-purple-300' :
-                                record.Label === 'L2' ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300' :
-                                record.Label === 'L3' ? 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-300' :
-                                record.Label === 'DC' ? 'bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300' :
+                                record.Label === 'L1' ? 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800' :
+                                record.Label === 'L2' ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800' :
+                                record.Label === 'L3' ? 'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800' :
+                                record.Label === 'DC' ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-800' :
                                 ''
                               }`}
                             >
