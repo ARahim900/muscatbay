@@ -8,6 +8,7 @@ import Contracts from '@/pages/Contracts';
 import Projects from '@/pages/Projects';
 import Electricity from '@/pages/Electricity';
 import ElectricitySystem from '@/pages/ElectricitySystem';
+import ElectricityAnalytics from '@/pages/ElectricityAnalytics';
 import HVAC from '@/pages/HVAC';
 import PumpingStations from '@/pages/PumpingStations';
 import STP from '@/pages/STP';
@@ -32,6 +33,7 @@ function App() {
       <Route path="/projects" element={<Layout><Projects /></Layout>} />
       <Route path="/electricity" element={<Layout><Electricity /></Layout>} />
       <Route path="/electricity-system" element={<Layout><ElectricitySystem /></Layout>} />
+      <Route path="/electricity-analytics" element={<Layout><ElectricityAnalytics /></Layout>} />
       <Route path="/water-system" element={<Layout><WaterSystem /></Layout>} />
       <Route path="/hvac" element={<Layout><HVAC /></Layout>} />
       <Route path="/pumping-stations" element={<Layout><PumpingStations /></Layout>} />

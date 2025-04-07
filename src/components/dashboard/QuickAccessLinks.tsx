@@ -8,7 +8,8 @@ import {
   FileText, 
   Star,
   Landmark,
-  Droplets
+  Droplets,
+  BarChart3
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -32,6 +33,15 @@ const quickLinks: QuickAccessLink[] = [
     url: '/electricity-system',
     color: 'text-amber-500',
     bgColor: 'bg-amber-50'
+  },
+  {
+    id: 'electricity-analytics',
+    title: 'Electricity Analytics',
+    description: 'Advanced electricity consumption analytics',
+    icon: <BarChart3 className="h-5 w-5 text-blue-600" />,
+    url: '/electricity-analytics',
+    color: 'text-blue-600',
+    bgColor: 'bg-blue-50'
   },
   {
     id: 'water',

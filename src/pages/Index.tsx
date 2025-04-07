@@ -1,8 +1,10 @@
+
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
-import { Zap } from 'lucide-react';
+import { Zap, BarChart3 } from 'lucide-react';
 import QuickAccessLinks from '@/components/dashboard/QuickAccessLinks';
+
 const Index = () => {
   return <div className="container mx-auto p-4">
       <div className="flex flex-col gap-6">
@@ -24,6 +26,17 @@ const Index = () => {
               <Link to="/electricity-system" className="px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700 transition-colors">Access Module</Link>
             </div>
           </Card>
+
+          <Card className="p-6 hover:shadow-lg transition-shadow">
+            <div className="flex flex-col items-center bg-slate-100">
+              <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center mb-4">
+                <BarChart3 className="h-8 w-8 text-blue-600" />
+              </div>
+              <h2 className="text-xl font-semibold mb-2">Electricity Analytics</h2>
+              <p className="text-center text-muted-foreground mb-4">Advanced analytics for electricity consumption</p>
+              <Link to="/electricity-analytics" className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">Access Analytics</Link>
+            </div>
+          </Card>
         </div>
         
         <div className="mt-6 text-center">
@@ -32,4 +45,5 @@ const Index = () => {
       </div>
     </div>;
 };
+
 export default Index;
