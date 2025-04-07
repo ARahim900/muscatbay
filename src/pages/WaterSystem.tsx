@@ -1113,10 +1113,10 @@ const Dashboard = () => {
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-2xl font-bold">Muscat Bay Water Monitoring</h1>
-              <p className="text-slate-50 text-base">Dashboard overview of water consumption and losses</p>
+              <p className="text-blue-100">Dashboard overview of water consumption and losses</p>
             </div>
             <div className="flex space-x-2">
-              <select value={selectedPeriod} onChange={e => setSelectedPeriod(e.target.value)} className="bg-opacity-20 border border-blue-300 text-white px-3 py-1 bg-muscat-dark rounded-sm">
+              <select className="bg-white bg-opacity-20 rounded border border-blue-300 text-white px-3 py-1" value={selectedPeriod} onChange={e => setSelectedPeriod(e.target.value)}>
                 <option value="Total">Total (Q1 2025)</option>
                 <option value="Jan-25">January 2025</option>
                 <option value="Feb-25">February 2025</option>
@@ -1733,7 +1733,7 @@ const Dashboard = () => {
     </div>;
 };
 const WaterSystem = () => {
-  return <StandardPageLayout title="Water System" description="Management and monitoring of water distribution across Muscat Bay" icon={<Droplets className="h-6 w-6 text-blue-500" />} headerColor="bg-gradient-to-r from-blue-100 to-cyan-50" className="bg-muscat-primary">
+  return <StandardPageLayout title="Water System" description="Management and monitoring of water distribution across Muscat Bay" icon={<Droplets className="h-6 w-6 text-blue-500" />} headerColor="bg-gradient-to-r from-blue-100 to-cyan-50">
       <Dashboard />
     </StandardPageLayout>;
 };
