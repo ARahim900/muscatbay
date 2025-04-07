@@ -1,21 +1,23 @@
-
 import Airtable from 'airtable';
 
 // Initialize Airtable with your API key
-const AIRTABLE_API_KEY = 'patgswc3cLZkA2Yrv.eb7796293aaabbc988a0d68e9f34010e8baae51d02c669185971b55689885534'; // Your Airtable API key
-const AIRTABLE_BASE_ID = 'appwGy1JHL1UYsO2W'; // Your Airtable Base ID
+const AIRTABLE_API_KEY = 'patgswc3cLZkA2Yrv.eb7796293aaabbc988a0d68e9f34010e8baae51d02c669185971b55689885534'; 
+const AIRTABLE_BASE_ID = 'appwGy1JHL1UYsO2W';
 
 // Initialize the Airtable base
 const base = new Airtable({ apiKey: AIRTABLE_API_KEY }).base(AIRTABLE_BASE_ID);
 
+// Constants for table IDs
+export const WATER_TABLE_ID = 'tblR7Yq40GnRh8esd';
+
 /**
  * Fetches data from a specific Airtable table
- * @param tableName - The name of the table to fetch from
+ * @param tableIdOrName - The ID or name of the table to fetch from
  * @param options - Optional query parameters
  * @returns An array of records with their fields
  */
 export const fetchTableData = async (
-  tableName: string, 
+  tableIdOrName: string, 
   options: { 
     view?: string, 
     filterByFormula?: string,
@@ -24,23 +26,23 @@ export const fetchTableData = async (
   } = {}
 ) => {
   try {
-    console.log(`Attempting to fetch data from Airtable table "${tableName}" with options:`, options);
+    console.log(`Attempting to fetch data from Airtable table "${tableIdOrName}" with options:`, options);
     
-    const records = await base(tableName)
+    const records = await base(tableIdOrName)
       .select({
         view: options.view || 'Grid view',  // Default to 'Grid view' if not specified
         ...options
       })
       .all();
     
-    console.log(`Successfully fetched ${records.length} records from "${tableName}"`);
+    console.log(`Successfully fetched ${records.length} records from "${tableIdOrName}"`);
     
     return records.map(record => ({
       id: record.id,
       ...record.fields
     }));
   } catch (error) {
-    console.error(`Error fetching data from ${tableName}:`, error);
+    console.error(`Error fetching data from ${tableIdOrName}:`, error);
     throw error;
   }
 };

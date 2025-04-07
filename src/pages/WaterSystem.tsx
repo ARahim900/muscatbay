@@ -23,7 +23,7 @@ import {
   Cell 
 } from 'recharts';
 import { toast } from 'sonner';
-import { fetchTableData } from '@/services/airtableService';
+import { fetchTableData, WATER_TABLE_ID } from '@/services/airtableService';
 
 // Define types for water data
 interface WaterConsumptionData {
@@ -47,22 +47,21 @@ const WaterSystem = () => {
   const [selectedZone, setSelectedZone] = useState("all");
   const [isManualLoading, setIsManualLoading] = useState(false);
   
-  // Fetch water consumption data from Airtable
+  // Fetch water consumption data from Airtable using the table ID instead of name
   const { data: waterData, isLoading, error, refetch } = useAirtableData<WaterConsumptionData>(
-    'Water Consumption', // Make sure this matches your actual table name in Airtable
+    WATER_TABLE_ID,
     {
-      // Optional: Add view, filter, or sort options
       view: 'Grid view',
       sort: [{ field: 'Date', direction: 'desc' }],
     }
   );
 
-  // Manual fetch function with direct table name check
+  // Manual fetch function with direct table ID check
   const handleManualFetch = async () => {
     setIsManualLoading(true);
     try {
       // Let's verify the table actually exists by trying to fetch it directly
-      const data = await fetchTableData('Water Consumption', {
+      const data = await fetchTableData(WATER_TABLE_ID, {
         view: 'Grid view',
         maxRecords: 1
       });
@@ -72,27 +71,6 @@ const WaterSystem = () => {
     } catch (err) {
       console.error('Manual fetch failed:', err);
       toast.error(`Manual fetch failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
-      
-      // Try other possible table names
-      try {
-        const tables = ['Water Data', 'WaterData', 'Water System', 'water_consumption', 'water-consumption'];
-        
-        for (const tableName of tables) {
-          try {
-            console.log(`Trying alternative table name: ${tableName}`);
-            const testData = await fetchTableData(tableName, { maxRecords: 1 });
-            if (testData && testData.length > 0) {
-              toast.success(`Found table with name: ${tableName}. Please update your table name in the code.`);
-              console.log(`Table found with name: ${tableName}`, testData);
-              break;
-            }
-          } catch (tableErr) {
-            console.log(`No table found with name: ${tableName}`);
-          }
-        }
-      } catch (alternativeErr) {
-        console.error('All alternative table name checks failed:', alternativeErr);
-      }
     } finally {
       setIsManualLoading(false);
     }
@@ -130,9 +108,9 @@ const WaterSystem = () => {
                   <div>
                     <p className="text-sm text-red-700 mb-1">Airtable Configuration:</p>
                     <ul className="list-disc pl-5 text-sm space-y-1">
-                      <li>API Key: The API key you're using appears to be valid in format</li>
-                      <li>Base ID: Make sure your Base ID (appwGy1JHL1UYsO2W) is correct</li>
-                      <li>Table Name: Ensure "Water Consumption" is the exact table name in your Airtable base</li>
+                      <li>API Key: The API key format appears valid</li>
+                      <li>Base ID: appwGy1JHL1UYsO2W</li>
+                      <li>Table ID: {WATER_TABLE_ID}</li>
                       <li>API Key Permissions: Verify your API key has access to this base</li>
                     </ul>
                   </div>
@@ -164,12 +142,12 @@ const WaterSystem = () => {
                       {isManualLoading ? (
                         <>
                           <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Checking table names...
+                          Checking table...
                         </>
                       ) : (
                         <>
                           <AlertTriangle className="w-4 h-4 mr-2" />
-                          Check Table Names
+                          Check Table Connection
                         </>
                       )}
                     </Button>
@@ -198,7 +176,7 @@ const WaterSystem = () => {
               <div className="bg-amber-50 text-amber-800 p-4 rounded-md">
                 <p className="font-medium">No water consumption data available.</p>
                 <p className="mt-2">
-                  Make sure your Airtable "Water Consumption" table contains records and has the correct structure.
+                  Make sure your Airtable table contains records and has the correct structure.
                 </p>
                 <div className="mt-4">
                   <Button 
