@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import useAirtableData from '@/hooks/useAirtableData';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -26,18 +25,27 @@ import {
 import { toast } from 'sonner';
 import { fetchTableData, WATER_TABLE_ID } from '@/services/airtableService';
 
-// Define types for water data
 interface WaterConsumptionData {
   id: string;
-  Date?: string;
-  Month?: string;
-  Zone?: string;
-  'Consumption (m³)'?: number;
-  'Cost (OMR)'?: number;
-  'Change %'?: number;
-  Type?: string;
-  Location?: string;
-  Notes?: string;
+  'Meter Label'?: string;
+  'Acct #'?: number;
+  'Zone'?: string;
+  'Type'?: string;
+  'Jan-25'?: number | string;
+  'Feb-25'?: number | string;
+  'Mar-25'?: number | string;
+  'Apr-25'?: number | string;
+  'May-25'?: number | string;
+  'Jun-25'?: number | string;
+  'Jul-25'?: number | string;
+  'Aug-25'?: number | string;
+  'Sep-25'?: number | string;
+  'Oct-25'?: number | string;
+  'Nov-25'?: number | string;
+  'Dec-25'?: number | string;
+  'Total'?: number;
+  'Parent Meter'?: string;
+  'Label'?: string;
 }
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#66BCFE'];
@@ -48,20 +56,13 @@ const WaterSystem = () => {
   const [selectedZone, setSelectedZone] = useState("all");
   const [isManualLoading, setIsManualLoading] = useState(false);
   
-  // Fetch water consumption data from Airtable using the table ID
-  // Remove the view parameter to avoid the "View Grid view not found" error
   const { data: waterData, isLoading, error, refetch } = useAirtableData<WaterConsumptionData>(
-    WATER_TABLE_ID,
-    {
-      sort: [{ field: 'Date', direction: 'desc' }],
-    }
+    WATER_TABLE_ID
   );
 
-  // Manual fetch function with direct table ID check
   const handleManualFetch = async () => {
     setIsManualLoading(true);
     try {
-      // Let's verify the table actually exists by trying to fetch it directly without specifying a view
       const data = await fetchTableData(WATER_TABLE_ID, {
         maxRecords: 1
       });
@@ -109,7 +110,7 @@ const WaterSystem = () => {
                     <p className="text-sm text-red-700 mb-1">Airtable Configuration:</p>
                     <ul className="list-disc pl-5 text-sm space-y-1">
                       <li>API Key: The API key format appears valid</li>
-                      <li>Base ID: appwGy1JHL1UYsO2W</li>
+                      <li>Base ID: {AIRTABLE_BASE_ID}</li>
                       <li>Table ID: {WATER_TABLE_ID}</li>
                       <li>API Key Permissions: Verify your API key has access to this base</li>
                     </ul>
@@ -195,51 +196,96 @@ const WaterSystem = () => {
     );
   }
   
-  // Extract available months and zones for filters
-  const months = ['all', ...new Set(waterData.map(item => item.Month).filter(Boolean))];
-  const zones = ['all', ...new Set(waterData.map(item => item.Zone).filter(Boolean))];
+  const months = ['all'];
+  const zones = ['all'];
   
-  // Filter data based on selections
-  const filteredData = waterData.filter(record => {
-    const monthMatch = selectedMonth === 'all' || record.Month === selectedMonth;
+  if (waterData && waterData.length > 0) {
+    waterData.forEach(item => {
+      if (item.Zone && !zones.includes(item.Zone)) {
+        zones.push(item.Zone);
+      }
+    });
+    
+    const monthFields = ['Jan-25', 'Feb-25', 'Mar-25', 'Apr-25', 'May-25', 
+                         'Jun-25', 'Jul-25', 'Aug-25', 'Sep-25', 'Oct-25', 
+                         'Nov-25', 'Dec-25'];
+                         
+    monthFields.forEach(month => {
+      const hasData = waterData.some(item => 
+        item[month as keyof WaterConsumptionData] !== undefined && 
+        item[month as keyof WaterConsumptionData] !== null);
+      
+      if (hasData && !months.includes(month)) {
+        months.push(month);
+      }
+    });
+  }
+  
+  const filteredData = waterData ? waterData.filter(record => {
+    const monthMatch = selectedMonth === 'all' || 
+                       (record[selectedMonth as keyof WaterConsumptionData] !== undefined && 
+                        record[selectedMonth as keyof WaterConsumptionData] !== null);
     const zoneMatch = selectedZone === 'all' || record.Zone === selectedZone;
     return monthMatch && zoneMatch;
-  });
+  }) : [];
   
-  // Calculate summary metrics
-  const totalConsumption = filteredData.reduce((sum, item) => sum + (item['Consumption (m³)'] || 0), 0);
-  const totalCost = filteredData.reduce((sum, item) => sum + (item['Cost (OMR)'] || 0), 0);
+  const getConsumptionForMonth = (item: WaterConsumptionData, month: string): number => {
+    const value = item[month as keyof WaterConsumptionData];
+    if (typeof value === 'number') return value;
+    if (typeof value === 'string' && !isNaN(parseFloat(value))) return parseFloat(value);
+    return 0;
+  };
+  
+  const totalConsumption = filteredData.reduce((sum, item) => {
+    if (selectedMonth === 'all') {
+      let itemSum = 0;
+      ['Jan-25', 'Feb-25'].forEach(month => {
+        itemSum += getConsumptionForMonth(item, month);
+      });
+      return sum + itemSum;
+    } else {
+      return sum + getConsumptionForMonth(item, selectedMonth);
+    }
+  }, 0);
+  
+  const totalCost = totalConsumption * 0.004;
   const avgConsumptionPerZone = zones.length > 1 ? totalConsumption / (zones.length - 1) : 0;
   
-  // Group data by zone for charts
   const consumptionByZone = zones
     .filter(zone => zone !== 'all')
     .map(zone => {
-      const zoneData = waterData.filter(item => item.Zone === zone);
-      const consumption = zoneData.reduce((sum, item) => sum + (item['Consumption (m³)'] || 0), 0);
-      const cost = zoneData.reduce((sum, item) => sum + (item['Cost (OMR)'] || 0), 0);
+      const zoneData = waterData ? waterData.filter(item => item.Zone === zone) : [];
+      let consumption = 0;
+      
+      zoneData.forEach(item => {
+        if (selectedMonth === 'all') {
+          ['Jan-25', 'Feb-25'].forEach(month => {
+            consumption += getConsumptionForMonth(item, month);
+          });
+        } else {
+          consumption += getConsumptionForMonth(item, selectedMonth);
+        }
+      });
       
       return {
         name: zone,
         consumption,
-        cost
+        cost: consumption * 0.004
       };
     }).sort((a, b) => b.consumption - a.consumption);
   
-  // Group data by month for trend analysis
-  const consumptionByMonth = months
-    .filter(month => month !== 'all')
-    .map(month => {
-      const monthData = waterData.filter(item => item.Month === month);
-      const consumption = monthData.reduce((sum, item) => sum + (item['Consumption (m³)'] || 0), 0);
-      const cost = monthData.reduce((sum, item) => sum + (item['Cost (OMR)'] || 0), 0);
-      
-      return {
-        month,
-        consumption,
-        cost
-      };
-    });
+  const availableMonths = months.filter(month => month !== 'all');
+  const consumptionByMonth = availableMonths.map(month => {
+    const consumption = waterData ? waterData.reduce((sum, item) => {
+      return sum + getConsumptionForMonth(item, month);
+    }, 0) : 0;
+    
+    return {
+      month,
+      consumption,
+      cost: consumption * 0.004
+    };
+  });
   
   const handleExportData = () => {
     toast.success("Exporting data... This feature will be implemented soon.");
@@ -301,7 +347,7 @@ const WaterSystem = () => {
               <CardContent>
                 <div className="text-2xl font-bold">{totalConsumption.toLocaleString()} m³</div>
                 <p className="text-xs text-muted-foreground">
-                  {selectedMonth === 'all' ? 'All Time' : selectedMonth}
+                  {selectedMonth === 'all' ? 'Jan-Feb 2025' : selectedMonth}
                 </p>
               </CardContent>
             </Card>
@@ -313,7 +359,7 @@ const WaterSystem = () => {
               <CardContent>
                 <div className="text-2xl font-bold">{totalCost.toLocaleString()} OMR</div>
                 <p className="text-xs text-muted-foreground">
-                  {selectedMonth === 'all' ? 'All Time' : selectedMonth}
+                  {selectedMonth === 'all' ? 'Jan-Feb 2025' : selectedMonth}
                 </p>
               </CardContent>
             </Card>
@@ -550,12 +596,18 @@ const WaterSystem = () => {
                 <table className="w-full border-collapse">
                   <thead>
                     <tr className="bg-muted text-left text-muted-foreground text-xs">
-                      <th className="p-2 whitespace-nowrap">Month</th>
+                      <th className="p-2 whitespace-nowrap">Meter Label</th>
                       <th className="p-2 whitespace-nowrap">Zone</th>
-                      <th className="p-2 whitespace-nowrap">Location</th>
-                      <th className="p-2 whitespace-nowrap text-right">Consumption (m³)</th>
-                      <th className="p-2 whitespace-nowrap text-right">Cost (OMR)</th>
-                      <th className="p-2 whitespace-nowrap text-right">Change %</th>
+                      <th className="p-2 whitespace-nowrap">Type</th>
+                      {selectedMonth === 'all' ? (
+                        <>
+                          <th className="p-2 whitespace-nowrap text-right">Jan-25 (m³)</th>
+                          <th className="p-2 whitespace-nowrap text-right">Feb-25 (m³)</th>
+                        </>
+                      ) : (
+                        <th className="p-2 whitespace-nowrap text-right">{selectedMonth} (m³)</th>
+                      )}
+                      <th className="p-2 whitespace-nowrap text-right">Parent Meter</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -564,33 +616,31 @@ const WaterSystem = () => {
                         key={record.id || index}
                         className="border-b border-gray-200 hover:bg-muted/50"
                       >
-                        <td className="p-2 whitespace-nowrap">{record.Month || '-'}</td>
+                        <td className="p-2 whitespace-nowrap">{record['Meter Label'] || '-'}</td>
                         <td className="p-2 whitespace-nowrap">
                           <Badge variant="outline" className="font-normal">
                             {record.Zone || '-'}
                           </Badge>
                         </td>
-                        <td className="p-2 whitespace-nowrap">{record.Location || '-'}</td>
-                        <td className="p-2 whitespace-nowrap text-right">
-                          {record['Consumption (m³)']?.toLocaleString() || '-'}
-                        </td>
-                        <td className="p-2 whitespace-nowrap text-right">
-                          {record['Cost (OMR)']?.toLocaleString() || '-'}
-                        </td>
-                        <td className="p-2 whitespace-nowrap text-right">
-                          <span 
-                            className={
-                              record['Change %'] && record['Change %'] > 0 
-                                ? 'text-red-500' 
-                                : record['Change %'] && record['Change %'] < 0 
-                                ? 'text-green-500' 
-                                : ''
-                            }
-                          >
-                            {record['Change %'] 
-                              ? `${record['Change %'] > 0 ? '+' : ''}${record['Change %'].toFixed(1)}%` 
+                        <td className="p-2 whitespace-nowrap">{record.Type || '-'}</td>
+                        {selectedMonth === 'all' ? (
+                          <>
+                            <td className="p-2 whitespace-nowrap text-right">
+                              {record['Jan-25'] !== undefined ? record['Jan-25'] : '-'}
+                            </td>
+                            <td className="p-2 whitespace-nowrap text-right">
+                              {record['Feb-25'] !== undefined ? record['Feb-25'] : '-'}
+                            </td>
+                          </>
+                        ) : (
+                          <td className="p-2 whitespace-nowrap text-right">
+                            {record[selectedMonth as keyof WaterConsumptionData] !== undefined
+                              ? record[selectedMonth as keyof WaterConsumptionData]
                               : '-'}
-                          </span>
+                          </td>
+                        )}
+                        <td className="p-2 whitespace-nowrap text-right">
+                          {record['Parent Meter'] || '-'}
                         </td>
                       </tr>
                     ))}

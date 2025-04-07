@@ -8,7 +8,7 @@ const AIRTABLE_BASE_ID = 'appwGy1JHL1UYsO2W';
 // Initialize the Airtable base
 const base = new Airtable({ apiKey: AIRTABLE_API_KEY }).base(AIRTABLE_BASE_ID);
 
-// Constants for table IDs
+// Constants for table IDs - using the correct table ID from the URL
 export const WATER_TABLE_ID = 'tblR7Yq40GnRh8esd';
 
 /**
