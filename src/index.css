@@ -36,11 +36,13 @@
  
     --radius: 0.5rem;
     
-    /* Reserve Fund Dashboard variables */
-    --brand-primary: #6366f1;
-    --brand-primary-text: #ffffff;
-    --brand-accent: #4e4456;
-    --brand-accent-text: #ffffff;
+    /* Muscat Bay color variables */
+    --muscat-primary: 292deg 13% 30%;  /* #4E4456 */
+    --muscat-teal: 178deg 54% 63%;     /* #68D1CC */
+    --muscat-gold: 36deg 44% 69%;      /* #D4B98C */
+    --muscat-lavender: 269deg 18% 64%; /* #9D8EB7 */
+    --muscat-light: 270deg 27% 97%;    /* #F7F5F9 */
+    --muscat-dark: 280deg 12% 17%;     /* #2A262E */
   }
  
   .dark {
@@ -87,12 +89,69 @@
   }
 }
 
-/* Animation for fadeIn (used in Reserve Fund Dashboard) */
+/* Animation for fadeIn */
 @keyframes fadeIn {
   from {
     opacity: 0;
+    transform: translateY(10px);
   }
   to {
     opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+/* Card hover animations */
+.hover-card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hover-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+/* Improved scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+  
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+  
+::-webkit-scrollbar-thumb {
+  background: #4E4456;
+  border-radius: 10px;
+  opacity: 0.7;
+}
+  
+::-webkit-scrollbar-thumb:hover {
+  background: #68D1CC;
+}
+
+/* Enhanced typography */
+.text-gradient {
+  background: linear-gradient(90deg, #4E4456, #9D8EB7);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Responsive design enhancements */
+@media (max-width: 640px) {
+  .responsive-card {
+    padding: 0.75rem;
+  }
+  
+  .responsive-header {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   Chart as ChartJS,
@@ -5,7 +6,7 @@ import {
   LinearScale,
   BarElement,
   Title,
-  Tooltip,
+  Tooltip as ChartTooltip,
   Legend,
   ArcElement,
   LineElement,
@@ -17,10 +18,9 @@ import {
 import { Bar } from 'react-chartjs-2';
 import { Pie } from 'react-chartjs-2';
 import { Line } from 'react-chartjs-2';
-import faker from 'faker';
 import StandardPageLayout from '@/components/layout/StandardPageLayout';
-import { FilePie, Landmark } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Landmark, PieChart } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -35,7 +35,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import { CalendarIcon } from "@radix-ui/react-icons";
+import { CalendarIcon } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -114,7 +114,6 @@ import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
-  ResizableSeparator,
 } from "@/components/ui/resizable";
 import {
   AlertDialog,
@@ -131,28 +130,19 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator, ContextMenuTrigger } from "@/components/ui/context-menu";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
-import { useFormField, Form, FormField, FormItem, FormLabel, FormMessage, FormPopover, } from "@/components/ui/form";
+import { Form, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { FormControl } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { DateRange } from "react-day-picker";
 import { addMonths, isBefore, isSameDay, startOfMonth } from "date-fns";
-import { Progress } from "@/components/ui/progress";
-import { useOrigin } from "@/hooks/use-origin";
-import { generatePalette } from "@/lib/utils";
-import { DataTable } from "@/components/ui/data-table";
 import {
-  ColumnDef,
-  flexRender,
-  getCoreRowModel,
-  getPaginationRowModel,
-  useReactTable,
-} from "@tanstack/react-table";
-import { MoreHorizontal } from "lucide-react";
-import { Check } from "lucide-react";
-import { Copy, Edit, Trash } from "lucide-react";
-import { CopyToClipboard } from 'react-copy-to-clipboard';
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   Accordion,
   AccordionContent,
@@ -160,17 +150,12 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import {
-  CardDescription,
-  CardFooter,
-} from "@/components/ui/card";
-import {
   Carousel,
   CarouselContent,
   CarouselItem,
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import Autoplay from "embla-carousel-autoplay";
 import {
   Sheet,
   SheetClose,
@@ -181,12 +166,6 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import {
   Collapsible,
   CollapsibleContent,
@@ -217,7 +196,7 @@ ChartJS.register(
   LinearScale,
   BarElement,
   Title,
-  Tooltip,
+  ChartTooltip,
   Legend,
   ArcElement,
   LineElement,
@@ -251,11 +230,11 @@ const mockReserveFundData = {
   totalAnnualContribution: 481310,
   averageContribution: 1000.64,
   contributions: [
-    { zone: 'Zone 3 (Zaha)', contribution: 172000, unitCount: 210, color: '#4CAF50' },
-    { zone: 'Zone 5 (Nameer)', contribution: 145000, unitCount: 150, color: '#2196F3' },
-    { zone: 'Zone 8 (Wajd)', contribution: 95000, unitCount: 85, color: '#FF9800' },
+    { zone: 'Zone 3 (Zaha)', contribution: 172000, unitCount: 210, color: '#68D1CC' },
+    { zone: 'Zone 5 (Nameer)', contribution: 145000, unitCount: 150, color: '#9D8EB7' },
+    { zone: 'Zone 8 (Wajd)', contribution: 95000, unitCount: 85, color: '#D4B98C' },
     { zone: 'Staff Accommodation', contribution: 45000, unitCount: 25, color: '#9C27B0' },
-    { zone: 'Commercial', contribution: 24310, unitCount: 11, color: '#F44336' },
+    { zone: 'Commercial', contribution: 24310, unitCount: 11, color: '#FF6B6B' },
   ]
 };
 
@@ -355,7 +334,7 @@ const ReserveFundDashboard = () => {
           ? [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(() => 
               (summaryData.totalAnnualContribution / 12).toFixed(2))
           : [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        backgroundColor: '#2196F3',
+        backgroundColor: '#68D1CC',
       }
     ],
   };
@@ -374,8 +353,8 @@ const ReserveFundDashboard = () => {
           summaryData.totalAnnualContribution * 1.10,
           summaryData.totalAnnualContribution * 1.15,
         ],
-        borderColor: '#4CAF50',
-        backgroundColor: 'rgba(76, 175, 80, 0.1)',
+        borderColor: '#9D8EB7',
+        backgroundColor: 'rgba(157, 142, 183, 0.1)',
         tension: 0.3,
         fill: true,
       }
@@ -480,19 +459,19 @@ const ReserveFundDashboard = () => {
     >
       <div className="grid grid-cols-1 gap-6">
         {/* Filters Section */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg font-medium">Filters</CardTitle>
+        <Card className="border-muscat-primary/20 shadow-md bg-white">
+          <CardHeader className="pb-2 bg-muscat-primary text-white rounded-t-lg">
+            <CardTitle className="text-lg font-medium">Filters & Controls</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2">
+          <CardContent className="space-y-2 p-6">
             <div className="flex flex-wrap gap-4 items-end">
               <div className="flex flex-col space-y-1.5">
-                <Label htmlFor="year">Year</Label>
+                <Label htmlFor="year" className="font-medium text-muscat-dark">Year</Label>
                 <Select
                   value={selectedYear.toString()}
                   onValueChange={(value) => handleYearChange(parseInt(value))}
                 >
-                  <SelectTrigger className="w-[120px]">
+                  <SelectTrigger className="w-[120px] border-muscat-primary/30 focus:ring-muscat-primary/20">
                     <SelectValue placeholder="Year" />
                   </SelectTrigger>
                   <SelectContent>
@@ -506,13 +485,13 @@ const ReserveFundDashboard = () => {
               </div>
               
               <div className="flex flex-col space-y-1.5">
-                <Label htmlFor="date">Date</Label>
+                <Label htmlFor="date" className="font-medium text-muscat-dark">Date</Label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
                       className={cn(
-                        "w-[240px] justify-start text-left font-normal",
+                        "w-[240px] justify-start text-left font-normal border-muscat-primary/30",
                         !date && "text-muted-foreground"
                       )}
                     >
@@ -532,12 +511,12 @@ const ReserveFundDashboard = () => {
               </div>
               
               <div className="flex flex-col space-y-1.5">
-                <Label htmlFor="zone">Zone</Label>
+                <Label htmlFor="zone" className="font-medium text-muscat-dark">Zone</Label>
                 <Select
                   value={selectedZone}
                   onValueChange={handleZoneChange}
                 >
-                  <SelectTrigger className="w-[180px]">
+                  <SelectTrigger className="w-[180px] border-muscat-primary/30 focus:ring-muscat-primary/20">
                     <SelectValue placeholder="Zone" />
                   </SelectTrigger>
                   <SelectContent>
@@ -552,7 +531,7 @@ const ReserveFundDashboard = () => {
               </div>
               
               <div className="ml-auto">
-                <Button onClick={handleExport}>
+                <Button onClick={handleExport} className="bg-muscat-primary hover:bg-muscat-primary/90 text-white">
                   Export Data
                 </Button>
               </div>
@@ -562,43 +541,43 @@ const ReserveFundDashboard = () => {
         
         {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card>
+          <Card className="border-muscat-teal/20 shadow-md hover:shadow-lg transition-shadow duration-300 bg-gradient-to-br from-white to-muscat-light">
             <CardHeader className="p-4 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Total Units</CardTitle>
+              <CardTitle className="text-sm font-medium text-muscat-primary">Total Units</CardTitle>
             </CardHeader>
             <CardContent className="p-4 pt-1">
-              <div className="text-2xl font-bold">{summaryData.totalUnits}</div>
-              <p className="text-xs text-muted-foreground mt-1">Properties in selected zone</p>
+              <div className="text-2xl font-bold text-muscat-dark">{summaryData.totalUnits}</div>
+              <p className="text-xs text-muscat-primary/70 mt-1">Properties in selected zone</p>
             </CardContent>
           </Card>
           
-          <Card>
+          <Card className="border-muscat-teal/20 shadow-md hover:shadow-lg transition-shadow duration-300 bg-gradient-to-br from-white to-muscat-light">
             <CardHeader className="p-4 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Total Building Area</CardTitle>
+              <CardTitle className="text-sm font-medium text-muscat-primary">Total Building Area</CardTitle>
             </CardHeader>
             <CardContent className="p-4 pt-1">
-              <div className="text-2xl font-bold">{summaryData.totalBuildingArea.toLocaleString()} SqM</div>
-              <p className="text-xs text-muted-foreground mt-1">Built-up area included</p>
+              <div className="text-2xl font-bold text-muscat-dark">{summaryData.totalBuildingArea.toLocaleString()} SqM</div>
+              <p className="text-xs text-muscat-primary/70 mt-1">Built-up area included</p>
             </CardContent>
           </Card>
           
-          <Card>
+          <Card className="border-muscat-teal/20 shadow-md hover:shadow-lg transition-shadow duration-300 bg-gradient-to-br from-white to-muscat-light">
             <CardHeader className="p-4 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Total Annual Contribution</CardTitle>
+              <CardTitle className="text-sm font-medium text-muscat-primary">Total Annual Contribution</CardTitle>
             </CardHeader>
             <CardContent className="p-4 pt-1">
-              <div className="text-2xl font-bold">{summaryData.totalAnnualContribution.toLocaleString()} OMR</div>
-              <p className="text-xs text-muted-foreground mt-1">For current year</p>
+              <div className="text-2xl font-bold text-muscat-dark">{summaryData.totalAnnualContribution.toLocaleString()} OMR</div>
+              <p className="text-xs text-muscat-primary/70 mt-1">For current year</p>
             </CardContent>
           </Card>
           
-          <Card>
+          <Card className="border-muscat-teal/20 shadow-md hover:shadow-lg transition-shadow duration-300 bg-gradient-to-br from-white to-muscat-light">
             <CardHeader className="p-4 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Average Contribution</CardTitle>
+              <CardTitle className="text-sm font-medium text-muscat-primary">Average Contribution</CardTitle>
             </CardHeader>
             <CardContent className="p-4 pt-1">
-              <div className="text-2xl font-bold">{summaryData.averageContribution.toLocaleString()} OMR</div>
-              <p className="text-xs text-muted-foreground mt-1">Per unit annually</p>
+              <div className="text-2xl font-bold text-muscat-dark">{summaryData.averageContribution.toLocaleString()} OMR</div>
+              <p className="text-xs text-muscat-primary/70 mt-1">Per unit annually</p>
             </CardContent>
           </Card>
         </div>
@@ -606,11 +585,11 @@ const ReserveFundDashboard = () => {
         {/* Charts Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Zone Distribution Chart */}
-          <Card>
-            <CardHeader>
+          <Card className="border-muscat-primary/20 shadow-md hover:shadow-lg transition-shadow duration-300 bg-white">
+            <CardHeader className="bg-muscat-primary text-white rounded-t-lg">
               <CardTitle>Zone Distribution</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-6">
               <div className="h-[300px] flex justify-center">
                 <Pie data={pieChartData} options={pieChartOptions} />
               </div>
@@ -618,11 +597,11 @@ const ReserveFundDashboard = () => {
           </Card>
           
           {/* Monthly Contribution Chart */}
-          <Card>
-            <CardHeader>
+          <Card className="border-muscat-primary/20 shadow-md hover:shadow-lg transition-shadow duration-300 bg-white">
+            <CardHeader className="bg-muscat-primary text-white rounded-t-lg">
               <CardTitle>Monthly Contributions</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-6">
               <div className="h-[300px]">
                 <Bar data={monthlyContributionData} options={barChartOptions} />
               </div>
@@ -630,11 +609,11 @@ const ReserveFundDashboard = () => {
           </Card>
           
           {/* Annual Growth Chart */}
-          <Card className="lg:col-span-2">
-            <CardHeader>
+          <Card className="lg:col-span-2 border-muscat-primary/20 shadow-md hover:shadow-lg transition-shadow duration-300 bg-white">
+            <CardHeader className="bg-muscat-primary text-white rounded-t-lg">
               <CardTitle>Annual Growth Projection</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-6">
               <div className="h-[300px]">
                 <Line data={annualGrowthData} options={lineChartOptions} />
               </div>
@@ -643,38 +622,40 @@ const ReserveFundDashboard = () => {
         </div>
         
         {/* Properties Table */}
-        <Card>
-          <CardHeader>
+        <Card className="border-muscat-primary/20 shadow-md hover:shadow-lg transition-shadow duration-300 bg-white">
+          <CardHeader className="bg-muscat-primary text-white rounded-t-lg">
             <CardTitle>Property Contributions</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="rounded-md border">
+          <CardContent className="p-6">
+            <div className="rounded-md border border-muscat-primary/20">
               <Table>
-                <TableHeader>
+                <TableHeader className="bg-muscat-primary/5">
                   <TableRow>
-                    <TableHead>Unit No</TableHead>
-                    <TableHead>Sector</TableHead>
-                    <TableHead>Unit Type</TableHead>
-                    <TableHead>BUA (SqM)</TableHead>
-                    <TableHead>Zone</TableHead>
-                    <TableHead className="text-right">Annual Contribution (OMR)</TableHead>
+                    <TableHead className="font-semibold text-muscat-primary">Unit No</TableHead>
+                    <TableHead className="font-semibold text-muscat-primary">Sector</TableHead>
+                    <TableHead className="font-semibold text-muscat-primary">Unit Type</TableHead>
+                    <TableHead className="font-semibold text-muscat-primary">BUA (SqM)</TableHead>
+                    <TableHead className="font-semibold text-muscat-primary">Zone</TableHead>
+                    <TableHead className="text-right font-semibold text-muscat-primary">Annual Contribution (OMR)</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredProperties.map((property) => (
-                    <TableRow key={property.unitNo}>
+                    <TableRow key={property.unitNo} className="hover:bg-muscat-light transition-colors">
                       <TableCell className="font-medium">{property.unitNo}</TableCell>
                       <TableCell>{property.sector}</TableCell>
                       <TableCell>{property.unitType}</TableCell>
                       <TableCell>{property.bua}</TableCell>
                       <TableCell>
-                        <Badge variant="outline">{property.zone}</Badge>
+                        <Badge variant="outline" className="bg-muscat-primary/10 text-muscat-primary border-muscat-primary/20">
+                          {property.zone}
+                        </Badge>
                       </TableCell>
                       <TableCell className="text-right">{property.contribution.toFixed(2)}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
-                <TableFooter>
+                <TableFooter className="bg-muscat-primary/5">
                   <TableRow>
                     <TableCell colSpan={5} className="text-right font-medium">Total</TableCell>
                     <TableCell className="text-right font-medium">
