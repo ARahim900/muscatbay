@@ -324,7 +324,6 @@ import { useOrigin } from "@/hooks/use-origin"
 import { generatePalette } from "@/lib/utils"
 import { DataTable } from "@/components/ui/data-table"
 import {
-  ColumnDef,
   flexRender,
   getCoreRowModel,
   getPaginationRowModel,
@@ -500,7 +499,6 @@ import { useOrigin } from "@/hooks/use-origin"
 import { generatePalette } from "@/lib/utils"
 import { DataTable } from "@/components/ui/data-table"
 import {
-  ColumnDef,
   flexRender,
   getCoreRowModel,
   getPaginationRowModel,
@@ -676,7 +674,6 @@ import { useOrigin } from "@/hooks/use-origin"
 import { generatePalette } from "@/lib/utils"
 import { DataTable } from "@/components/ui/data-table"
 import {
-  ColumnDef,
   flexRender,
   getCoreRowModel,
   getPaginationRowModel,
@@ -852,7 +849,6 @@ import { useOrigin } from "@/hooks/use-origin"
 import { generatePalette } from "@/lib/utils"
 import { DataTable } from "@/components/ui/data-table"
 import {
-  ColumnDef,
   flexRender,
   getCoreRowModel,
   getPaginationRowModel,
@@ -1028,7 +1024,6 @@ import { useOrigin } from "@/hooks/use-origin"
 import { generatePalette } from "@/lib/utils"
 import { DataTable } from "@/components/ui/data-table"
 import {
-  ColumnDef,
   flexRender,
   getCoreRowModel,
   getPaginationRowModel,
@@ -1204,4 +1199,8 @@ import { useOrigin } from "@/hooks/use-origin"
 import { generatePalette } from "@/lib/utils"
 import { DataTable } from "@/components/ui/data-table"
 import {
-  ColumnDef
+  flexRender,
+  getCoreRowModel,
+  getPaginationRowModel,
+  useReactTable,
+} from "@
