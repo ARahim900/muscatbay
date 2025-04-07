@@ -449,48 +449,48 @@ const WaterSystem = () => {
                   {filters.selectedView === 'zones' && filters.selectedZone !== 'all' && ` | Zone: ${filters.selectedZone}`}
                   {filters.selectedType !== 'all' && ` | Type: ${filters.selectedType}`}
                 </div>
+                
+                {/* Fix: Ensure TabsContent components are ALWAYS within the Tabs component */}
+                <TabsContent value="overview" className="mt-0">
+                  <WaterOverview 
+                    levelMetrics={levelMetrics}
+                    zoneMetrics={zoneMetrics}
+                    typeConsumption={typeConsumption}
+                    monthlyTrends={monthlyTrends}
+                    selectedMonth={filters.selectedMonth}
+                  />
+                </TabsContent>
+                
+                <TabsContent value="zones" className="mt-0">
+                  <WaterZones 
+                    zoneMetrics={zoneMetrics}
+                    waterData={transformedData}
+                    selectedMonth={filters.selectedMonth}
+                    selectedZone={filters.selectedZone || zones[1] || ''}
+                    onSelectZone={handleZoneChange}
+                  />
+                </TabsContent>
+                
+                <TabsContent value="types" className="mt-0">
+                  <WaterTypeAnalysis
+                    typeConsumption={typeConsumption}
+                    waterData={transformedData}
+                    selectedMonth={filters.selectedMonth}
+                    selectedType={filters.selectedType}
+                    onSelectType={handleTypeChange}
+                    types={types}
+                  />
+                </TabsContent>
+                
+                <TabsContent value="loss" className="mt-0">
+                  <WaterLossAnalysis 
+                    zoneMetrics={zoneMetrics}
+                    levelMetrics={levelMetrics}
+                    selectedMonth={filters.selectedMonth}
+                  />
+                </TabsContent>
               </Tabs>
             </div>
-            
-            {/* Tab content */}
-            <TabsContent value="overview" className="mt-0">
-              <WaterOverview 
-                levelMetrics={levelMetrics}
-                zoneMetrics={zoneMetrics}
-                typeConsumption={typeConsumption}
-                monthlyTrends={monthlyTrends}
-                selectedMonth={filters.selectedMonth}
-              />
-            </TabsContent>
-            
-            <TabsContent value="zones" className="mt-0">
-              <WaterZones 
-                zoneMetrics={zoneMetrics}
-                waterData={transformedData}
-                selectedMonth={filters.selectedMonth}
-                selectedZone={filters.selectedZone || zones[1] || ''}
-                onSelectZone={handleZoneChange}
-              />
-            </TabsContent>
-            
-            <TabsContent value="types" className="mt-0">
-              <WaterTypeAnalysis
-                typeConsumption={typeConsumption}
-                waterData={transformedData}
-                selectedMonth={filters.selectedMonth}
-                selectedType={filters.selectedType}
-                onSelectType={handleTypeChange}
-                types={types}
-              />
-            </TabsContent>
-            
-            <TabsContent value="loss" className="mt-0">
-              <WaterLossAnalysis 
-                zoneMetrics={zoneMetrics}
-                levelMetrics={levelMetrics}
-                selectedMonth={filters.selectedMonth}
-              />
-            </TabsContent>
             
             {/* Data Table with improved styling */}
             <Card className="shadow-md bg-white border-0 rounded-xl overflow-hidden">
