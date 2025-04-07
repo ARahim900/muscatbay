@@ -6,9 +6,6 @@ import Index from '@/pages/Index';
 import Auth from '@/pages/Auth';
 import Contracts from '@/pages/Contracts';
 import Projects from '@/pages/Projects';
-import Water from '@/pages/Water';
-import WaterSystem from '@/pages/WaterSystem';
-import WaterConsumptionTypes from '@/pages/WaterConsumptionTypes';
 import Electricity from '@/pages/Electricity';
 import ElectricitySystem from '@/pages/ElectricitySystem';
 import HVAC from '@/pages/HVAC';
@@ -32,9 +29,6 @@ function App() {
       <Route path="/" element={<Layout><Index /></Layout>} />
       <Route path="/contracts" element={<Layout><Contracts /></Layout>} />
       <Route path="/projects" element={<Layout><Projects /></Layout>} />
-      <Route path="/water" element={<Layout><Water /></Layout>} />
-      <Route path="/water-system" element={<Layout><WaterSystem /></Layout>} />
-      <Route path="/water-consumption-types" element={<Layout><WaterConsumptionTypes /></Layout>} />
       <Route path="/electricity" element={<Layout><Electricity /></Layout>} />
       <Route path="/electricity-system" element={<Layout><ElectricitySystem /></Layout>} />
       <Route path="/hvac" element={<Layout><HVAC /></Layout>} />

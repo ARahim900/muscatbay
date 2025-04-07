@@ -2,7 +2,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { 
-  Droplets, 
   Zap, 
   Factory, 
   AirVent, 
@@ -32,15 +31,6 @@ const quickLinks: QuickAccessLink[] = [
     url: '/electricity-system',
     color: 'text-amber-500',
     bgColor: 'bg-amber-50'
-  },
-  {
-    id: 'water',
-    title: 'Water System',
-    description: 'Monitor water usage and distribution',
-    icon: <Droplets className="h-5 w-5 text-blue-500" />,
-    url: '/water-system',
-    color: 'text-blue-500',
-    bgColor: 'bg-blue-50'
   },
   {
     id: 'stp',

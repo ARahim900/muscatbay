@@ -423,6 +423,72 @@ export type Database = {
         }
         Relationships: []
       }
+      L2: {
+        Row: {
+          "Acct #": number | null
+          "Apr-25": string | null
+          "Aug-25": string | null
+          "Dec-25": string | null
+          "Feb-25": number | null
+          "Jan-25": number | null
+          "Jul-25": string | null
+          "Jun-25": string | null
+          Label: string | null
+          "Mar-25": number | null
+          "May-25": string | null
+          "Meter Label": string | null
+          "Nov-25": string | null
+          "Oct-25": string | null
+          "Parent Meter": string | null
+          "Sep-25": string | null
+          Total: number | null
+          Type: string | null
+          Zone: string | null
+        }
+        Insert: {
+          "Acct #"?: number | null
+          "Apr-25"?: string | null
+          "Aug-25"?: string | null
+          "Dec-25"?: string | null
+          "Feb-25"?: number | null
+          "Jan-25"?: number | null
+          "Jul-25"?: string | null
+          "Jun-25"?: string | null
+          Label?: string | null
+          "Mar-25"?: number | null
+          "May-25"?: string | null
+          "Meter Label"?: string | null
+          "Nov-25"?: string | null
+          "Oct-25"?: string | null
+          "Parent Meter"?: string | null
+          "Sep-25"?: string | null
+          Total?: number | null
+          Type?: string | null
+          Zone?: string | null
+        }
+        Update: {
+          "Acct #"?: number | null
+          "Apr-25"?: string | null
+          "Aug-25"?: string | null
+          "Dec-25"?: string | null
+          "Feb-25"?: number | null
+          "Jan-25"?: number | null
+          "Jul-25"?: string | null
+          "Jun-25"?: string | null
+          Label?: string | null
+          "Mar-25"?: number | null
+          "May-25"?: string | null
+          "Meter Label"?: string | null
+          "Nov-25"?: string | null
+          "Oct-25"?: string | null
+          "Parent Meter"?: string | null
+          "Sep-25"?: string | null
+          Total?: number | null
+          Type?: string | null
+          Zone?: string | null
+        }
+        Relationships: []
+      }
       L2_Zone_Bulk_Direct: {
         Row: {
           apr_24: number | null
@@ -1437,6 +1503,7 @@ export type Database = {
           jul_24: number | null
           jun_24: number | null
           mar_24: number | null
+          mar_25: number | null
           may_24: number | null
           meter_label: string | null
           nov_24: number | null
@@ -1461,6 +1528,7 @@ export type Database = {
           jul_24?: number | null
           jun_24?: number | null
           mar_24?: number | null
+          mar_25?: number | null
           may_24?: number | null
           meter_label?: string | null
           nov_24?: number | null
@@ -1485,6 +1553,7 @@ export type Database = {
           jul_24?: number | null
           jun_24?: number | null
           mar_24?: number | null
+          mar_25?: number | null
           may_24?: number | null
           meter_label?: string | null
           nov_24?: number | null
@@ -2176,6 +2245,7 @@ export type Database = {
           jul_24: number | null
           jun_24: number | null
           mar_24: number | null
+          mar_25: number | null
           may_24: number | null
           nov_24: number | null
           oct_24: number | null
@@ -2197,6 +2267,7 @@ export type Database = {
           jul_24: number | null
           jun_24: number | null
           mar_24: number | null
+          mar_25: number | null
           may_24: number | null
           nov_24: number | null
           oct_24: number | null
@@ -2242,6 +2313,10 @@ export type Database = {
         Returns: undefined
       }
       refresh_all_materialized_views: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      refresh_water_consumption_views: {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
