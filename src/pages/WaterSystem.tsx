@@ -1113,10 +1113,10 @@ const Dashboard = () => {
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-2xl font-bold">Muscat Bay Water Monitoring</h1>
-              <p className="text-blue-100">Dashboard overview of water consumption and losses</p>
+              <p className="text-slate-50">Dashboard overview of water consumption and losses</p>
             </div>
             <div className="flex space-x-2">
-              <select className="bg-white bg-opacity-20 rounded border border-blue-300 text-white px-3 py-1" value={selectedPeriod} onChange={e => setSelectedPeriod(e.target.value)}>
+              <select value={selectedPeriod} onChange={e => setSelectedPeriod(e.target.value)} className="bg-opacity-20 border border-blue-300 text-white px-3 py-1 rounded-sm bg-muscat-dark">
                 <option value="Total">Total (Q1 2025)</option>
                 <option value="Jan-25">January 2025</option>
                 <option value="Feb-25">February 2025</option>
@@ -1323,7 +1323,7 @@ const Dashboard = () => {
                           {item.meterLabel}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          <button className="text-blue-600 hover:text-blue-800 hover:underline focus:outline-none" onClick={() => setShowParentDetails(item.parent)}>
+                          <button onClick={() => setShowParentDetails(item.parent)} className="hover:underline focus:outline-none text-muscat-primary font-semibold">
                             {item.parent}
                           </button>
                         </td>
