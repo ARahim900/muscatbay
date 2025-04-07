@@ -103,6 +103,7 @@ interface ProcessedElectricityData {
   }>;
   categories: string[];
   types: string[];
+  typesByCategory: Record<string, string[]>;
 }
 
 // --- Reusable Components ---
@@ -271,6 +272,7 @@ const processElectricityData = (rawData: ElectricityRecord[]): ProcessedElectric
   const meterDetails = [];
   const uniqueCategories = new Set<string>();
   const uniqueTypes = new Set<string>();
+  const typesByCategory: Record<string, string[]> = {};
 
   rawData.forEach(item => {
     const jan = parseFloat(item.jan25.toString()) || 0;
@@ -289,6 +291,14 @@ const processElectricityData = (rawData: ElectricityRecord[]): ProcessedElectric
     
     categoryTotalsMar[category] = (categoryTotalsMar[category] || 0) + mar;
     typeTotalsMar[type] = (typeTotalsMar[type] || 0) + mar;
+    
+    // Group types by category
+    if (!typesByCategory[category]) {
+      typesByCategory[category] = [];
+    }
+    if (!typesByCategory[category].includes(type)) {
+      typesByCategory[category].push(type);
+    }
     
     meterDetails.push({
       id: item.meter || `SL-${item.sl}`,
@@ -335,6 +345,7 @@ const processElectricityData = (rawData: ElectricityRecord[]): ProcessedElectric
     meterDetails: meterDetails,
     categories: Array.from(uniqueCategories).sort(),
     types: Array.from(uniqueTypes).sort(),
+    typesByCategory: typesByCategory,
   };
 };
 
@@ -350,6 +361,24 @@ const ElectricityAnalytics: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedType, setSelectedType] = useState("All");
   const [selectedYear, setSelectedYear] = useState(2025);
+  const [availableTypes, setAvailableTypes] = useState<string[]>(electricityData.types);
+
+  // Update available types when category changes
+  useEffect(() => {
+    if (selectedCategory === "All") {
+      setAvailableTypes(electricityData.types);
+    } else {
+      setAvailableTypes(electricityData.typesByCategory[selectedCategory] || []);
+    }
+    
+    // Reset type selection if the current selection isn't available in the new category
+    if (selectedCategory !== "All" && selectedType !== "All") {
+      const typesInCategory = electricityData.typesByCategory[selectedCategory] || [];
+      if (!typesInCategory.includes(selectedType)) {
+        setSelectedType("All");
+      }
+    }
+  }, [selectedCategory]);
 
   // --- Memoized Data Processing ---
   const filteredMeterDetails = useMemo(() => {
@@ -429,6 +458,11 @@ const ElectricityAnalytics: React.FC = () => {
     } else {
       console.log("Data for year", year, "is not available in this demo.");
     }
+  };
+
+  // Handle category change
+  const handleCategoryChange = (value: string) => {
+    setSelectedCategory(value);
   };
 
   // --- Common Chart Styles ---
@@ -611,7 +645,7 @@ const ElectricityAnalytics: React.FC = () => {
                         <Tooltip 
                           content={
                             <CustomTooltip 
-                              formatter={(v) => formatNumber(v, 0)} 
+                              valueFormatter={(v) => formatNumber(v, 0)} 
                               showCost={true}
                             />
                           } 
@@ -646,7 +680,7 @@ const ElectricityAnalytics: React.FC = () => {
                         <Tooltip 
                           content={
                             <CustomTooltip 
-                              formatter={(v) => formatNumber(v, 0)} 
+                              valueFormatter={(v) => formatNumber(v, 0)} 
                               showCost={true}
                             />
                           } 
@@ -707,7 +741,7 @@ const ElectricityAnalytics: React.FC = () => {
                         <Tooltip 
                           content={
                             <CustomTooltip 
-                              formatter={(v) => formatNumber(v, 0)} 
+                              valueFormatter={(v) => formatNumber(v, 0)} 
                               showCost={true}
                             />
                           } 
@@ -742,7 +776,7 @@ const ElectricityAnalytics: React.FC = () => {
                         <Tooltip 
                           content={
                             <CustomTooltip 
-                              formatter={(v) => formatNumber(v, 0)} 
+                              valueFormatter={(v) => formatNumber(v, 0)} 
                               showCost={true}
                             />
                           } 
@@ -779,7 +813,7 @@ const ElectricityAnalytics: React.FC = () => {
                     <Button 
                       size="sm" 
                       variant={selectedCategory === 'All' ? 'default' : 'outline'} 
-                      onClick={() => setSelectedCategory("All")}
+                      onClick={() => handleCategoryChange("All")}
                       className="rounded-full text-xs h-8"
                     >
                       All
@@ -789,7 +823,7 @@ const ElectricityAnalytics: React.FC = () => {
                         key={cat} 
                         size="sm"
                         variant={selectedCategory === cat ? 'default' : 'outline'}
-                        onClick={() => setSelectedCategory(cat)}
+                        onClick={() => handleCategoryChange(cat)}
                         className="rounded-full text-xs h-8"
                       >
                         {cat}
@@ -797,7 +831,7 @@ const ElectricityAnalytics: React.FC = () => {
                     ))}
                   </div>
                   
-                  {/* Type Filters */}
+                  {/* Type Filters - Now filtered based on selected category */}
                   <div className="flex items-center flex-wrap gap-2">
                     <span className="text-sm font-medium text-gray-600 mr-2 flex-shrink-0">Type:</span>
                     <Button 
@@ -808,7 +842,7 @@ const ElectricityAnalytics: React.FC = () => {
                     >
                       All
                     </Button>
-                    {electricityData.types.map(type => (
+                    {availableTypes.map(type => (
                       <Button 
                         key={type} 
                         size="sm"
