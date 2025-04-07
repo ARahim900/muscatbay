@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   Chart as ChartJS, ArcElement, Tooltip as ChartTooltip, Legend,
@@ -11,6 +10,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import Layout from '@/components/layout/Layout';
 
 // Register Chart.js components needed
 ChartJS.register(ArcElement, ChartTooltip, Legend, CategoryScale, LinearScale, BarElement, Title);
@@ -27,10 +27,36 @@ const rates = {
   masterCommunity: 1.914, // Derived rate based on user's list total area
 };
 
+// Define interfaces for type safety
+interface PropertyUnit {
+  unitNo: string;
+  sector: string;
+  type: string;
+  unitType: string;
+  bua: number;
+}
+
+interface SectorSummary {
+  units: number;
+  area: number;
+}
+
+interface TypeSummary {
+  units: number;
+  area: number;
+}
+
+interface Summaries {
+  sectors: Record<string, SectorSummary>;
+  types: Record<string, TypeSummary>;
+  totalArea: number;
+  totalUnits: number;
+}
+
 // --- FULL PROPERTY DATABASE ---
 // Note: Corrected Z3 008 area, handled invalid areas for Z3 056(3B)/Z3 056(4B) -> null
 // Note: Staff Accommodation (FM) units included but have null BUA
-const propertyDatabase = [
+const propertyDatabase: PropertyUnit[] = [
     { unitNo: "Z3 061(1A)", sector: "Zaha", type: "Apartment", unitType: "2 Bed Small Apt", bua: 115.47 },
     { unitNo: "Z3 054(4A)", sector: "Zaha", type: "Apartment", unitType: "2 Bed Small Apt", bua: 115.47 },
     { unitNo: "Z8 007", sector: "Wajd", type: "Villa", unitType: "5 Bed Wajd Villa", bua: 750.35 },
@@ -199,9 +225,9 @@ const propertyDatabase = [
 ];
 
 // Function to calculate data summaries
-const calculateSummaries = () => {
-  const sectors = {};
-  const types = {};
+const calculateSummaries = (): Summaries => {
+  const sectors: Record<string, SectorSummary> = {};
+  const types: Record<string, TypeSummary> = {};
   let totalArea = 0;
   let totalUnits = 0;
 
@@ -234,7 +260,7 @@ const calculateSummaries = () => {
   return { sectors, types, totalArea, totalUnits };
 };
 
-const ReserveFundDashboard = () => {
+const ReserveFundDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState("overview");
   const [selectedYear, setSelectedYear] = useState("2025");
   
@@ -276,7 +302,7 @@ const ReserveFundDashboard = () => {
   
   // Calculate total annual reserve fund
   const totalAnnualReserveFund = Object.entries(summaries.sectors).reduce((total, [sector, data]) => {
-    const sectorRate = rates.zone[sector] || 0;
+    const sectorRate = rates.zone[sector as keyof typeof rates.zone] || 0;
     const mcRate = sector !== 'FM' ? rates.masterCommunity : 0; // No MC for Staff Accommodation
     return total + ((sectorRate + mcRate) * data.area);
   }, 0);
@@ -290,10 +316,10 @@ const ReserveFundDashboard = () => {
       },
       tooltip: {
         callbacks: {
-          label: function(context) {
+          label: function(context: any) {
             const label = context.label || '';
             const value = context.raw || 0;
-            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+            const total = context.dataset.data.reduce((a: number, b: number) => a + b, 0);
             const percentage = ((value / total) * 100).toFixed(1);
             return `${label}: ${value.toLocaleString()} m² (${percentage}%)`;
           }
@@ -303,218 +329,220 @@ const ReserveFundDashboard = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-6">
-      <div className="flex items-center mb-6">
-        <Banknote className="h-8 w-8 mr-3 text-blue-600" />
-        <div>
-          <h1 className="text-2xl font-bold text-gray-800">Reserve Fund Dashboard</h1>
-          <p className="text-gray-600">Overview of Muscat Bay reserve fund allocations and property data</p>
+    <Layout>
+      <div className="container mx-auto px-4 py-6">
+        <div className="flex items-center mb-6">
+          <Banknote className="h-8 w-8 mr-3 text-blue-600" />
+          <div>
+            <h1 className="text-2xl font-bold text-gray-800">Reserve Fund Dashboard</h1>
+            <p className="text-gray-600">Overview of Muscat Bay reserve fund allocations and property data</p>
+          </div>
+          <div className="ml-auto flex space-x-2">
+            <Select value={selectedYear} onValueChange={setSelectedYear}>
+              <SelectTrigger className="w-[120px]">
+                <SelectValue placeholder="Year" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="2023">2023</SelectItem>
+                <SelectItem value="2024">2024</SelectItem>
+                <SelectItem value="2025">2025</SelectItem>
+                <SelectItem value="2026">2026</SelectItem>
+              </SelectContent>
+            </Select>
+            <button className="px-4 py-2 bg-blue-50 text-blue-700 rounded-md hover:bg-blue-100 transition-colors">
+              Export
+            </button>
+          </div>
         </div>
-        <div className="ml-auto flex space-x-2">
-          <Select value={selectedYear} onValueChange={setSelectedYear}>
-            <SelectTrigger className="w-[120px]">
-              <SelectValue placeholder="Year" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="2023">2023</SelectItem>
-              <SelectItem value="2024">2024</SelectItem>
-              <SelectItem value="2025">2025</SelectItem>
-              <SelectItem value="2026">2026</SelectItem>
-            </SelectContent>
-          </Select>
-          <button className="px-4 py-2 bg-blue-50 text-blue-700 rounded-md hover:bg-blue-100 transition-colors">
-            Export
-          </button>
-        </div>
-      </div>
-      
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="mb-4">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="analysis">Analysis</TabsTrigger>
-          <TabsTrigger value="by-type">By Type</TabsTrigger>
-          <TabsTrigger value="by-sector">By Sector</TabsTrigger>
-        </TabsList>
+        
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="mb-4">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="analysis">Analysis</TabsTrigger>
+            <TabsTrigger value="by-type">By Type</TabsTrigger>
+            <TabsTrigger value="by-sector">By Sector</TabsTrigger>
+          </TabsList>
 
-        <div className="text-sm text-gray-500 mb-6">
-          Showing: {activeTab === "overview" ? "Reserve Fund Overview" : 
-                   activeTab === "analysis" ? "Reserve Fund Analysis" :
-                   activeTab === "by-type" ? "Reserve Fund by Property Type" : "Reserve Fund by Sector"}
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-500">Total Properties</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">{summaries.totalUnits}</div>
-              <p className="text-xs text-gray-500 mt-1">Units in database</p>
-            </CardContent>
-          </Card>
+          <div className="text-sm text-gray-500 mb-6">
+            Showing: {activeTab === "overview" ? "Reserve Fund Overview" : 
+                     activeTab === "analysis" ? "Reserve Fund Analysis" :
+                     activeTab === "by-type" ? "Reserve Fund by Property Type" : "Reserve Fund by Sector"}
+          </div>
           
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-500">Total Area</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">{summaries.totalArea.toLocaleString()}</div>
-              <p className="text-xs text-gray-500 mt-1">Square meters</p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-500">Annual Reserve Fund</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">{totalAnnualReserveFund.toLocaleString()}</div>
-              <p className="text-xs text-gray-500 mt-1">Omani Rials</p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-500">Monthly Average</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">{(totalAnnualReserveFund / 12).toLocaleString()}</div>
-              <p className="text-xs text-gray-500 mt-1">Omani Rials per month</p>
-            </CardContent>
-          </Card>
-        </div>
-        
-        <TabsContent value="overview" className="mt-0">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             <Card>
-              <CardHeader>
-                <CardTitle>Distribution by Sector</CardTitle>
-                <CardDescription>Area distribution across different sectors</CardDescription>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-gray-500">Total Properties</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="h-[300px] flex items-center justify-center">
-                  <Pie data={sectorData} options={pieChartOptions} />
-                </div>
+                <div className="text-3xl font-bold">{summaries.totalUnits}</div>
+                <p className="text-xs text-gray-500 mt-1">Units in database</p>
               </CardContent>
             </Card>
             
             <Card>
-              <CardHeader>
-                <CardTitle>Distribution by Type</CardTitle>
-                <CardDescription>Area distribution by property type</CardDescription>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-gray-500">Total Area</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="h-[300px] flex items-center justify-center">
-                  <Pie data={typeData} options={pieChartOptions} />
-                </div>
+                <div className="text-3xl font-bold">{summaries.totalArea.toLocaleString()}</div>
+                <p className="text-xs text-gray-500 mt-1">Square meters</p>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-gray-500">Annual Reserve Fund</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold">{totalAnnualReserveFund.toLocaleString()}</div>
+                <p className="text-xs text-gray-500 mt-1">Omani Rials</p>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-gray-500">Monthly Average</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold">{(totalAnnualReserveFund / 12).toLocaleString()}</div>
+                <p className="text-xs text-gray-500 mt-1">Omani Rials per month</p>
               </CardContent>
             </Card>
           </div>
-        </TabsContent>
-        
-        <TabsContent value="analysis" className="mt-0">
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle>Reserve Fund Analysis</CardTitle>
-              <CardDescription>Analysis of reserve fund contributions and allocations</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="p-4 bg-gray-50 rounded-md">
-                <p>Detailed analysis view coming soon. This tab will include:</p>
-                <ul className="list-disc pl-5 mt-2 space-y-1">
-                  <li>Year-over-year comparisons</li>
-                  <li>Contribution analysis</li>
-                  <li>Fund allocation recommendations</li>
-                  <li>Long-term projections</li>
-                </ul>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="by-type" className="mt-0">
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle>Reserve Fund by Property Type</CardTitle>
-              <CardDescription>Breakdown of contributions by property type</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse">
-                  <thead>
-                    <tr className="bg-gray-50">
-                      <th className="text-left p-3 border-b">Property Type</th>
-                      <th className="text-right p-3 border-b">Units</th>
-                      <th className="text-right p-3 border-b">Total Area (m²)</th>
-                      <th className="text-right p-3 border-b">Avg. Area (m²)</th>
-                      <th className="text-right p-3 border-b">% of Total</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {Object.entries(summaries.types).map(([type, data], index) => (
-                      <tr key={index} className="hover:bg-gray-50">
-                        <td className="p-3 border-b">{type}</td>
-                        <td className="text-right p-3 border-b">{data.units}</td>
-                        <td className="text-right p-3 border-b">{data.area.toLocaleString()}</td>
-                        <td className="text-right p-3 border-b">{(data.area / data.units).toLocaleString()}</td>
-                        <td className="text-right p-3 border-b">
-                          {((data.area / summaries.totalArea) * 100).toFixed(1)}%
-                        </td>
+          
+          <TabsContent value="overview" className="mt-0">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Distribution by Sector</CardTitle>
+                  <CardDescription>Area distribution across different sectors</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[300px] flex items-center justify-center">
+                    <Pie data={sectorData} options={pieChartOptions} />
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader>
+                  <CardTitle>Distribution by Type</CardTitle>
+                  <CardDescription>Area distribution by property type</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[300px] flex items-center justify-center">
+                    <Pie data={typeData} options={pieChartOptions} />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="analysis" className="mt-0">
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle>Reserve Fund Analysis</CardTitle>
+                <CardDescription>Analysis of reserve fund contributions and allocations</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="p-4 bg-gray-50 rounded-md">
+                  <p>Detailed analysis view coming soon. This tab will include:</p>
+                  <ul className="list-disc pl-5 mt-2 space-y-1">
+                    <li>Year-over-year comparisons</li>
+                    <li>Contribution analysis</li>
+                    <li>Fund allocation recommendations</li>
+                    <li>Long-term projections</li>
+                  </ul>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="by-type" className="mt-0">
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle>Reserve Fund by Property Type</CardTitle>
+                <CardDescription>Breakdown of contributions by property type</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse">
+                    <thead>
+                      <tr className="bg-gray-50">
+                        <th className="text-left p-3 border-b">Property Type</th>
+                        <th className="text-right p-3 border-b">Units</th>
+                        <th className="text-right p-3 border-b">Total Area (m²)</th>
+                        <th className="text-right p-3 border-b">Avg. Area (m²)</th>
+                        <th className="text-right p-3 border-b">% of Total</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="by-sector" className="mt-0">
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle>Reserve Fund by Sector</CardTitle>
-              <CardDescription>Breakdown of contributions by sector</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse">
-                  <thead>
-                    <tr className="bg-gray-50">
-                      <th className="text-left p-3 border-b">Sector</th>
-                      <th className="text-right p-3 border-b">Units</th>
-                      <th className="text-right p-3 border-b">Total Area (m²)</th>
-                      <th className="text-right p-3 border-b">Zone Rate (OMR/m²)</th>
-                      <th className="text-right p-3 border-b">MC Rate (OMR/m²)</th>
-                      <th className="text-right p-3 border-b">Total Contribution (OMR)</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {Object.entries(summaries.sectors).map(([sector, data], index) => {
-                      const zoneRate = rates.zone[sector] || 0;
-                      const mcRate = sector !== 'FM' ? rates.masterCommunity : 0;
-                      const totalContribution = (zoneRate + mcRate) * data.area;
-                      
-                      return (
+                    </thead>
+                    <tbody>
+                      {Object.entries(summaries.types).map(([type, data], index) => (
                         <tr key={index} className="hover:bg-gray-50">
-                          <td className="p-3 border-b">{sector}</td>
+                          <td className="p-3 border-b">{type}</td>
                           <td className="text-right p-3 border-b">{data.units}</td>
                           <td className="text-right p-3 border-b">{data.area.toLocaleString()}</td>
-                          <td className="text-right p-3 border-b">{zoneRate.toFixed(3)}</td>
-                          <td className="text-right p-3 border-b">{mcRate.toFixed(3)}</td>
+                          <td className="text-right p-3 border-b">{(data.area / data.units).toLocaleString()}</td>
                           <td className="text-right p-3 border-b">
-                            {totalContribution.toLocaleString()}
+                            {((data.area / summaries.totalArea) * 100).toFixed(1)}%
                           </td>
                         </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-    </div>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="by-sector" className="mt-0">
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle>Reserve Fund by Sector</CardTitle>
+                <CardDescription>Breakdown of contributions by sector</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse">
+                    <thead>
+                      <tr className="bg-gray-50">
+                        <th className="text-left p-3 border-b">Sector</th>
+                        <th className="text-right p-3 border-b">Units</th>
+                        <th className="text-right p-3 border-b">Total Area (m²)</th>
+                        <th className="text-right p-3 border-b">Zone Rate (OMR/m²)</th>
+                        <th className="text-right p-3 border-b">MC Rate (OMR/m²)</th>
+                        <th className="text-right p-3 border-b">Total Contribution (OMR)</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {Object.entries(summaries.sectors).map(([sector, data], index) => {
+                        const zoneRate = rates.zone[sector as keyof typeof rates.zone] || 0;
+                        const mcRate = sector !== 'FM' ? rates.masterCommunity : 0;
+                        const totalContribution = (zoneRate + mcRate) * data.area;
+                        
+                        return (
+                          <tr key={index} className="hover:bg-gray-50">
+                            <td className="p-3 border-b">{sector}</td>
+                            <td className="text-right p-3 border-b">{data.units}</td>
+                            <td className="text-right p-3 border-b">{data.area.toLocaleString()}</td>
+                            <td className="text-right p-3 border-b">{zoneRate.toFixed(3)}</td>
+                            <td className="text-right p-3 border-b">{mcRate.toFixed(3)}</td>
+                            <td className="text-right p-3 border-b">
+                              {totalContribution.toLocaleString()}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </Layout>
   );
 };
 

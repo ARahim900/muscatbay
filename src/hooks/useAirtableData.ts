@@ -39,10 +39,37 @@ export default function useAirtableData<T = any>(
       console.log('Fetched data:', fetchedData);
       setData(fetchedData as T[]);
     } catch (err) {
-      const error = err instanceof Error ? err : new Error('An unknown error occurred');
-      console.error('Error fetching Airtable data:', error);
+      console.error('Error fetching Airtable data:', err);
+      
+      // Create a more informative error message
+      let errorMessage = 'An unknown error occurred';
+      
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      } else if (typeof err === 'object' && err !== null) {
+        // Try to extract more detailed error information
+        if ('statusCode' in err && typeof err.statusCode === 'number') {
+          if (err.statusCode === 403) {
+            errorMessage = 'Authentication error: Please check your Airtable API key and permissions';
+          } else if (err.statusCode === 404) {
+            errorMessage = `Table "${tableName}" not found. Please check table name`;
+          }
+        }
+        
+        if ('message' in err && typeof err.message === 'string') {
+          errorMessage = err.message;
+        }
+      }
+      
+      const error = new Error(errorMessage);
       setError(error);
-      toast.error(`Failed to fetch data: ${error.message}`);
+      
+      // Only show toast for non-network errors
+      if (!navigator.onLine) {
+        toast.error('Network connection issue. Please check your internet connection.');
+      } else {
+        toast.error(`Failed to fetch data: ${errorMessage}`);
+      }
     } finally {
       setIsLoading(false);
     }
