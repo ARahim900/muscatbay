@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Zap } from 'lucide-react';
+import { Zap, Droplets } from 'lucide-react';
 import SidebarLink from './SidebarLink';
 import SidebarSection from './SidebarSection';
 import { useNavigate } from 'react-router-dom';
@@ -40,6 +40,17 @@ const UtilitiesSection: React.FC<UtilitiesSectionProps> = ({
         iconColor="amber-500"
         bgColor="amber-100"
         onClick={() => handleClick('/electricity-system')}
+      />
+      <SidebarLink 
+        to="/water-system" 
+        icon={Droplets} 
+        label="Water System" 
+        collapsed={collapsed} 
+        external={false}
+        isMobile={isMobile}
+        iconColor="blue-500"
+        bgColor="blue-100"
+        onClick={() => handleClick('/water-system')}
       />
     </SidebarSection>
   );

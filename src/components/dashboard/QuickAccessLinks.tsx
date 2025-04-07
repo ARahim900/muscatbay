@@ -7,7 +7,8 @@ import {
   AirVent, 
   FileText, 
   Star,
-  Landmark
+  Landmark,
+  Droplets
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -31,6 +32,15 @@ const quickLinks: QuickAccessLink[] = [
     url: '/electricity-system',
     color: 'text-amber-500',
     bgColor: 'bg-amber-50'
+  },
+  {
+    id: 'water',
+    title: 'Water System',
+    description: 'Monitor water distribution and losses',
+    icon: <Droplets className="h-5 w-5 text-blue-500" />,
+    url: '/water-system',
+    color: 'text-blue-500',
+    bgColor: 'bg-blue-50'
   },
   {
     id: 'stp',

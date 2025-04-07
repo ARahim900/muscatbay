@@ -22,6 +22,7 @@ import ReserveFundCalculatorPage from '@/pages/ReserveFundCalculatorPage';
 import ReserveFundDashboard from '@/pages/ReserveFundDashboard';
 import NotFound from '@/pages/NotFound';
 import Layout from '@/components/layout/Layout';
+import WaterSystem from '@/pages/WaterSystem';
 
 function App() {
   return (
@@ -31,6 +32,7 @@ function App() {
       <Route path="/projects" element={<Layout><Projects /></Layout>} />
       <Route path="/electricity" element={<Layout><Electricity /></Layout>} />
       <Route path="/electricity-system" element={<Layout><ElectricitySystem /></Layout>} />
+      <Route path="/water-system" element={<Layout><WaterSystem /></Layout>} />
       <Route path="/hvac" element={<Layout><HVAC /></Layout>} />
       <Route path="/pumping-stations" element={<Layout><PumpingStations /></Layout>} />
       <Route path="/stp" element={<Layout><STP /></Layout>} />
