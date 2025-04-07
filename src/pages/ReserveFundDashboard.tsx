@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   Chart as ChartJS,
@@ -5,7 +6,7 @@ import {
   LinearScale,
   BarElement,
   Title,
-  Tooltip,
+  Tooltip as ChartTooltip,
   Legend,
   ArcElement,
   LineElement,
@@ -19,8 +20,15 @@ import { Pie } from 'react-chartjs-2';
 import { Line } from 'react-chartjs-2';
 import faker from 'faker';
 import StandardPageLayout from '@/components/layout/StandardPageLayout';
-import { FilePie, Landmark } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { FilePie, Landmark, MoreHorizontal, Check, Copy, Edit, Trash } from 'lucide-react';
+import { 
+  Card, 
+  CardContent, 
+  CardHeader, 
+  CardTitle,
+  CardDescription,
+  CardFooter
+} from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -38,7 +46,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { CalendarIcon } from "@radix-ui/react-icons";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { format } from "date-fns";
+import { format, addMonths, isBefore, isSameDay, startOfMonth } from "date-fns";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
@@ -128,17 +136,29 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator, ContextMenuTrigger } from "@/components/ui/context-menu";
+import { 
+  ContextMenu, 
+  ContextMenuContent, 
+  ContextMenuItem, 
+  ContextMenuSeparator, 
+  ContextMenuTrigger 
+} from "@/components/ui/context-menu";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
-import { useFormField, Form, FormField, FormItem, FormLabel, FormMessage, FormPopover, } from "@/components/ui/form";
-import { FormControl } from "@/components/ui/form";
+import { 
+  Form,
+  FormControl,
+  FormField, 
+  FormItem, 
+  FormLabel, 
+  FormMessage, 
+  FormPopover, 
+  FormDescription
+} from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { DateRange } from "react-day-picker";
-import { addMonths, isBefore, isSameDay, startOfMonth } from "date-fns";
-import { Progress } from "@/components/ui/progress";
 import { useOrigin } from "@/hooks/use-origin";
 import { generatePalette } from "@/lib/utils";
 import { DataTable } from "@/components/ui/data-table";
@@ -149,9 +169,6 @@ import {
   getPaginationRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { MoreHorizontal } from "lucide-react";
-import { Check } from "lucide-react";
-import { Copy, Edit, Trash } from "lucide-react";
 import { CopyToClipboard } from 'react-copy-to-clipboard';
 import {
   Accordion,
@@ -159,10 +176,6 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import {
-  CardDescription,
-  CardFooter,
-} from "@/components/ui/card";
 import {
   Carousel,
   CarouselContent,
@@ -217,7 +230,7 @@ ChartJS.register(
   LinearScale,
   BarElement,
   Title,
-  Tooltip,
+  ChartTooltip,
   Legend,
   ArcElement,
   LineElement,
