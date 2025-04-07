@@ -82,6 +82,77 @@ const WaterSystem = () => {
     exit: { opacity: 0, y: -20, transition: { duration: 0.2 } }
   };
   
+  // Initialize default values for metrics to prevent conditional hook calls
+  const emptyData: WaterConsumptionData[] = useMemo(() => [], []);
+  const defaultAvailableMonths = useMemo(() => ['all'], []);
+  
+  // Transform and prepare data - always compute these regardless of conditions
+  const transformedData = useMemo(() => 
+    waterData ? transformWaterData(waterData) : emptyData, 
+    [waterData, emptyData]
+  );
+  
+  const availableMonths = useMemo(() => 
+    waterData ? getAvailableMonths(transformedData) : defaultAvailableMonths, 
+    [transformedData, defaultAvailableMonths]
+  );
+  
+  const zones = useMemo(() => 
+    waterData ? getZones(transformedData) : ['all'], 
+    [transformedData]
+  );
+  
+  const types = useMemo(() => 
+    waterData ? getTypes(transformedData) : ['all'], 
+    [transformedData]
+  );
+  
+  const filteredData = useMemo(() => 
+    waterData ? filterWaterData(transformedData, filters.selectedMonth, filters.selectedZone, filters.selectedType) : [], 
+    [transformedData, filters.selectedMonth, filters.selectedZone, filters.selectedType]
+  );
+  
+  const levelMetrics = useMemo(() => 
+    waterData ? calculateLevelMetrics(transformedData, filters.selectedMonth) : {
+      l1Supply: 0,
+      l2Volume: 0,
+      l3Volume: 0,
+      stage1Loss: 0,
+      stage2Loss: 0,
+      totalLoss: 0,
+      stage1LossPercentage: 0,
+      stage2LossPercentage: 0,
+      totalLossPercentage: 0
+    }, 
+    [transformedData, filters.selectedMonth]
+  );
+  
+  const zoneMetrics = useMemo(() => 
+    waterData ? calculateZoneMetrics(transformedData, filters.selectedMonth) : [],
+    [transformedData, filters.selectedMonth]
+  );
+  
+  const typeConsumption = useMemo(() => 
+    waterData ? calculateTypeConsumption(transformedData, filters.selectedMonth) : [],
+    [transformedData, filters.selectedMonth]
+  );
+  
+  const monthlyTrends = useMemo(() => 
+    waterData ? calculateMonthlyTrends(transformedData, availableMonths) : [],
+    [transformedData, availableMonths]
+  );
+  
+  // Calculate pagination - moved out of conditional rendering to be consistent
+  const totalPages = useMemo(() => 
+    Math.ceil(filteredData.length / pageSize),
+    [filteredData.length, pageSize]
+  );
+  
+  const paginatedData = useMemo(() => 
+    filteredData.slice((currentPage - 1) * pageSize, currentPage * pageSize),
+    [filteredData, currentPage, pageSize]
+  );
+  
   // Handle loading state
   if (isLoading) {
     return (
@@ -215,41 +286,6 @@ const WaterSystem = () => {
       </Layout>
     );
   }
-  
-  // Transform and prepare data - always compute these regardless of conditions
-  const transformedData = useMemo(() => transformWaterData(waterData), [waterData]);
-  const availableMonths = useMemo(() => getAvailableMonths(transformedData), [transformedData]);
-  const zones = useMemo(() => getZones(transformedData), [transformedData]);
-  const types = useMemo(() => getTypes(transformedData), [transformedData]);
-  const filteredData = useMemo(() => 
-    filterWaterData(transformedData, filters.selectedMonth, filters.selectedZone, filters.selectedType),
-    [transformedData, filters.selectedMonth, filters.selectedZone, filters.selectedType]
-  );
-  const levelMetrics = useMemo(() => 
-    calculateLevelMetrics(transformedData, filters.selectedMonth),
-    [transformedData, filters.selectedMonth]
-  );
-  const zoneMetrics = useMemo(() => 
-    calculateZoneMetrics(transformedData, filters.selectedMonth),
-    [transformedData, filters.selectedMonth]
-  );
-  const typeConsumption = useMemo(() => 
-    calculateTypeConsumption(transformedData, filters.selectedMonth),
-    [transformedData, filters.selectedMonth]
-  );
-  const monthlyTrends = useMemo(() => 
-    calculateMonthlyTrends(transformedData, availableMonths),
-    [transformedData, availableMonths]
-  );
-  
-  // Calculate pagination - moved out of conditional rendering to be consistent
-  const totalPages = Math.ceil(filteredData.length / pageSize);
-  const paginatedData = useMemo(() => {
-    return filteredData.slice(
-      (currentPage - 1) * pageSize,
-      currentPage * pageSize
-    );
-  }, [filteredData, currentPage, pageSize]);
   
   // Handle export data
   const handleExportData = () => {
