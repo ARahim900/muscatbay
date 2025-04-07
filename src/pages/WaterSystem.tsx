@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState } from 'react';
 import useAirtableData from '@/hooks/useAirtableData';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Droplets, FileDown, TrendingUp, TrendingDown, Filter, Loader2, AlertTriangle } from 'lucide-react';
+import { Droplets, FileDown, Loader2, AlertTriangle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import Layout from '@/components/layout/Layout';
 import { 
@@ -38,54 +39,25 @@ interface WaterConsumptionData {
   Notes?: string;
 }
 
-// Mock data to use when Airtable is unavailable
-const mockWaterData: WaterConsumptionData[] = [
-  { id: '1', Month: 'January', Zone: 'Zone 1', 'Consumption (m³)': 1250, 'Cost (OMR)': 750, 'Change %': 0, Type: 'Residential', Location: 'Main Building' },
-  { id: '2', Month: 'February', Zone: 'Zone 1', 'Consumption (m³)': 1100, 'Cost (OMR)': 660, 'Change %': -12, Type: 'Residential', Location: 'Main Building' },
-  { id: '3', Month: 'March', Zone: 'Zone 1', 'Consumption (m³)': 1300, 'Cost (OMR)': 780, 'Change %': 18.2, Type: 'Residential', Location: 'Main Building' },
-  { id: '4', Month: 'January', Zone: 'Zone 2', 'Consumption (m³)': 980, 'Cost (OMR)': 588, 'Change %': 0, Type: 'Commercial', Location: 'Village Square' },
-  { id: '5', Month: 'February', Zone: 'Zone 2', 'Consumption (m³)': 1050, 'Cost (OMR)': 630, 'Change %': 7.1, Type: 'Commercial', Location: 'Village Square' },
-  { id: '6', Month: 'March', Zone: 'Zone 2', 'Consumption (m³)': 1100, 'Cost (OMR)': 660, 'Change %': 4.8, Type: 'Commercial', Location: 'Village Square' },
-  { id: '7', Month: 'January', Zone: 'Zone 3', 'Consumption (m³)': 2100, 'Cost (OMR)': 1260, 'Change %': 0, Type: 'Residential', Location: 'Zaha' },
-  { id: '8', Month: 'February', Zone: 'Zone 3', 'Consumption (m³)': 2000, 'Cost (OMR)': 1200, 'Change %': -4.8, Type: 'Residential', Location: 'Zaha' },
-  { id: '9', Month: 'March', Zone: 'Zone 3', 'Consumption (m³)': 2200, 'Cost (OMR)': 1320, 'Change %': 10, Type: 'Residential', Location: 'Zaha' },
-  { id: '10', Month: 'January', Zone: 'Zone 5', 'Consumption (m³)': 1500, 'Cost (OMR)': 900, 'Change %': 0, Type: 'Residential', Location: 'Nameer' },
-  { id: '11', Month: 'February', Zone: 'Zone 5', 'Consumption (m³)': 1450, 'Cost (OMR)': 870, 'Change %': -3.3, Type: 'Residential', Location: 'Nameer' },
-  { id: '12', Month: 'March', Zone: 'Zone 5', 'Consumption (m³)': 1550, 'Cost (OMR)': 930, 'Change %': 6.9, Type: 'Residential', Location: 'Nameer' },
-];
-
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#66BCFE'];
 
 const WaterSystem = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [selectedMonth, setSelectedMonth] = useState("all");
   const [selectedZone, setSelectedZone] = useState("all");
-  const [useDataSource, setUseDataSource] = useState<'airtable' | 'mock'>('airtable');
   
-  // Fetch water consumption data from Airtable using the updated hook
-  const { data: airtableData, isLoading, error, refetch } = useAirtableData<WaterConsumptionData>(
+  // Fetch water consumption data from Airtable
+  const { data: waterData, isLoading, error, refetch } = useAirtableData<WaterConsumptionData>(
     'Water Consumption', // Make sure this matches your actual table name in Airtable
     {
       // Optional: Add view, filter, or sort options
       // view: 'Grid view',
       // filterByFormula: `AND({Month}='${selectedMonth}')`,
-      // sort: [{ field: 'Date', direction: 'desc' }],
+      sort: [{ field: 'Date', direction: 'desc' }],
     }
   );
   
-  // Use effect to switch to mock data if there's an Airtable error
-  useEffect(() => {
-    if (error) {
-      console.log("Switching to mock data due to Airtable error:", error);
-      setUseDataSource('mock');
-      toast.info("Using sample data due to API connection issues");
-    }
-  }, [error]);
-  
-  // Determine which data source to use
-  const waterData = useDataSource === 'airtable' ? airtableData : mockWaterData;
-  
-  if (isLoading && useDataSource === 'airtable') {
+  if (isLoading) {
     return (
       <Layout>
         <div className="flex items-center justify-center min-h-[70vh]">
@@ -93,6 +65,72 @@ const WaterSystem = () => {
             <Loader2 className="h-10 w-10 mx-auto mb-4 text-primary animate-spin" />
             <p className="text-lg text-muted-foreground">Loading water system data...</p>
           </div>
+        </div>
+      </Layout>
+    );
+  }
+  
+  if (error) {
+    return (
+      <Layout>
+        <div className="container mx-auto p-4">
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <AlertTriangle className="mr-2 h-6 w-6 text-amber-500" />
+                Error Loading Data
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="bg-red-50 text-red-800 p-4 rounded-md">
+                <p className="font-medium">Failed to load water data: {error.message}</p>
+                <p className="mt-2">Please check your Airtable connection settings and table configuration.</p>
+                <div className="mt-4">
+                  <Button 
+                    variant="outline" 
+                    className="text-blue-600"
+                    onClick={() => refetch()}
+                  >
+                    Try Again
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </Layout>
+    );
+  }
+  
+  if (!waterData || waterData.length === 0) {
+    return (
+      <Layout>
+        <div className="container mx-auto p-4">
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Droplets className="mr-2 h-6 w-6 text-blue-500" />
+                Water System Dashboard
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="bg-amber-50 text-amber-800 p-4 rounded-md">
+                <p className="font-medium">No water consumption data available.</p>
+                <p className="mt-2">
+                  Make sure your Airtable "Water Consumption" table contains records and has the correct structure.
+                </p>
+                <div className="mt-4">
+                  <Button 
+                    variant="outline" 
+                    className="text-blue-600"
+                    onClick={() => refetch()}
+                  >
+                    Refresh Data
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </Layout>
     );
@@ -195,29 +233,6 @@ const WaterSystem = () => {
               </Button>
             </div>
           </div>
-          
-          {error && useDataSource === 'mock' && (
-            <Card className="bg-amber-50 border-amber-200">
-              <CardContent className="pt-6">
-                <div className="flex items-center">
-                  <AlertTriangle className="h-5 w-5 text-amber-500 mr-2" />
-                  <p className="text-amber-800">
-                    Using demo data due to connection issues with the water data source.
-                    <Button 
-                      variant="link" 
-                      className="px-2 text-blue-600"
-                      onClick={() => {
-                        setUseDataSource('airtable');
-                        refetch();
-                      }}
-                    >
-                      Try again
-                    </Button>
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          )}
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <Card>
