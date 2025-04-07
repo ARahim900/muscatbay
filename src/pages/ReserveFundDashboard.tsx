@@ -192,4 +192,6 @@ const propertyDatabase = [
     { unitNo: "Z3 060(2B)", sector: "Zaha", type: "Villa", unitType: "1 Bed Apt", bua: 79.09 },
     { unitNo: "Z3 060(3B)", sector: "Zaha", type: "Villa", unitType: "1 Bed Apt", bua: 79.09 },
     { unitNo: "Z3 060(4B)", sector: "Zaha", type: "Villa", unitType: "1 Bed Apt", bua: 79.09 },
-    { unitNo: "Z3 060(5)", sector: "Zaha", type: "Villa", unitType: "3 Be
+    { unitNo: "Z3 060(5)", sector: "Zaha", type: "Villa", unitType: "3 Bed Zaha Apt", bua: 355.07 },
+    { unitNo: "Z3 061(1B)", sector: "Zaha", type: "Villa", unitType: "1 Bed Apt", bua: 79.09 },
+    { unitNo: "Z

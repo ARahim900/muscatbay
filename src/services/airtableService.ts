@@ -1,10 +1,8 @@
-
 import Airtable from 'airtable';
 
 // Initialize Airtable with your API key
-// Note: In a production app, this should come from environment variables
-const AIRTABLE_API_KEY = 'keyVDuCWfXQBZD2Kd'; // Replace with your actual API key
-const AIRTABLE_BASE_ID = 'appvDirI6RN11wYFC'; // Replace with your base ID
+const AIRTABLE_API_KEY = 'patgswc3cLZkA2Yrv.eb7796293aaabbc988a0d68e9f34010e8baae51d02c669185971b55689885534'; // Your Airtable API key
+const AIRTABLE_BASE_ID = 'appwGy1JHL1UYsO2W'; // Your Airtable Base ID
 
 // Initialize the Airtable base
 const base = new Airtable({ apiKey: AIRTABLE_API_KEY }).base(AIRTABLE_BASE_ID);
