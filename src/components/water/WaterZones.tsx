@@ -1,9 +1,15 @@
 
 import React from 'react';
+import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { ZoneMetrics, TypeConsumption, WaterConsumptionData } from '@/types/waterSystem';
+import { Building, Home, Droplet, Water } from 'lucide-react';
+import { ZoneMetrics, WaterConsumptionData } from '@/types/waterSystem';
+import EnhancedKpiCard from './EnhancedKpiCard';
+import WaterConsumptionChart from './WaterConsumptionChart';
+import ZoneSelector from './ZoneSelector';
+import { waterColors } from './WaterTheme';
 import { getReadingValue } from '@/utils/waterSystemUtils';
 
 interface WaterZonesProps {
@@ -14,232 +20,417 @@ interface WaterZonesProps {
   onSelectZone: (zone: string) => void;
 }
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#66BCFE'];
-
-const WaterZones: React.FC<WaterZonesProps> = ({
+const WaterZones: React.FC<WaterZonesProps> = ({ 
   zoneMetrics,
   waterData,
   selectedMonth,
   selectedZone,
   onSelectZone
 }) => {
-  // Get zone-specific data
-  const zoneData = waterData.filter(item => 
-    item.Zone === selectedZone && 
-    (item.Label === 'L3' || item.Label === 'DC')
+  // Find the selected zone's metrics
+  const selectedZoneMetrics = zoneMetrics.find(zone => zone.zone === selectedZone);
+  
+  // Get all meters for the selected zone
+  const zoneMeters = waterData.filter(meter => 
+    meter.Zone === selectedZone
   );
   
-  // Calculate consumption by type within the selected zone
-  const typeConsumption: Record<string, number> = {};
-  
-  zoneData.forEach(meter => {
-    if (meter.Type) {
-      const consumption = getReadingValue(meter, selectedMonth);
-      
-      if (!typeConsumption[meter.Type]) {
-        typeConsumption[meter.Type] = 0;
-      }
-      
-      typeConsumption[meter.Type] += consumption;
+  // Group meters by type for the selected zone
+  const metersByType: Record<string, WaterConsumptionData[]> = {};
+  zoneMeters.forEach(meter => {
+    const type = meter.Type || 'Unknown';
+    if (!metersByType[type]) {
+      metersByType[type] = [];
     }
+    metersByType[type].push(meter);
   });
   
-  const typeConsumptionData = Object.entries(typeConsumption)
-    .map(([type, consumption]) => ({
-      type,
-      consumption
-    }))
-    .sort((a, b) => b.consumption - a.consumption);
+  // Calculate consumption by type for the selected zone
+  const typeConsumption = Object.entries(metersByType).map(([type, meters]) => {
+    const consumption = meters.reduce((sum, meter) => {
+      return sum + getReadingValue(meter, selectedMonth);
+    }, 0);
+    
+    return { type, consumption };
+  }).sort((a, b) => b.consumption - a.consumption);
   
-  // Get current zone metrics
-  const currentZoneMetrics = zoneMetrics.find(zone => zone.zone === selectedZone) || {
-    zone: selectedZone,
-    bulkSupply: 0,
-    individualMeters: 0,
-    loss: 0,
-    lossPercentage: 0
+  // Get L2 bulk meter for this zone
+  const zoneBulkMeter = waterData.find(meter => 
+    meter.Label === 'L2' && meter.Zone === selectedZone
+  );
+  
+  // Sum all direct connections in this zone
+  const directConnections = waterData.filter(meter => 
+    meter.Label === 'DC' && meter.Zone === selectedZone
+  );
+  
+  const directConnectionsConsumption = directConnections.reduce((sum, meter) => {
+    return sum + getReadingValue(meter, selectedMonth);
+  }, 0);
+  
+  // Sum all L3 meters in this zone
+  const individualMeters = waterData.filter(meter => 
+    meter.Label === 'L3' && meter.Zone === selectedZone
+  );
+  
+  const individualMetersConsumption = individualMeters.reduce((sum, meter) => {
+    return sum + getReadingValue(meter, selectedMonth);
+  }, 0);
+
+  // Format data for charts
+  const typeConsumptionData = typeConsumption.map(item => ({
+    name: item.type,
+    value: item.consumption
+  }));
+  
+  const meteringData = [
+    { name: 'Bulk Supply', value: selectedZoneMetrics?.bulkSupply || 0 },
+    { name: 'Direct Connections', value: directConnectionsConsumption },
+    { name: 'Individual Meters', value: individualMetersConsumption },
+    { name: 'Loss', value: selectedZoneMetrics?.loss || 0 }
+  ];
+  
+  // Animation variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
   };
   
-  return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Zone Performance</CardTitle>
-          <CardDescription>
-            Water loss by zone - click a bar to select that zone
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={zoneMetrics}
-                margin={{ top: 10, right: 30, left: 20, bottom: 10 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="zone" />
-                <YAxis yAxisId="left" label={{ value: 'm³', angle: -90, position: 'insideLeft' }} />
-                <YAxis yAxisId="right" orientation="right" label={{ value: 'Loss %', angle: 90, position: 'insideRight' }} />
-                <Tooltip
-                  formatter={(value: number, name: string) => {
-                    if (name === "lossPercentage") return [`${value.toFixed(1)}%`, 'Loss %'];
-                    return [`${value.toLocaleString()} m³`, name];
-                  }}
-                />
-                <Legend />
-                <Bar 
-                  dataKey="bulkSupply" 
-                  name="Bulk Supply" 
-                  fill="#0088FE" 
-                  yAxisId="left"
-                  onClick={(data) => onSelectZone(data.zone)}
-                  cursor="pointer"
-                />
-                <Bar 
-                  dataKey="individualMeters" 
-                  name="Individual Meters" 
-                  fill="#00C49F" 
-                  yAxisId="left"
-                  onClick={(data) => onSelectZone(data.zone)}
-                  cursor="pointer"
-                />
-                <Bar 
-                  dataKey="lossPercentage" 
-                  name="Loss %" 
-                  fill="#FF8042" 
-                  yAxisId="right"
-                  onClick={(data) => onSelectZone(data.zone)}
-                  cursor="pointer"
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </CardContent>
-      </Card>
-      
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0 }
+  };
+  
+  // If no zone is selected or available
+  if (!selectedZone || !selectedZoneMetrics) {
+    return (
+      <div className="space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle>Zone {selectedZone} Details</CardTitle>
-            <CardDescription>
-              Consumption breakdown for {selectedZone}
-            </CardDescription>
+            <CardTitle>Select a Zone</CardTitle>
+            <CardDescription>Choose a zone to view detailed water consumption information</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 gap-4 mb-6">
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <div className="text-sm text-blue-700 mb-1">Bulk Supply</div>
-                <div className="text-2xl font-bold">{currentZoneMetrics.bulkSupply.toLocaleString()} m³</div>
-              </div>
-              <div className="bg-green-50 p-4 rounded-lg">
-                <div className="text-sm text-green-700 mb-1">Individual Meters</div>
-                <div className="text-2xl font-bold">{currentZoneMetrics.individualMeters.toLocaleString()} m³</div>
-              </div>
-              <div className="bg-amber-50 p-4 rounded-lg">
-                <div className="text-sm text-amber-700 mb-1">Loss Volume</div>
-                <div className="text-2xl font-bold">{currentZoneMetrics.loss.toLocaleString()} m³</div>
-              </div>
-              <div className={`p-4 rounded-lg ${
-                currentZoneMetrics.lossPercentage > 15 ? 'bg-red-50' : 'bg-amber-50'
-              }`}>
-                <div className={`text-sm mb-1 ${
-                  currentZoneMetrics.lossPercentage > 15 ? 'text-red-700' : 'text-amber-700'
-                }`}>Loss Percentage</div>
-                <div className="text-2xl font-bold">{currentZoneMetrics.lossPercentage.toFixed(1)}%</div>
-              </div>
-            </div>
-            
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={typeConsumptionData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={true}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="consumption"
-                    nameKey="type"
-                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(1)}%`}
-                  >
-                    {typeConsumptionData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    formatter={(value: number) => [`${value.toLocaleString()} m³`, 'Consumption']}
-                  />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader>
-            <CardTitle>Zone {selectedZone} Meters</CardTitle>
-            <CardDescription>
-              Individual water meters in {selectedZone}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr className="bg-muted text-left text-muted-foreground text-xs">
-                    <th className="p-2 whitespace-nowrap">Meter Label</th>
-                    <th className="p-2 whitespace-nowrap">Type</th>
-                    <th className="p-2 whitespace-nowrap">Level</th>
-                    <th className="p-2 whitespace-nowrap text-right">Consumption (m³)</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {zoneData.length > 0 ? zoneData.map((meter, index) => (
-                    <tr 
-                      key={meter.id || index}
-                      className="border-b border-gray-200 hover:bg-muted/50"
-                    >
-                      <td className="p-2 whitespace-nowrap">{meter['Meter Label'] || '-'}</td>
-                      <td className="p-2 whitespace-nowrap">
-                        <Badge variant="outline" className="font-normal">
-                          {meter.Type || '-'}
-                        </Badge>
-                      </td>
-                      <td className="p-2 whitespace-nowrap">
-                        <Badge 
-                          variant="outline" 
-                          className={`font-normal ${
-                            meter.Label === 'L2' ? 'bg-blue-50 text-blue-700' :
-                            meter.Label === 'L3' ? 'bg-green-50 text-green-700' :
-                            meter.Label === 'DC' ? 'bg-purple-50 text-purple-700' :
-                            ''
-                          }`}
-                        >
-                          {meter.Label || '-'}
-                        </Badge>
-                      </td>
-                      <td className="p-2 whitespace-nowrap text-right">
-                        {selectedMonth === 'all' ? 
-                          'Multiple months' : 
-                          (getReadingValue(meter, selectedMonth) || '-')}
-                      </td>
-                    </tr>
-                  )) : (
-                    <tr>
-                      <td colSpan={4} className="p-4 text-center text-muted-foreground">
-                        No meters found for this zone
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+            <ZoneSelector
+              zones={zoneMetrics.map(zone => zone.zone)}
+              selectedZone={selectedZone}
+              onSelectZone={onSelectZone}
+              metrics={Object.fromEntries(
+                zoneMetrics.map(zone => [
+                  zone.zone,
+                  { lossPercentage: zone.lossPercentage, bulkSupply: zone.bulkSupply }
+                ])
+              )}
+            />
           </CardContent>
         </Card>
       </div>
-    </div>
+    );
+  }
+  
+  return (
+    <motion.div 
+      className="space-y-6"
+      variants={containerVariants}
+      initial="hidden"
+      animate="show"
+    >
+      <div className="flex justify-between items-center">
+        <h2 className="text-xl font-semibold">Zone Analysis: {selectedZone}</h2>
+      </div>
+      
+      <ZoneSelector
+        zones={zoneMetrics.map(zone => zone.zone)}
+        selectedZone={selectedZone}
+        onSelectZone={onSelectZone}
+        metrics={Object.fromEntries(
+          zoneMetrics.map(zone => [
+            zone.zone,
+            { lossPercentage: zone.lossPercentage, bulkSupply: zone.bulkSupply }
+          ])
+        )}
+      />
+      
+      <motion.div
+        className="grid grid-cols-1 md:grid-cols-3 gap-4"
+        variants={itemVariants}
+      >
+        <EnhancedKpiCard
+          title="Bulk Supply"
+          value={selectedZoneMetrics.bulkSupply.toLocaleString()}
+          valueUnit="m³"
+          icon={Droplet}
+          variant="primary"
+          description="Measured at L2 bulk meter"
+        />
+        
+        <EnhancedKpiCard
+          title="Individual Consumption"
+          value={selectedZoneMetrics.individualMeters.toLocaleString()}
+          valueUnit="m³"
+          icon={Home}
+          variant="success"
+          description="Sum of all individual meters"
+        />
+        
+        <EnhancedKpiCard
+          title="Water Loss"
+          value={selectedZoneMetrics.loss.toLocaleString()}
+          valueUnit="m³"
+          subValue={selectedZoneMetrics.lossPercentage.toFixed(1)}
+          subValueUnit="% of bulk supply"
+          icon={Water}
+          variant={selectedZoneMetrics.lossPercentage > 15 ? "danger" : "warning"}
+        />
+      </motion.div>
+      
+      <motion.div
+        className="grid grid-cols-1 lg:grid-cols-2 gap-6"
+        variants={itemVariants}
+      >
+        <WaterConsumptionChart
+          title="Water Distribution"
+          description={`${selectedZone} zone distribution breakdown`}
+          data={meteringData}
+          type="pie"
+          colors={[
+            waterColors.chart.blue,
+            waterColors.chart.purple,
+            waterColors.chart.green,
+            waterColors.chart.red
+          ]}
+        />
+        
+        <WaterConsumptionChart
+          title="Consumption by Type"
+          description={`${selectedZone} zone consumption by type`}
+          data={typeConsumptionData}
+          type="bar"
+          horizontal={true}
+        />
+      </motion.div>
+      
+      <motion.div variants={itemVariants}>
+        <Card>
+          <CardHeader>
+            <CardTitle>All Meters in {selectedZone}</CardTitle>
+            <CardDescription>
+              Total of {zoneMeters.length} meters found
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-0">
+            <Tabs defaultValue="all" className="w-full">
+              <div className="px-6 border-b">
+                <TabsList className="w-auto h-auto bg-transparent p-0 mb-0">
+                  <TabsTrigger 
+                    value="all" 
+                    className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-blue-500 data-[state=active]:shadow-none rounded-none px-4 py-2 h-auto"
+                  >
+                    All Meters
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="bulk" 
+                    className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-blue-500 data-[state=active]:shadow-none rounded-none px-4 py-2 h-auto"
+                  >
+                    Bulk Meters
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="direct" 
+                    className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-blue-500 data-[state=active]:shadow-none rounded-none px-4 py-2 h-auto"
+                  >
+                    Direct Connections
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="individual" 
+                    className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-blue-500 data-[state=active]:shadow-none rounded-none px-4 py-2 h-auto"
+                  >
+                    Individual Meters
+                  </TabsTrigger>
+                </TabsList>
+              </div>
+              
+              <TabsContent value="all" className="mt-0">
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse">
+                    <thead>
+                      <tr className="bg-gray-100 dark:bg-gray-800 text-left text-xs">
+                        <th className="px-4 py-3 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap">Meter Label</th>
+                        <th className="px-4 py-3 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap">Type</th>
+                        <th className="px-4 py-3 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap">Level</th>
+                        <th className="px-4 py-3 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap text-right">Consumption (m³)</th>
+                        <th className="px-4 py-3 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap">Parent Meter</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                      {zoneMeters.map((meter, index) => (
+                        <tr 
+                          key={meter.id || index}
+                          className="bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+                        >
+                          <td className="px-4 py-3 text-sm whitespace-nowrap">{meter['Meter Label'] || '-'}</td>
+                          <td className="px-4 py-3 text-sm whitespace-nowrap">{meter.Type || '-'}</td>
+                          <td className="px-4 py-3 text-sm whitespace-nowrap">
+                            <Badge 
+                              variant="outline" 
+                              className={`font-normal ${
+                                meter.Label === 'L1' ? 'bg-purple-50 text-purple-700 dark:bg-purple-900/20 dark:text-purple-300' :
+                                meter.Label === 'L2' ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300' :
+                                meter.Label === 'L3' ? 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-300' :
+                                meter.Label === 'DC' ? 'bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300' :
+                                ''
+                              }`}
+                            >
+                              {meter.Label || '-'}
+                            </Badge>
+                          </td>
+                          <td className="px-4 py-3 text-sm whitespace-nowrap text-right font-medium">
+                            {getReadingValue(meter, selectedMonth).toLocaleString()}
+                          </td>
+                          <td className="px-4 py-3 text-sm whitespace-nowrap text-gray-600 dark:text-gray-400">
+                            {meter['Parent Meter'] || '-'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="bulk" className="mt-0">
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse">
+                    <thead>
+                      <tr className="bg-gray-100 dark:bg-gray-800 text-left text-xs">
+                        <th className="px-4 py-3 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap">Meter Label</th>
+                        <th className="px-4 py-3 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap">Type</th>
+                        <th className="px-4 py-3 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap text-right">Consumption (m³)</th>
+                        <th className="px-4 py-3 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap">Parent Meter</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                      {zoneMeters
+                        .filter(meter => meter.Label === 'L2')
+                        .map((meter, index) => (
+                          <tr 
+                            key={meter.id || index}
+                            className="bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+                          >
+                            <td className="px-4 py-3 text-sm whitespace-nowrap">{meter['Meter Label'] || '-'}</td>
+                            <td className="px-4 py-3 text-sm whitespace-nowrap">{meter.Type || '-'}</td>
+                            <td className="px-4 py-3 text-sm whitespace-nowrap text-right font-medium">
+                              {getReadingValue(meter, selectedMonth).toLocaleString()}
+                            </td>
+                            <td className="px-4 py-3 text-sm whitespace-nowrap text-gray-600 dark:text-gray-400">
+                              {meter['Parent Meter'] || '-'}
+                            </td>
+                          </tr>
+                      ))}
+                      
+                      {!zoneMeters.some(meter => meter.Label === 'L2') && (
+                        <tr>
+                          <td colSpan={4} className="px-4 py-8 text-center text-gray-500">
+                            No bulk meters found for this zone
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="direct" className="mt-0">
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse">
+                    <thead>
+                      <tr className="bg-gray-100 dark:bg-gray-800 text-left text-xs">
+                        <th className="px-4 py-3 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap">Meter Label</th>
+                        <th className="px-4 py-3 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap">Type</th>
+                        <th className="px-4 py-3 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap text-right">Consumption (m³)</th>
+                        <th className="px-4 py-3 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap">Parent Meter</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                      {zoneMeters
+                        .filter(meter => meter.Label === 'DC')
+                        .map((meter, index) => (
+                          <tr 
+                            key={meter.id || index}
+                            className="bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+                          >
+                            <td className="px-4 py-3 text-sm whitespace-nowrap">{meter['Meter Label'] || '-'}</td>
+                            <td className="px-4 py-3 text-sm whitespace-nowrap">{meter.Type || '-'}</td>
+                            <td className="px-4 py-3 text-sm whitespace-nowrap text-right font-medium">
+                              {getReadingValue(meter, selectedMonth).toLocaleString()}
+                            </td>
+                            <td className="px-4 py-3 text-sm whitespace-nowrap text-gray-600 dark:text-gray-400">
+                              {meter['Parent Meter'] || '-'}
+                            </td>
+                          </tr>
+                      ))}
+                      
+                      {!zoneMeters.some(meter => meter.Label === 'DC') && (
+                        <tr>
+                          <td colSpan={4} className="px-4 py-8 text-center text-gray-500">
+                            No direct connections found for this zone
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="individual" className="mt-0">
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse">
+                    <thead>
+                      <tr className="bg-gray-100 dark:bg-gray-800 text-left text-xs">
+                        <th className="px-4 py-3 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap">Meter Label</th>
+                        <th className="px-4 py-3 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap">Type</th>
+                        <th className="px-4 py-3 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap text-right">Consumption (m³)</th>
+                        <th className="px-4 py-3 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap">Parent Meter</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                      {zoneMeters
+                        .filter(meter => meter.Label === 'L3')
+                        .map((meter, index) => (
+                          <tr 
+                            key={meter.id || index}
+                            className="bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+                          >
+                            <td className="px-4 py-3 text-sm whitespace-nowrap">{meter['Meter Label'] || '-'}</td>
+                            <td className="px-4 py-3 text-sm whitespace-nowrap">{meter.Type || '-'}</td>
+                            <td className="px-4 py-3 text-sm whitespace-nowrap text-right font-medium">
+                              {getReadingValue(meter, selectedMonth).toLocaleString()}
+                            </td>
+                            <td className="px-4 py-3 text-sm whitespace-nowrap text-gray-600 dark:text-gray-400">
+                              {meter['Parent Meter'] || '-'}
+                            </td>
+                          </tr>
+                      ))}
+                      
+                      {!zoneMeters.some(meter => meter.Label === 'L3') && (
+                        <tr>
+                          <td colSpan={4} className="px-4 py-8 text-center text-gray-500">
+                            No individual meters found for this zone
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
+      </motion.div>
+    </motion.div>
   );
 };
 

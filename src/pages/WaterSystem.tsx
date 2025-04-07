@@ -1,11 +1,12 @@
 
 import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import useAirtableData from '@/hooks/useAirtableData';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Droplets, FileDown, Loader2, AlertTriangle, RefreshCw } from 'lucide-react';
+import { Droplets, FileDown, Loader2, AlertTriangle, RefreshCw, AreaChart, PieChart, BarChart2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import Layout from '@/components/layout/Layout';
 import { toast } from 'sonner';
@@ -28,6 +29,8 @@ import {
 import WaterOverview from '@/components/water/WaterOverview';
 import WaterZones from '@/components/water/WaterZones';
 import WaterLossAnalysis from '@/components/water/WaterLossAnalysis';
+import WaterDataRefresh from '@/components/water/WaterDataRefresh';
+import { WaterThemeProvider } from '@/components/water/WaterTheme';
 
 const WaterSystem = () => {
   // State
@@ -38,6 +41,7 @@ const WaterSystem = () => {
     selectedView: "overview"
   });
   const [isManualLoading, setIsManualLoading] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<Date | undefined>(undefined);
   
   // Fetch data from Airtable
   const { data: waterData, isLoading, error, refetch } = useAirtableData<WaterConsumptionData>(
@@ -48,18 +52,25 @@ const WaterSystem = () => {
   const handleManualFetch = async () => {
     setIsManualLoading(true);
     try {
-      const data = await fetchTableData(WATER_TABLE_ID, {
+      await fetchTableData(WATER_TABLE_ID, {
         maxRecords: 1
       });
-      console.log('Manual fetch successful:', data);
-      toast.success('Table connection verified. Refreshing data...');
-      refetch();
+      await refetch();
+      setLastUpdated(new Date());
+      toast.success('Water data refreshed successfully');
     } catch (err) {
       console.error('Manual fetch failed:', err);
-      toast.error(`Manual fetch failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      toast.error(`Failed to refresh data: ${err instanceof Error ? err.message : 'Unknown error'}`);
     } finally {
       setIsManualLoading(false);
     }
+  };
+  
+  // Animation variants
+  const pageVariants = {
+    initial: { opacity: 0, y: 20 },
+    animate: { opacity: 1, y: 0, transition: { duration: 0.3 } },
+    exit: { opacity: 0, y: -20, transition: { duration: 0.2 } }
   };
   
   // Handle loading state
@@ -68,7 +79,7 @@ const WaterSystem = () => {
       <Layout>
         <div className="flex items-center justify-center min-h-[70vh]">
           <div className="text-center">
-            <Loader2 className="h-10 w-10 mx-auto mb-4 text-primary animate-spin" />
+            <Loader2 className="h-10 w-10 mx-auto mb-4 text-blue-500 animate-spin" />
             <p className="text-lg text-muted-foreground">Loading water system data...</p>
           </div>
         </div>
@@ -80,8 +91,14 @@ const WaterSystem = () => {
   if (error) {
     return (
       <Layout>
-        <div className="container mx-auto p-4">
-          <Card className="mb-6">
+        <motion.div 
+          className="container mx-auto p-4"
+          initial="initial"
+          animate="animate"
+          exit="exit"
+          variants={pageVariants}
+        >
+          <Card className="mb-6 border-red-200">
             <CardHeader>
               <CardTitle className="flex items-center">
                 <AlertTriangle className="mr-2 h-6 w-6 text-amber-500" />
@@ -144,7 +161,7 @@ const WaterSystem = () => {
               </div>
             </CardContent>
           </Card>
-        </div>
+        </motion.div>
       </Layout>
     );
   }
@@ -153,8 +170,14 @@ const WaterSystem = () => {
   if (!waterData || waterData.length === 0) {
     return (
       <Layout>
-        <div className="container mx-auto p-4">
-          <Card className="mb-6">
+        <motion.div 
+          className="container mx-auto p-4"
+          initial="initial"
+          animate="animate"
+          exit="exit"
+          variants={pageVariants}
+        >
+          <Card className="mb-6 border-amber-200">
             <CardHeader>
               <CardTitle className="flex items-center">
                 <Droplets className="mr-2 h-6 w-6 text-blue-500" />
@@ -179,7 +202,7 @@ const WaterSystem = () => {
               </div>
             </CardContent>
           </Card>
-        </div>
+        </motion.div>
       </Layout>
     );
   }
@@ -190,7 +213,7 @@ const WaterSystem = () => {
   // Get available filters
   const availableMonths = getAvailableMonths(transformedData);
   const zones = getZones(transformedData);
-  const types = getTypes ? getTypes(transformedData) : ['all'];
+  const types = getTypes(transformedData);
   
   // Filter data based on selections
   const filteredData = filterWaterData(
@@ -208,7 +231,33 @@ const WaterSystem = () => {
   
   // Handle export data
   const handleExportData = () => {
-    toast.success("Exporting data... This feature will be implemented soon.");
+    // Create CSV content
+    const headers = ["Meter Label", "Zone", "Type", "Level", `${filters.selectedMonth} (m³)`, "Parent Meter"];
+    const rows = filteredData.map(record => [
+      record['Meter Label'] || '-',
+      record.Zone || '-',
+      record.Type || '-',
+      record.Label || '-',
+      getReadingValue(record, filters.selectedMonth) || '-',
+      record['Parent Meter'] || '-'
+    ]);
+    
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.join(','))
+    ].join('\n');
+    
+    // Create and download the file
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `water-consumption-${filters.selectedMonth}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    toast.success("Data exported successfully");
   };
   
   // Handle tab change
@@ -242,175 +291,237 @@ const WaterSystem = () => {
   };
   
   return (
-    <Layout>
-      <div className="container mx-auto p-4">
-        <div className="flex flex-col space-y-6">
-          {/* Header */}
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight flex items-center">
-                <Droplets className="mr-2 h-6 w-6 text-blue-500" />
-                Water System Dashboard
-              </h1>
-              <p className="text-muted-foreground mt-1">
-                Monitor water consumption, distribution, and losses across Muscat Bay
-              </p>
+    <WaterThemeProvider>
+      <Layout>
+        <motion.div 
+          className="container mx-auto p-4"
+          initial="initial"
+          animate="animate"
+          exit="exit"
+          variants={pageVariants}
+        >
+          <div className="flex flex-col space-y-6">
+            {/* Header */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">
+              <div>
+                <h1 className="text-2xl font-bold tracking-tight flex items-center">
+                  <Droplets className="mr-2 h-6 w-6 text-blue-500" />
+                  Water System Dashboard
+                </h1>
+                <p className="text-muted-foreground mt-1">
+                  Monitor water consumption, distribution, and losses across Muscat Bay
+                </p>
+              </div>
+              
+              <div className="flex flex-wrap items-center gap-3">
+                <Select value={filters.selectedMonth} onValueChange={handleMonthChange}>
+                  <SelectTrigger className="w-[160px]">
+                    <SelectValue placeholder="Select Month" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableMonths.map((month) => (
+                      <SelectItem key={month} value={month}>
+                        {month === 'all' ? 'All Months' : month}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                
+                <Select value={filters.selectedZone} onValueChange={handleZoneChange}>
+                  <SelectTrigger className="w-[160px]">
+                    <SelectValue placeholder="Select Zone" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {zones.map((zone) => (
+                      <SelectItem key={zone} value={zone}>
+                        {zone === 'all' ? 'All Zones' : zone}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                
+                <Button 
+                  variant="outline" 
+                  size="icon"
+                  onClick={handleExportData}
+                  title="Export Data"
+                >
+                  <FileDown className="h-4 w-4" />
+                </Button>
+                
+                <WaterDataRefresh 
+                  onRefresh={handleManualFetch}
+                  lastUpdated={lastUpdated}
+                />
+              </div>
             </div>
             
-            <div className="flex flex-wrap gap-2">
-              <Select value={filters.selectedMonth} onValueChange={handleMonthChange}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Select Month" />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableMonths.map((month) => (
-                    <SelectItem key={month} value={month}>
-                      {month === 'all' ? 'All Months' : month}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            {/* Tabs */}
+            <Tabs 
+              value={filters.selectedView} 
+              onValueChange={handleTabChange}
+              className="space-y-6"
+            >
+              <TabsList className="grid w-full max-w-md grid-cols-3 mb-6">
+                <TabsTrigger value="overview" className="flex items-center gap-2">
+                  <BarChart2 className="h-4 w-4" />
+                  <span>Overview</span>
+                </TabsTrigger>
+                <TabsTrigger value="zones" className="flex items-center gap-2">
+                  <AreaChart className="h-4 w-4" />
+                  <span>Zones</span>
+                </TabsTrigger>
+                <TabsTrigger value="loss" className="flex items-center gap-2">
+                  <PieChart className="h-4 w-4" />
+                  <span>Loss Analysis</span>
+                </TabsTrigger>
+              </TabsList>
               
-              <Select value={filters.selectedZone} onValueChange={handleZoneChange}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Select Zone" />
-                </SelectTrigger>
-                <SelectContent>
-                  {zones.map((zone) => (
-                    <SelectItem key={zone} value={zone}>
-                      {zone === 'all' ? 'All Zones' : zone}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <TabsContent value="overview" className="space-y-6">
+                <WaterOverview 
+                  levelMetrics={levelMetrics}
+                  zoneMetrics={zoneMetrics}
+                  typeConsumption={typeConsumption}
+                  monthlyTrends={monthlyTrends}
+                  selectedMonth={filters.selectedMonth}
+                />
+              </TabsContent>
               
-              <Button variant="outline" size="icon" onClick={handleExportData}>
-                <FileDown className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-          
-          {/* Tabs */}
-          <Tabs value={filters.selectedView} onValueChange={handleTabChange}>
-            <TabsList className="grid w-full max-w-md grid-cols-3 mb-6">
-              <TabsTrigger value="overview">Overview</TabsTrigger>
-              <TabsTrigger value="zones">Zones</TabsTrigger>
-              <TabsTrigger value="loss">Loss Analysis</TabsTrigger>
-            </TabsList>
+              <TabsContent value="zones" className="space-y-6">
+                <WaterZones 
+                  zoneMetrics={zoneMetrics}
+                  waterData={transformedData}
+                  selectedMonth={filters.selectedMonth}
+                  selectedZone={filters.selectedZone || zones[1] || ''}
+                  onSelectZone={handleZoneChange}
+                />
+              </TabsContent>
+              
+              <TabsContent value="loss" className="space-y-6">
+                <WaterLossAnalysis 
+                  zoneMetrics={zoneMetrics}
+                  levelMetrics={levelMetrics}
+                  selectedMonth={filters.selectedMonth}
+                />
+              </TabsContent>
+            </Tabs>
             
-            <TabsContent value="overview" className="space-y-6">
-              <WaterOverview 
-                levelMetrics={levelMetrics}
-                zoneMetrics={zoneMetrics}
-                typeConsumption={typeConsumption}
-                monthlyTrends={monthlyTrends}
-                selectedMonth={filters.selectedMonth}
-              />
-            </TabsContent>
-            
-            <TabsContent value="zones" className="space-y-6">
-              <WaterZones 
-                zoneMetrics={zoneMetrics}
-                waterData={transformedData}
-                selectedMonth={filters.selectedMonth}
-                selectedZone={filters.selectedZone || zones[1] || ''}
-                onSelectZone={handleZoneChange}
-              />
-            </TabsContent>
-            
-            <TabsContent value="loss" className="space-y-6">
-              <WaterLossAnalysis 
-                zoneMetrics={zoneMetrics}
-                levelMetrics={levelMetrics}
-                selectedMonth={filters.selectedMonth}
-              />
-            </TabsContent>
-          </Tabs>
-          
-          {/* Data Table */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Detailed Water Consumption Data</CardTitle>
-              <CardDescription>
-                Showing {filteredData.length} records {filters.selectedMonth !== 'all' && `for ${filters.selectedMonth}`}
-                {filters.selectedZone !== 'all' && ` in ${filters.selectedZone}`}
-                {filters.selectedType !== 'all' && ` of type ${filters.selectedType}`}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse">
-                  <thead>
-                    <tr className="bg-muted text-left text-muted-foreground text-xs">
-                      <th className="p-2 whitespace-nowrap">Meter Label</th>
-                      <th className="p-2 whitespace-nowrap">Zone</th>
-                      <th className="p-2 whitespace-nowrap">Type</th>
-                      <th className="p-2 whitespace-nowrap">Level</th>
-                      {filters.selectedMonth === 'all' ? (
-                        <>
-                          <th className="p-2 whitespace-nowrap text-right">Jan-25 (m³)</th>
-                          <th className="p-2 whitespace-nowrap text-right">Feb-25 (m³)</th>
-                        </>
-                      ) : (
-                        <th className="p-2 whitespace-nowrap text-right">{filters.selectedMonth} (m³)</th>
-                      )}
-                      <th className="p-2 whitespace-nowrap">Parent Meter</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredData.map((record, index) => (
-                      <tr 
-                        key={record.id || index}
-                        className="border-b border-gray-200 hover:bg-muted/50"
-                      >
-                        <td className="p-2 whitespace-nowrap">{record['Meter Label'] || '-'}</td>
-                        <td className="p-2 whitespace-nowrap">
-                          <Badge variant="outline" className="font-normal">
-                            {record.Zone || '-'}
-                          </Badge>
-                        </td>
-                        <td className="p-2 whitespace-nowrap">{record.Type || '-'}</td>
-                        <td className="p-2 whitespace-nowrap">
-                          <Badge 
-                            variant="outline" 
-                            className={`font-normal ${
-                              record.Label === 'L1' ? 'bg-purple-50 text-purple-700' :
-                              record.Label === 'L2' ? 'bg-blue-50 text-blue-700' :
-                              record.Label === 'L3' ? 'bg-green-50 text-green-700' :
-                              record.Label === 'DC' ? 'bg-amber-50 text-amber-700' :
-                              ''
-                            }`}
-                          >
-                            {record.Label || '-'}
-                          </Badge>
-                        </td>
+            {/* Data Table */}
+            <Card className="shadow-sm">
+              <CardHeader className="bg-gray-50 dark:bg-gray-800/50 border-b">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+                  <div>
+                    <CardTitle className="text-lg">Water Consumption Details</CardTitle>
+                    <CardDescription>
+                      Showing {filteredData.length} records {filters.selectedMonth !== 'all' && `for ${filters.selectedMonth}`}
+                      {filters.selectedZone !== 'all' && ` in ${filters.selectedZone}`}
+                      {filters.selectedType !== 'all' && ` of type ${filters.selectedType}`}
+                    </CardDescription>
+                  </div>
+                  
+                  {types.length > 1 && (
+                    <Select value={filters.selectedType} onValueChange={handleTypeChange}>
+                      <SelectTrigger className="w-[160px]">
+                        <SelectValue placeholder="Filter by Type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {types.map((type) => (
+                          <SelectItem key={type} value={type}>
+                            {type === 'all' ? 'All Types' : type}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent className="p-0">
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse">
+                    <thead>
+                      <tr className="bg-gray-100 dark:bg-gray-800 text-left text-xs">
+                        <th className="px-4 py-3 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap">Meter Label</th>
+                        <th className="px-4 py-3 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap">Zone</th>
+                        <th className="px-4 py-3 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap">Type</th>
+                        <th className="px-4 py-3 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap">Level</th>
                         {filters.selectedMonth === 'all' ? (
                           <>
-                            <td className="p-2 whitespace-nowrap text-right">
-                              {getReadingValue(record, 'Jan-25') || '-'}
-                            </td>
-                            <td className="p-2 whitespace-nowrap text-right">
-                              {getReadingValue(record, 'Feb-25') || '-'}
-                            </td>
+                            <th className="px-4 py-3 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap text-right">Jan-25 (m³)</th>
+                            <th className="px-4 py-3 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap text-right">Feb-25 (m³)</th>
                           </>
                         ) : (
-                          <td className="p-2 whitespace-nowrap text-right">
-                            {getReadingValue(record, filters.selectedMonth) || '-'}
-                          </td>
+                          <th className="px-4 py-3 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap text-right">{filters.selectedMonth} (m³)</th>
                         )}
-                        <td className="p-2 whitespace-nowrap">
-                          {record['Parent Meter'] || '-'}
-                        </td>
+                        <th className="px-4 py-3 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap">Parent Meter</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    </Layout>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                      {filteredData.map((record, index) => (
+                        <tr 
+                          key={record.id || index}
+                          className="bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+                        >
+                          <td className="px-4 py-3 text-sm whitespace-nowrap">{record['Meter Label'] || '-'}</td>
+                          <td className="px-4 py-3 text-sm whitespace-nowrap">
+                            <Badge variant="outline" className="font-normal">
+                              {record.Zone || '-'}
+                            </Badge>
+                          </td>
+                          <td className="px-4 py-3 text-sm whitespace-nowrap">{record.Type || '-'}</td>
+                          <td className="px-4 py-3 text-sm whitespace-nowrap">
+                            <Badge 
+                              variant="outline" 
+                              className={`font-normal ${
+                                record.Label === 'L1' ? 'bg-purple-50 text-purple-700 dark:bg-purple-900/20 dark:text-purple-300' :
+                                record.Label === 'L2' ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300' :
+                                record.Label === 'L3' ? 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-300' :
+                                record.Label === 'DC' ? 'bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300' :
+                                ''
+                              }`}
+                            >
+                              {record.Label || '-'}
+                            </Badge>
+                          </td>
+                          {filters.selectedMonth === 'all' ? (
+                            <>
+                              <td className="px-4 py-3 text-sm whitespace-nowrap text-right font-medium">
+                                {getReadingValue(record, 'Jan-25') ? getReadingValue(record, 'Jan-25').toLocaleString() : '-'}
+                              </td>
+                              <td className="px-4 py-3 text-sm whitespace-nowrap text-right font-medium">
+                                {getReadingValue(record, 'Feb-25') ? getReadingValue(record, 'Feb-25').toLocaleString() : '-'}
+                              </td>
+                            </>
+                          ) : (
+                            <td className="px-4 py-3 text-sm whitespace-nowrap text-right font-medium">
+                              {getReadingValue(record, filters.selectedMonth) ? 
+                                getReadingValue(record, filters.selectedMonth).toLocaleString() : '-'}
+                            </td>
+                          )}
+                          <td className="px-4 py-3 text-sm whitespace-nowrap text-gray-600 dark:text-gray-400">
+                            {record['Parent Meter'] || '-'}
+                          </td>
+                        </tr>
+                      ))}
+                      
+                      {filteredData.length === 0 && (
+                        <tr>
+                          <td 
+                            colSpan={filters.selectedMonth === 'all' ? 7 : 6} 
+                            className="px-4 py-8 text-center text-gray-500"
+                          >
+                            No records found with the selected filters
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </motion.div>
+      </Layout>
+    </WaterThemeProvider>
   );
 };
 
