@@ -19,6 +19,7 @@ import WaterTypeAnalysis from '@/components/water/WaterTypeAnalysis';
 import WaterDataRefresh from '@/components/water/WaterDataRefresh';
 import DataTablePagination from '@/components/water/DataTablePagination';
 import { WaterThemeProvider } from '@/components/water/WaterTheme';
+
 const WaterSystem = () => {
   const [filters, setFilters] = useState<WaterDashboardFilters>({
     selectedMonth: "all",
@@ -98,6 +99,7 @@ const WaterSystem = () => {
   const monthlyTrends = useMemo(() => waterData ? calculateMonthlyTrends(transformedData, availableMonths) : [], [transformedData, availableMonths]);
   const totalPages = useMemo(() => Math.ceil(filteredData.length / pageSize), [filteredData.length, pageSize]);
   const paginatedData = useMemo(() => filteredData.slice((currentPage - 1) * pageSize, currentPage * pageSize), [filteredData, currentPage, pageSize]);
+
   if (isLoading) {
     return <Layout>
         <div className="flex items-center justify-center min-h-[70vh]">
@@ -410,4 +412,5 @@ const WaterSystem = () => {
       </Layout>
     </WaterThemeProvider>;
 };
+
 export default WaterSystem;
