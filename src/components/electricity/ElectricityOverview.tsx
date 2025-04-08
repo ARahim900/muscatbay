@@ -69,8 +69,10 @@ const ElectricityOverview: React.FC<ElectricityOverviewProps> = ({
     const topConsumers = [...electricityData]
       .filter(record => record[monthColumn] !== undefined)
       .sort((a, b) => {
-        const aConsumption = typeof a[monthColumn] === 'string' ? parseFloat(a[monthColumn]) : a[monthColumn];
-        const bConsumption = typeof b[monthColumn] === 'string' ? parseFloat(b[monthColumn]) : b[monthColumn];
+        const aConsumption = a[monthColumn] !== undefined ? 
+          (typeof a[monthColumn] === 'string' ? parseFloat(a[monthColumn]) : a[monthColumn]) : 0;
+        const bConsumption = b[monthColumn] !== undefined ? 
+          (typeof b[monthColumn] === 'string' ? parseFloat(b[monthColumn]) : b[monthColumn]) : 0;
         return bConsumption - aConsumption;
       })
       .slice(0, 5)
