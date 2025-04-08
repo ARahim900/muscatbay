@@ -25,15 +25,18 @@ const ElectricityConsumptionChart: React.FC<ElectricityConsumptionChartProps> = 
     // Aggregate consumption by month
     data.forEach(record => {
       months.forEach(month => {
-        const monthColumn = `${month}-${year}`;
-        if (record[monthColumn]) {
-          const consumption = parseFloat(record[monthColumn]);
-          if (!isNaN(consumption)) {
-            monthlyConsumption.set(
-              monthColumn, 
-              (monthlyConsumption.get(monthColumn) || 0) + consumption
-            );
-          }
+        const monthKey = `${month}-${year}`;
+        const consumption = record[monthKey];
+        
+        if (consumption !== undefined && !isNaN(parseFloat(consumption))) {
+          const consumptionValue = typeof consumption === 'string' 
+            ? parseFloat(consumption) 
+            : consumption;
+            
+          monthlyConsumption.set(
+            monthKey, 
+            (monthlyConsumption.get(monthKey) || 0) + consumptionValue
+          );
         }
       });
     });

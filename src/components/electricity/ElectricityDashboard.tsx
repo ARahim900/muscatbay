@@ -9,6 +9,7 @@ import useAirtableData from '@/hooks/useAirtableData';
 import { toast } from 'sonner';
 import ElectricityOverview from './ElectricityOverview';
 import ElectricityConsumptionChart from './ElectricityConsumptionChart';
+import { mockElectricityData } from '@/data/electricityMockData';
 
 const ELECTRICITY_BASE_ID = 'appbUreNO4vvslMme';
 const ELECTRICITY_TABLE_ID = 'shrpAtmnZhxfZ87Ue';
@@ -17,18 +18,23 @@ const ElectricityDashboard: React.FC = () => {
   const [selectedYear, setSelectedYear] = useState<string>('2025');
   const [selectedMonth, setSelectedMonth] = useState<string>('Feb');
   const [activeTab, setActiveTab] = useState<string>('overview');
+  const [useMockData, setUseMockData] = useState<boolean>(false);
   
-  const { data: electricityData, isLoading, error, refetch } = useAirtableData(
+  const { data: airtableData, isLoading, error, refetch } = useAirtableData(
     ELECTRICITY_TABLE_ID,
     {
       view: 'Grid view',
     }
   );
 
+  // Use either Airtable data or fallback to mock data
+  const electricityData = useMockData || error || !airtableData ? mockElectricityData : airtableData;
+
   useEffect(() => {
     if (error) {
-      toast.error('Failed to load electricity data. Please try again later.');
       console.error('Error loading electricity data:', error);
+      setUseMockData(true);
+      toast.info('Using demo data for electricity dashboard. Airtable connection failed.');
     }
   }, [error]);
 
@@ -38,8 +44,19 @@ const ElectricityDashboard: React.FC = () => {
   };
 
   const handleRefresh = () => {
-    refetch();
-    toast.success('Electricity data refreshed');
+    if (useMockData) {
+      toast.info('Using demo data for demonstration purposes');
+    } else {
+      refetch();
+      toast.success('Electricity data refreshed');
+    }
+  };
+
+  const handleToggleMockData = () => {
+    setUseMockData(!useMockData);
+    toast.info(useMockData 
+      ? 'Attempting to use Airtable data' 
+      : 'Using demo data for demonstration purposes');
   };
 
   const getMonthYearLabel = () => {
@@ -114,6 +131,16 @@ const ElectricityDashboard: React.FC = () => {
               <Download className="h-4 w-4" />
               Export
             </Button>
+
+            <Button
+              variant={useMockData ? "default" : "outline"}
+              size="sm"
+              className="gap-1"
+              onClick={handleToggleMockData}
+            >
+              <FileText className="h-4 w-4" />
+              {useMockData ? "Using Demo Data" : "Use Demo Data"}
+            </Button>
           </div>
         </div>
         
@@ -127,10 +154,11 @@ const ElectricityDashboard: React.FC = () => {
           
           <div className="mt-2 text-sm text-muted-foreground">
             Showing: <span className="font-medium text-foreground">{getMonthYearLabel()}</span> electricity data
+            {useMockData && <span className="ml-2 text-amber-600 font-medium">(Demo Data)</span>}
           </div>
 
           <TabsContent value="overview" className="mt-4">
-            {isLoading ? (
+            {isLoading && !useMockData ? (
               <Card>
                 <CardContent className="py-10">
                   <div className="flex justify-center">
@@ -139,23 +167,9 @@ const ElectricityDashboard: React.FC = () => {
                   <p className="text-center mt-4 text-sm text-muted-foreground">Loading electricity data...</p>
                 </CardContent>
               </Card>
-            ) : error ? (
-              <Card>
-                <CardContent className="py-10">
-                  <div className="flex justify-center">
-                    <div className="h-10 w-10 rounded-full bg-red-100 flex items-center justify-center">
-                      <Zap className="h-5 w-5 text-red-600" />
-                    </div>
-                  </div>
-                  <p className="text-center mt-4 text-sm text-muted-foreground">Error loading electricity data</p>
-                  <div className="flex justify-center mt-4">
-                    <Button variant="outline" size="sm" onClick={handleRefresh}>Try Again</Button>
-                  </div>
-                </CardContent>
-              </Card>
             ) : (
               <ElectricityOverview 
-                electricityData={electricityData || []} 
+                electricityData={electricityData} 
                 selectedMonth={selectedMonth}
                 selectedYear={selectedYear}
               />
@@ -171,7 +185,7 @@ const ElectricityDashboard: React.FC = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {isLoading ? (
+                {isLoading && !useMockData ? (
                   <div className="flex justify-center py-10">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600"></div>
                   </div>
@@ -191,7 +205,7 @@ const ElectricityDashboard: React.FC = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {isLoading ? (
+                {isLoading && !useMockData ? (
                   <div className="flex justify-center py-10">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600"></div>
                   </div>
@@ -211,12 +225,12 @@ const ElectricityDashboard: React.FC = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {isLoading ? (
+                {isLoading && !useMockData ? (
                   <div className="flex justify-center py-10">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600"></div>
                   </div>
                 ) : (
-                  <ElectricityConsumptionChart data={electricityData || []} />
+                  <ElectricityConsumptionChart data={electricityData} />
                 )}
               </CardContent>
             </Card>

@@ -1,9 +1,8 @@
 
 import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { CircleDollarSign, Zap, BarChart2, TrendingUp, PercentCircle } from 'lucide-react';
-import { ElectricityRecord } from '@/types/electricity';
-import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell, Sector } from 'recharts';
+import { CircleDollarSign, Zap, BarChart2, TrendingUp } from 'lucide-react';
+import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend } from 'recharts';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
 
 interface ElectricityOverviewProps {
@@ -38,7 +37,8 @@ const ElectricityOverview: React.FC<ElectricityOverviewProps> = ({
     // Calculate totals
     electricityData.forEach((record: any) => {
       // Check if the monthly consumption value exists
-      const consumption = record[monthColumn] ? parseFloat(record[monthColumn]) : 0;
+      const consumption = record[monthColumn] ? 
+        (typeof record[monthColumn] === 'string' ? parseFloat(record[monthColumn]) : record[monthColumn]) : 0;
       
       if (!isNaN(consumption)) {
         totalConsumption += consumption;
@@ -67,14 +67,20 @@ const ElectricityOverview: React.FC<ElectricityOverviewProps> = ({
     
     // Get top consumers
     const topConsumers = [...electricityData]
-      .filter(record => record[monthColumn])
-      .sort((a, b) => parseFloat(b[monthColumn]) - parseFloat(a[monthColumn]))
+      .filter(record => record[monthColumn] !== undefined)
+      .sort((a, b) => {
+        const aConsumption = typeof a[monthColumn] === 'string' ? parseFloat(a[monthColumn]) : a[monthColumn];
+        const bConsumption = typeof b[monthColumn] === 'string' ? parseFloat(b[monthColumn]) : b[monthColumn];
+        return bConsumption - aConsumption;
+      })
       .slice(0, 5)
       .map(record => ({
         name: record['Meter Label'] || 'Unknown',
         type: record['Type'] || 'Unknown',
-        consumption: record[monthColumn] ? parseFloat(record[monthColumn]) : 0,
-        cost: calculateCost(record[monthColumn] ? parseFloat(record[monthColumn]) : 0)
+        consumption: record[monthColumn] ? 
+          (typeof record[monthColumn] === 'string' ? parseFloat(record[monthColumn]) : record[monthColumn]) : 0,
+        cost: calculateCost(record[monthColumn] ? 
+          (typeof record[monthColumn] === 'string' ? parseFloat(record[monthColumn]) : record[monthColumn]) : 0)
       }));
     
     // Estimate cost (fictional calculation)
@@ -109,15 +115,6 @@ const ElectricityOverview: React.FC<ElectricityOverviewProps> = ({
     };
     
     return typeColors[type] || '#64748b'; // default color
-  };
-
-  // Custom tooltip formatter
-  const tooltipFormatter = (value: number) => {
-    return `${value.toFixed(2)} kWh`;
-  };
-
-  const costFormatter = (value: number) => {
-    return `${value.toFixed(2)} OMR`;
   };
 
   return (
@@ -208,7 +205,9 @@ const ElectricityOverview: React.FC<ElectricityOverviewProps> = ({
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Tooltip formatter={tooltipFormatter} />
+                  <Tooltip 
+                    formatter={(value: number) => `${value.toLocaleString()} kWh`} 
+                  />
                   <Legend />
                 </PieChart>
               </ResponsiveContainer>
