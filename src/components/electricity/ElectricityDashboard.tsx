@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -12,7 +11,7 @@ import ElectricityConsumptionChart from './ElectricityConsumptionChart';
 import { mockElectricityData } from '@/data/electricityMockData';
 
 const ELECTRICITY_BASE_ID = 'appbUreNO4vvslMme';
-const ELECTRICITY_TABLE_ID = 'shrpAtmnZhxfZ87Ue';
+const ELECTRICITY_TABLE_ID = 'shrygXh4TwgrcRN13';
 
 const ElectricityDashboard: React.FC = () => {
   const [selectedYear, setSelectedYear] = useState<string>('2025');
@@ -27,16 +26,20 @@ const ElectricityDashboard: React.FC = () => {
     }
   );
 
-  // Use either Airtable data or fallback to mock data
-  const electricityData = useMockData || error || !airtableData ? mockElectricityData : airtableData;
-
   useEffect(() => {
+    console.log('Electricity Airtable Configuration:');
+    console.log('Base ID:', ELECTRICITY_BASE_ID);
+    console.log('Table ID:', ELECTRICITY_TABLE_ID);
+    console.log('Airtable Data Response:', airtableData);
+    
     if (error) {
-      console.error('Error loading electricity data:', error);
+      console.error('Airtable Error:', error);
       setUseMockData(true);
       toast.info('Using demo data for electricity dashboard. Airtable connection failed.');
     }
-  }, [error]);
+  }, [airtableData, error]);
+
+  const electricityData = useMockData || error || !airtableData ? mockElectricityData : airtableData;
 
   const handleExport = () => {
     toast.info('Exporting electricity data...');
@@ -65,7 +68,6 @@ const ElectricityDashboard: React.FC = () => {
 
   return (
     <div className="container mx-auto px-4 py-6">
-      {/* Header Section */}
       <div className="mb-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
           <div className="flex items-center">

@@ -1,4 +1,3 @@
-
 import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { CircleDollarSign, Zap, BarChart2, TrendingUp } from 'lucide-react';
@@ -16,6 +15,10 @@ const ElectricityOverview: React.FC<ElectricityOverviewProps> = ({
   selectedMonth,
   selectedYear 
 }) => {
+  // Add logging to debug the data structure
+  console.log("Raw electricity data:", electricityData);
+  console.log("Selected Month/Year:", selectedMonth, selectedYear);
+  
   // Process the raw data from Airtable
   const processedData = useMemo(() => {
     // Default values for empty or invalid data
@@ -36,7 +39,12 @@ const ElectricityOverview: React.FC<ElectricityOverviewProps> = ({
     }
 
     try {
+      // Log the structure of the first record to understand field names
+      console.log("Sample record structure:", electricityData[0]);
+      
       const monthColumn = `${selectedMonth}-${selectedYear.substring(2)}`;
+      console.log("Looking for column:", monthColumn);
+      
       let totalConsumption = 0;
       let maxConsumption = 0;
       let maxConsumer = '';

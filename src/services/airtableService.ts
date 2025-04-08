@@ -3,7 +3,8 @@ import Airtable from 'airtable';
 
 // Initialize Airtable with your API key
 const AIRTABLE_API_KEY = 'patgswc3cLZkA2Yrv.eb7796293aaabbc988a0d68e9f34010e8baae51d02c669185971b55689885534'; 
-export const AIRTABLE_BASE_ID = 'appwGy1JHL1UYsO2W';
+// Update the base ID to match the one provided
+export const AIRTABLE_BASE_ID = 'appbUreNO4vvslMme';
 
 // Initialize the Airtable base
 const base = new Airtable({ apiKey: AIRTABLE_API_KEY }).base(AIRTABLE_BASE_ID);
