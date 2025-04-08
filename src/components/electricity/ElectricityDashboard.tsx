@@ -21,7 +21,8 @@ const ElectricityDashboard: React.FC = () => {
   const { data: airtableData, isLoading, error, refetch } = useAirtableData(
     ELECTRICITY_TABLE_ID,
     {
-      view: 'Grid view',
+      // Removed the view option to avoid the API error
+      // view: 'Grid view',
     }
   );
 

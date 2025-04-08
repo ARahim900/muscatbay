@@ -1,3 +1,4 @@
+
 import Airtable from 'airtable';
 
 // Use the API key you just provided
@@ -15,7 +16,7 @@ const base = new Airtable({
 
 // Constants for table IDs - using the correct table ID from the URL
 export const WATER_TABLE_ID = 'tblR7Yq40GnRh8esd';
-export const ELECTRICITY_TABLE_ID = 'shrpAtmnZhxfZ87Ue';
+export const ELECTRICITY_TABLE_ID = 'tblmIuoOUQb9USTfq'; // Updated to the correct table ID
 
 /**
  * Fetches data from a specific Airtable table
