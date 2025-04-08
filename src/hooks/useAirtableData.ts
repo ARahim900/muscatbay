@@ -53,7 +53,7 @@ export default function useAirtableData<T = any>(
       if (err instanceof Error) {
         errorMessage = err.message;
       } else if (typeof err === 'object' && err !== null) {
-        // Try to extract more detailed error information
+        // Try to extract more detailed error information from Airtable's error format
         if ('statusCode' in err && typeof err.statusCode === 'number') {
           if (err.statusCode === 403) {
             errorMessage = 'Authentication error: Please check your Airtable API key and permissions';
