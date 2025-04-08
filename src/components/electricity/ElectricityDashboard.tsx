@@ -1,19 +1,18 @@
 
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Download, FileText, BarChart3, Grid3X3, Zap } from 'lucide-react';
-import useAirtableData from '@/hooks/useAirtableData';
+import { Download, FileText, BarChart3, Zap } from 'lucide-react';
 import { toast } from 'sonner';
 import ElectricityOverview from './ElectricityOverview';
-import ElectricityConsumptionChart from './ElectricityConsumptionChart';
+import ElectricityFacilitiesTab from './ElectricityFacilitiesTab';
+import ElectricityTypesTab from './ElectricityTypesTab';
+import ElectricityTrendsTab from './ElectricityTrendsTab';
 import { mockElectricityData } from '@/data/electricityMockData';
 import { getAvailableMonths, getAvailableYears } from '@/utils/electricityDataUtils';
 import { fetchElectricityData } from '@/services/electricityService';
-
-const ELECTRICITY_TABLE_ID = 'shrpAtmnZhxfZ87Ue';
 
 const ElectricityDashboard: React.FC = () => {
   const [selectedYear, setSelectedYear] = useState<string>('2025');
@@ -186,63 +185,78 @@ const ElectricityDashboard: React.FC = () => {
           </TabsContent>
 
           <TabsContent value="facilities" className="mt-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Facilities Consumption</CardTitle>
-                <CardDescription>
-                  Electricity consumption breakdown by facility
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {isLoading ? (
-                  <div className="flex justify-center py-10">
+            {isLoading ? (
+              <Card>
+                <CardContent className="py-10">
+                  <div className="flex justify-center">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600"></div>
                   </div>
-                ) : (
-                  <p>Facilities data will be shown here</p>
-                )}
-              </CardContent>
-            </Card>
+                  <p className="text-center mt-4 text-sm text-muted-foreground">Loading facilities data...</p>
+                </CardContent>
+              </Card>
+            ) : error ? (
+              <Card>
+                <CardContent className="py-10">
+                  <p className="text-center text-sm text-red-500">{error}</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <ElectricityFacilitiesTab
+                electricityData={electricityData}
+                selectedMonth={selectedMonth}
+                selectedYear={selectedYear}
+              />
+            )}
           </TabsContent>
 
           <TabsContent value="types" className="mt-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Consumption by Type</CardTitle>
-                <CardDescription>
-                  Electricity consumption breakdown by type
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {isLoading ? (
-                  <div className="flex justify-center py-10">
+            {isLoading ? (
+              <Card>
+                <CardContent className="py-10">
+                  <div className="flex justify-center">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600"></div>
                   </div>
-                ) : (
-                  <p>Type breakdown data will be shown here</p>
-                )}
-              </CardContent>
-            </Card>
+                  <p className="text-center mt-4 text-sm text-muted-foreground">Loading type data...</p>
+                </CardContent>
+              </Card>
+            ) : error ? (
+              <Card>
+                <CardContent className="py-10">
+                  <p className="text-center text-sm text-red-500">{error}</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <ElectricityTypesTab
+                electricityData={electricityData}
+                selectedMonth={selectedMonth}
+                selectedYear={selectedYear}
+              />
+            )}
           </TabsContent>
 
           <TabsContent value="trends" className="mt-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Monthly Trends</CardTitle>
-                <CardDescription>
-                  Electricity consumption trends over time
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {isLoading ? (
-                  <div className="flex justify-center py-10">
+            {isLoading ? (
+              <Card>
+                <CardContent className="py-10">
+                  <div className="flex justify-center">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600"></div>
                   </div>
-                ) : (
-                  <ElectricityConsumptionChart data={electricityData} />
-                )}
-              </CardContent>
-            </Card>
+                  <p className="text-center mt-4 text-sm text-muted-foreground">Loading trends data...</p>
+                </CardContent>
+              </Card>
+            ) : error ? (
+              <Card>
+                <CardContent className="py-10">
+                  <p className="text-center text-sm text-red-500">{error}</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <ElectricityTrendsTab
+                electricityData={electricityData}
+                selectedMonth={selectedMonth}
+                selectedYear={selectedYear}
+              />
+            )}
           </TabsContent>
         </Tabs>
       </div>
