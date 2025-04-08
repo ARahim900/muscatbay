@@ -1,3 +1,4 @@
+
 import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { CircleDollarSign, Zap, BarChart2, TrendingUp } from 'lucide-react';
@@ -42,6 +43,7 @@ const ElectricityOverview: React.FC<ElectricityOverviewProps> = ({
       // Log the structure of the first record to understand field names
       console.log("Sample record structure:", electricityData[0]);
       
+      // Format the column name based on selected month/year
       const monthColumn = `${selectedMonth}-${selectedYear.substring(2)}`;
       console.log("Looking for column:", monthColumn);
       
@@ -79,14 +81,14 @@ const ElectricityOverview: React.FC<ElectricityOverviewProps> = ({
       // Calculate average
       const averageConsumption = electricityData.length > 0 ? totalConsumption / electricityData.length : 0;
       
-      // Convert type map to array for charts - safely handle the map
+      // Convert type map to array for charts
       const typeBreakdown = Array.from(typeMap.entries()).map(([type, consumption]) => ({
         name: type,
         value: consumption,
         color: getTypeColor(type)
       }));
       
-      // Get top consumers - ensure safe operations
+      // Get top consumers
       const topConsumers = Array.isArray(electricityData) ? 
         [...electricityData]
           .filter(record => record && record[monthColumn] !== undefined)

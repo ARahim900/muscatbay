@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -13,7 +14,7 @@ import { AIRTABLE_BASE_ID, ELECTRICITY_TABLE_ID } from '@/services/airtableServi
 
 const ElectricityDashboard: React.FC = () => {
   const [selectedYear, setSelectedYear] = useState<string>('2025');
-  const [selectedMonth, setSelectedMonth] = useState<string>('Feb');
+  const [selectedMonth, setSelectedMonth] = useState<string>('Apr');
   const [activeTab, setActiveTab] = useState<string>('overview');
   const [useMockData, setUseMockData] = useState<boolean>(false);
   
