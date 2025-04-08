@@ -34,56 +34,75 @@ const ElectricityOverview: React.FC<ElectricityOverviewProps> = ({
     // Map for consumption by type
     const typeMap = new Map<string, number>();
     
-    // Calculate totals
-    electricityData.forEach((record: any) => {
-      // Check if the monthly consumption value exists
-      const consumption = record[monthColumn] ? 
-        (typeof record[monthColumn] === 'string' ? parseFloat(record[monthColumn]) : record[monthColumn]) : 0;
-      
-      if (!isNaN(consumption)) {
-        totalConsumption += consumption;
+    // Calculate totals - make sure to safely access array items
+    if (Array.isArray(electricityData)) {
+      electricityData.forEach((record: any) => {
+        if (!record) return;
         
-        // Track max consumer
-        if (consumption > maxConsumption) {
-          maxConsumption = consumption;
-          maxConsumer = record['Meter Label'] || 'Unknown';
+        // Check if the monthly consumption value exists
+        const consumption = record[monthColumn] ? 
+          (typeof record[monthColumn] === 'string' ? parseFloat(record[monthColumn]) : record[monthColumn]) : 0;
+        
+        if (!isNaN(consumption)) {
+          totalConsumption += consumption;
+          
+          // Track max consumer
+          if (consumption > maxConsumption) {
+            maxConsumption = consumption;
+            maxConsumer = record['Meter Label'] || 'Unknown';
+          }
+          
+          // Aggregate by type
+          const type = record['Type'] || 'Unknown';
+          typeMap.set(type, (typeMap.get(type) || 0) + consumption);
         }
-        
-        // Aggregate by type
-        const type = record['Type'] || 'Unknown';
-        typeMap.set(type, (typeMap.get(type) || 0) + consumption);
-      }
-    });
+      });
+    }
     
     // Calculate average
-    const averageConsumption = electricityData.length > 0 ? totalConsumption / electricityData.length : 0;
+    const averageConsumption = electricityData && electricityData.length > 0 ? totalConsumption / electricityData.length : 0;
     
-    // Convert type map to array for charts
+    // Convert type map to array for charts - safely handle the map
     const typeBreakdown = Array.from(typeMap.entries()).map(([type, consumption]) => ({
       name: type,
       value: consumption,
       color: getTypeColor(type)
     }));
     
-    // Get top consumers
-    const topConsumers = [...electricityData]
-      .filter(record => record[monthColumn] !== undefined)
-      .sort((a, b) => {
-        const aConsumption = a[monthColumn] !== undefined ? 
-          (typeof a[monthColumn] === 'string' ? parseFloat(a[monthColumn]) : a[monthColumn]) : 0;
-        const bConsumption = b[monthColumn] !== undefined ? 
-          (typeof b[monthColumn] === 'string' ? parseFloat(b[monthColumn]) : b[monthColumn]) : 0;
-        return bConsumption - aConsumption;
-      })
-      .slice(0, 5)
-      .map(record => ({
-        name: record['Meter Label'] || 'Unknown',
-        type: record['Type'] || 'Unknown',
-        consumption: record[monthColumn] ? 
-          (typeof record[monthColumn] === 'string' ? parseFloat(record[monthColumn]) : record[monthColumn]) : 0,
-        cost: calculateCost(record[monthColumn] ? 
-          (typeof record[monthColumn] === 'string' ? parseFloat(record[monthColumn]) : record[monthColumn]) : 0)
-      }));
+    // Get top consumers - make sure to safely handle the array
+    const topConsumers = Array.isArray(electricityData) ? 
+      [...electricityData]
+        .filter(record => record && record[monthColumn] !== undefined)
+        .sort((a, b) => {
+          if (!a || !b) return 0;
+          
+          const aConsumption = a[monthColumn] !== undefined ? 
+            (typeof a[monthColumn] === 'string' ? parseFloat(a[monthColumn]) : a[monthColumn]) : 0;
+          const bConsumption = b[monthColumn] !== undefined ? 
+            (typeof b[monthColumn] === 'string' ? parseFloat(b[monthColumn]) : b[monthColumn]) : 0;
+          
+          return bConsumption - aConsumption;
+        })
+        .slice(0, 5)
+        .map(record => {
+          if (!record) return {
+            name: 'Unknown',
+            type: 'Unknown',
+            consumption: 0,
+            cost: 0
+          };
+          
+          const consumption = record[monthColumn] !== undefined ? 
+            (typeof record[monthColumn] === 'string' ? parseFloat(record[monthColumn]) : record[monthColumn]) : 0;
+          
+          return {
+            name: record['Meter Label'] || 'Unknown',
+            type: record['Type'] || 'Unknown',
+            consumption: consumption,
+            cost: calculateCost(consumption)
+          };
+        })
+      : [];
     
     // Estimate cost (fictional calculation)
     const totalCost = calculateCost(totalConsumption);
@@ -189,7 +208,7 @@ const ElectricityOverview: React.FC<ElectricityOverviewProps> = ({
         </CardHeader>
         <CardContent>
           <div className="h-[300px]">
-            {processedData.typeBreakdown.length > 0 ? (
+            {processedData.typeBreakdown && processedData.typeBreakdown.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
@@ -239,15 +258,16 @@ const ElectricityOverview: React.FC<ElectricityOverviewProps> = ({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {processedData.topConsumers.map((consumer, index) => (
-                <TableRow key={index}>
-                  <TableCell className="font-medium">{consumer.name}</TableCell>
-                  <TableCell>{consumer.type}</TableCell>
-                  <TableCell className="text-right">{consumer.consumption.toLocaleString()}</TableCell>
-                  <TableCell className="text-right">{consumer.cost.toLocaleString()}</TableCell>
-                </TableRow>
-              ))}
-              {processedData.topConsumers.length === 0 && (
+              {processedData.topConsumers && processedData.topConsumers.length > 0 ? (
+                processedData.topConsumers.map((consumer, index) => (
+                  <TableRow key={index}>
+                    <TableCell className="font-medium">{consumer.name}</TableCell>
+                    <TableCell>{consumer.type}</TableCell>
+                    <TableCell className="text-right">{consumer.consumption.toLocaleString()}</TableCell>
+                    <TableCell className="text-right">{consumer.cost.toLocaleString()}</TableCell>
+                  </TableRow>
+                ))
+              ) : (
                 <TableRow>
                   <TableCell colSpan={4} className="text-center py-4">No consumption data available</TableCell>
                 </TableRow>
