@@ -5,7 +5,7 @@ import { ElectricityRecord, TypeConsumption } from '@/types/electricity';
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 import { ELECTRICITY_RATE } from '@/data/electricityMockData';
 import { ChartContainer } from '@/components/ui/chart';
-import { getTypeColor } from '@/utils/electricityDataUtils';
+import { getTypeColor, getAvailableMonths } from '@/utils/electricityDataUtils';
 
 interface ElectricityTypesTabProps {
   electricityData: ElectricityRecord[];
@@ -20,6 +20,9 @@ const ElectricityTypesTab: React.FC<ElectricityTypesTabProps> = ({
 }) => {
   // Format month string to match the consumption object keys (e.g., "Feb-25")
   const monthKey = `${selectedMonth}-${selectedYear.substring(2)}`;
+  
+  // Get available months for types
+  const availableMonths = getAvailableMonths();
   
   // Process data for type breakdown
   const typeData = useMemo(() => {
@@ -82,23 +85,7 @@ const ElectricityTypesTab: React.FC<ElectricityTypesTabProps> = ({
       
       return monthData;
     });
-  }, [electricityData, selectedMonth, selectedYear]);
-  
-  // Get available months for types (this is a simplified version for demo)
-  const availableMonths = [
-    { value: 'Apr', label: 'April' },
-    { value: 'May', label: 'May' },
-    { value: 'Jun', label: 'June' },
-    { value: 'Jul', label: 'July' },
-    { value: 'Aug', label: 'August' },
-    { value: 'Sep', label: 'September' },
-    { value: 'Oct', label: 'October' },
-    { value: 'Nov', label: 'November' },
-    { value: 'Dec', label: 'December' },
-    { value: 'Jan', label: 'January' },
-    { value: 'Feb', label: 'February' },
-    { value: 'Mar', label: 'March' }
-  ];
+  }, [electricityData, selectedMonth, selectedYear, availableMonths]);
   
   return (
     <div className="space-y-6">
