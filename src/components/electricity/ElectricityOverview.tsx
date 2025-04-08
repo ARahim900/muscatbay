@@ -18,104 +18,114 @@ const ElectricityOverview: React.FC<ElectricityOverviewProps> = ({
 }) => {
   // Process the raw data from Airtable
   const processedData = useMemo(() => {
+    // Default values for empty or invalid data
+    const defaultData = {
+      totalConsumption: 0,
+      totalCost: 0,
+      averageConsumption: 0,
+      maxConsumption: 0,
+      maxConsumer: 'N/A',
+      typeBreakdown: [],
+      topConsumers: []
+    };
+
+    // Ensure electricityData is a valid array
     if (!electricityData || !Array.isArray(electricityData) || electricityData.length === 0) {
-      return { 
-        totalConsumption: 0,
-        totalCost: 0,
-        averageConsumption: 0,
-        maxConsumption: 0,
-        maxConsumer: 'N/A',
-        typeBreakdown: [],
-        topConsumers: []
-      };
+      return defaultData;
     }
 
-    const monthColumn = `${selectedMonth}-${selectedYear.substring(2)}`;
-    let totalConsumption = 0;
-    let maxConsumption = 0;
-    let maxConsumer = '';
-    
-    // Map for consumption by type
-    const typeMap = new Map<string, number>();
-    
-    // Calculate totals
-    electricityData.forEach((record: any) => {
-      if (!record) return;
+    try {
+      const monthColumn = `${selectedMonth}-${selectedYear.substring(2)}`;
+      let totalConsumption = 0;
+      let maxConsumption = 0;
+      let maxConsumer = '';
       
-      // Check if the monthly consumption value exists
-      const consumption = record[monthColumn] !== undefined ? 
-        (typeof record[monthColumn] === 'string' ? parseFloat(record[monthColumn]) : record[monthColumn]) : 0;
+      // Map for consumption by type
+      const typeMap = new Map<string, number>();
       
-      if (!isNaN(consumption)) {
-        totalConsumption += consumption;
+      // Calculate totals - safely handle each record
+      electricityData.forEach((record: any) => {
+        if (!record) return;
         
-        // Track max consumer
-        if (consumption > maxConsumption) {
-          maxConsumption = consumption;
-          maxConsumer = record['Meter Label'] || 'Unknown';
-        }
-        
-        // Aggregate by type
-        const type = record['Type'] || 'Unknown';
-        typeMap.set(type, (typeMap.get(type) || 0) + consumption);
-      }
-    });
-    
-    // Calculate average
-    const averageConsumption = electricityData.length > 0 ? totalConsumption / electricityData.length : 0;
-    
-    // Convert type map to array for charts - safely handle the map
-    const typeBreakdown = Array.from(typeMap.entries()).map(([type, consumption]) => ({
-      name: type,
-      value: consumption,
-      color: getTypeColor(type)
-    }));
-    
-    // Get top consumers
-    const topConsumers = [...electricityData]
-      .filter(record => record && record[monthColumn] !== undefined)
-      .sort((a, b) => {
-        if (!a || !b) return 0;
-        
-        const aConsumption = a[monthColumn] !== undefined ? 
-          (typeof a[monthColumn] === 'string' ? parseFloat(a[monthColumn]) : a[monthColumn]) : 0;
-        const bConsumption = b[monthColumn] !== undefined ? 
-          (typeof b[monthColumn] === 'string' ? parseFloat(b[monthColumn]) : b[monthColumn]) : 0;
-        
-        return bConsumption - aConsumption;
-      })
-      .slice(0, 5)
-      .map(record => {
-        if (!record) return {
-          name: 'Unknown',
-          type: 'Unknown',
-          consumption: 0,
-          cost: 0
-        };
-        
+        // Check if the monthly consumption value exists
         const consumption = record[monthColumn] !== undefined ? 
           (typeof record[monthColumn] === 'string' ? parseFloat(record[monthColumn]) : record[monthColumn]) : 0;
         
-        return {
-          name: record['Meter Label'] || 'Unknown',
-          type: record['Type'] || 'Unknown',
-          consumption: consumption,
-          cost: calculateCost(consumption)
-        };
+        if (!isNaN(consumption)) {
+          totalConsumption += consumption;
+          
+          // Track max consumer
+          if (consumption > maxConsumption) {
+            maxConsumption = consumption;
+            maxConsumer = record['Meter Label'] || 'Unknown';
+          }
+          
+          // Aggregate by type - ensure type is a string
+          const type = record['Type'] || 'Unknown';
+          typeMap.set(type, (typeMap.get(type) || 0) + consumption);
+        }
       });
-    
-    // Estimate cost (fictional calculation)
-    const totalCost = calculateCost(totalConsumption);
-    
-    return {
-      totalConsumption,
-      totalCost,
-      averageConsumption,
-      maxConsumption,
-      maxConsumer,
-      typeBreakdown,
-      topConsumers
-    };
+      
+      // Calculate average
+      const averageConsumption = electricityData.length > 0 ? totalConsumption / electricityData.length : 0;
+      
+      // Convert type map to array for charts - safely handle the map
+      const typeBreakdown = Array.from(typeMap.entries()).map(([type, consumption]) => ({
+        name: type,
+        value: consumption,
+        color: getTypeColor(type)
+      }));
+      
+      // Get top consumers - ensure safe operations
+      const topConsumers = Array.isArray(electricityData) ? 
+        [...electricityData]
+          .filter(record => record && record[monthColumn] !== undefined)
+          .sort((a, b) => {
+            if (!a || !b) return 0;
+            
+            const aConsumption = a[monthColumn] !== undefined ? 
+              (typeof a[monthColumn] === 'string' ? parseFloat(a[monthColumn]) : a[monthColumn]) : 0;
+            const bConsumption = b[monthColumn] !== undefined ? 
+              (typeof b[monthColumn] === 'string' ? parseFloat(b[monthColumn]) : b[monthColumn]) : 0;
+            
+            return bConsumption - aConsumption;
+          })
+          .slice(0, 5)
+          .map(record => {
+            if (!record) return {
+              name: 'Unknown',
+              type: 'Unknown',
+              consumption: 0,
+              cost: 0
+            };
+            
+            const consumption = record[monthColumn] !== undefined ? 
+              (typeof record[monthColumn] === 'string' ? parseFloat(record[monthColumn]) : record[monthColumn]) : 0;
+            
+            return {
+              name: record['Meter Label'] || 'Unknown',
+              type: record['Type'] || 'Unknown',
+              consumption: consumption,
+              cost: calculateCost(consumption)
+            };
+          }) : [];
+      
+      // Estimate cost (fictional calculation)
+      const totalCost = calculateCost(totalConsumption);
+      
+      return {
+        totalConsumption,
+        totalCost,
+        averageConsumption,
+        maxConsumption,
+        maxConsumer,
+        typeBreakdown,
+        topConsumers
+      };
+    } catch (error) {
+      console.error("Error processing electricity data:", error);
+      return defaultData; // Return default data structure in case of errors
+    }
   }, [electricityData, selectedMonth, selectedYear]);
 
   // Calculate cost (fictional calculation - 0.025 OMR per kWh)
@@ -222,7 +232,7 @@ const ElectricityOverview: React.FC<ElectricityOverviewProps> = ({
                     dataKey="value"
                     label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(1)}%`}
                   >
-                    {processedData.typeBreakdown.map((entry, index) => (
+                    {processedData.typeBreakdown.map((entry: any, index: number) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
@@ -259,7 +269,7 @@ const ElectricityOverview: React.FC<ElectricityOverviewProps> = ({
             </TableHeader>
             <TableBody>
               {processedData.topConsumers && processedData.topConsumers.length > 0 ? (
-                processedData.topConsumers.map((consumer, index) => (
+                processedData.topConsumers.map((consumer: any, index: number) => (
                   <TableRow key={index}>
                     <TableCell className="font-medium">{consumer.name}</TableCell>
                     <TableCell>{consumer.type}</TableCell>
