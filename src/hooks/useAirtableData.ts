@@ -45,8 +45,9 @@ export default function useAirtableData<T = any>(
         throw new Error('No Supabase table mapping found');
       }
       
+      // Use type assertion to handle the dynamic table name
       const { data: supabaseData, error: supabaseError } = await supabase
-        .from(supabaseTable)
+        .from(supabaseTable as any)
         .select('*');
         
       if (supabaseError) throw supabaseError;
@@ -216,10 +217,11 @@ export default function useAirtableData<T = any>(
     let meterCount = zones.length + 2;
     zones.forEach(zone => {
       types.forEach(type => {
-        const meterCount = Math.floor(Math.random() * 3) + 1;
-        for (let i = 0; i < meterCount; i++) {
+        // Fix: Use a different variable name to avoid shadowing
+        let metersPerType = Math.floor(Math.random() * 3) + 1;
+        for (let i = 0; i < metersPerType; i++) {
           mockData.push({
-            id: `rec${meterCount++}`,
+            id: `rec${meterCount}`, // Use current value, then increment separately
             'Meter Label': `${zone} ${type} Meter ${i + 1}`,
             'Acct #': 3000 + meterCount,
             'Zone': zone,
@@ -229,6 +231,7 @@ export default function useAirtableData<T = any>(
             'Feb-25': 750 + Math.floor(Math.random() * 300),
             'Parent Meter': `${zone} Bulk Meter`
           });
+          meterCount++; // Increment counter after using it
         }
       });
     });
@@ -239,7 +242,7 @@ export default function useAirtableData<T = any>(
       const type = types[Math.floor(Math.random() * types.length)];
       
       mockData.push({
-        id: `rec${meterCount++}`,
+        id: `rec${meterCount}`, // Use current value, then increment separately
         'Meter Label': `DC-${zone}-${i + 1}`,
         'Acct #': 4000 + i,
         'Zone': zone,
@@ -249,6 +252,7 @@ export default function useAirtableData<T = any>(
         'Feb-25': 280 + Math.floor(Math.random() * 100),
         'Parent Meter': `${zone} Bulk Meter`
       });
+      meterCount++; // Increment counter after using it
     }
     
     return mockData;
