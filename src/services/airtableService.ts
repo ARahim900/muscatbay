@@ -1,12 +1,17 @@
 import Airtable from 'airtable';
 
-// Initialize Airtable with your API key
+// Use the API key you just provided
 const AIRTABLE_API_KEY = 'patgswc3cLZkA2Yrv.eb7796293aaabbc988a0d68e9f34010e8baae51d02c669185971b55689885534'; 
-// Update the base ID to match the one provided
+
+// Keep the existing base ID
 export const AIRTABLE_BASE_ID = 'appbUreNO4vvslMme';
 
-// Initialize the Airtable base
-const base = new Airtable({ apiKey: AIRTABLE_API_KEY }).base(AIRTABLE_BASE_ID);
+// Initialize the Airtable base with error handling
+const base = new Airtable({ 
+  apiKey: AIRTABLE_API_KEY,
+  // Add timeout and error handling
+  requestTimeout: 30000 
+}).base(AIRTABLE_BASE_ID);
 
 // Constants for table IDs - using the correct table ID from the URL
 export const WATER_TABLE_ID = 'tblR7Yq40GnRh8esd';
