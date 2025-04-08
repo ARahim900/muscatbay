@@ -31,6 +31,7 @@ const ElectricityOverview: React.FC<ElectricityOverviewProps> = ({
 
     // Ensure electricityData is a valid array
     if (!electricityData || !Array.isArray(electricityData) || electricityData.length === 0) {
+      console.log("No electricity data available");
       return defaultData;
     }
 
@@ -62,7 +63,8 @@ const ElectricityOverview: React.FC<ElectricityOverviewProps> = ({
           
           // Aggregate by type - ensure type is a string
           const type = record['Type'] || 'Unknown';
-          typeMap.set(type, (typeMap.get(type) || 0) + consumption);
+          const currentTypeConsumption = typeMap.get(type) || 0;
+          typeMap.set(type, currentTypeConsumption + consumption);
         }
       });
       
@@ -81,8 +83,6 @@ const ElectricityOverview: React.FC<ElectricityOverviewProps> = ({
         [...electricityData]
           .filter(record => record && record[monthColumn] !== undefined)
           .sort((a, b) => {
-            if (!a || !b) return 0;
-            
             const aConsumption = a[monthColumn] !== undefined ? 
               (typeof a[monthColumn] === 'string' ? parseFloat(a[monthColumn]) : a[monthColumn]) : 0;
             const bConsumption = b[monthColumn] !== undefined ? 
@@ -91,24 +91,15 @@ const ElectricityOverview: React.FC<ElectricityOverviewProps> = ({
             return bConsumption - aConsumption;
           })
           .slice(0, 5)
-          .map(record => {
-            if (!record) return {
-              name: 'Unknown',
-              type: 'Unknown',
-              consumption: 0,
-              cost: 0
-            };
-            
-            const consumption = record[monthColumn] !== undefined ? 
-              (typeof record[monthColumn] === 'string' ? parseFloat(record[monthColumn]) : record[monthColumn]) : 0;
-            
-            return {
-              name: record['Meter Label'] || 'Unknown',
-              type: record['Type'] || 'Unknown',
-              consumption: consumption,
-              cost: calculateCost(consumption)
-            };
-          }) : [];
+          .map(record => ({
+            name: record['Meter Label'] || 'Unknown',
+            type: record['Type'] || 'Unknown',
+            consumption: record[monthColumn] !== undefined ? 
+              (typeof record[monthColumn] === 'string' ? parseFloat(record[monthColumn]) : record[monthColumn]) : 0,
+            cost: calculateCost(record[monthColumn] !== undefined ? 
+              (typeof record[monthColumn] === 'string' ? parseFloat(record[monthColumn]) : record[monthColumn]) : 0)
+          }))
+        : [];
       
       // Estimate cost (fictional calculation)
       const totalCost = calculateCost(totalConsumption);
@@ -160,7 +151,7 @@ const ElectricityOverview: React.FC<ElectricityOverviewProps> = ({
               </div>
               <div>
                 <p className="text-xs font-medium text-amber-600 dark:text-amber-400">Total Consumption</p>
-                <h3 className="text-2xl font-bold">{processedData.totalConsumption.toLocaleString()} kWh</h3>
+                <h3 className="text-2xl font-bold">{Math.round(processedData.totalConsumption).toLocaleString()} kWh</h3>
               </div>
             </div>
           </CardContent>
@@ -174,7 +165,7 @@ const ElectricityOverview: React.FC<ElectricityOverviewProps> = ({
               </div>
               <div>
                 <p className="text-xs font-medium text-green-600 dark:text-green-400">Total Cost</p>
-                <h3 className="text-2xl font-bold">{processedData.totalCost.toLocaleString()} OMR</h3>
+                <h3 className="text-2xl font-bold">{processedData.totalCost.toFixed(2).toLocaleString()} OMR</h3>
               </div>
             </div>
           </CardContent>
@@ -188,7 +179,7 @@ const ElectricityOverview: React.FC<ElectricityOverviewProps> = ({
               </div>
               <div>
                 <p className="text-xs font-medium text-blue-600 dark:text-blue-400">Average Consumption</p>
-                <h3 className="text-2xl font-bold">{processedData.averageConsumption.toLocaleString()} kWh</h3>
+                <h3 className="text-2xl font-bold">{Math.round(processedData.averageConsumption).toLocaleString()} kWh</h3>
               </div>
             </div>
           </CardContent>
@@ -203,7 +194,7 @@ const ElectricityOverview: React.FC<ElectricityOverviewProps> = ({
               <div>
                 <p className="text-xs font-medium text-purple-600 dark:text-purple-400">Highest Consumer</p>
                 <h3 className="text-lg font-bold">{processedData.maxConsumer}</h3>
-                <p className="text-xs">{processedData.maxConsumption.toLocaleString()} kWh</p>
+                <p className="text-xs">{Math.round(processedData.maxConsumption).toLocaleString()} kWh</p>
               </div>
             </div>
           </CardContent>
@@ -237,7 +228,7 @@ const ElectricityOverview: React.FC<ElectricityOverviewProps> = ({
                     ))}
                   </Pie>
                   <Tooltip 
-                    formatter={(value: number) => `${value.toLocaleString()} kWh`} 
+                    formatter={(value: number) => `${Math.round(value).toLocaleString()} kWh`} 
                   />
                   <Legend />
                 </PieChart>
@@ -273,8 +264,8 @@ const ElectricityOverview: React.FC<ElectricityOverviewProps> = ({
                   <TableRow key={index}>
                     <TableCell className="font-medium">{consumer.name}</TableCell>
                     <TableCell>{consumer.type}</TableCell>
-                    <TableCell className="text-right">{consumer.consumption.toLocaleString()}</TableCell>
-                    <TableCell className="text-right">{consumer.cost.toLocaleString()}</TableCell>
+                    <TableCell className="text-right">{Math.round(consumer.consumption).toLocaleString()}</TableCell>
+                    <TableCell className="text-right">{consumer.cost.toFixed(2)}</TableCell>
                   </TableRow>
                 ))
               ) : (
