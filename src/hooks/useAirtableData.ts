@@ -27,7 +27,7 @@ export default function useAirtableData<T = any>(
   
   const { enabled = true, ...queryOptions } = options;
 
-  // Remove 'Grid view' from options if present to avoid Airtable API errors
+  // Remove 'Grid view' from options if present
   const finalQueryOptions = {...queryOptions};
   if (finalQueryOptions.view === 'Grid view') {
     delete finalQueryOptions.view;
@@ -44,7 +44,7 @@ export default function useAirtableData<T = any>(
       const fetchedData = await fetchTableData(tableName, finalQueryOptions);
       console.log('Fetched data:', fetchedData);
       setData(fetchedData as T[]);
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error fetching Airtable data:', err);
       
       // Create a more informative error message
@@ -53,21 +53,7 @@ export default function useAirtableData<T = any>(
       if (err instanceof Error) {
         errorMessage = err.message;
       } else if (typeof err === 'object' && err !== null) {
-        // Try to extract more detailed error information from Airtable's error format
-        if ('error' in err && typeof err.error === 'object' && err.error !== null) {
-          const errorObj = err.error as any;
-          
-          if ('type' in errorObj && typeof errorObj.type === 'string') {
-            if (errorObj.type === 'INVALID_PERMISSIONS_OR_MODEL_NOT_FOUND') {
-              errorMessage = 'The Airtable table could not be found or you do not have permission to access it.';
-            }
-          }
-          
-          if ('message' in errorObj && typeof errorObj.message === 'string') {
-            errorMessage = errorObj.message;
-          }
-        }
-        
+        // Try to extract more detailed error information
         if ('statusCode' in err && typeof err.statusCode === 'number') {
           if (err.statusCode === 403) {
             errorMessage = 'Authentication error: Please check your Airtable API key and permissions';

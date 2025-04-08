@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Download, FileText, BarChart3, Grid3X3, Zap } from 'lucide-react';
@@ -9,36 +10,33 @@ import { toast } from 'sonner';
 import ElectricityOverview from './ElectricityOverview';
 import ElectricityConsumptionChart from './ElectricityConsumptionChart';
 import { mockElectricityData } from '@/data/electricityMockData';
-import { AIRTABLE_BASE_ID, ELECTRICITY_TABLE_ID } from '@/services/airtableService';
+
+const ELECTRICITY_BASE_ID = 'appbUreNO4vvslMme';
+const ELECTRICITY_TABLE_ID = 'shrpAtmnZhxfZ87Ue';
 
 const ElectricityDashboard: React.FC = () => {
   const [selectedYear, setSelectedYear] = useState<string>('2025');
-  const [selectedMonth, setSelectedMonth] = useState<string>('Apr');
+  const [selectedMonth, setSelectedMonth] = useState<string>('Feb');
   const [activeTab, setActiveTab] = useState<string>('overview');
   const [useMockData, setUseMockData] = useState<boolean>(false);
   
   const { data: airtableData, isLoading, error, refetch } = useAirtableData(
     ELECTRICITY_TABLE_ID,
     {
-      // Removed the view option to avoid the API error
-      // view: 'Grid view',
+      view: 'Grid view',
     }
   );
 
+  // Use either Airtable data or fallback to mock data
+  const electricityData = useMockData || error || !airtableData ? mockElectricityData : airtableData;
+
   useEffect(() => {
-    console.log('Electricity Airtable Configuration:');
-    console.log('Base ID:', AIRTABLE_BASE_ID);
-    console.log('Table ID:', ELECTRICITY_TABLE_ID);
-    console.log('Airtable Data Response:', airtableData);
-    
     if (error) {
-      console.error('Airtable Error:', error);
+      console.error('Error loading electricity data:', error);
       setUseMockData(true);
       toast.info('Using demo data for electricity dashboard. Airtable connection failed.');
     }
-  }, [airtableData, error]);
-
-  const electricityData = useMockData || error || !airtableData ? mockElectricityData : airtableData;
+  }, [error]);
 
   const handleExport = () => {
     toast.info('Exporting electricity data...');
@@ -67,6 +65,7 @@ const ElectricityDashboard: React.FC = () => {
 
   return (
     <div className="container mx-auto px-4 py-6">
+      {/* Header Section */}
       <div className="mb-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
           <div className="flex items-center">
