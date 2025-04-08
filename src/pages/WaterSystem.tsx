@@ -1,8 +1,7 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import useAirtableData from '@/hooks/useAirtableData';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
@@ -32,7 +31,6 @@ const WaterSystem = () => {
   const [lastUpdated, setLastUpdated] = useState<Date | undefined>(undefined);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [isLoadingDemo, setIsLoadingDemo] = useState(false);
   
   const {
     data: waterData,
@@ -61,21 +59,6 @@ const WaterSystem = () => {
       toast.error(`Failed to refresh data: ${err instanceof Error ? err.message : 'Unknown error'}`);
     } finally {
       setIsManualLoading(false);
-    }
-  };
-
-  const handleLoadDemoData = async () => {
-    setIsLoadingDemo(true);
-    try {
-      // Force refetch but allow fallback to mock data generation
-      await refetch();
-      setLastUpdated(new Date());
-      toast.success('Demo data loaded successfully');
-    } catch (err) {
-      console.error('Failed to load demo data:', err);
-      toast.error(`Failed to load demo data: ${err instanceof Error ? err.message : 'Unknown error'}`);
-    } finally {
-      setIsLoadingDemo(false);
     }
   };
 
@@ -178,15 +161,6 @@ const WaterSystem = () => {
                           Check Table Connection
                         </>}
                     </Button>
-                    <Button variant="outline" className="text-purple-600" onClick={handleLoadDemoData} disabled={isLoadingDemo}>
-                      {isLoadingDemo ? <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Loading demo data...
-                        </> : <>
-                          <RefreshCw className="w-4 h-4 mr-2" />
-                          Load Demo Data
-                        </>}
-                    </Button>
                   </div>
                 </div>
               </div>
@@ -220,15 +194,6 @@ const WaterSystem = () => {
                       </> : <>
                         <RefreshCw className="w-4 h-4 mr-2" />
                         Refresh Data
-                      </>}
-                  </Button>
-                  <Button variant="outline" className="text-purple-600" onClick={handleLoadDemoData} disabled={isLoadingDemo}>
-                    {isLoadingDemo ? <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Loading demo data...
-                      </> : <>
-                        <RefreshCw className="w-4 h-4 mr-2" />
-                        Load Demo Data
                       </>}
                   </Button>
                 </div>
