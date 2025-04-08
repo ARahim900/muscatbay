@@ -4,13 +4,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Download, FileText, BarChart3, Zap } from 'lucide-react';
+import { Download, BarChart3, Zap } from 'lucide-react';
 import { toast } from 'sonner';
 import ElectricityOverview from './ElectricityOverview';
 import ElectricityFacilitiesTab from './ElectricityFacilitiesTab';
 import ElectricityTypesTab from './ElectricityTypesTab';
 import ElectricityTrendsTab from './ElectricityTrendsTab';
-import { mockElectricityData } from '@/data/electricityMockData';
 import { getAvailableMonths, getAvailableYears } from '@/utils/electricityDataUtils';
 import { fetchElectricityData } from '@/services/electricityService';
 
@@ -18,8 +17,7 @@ const ElectricityDashboard: React.FC = () => {
   const [selectedYear, setSelectedYear] = useState<string>('2025');
   const [selectedMonth, setSelectedMonth] = useState<string>('Feb');
   const [activeTab, setActiveTab] = useState<string>('overview');
-  const [useMockData, setUseMockData] = useState<boolean>(false);
-  const [electricityData, setElectricityData] = useState(mockElectricityData);
+  const [electricityData, setElectricityData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -31,24 +29,12 @@ const ElectricityDashboard: React.FC = () => {
       setIsLoading(true);
       setError(null);
       
-      if (useMockData) {
-        setElectricityData(mockElectricityData);
-        toast.info('Using demo data for demonstration purposes');
-      } else {
-        const data = await fetchElectricityData();
-        setElectricityData(data);
-        
-        // If we got back mock data, that means the real data fetch failed
-        if (data === mockElectricityData) {
-          setUseMockData(true);
-        }
-      }
+      const data = await fetchElectricityData();
+      setElectricityData(data);
     } catch (err) {
       console.error('Error loading electricity data:', err);
-      setError('Failed to load electricity data. Using demo data instead.');
-      setUseMockData(true);
-      setElectricityData(mockElectricityData);
-      toast.error('Error loading data. Using demo data instead.');
+      setError('Failed to load electricity data. Please check your connection.');
+      toast.error('Error loading data. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -56,7 +42,7 @@ const ElectricityDashboard: React.FC = () => {
 
   useEffect(() => {
     loadData();
-  }, [useMockData]);
+  }, []);
 
   const handleExport = () => {
     toast.info('Exporting electricity data...');
@@ -64,10 +50,6 @@ const ElectricityDashboard: React.FC = () => {
 
   const handleRefresh = () => {
     loadData();
-  };
-
-  const handleToggleMockData = () => {
-    setUseMockData(!useMockData);
   };
 
   const getMonthYearLabel = () => {
@@ -133,16 +115,6 @@ const ElectricityDashboard: React.FC = () => {
               <Download className="h-4 w-4" />
               Export
             </Button>
-
-            <Button
-              variant={useMockData ? "default" : "outline"}
-              size="sm"
-              className="gap-1"
-              onClick={handleToggleMockData}
-            >
-              <FileText className="h-4 w-4" />
-              {useMockData ? "Using Demo Data" : "Use Demo Data"}
-            </Button>
           </div>
         </div>
         
@@ -156,7 +128,6 @@ const ElectricityDashboard: React.FC = () => {
           
           <div className="mt-2 text-sm text-muted-foreground">
             Showing: <span className="font-medium text-foreground">{getMonthYearLabel()}</span> electricity data
-            {useMockData && <span className="ml-2 text-amber-600 font-medium">(Demo Data)</span>}
           </div>
 
           <TabsContent value="overview" className="mt-4">
