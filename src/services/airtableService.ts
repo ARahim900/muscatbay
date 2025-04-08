@@ -66,8 +66,9 @@ export const fetchTableData = async (
   } catch (error: any) {
     console.error(`Error fetching data from ${tableIdOrName}:`, error);
     
-    // Provide more detailed error information
+    // Enhanced error handling to provide useful diagnostic information
     if (error.statusCode === 403) {
+      console.log("Authentication error detected. Will use fallback data.");
       throw new Error("You are not authorized to perform this operation. Please check your API key permissions.");
     } else if (error.statusCode === 404) {
       throw new Error(`Table "${tableIdOrName}" not found. Please verify the table ID.`);

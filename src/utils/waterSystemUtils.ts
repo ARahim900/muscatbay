@@ -7,13 +7,29 @@ const EXCLUDED_METERS = ['4300322']; // Z3-74(3) meter to be excluded
  * Transform raw Airtable data into a more structured format
  */
 export const transformWaterData = (data: WaterConsumptionData[]): WaterConsumptionData[] => {
-  return data.filter(item => item['Acct #'] && !EXCLUDED_METERS.includes(String(item['Acct #'])));
+  // Make sure data is valid before filtering
+  if (!data || !Array.isArray(data)) {
+    console.warn("Invalid data passed to transformWaterData:", data);
+    return [];
+  }
+  
+  // Filter out excluded meters and ensure each item has required properties
+  return data.filter(item => {
+    // Skip items without proper account numbers
+    if (!item['Acct #']) return false;
+    
+    // Skip excluded meters
+    if (EXCLUDED_METERS.includes(String(item['Acct #']))) return false;
+    
+    return true;
+  });
 };
 
 /**
  * Calculate reading for a specific month, handling different data types
  */
 export const getReadingValue = (item: WaterConsumptionData, month: string): number => {
+  if (!item) return 0;
   if (month === 'all') return 0; // Return 0 for 'all' selection to fix zero display issue
   
   const value = item[month];
@@ -29,7 +45,15 @@ export const getReadingValue = (item: WaterConsumptionData, month: string): numb
 export const getAvailableMonths = (data: WaterConsumptionData[]): string[] => {
   const months = ['all'];
   
-  const monthFields = Object.keys(data[0] || {}).filter(key => 
+  if (!data || data.length === 0) {
+    console.warn("No data available for extracting months");
+    return months;
+  }
+  
+  const firstItem = data[0];
+  if (!firstItem) return months;
+  
+  const monthFields = Object.keys(firstItem).filter(key => 
     /^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)-\d{2}$/.test(key)
   );
   
@@ -46,11 +70,18 @@ export const getAvailableMonths = (data: WaterConsumptionData[]): string[] => {
   });
   
   monthFields.forEach(month => {
+    // Check if any record has data for this month
     const hasData = data.some(item => getReadingValue(item, month) > 0);
     if (hasData && !months.includes(month)) {
       months.push(month);
     }
   });
+  
+  // Ensure we have at least one month for demo data
+  if (months.length <= 1) {
+    console.log("Adding default months since no month data was found");
+    months.push('Jan-25', 'Feb-25');
+  }
   
   return months;
 };
@@ -60,6 +91,8 @@ export const getAvailableMonths = (data: WaterConsumptionData[]): string[] => {
  */
 export const getZones = (data: WaterConsumptionData[]): string[] => {
   const zones = ['all'];
+  
+  if (!data || data.length === 0) return zones;
   
   data.forEach(item => {
     if (item.Zone && !zones.includes(item.Zone)) {
@@ -75,6 +108,8 @@ export const getZones = (data: WaterConsumptionData[]): string[] => {
  */
 export const getTypes = (data: WaterConsumptionData[]): string[] => {
   const types = ['all'];
+  
+  if (!data || data.length === 0) return types;
   
   data.forEach(item => {
     if (item.Type && !types.includes(item.Type)) {
@@ -94,6 +129,8 @@ export const filterWaterData = (
   selectedZone: string,
   selectedType: string
 ): WaterConsumptionData[] => {
+  if (!data || data.length === 0) return [];
+  
   return data.filter(record => {
     // Fix for 'all' month selection - if 'all' is selected, include all records regardless of month data
     const monthMatch = selectedMonth === 'all' || 

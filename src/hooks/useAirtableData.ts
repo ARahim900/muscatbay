@@ -152,10 +152,14 @@ export default function useAirtableData<T = any>(
       if (useFallback) {
         try {
           // Try to load mock data based on the table name
+          console.log("Attempting to load mock data for table:", tableName);
           const mockData = await loadMockData(tableName);
-          if (mockData) {
+          if (mockData && mockData.length > 0) {
+            console.log("Mock data successfully generated:", mockData.length, "records");
             setData(mockData as T[]);
             toast.info('Using mock data instead of live Airtable connection');
+          } else {
+            console.error("Generated mock data was empty or null");
           }
         } catch (mockErr) {
           console.error('Failed to load mock data:', mockErr);
@@ -171,6 +175,7 @@ export default function useAirtableData<T = any>(
     // Determine which mock data to load based on the table name
     if (tableName.includes('shrjrIEpBjAANAxZy')) {
       // Water system mock data
+      console.log("Generating water mock data");
       return generateWaterMockData();
     }
     
@@ -181,8 +186,8 @@ export default function useAirtableData<T = any>(
   const generateWaterMockData = () => {
     const zones = ['Zone 01', 'Zone 02', 'Zone 03', 'Zone 04', 'Zone 05'];
     const types = ['Residential', 'Commercial', 'Irrigation', 'Common Areas'];
-    const levels = ['L1', 'L2', 'L3', 'DC'];
     
+    console.log("Starting mock data generation with zones:", zones.length, "and types:", types.length);
     const mockData = [];
     
     // L1 meter - Main bulk meter
@@ -213,17 +218,19 @@ export default function useAirtableData<T = any>(
       });
     }
     
-    // L3 meters - Individual meters
-    let meterCount = zones.length + 2;
+    // L3 meters - Individual meters with fixed counters
+    let recordCounter = zones.length + 2; // Starting ID for L3 meters
+    
     zones.forEach(zone => {
       types.forEach(type => {
-        // Fix: Use a different variable name to avoid shadowing
-        let metersPerType = Math.floor(Math.random() * 3) + 1;
+        // Generate 1-3 meters for each zone/type combination
+        const metersPerType = Math.floor(Math.random() * 3) + 1;
+        
         for (let i = 0; i < metersPerType; i++) {
           mockData.push({
-            id: `rec${meterCount}`, // Use current value, then increment separately
+            id: `rec${recordCounter}`,
             'Meter Label': `${zone} ${type} Meter ${i + 1}`,
-            'Acct #': 3000 + meterCount,
+            'Acct #': 3000 + recordCounter,
             'Zone': zone,
             'Type': type,
             'Label': 'L3',
@@ -231,7 +238,7 @@ export default function useAirtableData<T = any>(
             'Feb-25': 750 + Math.floor(Math.random() * 300),
             'Parent Meter': `${zone} Bulk Meter`
           });
-          meterCount++; // Increment counter after using it
+          recordCounter++;
         }
       });
     });
@@ -242,7 +249,7 @@ export default function useAirtableData<T = any>(
       const type = types[Math.floor(Math.random() * types.length)];
       
       mockData.push({
-        id: `rec${meterCount}`, // Use current value, then increment separately
+        id: `rec${recordCounter}`,
         'Meter Label': `DC-${zone}-${i + 1}`,
         'Acct #': 4000 + i,
         'Zone': zone,
@@ -252,9 +259,10 @@ export default function useAirtableData<T = any>(
         'Feb-25': 280 + Math.floor(Math.random() * 100),
         'Parent Meter': `${zone} Bulk Meter`
       });
-      meterCount++; // Increment counter after using it
+      recordCounter++;
     }
     
+    console.log("Generated mock data:", mockData.length, "records");
     return mockData;
   };
 
