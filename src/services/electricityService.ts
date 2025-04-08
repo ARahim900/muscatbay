@@ -2,6 +2,8 @@
 import { fetchTableData } from './airtableService';
 import { ElectricityRecord } from '@/types/electricity';
 import { addIdsToElectricityData } from '@/utils/dataUtils';
+import { mockElectricityData } from '@/data/electricityMockData';
+import { toast } from 'sonner';
 
 // Airtable table ID for Electricity data
 const ELECTRICITY_TABLE_ID = 'shrpAtmnZhxfZ87Ue'; 
@@ -38,7 +40,9 @@ export const fetchElectricityData = async (options = {}) => {
     return addIdsToElectricityData(transformedData);
   } catch (error) {
     console.error('Error fetching electricity data:', error);
-    throw error;
+    toast.error('Could not connect to Airtable. Using demo data instead.');
+    // Return mock data when Airtable connection fails
+    return mockElectricityData;
   }
 };
 
