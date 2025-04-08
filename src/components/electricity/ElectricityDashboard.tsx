@@ -9,9 +9,7 @@ import { toast } from 'sonner';
 import ElectricityOverview from './ElectricityOverview';
 import ElectricityConsumptionChart from './ElectricityConsumptionChart';
 import { mockElectricityData } from '@/data/electricityMockData';
-
-const ELECTRICITY_BASE_ID = 'appbUreNO4vvslMme';
-const ELECTRICITY_TABLE_ID = 'shrygXh4TwgrcRN13';
+import { AIRTABLE_BASE_ID, ELECTRICITY_TABLE_ID } from '@/services/airtableService';
 
 const ElectricityDashboard: React.FC = () => {
   const [selectedYear, setSelectedYear] = useState<string>('2025');
@@ -28,7 +26,7 @@ const ElectricityDashboard: React.FC = () => {
 
   useEffect(() => {
     console.log('Electricity Airtable Configuration:');
-    console.log('Base ID:', ELECTRICITY_BASE_ID);
+    console.log('Base ID:', AIRTABLE_BASE_ID);
     console.log('Table ID:', ELECTRICITY_TABLE_ID);
     console.log('Airtable Data Response:', airtableData);
     

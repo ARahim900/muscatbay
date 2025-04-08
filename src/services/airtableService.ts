@@ -1,4 +1,3 @@
-
 import Airtable from 'airtable';
 
 // Initialize Airtable with your API key
@@ -11,6 +10,7 @@ const base = new Airtable({ apiKey: AIRTABLE_API_KEY }).base(AIRTABLE_BASE_ID);
 
 // Constants for table IDs - using the correct table ID from the URL
 export const WATER_TABLE_ID = 'tblR7Yq40GnRh8esd';
+export const ELECTRICITY_TABLE_ID = 'shrygXh4TwgrcRN13';
 
 /**
  * Fetches data from a specific Airtable table

@@ -44,7 +44,7 @@ export default function useAirtableData<T = any>(
       const fetchedData = await fetchTableData(tableName, finalQueryOptions);
       console.log('Fetched data:', fetchedData);
       setData(fetchedData as T[]);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error fetching Airtable data:', err);
       
       // Create a more informative error message
