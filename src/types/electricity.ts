@@ -1,3 +1,4 @@
+
 export interface ElectricityRecord {
   name: string;
   type: string;

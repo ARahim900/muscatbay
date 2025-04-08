@@ -1,8 +1,8 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
 import Layout from '@/components/layout/Layout';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import ElectricityDashboard from '@/components/electricity/ElectricityDashboard';
 
 const ElectricitySystem = () => {
   // Animation variants
@@ -21,14 +21,7 @@ const ElectricitySystem = () => {
         exit="exit"
         variants={pageVariants}
       >
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Electricity System</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p>This page will display electricity system information.</p>
-          </CardContent>
-        </Card>
+        <ElectricityDashboard />
       </motion.div>
     </Layout>
   );
