@@ -1,6 +1,6 @@
 
 export interface ElectricityRecord {
-  id: string;
+  id?: string;
   name: string;
   type: string;
   zone?: string;
@@ -17,7 +17,7 @@ export interface ElectricityMonthlyData {
 }
 
 export interface FacilityConsumption {
-  id: string;
+  id?: string;
   name: string;
   type: string;
   zone?: string;
@@ -52,7 +52,7 @@ export interface MonthlyTypeConsumption {
 }
 
 export interface TopConsumer {
-  id: string;
+  id?: string;
   name: string;
   type: string;
   zone?: string;

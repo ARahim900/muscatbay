@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { ChartContainer } from '@/components/ui/chart';
@@ -56,6 +57,7 @@ export const ElectricityTrends: React.FC<ElectricityTrendsProps> = ({
     return electricityData
       .filter(facility => facility.name && facility.consumption[month] > 0)
       .map(facility => ({
+        id: facility.id || facility.meterAccountNo,
         name: facility.name,
         type: facility.type,
         consumption: facility.consumption[month] || 0,

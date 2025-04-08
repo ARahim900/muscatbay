@@ -1,11 +1,13 @@
 
 import { ElectricityRecord } from '@/types/electricity';
+import { addIdsToElectricityData } from '@/utils/dataUtils';
 
-// Electricity data from the provided tables
-export const electricityData: ElectricityRecord[] = [
+// Raw electricity data from the provided tables
+const rawElectricityData = [
   {
     name: "Pumping Station 01",
     type: "PS",
+    zone: "Infrastructure",
     meterAccountNo: "R52330",
     consumption: {
       "Apr-24": 1608,
@@ -24,6 +26,7 @@ export const electricityData: ElectricityRecord[] = [
   {
     name: "Pumping Station 03",
     type: "PS",
+    zone: "Infrastructure",
     meterAccountNo: "R52329",
     consumption: {
       "Apr-24": 31,
@@ -1012,3 +1015,6 @@ export const electricityData: ElectricityRecord[] = [
     }
   }
 ];
+
+// Add unique IDs to all records
+export const electricityData: ElectricityRecord[] = addIdsToElectricityData(rawElectricityData);

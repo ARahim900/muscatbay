@@ -58,10 +58,12 @@ export const ElectricityFacilitiesTable: React.FC<ElectricityFacilitiesTableProp
         : null;
       
       return {
+        id: facility.id || facility.meterAccountNo,
         name: facility.type === 'D_Building' && facility.name.includes('D Building') 
           ? facility.name.replace('D Building', 'DB') 
           : facility.name,
         type: facility.type,
+        zone: facility.zone,
         consumption: consumption,
         cost: consumption * electricityRate,
         previousConsumption: previousConsumption,
