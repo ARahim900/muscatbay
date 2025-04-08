@@ -4,7 +4,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import EnhancedPieChart from '@/components/ui/enhanced-pie-chart';
-import { ArrowDown, Info } from 'lucide-react';
+import { ArrowDown, Info, ChartPie } from 'lucide-react';
 
 interface ElectricityTypeDistributionProps {
   typeBreakdown: Array<{
@@ -34,9 +34,14 @@ const ElectricityTypeDistribution: React.FC<ElectricityTypeDistributionProps> = 
     <Card className="shadow-sm">
       <CardHeader className="pb-2">
         <div className="flex justify-between items-start">
-          <div>
-            <CardTitle>Consumption by Type</CardTitle>
-            <CardDescription>Distribution of electricity consumption by facility type</CardDescription>
+          <div className="flex items-center gap-2">
+            <div className="rounded-full bg-indigo-100 p-1.5">
+              <ChartPie className="h-4 w-4 text-indigo-600" />
+            </div>
+            <div>
+              <CardTitle>Consumption by Type</CardTitle>
+              <CardDescription>Distribution of electricity consumption by facility type</CardDescription>
+            </div>
           </div>
           
           {!hasData && (
@@ -61,6 +66,9 @@ const ElectricityTypeDistribution: React.FC<ElectricityTypeDistributionProps> = 
                   <p className="text-sm text-gray-600">
                     {Math.round(value).toLocaleString()} kWh ({props.percentage}%)
                   </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {(value * 0.025).toFixed(2)} OMR
+                  </p>
                 </div>
               )}
             />
@@ -74,8 +82,8 @@ const ElectricityTypeDistribution: React.FC<ElectricityTypeDistributionProps> = 
         </div>
         
         {hasData && (
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-4">
-            {formattedData.slice(0, 6).map((item, index) => (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mt-4">
+            {formattedData.slice(0, 8).map((item, index) => (
               <div key={index} className="flex items-center gap-2">
                 <div 
                   className="w-3 h-3 rounded-full" 

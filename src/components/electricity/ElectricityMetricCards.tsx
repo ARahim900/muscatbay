@@ -43,6 +43,7 @@ const ElectricityMetricCards: React.FC<ElectricityMetricCardsProps> = ({
             <div>
               <p className="text-xs font-medium text-green-600 dark:text-green-400">Total Cost</p>
               <h3 className="text-2xl font-bold">{totalCost.toFixed(2).toLocaleString()} OMR</h3>
+              <p className="text-xs text-green-600/80">@ 0.025 OMR per kWh</p>
             </div>
           </div>
         </CardContent>
@@ -57,6 +58,7 @@ const ElectricityMetricCards: React.FC<ElectricityMetricCardsProps> = ({
             <div>
               <p className="text-xs font-medium text-blue-600 dark:text-blue-400">Average Consumption</p>
               <h3 className="text-2xl font-bold">{Math.round(averageConsumption).toLocaleString()} kWh</h3>
+              <p className="text-xs text-blue-600/80">per facility</p>
             </div>
           </div>
         </CardContent>
@@ -70,8 +72,11 @@ const ElectricityMetricCards: React.FC<ElectricityMetricCardsProps> = ({
             </div>
             <div>
               <p className="text-xs font-medium text-purple-600 dark:text-purple-400">Highest Consumer</p>
-              <h3 className="text-lg font-bold">{maxConsumer}</h3>
-              <p className="text-xs">{Math.round(maxConsumption).toLocaleString()} kWh</p>
+              <h3 className="text-lg font-bold truncate">{maxConsumer}</h3>
+              <p className="text-xs flex items-center gap-1">
+                {Math.round(maxConsumption).toLocaleString()} kWh
+                <span className="text-xs text-purple-600/80">({(maxConsumption * 0.025).toFixed(2)} OMR)</span>
+              </p>
             </div>
           </div>
         </CardContent>

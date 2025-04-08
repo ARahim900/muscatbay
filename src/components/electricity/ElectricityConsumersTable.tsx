@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Zap, Users, ArrowDown } from 'lucide-react';
+import { Zap, Users, ArrowDown, Table as TableIcon } from 'lucide-react';
 import { TopConsumer } from '@/types/electricity';
 
 interface ElectricityConsumersTableProps {
@@ -17,13 +17,20 @@ const ElectricityConsumersTable: React.FC<ElectricityConsumersTableProps> = ({ t
   const getTypeColor = (type: string): string => {
     const typeColors: { [key: string]: string } = {
       'Retail': 'bg-blue-100 text-blue-800 border-blue-200',
-      'Residential (Villa)': 'bg-green-100 text-green-800 border-green-200', 
-      'Residential (Apart)': 'bg-amber-100 text-amber-800 border-amber-200',
+      'Apartment': 'bg-green-100 text-green-800 border-green-200', 
+      'D_Building': 'bg-amber-100 text-amber-800 border-amber-200',
+      'SBJ Common Meter': 'bg-amber-100 text-amber-800 border-amber-200',
       'IRR': 'bg-red-100 text-red-800 border-red-200',
       'IRR_Services': 'bg-red-100 text-red-800 border-red-200',
+      'MC': 'bg-purple-100 text-purple-800 border-purple-200',
       'MB_Common': 'bg-purple-100 text-purple-800 border-purple-200',
       'Building': 'bg-sky-100 text-sky-800 border-sky-200',
-      'D_Building_Common': 'bg-indigo-100 text-indigo-800 border-indigo-200',
+      'PS': 'bg-indigo-100 text-indigo-800 border-indigo-200',
+      'LS': 'bg-violet-100 text-violet-800 border-violet-200',
+      'DB': 'bg-fuchsia-100 text-fuchsia-800 border-fuchsia-200',
+      'Street Light': 'bg-yellow-100 text-yellow-800 border-yellow-200',
+      'Zone-3 landscape light': 'bg-lime-100 text-lime-800 border-lime-200',
+      'FP-Landscape Lights Z3': 'bg-lime-100 text-lime-800 border-lime-200',
       'Common': 'bg-purple-100 text-purple-800 border-purple-200',
       'Common Area': 'bg-purple-100 text-purple-800 border-purple-200'
     };
@@ -37,7 +44,7 @@ const ElectricityConsumersTable: React.FC<ElectricityConsumersTableProps> = ({ t
         <div className="flex items-start justify-between">
           <div className="flex items-start gap-2">
             <div className="rounded-full bg-indigo-100 p-1.5">
-              <Users className="h-4 w-4 text-indigo-600" />
+              <TableIcon className="h-4 w-4 text-indigo-600" />
             </div>
             <div>
               <CardTitle>Top Consumers</CardTitle>
@@ -65,7 +72,7 @@ const ElectricityConsumersTable: React.FC<ElectricityConsumersTableProps> = ({ t
             </TableHeader>
             <TableBody>
               {topConsumers.map((consumer, index) => (
-                <TableRow key={index} className={index === 0 ? "bg-amber-50/30" : ""}>
+                <TableRow key={index} className={index === 0 ? "bg-amber-50/50" : ""}>
                   <TableCell className="font-medium">
                     {consumer.name}
                     {index === 0 && (

@@ -23,7 +23,10 @@ const ElectricityOverview: React.FC<ElectricityOverviewProps> = ({
   // Process the raw data from Airtable using our utility function
   const processedData = useMemo(() => {
     try {
-      return processAirtableData(electricityData, selectedMonth, selectedYear);
+      // Define electricity rate
+      const electricityRate = 0.025; // OMR per kWh
+      
+      return processAirtableData(electricityData, selectedMonth, selectedYear, electricityRate);
     } catch (error) {
       console.error("Error processing electricity data:", error);
       // Return default data structure in case of errors
