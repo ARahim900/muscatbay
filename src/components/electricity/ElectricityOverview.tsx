@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { CircleDollarSign, Zap, BarChart2, TrendingUp } from 'lucide-react';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend } from 'recharts';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
+import { processAirtableData, calculateCost, getTypeColor } from '@/utils/electricityDataUtils';
 
 interface ElectricityOverviewProps {
   electricityData: any[];
@@ -20,134 +21,24 @@ const ElectricityOverview: React.FC<ElectricityOverviewProps> = ({
   console.log("Raw electricity data:", electricityData);
   console.log("Selected Month/Year:", selectedMonth, selectedYear);
   
-  // Process the raw data from Airtable
+  // Process the raw data from Airtable using our utility function
   const processedData = useMemo(() => {
-    // Default values for empty or invalid data
-    const defaultData = {
-      totalConsumption: 0,
-      totalCost: 0,
-      averageConsumption: 0,
-      maxConsumption: 0,
-      maxConsumer: 'N/A',
-      typeBreakdown: [],
-      topConsumers: []
-    };
-
-    // Ensure electricityData is a valid array
-    if (!electricityData || !Array.isArray(electricityData) || electricityData.length === 0) {
-      console.log("No electricity data available");
-      return defaultData;
-    }
-
     try {
-      // Log the structure of the first record to understand field names
-      console.log("Sample record structure:", electricityData[0]);
-      
-      // Format the column name based on selected month/year
-      const monthColumn = `${selectedMonth}-${selectedYear.substring(2)}`;
-      console.log("Looking for column:", monthColumn);
-      
-      let totalConsumption = 0;
-      let maxConsumption = 0;
-      let maxConsumer = '';
-      
-      // Map for consumption by type
-      const typeMap = new Map<string, number>();
-      
-      // Calculate totals - safely handle each record
-      electricityData.forEach((record: any) => {
-        if (!record) return;
-        
-        // Check if the monthly consumption value exists
-        const consumption = record[monthColumn] !== undefined ? 
-          (typeof record[monthColumn] === 'string' ? parseFloat(record[monthColumn]) : record[monthColumn]) : 0;
-        
-        if (!isNaN(consumption)) {
-          totalConsumption += consumption;
-          
-          // Track max consumer
-          if (consumption > maxConsumption) {
-            maxConsumption = consumption;
-            maxConsumer = record['Meter Label'] || 'Unknown';
-          }
-          
-          // Aggregate by type - ensure type is a string
-          const type = record['Type'] || 'Unknown';
-          const currentTypeConsumption = typeMap.get(type) || 0;
-          typeMap.set(type, currentTypeConsumption + consumption);
-        }
-      });
-      
-      // Calculate average
-      const averageConsumption = electricityData.length > 0 ? totalConsumption / electricityData.length : 0;
-      
-      // Convert type map to array for charts
-      const typeBreakdown = Array.from(typeMap.entries()).map(([type, consumption]) => ({
-        name: type,
-        value: consumption,
-        color: getTypeColor(type)
-      }));
-      
-      // Get top consumers
-      const topConsumers = Array.isArray(electricityData) ? 
-        [...electricityData]
-          .filter(record => record && record[monthColumn] !== undefined)
-          .sort((a, b) => {
-            const aConsumption = a[monthColumn] !== undefined ? 
-              (typeof a[monthColumn] === 'string' ? parseFloat(a[monthColumn]) : a[monthColumn]) : 0;
-            const bConsumption = b[monthColumn] !== undefined ? 
-              (typeof b[monthColumn] === 'string' ? parseFloat(b[monthColumn]) : b[monthColumn]) : 0;
-            
-            return bConsumption - aConsumption;
-          })
-          .slice(0, 5)
-          .map(record => ({
-            name: record['Meter Label'] || 'Unknown',
-            type: record['Type'] || 'Unknown',
-            consumption: record[monthColumn] !== undefined ? 
-              (typeof record[monthColumn] === 'string' ? parseFloat(record[monthColumn]) : record[monthColumn]) : 0,
-            cost: calculateCost(record[monthColumn] !== undefined ? 
-              (typeof record[monthColumn] === 'string' ? parseFloat(record[monthColumn]) : record[monthColumn]) : 0)
-          }))
-        : [];
-      
-      // Estimate cost (fictional calculation)
-      const totalCost = calculateCost(totalConsumption);
-      
-      return {
-        totalConsumption,
-        totalCost,
-        averageConsumption,
-        maxConsumption,
-        maxConsumer,
-        typeBreakdown,
-        topConsumers
-      };
+      return processAirtableData(electricityData, selectedMonth, selectedYear);
     } catch (error) {
       console.error("Error processing electricity data:", error);
-      return defaultData; // Return default data structure in case of errors
+      // Return default data structure in case of errors
+      return {
+        totalConsumption: 0,
+        totalCost: 0,
+        averageConsumption: 0,
+        maxConsumption: 0,
+        maxConsumer: 'N/A',
+        typeBreakdown: [],
+        topConsumers: []
+      };
     }
   }, [electricityData, selectedMonth, selectedYear]);
-
-  // Calculate cost (fictional calculation - 0.025 OMR per kWh)
-  const calculateCost = (consumption: number): number => {
-    return consumption * 0.025;
-  };
-
-  // Function to get type color
-  const getTypeColor = (type: string): string => {
-    const typeColors: { [key: string]: string } = {
-      'Retail': '#3b82f6',  // blue
-      'Residential (Villa)': '#10b981', // green
-      'Residential (Apart)': '#f59e0b', // amber
-      'IRR_Services': '#ef4444', // red
-      'MB_Common': '#8b5cf6', // purple
-      'Building': '#0ea5e9', // light blue
-      'D_Building_Common': '#6366f1' // indigo
-    };
-    
-    return typeColors[type] || '#64748b'; // default color
-  };
 
   return (
     <div className="space-y-8">
@@ -233,7 +124,7 @@ const ElectricityOverview: React.FC<ElectricityOverviewProps> = ({
                     dataKey="value"
                     label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(1)}%`}
                   >
-                    {processedData.typeBreakdown.map((entry: any, index: number) => (
+                    {processedData.typeBreakdown.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
@@ -270,7 +161,7 @@ const ElectricityOverview: React.FC<ElectricityOverviewProps> = ({
             </TableHeader>
             <TableBody>
               {processedData.topConsumers && processedData.topConsumers.length > 0 ? (
-                processedData.topConsumers.map((consumer: any, index: number) => (
+                processedData.topConsumers.map((consumer, index) => (
                   <TableRow key={index}>
                     <TableCell className="font-medium">{consumer.name}</TableCell>
                     <TableCell>{consumer.type}</TableCell>
