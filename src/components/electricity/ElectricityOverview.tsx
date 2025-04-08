@@ -18,13 +18,17 @@ const ElectricityOverview: React.FC<ElectricityOverviewProps> = ({
 }) => {
   // Process the raw data from Airtable
   const processedData = useMemo(() => {
-    if (!electricityData || electricityData.length === 0) return { 
-      totalConsumption: 0,
-      totalCost: 0,
-      averageConsumption: 0,
-      typeBreakdown: [],
-      topConsumers: []
-    };
+    if (!electricityData || !Array.isArray(electricityData) || electricityData.length === 0) {
+      return { 
+        totalConsumption: 0,
+        totalCost: 0,
+        averageConsumption: 0,
+        maxConsumption: 0,
+        maxConsumer: 'N/A',
+        typeBreakdown: [],
+        topConsumers: []
+      };
+    }
 
     const monthColumn = `${selectedMonth}-${selectedYear.substring(2)}`;
     let totalConsumption = 0;
@@ -34,33 +38,31 @@ const ElectricityOverview: React.FC<ElectricityOverviewProps> = ({
     // Map for consumption by type
     const typeMap = new Map<string, number>();
     
-    // Calculate totals - make sure to safely access array items
-    if (Array.isArray(electricityData)) {
-      electricityData.forEach((record: any) => {
-        if (!record) return;
+    // Calculate totals
+    electricityData.forEach((record: any) => {
+      if (!record) return;
+      
+      // Check if the monthly consumption value exists
+      const consumption = record[monthColumn] !== undefined ? 
+        (typeof record[monthColumn] === 'string' ? parseFloat(record[monthColumn]) : record[monthColumn]) : 0;
+      
+      if (!isNaN(consumption)) {
+        totalConsumption += consumption;
         
-        // Check if the monthly consumption value exists
-        const consumption = record[monthColumn] ? 
-          (typeof record[monthColumn] === 'string' ? parseFloat(record[monthColumn]) : record[monthColumn]) : 0;
-        
-        if (!isNaN(consumption)) {
-          totalConsumption += consumption;
-          
-          // Track max consumer
-          if (consumption > maxConsumption) {
-            maxConsumption = consumption;
-            maxConsumer = record['Meter Label'] || 'Unknown';
-          }
-          
-          // Aggregate by type
-          const type = record['Type'] || 'Unknown';
-          typeMap.set(type, (typeMap.get(type) || 0) + consumption);
+        // Track max consumer
+        if (consumption > maxConsumption) {
+          maxConsumption = consumption;
+          maxConsumer = record['Meter Label'] || 'Unknown';
         }
-      });
-    }
+        
+        // Aggregate by type
+        const type = record['Type'] || 'Unknown';
+        typeMap.set(type, (typeMap.get(type) || 0) + consumption);
+      }
+    });
     
     // Calculate average
-    const averageConsumption = electricityData && electricityData.length > 0 ? totalConsumption / electricityData.length : 0;
+    const averageConsumption = electricityData.length > 0 ? totalConsumption / electricityData.length : 0;
     
     // Convert type map to array for charts - safely handle the map
     const typeBreakdown = Array.from(typeMap.entries()).map(([type, consumption]) => ({
@@ -69,40 +71,38 @@ const ElectricityOverview: React.FC<ElectricityOverviewProps> = ({
       color: getTypeColor(type)
     }));
     
-    // Get top consumers - make sure to safely handle the array
-    const topConsumers = Array.isArray(electricityData) ? 
-      [...electricityData]
-        .filter(record => record && record[monthColumn] !== undefined)
-        .sort((a, b) => {
-          if (!a || !b) return 0;
-          
-          const aConsumption = a[monthColumn] !== undefined ? 
-            (typeof a[monthColumn] === 'string' ? parseFloat(a[monthColumn]) : a[monthColumn]) : 0;
-          const bConsumption = b[monthColumn] !== undefined ? 
-            (typeof b[monthColumn] === 'string' ? parseFloat(b[monthColumn]) : b[monthColumn]) : 0;
-          
-          return bConsumption - aConsumption;
-        })
-        .slice(0, 5)
-        .map(record => {
-          if (!record) return {
-            name: 'Unknown',
-            type: 'Unknown',
-            consumption: 0,
-            cost: 0
-          };
-          
-          const consumption = record[monthColumn] !== undefined ? 
-            (typeof record[monthColumn] === 'string' ? parseFloat(record[monthColumn]) : record[monthColumn]) : 0;
-          
-          return {
-            name: record['Meter Label'] || 'Unknown',
-            type: record['Type'] || 'Unknown',
-            consumption: consumption,
-            cost: calculateCost(consumption)
-          };
-        })
-      : [];
+    // Get top consumers
+    const topConsumers = [...electricityData]
+      .filter(record => record && record[monthColumn] !== undefined)
+      .sort((a, b) => {
+        if (!a || !b) return 0;
+        
+        const aConsumption = a[monthColumn] !== undefined ? 
+          (typeof a[monthColumn] === 'string' ? parseFloat(a[monthColumn]) : a[monthColumn]) : 0;
+        const bConsumption = b[monthColumn] !== undefined ? 
+          (typeof b[monthColumn] === 'string' ? parseFloat(b[monthColumn]) : b[monthColumn]) : 0;
+        
+        return bConsumption - aConsumption;
+      })
+      .slice(0, 5)
+      .map(record => {
+        if (!record) return {
+          name: 'Unknown',
+          type: 'Unknown',
+          consumption: 0,
+          cost: 0
+        };
+        
+        const consumption = record[monthColumn] !== undefined ? 
+          (typeof record[monthColumn] === 'string' ? parseFloat(record[monthColumn]) : record[monthColumn]) : 0;
+        
+        return {
+          name: record['Meter Label'] || 'Unknown',
+          type: record['Type'] || 'Unknown',
+          consumption: consumption,
+          cost: calculateCost(consumption)
+        };
+      });
     
     // Estimate cost (fictional calculation)
     const totalCost = calculateCost(totalConsumption);
