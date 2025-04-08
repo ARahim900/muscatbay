@@ -31,15 +31,20 @@ const WaterSystem = () => {
   const [lastUpdated, setLastUpdated] = useState<Date | undefined>(undefined);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  
   const {
     data: waterData,
     isLoading,
     error,
     refetch
-  } = useAirtableData<WaterConsumptionData>(WATER_TABLE_ID);
+  } = useAirtableData<WaterConsumptionData>(WATER_TABLE_ID, {
+    useFallback: true
+  });
+
   useEffect(() => {
     setCurrentPage(1);
   }, [filters.selectedMonth, filters.selectedZone, filters.selectedType]);
+
   const handleManualFetch = async () => {
     setIsManualLoading(true);
     try {
@@ -56,6 +61,7 @@ const WaterSystem = () => {
       setIsManualLoading(false);
     }
   };
+
   const pageVariants = {
     initial: {
       opacity: 0,
@@ -76,6 +82,7 @@ const WaterSystem = () => {
       }
     }
   };
+
   const emptyData: WaterConsumptionData[] = useMemo(() => [], []);
   const defaultAvailableMonths = useMemo(() => ['all'], []);
   const transformedData = useMemo(() => waterData ? transformWaterData(waterData) : emptyData, [waterData, emptyData]);
@@ -110,6 +117,7 @@ const WaterSystem = () => {
         </div>
       </Layout>;
   }
+
   if (error) {
     return <Layout>
         <motion.div className="container mx-auto p-4" initial="initial" animate="animate" exit="exit" variants={pageVariants}>
@@ -153,6 +161,10 @@ const WaterSystem = () => {
                           Check Table Connection
                         </>}
                     </Button>
+                    <Button variant="outline" className="text-purple-600" onClick={() => refetch()}>
+                      <RefreshCw className="w-4 h-4 mr-2" />
+                      Load Demo Data
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -161,6 +173,7 @@ const WaterSystem = () => {
         </motion.div>
       </Layout>;
   }
+
   if (!waterData || waterData.length === 0) {
     return <Layout>
         <motion.div className="container mx-auto p-4" initial="initial" animate="animate" exit="exit" variants={pageVariants}>
@@ -188,6 +201,7 @@ const WaterSystem = () => {
         </motion.div>
       </Layout>;
   }
+
   const handleExportData = () => {
     const headers = ["Meter Label", "Zone", "Type", "Level", `${filters.selectedMonth} (m³)`, "Parent Meter"];
     const rows = filteredData.map(record => [record['Meter Label'] || '-', record.Zone || '-', record.Type || '-', record.Label || '-', getReadingValue(record, filters.selectedMonth) || '-', record['Parent Meter'] || '-']);
@@ -204,30 +218,35 @@ const WaterSystem = () => {
     document.body.removeChild(link);
     toast.success("Data exported successfully");
   };
+
   const handleTabChange = (value: string) => {
     setFilters(prev => ({
       ...prev,
       selectedView: value
     }));
   };
+
   const handleMonthChange = (value: string) => {
     setFilters(prev => ({
       ...prev,
       selectedMonth: value
     }));
   };
+
   const handleZoneChange = (value: string) => {
     setFilters(prev => ({
       ...prev,
       selectedZone: value
     }));
   };
+
   const handleTypeChange = (value: string) => {
     setFilters(prev => ({
       ...prev,
       selectedType: value
     }));
   };
+
   return <WaterThemeProvider>
       <Layout>
         <motion.div className="container mx-auto p-4" initial="initial" animate="animate" exit="exit" variants={pageVariants}>

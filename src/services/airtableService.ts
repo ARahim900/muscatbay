@@ -36,9 +36,26 @@ export const fetchTableData = async (
       console.log('Removed "Grid view" from options to avoid Airtable error');
     }
     
-    const records = await base(tableIdOrName)
-      .select(finalOptions)
-      .all();
+    // Implement a timeout to avoid hanging requests
+    const timeout = 10000; // 10 seconds
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeout);
+    
+    const fetchPromise = new Promise((resolve, reject) => {
+      base(tableIdOrName)
+        .select(finalOptions)
+        .all()
+        .then(records => {
+          clearTimeout(timeoutId);
+          resolve(records);
+        })
+        .catch(error => {
+          clearTimeout(timeoutId);
+          reject(error);
+        });
+    });
+    
+    const records = await fetchPromise as any[];
     
     console.log(`Successfully fetched ${records.length} records from "${tableIdOrName}"`);
     
@@ -46,8 +63,18 @@ export const fetchTableData = async (
       id: record.id,
       ...record.fields
     }));
-  } catch (error) {
+  } catch (error: any) {
     console.error(`Error fetching data from ${tableIdOrName}:`, error);
+    
+    // Provide more detailed error information
+    if (error.statusCode === 403) {
+      throw new Error("You are not authorized to perform this operation. Please check your API key permissions.");
+    } else if (error.statusCode === 404) {
+      throw new Error(`Table "${tableIdOrName}" not found. Please verify the table ID.`);
+    } else if (error.name === 'AbortError') {
+      throw new Error("Request timed out. Please try again later.");
+    }
+    
     throw error;
   }
 };
