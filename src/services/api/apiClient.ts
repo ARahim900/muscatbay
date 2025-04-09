@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -28,6 +27,8 @@ export class ApiClient {
   private defaultHeaders: Record<string, string>;
   private apiKey: string | null = null;
   private apiVersion: string;
+  private isApiKeyLoaded: boolean = false;
+  private apiKeyLoading: boolean = false;
 
   constructor(baseUrl: string, apiVersion: string = 'v1') {
     this.baseUrl = baseUrl;
@@ -42,6 +43,10 @@ export class ApiClient {
 
   // Load API key from Supabase
   private async loadApiKey(): Promise<void> {
+    if (this.apiKeyLoading) return;
+    
+    this.apiKeyLoading = true;
+    
     try {
       // Use a direct query to get the API key
       const { data, error } = await supabase
@@ -49,7 +54,6 @@ export class ApiClient {
         .select('key')
         .eq('service', 'airtable')
         .eq('is_active', true)
-        .limit(1)
         .maybeSingle();
 
       if (error) {
@@ -57,21 +61,36 @@ export class ApiClient {
         return;
       }
 
+      this.isApiKeyLoaded = true;
+      
       if (data && data.key) {
         this.apiKey = data.key;
         this.defaultHeaders['Authorization'] = `Bearer ${this.apiKey}`;
+        console.log('API key loaded successfully for service: airtable');
       } else {
         console.warn('API key not found for service: airtable');
+        toast.error('API key not found. Please add an API key in the Supabase admin panel.', {
+          duration: 5000,
+        });
       }
     } catch (error) {
       console.error('Failed to load API key:', error);
+      toast.error('Failed to load API key. Check your Supabase connection.');
+    } finally {
+      this.apiKeyLoading = false;
     }
+  }
+
+  // Get API key loading status
+  public isKeyLoaded(): boolean {
+    return this.isApiKeyLoaded;
   }
 
   // Set API key manually if needed
   public setApiKey(key: string): void {
     this.apiKey = key;
     this.defaultHeaders['Authorization'] = `Bearer ${key}`;
+    this.isApiKeyLoaded = true;
   }
 
   // Change API version
@@ -81,6 +100,21 @@ export class ApiClient {
 
   // Main request method
   public async request<T>(config: ApiRequestConfig): Promise<ApiResponse<T>> {
+    // Make sure API key is loaded before making requests
+    if (!this.isApiKeyLoaded) {
+      await this.loadApiKey();
+    }
+    
+    // Check if we have the API key after attempting to load it
+    if (!this.apiKey) {
+      return {
+        data: null,
+        error: new Error('API key not available. Please check your API key configuration.'),
+        status: 401,
+        timestamp: new Date()
+      };
+    }
+    
     // Check if we have a cached response
     const cacheKey = this.getCacheKey(config);
     if (config.useCache && cache[cacheKey]) {

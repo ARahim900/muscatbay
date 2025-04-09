@@ -1,14 +1,17 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Loader2, AlertTriangle, Lightbulb, RefreshCw, FileDown } from 'lucide-react';
+import { Loader2, AlertTriangle, Lightbulb, RefreshCw, FileDown, Settings } from 'lucide-react';
 import { ElectricityDashboardFilters } from '@/types/electricitySystem';
 import useElectricityData from '@/hooks/useElectricityData';
 import { ELECTRICITY_TABLE_ID } from '@/services/api/electricityService';
 import { toast } from 'sonner';
+import { airtableApi } from '@/services/api/apiClient';
+import { electricityData as fallbackData } from '@/data/electricityData';
+import ElectricityOverview from './ElectricityOverview';
 
 const ElectricityDashboard: React.FC = () => {
   // Dashboard state
@@ -26,13 +29,28 @@ const ElectricityDashboard: React.FC = () => {
     error,
     refetch
   } = useElectricityData(ELECTRICITY_TABLE_ID, {
-    useFallback: true
+    useFallback: true,
+    initialData: fallbackData
   });
 
   // Available filter options
   const [availableMonths, setAvailableMonths] = useState<string[]>(['all']);
   const [availableZones, setAvailableZones] = useState<string[]>(['all']);
   const [availableTypes, setAvailableTypes] = useState<string[]>(['all']);
+  const [apiKeyMissing, setApiKeyMissing] = useState<boolean>(false);
+
+  // Check API key status
+  useEffect(() => {
+    const checkApiKey = () => {
+      if (!airtableApi.isKeyLoaded()) {
+        setApiKeyMissing(true);
+      }
+    };
+    
+    // Check after a slight delay to allow for loading
+    const timer = setTimeout(checkApiKey, 2000);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Extract available filter options from data
   useEffect(() => {
@@ -77,6 +95,17 @@ const ElectricityDashboard: React.FC = () => {
     }
   }, [electricityData]);
 
+  // Filter data based on selected filters
+  const filteredData = useMemo(() => {
+    if (!electricityData) return [];
+    
+    return electricityData.filter(record => {
+      const matchesZone = filters.selectedZone === 'all' || record.Zone === filters.selectedZone;
+      const matchesType = filters.selectedType === 'all' || record.Type === filters.selectedType;
+      return matchesZone && matchesType;
+    });
+  }, [electricityData, filters.selectedZone, filters.selectedType]);
+
   // Manual refresh handler
   const handleRefresh = async () => {
     toast.info('Refreshing electricity data...');
@@ -90,8 +119,83 @@ const ElectricityDashboard: React.FC = () => {
 
   // Export data as CSV
   const handleExport = () => {
-    toast.info('This feature is coming soon...');
+    if (!filteredData || filteredData.length === 0) {
+      toast.error('No data to export');
+      return;
+    }
+    
+    try {
+      // Create CSV header from first record keys
+      const headers = Object.keys(filteredData[0]).join(',');
+      
+      // Generate CSV rows
+      const csvRows = filteredData.map(record => {
+        return Object.values(record).map(value => {
+          // Handle strings with commas by wrapping in quotes
+          if (typeof value === 'string' && value.includes(',')) {
+            return `"${value}"`;
+          }
+          return value;
+        }).join(',');
+      });
+      
+      // Combine header and rows
+      const csvContent = [headers, ...csvRows].join('\n');
+      
+      // Create a blob and download link
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', `electricity-data-${new Date().toISOString().slice(0, 10)}.csv`);
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      toast.success('Data exported successfully');
+    } catch (error) {
+      console.error('Export error:', error);
+      toast.error('Failed to export data');
+    }
   };
+
+  // API key warning display
+  if (apiKeyMissing) {
+    return (
+      <Card className="mb-6 border-amber-200">
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <AlertTriangle className="mr-2 h-6 w-6 text-amber-500" />
+            API Key Missing
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="bg-amber-50 text-amber-800 p-4 rounded-md">
+            <p className="font-medium">No Airtable API key has been configured.</p>
+            <p className="mt-2">To fetch live data, you need to add an API key to your Supabase database.</p>
+            <ol className="mt-4 list-decimal pl-5 space-y-2">
+              <li>Go to the Supabase admin panel</li>
+              <li>Insert a record in the 'api_keys' table with:
+                <ul className="list-disc pl-5 mt-1">
+                  <li>service: "airtable"</li>
+                  <li>key: "your_airtable_api_key"</li>
+                  <li>is_active: true</li>
+                </ul>
+              </li>
+              <li>Return to this page and click "Try Again"</li>
+            </ol>
+            <div className="mt-4">
+              <Button variant="outline" className="text-blue-600" onClick={handleRefresh}>
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Try Again
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -116,7 +220,13 @@ const ElectricityDashboard: React.FC = () => {
         <CardContent>
           <div className="bg-red-50 text-red-800 p-4 rounded-md">
             <p className="font-medium">Failed to load electricity data: {error.message}</p>
-            <p className="mt-2">Please check your connection settings and try again.</p>
+            <p className="mt-2">This could be due to:</p>
+            <ul className="list-disc pl-5 mt-1">
+              <li>Missing or invalid API key</li>
+              <li>Network connectivity issues</li>
+              <li>Airtable API rate limiting</li>
+            </ul>
+            <p className="mt-2">Using fallback data for now. Check your connection settings and try again.</p>
             <div className="mt-4">
               <Button variant="outline" className="text-blue-600" onClick={handleRefresh}>
                 <RefreshCw className="w-4 h-4 mr-2" />
@@ -230,11 +340,17 @@ const ElectricityDashboard: React.FC = () => {
         </TabsList>
         
         <TabsContent value="overview" className="space-y-4">
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm">
-            <h2 className="text-xl font-semibold mb-4">Electricity Overview</h2>
-            <p>Overview content will be displayed here.</p>
-            <p className="text-muted-foreground">This section is under development.</p>
-          </div>
+          {electricityData && electricityData.length > 0 ? (
+            <ElectricityOverview 
+              electricityData={filteredData} 
+              selectedMonth={filters.selectedMonth}
+              selectedYear="2024-2025"
+            />
+          ) : (
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm text-center">
+              <p className="text-muted-foreground">No data available. Please check your data source.</p>
+            </div>
+          )}
         </TabsContent>
         
         <TabsContent value="zones" className="space-y-4">
@@ -267,7 +383,7 @@ const ElectricityDashboard: React.FC = () => {
         <CardHeader>
           <CardTitle>Data Summary</CardTitle>
           <CardDescription>
-            {electricityData.length} meter records found in the system
+            {filteredData.length} meter records found in the system
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -275,7 +391,14 @@ const ElectricityDashboard: React.FC = () => {
             <p>Filters: {filters.selectedMonth === 'all' ? 'All Periods' : filters.selectedMonth}, 
                {filters.selectedZone === 'all' ? ' All Zones' : ` ${filters.selectedZone}`}, 
                {filters.selectedType === 'all' ? ' All Types' : ` ${filters.selectedType}`}</p>
-            <p className="mt-2">The dashboard is currently in development phase. More features will be added soon.</p>
+            {!airtableApi.isKeyLoaded() && (
+              <div className="mt-4 text-amber-600 bg-amber-50 p-3 rounded-md">
+                <p className="flex items-center">
+                  <Settings className="w-4 h-4 mr-2" />
+                  <span>Using local fallback data. Add API key to fetch live data.</span>
+                </p>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

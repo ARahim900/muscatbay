@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { fetchElectricityData } from '@/services/api/electricityService';
 import { ElectricityConsumptionData } from '@/types/electricitySystem';
+import { toast } from 'sonner';
 
 interface UseElectricityDataOptions {
   useFallback?: boolean;
@@ -25,9 +26,11 @@ const useElectricityData = <T = ElectricityConsumptionData>(
       setData(result as T[]);
       return result;
     } catch (err) {
+      console.error('Error in useElectricityData hook:', err);
       setError(err instanceof Error ? err : new Error(String(err)));
       
       if (options.useFallback && options.initialData) {
+        toast.warning('Using fallback data due to API connection issue');
         setData(options.initialData as T[]);
       }
       
@@ -39,7 +42,7 @@ const useElectricityData = <T = ElectricityConsumptionData>(
 
   useEffect(() => {
     fetchData().catch(err => {
-      console.error('Error in useElectricityData hook:', err);
+      // Error is already handled in fetchData
     });
   }, [tableId]);
 
