@@ -43,11 +43,10 @@ export class ApiClient {
   // Load API key from Supabase
   private async loadApiKey(): Promise<void> {
     try {
-      const { data, error } = await supabase
-        .from('api_keys')
-        .select('key, service')
-        .eq('service', 'airtable')
-        .single();
+      // Using rpc function instead of direct table query to bypass typings issues
+      const { data, error } = await supabase.rpc('get_api_key_by_service', {
+        service_name: 'airtable'
+      });
 
       if (error) {
         console.error('Error loading API key:', error);
@@ -57,9 +56,39 @@ export class ApiClient {
       if (data && data.key) {
         this.apiKey = data.key;
         this.defaultHeaders['Authorization'] = `Bearer ${this.apiKey}`;
+      } else {
+        console.warn('API key not found for service: airtable');
+        // Fallback to direct query as a last resort
+        this.loadApiKeyFallback();
       }
     } catch (error) {
-      console.error('Failed to load API key:', error);
+      console.error('Failed to load API key using RPC:', error);
+      this.loadApiKeyFallback();
+    }
+  }
+
+  // Fallback method if RPC doesn't work
+  private async loadApiKeyFallback(): Promise<void> {
+    try {
+      // Using raw SQL query through Supabase to get the API key
+      const { data, error } = await supabase
+        .from('api_keys')
+        .select('key')
+        .eq('service', 'airtable')
+        .eq('is_active', true)
+        .single();
+
+      if (error) {
+        console.error('Fallback: Error loading API key:', error);
+        return;
+      }
+
+      if (data && data.key) {
+        this.apiKey = data.key;
+        this.defaultHeaders['Authorization'] = `Bearer ${this.apiKey}`;
+      }
+    } catch (error) {
+      console.error('Fallback: Failed to load API key:', error);
     }
   }
 
