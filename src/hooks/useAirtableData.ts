@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { fetchTableData } from '@/services/airtableService';
+import { fetchTableData } from '@/services/api/airtableService';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -11,6 +11,7 @@ interface UseAirtableDataOptions {
   sort?: Array<{field: string, direction: 'asc' | 'desc'}>;
   enabled?: boolean;
   useFallback?: boolean;
+  refetchInterval?: number; // in milliseconds
 }
 
 export default function useAirtableData<T = any>(
@@ -20,8 +21,14 @@ export default function useAirtableData<T = any>(
   const [data, setData] = useState<T[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
+  const [lastFetched, setLastFetched] = useState<Date | null>(null);
   
-  const { enabled = true, useFallback = true, ...queryOptions } = options;
+  const { 
+    enabled = true, 
+    useFallback = true, 
+    refetchInterval = 0,
+    ...queryOptions 
+  } = options;
 
   const finalQueryOptions = {...queryOptions};
   if (finalQueryOptions.view === 'Grid view') {
@@ -57,6 +64,7 @@ export default function useAirtableData<T = any>(
   const getSupabaseTableName = (airtableTable: string) => {
     const tableMap: Record<string, string> = {
       'shrjrIEpBjAANAxZy': 'water_distribution_master',
+      'shrpAtmnZhxfZ87Ue': 'electricity_data',
       // Add more mappings as needed
     };
     
@@ -74,6 +82,7 @@ export default function useAirtableData<T = any>(
       const fetchedData = await fetchTableData(tableName, finalQueryOptions);
       console.log('Fetched data:', fetchedData);
       setData(fetchedData as T[]);
+      setLastFetched(new Date());
     } catch (err) {
       console.error('Error fetching Airtable data:', err);
       
@@ -92,6 +101,7 @@ export default function useAirtableData<T = any>(
               if (fallbackData) {
                 setData(fallbackData);
                 setIsLoading(false);
+                setLastFetched(new Date());
                 toast.info('Using stored data instead of live Airtable connection');
                 return;
               }
@@ -106,6 +116,7 @@ export default function useAirtableData<T = any>(
               const fetchedData = await fetchTableData(tableName, retryOptions);
               setData(fetchedData as T[]);
               setIsLoading(false);
+              setLastFetched(new Date());
               return;
             } catch (retryErr) {
               console.error('Retry failed:', retryErr);
@@ -138,7 +149,21 @@ export default function useAirtableData<T = any>(
 
   useEffect(() => {
     fetchData();
-  }, [tableName, JSON.stringify(finalQueryOptions), enabled]);
+    
+    // Set up interval for refetching if specified
+    if (refetchInterval > 0) {
+      const intervalId = setInterval(fetchData, refetchInterval);
+      
+      // Clean up interval on component unmount
+      return () => clearInterval(intervalId);
+    }
+  }, [tableName, JSON.stringify(finalQueryOptions), enabled, refetchInterval]);
 
-  return { data, isLoading, error, refetch: fetchData };
+  return { 
+    data, 
+    isLoading, 
+    error, 
+    refetch: fetchData,
+    lastFetched
+  };
 }

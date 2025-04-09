@@ -1,5 +1,5 @@
 
-import { fetchTableData } from './airtableService';
+import { fetchTableData } from './api/airtableService';
 import { ElectricityRecord } from '@/types/electricity';
 import { addIdsToElectricityData } from '@/utils/dataUtils';
 import { toast } from 'sonner';
@@ -8,12 +8,19 @@ import { electricityData as fallbackData } from '@/data/electricityData';
 // Airtable table ID for Electricity data
 const ELECTRICITY_TABLE_ID = 'shrpAtmnZhxfZ87Ue'; 
 
-export const fetchElectricityData = async (options = {}) => {
+interface FetchElectricityOptions {
+  view?: string;
+  filterByFormula?: string;
+  maxRecords?: number;
+  sort?: Array<{field: string, direction: 'asc' | 'desc'}>;
+  useFallback?: boolean;
+}
+
+export const fetchElectricityData = async (options: FetchElectricityOptions = {}) => {
+  const { useFallback = true, ...queryOptions } = options;
+  
   try {
-    const rawData = await fetchTableData(ELECTRICITY_TABLE_ID, {
-      view: 'Grid view',
-      ...options
-    });
+    const rawData = await fetchTableData(ELECTRICITY_TABLE_ID, queryOptions);
 
     // Transform Airtable data to match ElectricityRecord type
     const transformedData: ElectricityRecord[] = rawData.map(record => ({
@@ -41,10 +48,13 @@ export const fetchElectricityData = async (options = {}) => {
     return addIdsToElectricityData(transformedData);
   } catch (error) {
     console.error('Error fetching electricity data:', error);
-    toast.error('Could not connect to Airtable. Using local data instead.');
     
-    // Return the fallback data
-    return fallbackData;
+    if (useFallback) {
+      toast.error('Could not connect to Airtable. Using local data instead.');
+      return fallbackData;
+    }
+    
+    throw error;
   }
 };
 
