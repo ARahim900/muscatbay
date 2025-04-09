@@ -16,6 +16,16 @@ interface AirtableListRecordsOptions {
   sort?: Array<{field: string, direction: 'asc' | 'desc'}>;
 }
 
+// Define types for Airtable responses
+interface AirtableRecord {
+  id: string;
+  fields: Record<string, any>;
+}
+
+interface AirtableResponse {
+  records: AirtableRecord[];
+}
+
 /**
  * Fetches data from a specific Airtable table
  * @param tableIdOrName - The ID or name of the table to fetch from
@@ -54,7 +64,7 @@ export const fetchTableData = async (
     }
     
     // Make the API request
-    const response = await airtableApi.get(endpoint, params, {
+    const response = await airtableApi.get<AirtableResponse>(endpoint, params, {
       useCache: true,
       cacheTTL: 600, // Cache for 10 minutes
       version: 'v0' // Airtable API is v0
@@ -104,12 +114,16 @@ export const fetchRecordById = async (tableName: string, recordId: string) => {
   try {
     const endpoint = `${AIRTABLE_BASE_ID}/${tableName}/${recordId}`;
     
-    const response = await airtableApi.get(endpoint, {}, {
+    const response = await airtableApi.get<AirtableRecord>(endpoint, {}, {
       version: 'v0' // Airtable API is v0
     });
     
     if (response.error) {
       throw response.error;
+    }
+    
+    if (!response.data) {
+      throw new Error('No record found');
     }
     
     return {
@@ -133,7 +147,7 @@ export const createRecord = async (tableName: string, fields: Record<string, any
   try {
     const endpoint = `${AIRTABLE_BASE_ID}/${tableName}`;
     
-    const response = await airtableApi.post(endpoint, {
+    const response = await airtableApi.post<{records: AirtableRecord[]}>(endpoint, {
       records: [{ fields }]
     }, {
       version: 'v0' // Airtable API is v0
@@ -141,6 +155,10 @@ export const createRecord = async (tableName: string, fields: Record<string, any
     
     if (response.error) {
       throw response.error;
+    }
+    
+    if (!response.data || !response.data.records || response.data.records.length === 0) {
+      throw new Error('No record was created');
     }
     
     const record = response.data.records[0];
@@ -171,7 +189,7 @@ export const updateRecord = async (
   try {
     const endpoint = `${AIRTABLE_BASE_ID}/${tableName}`;
     
-    const response = await airtableApi.patch(endpoint, {
+    const response = await airtableApi.patch<{records: AirtableRecord[]}>(endpoint, {
       records: [{ 
         id: recordId,
         fields 
@@ -182,6 +200,10 @@ export const updateRecord = async (
     
     if (response.error) {
       throw response.error;
+    }
+    
+    if (!response.data || !response.data.records || response.data.records.length === 0) {
+      throw new Error('No record was updated');
     }
     
     const record = response.data.records[0];

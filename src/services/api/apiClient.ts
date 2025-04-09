@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 
 interface ApiRequestConfig {
   endpoint: string;
-  method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
+  method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
   params?: Record<string, string>;
   body?: any;
   headers?: Record<string, string>;
@@ -54,7 +54,7 @@ export class ApiClient {
         return;
       }
 
-      if (data?.key) {
+      if (data && data.key) {
         this.apiKey = data.key;
         this.defaultHeaders['Authorization'] = `Bearer ${this.apiKey}`;
       }
@@ -198,6 +198,15 @@ export class ApiClient {
     return this.request<T>({
       endpoint,
       method: 'DELETE',
+      ...(options || {})
+    });
+  }
+  
+  public async patch<T>(endpoint: string, body?: any, options?: Partial<ApiRequestConfig>): Promise<ApiResponse<T>> {
+    return this.request<T>({
+      endpoint,
+      method: 'PATCH',
+      body,
       ...(options || {})
     });
   }
