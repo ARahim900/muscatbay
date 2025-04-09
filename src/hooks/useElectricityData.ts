@@ -3,13 +3,14 @@ import { useState, useEffect } from 'react';
 import { fetchElectricityData } from '@/services/api/electricityService';
 import { ElectricityConsumptionData } from '@/types/electricitySystem';
 import { toast } from 'sonner';
+import { ElectricityRecord } from '@/types/electricity';
 
 interface UseElectricityDataOptions {
   useFallback?: boolean;
-  initialData?: ElectricityConsumptionData[];
+  initialData?: ElectricityConsumptionData[] | ElectricityRecord[];
 }
 
-const useElectricityData = <T = ElectricityConsumptionData>(
+const useElectricityData = <T = ElectricityConsumptionData | ElectricityRecord>(
   tableId: string,
   options: UseElectricityDataOptions = {}
 ) => {

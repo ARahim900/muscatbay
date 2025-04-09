@@ -1,12 +1,13 @@
 
 import React, { useMemo } from 'react';
+import { ElectricityRecord } from '@/types/electricity';
 import { processElectricityData } from '@/utils/electricityDataUtils';
 import ElectricityMetricCards from './ElectricityMetricCards';
 import ElectricityTypeDistribution from './ElectricityTypeDistribution';
 import ElectricityConsumersTable from './ElectricityConsumersTable';
 
 interface ElectricityOverviewProps {
-  electricityData: any[];
+  electricityData: ElectricityRecord[];
   selectedMonth: string;
   selectedYear: string;
 }

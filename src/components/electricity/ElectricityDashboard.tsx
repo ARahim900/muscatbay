@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -12,6 +11,7 @@ import { toast } from 'sonner';
 import { airtableApi } from '@/services/api/apiClient';
 import { electricityData as fallbackData } from '@/data/electricityData';
 import ElectricityOverview from './ElectricityOverview';
+import { ElectricityRecord } from '@/types/electricity';
 
 const ElectricityDashboard: React.FC = () => {
   // Dashboard state
@@ -28,7 +28,7 @@ const ElectricityDashboard: React.FC = () => {
     isLoading,
     error,
     refetch
-  } = useElectricityData(ELECTRICITY_TABLE_ID, {
+  } = useElectricityData<ElectricityRecord>(ELECTRICITY_TABLE_ID, {
     useFallback: true,
     initialData: fallbackData
   });
@@ -60,7 +60,7 @@ const ElectricityDashboard: React.FC = () => {
       months.add('all');
       
       electricityData.forEach(record => {
-        Object.keys(record).forEach(key => {
+        Object.keys(record.consumption).forEach(key => {
           if (key.includes('-')) {
             months.add(key);
           }
@@ -74,8 +74,8 @@ const ElectricityDashboard: React.FC = () => {
       zones.add('all');
       
       electricityData.forEach(record => {
-        if (record.Zone) {
-          zones.add(record.Zone);
+        if (record.zone) {
+          zones.add(record.zone);
         }
       });
       
@@ -86,8 +86,8 @@ const ElectricityDashboard: React.FC = () => {
       types.add('all');
       
       electricityData.forEach(record => {
-        if (record.Type) {
-          types.add(record.Type);
+        if (record.type) {
+          types.add(record.type);
         }
       });
       
@@ -100,8 +100,8 @@ const ElectricityDashboard: React.FC = () => {
     if (!electricityData) return [];
     
     return electricityData.filter(record => {
-      const matchesZone = filters.selectedZone === 'all' || record.Zone === filters.selectedZone;
-      const matchesType = filters.selectedType === 'all' || record.Type === filters.selectedType;
+      const matchesZone = filters.selectedZone === 'all' || record.zone === filters.selectedZone;
+      const matchesType = filters.selectedType === 'all' || record.type === filters.selectedType;
       return matchesZone && matchesType;
     });
   }, [electricityData, filters.selectedZone, filters.selectedType]);
@@ -125,12 +125,22 @@ const ElectricityDashboard: React.FC = () => {
     }
     
     try {
-      // Create CSV header from first record keys
-      const headers = Object.keys(filteredData[0]).join(',');
+      // Create CSV header 
+      const headers = ['id', 'name', 'type', 'zone', 'meterAccountNo', ...Object.keys(filteredData[0].consumption)].join(',');
       
       // Generate CSV rows
       const csvRows = filteredData.map(record => {
-        return Object.values(record).map(value => {
+        const baseValues = [
+          record.id || '',
+          record.name || '',
+          record.type || '',
+          record.zone || '',
+          record.meterAccountNo || ''
+        ];
+        
+        const consumptionValues = Object.values(record.consumption).map(value => value || 0);
+        
+        return [...baseValues, ...consumptionValues].map(value => {
           // Handle strings with commas by wrapping in quotes
           if (typeof value === 'string' && value.includes(',')) {
             return `"${value}"`;
