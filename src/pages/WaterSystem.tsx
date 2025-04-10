@@ -2,21 +2,75 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
   BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, 
-  Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell,
-  AreaChart, Area
+  Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell
 } from 'recharts';
 import { motion } from 'framer-motion';
 import { ChevronDown, ChevronUp, BarChart2, PieChart as PieChartIcon, 
   AlertTriangle, Home, Droplet, FileText, Settings, TrendingUp,
   RefreshCw, FileDown } from 'lucide-react';
 import Layout from '@/components/layout/Layout';
+import { useAirtableData } from '@/hooks/useAirtableData';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import useAirtableData from '@/hooks/useAirtableData';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { WATER_TABLE_ID } from '@/services/airtableService';
+import { WATER_TABLE_ID } from '@/services/api/airtableService';
 import { WaterConsumptionData } from '@/types/waterSystem';
 import { transformWaterData, getReadingValue, getAvailableMonths } from '@/utils/waterSystemUtils';
+
+// Type definitions for our metrics data structure
+interface ZoneMetric {
+  bulkMeter: string;
+  bulkReading: number;
+  l3Sum: number;
+  meterCount: number;
+  loss: number;
+  lossPercent: string;
+}
+
+interface MetricsByMonth {
+  l1Supply: number;
+  l2Volume: number;
+  l3Volume: number;
+  stage1Loss: number;
+  stage2Loss: number;
+  totalLoss: number;
+  stage1LossPercent: string;
+  stage2LossPercent: string;
+  totalLossPercent: string;
+}
+
+interface Metrics {
+  byMonth: {
+    [key: string]: MetricsByMonth;
+  };
+  zoneMetrics: {
+    [key: string]: ZoneMetric;
+  };
+  typeConsumption: {
+    [key: string]: number;
+  };
+  zoneTypeConsumption: {
+    [key: string]: {
+      [key: string]: number;
+    };
+  };
+}
+
+interface ChartData {
+  trendData: any[];
+  lossTrendData: any[];
+  consumptionByTypeData: any[];
+  zoneLossData: any[];
+}
+
+// Define interface for Zone Loss Data
+interface ZoneLossDataItem {
+  zone: string;
+  bulkReading: number;
+  l3Sum: number;
+  loss: number;
+  lossPercent: number;
+}
 
 // Main Water System Component
 const WaterSystem = () => {
@@ -135,7 +189,7 @@ const WaterSystem = () => {
   };
 
   // Calculate metrics based on current data and filters
-  const metrics = useMemo(() => {
+  const metrics = useMemo<Metrics | null>(() => {
     if (!transformedData.length) return null;
     
     const months = availableMonths;
@@ -178,9 +232,9 @@ const WaterSystem = () => {
         stage1Loss,
         stage2Loss,
         totalLoss,
-        stage1LossPercent: l1Supply > 0 ? ((stage1Loss / l1Supply) * 100).toFixed(2) : 0,
-        stage2LossPercent: l2Volume > 0 ? ((stage2Loss / l2Volume) * 100).toFixed(2) : 0,
-        totalLossPercent: l1Supply > 0 ? ((totalLoss / l1Supply) * 100).toFixed(2) : 0
+        stage1LossPercent: l1Supply > 0 ? ((stage1Loss / l1Supply) * 100).toFixed(2) : '0',
+        stage2LossPercent: l2Volume > 0 ? ((stage2Loss / l2Volume) * 100).toFixed(2) : '0',
+        totalLossPercent: l1Supply > 0 ? ((totalLoss / l1Supply) * 100).toFixed(2) : '0'
       };
     });
     
@@ -260,8 +314,8 @@ const WaterSystem = () => {
   }, [transformedData, selectedPeriod, availableMonths]);
 
   // Prepare data for charts
-  const chartData = useMemo(() => {
-    if (!metrics || !availableMonths || availableMonths.length < 3) return {};
+  const chartData = useMemo<ChartData | null>(() => {
+    if (!metrics || !availableMonths || availableMonths.length < 3) return null;
     
     // Use only the last 3 months for trend data or all available months
     const months = availableMonths.slice(-3);
@@ -461,7 +515,7 @@ const WaterSystem = () => {
         {/* Main Content */}
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           {/* Dashboard */}
-          {activeTab === 'dashboard' && metrics && (
+          {activeTab === 'dashboard' && metrics && chartData && (
             <DashboardView metrics={metrics} selectedPeriod={selectedPeriod} chartData={chartData} />
           )}
           
@@ -489,7 +543,7 @@ const WaterSystem = () => {
           )}
           
           {/* Loss Analysis */}
-          {activeTab === 'losses' && metrics && (
+          {activeTab === 'losses' && metrics && chartData && (
             <LossView 
               metrics={metrics} 
               selectedPeriod={selectedPeriod}
@@ -503,7 +557,7 @@ const WaterSystem = () => {
 };
 
 // Dashboard View Component
-const DashboardView = ({ metrics, selectedPeriod, chartData }: any) => {
+const DashboardView: React.FC<{metrics: Metrics, selectedPeriod: string, chartData: ChartData}> = ({ metrics, selectedPeriod, chartData }) => {
   const currentMetrics = metrics.byMonth[selectedPeriod];
   
   // Custom gradient colors for KPI cards
@@ -623,7 +677,7 @@ const DashboardView = ({ metrics, selectedPeriod, chartData }: any) => {
                   dataKey="value"
                   label={({ name, percent }: any) => `${name}: ${(percent * 100).toFixed(1)}%`}
                 >
-                  {chartData.consumptionByTypeData?.map((entry: any, index: number) => (
+                  {chartData.consumptionByTypeData.map((entry: any, index: number) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
@@ -666,7 +720,7 @@ const DashboardView = ({ metrics, selectedPeriod, chartData }: any) => {
                   fill="#8884d8"
                   radius={[0, 4, 4, 0]}
                 >
-                  {chartData.zoneLossData?.map((entry: any, index: number) => (
+                  {chartData.zoneLossData.map((entry: any, index: number) => (
                     <Cell 
                       key={`cell-${index}`} 
                       fill={entry.value > 20 ? '#ef4444' : '#10b981'} 
@@ -729,7 +783,13 @@ const DashboardView = ({ metrics, selectedPeriod, chartData }: any) => {
 };
 
 // Zone View Component
-const ZoneView = ({ metrics, selectedPeriod, selectedZone, setSelectedZone, data }: any) => {
+const ZoneView: React.FC<{
+  metrics: Metrics, 
+  selectedPeriod: string, 
+  selectedZone: string, 
+  setSelectedZone: (zone: string) => void, 
+  data: WaterConsumptionData[]
+}> = ({ metrics, selectedPeriod, selectedZone, setSelectedZone, data }) => {
   // Get all available zones
   const zones = Object.keys(metrics.zoneMetrics);
   
@@ -986,7 +1046,14 @@ const ZoneView = ({ metrics, selectedPeriod, selectedZone, setSelectedZone, data
 };
 
 // Type View Component
-const TypeView = ({ metrics, selectedPeriod, selectedType, setSelectedType, data }: any) => {
+const TypeView: React.FC<{
+  metrics: Metrics,
+  selectedPeriod: string,
+  selectedType: string,
+  setSelectedType: (type: string) => void,
+  chartData: ChartData | null,
+  data: WaterConsumptionData[]
+}> = ({ metrics, selectedPeriod, selectedType, setSelectedType, data }) => {
   // Get all available types (excluding bulk meters)
   const types = Object.keys(metrics.typeConsumption).filter(
     (type: string) => type !== 'Zone Bulk' && type !== 'Main BULK'
@@ -995,7 +1062,7 @@ const TypeView = ({ metrics, selectedPeriod, selectedType, setSelectedType, data
   // Get consumption data by zone for the selected type
   const typeByZoneData: any[] = [];
   
-  Object.entries(metrics.zoneTypeConsumption).forEach(([zone, typeData]: any) => {
+  Object.entries(metrics.zoneTypeConsumption).forEach(([zone, typeData]: [string, any]) => {
     if (typeData[selectedType]) {
       typeByZoneData.push({
         name: zone.replace('Zone_', '').replace('_(', ' ').replace(')', ''),
@@ -1205,12 +1272,16 @@ const TypeView = ({ metrics, selectedPeriod, selectedType, setSelectedType, data
 };
 
 // Loss View Component
-const LossView = ({ metrics, selectedPeriod, chartData }: any) => {
+const LossView: React.FC<{
+  metrics: Metrics, 
+  selectedPeriod: string, 
+  chartData: ChartData
+}> = ({ metrics, selectedPeriod, chartData }) => {
   const currentMetrics = metrics.byMonth[selectedPeriod];
   
   // Prepare zone loss data
-  const zoneLossData = Object.entries(metrics.zoneMetrics)
-    .map(([zone, data]: [string, any]) => ({
+  const zoneLossData: ZoneLossDataItem[] = Object.entries(metrics.zoneMetrics)
+    .map(([zone, data]: [string, ZoneMetric]) => ({
       zone: zone.replace('Zone_', 'Zone ').replace('_(', ' ').replace(')', ''),
       bulkReading: data.bulkReading,
       l3Sum: data.l3Sum,
