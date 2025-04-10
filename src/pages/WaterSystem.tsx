@@ -1,38 +1,32 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
+import { 
+  BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, 
+  Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell,
+  AreaChart, Area
+} from 'recharts';
 import { motion } from 'framer-motion';
-import useAirtableData from '@/hooks/useAirtableData';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Button } from '@/components/ui/button';
-import { Droplets, FileDown, Loader2, AlertTriangle, RefreshCw, AreaChart, PieChart, BarChart2, FlaskConical } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { ChevronDown, ChevronUp, BarChart2, PieChart as PieChartIcon, 
+  AlertTriangle, Home, Droplet, FileText, Settings, TrendingUp,
+  RefreshCw, FileDown } from 'lucide-react';
 import Layout from '@/components/layout/Layout';
+import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { fetchTableData, WATER_TABLE_ID, AIRTABLE_BASE_ID } from '@/services/airtableService';
-import { WaterConsumptionData, WaterDashboardFilters } from '@/types/waterSystem';
-import { transformWaterData, getAvailableMonths, getZones, getTypes, filterWaterData, calculateLevelMetrics, calculateZoneMetrics, calculateTypeConsumption, calculateMonthlyTrends, getReadingValue } from '@/utils/waterSystemUtils';
-import WaterOverview from '@/components/water/WaterOverview';
-import WaterZones from '@/components/water/WaterZones';
-import WaterLossAnalysis from '@/components/water/WaterLossAnalysis';
-import WaterTypeAnalysis from '@/components/water/WaterTypeAnalysis';
-import WaterDataRefresh from '@/components/water/WaterDataRefresh';
-import DataTablePagination from '@/components/water/DataTablePagination';
-import { WaterThemeProvider } from '@/components/water/WaterTheme';
+import useAirtableData from '@/hooks/useAirtableData';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { WATER_TABLE_ID } from '@/services/airtableService';
+import { WaterConsumptionData } from '@/types/waterSystem';
+import { transformWaterData, getReadingValue, getAvailableMonths } from '@/utils/waterSystemUtils';
 
+// Main Water System Component
 const WaterSystem = () => {
-  const [filters, setFilters] = useState<WaterDashboardFilters>({
-    selectedMonth: "all",
-    selectedZone: "all",
-    selectedType: "all",
-    selectedView: "overview"
-  });
-  const [isManualLoading, setIsManualLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<string>('dashboard');
+  const [selectedPeriod, setSelectedPeriod] = useState<string>('Mar-25');
+  const [selectedZone, setSelectedZone] = useState<string>('');
+  const [selectedType, setSelectedType] = useState<string>('');
   const [lastUpdated, setLastUpdated] = useState<Date | undefined>(undefined);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
   
+  // Fetch water data
   const {
     data: waterData,
     isLoading,
@@ -42,397 +36,1461 @@ const WaterSystem = () => {
     useFallback: true
   });
 
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [filters.selectedMonth, filters.selectedZone, filters.selectedType]);
+  // Transform data to our desired format
+  const transformedData = useMemo(() => {
+    if (!waterData) return [];
+    return transformWaterData(waterData);
+  }, [waterData]);
 
+  // Set default zones and types
+  useEffect(() => {
+    if (transformedData.length > 0) {
+      // Set default selected zone
+      const zones = Array.from(new Set(transformedData
+        .filter(row => row.Zone && row.Label === 'L2')
+        .map(row => row.Zone)
+      ));
+      
+      if (zones.length > 0 && !selectedZone) {
+        setSelectedZone(zones[0]);
+      }
+      
+      // Set default selected type
+      const types = Array.from(new Set(transformedData
+        .filter(row => row.Type && row.Type !== 'Zone Bulk' && row.Type !== 'Main BULK')
+        .map(row => row.Type)
+      ));
+      
+      if (types.length > 0 && !selectedType) {
+        setSelectedType(types[0]);
+      }
+    }
+  }, [transformedData, selectedZone, selectedType]);
+
+  // Available months
+  const availableMonths = useMemo(() => {
+    return getAvailableMonths(transformedData).filter(month => 
+      month !== 'all' && /^[A-Za-z]+-\d{2}$/.test(month)
+    );
+  }, [transformedData]);
+
+  useEffect(() => {
+    if (availableMonths.length > 0 && !availableMonths.includes(selectedPeriod)) {
+      setSelectedPeriod(availableMonths[availableMonths.length - 1]);
+    }
+  }, [availableMonths, selectedPeriod]);
+
+  // Handle manual refresh
   const handleManualFetch = async () => {
-    setIsManualLoading(true);
+    toast.info('Refreshing water data...');
     try {
-      await fetchTableData(WATER_TABLE_ID, {
-        maxRecords: 1
-      });
       await refetch();
       setLastUpdated(new Date());
       toast.success('Water data refreshed successfully');
     } catch (err) {
-      console.error('Manual fetch failed:', err);
       toast.error(`Failed to refresh data: ${err instanceof Error ? err.message : 'Unknown error'}`);
-    } finally {
-      setIsManualLoading(false);
     }
   };
 
-  const pageVariants = {
-    initial: {
-      opacity: 0,
-      y: 20
-    },
-    animate: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        duration: 0.3
-      }
-    },
-    exit: {
-      opacity: 0,
-      y: -20,
-      transition: {
-        duration: 0.2
-      }
+  // Handle export data
+  const handleExportData = () => {
+    if (!transformedData || transformedData.length === 0) {
+      toast.error('No data to export');
+      return;
+    }
+    
+    try {
+      // Create CSV header 
+      const headers = ["Meter Label", "Zone", "Type", "Level", `${selectedPeriod} (m³)`, "Parent Meter"];
+      
+      // Generate CSV rows
+      const csvRows = transformedData.map(record => [
+        record['Meter Label'] || '-', 
+        record.Zone || '-', 
+        record.Type || '-', 
+        record.Label || '-', 
+        getReadingValue(record, selectedPeriod) || '-', 
+        record['Parent Meter'] || '-'
+      ]);
+      
+      // Combine header and rows
+      const csvContent = [headers.join(','), ...csvRows.map(row => row.join(','))].join('\n');
+      
+      // Create a blob and download link
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', `water-consumption-${selectedPeriod}.csv`);
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      toast.success('Data exported successfully');
+    } catch (error) {
+      console.error('Export error:', error);
+      toast.error('Failed to export data');
     }
   };
 
-  const emptyData: WaterConsumptionData[] = useMemo(() => [], []);
-  const defaultAvailableMonths = useMemo(() => ['all'], []);
-  const transformedData = useMemo(() => waterData ? transformWaterData(waterData) : emptyData, [waterData, emptyData]);
-  const availableMonths = useMemo(() => waterData ? getAvailableMonths(transformedData) : defaultAvailableMonths, [transformedData, defaultAvailableMonths]);
-  const zones = useMemo(() => waterData ? getZones(transformedData) : ['all'], [transformedData]);
-  const types = useMemo(() => waterData ? getTypes(transformedData) : ['all'], [transformedData]);
-  const filteredData = useMemo(() => waterData ? filterWaterData(transformedData, filters.selectedMonth, filters.selectedZone, filters.selectedType) : [], [transformedData, filters.selectedMonth, filters.selectedZone, filters.selectedType]);
-  const levelMetrics = useMemo(() => waterData ? calculateLevelMetrics(transformedData, filters.selectedMonth) : {
-    l1Supply: 0,
-    l2Volume: 0,
-    l3Volume: 0,
-    stage1Loss: 0,
-    stage2Loss: 0,
-    totalLoss: 0,
-    stage1LossPercentage: 0,
-    stage2LossPercentage: 0,
-    totalLossPercentage: 0
-  }, [transformedData, filters.selectedMonth]);
-  const zoneMetrics = useMemo(() => waterData ? calculateZoneMetrics(transformedData, filters.selectedMonth) : [], [transformedData, filters.selectedMonth]);
-  const typeConsumption = useMemo(() => waterData ? calculateTypeConsumption(transformedData, filters.selectedMonth) : [], [transformedData, filters.selectedMonth]);
-  const monthlyTrends = useMemo(() => waterData ? calculateMonthlyTrends(transformedData, availableMonths) : [], [transformedData, availableMonths]);
-  const totalPages = useMemo(() => Math.ceil(filteredData.length / pageSize), [filteredData.length, pageSize]);
-  const paginatedData = useMemo(() => filteredData.slice((currentPage - 1) * pageSize, currentPage * pageSize), [filteredData, currentPage, pageSize]);
+  // Calculate metrics based on current data and filters
+  const metrics = useMemo(() => {
+    if (!transformedData.length) return null;
+    
+    const months = availableMonths;
+    const result: any = { byMonth: {} };
+    
+    months.forEach(month => {
+      // Get L1 meter reading
+      const l1Meter = transformedData.find(row => row.Label === 'L1');
+      const l1Supply = l1Meter ? getReadingValue(l1Meter, month) : 0;
+      
+      // Calculate Total L2 Volume
+      let l2Volume = transformedData
+        .filter(row => row.Label === 'L2')
+        .reduce((sum, row) => sum + getReadingValue(row, month), 0);
+      
+      // Add DC meters connected to L1
+      if (l1Meter) {
+        l2Volume += transformedData
+          .filter(row => row.Label === 'DC' && row['Parent Meter'] === l1Meter['Meter Label'])
+          .reduce((sum, row) => sum + getReadingValue(row, month), 0);
+      }
+      
+      // Calculate Total L3 Volume (excluding anomaly meter)
+      const l3Volume = transformedData
+        .filter(row => 
+          (row.Label === 'L3' && row['Acct #'] !== '4300322') || 
+          row.Label === 'DC'
+        )
+        .reduce((sum, row) => sum + getReadingValue(row, month), 0);
+      
+      // Calculate losses
+      const stage1Loss = l1Supply - l2Volume;
+      const stage2Loss = l2Volume - l3Volume;
+      const totalLoss = l1Supply - l3Volume;
+      
+      result.byMonth[month] = {
+        l1Supply,
+        l2Volume,
+        l3Volume,
+        stage1Loss,
+        stage2Loss,
+        totalLoss,
+        stage1LossPercent: l1Supply > 0 ? ((stage1Loss / l1Supply) * 100).toFixed(2) : 0,
+        stage2LossPercent: l2Volume > 0 ? ((stage2Loss / l2Volume) * 100).toFixed(2) : 0,
+        totalLossPercent: l1Supply > 0 ? ((totalLoss / l1Supply) * 100).toFixed(2) : 0
+      };
+    });
+    
+    // Calculate zone metrics for the selected period
+    result.zoneMetrics = {};
+    
+    // Map zones to bulk meters
+    const zoneToBulkMap: Record<string, any> = {};
+    transformedData.filter(row => row.Label === 'L2').forEach(bulkMeter => {
+      const zone = bulkMeter.Zone;
+      if (zone) {
+        zoneToBulkMap[zone] = bulkMeter;
+      }
+    });
+    
+    Object.keys(zoneToBulkMap).forEach(zone => {
+      const bulkMeter = zoneToBulkMap[zone];
+      const bulkReading = getReadingValue(bulkMeter, selectedPeriod);
+      
+      // Sum L3 meters in this zone (excluding anomaly meter)
+      const l3Meters = transformedData.filter(row => 
+        row.Label === 'L3' && 
+        row.Zone === zone && 
+        row['Acct #'] !== '4300322'
+      );
+      
+      const l3Sum = l3Meters.reduce((sum, row) => sum + getReadingValue(row, selectedPeriod), 0);
+      const meterCount = l3Meters.length;
+      
+      const loss = bulkReading - l3Sum;
+      const lossPercent = bulkReading > 0 ? (loss / bulkReading * 100) : 0;
+      
+      result.zoneMetrics[zone] = {
+        bulkMeter: bulkMeter['Meter Label'],
+        bulkReading,
+        l3Sum,
+        meterCount,
+        loss,
+        lossPercent: lossPercent.toFixed(2)
+      };
+    });
+    
+    // Calculate consumption by type
+    result.typeConsumption = {};
+    const types = Array.from(new Set(transformedData.map(row => row.Type)));
+    
+    types.forEach(type => {
+      if (type && type !== 'Zone Bulk' && type !== 'Main BULK') {
+        result.typeConsumption[type] = transformedData
+          .filter(row => row.Type === type && row['Acct #'] !== '4300322')
+          .reduce((sum, row) => sum + getReadingValue(row, selectedPeriod), 0);
+      }
+    });
+    
+    // Calculate consumption by type for each zone
+    result.zoneTypeConsumption = {};
+    
+    Object.keys(zoneToBulkMap).forEach(zone => {
+      const typeConsumption: Record<string, number> = {};
+      
+      types.forEach(type => {
+        if (type && type !== 'Zone Bulk' && type !== 'Main BULK') {
+          const consumption = transformedData
+            .filter(row => row.Zone === zone && row.Type === type && row['Acct #'] !== '4300322')
+            .reduce((sum, row) => sum + getReadingValue(row, selectedPeriod), 0);
+          
+          if (consumption > 0) {
+            typeConsumption[type] = consumption;
+          }
+        }
+      });
+      
+      result.zoneTypeConsumption[zone] = typeConsumption;
+    });
+    
+    return result;
+  }, [transformedData, selectedPeriod, availableMonths]);
 
+  // Prepare data for charts
+  const chartData = useMemo(() => {
+    if (!metrics || !availableMonths || availableMonths.length < 3) return {};
+    
+    // Use only the last 3 months for trend data or all available months
+    const months = availableMonths.slice(-3);
+    
+    // Monthly trend data
+    const trendData = months.map(month => ({ 
+      name: month, 
+      L1_Supply: metrics.byMonth[month].l1Supply, 
+      L3_Consumption: metrics.byMonth[month].l3Volume 
+    }));
+    
+    // Loss trend data
+    const lossTrendData = months.map(month => ({ 
+      name: month, 
+      'Stage 1 Loss': metrics.byMonth[month].stage1Loss, 
+      'Stage 2 Loss': metrics.byMonth[month].stage2Loss, 
+      'Total Loss': metrics.byMonth[month].totalLoss 
+    }));
+    
+    // Consumption by type chart data
+    const consumptionByTypeData = Object.entries(metrics.typeConsumption)
+      .filter(([_, value]) => value > 0)
+      .map(([type, value]) => ({ name: type, value }));
+    
+    // Zone loss chart data
+    const zoneLossData = Object.entries(metrics.zoneMetrics)
+      .map(([zone, data]) => ({
+        name: zone.replace('Zone_', '').replace('_(', ' ').replace(')', ''),
+        value: parseFloat(data.lossPercent)
+      }))
+      .sort((a, b) => b.value - a.value);
+    
+    return {
+      trendData,
+      lossTrendData,
+      consumptionByTypeData,
+      zoneLossData
+    };
+  }, [metrics, availableMonths]);
+
+  // Loading state
   if (isLoading) {
     return <Layout>
-        <div className="flex items-center justify-center min-h-[70vh]">
-          <div className="text-center">
-            <Loader2 className="h-10 w-10 mx-auto mb-4 text-blue-500 animate-spin" />
-            <p className="text-lg text-muted-foreground">Loading water system data...</p>
-          </div>
+      <div className="flex items-center justify-center min-h-[70vh]">
+        <div className="text-center">
+          <RefreshCw className="h-10 w-10 mx-auto mb-4 text-blue-500 animate-spin" />
+          <p className="text-lg text-muted-foreground">Loading water system data...</p>
         </div>
-      </Layout>;
+      </div>
+    </Layout>;
   }
-
+  
+  // Error state
   if (error) {
     return <Layout>
-        <motion.div className="container mx-auto p-4" initial="initial" animate="animate" exit="exit" variants={pageVariants}>
-          <Card className="mb-6 border-red-200">
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <AlertTriangle className="mr-2 h-6 w-6 text-amber-500" />
-                Error Loading Data
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="bg-red-50 text-red-800 p-4 rounded-md">
-                <p className="font-medium">Failed to load water data: {error.message}</p>
-                <p className="mt-2">Please check your Airtable connection settings and table configuration.</p>
-                <div className="mt-4 space-y-3">
-                  <div>
-                    <p className="text-sm text-red-700 mb-1">Airtable Configuration:</p>
-                    <ul className="list-disc pl-5 text-sm space-y-1">
-                      <li>API Key: The API key format appears valid</li>
-                      <li>Base ID: {AIRTABLE_BASE_ID}</li>
-                      <li>Table ID: {WATER_TABLE_ID}</li>
-                      <li>API Key Permissions: Verify your API key has access to this base</li>
-                    </ul>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    <Button variant="outline" className="text-blue-600" onClick={() => refetch()} disabled={isManualLoading}>
-                      {isManualLoading ? <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Checking...
-                        </> : <>
-                          <RefreshCw className="w-4 h-4 mr-2" />
-                          Try Again
-                        </>}
-                    </Button>
-                    <Button variant="outline" className="text-amber-600" onClick={handleManualFetch} disabled={isManualLoading}>
-                      {isManualLoading ? <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Checking table...
-                        </> : <>
-                          <AlertTriangle className="w-4 h-4 mr-2" />
-                          Check Table Connection
-                        </>}
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-      </Layout>;
+      <div className="container mx-auto p-4">
+        <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-red-500">
+          <AlertTriangle className="w-12 h-12 mb-4 text-red-500" />
+          <h2 className="text-2xl font-bold mb-2">Error Loading Data</h2>
+          <p className="mb-4">{error.message}</p>
+          <Button variant="outline" onClick={handleManualFetch}>
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Try Again
+          </Button>
+        </div>
+      </div>
+    </Layout>;
   }
 
-  if (!waterData || waterData.length === 0) {
+  // If no data
+  if (!transformedData || transformedData.length === 0) {
     return <Layout>
-        <motion.div className="container mx-auto p-4" initial="initial" animate="animate" exit="exit" variants={pageVariants}>
-          <Card className="mb-6 border-amber-200">
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Droplets className="mr-2 h-6 w-6 text-blue-500" />
-                Water System Dashboard
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="bg-amber-50 text-amber-800 p-4 rounded-md">
-                <p className="font-medium">No water consumption data available.</p>
-                <p className="mt-2">
-                  Make sure your Airtable table contains records and has the correct structure.
-                </p>
-                <div className="mt-4 flex flex-wrap gap-2">
-                  <Button variant="outline" className="text-blue-600" onClick={() => refetch()} disabled={isManualLoading}>
-                    {isManualLoading ? <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Refreshing...
-                      </> : <>
-                        <RefreshCw className="w-4 h-4 mr-2" />
-                        Refresh Data
-                      </>}
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-      </Layout>;
+      <div className="container mx-auto p-4">
+        <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-amber-500">
+          <AlertTriangle className="w-12 h-12 mb-4 text-amber-500" />
+          <h2 className="text-2xl font-bold mb-2">No Data Available</h2>
+          <p className="mb-4">No water consumption data available. Make sure your data source contains records.</p>
+          <Button variant="outline" onClick={handleManualFetch}>
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Refresh Data
+          </Button>
+        </div>
+      </div>
+    </Layout>;
   }
 
-  const handleExportData = () => {
-    const headers = ["Meter Label", "Zone", "Type", "Level", `${filters.selectedMonth} (m³)`, "Parent Meter"];
-    const rows = filteredData.map(record => [record['Meter Label'] || '-', record.Zone || '-', record.Type || '-', record.Label || '-', getReadingValue(record, filters.selectedMonth) || '-', record['Parent Meter'] || '-']);
-    const csvContent = [headers.join(','), ...rows.map(row => row.join(','))].join('\n');
-    const blob = new Blob([csvContent], {
-      type: 'text/csv;charset=utf-8;'
-    });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', `water-consumption-${filters.selectedMonth}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    toast.success("Data exported successfully");
-  };
-
-  const handleTabChange = (value: string) => {
-    setFilters(prev => ({
-      ...prev,
-      selectedView: value
-    }));
-  };
-
-  const handleMonthChange = (value: string) => {
-    setFilters(prev => ({
-      ...prev,
-      selectedMonth: value
-    }));
-  };
-
-  const handleZoneChange = (value: string) => {
-    setFilters(prev => ({
-      ...prev,
-      selectedZone: value
-    }));
-  };
-
-  const handleTypeChange = (value: string) => {
-    setFilters(prev => ({
-      ...prev,
-      selectedType: value
-    }));
-  };
-
-  return <WaterThemeProvider>
-      <Layout>
-        <motion.div className="container mx-auto p-4" initial="initial" animate="animate" exit="exit" variants={pageVariants}>
-          <div className="flex flex-col space-y-6">
-            <div className="rounded-xl bg-gradient-to-r from-[#4E4456]/10 via-[#4E4456]/20 to-[#4E4456]/30 dark:from-[#4E4456]/30 dark:via-[#4E4456]/40 dark:to-[#4E4456]/50 p-6 shadow-md">
-              <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">
-                <div>
-                  <h1 className="text-2xl font-bold tracking-tight flex items-center text-muscat-primary">
-                    <Droplets className="mr-2 h-8 w-8 text-blue-600 dark:text-blue-400 bg-muscat-primary" />
-                    Water System Dashboard
-                  </h1>
-                  <p className="mt-1 max-w-2xl text-muscat-dark text-base text-center">
-                    Monitor water consumption, distribution, and losses across Muscat Bay
-                  </p>
-                </div>
-                
-                <div className="flex flex-wrap items-center gap-3">
-                  <Select value={filters.selectedMonth} onValueChange={handleMonthChange}>
-                    <SelectTrigger className="w-[160px] bg-white/90 shadow-sm">
-                      <SelectValue placeholder="Select Month" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableMonths.map(month => <SelectItem key={month} value={month}>
-                          {month === 'all' ? 'All Months' : month}
-                        </SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                  
-                  <Button variant="outline" size="icon" onClick={handleExportData} title="Export Data" className="bg-white/90 shadow-sm">
-                    <FileDown className="h-4 w-4" />
-                  </Button>
-                  
-                  <WaterDataRefresh onRefresh={handleManualFetch} lastUpdated={lastUpdated} />
-                </div>
-              </div>
-              
-              <Tabs value={filters.selectedView} onValueChange={handleTabChange} className="mt-6">
-                <TabsList className={`grid w-full max-w-2xl grid-cols-4 bg-white/70 dark:bg-gray-800/50 p-1 rounded-lg shadow-sm`}>
-                  <TabsTrigger value="overview" className="flex items-center gap-2 data-[state=active]:bg-[#4E4456] data-[state=active]:text-white dark:data-[state=active]:bg-[#4E4456]/90">
-                    <BarChart2 className="h-4 w-4" />
-                    <span className="hidden md:inline">Overview</span>
-                    <span className="md:hidden">Overview</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="zones" className="flex items-center gap-2 data-[state=active]:bg-teal-600 data-[state=active]:text-white dark:data-[state=active]:bg-teal-700">
-                    <AreaChart className="h-4 w-4" />
-                    <span className="hidden md:inline">Zones</span>
-                    <span className="md:hidden">Zones</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="types" className="flex items-center gap-2 data-[state=active]:bg-indigo-600 data-[state=active]:text-white dark:data-[state=active]:bg-indigo-700">
-                    <FlaskConical className="h-4 w-4" />
-                    <span className="hidden md:inline">Types</span>
-                    <span className="md:hidden">Types</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="loss" className="flex items-center gap-2 data-[state=active]:bg-amber-600 data-[state=active]:text-white dark:data-[state=active]:bg-amber-700">
-                    <PieChart className="h-4 w-4" />
-                    <span className="hidden md:inline">Loss Analysis</span>
-                    <span className="md:hidden">Loss</span>
-                  </TabsTrigger>
-                </TabsList>
-                
-                <div className="mt-2 text-sm text-blue-700/70 dark:text-blue-400/70 pl-2">
-                  <span className="font-medium">Showing:</span> {filters.selectedMonth === 'all' ? 'All Months' : filters.selectedMonth}
-                  {filters.selectedView === 'zones' && filters.selectedZone !== 'all' && ` | Zone: ${filters.selectedZone}`}
-                  {filters.selectedType !== 'all' && ` | Type: ${filters.selectedType}`}
-                </div>
-                
-                <TabsContent value="overview" className="mt-0">
-                  <WaterOverview levelMetrics={levelMetrics} zoneMetrics={zoneMetrics} typeConsumption={typeConsumption} monthlyTrends={monthlyTrends} selectedMonth={filters.selectedMonth} />
-                </TabsContent>
-                
-                <TabsContent value="zones" className="mt-0">
-                  <WaterZones zoneMetrics={zoneMetrics} waterData={transformedData} selectedMonth={filters.selectedMonth} selectedZone={filters.selectedZone || zones[1] || ''} onSelectZone={handleZoneChange} />
-                </TabsContent>
-                
-                <TabsContent value="types" className="mt-0">
-                  <WaterTypeAnalysis typeConsumption={typeConsumption} waterData={transformedData} selectedMonth={filters.selectedMonth} selectedType={filters.selectedType} onSelectType={handleTypeChange} types={types} />
-                </TabsContent>
-                
-                <TabsContent value="loss" className="mt-0">
-                  <WaterLossAnalysis zoneMetrics={zoneMetrics} levelMetrics={levelMetrics} selectedMonth={filters.selectedMonth} />
-                </TabsContent>
-              </Tabs>
-            </div>
+  return (
+    <Layout>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+        {/* Header */}
+        <header className="bg-white shadow-md">
+          <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+            <motion.h1 
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-2xl md:text-3xl font-bold text-blue-800 flex items-center"
+            >
+              <Droplet className="mr-2 h-8 w-8 text-blue-500" />
+              Muscat Bay Water System
+            </motion.h1>
             
-            <Card className="shadow-md bg-white border-0 rounded-xl overflow-hidden">
-              <CardHeader className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800/50 dark:to-gray-700/50 border-b">
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-                  <div>
-                    <CardTitle className="text-lg font-semibold">Water Consumption Details</CardTitle>
-                    <CardDescription>
-                      Showing {filteredData.length} records 
-                      {filters.selectedMonth !== 'all' && ` for ${filters.selectedMonth}`}
-                      {filters.selectedZone !== 'all' && ` in ${filters.selectedZone}`}
-                      {filters.selectedType !== 'all' && ` of type ${filters.selectedType}`}
-                    </CardDescription>
-                  </div>
-                  
-                  <div className="flex gap-3">
-                    {zones.length > 1 && <Select value={filters.selectedZone} onValueChange={handleZoneChange}>
-                        <SelectTrigger className="w-[160px] bg-white shadow-sm">
-                          <SelectValue placeholder="Filter by Zone" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {zones.map(zone => <SelectItem key={zone} value={zone}>
-                              {zone === 'all' ? 'All Zones' : zone}
-                            </SelectItem>)}
-                        </SelectContent>
-                      </Select>}
-                    
-                    {types.length > 1 && <Select value={filters.selectedType} onValueChange={handleTypeChange}>
-                        <SelectTrigger className="w-[160px] bg-white shadow-sm">
-                          <SelectValue placeholder="Filter by Type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {types.map(type => <SelectItem key={type} value={type}>
-                              {type === 'all' ? 'All Types' : type}
-                            </SelectItem>)}
-                        </SelectContent>
-                      </Select>}
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="p-0">
-                <div className="overflow-x-auto">
-                  <table className="w-full border-collapse">
-                    <thead>
-                      <tr className="bg-gray-100 dark:bg-gray-800 text-left text-xs">
-                        <th className="px-4 py-3 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap">Meter Label</th>
-                        <th className="px-4 py-3 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap">Zone</th>
-                        <th className="px-4 py-3 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap">Type</th>
-                        <th className="px-4 py-3 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap">Level</th>
-                        {filters.selectedMonth === 'all' ? <>
-                            <th className="px-4 py-3 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap text-right">Jan-25 (m³)</th>
-                            <th className="px-4 py-3 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap text-right">Feb-25 (m³)</th>
-                          </> : <th className="px-4 py-3 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap text-right">{filters.selectedMonth} (m³)</th>}
-                        <th className="px-4 py-3 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap">Parent Meter</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                      {paginatedData.map((record, index) => <tr key={record.id || index} className="bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                          <td className="px-4 py-3 text-sm whitespace-nowrap">{record['Meter Label'] || '-'}</td>
-                          <td className="px-4 py-3 text-sm whitespace-nowrap">
-                            <Badge variant="outline" className="font-normal text-blue-700 border-blue-200 dark:text-blue-300 dark:border-blue-800 bg-zinc-50">
-                              {record.Zone || '-'}
-                            </Badge>
-                          </td>
-                          <td className="px-4 py-3 text-sm whitespace-nowrap">{record.Type || '-'}</td>
-                          <td className="px-4 py-3 text-sm whitespace-nowrap">
-                            <Badge variant="outline" className={`font-normal ${record.Label === 'L1' ? 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800' : record.Label === 'L2' ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800' : record.Label === 'L3' ? 'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800' : record.Label === 'DC' ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-800' : ''}`}>
-                              {record.Label || '-'}
-                            </Badge>
-                          </td>
-                          {filters.selectedMonth === 'all' ? <>
-                              <td className="px-4 py-3 text-sm whitespace-nowrap text-right font-medium">
-                                {getReadingValue(record, 'Jan-25') ? getReadingValue(record, 'Jan-25').toLocaleString() : '-'}
-                              </td>
-                              <td className="px-4 py-3 text-sm whitespace-nowrap text-right font-medium">
-                                {getReadingValue(record, 'Feb-25') ? getReadingValue(record, 'Feb-25').toLocaleString() : '-'}
-                              </td>
-                            </> : <td className="px-4 py-3 text-sm whitespace-nowrap text-right font-medium">
-                              {getReadingValue(record, filters.selectedMonth) ? getReadingValue(record, filters.selectedMonth).toLocaleString() : '-'}
-                            </td>}
-                          <td className="px-4 py-3 text-sm whitespace-nowrap text-gray-600 dark:text-gray-400">
-                            {record['Parent Meter'] || '-'}
-                          </td>
-                        </tr>)}
-                      
-                      {filteredData.length === 0 && <tr>
-                          <td colSpan={filters.selectedMonth === 'all' ? 7 : 6} className="px-4 py-8 text-center text-gray-500">
-                            No records found with the selected filters
-                          </td>
-                        </tr>}
-                    </tbody>
-                  </table>
-                  
-                  {filteredData.length > 0 && <DataTablePagination currentPage={currentPage} totalPages={totalPages} totalItems={filteredData.length} pageSize={pageSize} onPageChange={setCurrentPage} onPageSizeChange={setPageSize} />}
-                </div>
-              </CardContent>
-            </Card>
+            <div className="flex flex-wrap items-center gap-3">
+              {/* Period Selector */}
+              <motion.div 
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+              >
+                <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
+                  <SelectTrigger className="w-[160px] bg-white/90 shadow-sm">
+                    <SelectValue placeholder="Select Period" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableMonths.map(month => (
+                      <SelectItem key={month} value={month}>{month}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </motion.div>
+              
+              <Button variant="outline" size="icon" onClick={handleExportData} title="Export Data" className="bg-white/90 shadow-sm">
+                <FileDown className="h-4 w-4" />
+              </Button>
+              
+              <Button variant="outline" size="icon" onClick={handleManualFetch} title="Refresh Data" className="bg-white/90 shadow-sm">
+                <RefreshCw className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </header>
+        
+        {/* Navigation */}
+        <nav className="bg-white shadow-sm border-t border-gray-200">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between h-16">
+              <div className="flex space-x-8">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setActiveTab('dashboard')}
+                  className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
+                    activeTab === 'dashboard' 
+                      ? 'border-blue-500 text-blue-600' 
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  <Home className="w-5 h-5 mr-1" />
+                  Dashboard
+                </motion.button>
+                
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setActiveTab('zones')}
+                  className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
+                    activeTab === 'zones' 
+                      ? 'border-blue-500 text-blue-600' 
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  <PieChartIcon className="w-5 h-5 mr-1" />
+                  Zone Details
+                </motion.button>
+                
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setActiveTab('types')}
+                  className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
+                    activeTab === 'types' 
+                      ? 'border-blue-500 text-blue-600' 
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  <BarChart2 className="w-5 h-5 mr-1" />
+                  Type Analysis
+                </motion.button>
+                
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setActiveTab('losses')}
+                  className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
+                    activeTab === 'losses' 
+                      ? 'border-blue-500 text-blue-600' 
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  <TrendingUp className="w-5 h-5 mr-1" />
+                  Loss Analysis
+                </motion.button>
+              </div>
+            </div>
+          </div>
+        </nav>
+        
+        {/* Main Content */}
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          {/* Dashboard */}
+          {activeTab === 'dashboard' && metrics && (
+            <DashboardView metrics={metrics} selectedPeriod={selectedPeriod} chartData={chartData} />
+          )}
+          
+          {/* Zone Details */}
+          {activeTab === 'zones' && metrics && (
+            <ZoneView 
+              metrics={metrics} 
+              selectedPeriod={selectedPeriod} 
+              selectedZone={selectedZone}
+              setSelectedZone={setSelectedZone}
+              data={transformedData}
+            />
+          )}
+          
+          {/* Type Analysis */}
+          {activeTab === 'types' && metrics && (
+            <TypeView 
+              metrics={metrics} 
+              selectedPeriod={selectedPeriod}
+              selectedType={selectedType}
+              setSelectedType={setSelectedType}
+              chartData={chartData}
+              data={transformedData}
+            />
+          )}
+          
+          {/* Loss Analysis */}
+          {activeTab === 'losses' && metrics && (
+            <LossView 
+              metrics={metrics} 
+              selectedPeriod={selectedPeriod}
+              chartData={chartData}
+            />
+          )}
+        </main>
+      </div>
+    </Layout>
+  );
+};
+
+// Dashboard View Component
+const DashboardView = ({ metrics, selectedPeriod, chartData }: any) => {
+  const currentMetrics = metrics.byMonth[selectedPeriod];
+  
+  // Custom gradient colors for KPI cards
+  const kpiGradients = [
+    'from-blue-400 to-blue-600',
+    'from-teal-400 to-teal-600',
+    'from-purple-400 to-purple-600',
+    'from-indigo-400 to-indigo-600'
+  ];
+  
+  // Custom colors for pie chart
+  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
+  
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+    >
+      <h2 className="text-2xl font-semibold text-gray-800 mb-6">Dashboard Overview</h2>
+      
+      {/* KPI Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <motion.div 
+          whileHover={{ y: -5 }}
+          className={`bg-gradient-to-r ${kpiGradients[0]} rounded-lg shadow-lg p-6 text-white`}
+        >
+          <h3 className="text-sm font-medium mb-1 opacity-90">Total L1 Supply</h3>
+          <p className="text-3xl font-bold">{currentMetrics.l1Supply.toLocaleString()} m³</p>
+        </motion.div>
+        
+        <motion.div 
+          whileHover={{ y: -5 }}
+          className={`bg-gradient-to-r ${kpiGradients[1]} rounded-lg shadow-lg p-6 text-white`}
+        >
+          <h3 className="text-sm font-medium mb-1 opacity-90">Total L3 Consumption</h3>
+          <p className="text-3xl font-bold">{currentMetrics.l3Volume.toLocaleString()} m³</p>
+        </motion.div>
+        
+        <motion.div 
+          whileHover={{ y: -5 }}
+          className={`bg-gradient-to-r ${kpiGradients[2]} rounded-lg shadow-lg p-6 text-white`}
+        >
+          <h3 className="text-sm font-medium mb-1 opacity-90">Total Water Loss</h3>
+          <p className="text-3xl font-bold">{currentMetrics.totalLoss.toLocaleString()} m³</p>
+        </motion.div>
+        
+        <motion.div 
+          whileHover={{ y: -5 }}
+          className={`bg-gradient-to-r ${kpiGradients[3]} rounded-lg shadow-lg p-6 text-white`}
+        >
+          <h3 className="text-sm font-medium mb-1 opacity-90">Loss Percentage</h3>
+          <p className="text-3xl font-bold">{currentMetrics.totalLossPercent}%</p>
+        </motion.div>
+      </div>
+      
+      {/* Main Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        {/* Consumption Trend Chart */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="bg-white rounded-lg shadow-md p-6"
+        >
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">Water Supply vs Consumption Trend</h3>
+          <div className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart
+                data={chartData.trendData}
+                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip 
+                  formatter={(value: any) => [`${value.toLocaleString()} m³`, null]}
+                  contentStyle={{ borderRadius: '8px' }}
+                />
+                <Legend />
+                <Line 
+                  type="monotone" 
+                  dataKey="L1_Supply" 
+                  stroke="#3b82f6" 
+                  strokeWidth={3}
+                  activeDot={{ r: 8 }} 
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="L3_Consumption" 
+                  stroke="#10b981" 
+                  strokeWidth={3} 
+                />
+              </LineChart>
+            </ResponsiveContainer>
           </div>
         </motion.div>
-      </Layout>
-    </WaterThemeProvider>;
+        
+        {/* Consumption By Type Pie Chart */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="bg-white rounded-lg shadow-md p-6"
+        >
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">Consumption by Type</h3>
+          <div className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={chartData.consumptionByTypeData}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  outerRadius={120}
+                  fill="#8884d8"
+                  dataKey="value"
+                  label={({ name, percent }: any) => `${name}: ${(percent * 100).toFixed(1)}%`}
+                >
+                  {chartData.consumptionByTypeData?.map((entry: any, index: number) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip 
+                  formatter={(value: any) => [`${value.toLocaleString()} m³`, null]}
+                  contentStyle={{ borderRadius: '8px' }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </motion.div>
+      </div>
+      
+      {/* Bottom Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Top Loss Zones Chart */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="bg-white rounded-lg shadow-md p-6"
+        >
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">Top Loss Zones (%)</h3>
+          <div className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={chartData.zoneLossData}
+                layout="vertical"
+                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <XAxis type="number" domain={[0, 100]} />
+                <YAxis dataKey="name" type="category" width={100} />
+                <Tooltip 
+                  formatter={(value: any) => [`${value.toFixed(2)}%`, null]}
+                  contentStyle={{ borderRadius: '8px' }}
+                />
+                <Bar 
+                  dataKey="value" 
+                  fill="#8884d8"
+                  radius={[0, 4, 4, 0]}
+                >
+                  {chartData.zoneLossData?.map((entry: any, index: number) => (
+                    <Cell 
+                      key={`cell-${index}`} 
+                      fill={entry.value > 20 ? '#ef4444' : '#10b981'} 
+                    />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </motion.div>
+        
+        {/* Loss Trend Chart */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="bg-white rounded-lg shadow-md p-6"
+        >
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">Loss Trend Analysis</h3>
+          <div className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart
+                data={chartData.lossTrendData}
+                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip 
+                  formatter={(value: any) => [`${value.toLocaleString()} m³`, null]}
+                  contentStyle={{ borderRadius: '8px' }}
+                />
+                <Legend />
+                <Line 
+                  type="monotone" 
+                  dataKey="Stage 1 Loss" 
+                  stroke="#f59e0b" 
+                  strokeWidth={2} 
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="Stage 2 Loss" 
+                  stroke="#8b5cf6" 
+                  strokeWidth={2} 
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="Total Loss" 
+                  stroke="#ef4444" 
+                  strokeWidth={3}
+                  activeDot={{ r: 8 }} 
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </motion.div>
+      </div>
+    </motion.div>
+  );
+};
+
+// Zone View Component
+const ZoneView = ({ metrics, selectedPeriod, selectedZone, setSelectedZone, data }: any) => {
+  // Get all available zones
+  const zones = Object.keys(metrics.zoneMetrics);
+  
+  // Get the selected zone metrics
+  const zoneMetric = metrics.zoneMetrics[selectedZone];
+  
+  // Get type consumption data for the selected zone
+  const zoneTypeData = metrics.zoneTypeConsumption[selectedZone];
+  
+  // Transform to chart format
+  const pieData = zoneTypeData ? Object.entries(zoneTypeData)
+    .map(([type, value]) => ({ name: type, value })) : [];
+  
+  // Custom colors for pie chart
+  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
+  
+  // Get meters for the selected zone
+  const zoneMeterData = data.filter((row: any) => 
+    row.Zone === selectedZone && 
+    row.Label === 'L3' && 
+    row['Acct #'] !== '4300322'
+  ).map((meter: any) => ({
+    meterLabel: meter['Meter Label'],
+    accountNumber: meter['Acct #'],
+    type: meter.Type,
+    consumption: getReadingValue(meter, selectedPeriod)
+  })).sort((a: any, b: any) => b.consumption - a.consumption);
+  
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+    >
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+        <h2 className="text-2xl font-semibold text-gray-800">Zone Details</h2>
+        
+        {/* Zone Selector */}
+        <div className="mt-3 md:mt-0">
+          <Select value={selectedZone} onValueChange={setSelectedZone}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Select Zone" />
+            </SelectTrigger>
+            <SelectContent>
+              {zones.map(zone => (
+                <SelectItem key={zone} value={zone}>
+                  {zone.replace('Zone_', 'Zone ').replace('_(', ' ').replace(')', '')}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+      
+      {zoneMetric && (
+        <>
+          {/* Zone KPI Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <motion.div 
+              whileHover={{ y: -5 }}
+              className="bg-gradient-to-r from-blue-400 to-blue-600 rounded-lg shadow-lg p-6 text-white"
+            >
+              <h3 className="text-sm font-medium mb-1 opacity-90">Bulk Meter Reading</h3>
+              <p className="text-3xl font-bold">{zoneMetric.bulkReading.toLocaleString()} m³</p>
+              <p className="text-xs mt-2 opacity-80">{zoneMetric.bulkMeter}</p>
+            </motion.div>
+            
+            <motion.div 
+              whileHover={{ y: -5 }}
+              className="bg-gradient-to-r from-teal-400 to-teal-600 rounded-lg shadow-lg p-6 text-white"
+            >
+              <h3 className="text-sm font-medium mb-1 opacity-90">L3 Consumption</h3>
+              <p className="text-3xl font-bold">{zoneMetric.l3Sum.toLocaleString()} m³</p>
+              <p className="text-xs mt-2 opacity-80">{zoneMetric.meterCount} meters</p>
+            </motion.div>
+            
+            <motion.div 
+              whileHover={{ y: -5 }}
+              className="bg-gradient-to-r from-purple-400 to-purple-600 rounded-lg shadow-lg p-6 text-white"
+            >
+              <h3 className="text-sm font-medium mb-1 opacity-90">Zone Loss</h3>
+              <p className="text-3xl font-bold">{zoneMetric.loss.toLocaleString()} m³</p>
+            </motion.div>
+            
+            <motion.div 
+              whileHover={{ y: -5 }}
+              className={`bg-gradient-to-r rounded-lg shadow-lg p-6 text-white
+                ${parseFloat(zoneMetric.lossPercent) > 20 ? 'from-red-400 to-red-600' : 'from-indigo-400 to-indigo-600'}`}
+            >
+              <h3 className="text-sm font-medium mb-1 opacity-90">Loss Percentage</h3>
+              <p className="text-3xl font-bold">{zoneMetric.lossPercent}%</p>
+              <p className="text-xs mt-2 opacity-80">
+                {parseFloat(zoneMetric.lossPercent) > 20 ? 'High loss - investigate' : 'Normal range'}
+              </p>
+            </motion.div>
+          </div>
+          
+          {/* Zone Charts */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            {/* Consumption By Type Pie Chart */}
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="bg-white rounded-lg shadow-md p-6"
+            >
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                Consumption by Type in {selectedZone.replace('Zone_', 'Zone ').replace('_(', ' ').replace(')', '')}
+              </h3>
+              {pieData.length > 0 ? (
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={pieData}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        outerRadius={120}
+                        fill="#8884d8"
+                        dataKey="value"
+                        label={({ name, percent }: any) => `${name}: ${(percent * 100).toFixed(1)}%`}
+                      >
+                        {pieData.map((entry: any, index: number) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip 
+                        formatter={(value: any) => [`${value.toLocaleString()} m³`, null]}
+                        contentStyle={{ borderRadius: '8px' }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              ) : (
+                <div className="h-80 flex items-center justify-center">
+                  <p className="text-gray-500">No consumption data available for this zone</p>
+                </div>
+              )}
+            </motion.div>
+            
+            {/* Top Meters in Zone */}
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="bg-white rounded-lg shadow-md p-6"
+            >
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                Top Consumption Meters
+              </h3>
+              <div className="h-80 overflow-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50 sticky top-0">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Meter Label
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Type
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Consumption (m³)
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {zoneMeterData.slice(0, 20).map((meter: any, index: number) => (
+                      <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                        <td className="px-6 py-2 whitespace-nowrap text-sm font-medium text-gray-900">
+                          {meter.meterLabel}
+                        </td>
+                        <td className="px-6 py-2 whitespace-nowrap text-sm text-gray-500">
+                          {meter.type}
+                        </td>
+                        <td className="px-6 py-2 whitespace-nowrap text-sm text-gray-500">
+                          {meter.consumption.toLocaleString()}
+                        </td>
+                      </tr>
+                    ))}
+                    {zoneMeterData.length === 0 && (
+                      <tr>
+                        <td colSpan={3} className="px-6 py-4 text-center text-sm text-gray-500">
+                          No meter data available for this zone
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </motion.div>
+          </div>
+          
+          {/* All Meters Table */}
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="bg-white rounded-lg shadow-md p-6"
+          >
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">
+              All Meters in {selectedZone.replace('Zone_', 'Zone ').replace('_(', ' ').replace(')', '')}
+            </h3>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Meter Label
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Account Number
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Type
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Consumption (m³)
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {zoneMeterData.map((meter: any, index: number) => (
+                    <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                      <td className="px-6 py-2 whitespace-nowrap text-sm font-medium text-gray-900">
+                        {meter.meterLabel}
+                      </td>
+                      <td className="px-6 py-2 whitespace-nowrap text-sm text-gray-500">
+                        {meter.accountNumber}
+                      </td>
+                      <td className="px-6 py-2 whitespace-nowrap text-sm text-gray-500">
+                        {meter.type}
+                      </td>
+                      <td className="px-6 py-2 whitespace-nowrap text-sm text-gray-500">
+                        {meter.consumption.toLocaleString()}
+                      </td>
+                    </tr>
+                  ))}
+                  {zoneMeterData.length === 0 && (
+                    <tr>
+                      <td colSpan={4} className="px-6 py-4 text-center text-sm text-gray-500">
+                        No meter data available for this zone
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </motion.div>
+        </>
+      )}
+    </motion.div>
+  );
+};
+
+// Type View Component
+const TypeView = ({ metrics, selectedPeriod, selectedType, setSelectedType, data }: any) => {
+  // Get all available types (excluding bulk meters)
+  const types = Object.keys(metrics.typeConsumption).filter(
+    (type: string) => type !== 'Zone Bulk' && type !== 'Main BULK'
+  );
+  
+  // Get consumption data by zone for the selected type
+  const typeByZoneData: any[] = [];
+  
+  Object.entries(metrics.zoneTypeConsumption).forEach(([zone, typeData]: any) => {
+    if (typeData[selectedType]) {
+      typeByZoneData.push({
+        name: zone.replace('Zone_', '').replace('_(', ' ').replace(')', ''),
+        value: typeData[selectedType]
+      });
+    }
+  });
+  
+  typeByZoneData.sort((a, b) => b.value - a.value);
+  
+  // Get all meters of the selected type
+  const typeMeters = data.filter((row: any) => 
+    row.Type === selectedType && 
+    row['Acct #'] !== '4300322'
+  ).map((meter: any) => ({
+    meterLabel: meter['Meter Label'],
+    zone: meter.Zone,
+    accountNumber: meter['Acct #'],
+    consumption: getReadingValue(meter, selectedPeriod)
+  })).sort((a: any, b: any) => b.consumption - a.consumption);
+  
+  // Calculate total consumption for this type
+  const totalTypeConsumption = metrics.typeConsumption[selectedType] || 0;
+  
+  // Monthly trend data for this type
+  const monthlyTrendData = Object.keys(metrics.byMonth).map((month: string) => { 
+    const consumption = data
+      .filter((row: any) => row.Type === selectedType && row['Acct #'] !== '4300322')
+      .reduce((sum: number, row: any) => sum + getReadingValue(row, month), 0);
+    
+    return {
+      name: month,
+      consumption
+    };
+  });
+  
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+    >
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+        <h2 className="text-2xl font-semibold text-gray-800">Type Analysis</h2>
+        
+        {/* Type Selector */}
+        <div className="mt-3 md:mt-0">
+          <Select value={selectedType} onValueChange={setSelectedType}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Select Type" />
+            </SelectTrigger>
+            <SelectContent>
+              {types.map((type: string) => (
+                <SelectItem key={type} value={type}>{type}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+      
+      {/* Type KPI Card */}
+      <motion.div 
+        whileHover={{ y: -5 }}
+        className="bg-gradient-to-r from-indigo-400 to-indigo-600 rounded-lg shadow-lg p-6 text-white mb-8"
+      >
+        <h3 className="text-sm font-medium mb-1 opacity-90">Total {selectedType} Consumption</h3>
+        <p className="text-3xl font-bold">{totalTypeConsumption.toLocaleString()} m³</p>
+        <p className="text-xs mt-2 opacity-80">{typeMeters.length} meters</p>
+      </motion.div>
+      
+      {/* Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        {/* Trend Chart */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="bg-white rounded-lg shadow-md p-6"
+        >
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">
+            {selectedType} Consumption Trend
+          </h3>
+          <div className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart
+                data={monthlyTrendData}
+                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip 
+                  formatter={(value: any) => [`${value.toLocaleString()} m³`, 'Consumption']}
+                  contentStyle={{ borderRadius: '8px' }}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="consumption" 
+                  stroke="#8884d8" 
+                  strokeWidth={3}
+                  activeDot={{ r: 8 }} 
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </motion.div>
+        
+        {/* By Zone Chart */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="bg-white rounded-lg shadow-md p-6"
+        >
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">
+            {selectedType} Consumption by Zone
+          </h3>
+          {typeByZoneData.length > 0 ? (
+            <div className="h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={typeByZoneData}
+                  layout="vertical"
+                  margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" horizontal={false} />
+                  <XAxis type="number" />
+                  <YAxis dataKey="name" type="category" width={100} />
+                  <Tooltip 
+                    formatter={(value: any) => [`${value.toLocaleString()} m³`, null]}
+                    contentStyle={{ borderRadius: '8px' }}
+                  />
+                  <Bar 
+                    dataKey="value" 
+                    fill="#8884d8"
+                    radius={[0, 4, 4, 0]}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          ) : (
+            <div className="h-80 flex items-center justify-center">
+              <p className="text-gray-500">No zone data available for this type</p>
+            </div>
+          )}
+        </motion.div>
+      </div>
+      
+      {/* Top Meters Table */}
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4 }}
+        className="bg-white rounded-lg shadow-md p-6"
+      >
+        <h3 className="text-lg font-semibold text-gray-800 mb-4">
+          Top {selectedType} Meters
+        </h3>
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Meter Label
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Zone
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Account Number
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Consumption (m³)
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {typeMeters.slice(0, 50).map((meter: any, index: number) => (
+                <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                  <td className="px-6 py-2 whitespace-nowrap text-sm font-medium text-gray-900">
+                    {meter.meterLabel}
+                  </td>
+                  <td className="px-6 py-2 whitespace-nowrap text-sm text-gray-500">
+                    {meter.zone ? meter.zone.replace('Zone_', 'Zone ').replace('_(', ' ').replace(')', '') : '-'}
+                  </td>
+                  <td className="px-6 py-2 whitespace-nowrap text-sm text-gray-500">
+                    {meter.accountNumber}
+                  </td>
+                  <td className="px-6 py-2 whitespace-nowrap text-sm text-gray-500">
+                    {meter.consumption.toLocaleString()}
+                  </td>
+                </tr>
+              ))}
+              {typeMeters.length === 0 && (
+                <tr>
+                  <td colSpan={4} className="px-6 py-4 text-center text-sm text-gray-500">
+                    No meter data available for this type
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+};
+
+// Loss View Component
+const LossView = ({ metrics, selectedPeriod, chartData }: any) => {
+  const currentMetrics = metrics.byMonth[selectedPeriod];
+  
+  // Prepare zone loss data
+  const zoneLossData = Object.entries(metrics.zoneMetrics)
+    .map(([zone, data]: [string, any]) => ({
+      zone: zone.replace('Zone_', 'Zone ').replace('_(', ' ').replace(')', ''),
+      bulkReading: data.bulkReading,
+      l3Sum: data.l3Sum,
+      loss: data.loss,
+      lossPercent: parseFloat(data.lossPercent)
+    }))
+    .sort((a, b) => b.lossPercent - a.lossPercent);
+  
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+    >
+      <h2 className="text-2xl font-semibold text-gray-800 mb-6">Loss Analysis</h2>
+      
+      {/* Loss Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        {/* Stage 1 Loss Card */}
+        <motion.div 
+          whileHover={{ y: -5 }}
+          className={`rounded-lg shadow-lg p-6 text-white bg-gradient-to-r ${
+            parseFloat(currentMetrics.stage1LossPercent) > 15 
+              ? 'from-red-400 to-red-600' 
+              : 'from-yellow-400 to-yellow-600'
+          }`}
+        >
+          <h3 className="text-lg font-semibold mb-2">Stage 1 Loss (Trunk Main)</h3>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <p className="text-sm opacity-90">Volume</p>
+              <p className="text-2xl font-bold">{currentMetrics.stage1Loss.toLocaleString()} m³</p>
+            </div>
+            <div>
+              <p className="text-sm opacity-90">Percentage</p>
+              <p className="text-2xl font-bold">{currentMetrics.stage1LossPercent}%</p>
+            </div>
+          </div>
+          <div className="mt-3">
+            <p className="text-sm opacity-90">Formula: L1 Supply - Total L2 Volume</p>
+            <p className="text-sm opacity-90">
+              {currentMetrics.l1Supply.toLocaleString()} - {currentMetrics.l2Volume.toLocaleString()} = {currentMetrics.stage1Loss.toLocaleString()}
+            </p>
+          </div>
+        </motion.div>
+        
+        {/* Stage 2 Loss Card */}
+        <motion.div 
+          whileHover={{ y: -5 }}
+          className={`rounded-lg shadow-lg p-6 text-white bg-gradient-to-r ${
+            parseFloat(currentMetrics.stage2LossPercent) > 15 
+              ? 'from-red-400 to-red-600' 
+              : 'from-purple-400 to-purple-600'
+          }`}
+        >
+          <h3 className="text-lg font-semibold mb-2">Stage 2 Loss (Distribution)</h3>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <p className="text-sm opacity-90">Volume</p>
+              <p className="text-2xl font-bold">{currentMetrics.stage2Loss.toLocaleString()} m³</p>
+            </div>
+            <div>
+              <p className="text-sm opacity-90">Percentage</p>
+              <p className="text-2xl font-bold">{currentMetrics.stage2LossPercent}%</p>
+            </div>
+          </div>
+          <div className="mt-3">
+            <p className="text-sm opacity-90">Formula: Total L2 Volume - Total L3 Volume</p>
+            <p className="text-sm opacity-90">
+              {currentMetrics.l2Volume.toLocaleString()} - {currentMetrics.l3Volume.toLocaleString()} = {currentMetrics.stage2Loss.toLocaleString()}
+            </p>
+          </div>
+        </motion.div>
+        
+        {/* Total Loss Card */}
+        <motion.div 
+          whileHover={{ y: -5 }}
+          className={`rounded-lg shadow-lg p-6 text-white bg-gradient-to-r ${
+            parseFloat(currentMetrics.totalLossPercent) > 20 
+              ? 'from-red-400 to-red-600' 
+              : 'from-blue-400 to-blue-600'
+          }`}
+        >
+          <h3 className="text-lg font-semibold mb-2">Total Loss (NRW)</h3>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <p className="text-sm opacity-90">Volume</p>
+              <p className="text-2xl font-bold">{currentMetrics.totalLoss.toLocaleString()} m³</p>
+            </div>
+            <div>
+              <p className="text-sm opacity-90">Percentage</p>
+              <p className="text-2xl font-bold">{currentMetrics.totalLossPercent}%</p>
+            </div>
+          </div>
+          <div className="mt-3">
+            <p className="text-sm opacity-90">Formula: L1 Supply - Total L3 Volume</p>
+            <p className="text-sm opacity-90">
+              {currentMetrics.l1Supply.toLocaleString()} - {currentMetrics.l3Volume.toLocaleString()} = {currentMetrics.totalLoss.toLocaleString()}
+            </p>
+          </div>
+        </motion.div>
+      </div>
+      
+      {/* Loss Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        {/* Loss Trend Chart */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="bg-white rounded-lg shadow-md p-6"
+        >
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">Loss Trend Analysis</h3>
+          <div className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart
+                data={chartData.lossTrendData}
+                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip 
+                  formatter={(value: any) => [`${value.toLocaleString()} m³`, null]}
+                  contentStyle={{ borderRadius: '8px' }}
+                />
+                <Legend />
+                <Line 
+                  type="monotone" 
+                  dataKey="Stage 1 Loss" 
+                  stroke="#f59e0b" 
+                  strokeWidth={2} 
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="Stage 2 Loss" 
+                  stroke="#8b5cf6" 
+                  strokeWidth={2} 
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="Total Loss" 
+                  stroke="#ef4444" 
+                  strokeWidth={3}
+                  activeDot={{ r: 8 }} 
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </motion.div>
+        
+        {/* Loss Percentage Trend */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="bg-white rounded-lg shadow-md p-6"
+        >
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">
+            Loss Percentage Trend
+          </h3>
+          <div className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart
+                data={Object.keys(metrics.byMonth).map((month) => ({ 
+                  name: month, 
+                  'Stage 1 Loss %': parseFloat(metrics.byMonth[month].stage1LossPercent), 
+                  'Stage 2 Loss %': parseFloat(metrics.byMonth[month].stage2LossPercent),
+                  'Total Loss %': parseFloat(metrics.byMonth[month].totalLossPercent)
+                }))}
+                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <XAxis dataKey="name" />
+                <YAxis domain={[-20, 40]}/>
+                <Tooltip 
+                  formatter={(value: any) => [`${value.toFixed(2)}%`, null]}
+                  contentStyle={{ borderRadius: '8px' }}
+                />
+                <Legend />
+                <Line 
+                  type="monotone" 
+                  dataKey="Stage 1 Loss %" 
+                  stroke="#f59e0b" 
+                  strokeWidth={2} 
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="Stage 2 Loss %" 
+                  stroke="#8b5cf6" 
+                  strokeWidth={2} 
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="Total Loss %" 
+                  stroke="#ef4444" 
+                  strokeWidth={3}
+                  activeDot={{ r: 8 }} 
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </motion.div>
+      </div>
+      
+      {/* Zone Loss Table */}
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4 }}
+        className="bg-white rounded-lg shadow-md p-6"
+      >
+        <h3 className="text-lg font-semibold text-gray-800 mb-4">
+          Zone Loss Analysis
+        </h3>
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Zone
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Bulk Reading (m³)
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  L3 Consumption (m³)
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Loss (m³)
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Loss Percentage
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Status
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {zoneLossData.map((zone, index) => (
+                <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                  <td className="px-6 py-2 whitespace-nowrap text-sm font-medium text-gray-900">
+                    {zone.zone}
+                  </td>
+                  <td className="px-6 py-2 whitespace-nowrap text-sm text-gray-500">
+                    {zone.bulkReading.toLocaleString()}
+                  </td>
+                  <td className="px-6 py-2 whitespace-nowrap text-sm text-gray-500">
+                    {zone.l3Sum.toLocaleString()}
+                  </td>
+                  <td className="px-6 py-2 whitespace-nowrap text-sm text-gray-500">
+                    {zone.loss.toLocaleString()}
+                  </td>
+                  <td className="px-6 py-2 whitespace-nowrap text-sm text-gray-500">
+                    {zone.lossPercent.toFixed(2)}%
+                  </td>
+                  <td className="px-6 py-2 whitespace-nowrap text-sm">
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      zone.lossPercent > 20 
+                        ? 'bg-red-100 text-red-800' 
+                        : zone.lossPercent > 10
+                          ? 'bg-yellow-100 text-yellow-800'
+                          : 'bg-green-100 text-green-800'
+                    }`}>
+                      {zone.lossPercent > 20 
+                        ? 'High Loss' 
+                        : zone.lossPercent > 10
+                          ? 'Moderate'
+                          : 'Normal'}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
 };
 
 export default WaterSystem;
