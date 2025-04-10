@@ -5,19 +5,22 @@ import {
   Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell
 } from 'recharts';
 import { motion } from 'framer-motion';
-import { ChevronDown, ChevronUp, BarChart2, PieChart as PieChartIcon, 
-  AlertTriangle, Home, Droplet, FileText, Settings, TrendingUp,
-  RefreshCw, FileDown } from 'lucide-react';
-import Layout from '@/components/layout/Layout';
-import { useAirtableData } from '@/hooks/useAirtableData';
-import { Button } from '@/components/ui/button';
+import { ChevronDown, ChevronUp, BarChart2, PieChart as PieChartIcon, AlertTriangle, Home, Droplet, FileText, Settings, TrendingUp } from 'lucide-react';
+import { electricityData as fallbackData } from '@/data/electricityData';
 import { toast } from 'sonner';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { WATER_TABLE_ID } from '@/services/api/airtableService';
-import { WaterConsumptionData } from '@/types/waterSystem';
-import { transformWaterData, getReadingValue, getAvailableMonths } from '@/utils/waterSystemUtils';
 
-// Type definitions for our metrics data structure
+// Define type interfaces
+interface WaterConsumptionRecord {
+  id: string;
+  'Meter Label'?: string;
+  'Acct #'?: string | number;
+  Zone?: string;
+  Type?: string;
+  'Parent Meter'?: string;
+  Label?: string;
+  [key: string]: any; // To allow for month readings like 'Jan-25', 'Feb-25', etc.
+}
+
 interface ZoneMetric {
   bulkMeter: string;
   bulkReading: number;
@@ -27,7 +30,15 @@ interface ZoneMetric {
   lossPercent: string;
 }
 
-interface MetricsByMonth {
+interface TypeConsumption {
+  [key: string]: number;
+}
+
+interface ZoneTypeConsumption {
+  [key: string]: TypeConsumption;
+}
+
+interface MonthMetrics {
   l1Supply: number;
   l2Volume: number;
   l3Volume: number;
@@ -41,184 +52,234 @@ interface MetricsByMonth {
 
 interface Metrics {
   byMonth: {
-    [key: string]: MetricsByMonth;
+    [key: string]: MonthMetrics;
   };
   zoneMetrics: {
     [key: string]: ZoneMetric;
   };
-  typeConsumption: {
-    [key: string]: number;
+  typeConsumption: TypeConsumption;
+  zoneTypeConsumption: ZoneTypeConsumption;
+}
+
+interface ChartDataType {
+  trendData: Array<{
+    name: string;
+    L1_Supply: number;
+    L3_Consumption: number;
+  }>;
+  lossTrendData: Array<{
+    name: string;
+    'Stage 1 Loss': number;
+    'Stage 2 Loss': number;
+    'Total Loss': number;
+  }>;
+  consumptionByTypeData: Array<{
+    name: string;
+    value: number;
+  }>;
+  zoneLossData: Array<{
+    name: string;
+    value: number;
+  }>;
+}
+
+interface DashboardViewProps {
+  metrics: Metrics;
+  selectedPeriod: string;
+  chartData: ChartDataType;
+}
+
+interface ZoneViewProps {
+  metrics: Metrics;
+  selectedPeriod: string;
+  selectedZone: string;
+  setSelectedZone: (zone: string) => void;
+  data: WaterConsumptionRecord[];
+}
+
+interface TypeViewProps {
+  metrics: Metrics;
+  selectedPeriod: string;
+  selectedType: string;
+  setSelectedType: (type: string) => void;
+  chartData: ChartDataType;
+  data: WaterConsumptionRecord[];
+}
+
+interface LossViewProps {
+  metrics: Metrics;
+  selectedPeriod: string;
+  chartData: ChartDataType;
+}
+
+// Generate mock water data based on existing electricity data structure
+const generateMockWaterData = (): WaterConsumptionRecord[] => {
+  // Create the data structure we need for water consumption
+  const mockL1 = {
+    id: '1',
+    'Meter Label': 'Main Bulk Meter',
+    'Acct #': '10001',
+    Zone: 'MainSupply',
+    Type: 'Main BULK',
+    Label: 'L1',
+    'Jan-25': 95000,
+    'Feb-25': 98000,
+    'Mar-25': 92500
   };
-  zoneTypeConsumption: {
-    [key: string]: {
-      [key: string]: number;
-    };
-  };
-}
+  
+  // Create mock L2 zone meters
+  const zones = ['Zone_03A', 'Zone_03B', 'Zone_05', 'Zone_08', 'Zone_FM', 'Zone_VS'];
+  const mockL2 = zones.map((zone, index) => ({
+    id: (index + 2).toString(),
+    'Meter Label': `${zone} Bulk Meter`,
+    'Acct #': (20000 + index).toString(),
+    Zone: zone,
+    Type: 'Zone Bulk',
+    Label: 'L2',
+    'Parent Meter': 'Main Bulk Meter',
+    'Jan-25': 12000 + (index * 1500),
+    'Feb-25': 13000 + (index * 1500),
+    'Mar-25': 11500 + (index * 1500)
+  }));
+  
+  // Create mock L3 individual meters
+  const meterTypes = ['Villa', 'Apartment', 'Commercial', 'Irrigation', 'Facility', 'Community'];
+  let mockL3: WaterConsumptionRecord[] = [];
+  
+  zones.forEach((zone, zoneIndex) => {
+    meterTypes.forEach((type, typeIndex) => {
+      // Create 3-5 meters of each type per zone
+      const meterCount = 3 + Math.floor(Math.random() * 3);
+      
+      for (let i = 0; i < meterCount; i++) {
+        const baseId = 30000 + (zoneIndex * 100) + (typeIndex * 10) + i;
+        mockL3.push({
+          id: baseId.toString(),
+          'Meter Label': `${zone}-${type}-${i+1}`,
+          'Acct #': baseId.toString(),
+          Zone: zone,
+          Type: type,
+          Label: 'L3',
+          'Parent Meter': `${zone} Bulk Meter`,
+          'Jan-25': 500 + Math.floor(Math.random() * 1000),
+          'Feb-25': 550 + Math.floor(Math.random() * 1000),
+          'Mar-25': 450 + Math.floor(Math.random() * 1000)
+        });
+      }
+    });
+  });
+  
+  // Create some direct connections (DC)
+  const mockDC = zones.slice(0, 3).map((zone, index) => ({
+    id: (40000 + index).toString(),
+    'Meter Label': `${zone}-DC-${index+1}`,
+    'Acct #': (40000 + index).toString(),
+    Zone: zone,
+    Type: meterTypes[Math.floor(Math.random() * meterTypes.length)],
+    Label: 'DC',
+    'Parent Meter': 'Main Bulk Meter',
+    'Jan-25': 300 + Math.floor(Math.random() * 500),
+    'Feb-25': 320 + Math.floor(Math.random() * 500),
+    'Mar-25': 280 + Math.floor(Math.random() * 500)
+  }));
+  
+  // Combine all meters
+  return [mockL1, ...mockL2, ...mockL3, ...mockDC];
+};
 
-interface ChartData {
-  trendData: any[];
-  lossTrendData: any[];
-  consumptionByTypeData: any[];
-  zoneLossData: any[];
-}
-
-// Define interface for Zone Loss Data
-interface ZoneLossDataItem {
-  zone: string;
-  bulkReading: number;
-  l3Sum: number;
-  loss: number;
-  lossPercent: number;
-}
-
-// Main Water System Component
+// Main App Component
 const WaterSystem = () => {
+  const [data, setData] = useState<WaterConsumptionRecord[]>([]);
   const [activeTab, setActiveTab] = useState<string>('dashboard');
   const [selectedPeriod, setSelectedPeriod] = useState<string>('Mar-25');
   const [selectedZone, setSelectedZone] = useState<string>('');
   const [selectedType, setSelectedType] = useState<string>('');
-  const [lastUpdated, setLastUpdated] = useState<Date | undefined>(undefined);
-  
-  // Fetch water data
-  const {
-    data: waterData,
-    isLoading,
-    error,
-    refetch
-  } = useAirtableData<WaterConsumptionData>(WATER_TABLE_ID, {
-    useFallback: true
-  });
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Transform data to our desired format
-  const transformedData = useMemo(() => {
-    if (!waterData) return [];
-    return transformWaterData(waterData);
-  }, [waterData]);
-
-  // Set default zones and types
+  // Data loading
   useEffect(() => {
-    if (transformedData.length > 0) {
-      // Set default selected zone
-      const zones = Array.from(new Set(transformedData
-        .filter(row => row.Zone && row.Label === 'L2')
-        .map(row => row.Zone)
-      ));
-      
-      if (zones.length > 0 && !selectedZone) {
-        setSelectedZone(zones[0]);
+    const loadData = async () => {
+      try {
+        setIsLoading(true);
+        
+        // Use mock data instead of trying to load from Airtable
+        const mockData = generateMockWaterData();
+        setData(mockData);
+        
+        // Set default selected zone
+        const zones = Array.from(new Set(mockData
+          .filter(row => row.Zone && row.Label === 'L2')
+          .map(row => row.Zone as string)
+        ));
+        
+        if (zones.length > 0) {
+          setSelectedZone(zones[0]);
+        }
+        
+        // Set default selected type
+        const types = Array.from(new Set(mockData
+          .filter(row => row.Type && row.Type !== 'Zone Bulk' && row.Type !== 'Main BULK')
+          .map(row => row.Type as string)
+        ));
+        
+        if (types.length > 0) {
+          setSelectedType(types[0]);
+        }
+        
+        setIsLoading(false);
+        toast.success("Water system data loaded successfully");
+      } catch (err: any) {
+        setError(`Error loading data: ${err.message}`);
+        setIsLoading(false);
+        toast.error(`Failed to load data: ${err.message}`);
       }
-      
-      // Set default selected type
-      const types = Array.from(new Set(transformedData
-        .filter(row => row.Type && row.Type !== 'Zone Bulk' && row.Type !== 'Main BULK')
-        .map(row => row.Type)
-      ));
-      
-      if (types.length > 0 && !selectedType) {
-        setSelectedType(types[0]);
-      }
-    }
-  }, [transformedData, selectedZone, selectedType]);
-
-  // Available months
-  const availableMonths = useMemo(() => {
-    return getAvailableMonths(transformedData).filter(month => 
-      month !== 'all' && /^[A-Za-z]+-\d{2}$/.test(month)
-    );
-  }, [transformedData]);
-
-  useEffect(() => {
-    if (availableMonths.length > 0 && !availableMonths.includes(selectedPeriod)) {
-      setSelectedPeriod(availableMonths[availableMonths.length - 1]);
-    }
-  }, [availableMonths, selectedPeriod]);
-
-  // Handle manual refresh
-  const handleManualFetch = async () => {
-    toast.info('Refreshing water data...');
-    try {
-      await refetch();
-      setLastUpdated(new Date());
-      toast.success('Water data refreshed successfully');
-    } catch (err) {
-      toast.error(`Failed to refresh data: ${err instanceof Error ? err.message : 'Unknown error'}`);
-    }
-  };
-
-  // Handle export data
-  const handleExportData = () => {
-    if (!transformedData || transformedData.length === 0) {
-      toast.error('No data to export');
-      return;
-    }
+    };
     
-    try {
-      // Create CSV header 
-      const headers = ["Meter Label", "Zone", "Type", "Level", `${selectedPeriod} (m³)`, "Parent Meter"];
-      
-      // Generate CSV rows
-      const csvRows = transformedData.map(record => [
-        record['Meter Label'] || '-', 
-        record.Zone || '-', 
-        record.Type || '-', 
-        record.Label || '-', 
-        getReadingValue(record, selectedPeriod) || '-', 
-        record['Parent Meter'] || '-'
-      ]);
-      
-      // Combine header and rows
-      const csvContent = [headers.join(','), ...csvRows.map(row => row.join(','))].join('\n');
-      
-      // Create a blob and download link
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.setAttribute('href', url);
-      link.setAttribute('download', `water-consumption-${selectedPeriod}.csv`);
-      link.style.display = 'none';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      
-      toast.success('Data exported successfully');
-    } catch (error) {
-      console.error('Export error:', error);
-      toast.error('Failed to export data');
-    }
-  };
+    loadData();
+  }, []);
 
   // Calculate metrics based on current data and filters
-  const metrics = useMemo<Metrics | null>(() => {
-    if (!transformedData.length) return null;
+  const metrics = useMemo<Metrics>(() => {
+    if (!data.length) return {
+      byMonth: {},
+      zoneMetrics: {},
+      typeConsumption: {},
+      zoneTypeConsumption: {}
+    };
     
-    const months = availableMonths;
-    const result: any = { byMonth: {} };
+    const months = ['Jan-25', 'Feb-25', 'Mar-25'];
+    const result: Metrics = { 
+      byMonth: {},
+      zoneMetrics: {},
+      typeConsumption: {},
+      zoneTypeConsumption: {}
+    };
     
     months.forEach(month => {
       // Get L1 meter reading
-      const l1Meter = transformedData.find(row => row.Label === 'L1');
-      const l1Supply = l1Meter ? getReadingValue(l1Meter, month) : 0;
+      const l1Meter = data.find(row => row.Label === 'L1');
+      const l1Supply = l1Meter ? parseFloat(l1Meter[month] as string) || 0 : 0;
       
       // Calculate Total L2 Volume
-      let l2Volume = transformedData
+      let l2Volume = data
         .filter(row => row.Label === 'L2')
-        .reduce((sum, row) => sum + getReadingValue(row, month), 0);
+        .reduce((sum, row) => sum + (parseFloat(row[month] as string) || 0), 0);
       
       // Add DC meters connected to L1
       if (l1Meter) {
-        l2Volume += transformedData
+        l2Volume += data
           .filter(row => row.Label === 'DC' && row['Parent Meter'] === l1Meter['Meter Label'])
-          .reduce((sum, row) => sum + getReadingValue(row, month), 0);
+          .reduce((sum, row) => sum + (parseFloat(row[month] as string) || 0), 0);
       }
       
       // Calculate Total L3 Volume (excluding anomaly meter)
-      const l3Volume = transformedData
+      const l3Volume = data
         .filter(row => 
           (row.Label === 'L3' && row['Acct #'] !== '4300322') || 
           row.Label === 'DC'
         )
-        .reduce((sum, row) => sum + getReadingValue(row, month), 0);
+        .reduce((sum, row) => sum + (parseFloat(row[month] as string) || 0), 0);
       
       // Calculate losses
       const stage1Loss = l1Supply - l2Volume;
@@ -242,8 +303,8 @@ const WaterSystem = () => {
     result.zoneMetrics = {};
     
     // Map zones to bulk meters
-    const zoneToBulkMap: Record<string, any> = {};
-    transformedData.filter(row => row.Label === 'L2').forEach(bulkMeter => {
+    const zoneToBulkMap: Record<string, WaterConsumptionRecord> = {};
+    data.filter(row => row.Label === 'L2').forEach(bulkMeter => {
       const zone = bulkMeter.Zone;
       if (zone) {
         zoneToBulkMap[zone] = bulkMeter;
@@ -252,23 +313,23 @@ const WaterSystem = () => {
     
     Object.keys(zoneToBulkMap).forEach(zone => {
       const bulkMeter = zoneToBulkMap[zone];
-      const bulkReading = getReadingValue(bulkMeter, selectedPeriod);
+      const bulkReading = parseFloat(bulkMeter[selectedPeriod] as string) || 0;
       
       // Sum L3 meters in this zone (excluding anomaly meter)
-      const l3Meters = transformedData.filter(row => 
+      const l3Meters = data.filter(row => 
         row.Label === 'L3' && 
         row.Zone === zone && 
         row['Acct #'] !== '4300322'
       );
       
-      const l3Sum = l3Meters.reduce((sum, row) => sum + getReadingValue(row, selectedPeriod), 0);
+      const l3Sum = l3Meters.reduce((sum, row) => sum + (parseFloat(row[selectedPeriod] as string) || 0), 0);
       const meterCount = l3Meters.length;
       
       const loss = bulkReading - l3Sum;
       const lossPercent = bulkReading > 0 ? (loss / bulkReading * 100) : 0;
       
       result.zoneMetrics[zone] = {
-        bulkMeter: bulkMeter['Meter Label'],
+        bulkMeter: bulkMeter['Meter Label'] as string,
         bulkReading,
         l3Sum,
         meterCount,
@@ -279,13 +340,13 @@ const WaterSystem = () => {
     
     // Calculate consumption by type
     result.typeConsumption = {};
-    const types = Array.from(new Set(transformedData.map(row => row.Type)));
+    const types = Array.from(new Set(data.map(row => row.Type)));
     
     types.forEach(type => {
       if (type && type !== 'Zone Bulk' && type !== 'Main BULK') {
-        result.typeConsumption[type] = transformedData
+        result.typeConsumption[type] = data
           .filter(row => row.Type === type && row['Acct #'] !== '4300322')
-          .reduce((sum, row) => sum + getReadingValue(row, selectedPeriod), 0);
+          .reduce((sum, row) => sum + (parseFloat(row[selectedPeriod] as string) || 0), 0);
       }
     });
     
@@ -293,13 +354,13 @@ const WaterSystem = () => {
     result.zoneTypeConsumption = {};
     
     Object.keys(zoneToBulkMap).forEach(zone => {
-      const typeConsumption: Record<string, number> = {};
+      const typeConsumption: TypeConsumption = {};
       
       types.forEach(type => {
         if (type && type !== 'Zone Bulk' && type !== 'Main BULK') {
-          const consumption = transformedData
+          const consumption = data
             .filter(row => row.Zone === zone && row.Type === type && row['Acct #'] !== '4300322')
-            .reduce((sum, row) => sum + getReadingValue(row, selectedPeriod), 0);
+            .reduce((sum, row) => sum + (parseFloat(row[selectedPeriod] as string) || 0), 0);
           
           if (consumption > 0) {
             typeConsumption[type] = consumption;
@@ -311,29 +372,30 @@ const WaterSystem = () => {
     });
     
     return result;
-  }, [transformedData, selectedPeriod, availableMonths]);
+  }, [data, selectedPeriod]);
 
   // Prepare data for charts
-  const chartData = useMemo<ChartData | null>(() => {
-    if (!metrics || !availableMonths || availableMonths.length < 3) return null;
-    
-    // Use only the last 3 months for trend data or all available months
-    const months = availableMonths.slice(-3);
+  const chartData = useMemo<ChartDataType>(() => {
+    if (!metrics.byMonth['Jan-25']) return {
+      trendData: [],
+      lossTrendData: [],
+      consumptionByTypeData: [],
+      zoneLossData: []
+    };
     
     // Monthly trend data
-    const trendData = months.map(month => ({ 
-      name: month, 
-      L1_Supply: metrics.byMonth[month].l1Supply, 
-      L3_Consumption: metrics.byMonth[month].l3Volume 
-    }));
+    const trendData = [
+      { name: 'Jan-25', L1_Supply: metrics.byMonth['Jan-25'].l1Supply, L3_Consumption: metrics.byMonth['Jan-25'].l3Volume },
+      { name: 'Feb-25', L1_Supply: metrics.byMonth['Feb-25'].l1Supply, L3_Consumption: metrics.byMonth['Feb-25'].l3Volume },
+      { name: 'Mar-25', L1_Supply: metrics.byMonth['Mar-25'].l1Supply, L3_Consumption: metrics.byMonth['Mar-25'].l3Volume }
+    ];
     
     // Loss trend data
-    const lossTrendData = months.map(month => ({ 
-      name: month, 
-      'Stage 1 Loss': metrics.byMonth[month].stage1Loss, 
-      'Stage 2 Loss': metrics.byMonth[month].stage2Loss, 
-      'Total Loss': metrics.byMonth[month].totalLoss 
-    }));
+    const lossTrendData = [
+      { name: 'Jan-25', 'Stage 1 Loss': metrics.byMonth['Jan-25'].stage1Loss, 'Stage 2 Loss': metrics.byMonth['Jan-25'].stage2Loss, 'Total Loss': metrics.byMonth['Jan-25'].totalLoss },
+      { name: 'Feb-25', 'Stage 1 Loss': metrics.byMonth['Feb-25'].stage1Loss, 'Stage 2 Loss': metrics.byMonth['Feb-25'].stage2Loss, 'Total Loss': metrics.byMonth['Feb-25'].totalLoss },
+      { name: 'Mar-25', 'Stage 1 Loss': metrics.byMonth['Mar-25'].stage1Loss, 'Stage 2 Loss': metrics.byMonth['Mar-25'].stage2Loss, 'Total Loss': metrics.byMonth['Mar-25'].totalLoss }
+    ];
     
     // Consumption by type chart data
     const consumptionByTypeData = Object.entries(metrics.typeConsumption)
@@ -354,210 +416,192 @@ const WaterSystem = () => {
       consumptionByTypeData,
       zoneLossData
     };
-  }, [metrics, availableMonths]);
+  }, [metrics]);
 
-  // Loading state
+  // Loading/Error state
   if (isLoading) {
-    return <Layout>
-      <div className="flex items-center justify-center min-h-[70vh]">
-        <div className="text-center">
-          <RefreshCw className="h-10 w-10 mx-auto mb-4 text-blue-500 animate-spin" />
-          <p className="text-lg text-muted-foreground">Loading water system data...</p>
-        </div>
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="text-blue-600 text-2xl font-semibold"
+        >
+          Loading water system data...
+        </motion.div>
       </div>
-    </Layout>;
+    );
   }
   
-  // Error state
   if (error) {
-    return <Layout>
-      <div className="container mx-auto p-4">
-        <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-red-500">
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="text-red-600 text-xl max-w-md p-6 bg-white rounded-lg shadow-lg"
+        >
           <AlertTriangle className="w-12 h-12 mb-4 text-red-500" />
           <h2 className="text-2xl font-bold mb-2">Error Loading Data</h2>
-          <p className="mb-4">{error.message}</p>
-          <Button variant="outline" onClick={handleManualFetch}>
-            <RefreshCw className="w-4 h-4 mr-2" />
-            Try Again
-          </Button>
-        </div>
+          <p>{error}</p>
+        </motion.div>
       </div>
-    </Layout>;
-  }
-
-  // If no data
-  if (!transformedData || transformedData.length === 0) {
-    return <Layout>
-      <div className="container mx-auto p-4">
-        <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-amber-500">
-          <AlertTriangle className="w-12 h-12 mb-4 text-amber-500" />
-          <h2 className="text-2xl font-bold mb-2">No Data Available</h2>
-          <p className="mb-4">No water consumption data available. Make sure your data source contains records.</p>
-          <Button variant="outline" onClick={handleManualFetch}>
-            <RefreshCw className="w-4 h-4 mr-2" />
-            Refresh Data
-          </Button>
-        </div>
-      </div>
-    </Layout>;
+    );
   }
 
   return (
-    <Layout>
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-        {/* Header */}
-        <header className="bg-white shadow-md">
-          <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex flex-col md:flex-row md:justify-between md:items-center gap-4">
-            <motion.h1 
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-2xl md:text-3xl font-bold text-blue-800 flex items-center"
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      {/* Header */}
+      <header className="bg-white shadow-md">
+        <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex justify-between items-center">
+          <motion.h1 
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-2xl md:text-3xl font-bold text-blue-800 flex items-center"
+          >
+            <Droplet className="mr-2 h-8 w-8 text-blue-500" />
+            Muscat Bay Water System
+          </motion.h1>
+          
+          {/* Period Selector */}
+          <motion.div 
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="relative inline-block text-left"
+          >
+            <select
+              value={selectedPeriod}
+              onChange={(e) => setSelectedPeriod(e.target.value)}
+              className="bg-white border border-gray-300 rounded-md py-2 pl-3 pr-10 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <Droplet className="mr-2 h-8 w-8 text-blue-500" />
-              Muscat Bay Water System
-            </motion.h1>
-            
-            <div className="flex flex-wrap items-center gap-3">
-              {/* Period Selector */}
-              <motion.div 
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
+              <option value="Jan-25">January 2025</option>
+              <option value="Feb-25">February 2025</option>
+              <option value="Mar-25">March 2025</option>
+            </select>
+          </motion.div>
+        </div>
+      </header>
+      
+      {/* Navigation */}
+      <nav className="bg-white shadow-sm border-t border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between h-16">
+            <div className="flex space-x-8">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setActiveTab('dashboard')}
+                className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
+                  activeTab === 'dashboard' 
+                    ? 'border-blue-500 text-blue-600' 
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
               >
-                <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
-                  <SelectTrigger className="w-[160px] bg-white/90 shadow-sm">
-                    <SelectValue placeholder="Select Period" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availableMonths.map(month => (
-                      <SelectItem key={month} value={month}>{month}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </motion.div>
+                <Home className="w-5 h-5 mr-1" />
+                Dashboard
+              </motion.button>
               
-              <Button variant="outline" size="icon" onClick={handleExportData} title="Export Data" className="bg-white/90 shadow-sm">
-                <FileDown className="h-4 w-4" />
-              </Button>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setActiveTab('zones')}
+                className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
+                  activeTab === 'zones' 
+                    ? 'border-blue-500 text-blue-600' 
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <PieChartIcon className="w-5 h-5 mr-1" />
+                Zone Details
+              </motion.button>
               
-              <Button variant="outline" size="icon" onClick={handleManualFetch} title="Refresh Data" className="bg-white/90 shadow-sm">
-                <RefreshCw className="h-4 w-4" />
-              </Button>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setActiveTab('types')}
+                className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
+                  activeTab === 'types' 
+                    ? 'border-blue-500 text-blue-600' 
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <BarChart2 className="w-5 h-5 mr-1" />
+                Type Analysis
+              </motion.button>
+              
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setActiveTab('losses')}
+                className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
+                  activeTab === 'losses' 
+                    ? 'border-blue-500 text-blue-600' 
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <TrendingUp className="w-5 h-5 mr-1" />
+                Loss Analysis
+              </motion.button>
             </div>
           </div>
-        </header>
+        </div>
+      </nav>
+      
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* Dashboard */}
+        {activeTab === 'dashboard' && metrics && (
+          <DashboardView metrics={metrics} selectedPeriod={selectedPeriod} chartData={chartData} />
+        )}
         
-        {/* Navigation */}
-        <nav className="bg-white shadow-sm border-t border-gray-200">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between h-16">
-              <div className="flex space-x-8">
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setActiveTab('dashboard')}
-                  className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
-                    activeTab === 'dashboard' 
-                      ? 'border-blue-500 text-blue-600' 
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  <Home className="w-5 h-5 mr-1" />
-                  Dashboard
-                </motion.button>
-                
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setActiveTab('zones')}
-                  className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
-                    activeTab === 'zones' 
-                      ? 'border-blue-500 text-blue-600' 
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  <PieChartIcon className="w-5 h-5 mr-1" />
-                  Zone Details
-                </motion.button>
-                
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setActiveTab('types')}
-                  className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
-                    activeTab === 'types' 
-                      ? 'border-blue-500 text-blue-600' 
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  <BarChart2 className="w-5 h-5 mr-1" />
-                  Type Analysis
-                </motion.button>
-                
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setActiveTab('losses')}
-                  className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
-                    activeTab === 'losses' 
-                      ? 'border-blue-500 text-blue-600' 
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  <TrendingUp className="w-5 h-5 mr-1" />
-                  Loss Analysis
-                </motion.button>
-              </div>
-            </div>
-          </div>
-        </nav>
+        {/* Zone Details */}
+        {activeTab === 'zones' && metrics && (
+          <ZoneView 
+            metrics={metrics} 
+            selectedPeriod={selectedPeriod} 
+            selectedZone={selectedZone}
+            setSelectedZone={setSelectedZone}
+            data={data}
+          />
+        )}
         
-        {/* Main Content */}
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          {/* Dashboard */}
-          {activeTab === 'dashboard' && metrics && chartData && (
-            <DashboardView metrics={metrics} selectedPeriod={selectedPeriod} chartData={chartData} />
-          )}
-          
-          {/* Zone Details */}
-          {activeTab === 'zones' && metrics && (
-            <ZoneView 
-              metrics={metrics} 
-              selectedPeriod={selectedPeriod} 
-              selectedZone={selectedZone}
-              setSelectedZone={setSelectedZone}
-              data={transformedData}
-            />
-          )}
-          
-          {/* Type Analysis */}
-          {activeTab === 'types' && metrics && (
-            <TypeView 
-              metrics={metrics} 
-              selectedPeriod={selectedPeriod}
-              selectedType={selectedType}
-              setSelectedType={setSelectedType}
-              chartData={chartData}
-              data={transformedData}
-            />
-          )}
-          
-          {/* Loss Analysis */}
-          {activeTab === 'losses' && metrics && chartData && (
-            <LossView 
-              metrics={metrics} 
-              selectedPeriod={selectedPeriod}
-              chartData={chartData}
-            />
-          )}
-        </main>
-      </div>
-    </Layout>
+        {/* Type Analysis */}
+        {activeTab === 'types' && metrics && (
+          <TypeView 
+            metrics={metrics} 
+            selectedPeriod={selectedPeriod}
+            selectedType={selectedType}
+            setSelectedType={setSelectedType}
+            chartData={chartData}
+            data={data}
+          />
+        )}
+        
+        {/* Loss Analysis */}
+        {activeTab === 'losses' && metrics && (
+          <LossView 
+            metrics={metrics} 
+            selectedPeriod={selectedPeriod}
+            chartData={chartData}
+          />
+        )}
+      </main>
+      
+      {/* Footer */}
+      <footer className="bg-white border-t border-gray-200 py-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <p className="text-center text-sm text-gray-500">
+            © 2025 Muscat Bay Water Management System. All rights reserved.
+          </p>
+        </div>
+      </footer>
+    </div>
   );
 };
 
 // Dashboard View Component
-const DashboardView: React.FC<{metrics: Metrics, selectedPeriod: string, chartData: ChartData}> = ({ metrics, selectedPeriod, chartData }) => {
+const DashboardView: React.FC<DashboardViewProps> = ({ metrics, selectedPeriod, chartData }) => {
   const currentMetrics = metrics.byMonth[selectedPeriod];
   
   // Custom gradient colors for KPI cards
@@ -675,9 +719,9 @@ const DashboardView: React.FC<{metrics: Metrics, selectedPeriod: string, chartDa
                   outerRadius={120}
                   fill="#8884d8"
                   dataKey="value"
-                  label={({ name, percent }: any) => `${name}: ${(percent * 100).toFixed(1)}%`}
+                  label={({ name, percent }: { name: string, percent: number }) => `${name}: ${(percent * 100).toFixed(1)}%`}
                 >
-                  {chartData.consumptionByTypeData.map((entry: any, index: number) => (
+                  {chartData.consumptionByTypeData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
@@ -720,7 +764,7 @@ const DashboardView: React.FC<{metrics: Metrics, selectedPeriod: string, chartDa
                   fill="#8884d8"
                   radius={[0, 4, 4, 0]}
                 >
-                  {chartData.zoneLossData.map((entry: any, index: number) => (
+                  {chartData.zoneLossData.map((entry, index) => (
                     <Cell 
                       key={`cell-${index}`} 
                       fill={entry.value > 20 ? '#ef4444' : '#10b981'} 
@@ -783,13 +827,7 @@ const DashboardView: React.FC<{metrics: Metrics, selectedPeriod: string, chartDa
 };
 
 // Zone View Component
-const ZoneView: React.FC<{
-  metrics: Metrics, 
-  selectedPeriod: string, 
-  selectedZone: string, 
-  setSelectedZone: (zone: string) => void, 
-  data: WaterConsumptionData[]
-}> = ({ metrics, selectedPeriod, selectedZone, setSelectedZone, data }) => {
+const ZoneView: React.FC<ZoneViewProps> = ({ metrics, selectedPeriod, selectedZone, setSelectedZone, data }) => {
   // Get all available zones
   const zones = Object.keys(metrics.zoneMetrics);
   
@@ -807,16 +845,16 @@ const ZoneView: React.FC<{
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
   
   // Get meters for the selected zone
-  const zoneMeterData = data.filter((row: any) => 
+  const zoneMeterData = data.filter(row => 
     row.Zone === selectedZone && 
     row.Label === 'L3' && 
     row['Acct #'] !== '4300322'
-  ).map((meter: any) => ({
+  ).map(meter => ({
     meterLabel: meter['Meter Label'],
     accountNumber: meter['Acct #'],
     type: meter.Type,
-    consumption: getReadingValue(meter, selectedPeriod)
-  })).sort((a: any, b: any) => b.consumption - a.consumption);
+    consumption: parseFloat(meter[selectedPeriod] as string) || 0
+  })).sort((a, b) => b.consumption - a.consumption);
   
   return (
     <motion.div
@@ -829,18 +867,17 @@ const ZoneView: React.FC<{
         
         {/* Zone Selector */}
         <div className="mt-3 md:mt-0">
-          <Select value={selectedZone} onValueChange={setSelectedZone}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Select Zone" />
-            </SelectTrigger>
-            <SelectContent>
-              {zones.map(zone => (
-                <SelectItem key={zone} value={zone}>
-                  {zone.replace('Zone_', 'Zone ').replace('_(', ' ').replace(')', '')}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <select
+            value={selectedZone}
+            onChange={(e) => setSelectedZone(e.target.value)}
+            className="bg-white border border-gray-300 rounded-md py-2 pl-3 pr-10 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            {zones.map(zone => (
+              <option key={zone} value={zone}>
+                {zone.replace('Zone_', 'Zone ').replace('_(', ' ').replace(')', '')}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
       
@@ -911,9 +948,9 @@ const ZoneView: React.FC<{
                         outerRadius={120}
                         fill="#8884d8"
                         dataKey="value"
-                        label={({ name, percent }: any) => `${name}: ${(percent * 100).toFixed(1)}%`}
+                        label={({ name, percent }: { name: string, percent: number }) => `${name}: ${(percent * 100).toFixed(1)}%`}
                       >
-                        {pieData.map((entry: any, index: number) => (
+                        {pieData.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}
                       </Pie>
@@ -957,7 +994,7 @@ const ZoneView: React.FC<{
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {zoneMeterData.slice(0, 20).map((meter: any, index: number) => (
+                    {zoneMeterData.slice(0, 20).map((meter, index) => (
                       <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
                         <td className="px-6 py-2 whitespace-nowrap text-sm font-medium text-gray-900">
                           {meter.meterLabel}
@@ -1012,7 +1049,7 @@ const ZoneView: React.FC<{
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {zoneMeterData.map((meter: any, index: number) => (
+                  {zoneMeterData.map((meter, index) => (
                     <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
                       <td className="px-6 py-2 whitespace-nowrap text-sm font-medium text-gray-900">
                         {meter.meterLabel}
@@ -1046,23 +1083,16 @@ const ZoneView: React.FC<{
 };
 
 // Type View Component
-const TypeView: React.FC<{
-  metrics: Metrics,
-  selectedPeriod: string,
-  selectedType: string,
-  setSelectedType: (type: string) => void,
-  chartData: ChartData | null,
-  data: WaterConsumptionData[]
-}> = ({ metrics, selectedPeriod, selectedType, setSelectedType, data }) => {
+const TypeView: React.FC<TypeViewProps> = ({ metrics, selectedPeriod, selectedType, setSelectedType, data }) => {
   // Get all available types (excluding bulk meters)
   const types = Object.keys(metrics.typeConsumption).filter(
-    (type: string) => type !== 'Zone Bulk' && type !== 'Main BULK'
+    type => type !== 'Zone Bulk' && type !== 'Main BULK'
   );
   
   // Get consumption data by zone for the selected type
-  const typeByZoneData: any[] = [];
+  const typeByZoneData = [];
   
-  Object.entries(metrics.zoneTypeConsumption).forEach(([zone, typeData]: [string, any]) => {
+  Object.entries(metrics.zoneTypeConsumption).forEach(([zone, typeData]) => {
     if (typeData[selectedType]) {
       typeByZoneData.push({
         name: zone.replace('Zone_', '').replace('_(', ' ').replace(')', ''),
@@ -1074,30 +1104,40 @@ const TypeView: React.FC<{
   typeByZoneData.sort((a, b) => b.value - a.value);
   
   // Get all meters of the selected type
-  const typeMeters = data.filter((row: any) => 
+  const typeMeters = data.filter(row => 
     row.Type === selectedType && 
     row['Acct #'] !== '4300322'
-  ).map((meter: any) => ({
+  ).map(meter => ({
     meterLabel: meter['Meter Label'],
     zone: meter.Zone,
     accountNumber: meter['Acct #'],
-    consumption: getReadingValue(meter, selectedPeriod)
-  })).sort((a: any, b: any) => b.consumption - a.consumption);
+    consumption: parseFloat(meter[selectedPeriod] as string) || 0
+  })).sort((a, b) => b.consumption - a.consumption);
   
   // Calculate total consumption for this type
   const totalTypeConsumption = metrics.typeConsumption[selectedType] || 0;
   
   // Monthly trend data for this type
-  const monthlyTrendData = Object.keys(metrics.byMonth).map((month: string) => { 
-    const consumption = data
-      .filter((row: any) => row.Type === selectedType && row['Acct #'] !== '4300322')
-      .reduce((sum: number, row: any) => sum + getReadingValue(row, month), 0);
-    
-    return {
-      name: month,
-      consumption
-    };
-  });
+  const monthlyTrendData = [
+    { 
+      name: 'Jan-25', 
+      consumption: data
+        .filter(row => row.Type === selectedType && row['Acct #'] !== '4300322')
+        .reduce((sum, row) => sum + (parseFloat(row['Jan-25'] as string) || 0), 0)
+    },
+    { 
+      name: 'Feb-25', 
+      consumption: data
+        .filter(row => row.Type === selectedType && row['Acct #'] !== '4300322')
+        .reduce((sum, row) => sum + (parseFloat(row['Feb-25'] as string) || 0), 0)
+    },
+    { 
+      name: 'Mar-25', 
+      consumption: data
+        .filter(row => row.Type === selectedType && row['Acct #'] !== '4300322')
+        .reduce((sum, row) => sum + (parseFloat(row['Mar-25'] as string) || 0), 0)
+    }
+  ];
   
   return (
     <motion.div
@@ -1110,16 +1150,15 @@ const TypeView: React.FC<{
         
         {/* Type Selector */}
         <div className="mt-3 md:mt-0">
-          <Select value={selectedType} onValueChange={setSelectedType}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Select Type" />
-            </SelectTrigger>
-            <SelectContent>
-              {types.map((type: string) => (
-                <SelectItem key={type} value={type}>{type}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <select
+            value={selectedType}
+            onChange={(e) => setSelectedType(e.target.value)}
+            className="bg-white border border-gray-300 rounded-md py-2 pl-3 pr-10 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            {types.map(type => (
+              <option key={type} value={type}>{type}</option>
+            ))}
+          </select>
         </div>
       </div>
       
@@ -1240,13 +1279,13 @@ const TypeView: React.FC<{
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {typeMeters.slice(0, 50).map((meter: any, index: number) => (
+              {typeMeters.slice(0, 50).map((meter, index) => (
                 <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
                   <td className="px-6 py-2 whitespace-nowrap text-sm font-medium text-gray-900">
                     {meter.meterLabel}
                   </td>
                   <td className="px-6 py-2 whitespace-nowrap text-sm text-gray-500">
-                    {meter.zone ? meter.zone.replace('Zone_', 'Zone ').replace('_(', ' ').replace(')', '') : '-'}
+                    {meter.zone ? meter.zone.toString().replace('Zone_', 'Zone ').replace('_(', ' ').replace(')', '') : '-'}
                   </td>
                   <td className="px-6 py-2 whitespace-nowrap text-sm text-gray-500">
                     {meter.accountNumber}
@@ -1272,16 +1311,12 @@ const TypeView: React.FC<{
 };
 
 // Loss View Component
-const LossView: React.FC<{
-  metrics: Metrics, 
-  selectedPeriod: string, 
-  chartData: ChartData
-}> = ({ metrics, selectedPeriod, chartData }) => {
+const LossView: React.FC<LossViewProps> = ({ metrics, selectedPeriod, chartData }) => {
   const currentMetrics = metrics.byMonth[selectedPeriod];
   
   // Prepare zone loss data
-  const zoneLossData: ZoneLossDataItem[] = Object.entries(metrics.zoneMetrics)
-    .map(([zone, data]: [string, ZoneMetric]) => ({
+  const zoneLossData = Object.entries(metrics.zoneMetrics)
+    .map(([zone, data]) => ({
       zone: zone.replace('Zone_', 'Zone ').replace('_(', ' ').replace(')', ''),
       bulkReading: data.bulkReading,
       l3Sum: data.l3Sum,
@@ -1446,12 +1481,26 @@ const LossView: React.FC<{
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart
-                data={Object.keys(metrics.byMonth).map((month) => ({ 
-                  name: month, 
-                  'Stage 1 Loss %': parseFloat(metrics.byMonth[month].stage1LossPercent), 
-                  'Stage 2 Loss %': parseFloat(metrics.byMonth[month].stage2LossPercent),
-                  'Total Loss %': parseFloat(metrics.byMonth[month].totalLossPercent)
-                }))}
+                data={[
+                  { 
+                    name: 'Jan-25', 
+                    'Stage 1 Loss %': parseFloat(metrics.byMonth['Jan-25'].stage1LossPercent), 
+                    'Stage 2 Loss %': parseFloat(metrics.byMonth['Jan-25'].stage2LossPercent),
+                    'Total Loss %': parseFloat(metrics.byMonth['Jan-25'].totalLossPercent)
+                  },
+                  { 
+                    name: 'Feb-25', 
+                    'Stage 1 Loss %': parseFloat(metrics.byMonth['Feb-25'].stage1LossPercent), 
+                    'Stage 2 Loss %': parseFloat(metrics.byMonth['Feb-25'].stage2LossPercent),
+                    'Total Loss %': parseFloat(metrics.byMonth['Feb-25'].totalLossPercent)
+                  },
+                  { 
+                    name: 'Mar-25', 
+                    'Stage 1 Loss %': parseFloat(metrics.byMonth['Mar-25'].stage1LossPercent), 
+                    'Stage 2 Loss %': parseFloat(metrics.byMonth['Mar-25'].stage2LossPercent),
+                    'Total Loss %': parseFloat(metrics.byMonth['Mar-25'].totalLossPercent)
+                  }
+                ]}
                 margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
