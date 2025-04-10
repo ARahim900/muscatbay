@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -16,7 +16,6 @@ const STPDashboard = () => {
   const [showDailyView, setShowDailyView] = useState(false);
   const [activeLabel, setActiveLabel] = useState('');
   
-  // Monthly production data based on actual analysis
   const monthlyData = [
     { month: 'Jul-24', treatedWater: 18308, irrigationOutput: 16067, inletSewage: 16895, treatmentEfficiency: 108.36, irrigationEfficiency: 87.76 },
     { month: 'Aug-24', treatedWater: 17372, irrigationOutput: 15139, inletSewage: 15641, treatmentEfficiency: 111.07, irrigationEfficiency: 87.15 },
@@ -29,7 +28,6 @@ const STPDashboard = () => {
     { month: 'Mar-25', treatedWater: 7251, irrigationOutput: 6202, inletSewage: 6322, treatmentEfficiency: 114.69, irrigationEfficiency: 85.53 }
   ];
   
-  // Daily data for each month
   const dailyData: Record<string, Array<{
     day: string;
     treatedWater: number;
@@ -396,4 +394,19 @@ const STPDashboard = () => {
                       {day.tankerVolume}
                     </td>
                     <td className="px-6 py-2 whitespace-nowrap text-sm text-gray-500">
-                      {
+                      {day.directInlineSewage}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  return renderOverview();
+};
+
+export default STPDashboard;
