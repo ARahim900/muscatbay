@@ -507,6 +507,73 @@ const MuscatBayWaterSystem = () => {
           const stage1Loss = totalL1 - totalL2;
           const stage2Loss = totalL2 - totalL3;
           const totalLoss = totalL1 - totalL3;
-
           const stage1LossPct = totalL1 > 0 ? (stage1Loss / totalL1 * 100) : 0;
-          const stage2LossPct = totalL2 > 0
+          const stage2LossPct = totalL2 > 0 ? (stage2Loss / totalL2 * 100) : 0;
+          const totalLossPct = totalL1 > 0 ? (totalLoss / totalL1 * 100) : 0;
+
+          return {
+              month,
+              stage1Loss,
+              stage2Loss,
+              totalLoss,
+              stage1LossPct,
+              stage2LossPct,
+              totalLossPct
+          };
+      });
+  };
+
+  const consumptionByTypeData: ChartDataItem[] = useMemo(() => {
+    const { consumptionByType } = calculatedMetrics;
+    return Object.entries(consumptionByType)
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value);
+  }, [calculatedMetrics]);
+
+  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
+
+  return (
+    <div className="container mx-auto p-4">
+      <h1 className="text-2xl font-semibold mb-4 text-muscat-primary">Muscat Bay Water System Dashboard</h1>
+
+      {/* Top Filters and Actions */}
+      <div className="flex justify-between items-center mb-4">
+        <div className="flex items-center space-x-2">
+          <select
+            className="p-2 border rounded"
+            value={selectedYear}
+            onChange={(e) => setSelectedYear(e.target.value)}
+          >
+            <option value="2024">2024</option>
+            <option value="2025">2025</option>
+          </select>
+
+          <select
+            className="p-2 border rounded"
+            value={selectedMonth}
+            onChange={(e) => setSelectedMonth(e.target.value)}
+          >
+            {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].map(month => (
+              <option key={month} value={month}>{month}</option>
+            ))}
+          </select>
+
+          <select
+            className="p-2 border rounded"
+            value={selectedType}
+            onChange={(e) => setSelectedType(e.target.value)}
+          >
+            <option value="All Types">All Types</option>
+            {[...new Set(processedData.map(m => m.type))].map(type => (
+              <option key={type} value={type}>{type}</option>
+            ))}
+          </select>
+
+          <select
+            className="p-2 border rounded"
+            value={selectedZone}
+            onChange={(e) => setSelectedZone(e.target.value)}
+            disabled={processedData.length === 0}
+          >
+            {processedData.length === 0 ? (
+              <option value="">No Zones Available</option>
