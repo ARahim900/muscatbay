@@ -1,51 +1,56 @@
 
-import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import './App.css';
 import Index from '@/pages/Index';
-import Auth from '@/pages/Auth';
-import Contracts from '@/pages/Contracts';
+import NotFound from '@/pages/NotFound';
+import ALM from '@/pages/ALM';
+import ReserveFundCalculatorPage from '@/pages/ReserveFundCalculatorPage';
 import Projects from '@/pages/Projects';
 import Electricity from '@/pages/Electricity';
-import ElectricitySystem from '@/pages/ElectricitySystem';
-import HVAC from '@/pages/HVAC';
-import PumpingStations from '@/pages/PumpingStations';
-import STP from '@/pages/STP';
-import STPPlant from '@/pages/STPPlant';
-import STPDashboard from '@/pages/STPDashboard';
-import STPAnalytics from '@/pages/STPAnalytics';
-import Reports from '@/pages/Reports';
-import Admin from '@/pages/Admin';
-import OperatingExpenses from '@/pages/OperatingExpenses';
-import ServiceCharges from '@/pages/ServiceCharges';
-import ReserveFundCalculatorPage from '@/pages/ReserveFundCalculatorPage';
 import ReserveFundDashboard from '@/pages/ReserveFundDashboard';
-import NotFound from '@/pages/NotFound';
-import Layout from '@/components/layout/Layout';
+import ServiceCharges from '@/pages/ServiceCharges';
+import Admin from '@/pages/Admin';
+import STP from '@/pages/STP';
+import Auth from '@/pages/Auth';
+import PropertyManagement from '@/pages/PropertyManagement';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import STPPlant from '@/pages/STPPlant';
+import Contracts from '@/pages/Contracts';
+import OperatingExpenses from '@/pages/OperatingExpenses';
+import HVAC from '@/pages/HVAC';
+import Reports from '@/pages/Reports';
+import PumpingStations from '@/pages/PumpingStations';
+import Water from '@/pages/Water';
 import WaterSystem from '@/pages/WaterSystem';
 
 function App() {
   return (
     <Routes>
-      <Route path="/" element={<Layout><Index /></Layout>} />
-      <Route path="/contracts" element={<Layout><Contracts /></Layout>} />
-      <Route path="/projects" element={<Layout><Projects /></Layout>} />
-      <Route path="/electricity" element={<Layout><Electricity /></Layout>} />
-      <Route path="/electricity-system" element={<Layout><ElectricitySystem /></Layout>} />
-      <Route path="/water-system" element={<Layout><WaterSystem /></Layout>} />
-      <Route path="/hvac" element={<Layout><HVAC /></Layout>} />
-      <Route path="/pumping-stations" element={<Layout><PumpingStations /></Layout>} />
-      <Route path="/stp" element={<Layout><STP /></Layout>} />
-      <Route path="/stp-plant" element={<Layout><STPPlant /></Layout>} />
-      <Route path="/stp-dashboard" element={<Layout><STPDashboard /></Layout>} />
-      <Route path="/stp-analytics" element={<Layout><STPAnalytics /></Layout>} />
-      <Route path="/reports" element={<Layout><Reports /></Layout>} />
-      <Route path="/admin" element={<Layout><Admin /></Layout>} />
-      <Route path="/operating-expenses" element={<Layout><OperatingExpenses /></Layout>} />
-      <Route path="/service-charges" element={<Layout><ServiceCharges /></Layout>} />
-      <Route path="/reserve-fund-calculator" element={<Layout><ReserveFundCalculatorPage /></Layout>} />
-      <Route path="/reserve-fund-dashboard" element={<Layout><ReserveFundDashboard /></Layout>} />
+      <Route path="/" element={<Index />} />
       <Route path="/auth" element={<Auth />} />
+      
+      <Route path="/" element={<ProtectedRoute />}>
+        <Route path="/alm" element={<ALM />} />
+        <Route path="/projects" element={<Projects />} />
+        <Route path="/electricity" element={<Electricity />} />
+        <Route path="/electricity-system" element={<Electricity />} />
+        <Route path="/reserve-fund-calculator" element={<ReserveFundCalculatorPage />} />
+        <Route path="/reserve-fund-dashboard" element={<ReserveFundDashboard />} />
+        <Route path="/service-charges" element={<ServiceCharges />} />
+        <Route path="/stp" element={<STP />} />
+        <Route path="/stp-dashboard" element={<STP />} />
+        <Route path="/stp-plant" element={<STPPlant />} />
+        <Route path="/water" element={<Water />} />
+        <Route path="/water-system" element={<WaterSystem />} />
+        <Route path="/admin" element={<Admin />} />
+        <Route path="/property-management" element={<PropertyManagement />} />
+        <Route path="/contracts" element={<Contracts />} />
+        <Route path="/operating-expenses" element={<OperatingExpenses />} />
+        <Route path="/hvac" element={<HVAC />} />
+        <Route path="/reports" element={<Reports />} />
+        <Route path="/pumping-stations" element={<PumpingStations />} />
+      </Route>
+      
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
