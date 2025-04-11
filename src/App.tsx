@@ -29,7 +29,7 @@ function App() {
       <Route path="/" element={<Index />} />
       <Route path="/auth" element={<Auth />} />
       
-      <Route path="/" element={<ProtectedRoute />}>
+      <Route element={<ProtectedRoute />}>
         <Route path="/alm" element={<ALM />} />
         <Route path="/projects" element={<Projects />} />
         <Route path="/electricity" element={<Electricity />} />
