@@ -465,3 +465,817 @@ const MuscatBayWaterSystem = () => {
             const totalLossPct = totalL1 > 0 ? (totalLoss / totalL1 * 100) : 0;
 
             return { period: month, stage1LossPct, stage2LossPct, totalLossPct };
+        });
+        
+        return trend;
+    };
+
+  // Prepare data for "Consumption by Type" pie chart
+  const prepareConsumptionByTypeData = () => {
+    if (!calculatedMetrics.consumptionByType) return [];
+    
+    // Convert the consumptionByType object to an array for the pie chart
+    return Object.entries(calculatedMetrics.consumptionByType)
+      .map(([type, value]) => ({
+        name: type,
+        value: Number(value)
+      }))
+      .filter(item => item.value > 0) // Only include types with consumption > 0
+      .sort((a, b) => b.value - a.value); // Sort by consumption (descending)
+  };
+
+  // Filter zone meters based on search term
+  const filteredZoneMeters = useMemo(() => {
+    const meters = getSelectedZoneMeters();
+    if (!searchTerm) return meters;
+    
+    return meters.filter(meter => 
+      meter.meterLabel.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      meter.acctNum.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [processedData, selectedZone, searchTerm, selectedPeriod]); // Re-filter when data, zone, search, or period changes
+
+  // --- RENDER LOGIC ---
+  return (
+    <div className="flex flex-col h-full bg-gray-50">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-200 px-6 py-4">
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl font-semibold text-gray-800">Muscat Bay Water System</h1>
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2">
+              <Clock size={18} className="text-gray-500" />
+              <span className="text-sm text-gray-600">Last updated: Today, 08:45 AM</span>
+            </div>
+            <button 
+              onClick={handleRefresh}
+              className="flex items-center space-x-1 px-3 py-1.5 bg-white border border-gray-300 rounded-md text-sm text-gray-700 hover:bg-gray-50"
+            >
+              <RefreshCw size={16} />
+              <span>Refresh</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="flex-1 overflow-auto p-6">
+        {isLoading || isScriptLoading ? (
+          <div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+          </div>
+        ) : (
+          <>
+            {/* Filters */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
+              <div className="flex flex-wrap items-center gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Year</label>
+                  <select 
+                    value={selectedYear}
+                    onChange={(e) => setSelectedYear(e.target.value)}
+                    className="block w-32 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  >
+                    <option value="2025">2025</option>
+                    <option value="2024">2024</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Month</label>
+                  <select 
+                    value={selectedMonth}
+                    onChange={(e) => setSelectedMonth(e.target.value)}
+                    className="block w-32 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  >
+                    <option value="Jan">January</option>
+                    <option value="Feb">February</option>
+                    <option value="Mar">March</option>
+                    <option value="Apr">April</option>
+                    <option value="May">May</option>
+                    <option value="Jun">June</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Zone</label>
+                  <select 
+                    value={selectedZone}
+                    onChange={(e) => setSelectedZone(e.target.value)}
+                    className="block w-40 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  >
+                    {[...new Set(processedData.filter(m => m.zone && m.zone !== 'Unknown').map(m => m.zone))].map(zone => (
+                      <option key={zone} value={zone}>{zone.replace('Zone_', 'Zone ').replace('_', ' ')}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                  <select 
+                    value={selectedType}
+                    onChange={(e) => setSelectedType(e.target.value)}
+                    className="block w-40 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  >
+                    <option value="All Types">All Types</option>
+                    {[...new Set(processedData.filter(m => m.type).map(m => m.type))].map(type => (
+                      <option key={type} value={type}>{type}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="ml-auto flex items-center space-x-2">
+                  <button className="flex items-center space-x-1 px-3 py-1.5 bg-white border border-gray-300 rounded-md text-sm text-gray-700 hover:bg-gray-50">
+                    <Filter size={16} />
+                    <span>More Filters</span>
+                  </button>
+                  <button className="flex items-center space-x-1 px-3 py-1.5 bg-white border border-gray-300 rounded-md text-sm text-gray-700 hover:bg-gray-50">
+                    <Download size={16} />
+                    <span>Export</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Tabs */}
+            <div className="mb-6">
+              <div className="border-b border-gray-200">
+                <nav className="-mb-px flex space-x-8">
+                  <button
+                    onClick={() => handleTabChange('dashboard')}
+                    className={`${
+                      activeTab === 'dashboard'
+                        ? 'border-indigo-500 text-indigo-600'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+                  >
+                    Dashboard
+                  </button>
+                  <button
+                    onClick={() => handleTabChange('zone-details')}
+                    className={`${
+                      activeTab === 'zone-details'
+                        ? 'border-indigo-500 text-indigo-600'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+                  >
+                    Zone Details
+                  </button>
+                  <button
+                    onClick={() => handleTabChange('type-details')}
+                    className={`${
+                      activeTab === 'type-details'
+                        ? 'border-indigo-500 text-indigo-600'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+                  >
+                    Type Details
+                  </button>
+                  <button
+                    onClick={() => handleTabChange('trends')}
+                    className={`${
+                      activeTab === 'trends'
+                        ? 'border-indigo-500 text-indigo-600'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+                  >
+                    Trends
+                  </button>
+                  <button
+                    onClick={() => handleTabChange('settings')}
+                    className={`${
+                      activeTab === 'settings'
+                        ? 'border-indigo-500 text-indigo-600'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+                  >
+                    Settings
+                  </button>
+                </nav>
+              </div>
+            </div>
+
+            {/* Dashboard Tab Content */}
+            {activeTab === 'dashboard' && (
+              <div>
+                {/* KPI Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                  <KPI_Card
+                    title="Total Supply"
+                    value={formatNumber(calculatedMetrics.totalL1Supply)}
+                    unit="m³"
+                    icon={<Droplet size={20} className="text-blue-500" />}
+                    trend={null}
+                    trendText={null}
+                    color="blue"
+                  />
+                  <KPI_Card
+                    title="Total Loss"
+                    value={formatNumber(calculatedMetrics.totalLoss)}
+                    unit="m³"
+                    icon={<ArrowDownRight size={20} className="text-red-500" />}
+                    trend={calculatedMetrics.totalLossPercentage}
+                    trendText={formatPercentage(calculatedMetrics.totalLossPercentage)}
+                    color={getLossStatusColor(calculatedMetrics.totalLossPercentage)}
+                    statusText={getLossStatusText(calculatedMetrics.totalLossPercentage)}
+                  />
+                  <KPI_Card
+                    title="Stage 1 Loss"
+                    value={formatNumber(calculatedMetrics.stage1Loss)}
+                    unit="m³"
+                    icon={<Activity size={20} className="text-orange-500" />}
+                    trend={calculatedMetrics.stage1LossPercentage}
+                    trendText={formatPercentage(calculatedMetrics.stage1LossPercentage)}
+                    color={getLossStatusColor(calculatedMetrics.stage1LossPercentage)}
+                    statusText={getLossStatusText(calculatedMetrics.stage1LossPercentage)}
+                    description="L1 to L2 Loss"
+                  />
+                  <KPI_Card
+                    title="Stage 2 Loss"
+                    value={formatNumber(calculatedMetrics.stage2Loss)}
+                    unit="m³"
+                    icon={<Layers size={20} className="text-purple-500" />}
+                    trend={calculatedMetrics.stage2LossPercentage}
+                    trendText={formatPercentage(calculatedMetrics.stage2LossPercentage)}
+                    color={getLossStatusColor(calculatedMetrics.stage2LossPercentage)}
+                    statusText={getLossStatusText(calculatedMetrics.stage2LossPercentage)}
+                    description="L2 to L3 Loss"
+                  />
+                </div>
+
+                {/* Charts Row */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                  {/* Water Flow Diagram */}
+                  <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                    <h3 className="text-lg font-medium text-gray-900 mb-4">Water Flow Diagram</h3>
+                    <div className="h-80">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart
+                          data={[
+                            { name: 'L1 Supply', value: calculatedMetrics.totalL1Supply },
+                            { name: 'Stage 1 Loss', value: calculatedMetrics.stage1Loss },
+                            { name: 'L2 Volume', value: calculatedMetrics.totalL2Volume },
+                            { name: 'Stage 2 Loss', value: calculatedMetrics.stage2Loss },
+                            { name: 'L3 Volume', value: calculatedMetrics.totalL3Volume }
+                          ]}
+                          layout="vertical"
+                          margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                        >
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis type="number" />
+                          <YAxis dataKey="name" type="category" />
+                          <Tooltip formatter={(value) => [`${formatNumber(value)} m³`, '']} />
+                          <Legend />
+                          <Bar dataKey="value" name="Volume (m³)">
+                            {[
+                              <Cell key="L1" fill={THEME.accent} />,
+                              <Cell key="S1L" fill={THEME.error} />,
+                              <Cell key="L2" fill={THEME.secondary} />,
+                              <Cell key="S2L" fill={THEME.error} />,
+                              <Cell key="L3" fill={THEME.success} />
+                            ]}
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+
+                  {/* Consumption by Type */}
+                  <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                    <h3 className="text-lg font-medium text-gray-900 mb-4">Consumption by Type</h3>
+                    <div className="h-80">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={prepareConsumptionByTypeData()}
+                            cx="50%"
+                            cy="50%"
+                            labelLine={false}
+                            outerRadius={80}
+                            fill="#8884d8"
+                            dataKey="value"
+                            nameKey="name"
+                            label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(1)}%`}
+                          >
+                            {prepareConsumptionByTypeData().map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={THEME.chartColors[index % THEME.chartColors.length]} />
+                            ))}
+                          </Pie>
+                          <Tooltip formatter={(value) => [`${formatNumber(value)} m³`, '']} />
+                          <Legend />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Bottom Row */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Top Losing Zones */}
+                  <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                    <h3 className="text-lg font-medium text-gray-900 mb-4">Top Losing Zones</h3>
+                    <div className="space-y-4">
+                      {calculatedMetrics.topLosingZones.map((zone, index) => (
+                        <div key={index} className="flex items-center">
+                          <div className="w-32 flex-shrink-0">
+                            <span className="text-sm font-medium text-gray-900">{zone.name}</span>
+                          </div>
+                          <div className="flex-1 mx-4">
+                            <div className="w-full bg-gray-200 rounded-full h-2.5">
+                              <div 
+                                className="h-2.5 rounded-full" 
+                                style={{ 
+                                  width: `${Math.min(zone.lossPercentage * 2, 100)}%`,
+                                  backgroundColor: getLossStatusColor(zone.lossPercentage)
+                                }}
+                              ></div>
+                            </div>
+                          </div>
+                          <div className="w-20 flex-shrink-0 text-right">
+                            <span className="text-sm font-medium" style={{ color: getLossStatusColor(zone.lossPercentage) }}>
+                              {formatPercentage(zone.lossPercentage)}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Loss Trend */}
+                  <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                    <h3 className="text-lg font-medium text-gray-900 mb-4">Loss Trend ({selectedYear})</h3>
+                    <div className="h-80">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart
+                          data={calculateLossTrend()}
+                          margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                        >
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="period" />
+                          <YAxis tickFormatter={(value) => `${value}%`} />
+                          <Tooltip formatter={(value) => [`${value.toFixed(1)}%`, '']} />
+                          <Legend />
+                          <Line type="monotone" dataKey="totalLossPct" name="Total Loss %" stroke={THEME.error} activeDot={{ r: 8 }} />
+                          <Line type="monotone" dataKey="stage1LossPct" name="Stage 1 Loss %" stroke={THEME.warning} />
+                          <Line type="monotone" dataKey="stage2LossPct" name="Stage 2 Loss %" stroke={THEME.secondary} />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Zone Details Tab Content */}
+            {activeTab === 'zone-details' && (
+              <div>
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <div>
+                      <h2 className="text-xl font-semibold text-gray-900">Zone Details: {selectedZone.replace('Zone_', 'Zone ').replace('_', ' ')}</h2>
+                      <p className="text-sm text-gray-500 mt-1">Detailed analysis of water consumption and loss for the selected zone</p>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <div className="relative">
+                        <input
+                          type="text"
+                          placeholder="Search meters..."
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                          className="block w-64 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm pl-10"
+                        />
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                          <svg className="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                            <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Zone KPI Cards */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                    <KPI_Card
+                      title="Zone Bulk Supply"
+                      value={formatNumber(calculatedMetrics.zoneMetrics[selectedZone]?.l2Bulk || 0)}
+                      unit="m³"
+                      icon={<Droplet size={20} className="text-blue-500" />}
+                      trend={null}
+                      trendText={null}
+                      color="blue"
+                    />
+                    <KPI_Card
+                      title="Zone Consumption"
+                      value={formatNumber(calculatedMetrics.zoneMetrics[selectedZone]?.l3Sum || 0)}
+                      unit="m³"
+                      icon={<Check size={20} className="text-green-500" />}
+                      trend={null}
+                      trendText={null}
+                      color="green"
+                    />
+                    <KPI_Card
+                      title="Zone Loss"
+                      value={formatNumber(calculatedMetrics.zoneMetrics[selectedZone]?.loss || 0)}
+                      unit="m³"
+                      icon={<Percent size={20} className="text-red-500" />}
+                      trend={calculatedMetrics.zoneMetrics[selectedZone]?.lossPercentage || 0}
+                      trendText={formatPercentage(calculatedMetrics.zoneMetrics[selectedZone]?.lossPercentage || 0)}
+                      color={getLossStatusColor(calculatedMetrics.zoneMetrics[selectedZone]?.lossPercentage || 0)}
+                      statusText={getLossStatusText(calculatedMetrics.zoneMetrics[selectedZone]?.lossPercentage || 0)}
+                    />
+                  </div>
+
+                  {/* Zone Meters Table */}
+                  <div className="mt-8">
+                    <h3 className="text-lg font-medium text-gray-900 mb-4">Individual Meters in {selectedZone.replace('Zone_', 'Zone ').replace('_', ' ')}</h3>
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Meter Label</th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Account #</th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Parent Meter</th>
+                            <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Consumption (m³)</th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                          {filteredZoneMeters.map((meter, index) => (
+                            <tr key={index} className={meter.acctNum === '4300322' ? 'bg-red-50' : ''}>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{meter.meterLabel}</td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{meter.acctNum}</td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{meter.type}</td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{meter.parentMeterLabel}</td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-right font-medium">
+                                {meter.acctNum === '4300322' ? (
+                                  <span className="text-red-500 font-medium">{formatNumber(meter[selectedPeriod])} (excluded)</span>
+                                ) : (
+                                  formatNumber(meter[selectedPeriod])
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                          {filteredZoneMeters.length === 0 && (
+                            <tr>
+                              <td colSpan={5} className="px-6 py-4 text-center text-sm text-gray-500">
+                                No meters found for this zone or search criteria.
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                        <tfoot className="bg-gray-50">
+                          <tr>
+                            <td colSpan={4} className="px-6 py-3 text-right text-sm font-medium text-gray-900">Total Consumption:</td>
+                            <td className="px-6 py-3 text-right text-sm font-medium text-gray-900">
+                              {formatNumber(calculatedMetrics.zoneMetrics[selectedZone]?.l3Sum || 0)} m³
+                            </td>
+                          </tr>
+                        </tfoot>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Type Details Tab Content */}
+            {activeTab === 'type-details' && (
+              <div>
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <div>
+                      <h2 className="text-xl font-semibold text-gray-900">Type Details: {selectedType}</h2>
+                      <p className="text-sm text-gray-500 mt-1">Analysis of water consumption by property type</p>
+                    </div>
+                  </div>
+
+                  {/* Type Consumption Chart */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div>
+                      <h3 className="text-lg font-medium text-gray-900 mb-4">Consumption by Type</h3>
+                      <div className="h-80">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie
+                              data={prepareConsumptionByTypeData()}
+                              cx="50%"
+                              cy="50%"
+                              labelLine={false}
+                              outerRadius={80}
+                              fill="#8884d8"
+                              dataKey="value"
+                              nameKey="name"
+                              label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(1)}%`}
+                            >
+                              {prepareConsumptionByTypeData().map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={THEME.chartColors[index % THEME.chartColors.length]} />
+                              ))}
+                            </Pie>
+                            <Tooltip formatter={(value) => [`${formatNumber(value)} m³`, '']} />
+                            <Legend />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+
+                    <div>
+                      <h3 className="text-lg font-medium text-gray-900 mb-4">Consumption by Zone</h3>
+                      <div className="h-80">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart
+                            data={getConsumptionByZoneData()}
+                            layout="vertical"
+                            margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                          >
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis type="number" />
+                            <YAxis dataKey="name" type="category" width={100} />
+                            <Tooltip formatter={(value) => [`${formatNumber(value)} m³`, '']} />
+                            <Legend />
+                            <Bar dataKey="value" name="Consumption (m³)" fill={THEME.accent} />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Type Details Table */}
+                  <div className="mt-8">
+                    <h3 className="text-lg font-medium text-gray-900 mb-4">Consumption Details by Type</h3>
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                            <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Consumption (m³)</th>
+                            <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Percentage</th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                          {Object.entries(calculatedMetrics.consumptionByType || {}).map(([type, value], index) => (
+                            <tr key={index}>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{type}</td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-right">{formatNumber(value)} m³</td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
+                                {formatPercentage(value / calculatedMetrics.totalL3Volume * 100)}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                        <tfoot className="bg-gray-50">
+                          <tr>
+                            <td className="px-6 py-3 text-right text-sm font-medium text-gray-900">Total:</td>
+                            <td className="px-6 py-3 text-right text-sm font-medium text-gray-900">
+                              {formatNumber(calculatedMetrics.totalL3Volume)} m³
+                            </td>
+                            <td className="px-6 py-3 text-right text-sm font-medium text-gray-900">100%</td>
+                          </tr>
+                        </tfoot>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Trends Tab Content */}
+            {activeTab === 'trends' && (
+              <div>
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <div>
+                      <h2 className="text-xl font-semibold text-gray-900">Water Consumption & Loss Trends</h2>
+                      <p className="text-sm text-gray-500 mt-1">Analysis of water consumption and loss trends over time</p>
+                    </div>
+                  </div>
+
+                  {/* Trends Charts */}
+                  <div className="grid grid-cols-1 gap-6">
+                    <div>
+                      <h3 className="text-lg font-medium text-gray-900 mb-4">Loss Percentage Trend ({selectedYear})</h3>
+                      <div className="h-80">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <LineChart
+                            data={calculateLossTrend()}
+                            margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                          >
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="period" />
+                            <YAxis tickFormatter={(value) => `${value}%`} />
+                            <Tooltip formatter={(value) => [`${value.toFixed(1)}%`, '']} />
+                            <Legend />
+                            <Line type="monotone" dataKey="totalLossPct" name="Total Loss %" stroke={THEME.error} activeDot={{ r: 8 }} />
+                            <Line type="monotone" dataKey="stage1LossPct" name="Stage 1 Loss %" stroke={THEME.warning} />
+                            <Line type="monotone" dataKey="stage2LossPct" name="Stage 2 Loss %" stroke={THEME.secondary} />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+
+                    <div>
+                      <h3 className="text-lg font-medium text-gray-900 mb-4">Volume Trend by Level ({selectedYear})</h3>
+                      <div className="h-80">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart
+                            data={calculateLossTrend().map(item => ({
+                              period: item.period,
+                              L1: processedData.find(row => row.label === 'L1')?.[`${item.period}-${selectedYear.substring(2)}`] || 0,
+                              L2: processedData.filter(row => row.label === 'L2').reduce((sum, m) => sum + (m[`${item.period}-${selectedYear.substring(2)}`] || 0), 0) +
+                                  processedData.filter(row => row.label === 'DC' && row.parentMeterLabel === processedData.find(r => r.label === 'L1')?.meterLabel).reduce((sum, m) => sum + (m[`${item.period}-${selectedYear.substring(2)}`] || 0), 0),
+                              L3: (processedData.filter(row => row.label === 'L3').reduce((sum, m) => sum + (m[`${item.period}-${selectedYear.substring(2)}`] || 0), 0) - 
+                                  (processedData.find(row => row.acctNum === '4300322')?.[`${item.period}-${selectedYear.substring(2)}`] || 0)) +
+                                  processedData.filter(row => row.label === 'DC').reduce((sum, m) => sum + (m[`${item.period}-${selectedYear.substring(2)}`] || 0), 0)
+                            }))}
+                            margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                          >
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="period" />
+                            <YAxis />
+                            <Tooltip formatter={(value) => [`${formatNumber(value)} m³`, '']} />
+                            <Legend />
+                            <Bar dataKey="L1" name="L1 Supply" fill={THEME.accent} />
+                            <Bar dataKey="L2" name="L2 Volume" fill={THEME.secondary} />
+                            <Bar dataKey="L3" name="L3 Volume" fill={THEME.success} />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Settings Tab Content */}
+            {activeTab === 'settings' && (
+              <div>
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <div>
+                      <h2 className="text-xl font-semibold text-gray-900">System Settings</h2>
+                      <p className="text-sm text-gray-500 mt-1">Configure water system dashboard settings</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-6">
+                    <div>
+                      <h3 className="text-lg font-medium text-gray-900 mb-4">Data Settings</h3>
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Data Source</label>
+                          <select className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                            <option>CSV Files</option>
+                            <option>API Endpoint</option>
+                            <option>Database</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Data Refresh Interval</label>
+                          <select className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                            <option>Manual Only</option>
+                            <option>Every Hour</option>
+                            <option>Every 6 Hours</option>
+                            <option>Daily</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <h3 className="text-lg font-medium text-gray-900 mb-4">Display Settings</h3>
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Default Year</label>
+                          <select className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                            <option>2025</option>
+                            <option>2024</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Default Month</label>
+                          <select className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                            <option>January</option>
+                            <option>February</option>
+                            <option>March</option>
+                            <option>April</option>
+                            <option>May</option>
+                            <option>June</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Default Zone</label>
+                          <select className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                            {[...new Set(processedData.filter(m => m.zone && m.zone !== 'Unknown').map(m => m.zone))].map(zone => (
+                              <option key={zone} value={zone}>{zone.replace('Zone_', 'Zone ').replace('_', ' ')}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <h3 className="text-lg font-medium text-gray-900 mb-4">Threshold Settings</h3>
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Warning Threshold (%)</label>
+                          <input type="number" defaultValue="10" min="0" max="100" className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Critical Threshold (%)</label>
+                          <input type="number" defaultValue="20" min="0" max="100" className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <h3 className="text-lg font-medium text-gray-900 mb-4">Excluded Meters</h3>
+                      <div className="space-y-4">
+                        <div className="flex items-center">
+                          <input type="checkbox" id="exclude-4300322" defaultChecked className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" />
+                          <label htmlFor="exclude-4300322" className="ml-2 block text-sm text-gray-900">
+                            Exclude meter 4300322 (Z3-74(3) Building)
+                          </label>
+                        </div>
+                        <div className="flex items-center">
+                          <input type="checkbox" id="add-new-exclusion" className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" />
+                          <label htmlFor="add-new-exclusion" className="ml-2 block text-sm text-gray-900">
+                            Add new exclusion
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="pt-5">
+                      <div className="flex justify-end">
+                        <button
+                          type="button"
+                          className="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                        >
+                          Reset to Defaults
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleSaveSettings}
+                          className="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                        >
+                          <SettingsIcon className="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
+                          Save Settings
+                        </button>
+                      </div>
+                      {settingsSaved && (
+                        <div className="mt-3 text-sm text-green-600 flex items-center">
+                          <Check size={16} className="mr-1" />
+                          Settings saved successfully
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+};
+
+
+// --- Reusable KPI Card Component ---
+const KPI_Card = ({ title, value, unit, icon, trend, trendText, color, statusText, description }) => {
+  return (
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+      <div className="flex justify-between items-start">
+        <div>
+          <h3 className="text-sm font-medium text-gray-500">{title}</h3>
+          <div className="mt-1 flex items-baseline">
+            <p className="text-2xl font-semibold text-gray-900">{value}</p>
+            <p className="ml-1 text-sm font-medium text-gray-500">{unit}</p>
+          </div>
+          {description && <p className="text-xs text-gray-500 mt-1">{description}</p>}
+        </div>
+        <div className="p-2 bg-gray-50 rounded-md">{icon}</div>
+      </div>
+      {trend !== null && (
+        <div className="mt-4">
+          <div className="flex items-center">
+            <div className="flex-1 h-2 bg-gray-200 rounded-full">
+              <div
+                className="h-2 rounded-full"
+                style={{
+                  width: `${Math.min(trend * 2, 100)}%`,
+                  backgroundColor: color
+                }}
+              ></div>
+            </div>
+            <span className="ml-2 text-sm font-medium" style={{ color }}>
+              {trendText}
+            </span>
+          </div>
+          {statusText && (
+            <p className="mt-1 text-xs" style={{ color }}>
+              {statusText}
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default MuscatBayWaterSystem;
