@@ -360,7 +360,7 @@ const MuscatBayWaterSystem = () => {
             name: name.replace('Zone_', '').replace(/_/g, ' ').replace('(A)', ' A').replace('(B)', ' B').replace('(FM)', ' FM'), // Clean up name for display
             lossPercentage: data.lossPercentage
         }))
-        .filter(z => z.lossPercentage !== undefined && !isNaN(z.lossPercentage) && dataForPeriod.some(m => m.zone === name && m.label === 'L2')) // Ensure L2 exists for calc
+        .filter(z => z.lossPercentage !== undefined && !isNaN(z.lossPercentage)) // Ensure valid percentage
         .sort((a, b) => b.lossPercentage - a.lossPercentage)
         .slice(0, 5); // Get top 5
 
@@ -462,4 +462,6 @@ const MuscatBayWaterSystem = () => {
             // Calculate percentages
             const stage1LossPct = totalL1 > 0 ? (stage1Loss / totalL1 * 100) : 0;
             const stage2LossPct = totalL2 > 0 ? (stage2Loss / totalL2 * 100) : 0;
-            const totalLossPct = totalL1 > 0 ? (totalLoss / totalL1 * 100) : 0
+            const totalLossPct = totalL1 > 0 ? (totalLoss / totalL1 * 100) : 0;
+
+            return { period: month, stage1LossPct, stage2LossPct, totalLossPct };
