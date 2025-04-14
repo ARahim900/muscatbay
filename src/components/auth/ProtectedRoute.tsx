@@ -4,7 +4,11 @@ import { Navigate, useLocation, Outlet } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
 
-const ProtectedRoute: React.FC = () => {
+interface ProtectedRouteProps {
+  children?: React.ReactNode;
+}
+
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { user, loading } = useAuth();
   const location = useLocation();
 
@@ -31,7 +35,7 @@ const ProtectedRoute: React.FC = () => {
   }
 
   console.log("ProtectedRoute - Access granted to:", location.pathname);
-  return <Outlet />;
+  return children ? <>{children}</> : <Outlet />;
 };
 
 export default ProtectedRoute;

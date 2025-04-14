@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line
@@ -577,3 +578,45 @@ const MuscatBayWaterSystem = () => {
           >
             {processedData.length === 0 ? (
               <option value="">No Zones Available</option>
+            ) : (
+              <>
+                <option value="All Zones">All Zones</option>
+                {[...new Set(processedData
+                  .filter(m => m.zone && m.zone !== 'Unknown' && !m.zone.toLowerCase().includes('direct connection'))
+                  .map(m => m.zone))]
+                  .map(zone => (
+                    <option key={zone} value={zone}>{zone.replace('Zone_', '').replace(/_/g, ' ').replace('(A)', ' A').replace('(B)', ' B')}</option>
+                  ))}
+              </>
+            )}
+          </select>
+        </div>
+
+        <div className="flex items-center space-x-2">
+          <button
+            className="p-2 border rounded flex items-center text-sm"
+            onClick={handleRefresh}
+            disabled={isLoading}
+          >
+            <RefreshCw className="h-4 w-4 mr-1" />
+            Refresh
+          </button>
+          <button
+            className="p-2 border rounded flex items-center text-sm"
+          >
+            <Download className="h-4 w-4 mr-1" />
+            Export
+          </button>
+        </div>
+      </div>
+
+      {/* Placeholder for the main content */}
+      <div className="bg-gray-100 p-8 rounded-lg mb-4 text-center">
+        <p>Water System Dashboard Content Will Be Displayed Here</p>
+        <p className="text-sm text-gray-500">Currently selected period: {selectedPeriod}</p>
+      </div>
+    </div>
+  );
+};
+
+export default MuscatBayWaterSystem;
