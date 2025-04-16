@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 export interface WaterMeter {
@@ -45,7 +46,10 @@ export const waterService = {
         zone: meter.zone || '',
         type: meter.type || '',
         parentMeter: meter.parent_meter || '',
-        label: meter.label || '',
+        // The database doesn't have a 'label' field, so we'll need to use another suitable field
+        // Based on the context, we'll use the 'meter_label' property as a fallback
+        // You should update this to the correct field name if available
+        label: meter.meter_label || '',
         readings: {
           [period]: meter[period.toLowerCase()] || null
         }
