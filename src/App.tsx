@@ -22,37 +22,55 @@ import Reports from '@/pages/Reports';
 import PumpingStations from '@/pages/PumpingStations';
 import Water from '@/pages/Water';
 import WaterSystem from '@/pages/WaterSystem';
+import { AppProvider } from '@/context/AppContext';
+import NewHeader from '@/components/layout/NewHeader';
+import { motion, AnimatePresence } from 'framer-motion';
 
 function App() {
   return (
-    <Routes>
-      <Route path="/" element={<Index />} />
-      <Route path="/auth" element={<Auth />} />
-      
-      <Route element={<ProtectedRoute />}>
-        <Route path="/alm" element={<ALM />} />
-        <Route path="/projects" element={<Projects />} />
-        <Route path="/electricity" element={<Electricity />} />
-        <Route path="/electricity-system" element={<Electricity />} />
-        <Route path="/reserve-fund-calculator" element={<ReserveFundCalculatorPage />} />
-        <Route path="/reserve-fund-dashboard" element={<ReserveFundDashboard />} />
-        <Route path="/service-charges" element={<ServiceCharges />} />
-        <Route path="/stp" element={<STP />} />
-        <Route path="/stp-dashboard" element={<STP />} />
-        <Route path="/stp-plant" element={<STPPlant />} />
-        <Route path="/water" element={<Water />} />
-        <Route path="/water-system" element={<WaterSystem />} />
-        <Route path="/admin" element={<Admin />} />
-        <Route path="/property-management" element={<PropertyManagement />} />
-        <Route path="/contracts" element={<Contracts />} />
-        <Route path="/operating-expenses" element={<OperatingExpenses />} />
-        <Route path="/hvac" element={<HVAC />} />
-        <Route path="/reports" element={<Reports />} />
-        <Route path="/pumping-stations" element={<PumpingStations />} />
-      </Route>
-      
-      <Route path="*" element={<NotFound />} />
-    </Routes>
+    <AppProvider>
+      <div className="flex h-screen bg-gray-100 font-sans">
+        <AnimatePresence mode="wait">
+          <Routes>
+            <Route path="/auth" element={<Auth />} />
+            
+            <Route element={<ProtectedRoute />}>
+              <Route path="/" element={
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <Index />
+                </motion.div>
+              } />
+              <Route path="/alm" element={<ALM />} />
+              <Route path="/projects" element={<Projects />} />
+              <Route path="/electricity" element={<Electricity />} />
+              <Route path="/electricity-system" element={<Electricity />} />
+              <Route path="/reserve-fund-calculator" element={<ReserveFundCalculatorPage />} />
+              <Route path="/reserve-fund-dashboard" element={<ReserveFundDashboard />} />
+              <Route path="/service-charges" element={<ServiceCharges />} />
+              <Route path="/stp" element={<STP />} />
+              <Route path="/stp-dashboard" element={<STP />} />
+              <Route path="/stp-plant" element={<STPPlant />} />
+              <Route path="/water" element={<Water />} />
+              <Route path="/water-system" element={<WaterSystem />} />
+              <Route path="/admin" element={<Admin />} />
+              <Route path="/property-management" element={<PropertyManagement />} />
+              <Route path="/contracts" element={<Contracts />} />
+              <Route path="/operating-expenses" element={<OperatingExpenses />} />
+              <Route path="/hvac" element={<HVAC />} />
+              <Route path="/reports" element={<Reports />} />
+              <Route path="/pumping-stations" element={<PumpingStations />} />
+            </Route>
+            
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </AnimatePresence>
+      </div>
+    </AppProvider>
   );
 }
 
