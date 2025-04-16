@@ -30,7 +30,7 @@ function App() {
   return (
     <AppProvider>
       <div className="flex h-screen bg-gray-100 font-sans">
-        <AnimatePresence mode="wait">
+        <AnimatePresence>
           <Routes>
             <Route path="/auth" element={<Auth />} />
             
