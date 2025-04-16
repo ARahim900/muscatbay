@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export interface WaterMeter {
@@ -31,7 +30,6 @@ export const waterService = {
   // Fetch water meter data for given period
   async getWaterMeters(period: string): Promise<WaterMeter[]> {
     try {
-      // Use the water_distribution_master table from Supabase
       const { data, error } = await supabase
         .from('water_distribution_master')
         .select('*')
@@ -47,7 +45,7 @@ export const waterService = {
         zone: meter.zone || '',
         type: meter.type || '',
         parentMeter: meter.parent_meter || '',
-        label: meter.hierarchyLevel || '',
+        label: meter.label || '',
         readings: {
           [period]: meter[period.toLowerCase()] || null
         }
@@ -123,4 +121,3 @@ export const waterService = {
     }
   }
 };
-
