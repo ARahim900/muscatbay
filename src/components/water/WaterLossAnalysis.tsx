@@ -107,9 +107,9 @@ export const WaterLossAnalysis: React.FC<WaterLossAnalysisProps> = ({
                 <XAxis dataKey="period" />
                 <YAxis yAxisId="left" orientation="left" stroke="#3B82F6" />
                 <YAxis yAxisId="right" orientation="right" stroke="#F97316" />
-                <Tooltip formatter={(value, name) => {
-                  if (name.includes('Percent')) return [`${value.toFixed(1)}%`, name];
-                  return [`${formatNumber(value)} m³`, name];
+                <Tooltip formatter={(value: any, name: any) => {
+                  if (typeof name === 'string' && name.includes('Percent')) return [`${Number(value).toFixed(1)}%`, name];
+                  return [`${formatNumber(Number(value))} m³`, name];
                 }} />
                 <Legend />
                 <Bar yAxisId="left" dataKey="totalSupply" name="Total Supply (m³)" fill="#3B82F6" radius={[4, 4, 0, 0]} />

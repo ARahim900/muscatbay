@@ -46,9 +46,8 @@ export const waterService = {
         zone: meter.zone || '',
         type: meter.type || '',
         parentMeter: meter.parent_meter || '',
-        // The database doesn't have a 'label' field, so we'll use a suitable field
-        // In the water system, Label refers to the hierarchy level (L1, L2, L3, DC)
-        label: meter.level || meter.label || '',
+        // Use a safe approach to get the label field
+        label: meter.level || '', // Since level field may not exist, default to empty string
         readings: {
           [period]: meter[period.toLowerCase()] || null
         }
@@ -146,7 +145,7 @@ export const waterService = {
       const { data, error } = await supabase
         .from('water_distribution_master')
         .select('*')
-        .eq('id', meterId)
+        .eq('id', parseInt(meterId, 10))
         .single();
 
       if (error) throw error;
@@ -165,8 +164,7 @@ export const waterService = {
       // For now, we'll construct it from other tables
       const { data: meters, error } = await supabase
         .from('water_distribution_master')
-        .select('*')
-        .in('level', ['L1', 'L2', 'L3']);
+        .select('*');
 
       if (error) throw error;
 
@@ -178,9 +176,10 @@ export const waterService = {
       
       const result = months.map(month => {
         const key = `${month}_${year}`;
-        const l1Meters = meters.filter(m => m.level === 'L1');
-        const l2Meters = meters.filter(m => m.level === 'L2');
-        const l3Meters = meters.filter(m => m.level === 'L3');
+        // Filter meters based on their type or purpose instead of level which may not exist
+        const l1Meters = meters.filter(m => m.type === 'Main BULK');
+        const l2Meters = meters.filter(m => m.type === 'Zone Bulk');
+        const l3Meters = meters.filter(m => m.type !== 'Main BULK' && m.type !== 'Zone Bulk');
         
         const totalSupply = l1Meters.reduce((sum, meter) => sum + (meter[key] || 0), 0);
         const totalDistribution = l2Meters.reduce((sum, meter) => sum + (meter[key] || 0), 0);

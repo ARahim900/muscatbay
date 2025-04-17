@@ -124,7 +124,7 @@ export const WaterDashboard: React.FC<WaterDashboardProps> = ({
                 <XAxis dataKey="month" />
                 <YAxis />
                 <Tooltip 
-                  formatter={(value) => [`${formatNumber(value)} m³`, 'Consumption']}
+                  formatter={(value: any) => [`${formatNumber(Number(value))} m³`, 'Consumption']}
                   contentStyle={{ 
                     backgroundColor: 'rgba(255, 255, 255, 0.95)', 
                     borderRadius: '8px', 
@@ -166,7 +166,7 @@ export const WaterDashboard: React.FC<WaterDashboardProps> = ({
                 <XAxis dataKey="period" />
                 <YAxis />
                 <Tooltip 
-                  formatter={(value) => [`${value.toFixed(1)}%`, 'Loss Rate']}
+                  formatter={(value: any) => [`${Number(value).toFixed(1)}%`, 'Loss Rate']}
                   contentStyle={{ 
                     backgroundColor: 'rgba(255, 255, 255, 0.95)', 
                     borderRadius: '8px', 
@@ -275,7 +275,7 @@ export const WaterDashboard: React.FC<WaterDashboardProps> = ({
                     fill="#8884d8"
                     dataKey="value"
                     nameKey="name"
-                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(1)}%`}
+                    label={({ name, percent }) => `${name}: ${(Number(percent) * 100).toFixed(1)}%`}
                   >
                     {Object.keys(latestConsumptionData)
                       .filter(key => key !== 'month' && key !== 'year' && key !== 'total')
@@ -285,7 +285,7 @@ export const WaterDashboard: React.FC<WaterDashboardProps> = ({
                       })
                     }
                   </Pie>
-                  <Tooltip formatter={(value) => [`${formatNumber(value)} m³`, 'Consumption']} />
+                  <Tooltip formatter={(value: any) => [`${formatNumber(Number(value))} m³`, 'Consumption']} />
                 </PieChart>
               </ResponsiveContainer>
             ) : (

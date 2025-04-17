@@ -1,161 +1,160 @@
 
 import React, { useState, useEffect } from 'react';
 import { 
-  BarChart, Bar, LineChart, Line, PieChart, Pie, 
-  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-  Cell, AreaChart, Area, ComposedChart, Scatter 
-} from 'recharts';
-import { 
-  Droplet, AlertTriangle, TrendingUp, MapPin, FileText, 
-  Filter, Activity, Calendar, RefreshCw, Search, Download,
-  ChevronDown, ArrowRight, Plus, Settings, Clock, BarChart2, Check,
-  LayoutDashboard, Bell, Wrench
+  Droplet, LayoutDashboard, PieChart, TrendingUp, BarChart2, AlertTriangle, 
+  Settings, Filter, RefreshCw, DownloadCloud, Calendar
 } from 'lucide-react';
-import { waterService } from '@/services/waterService';
+import { Card, CardContent } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { WaterDashboard } from './WaterDashboard';
 import { WaterConsumptionAnalysis } from './WaterConsumptionAnalysis';
 import { WaterLossAnalysis } from './WaterLossAnalysis';
-import { MeterManagement } from './MeterManagement';
 import { WaterAlerts } from './WaterAlerts';
-import { MeterDetails } from './MeterDetails';
-import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { waterService } from '@/services/waterService';
+import { waterColors } from './WaterTheme';
 
 const WaterSystemModule = () => {
-  // State hooks for module functionality
-  const [selectedView, setSelectedView] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState('dashboard');
+  const [selectedYear, setSelectedYear] = useState('2024');
+  const [selectedMonth, setSelectedMonth] = useState('apr_24');
   const [selectedZone, setSelectedZone] = useState('all');
-  const [selectedMeter, setSelectedMeter] = useState<string | null>(null);
-  const [selectedPeriod, setSelectedPeriod] = useState('apr_24');
-  const [showFilters, setShowFilters] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [alerts, setAlerts] = useState([]);
-  const [summary, setSummary] = useState<any>({});
-  const [zones, setZones] = useState([]);
+  
+  // State for data
   const [meters, setMeters] = useState([]);
+  const [zones, setZones] = useState([]);
   const [consumptionData, setConsumptionData] = useState([]);
   const [waterLossData, setWaterLossData] = useState([]);
-  const [meterDetails, setMeterDetails] = useState(null);
+  const [typeConsumption, setTypeConsumption] = useState([]);
+  const [alerts, setAlerts] = useState([]);
   
-  // Theme colors
-  const themeColors = {
-    primary: '#4E4456',
-    primaryLight: '#6a5f7a',
-    primaryDark: '#3a3340',
-    secondary: '#63B3ED',
-    accent: '#805AD5',
-    success: '#48BB78',
-    warning: '#F6AD55',
-    danger: '#F56565',
-    background: '#F7FAFC',
-    card: '#FFFFFF',
-    text: '#2D3748',
-    textLight: '#718096',
-    border: '#E2E8F0'
-  };
+  // Summary metrics
+  const [summary, setSummary] = useState({
+    totalConsumption: 0,
+    averageLoss: 0,
+    changePercent: 0,
+    activeMeters: 0,
+    inactiveMeters: 0,
+    alertCount: 0
+  });
   
-  // Load data on component mount
   useEffect(() => {
-    const loadData = async () => {
+    const fetchData = async () => {
       setIsLoading(true);
-      
       try {
         // Fetch zones
-        const zonesData = await waterService.getZones();
+        const zonesList = await waterService.getZones();
+        setZones(['all', ...zonesList]);
         
         // Fetch meters
-        const metersData = await waterService.getWaterMeters(selectedPeriod);
+        const meterData = await waterService.getWaterMeters(selectedMonth);
+        setMeters(meterData);
         
         // Fetch consumption data
-        const consumptionByZone = await waterService.getMonthlyConsumption(2024);
+        const consumptionByMonth = await waterService.getMonthlyConsumption(parseInt(selectedYear));
+        setConsumptionData(consumptionByMonth);
+        
+        // Fetch type data
+        const typeData = await waterService.getConsumptionByType(selectedMonth);
+        setTypeConsumption(typeData);
         
         // Fetch water loss data
         const lossData = await waterService.getWaterLossData();
-        
-        // If a meter is selected, fetch its details
-        let meterData = null;
-        if (selectedMeter) {
-          meterData = await waterService.getMeterDetails(selectedMeter);
-        }
-        
-        // Mock alerts for now
-        const mockAlerts = [
-          { id: 'alert1', type: 'consumption', severity: 'high', title: 'High Consumption', message: 'Zone 3A consumption increased by 45% from March to April', timestamp: new Date('2024-04-15T09:30:00'), status: 'new' },
-          { id: 'alert2', type: 'loss', severity: 'critical', title: 'Critical Water Loss', message: 'System-wide water loss remains above 65% threshold', timestamp: new Date('2024-04-10T14:15:00'), status: 'acknowledged' },
-          { id: 'alert3', type: 'meter', severity: 'medium', title: 'Meter Reading Anomaly', message: 'Z3-28 Villa shows unusual consumption pattern', timestamp: new Date('2024-04-05T11:20:00'), status: 'new' },
-          { id: 'alert4', type: 'maintenance', severity: 'low', title: 'Maintenance Required', message: 'Main Bulk Meter scheduled for calibration', timestamp: new Date('2024-04-01T16:45:00'), status: 'new' },
-        ];
-        
-        // Calculate summary metrics
-        const latestLossData = lossData.length > 0 ? lossData[lossData.length - 1] : null;
-        const summaryData = {
-          totalConsumption: latestLossData?.totalConsumption || 0,
-          previousPeriodConsumption: lossData.length > 1 ? lossData[lossData.length - 2].totalConsumption : 0,
-          changePercent: latestLossData && lossData.length > 1 
-            ? ((latestLossData.totalConsumption - lossData[lossData.length - 2].totalConsumption) / 
-               lossData[lossData.length - 2].totalConsumption * 100)
-            : 0,
-          activeMeters: metersData.filter(m => m.readings[selectedPeriod] > 0).length,
-          inactiveMeters: metersData.filter(m => !m.readings[selectedPeriod]).length,
-          alertCount: mockAlerts.length,
-          averageLoss: latestLossData?.totalLossPercent || 0,
-          topConsumer: {
-            label: metersData.reduce((top, meter) => 
-              (!top || (meter.readings[selectedPeriod] > top.readings[selectedPeriod])) 
-                ? meter 
-                : top, 
-              null
-            )?.meterLabel || 'Unknown',
-            consumption: metersData.reduce((max, meter) => 
-              Math.max(max, meter.readings[selectedPeriod] || 0), 
-              0
-            ),
-            percent: metersData.reduce((max, meter) => 
-              Math.max(max, meter.readings[selectedPeriod] || 0), 
-              0
-            ) / (latestLossData?.totalConsumption || 1) * 100
-          }
-        };
-        
-        // Update state with loaded data
-        setZones(zonesData);
-        setMeters(metersData);
-        setConsumptionData(consumptionByZone);
         setWaterLossData(lossData);
-        setAlerts(mockAlerts);
-        setSummary(summaryData);
-        setMeterDetails(meterData);
+        
+        // Generate mock alerts for demo purposes
+        generateMockAlerts();
+        
+        // Set summary data
+        calculateSummary(meterData, lossData);
       } catch (error) {
-        console.error('Error loading water system data:', error);
+        console.error("Error fetching water system data:", error);
       } finally {
         setIsLoading(false);
       }
     };
     
-    loadData();
-  }, [selectedPeriod, selectedMeter]);
+    fetchData();
+  }, [selectedMonth, selectedYear]);
   
-  // Handle meter selection
-  const handleMeterSelect = (meterId: string) => {
-    setSelectedMeter(meterId);
-    setSelectedView('meterDetails');
+  // Calculate summary statistics
+  const calculateSummary = (meterData, lossData) => {
+    const latestLossData = lossData.length > 0 ? lossData[lossData.length - 1] : { totalLossPercent: 0 };
+    const activeMeters = meterData.filter(m => m.readings[selectedMonth] > 0).length;
+    
+    const totalConsumption = meterData.reduce((sum, meter) => sum + (meter.readings[selectedMonth] || 0), 0);
+    
+    // Calculate change percentage (mock for demo)
+    const previousMonth = selectedMonth === 'apr_24' ? 'mar_24' : 'feb_24';
+    const previousConsumption = 22000; // Mock data
+    const changePercent = ((totalConsumption - previousConsumption) / previousConsumption) * 100;
+    
+    setSummary({
+      totalConsumption,
+      averageLoss: latestLossData.totalLossPercent,
+      changePercent,
+      activeMeters,
+      inactiveMeters: meterData.length - activeMeters,
+      alertCount: alerts.length
+    });
   };
   
-  // Navigation functions
-  const navigateTo = (view: string) => {
-    setSelectedView(view);
-    if (view !== 'meterDetails') {
-      setSelectedMeter(null);
-    }
+  // Generate mock alerts for demo
+  const generateMockAlerts = () => {
+    const mockAlerts = [
+      {
+        id: 'alert1',
+        type: 'consumption',
+        severity: 'high',
+        title: 'High Consumption',
+        message: 'Zone 3A consumption increased by 45% from previous month',
+        timestamp: new Date(2024, 3, 15),
+        status: 'new'
+      },
+      {
+        id: 'alert2',
+        type: 'loss',
+        severity: 'critical',
+        title: 'Critical Water Loss',
+        message: 'System-wide water loss remains above 65% threshold',
+        timestamp: new Date(2024, 3, 10),
+        status: 'acknowledged'
+      },
+      {
+        id: 'alert3',
+        type: 'meter',
+        severity: 'medium',
+        title: 'Meter Reading Anomaly',
+        message: 'Z3-28 Villa shows unusual consumption pattern',
+        timestamp: new Date(2024, 3, 5),
+        status: 'new'
+      },
+      {
+        id: 'alert4',
+        type: 'maintenance',
+        severity: 'low',
+        title: 'Maintenance Required',
+        message: 'Main Bulk Meter scheduled for calibration',
+        timestamp: new Date(2024, 3, 1),
+        status: 'resolved'
+      }
+    ];
+    
+    setAlerts(mockAlerts);
   };
   
-  // Format timestamp for alerts
-  const formatTimestamp = (timestamp: Date): string => {
-    return timestamp.toLocaleString('en-US', { 
+  // Format number with commas
+  const formatNumber = (num) => {
+    if (isNaN(num)) return '0';
+    return num.toLocaleString();
+  };
+  
+  // Format timestamp
+  const formatTimestamp = (timestamp) => {
+    const date = new Date(timestamp);
+    return date.toLocaleString('en-US', { 
       month: 'short', 
       day: 'numeric', 
       hour: '2-digit', 
@@ -163,236 +162,172 @@ const WaterSystemModule = () => {
     });
   };
   
-  // Get colors for severity
-  const getSeverityColor = (severity: string): string => {
-    switch (severity) {
-      case 'critical': return 'text-red-600 bg-red-50/80';
-      case 'high': return 'text-orange-600 bg-orange-50/80';
-      case 'medium': return 'text-amber-600 bg-amber-50/80';
-      case 'low': return 'text-[#4E4456] bg-purple-50/80';
-      default: return 'text-gray-600 bg-gray-50/80';
-    }
-  };
-  
-  // Format number with commas
-  const formatNumber = (num: number): string => {
-    return num.toLocaleString();
-  };
-  
-  // Calculate color based on change percentage
-  const getChangeColor = (percent: number): string => {
+  // Get color based on change percentage
+  const getChangeColor = (percent) => {
     if (percent > 10) return 'text-red-600';
     if (percent > 0) return 'text-orange-600';
     if (percent < -10) return 'text-green-600';
     if (percent < 0) return 'text-emerald-600';
     return 'text-gray-600';
   };
-
-  // Render content based on selected view
+  
+  // Get color based on severity
+  const getSeverityColor = (severity) => {
+    switch (severity) {
+      case 'critical': return 'text-red-600 bg-red-50';
+      case 'high': return 'text-orange-600 bg-orange-50';
+      case 'medium': return 'text-amber-600 bg-amber-50';
+      case 'low': return 'text-[#4E4456] bg-purple-50';
+      default: return 'text-gray-600 bg-gray-50';
+    }
+  };
+  
+  // Navigate between views
+  const navigateTo = (view) => {
+    setActiveTab(view);
+  };
+  
+  // Render loading state
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="flex flex-col items-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#4E4456]"></div>
+          <p className="mt-4 text-gray-600">Loading water system data...</p>
+        </div>
+      </div>
+    );
+  }
+  
   return (
-    <div className="container mx-auto px-4 py-6">
-      <div className="mb-6">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-          <div className="mb-4 md:mb-0">
-            <h1 className="text-2xl font-bold text-[#4E4456]">Water System</h1>
-            <p className="text-gray-600 mt-1">Monitoring and management of Muscat Bay water distribution network</p>
+    <div className="py-4">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between mb-6">
+        <div className="flex items-center mb-4 md:mb-0">
+          <div className="bg-[#4E4456]/10 p-3 rounded-lg">
+            <Droplet className="h-8 w-8 text-[#4E4456]" />
+          </div>
+          <div className="ml-4">
+            <h1 className="text-2xl font-bold text-gray-900">Water Distribution System</h1>
+            <p className="text-gray-500">Manage and monitor water consumption and distribution</p>
+          </div>
+        </div>
+        
+        <div className="flex flex-wrap gap-3">
+          <div className="flex items-center space-x-2">
+            <Select defaultValue={selectedYear} onValueChange={setSelectedYear}>
+              <SelectTrigger className="w-[100px]">
+                <Calendar className="h-4 w-4 mr-2" />
+                <SelectValue placeholder="Year" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="2023">2023</SelectItem>
+                <SelectItem value="2024">2024</SelectItem>
+                <SelectItem value="2025">2025</SelectItem>
+              </SelectContent>
+            </Select>
+            
+            <Select defaultValue={selectedMonth} onValueChange={setSelectedMonth}>
+              <SelectTrigger className="w-[120px]">
+                <SelectValue placeholder="Month" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="jan_24">January</SelectItem>
+                <SelectItem value="feb_24">February</SelectItem>
+                <SelectItem value="mar_24">March</SelectItem>
+                <SelectItem value="apr_24">April</SelectItem>
+                <SelectItem value="may_24">May</SelectItem>
+                <SelectItem value="jun_24">June</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           
-          <div className="flex flex-wrap gap-2">
-            <Button variant="outline" className="h-9 gap-1" onClick={() => setShowFilters(!showFilters)}>
-              <Filter className="h-4 w-4" />
-              <span className="hidden sm:inline">Filters</span>
-            </Button>
-            
-            <Button variant="outline" className="h-9 gap-1">
-              <Calendar className="h-4 w-4" />
-              <span className="hidden sm:inline">Apr 2024</span>
-            </Button>
-            
-            <Button variant="outline" className="h-9 gap-1">
-              <Download className="h-4 w-4" />
-              <span className="hidden sm:inline">Export</span>
-            </Button>
-            
-            <Button variant="default" className="h-9 gap-1" onClick={() => window.location.reload()}>
-              <RefreshCw className="h-4 w-4" />
-              <span className="hidden sm:inline">Refresh</span>
-            </Button>
-          </div>
+          <Button variant="outline" size="icon">
+            <RefreshCw className="h-4 w-4" />
+          </Button>
+          
+          <Button variant="outline">
+            <Filter className="h-4 w-4 mr-2" />
+            Filters
+          </Button>
+          
+          <Button>
+            <DownloadCloud className="h-4 w-4 mr-2" />
+            Export
+          </Button>
         </div>
       </div>
       
-      {/* Navigation Tabs */}
-      <Tabs defaultValue="dashboard" value={selectedView} onValueChange={navigateTo} className="mb-6">
-        <TabsList className="grid grid-cols-3 md:grid-cols-6 gap-1">
-          <TabsTrigger value="dashboard" className="flex items-center gap-1.5">
-            <LayoutDashboard className="h-4 w-4" />
-            <span className="hidden sm:inline">Overview</span>
+      {/* Main navigation tabs */}
+      <Tabs defaultValue="dashboard" value={activeTab} onValueChange={setActiveTab} className="mb-6">
+        <TabsList className="grid grid-cols-2 md:grid-cols-5 gap-2 mb-2">
+          <TabsTrigger value="dashboard" className="flex items-center">
+            <LayoutDashboard className="h-4 w-4 mr-2" />
+            Dashboard
           </TabsTrigger>
-          <TabsTrigger value="consumption" className="flex items-center gap-1.5">
-            <Droplet className="h-4 w-4" />
-            <span className="hidden sm:inline">Consumption</span>
+          <TabsTrigger value="consumption" className="flex items-center">
+            <BarChart2 className="h-4 w-4 mr-2" />
+            Consumption
           </TabsTrigger>
-          <TabsTrigger value="waterLoss" className="flex items-center gap-1.5">
-            <TrendingUp className="h-4 w-4" />
-            <span className="hidden sm:inline">Water Loss</span>
+          <TabsTrigger value="loss" className="flex items-center">
+            <TrendingUp className="h-4 w-4 mr-2" />
+            Water Loss
           </TabsTrigger>
-          <TabsTrigger value="meters" className="flex items-center gap-1.5">
-            <Activity className="h-4 w-4" />
-            <span className="hidden sm:inline">Meters</span>
+          <TabsTrigger value="types" className="flex items-center">
+            <PieChart className="h-4 w-4 mr-2" />
+            Types
           </TabsTrigger>
-          <TabsTrigger value="alerts" className="flex items-center gap-1.5">
-            <Bell className="h-4 w-4" />
-            <span className="hidden sm:inline">Alerts</span>
-          </TabsTrigger>
-          <TabsTrigger value="settings" className="flex items-center gap-1.5">
-            <Settings className="h-4 w-4" />
-            <span className="hidden sm:inline">Settings</span>
+          <TabsTrigger value="alerts" className="flex items-center">
+            <AlertTriangle className="h-4 w-4 mr-2" />
+            Alerts
           </TabsTrigger>
         </TabsList>
         
-        {/* Tab Content */}
-        <TabsContent value="dashboard">
-          {isLoading ? (
-            <div className="space-y-4">
-              <Skeleton className="h-[300px] w-full rounded-xl" />
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Skeleton className="h-[250px] w-full rounded-xl" />
-                <Skeleton className="h-[250px] w-full rounded-xl" />
-              </div>
-            </div>
-          ) : (
-            <WaterDashboard 
-              summary={summary} 
-              consumptionData={consumptionData}
-              waterLossData={waterLossData}
-              alerts={alerts}
-              formatNumber={formatNumber}
-              formatTimestamp={formatTimestamp}
-              getSeverityColor={getSeverityColor}
-              getChangeColor={getChangeColor}
-              navigateTo={navigateTo}
-            />
-          )}
-        </TabsContent>
-        
-        <TabsContent value="consumption">
-          {isLoading ? (
-            <Skeleton className="h-[500px] w-full rounded-xl" />
-          ) : (
-            <WaterConsumptionAnalysis 
-              consumptionData={consumptionData}
-              selectedZone={selectedZone}
-              setSelectedZone={setSelectedZone}
-              formatNumber={formatNumber}
-            />
-          )}
-        </TabsContent>
-        
-        <TabsContent value="waterLoss">
-          {isLoading ? (
-            <Skeleton className="h-[500px] w-full rounded-xl" />
-          ) : (
-            <WaterLossAnalysis 
-              waterLossData={waterLossData}
-              formatNumber={formatNumber}
-            />
-          )}
-        </TabsContent>
-        
-        <TabsContent value="meters">
-          {isLoading ? (
-            <Skeleton className="h-[500px] w-full rounded-xl" />
-          ) : (
-            <MeterManagement 
-              meters={meters}
-              selectedZone={selectedZone}
-              setSelectedZone={setSelectedZone}
-              handleMeterSelect={handleMeterSelect}
-              zones={zones}
-              formatNumber={formatNumber}
-            />
-          )}
-        </TabsContent>
-        
-        <TabsContent value="alerts">
-          {isLoading ? (
-            <Skeleton className="h-[500px] w-full rounded-xl" />
-          ) : (
-            <WaterAlerts 
-              alerts={alerts}
-              formatTimestamp={formatTimestamp}
-              getSeverityColor={getSeverityColor}
-            />
-          )}
-        </TabsContent>
-        
-        <TabsContent value="meterDetails">
-          {isLoading ? (
-            <Skeleton className="h-[500px] w-full rounded-xl" />
-          ) : (
-            <MeterDetails 
-              meter={meterDetails}
-              formatNumber={formatNumber}
-              goBack={() => navigateTo('meters')}
-            />
-          )}
-        </TabsContent>
-        
-        <TabsContent value="settings">
-          <Card className="p-6">
-            <h2 className="text-xl font-semibold mb-4">Water System Settings</h2>
-            <p className="text-gray-600 mb-4">Configure system parameters, alerts, and monitoring thresholds.</p>
-            <div className="grid gap-4">
-              <div>
-                <h3 className="text-lg font-medium mb-2">Alert Thresholds</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Water Loss Warning (%)</label>
-                    <Input type="number" defaultValue="45" className="max-w-xs" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Water Loss Critical (%)</label>
-                    <Input type="number" defaultValue="65" className="max-w-xs" />
-                  </div>
-                </div>
-              </div>
-              
-              <div className="mt-4">
-                <h3 className="text-lg font-medium mb-2">Data Collection</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Reading Frequency</label>
-                    <select className="w-full max-w-xs rounded-md border border-gray-300 px-3 py-2">
-                      <option>Daily</option>
-                      <option>Weekly</option>
-                      <option selected>Monthly</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Data Retention Period</label>
-                    <select className="w-full max-w-xs rounded-md border border-gray-300 px-3 py-2">
-                      <option>6 months</option>
-                      <option selected>1 year</option>
-                      <option>2 years</option>
-                      <option>5 years</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="mt-4">
-                <Button variant="default" className="mr-2">
-                  <Check className="h-4 w-4 mr-2" />
-                  Save Settings
-                </Button>
-                <Button variant="outline">
-                  Reset to Defaults
-                </Button>
-              </div>
-            </div>
-          </Card>
-        </TabsContent>
+        <Card>
+          <CardContent className="p-4 md:p-6">
+            <TabsContent value="dashboard" className="mt-0">
+              <WaterDashboard 
+                summary={summary}
+                consumptionData={consumptionData}
+                waterLossData={waterLossData}
+                alerts={alerts}
+                formatNumber={formatNumber}
+                formatTimestamp={formatTimestamp}
+                getSeverityColor={getSeverityColor}
+                getChangeColor={getChangeColor}
+                navigateTo={navigateTo}
+              />
+            </TabsContent>
+            
+            <TabsContent value="consumption" className="mt-0">
+              <WaterConsumptionAnalysis 
+                consumptionData={consumptionData}
+                selectedZone={selectedZone}
+                setSelectedZone={setSelectedZone}
+                formatNumber={formatNumber}
+              />
+            </TabsContent>
+            
+            <TabsContent value="loss" className="mt-0">
+              <WaterLossAnalysis 
+                waterLossData={waterLossData}
+                formatNumber={formatNumber}
+              />
+            </TabsContent>
+            
+            <TabsContent value="types" className="mt-0">
+              <p>Usage by type analysis will appear here.</p>
+            </TabsContent>
+            
+            <TabsContent value="alerts" className="mt-0">
+              <WaterAlerts 
+                alerts={alerts}
+                formatTimestamp={formatTimestamp}
+                getSeverityColor={getSeverityColor}
+              />
+            </TabsContent>
+          </CardContent>
+        </Card>
       </Tabs>
     </div>
   );

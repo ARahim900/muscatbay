@@ -137,7 +137,7 @@ export const WaterConsumptionAnalysis: React.FC<WaterConsumptionAnalysisProps> =
                 <XAxis dataKey="month" />
                 <YAxis yAxisId="left" orientation="left" stroke="#3B82F6" />
                 <YAxis yAxisId="right" orientation="right" stroke="#F97316" />
-                <Tooltip formatter={(value, name) => [`${formatNumber(value)} m³`, name]} />
+                <Tooltip formatter={(value: any, name) => [`${formatNumber(Number(value))} m³`, name]} />
                 <Legend />
                 <Bar 
                   yAxisId="left" 
