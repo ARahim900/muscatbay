@@ -1,45 +1,27 @@
-import { createContext, useContext, ReactNode } from 'react';
 
-// Water system color palette
 export const waterColors = {
-  primary: '#4E4456', // Updated primary color
-  secondary: '#68D1CC', // Keeping other colors from existing palette
-  accent: '#38bdf8', 
-  warning: '#f59e0b', 
-  danger: '#ef4444', 
-  success: '#10b981', 
-  
-  // Neutral colors
-  background: '#f8fafc',
-  card: '#ffffff',
-  text: {
-    primary: '#0f172a',
-    secondary: '#64748b',
-    muted: '#94a3b8',
-  },
-  
-  // Chart colors
+  primary: '#4E4456',
+  primaryLight: '#6a5f7a',
+  primaryDark: '#3a3340',
+  secondary: '#63B3ED',
+  accent: '#805AD5',
+  success: '#48BB78',
+  warning: '#F6AD55',
+  danger: '#F56565',
+  background: '#F7FAFC',
+  card: '#FFFFFF',
+  text: '#2D3748',
+  textLight: '#718096',
+  border: '#E2E8F0',
   chart: {
-    blue: '#2563eb',
-    lightBlue: '#60a5fa',
-    green: '#10b981',
-    amber: '#f59e0b',
-    red: '#ef4444',
-    purple: '#8b5cf6',
-    teal: '#14b8a6',
-    indigo: '#4f46e5',
+    blue: '#3B82F6',
+    lightBlue: '#60A5FA',
+    green: '#10B981',
+    red: '#EF4444',
+    orange: '#F97316',
+    amber: '#F59E0B',
+    purple: '#8B5CF6',
+    teal: '#14B8A6',
+    indigo: '#6366F1'
   }
-};
-
-// Theme context for potential future theming support
-const WaterThemeContext = createContext(waterColors);
-
-export const useWaterTheme = () => useContext(WaterThemeContext);
-
-export const WaterThemeProvider = ({ children }: { children: ReactNode }) => {
-  return (
-    <WaterThemeContext.Provider value={waterColors}>
-      {children}
-    </WaterThemeContext.Provider>
-  );
 };

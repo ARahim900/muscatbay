@@ -46,10 +46,9 @@ export const waterService = {
         zone: meter.zone || '',
         type: meter.type || '',
         parentMeter: meter.parent_meter || '',
-        // The database doesn't have a 'label' field, so we'll need to use another suitable field
-        // Based on the context, we'll use the 'meter_label' property as a fallback
-        // You should update this to the correct field name if available
-        label: meter.meter_label || '',
+        // The database doesn't have a 'label' field, so we'll use a suitable field
+        // In the water system, Label refers to the hierarchy level (L1, L2, L3, DC)
+        label: meter.level || meter.label || '',
         readings: {
           [period]: meter[period.toLowerCase()] || null
         }
@@ -121,6 +120,97 @@ export const waterService = {
       return data;
     } catch (error) {
       console.error('Error fetching monthly consumption:', error);
+      return [];
+    }
+  },
+  
+  // Get water consumption by type
+  async getConsumptionByType(period: string): Promise<any[]> {
+    try {
+      const { data, error } = await supabase
+        .from('water_consumption_by_type')
+        .select('*');
+
+      if (error) throw error;
+
+      return data;
+    } catch (error) {
+      console.error('Error fetching consumption by type:', error);
+      return [];
+    }
+  },
+  
+  // Get detailed meter data
+  async getMeterDetails(meterId: string): Promise<any> {
+    try {
+      const { data, error } = await supabase
+        .from('water_distribution_master')
+        .select('*')
+        .eq('id', meterId)
+        .single();
+
+      if (error) throw error;
+
+      return data;
+    } catch (error) {
+      console.error('Error fetching meter details:', error);
+      return null;
+    }
+  },
+  
+  // Get water loss data
+  async getWaterLossData(): Promise<any[]> {
+    try {
+      // This would typically fetch from a dedicated water loss table
+      // For now, we'll construct it from other tables
+      const { data: meters, error } = await supabase
+        .from('water_distribution_master')
+        .select('*')
+        .in('level', ['L1', 'L2', 'L3']);
+
+      if (error) throw error;
+
+      // Process the data to calculate loss metrics
+      // This is a simplified example - in a real application, you would have a more 
+      // sophisticated calculation based on your business logic
+      const months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+      const year = new Date().getFullYear().toString().slice(-2);
+      
+      const result = months.map(month => {
+        const key = `${month}_${year}`;
+        const l1Meters = meters.filter(m => m.level === 'L1');
+        const l2Meters = meters.filter(m => m.level === 'L2');
+        const l3Meters = meters.filter(m => m.level === 'L3');
+        
+        const totalSupply = l1Meters.reduce((sum, meter) => sum + (meter[key] || 0), 0);
+        const totalDistribution = l2Meters.reduce((sum, meter) => sum + (meter[key] || 0), 0);
+        const totalConsumption = l3Meters.reduce((sum, meter) => sum + (meter[key] || 0), 0);
+        
+        const stage1Loss = totalSupply - totalDistribution;
+        const stage2Loss = totalDistribution - totalConsumption;
+        const totalLoss = totalSupply - totalConsumption;
+        
+        const stage1LossPercent = totalSupply > 0 ? (stage1Loss / totalSupply * 100) : 0;
+        const stage2LossPercent = totalDistribution > 0 ? (stage2Loss / totalDistribution * 100) : 0;
+        const totalLossPercent = totalSupply > 0 ? (totalLoss / totalSupply * 100) : 0;
+        
+        return {
+          period: `${month.charAt(0).toUpperCase() + month.slice(1)}-${year}`,
+          totalSupply,
+          totalDistribution,
+          totalConsumption,
+          stage1Loss,
+          stage1LossPercent,
+          stage2Loss,
+          stage2LossPercent,
+          totalLoss,
+          totalLossPercent
+        };
+      });
+      
+      return result.filter(r => r.totalSupply > 0);
+    } catch (error) {
+      console.error('Error calculating water loss data:', error);
       return [];
     }
   }

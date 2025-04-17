@@ -1,247 +1,201 @@
 
 import React from 'react';
-import { motion } from 'framer-motion';
+import { 
+  ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, 
+  Tooltip, Legend, ResponsiveContainer 
+} from 'recharts';
+import { 
+  AlertTriangle, TrendingUp, Check
+} from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { TrendingDown, AlertTriangle, BarChart, Droplets } from 'lucide-react';
-import { ZoneMetrics, LevelMetrics } from '@/types/waterSystem';
-import EnhancedKpiCard from './EnhancedKpiCard';
-import WaterConsumptionChart from './WaterConsumptionChart';
-import { waterColors } from './WaterTheme';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
 
 interface WaterLossAnalysisProps {
-  zoneMetrics: ZoneMetrics[];
-  levelMetrics: LevelMetrics;
-  selectedMonth: string;
+  waterLossData: any[];
+  formatNumber: (num: number) => string;
 }
 
-const WaterLossAnalysis: React.FC<WaterLossAnalysisProps> = ({
-  zoneMetrics,
-  levelMetrics,
-  selectedMonth
+export const WaterLossAnalysis: React.FC<WaterLossAnalysisProps> = ({
+  waterLossData,
+  formatNumber
 }) => {
-  const displayMonth = selectedMonth === 'all' ? 'All Months' : selectedMonth;
-  
-  // Format data for zone loss chart
-  const zoneLossData = zoneMetrics
-    .filter(zone => zone.lossPercentage > 0)
-    .map(zone => ({
-      name: zone.zone,
-      value: zone.lossPercentage,
-      lossVolume: zone.loss,
-      bulkSupply: zone.bulkSupply
-    }))
-    .sort((a, b) => b.value - a.value);
-  
-  // Format data for distribution loss chart
-  const distributionLossData = [
-    { name: 'Stage 1 Loss', value: levelMetrics.stage1Loss, percentage: levelMetrics.stage1LossPercentage },
-    { name: 'Stage 2 Loss', value: levelMetrics.stage2Loss, percentage: levelMetrics.stage2LossPercentage }
-  ];
-  
-  // Format data for water balance chart (sankey diagram approximation with bar chart)
-  const waterBalanceData = [
-    { name: 'L1 Supply', value: levelMetrics.l1Supply, type: 'supply' },
-    { name: 'Stage 1 Loss', value: levelMetrics.stage1Loss, type: 'loss' },
-    { name: 'L2 Volume', value: levelMetrics.l2Volume, type: 'intermediate' },
-    { name: 'Stage 2 Loss', value: levelMetrics.stage2Loss, type: 'loss' },
-    { name: 'L3 Volume', value: levelMetrics.l3Volume, type: 'consumption' }
-  ];
-  
-  // Animation variants
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1
-      }
-    }
-  };
-  
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    show: { opacity: 1, y: 0 }
-  };
+  const latestData = waterLossData.length > 0 ? waterLossData[waterLossData.length - 1] : null;
   
   return (
-    <motion.div 
-      className="space-y-6"
-      variants={containerVariants}
-      initial="hidden"
-      animate="show"
-    >
-      <motion.div 
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
-        variants={itemVariants}
-      >
-        <EnhancedKpiCard
-          title="Total System Loss"
-          value={levelMetrics.totalLoss.toLocaleString()}
-          valueUnit="m³"
-          subValue={levelMetrics.totalLossPercentage.toFixed(1)}
-          subValueUnit="% of supply"
-          icon={AlertTriangle}
-          variant={levelMetrics.totalLossPercentage > 15 ? "danger" : "warning"}
-        />
+    <>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center">
+              <div className="p-3 rounded-lg bg-red-50 mr-4">
+                <AlertTriangle className="h-5 w-5 text-red-500" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-500">Current Loss Rate</p>
+                <h3 className="text-2xl font-bold text-gray-800">{latestData?.totalLossPercent.toFixed(1)}%</h3>
+                <p className="text-xs text-red-600 mt-1">Above target threshold (45%)</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
         
-        <EnhancedKpiCard
-          title="Transmission Loss"
-          value={levelMetrics.stage1Loss.toLocaleString()}
-          valueUnit="m³"
-          subValue={levelMetrics.stage1LossPercentage.toFixed(1)}
-          subValueUnit="% of L1 supply"
-          description="L1 to L2 Loss"
-          icon={TrendingDown}
-          variant={levelMetrics.stage1LossPercentage > 10 ? "danger" : "warning"}
-        />
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center">
+              <div className="p-3 rounded-lg bg-orange-50 mr-4">
+                <AlertTriangle className="h-5 w-5 text-orange-500" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-500">Stage 1 Loss (Supply → Distribution)</p>
+                <h3 className="text-2xl font-bold text-gray-800">{latestData?.stage1LossPercent.toFixed(1)}%</h3>
+                <p className="text-xs text-orange-600 mt-1">Critical attention required</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
         
-        <EnhancedKpiCard
-          title="Distribution Loss"
-          value={levelMetrics.stage2Loss.toLocaleString()}
-          valueUnit="m³"
-          subValue={levelMetrics.stage2LossPercentage.toFixed(1)}
-          subValueUnit="% of L2 volume"
-          description="L2 to L3 Loss"
-          icon={TrendingDown}
-          variant={levelMetrics.stage2LossPercentage > 10 ? "danger" : "warning"}
-        />
-        
-        <EnhancedKpiCard
-          title="Total Consumption"
-          value={levelMetrics.l3Volume.toLocaleString()}
-          valueUnit="m³"
-          subValue={(levelMetrics.l3Volume / levelMetrics.l1Supply * 100).toFixed(1)}
-          subValueUnit="% of supply"
-          icon={Droplets}
-          variant="primary"
-        />
-      </motion.div>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center">
+              <div className="p-3 rounded-lg bg-amber-50 mr-4">
+                <AlertTriangle className="h-5 w-5 text-amber-500" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-500">Stage 2 Loss (Distribution → End-User)</p>
+                <h3 className="text-2xl font-bold text-gray-800">{latestData?.stage2LossPercent.toFixed(1)}%</h3>
+                <p className="text-xs text-amber-600 mt-1">Within acceptable range</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
       
-      <motion.div variants={itemVariants}>
-        <Card>
-          <CardHeader>
-            <CardTitle>Water Distribution Flow</CardTitle>
-            <CardDescription>From bulk supply to end consumption for {displayMonth}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="h-80">
-              <WaterConsumptionChart
-                title=""
-                data={waterBalanceData}
-                type="bar"
-                colors={[
-                  waterColors.chart.blue,
-                  waterColors.chart.red,
-                  waterColors.chart.purple,
-                  waterColors.chart.red,
-                  waterColors.chart.green
-                ]}
-              />
+      <Card className="mb-6">
+        <CardHeader className="pb-3">
+          <div className="flex flex-wrap justify-between items-center">
+            <div>
+              <CardTitle className="text-xl">Water Loss Trend Analysis</CardTitle>
+              <CardDescription>Track and analyze water loss metrics over time</CardDescription>
             </div>
-          </CardContent>
-        </Card>
-      </motion.div>
-      
-      <motion.div 
-        className="grid grid-cols-1 lg:grid-cols-2 gap-6"
-        variants={itemVariants}
-      >
-        <Card>
-          <CardHeader>
-            <CardTitle>Loss by Zone</CardTitle>
-            <CardDescription>
-              Water loss percentage across different zones
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="h-80">
-              <WaterConsumptionChart
-                title=""
-                data={zoneLossData}
-                type="bar"
-                dataKey="value"
-                horizontal={true}
-                colors={[waterColors.chart.amber]}
-                valueFormatter={(value) => `${value.toFixed(1)}%`}
-              />
+            
+            <div className="flex items-center space-x-3 mt-3 sm:mt-0">
+              <Select defaultValue="lastMonth">
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue placeholder="Period" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="lastMonth">Last Month</SelectItem>
+                  <SelectItem value="lastQuarter">Last Quarter</SelectItem>
+                  <SelectItem value="lastYear">Last Year</SelectItem>
+                  <SelectItem value="custom">Custom Range</SelectItem>
+                </SelectContent>
+              </Select>
+              
+              <Button variant="outline" size="sm">
+                Export
+              </Button>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </CardHeader>
         
-        <Card>
-          <CardHeader>
-            <CardTitle>Distribution of Losses</CardTitle>
-            <CardDescription>
-              Comparison of stage 1 vs stage 2 losses
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="h-80">
-              <WaterConsumptionChart
-                title=""
-                data={distributionLossData}
-                type="pie"
-                colors={[waterColors.chart.purple, waterColors.chart.amber]}
-              />
+        <CardContent>
+          <div className="mb-6">
+            <ResponsiveContainer width="100%" height={400}>
+              <ComposedChart data={waterLossData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <XAxis dataKey="period" />
+                <YAxis yAxisId="left" orientation="left" stroke="#3B82F6" />
+                <YAxis yAxisId="right" orientation="right" stroke="#F97316" />
+                <Tooltip formatter={(value, name) => {
+                  if (name.includes('Percent')) return [`${value.toFixed(1)}%`, name];
+                  return [`${formatNumber(value)} m³`, name];
+                }} />
+                <Legend />
+                <Bar yAxisId="left" dataKey="totalSupply" name="Total Supply (m³)" fill="#3B82F6" radius={[4, 4, 0, 0]} />
+                <Bar yAxisId="left" dataKey="totalDistribution" name="Total Distribution (m³)" fill="#60A5FA" radius={[4, 4, 0, 0]} />
+                <Bar yAxisId="left" dataKey="totalConsumption" name="Total Consumption (m³)" fill="#93C5FD" radius={[4, 4, 0, 0]} />
+                <Line yAxisId="right" type="monotone" dataKey="totalLossPercent" name="Total Loss (%)" stroke="#EF4444" strokeWidth={2} />
+                <Line yAxisId="right" type="monotone" dataKey="stage1LossPercent" name="Stage 1 Loss (%)" stroke="#F97316" strokeWidth={2} />
+                <Line yAxisId="right" type="monotone" dataKey="stage2LossPercent" name="Stage 2 Loss (%)" stroke="#EAB308" strokeWidth={2} />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </div>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div>
+              <h4 className="text-md font-medium text-gray-800 mb-3">Water Loss Breakdown</h4>
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Period</th>
+                    <th scope="col" className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Stage 1 Loss</th>
+                    <th scope="col" className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Stage 2 Loss</th>
+                    <th scope="col" className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total Loss</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {waterLossData.map((data) => (
+                    <tr key={data.period}>
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{data.period}</td>
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 text-right">
+                        {formatNumber(data.stage1Loss)} m³
+                        <div className="text-xs text-orange-600">{data.stage1LossPercent.toFixed(1)}%</div>
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 text-right">
+                        {formatNumber(data.stage2Loss)} m³
+                        <div className="text-xs text-amber-600">{data.stage2LossPercent.toFixed(1)}%</div>
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 text-right">
+                        {formatNumber(data.totalSupply - data.totalConsumption)} m³
+                        <div className="text-xs text-red-600">{data.totalLossPercent.toFixed(1)}%</div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          </CardContent>
-        </Card>
-      </motion.div>
-      
-      <motion.div variants={itemVariants}>
-        <Card>
-          <CardHeader>
-            <CardTitle>Highest Losing Zones</CardTitle>
-            <CardDescription>Zones with the highest water loss by volume</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-5 py-3">
-              {zoneLossData
-                .sort((a, b) => b.lossVolume - a.lossVolume)
-                .slice(0, 5)
-                .map((zone, index) => {
-                  const lossPercentage = zone.value;
-                  
-                  // Determine color based on loss percentage
-                  let statusColor = waterColors.success;
-                  if (lossPercentage > 20) {
-                    statusColor = waterColors.danger;
-                  } else if (lossPercentage > 10) {
-                    statusColor = waterColors.warning;
-                  }
-                  
-                  // Calculate percentage of progress bar to fill
-                  const progressPercentage = (lossPercentage / 100) * 100;
-                  
-                  return (
-                    <div key={zone.name} className="space-y-1">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium">{zone.name}</span>
-                        <span className="text-sm">{lossPercentage.toFixed(1)}%</span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-                          <div
-                            className="h-full transition-all duration-500"
-                            style={{ 
-                              width: `${Math.min(progressPercentage, 100)}%`,
-                              backgroundColor: statusColor
-                            }}
-                          />
-                        </div>
-                        <span className="text-xs text-gray-500 whitespace-nowrap">
-                          {zone.lossVolume.toLocaleString()} m³
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
+            
+            <div>
+              <h4 className="text-md font-medium text-gray-800 mb-3">Loss Analysis Insights</h4>
+              <div className="bg-red-50 rounded-lg p-4 mb-4">
+                <h5 className="text-red-800 font-medium text-sm flex items-center">
+                  <AlertTriangle className="h-4 w-4 mr-2" /> Critical Stage 1 Loss
+                </h5>
+                <p className="mt-1 text-sm text-red-700">
+                  Stage 1 loss remains critically high, indicating potential major leaks or metering issues in the main supply infrastructure. Investigation required in:
+                </p>
+                <ul className="mt-2 text-sm text-red-700 list-disc list-inside">
+                  <li>Main transmission lines between source and L2 meters</li>
+                  <li>Bulk meter calibration at source (L1)</li>
+                  <li>Possible unmeasured withdrawals</li>
+                </ul>
+              </div>
+              
+              <div className="bg-amber-50 rounded-lg p-4 mb-4">
+                <h5 className="text-amber-800 font-medium text-sm flex items-center">
+                  <TrendingUp className="h-4 w-4 mr-2" /> Loss Trend Analysis
+                </h5>
+                <p className="mt-1 text-sm text-amber-700">
+                  Total water loss has shown some improvement over the measured periods, but remains significantly above the industry standard target of 45%. Continued efforts needed to identify and address major sources of loss.
+                </p>
+              </div>
+              
+              <div className="bg-blue-50 rounded-lg p-4">
+                <h5 className="text-blue-800 font-medium text-sm flex items-center">
+                  <Check className="h-4 w-4 mr-2" /> Recommended Actions
+                </h5>
+                <ul className="mt-1 text-sm text-blue-700 list-disc list-inside">
+                  <li>Conduct complete leak detection survey in main transmission lines</li>
+                  <li>Verify calibration of L1 and L2 meters</li>
+                  <li>Implement pressure management in high-loss zones</li>
+                  <li>Investigate potential unauthorized connections</li>
+                </ul>
+              </div>
             </div>
-          </CardContent>
-        </Card>
-      </motion.div>
-    </motion.div>
+          </div>
+        </CardContent>
+      </Card>
+    </>
   );
 };
-
-export default WaterLossAnalysis;

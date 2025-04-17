@@ -1,12 +1,12 @@
 
 import React from 'react';
 import Layout from '@/components/layout/Layout';
-import MuscatBayWaterSystem from '@/components/water/MuscatBayWaterSystem';
+import WaterSystemModule from '@/components/water/WaterSystemModule';
 
 const WaterSystem = () => {
   return (
     <Layout>
-      <MuscatBayWaterSystem />
+      <WaterSystemModule />
     </Layout>
   );
 };
