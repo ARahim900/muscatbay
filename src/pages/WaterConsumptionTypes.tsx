@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area, LineChart, Line } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area, LineChart, Line, Cell } from 'recharts';
 import Layout from '@/components/layout/Layout';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -8,6 +7,7 @@ import { FileBarChart, Droplets } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import ImportWaterData from '@/components/water/ImportWaterData';
+import { ModernDonutChart } from '@/components/ui/modern-donut-chart';
 
 interface WaterData {
   name: string;
@@ -369,34 +369,11 @@ const WaterConsumptionTypes = () => {
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg font-medium text-gray-700">Consumption Distribution (%)</CardTitle>
-              </CardHeader>
-              <CardContent className="p-2">
-                <div className="h-80">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={typeDataToDisplay}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        outerRadius={100}
-                        fill="#8884d8"
-                        dataKey="value"
-                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(1)}%`}
-                      >
-                        {typeDataToDisplay.map((entry) => (
-                          <Cell key={entry.name} fill={COLORS[entry.name] || '#8884d8'} />
-                        ))}
-                      </Pie>
-                      <Tooltip formatter={(value: number) => [`${formatNumber(value)} m³`, 'Consumption']} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
+            <ModernDonutChart
+              title="Consumption Distribution"
+              data={typeDataToDisplay}
+              className="h-[500px]"
+            />
           </div>
 
           {/* Monthly Trends */}
