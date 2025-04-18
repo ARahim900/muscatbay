@@ -27,15 +27,15 @@ const WaterConsumptionTypes = () => {
 
   // Color palette for different meter types
   const COLORS: Record<string, string> = {
-    'Retail': '#ff8042',
+    'Retail': '#4285F4', // Bright blue
     'Zone Bulk': '#00C49F',
     'Residential (Villa)': '#FFED00',
-    'Residential (Apart)': '#82ca9d',
-    'IRR_Servies': '#0088FE',
-    'MB_Common': '#4E4456',
+    'Residential (Apart)': '#A142F4', // Purple
+    'IRR_Servies': '#FBBC05', // Yellow/Gold
+    'MB_Common': '#EA4335', // Red
     'Building': '#B8860B',
-    'D_Building_Bulk': '#a4de6c',
-    'D_Building_Common': '#d0ed57',
+    'D_Building_Bulk': '#5570F6', // Indigo
+    'D_Building_Common': '#FF64B4', // Pink
     'Main BULK': '#ff5252'
   };
 
@@ -371,7 +371,10 @@ const WaterConsumptionTypes = () => {
 
             <ModernDonutChart
               title="Consumption Distribution"
-              data={typeDataToDisplay}
+              data={typeDataToDisplay.map(item => ({
+                name: item.name,
+                value: item.value
+              }))}
               className="h-[500px]"
             />
           </div>
