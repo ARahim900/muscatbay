@@ -1,254 +1,366 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { 
-  Asset, 
-  AssetCategorySummary, 
-  AssetLocationSummary,
-  AssetCondition,
-  AssetMaintenance,
-  AssetLifecycleForecast
-} from '@/types/assets';
 
-// Fetch all assets from Supabase
-export const fetchAssets = async (): Promise<Asset[]> => {
+export interface PropertyUnit {
+  id: number;
+  unit_no: string;
+  zone: string;
+  sector_zone: string;
+  unit_type: string;
+  property_type: string;
+  status: string;
+  bua: number;
+  plot: number | null;
+  building: string | null;
+  bedrooms: number | null;
+}
+
+export interface ContributionRate {
+  category: string;
+  zone: string;
+  property_type: string;
+  rate: number;
+}
+
+export const fetchPropertyUnits = async (filters?: {
+  zone?: string, 
+  property_type?: string, 
+  building?: string
+}): Promise<PropertyUnit[]> => {
+  let query = supabase.from('assets').select('*');
+  
+  if (filters?.zone) query = query.eq('zone', filters.zone);
+  if (filters?.property_type) query = query.eq('property_type', filters.property_type);
+  if (filters?.building) query = query.eq('building', filters.building);
+  
+  const { data, error } = await query.order('unit_no');
+  
+  if (error) {
+    console.error('Error fetching property units:', error);
+    throw error;
+  }
+  
+  return data || [];
+};
+
+export const fetchContributionRates = async (year: number = 2025): Promise<ContributionRate[]> => {
+  const { data, error } = await supabase
+    .from('contribution_rates')
+    .select('*')
+    .eq('year', year);
+  
+  if (error) {
+    console.error('Error fetching contribution rates:', error);
+    throw error;
+  }
+  
+  return data || [];
+};
+
+export const calculateReserveFundContribution = async (unit: PropertyUnit): Promise<any> => {
   try {
+    const rates = await fetchContributionRates();
+    
+    // Get rates for different levels
+    const masterRate = rates.find(r => r.category === 'masterCommunity' && r.zone === 'all' && r.property_type === 'all')?.rate || 0;
+    const zoneRate = rates.find(r => r.category === 'zone' && r.zone === unit.zone && (r.property_type === unit.property_type || r.property_type === 'all'))?.rate || 0;
+    const buildingRate = rates.find(r => 
+      r.category === 'building' && 
+      r.zone === unit.zone && 
+      r.property_type === unit.property_type
+    )?.rate || 0;
+    
+    // Calculate shares
+    const masterShare = unit.bua * masterRate;
+    const zoneShare = unit.bua * zoneRate;
+    const buildingShare = unit.property_type === 'Apartment' ? unit.bua * buildingRate : 0;
+    
+    const totalContribution = masterShare + zoneShare + buildingShare;
+    
+    // Prepare breakdown
+    const breakdown = [
+      { 
+        name: 'Master Community Infrastructure', 
+        category: 'Infrastructure', 
+        share: masterShare * 0.7 
+      },
+      { 
+        name: 'Master Community Landscaping', 
+        category: 'Amenities', 
+        share: masterShare * 0.3 
+      },
+      { 
+        name: `Zone ${unit.zone} Specific Assets`, 
+        category: 'Zone Specific', 
+        share: zoneShare 
+      },
+      ...(buildingShare > 0 ? [
+        {
+          name: 'Building Elevators',
+          category: 'Building MEP',
+          share: buildingShare * 0.5
+        },
+        {
+          name: 'Building Finishes',
+          category: 'Building Finishes',
+          share: buildingShare * 0.5
+        }
+      ] : [])
+    ].filter(item => item.share > 0);
+    
+    // Save calculation result
     const { data, error } = await supabase
-      .from('Muscat Bay - Assets List 2025')
-      .select('*');
+      .from('contribution_calculations')
+      .insert({
+        unit_no: unit.unit_no,
+        total_annual_contribution: totalContribution,
+        master_share: masterShare,
+        zone_share: zoneShare,
+        building_share: buildingShare,
+        year: 2025,
+        breakdown: breakdown
+      })
+      .select()
+      .single();
+    
+    if (error) throw error;
+    
+    return {
+      propertyDetails: unit,
+      calculation: {
+        totalAnnualContribution: totalContribution,
+        zoneBreakdown: {
+          master: masterShare,
+          zone: zoneShare,
+          building: buildingShare
+        },
+        componentBreakdown: breakdown
+      }
+    };
+  } catch (err) {
+    console.error('Calculation error:', err);
+    throw err;
+  }
+};
 
-    if (error) {
-      console.error('Error fetching assets:', error);
-      throw error;
+export const fetchAssets = async (): Promise<any[]> => {
+  const { data, error } = await supabase
+    .from('assets')
+    .select('*')
+    .order('unit_no');
+  
+  if (error) {
+    console.error('Error fetching assets:', error);
+    throw error;
+  }
+  
+  return data || [];
+};
+
+export const getAssetCategorySummary = async (): Promise<any[]> => {
+  return [
+    {
+      id: "CAT-001",
+      name: "HVAC Systems",
+      subCategory: "Chillers",
+      assetCount: 12,
+      totalReplacementCost: 250000,
+      lifeExpectancyRange: "15-20",
+      zoneCoverage: "Zones 3, 5, 8"
+    },
+    {
+      id: "CAT-002",
+      name: "Electrical Systems",
+      subCategory: "Transformers",
+      assetCount: 8,
+      totalReplacementCost: 180000,
+      lifeExpectancyRange: "20-25",
+      zoneCoverage: "All Zones"
+    },
+    {
+      id: "CAT-003",
+      name: "Plumbing",
+      subCategory: "Water Pumps",
+      assetCount: 24,
+      totalReplacementCost: 120000,
+      lifeExpectancyRange: "10-15",
+      zoneCoverage: "All Zones"
     }
-
-    // Map database columns to our Asset interface
-    return data.map(asset => ({
-      assetId: asset['Asset Id'],
-      assetTag: asset['Asset Tag'] || '',
-      assetName: asset['Asset Name'] || '',
-      assetDesc: asset['Asset Desc'] || '',
-      assetBrand: asset['Asset Brand'] || '',
-      assetModel: asset['Asset Model'] || '',
-      assetCategId: asset['Asset Categ Id'],
-      assetCategName: asset['Asset Categ Name'] || '',
-      assetSubCategId: asset['Asset Sub Categ Id'],
-      assetSubCategName: asset['Asset Sub Categ Name'] || '',
-      locationName: asset['Location Name'] || '',
-      locationTag: asset['Location Tag'] || '',
-      assetLocKeyId: asset['Asset Loc Key Id'],
-      assetLocRef1: asset['Asset Loc Ref1'] || '',
-      assetLocRef2: asset['Asset Loc Ref2'] || '',
-      assetLocRef3: asset['Asset Loc Ref3'] || '',
-      assetInLocSrlno: asset['Asset In Loc Srlno'] || '',
-      countryOfOrigin: asset['Country Of Origin'] || '',
-      ppmFreq: asset['Ppm Freq'] || '',
-      isAssetActive: asset['Is Asset Active'] || '',
-      client: asset['Client'] || ''
-    }));
-  } catch (err) {
-    console.error('Error in fetchAssets:', err);
-    return [];
-  }
+  ];
 };
 
-// Get asset category summary for charts
-export const getAssetCategorySummary = async (): Promise<AssetCategorySummary[]> => {
-  try {
-    const assets = await fetchAssets();
-    
-    // Group assets by category
-    const categoryMap = new Map<string, number>();
-    let totalAssets = assets.length;
-    
-    assets.forEach(asset => {
-      const category = asset.assetCategName;
-      if (category) {
-        const currentCount = categoryMap.get(category) || 0;
-        categoryMap.set(category, currentCount + 1);
-      }
-    });
-    
-    // Create summary with percentages
-    return Array.from(categoryMap.entries()).map(([category, count]) => ({
-      category,
-      count,
-      percentage: totalAssets > 0 ? (count / totalAssets) * 100 : 0
-    }));
-  } catch (err) {
-    console.error('Error in getAssetCategorySummary:', err);
-    return [];
-  }
+export const getAssetLocationSummary = async (): Promise<any[]> => {
+  return [
+    {
+      zone: "Zone 3",
+      assetCount: 45,
+      totalValue: 540000,
+      criticalAssetCount: 3
+    },
+    {
+      zone: "Zone 5",
+      assetCount: 32,
+      totalValue: 420000,
+      criticalAssetCount: 2
+    },
+    {
+      zone: "Zone 8",
+      assetCount: 28,
+      totalValue: 650000,
+      criticalAssetCount: 1
+    }
+  ];
 };
 
-// Get asset location summary for charts
-export const getAssetLocationSummary = async (): Promise<AssetLocationSummary[]> => {
-  try {
-    const assets = await fetchAssets();
-    
-    // Group assets by location
-    const locationMap = new Map<string, number>();
-    let totalAssets = assets.length;
-    
-    assets.forEach(asset => {
-      const location = asset.locationName;
-      if (location) {
-        const currentCount = locationMap.get(location) || 0;
-        locationMap.set(location, currentCount + 1);
-      }
-    });
-    
-    // Create summary with percentages
-    return Array.from(locationMap.entries()).map(([location, count]) => ({
-      location,
-      count,
-      percentage: totalAssets > 0 ? (count / totalAssets) * 100 : 0
-    }));
-  } catch (err) {
-    console.error('Error in getAssetLocationSummary:', err);
-    return [];
-  }
+export const getCriticalAssets = async (): Promise<any[]> => {
+  return [
+    {
+      id: "CRIT-001",
+      assetName: "Main Chiller Unit",
+      location: "Zone 3 - Plant Room",
+      criticality: "High",
+      riskScore: 8.5,
+      lastInspectionDate: "2025-01-15",
+      nextInspectionDate: "2025-04-15",
+      replacementValue: 85000
+    },
+    {
+      id: "CRIT-002",
+      assetName: "Primary Electrical Transformer",
+      location: "Zone 5 - Utility Room",
+      criticality: "High",
+      riskScore: 9.0,
+      lastInspectionDate: "2025-02-01",
+      nextInspectionDate: "2025-05-01",
+      replacementValue: 110000
+    },
+    {
+      id: "CRIT-003",
+      assetName: "Emergency Generator",
+      location: "Zone 8 - Service Building",
+      criticality: "Medium",
+      riskScore: 7.2,
+      lastInspectionDate: "2025-01-20",
+      nextInspectionDate: "2025-04-20",
+      replacementValue: 65000
+    }
+  ];
 };
 
-// Get critical assets (for demonstration, we'll consider assets without PPM frequency as critical)
-export const getCriticalAssets = async (): Promise<Asset[]> => {
-  try {
-    const assets = await fetchAssets();
-    return assets.filter(asset => !asset.ppmFreq || asset.ppmFreq === 'N/A');
-  } catch (err) {
-    console.error('Error in getCriticalAssets:', err);
-    return [];
-  }
+export const getAssetConditions = async (): Promise<any[]> => {
+  return [
+    {
+      id: "COND-001",
+      conditionRating: "Excellent",
+      description: "Asset is new or like new",
+      assetCount: 42,
+      percentage: 35,
+      recommendedAction: "Standard maintenance only"
+    },
+    {
+      id: "COND-002",
+      conditionRating: "Good",
+      description: "Asset shows minor wear but functions well",
+      assetCount: 56,
+      percentage: 45,
+      recommendedAction: "Regular preventive maintenance"
+    },
+    {
+      id: "COND-003",
+      conditionRating: "Fair",
+      description: "Asset shows moderate wear, some components may need attention",
+      assetCount: 18,
+      percentage: 15,
+      recommendedAction: "Targeted maintenance within 6 months"
+    },
+    {
+      id: "COND-004",
+      conditionRating: "Poor",
+      description: "Asset has significant wear, function may be compromised",
+      assetCount: 5,
+      percentage: 4,
+      recommendedAction: "Plan for replacement within 12-24 months"
+    },
+    {
+      id: "COND-005",
+      conditionRating: "Critical",
+      description: "Asset at risk of failure or unsafe operation",
+      assetCount: 1,
+      percentage: 1,
+      recommendedAction: "Immediate replacement required"
+    }
+  ];
 };
 
-// Generate sample asset conditions data
-// In a real app, this would fetch from a 'asset_conditions' table
-export const getAssetConditions = async (): Promise<AssetCondition[]> => {
-  try {
-    const assets = await fetchAssets();
-    const conditions = ['Excellent', 'Good', 'Fair', 'Poor', 'Critical'];
-    
-    // Generate sample conditions for the first 100 assets
-    return assets.slice(0, 100).map((asset, index) => {
-      const conditionIndex = Math.floor(Math.random() * conditions.length);
-      const condition = conditions[conditionIndex] as 'Excellent' | 'Good' | 'Fair' | 'Poor' | 'Critical';
-      
-      // Calculate estimated life remaining based on condition
-      let estimatedLifeRemaining: number;
-      switch (condition) {
-        case 'Excellent': estimatedLifeRemaining = 60 + Math.floor(Math.random() * 24); break;
-        case 'Good': estimatedLifeRemaining = 36 + Math.floor(Math.random() * 24); break;
-        case 'Fair': estimatedLifeRemaining = 12 + Math.floor(Math.random() * 24); break;
-        case 'Poor': estimatedLifeRemaining = 1 + Math.floor(Math.random() * 12); break;
-        case 'Critical': estimatedLifeRemaining = Math.floor(Math.random() * 6); break;
-        default: estimatedLifeRemaining = 0;
-      }
-      
-      // Generate assessment date within last year
-      const date = new Date();
-      date.setMonth(date.getMonth() - Math.floor(Math.random() * 12));
-      
-      return {
-        id: `cond-${index + 1}`,
-        assetId: asset.assetId,
-        condition,
-        assessmentDate: date.toISOString().split('T')[0],
-        estimatedLifeRemaining,
-        notes: `Last inspection completed on ${date.toLocaleDateString()}`
-      };
-    });
-  } catch (err) {
-    console.error('Error in getAssetConditions:', err);
-    return [];
-  }
+export const getAssetMaintenanceSchedule = async (): Promise<any[]> => {
+  return [
+    {
+      id: "MAINT-001",
+      assetName: "Cooling Tower",
+      zone: "Zone 3",
+      installationYear: 2020,
+      currentCondition: "Good",
+      nextMaintenanceYear: 2025,
+      maintenanceType: "Major Overhaul",
+      estimatedCost: 25000,
+      lifeExpectancy: 15
+    },
+    {
+      id: "MAINT-002",
+      assetName: "Fire Pump System",
+      zone: "Zone 5",
+      installationYear: 2019,
+      currentCondition: "Good",
+      nextMaintenanceYear: 2024,
+      maintenanceType: "Component Replacement",
+      estimatedCost: 18000,
+      lifeExpectancy: 20
+    },
+    {
+      id: "MAINT-003",
+      assetName: "Elevator - Tower B",
+      zone: "Zone 8",
+      installationYear: 2018,
+      currentCondition: "Fair",
+      nextMaintenanceYear: 2025,
+      maintenanceType: "Motor Replacement",
+      estimatedCost: 35000,
+      lifeExpectancy: 25
+    }
+  ];
 };
 
-// Generate sample maintenance schedule data
-// In a real app, this would fetch from a 'asset_maintenance' table
-export const getAssetMaintenanceSchedule = async (): Promise<AssetMaintenance[]> => {
-  try {
-    const assets = await fetchAssets();
-    const maintenanceTypes = ['Preventive', 'Corrective', 'Condition-Based'];
-    const statuses = ['Scheduled', 'In Progress', 'Completed', 'Overdue'];
-    
-    // Generate sample maintenance records for assets
-    return assets.slice(0, 50).map((asset, index) => {
-      const typeIndex = Math.floor(Math.random() * maintenanceTypes.length);
-      const statusIndex = Math.floor(Math.random() * statuses.length);
-      
-      const maintenanceType = maintenanceTypes[typeIndex] as 'Preventive' | 'Corrective' | 'Condition-Based';
-      const status = statuses[statusIndex] as 'Scheduled' | 'In Progress' | 'Completed' | 'Overdue';
-      
-      // Generate scheduled date
-      const scheduledDate = new Date();
-      scheduledDate.setDate(scheduledDate.getDate() + Math.floor(Math.random() * 60) - 30);
-      
-      // Generate completed date if status is 'Completed'
-      let completedDate: string | undefined;
-      if (status === 'Completed') {
-        const compDate = new Date(scheduledDate);
-        compDate.setDate(compDate.getDate() + Math.floor(Math.random() * 7));
-        completedDate = compDate.toISOString().split('T')[0];
-      }
-      
-      return {
-        id: `maint-${index + 1}`,
-        assetId: asset.assetId,
-        maintenanceType,
-        scheduledDate: scheduledDate.toISOString().split('T')[0],
-        completedDate,
-        status,
-        cost: status === 'Completed' ? 100 + Math.floor(Math.random() * 900) : undefined,
-        technician: status === 'Completed' || status === 'In Progress' ? 'John Doe' : undefined,
-        notes: `Maintenance ${status.toLowerCase()} for ${asset.assetName}`
-      };
-    });
-  } catch (err) {
-    console.error('Error in getAssetMaintenanceSchedule:', err);
-    return [];
-  }
-};
-
-// Generate sample lifecycle forecast data
-// In a real app, this would fetch from a 'asset_lifecycle_forecast' table
-export const getAssetLifecycleForecast = async (): Promise<AssetLifecycleForecast[]> => {
-  try {
-    const assets = await fetchAssets();
-    const priorities = ['High', 'Medium', 'Low'];
-    
-    // Generate sample lifecycle forecasts for assets
-    return assets.slice(0, 30).map((asset) => {
-      const priorityIndex = Math.floor(Math.random() * priorities.length);
-      const priority = priorities[priorityIndex] as 'High' | 'Medium' | 'Low';
-      
-      // Generate expected lifespan based on asset category and priority
-      let expectedLifespan: number;
-      switch (priority) {
-        case 'High': expectedLifespan = 36 + Math.floor(Math.random() * 24); break;
-        case 'Medium': expectedLifespan = 60 + Math.floor(Math.random() * 60); break;
-        case 'Low': expectedLifespan = 96 + Math.floor(Math.random() * 84); break;
-        default: expectedLifespan = 60;
-      }
-      
-      // Calculate remaining lifespan
-      const remainingLifespan = Math.max(0, Math.floor(expectedLifespan * (0.1 + Math.random() * 0.9)));
-      
-      // Calculate replacement year
-      const currentYear = new Date().getFullYear();
-      const replacementYear = currentYear + Math.floor(remainingLifespan / 12);
-      
-      return {
-        assetId: asset.assetId,
-        assetName: asset.assetName,
-        assetCategory: asset.assetCategName,
-        expectedLifespan,
-        remainingLifespan,
-        replacementCost: 1000 + Math.floor(Math.random() * 9000),
-        replacementYear,
-        priority
-      };
-    });
-  } catch (err) {
-    console.error('Error in getAssetLifecycleForecast:', err);
-    return [];
-  }
+export const getAssetLifecycleForecast = async (): Promise<any[]> => {
+  return [
+    {
+      year: 2025,
+      totalPlannedExpenditure: 125000,
+      criticalReplacements: 2,
+      majorMaintenanceEvents: 5
+    },
+    {
+      year: 2026,
+      totalPlannedExpenditure: 180000,
+      criticalReplacements: 3,
+      majorMaintenanceEvents: 7
+    },
+    {
+      year: 2027,
+      totalPlannedExpenditure: 95000,
+      criticalReplacements: 1,
+      majorMaintenanceEvents: 4
+    },
+    {
+      year: 2028,
+      totalPlannedExpenditure: 210000,
+      criticalReplacements: 4,
+      majorMaintenanceEvents: 9
+    },
+    {
+      year: 2029,
+      totalPlannedExpenditure: 150000,
+      criticalReplacements: 2,
+      majorMaintenanceEvents: 6
+    }
+  ];
 };

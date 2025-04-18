@@ -21,7 +21,7 @@ const UtilitiesSection: React.FC<UtilitiesSectionProps> = ({
   // Handle clicks for internal routes
   const handleClick = (path: string) => {
     if (typeof openEmbeddedApp === 'function' && path.startsWith('http')) {
-      openEmbeddedApp(path, 'Electricity System');
+      openEmbeddedApp(path, path.includes('electricity') ? 'Electricity System' : 'Water System');
     } else {
       // For internal routes, use navigation
       navigate(path);

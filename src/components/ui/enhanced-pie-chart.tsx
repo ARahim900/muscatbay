@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer, Sector } from 'recharts';
+import React from 'react';
+import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer, Sector, PieLabelRenderProps } from 'recharts';
 import { ChartTooltip } from './chart';
 
 interface EnhancedPieChartProps {
@@ -21,7 +21,7 @@ interface EnhancedPieChartProps {
 }
 
 // This helps avoid label collisions by calculating positions more carefully
-const renderCustomizedLabel = (props: any, formatter?: (entry: any) => string) => {
+const renderCustomizedLabel = (props: PieLabelRenderProps, formatter?: (entry: any) => string) => {
   const { cx, cy, midAngle, innerRadius, outerRadius, percent, index, name, value } = props;
   
   // Filter out small segments (less than 5%) to avoid label clutter
@@ -105,7 +105,7 @@ export const EnhancedPieChart: React.FC<EnhancedPieChartProps> = ({
   labelFormatter,
   tooltipFormatter
 }) => {
-  const [activeIndex, setActiveIndex] = useState<number | undefined>(undefined);
+  const [activeIndex, setActiveIndex] = React.useState<number | undefined>(undefined);
   
   const onPieEnter = (_: any, index: number) => {
     setActiveIndex(index);
@@ -115,15 +115,6 @@ export const EnhancedPieChart: React.FC<EnhancedPieChartProps> = ({
     setActiveIndex(undefined);
   };
 
-  // Calculate total for percentage
-  const total = data.reduce((sum, item) => sum + item.value, 0);
-  
-  // Enrich data with total for tooltip percentage calculation
-  const enrichedData = data.map(item => ({
-    ...item,
-    total
-  }));
-
   return (
     <div className={className || 'w-full h-full min-h-[300px]'}>
       <ResponsiveContainer width="100%" height="100%">
@@ -131,7 +122,7 @@ export const EnhancedPieChart: React.FC<EnhancedPieChartProps> = ({
           <Pie
             activeIndex={activeIndex}
             activeShape={renderActiveShape}
-            data={enrichedData}
+            data={data}
             cx="50%"
             cy="50%"
             innerRadius={innerRadius}
@@ -143,7 +134,7 @@ export const EnhancedPieChart: React.FC<EnhancedPieChartProps> = ({
             labelLine={false}
             label={showLabels ? (props) => renderCustomizedLabel(props, labelFormatter) : false}
           >
-            {enrichedData.map((entry, index) => (
+            {data.map((entry, index) => (
               <Cell 
                 key={`cell-${index}`} 
                 fill={entry.color || colors[index % colors.length]} 

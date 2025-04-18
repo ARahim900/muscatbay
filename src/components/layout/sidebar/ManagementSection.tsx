@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { FileCog, FileSpreadsheet, Calculator, CreditCard, Landmark } from 'lucide-react';
+import { PackageOpen, FileSpreadsheet, Building2, Calculator, FileCog, CreditCard } from 'lucide-react';
 import SidebarSection from './SidebarSection';
 import SidebarLink, { SidebarLinkProps } from './SidebarLink';
 
@@ -25,40 +25,19 @@ const ManagementSection: React.FC<ManagementSectionProps> = ({
       collapsed={collapsed}
     >
       <SidebarLink 
-        to="/contracts" 
-        icon={FileCog} 
-        label="Contracts" 
+        to="/alm" 
+        icon={PackageOpen} 
+        label="Asset Lifecycle" 
         collapsed={collapsed} 
         isMobile={isMobile} 
+        iconColor="blue" 
+        bgColor="blue" 
       />
-      <SidebarLink 
-        to="/operating-expenses" 
-        icon={FileSpreadsheet} 
-        label="Operating Expenses" 
-        collapsed={collapsed} 
-        isMobile={isMobile} 
-      />
-      <SidebarLink 
-        to="/service-charges" 
-        icon={Calculator} 
-        label="Service Charges" 
-        collapsed={collapsed} 
-        isMobile={isMobile} 
-      />
-      <SidebarLink 
-        to="/reserve-fund-dashboard" 
-        icon={Landmark} 
-        label="Reserve Fund Dashboard" 
-        collapsed={collapsed} 
-        isMobile={isMobile} 
-      />
-      <SidebarLink 
-        to="/reports" 
-        icon={CreditCard} 
-        label="Financial Reports" 
-        collapsed={collapsed} 
-        isMobile={isMobile} 
-      />
+      <SidebarLink to="/contracts" icon={FileCog} label="Contracts" collapsed={collapsed} isMobile={isMobile} />
+      <SidebarLink to="/operating-expenses" icon={FileSpreadsheet} label="Operating Expenses" collapsed={collapsed} isMobile={isMobile} />
+      <SidebarLink to="/property-management" icon={Building2} label="Property Management" collapsed={collapsed} isMobile={isMobile} />
+      <SidebarLink to="/service-charges" icon={Calculator} label="Service Charges" collapsed={collapsed} isMobile={isMobile} />
+      <SidebarLink to="/reports" icon={CreditCard} label="Financial Reports" collapsed={collapsed} isMobile={isMobile} />
     </SidebarSection>
   );
 };

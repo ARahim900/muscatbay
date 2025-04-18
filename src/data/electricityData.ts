@@ -1,13 +1,11 @@
 
 import { ElectricityRecord } from '@/types/electricity';
-import { addIdsToElectricityData } from '@/utils/dataUtils';
 
-// Raw electricity data from the provided tables
-const rawElectricityData = [
+// Electricity data from the provided tables
+export const electricityData: ElectricityRecord[] = [
   {
     name: "Pumping Station 01",
     type: "PS",
-    zone: "Infrastructure",
     meterAccountNo: "R52330",
     consumption: {
       "Apr-24": 1608,
@@ -20,14 +18,12 @@ const rawElectricityData = [
       "Nov-24": 1629,
       "Dec-24": 1640,
       "Jan-25": 1903,
-      "Feb-25": 2095,
-      "Mar-25": 3032
+      "Feb-25": 2095
     }
   },
   {
     name: "Pumping Station 03",
     type: "PS",
-    zone: "Infrastructure",
     meterAccountNo: "R52329",
     consumption: {
       "Apr-24": 31,
@@ -40,8 +36,7 @@ const rawElectricityData = [
       "Nov-24": 0,
       "Dec-24": 179,
       "Jan-25": 33,
-      "Feb-25": 137,
-      "Mar-25": 131
+      "Feb-25": 137
     }
   },
   {
@@ -59,8 +54,7 @@ const rawElectricityData = [
       "Nov-24": 919,
       "Dec-24": 921,
       "Jan-25": 245,
-      "Feb-25": 870,
-      "Mar-25": 646
+      "Feb-25": 870
     }
   },
   {
@@ -78,8 +72,7 @@ const rawElectricityData = [
       "Nov-24": 2599,
       "Dec-24": 1952,
       "Jan-25": 2069,
-      "Feb-25": 2521,
-      "Mar-25": 2601
+      "Feb-25": 2521
     }
   },
   {
@@ -97,8 +90,7 @@ const rawElectricityData = [
       "Nov-24": 0,
       "Dec-24": 0,
       "Jan-25": 0,
-      "Feb-25": 0,
-      "Mar-25": 0
+      "Feb-25": 0
     }
   },
   {
@@ -116,8 +108,7 @@ const rawElectricityData = [
       "Nov-24": 91,
       "Dec-24": 185,
       "Jan-25": 28,
-      "Feb-25": 40,
-      "Mar-25": 58
+      "Feb-25": 40
     }
   },
   {
@@ -135,8 +126,7 @@ const rawElectricityData = [
       "Nov-24": 686,
       "Dec-24": 631,
       "Jan-25": 701,
-      "Feb-25": 638,
-      "Mar-25": 572
+      "Feb-25": 638
     }
   },
   {
@@ -154,8 +144,7 @@ const rawElectricityData = [
       "Nov-24": 2413,
       "Dec-24": 2643,
       "Jan-25": 2873,
-      "Feb-25": 3665,
-      "Mar-25": 3069
+      "Feb-25": 3665
     }
   },
   {
@@ -173,8 +162,7 @@ const rawElectricityData = [
       "Nov-24": 1432,
       "Dec-24": 1268,
       "Jan-25": 1689,
-      "Feb-25": 2214,
-      "Mar-25": 1718
+      "Feb-25": 2214
     }
   },
   {
@@ -192,8 +180,7 @@ const rawElectricityData = [
       "Nov-24": 974,
       "Dec-24": 1026,
       "Jan-25": 983,
-      "Feb-25": 1124,
-      "Mar-25": 1110
+      "Feb-25": 1124
     }
   },
   {
@@ -211,8 +198,7 @@ const rawElectricityData = [
       "Nov-24": 269,
       "Dec-24": 417,
       "Jan-25": 840,
-      "Feb-25": 1009,
-      "Mar-25": 845
+      "Feb-25": 1009
     }
   },
   {
@@ -230,8 +216,7 @@ const rawElectricityData = [
       "Nov-24": 212,
       "Dec-24": 213,
       "Jan-25": 40,
-      "Feb-25": 233,
-      "Mar-25": 235
+      "Feb-25": 233
     }
   },
   {
@@ -249,8 +234,7 @@ const rawElectricityData = [
       "Nov-24": 34,
       "Dec-24": 29,
       "Jan-25": 7,
-      "Feb-25": 28,
-      "Mar-25": 24
+      "Feb-25": 28
     }
   },
   {
@@ -268,8 +252,7 @@ const rawElectricityData = [
       "Nov-24": 232,
       "Dec-24": 161,
       "Jan-25": 33,
-      "Feb-25": 134,
-      "Mar-25": 139
+      "Feb-25": 134
     }
   },
   {
@@ -287,8 +270,7 @@ const rawElectricityData = [
       "Nov-24": 220,
       "Dec-24": 199,
       "Jan-25": 56,
-      "Feb-25": 203,
-      "Mar-25": 196
+      "Feb-25": 203
     }
   },
   {
@@ -306,8 +288,7 @@ const rawElectricityData = [
       "Nov-24": 172,
       "Dec-24": 173,
       "Jan-25": 186,
-      "Feb-25": 161,
-      "Mar-25": 227
+      "Feb-25": 161
     }
   },
   {
@@ -325,8 +306,7 @@ const rawElectricityData = [
       "Nov-24": 18,
       "Dec-24": 16,
       "Jan-25": 4,
-      "Feb-25": 18,
-      "Mar-25": 14
+      "Feb-25": 18
     }
   },
   {
@@ -344,8 +324,7 @@ const rawElectricityData = [
       "Nov-24": 49,
       "Dec-24": 44,
       "Jan-25": 47,
-      "Feb-25": 45,
-      "Mar-25": 38
+      "Feb-25": 45
     }
   },
   {
@@ -363,8 +342,7 @@ const rawElectricityData = [
       "Nov-24": 3593,
       "Dec-24": 3147,
       "Jan-25": 787,
-      "Feb-25": 3228,
-      "Mar-25": 2663
+      "Feb-25": 3228
     }
   },
   {
@@ -382,8 +360,7 @@ const rawElectricityData = [
       "Nov-24": 2361,
       "Dec-24": 2258,
       "Jan-25": 633,
-      "Feb-25": 2298,
-      "Mar-25": 1812
+      "Feb-25": 2298
     }
   },
   {
@@ -401,8 +378,7 @@ const rawElectricityData = [
       "Nov-24": 2060,
       "Dec-24": 1966,
       "Jan-25": 1868,
-      "Feb-25": 1974,
-      "Mar-25": 1562
+      "Feb-25": 1974
     }
   },
   {
@@ -420,8 +396,7 @@ const rawElectricityData = [
       "Nov-24": 2299,
       "Dec-24": 1389,
       "Jan-25": 325,
-      "Feb-25": 1406,
-      "Mar-25": 1401
+      "Feb-25": 1406
     }
   },
   {
@@ -439,8 +414,7 @@ const rawElectricityData = [
       "Nov-24": 1477,
       "Dec-24": 1121,
       "Jan-25": 449,
-      "Feb-25": 2070,
-      "Mar-25": 1870
+      "Feb-25": 2070
     }
   },
   {
@@ -458,8 +432,7 @@ const rawElectricityData = [
       "Nov-24": 24383,
       "Dec-24": 37236,
       "Jan-25": 38168,
-      "Feb-25": 18422,
-      "Mar-25": 40
+      "Feb-25": 18422
     }
   },
   {
@@ -477,8 +450,7 @@ const rawElectricityData = [
       "Nov-24": 0,
       "Dec-24": 0,
       "Jan-25": 0,
-      "Feb-25": 0,
-      "Mar-25": 0
+      "Feb-25": 0
     }
   },
   {
@@ -496,8 +468,7 @@ const rawElectricityData = [
       "Nov-24": 9604,
       "Dec-24": 19032,
       "Jan-25": 22819,
-      "Feb-25": 19974,
-      "Mar-25": 14190
+      "Feb-25": 19974
     }
   },
   {
@@ -515,8 +486,7 @@ const rawElectricityData = [
       "Nov-24": 1225,
       "Dec-24": 814,
       "Jan-25": 798,
-      "Feb-25": 936,
-      "Mar-25": 879
+      "Feb-25": 936
     }
   },
   {
@@ -534,8 +504,7 @@ const rawElectricityData = [
       "Nov-24": 5702,
       "Dec-24": 5131,
       "Jan-25": 5559,
-      "Feb-25": 5417,
-      "Mar-25": 4504
+      "Feb-25": 5417
     }
   },
   {
@@ -553,8 +522,7 @@ const rawElectricityData = [
       "Nov-24": 3581,
       "Dec-24": 2352,
       "Jan-25": 2090,
-      "Feb-25": 2246,
-      "Mar-25": 1939
+      "Feb-25": 2246
     }
   },
   {
@@ -572,8 +540,7 @@ const rawElectricityData = [
       "Nov-24": 1377,
       "Dec-24": 764,
       "Jan-25": 647,
-      "Feb-25": 657,
-      "Mar-25": 650
+      "Feb-25": 657
     }
   },
   {
@@ -591,8 +558,7 @@ const rawElectricityData = [
       "Nov-24": 1252,
       "Dec-24": 841,
       "Jan-25": 670,
-      "Feb-25": 556,
-      "Mar-25": 608
+      "Feb-25": 556
     }
   },
   {
@@ -610,8 +576,7 @@ const rawElectricityData = [
       "Nov-24": 1577,
       "Dec-24": 890,
       "Jan-25": 724,
-      "Feb-25": 690,
-      "Mar-25": 752
+      "Feb-25": 690
     }
   },
   {
@@ -629,8 +594,7 @@ const rawElectricityData = [
       "Nov-24": 1774,
       "Dec-24": 1055,
       "Jan-25": 887,
-      "Feb-25": 738,
-      "Mar-25": 792
+      "Feb-25": 738
     }
   },
   {
@@ -648,8 +612,7 @@ const rawElectricityData = [
       "Nov-24": 1046,
       "Dec-24": 785,
       "Jan-25": 826,
-      "Feb-25": 676,
-      "Mar-25": 683
+      "Feb-25": 676
     }
   },
   {
@@ -667,8 +630,7 @@ const rawElectricityData = [
       "Nov-24": 1608,
       "Dec-24": 1068,
       "Jan-25": 860,
-      "Feb-25": 837,
-      "Mar-25": 818
+      "Feb-25": 837
     }
   },
   {
@@ -686,8 +648,7 @@ const rawElectricityData = [
       "Nov-24": 1102,
       "Dec-24": 789,
       "Jan-25": 765,
-      "Feb-25": 785,
-      "Mar-25": 707
+      "Feb-25": 785
     }
   },
   {
@@ -705,8 +666,7 @@ const rawElectricityData = [
       "Nov-24": 1855,
       "Dec-24": 710,
       "Jan-25": 661,
-      "Feb-25": 682,
-      "Mar-25": 642
+      "Feb-25": 682
     }
   },
   {
@@ -724,8 +684,7 @@ const rawElectricityData = [
       "Nov-24": 1986,
       "Dec-24": 1208,
       "Jan-25": 979,
-      "Feb-25": 896,
-      "Mar-25": 952
+      "Feb-25": 896
     }
   },
   {
@@ -743,8 +702,7 @@ const rawElectricityData = [
       "Nov-24": 1764,
       "Dec-24": 968,
       "Jan-25": 693,
-      "Feb-25": 732,
-      "Mar-25": 760
+      "Feb-25": 732
     }
   },
   {
@@ -762,8 +720,7 @@ const rawElectricityData = [
       "Nov-24": 1777,
       "Dec-24": 834,
       "Jan-25": 681,
-      "Feb-25": 559,
-      "Mar-25": 531
+      "Feb-25": 559
     }
   },
   {
@@ -781,8 +738,7 @@ const rawElectricityData = [
       "Nov-24": 1828,
       "Dec-24": 1035,
       "Jan-25": 677,
-      "Feb-25": 616,
-      "Mar-25": 719
+      "Feb-25": 616
     }
   },
   {
@@ -800,8 +756,7 @@ const rawElectricityData = [
       "Nov-24": 1805,
       "Dec-24": 937,
       "Jan-25": 683,
-      "Feb-25": 731,
-      "Mar-25": 765
+      "Feb-25": 731
     }
   },
   {
@@ -819,8 +774,7 @@ const rawElectricityData = [
       "Nov-24": 2262,
       "Dec-24": 1332,
       "Jan-25": 990,
-      "Feb-25": 846,
-      "Mar-25": 795
+      "Feb-25": 846
     }
   },
   {
@@ -838,8 +792,7 @@ const rawElectricityData = [
       "Nov-24": 1534,
       "Dec-24": 778,
       "Jan-25": 593,
-      "Feb-25": 535,
-      "Mar-25": 594
+      "Feb-25": 535
     }
   },
   {
@@ -857,8 +810,7 @@ const rawElectricityData = [
       "Nov-24": 1634,
       "Dec-24": 998,
       "Jan-25": 628,
-      "Feb-25": 582,
-      "Mar-25": 697
+      "Feb-25": 582
     }
   },
   {
@@ -876,8 +828,7 @@ const rawElectricityData = [
       "Nov-24": 1275,
       "Dec-24": 705,
       "Jan-25": 674,
-      "Feb-25": 612,
-      "Mar-25": 679
+      "Feb-25": 612
     }
   },
   {
@@ -895,8 +846,7 @@ const rawElectricityData = [
       "Nov-24": 1734,
       "Dec-24": 977,
       "Jan-25": 767,
-      "Feb-25": 800,
-      "Mar-25": 719
+      "Feb-25": 800
     }
   },
   {
@@ -914,8 +864,7 @@ const rawElectricityData = [
       "Nov-24": 1630,
       "Dec-24": 957,
       "Jan-25": 715,
-      "Feb-25": 677,
-      "Mar-25": 595
+      "Feb-25": 677
     }
   },
   {
@@ -933,8 +882,7 @@ const rawElectricityData = [
       "Nov-24": 1303,
       "Dec-24": 766,
       "Jan-25": 639,
-      "Feb-25": 566,
-      "Mar-25": 463
+      "Feb-25": 566
     }
   },
   {
@@ -952,8 +900,7 @@ const rawElectricityData = [
       "Nov-24": 1169,
       "Dec-24": 702,
       "Jan-25": 475,
-      "Feb-25": 508,
-      "Mar-25": 554
+      "Feb-25": 508
     }
   },
   {
@@ -971,8 +918,7 @@ const rawElectricityData = [
       "Nov-24": 6229,
       "Dec-24": 3695,
       "Jan-25": 3304,
-      "Feb-25": 3335,
-      "Mar-25": 3383
+      "Feb-25": 3335
     }
   },
   {
@@ -990,8 +936,7 @@ const rawElectricityData = [
       "Nov-24": 0,
       "Dec-24": 0,
       "Jan-25": 0,
-      "Feb-25": 0,
-      "Mar-25": 0
+      "Feb-25": 0
     }
   },
   {
@@ -1009,8 +954,7 @@ const rawElectricityData = [
       "Nov-24": 40,
       "Dec-24": 48,
       "Jan-25": 13,
-      "Feb-25": 57,
-      "Mar-25": 47
+      "Feb-25": 57
     }
   },
   {
@@ -1028,8 +972,7 @@ const rawElectricityData = [
       "Nov-24": 6,
       "Dec-24": 8,
       "Jan-25": 0,
-      "Feb-25": 0,
-      "Mar-25": 0
+      "Feb-25": 0
     }
   },
   {
@@ -1047,8 +990,7 @@ const rawElectricityData = [
       "Nov-24": 148,
       "Dec-24": 72,
       "Jan-25": 59,
-      "Feb-25": 98,
-      "Mar-25": 88
+      "Feb-25": 98
     }
   },
   {
@@ -1066,11 +1008,7 @@ const rawElectricityData = [
       "Nov-24": 16742,
       "Dec-24": 15554,
       "Jan-25": 16788,
-      "Feb-25": 16154,
-      "Mar-25": 14971
+      "Feb-25": 16154
     }
   }
 ];
-
-// Add unique IDs to all records
-export const electricityData: ElectricityRecord[] = addIdsToElectricityData(rawElectricityData);

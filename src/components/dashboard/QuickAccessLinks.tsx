@@ -2,13 +2,16 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { 
+  Droplets, 
   Zap, 
   Factory, 
-  AirVent, 
+  Wind, 
   FileText, 
-  Star,
-  Landmark,
-  Droplets
+  AirVent, 
+  Shield, 
+  FolderKanban,
+  Clock,
+  Star
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -36,7 +39,7 @@ const quickLinks: QuickAccessLink[] = [
   {
     id: 'water',
     title: 'Water System',
-    description: 'Monitor water distribution and losses',
+    description: 'Monitor water usage and distribution',
     icon: <Droplets className="h-5 w-5 text-blue-500" />,
     url: '/water-system',
     color: 'text-blue-500',
@@ -64,19 +67,19 @@ const quickLinks: QuickAccessLink[] = [
     id: 'contracts',
     title: 'Contracts',
     description: 'Contract management and tracking',
-    icon: <FileText className="h-5 w-5 text-indigo-500" />,
+    icon: <FileText className="h-5 w-5 text-purple-500" />,
     url: '/contracts',
-    color: 'text-indigo-500',
-    bgColor: 'bg-indigo-50'
-  },
-  {
-    id: 'reserve-fund',
-    title: 'Reserve Fund',
-    description: 'Reserve fund analytics dashboard',
-    icon: <Landmark className="h-5 w-5 text-purple-500" />,
-    url: '/reserve-fund-dashboard',
     color: 'text-purple-500',
     bgColor: 'bg-purple-50'
+  },
+  {
+    id: 'asset-lifecycle',
+    title: 'Asset Lifecycle',
+    description: 'Manage asset lifecycle and maintenance',
+    icon: <Clock className="h-5 w-5 text-sky-500" />,
+    url: '/alm',
+    color: 'text-sky-500',
+    bgColor: 'bg-sky-50'
   }
 ];
 

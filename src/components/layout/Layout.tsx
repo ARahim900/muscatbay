@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import AppNavbar from './AppNavbar';
 import MobileMenu from './MobileMenu';
@@ -7,8 +8,6 @@ import { toast } from 'sonner';
 import { ArrowLeft, X, Menu, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useApp } from '@/context/AppContext';
-import NewHeader from './NewHeader';
 
 interface EmbeddedAppState {
   url: string;
@@ -21,7 +20,6 @@ interface LayoutProps {
 }
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
-  const { isSidebarOpen } = useApp();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [embeddedApp, setEmbeddedApp] = useState<EmbeddedAppState>({
     url: '',
@@ -35,9 +33,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const location = useLocation();
   const navigate = useNavigate();
 
+  // Close mobile menu on route change
   useEffect(() => {
     setMobileMenuOpen(false);
     
+    // Check if we're navigating to an external app route
+    // If we are, we should close the embedded app view
     if (location.pathname.startsWith('/') && embeddedApp.isOpen) {
       setEmbeddedApp({
         url: '',
@@ -52,6 +53,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   };
 
   const openEmbeddedApp = (url: string, title: string) => {
+    // If it's an internal route, use navigation instead
     if (url.startsWith('/')) {
       navigate(url);
       return;
@@ -91,8 +93,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   return (
     <div className="min-h-screen bg-background text-foreground overflow-hidden transition-colors duration-150">
-      <NewHeader />
+      {/* Top Navigation */}
+      <AppNavbar toggleMobileMenu={toggleMobileMenu} />
       
+      {/* Mobile Menu */}
       <AnimatePresence>
         {mobileMenuOpen && (
           <motion.div
@@ -110,9 +114,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         )}
       </AnimatePresence>
       
-      <main className={`pt-16 min-h-screen w-full max-w-[1800px] mx-auto transition-all duration-300 ${
-        isSidebarOpen ? 'md:ml-64' : ''
-      }`}>
+      <main className="pt-16 min-h-screen w-full max-w-[1800px] mx-auto">
         {embeddedApp.isOpen ? (
           <div className="relative w-full h-[calc(100vh-4rem)]">
             <div className="fixed top-16 left-0 right-0 z-40 flex items-center justify-between px-3 sm:px-4 py-2 sm:py-3 bg-card dark:bg-card/80 backdrop-blur-sm border-b shadow-sm border-border">
@@ -175,14 +177,15 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             </div>
           </div>
         ) : (
-          <motion.div
-            initial={{ opacity: 0, y: 5 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-            className="px-2 sm:px-6 md:px-8 mx-auto w-full max-w-full"
-          >
-            {children}
-          </motion.div>
+          <div className="px-2 sm:px-6 md:px-8 mx-auto w-full max-w-full">
+            <motion.div
+              initial={{ opacity: 0, y: 5 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              {children || <Outlet />}
+            </motion.div>
+          </div>
         )}
       </main>
     </div>
