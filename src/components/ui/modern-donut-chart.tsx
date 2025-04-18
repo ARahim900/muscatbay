@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Sector } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
@@ -14,7 +14,7 @@ interface ModernDonutChartProps {
   className?: string;
 }
 
-// Updated modern color palette with better visibility and contrast
+// Modern vibrant color palette with better contrast
 const DEFAULT_COLORS = {
   'Retail': '#4285F4', // Bright blue
   'Residential (Villas)': '#34A853', // Green
@@ -33,7 +33,7 @@ const DEFAULT_COLORS = {
   'Village Square': '#5570F6'
 };
 
-// Active shape for hover effect
+// Active shape for hover effect - creates the expanded slice on hover
 const renderActiveShape = (props: any) => {
   const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill } = props;
   
@@ -43,7 +43,7 @@ const renderActiveShape = (props: any) => {
         cx={cx}
         cy={cy}
         innerRadius={innerRadius}
-        outerRadius={outerRadius + 6}
+        outerRadius={outerRadius + 8}
         startAngle={startAngle}
         endAngle={endAngle}
         fill={fill}
@@ -54,8 +54,8 @@ const renderActiveShape = (props: any) => {
         cy={cy}
         startAngle={startAngle}
         endAngle={endAngle}
-        innerRadius={outerRadius + 6}
-        outerRadius={outerRadius + 10}
+        innerRadius={outerRadius + 8}
+        outerRadius={outerRadius + 12}
         fill={fill}
       />
     </g>
@@ -68,7 +68,7 @@ export const ModernDonutChart: React.FC<ModernDonutChartProps> = ({
   className 
 }) => {
   const total = data.reduce((sum, item) => sum + item.value, 0);
-  const [activeIndex, setActiveIndex] = React.useState<number | null>(null);
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
   const onPieEnter = (_: any, index: number) => {
     setActiveIndex(index);
@@ -78,34 +78,55 @@ export const ModernDonutChart: React.FC<ModernDonutChartProps> = ({
     setActiveIndex(null);
   };
 
+  // Render label with line connector - this creates the labels outside the chart
   const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index, name, value }: any) => {
     // Filter out small segments (less than 3%) to avoid label clutter
     if (percent < 0.03) return null;
     
     const RADIAN = Math.PI / 180;
-    // Positioning the label outside the pie
-    const radius = outerRadius * 1.15;
+    // Position the label outside the pie with some extra space
+    const radius = outerRadius * 1.2;
     const x = cx + radius * Math.cos(-midAngle * RADIAN);
     const y = cy + radius * Math.sin(-midAngle * RADIAN);
     
-    // Determine text anchor based on quadrant
+    // Determine which side of the chart we're on
     const isRightSide = x > cx;
     
-    // Label with percentage
+    // Format the label with percentage
     const labelText = `${name} (${(percent * 100).toFixed(1)}%)`;
     
+    // Draw line from segment to label
+    const innerX = cx + (innerRadius + (outerRadius - innerRadius) * 0.5) * Math.cos(-midAngle * RADIAN);
+    const innerY = cy + (innerRadius + (outerRadius - innerRadius) * 0.5) * Math.sin(-midAngle * RADIAN);
+    
+    const middleX = cx + (outerRadius + 30) * Math.cos(-midAngle * RADIAN);
+    const middleY = cy + (outerRadius + 30) * Math.sin(-midAngle * RADIAN);
+    
+    const color = data[index].color || DEFAULT_COLORS[name as keyof typeof DEFAULT_COLORS] || '#666';
+    
     return (
-      <text 
-        x={x} 
-        y={y} 
-        fill={data[index].color || DEFAULT_COLORS[name as keyof typeof DEFAULT_COLORS] || '#666'}
-        textAnchor={isRightSide ? 'start' : 'end'}
-        dominantBaseline="central"
-        fontSize={13}
-        fontWeight="500"
-      >
-        {labelText}
-      </text>
+      <g>
+        {/* Connector line from pie to label */}
+        <path 
+          d={`M${innerX},${innerY}L${middleX},${middleY}L${isRightSide ? x + 5 : x - 5},${middleY}`} 
+          stroke={color}
+          fill="none"
+          strokeWidth={1}
+        />
+        
+        {/* Label text */}
+        <text 
+          x={isRightSide ? x + 10 : x - 10} 
+          y={middleY} 
+          fill={color}
+          textAnchor={isRightSide ? 'start' : 'end'}
+          dominantBaseline="central"
+          fontSize={12}
+          fontWeight="500"
+        >
+          {labelText}
+        </text>
+      </g>
     );
   };
 
@@ -117,7 +138,7 @@ export const ModernDonutChart: React.FC<ModernDonutChartProps> = ({
       <CardContent>
         <div className="h-[400px] relative overflow-visible">
           <ResponsiveContainer width="100%" height="100%">
-            <PieChart margin={{ top: 10, right: 10, bottom: 10, left: 10 }}>
+            <PieChart margin={{ top: 20, right: 80, bottom: 20, left: 80 }}>
               <Pie
                 activeIndex={activeIndex !== null ? activeIndex : undefined}
                 activeShape={renderActiveShape}
@@ -128,7 +149,7 @@ export const ModernDonutChart: React.FC<ModernDonutChartProps> = ({
                 outerRadius={120}
                 paddingAngle={2}
                 dataKey="value"
-                labelLine={false}
+                labelLine={true}
                 label={renderCustomizedLabel}
                 onMouseEnter={onPieEnter}
                 onMouseLeave={onPieLeave}
@@ -140,8 +161,8 @@ export const ModernDonutChart: React.FC<ModernDonutChartProps> = ({
                   <Cell 
                     key={`cell-${index}`}
                     fill={entry.color || DEFAULT_COLORS[entry.name as keyof typeof DEFAULT_COLORS] || `#${Math.floor(Math.random()*16777215).toString(16)}`}
-                    strokeWidth={1}
-                    stroke="white"
+                    strokeWidth={2}
+                    stroke="#fff"
                   />
                 ))}
               </Pie>
@@ -152,7 +173,7 @@ export const ModernDonutChart: React.FC<ModernDonutChartProps> = ({
                     const percentage = ((data.value / total) * 100).toFixed(1);
                     
                     return (
-                      <div className="bg-white p-2 shadow-lg rounded-lg border border-gray-200">
+                      <div className="bg-white p-3 shadow-lg rounded-lg border border-gray-200">
                         <p className="font-medium text-sm">{data.name}</p>
                         <p className="text-sm text-gray-600">
                           {data.value.toLocaleString()} m³ ({percentage}%)
@@ -172,21 +193,6 @@ export const ModernDonutChart: React.FC<ModernDonutChartProps> = ({
               <div className="text-3xl font-bold">{total.toLocaleString()}</div>
               <div className="text-sm text-gray-500">Total m³</div>
             </div>
-          </div>
-          
-          {/* Legend - Removed from inside chart for cleaner look, will appear below */}
-          <div className="absolute bottom-0 left-0 right-0 flex flex-wrap justify-center gap-x-4 gap-y-2 mt-4">
-            {data.map((entry, index) => (
-              <div key={index} className="flex items-center text-sm">
-                <div 
-                  className="w-3 h-3 rounded-full mr-2"
-                  style={{ 
-                    backgroundColor: entry.color || DEFAULT_COLORS[entry.name as keyof typeof DEFAULT_COLORS] 
-                  }}
-                />
-                <span className="text-gray-700 whitespace-nowrap">{entry.name}</span>
-              </div>
-            ))}
           </div>
         </div>
       </CardContent>
