@@ -1,55 +1,46 @@
 
-import { Card, CardContent } from "@/components/ui/card"
-import { LucideIcon } from "lucide-react"
+import React from 'react';
+import { Card, CardContent } from "@/components/ui/card";
+import { LucideIcon } from 'lucide-react';
 
-interface MetricCardProps {
-  title: string
-  value: string
-  unit?: string
-  icon?: React.ReactNode
-  trend?: {
-    value: number
-    icon: LucideIcon
-    label: string
-  }
+interface TrendInfo {
+  value: number;
+  icon: LucideIcon;
+  label: string;
 }
 
-export function MetricCard({
-  title,
-  value,
-  unit,
-  icon,
-  trend,
-}: MetricCardProps) {
+interface MetricCardProps {
+  title: string;
+  value: string | number;
+  unit?: string;
+  icon: React.ReactNode;
+  trend?: TrendInfo;
+}
+
+export function MetricCard({ title, value, unit, icon, trend }: MetricCardProps) {
   return (
-    <Card>
+    <Card className="overflow-hidden">
       <CardContent className="p-6">
-        <div className="flex items-center justify-between space-y-0 pb-2">
-          <p className="text-sm font-medium text-muted-foreground">{title}</p>
-          {icon}
+        <div className="flex justify-between items-start mb-3">
+          <p className="text-sm text-muted-foreground">{title}</p>
+          <div className="bg-muted p-2 rounded-full">
+            {icon}
+          </div>
         </div>
-        <div className="flex items-baseline gap-2">
-          <h3 className="text-2xl font-bold">{value}</h3>
-          {unit && <span className="text-sm text-muted-foreground">{unit}</span>}
+        <div className="flex items-baseline">
+          <div className="text-2xl font-bold mr-1">{value}</div>
+          {unit && <div className="text-sm text-muted-foreground">{unit}</div>}
         </div>
         {trend && (
-          <div className="flex items-center gap-1 mt-2">
-            <trend.icon
-              className={`h-4 w-4 ${
-                trend.value >= 0 ? "text-green-500" : "text-red-500"
-              }`}
-            />
-            <p
-              className={`text-sm ${
-                trend.value >= 0 ? "text-green-500" : "text-red-500"
-              }`}
-            >
-              {Math.abs(trend.value)}%
-            </p>
-            <p className="text-sm text-muted-foreground">{trend.label}</p>
+          <div className="flex items-center mt-2 text-xs">
+            <trend.icon className={`h-3 w-3 mr-1 ${trend.value >= 0 ? 'text-green-500' : 'text-red-500'}`} />
+            <span className={trend.value >= 0 ? 'text-green-500' : 'text-red-500'}>
+              {trend.value >= 0 ? '+' : ''}{trend.value}%
+            </span>
+            <span className="text-muted-foreground ml-1">{trend.label}</span>
           </div>
         )}
       </CardContent>
     </Card>
-  )
+  );
 }
