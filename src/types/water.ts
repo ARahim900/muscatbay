@@ -1,4 +1,3 @@
-
 export interface WaterData {
   meter_label: string;
   account_number: string;
@@ -44,4 +43,49 @@ export interface CSVRowData {
   'Feb-25': string;
   'Total': string;
   [key: string]: string; // Allow for additional properties
+}
+
+export interface WaterSystemData {
+  // L1, L2, L3 level data
+  levels: {
+    L1: number;
+    L2: number;
+    L3: number;
+  };
+  
+  // Zone analysis data
+  zones: {
+    [key: string]: {
+      consumption: number;
+      loss: number;
+    };
+  };
+  
+  // Type breakdown data
+  types: {
+    [key: string]: number;
+  };
+  
+  // Loss analysis data
+  losses: {
+    systemLoss: number;
+    zoneLosses: {
+      [key: string]: number;
+    };
+    financialImpact: number; // in OMR
+  };
+  
+  // Monthly trends
+  monthlyTrends: {
+    [key: string]: {
+      consumption: number;
+      loss: number;
+    };
+  };
+}
+
+export interface WaterFilter {
+  month: string;
+  zone: string;
+  type: string;
 }
