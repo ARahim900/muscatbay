@@ -42,7 +42,7 @@ const UtilitiesSection: React.FC<UtilitiesSectionProps> = ({
         onClick={() => handleClick('/electricity-system')}
       />
       <SidebarLink 
-        to="/water-system" 
+        to="/water-dashboard" 
         icon={Droplets} 
         label="Water System" 
         collapsed={collapsed} 
@@ -50,7 +50,7 @@ const UtilitiesSection: React.FC<UtilitiesSectionProps> = ({
         isMobile={isMobile}
         iconColor="blue-500"
         bgColor="blue-100"
-        onClick={() => handleClick('/water-system')}
+        onClick={() => handleClick('/water-dashboard')}
       />
     </SidebarSection>
   );

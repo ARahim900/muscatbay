@@ -32,13 +32,13 @@ export const parseWaterData = async (filters: WaterFilter): Promise<WaterSystemD
   };
   
   // Calculate zone analysis
-  const zones = calculateZoneAnalysis(filteredData);
+  const zones = calculateZoneAnalysis(filteredData, filters.month);
   
   // Calculate type breakdown
-  const types = calculateTypeBreakdown(filteredData);
+  const types = calculateTypeBreakdown(filteredData, filters.month);
   
   // Calculate losses
-  const losses = calculateLossAnalysis(filteredData);
+  const losses = calculateLossAnalysis(filteredData, filters.month);
   
   // Calculate monthly trends
   const monthlyTrends = calculateMonthlyTrends(filteredData);
@@ -59,7 +59,7 @@ const calculateLevelTotal = (data: CSVRowData[], level: string): number => {
     .reduce((sum, row) => sum + parseFloat(row[getCurrentMonthColumn()] || '0'), 0);
 };
 
-const calculateZoneAnalysis = (data: CSVRowData[]) => {
+const calculateZoneAnalysis = (data: CSVRowData[], selectedMonth: string = 'feb_25') => {
   const zones: { [key: string]: { consumption: number; loss: number } } = {};
   
   data.forEach(row => {
@@ -67,7 +67,7 @@ const calculateZoneAnalysis = (data: CSVRowData[]) => {
       zones[row.Zone] = { consumption: 0, loss: 0 };
     }
     
-    const consumption = parseFloat(row[getCurrentMonthColumn()] || '0');
+    const consumption = parseFloat(row[convertToDbColumnName(selectedMonth)] || '0');
     zones[row.Zone].consumption += consumption;
     
     // Calculate zone loss (difference between zone bulk meter and sum of sub-meters)
@@ -78,7 +78,7 @@ const calculateZoneAnalysis = (data: CSVRowData[]) => {
           subRow.Type !== 'Zone Bulk'
         )
         .reduce((sum, subRow) => 
-          sum + parseFloat(subRow[getCurrentMonthColumn()] || '0'), 
+          sum + parseFloat(subRow[convertToDbColumnName(selectedMonth)] || '0'), 
           0
         );
       
@@ -89,37 +89,37 @@ const calculateZoneAnalysis = (data: CSVRowData[]) => {
   return zones;
 };
 
-const calculateTypeBreakdown = (data: CSVRowData[]) => {
+const calculateTypeBreakdown = (data: CSVRowData[], selectedMonth: string = 'feb_25') => {
   const types: { [key: string]: number } = {};
   
   data.forEach(row => {
     if (!types[row.Type]) {
       types[row.Type] = 0;
     }
-    types[row.Type] += parseFloat(row[getCurrentMonthColumn()] || '0');
+    types[row.Type] += parseFloat(row[convertToDbColumnName(selectedMonth)] || '0');
   });
   
   return types;
 };
 
-const calculateLossAnalysis = (data: CSVRowData[]) => {
+const calculateLossAnalysis = (data: CSVRowData[], selectedMonth: string = 'feb_25') => {
   // Calculate total system input
   const mainBulkFlow = data
     .filter(row => row.Type === 'Main BULK')
-    .reduce((sum, row) => sum + parseFloat(row[getCurrentMonthColumn()] || '0'), 0);
+    .reduce((sum, row) => sum + parseFloat(row[convertToDbColumnName(selectedMonth)] || '0'), 0);
   
   // Calculate total consumption
   const totalConsumption = data
     .filter(row => row.Type !== 'Main BULK' && row.Type !== 'Zone Bulk')
-    .reduce((sum, row) => sum + parseFloat(row[getCurrentMonthColumn()] || '0'), 0);
+    .reduce((sum, row) => sum + parseFloat(row[convertToDbColumnName(selectedMonth)] || '0'), 0);
   
   // Calculate system loss
   const systemLoss = mainBulkFlow - totalConsumption;
   
   // Calculate zone-specific losses
   const zoneLosses: { [key: string]: number } = {};
-  Object.keys(calculateZoneAnalysis(data)).forEach(zone => {
-    zoneLosses[zone] = calculateZoneAnalysis(data)[zone].loss;
+  Object.keys(calculateZoneAnalysis(data, selectedMonth)).forEach(zone => {
+    zoneLosses[zone] = calculateZoneAnalysis(data, selectedMonth)[zone].loss;
   });
   
   return {
@@ -141,11 +141,11 @@ const calculateMonthlyTrends = (data: CSVRowData[]) => {
   months.forEach(month => {
     const mainBulkFlow = data
       .filter(row => row.Type === 'Main BULK')
-      .reduce((sum, row) => sum + parseFloat(row[month] || '0'), 0);
+      .reduce((sum, row) => sum + parseFloat(row[convertToDbColumnName(month)] || '0'), 0);
       
     const consumption = data
       .filter(row => row.Type !== 'Main BULK' && row.Type !== 'Zone Bulk')
-      .reduce((sum, row) => sum + parseFloat(row[month] || '0'), 0);
+      .reduce((sum, row) => sum + parseFloat(row[convertToDbColumnName(month)] || '0'), 0);
       
     trends[month] = {
       consumption,
@@ -163,9 +163,26 @@ const determineMeterLevel = (type: string, parentMeter: string | null): string =
   return 'L3';
 };
 
+// Convert month in format 'jan_24' to database column format 'Jan-24'
+const convertToDbColumnName = (month: string): string => {
+  // Default to feb_25 if not provided
+  if (!month) return 'Feb-25';
+  
+  // Extract the month and year parts
+  const parts = month.split('_');
+  if (parts.length !== 2) return 'Feb-25';
+  
+  // Capitalize the first letter of the month
+  const monthPart = parts[0].charAt(0).toUpperCase() + parts[0].slice(1);
+  
+  // Return in the format 'Jan-24'
+  return `${monthPart}-${parts[1]}`;
+};
+
+// Get current month column for the data
 const getCurrentMonthColumn = (): string => {
   // Default to most recent month (feb_25)
-  return 'feb_25';
+  return 'Feb-25';
 };
 
 export const getAvailableZones = async (): Promise<string[]> => {
