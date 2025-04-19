@@ -1,289 +1,269 @@
 
-import React from 'react';
-import { useWaterSystem } from '@/hooks/useWaterSystem';
-import Layout from '@/components/layout/Layout';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  PieChart,
-  Pie,
-  Cell
+import React, { useState, useEffect } from 'react';
+import { 
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, 
+  ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, 
+  AreaChart, Area 
 } from 'recharts';
-import { Droplets, BarChart2, PieChart as PieChartIcon, TrendingUp } from 'lucide-react';
-import WaterFilters from '@/components/water/WaterFilters';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
-import { useNavigate } from 'react-router-dom';
-import { ModernDonutChart } from '@/components/ui/modern-donut-chart';
-import StatCard from '@/components/dashboard/StatCard';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Download, Filter, Calendar, DropletIcon, AlertTriangle, Activity, Home, Building, Droplets } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useWaterSystem } from '@/hooks/useWaterSystem';
+import WaterFilters from '@/components/water/WaterFilters';
+import { WaterFilter } from '@/types/water';
 
 const WaterDashboard = () => {
-  const {
-    waterData,
-    loading,
-    error,
-    filters,
-    availableZones,
+  const { 
+    waterData, 
+    loading, 
+    error, 
+    filters, 
+    availableZones, 
     availableTypes,
-    updateFilters
+    updateFilters 
   } = useWaterSystem();
   
-  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState('overview');
+  
+  // Color schemes
+  const COLORS = [
+    '#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', 
+    '#82CA9D', '#FF6B6B', '#6A7FDB', '#61DAFB', '#FF9AA2'
+  ];
+  
+  const LOSS_COLORS = {
+    loss: '#FF6B6B',
+    consumption: '#0088FE'
+  };
+  
+  // Data transformations for charts
+  const prepareZoneData = () => {
+    if (!waterData?.zones) return [];
+    
+    return Object.entries(waterData.zones).map(([zone, data]) => ({
+      name: zone,
+      consumption: data.consumption,
+      loss: data.loss
+    }));
+  };
+  
+  const prepareTypeData = () => {
+    if (!waterData?.types) return [];
+    
+    return Object.entries(waterData.types)
+      .filter(([type]) => type !== 'Main BULK' && type !== 'Zone Bulk')
+      .map(([type, value]) => ({
+        name: type,
+        value
+      }));
+  };
+  
+  const prepareLossAnalysisData = () => {
+    if (!waterData?.losses) return [];
+    
+    return [
+      { name: 'Consumption', value: waterData.levels.L3 },
+      { name: 'System Loss', value: waterData.losses.systemLoss }
+    ];
+  };
+  
+  const prepareMonthlyTrendData = () => {
+    if (!waterData?.monthlyTrends) return [];
+    
+    return Object.entries(waterData.monthlyTrends).map(([month, data]) => ({
+      name: month.replace('_', '-'),
+      consumption: data.consumption,
+      loss: data.loss
+    }));
+  };
+  
+  const handleFilterChange = (newFilter: Partial<WaterFilter>) => {
+    updateFilters(newFilter);
+  };
+  
+  useEffect(() => {
+    document.title = 'Water Dashboard | Muscat Bay Asset Manager';
+  }, []);
+  
+  const formatNumber = (value: number | string) => {
+    const numValue = typeof value === 'string' ? parseFloat(value) : value;
+    return numValue.toLocaleString(undefined, { maximumFractionDigits: 0 });
+  };
 
+  // Safely format percentages to avoid NaN or infinity
+  const calculatePercentage = (part: number, total: number) => {
+    if (!total) return 0;
+    return (part / total * 100).toFixed(1);
+  };
+  
   if (loading) {
     return (
       <Layout>
-        <div className="p-8">
-          <div className="animate-pulse space-y-4">
-            <div className="h-8 bg-gray-200 rounded w-1/4"></div>
-            <div className="h-32 bg-gray-200 rounded"></div>
-            <div className="h-64 bg-gray-200 rounded"></div>
+        <div className="p-6">
+          <h1 className="text-2xl font-bold mb-6">Water Dashboard</h1>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            {[1, 2, 3, 4].map((i) => (
+              <Skeleton key={i} className="h-32" />
+            ))}
+          </div>
+          <Skeleton className="h-96 mb-8" />
+          <Skeleton className="h-96" />
+        </div>
+      </Layout>
+    );
+  }
+  
+  if (error) {
+    return (
+      <Layout>
+        <div className="p-6">
+          <h1 className="text-2xl font-bold mb-6">Water Dashboard</h1>
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
+            <p className="font-medium">Error loading water data</p>
+            <p>{error}</p>
           </div>
         </div>
       </Layout>
     );
   }
-
-  if (error) {
-    return (
-      <Layout>
-        <div className="p-8">
-          <div className="text-red-500">Error: {error}</div>
-        </div>
-      </Layout>
-    );
-  }
-
-  if (!waterData) {
-    return (
-      <Layout>
-        <div className="p-8">No data available</div>
-      </Layout>
-    );
-  }
-
-  const formatNumber = (num: number) => {
-    return new Intl.NumberFormat().format(Math.round(num));
-  };
-
-  // Create data for level distribution pie chart
-  const levelData = [
-    { name: 'Main Bulk (L1)', value: waterData.levels.L1 },
-    { name: 'Zone Bulk (L2)', value: waterData.levels.L2 },
-    { name: 'Individual (L3)', value: waterData.levels.L3 }
-  ];
-
-  // Create data for type distribution chart
-  const typeData = Object.entries(waterData.types).map(([type, value]) => ({
-    name: type,
-    value
-  })).sort((a, b) => b.value - a.value);
-
-  // Create data for zone distribution chart
-  const zoneData = Object.entries(waterData.zones).map(([zone, data]) => ({
-    name: zone,
-    consumption: data.consumption,
-    loss: data.loss
-  }));
-
-  // Monthly trends data
-  const monthlyData = Object.entries(waterData.monthlyTrends).map(([month, data]) => ({
-    month: month.replace('_', ' ').toUpperCase(),
-    consumption: data.consumption,
-    loss: data.loss
-  }));
-
-  // Calculate loss percentage
-  const totalConsumption = waterData.levels.L1;
-  const totalLoss = waterData.losses.systemLoss;
-  const lossPercentage = (totalLoss / totalConsumption) * 100;
-
-  // Colors for charts
-  const COLORS = {
-    L1: '#4285F4',  // Blue
-    L2: '#34A853',  // Green
-    L3: '#FBBC05',  // Yellow/Gold
-    loss: '#EA4335', // Red
-    residential: '#8E24AA', // Purple
-    retail: '#00ACC1', // Cyan
-    irrigation: '#7CB342', // Light Green
-    common: '#FB8C00', // Orange
-  };
-
-  const PIE_COLORS = ['#4285F4', '#34A853', '#FBBC05', '#EA4335', '#8E24AA', '#00ACC1'];
+  
+  // Calculate total and percentages
+  const totalConsumption = waterData?.levels.L1 || 0;
+  const totalLoss = (waterData?.losses?.systemLoss || 0);
+  const lossPercentage = calculatePercentage(totalLoss, totalConsumption);
 
   return (
     <Layout>
       <div className="bg-gray-50 min-h-screen">
+        {/* Header */}
         <div className="bg-white shadow">
-          <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6">
-            <div className="flex items-center">
-              <Droplets className="h-6 w-6 mr-2 text-blue-600" />
-              <h1 className="text-2xl font-semibold text-gray-800">Water Management Dashboard</h1>
+          <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6">
+            <div className="flex justify-between items-center">
+              <div className="flex items-center">
+                <Droplets className="h-8 w-8 mr-3 text-blue-600" />
+                <h1 className="text-2xl font-bold text-gray-900">Water Management Dashboard</h1>
+              </div>
+              <div className="flex items-center space-x-3">
+                <Button variant="outline" className="flex items-center">
+                  <Calendar className="h-4 w-4 mr-2" />
+                  2024-2025
+                </Button>
+                <Button variant="outline" className="flex items-center">
+                  <Download className="h-4 w-4 mr-2" />
+                  Export
+                </Button>
+              </div>
             </div>
           </div>
         </div>
-
-        <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6">
+        
+        <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6">
+          {/* Filter Bar */}
           <WaterFilters 
             filters={filters}
             availableZones={availableZones}
             availableTypes={availableTypes}
-            onFilterChange={updateFilters}
-            onReset={() => updateFilters({
-              month: 'feb_25',
-              zone: 'all',
-              type: 'all'
-            })}
+            onFilterChange={handleFilterChange}
           />
-
-          {/* Dashboard Navigation */}
-          <div className="flex flex-wrap gap-3 mb-6">
-            <Button 
-              variant="outline" 
-              className="bg-blue-50 border-blue-200 hover:bg-blue-100"
-              onClick={() => navigate('/water-system')}
-            >
-              <Droplets className="mr-2 h-4 w-4 text-blue-600" />
-              System Overview
-            </Button>
-            <Button 
-              variant="outline" 
-              className="bg-green-50 border-green-200 hover:bg-green-100"
-              onClick={() => navigate('/water-zone-analysis')}
-            >
-              <BarChart2 className="mr-2 h-4 w-4 text-green-600" />
-              Zone Analysis
-            </Button>
-            <Button 
-              variant="outline" 
-              className="bg-purple-50 border-purple-200 hover:bg-purple-100"
-              onClick={() => navigate('/water-consumption-types')}
-            >
-              <PieChartIcon className="mr-2 h-4 w-4 text-purple-600" />
-              Consumption by Type
-            </Button>
-            <Button 
-              variant="outline" 
-              className="bg-red-50 border-red-200 hover:bg-red-100"
-              onClick={() => navigate('/water-loss-analysis')}
-            >
-              <TrendingUp className="mr-2 h-4 w-4 text-red-600" />
-              Loss Analysis
-            </Button>
-          </div>
-
-          {/* Key Metrics */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-            <StatCard
-              title="Total Consumption"
-              value={formatNumber(totalConsumption) + " m³"}
-              icon={Droplets}
-              color="primary"
-              description={`For ${filters.month.replace('_', ' ').toUpperCase()}`}
-            />
-            
-            <StatCard
-              title="Individual Meters (L3)"
-              value={formatNumber(waterData.levels.L3) + " m³"}
-              icon={Droplets}
-              color="teal"
-              description={`${((waterData.levels.L3 / totalConsumption) * 100).toFixed(1)}% of total`}
-            />
-            
-            <StatCard
-              title="Water Loss"
-              value={formatNumber(totalLoss) + " m³"}
-              icon={Droplets}
-              color="lavender"
-              description={`${lossPercentage.toFixed(1)}% loss rate`}
-            />
-            
-            <StatCard
-              title="Financial Impact"
-              value={formatNumber(waterData.losses.financialImpact) + " OMR"}
-              icon={Droplets}
-              color="gold"
-              description="Based on water rate of 3.5 OMR/m³"
-            />
-          </div>
-
-          {/* Main Content Tabs */}
-          <Tabs defaultValue="overview" className="mb-6">
-            <TabsList className="mb-4">
+          
+          {/* Tabs */}
+          <Tabs 
+            defaultValue="overview" 
+            value={activeTab}
+            onValueChange={setActiveTab}
+            className="mt-6"
+          >
+            <TabsList className="grid grid-cols-4 w-full max-w-md">
               <TabsTrigger value="overview">Overview</TabsTrigger>
-              <TabsTrigger value="consumption">Consumption</TabsTrigger>
-              <TabsTrigger value="loss">Loss Analysis</TabsTrigger>
-              <TabsTrigger value="types">Meter Types</TabsTrigger>
+              <TabsTrigger value="zones">Zones</TabsTrigger>
+              <TabsTrigger value="types">Types</TabsTrigger>
+              <TabsTrigger value="losses">Losses</TabsTrigger>
             </TabsList>
             
-            <TabsContent value="overview">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                {/* Distribution by Level */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Distribution by Meter Level</CardTitle>
-                    <CardDescription>Consumption breakdown by meter hierarchy</CardDescription>
+            <div className="mt-2 text-sm text-gray-500">
+              Showing: {filters.zone === 'all' ? 'All Zones' : filters.zone} | 
+              {filters.type === 'all' ? ' All Types' : ` ${filters.type}`}
+            </div>
+
+            {/* Overview Tab */}
+            <TabsContent value="overview" className="mt-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                <Card className="bg-white">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium text-gray-500">Total Consumption</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="h-80">
-                      <ModernDonutChart
-                        data={levelData}
-                        title="Meter Level Distribution"
-                      />
-                    </div>
+                    <div className="text-2xl font-bold">{formatNumber(totalConsumption)} m³</div>
+                    <p className="text-xs text-gray-500 mt-1">From main bulk meter</p>
                   </CardContent>
                 </Card>
-
-                {/* Monthly Trend Chart */}
-                <Card>
+                
+                <Card className="bg-white">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium text-gray-500">System Loss</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{formatNumber(totalLoss)} m³</div>
+                    <p className="text-xs text-gray-500 mt-1">{lossPercentage}% of total</p>
+                  </CardContent>
+                </Card>
+                
+                <Card className="bg-white">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium text-gray-500">Financial Impact</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{formatNumber(waterData?.losses?.financialImpact || 0)} OMR</div>
+                    <p className="text-xs text-gray-500 mt-1">Cost of water loss</p>
+                  </CardContent>
+                </Card>
+                
+                <Card className="bg-white">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium text-gray-500">Zones Count</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{Object.keys(waterData?.zones || {}).length}</div>
+                    <p className="text-xs text-gray-500 mt-1">Active zones</p>
+                  </CardContent>
+                </Card>
+              </div>
+              
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                <Card className="bg-white">
                   <CardHeader>
-                    <CardTitle>Monthly Consumption & Loss</CardTitle>
-                    <CardDescription>Trend over last 12 months</CardDescription>
+                    <CardTitle>Monthly Consumption Trend</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="h-80">
                       <ResponsiveContainer width="100%" height="100%">
                         <LineChart
-                          data={monthlyData}
-                          margin={{
-                            top: 5,
-                            right: 30,
-                            left: 20,
-                            bottom: 25,
-                          }}
+                          data={prepareMonthlyTrendData()}
+                          margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                         >
                           <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis 
-                            dataKey="month" 
-                            angle={-45} 
-                            textAnchor="end"
-                            height={60}
-                          />
+                          <XAxis dataKey="name" />
                           <YAxis />
-                          <Tooltip formatter={(value) => formatNumber(value) + " m³"} />
-                          <Legend />
-                          <Line
-                            type="monotone"
-                            dataKey="consumption"
-                            stroke={COLORS.L1}
-                            activeDot={{ r: 8 }}
-                            strokeWidth={2}
+                          <Tooltip 
+                            formatter={(value) => [formatNumber(Number(value)) + ' m³', 'Volume']}
                           />
-                          <Line
-                            type="monotone"
-                            dataKey="loss"
-                            stroke={COLORS.loss}
-                            activeDot={{ r: 8 }}
+                          <Legend />
+                          <Line 
+                            type="monotone" 
+                            dataKey="consumption" 
+                            name="Consumption" 
+                            stroke="#0088FE" 
+                            strokeWidth={2}
+                            activeDot={{ r: 8 }} 
+                          />
+                          <Line 
+                            type="monotone" 
+                            dataKey="loss" 
+                            name="Loss" 
+                            stroke="#FF6B6B" 
                             strokeWidth={2}
                           />
                         </LineChart>
@@ -291,185 +271,344 @@ const WaterDashboard = () => {
                     </div>
                   </CardContent>
                 </Card>
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="consumption">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                {/* Zone Consumption Chart */}
-                <Card>
+                
+                <Card className="bg-white">
                   <CardHeader>
-                    <CardTitle>Consumption by Zone</CardTitle>
-                    <CardDescription>Water usage across different zones</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="h-80">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart
-                          data={zoneData}
-                          margin={{
-                            top: 5,
-                            right: 30,
-                            left: 20,
-                            bottom: 5,
-                          }}
-                        >
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis dataKey="name" />
-                          <YAxis />
-                          <Tooltip formatter={(value) => formatNumber(value) + " m³"} />
-                          <Legend />
-                          <Bar dataKey="consumption" name="Consumption" fill={COLORS.L1} />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Type Distribution Chart */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Consumption by Type</CardTitle>
-                    <CardDescription>Water usage by consumer type</CardDescription>
+                    <CardTitle>Consumption vs Loss</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="h-80">
                       <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
                           <Pie
-                            data={typeData}
+                            data={prepareLossAnalysisData()}
                             cx="50%"
                             cy="50%"
-                            labelLine={true}
+                            labelLine={false}
                             outerRadius={100}
                             fill="#8884d8"
                             dataKey="value"
-                            label={({name, percent}) => `${name}: ${(percent * 100).toFixed(1)}%`}
+                            nameKey="name"
+                            label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(1)}%`}
                           >
-                            {typeData.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                            {prepareLossAnalysisData().map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={index === 0 ? LOSS_COLORS.consumption : LOSS_COLORS.loss} />
                             ))}
                           </Pie>
-                          <Tooltip formatter={(value) => formatNumber(value) + " m³"} />
+                          <Tooltip 
+                            formatter={(value) => [formatNumber(Number(value)) + ' m³', 'Volume']}
+                          />
                         </PieChart>
                       </ResponsiveContainer>
                     </div>
                   </CardContent>
                 </Card>
               </div>
+              
+              <Card className="bg-white mb-8">
+                <CardHeader>
+                  <CardTitle>Water Consumption by Zone</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-96">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart
+                        data={prepareZoneData()}
+                        margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" />
+                        <YAxis />
+                        <Tooltip 
+                          formatter={(value) => [formatNumber(Number(value)) + ' m³', 'Volume']}
+                        />
+                        <Legend />
+                        <Bar dataKey="consumption" name="Consumption" fill="#0088FE" />
+                        <Bar dataKey="loss" name="Loss" fill="#FF6B6B" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
             </TabsContent>
             
-            <TabsContent value="loss">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                {/* Loss By Zone Chart */}
-                <Card>
+            {/* Zones Tab */}
+            <TabsContent value="zones" className="mt-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                <Card className="bg-white">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium text-gray-500">Highest Consumption Zone</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {prepareZoneData().length > 0 ? (
+                      <>
+                        <div className="text-2xl font-bold">
+                          {prepareZoneData().sort((a, b) => b.consumption - a.consumption)[0]?.name || 'N/A'}
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {formatNumber(prepareZoneData().sort((a, b) => b.consumption - a.consumption)[0]?.consumption || 0)} m³
+                        </p>
+                      </>
+                    ) : (
+                      <div className="text-lg text-gray-400">No data available</div>
+                    )}
+                  </CardContent>
+                </Card>
+                
+                <Card className="bg-white">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium text-gray-500">Highest Loss Zone</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {prepareZoneData().length > 0 ? (
+                      <>
+                        <div className="text-2xl font-bold">
+                          {prepareZoneData().sort((a, b) => b.loss - a.loss)[0]?.name || 'N/A'}
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {formatNumber(prepareZoneData().sort((a, b) => b.loss - a.loss)[0]?.loss || 0)} m³
+                        </p>
+                      </>
+                    ) : (
+                      <div className="text-lg text-gray-400">No data available</div>
+                    )}
+                  </CardContent>
+                </Card>
+                
+                <Card className="bg-white">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium text-gray-500">Lowest Consumption Zone</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {prepareZoneData().length > 0 ? (
+                      <>
+                        <div className="text-2xl font-bold">
+                          {prepareZoneData().sort((a, b) => a.consumption - b.consumption)[0]?.name || 'N/A'}
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {formatNumber(prepareZoneData().sort((a, b) => a.consumption - b.consumption)[0]?.consumption || 0)} m³
+                        </p>
+                      </>
+                    ) : (
+                      <div className="text-lg text-gray-400">No data available</div>
+                    )}
+                  </CardContent>
+                </Card>
+                
+                <Card className="bg-white">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium text-gray-500">Average Zone Consumption</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {prepareZoneData().length > 0 ? (
+                      <>
+                        <div className="text-2xl font-bold">
+                          {formatNumber(
+                            prepareZoneData().reduce((sum, zone) => sum + zone.consumption, 0) / 
+                            prepareZoneData().length
+                          )} m³
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">Per zone</p>
+                      </>
+                    ) : (
+                      <div className="text-lg text-gray-400">No data available</div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+              
+              <Card className="bg-white mb-8">
+                <CardHeader>
+                  <CardTitle>Zone Consumption Comparison</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-96">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart
+                        data={prepareZoneData()}
+                        margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                        layout="vertical"
+                      >
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis type="number" />
+                        <YAxis dataKey="name" type="category" width={120} />
+                        <Tooltip 
+                          formatter={(value) => [formatNumber(Number(value)) + ' m³', 'Volume']}
+                        />
+                        <Legend />
+                        <Bar dataKey="consumption" name="Consumption" fill="#0088FE" />
+                        <Bar dataKey="loss" name="Loss" fill="#FF6B6B" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card className="bg-white mb-8">
+                <CardHeader>
+                  <CardTitle>Zone Loss Percentage</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-80">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart
+                        data={prepareZoneData().map(zone => ({
+                          name: zone.name,
+                          lossPercentage: zone.consumption ? (zone.loss / zone.consumption * 100) : 0
+                        }))}
+                        margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" />
+                        <YAxis label={{ value: 'Loss %', angle: -90, position: 'insideLeft' }} />
+                        <Tooltip formatter={(value) => [`${parseFloat(value.toString()).toFixed(1)}%`, 'Loss Percentage']} />
+                        <Bar dataKey="lossPercentage" name="Loss Percentage">
+                          {prepareZoneData().map((entry, index) => (
+                            <Cell 
+                              key={`cell-${index}`} 
+                              fill={
+                                entry.consumption && (entry.loss / entry.consumption * 100) > 15 
+                                  ? '#FF6B6B' 
+                                  : '#FFBB28'
+                              } 
+                            />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+            
+            {/* Types Tab */}
+            <TabsContent value="types" className="mt-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                <Card className="bg-white">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium text-gray-500">Highest Consumption Type</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {prepareTypeData().length > 0 ? (
+                      <>
+                        <div className="text-2xl font-bold">
+                          {prepareTypeData().sort((a, b) => b.value - a.value)[0]?.name || 'N/A'}
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {formatNumber(prepareTypeData().sort((a, b) => b.value - a.value)[0]?.value || 0)} m³
+                        </p>
+                      </>
+                    ) : (
+                      <div className="text-lg text-gray-400">No data available</div>
+                    )}
+                  </CardContent>
+                </Card>
+                
+                <Card className="bg-white">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium text-gray-500">Lowest Consumption Type</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {prepareTypeData().length > 0 ? (
+                      <>
+                        <div className="text-2xl font-bold">
+                          {prepareTypeData().sort((a, b) => a.value - b.value)[0]?.name || 'N/A'}
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {formatNumber(prepareTypeData().sort((a, b) => a.value - b.value)[0]?.value || 0)} m³
+                        </p>
+                      </>
+                    ) : (
+                      <div className="text-lg text-gray-400">No data available</div>
+                    )}
+                  </CardContent>
+                </Card>
+                
+                <Card className="bg-white">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium text-gray-500">Type Count</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{prepareTypeData().length}</div>
+                    <p className="text-xs text-gray-500 mt-1">Unique consumption types</p>
+                  </CardContent>
+                </Card>
+                
+                <Card className="bg-white">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium text-gray-500">Average Type Consumption</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {prepareTypeData().length > 0 ? (
+                      <>
+                        <div className="text-2xl font-bold">
+                          {formatNumber(
+                            prepareTypeData().reduce((sum, type) => sum + type.value, 0) / 
+                            prepareTypeData().length
+                          )} m³
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">Per type</p>
+                      </>
+                    ) : (
+                      <div className="text-lg text-gray-400">No data available</div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+              
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                <Card className="bg-white">
                   <CardHeader>
-                    <CardTitle>Water Loss by Zone</CardTitle>
-                    <CardDescription>Volume of water lost in each zone</CardDescription>
+                    <CardTitle>Consumption by Type</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="h-80">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={prepareTypeData()}
+                            cx="50%"
+                            cy="50%"
+                            labelLine={false}
+                            outerRadius={100}
+                            fill="#8884d8"
+                            dataKey="value"
+                            nameKey="name"
+                            label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(1)}%`}
+                          >
+                            {prepareTypeData().map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                            ))}
+                          </Pie>
+                          <Tooltip 
+                            formatter={(value) => [formatNumber(Number(value)) + ' m³', 'Volume']}
+                          />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                <Card className="bg-white">
+                  <CardHeader>
+                    <CardTitle>Type Distribution Comparison</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="h-80">
                       <ResponsiveContainer width="100%" height="100%">
                         <BarChart
-                          data={zoneData}
-                          margin={{
-                            top: 5,
-                            right: 30,
-                            left: 20,
-                            bottom: 5,
-                          }}
+                          data={prepareTypeData()}
+                          margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
                         >
                           <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis dataKey="name" />
+                          <XAxis dataKey="name" angle={-45} textAnchor="end" height={60} />
                           <YAxis />
-                          <Tooltip formatter={(value) => formatNumber(value) + " m³"} />
-                          <Legend />
-                          <Bar dataKey="loss" name="Loss" fill={COLORS.loss} />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Loss Impact Card */}
-                <Card className="bg-gradient-to-br from-red-50 to-pink-50 border-red-200">
-                  <CardHeader>
-                    <CardTitle className="text-red-700">Financial Impact of Water Loss</CardTitle>
-                    <CardDescription className="text-red-600">Based on water rate of 3.5 OMR/m³</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex flex-col space-y-4">
-                      <div className="flex justify-between items-center p-4 bg-white rounded-lg shadow-sm">
-                        <span className="font-medium">Total Loss Value:</span>
-                        <span className="text-xl font-bold text-red-600">
-                          {formatNumber(waterData.losses.financialImpact)} OMR
-                        </span>
-                      </div>
-                      
-                      <div className="flex justify-between items-center p-4 bg-white rounded-lg shadow-sm">
-                        <span className="font-medium">Loss Rate:</span>
-                        <span className="text-xl font-bold text-red-600">
-                          {lossPercentage.toFixed(1)}%
-                        </span>
-                      </div>
-                      
-                      <div className="flex justify-between items-center p-4 bg-white rounded-lg shadow-sm">
-                        <span className="font-medium">Annual Projection:</span>
-                        <span className="text-xl font-bold text-red-600">
-                          {formatNumber(waterData.losses.financialImpact * 12)} OMR
-                        </span>
-                      </div>
-                      
-                      <div className="p-4 bg-white rounded-lg shadow-sm">
-                        <div className="flex justify-between items-center mb-2">
-                          <span className="font-medium">Potential Savings (10% Reduction):</span>
-                          <span className="text-xl font-bold text-green-600">
-                            {formatNumber(waterData.losses.financialImpact * 0.1)} OMR
-                          </span>
-                        </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2.5">
-                          <div className="bg-green-600 h-2.5 rounded-full" style={{ width: '10%' }}></div>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="types">
-              <div className="grid grid-cols-1 gap-6 mb-6">
-                {/* Types Breakdown */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Detailed Consumption by Meter Type</CardTitle>
-                    <CardDescription>Breakdown of water usage by consumer category</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="h-96">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart
-                          data={typeData}
-                          margin={{
-                            top: 20,
-                            right: 30,
-                            left: 20,
-                            bottom: 70,
-                          }}
-                        >
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis 
-                            dataKey="name" 
-                            angle={-45} 
-                            textAnchor="end" 
-                            height={70}
+                          <Tooltip 
+                            formatter={(value) => [formatNumber(Number(value)) + ' m³', 'Volume']}
                           />
-                          <YAxis />
-                          <Tooltip formatter={(value) => formatNumber(value) + " m³"} />
-                          <Legend />
-                          <Bar dataKey="value" name="Consumption" fill="#8884d8">
-                            {typeData.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                          <Bar dataKey="value" name="Consumption">
+                            {prepareTypeData().map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                             ))}
                           </Bar>
                         </BarChart>
@@ -479,43 +618,176 @@ const WaterDashboard = () => {
                 </Card>
               </div>
             </TabsContent>
-          </Tabs>
-
-          {/* Detailed Zone Cards */}
-          <div className="mb-6">
-            <h2 className="text-xl font-semibold mb-4">Zone Performance Summary</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {zoneData.map((zone) => (
-                <Card key={zone.name} className="border-l-4" style={{ borderLeftColor: PIE_COLORS[zoneData.indexOf(zone) % PIE_COLORS.length] }}>
+            
+            {/* Losses Tab */}
+            <TabsContent value="losses" className="mt-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                <Card className="bg-white">
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-lg">{zone.name}</CardTitle>
+                    <CardTitle className="text-sm font-medium text-gray-500">Total System Loss</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <span className="text-sm text-gray-500">Consumption:</span>
-                        <span className="font-medium">{formatNumber(zone.consumption)} m³</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm text-gray-500">Loss:</span>
-                        <span className="font-medium text-red-600">{formatNumber(zone.loss)} m³</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm text-gray-500">Loss Rate:</span>
-                        <span className="font-medium text-amber-600">
-                          {((zone.loss / (zone.consumption + zone.loss)) * 100).toFixed(1)}%
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm text-gray-500">Financial Impact:</span>
-                        <span className="font-medium text-red-600">{formatNumber(zone.loss * 3.5)} OMR</span>
-                      </div>
+                    <div className="text-2xl font-bold">{formatNumber(waterData?.losses?.systemLoss || 0)} m³</div>
+                    <p className="text-xs text-gray-500 mt-1">{lossPercentage}% of total flow</p>
+                  </CardContent>
+                </Card>
+                
+                <Card className="bg-white">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium text-gray-500">Financial Impact</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{formatNumber(waterData?.losses?.financialImpact || 0)} OMR</div>
+                    <p className="text-xs text-gray-500 mt-1">Cost of water loss</p>
+                  </CardContent>
+                </Card>
+                
+                <Card className="bg-white">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium text-gray-500">Highest Loss Zone</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {prepareZoneData().length > 0 ? (
+                      <>
+                        <div className="text-2xl font-bold">
+                          {prepareZoneData().sort((a, b) => b.loss - a.loss)[0]?.name || 'N/A'}
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {formatNumber(prepareZoneData().sort((a, b) => b.loss - a.loss)[0]?.loss || 0)} m³
+                        </p>
+                      </>
+                    ) : (
+                      <div className="text-lg text-gray-400">No data available</div>
+                    )}
+                  </CardContent>
+                </Card>
+                
+                <Card className="bg-white">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium text-gray-500">System Efficiency</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">
+                      {(100 - parseFloat(lossPercentage)).toFixed(1)}%
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">Water delivery efficiency</p>
+                  </CardContent>
+                </Card>
+              </div>
+              
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                <Card className="bg-white">
+                  <CardHeader>
+                    <CardTitle>Loss Percentage by Zone</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="h-80">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart
+                          data={prepareZoneData().map(zone => ({
+                            name: zone.name,
+                            lossPercentage: zone.consumption ? (zone.loss / zone.consumption * 100) : 0
+                          }))}
+                          margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                        >
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="name" />
+                          <YAxis label={{ value: 'Loss %', angle: -90, position: 'insideLeft' }} />
+                          <Tooltip formatter={(value) => [`${parseFloat(value.toString()).toFixed(1)}%`, 'Loss Percentage']} />
+                          <Bar dataKey="lossPercentage" name="Loss Percentage">
+                            {prepareZoneData().map((entry, index) => (
+                              <Cell 
+                                key={`cell-${index}`} 
+                                fill={
+                                  entry.consumption && (entry.loss / entry.consumption * 100) > 15 
+                                    ? '#FF6B6B' 
+                                    : '#FFBB28'
+                                } 
+                              />
+                            ))}
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
                     </div>
                   </CardContent>
                 </Card>
-              ))}
-            </div>
-          </div>
+                
+                <Card className="bg-white">
+                  <CardHeader>
+                    <CardTitle>Monthly Loss Trend</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="h-80">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart
+                          data={prepareMonthlyTrendData()}
+                          margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+                        >
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="name" />
+                          <YAxis />
+                          <Tooltip 
+                            formatter={(value) => [formatNumber(Number(value)) + ' m³', 'Volume']}
+                          />
+                          <Area 
+                            type="monotone" 
+                            dataKey="loss" 
+                            name="Loss" 
+                            stroke="#FF6B6B" 
+                            fill="#FFCDD2" 
+                          />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+              
+              <Card className="bg-white mb-8">
+                <CardHeader>
+                  <CardTitle>Consumption vs Loss Volume</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-80">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart
+                        data={prepareMonthlyTrendData()}
+                        margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+                        stackOffset="expand"
+                      >
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" />
+                        <YAxis tickFormatter={(tick) => `${(tick * 100)}%`} />
+                        <Tooltip 
+                          formatter={(value, name, props) => {
+                            const total = props.payload.consumption + props.payload.loss;
+                            return [`${((Number(value) / total) * 100).toFixed(1)}%`, name];
+                          }}
+                        />
+                        <Legend />
+                        <Area 
+                          type="monotone" 
+                          dataKey="consumption" 
+                          name="Consumption" 
+                          stackId="1"
+                          stroke="#0088FE" 
+                          fill="#0088FE" 
+                        />
+                        <Area 
+                          type="monotone" 
+                          dataKey="loss" 
+                          name="Loss" 
+                          stackId="1"
+                          stroke="#FF6B6B" 
+                          fill="#FF6B6B" 
+                        />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
     </Layout>

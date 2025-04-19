@@ -31,6 +31,12 @@ import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import './App.css';
 
+// Fix the ProtectedRoute props issue
+interface ProtectedRouteProps {
+  children: React.ReactNode;
+  roles?: string[];
+}
+
 function App() {
   return (
     <ThemeProvider defaultTheme="light" storageKey="muscat-bay-theme">

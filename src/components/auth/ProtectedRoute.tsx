@@ -1,40 +1,37 @@
 
 import React from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
-import { toast } from 'sonner';
 
-interface ProtectedRouteProps {
+export interface ProtectedRouteProps {
   children: React.ReactNode;
+  roles?: string[];
 }
 
-const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  const { user, loading } = useAuth();
-  const location = useLocation();
-
-  // Add console logs for debugging
-  console.log("ProtectedRoute - Current path:", location.pathname);
-  console.log("ProtectedRoute - User authenticated:", !!user);
-  console.log("ProtectedRoute - Auth loading:", loading);
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-muscat-primary"></div>
-      </div>
-    );
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, roles = [] }) => {
+  const { user, isLoading } = useAuth();
+  
+  // If auth is still loading, show a loading indicator
+  if (isLoading) {
+    return <div>Loading...</div>;
   }
-
+  
+  // If user is not logged in, redirect to auth page
   if (!user) {
-    // Show toast only when trying to access a protected route
-    if (location.pathname !== '/auth') {
-      toast.error('Please log in to access this page');
-      console.log("ProtectedRoute - Redirecting to auth page from:", location.pathname);
-    }
-    return <Navigate to="/auth" replace state={{ from: location.pathname }} />;
+    return <Navigate to="/auth" replace />;
   }
-
-  console.log("ProtectedRoute - Access granted to:", location.pathname);
+  
+  // If roles are specified, check if user has the required role
+  if (roles.length > 0) {
+    const userRoles = user.app_metadata?.roles || [];
+    const hasRequiredRole = roles.some(role => userRoles.includes(role));
+    
+    if (!hasRequiredRole) {
+      return <Navigate to="/" replace />;
+    }
+  }
+  
+  // User is authenticated and has required roles, render the children
   return <>{children}</>;
 };
 
