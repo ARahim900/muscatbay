@@ -12,20 +12,22 @@ export function DataTable() {
           <TableHead>Zone</TableHead>
           <TableHead className="text-right">Consumption (m³)</TableHead>
           <TableHead className="text-right">Loss (m³)</TableHead>
-          <TableHead className="text-right">Loss %</TableHead>
+          <TableHead className="text-right">Efficiency (%)</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
-        {waterData.zones.map((zone) => (
-          <TableRow key={zone.name}>
-            <TableCell className="font-medium">{zone.name}</TableCell>
-            <TableCell className="text-right">{formatNumber(zone.consumption)}</TableCell>
-            <TableCell className="text-right">{formatNumber(zone.loss)}</TableCell>
-            <TableCell className="text-right">
-              {((zone.loss / zone.consumption) * 100).toFixed(1)}%
-            </TableCell>
-          </TableRow>
-        ))}
+        {waterData.zones.map((zone, index) => {
+          const efficiency = ((zone.consumption - zone.loss) / zone.consumption * 100).toFixed(1);
+          
+          return (
+            <TableRow key={index}>
+              <TableCell className="font-medium">{zone.name}</TableCell>
+              <TableCell className="text-right">{formatNumber(zone.consumption)}</TableCell>
+              <TableCell className="text-right">{formatNumber(zone.loss)}</TableCell>
+              <TableCell className="text-right">{efficiency}%</TableCell>
+            </TableRow>
+          );
+        })}
       </TableBody>
     </Table>
   );
