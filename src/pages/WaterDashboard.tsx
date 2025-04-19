@@ -1,10 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, 
-  ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, 
-  AreaChart, Area 
-} from 'recharts';
-import Layout from '@/components/layout/Layout';
+import React from 'react';
+import { Layout } from '@/components/layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -706,7 +701,9 @@ const WaterDashboard = () => {
                           <CartesianGrid strokeDasharray="3 3" />
                           <XAxis dataKey="name" />
                           <YAxis label={{ value: 'Loss %', angle: -90, position: 'insideLeft' }} />
-                          <Tooltip formatter={(value) => [`${parseFloat(value.toString())}%`, 'Loss Percentage']} />
+                          <Tooltip 
+                            formatter={(value) => [`${parseFloat(value.toString())}%`, 'Loss Percentage']}
+                          />
                           <Bar dataKey="lossPercentage" name="Loss Percentage">
                             {prepareZoneData().map((entry, index) => (
                               <Cell 

@@ -6,8 +6,6 @@ import { MetricCard } from "@/components/water-system/MetricCard";
 import { DataTable } from "@/components/water-system/DataTable";
 import { FilterButton } from "@/components/water-system/FilterButton";
 import { TabButton } from "@/components/water-system/TabButton";
-import { WaterData } from "@/types/water";
-import { formatNumber } from "@/lib/utils";
 import { ArrowDown, ArrowUp, Droplets, Gauge } from 'lucide-react';
 import {
   Card,
@@ -76,4 +74,3 @@ export function WaterSystemDashboard() {
     </Layout>
   );
 }
-
