@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Index from './pages/Index';
 import Electricity from './pages/Electricity';
@@ -29,6 +28,7 @@ import { Toaster } from './components/ui/toaster';
 import { ThemeProvider } from './components/theme/theme-provider';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import './App.css';
+import { WaterSystemDashboard } from './components/water-system/WaterSystemDashboard';
 
 // Fix the ProtectedRoute props issue
 interface ProtectedRouteProps {
@@ -42,6 +42,7 @@ function App() {
       <Routes>
         <Route path="/auth" element={<Auth />} />
         <Route path="/" element={<Index />} />
+        <Route path="/mb-water-system" element={<WaterSystemDashboard />} />
         <Route path="/water" element={<Water />} />
         <Route path="/water-system" element={<WaterSystem />} />
         <Route path="/water-zone-analysis" element={<WaterZoneAnalysis />} />

@@ -304,7 +304,7 @@ const WaterDashboard = () => {
                             ))}
                           </Pie>
                           <Tooltip 
-                            formatter={(value) => [formatNumber(Number(value)) + ' m³', 'Volume']}
+                            formatter={(value) => [`${parseFloat(String(value))}%`, 'Loss Percentage']}
                           />
                         </PieChart>
                       </ResponsiveContainer>
@@ -471,7 +471,6 @@ const WaterDashboard = () => {
                         <YAxis label={{ value: 'Loss %', angle: -90, position: 'insideLeft' }} />
                         <Tooltip 
                           formatter={(value) => {
-                            // Convert value to string before formatting
                             const stringValue = String(value); 
                             return [`${parseFloat(stringValue).toFixed(1)}%`, 'Loss Percentage']
                           }} 

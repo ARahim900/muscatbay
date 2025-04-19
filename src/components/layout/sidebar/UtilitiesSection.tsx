@@ -18,12 +18,10 @@ const UtilitiesSection: React.FC<UtilitiesSectionProps> = ({
 }) => {
   const navigate = useNavigate();
   
-  // Handle clicks for internal routes
   const handleClick = (path: string) => {
     if (typeof openEmbeddedApp === 'function' && path.startsWith('http')) {
       openEmbeddedApp(path, path.includes('electricity') ? 'Electricity System' : 'Water System');
     } else {
-      // For internal routes, use navigation
       navigate(path);
     }
   };
@@ -42,9 +40,20 @@ const UtilitiesSection: React.FC<UtilitiesSectionProps> = ({
         onClick={() => handleClick('/electricity-system')}
       />
       <SidebarLink 
+        to="/mb-water-system" 
+        icon={Droplets} 
+        label="MB Water System" 
+        collapsed={collapsed} 
+        external={false}
+        isMobile={isMobile}
+        iconColor="blue-500"
+        bgColor="blue-100"
+        onClick={() => handleClick('/mb-water-system')}
+      />
+      <SidebarLink 
         to="/water-dashboard" 
         icon={Droplets} 
-        label="Water System" 
+        label="Water Dashboard" 
         collapsed={collapsed} 
         external={false}
         isMobile={isMobile}
