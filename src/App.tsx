@@ -27,7 +27,6 @@ import Projects from './pages/Projects';
 import Contracts from './pages/Contracts';
 import { Toaster } from './components/ui/toaster';
 import { ThemeProvider } from './components/theme/theme-provider';
-import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import './App.css';
 
@@ -39,44 +38,40 @@ interface ProtectedRouteProps {
 
 function App() {
   return (
-    <ThemeProvider defaultTheme="light" storageKey="muscat-bay-theme">
-      <AuthProvider>
-        <Router>
-          <Routes>
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/" element={<Index />} />
-            <Route path="/water" element={<Water />} />
-            <Route path="/water-system" element={<WaterSystem />} />
-            <Route path="/water-zone-analysis" element={<WaterZoneAnalysis />} />
-            <Route path="/water-consumption-types" element={<WaterConsumptionTypes />} />
-            <Route path="/water-loss-analysis" element={<WaterLossAnalysis />} />
-            <Route path="/water-dashboard" element={<WaterDashboard />} />
-            <Route path="/electricity" element={<Electricity />} />
-            <Route path="/electricity-system" element={<ElectricitySystem />} />
-            <Route path="/hvac" element={<HVAC />} />
-            <Route path="/pumping-stations" element={<PumpingStations />} />
-            <Route path="/stp" element={<STP />} />
-            <Route path="/stp-dashboard" element={<STPDashboard />} />
-            <Route path="/stp-analytics" element={<STPAnalytics />} />
-            <Route path="/stp-plant" element={<STPPlant />} />
-            <Route path="/service-charges" element={<ServiceCharges />} />
-            <Route path="/operating-expenses" element={<OperatingExpenses />} />
-            <Route path="/property-management" element={<PropertyManagement />} />
-            <Route path="/asset-lifecycle" element={<AssetLifecycle />} />
-            <Route path="/reports" element={<Reports />} />
-            <Route path="/projects" element={<Projects />} />
-            <Route path="/contracts" element={<Contracts />} />
-            <Route path="/admin" element={
-              <ProtectedRoute roles={['admin']}>
-                <Admin />
-              </ProtectedRoute>
-            } />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </Router>
-        <Toaster />
-      </AuthProvider>
-    </ThemeProvider>
+    <Router>
+      <Routes>
+        <Route path="/auth" element={<Auth />} />
+        <Route path="/" element={<Index />} />
+        <Route path="/water" element={<Water />} />
+        <Route path="/water-system" element={<WaterSystem />} />
+        <Route path="/water-zone-analysis" element={<WaterZoneAnalysis />} />
+        <Route path="/water-consumption-types" element={<WaterConsumptionTypes />} />
+        <Route path="/water-loss-analysis" element={<WaterLossAnalysis />} />
+        <Route path="/water-dashboard" element={<WaterDashboard />} />
+        <Route path="/electricity" element={<Electricity />} />
+        <Route path="/electricity-system" element={<ElectricitySystem />} />
+        <Route path="/hvac" element={<HVAC />} />
+        <Route path="/pumping-stations" element={<PumpingStations />} />
+        <Route path="/stp" element={<STP />} />
+        <Route path="/stp-dashboard" element={<STPDashboard />} />
+        <Route path="/stp-analytics" element={<STPAnalytics />} />
+        <Route path="/stp-plant" element={<STPPlant />} />
+        <Route path="/service-charges" element={<ServiceCharges />} />
+        <Route path="/operating-expenses" element={<OperatingExpenses />} />
+        <Route path="/property-management" element={<PropertyManagement />} />
+        <Route path="/asset-lifecycle" element={<AssetLifecycle />} />
+        <Route path="/reports" element={<Reports />} />
+        <Route path="/projects" element={<Projects />} />
+        <Route path="/contracts" element={<Contracts />} />
+        <Route path="/admin" element={
+          <ProtectedRoute roles={['admin']}>
+            <Admin />
+          </ProtectedRoute>
+        } />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+      <Toaster />
+    </Router>
   );
 }
 

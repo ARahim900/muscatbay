@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, 
@@ -82,6 +81,14 @@ const WaterDashboard = () => {
   
   const handleFilterChange = (newFilter: Partial<WaterFilter>) => {
     updateFilters(newFilter);
+  };
+
+  const handleResetFilters = () => {
+    updateFilters({
+      month: 'feb_25',
+      zone: 'all',
+      type: 'all'
+    });
   };
   
   useEffect(() => {
@@ -167,6 +174,7 @@ const WaterDashboard = () => {
             availableZones={availableZones}
             availableTypes={availableTypes}
             onFilterChange={handleFilterChange}
+            onReset={handleResetFilters}
           />
           
           {/* Tabs */}
@@ -693,7 +701,7 @@ const WaterDashboard = () => {
                           <CartesianGrid strokeDasharray="3 3" />
                           <XAxis dataKey="name" />
                           <YAxis label={{ value: 'Loss %', angle: -90, position: 'insideLeft' }} />
-                          <Tooltip formatter={(value) => [`${parseFloat(value.toString()).toFixed(1)}%`, 'Loss Percentage']} />
+                          <Tooltip formatter={(value) => [`${parseFloat(value.toString())}%`, 'Loss Percentage']} />
                           <Bar dataKey="lossPercentage" name="Loss Percentage">
                             {prepareZoneData().map((entry, index) => (
                               <Cell 

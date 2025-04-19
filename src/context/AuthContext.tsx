@@ -7,7 +7,7 @@ interface AuthContextProps {
   session: Session | null;
   user: User | null;
   signOut: () => Promise<void>;
-  loading: boolean;
+  isLoading: boolean; // Added isLoading property to match usage in ProtectedRoute
 }
 
 const AuthContext = createContext<AuthContextProps | undefined>(undefined);
@@ -15,7 +15,7 @@ const AuthContext = createContext<AuthContextProps | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true); // Renamed loading to isLoading for consistency
 
   useEffect(() => {
     // Get initial session
@@ -27,7 +27,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       } catch (error) {
         console.error('Error fetching initial session:', error);
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
 
@@ -38,7 +38,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       (_event, session) => {
         setSession(session);
         setUser(session?.user || null);
-        setLoading(false);
+        setIsLoading(false);
       }
     );
 
@@ -59,7 +59,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     session,
     user,
     signOut,
-    loading
+    isLoading // Updated property name
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
