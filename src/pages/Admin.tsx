@@ -16,12 +16,12 @@ import { AlertCircle, Info } from 'lucide-react';
 const ADMIN_EMAILS = ["aalbalushi@muscatbay.com"];
 
 const AdminPage: React.FC = () => {
-  const { user, loading } = useAuth();
+  const { user, isLoading } = useAuth(); // Changed 'loading' to 'isLoading'
   const [isAuthorized, setIsAuthorized] = useState<boolean>(false);
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (user && !loading) {
+    if (user && !isLoading) { // Changed 'loading' to 'isLoading'
       console.log("Admin page - Current user:", user.email);
       console.log("Admin emails list:", ADMIN_EMAILS);
       
@@ -36,14 +36,14 @@ const AdminPage: React.FC = () => {
         toast.error("You don't have permission to access the admin page.");
         setIsAuthorized(false);
       }
-    } else if (!loading && !user) {
+    } else if (!isLoading && !user) { // Changed 'loading' to 'isLoading'
       // User is not logged in
       toast.error("Please log in to access the admin page");
       navigate("/auth", { replace: true });
     }
-  }, [user, loading, navigate]);
+  }, [user, isLoading, navigate]); // Changed 'loading' to 'isLoading'
 
-  if (loading) {
+  if (isLoading) { // Changed 'loading' to 'isLoading'
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-muscat-primary"></div>

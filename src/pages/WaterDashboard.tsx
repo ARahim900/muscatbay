@@ -469,7 +469,13 @@ const WaterDashboard = () => {
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="name" />
                         <YAxis label={{ value: 'Loss %', angle: -90, position: 'insideLeft' }} />
-                        <Tooltip formatter={(value) => [`${parseFloat(value.toString()).toFixed(1)}%`, 'Loss Percentage']} />
+                        <Tooltip 
+                          formatter={(value) => {
+                            // Convert value to string before formatting
+                            const stringValue = String(value); 
+                            return [`${parseFloat(stringValue).toFixed(1)}%`, 'Loss Percentage']
+                          }} 
+                        />
                         <Bar dataKey="lossPercentage" name="Loss Percentage">
                           {prepareZoneData().map((entry, index) => (
                             <Cell 
