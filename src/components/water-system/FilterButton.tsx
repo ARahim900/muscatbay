@@ -1,6 +1,5 @@
 
 import React from 'react';
-import { Button } from "@/components/ui/button";
 
 interface FilterButtonProps {
   children: React.ReactNode;
@@ -9,13 +8,11 @@ interface FilterButtonProps {
 
 export function FilterButton({ children, onClick }: FilterButtonProps) {
   return (
-    <Button 
-      variant="outline" 
-      size="sm" 
+    <button
+      className="px-4 py-2 rounded-md text-sm border border-gray-200 hover:bg-gray-50 transition-colors"
       onClick={onClick}
-      className="rounded-full text-sm"
     >
       {children}
-    </Button>
+    </button>
   );
 }

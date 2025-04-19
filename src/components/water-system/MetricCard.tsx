@@ -1,46 +1,54 @@
 
 import React from 'react';
-import { Card, CardContent } from "@/components/ui/card";
 import { LucideIcon } from 'lucide-react';
-
-interface TrendInfo {
-  value: number;
-  icon: LucideIcon;
-  label: string;
-}
 
 interface MetricCardProps {
   title: string;
-  value: string | number;
+  value: string;
   unit?: string;
   icon: React.ReactNode;
-  trend?: TrendInfo;
+  trend?: {
+    value: number;
+    icon: LucideIcon;
+    label: string;
+  };
 }
 
 export function MetricCard({ title, value, unit, icon, trend }: MetricCardProps) {
+  const TrendIcon = trend?.icon;
+  const isTrendPositive = trend?.value && trend?.value >= 0;
+
   return (
-    <Card className="overflow-hidden">
-      <CardContent className="p-6">
-        <div className="flex justify-between items-start mb-3">
-          <p className="text-sm text-muted-foreground">{title}</p>
-          <div className="bg-muted p-2 rounded-full">
-            {icon}
-          </div>
+    <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+      <div className="flex justify-between items-start mb-2">
+        <p className="text-sm text-gray-500">{title}</p>
+        <div className="text-primary bg-primary/10 p-2 rounded-full">
+          {icon}
         </div>
-        <div className="flex items-baseline">
-          <div className="text-2xl font-bold mr-1">{value}</div>
-          {unit && <div className="text-sm text-muted-foreground">{unit}</div>}
+      </div>
+      <div className="flex items-baseline">
+        <h3 className="text-2xl font-bold">{value}</h3>
+        {unit && <span className="ml-1 text-gray-500">{unit}</span>}
+      </div>
+      {trend && (
+        <div className="flex items-center mt-2">
+          {TrendIcon && (
+            <TrendIcon
+              className={`h-4 w-4 mr-1 ${
+                isTrendPositive ? "text-green-500" : "text-red-500"
+              }`}
+            />
+          )}
+          <span
+            className={`text-xs ${
+              isTrendPositive ? "text-green-500" : "text-red-500"
+            }`}
+          >
+            {isTrendPositive ? "+" : ""}
+            {trend.value}% {trend.label}
+          </span>
         </div>
-        {trend && (
-          <div className="flex items-center mt-2 text-xs">
-            <trend.icon className={`h-3 w-3 mr-1 ${trend.value >= 0 ? 'text-green-500' : 'text-red-500'}`} />
-            <span className={trend.value >= 0 ? 'text-green-500' : 'text-red-500'}>
-              {trend.value >= 0 ? '+' : ''}{trend.value}%
-            </span>
-            <span className="text-muted-foreground ml-1">{trend.label}</span>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+      )}
+    </div>
   );
 }

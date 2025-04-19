@@ -1,13 +1,12 @@
 
 import React from 'react';
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { waterData } from '@/data/water-data';
 import { formatNumber } from '@/lib/utils';
 
 export function DataTable() {
   return (
     <Table>
-      <TableCaption>Water consumption by zone</TableCaption>
       <TableHeader>
         <TableRow>
           <TableHead>Zone</TableHead>

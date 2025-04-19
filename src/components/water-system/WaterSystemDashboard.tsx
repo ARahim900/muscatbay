@@ -2,14 +2,18 @@
 "use client"
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { MetricCard } from "@/components/water-system/MetricCard";
 import { FilterButton } from "@/components/water-system/FilterButton";
+import { MetricCard } from "@/components/water-system/MetricCard";
+import { DataTable } from "@/components/water-system/DataTable";
 import { ArrowDown, ArrowUp, Droplets, Gauge } from 'lucide-react';
 import { waterData } from '@/data/water-data';
 import { themeConfig } from '@/lib/theme-config';
 import { formatNumber } from '@/lib/utils';
 
 export function WaterSystemDashboard() {
+  // Define the theme and data we'll use
+  const theme = themeConfig;
+  
   return (
     <div className="container mx-auto p-6">
       <div className="flex items-center justify-between mb-8">
@@ -59,9 +63,7 @@ export function WaterSystemDashboard() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="h-[300px] flex items-center justify-center text-muted-foreground">
-              Data table would be displayed here
-            </div>
+            <DataTable />
           </CardContent>
         </Card>
       </div>
