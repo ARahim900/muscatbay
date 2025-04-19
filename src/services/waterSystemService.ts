@@ -177,7 +177,11 @@ export const getAvailableZones = async (): Promise<string[]> => {
     skipEmptyLines: true
   });
   
-  return Array.from(new Set(data.map(row => row.Zone))).filter(Boolean);
+  // Fix: Convert unknown[] to string[] by explicitly filtering out non-string values and asserting the type
+  const zones = Array.from(new Set(data.map(row => row.Zone)))
+    .filter((zone): zone is string => typeof zone === 'string' && zone !== '');
+  
+  return zones;
 };
 
 export const getAvailableTypes = async (): Promise<string[]> => {
@@ -189,6 +193,9 @@ export const getAvailableTypes = async (): Promise<string[]> => {
     skipEmptyLines: true
   });
   
-  return Array.from(new Set(data.map(row => row.Type))).filter(Boolean);
+  // Fix: Convert unknown[] to string[] by explicitly filtering out non-string values and asserting the type
+  const types = Array.from(new Set(data.map(row => row.Type)))
+    .filter((type): type is string => typeof type === 'string' && type !== '');
+  
+  return types;
 };
-
