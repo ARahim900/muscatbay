@@ -1,4 +1,12 @@
 
+// Primary color and derived shades
+export const primaryColor = "#4E4456"
+export const primaryLight = "#6A5D73"
+export const primaryLighter = "#8A7B94"
+export const primaryDark = "#3D3543"
+export const primaryDarker = "#2C2631"
+
+// Theme configuration object
 export const themeConfig = {
   primary: '#0088FE',
   secondary: '#00C49F',
@@ -24,13 +32,6 @@ export const themeConfig = {
     panelBg: 'bg-gray-900',
   }
 };
-
-// Primary color and derived shades
-export const primaryColor = "#4E4456"
-export const primaryLight = "#6A5D73"
-export const primaryLighter = "#8A7B94"
-export const primaryDark = "#3D3543"
-export const primaryDarker = "#2C2631"
 
 // Export themes for compatibility with existing code
 export const themes = {

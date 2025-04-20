@@ -1,17 +1,43 @@
 
-// Sample water system data
-export const waterData = {
-  totalConsumption: 48234,
-  systemEfficiency: 94.2,
+export interface WaterZone {
+  name: string;
+  consumption: number;
+  loss: number;
+}
+
+export interface WaterData {
+  total: {
+    consumption: number;
+    loss: number;
+  };
+  zones: WaterZone[];
+}
+
+export const waterData: WaterData = {
+  total: {
+    consumption: 48234,
+    loss: 2892,
+  },
   zones: [
-    { name: "Zone A", consumption: 12500, loss: 750 },
-    { name: "Zone B", consumption: 9800, loss: 450 },
-    { name: "Zone C", consumption: 15400, loss: 980 },
-    { name: "Zone D", consumption: 10534, loss: 620 }
+    {
+      name: "Residential",
+      consumption: 21450,
+      loss: 1072,
+    },
+    {
+      name: "Commercial",
+      consumption: 14780,
+      loss: 739,
+    },
+    {
+      name: "Landscape",
+      consumption: 9860,
+      loss: 892,
+    },
+    {
+      name: "Amenities",
+      consumption: 2144,
+      loss: 189,
+    },
   ],
-  monthlyTrends: [
-    { month: "Jan", consumption: 42500, loss: 2500 },
-    { month: "Feb", consumption: 48234, loss: 2850 },
-    { month: "Mar", consumption: 45600, loss: 2300 }
-  ]
 };

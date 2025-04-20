@@ -9,7 +9,7 @@ interface FilterButtonProps {
 export function FilterButton({ children, onClick }: FilterButtonProps) {
   return (
     <button
-      className="px-4 py-2 rounded-md text-sm border border-gray-200 hover:bg-gray-50 transition-colors"
+      className="bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-md text-sm font-medium transition-colors"
       onClick={onClick}
     >
       {children}
