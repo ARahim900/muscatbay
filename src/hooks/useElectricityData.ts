@@ -1,13 +1,20 @@
 
 import { useState, useEffect } from 'react';
 import { fetchElectricityData } from '@/services/electricityService';
-import { ElectricityFilters } from '@/types/electricity';
+
+interface Filters {
+  year: number;
+  month: string | 'all';
+  zone: string;
+  type: string;
+  view: 'overview' | 'facilities' | 'trends' | 'comparison';
+}
 
 export const useElectricityData = () => {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [filters, setFilters] = useState<ElectricityFilters>({
+  const [filters, setFilters] = useState<Filters>({
     year: new Date().getFullYear(),
     month: 'all',
     zone: 'all',
@@ -52,7 +59,7 @@ export const useElectricityData = () => {
   }) : [];
 
   // Update filters
-  const updateFilters = (newFilters: Partial<ElectricityFilters>) => {
+  const updateFilters = (newFilters: Partial<Filters>) => {
     setFilters(prev => ({ ...prev, ...newFilters }));
   };
 

@@ -1,18 +1,14 @@
 
-/**
- * Expenses data service for Muscat Bay operations web application
- */
 import { fetchData } from './dataService';
-import { Expense, ExpenseCategory, ExpenseSummary } from '@/types/expenses';
 
 /**
  * Fetches expenses data
  * @param signal Optional AbortSignal for request cancellation
  * @returns Promise with expenses data
  */
-export async function fetchExpenses(signal?: AbortSignal): Promise<Expense[]> {
+export async function fetchExpenses(signal?: AbortSignal): Promise<any[]> {
   try {
-    const response = await fetchData<{ expenses: Expense[] }>(
+    const response = await fetchData<{ expenses: any[] }>(
       'expenses/expenses.json',
       {
         signal,
@@ -28,44 +24,34 @@ export async function fetchExpenses(signal?: AbortSignal): Promise<Expense[]> {
 }
 
 /**
- * Categorizes expenses by their service type
+ * Categorizes expenses by category
  * @param expenses Array of expenses
- * @returns Expense categories with their respective expenses
+ * @returns Object with expenses categorized by their category
  */
-export function categorizeExpensesByType(expenses: Expense[]): ExpenseCategory[] {
-  if (!expenses || expenses.length === 0) return [];
+export function categorizeExpensesByCategory(expenses: any[]): Record<string, any[]> {
+  if (!expenses || expenses.length === 0) return {};
   
-  // Group expenses by category
-  const categorizedExpenses: Record<string, Expense[]> = {};
+  const categorized: Record<string, any[]> = {};
   
   expenses.forEach(expense => {
     const category = expense.category || 'Uncategorized';
-    if (!categorizedExpenses[category]) {
-      categorizedExpenses[category] = [];
+    
+    if (!categorized[category]) {
+      categorized[category] = [];
     }
     
-    categorizedExpenses[category].push(expense);
+    categorized[category].push(expense);
   });
   
-  // Convert grouped expenses to summary array
-  return Object.entries(categorizedExpenses).map(([category, categoryExpenses]) => {
-    const total = categoryExpenses.reduce((sum, expense) => sum + expense.annualCost, 0);
-    
-    return {
-      name: category,
-      total,
-      count: categoryExpenses.length,
-      expenses: categoryExpenses
-    };
-  }).sort((a, b) => b.total - a.total);
+  return categorized;
 }
 
 /**
- * Generates a summary of expenses
+ * Calculates expense summary
  * @param expenses Array of expenses
- * @returns Expense summary data
+ * @returns Summary object with various aggregations
  */
-export function generateExpensesSummary(expenses: Expense[]): ExpenseSummary {
+export function calculateExpenseSummary(expenses: any[]): any {
   if (!expenses || expenses.length === 0) {
     return {
       totalAnnual: 0,
@@ -77,28 +63,32 @@ export function generateExpensesSummary(expenses: Expense[]): ExpenseSummary {
     };
   }
   
+  let totalAnnual = 0;
+  let totalMonthly = 0;
   const categoryCounts: Record<string, number> = {};
   const statusCounts: Record<string, number> = {};
   const byCategory: Record<string, number> = {};
   const byStatus: Record<string, number> = {};
   
-  let totalAnnual = 0;
-  let totalMonthly = 0;
-  
   expenses.forEach(expense => {
-    // Count by category
     const category = expense.category || 'Uncategorized';
-    categoryCounts[category] = (categoryCounts[category] || 0) + 1;
-    byCategory[category] = (byCategory[category] || 0) + expense.annualCost;
-    
-    // Count by status
     const status = expense.status || 'Unknown';
-    statusCounts[status] = (statusCounts[status] || 0) + 1;
-    byStatus[status] = (byStatus[status] || 0) + expense.annualCost;
     
-    // Calculate totals
+    // Update totals
     totalAnnual += expense.annualCost || 0;
     totalMonthly += expense.monthlyCost || 0;
+    
+    // Update category counts
+    categoryCounts[category] = (categoryCounts[category] || 0) + 1;
+    
+    // Update status counts
+    statusCounts[status] = (statusCounts[status] || 0) + 1;
+    
+    // Update by category totals
+    byCategory[category] = (byCategory[category] || 0) + (expense.annualCost || 0);
+    
+    // Update by status totals
+    byStatus[status] = (byStatus[status] || 0) + (expense.annualCost || 0);
   });
   
   return {

@@ -4,49 +4,48 @@
  */
 
 export interface STPDailyRecord {
+  id: string;
   date: string;
-  bod?: number;
-  cod?: number;
-  tss?: number;
-  nh4_n?: number;
-  tn?: number;
-  tp?: number;
-  ph?: number;
-  tankerTrips?: number;
-  expectedVolumeTankers?: number;
-  directSewageMb?: number;
-  totalInfluent?: number;
-  totalWaterProcessed?: number;
-  tseToIrrigation?: number;
-}
-
-export interface STPDailyData {
-  metadata: {
-    version: string;
-    timestamp: string;
-    description: string;
-  };
-  data: STPDailyRecord[];
+  plantId: string;
+  plantName: string;
+  influentFlow: number;
+  effluentFlow: number;
+  totalSuspendedSolids: number;
+  biochemicalOxygenDemand: number;
+  chemicalOxygenDemand: number;
+  pH: number;
+  dissolvedOxygen: number;
+  temperature: number;
+  remarks?: string;
 }
 
 export interface STPMonthlyAggregate {
   month: string;
-  tankerTrips: number;
-  totalInfluent: number;
-  totalWaterProcessed: number;
-  tseToIrrigation: number;
-  directSewageMb: number;
-  expectedVolumeTankers: number;
-  bodAvg: number;
-  codAvg: number;
-  tssAvg: number;
-  days: number;
+  year: number;
+  plantId: string;
+  plantName: string;
+  averageInfluentFlow: number;
+  averageEffluentFlow: number;
+  averageTSS: number;
+  averageBOD: number;
+  averageCOD: number;
+  averagePH: number;
+  averageDO: number;
+  averageTemperature: number;
+  compliancePct: number;
 }
 
 export interface STPFilters {
-  year: number;
-  month: number | 'all';
-  view: 'daily' | 'monthly' | 'performance';
-  sortBy: 'date' | 'bod' | 'cod' | 'tss';
-  sortOrder: 'asc' | 'desc';
+  plant: string;
+  dateRange: {
+    start: string;
+    end: string;
+  };
+  year: number | 'all';
+  month: string;
+  view: 'daily' | 'monthly' | 'compliance' | 'efficiency';
+}
+
+export interface STPDailyData {
+  records: STPDailyRecord[];
 }

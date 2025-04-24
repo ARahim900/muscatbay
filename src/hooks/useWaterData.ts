@@ -4,49 +4,39 @@
  */
 import { useState, useEffect } from 'react';
 import { fetchWaterData, calculateEfficiency } from '@/services/waterService';
-import { WaterConsumptionData, WaterSystemData } from '@/types/water';
+
+interface WaterDataState {
+  data: any;
+  loading: boolean;
+  error: string | null;
+}
 
 export const useWaterData = () => {
-  const [data, setData] = useState<WaterConsumptionData | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-  const [filters, setFilters] = useState({
-    zone: 'all',
-    period: 'monthly',
-    view: 'overview'
+  const [state, setState] = useState<WaterDataState>({
+    data: null,
+    loading: true,
+    error: null
   });
   
-  // Derived state
-  const systemEfficiency = data ? calculateEfficiency(
-    data.total.consumption, 
-    data.total.loss
-  ) : 0;
-  
-  const zoneData = data ? data.zones.map(zone => ({
-    name: zone.name,
-    consumption: zone.consumption,
-    loss: zone.loss,
-    efficiency: calculateEfficiency(zone.consumption, zone.loss)
-  })) : [];
-
   useEffect(() => {
     const controller = new AbortController();
     const { signal } = controller;
 
     const loadData = async () => {
       try {
-        setLoading(true);
-        setError(null);
+        setState(prev => ({ ...prev, loading: true, error: null }));
         
         const waterData = await fetchWaterData(signal);
-        setData(waterData);
+        setState(prev => ({ ...prev, data: waterData, loading: false }));
       } catch (err) {
         if (err instanceof Error && err.name !== 'AbortError') {
           console.error('Error loading water data:', err);
-          setError(err.message);
+          setState(prev => ({ 
+            ...prev, 
+            loading: false, 
+            error: err instanceof Error ? err.message : 'An unknown error occurred' 
+          }));
         }
-      } finally {
-        setLoading(false);
       }
     };
 
@@ -58,16 +48,5 @@ export const useWaterData = () => {
     };
   }, []);
   
-  const updateFilters = (newFilters: Partial<typeof filters>) => {
-    setFilters(prev => ({ ...prev, ...newFilters }));
-  };
-
-  return {
-    data,
-    loading,
-    error,
-    zoneData,
-    systemEfficiency,
-    updateFilters
-  };
+  return state;
 };

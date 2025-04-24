@@ -6,13 +6,14 @@ import { FilterButton } from "@/components/water-system/FilterButton";
 import { MetricCard } from "@/components/water-system/MetricCard";
 import { DataTable } from "@/components/water-system/DataTable";
 import { ArrowDown, ArrowUp, Droplets, Gauge } from 'lucide-react';
-import { waterData } from '@/data/water-data';
+import { useWaterData } from '@/hooks/useWaterData';
 import { themeConfig } from '@/lib/theme-config';
 import { formatNumber } from '@/lib/utils';
 
 export function WaterSystemDashboard() {
   // Define the theme and data we'll use
   const theme = themeConfig;
+  const { data, loading, error } = useWaterData();
   
   return (
     <div className="container mx-auto p-6">

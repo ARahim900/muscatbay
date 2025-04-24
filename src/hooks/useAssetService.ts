@@ -9,11 +9,11 @@ import {
   categorizeAssetsByLocation,
   analyzeAssetCondition
 } from '@/services/assetService';
-import { PropertyUnit, Asset } from '@/types/assets';
+import { Asset } from '@/types/assets';
 
 export const useAssetService = () => {
   const [assets, setAssets] = useState<Asset[]>([]);
-  const [propertyUnits, setPropertyUnits] = useState<PropertyUnit[]>([]);
+  const [propertyUnits, setPropertyUnits] = useState<any[]>([]);
   const [contributionRates, setContributionRates] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -37,7 +37,7 @@ export const useAssetService = () => {
         const zones: string[] = [...new Set(assetsData.map(asset => asset.locationName || ''))];
         setSelectedZones(zones);
         
-        const categories: string[] = [...new Set(assetsData.map(asset => asset.assetCategory || ''))];
+        const categories: string[] = [...new Set(assetsData.map(asset => asset.assetCategName || ''))];
         setSelectedCategories(categories);
         
         // Load property units data
@@ -79,7 +79,7 @@ export const useAssetService = () => {
   // Filter assets by selected zones and categories
   const filteredAssets = assets.filter(asset => {
     const matchesZone = selectedZones.length === 0 || selectedZones.includes(asset.locationName || '');
-    const matchesCategory = selectedCategories.length === 0 || selectedCategories.includes(asset.assetCategory || '');
+    const matchesCategory = selectedCategories.length === 0 || selectedCategories.includes(asset.assetCategName || '');
     return matchesZone && matchesCategory;
   });
 

@@ -5,42 +5,78 @@
 
 export interface Asset {
   id: string;
+  assetId: number;
   name: string;
-  assetCategory: string;
-  assetSubCategory: string;
   assetTag: string;
+  assetName: string;
+  assetDesc: string;
+  assetBrand: string;
+  assetModel: string;
+  assetCategId: number;
+  assetCategName: string;
+  assetSubCategId: number;
+  assetSubCategName: string;
   locationName: string;
   locationTag: string;
-  assetCondition: string;
-  installationDate?: string;
-  assetValue?: number;
-  brand?: string;
-  model?: string;
-  countryOfOrigin?: string;
+  assetLocKeyId: number;
+  assetLocRef1: string;
+  assetLocRef2: string;
+  assetLocRef3: string;
+  assetInLocSrlno: string;
+  countryOfOrigin: string;
+  ppmFreq: string;
+  isAssetActive: string;
+  client: string;
 }
 
 export interface AssetCategorySummary {
-  name: string;
+  category: string;
   count: number;
   assets: Asset[];
-  totalValue: number;
   percentage: number;
 }
 
 export interface AssetLocationSummary {
-  name: string;
+  location: string;
   count: number;
   assets: Asset[];
-  totalValue: number;
   percentage: number;
 }
 
 export interface AssetCondition {
-  condition: string;
-  count: number;
-  percentage: number;
+  id: string;
+  assetId: number;
+  condition: 'Excellent' | 'Good' | 'Fair' | 'Poor' | 'Critical' | 'Unknown';
+  assessmentDate: string;
+  notes?: string;
+  estimatedLifeRemaining?: number; // in months
 }
 
+export interface AssetMaintenance {
+  id: string;
+  assetId: number;
+  maintenanceType: 'Preventive' | 'Corrective' | 'Condition-Based';
+  scheduledDate: string;
+  completedDate?: string;
+  status: 'Scheduled' | 'In Progress' | 'Completed' | 'Overdue';
+  cost?: number;
+  technician?: string;
+  notes?: string;
+}
+
+export interface AssetLifecycleForecast {
+  assetId: number;
+  assetName: string;
+  assetCategory: string;
+  installationDate?: string;
+  expectedLifespan: number; // in months
+  remainingLifespan: number; // in months
+  replacementCost?: number;
+  replacementYear: number;
+  priority: 'High' | 'Medium' | 'Low';
+}
+
+// Property units
 export interface PropertyUnit {
   id: string;
   unitNo: string;

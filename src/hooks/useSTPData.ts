@@ -1,46 +1,51 @@
 
 import { useState, useEffect } from 'react';
-import { 
-  fetchSTPDailyData, 
-  fetchSTPMonthlyData, 
-  filterDataByDateRange, 
-  calculateMonthlyAggregates
-} from '@/services/stpService';
-import { STPDailyRecord, STPMonthlyAggregate, STPFilters } from '@/types/stp';
+import { fetchSTPDailyData, fetchSTPMonthlyData, processData } from '@/services/stpService';
 
+/**
+ * Hook for STP data management
+ */
 export const useSTPData = () => {
-  const [dailyData, setDailyData] = useState<STPDailyRecord[]>([]);
-  const [monthlyData, setMonthlyData] = useState<STPMonthlyAggregate[]>([]);
+  const [dailyData, setDailyData] = useState<any[]>([]);
+  const [monthlyData, setMonthlyData] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [filters, setFilters] = useState<STPFilters>({
+  const [filters, setFilters] = useState({
+    plant: 'all',
+    dateRange: {
+      start: '',
+      end: ''
+    },
     year: new Date().getFullYear(),
     month: 'all',
-    view: 'daily',
-    sortBy: 'date',
-    sortOrder: 'desc'
+    view: 'daily'
   });
 
+  // Fetch data when component mounts
   useEffect(() => {
     const controller = new AbortController();
     const { signal } = controller;
 
-    const loadData = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
         setError(null);
-        
-        // Load daily data
-        const stpDailyData = await fetchSTPDailyData(signal);
-        setDailyData(stpDailyData);
-        
-        // Load monthly data
-        const stpMonthlyData = await fetchSTPMonthlyData(signal);
-        setMonthlyData(stpMonthlyData as STPMonthlyAggregate[]);
-        
+
+        // Fetch daily data
+        const dailyResult = await fetchSTPDailyData(signal);
+        const processedDailyData = processData(
+          dailyResult, 
+          filters.dateRange,
+          filters.plant
+        );
+        setDailyData(processedDailyData);
+
+        // Fetch monthly data
+        const monthlyResult = await fetchSTPMonthlyData(signal);
+        setMonthlyData(monthlyResult || []);
       } catch (err) {
         if (err instanceof Error && err.name !== 'AbortError') {
-          console.error('Error loading STP data:', err);
+          console.error('Error fetching STP data:', err);
           setError(err.message);
         }
       } finally {
@@ -48,60 +53,21 @@ export const useSTPData = () => {
       }
     };
 
-    loadData();
+    fetchData();
 
     // Clean up on unmount
     return () => {
       controller.abort();
     };
-  }, []);
+  }, [filters.dateRange, filters.plant]);
 
-  // Get filtered daily data
-  const getFilteredDailyData = (): STPDailyRecord[] => {
-    if (dailyData.length === 0) return [];
-    
-    let filtered = [...dailyData];
-    
-    // Filter by year
-    filtered = filtered.filter(record => {
-      const date = new Date(record.date);
-      return date.getFullYear() === filters.year;
-    });
-    
-    // Filter by month if needed
-    if (filters.month !== 'all') {
-      filtered = filtered.filter(record => {
-        const date = new Date(record.date);
-        return date.getMonth() === (filters.month as number) - 1; // Month is 0-indexed in JS
-      });
-    }
-    
-    // Sort the data
-    filtered.sort((a, b) => {
-      const aValue = a[filters.sortBy] || 0;
-      const bValue = b[filters.sortBy] || 0;
-      
-      if (filters.sortBy === 'date') {
-        const aDate = new Date(a.date).getTime();
-        const bDate = new Date(b.date).getTime();
-        return filters.sortOrder === 'asc' ? aDate - bDate : bDate - aDate;
-      }
-      
-      return filters.sortOrder === 'asc' ? Number(aValue) - Number(bValue) : Number(bValue) - Number(aValue);
-    });
-    
-    return filtered;
-  };
-
-  // Update filters
-  const updateFilters = (newFilters: Partial<STPFilters>) => {
+  const updateFilters = (newFilters: Partial<typeof filters>) => {
     setFilters(prev => ({ ...prev, ...newFilters }));
   };
 
   return {
     dailyData,
     monthlyData,
-    filteredDailyData: getFilteredDailyData(),
     loading,
     error,
     filters,
