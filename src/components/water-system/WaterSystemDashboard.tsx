@@ -7,7 +7,7 @@ import { MetricCard } from "@/components/water-system/MetricCard";
 import { DataTable } from "@/components/water-system/DataTable";
 import { ArrowDown, ArrowUp, Droplets, Gauge } from 'lucide-react';
 import { waterData } from '@/data/water-data';
-import { themeConfig, themes } from '@/lib/theme-config';
+import { themeConfig } from '@/lib/theme-config';
 import { formatNumber } from '@/lib/utils';
 
 export function WaterSystemDashboard() {
@@ -35,22 +35,14 @@ export function WaterSystemDashboard() {
           value={48234}
           unit="m³"
           icon={<Droplets className="h-4 w-4" />}
-          trend={{
-            value: 12.5,
-            icon: ArrowUp,
-            label: "from previous period"
-          }}
+          trend={12.5}
         />
         <MetricCard
           title="System Efficiency"
           value={94.2}
           unit="%"
           icon={<Gauge className="h-4 w-4" />}
-          trend={{
-            value: -2.1,
-            icon: ArrowDown,
-            label: "from target"
-          }}
+          trend={-2.1}
         />
       </div>
 

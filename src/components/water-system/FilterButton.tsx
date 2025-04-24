@@ -3,11 +3,11 @@ import React from 'react';
 
 interface FilterButtonProps {
   children: React.ReactNode;
-  onClick: () => void;
+  onClick?: () => void;
   className?: string;
 }
 
-export function FilterButton({ children, onClick, className = "" }: FilterButtonProps) {
+export function FilterButton({ children, onClick = () => {}, className = "" }: FilterButtonProps) {
   return (
     <button
       className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${className}`}

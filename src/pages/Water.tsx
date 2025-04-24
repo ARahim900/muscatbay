@@ -12,7 +12,7 @@ import { CustomTooltip } from '@/components/water-system/CustomTooltip';
 import { formatNumber } from "@/lib/utils";
 import { themes } from '@/lib/theme-config';
 import { waterData } from '@/data/water-data';
-import type { WaterMetrics, ZoneData, TypeData, WaterSystemMetrics } from '@/types/water';
+import type { WaterSystemMetrics, ZoneData, TypeData } from '@/types/water.d';
 
 // Sample data based on the waterData schema
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];

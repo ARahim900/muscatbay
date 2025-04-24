@@ -22,7 +22,7 @@ export function MetricCard({
   trend,
   icon,
   className = "",
-  lossPercent,
+  lossPercent = 0,
   secondaryValue,
   secondaryUnit,
 }: MetricCardProps) {
@@ -55,7 +55,7 @@ export function MetricCard({
           </div>
         )}
 
-        {lossPercent !== undefined && (
+        {lossPercent !== undefined && lossPercent > 0 && (
           <div className="mt-1 text-sm text-gray-600 dark:text-gray-300">
             Loss: {formatNumber(lossPercent, 1)}%
           </div>
