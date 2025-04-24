@@ -3,13 +3,14 @@ import React from 'react';
 
 interface FilterButtonProps {
   children: React.ReactNode;
-  onClick?: () => void;
+  onClick: () => void;
+  className?: string;
 }
 
-export function FilterButton({ children, onClick }: FilterButtonProps) {
+export function FilterButton({ children, onClick, className = "" }: FilterButtonProps) {
   return (
     <button
-      className="bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-md text-sm font-medium transition-colors"
+      className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${className}`}
       onClick={onClick}
     >
       {children}

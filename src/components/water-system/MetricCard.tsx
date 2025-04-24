@@ -1,52 +1,72 @@
 
 import React from 'react';
-import { LucideIcon } from 'lucide-react';
-import { formatNumber } from '@/lib/utils';
-
-interface TrendProps {
-  value: number;
-  icon: LucideIcon;
-  label: string;
-}
+import { formatNumber } from "@/lib/utils";
+import type { LucideIcon } from "lucide-react";
 
 interface MetricCardProps {
   title: string;
   value: number | string;
   unit?: string;
-  icon: React.ReactNode;
-  trend?: TrendProps;
+  trend?: number;
+  icon: React.ReactElement;
+  className?: string;
+  lossPercent?: number;
+  secondaryValue?: number | string;
+  secondaryUnit?: string;
 }
 
-export function MetricCard({ title, value, unit, icon, trend }: MetricCardProps) {
-  // Format the value if it's a number
-  const displayValue = typeof value === 'number' ? formatNumber(value) : value;
+export function MetricCard({
+  title,
+  value,
+  unit,
+  trend,
+  icon,
+  className = "",
+  lossPercent,
+  secondaryValue,
+  secondaryUnit,
+}: MetricCardProps) {
+  const displayValue = typeof value === "number" ? formatNumber(value) : value;
+  const displaySecondaryValue = secondaryValue !== undefined ? 
+    (typeof secondaryValue === "number" ? formatNumber(secondaryValue) : secondaryValue) : 
+    null;
   
-  // Determine if trend is positive or negative
-  const isTrendPositive = trend ? trend.value >= 0 : null;
-  const trendColor = isTrendPositive === null ? 'text-gray-500' : isTrendPositive ? 'text-green-500' : 'text-red-500';
-  
-  const TrendIcon = trend?.icon;
-  
+  const trendColor = trend && trend > 0 ? "text-green-500" : "text-red-500";
+
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-medium text-gray-500">{title}</h3>
-        <div className="text-primary">
+    <div className={`bg-white dark:bg-gray-800 rounded-lg shadow-md p-5 ${className}`}>
+      <div className="flex justify-between items-start mb-3">
+        <div className="text-sm font-medium text-gray-600 dark:text-gray-300">{title}</div>
+        <div className="p-2 rounded-full bg-blue-100 dark:bg-blue-900">
           {icon}
         </div>
       </div>
       
-      <div className="flex items-baseline">
-        <span className="text-3xl font-bold">{displayValue}</span>
-        {unit && <span className="ml-1 text-gray-500 text-sm">{unit}</span>}
-      </div>
-      
-      {trend && (
-        <div className={`flex items-center mt-3 text-xs ${trendColor}`}>
-          {TrendIcon && <TrendIcon className="h-3 w-3 mr-1" />}
-          <span>{trend.value > 0 ? '+' : ''}{formatNumber(trend.value, 1)}% {trend.label}</span>
+      <div className="mt-1 flex flex-col">
+        <div className="flex items-baseline">
+          <div className="text-3xl font-bold text-gray-900 dark:text-white">{displayValue}</div>
+          {unit && <div className="ml-1.5 text-sm text-gray-600 dark:text-gray-300">{unit}</div>}
         </div>
-      )}
+
+        {displaySecondaryValue !== null && (
+          <div className="mt-1 text-sm text-gray-600 dark:text-gray-300">
+            {displaySecondaryValue}
+            {secondaryUnit && <span className="ml-1">{secondaryUnit}</span>}
+          </div>
+        )}
+
+        {lossPercent !== undefined && (
+          <div className="mt-1 text-sm text-gray-600 dark:text-gray-300">
+            Loss: {formatNumber(lossPercent, 1)}%
+          </div>
+        )}
+
+        {trend !== undefined && (
+          <div className={`mt-1 text-sm ${trendColor}`}>
+            {trend >= 0 ? "+" : ""}{formatNumber(trend, 1)}%
+          </div>
+        )}
+      </div>
     </div>
   );
 }
