@@ -1,4 +1,3 @@
-
 // Import necessary types from the asset type definitions
 import { Asset, AssetCategorySummary, AssetLocationSummary, AssetCondition } from '@/types/asset';
 
@@ -40,7 +39,42 @@ const assets: Asset[] = [
     criticality: 'Medium',
     nextMaintenanceDate: '2023-10-12'
   },
-  // Add more mock assets as needed
+  {
+    id: 'asset-004',
+    name: 'Fire Alarm System',
+    category: 'Safety',
+    location: 'Building A',
+    acquisitionDate: '2021-01-10',
+    value: 15000,
+    lifeExpectancy: 10,
+    condition: 'Good',
+    criticality: 'High',
+    nextMaintenanceDate: '2023-07-20'
+  },
+  {
+    id: 'asset-005',
+    name: 'Water Pumps - Building B',
+    category: 'Plumbing',
+    location: 'Building B',
+    acquisitionDate: '2017-09-01',
+    value: 32000,
+    lifeExpectancy: 12,
+    condition: 'Fair',
+    criticality: 'Medium',
+    nextMaintenanceDate: '2023-08-28'
+  },
+  {
+    id: 'asset-006',
+    name: 'Generator Set',
+    category: 'Electrical',
+    location: 'Power Room',
+    acquisitionDate: '2016-05-18',
+    value: 75000,
+    lifeExpectancy: 25,
+    condition: 'Good',
+    criticality: 'Critical',
+    nextMaintenanceDate: '2023-09-05'
+  }
 ];
 
 /**

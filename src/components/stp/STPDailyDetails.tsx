@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -32,17 +31,14 @@ export const STPDailyDetails: React.FC<STPDailyDetailsProps> = ({
         const data = await fetchSTPDailyData();
         let records = processData(data);
         
-        // Filter by plant ID if provided
         if (plantId) {
           records = records.filter((r: STPDailyRecord) => r.plantId === plantId);
         }
         
-        // Filter by date if provided
         if (date) {
           records = records.filter((r: STPDailyRecord) => r.date === date);
         }
         
-        // Filter by record ID if provided
         if (recordId) {
           const foundRecord = records.find((r: STPDailyRecord) => r.id === recordId);
           if (foundRecord) {
@@ -51,7 +47,6 @@ export const STPDailyDetails: React.FC<STPDailyDetailsProps> = ({
             setError('Record not found');
           }
         } else if (records.length > 0) {
-          // If no specific record is requested, use the first one
           setRecord(records[0]);
         } else {
           setError('No records found');
@@ -86,7 +81,7 @@ export const STPDailyDetails: React.FC<STPDailyDetailsProps> = ({
       
       <Card>
         <CardHeader>
-          <CardTitle>STP Daily Record: {record.date}</CardTitle>
+          <CardTitle>STP Daily Record: {record?.date}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">

@@ -30,5 +30,3 @@ export const AssetCategoriesTable: React.FC<AssetCategoriesTableProps> = ({ cate
     </Table>
   );
 };
-
-export default AssetCategoriesTable;

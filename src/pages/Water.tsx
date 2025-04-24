@@ -1,281 +1,185 @@
-
-import React, { useState, useEffect } from 'react';
-import { useWaterData } from '@/hooks/useWaterData';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import React from 'react';
+import { 
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardHeader, 
+  CardTitle 
+} from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useIsMobile } from '@/hooks/use-mobile';
-import StatCard from '@/components/dashboard/StatCard';
-import { Droplets, Gauge, TrendingDown, TrendingUp } from 'lucide-react';
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 import { WaterSystemMetrics, ZoneData, TypeData } from '@/types/water';
+import { formatNumber } from '@/lib/utils';
+import { 
+  Droplets, 
+  BarChart3, 
+  ArrowRight, 
+  CircleDollarSign, 
+  ArrowUpRight 
+} from 'lucide-react';
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#FF6B6B'];
-const WATER_RATE = 2.5; // OMR per cubic meter
+// Use a color that is defined in your theme
+const themeColor = "primary";
 
-const Water = () => {
-  const { data, loading, error } = useWaterData();
-  const isMobile = useIsMobile();
-  const [metrics, setMetrics] = useState<WaterSystemMetrics>({
-    totalConsumption: 0,
-    totalLoss: 0,
-    efficiency: 0,
-    averageDailyUsage: 0,
-    waterRate: WATER_RATE,
-    monthlyCost: 0
-  });
-  
-  const [zoneData, setZoneData] = useState<ZoneData[]>([]);
-  const [typeData, setTypeData] = useState<TypeData[]>([]);
-
-  useEffect(() => {
-    if (data) {
-      // Calculate metrics from data
-      const totalConsumption = data.total?.consumption || 0;
-      const totalLoss = data.total?.loss || 0;
-      const totalWater = totalConsumption + totalLoss;
-      const efficiency = totalWater > 0 ? (totalConsumption / totalWater) * 100 : 0;
-      const monthlyCost = totalConsumption * WATER_RATE;
-      
-      setMetrics({
-        totalConsumption,
-        totalLoss,
-        efficiency,
-        averageDailyUsage: Math.round(totalConsumption / 30), // Assuming a 30-day month
-        waterRate: WATER_RATE,
-        monthlyCost
-      });
-      
-      // Prepare zone data for charts
-      if (data.zones && Array.isArray(data.zones)) {
-        const zones = data.zones.map(zone => ({
-          name: zone.name,
-          consumption: zone.consumption,
-          loss: zone.loss,
-          percentage: totalConsumption > 0 ? (zone.consumption / totalConsumption) * 100 : 0
-        }));
-        setZoneData(zones);
-      }
-      
-      // Placeholder for type data
-      const types = [
-        { name: 'Potable', value: Math.round(totalConsumption * 0.65), percentage: 65 },
-        { name: 'Irrigation', value: Math.round(totalConsumption * 0.25), percentage: 25 },
-        { name: 'Amenities', value: Math.round(totalConsumption * 0.10), percentage: 10 }
-      ];
-      setTypeData(types);
-    }
-  }, [data]);
-
-  if (loading) {
-    return (
-      <div className="p-4">Loading water system data...</div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="p-4 text-red-500">Error loading water system data: {error}</div>
-    );
-  }
-
-  const getCardColor = (index: number): "primary" | "teal" | "lavender" | "gold" => {
-    const colors: Array<"primary" | "teal" | "lavender" | "gold"> = ["primary", "teal", "lavender", "gold"];
-    return colors[index % colors.length];
+const Water: React.FC = () => {
+  // Mock data for water system metrics
+  const waterMetrics: WaterSystemMetrics = {
+    totalConsumption: 48234,
+    totalLoss: 2865,
+    efficiency: 94.07,
+    averageDailyUsage: 1608,
+    waterRate: 0.3,
+    monthlyCost: 14470
   };
 
+  // Mock data for zone-wise consumption
+  const zoneData: ZoneData[] = [
+    { name: 'Residential', consumption: 28940, loss: 1736, percentage: 60 },
+    { name: 'Commercial', consumption: 12450, loss: 747, percentage: 25 },
+    { name: 'Common Areas', consumption: 6844, loss: 382, percentage: 15 }
+  ];
+
+  // Mock data for type-wise consumption (example: usage types)
+  const typeData: TypeData[] = [
+    { name: 'Irrigation', value: 15000, percentage: 31 },
+    { name: 'Domestic', value: 25000, percentage: 52 },
+    { name: 'Industrial', value: 8234, percentage: 17 }
+  ];
+  
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-3xl font-bold mb-6">Water System Dashboard</h1>
+    <div className="container mx-auto p-6">
+      <h1 className="text-3xl font-bold mb-2">Water Management</h1>
+      <p className="text-muted-foreground mb-6">
+        Track and optimize water consumption across different zones and types
+      </p>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <StatCard
-          title="Total Water Consumption"
-          value={`${metrics.totalConsumption.toLocaleString()} m³`}
-          description={`${metrics.monthlyCost.toLocaleString()} OMR`}
-          icon={Droplets}
-          color="primary"
-        />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Total Consumption
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{formatNumber(waterMetrics.totalConsumption)} m³</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              <Droplets className="h-4 w-4 inline-block mr-1" />
+              {formatNumber(waterMetrics.averageDailyUsage)} m³ daily average
+            </p>
+          </CardContent>
+        </Card>
         
-        <StatCard
-          title="System Efficiency"
-          value={`${metrics.efficiency.toFixed(1)}%`}
-          description="Water utilization rate"
-          icon={Gauge}
-          color="teal"
-        />
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Water Loss
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{formatNumber(waterMetrics.totalLoss)} m³</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {((waterMetrics.totalLoss / waterMetrics.totalConsumption) * 100).toFixed(1)}% of total consumption
+            </p>
+          </CardContent>
+        </Card>
         
-        <StatCard
-          title="Average Daily Usage"
-          value={`${metrics.averageDailyUsage.toLocaleString()} m³`}
-          description={`${(metrics.averageDailyUsage * WATER_RATE).toLocaleString()} OMR/day`}
-          icon={TrendingUp}
-          color="lavender"
-        />
-        
-        <StatCard
-          title="Total Water Loss"
-          value={`${metrics.totalLoss.toLocaleString()} m³`}
-          description={`${(100 - metrics.efficiency).toFixed(1)}% of supply`}
-          icon={TrendingDown}
-          color="gold"
-        />
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Monthly Cost
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{formatNumber(waterMetrics.monthlyCost)} OMR</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              <CircleDollarSign className="h-4 w-4 inline-block mr-1" />
+              {formatNumber(waterMetrics.waterRate)} OMR per m³
+            </p>
+          </CardContent>
+        </Card>
       </div>
       
-      <Tabs defaultValue="overview" className="w-full">
+      <Tabs defaultValue="zones" className="w-full">
         <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="zones">Zones</TabsTrigger>
           <TabsTrigger value="types">Types</TabsTrigger>
-          <TabsTrigger value="trends">Trends</TabsTrigger>
+          <TabsTrigger value="performance">Performance</TabsTrigger>
         </TabsList>
         
-        <TabsContent value="overview">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Consumption by Zone</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-[300px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={zoneData}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        outerRadius={isMobile ? 80 : 120}
-                        fill="#8884d8"
-                        dataKey="consumption"
-                        nameKey="name"
-                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                      >
-                        {zoneData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip formatter={(value) => [`${value.toLocaleString()} m³`, 'Consumption']} />
-                      <Legend />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader>
-                <CardTitle>Water Loss by Zone</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-[300px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={zoneData}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        outerRadius={isMobile ? 80 : 120}
-                        fill="#8884d8"
-                        dataKey="loss"
-                        nameKey="name"
-                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                      >
-                        {zoneData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip formatter={(value) => [`${value.toLocaleString()} m³`, 'Loss']} />
-                      <Legend />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-        
         <TabsContent value="zones">
-          <div className="grid grid-cols-1 gap-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Zone Details</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left py-2">Zone</th>
-                      <th className="text-right py-2">Consumption (m³)</th>
-                      <th className="text-right py-2">Loss (m³)</th>
-                      <th className="text-right py-2">Efficiency</th>
-                      <th className="text-right py-2">Cost (OMR)</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {zoneData.map((zone, index) => {
-                      const totalWater = zone.consumption + zone.loss;
-                      const efficiency = totalWater > 0 ? ((zone.consumption / totalWater) * 100).toFixed(1) : '0.0';
-                      
-                      return (
-                        <tr key={index} className="border-b">
-                          <td className="py-2">{zone.name}</td>
-                          <td className="text-right py-2">{zone.consumption.toLocaleString()}</td>
-                          <td className="text-right py-2">{zone.loss.toLocaleString()}</td>
-                          <td className="text-right py-2">{efficiency}%</td>
-                          <td className="text-right py-2">{(zone.consumption * WATER_RATE).toLocaleString()}</td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </CardContent>
-            </Card>
-          </div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Consumption by Zone</CardTitle>
+              <CardDescription>
+                Water usage distribution across different zones
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ul className="list-none pl-0">
+                {zoneData.map((zone) => (
+                  <li key={zone.name} className="flex items-center justify-between py-2">
+                    <div className="flex items-center">
+                      <BarChart3 className="h-4 w-4 mr-2 text-muted-foreground" />
+                      {zone.name}
+                    </div>
+                    <div className="font-medium">
+                      {formatNumber(zone.consumption)} m³ ({zone.percentage}%)
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
         </TabsContent>
         
         <TabsContent value="types">
-          <div className="grid grid-cols-1 gap-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Water Usage by Type</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-[300px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={typeData}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        outerRadius={isMobile ? 80 : 120}
-                        fill="#8884d8"
-                        dataKey="value"
-                        nameKey="name"
-                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                      >
-                        {typeData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip formatter={(value) => [`${value.toLocaleString()} m³`, 'Usage']} />
-                      <Legend />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-        
-        <TabsContent value="trends">
           <Card>
             <CardHeader>
-              <CardTitle>Monthly Trends Coming Soon</CardTitle>
+              <CardTitle>Consumption by Type</CardTitle>
+              <CardDescription>
+                Water usage distribution by different types of consumption
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <p>Historical trend data will be available in the next update.</p>
+              <ul className="list-none pl-0">
+                {typeData.map((type) => (
+                  <li key={type.name} className="flex items-center justify-between py-2">
+                    <div className="flex items-center">
+                      <Droplets className="h-4 w-4 mr-2 text-muted-foreground" />
+                      {type.name}
+                    </div>
+                    <div className="font-medium">
+                      {formatNumber(type.value)} m³ ({type.percentage}%)
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="performance">
+          <Card>
+            <CardHeader>
+              <CardTitle>System Performance</CardTitle>
+              <CardDescription>
+                Overall water system efficiency and key metrics
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Efficiency</p>
+                  <div className="text-2xl font-bold">
+                    {formatNumber(waterMetrics.efficiency)}%
+                  </div>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Water Rate</p>
+                  <div className="text-2xl font-bold">
+                    {formatNumber(waterMetrics.waterRate)} OMR/m³
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
