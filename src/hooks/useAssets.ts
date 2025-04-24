@@ -1,13 +1,11 @@
 
 import { useState, useEffect } from 'react';
 import { 
-  fetchAssets, 
+  getAssets, 
   getAssetCategorySummary, 
   getAssetLocationSummary,
   getCriticalAssets,
-  getAssetConditions,
-  getAssetMaintenanceSchedule,
-  getAssetLifecycleForecast
+  getAssetConditions
 } from '@/services/assetService';
 import {
   Asset,
@@ -16,8 +14,54 @@ import {
   AssetCondition,
   AssetMaintenance,
   AssetLifecycleForecast
-} from '@/types/assets';
+} from '@/types/asset';
 import { useToast } from '@/hooks/use-toast';
+
+// Mock data for maintenance and lifecycle
+const mockMaintenanceData: AssetMaintenance[] = [
+  {
+    id: 'maint-001',
+    assetId: 'asset-001',
+    assetName: 'HVAC System - Building A',
+    maintenanceType: 'Preventive',
+    scheduledDate: '2023-09-15',
+    estimatedCost: 2500,
+    priority: 'Medium'
+  },
+  {
+    id: 'maint-002',
+    assetId: 'asset-002',
+    assetName: 'Elevators - Main Building',
+    maintenanceType: 'Inspection',
+    scheduledDate: '2023-08-05',
+    estimatedCost: 1800,
+    priority: 'High'
+  }
+];
+
+const mockForecastData: AssetLifecycleForecast[] = [
+  {
+    year: 2023,
+    replacements: 2,
+    maintenanceCosts: 45000,
+    assets: []
+  },
+  {
+    year: 2024,
+    replacements: 5,
+    maintenanceCosts: 78000,
+    assets: []
+  }
+];
+
+// Helper functions to mimic the missing service functions
+const getAssetMaintenanceSchedule = (): AssetMaintenance[] => {
+  return mockMaintenanceData;
+};
+
+const getAssetLifecycleForecast = (): AssetLifecycleForecast[] => {
+  return mockForecastData;
+};
 
 export const useAssets = () => {
   const [assets, setAssets] = useState<Asset[]>([]);
@@ -38,23 +82,13 @@ export const useAssets = () => {
         setLoading(true);
         setError(null);
         
-        const [
-          assetsData, 
-          categoryData, 
-          locationData,
-          criticalData,
-          conditionsData,
-          maintenanceData,
-          forecastData
-        ] = await Promise.all([
-          fetchAssets(),
-          getAssetCategorySummary(),
-          getAssetLocationSummary(),
-          getCriticalAssets(),
-          getAssetConditions(),
-          getAssetMaintenanceSchedule(),
-          getAssetLifecycleForecast()
-        ]);
+        const assetsData = getAssets();
+        const categoryData = getAssetCategorySummary();
+        const locationData = getAssetLocationSummary();
+        const criticalData = getCriticalAssets();
+        const conditionsData = getAssetConditions();
+        const maintenanceData = getAssetMaintenanceSchedule();
+        const forecastData = getAssetLifecycleForecast();
         
         setAssets(assetsData);
         setCategorySummary(categoryData);

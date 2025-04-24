@@ -1,8 +1,4 @@
 
-/**
- * Type definitions for STP (Sewage Treatment Plant) data
- */
-
 export interface STPDailyRecord {
   id: string;
   date: string;
@@ -21,29 +17,21 @@ export interface STPDailyRecord {
 
 export interface STPMonthlyAggregate {
   month: string;
-  year: number;
-  plantId: string;
-  plantName: string;
-  averageInfluentFlow: number;
-  averageEffluentFlow: number;
+  year: string;
+  averageInfluent: number;
+  averageEffluent: number;
   averageTSS: number;
   averageBOD: number;
   averageCOD: number;
-  averagePH: number;
-  averageDO: number;
-  averageTemperature: number;
-  compliancePct: number;
+  efficiency: number;
 }
 
 export interface STPFilters {
-  plant: string;
-  dateRange: {
-    start: string;
-    end: string;
-  };
-  year: number | 'all';
-  month: string;
-  view: 'daily' | 'monthly' | 'compliance' | 'efficiency';
+  plantId?: string;
+  startDate?: string;
+  endDate?: string;
+  month?: string;
+  year?: string;
 }
 
 export interface STPDailyData {

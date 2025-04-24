@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useWaterData } from '@/hooks/useWaterData';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -116,7 +117,7 @@ const Water = () => {
           value={`${metrics.totalLoss.toLocaleString()} m³`}
           description={`${(100 - metrics.efficiency).toFixed(1)}% of supply`}
           icon={TrendingDown}
-          color="amber"
+          color="gold"
         />
       </div>
       

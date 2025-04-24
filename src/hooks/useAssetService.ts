@@ -6,11 +6,6 @@ import {
   getAssetLocationSummary, 
   getCriticalAssets, 
   getAssetConditions,
-  fetchPropertyUnits,
-  fetchContributionRates,
-  calculateReserveFundContribution,
-  PropertyUnit,
-  ContributionRate
 } from '@/services/assetService';
 import { Asset, AssetCategorySummary, AssetLocationSummary, AssetCondition } from '@/types/asset';
 
@@ -20,8 +15,8 @@ export interface AssetServiceState {
   locationSummary: AssetLocationSummary[];
   criticalAssets: Asset[];
   conditions: AssetCondition[];
-  propertyUnits: PropertyUnit[];
-  contributionRates: ContributionRate[];
+  propertyUnits: any[];
+  contributionRates: any[];
   loading: boolean;
   error: string | null;
 }
@@ -50,8 +45,8 @@ export const useAssetService = () => {
         const locationSummary = getAssetLocationSummary();
         const criticalAssets = getCriticalAssets();
         const conditions = getAssetConditions();
-        const propertyUnits = fetchPropertyUnits();
-        const contributionRates = fetchContributionRates();
+        const propertyUnits = [];
+        const contributionRates = [];
         
         setState(prev => ({
           ...prev,
@@ -78,8 +73,8 @@ export const useAssetService = () => {
   }, []);
   
   // Provide a function to calculate contributions
-  const calculateContribution = (unit: PropertyUnit, rate: ContributionRate): number => {
-    return calculateReserveFundContribution(unit, rate);
+  const calculateContribution = (unit: any, rate: any): number => {
+    return 0; // Mock implementation
   };
 
   return {

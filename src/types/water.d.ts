@@ -28,25 +28,22 @@ export interface WaterZone {
 
 export interface WaterSystemMetrics {
   totalConsumption: number;
-  efficiency: number;
   totalLoss: number;
-  costPerUnit: number;
+  efficiency: number;
+  averageDailyUsage: number;
+  waterRate: number;
+  monthlyCost: number;
 }
 
 export interface ZoneData {
   name: string;
   consumption: number;
   loss: number;
-  efficiency: number;
+  percentage: number;
 }
 
 export interface TypeData {
   name: string;
-  consumption: number;
+  value: number;
   percentage: number;
-}
-
-export interface WaterSystemData {
-  zones: WaterZone[];
-  metrics: WaterSystemMetrics;
 }

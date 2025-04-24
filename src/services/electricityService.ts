@@ -1,76 +1,42 @@
 
-/**
- * Electricity data service for Muscat Bay operations web application
- */
-import { fetchData } from './dataService';
+import { ElectricityRecord } from '@/types/electricity';
 
 /**
- * Fetches electricity consumption data
- * @param signal Optional AbortSignal for request cancellation
- * @returns Promise with electricity consumption data
+ * Function to generate a random color
+ * @returns Random hex color
  */
-export async function fetchElectricityData(signal?: AbortSignal): Promise<any[]> {
-  try {
-    const response = await fetchData<any>(
-      'electricity/consumption.json',
-      {
-        signal,
-        errorMessage: 'Failed to load electricity consumption data'
-      }
-    );
-    
-    return Array.isArray(response) ? response : [];
-  } catch (error) {
-    console.error('Error in fetchElectricityData:', error);
-    throw error;
+export const getRandomColor = (): string => {
+  const letters = '0123456789ABCDEF';
+  let color = '#';
+  for (let i = 0; i < 6; i++) {
+    color += letters[Math.floor(Math.random() * 16)];
   }
-}
+  return color;
+};
 
 /**
- * Gets mock electricity data
- * @returns Mock electricity data
+ * Fetches electricity data
+ * @returns Array of electricity records
  */
-export function getElectricityData() {
+export const fetchElectricityData = async (): Promise<any[]> => {
+  // Mock data
   return [
-    {
-      id: 'elec-001',
-      name: 'Residential Zone A',
-      type: 'Residential',
-      zone: 'Zone A',
-      accountNumber: 'ACC-001',
-      consumption: {
-        'Jan': 45000,
-        'Feb': 42000,
-        'Mar': 41000,
-        'Apr': 43500,
-        'May': 47000,
-        'Jun': 52000
-      }
-    },
-    {
-      id: 'elec-002',
-      name: 'Commercial Plaza',
-      type: 'Commercial',
-      zone: 'Zone B',
-      accountNumber: 'ACC-002',
-      consumption: {
-        'Jan': 68000,
-        'Feb': 65000,
-        'Mar': 69000,
-        'Apr': 71000,
-        'May': 73000,
-        'Jun': 75000
-      }
-    }
+    { id: 'e1', zone: 'Residential', consumption: 1500, cost: 135 },
+    { id: 'e2', zone: 'Commercial', consumption: 2800, cost: 252 },
+    { id: 'e3', zone: 'Common Areas', consumption: 950, cost: 85.5 }
   ];
-}
+};
 
 /**
- * Calculates electricity cost
- * @param consumption Electricity consumption in kWh
- * @param rate Electricity rate per kWh
- * @returns Total cost
+ * Safely parse number values
+ * @param value Value to parse
+ * @returns Parsed number or 0 if invalid
  */
-export function calculateElectricityCost(consumption: number, rate: number): number {
-  return consumption * rate;
-}
+export const safeParseNumber = (value: any): number => {
+  if (typeof value === 'number') return value;
+  if (typeof value === 'string') {
+    const parsed = parseFloat(value);
+    return isNaN(parsed) ? 0 : parsed;
+  }
+  return 0;
+};

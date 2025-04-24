@@ -1,6 +1,13 @@
+
 import React, { useState } from 'react';
 import { STPDailyDetails } from '@/components/stp/STPDailyDetails';
-import { Select } from "@/components/ui/select"
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
 
 interface STPDailyDetailsProps {
   // Define required props
@@ -30,37 +37,37 @@ export const STPDashboard: React.FC = () => {
       <h1>STP Dashboard</h1>
       <div>
         <label>Select Year:</label>
-        <Select onValueChange={handleYearChange}>
-          <Select.Trigger>
-            <span>{selectedYear}</span>
-          </Select.Trigger>
-          <Select.Content>
-            <Select.Item value="2022">2022</Select.Item>
-            <Select.Item value="2023">2023</Select.Item>
-            <Select.Item value="2024">2024</Select.Item>
-          </Select.Content>
+        <Select onValueChange={handleYearChange} defaultValue={selectedYear}>
+          <SelectTrigger>
+            <SelectValue>{selectedYear}</SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="2022">2022</SelectItem>
+            <SelectItem value="2023">2023</SelectItem>
+            <SelectItem value="2024">2024</SelectItem>
+          </SelectContent>
         </Select>
       </div>
       <div>
         <label>Select Month:</label>
-        <Select onValueChange={handleMonthChange}>
-          <Select.Trigger>
-            <span>{selectedMonth}</span>
-          </Select.Trigger>
-          <Select.Content>
-            <Select.Item value="01">January</Select.Item>
-            <Select.Item value="02">February</Select.Item>
-            <Select.Item value="03">March</Select.Item>
-            <Select.Item value="04">April</Select.Item>
-            <Select.Item value="05">May</Select.Item>
-            <Select.Item value="06">June</Select.Item>
-            <Select.Item value="07">July</Select.Item>
-            <Select.Item value="08">August</Select.Item>
-            <Select.Item value="09">September</Select.Item>
-            <Select.Item value="10">October</Select.Item>
-            <Select.Item value="11">November</Select.Item>
-            <Select.Item value="12">December</Select.Item>
-          </Select.Content>
+        <Select onValueChange={handleMonthChange} defaultValue={selectedMonth}>
+          <SelectTrigger>
+            <SelectValue>{selectedMonth}</SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="01">January</SelectItem>
+            <SelectItem value="02">February</SelectItem>
+            <SelectItem value="03">March</SelectItem>
+            <SelectItem value="04">April</SelectItem>
+            <SelectItem value="05">May</SelectItem>
+            <SelectItem value="06">June</SelectItem>
+            <SelectItem value="07">July</SelectItem>
+            <SelectItem value="08">August</SelectItem>
+            <SelectItem value="09">September</SelectItem>
+            <SelectItem value="10">October</SelectItem>
+            <SelectItem value="11">November</SelectItem>
+            <SelectItem value="12">December</SelectItem>
+          </SelectContent>
         </Select>
       </div>
       <STPDailyDetails selectedMonth={selectedMonth} />

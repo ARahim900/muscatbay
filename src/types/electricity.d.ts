@@ -1,39 +1,26 @@
 
-/**
- * Type definitions for electricity system data
- */
-
-export interface ElectricityConsumptionData {
-  metadata: {
-    version: string;
-    timestamp: string;
-    description: string;
-    units: string;
-  };
-  facilities: ElectricityFacility[];
-  summary: {
-    totalConsumption: number;
-    totalCost: number;
-    highestConsumer: string;
-    averageConsumption: number;
-  };
+export interface ElectricityRecord {
+  id: string;
+  zone: string;
+  consumption: number;
+  cost: number;
 }
 
-export interface ElectricityFacility {
-  id: string;
-  name: string;
-  type: string;
-  zone: string;
-  accountNumber: string;
-  consumption: {
+export interface ElectricityConsumptionData {
+  records: ElectricityRecord[];
+  total: {
+    consumption: number;
+    cost: number;
+  };
+  trends: {
     [month: string]: number;
   };
 }
 
 export interface ElectricityFilters {
-  year: number;
-  month: string | 'all';
-  zone: string;
-  type: string;
-  view: 'overview' | 'facilities' | 'trends' | 'comparison';
+  zone?: string;
+  startDate?: string;
+  endDate?: string;
+  month?: string;
+  year?: string;
 }
