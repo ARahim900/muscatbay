@@ -1,7 +1,6 @@
-
 import { ElectricityRecord } from '@/types/electricity';
 
-// Electricity data from the provided tables
+// Electricity data from the provided tables - Updated with Mar-25 data
 export const electricityData: ElectricityRecord[] = [
   {
     name: "Pumping Station 01",
@@ -18,7 +17,8 @@ export const electricityData: ElectricityRecord[] = [
       "Nov-24": 1629,
       "Dec-24": 1640,
       "Jan-25": 1903,
-      "Feb-25": 2095
+      "Feb-25": 2095,
+      "Mar-25": 3032 // Added
     }
   },
   {
@@ -36,7 +36,8 @@ export const electricityData: ElectricityRecord[] = [
       "Nov-24": 0,
       "Dec-24": 179,
       "Jan-25": 33,
-      "Feb-25": 137
+      "Feb-25": 137,
+      "Mar-25": 131 // Added
     }
   },
   {
@@ -54,7 +55,8 @@ export const electricityData: ElectricityRecord[] = [
       "Nov-24": 919,
       "Dec-24": 921,
       "Jan-25": 245,
-      "Feb-25": 870
+      "Feb-25": 870,
+      "Mar-25": 646 // Added
     }
   },
   {
@@ -72,7 +74,8 @@ export const electricityData: ElectricityRecord[] = [
       "Nov-24": 2599,
       "Dec-24": 1952,
       "Jan-25": 2069,
-      "Feb-25": 2521
+      "Feb-25": 2521,
+      "Mar-25": 2601 // Added
     }
   },
   {
@@ -90,7 +93,8 @@ export const electricityData: ElectricityRecord[] = [
       "Nov-24": 0,
       "Dec-24": 0,
       "Jan-25": 0,
-      "Feb-25": 0
+      "Feb-25": 0,
+      "Mar-25": 0 // Added
     }
   },
   {
@@ -108,7 +112,8 @@ export const electricityData: ElectricityRecord[] = [
       "Nov-24": 91,
       "Dec-24": 185,
       "Jan-25": 28,
-      "Feb-25": 40
+      "Feb-25": 40,
+      "Mar-25": 58 // Added
     }
   },
   {
@@ -126,7 +131,8 @@ export const electricityData: ElectricityRecord[] = [
       "Nov-24": 686,
       "Dec-24": 631,
       "Jan-25": 701,
-      "Feb-25": 638
+      "Feb-25": 638,
+      "Mar-25": 572 // Added
     }
   },
   {
@@ -144,7 +150,8 @@ export const electricityData: ElectricityRecord[] = [
       "Nov-24": 2413,
       "Dec-24": 2643,
       "Jan-25": 2873,
-      "Feb-25": 3665
+      "Feb-25": 3665,
+      "Mar-25": 3069 // Added
     }
   },
   {
@@ -162,7 +169,8 @@ export const electricityData: ElectricityRecord[] = [
       "Nov-24": 1432,
       "Dec-24": 1268,
       "Jan-25": 1689,
-      "Feb-25": 2214
+      "Feb-25": 2214,
+      "Mar-25": 1718 // Added
     }
   },
   {
@@ -180,7 +188,8 @@ export const electricityData: ElectricityRecord[] = [
       "Nov-24": 974,
       "Dec-24": 1026,
       "Jan-25": 983,
-      "Feb-25": 1124
+      "Feb-25": 1124,
+      "Mar-25": 1110 // Added
     }
   },
   {
@@ -198,7 +207,8 @@ export const electricityData: ElectricityRecord[] = [
       "Nov-24": 269,
       "Dec-24": 417,
       "Jan-25": 840,
-      "Feb-25": 1009
+      "Feb-25": 1009,
+      "Mar-25": 845 // Added
     }
   },
   {
@@ -216,7 +226,8 @@ export const electricityData: ElectricityRecord[] = [
       "Nov-24": 212,
       "Dec-24": 213,
       "Jan-25": 40,
-      "Feb-25": 233
+      "Feb-25": 233,
+      "Mar-25": 235 // Added
     }
   },
   {
@@ -234,7 +245,8 @@ export const electricityData: ElectricityRecord[] = [
       "Nov-24": 34,
       "Dec-24": 29,
       "Jan-25": 7,
-      "Feb-25": 28
+      "Feb-25": 28,
+      "Mar-25": 24 // Added
     }
   },
   {
@@ -252,7 +264,8 @@ export const electricityData: ElectricityRecord[] = [
       "Nov-24": 232,
       "Dec-24": 161,
       "Jan-25": 33,
-      "Feb-25": 134
+      "Feb-25": 134,
+      "Mar-25": 139 // Added
     }
   },
   {
@@ -270,7 +283,8 @@ export const electricityData: ElectricityRecord[] = [
       "Nov-24": 220,
       "Dec-24": 199,
       "Jan-25": 56,
-      "Feb-25": 203
+      "Feb-25": 203,
+      "Mar-25": 196 // Added
     }
   },
   {
@@ -288,7 +302,8 @@ export const electricityData: ElectricityRecord[] = [
       "Nov-24": 172,
       "Dec-24": 173,
       "Jan-25": 186,
-      "Feb-25": 161
+      "Feb-25": 161,
+      "Mar-25": 227 // Added
     }
   },
   {
@@ -306,7 +321,8 @@ export const electricityData: ElectricityRecord[] = [
       "Nov-24": 18,
       "Dec-24": 16,
       "Jan-25": 4,
-      "Feb-25": 18
+      "Feb-25": 18,
+      "Mar-25": 14 // Added
     }
   },
   {
@@ -324,7 +340,8 @@ export const electricityData: ElectricityRecord[] = [
       "Nov-24": 49,
       "Dec-24": 44,
       "Jan-25": 47,
-      "Feb-25": 45
+      "Feb-25": 45,
+      "Mar-25": 38 // Added
     }
   },
   {
@@ -342,7 +359,8 @@ export const electricityData: ElectricityRecord[] = [
       "Nov-24": 3593,
       "Dec-24": 3147,
       "Jan-25": 787,
-      "Feb-25": 3228
+      "Feb-25": 3228,
+      "Mar-25": 2663 // Added
     }
   },
   {
@@ -360,7 +378,8 @@ export const electricityData: ElectricityRecord[] = [
       "Nov-24": 2361,
       "Dec-24": 2258,
       "Jan-25": 633,
-      "Feb-25": 2298
+      "Feb-25": 2298,
+      "Mar-25": 1812 // Added
     }
   },
   {
@@ -378,7 +397,8 @@ export const electricityData: ElectricityRecord[] = [
       "Nov-24": 2060,
       "Dec-24": 1966,
       "Jan-25": 1868,
-      "Feb-25": 1974
+      "Feb-25": 1974,
+      "Mar-25": 1562 // Added
     }
   },
   {
@@ -396,7 +416,8 @@ export const electricityData: ElectricityRecord[] = [
       "Nov-24": 2299,
       "Dec-24": 1389,
       "Jan-25": 325,
-      "Feb-25": 1406
+      "Feb-25": 1406,
+      "Mar-25": 1401 // Added
     }
   },
   {
@@ -414,7 +435,8 @@ export const electricityData: ElectricityRecord[] = [
       "Nov-24": 1477,
       "Dec-24": 1121,
       "Jan-25": 449,
-      "Feb-25": 2070
+      "Feb-25": 2070,
+      "Mar-25": 1870 // Added
     }
   },
   {
@@ -432,7 +454,8 @@ export const electricityData: ElectricityRecord[] = [
       "Nov-24": 24383,
       "Dec-24": 37236,
       "Jan-25": 38168,
-      "Feb-25": 18422
+      "Feb-25": 18422,
+      "Mar-25": 40 // Added
     }
   },
   {
@@ -450,7 +473,8 @@ export const electricityData: ElectricityRecord[] = [
       "Nov-24": 0,
       "Dec-24": 0,
       "Jan-25": 0,
-      "Feb-25": 0
+      "Feb-25": 0,
+      "Mar-25": 0 // Added
     }
   },
   {
@@ -468,7 +492,8 @@ export const electricityData: ElectricityRecord[] = [
       "Nov-24": 9604,
       "Dec-24": 19032,
       "Jan-25": 22819,
-      "Feb-25": 19974
+      "Feb-25": 19974,
+      "Mar-25": 14190 // Added
     }
   },
   {
@@ -486,7 +511,8 @@ export const electricityData: ElectricityRecord[] = [
       "Nov-24": 1225,
       "Dec-24": 814,
       "Jan-25": 798,
-      "Feb-25": 936
+      "Feb-25": 936,
+      "Mar-25": 879 // Added
     }
   },
   {
@@ -504,7 +530,8 @@ export const electricityData: ElectricityRecord[] = [
       "Nov-24": 5702,
       "Dec-24": 5131,
       "Jan-25": 5559,
-      "Feb-25": 5417
+      "Feb-25": 5417,
+      "Mar-25": 4504 // Added
     }
   },
   {
@@ -522,7 +549,8 @@ export const electricityData: ElectricityRecord[] = [
       "Nov-24": 3581,
       "Dec-24": 2352,
       "Jan-25": 2090,
-      "Feb-25": 2246
+      "Feb-25": 2246,
+      "Mar-25": 1939 // Added
     }
   },
   {
@@ -540,7 +568,8 @@ export const electricityData: ElectricityRecord[] = [
       "Nov-24": 1377,
       "Dec-24": 764,
       "Jan-25": 647,
-      "Feb-25": 657
+      "Feb-25": 657,
+      "Mar-25": 650 // Added
     }
   },
   {
@@ -558,7 +587,8 @@ export const electricityData: ElectricityRecord[] = [
       "Nov-24": 1252,
       "Dec-24": 841,
       "Jan-25": 670,
-      "Feb-25": 556
+      "Feb-25": 556,
+      "Mar-25": 608 // Added
     }
   },
   {
@@ -576,7 +606,8 @@ export const electricityData: ElectricityRecord[] = [
       "Nov-24": 1577,
       "Dec-24": 890,
       "Jan-25": 724,
-      "Feb-25": 690
+      "Feb-25": 690,
+      "Mar-25": 752 // Added
     }
   },
   {
@@ -594,7 +625,8 @@ export const electricityData: ElectricityRecord[] = [
       "Nov-24": 1774,
       "Dec-24": 1055,
       "Jan-25": 887,
-      "Feb-25": 738
+      "Feb-25": 738,
+      "Mar-25": 792 // Added
     }
   },
   {
@@ -612,7 +644,8 @@ export const electricityData: ElectricityRecord[] = [
       "Nov-24": 1046,
       "Dec-24": 785,
       "Jan-25": 826,
-      "Feb-25": 676
+      "Feb-25": 676,
+      "Mar-25": 683 // Added
     }
   },
   {
@@ -630,13 +663,14 @@ export const electricityData: ElectricityRecord[] = [
       "Nov-24": 1608,
       "Dec-24": 1068,
       "Jan-25": 860,
-      "Feb-25": 837
+      "Feb-25": 837,
+      "Mar-25": 818 // Added
     }
   },
   {
     name: "D Building 50",
     type: "D_Building",
-    meterAccountNo: "R53672 ",
+    meterAccountNo: "R53672", // Corrected Meter number (removed trailing space)
     consumption: {
       "Apr-24": 577,
       "May-24": 1253,
@@ -648,7 +682,8 @@ export const electricityData: ElectricityRecord[] = [
       "Nov-24": 1102,
       "Dec-24": 789,
       "Jan-25": 765,
-      "Feb-25": 785
+      "Feb-25": 785,
+      "Mar-25": 707 // Added
     }
   },
   {
@@ -666,7 +701,8 @@ export const electricityData: ElectricityRecord[] = [
       "Nov-24": 1855,
       "Dec-24": 710,
       "Jan-25": 661,
-      "Feb-25": 682
+      "Feb-25": 682,
+      "Mar-25": 642 // Added
     }
   },
   {
@@ -684,7 +720,8 @@ export const electricityData: ElectricityRecord[] = [
       "Nov-24": 1986,
       "Dec-24": 1208,
       "Jan-25": 979,
-      "Feb-25": 896
+      "Feb-25": 896,
+      "Mar-25": 952 // Added
     }
   },
   {
@@ -702,7 +739,8 @@ export const electricityData: ElectricityRecord[] = [
       "Nov-24": 1764,
       "Dec-24": 968,
       "Jan-25": 693,
-      "Feb-25": 732
+      "Feb-25": 732,
+      "Mar-25": 760 // Added
     }
   },
   {
@@ -720,7 +758,8 @@ export const electricityData: ElectricityRecord[] = [
       "Nov-24": 1777,
       "Dec-24": 834,
       "Jan-25": 681,
-      "Feb-25": 559
+      "Feb-25": 559,
+      "Mar-25": 531 // Added
     }
   },
   {
@@ -738,7 +777,8 @@ export const electricityData: ElectricityRecord[] = [
       "Nov-24": 1828,
       "Dec-24": 1035,
       "Jan-25": 677,
-      "Feb-25": 616
+      "Feb-25": 616,
+      "Mar-25": 719 // Added
     }
   },
   {
@@ -756,7 +796,8 @@ export const electricityData: ElectricityRecord[] = [
       "Nov-24": 1805,
       "Dec-24": 937,
       "Jan-25": 683,
-      "Feb-25": 731
+      "Feb-25": 731,
+      "Mar-25": 765 // Added
     }
   },
   {
@@ -774,7 +815,8 @@ export const electricityData: ElectricityRecord[] = [
       "Nov-24": 2262,
       "Dec-24": 1332,
       "Jan-25": 990,
-      "Feb-25": 846
+      "Feb-25": 846,
+      "Mar-25": 795 // Added
     }
   },
   {
@@ -792,7 +834,8 @@ export const electricityData: ElectricityRecord[] = [
       "Nov-24": 1534,
       "Dec-24": 778,
       "Jan-25": 593,
-      "Feb-25": 535
+      "Feb-25": 535,
+      "Mar-25": 594 // Added
     }
   },
   {
@@ -810,7 +853,8 @@ export const electricityData: ElectricityRecord[] = [
       "Nov-24": 1634,
       "Dec-24": 998,
       "Jan-25": 628,
-      "Feb-25": 582
+      "Feb-25": 582,
+      "Mar-25": 697 // Added
     }
   },
   {
@@ -828,7 +872,8 @@ export const electricityData: ElectricityRecord[] = [
       "Nov-24": 1275,
       "Dec-24": 705,
       "Jan-25": 674,
-      "Feb-25": 612
+      "Feb-25": 612,
+      "Mar-25": 679 // Added
     }
   },
   {
@@ -846,7 +891,8 @@ export const electricityData: ElectricityRecord[] = [
       "Nov-24": 1734,
       "Dec-24": 977,
       "Jan-25": 767,
-      "Feb-25": 800
+      "Feb-25": 800,
+      "Mar-25": 719 // Added
     }
   },
   {
@@ -864,7 +910,8 @@ export const electricityData: ElectricityRecord[] = [
       "Nov-24": 1630,
       "Dec-24": 957,
       "Jan-25": 715,
-      "Feb-25": 677
+      "Feb-25": 677,
+      "Mar-25": 595 // Added
     }
   },
   {
@@ -882,7 +929,8 @@ export const electricityData: ElectricityRecord[] = [
       "Nov-24": 1303,
       "Dec-24": 766,
       "Jan-25": 639,
-      "Feb-25": 566
+      "Feb-25": 566,
+      "Mar-25": 463 // Added
     }
   },
   {
@@ -900,7 +948,8 @@ export const electricityData: ElectricityRecord[] = [
       "Nov-24": 1169,
       "Dec-24": 702,
       "Jan-25": 475,
-      "Feb-25": 508
+      "Feb-25": 508,
+      "Mar-25": 554 // Added
     }
   },
   {
@@ -918,11 +967,13 @@ export const electricityData: ElectricityRecord[] = [
       "Nov-24": 6229,
       "Dec-24": 3695,
       "Jan-25": 3304,
-      "Feb-25": 3335
+      "Feb-25": 3335,
+      "Mar-25": 3383 // Added
     }
   },
   {
-    name: "Zone-3 landscape light 17",
+    // Corrected name to match existing data (hyphen vs space)
+    name: "Zone-3 landscape light 17", 
     type: "FP-Landscape Lights Z3",
     meterAccountNo: "R54872",
     consumption: {
@@ -936,11 +987,13 @@ export const electricityData: ElectricityRecord[] = [
       "Nov-24": 0,
       "Dec-24": 0,
       "Jan-25": 0,
-      "Feb-25": 0
+      "Feb-25": 0,
+      "Mar-25": 0 // Added
     }
   },
   {
-    name: "Zone-3 landscape light 21",
+    // Corrected name to match existing data (hyphen vs space)
+    name: "Zone-3 landscape light 21", 
     type: "FP-Landscape Lights Z3",
     meterAccountNo: "R54873",
     consumption: {
@@ -954,11 +1007,13 @@ export const electricityData: ElectricityRecord[] = [
       "Nov-24": 40,
       "Dec-24": 48,
       "Jan-25": 13,
-      "Feb-25": 57
+      "Feb-25": 57,
+      "Mar-25": 47 // Added
     }
   },
   {
-    name: "Zone-3 landscape light 22",
+    // Corrected name to match existing data (hyphen vs space)
+    name: "Zone-3 landscape light 22", 
     type: "FP-Landscape Lights Z3",
     meterAccountNo: "R54874",
     consumption: {
@@ -972,13 +1027,14 @@ export const electricityData: ElectricityRecord[] = [
       "Nov-24": 6,
       "Dec-24": 8,
       "Jan-25": 0,
-      "Feb-25": 0
+      "Feb-25": 0,
+      "Mar-25": 0 // Added
     }
   },
   {
     name: "Bank muscat",
     type: "Retail",
-    meterAccountNo: "",
+    meterAccountNo: "", // Kept empty as per original and new data
     consumption: {
       "Apr-24": 0,
       "May-24": 0,
@@ -990,13 +1046,14 @@ export const electricityData: ElectricityRecord[] = [
       "Nov-24": 148,
       "Dec-24": 72,
       "Jan-25": 59,
-      "Feb-25": 98
+      "Feb-25": 98,
+      "Mar-25": 88 // Added
     }
   },
   {
     name: "CIF kitchen",
     type: "Retail",
-    meterAccountNo: "",
+    meterAccountNo: "", // Kept empty as per original and new data
     consumption: {
       "Apr-24": 0,
       "May-24": 0,
@@ -1008,7 +1065,8 @@ export const electricityData: ElectricityRecord[] = [
       "Nov-24": 16742,
       "Dec-24": 15554,
       "Jan-25": 16788,
-      "Feb-25": 16154
+      "Feb-25": 16154,
+      "Mar-25": 14971 // Added
     }
   }
 ];
