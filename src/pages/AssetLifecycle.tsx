@@ -195,7 +195,7 @@ const sampleUpcomingMaintenanceData: UpcomingMaintenance[] = [
   }
 ];
 
-const AssetLifecycle = () => {
+const AssetLifecycle: React.FC = () => {
   const { assets, loading, error } = useAssets();
   const [activeTab, setActiveTab] = useState("overview");
   const [serviceChargeCalculatorType, setServiceChargeCalculatorType] = useState<'template' | 'real'>('real');

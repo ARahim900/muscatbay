@@ -1,8 +1,4 @@
 
-/**
- * Type definitions for water data
- */
-
 export interface WaterConsumptionData {
   metadata: {
     version: string;

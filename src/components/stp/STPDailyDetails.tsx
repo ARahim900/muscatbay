@@ -1,79 +1,190 @@
-
 import React from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { STPDailyRecord } from '@/types/stp';
+import { fetchSTPDailyData, processData } from '@/services/stpService';
+import { formatNumber } from '@/lib/utils';
 
-interface STPRecord {
-  id: string;
-  date: string;
-  plantId: string;
-  plantName: string;
-  influentFlow: number;
-  effluentFlow: number;
-  totalSuspendedSolids: number;
-  biochemicalOxygenDemand: number;
-  chemicalOxygenDemand: number;
-  pH: number;
-  dissolvedOxygen: number;
-  temperature: number;
-  remarks?: string;
+export interface STPDailyDetailsProps {
+  recordId?: string;
+  date?: string;
+  plantId?: string;
+  selectedMonth?: string;
 }
 
-interface STPDailyDetailsProps {
-  record: STPRecord;
-}
+export const STPDailyDetails: React.FC<STPDailyDetailsProps> = ({ 
+  recordId, 
+  date, 
+  plantId,
+  selectedMonth 
+}) => {
+  const [record, setRecord] = React.useState<STPDailyRecord | null>(null);
+  const [loading, setLoading] = React.useState<boolean>(true);
+  const [error, setError] = React.useState<string | null>(null);
 
-export const STPDailyDetails: React.FC<STPDailyDetailsProps> = ({ record }) => {
-  if (!record) {
-    return <div>No data available</div>;
+  React.useEffect(() => {
+    const fetchRecord = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        const data = await fetchSTPDailyData();
+        let records = processData(data);
+        
+        // Filter by plant ID if provided
+        if (plantId) {
+          records = records.filter((r: STPDailyRecord) => r.plantId === plantId);
+        }
+        
+        // Filter by date if provided
+        if (date) {
+          records = records.filter((r: STPDailyRecord) => r.date === date);
+        }
+        
+        // Filter by record ID if provided
+        if (recordId) {
+          const foundRecord = records.find((r: STPDailyRecord) => r.id === recordId);
+          if (foundRecord) {
+            setRecord(foundRecord);
+          } else {
+            setError('Record not found');
+          }
+        } else if (records.length > 0) {
+          // If no specific record is requested, use the first one
+          setRecord(records[0]);
+        } else {
+          setError('No records found');
+        }
+        
+        setLoading(false);
+      } catch (err) {
+        console.error('Error fetching STP record:', err);
+        setError('Failed to load STP data');
+        setLoading(false);
+      }
+    };
+    
+    fetchRecord();
+  }, [recordId, date, plantId]);
+
+  if (loading) {
+    return <div>Loading STP data...</div>;
   }
-  
+
+  if (error) {
+    return <div>Error: {error}</div>;
+  }
+
+  if (!record) {
+    return <div>No STP record found</div>;
+  }
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div>
-        <h3 className="font-medium text-lg mb-2">Plant Information</h3>
-        <div className="grid grid-cols-2 gap-2">
-          <div className="text-sm text-gray-500">Plant ID</div>
-          <div>{record.plantId}</div>
-          <div className="text-sm text-gray-500">Plant Name</div>
-          <div>{record.plantName}</div>
-          <div className="text-sm text-gray-500">Date</div>
-          <div>{new Date(record.date).toLocaleDateString()}</div>
-        </div>
-      </div>
+    <div className="space-y-6">
+      {selectedMonth && <div className="text-sm text-muted-foreground">Month: {selectedMonth}</div>}
       
-      <div>
-        <h3 className="font-medium text-lg mb-2">Flow Measurements</h3>
-        <div className="grid grid-cols-2 gap-2">
-          <div className="text-sm text-gray-500">Influent Flow</div>
-          <div>{record.influentFlow} m³/day</div>
-          <div className="text-sm text-gray-500">Effluent Flow</div>
-          <div>{record.effluentFlow} m³/day</div>
-        </div>
-      </div>
-      
-      <div>
-        <h3 className="font-medium text-lg mb-2">Water Parameters</h3>
-        <div className="grid grid-cols-2 gap-2">
-          <div className="text-sm text-gray-500">TSS</div>
-          <div>{record.totalSuspendedSolids} mg/L</div>
-          <div className="text-sm text-gray-500">BOD</div>
-          <div>{record.biochemicalOxygenDemand} mg/L</div>
-          <div className="text-sm text-gray-500">COD</div>
-          <div>{record.chemicalOxygenDemand} mg/L</div>
-          <div className="text-sm text-gray-500">pH</div>
-          <div>{record.pH}</div>
-          <div className="text-sm text-gray-500">Dissolved Oxygen</div>
-          <div>{record.dissolvedOxygen} mg/L</div>
-          <div className="text-sm text-gray-500">Temperature</div>
-          <div>{record.temperature} °C</div>
-        </div>
-      </div>
-      
-      {record.remarks && (
-        <div>
-          <h3 className="font-medium text-lg mb-2">Remarks</h3>
-          <div className="border p-2 rounded">{record.remarks}</div>
-        </div>
-      )}
+      <Card>
+        <CardHeader>
+          <CardTitle>STP Daily Record: {record.date}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div>
+              <h3 className="text-lg font-medium mb-2">Plant Information</h3>
+              <Table>
+                <TableBody>
+                  <TableRow>
+                    <TableCell className="font-medium">Plant ID</TableCell>
+                    <TableCell>{record.plantId}</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-medium">Plant Name</TableCell>
+                    <TableCell>{record.plantName}</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-medium">Date</TableCell>
+                    <TableCell>{record.date}</TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </div>
+            
+            <div>
+              <h3 className="text-lg font-medium mb-2">Flow Metrics</h3>
+              <Table>
+                <TableBody>
+                  <TableRow>
+                    <TableCell className="font-medium">Influent Flow</TableCell>
+                    <TableCell>{formatNumber(record.influentFlow)} m³/day</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-medium">Effluent Flow</TableCell>
+                    <TableCell>{formatNumber(record.effluentFlow)} m³/day</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-medium">Efficiency</TableCell>
+                    <TableCell>
+                      {formatNumber((record.effluentFlow / record.influentFlow) * 100, 1)}%
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+          
+          <h3 className="text-lg font-medium mb-2">Water Quality Parameters</h3>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Parameter</TableHead>
+                <TableHead>Value</TableHead>
+                <TableHead>Unit</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              <TableRow>
+                <TableCell>Total Suspended Solids (TSS)</TableCell>
+                <TableCell>{formatNumber(record.totalSuspendedSolids, 1)}</TableCell>
+                <TableCell>mg/L</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell>Biochemical Oxygen Demand (BOD)</TableCell>
+                <TableCell>{formatNumber(record.biochemicalOxygenDemand, 1)}</TableCell>
+                <TableCell>mg/L</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell>Chemical Oxygen Demand (COD)</TableCell>
+                <TableCell>{formatNumber(record.chemicalOxygenDemand, 1)}</TableCell>
+                <TableCell>mg/L</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell>pH</TableCell>
+                <TableCell>{formatNumber(record.pH, 1)}</TableCell>
+                <TableCell>-</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell>Dissolved Oxygen (DO)</TableCell>
+                <TableCell>{formatNumber(record.dissolvedOxygen, 1)}</TableCell>
+                <TableCell>mg/L</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell>Temperature</TableCell>
+                <TableCell>{formatNumber(record.temperature, 1)}</TableCell>
+                <TableCell>°C</TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
+          
+          {record.remarks && (
+            <div className="mt-6">
+              <h3 className="text-lg font-medium mb-2">Remarks</h3>
+              <p className="text-sm text-muted-foreground">{record.remarks}</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 };
+
+export default STPDailyDetails;

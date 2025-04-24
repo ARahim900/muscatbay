@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Layout from '@/components/layout/Layout';
 import { useTheme } from '@/components/theme/theme-provider';
@@ -54,7 +53,7 @@ import ResponsiveBarChart from '@/components/ui/responsive-chart';
 const ELECTRICITY_RATE = 0.025; // OMR per kWh
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#FF6B6B'];
 
-const ElectricitySystem = () => {
+export const ElectricitySystem: React.FC = () => {
   const { theme } = useTheme();
   const [selectedMonth, setSelectedMonth] = useState<string>("all");
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -192,12 +191,29 @@ const ElectricitySystem = () => {
     }))
     .sort((a, b) => b.consumption - a.consumption);
 
-  // Format for Enhanced Pie Chart
-  const pieChartData = consumptionByTypeArray.map((item, index) => ({
-    name: item.type,
-    value: Number(item.consumption),
-    color: COLORS[index % COLORS.length]
-  }));
+  const calculateMonthlyConsumption = (data: any) => {
+    let totalConsumption = 0;
+    
+    if (data && typeof data === 'object') {
+      Object.values(data).forEach(value => {
+        if (typeof value === 'number') {
+          totalConsumption += value;
+        }
+      });
+    }
+    
+    return totalConsumption;
+  };
+
+  const generatePieData = (data: any) => {
+    if (!data) return [];
+    
+    return Object.entries(data).map(([name, value]) => ({
+      name,
+      value: typeof value === 'number' ? value : 0,
+      color: getRandomColor()
+    }));
+  };
 
   const getTopConsumers = () => {
     if (!electricityData) return [];
@@ -221,9 +237,9 @@ const ElectricitySystem = () => {
   const months = ['Apr-24', 'May-24', 'Jun-24', 'Jul-24', 'Aug-24', 'Sep-24', 'Oct-24', 'Nov-24', 'Dec-24', 'Jan-25', 'Feb-25'];
   
   const monthlyConsumption = months.map(month => {
-    const totalForMonth = electricityData ? electricityData.reduce((total: number, facility: any) => {
+    const totalForMonth = calculateMonthlyConsumption(electricityData ? electricityData.reduce((total: number, facility: any) => {
       return total + (facility.consumption[month] || 0);
-    }, 0) : 0;
+    }, 0) : 0);
     
     return {
       month,
@@ -450,7 +466,7 @@ const ElectricitySystem = () => {
                 <CardContent className="pt-0">
                   <div className="w-full h-64 md:h-80">
                     <EnhancedPieChart
-                      data={pieChartData}
+                      data={generatePieData(consumptionByTypeArray)}
                       colors={COLORS}
                       outerRadius={isMobile ? 60 : 80}
                       valueFormatter={(value) => `${value.toLocaleString()} kWh`}
