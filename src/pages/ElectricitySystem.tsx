@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Layout from '@/components/layout/Layout';
 import { useTheme } from '@/components/theme/theme-provider';
@@ -36,7 +35,7 @@ import {
   AreaChart as AreaChartIcon,
   ChevronLeft
 } from 'lucide-react';
-import { electricityData } from '@/data/electricityData';
+import { getElectricityData } from '@/data/electricityData';
 import { ElectricitySummary } from '@/components/electricity/ElectricitySummary';
 import { ElectricityFacilitiesTable } from '@/components/electricity/ElectricityFacilitiesTable';
 import { ElectricityTrends } from '@/components/electricity/ElectricityTrends';

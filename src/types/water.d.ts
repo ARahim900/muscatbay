@@ -23,30 +23,30 @@ export interface WaterConsumptionData {
   zones: WaterZone[];
 }
 
-export interface WaterFilter {
-  month: string;
-  zone: string;
-  type: string;
+export interface WaterSystemMetrics {
+  totalConsumption: number;
+  totalLoss: number;
+  efficiency: number;
+  averageDailyUsage: number;
+  waterRate: number;
+  monthlyCost: number;
 }
 
-export interface WaterSystemData {
-  levels: {
-    L1: number;
-    L2: number;
-    L3: number;
-  };
-  zones: Record<string, {
-    consumption: number;
-    loss: number;
-  }>;
-  types: Record<string, number>;
-  losses: {
-    systemLoss: number;
-    financialImpact: number;
-    zoneLosses: Record<string, number>;
-  };
-  monthlyTrends: Record<string, {
-    consumption: number;
-    loss: number;
-  }>;
+export interface ZoneData {
+  name: string;
+  consumption: number;
+  loss: number;
+  percentage: number;
+}
+
+export interface TypeData {
+  name: string;
+  value: number;
+  percentage: number;
+}
+
+export interface WaterFilters {
+  zone: string;
+  period: string;
+  view: 'overview' | 'zones' | 'types' | 'trends';
 }

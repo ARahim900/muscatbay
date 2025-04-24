@@ -28,48 +28,45 @@ export async function fetchWaterData(signal?: AbortSignal): Promise<WaterConsump
 }
 
 /**
- * Gets water consumption by zone
- * @param data Water consumption data
- * @returns Array of zone consumption and loss data
- */
-export function getZoneConsumption(data: WaterConsumptionData): WaterZone[] {
-  if (!data || !data.zones) {
-    return [];
-  }
-  
-  return data.zones;
-}
-
-/**
  * Calculates water system efficiency
- * @param data Water consumption data
+ * @param totalConsumption Total water consumption
+ * @param totalLoss Total water loss
  * @returns Efficiency percentage
  */
-export function calculateSystemEfficiency(data: WaterConsumptionData): number {
-  if (!data || !data.total || data.total.consumption === 0) {
-    return 0;
-  }
-  
-  const totalConsumption = data.total.consumption;
-  const totalLoss = data.total.loss;
-  
-  // Calculate efficiency as (total consumption - loss) / total consumption
-  return ((totalConsumption - totalLoss) / totalConsumption) * 100;
+export function calculateEfficiency(totalConsumption: number, totalLoss: number): number {
+  if (totalConsumption === 0) return 0;
+  const totalWater = totalConsumption + totalLoss;
+  return (totalConsumption / totalWater) * 100;
 }
 
 /**
- * Calculates financial impact of water loss
- * @param data Water consumption data
- * @param waterCostPerCubicMeter Cost of water per cubic meter
- * @returns Financial impact value
+ * Calculates water cost
+ * @param consumption Water consumption in cubic meters
+ * @param rate Water rate per cubic meter
+ * @returns Total cost
  */
-export function calculateFinancialImpact(
-  data: WaterConsumptionData,
-  waterCostPerCubicMeter: number = 3.5
-): number {
-  if (!data || !data.total) {
-    return 0;
-  }
+export function calculateWaterCost(consumption: number, rate: number): number {
+  return consumption * rate;
+}
+
+/**
+ * Sorts zones by consumption or loss
+ * @param zones Array of water zones
+ * @param sortBy Property to sort by ('consumption' or 'loss')
+ * @param sortOrder Sort direction ('asc' or 'desc')
+ * @returns Sorted array of zones
+ */
+export function sortZonesByProperty(
+  zones: WaterZone[],
+  sortBy: 'consumption' | 'loss' = 'consumption',
+  sortOrder: 'asc' | 'desc' = 'desc'
+): WaterZone[] {
+  if (!zones || zones.length === 0) return [];
   
-  return data.total.loss * waterCostPerCubicMeter;
+  return [...zones].sort((a, b) => {
+    const valueA = a[sortBy];
+    const valueB = b[sortBy];
+    
+    return sortOrder === 'asc' ? valueA - valueB : valueB - valueA;
+  });
 }

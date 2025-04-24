@@ -1,26 +1,26 @@
 
 /**
- * Sewage Treatment Plant (STP) data service for Muscat Bay operations web application
+ * STP (Sewage Treatment Plant) data service for Muscat Bay operations web application
  */
 import { fetchData } from './dataService';
-import { STPDailyData, STPDailyRecord } from '@/types/stp';
+import { STPDailyData } from '@/types/stp';
 
 /**
- * Fetches STP daily operational data
+ * Fetches STP daily data
  * @param signal Optional AbortSignal for request cancellation
- * @returns Promise with STP daily data
+ * @returns Promise with STP daily records
  */
-export async function fetchSTPDailyData(signal?: AbortSignal): Promise<STPDailyRecord[]> {
+export async function fetchSTPDailyData(signal?: AbortSignal) {
   try {
     const response = await fetchData<STPDailyData>(
-      'stp/daily.json',
+      'stp/daily-data.json',
       {
         signal,
-        errorMessage: 'Failed to load STP daily operational data'
+        errorMessage: 'Failed to load STP daily data'
       }
     );
     
-    return response.data;
+    return response.data || [];
   } catch (error) {
     console.error('Error in fetchSTPDailyData:', error);
     throw error;
@@ -28,125 +28,107 @@ export async function fetchSTPDailyData(signal?: AbortSignal): Promise<STPDailyR
 }
 
 /**
- * Filters STP data by date range
- * @param data STP daily data
- * @param startDate Start date of filter range
- * @param endDate End date of filter range
- * @returns Filtered STP data
+ * Fetches STP monthly data
+ * @param signal Optional AbortSignal for request cancellation
+ * @returns Promise with STP monthly data
  */
-export function filterDataByDateRange(
-  data: STPDailyRecord[],
-  startDate: Date,
-  endDate: Date
-): STPDailyRecord[] {
-  if (!data || data.length === 0) {
-    return [];
+export async function fetchSTPMonthlyData(signal?: AbortSignal) {
+  try {
+    const response = await fetchData(
+      'stp/monthly-data.json',
+      {
+        signal,
+        errorMessage: 'Failed to load STP monthly data'
+      }
+    );
+    
+    return response.data || [];
+  } catch (error) {
+    console.error('Error in fetchSTPMonthlyData:', error);
+    throw error;
   }
-  
-  const start = new Date(startDate);
-  start.setHours(0, 0, 0, 0);
-  
-  const end = new Date(endDate);
-  end.setHours(23, 59, 59, 999);
+}
 
+/**
+ * Filters STP data by date range
+ * @param data Array of STP daily records
+ * @param startDate Start date for filtering
+ * @param endDate End date for filtering
+ * @returns Filtered array of STP daily records
+ */
+export function filterDataByDateRange(data, startDate, endDate) {
+  if (!data || !Array.isArray(data)) return [];
+  
   return data.filter(record => {
     const recordDate = new Date(record.date);
-    return recordDate >= start && recordDate <= end;
+    return recordDate >= startDate && recordDate <= endDate;
   });
 }
 
 /**
- * Filters STP data by time range
- * @param data STP daily data
- * @param timeRange Time range code ('1D', '7D', '1M', '3M', 'ALL')
- * @returns Filtered STP data
+ * Filters STP data by time range within a day
+ * @param data Array of STP daily records
+ * @param startHour Start hour (0-23)
+ * @param endHour End hour (0-23)
+ * @returns Filtered array of STP daily records
  */
-export function filterDataByTimeRange(
-  data: STPDailyRecord[],
-  timeRange: '1D' | '7D' | '1M' | '3M' | 'ALL'
-): STPDailyRecord[] {
-  if (!data || data.length === 0) {
-    return [];
-  }
-
-  switch (timeRange) {
-    case '1D':
-      // Last day data
-      return data.slice(-1);
-    case '7D':
-      // Last 7 days data
-      return data.slice(-7);
-    case '1M':
-      // Last month (approximating as last 30 days)
-      return data.slice(-30);
-    case '3M':
-      // Last 3 months (approximating as last 90 days)
-      return data.slice(-90);
-    case 'ALL':
-    default:
-      return data;
-  }
+export function filterDataByTimeRange(data, startHour, endHour) {
+  if (!data || !Array.isArray(data)) return [];
+  
+  // This is a placeholder. In a real application, this would filter by hour if hourly data is available
+  return data;
 }
 
 /**
- * Calculates monthly aggregates from daily STP data
- * @param data STP daily data
- * @returns Monthly aggregated STP data
+ * Calculates monthly aggregates from daily data
+ * @param dailyData Array of STP daily records
+ * @returns Object with monthly aggregated data
  */
-export function calculateMonthlyAggregates(data: STPDailyRecord[]) {
-  if (!data || data.length === 0) {
-    return [];
-  }
-
-  const monthlyData: Record<string, {
-    month: string;
-    tankerTrips: number;
-    tankerVolume: number;
-    directSewage: number;
-    totalInfluent: number;
-    waterProcessed: number;
-    tseIrrigation: number;
-    capacity: number;
-    utilizationPercentage: string;
-    processingEfficiency: string;
-  }> = {};
-
-  data.forEach(record => {
+export function calculateMonthlyAggregates(dailyData) {
+  if (!dailyData || !Array.isArray(dailyData)) return [];
+  
+  const monthlyData = {};
+  
+  dailyData.forEach(record => {
     const date = new Date(record.date);
-    const monthKey = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}`;
-    const monthName = date.toLocaleString('default', { month: 'short' });
-    const daysInMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
-    const capacity = 750 * daysInMonth; // 750 m³/day capacity
-
-    if (!monthlyData[monthKey]) {
-      monthlyData[monthKey] = {
-        month: monthName,
+    const yearMonth = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    
+    if (!monthlyData[yearMonth]) {
+      monthlyData[yearMonth] = {
+        month: yearMonth,
         tankerTrips: 0,
-        tankerVolume: 0,
-        directSewage: 0,
         totalInfluent: 0,
-        waterProcessed: 0,
-        tseIrrigation: 0,
-        capacity,
-        utilizationPercentage: '0',
-        processingEfficiency: '0'
+        totalWaterProcessed: 0,
+        tseToIrrigation: 0,
+        directSewageMb: 0,
+        expectedVolumeTankers: 0,
+        bodAvg: 0,
+        codAvg: 0,
+        tssAvg: 0,
+        days: 0
       };
     }
-
-    monthlyData[monthKey].tankerTrips += record.tankerTrips;
-    monthlyData[monthKey].tankerVolume += record.expectedVolumeTankers;
-    monthlyData[monthKey].directSewage += record.directSewageMB;
-    monthlyData[monthKey].totalInfluent += record.totalInfluent;
-    monthlyData[monthKey].waterProcessed += record.totalWaterProcessed;
-    monthlyData[monthKey].tseIrrigation += record.tseToIrrigation;
+    
+    const monthly = monthlyData[yearMonth];
+    monthly.tankerTrips += record.tankerTrips || 0;
+    monthly.totalInfluent += record.totalInfluent || 0;
+    monthly.totalWaterProcessed += record.totalWaterProcessed || 0;
+    monthly.tseToIrrigation += record.tseToIrrigation || 0;
+    monthly.directSewageMb += record.directSewageMb || 0;
+    monthly.expectedVolumeTankers += record.expectedVolumeTankers || 0;
+    
+    if (record.bod) {
+      monthly.bodAvg = (monthly.bodAvg * monthly.days + record.bod) / (monthly.days + 1);
+    }
+    if (record.cod) {
+      monthly.codAvg = (monthly.codAvg * monthly.days + record.cod) / (monthly.days + 1);
+    }
+    if (record.tss) {
+      monthly.tssAvg = (monthly.tssAvg * monthly.days + record.tss) / (monthly.days + 1);
+    }
+    
+    monthly.days++;
   });
-
-  // Calculate percentages after all data is aggregated
-  Object.keys(monthlyData).forEach(key => {
-    const month = monthlyData[key];
-    month.utilizationPercentage = ((month.totalInfluent / month.capacity) * 100).toFixed(1);
-    month.processingEfficiency = ((month.tseIrrigation / month.totalInfluent) * 100).toFixed(1);
-  });
-
+  
   return Object.values(monthlyData);
 }
