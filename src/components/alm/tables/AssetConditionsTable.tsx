@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
 import { AssetCondition } from '@/types/asset';
 
 export interface AssetConditionsTableProps {
@@ -8,30 +8,53 @@ export interface AssetConditionsTableProps {
 }
 
 export const AssetConditionsTable: React.FC<AssetConditionsTableProps> = ({ conditions }) => {
+  const getConditionColor = (condition: string): string => {
+    switch (condition.toLowerCase()) {
+      case 'excellent': return 'bg-green-100 text-green-800';
+      case 'good': return 'bg-blue-100 text-blue-800';
+      case 'fair': return 'bg-yellow-100 text-yellow-800';
+      case 'poor': return 'bg-orange-100 text-orange-800';
+      case 'critical': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Condition</TableHead>
-          <TableHead className="text-right">Count</TableHead>
-          <TableHead className="text-right">Percentage</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {conditions.map((condition) => {
-          const totalCount = conditions.reduce((sum, c) => sum + c.count, 0);
-          const percentage = totalCount > 0 ? (condition.count / totalCount) * 100 : 0;
-          
-          return (
-            <TableRow key={condition.condition}>
-              <TableCell className="font-medium">{condition.condition}</TableCell>
-              <TableCell className="text-right">{condition.count}</TableCell>
-              <TableCell className="text-right">{percentage.toFixed(1)}%</TableCell>
+    <div className="rounded-md border">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Condition</TableHead>
+            <TableHead className="text-right">Count</TableHead>
+            <TableHead className="text-right">Percentage</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {conditions.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={3} className="text-center">No condition data found</TableCell>
             </TableRow>
-          );
-        })}
-      </TableBody>
-    </Table>
+          ) : (
+            conditions.map((conditionData) => {
+              const totalAssets = conditions.reduce((sum, c) => sum + c.count, 0);
+              const percentage = (conditionData.count / totalAssets) * 100;
+              
+              return (
+                <TableRow key={conditionData.condition}>
+                  <TableCell>
+                    <span className={`px-2 py-1 rounded-full text-xs ${getConditionColor(conditionData.condition)}`}>
+                      {conditionData.condition}
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-right">{conditionData.count}</TableCell>
+                  <TableCell className="text-right">{percentage.toFixed(1)}%</TableCell>
+                </TableRow>
+              );
+            })
+          )}
+        </TableBody>
+      </Table>
+    </div>
   );
 };
 

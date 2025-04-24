@@ -17,6 +17,18 @@ export interface STPDailyRecord {
   remarks?: string;
 }
 
+export interface STPDailyData {
+  date: string;
+  tankerTrips: number;
+  expectedVolumeTankers: number;
+  directSewageMB: number;
+  totalInfluent: number;
+  totalWaterProcessed: number;
+  tseToIrrigation: number;
+  utilizationPercentage?: string;
+  processingEfficiency?: string;
+}
+
 export interface STPMonthlyData {
   month: string;
   tankerTrips: number;

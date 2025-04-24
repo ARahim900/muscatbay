@@ -4,7 +4,11 @@
 export interface ElectricityRecord {
   id: string;
   zone: string;
-  consumption: number;
+  name: string;
+  type: string;
+  consumption: {
+    [month: string]: number;
+  };
   cost: number;
 }
 
@@ -17,4 +21,32 @@ export interface ElectricityConsumptionData {
   trends: {
     [month: string]: number;
   };
+}
+
+export interface TypeConsumption {
+  type: string;
+  consumption: number;
+  cost: number;
+}
+
+export interface TopConsumer {
+  name: string;
+  type: string;
+  consumption: number;
+  cost: number;
+}
+
+export interface MonthlyTypeConsumption {
+  month: string;
+  [type: string]: string | number;
+}
+
+export interface FacilityConsumption {
+  name: string;
+  type: string;
+  consumption: number;
+  cost: number;
+  previousConsumption: number | null;
+  previousCost: number | null;
+  change: number | null;
 }

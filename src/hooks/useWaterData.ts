@@ -3,84 +3,71 @@ import { useState, useEffect } from 'react';
 import { WaterConsumptionData } from '@/types/water';
 
 export const useWaterData = () => {
-  const [data, setData] = useState<WaterConsumptionData | null>(null);
+  const [data, setData] = useState<any>(null);
   const [zoneData, setZoneData] = useState<any[]>([]);
   const [systemEfficiency, setSystemEfficiency] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-
+  const [error, setError] = useState<string>('');
+  
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
         
-        // Mock data for now
-        const mockData: WaterConsumptionData = {
-          metadata: {
-            version: '1.0',
-            timestamp: new Date().toISOString(),
-            description: 'Water consumption data'
-          },
+        // Mock data for the water system dashboard
+        const mockData = {
           total: {
-            consumption: 48234,
-            loss: 2511,
-            cost: 4250
+            consumption: 481310,
+            loss: 52941.24
           },
-          zones: [
-            {
-              id: 'z1',
-              name: 'Zone A',
-              consumption: 12543,
-              loss: 780,
-              trend: { 'Jan': 11800, 'Feb': 12100, 'Mar': 12543 }
-            },
-            {
-              id: 'z2',
-              name: 'Zone B',
-              consumption: 18320,
-              loss: 1150,
-              trend: { 'Jan': 17900, 'Feb': 18100, 'Mar': 18320 }
-            }
-          ],
-          trend: {
-            'Jan': 46100,
-            'Feb': 47200,
-            'Mar': 48234
+          zones: {
+            "Zone A": { consumption: 125482, loss: 15698.3 },
+            "Zone B": { consumption: 98763, loss: 12478.9 },
+            "Zone C": { consumption: 156894, loss: 18234.7 },
+            "Zone D": { consumption: 100171, loss: 6529.34 }
           }
         };
         
         // Calculate system efficiency
-        const totalConsumption = mockData.total.consumption;
-        const totalLoss = mockData.total.loss;
-        const efficiency = totalConsumption > 0 ? 
-          ((totalConsumption - totalLoss) / totalConsumption) * 100 : 0;
+        const totalWater = mockData.total.consumption + mockData.total.loss;
+        const efficiency = (mockData.total.consumption / totalWater) * 100;
         
-        // Format zone data for display
-        const zones = mockData.zones.map(zone => ({
-          name: zone.name,
-          consumption: zone.consumption,
-          loss: zone.loss,
-          percentage: totalConsumption > 0 ? (zone.consumption / totalConsumption) * 100 : 0
+        // Transform zone data for visualization
+        const transformedZoneData = Object.entries(mockData.zones).map(([name, data]) => ({
+          name,
+          consumption: data.consumption,
+          loss: data.loss,
+          total: data.consumption + data.loss,
+          efficiency: ((data.consumption / (data.consumption + data.loss)) * 100).toFixed(1)
         }));
         
         setData(mockData);
-        setZoneData(zones);
+        setZoneData(transformedZoneData);
         setSystemEfficiency(parseFloat(efficiency.toFixed(1)));
         setLoading(false);
       } catch (err) {
-        console.error('Error fetching water data:', err);
-        setError('Failed to load water data');
+        console.error("Failed to fetch water data", err);
+        setError(err instanceof Error ? err.message : "An unknown error occurred");
         setLoading(false);
       }
     };
     
     fetchData();
   }, []);
-
+  
   const updateFilters = (filters: any) => {
-    console.log('Updating filters:', filters);
-    // In a real app, this would filter the data based on the provided filters
+    console.log("Filters updated:", filters);
+    // In a real implementation, this would refetch data with the new filters
   };
-
-  return { data, zoneData, systemEfficiency, loading, error, updateFilters };
+  
+  return {
+    data,
+    zoneData,
+    systemEfficiency,
+    loading,
+    error,
+    updateFilters
+  };
 };
+
+export default useWaterData;

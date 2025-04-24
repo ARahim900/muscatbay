@@ -1,33 +1,40 @@
 
 import React from 'react';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
 import { AssetLifecycleForecast } from '@/types/asset';
-import { formatNumber } from '@/lib/utils';
 
 export interface MaintenanceForecastTableProps {
-  forecast: AssetLifecycleForecast[];
+  forecasts: AssetLifecycleForecast[];
 }
 
-export const MaintenanceForecastTable: React.FC<MaintenanceForecastTableProps> = ({ forecast }) => {
+export const MaintenanceForecastTable: React.FC<MaintenanceForecastTableProps> = ({ forecasts }) => {
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Year</TableHead>
-          <TableHead className="text-right">Replacements</TableHead>
-          <TableHead className="text-right">Maintenance Costs</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {forecast.map((item) => (
-          <TableRow key={item.year}>
-            <TableCell className="font-medium">{item.year}</TableCell>
-            <TableCell className="text-right">{item.replacements}</TableCell>
-            <TableCell className="text-right">{formatNumber(item.maintenanceCosts)} OMR</TableCell>
+    <div className="rounded-md border">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Year</TableHead>
+            <TableHead className="text-right">Replacements</TableHead>
+            <TableHead className="text-right">Maintenance Costs</TableHead>
           </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+        </TableHeader>
+        <TableBody>
+          {forecasts.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={3} className="text-center">No forecast data available</TableCell>
+            </TableRow>
+          ) : (
+            forecasts.map((forecast) => (
+              <TableRow key={forecast.year}>
+                <TableCell className="font-medium">{forecast.year}</TableCell>
+                <TableCell className="text-right">{forecast.replacements}</TableCell>
+                <TableCell className="text-right">{forecast.maintenanceCosts.toLocaleString()} OMR</TableCell>
+              </TableRow>
+            ))
+          )}
+        </TableBody>
+      </Table>
+    </div>
   );
 };
 
