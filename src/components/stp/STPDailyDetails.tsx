@@ -1,70 +1,51 @@
 
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { STPDailyRecord } from '@/types/stp';
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
+import { stpDailyData } from '@/utils/stpDataUtils';
 
 interface STPDailyDetailsProps {
-  record: STPDailyRecord;
+  selectedMonth?: string;
 }
 
-const STPDailyDetails: React.FC<STPDailyDetailsProps> = ({ record }) => {
+const STPDailyDetails: React.FC<STPDailyDetailsProps> = ({ selectedMonth }) => {
+  // Filter data by month if provided
+  const filteredData = selectedMonth 
+    ? stpDailyData.filter(record => record.date.startsWith(selectedMonth)) 
+    : stpDailyData;
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>STP Daily Details - {record.plantName}</CardTitle>
+        <CardTitle>STP Daily Operations</CardTitle>
       </CardHeader>
       <CardContent>
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Parameter</TableHead>
-              <TableHead>Value</TableHead>
+              <TableHead>Date</TableHead>
+              <TableHead>Tanker Trips</TableHead>
+              <TableHead>Direct Sewage (m³)</TableHead>
+              <TableHead>Total Influent (m³)</TableHead>
+              <TableHead>Water Processed (m³)</TableHead>
+              <TableHead>TSE to Irrigation (m³)</TableHead>
+              <TableHead>Efficiency</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            <TableRow>
-              <TableCell>Date</TableCell>
-              <TableCell>{new Date(record.date).toLocaleDateString()}</TableCell>
-            </TableRow>
-            <TableRow>
-              <TableCell>Influent Flow</TableCell>
-              <TableCell>{record.influentFlow} m³</TableCell>
-            </TableRow>
-            <TableRow>
-              <TableCell>Effluent Flow</TableCell>
-              <TableCell>{record.effluentFlow} m³</TableCell>
-            </TableRow>
-            <TableRow>
-              <TableCell>Total Suspended Solids</TableCell>
-              <TableCell>{record.totalSuspendedSolids} mg/L</TableCell>
-            </TableRow>
-            <TableRow>
-              <TableCell>BOD</TableCell>
-              <TableCell>{record.biochemicalOxygenDemand} mg/L</TableCell>
-            </TableRow>
-            <TableRow>
-              <TableCell>COD</TableCell>
-              <TableCell>{record.chemicalOxygenDemand} mg/L</TableCell>
-            </TableRow>
-            <TableRow>
-              <TableCell>pH</TableCell>
-              <TableCell>{record.pH}</TableCell>
-            </TableRow>
-            <TableRow>
-              <TableCell>Dissolved Oxygen</TableCell>
-              <TableCell>{record.dissolvedOxygen} mg/L</TableCell>
-            </TableRow>
-            <TableRow>
-              <TableCell>Temperature</TableCell>
-              <TableCell>{record.temperature} °C</TableCell>
-            </TableRow>
-            {record.remarks && (
-              <TableRow>
-                <TableCell>Remarks</TableCell>
-                <TableCell>{record.remarks}</TableCell>
+            {filteredData.map(record => (
+              <TableRow key={record.id}>
+                <TableCell>{record.date}</TableCell>
+                <TableCell>{record.tankerTrips}</TableCell>
+                <TableCell>{record.directSewageMB}</TableCell>
+                <TableCell>{record.totalInfluent}</TableCell>
+                <TableCell>{record.totalWaterProcessed}</TableCell>
+                <TableCell>{record.tseToIrrigation}</TableCell>
+                <TableCell>
+                  {((record.totalWaterProcessed / record.totalInfluent) * 100).toFixed(1)}%
+                </TableCell>
               </TableRow>
-            )}
+            ))}
           </TableBody>
         </Table>
       </CardContent>

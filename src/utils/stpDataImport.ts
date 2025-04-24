@@ -37,3 +37,30 @@ export const validateSTPData = (data: STPDailyData[]): string[] => {
   
   return errors;
 };
+
+export const importSTPData = async (csvText: string): Promise<{ success: boolean; message: string }> => {
+  try {
+    const data = parseSTPCSV(csvText);
+    const validationErrors = validateSTPData(data);
+    
+    if (validationErrors.length) {
+      return { 
+        success: false, 
+        message: `Validation failed: ${validationErrors.join(', ')}` 
+      };
+    }
+    
+    // Here you would normally save to a database
+    // For now, we'll just return a success message
+    return { 
+      success: true, 
+      message: `Successfully parsed ${data.length} STP records.` 
+    };
+  } catch (error) {
+    console.error("Error importing STP data:", error);
+    return { 
+      success: false, 
+      message: error instanceof Error ? error.message : "Unknown error occurred" 
+    };
+  }
+};

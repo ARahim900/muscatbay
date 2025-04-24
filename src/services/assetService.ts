@@ -1,219 +1,122 @@
 
-// Import necessary types from the asset type definitions
 import { Asset, AssetCategorySummary, AssetLocationSummary, AssetCondition } from '@/types/asset';
 
-// Mock asset data
-const assets: Asset[] = [
-  {
-    id: 'asset-001',
-    name: 'HVAC System - Building A',
-    category: 'Mechanical',
-    location: 'Building A',
-    acquisitionDate: '2019-03-15',
-    value: 45000,
-    lifeExpectancy: 15,
-    condition: 'Good',
-    criticality: 'High',
-    nextMaintenanceDate: '2023-09-15'
-  },
-  {
-    id: 'asset-002',
-    name: 'Elevators - Main Building',
-    category: 'Mechanical',
-    location: 'Main Building',
-    acquisitionDate: '2018-06-22',
-    value: 120000,
-    lifeExpectancy: 20,
-    condition: 'Good',
-    criticality: 'Critical',
-    nextMaintenanceDate: '2023-08-05'
-  },
-  {
-    id: 'asset-003',
-    name: 'Security Cameras',
-    category: 'Security',
-    location: 'Perimeter',
-    acquisitionDate: '2020-11-03',
-    value: 28500,
-    lifeExpectancy: 8,
-    condition: 'Excellent',
-    criticality: 'Medium',
-    nextMaintenanceDate: '2023-10-12'
-  },
-  {
-    id: 'asset-004',
-    name: 'Fire Alarm System',
-    category: 'Safety',
-    location: 'Building A',
-    acquisitionDate: '2021-01-10',
-    value: 15000,
-    lifeExpectancy: 10,
-    condition: 'Good',
-    criticality: 'High',
-    nextMaintenanceDate: '2023-07-20'
-  },
-  {
-    id: 'asset-005',
-    name: 'Water Pumps - Building B',
-    category: 'Plumbing',
-    location: 'Building B',
-    acquisitionDate: '2017-09-01',
-    value: 32000,
-    lifeExpectancy: 12,
-    condition: 'Fair',
-    criticality: 'Medium',
-    nextMaintenanceDate: '2023-08-28'
-  },
-  {
-    id: 'asset-006',
-    name: 'Generator Set',
-    category: 'Electrical',
-    location: 'Power Room',
-    acquisitionDate: '2016-05-18',
-    value: 75000,
-    lifeExpectancy: 25,
-    condition: 'Good',
-    criticality: 'Critical',
-    nextMaintenanceDate: '2023-09-05'
-  }
-];
-
-/**
- * Fetches all assets
- * @returns Array of assets
- */
-export function getAssets(): Asset[] {
-  return assets;
-}
-
-/**
- * Gets asset category summary
- * @returns Asset category summary
- */
-export function getAssetCategorySummary(): AssetCategorySummary[] {
-  const categoryMap = new Map<string, AssetCategorySummary>();
-  
-  assets.forEach(asset => {
-    const category = asset.category;
-    
-    if (!categoryMap.has(category)) {
-      categoryMap.set(category, {
-        category,
-        count: 0,
-        totalValue: 0,
-        assets: []
-      });
+// Mock function to get all assets
+export const getAssets = async (): Promise<Asset[]> => {
+  // This would usually fetch from an API
+  const mockAssets: Asset[] = [
+    { 
+      id: "a1", 
+      name: "HVAC System", 
+      category: "Mechanical", 
+      location: "Main Building", 
+      installationDate: "2020-05-15", 
+      value: 25000,
+      condition: "Good",
+      criticalityLevel: "High"
+    },
+    { 
+      id: "a2", 
+      name: "Irrigation Pump", 
+      category: "Plumbing", 
+      location: "Garden Area", 
+      installationDate: "2021-03-10", 
+      value: 8500,
+      condition: "Excellent",
+      criticalityLevel: "Medium"
+    },
+    { 
+      id: "a3", 
+      name: "Backup Generator", 
+      category: "Electrical", 
+      location: "Utility Room", 
+      installationDate: "2019-11-22", 
+      value: 35000,
+      condition: "Fair",
+      criticalityLevel: "Critical"
     }
-    
-    const summary = categoryMap.get(category)!;
-    summary.count++;
-    summary.totalValue += asset.value;
-    summary.assets.push(asset);
-  });
+  ];
   
-  return Array.from(categoryMap.values());
-}
+  return mockAssets;
+};
 
-/**
- * Gets asset location summary
- * @returns Asset location summary
- */
-export function getAssetLocationSummary(): AssetLocationSummary[] {
-  const locationMap = new Map<string, AssetLocationSummary>();
+// Get assets grouped by category
+export const getAssetsByCategory = async (): Promise<AssetCategorySummary[]> => {
+  const assets = await getAssets();
   
-  assets.forEach(asset => {
-    const location = asset.location;
-    
-    if (!locationMap.has(location)) {
-      locationMap.set(location, {
-        location,
-        count: 0,
-        totalValue: 0,
-        assets: []
-      });
-    }
-    
-    const summary = locationMap.get(location)!;
-    summary.count++;
-    summary.totalValue += asset.value;
-    summary.assets.push(asset);
-  });
-  
-  return Array.from(locationMap.values());
-}
-
-/**
- * Gets critical assets
- * @returns Array of critical assets
- */
-export function getCriticalAssets(): Asset[] {
-  return assets.filter(asset => 
-    asset.criticality === 'Critical' || 
-    asset.criticality === 'High'
+  // Group by category
+  const categories = assets.reduce<Record<string, { count: number; totalValue: number }>>(
+    (acc, asset) => {
+      if (!acc[asset.category]) {
+        acc[asset.category] = { count: 0, totalValue: 0 };
+      }
+      
+      acc[asset.category].count += 1;
+      acc[asset.category].totalValue += asset.value;
+      
+      return acc;
+    },
+    {}
   );
-}
-
-/**
- * Gets asset conditions
- * @returns Asset condition summary
- */
-export function getAssetConditions(): AssetCondition[] {
-  const conditions: AssetCondition[] = [
-    { condition: 'Excellent', count: 0 },
-    { condition: 'Good', count: 0 },
-    { condition: 'Fair', count: 0 },
-    { condition: 'Poor', count: 0 },
-    { condition: 'Critical', count: 0 },
-  ];
   
-  assets.forEach(asset => {
-    const condition = conditions.find(c => c.condition === asset.condition);
-    if (condition) {
-      condition.count++;
-    }
-  });
+  // Convert to array
+  return Object.entries(categories).map(([category, data]) => ({
+    category,
+    count: data.count,
+    totalValue: data.totalValue
+  }));
+};
+
+// Get assets grouped by location
+export const getAssetsByLocation = async (): Promise<AssetLocationSummary[]> => {
+  const assets = await getAssets();
   
-  return conditions;
-}
-
-export function getAssetMaintenanceSchedule() {
-  // Mock maintenance schedule
-  return [
-    {
-      id: 'maint-001',
-      assetId: 'asset-001',
-      assetName: 'HVAC System - Building A',
-      maintenanceType: 'Preventive',
-      scheduledDate: '2023-09-15',
-      estimatedCost: 2500,
-      priority: 'Medium'
+  // Group by location
+  const locations = assets.reduce<Record<string, { count: number; totalValue: number }>>(
+    (acc, asset) => {
+      if (!acc[asset.location]) {
+        acc[asset.location] = { count: 0, totalValue: 0 };
+      }
+      
+      acc[asset.location].count += 1;
+      acc[asset.location].totalValue += asset.value;
+      
+      return acc;
     },
-    {
-      id: 'maint-002',
-      assetId: 'asset-002',
-      assetName: 'Elevators - Main Building',
-      maintenanceType: 'Inspection',
-      scheduledDate: '2023-08-05',
-      estimatedCost: 1800,
-      priority: 'High'
-    }
-  ];
-}
+    {}
+  );
+  
+  // Convert to array
+  return Object.entries(locations).map(([location, data]) => ({
+    location,
+    count: data.count,
+    totalValue: data.totalValue
+  }));
+};
 
-export function getAssetLifecycleForecast() {
-  // Mock lifecycle forecast
-  return [
-    {
-      year: 2023,
-      replacements: 2,
-      maintenanceCosts: 45000,
-      assets: []
+// Get assets grouped by condition
+export const getAssetConditions = async (): Promise<AssetCondition[]> => {
+  const assets = await getAssets();
+  
+  // Group by condition
+  const conditions = assets.reduce<Record<string, { count: number; totalValue: number }>>(
+    (acc, asset) => {
+      if (!acc[asset.condition]) {
+        acc[asset.condition] = { count: 0, totalValue: 0 };
+      }
+      
+      acc[asset.condition].count += 1;
+      acc[asset.condition].totalValue += asset.value;
+      
+      return acc;
     },
-    {
-      year: 2024,
-      replacements: 5,
-      maintenanceCosts: 78000,
-      assets: []
-    }
-  ];
-}
+    {}
+  );
+  
+  // Convert to array
+  return Object.entries(conditions).map(([condition, data]) => ({
+    condition,
+    count: data.count,
+    totalValue: data.totalValue
+  }));
+};

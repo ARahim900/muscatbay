@@ -62,7 +62,7 @@ export const useAssets = () => {
   
   // Helper function to generate mock maintenance schedule
   const generateMockMaintenanceSchedule = (assets: Asset[]): AssetMaintenance[] => {
-    const priorityOptions: ('Low' | 'Medium' | 'High' | 'Critical')[] = ['Low', 'Medium', 'High', 'Critical'];
+    const priorityOptions: ("Low" | "Medium" | "High" | "Critical")[] = ['Low', 'Medium', 'High', 'Critical'];
     const maintenanceTypes = ['Preventive', 'Corrective', 'Condition-based', 'Predictive'];
     
     return assets.slice(0, 10).map((asset, index) => ({

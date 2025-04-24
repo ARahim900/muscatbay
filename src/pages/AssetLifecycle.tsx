@@ -11,20 +11,24 @@ import {
   CriticalAssetsTable, 
   MaintenanceForecastTable,
   UpcomingMaintenanceTable
-} from '@/components/alm/index';
+} from '@/components/alm/tables';
 
 const AssetLifecycle: React.FC = () => {
   const { 
     assets, 
-    categorySummary, 
-    locationSummary, 
-    criticalAssets, 
-    assetConditions,
+    categorySummaries, 
+    locationSummaries, 
+    conditions, 
     maintenanceSchedule,
     lifecycleForecast,
     loading, 
     error 
   } = useAssets();
+  
+  // Filter assets with critical level
+  const criticalAssets = React.useMemo(() => {
+    return assets.filter(asset => asset.criticalityLevel === 'Critical' || asset.criticalityLevel === 'High');
+  }, [assets]);
   
   if (loading) {
     return <div className="p-6">Loading asset data...</div>;
@@ -99,7 +103,7 @@ const AssetLifecycle: React.FC = () => {
                 <CardDescription>Distribution of assets by condition</CardDescription>
               </CardHeader>
               <CardContent>
-                <AssetConditionsTable conditions={assetConditions} />
+                <AssetConditionsTable conditions={conditions} />
               </CardContent>
             </Card>
             
@@ -109,7 +113,7 @@ const AssetLifecycle: React.FC = () => {
                 <CardDescription>Distribution of assets by category</CardDescription>
               </CardHeader>
               <CardContent>
-                <AssetCategoriesTable categories={categorySummary} />
+                <AssetCategoriesTable categories={categorySummaries} />
               </CardContent>
             </Card>
           </div>
@@ -122,7 +126,7 @@ const AssetLifecycle: React.FC = () => {
               <CardDescription>Detailed breakdown of asset categories</CardDescription>
             </CardHeader>
             <CardContent>
-              <AssetCategoriesTable categories={categorySummary} />
+              <AssetCategoriesTable categories={categorySummaries} />
             </CardContent>
           </Card>
         </TabsContent>
@@ -157,7 +161,7 @@ const AssetLifecycle: React.FC = () => {
                 <CardDescription>Projected maintenance and replacements</CardDescription>
               </CardHeader>
               <CardContent>
-                <MaintenanceForecastTable forecast={lifecycleForecast} />
+                <MaintenanceForecastTable forecasts={lifecycleForecast} />
               </CardContent>
             </Card>
           </div>

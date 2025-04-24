@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { STPDailyDetails } from '@/components/stp/STPDailyDetails';
+import STPDailyDetails from '@/components/stp/STPDailyDetails';
 import { 
   Select, 
   SelectContent, 

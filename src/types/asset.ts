@@ -6,31 +6,28 @@ export interface Asset {
   name: string;
   category: string;
   location: string;
-  acquisitionDate: string;
+  installationDate: string;
   value: number;
-  lifeExpectancy: number;
   condition: string;
-  criticality: string;
-  nextMaintenanceDate: string;
+  criticalityLevel: string;
 }
 
 export interface AssetCategorySummary {
   category: string;
   count: number;
   totalValue: number;
-  assets: Asset[];
 }
 
 export interface AssetLocationSummary {
   location: string;
   count: number;
   totalValue: number;
-  assets: Asset[];
 }
 
 export interface AssetCondition {
   condition: string;
   count: number;
+  totalValue: number;
 }
 
 export interface AssetMaintenance {
@@ -40,7 +37,7 @@ export interface AssetMaintenance {
   maintenanceType: string;
   scheduledDate: string;
   estimatedCost: number;
-  priority: 'Low' | 'Medium' | 'High' | 'Critical';
+  priority: "Low" | "Medium" | "High" | "Critical";
 }
 
 export interface AssetLifecycleForecast {
@@ -48,4 +45,10 @@ export interface AssetLifecycleForecast {
   replacements: number;
   maintenanceCosts: number;
   assets: Asset[];
+}
+
+export interface AssetSummary {
+  totalAssets: number;
+  totalValue: number;
+  criticalAssets: number;
 }

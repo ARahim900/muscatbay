@@ -15,9 +15,42 @@ export const useElectricityData = () => {
         // Mock data for now
         const mockData: ElectricityConsumptionData = {
           records: [
-            { id: 'e1', zone: 'Residential', consumption: 1500, cost: 135 },
-            { id: 'e2', zone: 'Commercial', consumption: 2800, cost: 252 },
-            { id: 'e3', zone: 'Common Areas', consumption: 950, cost: 85.5 }
+            { 
+              id: 'e1', 
+              zone: 'Residential', 
+              name: 'Residential Zone A',
+              type: 'Residential',
+              consumption: {
+                'Jan': 1500,
+                'Feb': 1450,
+                'Mar': 1520
+              },
+              cost: 135 
+            },
+            { 
+              id: 'e2', 
+              zone: 'Commercial', 
+              name: 'Commercial Complex',
+              type: 'Commercial',
+              consumption: {
+                'Jan': 2800,
+                'Feb': 2900,
+                'Mar': 2750
+              },
+              cost: 252 
+            },
+            { 
+              id: 'e3', 
+              zone: 'Common Areas', 
+              name: 'Common Facilities',
+              type: 'Common',
+              consumption: {
+                'Jan': 950,
+                'Feb': 980,
+                'Mar': 1020
+              }, 
+              cost: 85.5 
+            }
           ],
           total: {
             consumption: 5250,
