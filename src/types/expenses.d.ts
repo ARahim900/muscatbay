@@ -1,45 +1,40 @@
 
 /**
- * Type definitions for expenses management data
+ * Type definitions for expenses data
  */
 
 export interface Expense {
   id: string;
-  date: string;
+  serviceType: string;
+  serviceProvider: string;
+  status: string;
+  annualCost: number;
+  monthlyCost: number;
+  notes?: string;
   category: string;
-  description: string;
-  amount: number;
-  currency: string;
-  paymentMethod?: string;
-  vendor?: string;
-  receiptUrl?: string;
-  approvedBy?: string;
-  approvalDate?: string;
-  status: 'Pending' | 'Approved' | 'Rejected' | 'Paid';
+  allocation: string;
 }
 
 export interface ExpenseCategory {
-  id: string;
   name: string;
-  description?: string;
-  budgetAllocation?: number;
-  color?: string;
+  total: number;
+  count: number;
+  expenses: Expense[];
 }
 
 export interface ExpenseSummary {
-  category: string;
-  total: number;
-  count: number;
-  percentage: number;
-}
-
-export interface ExpenseFilters {
-  year?: number;
-  month?: number;
-  category?: string;
-  minAmount?: number;
-  maxAmount?: number;
-  status?: 'Pending' | 'Approved' | 'Rejected' | 'Paid';
-  sortBy?: 'date' | 'amount' | 'category';
-  sortOrder?: 'asc' | 'desc';
+  totalAnnual: number;
+  totalMonthly: number;
+  categoryCounts: {
+    [key: string]: number;
+  };
+  statusCounts: {
+    [key: string]: number;
+  };
+  byCategory: {
+    [key: string]: number;
+  };
+  byStatus: {
+    [key: string]: number;
+  };
 }

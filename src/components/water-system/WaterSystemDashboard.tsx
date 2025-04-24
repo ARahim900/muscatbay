@@ -25,7 +25,7 @@ export function WaterSystemDashboard() {
   };
   
   const handleTimeFilterClick = (month: string) => {
-    updateFilters({ month });
+    updateFilters({ period: month });
   };
   
   // Handle loading state

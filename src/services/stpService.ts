@@ -3,14 +3,14 @@
  * STP (Sewage Treatment Plant) data service for Muscat Bay operations web application
  */
 import { fetchData } from './dataService';
-import { STPDailyData } from '@/types/stp';
+import { STPDailyData, STPDailyRecord } from '@/types/stp';
 
 /**
  * Fetches STP daily data
  * @param signal Optional AbortSignal for request cancellation
  * @returns Promise with STP daily records
  */
-export async function fetchSTPDailyData(signal?: AbortSignal) {
+export async function fetchSTPDailyData(signal?: AbortSignal): Promise<STPDailyRecord[]> {
   try {
     const response = await fetchData<STPDailyData>(
       'stp/daily-data.json',
@@ -32,7 +32,7 @@ export async function fetchSTPDailyData(signal?: AbortSignal) {
  * @param signal Optional AbortSignal for request cancellation
  * @returns Promise with STP monthly data
  */
-export async function fetchSTPMonthlyData(signal?: AbortSignal) {
+export async function fetchSTPMonthlyData(signal?: AbortSignal): Promise<any[]> {
   try {
     const response = await fetchData(
       'stp/monthly-data.json',
@@ -42,7 +42,10 @@ export async function fetchSTPMonthlyData(signal?: AbortSignal) {
       }
     );
     
-    return response.data || [];
+    if (response && response.data) {
+      return response.data;
+    }
+    return [];
   } catch (error) {
     console.error('Error in fetchSTPMonthlyData:', error);
     throw error;
@@ -56,7 +59,7 @@ export async function fetchSTPMonthlyData(signal?: AbortSignal) {
  * @param endDate End date for filtering
  * @returns Filtered array of STP daily records
  */
-export function filterDataByDateRange(data, startDate, endDate) {
+export function filterDataByDateRange(data: STPDailyRecord[], startDate: Date, endDate: Date): STPDailyRecord[] {
   if (!data || !Array.isArray(data)) return [];
   
   return data.filter(record => {
@@ -72,7 +75,7 @@ export function filterDataByDateRange(data, startDate, endDate) {
  * @param endHour End hour (0-23)
  * @returns Filtered array of STP daily records
  */
-export function filterDataByTimeRange(data, startHour, endHour) {
+export function filterDataByTimeRange(data: STPDailyRecord[], startHour: number, endHour: number): STPDailyRecord[] {
   if (!data || !Array.isArray(data)) return [];
   
   // This is a placeholder. In a real application, this would filter by hour if hourly data is available
@@ -84,10 +87,10 @@ export function filterDataByTimeRange(data, startHour, endHour) {
  * @param dailyData Array of STP daily records
  * @returns Object with monthly aggregated data
  */
-export function calculateMonthlyAggregates(dailyData) {
+export function calculateMonthlyAggregates(dailyData: STPDailyRecord[]): any[] {
   if (!dailyData || !Array.isArray(dailyData)) return [];
   
-  const monthlyData = {};
+  const monthlyData: Record<string, any> = {};
   
   dailyData.forEach(record => {
     const date = new Date(record.date);

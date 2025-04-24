@@ -1,164 +1,117 @@
 
-import { useState, useCallback } from 'react';
-import { 
-  fetchPropertyUnits, 
-  fetchContributionRates, 
-  calculateReserveFundContribution,
+import { useState, useEffect } from 'react';
+import {
   fetchAssets,
-  getAssetCategorySummary,
-  getAssetLocationSummary,
-  getCriticalAssets,
-  getAssetConditions,
-  getAssetMaintenanceSchedule,
-  getAssetLifecycleForecast,
-  PropertyUnit 
+  fetchPropertyUnits,
+  fetchContributionRates,
+  calculateReserveFundContribution,
+  categorizeAssetsByCategory,
+  categorizeAssetsByLocation,
+  analyzeAssetCondition
 } from '@/services/assetService';
+import { PropertyUnit, Asset } from '@/types/assets';
 
 export const useAssetService = () => {
-  const [loading, setLoading] = useState(false);
+  const [assets, setAssets] = useState<Asset[]>([]);
+  const [propertyUnits, setPropertyUnits] = useState<PropertyUnit[]>([]);
+  const [contributionRates, setContributionRates] = useState<any[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedZones, setSelectedZones] = useState<string[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
-  const getPropertyUnits = useCallback(async (filters?: {
-    zone?: string, 
-    property_type?: string, 
-    building?: string
-  }) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const units = await fetchPropertyUnits(filters);
-      return units;
-    } catch (err: any) {
-      setError(err.message || 'Failed to fetch property units');
-      return [];
-    } finally {
-      setLoading(false);
-    }
+  useEffect(() => {
+    const controller = new AbortController();
+    const { signal } = controller;
+
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        // Load assets data
+        const assetsData = await fetchAssets(signal);
+        setAssets(assetsData);
+        
+        // Extract available zones and categories
+        const zones: string[] = [...new Set(assetsData.map(asset => asset.locationName || ''))];
+        setSelectedZones(zones);
+        
+        const categories: string[] = [...new Set(assetsData.map(asset => asset.assetCategory || ''))];
+        setSelectedCategories(categories);
+        
+        // Load property units data
+        try {
+          const units = await fetchPropertyUnits(signal);
+          setPropertyUnits(units);
+        } catch (err) {
+          console.error('Error loading property units:', err);
+          // Non-critical error, continue
+        }
+        
+        // Load contribution rates
+        try {
+          const rates = await fetchContributionRates(signal);
+          setContributionRates(rates);
+        } catch (err) {
+          console.error('Error loading contribution rates:', err);
+          // Non-critical error, continue
+        }
+        
+      } catch (err) {
+        if (err instanceof Error && err.name !== 'AbortError') {
+          console.error('Error loading asset data:', err);
+          setError(err.message);
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+
+    // Clean up on unmount
+    return () => {
+      controller.abort();
+    };
   }, []);
 
-  const calculateContribution = useCallback(async (unit: PropertyUnit) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const result = await calculateReserveFundContribution(unit);
-      return result;
-    } catch (err: any) {
-      setError(err.message || 'Failed to calculate contribution');
-      return null;
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  // Filter assets by selected zones and categories
+  const filteredAssets = assets.filter(asset => {
+    const matchesZone = selectedZones.length === 0 || selectedZones.includes(asset.locationName || '');
+    const matchesCategory = selectedCategories.length === 0 || selectedCategories.includes(asset.assetCategory || '');
+    return matchesZone && matchesCategory;
+  });
 
-  const getAssets = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const assets = await fetchAssets();
-      return assets;
-    } catch (err: any) {
-      setError(err.message || 'Failed to fetch assets');
-      return [];
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  // Derived data
+  const assetsByCategory = categorizeAssetsByCategory(filteredAssets);
+  const assetsByLocation = categorizeAssetsByLocation(filteredAssets);
+  const assetConditions = analyzeAssetCondition(filteredAssets);
 
-  const getAssetCategories = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const categories = await getAssetCategorySummary();
-      return categories;
-    } catch (err: any) {
-      setError(err.message || 'Failed to fetch asset categories');
-      return [];
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  // Update selected zones
+  const updateSelectedZones = (zones: string[]) => {
+    setSelectedZones(zones);
+  };
 
-  const getAssetLocations = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const locations = await getAssetLocationSummary();
-      return locations;
-    } catch (err: any) {
-      setError(err.message || 'Failed to fetch asset locations');
-      return [];
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  const getCriticalAssetsList = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const assets = await getCriticalAssets();
-      return assets;
-    } catch (err: any) {
-      setError(err.message || 'Failed to fetch critical assets');
-      return [];
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  const getAssetConditionsList = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const conditions = await getAssetConditions();
-      return conditions;
-    } catch (err: any) {
-      setError(err.message || 'Failed to fetch asset conditions');
-      return [];
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  const getMaintenanceSchedule = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const schedule = await getAssetMaintenanceSchedule();
-      return schedule;
-    } catch (err: any) {
-      setError(err.message || 'Failed to fetch maintenance schedule');
-      return [];
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  const getLifecycleForecast = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const forecast = await getAssetLifecycleForecast();
-      return forecast;
-    } catch (err: any) {
-      setError(err.message || 'Failed to fetch lifecycle forecast');
-      return [];
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  // Update selected categories
+  const updateSelectedCategories = (categories: string[]) => {
+    setSelectedCategories(categories);
+  };
 
   return {
-    getPropertyUnits,
-    calculateContribution,
-    getAssets,
-    getAssetCategories,
-    getAssetLocations,
-    getCriticalAssetsList,
-    getAssetConditionsList,
-    getMaintenanceSchedule,
-    getLifecycleForecast,
+    assets,
+    filteredAssets,
+    propertyUnits,
+    contributionRates,
     loading,
-    error
+    error,
+    assetsByCategory,
+    assetsByLocation,
+    assetConditions,
+    selectedZones,
+    selectedCategories,
+    updateSelectedZones,
+    updateSelectedCategories,
+    calculateReserveFundContribution
   };
 };

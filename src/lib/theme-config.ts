@@ -1,101 +1,106 @@
 
 /**
- * Theme configuration for Muscat Bay operations web application
+ * Theme configuration for the Muscat Bay operations web application
  */
 
+// Define the theme color palette
+export const colorPalette = {
+  // Primary colors
+  primary: '#0565FF', // Blue
+  secondary: '#14B8A6', // Teal
+  tertiary: '#8884D8', // Lavender
+  quaternary: '#FFB020', // Gold
+  
+  // Text colors
+  textPrimary: '#111827',
+  textSecondary: '#6B7280',
+  textLight: '#9CA3AF',
+  
+  // Background colors
+  background: '#FFFFFF',
+  backgroundLight: '#F9FAFB',
+  backgroundDark: '#F3F4F6',
+  
+  // Success/Error colors
+  success: '#10B981',
+  warning: '#F59E0B',
+  error: '#EF4444',
+  info: '#3B82F6',
+  
+  // Chart colors
+  chartColors: [
+    '#0565FF', // Blue
+    '#14B8A6', // Teal
+    '#8884D8', // Lavender
+    '#FFB020', // Gold
+    '#F43F5E', // Rose
+    '#8B5CF6', // Purple
+    '#10B981', // Emerald
+    '#F97316', // Orange
+  ]
+};
+
+// Define the theme config
 export const themeConfig = {
-  colors: {
-    // Primary palette
-    primary: "#4285F4", // Blue
-    secondary: "#34A853", // Green
-    accent: "#FBBC05", // Yellow
-    destructive: "#EA4335", // Red
-    
-    // Entity-specific colors
-    water: {
-      primary: "#4285F4", // Blue
-      accent: "#0F9D58" // Dark Green
-    },
-    electricity: {
-      primary: "#F4B400", // Amber
-      accent: "#DB4437" // Red
-    },
-    stp: {
-      primary: "#0F9D58", // Green
-      accent: "#4285F4" // Blue
-    },
-    property: {
-      primary: "#744DA9", // Purple
-      accent: "#F24822" // Orange
-    },
-    
-    // Chart colors
-    chart: [
-      "#4285F4", // Blue
-      "#34A853", // Green
-      "#FBBC05", // Yellow
-      "#EA4335", // Red
-      "#8884d8", // Purple
-      "#82ca9d", // Teal
-      "#ff7300", // Orange
-      "#a05195", // Magenta
-      "#003f5c" // Navy
-    ]
-  },
+  primary: colorPalette.primary,
+  secondary: colorPalette.secondary,
+  tertiary: colorPalette.tertiary,
+  quaternary: colorPalette.quaternary,
   
-  // Border radiuses
-  radius: {
-    sm: "0.125rem",
-    md: "0.375rem",
-    lg: "0.5rem",
-    xl: "0.75rem",
-    "2xl": "1rem",
-    full: "9999px"
-  },
+  // Text colors
+  text: colorPalette.textPrimary,
+  textSecondary: colorPalette.textSecondary,
+  textLight: colorPalette.textLight,
   
-  // Shadows
-  shadow: {
-    sm: "0 1px 2px rgba(0, 0, 0, 0.05)",
-    md: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
-    lg: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
-    xl: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
-  },
+  // Background colors
+  bg: colorPalette.background,
+  bgLight: colorPalette.backgroundLight,
+  bgDark: colorPalette.backgroundDark,
   
-  // Typography
-  typography: {
-    fontFamily: "Inter, system-ui, sans-serif",
-    headings: {
-      fontWeight: "600",
-      lineHeight: "1.2"
-    },
-    body: {
-      fontWeight: "400",
-      lineHeight: "1.5"
-    }
-  },
+  // Card & Panel
+  cardBg: colorPalette.background,
+  panelBg: colorPalette.backgroundLight,
+  border: 'border-gray-200 dark:border-gray-700',
   
-  // Transitions
-  transition: {
-    default: "all 0.2s ease",
-    slow: "all 0.3s ease",
-    fast: "all 0.1s ease"
+  // Status colors
+  success: colorPalette.success,
+  warning: colorPalette.warning,
+  error: colorPalette.error,
+  info: colorPalette.info,
+  
+  // Chart colors
+  chartColors: colorPalette.chartColors,
+  
+  // Color by module
+  modules: {
+    water: colorPalette.primary,
+    electricity: colorPalette.quaternary,
+    stp: colorPalette.secondary,
+    assets: colorPalette.tertiary,
   }
 };
 
-// Additional themes (dark, light, etc.)
-export const themes = {
-  light: {
-    ...themeConfig,
-    background: "#ffffff",
-    text: "#333333",
-    border: "#e5e7eb",
-    muted: "#f3f4f6"
-  },
-  dark: {
-    ...themeConfig,
-    background: "#1f2937",
-    text: "#f3f4f6",
-    border: "#374151",
-    muted: "#374151"
+/**
+ * Get color for a specific metric based on its value
+ * @param value The metric value
+ * @param thresholds Object defining the thresholds for each color
+ * @param inverse Whether to invert the color logic (higher is worse)
+ * @returns Color code based on the value
+ */
+export const getMetricColor = (
+  value: number,
+  thresholds = { high: 80, medium: 50, low: 0 },
+  inverse = false
+): string => {
+  if (inverse) {
+    if (value >= thresholds.high) return colorPalette.error;
+    if (value >= thresholds.medium) return colorPalette.warning;
+    return colorPalette.success;
+  } else {
+    if (value >= thresholds.high) return colorPalette.success;
+    if (value >= thresholds.medium) return colorPalette.warning;
+    return colorPalette.error;
   }
 };
+
+export default themeConfig;

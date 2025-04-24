@@ -1,26 +1,18 @@
 
 /**
- * Expenses management service for Muscat Bay operations web application
+ * Expenses data service for Muscat Bay operations web application
  */
 import { fetchData } from './dataService';
 import { Expense, ExpenseCategory, ExpenseSummary } from '@/types/expenses';
 
 /**
  * Fetches expenses data
- * @param options Filter options for expenses
  * @param signal Optional AbortSignal for request cancellation
  * @returns Promise with expenses data
  */
-export async function fetchExpenses(
-  options: { 
-    year?: number, 
-    month?: number, 
-    category?: string
-  } = {},
-  signal?: AbortSignal
-): Promise<Expense[]> {
+export async function fetchExpenses(signal?: AbortSignal): Promise<Expense[]> {
   try {
-    const response = await fetchData<{metadata: any, data: Expense[]}>(
+    const response = await fetchData<{ expenses: Expense[] }>(
       'expenses/expenses.json',
       {
         signal,
@@ -28,125 +20,93 @@ export async function fetchExpenses(
       }
     );
     
-    let filteredData = response.data || [];
-    
-    // Apply filters if provided
-    if (options.year) {
-      filteredData = filteredData.filter(expense => {
-        const expenseDate = new Date(expense.date);
-        return expenseDate.getFullYear() === options.year;
-      });
-    }
-    
-    if (options.month) {
-      filteredData = filteredData.filter(expense => {
-        const expenseDate = new Date(expense.date);
-        return expenseDate.getMonth() === options.month - 1; // JavaScript months are 0-indexed
-      });
-    }
-    
-    if (options.category) {
-      filteredData = filteredData.filter(expense => expense.category === options.category);
-    }
-    
-    return filteredData;
+    return response.expenses || [];
   } catch (error) {
     console.error('Error in fetchExpenses:', error);
-    return [];
+    throw error;
   }
 }
 
 /**
- * Gets available expense categories
- * @param signal Optional AbortSignal for request cancellation
- * @returns Promise with expense categories
+ * Categorizes expenses by their service type
+ * @param expenses Array of expenses
+ * @returns Expense categories with their respective expenses
  */
-export async function getExpenseCategories(signal?: AbortSignal): Promise<ExpenseCategory[]> {
-  try {
-    const response = await fetchData<{metadata: any, data: ExpenseCategory[]}>(
-      'expenses/categories.json',
-      {
-        signal,
-        errorMessage: 'Failed to load expense categories'
-      }
-    );
-    
-    return response.data || [];
-  } catch (error) {
-    console.error('Error in getExpenseCategories:', error);
-    return [];
-  }
-}
-
-/**
- * Calculates expense summary by category
- * @param expenses Expenses data
- * @returns Expense summary by category
- */
-export function calculateExpenseSummaryByCategory(expenses: Expense[]): ExpenseSummary[] {
-  if (!expenses || expenses.length === 0) {
-    return [];
-  }
+export function categorizeExpensesByType(expenses: Expense[]): ExpenseCategory[] {
+  if (!expenses || expenses.length === 0) return [];
   
-  const categorySummary: Record<string, ExpenseSummary> = {};
+  // Group expenses by category
+  const categorizedExpenses: Record<string, Expense[]> = {};
   
   expenses.forEach(expense => {
     const category = expense.category || 'Uncategorized';
-    
-    if (!categorySummary[category]) {
-      categorySummary[category] = {
-        category,
-        total: 0,
-        count: 0,
-        percentage: 0
-      };
+    if (!categorizedExpenses[category]) {
+      categorizedExpenses[category] = [];
     }
     
-    categorySummary[category].total += expense.amount;
-    categorySummary[category].count++;
+    categorizedExpenses[category].push(expense);
   });
   
-  // Calculate total across all categories
-  const totalAmount = expenses.reduce((sum, expense) => sum + expense.amount, 0);
-  
-  // Calculate percentage of total for each category
-  return Object.values(categorySummary).map(summary => ({
-    ...summary,
-    percentage: totalAmount > 0 ? (summary.total / totalAmount) * 100 : 0
-  }));
+  // Convert grouped expenses to summary array
+  return Object.entries(categorizedExpenses).map(([category, categoryExpenses]) => {
+    const total = categoryExpenses.reduce((sum, expense) => sum + expense.annualCost, 0);
+    
+    return {
+      name: category,
+      total,
+      count: categoryExpenses.length,
+      expenses: categoryExpenses
+    };
+  }).sort((a, b) => b.total - a.total);
 }
 
 /**
- * Calculates monthly expense totals
- * @param expenses Expenses data
- * @param year Year to filter by
- * @returns Monthly expense totals
+ * Generates a summary of expenses
+ * @param expenses Array of expenses
+ * @returns Expense summary data
  */
-export function calculateMonthlyExpenseTotals(
-  expenses: Expense[],
-  year?: number
-): Record<string, number> {
+export function generateExpensesSummary(expenses: Expense[]): ExpenseSummary {
   if (!expenses || expenses.length === 0) {
-    return {};
+    return {
+      totalAnnual: 0,
+      totalMonthly: 0,
+      categoryCounts: {},
+      statusCounts: {},
+      byCategory: {},
+      byStatus: {}
+    };
   }
   
-  const filteredExpenses = year 
-    ? expenses.filter(expense => new Date(expense.date).getFullYear() === year)
-    : expenses;
+  const categoryCounts: Record<string, number> = {};
+  const statusCounts: Record<string, number> = {};
+  const byCategory: Record<string, number> = {};
+  const byStatus: Record<string, number> = {};
   
-  const monthlyTotals: Record<string, number> = {};
+  let totalAnnual = 0;
+  let totalMonthly = 0;
   
-  filteredExpenses.forEach(expense => {
-    const expenseDate = new Date(expense.date);
-    const month = expenseDate.getMonth(); // 0-indexed
-    const monthName = expenseDate.toLocaleString('default', { month: 'short' });
+  expenses.forEach(expense => {
+    // Count by category
+    const category = expense.category || 'Uncategorized';
+    categoryCounts[category] = (categoryCounts[category] || 0) + 1;
+    byCategory[category] = (byCategory[category] || 0) + expense.annualCost;
     
-    if (!monthlyTotals[monthName]) {
-      monthlyTotals[monthName] = 0;
-    }
+    // Count by status
+    const status = expense.status || 'Unknown';
+    statusCounts[status] = (statusCounts[status] || 0) + 1;
+    byStatus[status] = (byStatus[status] || 0) + expense.annualCost;
     
-    monthlyTotals[monthName] += expense.amount;
+    // Calculate totals
+    totalAnnual += expense.annualCost || 0;
+    totalMonthly += expense.monthlyCost || 0;
   });
   
-  return monthlyTotals;
+  return {
+    totalAnnual,
+    totalMonthly,
+    categoryCounts,
+    statusCounts,
+    byCategory,
+    byStatus
+  };
 }

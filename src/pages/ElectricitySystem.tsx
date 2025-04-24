@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import Layout from '@/components/layout/Layout';
 import { useTheme } from '@/components/theme/theme-provider';
@@ -35,7 +36,7 @@ import {
   AreaChart as AreaChartIcon,
   ChevronLeft
 } from 'lucide-react';
-import { getElectricityData } from '@/data/electricityData';
+import { useElectricityData } from '@/hooks/useElectricityData';
 import { ElectricitySummary } from '@/components/electricity/ElectricitySummary';
 import { ElectricityFacilitiesTable } from '@/components/electricity/ElectricityFacilitiesTable';
 import { ElectricityTrends } from '@/components/electricity/ElectricityTrends';
@@ -59,6 +60,7 @@ const ElectricitySystem = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const isMobile = useIsMobile();
   const navigate = useNavigate();
+  const { data: electricityData, loading } = useElectricityData();
   
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -89,12 +91,24 @@ const ElectricitySystem = () => {
   ];
 
   const getConsumptionData = () => {
+    if (!electricityData) {
+      return {
+        totalConsumption: 0,
+        periodLabel: 'N/A',
+        currentMonth: 0,
+        currentMonthLabel: 'N/A',
+        previousMonth: 0,
+        previousMonthLabel: 'N/A',
+        momChange: 0
+      };
+    }
+    
     if (selectedMonth === 'all') {
-      const janConsumption = electricityData.reduce((total, facility) => {
+      const janConsumption = electricityData.reduce((total: number, facility: any) => {
         return total + (facility.consumption['Jan-25'] || 0);
       }, 0);
       
-      const febConsumption = electricityData.reduce((total, facility) => {
+      const febConsumption = electricityData.reduce((total: number, facility: any) => {
         return total + (facility.consumption['Feb-25'] || 0);
       }, 0);
       
@@ -112,13 +126,13 @@ const ElectricitySystem = () => {
       const previousMonthIndex = monthIndex > 1 ? monthIndex - 1 : -1;
       const previousMonth = previousMonthIndex > 0 ? allMonths[previousMonthIndex].value : null;
       
-      const currentMonthConsumption = electricityData.reduce((total, facility) => {
+      const currentMonthConsumption = electricityData.reduce((total: number, facility: any) => {
         return total + (facility.consumption[selectedMonth] || 0);
       }, 0);
       
       let previousMonthConsumption = 0;
       if (previousMonth) {
-        previousMonthConsumption = electricityData.reduce((total, facility) => {
+        previousMonthConsumption = electricityData.reduce((total: number, facility: any) => {
           return total + (facility.consumption[previousMonth] || 0);
         }, 0);
       }
@@ -138,8 +152,10 @@ const ElectricitySystem = () => {
   const consumptionData = getConsumptionData();
 
   const getConsumptionByType = () => {
+    if (!electricityData) return {};
+    
     if (selectedMonth === 'all') {
-      return electricityData.reduce((acc, facility) => {
+      return electricityData.reduce((acc: Record<string, number>, facility: any) => {
         const type = facility.type;
         const consumption = facility.consumption['Feb-25'] || 0;
         
@@ -151,7 +167,7 @@ const ElectricitySystem = () => {
         return acc;
       }, {} as Record<string, number>);
     } else {
-      return electricityData.reduce((acc, facility) => {
+      return electricityData.reduce((acc: Record<string, number>, facility: any) => {
         const type = facility.type;
         const consumption = facility.consumption[selectedMonth] || 0;
         
@@ -172,29 +188,31 @@ const ElectricitySystem = () => {
     .map(([type, consumption]) => ({
       type,
       consumption,
-      cost: consumption * ELECTRICITY_RATE
+      cost: Number(consumption) * ELECTRICITY_RATE
     }))
     .sort((a, b) => b.consumption - a.consumption);
 
   // Format for Enhanced Pie Chart
   const pieChartData = consumptionByTypeArray.map((item, index) => ({
     name: item.type,
-    value: item.consumption,
+    value: Number(item.consumption),
     color: COLORS[index % COLORS.length]
   }));
 
   const getTopConsumers = () => {
+    if (!electricityData) return [];
+    
     const monthToUse = selectedMonth === 'all' ? 'Feb-25' : selectedMonth;
     
     return electricityData
-      .filter(facility => facility.name && facility.consumption[monthToUse] > 0)
-      .map(facility => ({
+      .filter((facility: any) => facility.name && facility.consumption[monthToUse] > 0)
+      .map((facility: any) => ({
         name: facility.name,
         type: facility.type,
         consumption: facility.consumption[monthToUse] || 0,
         cost: (facility.consumption[monthToUse] || 0) * ELECTRICITY_RATE
       }))
-      .sort((a, b) => b.consumption - a.consumption)
+      .sort((a: any, b: any) => b.consumption - a.consumption)
       .slice(0, 10);
   };
 
@@ -203,9 +221,9 @@ const ElectricitySystem = () => {
   const months = ['Apr-24', 'May-24', 'Jun-24', 'Jul-24', 'Aug-24', 'Sep-24', 'Oct-24', 'Nov-24', 'Dec-24', 'Jan-25', 'Feb-25'];
   
   const monthlyConsumption = months.map(month => {
-    const totalForMonth = electricityData.reduce((total, facility) => {
+    const totalForMonth = electricityData ? electricityData.reduce((total: number, facility: any) => {
       return total + (facility.consumption[month] || 0);
-    }, 0);
+    }, 0) : 0;
     
     return {
       month,
@@ -214,7 +232,7 @@ const ElectricitySystem = () => {
     };
   });
 
-  if (isLoading) {
+  if (isLoading || loading) {
     return (
       <Layout>
         <div className="flex items-center justify-center min-h-screen">

@@ -3,13 +3,31 @@
  * React hook for water data management
  */
 import { useState, useEffect } from 'react';
-import { fetchWaterData } from '@/services/waterService';
-import { WaterConsumptionData } from '@/types/water';
+import { fetchWaterData, calculateEfficiency } from '@/services/waterService';
+import { WaterConsumptionData, WaterSystemData } from '@/types/water';
 
 export const useWaterData = () => {
   const [data, setData] = useState<WaterConsumptionData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [filters, setFilters] = useState({
+    zone: 'all',
+    period: 'monthly',
+    view: 'overview'
+  });
+  
+  // Derived state
+  const systemEfficiency = data ? calculateEfficiency(
+    data.total.consumption, 
+    data.total.loss
+  ) : 0;
+  
+  const zoneData = data ? data.zones.map(zone => ({
+    name: zone.name,
+    consumption: zone.consumption,
+    loss: zone.loss,
+    efficiency: calculateEfficiency(zone.consumption, zone.loss)
+  })) : [];
 
   useEffect(() => {
     const controller = new AbortController();
@@ -39,10 +57,17 @@ export const useWaterData = () => {
       controller.abort();
     };
   }, []);
+  
+  const updateFilters = (newFilters: Partial<typeof filters>) => {
+    setFilters(prev => ({ ...prev, ...newFilters }));
+  };
 
   return {
     data,
     loading,
-    error
+    error,
+    zoneData,
+    systemEfficiency,
+    updateFilters
   };
 };

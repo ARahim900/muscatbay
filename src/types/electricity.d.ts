@@ -3,13 +3,6 @@
  * Type definitions for electricity system data
  */
 
-export interface ElectricityRecord {
-  name: string;
-  type: string;
-  meterAccountNo: string;
-  consumption: Record<string, number>;
-}
-
 export interface ElectricityConsumptionData {
   metadata: {
     version: string;
@@ -17,24 +10,30 @@ export interface ElectricityConsumptionData {
     description: string;
     units: string;
   };
-  data: ElectricityRecord[];
+  facilities: ElectricityFacility[];
+  summary: {
+    totalConsumption: number;
+    totalCost: number;
+    highestConsumer: string;
+    averageConsumption: number;
+  };
 }
 
-export interface ElectricityConsumptionByType {
+export interface ElectricityFacility {
+  id: string;
+  name: string;
   type: string;
-  consumption: number;
-  percentage: number;
-}
-
-export interface ElectricityMonthlyTotal {
-  month: string;
-  consumption: number;
-  previousMonthChange: number;
+  zone: string;
+  accountNumber: string;
+  consumption: {
+    [month: string]: number;
+  };
 }
 
 export interface ElectricityFilters {
-  month: string;
+  year: number;
+  month: string | 'all';
+  zone: string;
   type: string;
-  sortBy: 'name' | 'consumption' | 'type';
-  sortOrder: 'asc' | 'desc';
+  view: 'overview' | 'facilities' | 'trends' | 'comparison';
 }

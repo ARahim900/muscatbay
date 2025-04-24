@@ -1,437 +1,173 @@
 
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calculator, Building2, MapPin, ArrowRight } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Calculator, Building, Coins } from 'lucide-react';
 import { useAssetService } from '@/hooks/useAssetService';
-import { PropertyUnit, ContributionBreakdown } from '@/types/asset';
-import { toast } from "sonner";
 
-interface CalculationResult {
-  totalAnnualContribution: number;
-  componentBreakdown: ContributionBreakdown[];
-  zoneBreakdown: {
-    master: number;
-    zone: number;
-    building: number;
-  };
+interface ReserveCalcProps {
+  title?: string;
+  subtitle?: string;
 }
 
-const ReserveCalculator: React.FC = () => {
-  // State for selections
-  const [selectedZone, setSelectedZone] = useState<string>("");
-  const [selectedPropertyType, setSelectedPropertyType] = useState<string>("");
-  const [selectedBuilding, setSelectedBuilding] = useState<string>("");
-  const [selectedUnitId, setSelectedUnitId] = useState<number | null>(null);
-  
-  // State for filtered data
+export const ReserveCalculator: React.FC<ReserveCalcProps> = ({ title = "Reserve Fund Calculator", subtitle = "Calculate reserve fund contributions" }) => {
+  const [selectedZone, setSelectedZone] = useState<string>('');
+  const [selectedPropertyType, setSelectedPropertyType] = useState<string>('');
+  const [area, setArea] = useState<string>('');
+  const [contribution, setContribution] = useState<number>(0);
   const [availableZones, setAvailableZones] = useState<string[]>([]);
-  const [availablePropertyTypes, setAvailablePropertyTypes] = useState<string[]>([]);
-  const [availableBuildings, setAvailableBuildings] = useState<string[]>([]);
-  const [availableUnits, setAvailableUnits] = useState<PropertyUnit[]>([]);
+  const [availableTypes, setAvailableTypes] = useState<string[]>([]);
   
-  // State for results
-  const [propertyDetails, setPropertyDetails] = useState<PropertyUnit | null>(null);
-  const [calculationResults, setCalculationResults] = useState<CalculationResult | null>(null);
-  
-  const { getPropertyUnits, calculateContribution, loading, error } = useAssetService();
-  
-  // Fetch all available zones initially
+  const { propertyUnits, contributionRates, loading } = useAssetService();
+
+  // Extract unique zones and property types when data is loaded
   useEffect(() => {
-    const fetchZones = async () => {
-      try {
-        const units = await getPropertyUnits();
-        const zones = [...new Set(units.map(unit => unit.zone))].sort();
-        setAvailableZones(zones);
-      } catch (err) {
-        console.error("Error fetching zones:", err);
-        toast.error("Failed to load zones");
+    if (propertyUnits && propertyUnits.length > 0) {
+      const zones = [...new Set(propertyUnits.map(unit => unit.zoneCode))];
+      setAvailableZones(zones.filter((zone): zone is string => typeof zone === 'string'));
+      
+      if (zones.length > 0) {
+        setSelectedZone(zones[0] as string);
       }
-    };
-    
-    fetchZones();
-  }, [getPropertyUnits]);
-  
-  // Filter property types when zone changes
+    }
+  }, [propertyUnits]);
+
+  // Update available property types when selected zone changes
   useEffect(() => {
-    const fetchPropertyTypes = async () => {
-      if (!selectedZone) {
-        setAvailablePropertyTypes([]);
-        setSelectedPropertyType("");
+    if (propertyUnits && propertyUnits.length > 0 && selectedZone) {
+      const types = [...new Set(
+        propertyUnits
+          .filter(unit => unit.zoneCode === selectedZone)
+          .map(unit => unit.propertyType)
+      )];
+      
+      setAvailableTypes(types.filter((type): type is string => typeof type === 'string'));
+      
+      if (types.length > 0) {
+        setSelectedPropertyType(types[0] as string);
+      }
+    }
+  }, [selectedZone, propertyUnits]);
+
+  // Calculate contribution when inputs change
+  useEffect(() => {
+    if (selectedZone && selectedPropertyType && area) {
+      const numericArea = parseFloat(area);
+      
+      if (isNaN(numericArea) || numericArea <= 0) {
+        setContribution(0);
         return;
       }
       
-      try {
-        const units = await getPropertyUnits({ zone: selectedZone });
-        const types = [...new Set(units.map(unit => unit.property_type))].sort();
-        setAvailablePropertyTypes(types);
-        setSelectedPropertyType("");
-        setSelectedBuilding("");
-        setSelectedUnitId(null);
-        setPropertyDetails(null);
-        setCalculationResults(null);
-      } catch (err) {
-        console.error("Error fetching property types:", err);
-        toast.error("Failed to load property types");
-      }
-    };
-    
-    fetchPropertyTypes();
-  }, [selectedZone, getPropertyUnits]);
-  
-  // Filter buildings when property type changes
-  useEffect(() => {
-    const fetchBuildings = async () => {
-      if (!selectedZone || !selectedPropertyType) {
-        setAvailableBuildings([]);
-        setAvailableUnits([]);
-        setSelectedBuilding("");
-        setSelectedUnitId(null);
-        return;
-      }
+      // Find applicable rate
+      const rate = contributionRates.find((rate: any) => 
+        rate.zone === selectedZone && 
+        rate.propertyType === selectedPropertyType
+      );
       
-      try {
-        const units = await getPropertyUnits({ 
-          zone: selectedZone, 
-          property_type: selectedPropertyType 
-        });
-        
-        // Get unique buildings (excluding null/undefined)
-        const buildings = [...new Set(units
-          .map(unit => unit.building)
-          .filter(building => building) as string[]
-        )].sort();
-        
-        setAvailableBuildings(buildings);
-        setSelectedBuilding("");
-        
-        // If no buildings exist (e.g., villas), directly set available units
-        if (buildings.length === 0) {
-          setAvailableUnits(units);
-        } else {
-          setAvailableUnits([]);
-        }
-        
-        setSelectedUnitId(null);
-        setPropertyDetails(null);
-        setCalculationResults(null);
-      } catch (err) {
-        console.error("Error fetching buildings:", err);
-        toast.error("Failed to load buildings");
+      if (rate) {
+        const baseRate = rate.rate || 0;
+        const annualContribution = baseRate * numericArea;
+        setContribution(annualContribution);
+      } else {
+        setContribution(0);
       }
-    };
-    
-    fetchBuildings();
-  }, [selectedZone, selectedPropertyType, getPropertyUnits]);
-  
-  // Filter units when building changes
-  useEffect(() => {
-    const fetchUnits = async () => {
-      if (!selectedZone || !selectedPropertyType) {
-        setAvailableUnits([]);
-        setSelectedUnitId(null);
-        return;
-      }
-      
-      // Skip if buildings exist but none selected
-      if (availableBuildings.length > 0 && !selectedBuilding) {
-        setAvailableUnits([]);
-        setSelectedUnitId(null);
-        return;
-      }
-      
-      try {
-        const filters: {
-          zone?: string;
-          property_type?: string;
-          building?: string;
-        } = {
-          zone: selectedZone,
-          property_type: selectedPropertyType
-        };
-        
-        if (selectedBuilding) {
-          filters.building = selectedBuilding;
-        }
-        
-        const units = await getPropertyUnits(filters);
-        setAvailableUnits(units);
-        setSelectedUnitId(null);
-        setPropertyDetails(null);
-        setCalculationResults(null);
-      } catch (err) {
-        console.error("Error fetching units:", err);
-        toast.error("Failed to load units");
-      }
-    };
-    
-    fetchUnits();
-  }, [selectedZone, selectedPropertyType, selectedBuilding, availableBuildings, getPropertyUnits]);
-  
-  // Fetch details and calculate when unit is selected
-  useEffect(() => {
-    const fetchDetailsAndCalculate = async () => {
-      if (!selectedUnitId) {
-        setPropertyDetails(null);
-        setCalculationResults(null);
-        return;
-      }
-      
-      const selectedUnit = availableUnits.find(unit => unit.id === selectedUnitId);
-      if (!selectedUnit) return;
-      
-      setPropertyDetails(selectedUnit);
-      
-      try {
-        const result = await calculateContribution(selectedUnit);
-        if (result) {
-          setCalculationResults({
-            totalAnnualContribution: result.calculation.totalAnnualContribution,
-            componentBreakdown: result.calculation.componentBreakdown,
-            zoneBreakdown: result.calculation.zoneBreakdown
-          });
-        }
-      } catch (err) {
-        console.error("Error calculating contribution:", err);
-        toast.error("Failed to calculate contribution");
-        setCalculationResults(null);
-      }
-    };
-    
-    fetchDetailsAndCalculate();
-  }, [selectedUnitId, availableUnits, calculateContribution]);
-  
-  // Zone label mapping
-  const getZoneLabel = (zoneCode: string): string => {
-    const zoneMap: Record<string, string> = {
-      'Z3': 'Zone 3 (Zaha)',
-      '3': 'Zone 3 (Zaha)', 
-      'Z5': 'Zone 5 (Nameer)',
-      '5': 'Zone 5 (Nameer)',
-      'Z8': 'Zone 8 (Wajd)',
-      '8': 'Zone 8 (Wajd)',
-      'staff': 'Staff Accommodation',
-      'VS': 'Village Square'
-    };
-    return zoneMap[zoneCode] || `Zone ${zoneCode}`;
-  };
-  
+    }
+  }, [selectedZone, selectedPropertyType, area, contributionRates]);
+
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle className="flex items-center">
-          <Calculator className="h-5 w-5 mr-2" />
-          Reserve Fund Contribution Calculator
+        <CardTitle className="text-xl flex items-center gap-2">
+          <Calculator className="h-5 w-5 text-blue-600" />
+          {title}
         </CardTitle>
+        <p className="text-sm text-muted-foreground">{subtitle}</p>
       </CardHeader>
       <CardContent>
-        <div className="space-y-6">
-          {/* Selection UI */}
-          <div className="space-y-4 bg-blue-50 p-4 rounded-lg border border-blue-200">
-            <h2 className="text-lg font-semibold text-blue-800">Select Property</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {/* Zone */}
-              <div>
-                <label htmlFor="zone-select" className="block text-sm font-medium text-gray-700 mb-1">Zone</label>
-                <select
-                  id="zone-select"
-                  value={selectedZone}
-                  onChange={(e) => setSelectedZone(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white"
-                >
-                  <option value="">-- Select Zone --</option>
-                  {availableZones.map(zone => (
-                    <option key={zone} value={zone}>
-                      {getZoneLabel(zone)}
-                    </option>
+        <div className="grid gap-4">
+          <div className="grid gap-2">
+            <label className="text-sm font-medium">Zone</label>
+            <Select
+              value={selectedZone}
+              onValueChange={setSelectedZone}
+              disabled={loading || availableZones.length === 0}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select zone" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectLabel>Zones</SelectLabel>
+                  {availableZones.map((zone) => (
+                    <SelectItem key={zone} value={zone}>{zone}</SelectItem>
                   ))}
-                </select>
-              </div>
-              
-              {/* Property Type */}
-              <div>
-                <label htmlFor="type-select" className="block text-sm font-medium text-gray-700 mb-1">Property Type</label>
-                <select
-                  id="type-select"
-                  value={selectedPropertyType}
-                  onChange={(e) => setSelectedPropertyType(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white"
-                  disabled={!selectedZone}
-                >
-                  <option value="">-- Select Type --</option>
-                  {availablePropertyTypes.map(type => (
-                    <option key={type} value={type}>
-                      {type}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              
-              {/* Building (conditional) */}
-              {availableBuildings.length > 0 && (
-                <div>
-                  <label htmlFor="building-select" className="block text-sm font-medium text-gray-700 mb-1">Building</label>
-                  <select
-                    id="building-select"
-                    value={selectedBuilding}
-                    onChange={(e) => setSelectedBuilding(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white"
-                    disabled={!selectedPropertyType}
-                  >
-                    <option value="">-- Select Building --</option>
-                    {availableBuildings.map(building => (
-                      <option key={building} value={building}>
-                        {building}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-              
-              {/* Unit */}
-              <div>
-                <label htmlFor="unit-select" className="block text-sm font-medium text-gray-700 mb-1">Unit</label>
-                <select
-                  id="unit-select"
-                  value={selectedUnitId ? selectedUnitId.toString() : ""}
-                  onChange={(e) => setSelectedUnitId(e.target.value ? parseInt(e.target.value) : null)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white"
-                  disabled={availableUnits.length === 0}
-                >
-                  <option value="">-- Select Unit --</option>
-                  {availableUnits.map(unit => (
-                    <option key={unit.id} value={unit.id.toString()}>
-                      {unit.unit_no}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
           </div>
           
-          {/* Loading State */}
-          {loading && (
-            <div className="text-center p-6 text-blue-600 font-semibold">
-              <span className="animate-pulse">Calculating Contribution...</span>
-            </div>
-          )}
+          <div className="grid gap-2">
+            <label className="text-sm font-medium">Property Type</label>
+            <Select
+              value={selectedPropertyType}
+              onValueChange={setSelectedPropertyType}
+              disabled={loading || availableTypes.length === 0}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select property type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectLabel>Property Types</SelectLabel>
+                  {availableTypes.map((type) => (
+                    <SelectItem key={type} value={type}>{type}</SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </div>
           
-          {/* Error State */}
-          {error && (
-            <div className="text-center p-4 text-red-600 bg-red-50 border border-red-300 rounded">
-              {error}
-            </div>
-          )}
+          <div className="grid gap-2">
+            <label className="text-sm font-medium">Built-up Area (m²)</label>
+            <input
+              type="number"
+              value={area}
+              onChange={(e) => setArea(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+              placeholder="Enter area in square meters"
+              disabled={loading}
+            />
+          </div>
           
-          {/* Results Display */}
-          {propertyDetails && calculationResults && !loading && (
-            <div className="mt-8 space-y-6 animate-fade-in">
-              {/* Property Details */}
-              <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                <h2 className="text-lg font-semibold mb-3 text-gray-800">Property Details</h2>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-2 text-sm">
-                  <div><p className="text-gray-600">Unit:</p><p className="font-medium text-gray-900">{propertyDetails.unit_no}</p></div>
-                  <div><p className="text-gray-600">Type:</p><p className="font-medium text-gray-900">{propertyDetails.property_type}</p></div>
-                  <div><p className="text-gray-600">Size:</p><p className="font-medium text-gray-900">{propertyDetails.bua.toFixed(2)} Sq.m.</p></div>
-                  {propertyDetails.building && (
-                    <div><p className="text-gray-600">Building:</p><p className="font-medium text-gray-900">{propertyDetails.building}</p></div>
-                  )}
-                  <div><p className="text-gray-600">Zone:</p><p className="font-medium text-gray-900">{getZoneLabel(propertyDetails.zone)}</p></div>
-                </div>
+          <div className="mt-4 p-4 bg-blue-50 border border-blue-100 rounded-md">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Coins className="h-5 w-5 text-blue-600" />
+                <span className="text-sm font-medium text-gray-600">Annual Contribution</span>
               </div>
-              
-              {/* Calculation Results */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Contribution Summary */}
-                <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-                  <h2 className="text-lg font-semibold mb-4 text-green-800">Est. Reserve Contribution (2025)</h2>
-                  <div className="space-y-2 text-sm">
-                    {calculationResults.zoneBreakdown.master > 0 && (
-                      <div className="flex justify-between items-center border-b pb-1">
-                        <span className="text-gray-700">Master Community Share:</span>
-                        <span className="font-medium text-gray-900">OMR {calculationResults.zoneBreakdown.master.toFixed(2)}</span>
-                      </div>
-                    )}
-                    {calculationResults.zoneBreakdown.zone > 0 && (
-                      <div className="flex justify-between items-center border-b pb-1">
-                        <span className="text-gray-700">
-                          {propertyDetails.zone === "staff" ? "Staff Accomm. Share" : `Zone ${propertyDetails.zone} Share`}:
-                        </span>
-                        <span className="font-medium text-gray-900">OMR {calculationResults.zoneBreakdown.zone.toFixed(2)}</span>
-                      </div>
-                    )}
-                    {calculationResults.zoneBreakdown.building > 0 && (
-                      <div className="flex justify-between items-center border-b pb-1">
-                        <span className="text-gray-700">Building Specific Share:</span>
-                        <span className="font-medium text-gray-900">OMR {calculationResults.zoneBreakdown.building.toFixed(2)}</span>
-                      </div>
-                    )}
-                    <div className="pt-2 flex justify-between font-bold text-base">
-                      <span className="text-green-900">Total Annual:</span>
-                      <span className="text-green-900">OMR {calculationResults.totalAnnualContribution.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between text-sm text-gray-700">
-                      <span>Approx. Monthly:</span>
-                      <span>OMR {(calculationResults.totalAnnualContribution / 12).toFixed(2)}</span>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Component Breakdown */}
-                <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
-                  <h2 className="text-lg font-semibold mb-4 text-orange-800">Est. Contribution Breakdown</h2>
-                  <div className="max-h-60 overflow-y-auto text-sm">
-                    {calculationResults.componentBreakdown.length > 0 ? (
-                      <table className="min-w-full">
-                        <thead className="sticky top-0 bg-orange-100">
-                          <tr>
-                            <th className="text-left p-1 font-medium text-orange-900">Category / Component</th>
-                            <th className="text-right p-1 font-medium text-orange-900">Share (OMR)</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-orange-200">
-                          {calculationResults.componentBreakdown.map((item, index) => (
-                            <tr key={index}>
-                              <td className="p-1 text-gray-700">
-                                {item.name} <span className="text-xs text-gray-500">({item.category})</span>
-                              </td>
-                              <td className="p-1 text-right font-medium text-gray-800">{item.share.toFixed(2)}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    ) : (
-                      <p className="text-center text-gray-500 py-4">No breakdown data available.</p>
-                    )}
-                  </div>
-                </div>
-              </div>
-              
-              {/* Notes Section */}
-              <div className="mt-6 bg-gray-100 p-3 rounded-lg border border-gray-300">
-                <h3 className="text-sm font-semibold mb-1 text-gray-700">Calculation Notes</h3>
-                <ul className="text-xs list-disc list-inside space-y-1 text-gray-600">
-                  <li>Calculations are estimates based on 2025 projected rates derived from 2021 RFS (incl. 0.5% annual increase).</li>
-                  <li>These calculations are based on rates stored in the database. Actual fees may vary.</li>
-                  <li>Does not include operational service charges or potential special assessments.</li>
-                </ul>
-              </div>
+              <span className="text-xl font-bold text-blue-700">
+                {contribution.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} OMR
+              </span>
             </div>
-          )}
-          
-          {/* No Selection State */}
-          {!propertyDetails && !loading && (
-            <div className="text-center p-8 bg-muted/30 rounded-lg">
-              <Calculator className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-              <h3 className="text-lg font-medium mb-2">Select a Property</h3>
-              <p className="text-muted-foreground max-w-md mx-auto">
-                Select a property from the dropdown above to calculate reserve fund contributions based on the property's details and applicable assets.
-              </p>
+            
+            <div className="flex items-center justify-between mt-2">
+              <span className="text-sm text-gray-600">Monthly</span>
+              <span className="text-md font-medium text-gray-800">
+                {(contribution / 12).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} OMR
+              </span>
             </div>
-          )}
+          </div>
         </div>
       </CardContent>
     </Card>
   );
 };
-
-export default ReserveCalculator;

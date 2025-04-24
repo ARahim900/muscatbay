@@ -1,31 +1,26 @@
 
-/**
- * React hook for STP (Sewage Treatment Plant) data management
- */
 import { useState, useEffect } from 'react';
 import { 
   fetchSTPDailyData, 
+  fetchSTPMonthlyData, 
   filterDataByDateRange, 
-  filterDataByTimeRange,
-  calculateMonthlyAggregates 
+  calculateMonthlyAggregates
 } from '@/services/stpService';
 import { STPDailyRecord, STPMonthlyAggregate, STPFilters } from '@/types/stp';
 
-export const useSTPData = (initialFilters: Partial<STPFilters> = {}) => {
-  const [rawData, setRawData] = useState<STPDailyRecord[]>([]);
-  const [filteredData, setFilteredData] = useState<STPDailyRecord[]>([]);
+export const useSTPData = () => {
+  const [dailyData, setDailyData] = useState<STPDailyRecord[]>([]);
   const [monthlyData, setMonthlyData] = useState<STPMonthlyAggregate[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  
   const [filters, setFilters] = useState<STPFilters>({
-    timeRange: initialFilters.timeRange || 'ALL',
-    year: initialFilters.year || 'all',
-    month: initialFilters.month || 'all',
-    aggregation: initialFilters.aggregation || 'daily'
+    year: new Date().getFullYear(),
+    month: 'all',
+    view: 'daily',
+    sortBy: 'date',
+    sortOrder: 'desc'
   });
 
-  // Load initial data
   useEffect(() => {
     const controller = new AbortController();
     const { signal } = controller;
@@ -35,11 +30,14 @@ export const useSTPData = (initialFilters: Partial<STPFilters> = {}) => {
         setLoading(true);
         setError(null);
         
-        const stpData = await fetchSTPDailyData(signal);
-        setRawData(stpData);
+        // Load daily data
+        const stpDailyData = await fetchSTPDailyData(signal);
+        setDailyData(stpDailyData);
         
-        // Apply initial filters
-        applyFilters(stpData, filters);
+        // Load monthly data
+        const stpMonthlyData = await fetchSTPMonthlyData(signal);
+        setMonthlyData(stpMonthlyData as STPMonthlyAggregate[]);
+        
       } catch (err) {
         if (err instanceof Error && err.name !== 'AbortError') {
           console.error('Error loading STP data:', err);
@@ -58,60 +56,52 @@ export const useSTPData = (initialFilters: Partial<STPFilters> = {}) => {
     };
   }, []);
 
-  // Apply filters when they change
-  useEffect(() => {
-    applyFilters(rawData, filters);
-  }, [rawData, filters]);
-  
-  // Function to apply filters to the raw data
-  const applyFilters = (data: STPDailyRecord[], currentFilters: STPFilters) => {
-    if (!data || data.length === 0) {
-      setFilteredData([]);
-      setMonthlyData([]);
-      return;
-    }
+  // Get filtered daily data
+  const getFilteredDailyData = (): STPDailyRecord[] => {
+    if (dailyData.length === 0) return [];
     
-    let result: STPDailyRecord[];
+    let filtered = [...dailyData];
     
-    // Apply time range filter
-    if (currentFilters.timeRange !== 'ALL') {
-      result = filterDataByTimeRange(data, currentFilters.timeRange);
-    } else {
-      // Apply year and month filters
-      result = data.filter(record => {
-        const recordDate = new Date(record.date);
-        
-        if (currentFilters.year !== 'all') {
-          const recordYear = recordDate.getFullYear().toString();
-          if (recordYear !== currentFilters.year) return false;
-        }
-        
-        if (currentFilters.month !== 'all') {
-          const recordMonth = (recordDate.getMonth() + 1).toString().padStart(2, '0');
-          if (recordMonth !== currentFilters.month) return false;
-        }
-        
-        return true;
+    // Filter by year
+    filtered = filtered.filter(record => {
+      const date = new Date(record.date);
+      return date.getFullYear() === filters.year;
+    });
+    
+    // Filter by month if needed
+    if (filters.month !== 'all') {
+      filtered = filtered.filter(record => {
+        const date = new Date(record.date);
+        return date.getMonth() === (filters.month as number) - 1; // Month is 0-indexed in JS
       });
     }
     
-    // Set the filtered daily data
-    setFilteredData(result);
+    // Sort the data
+    filtered.sort((a, b) => {
+      const aValue = a[filters.sortBy] || 0;
+      const bValue = b[filters.sortBy] || 0;
+      
+      if (filters.sortBy === 'date') {
+        const aDate = new Date(a.date).getTime();
+        const bDate = new Date(b.date).getTime();
+        return filters.sortOrder === 'asc' ? aDate - bDate : bDate - aDate;
+      }
+      
+      return filters.sortOrder === 'asc' ? Number(aValue) - Number(bValue) : Number(bValue) - Number(aValue);
+    });
     
-    // Calculate monthly aggregates
-    const aggregates = calculateMonthlyAggregates(result);
-    setMonthlyData(aggregates);
+    return filtered;
   };
-  
+
   // Update filters
   const updateFilters = (newFilters: Partial<STPFilters>) => {
     setFilters(prev => ({ ...prev, ...newFilters }));
   };
-  
+
   return {
-    rawData,
-    filteredData,
+    dailyData,
     monthlyData,
+    filteredDailyData: getFilteredDailyData(),
     loading,
     error,
     filters,

@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useRef } from 'react';
 import Layout from '@/components/layout/Layout';
 import { stpMonthlyData, formatMonth, getDailyDataForMonth } from '@/utils/stpDataUtils';
@@ -45,13 +44,14 @@ const STPDashboard = () => {
   }, [selectedMonth]);
 
   const handleMonthChange = (value: string) => {
-    console.log("Selected month changed to:", value);
-    setSelectedMonth(value);
-    const dailyData = getDailyDataForMonth(value);
+    // Convert string value to number or 'all'
+    const monthValue = value === 'all' ? 'all' : parseInt(value, 10);
+    setSelectedMonth(monthValue);
+    const dailyData = getDailyDataForMonth(monthValue);
     if (dailyData.length === 0) {
-      toast.warning(`No daily data found for ${formatMonth(value)}. Please select another month.`);
+      toast.warning(`No daily data found for ${formatMonth(monthValue)}. Please select another month.`);
     } else {
-      toast.success(`Loaded ${dailyData.length} days of data for ${formatMonth(value)}`);
+      toast.success(`Loaded ${dailyData.length} days of data for ${formatMonth(monthValue)}`);
     }
   };
 
