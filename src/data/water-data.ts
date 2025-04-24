@@ -1,43 +1,34 @@
 
-export interface WaterZone {
-  name: string;
-  consumption: number;
-  loss: number;
-}
+/**
+ * Water data types and helper functions
+ * 
+ * Note: This file now serves as a bridge to the new data service architecture.
+ * For new code, import directly from src/services/waterService.ts
+ */
 
-export interface WaterData {
-  total: {
-    consumption: number;
-    loss: number;
-  };
-  zones: WaterZone[];
-}
+import { WaterConsumptionData, WaterZone } from '@/types/water';
+import { fetchWaterData } from '@/services/waterService';
 
-export const waterData: WaterData = {
-  total: {
-    consumption: 48234,
-    loss: 2892,
-  },
-  zones: [
-    {
-      name: "Residential",
-      consumption: 21450,
-      loss: 1072,
-    },
-    {
-      name: "Commercial",
-      consumption: 14780,
-      loss: 739,
-    },
-    {
-      name: "Landscape",
-      consumption: 9860,
-      loss: 892,
-    },
-    {
-      name: "Amenities",
-      consumption: 2144,
-      loss: 189,
-    },
-  ],
+export const getWaterData = async (): Promise<WaterConsumptionData> => {
+  try {
+    return await fetchWaterData();
+  } catch (error) {
+    console.error('Error fetching water data:', error);
+    return { 
+      metadata: {
+        version: '1.0.0',
+        timestamp: new Date().toISOString(),
+        description: 'Error fallback data',
+        units: 'm³'
+      },
+      total: {
+        consumption: 0,
+        loss: 0
+      },
+      zones: [] 
+    };
+  }
 };
+
+// Export the types for backward compatibility
+export type { WaterZone, WaterConsumptionData };

@@ -6,13 +6,67 @@ import { FilterButton } from "@/components/water-system/FilterButton";
 import { MetricCard } from "@/components/water-system/MetricCard";
 import { DataTable } from "@/components/water-system/DataTable";
 import { ArrowDown, ArrowUp, Droplets, Gauge } from 'lucide-react';
-import { waterData } from '@/data/water-data';
+import { useWaterData } from '@/hooks/useWaterData';
 import { themeConfig } from '@/lib/theme-config';
-import { formatNumber } from '@/lib/utils';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 export function WaterSystemDashboard() {
-  // Define the theme and data we'll use
+  // Use the water data hook to fetch data
+  const { data, zoneData, systemEfficiency, loading, error, updateFilters } = useWaterData();
+  
+  // Define the theme from config
   const theme = themeConfig;
+  
+  // Handle filter button clicks
+  const handleZoneFilterClick = (zone: string) => {
+    updateFilters({ zone });
+  };
+  
+  const handleTimeFilterClick = (month: string) => {
+    updateFilters({ month });
+  };
+  
+  // Handle loading state
+  if (loading) {
+    return (
+      <div className="container mx-auto p-6">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <Skeleton className="h-8 w-64 mb-2" />
+            <Skeleton className="h-4 w-96" />
+          </div>
+          <div className="flex gap-2">
+            <Skeleton className="h-10 w-24" />
+            <Skeleton className="h-10 w-32" />
+          </div>
+        </div>
+        
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
+          <Skeleton className="h-32" />
+          <Skeleton className="h-32" />
+        </div>
+        
+        <Skeleton className="h-64" />
+      </div>
+    );
+  }
+  
+  // Handle error state
+  if (error || !data) {
+    return (
+      <div className="container mx-auto p-6">
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>
+            {error || 'Failed to load water system data. Please try again later.'}
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
   
   return (
     <div className="container mx-auto p-6">
@@ -24,25 +78,43 @@ export function WaterSystemDashboard() {
           </p>
         </div>
         <div className="flex gap-2">
-          <FilterButton>All Zones</FilterButton>
-          <FilterButton>Last 30 Days</FilterButton>
+          <FilterButton onClick={() => handleZoneFilterClick('all')}>
+            All Zones
+          </FilterButton>
+          <FilterButton onClick={() => handleTimeFilterClick('last30days')}>
+            Last 30 Days
+          </FilterButton>
         </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
         <MetricCard
           title="Total Consumption"
-          value={48234}
+          value={data.total.consumption}
           unit="m³"
           icon={<Droplets className="h-4 w-4" />}
-          trend={12.5}
+          trend={{
+            value: 12.5,
+            icon: ArrowUp,
+            label: "vs. last month"
+          }}
+          lossPercent={0}
+          secondaryValue={0}
+          secondaryUnit=""
         />
         <MetricCard
           title="System Efficiency"
-          value={94.2}
+          value={systemEfficiency}
           unit="%"
           icon={<Gauge className="h-4 w-4" />}
-          trend={-2.1}
+          trend={{
+            value: -2.1,
+            icon: ArrowDown,
+            label: "vs. last month"
+          }}
+          lossPercent={0}
+          secondaryValue={0}
+          secondaryUnit=""
         />
       </div>
 

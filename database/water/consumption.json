@@ -1,0 +1,35 @@
+
+{
+  "metadata": {
+    "version": "1.0.0",
+    "timestamp": "2025-04-24T12:00:00Z",
+    "description": "Water consumption and loss data by zone",
+    "units": "m³"
+  },
+  "total": {
+    "consumption": 48234,
+    "loss": 2892
+  },
+  "zones": [
+    {
+      "name": "Residential",
+      "consumption": 21450,
+      "loss": 1072
+    },
+    {
+      "name": "Commercial",
+      "consumption": 14780,
+      "loss": 739
+    },
+    {
+      "name": "Landscape",
+      "consumption": 9860,
+      "loss": 892
+    },
+    {
+      "name": "Amenities",
+      "consumption": 2144,
+      "loss": 189
+    }
+  ]
+}

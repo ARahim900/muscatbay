@@ -1,85 +1,32 @@
 
-export interface WaterMetrics {
-  bulkReading: number;
-  l3Sum: number;
-  loss: number;
-  lossPercent: number;
-}
+/**
+ * Type definitions for water system data
+ */
 
-export interface ZoneData {
-  zone: string;
+export interface WaterZone {
+  name: string;
   consumption: number;
   loss: number;
-  lossPercent: number;
 }
 
-export interface TypeData {
-  type: string;
-  value: number;
-  percentage: number;
-}
-
-export interface WaterSystemMetrics {
+export interface WaterConsumptionData {
+  metadata: {
+    version: string;
+    timestamp: string;
+    description: string;
+    units: string;
+  };
   total: {
     consumption: number;
     loss: number;
-    lossPercent: number;
   };
-  zones: ZoneData[];
-  types: TypeData[];
-  monthly: {
-    [key: string]: {
-      consumption: number;
-      loss: number;
-    };
-  }
+  zones: WaterZone[];
 }
 
-export interface WaterData {
-  meter_label: string;
-  account_number: string;
+export interface WaterFilter {
+  month: string;
   zone: string;
   type: string;
-  parent_meter: string;
-  jan_24: number;
-  feb_24: number;
-  mar_24: number;
-  apr_24: number;
-  may_24: number;
-  jun_24: number;
-  jul_24: number;
-  aug_24: number;
-  sep_24: number;
-  oct_24: number;
-  nov_24: number;
-  dec_24: number;
-  jan_25: number;
-  feb_25: number;
-  total: number;
-}
-
-export interface CSVRowData {
-  'Meter Label': string;
-  'Acct #': string;
-  'Zone': string;
-  'Type': string;
-  'Parent Meter': string;
-  'Jan-24': string;
-  'Feb-24': string;
-  'Mar-24': string;
-  'Apr-24': string;
-  'May-24': string;
-  'Jun-24': string;
-  'Jul-24': string;
-  'Aug-24': string;
-  'Sep-24': string;
-  'Oct-24': string;
-  'Nov-24': string;
-  'Dec-24': string;
-  'Jan-25': string;
-  'Feb-25': string;
-  'Total': string;
-  [key: string]: string;
 }
 
 export interface WaterSystemData {
@@ -88,36 +35,18 @@ export interface WaterSystemData {
     L2: number;
     L3: number;
   };
-  
-  zones: {
-    [key: string]: {
-      consumption: number;
-      loss: number;
-    };
-  };
-  
-  types: {
-    [key: string]: number;
-  };
-  
+  zones: Record<string, {
+    consumption: number;
+    loss: number;
+  }>;
+  types: Record<string, number>;
   losses: {
     systemLoss: number;
-    zoneLosses: {
-      [key: string]: number;
-    };
     financialImpact: number;
+    zoneLosses: Record<string, number>;
   };
-  
-  monthlyTrends: {
-    [key: string]: {
-      consumption: number;
-      loss: number;
-    };
-  };
-}
-
-export interface WaterFilter {
-  month: string;
-  zone: string;
-  type: string;
+  monthlyTrends: Record<string, {
+    consumption: number;
+    loss: number;
+  }>;
 }
