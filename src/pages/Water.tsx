@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { 
   Card, 
@@ -6,186 +7,184 @@ import {
   CardHeader, 
   CardTitle 
 } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { WaterSystemMetrics, ZoneData, TypeData } from '@/types/water';
-import { formatNumber } from '@/lib/utils';
 import { 
-  Droplets, 
-  BarChart3, 
-  ArrowRight, 
-  CircleDollarSign, 
-  ArrowUpRight 
-} from 'lucide-react';
+  WaterSystemMetrics, 
+  ZoneData, 
+  TypeData 
+} from '@/types/water';
+import { formatNumber } from '@/lib/utils';
 
-// Use a color that is defined in your theme
-const themeColor = "primary";
+// Import color theme configuration if it exists
+import { themeConfig } from '@/lib/theme-config';
 
-const Water: React.FC = () => {
-  // Mock data for water system metrics
-  const waterMetrics: WaterSystemMetrics = {
-    totalConsumption: 48234,
-    totalLoss: 2865,
-    efficiency: 94.07,
-    averageDailyUsage: 1608,
-    waterRate: 0.3,
-    monthlyCost: 14470
-  };
+// Mock data for the page
+const waterMetrics: WaterSystemMetrics = {
+  totalConsumption: 48234,
+  totalLoss: 2511,
+  efficiency: 94.8,
+  averageDailyUsage: 1608,
+  waterRate: 2.5,
+  monthlyCost: 4250
+};
 
-  // Mock data for zone-wise consumption
-  const zoneData: ZoneData[] = [
-    { name: 'Residential', consumption: 28940, loss: 1736, percentage: 60 },
-    { name: 'Commercial', consumption: 12450, loss: 747, percentage: 25 },
-    { name: 'Common Areas', consumption: 6844, loss: 382, percentage: 15 }
-  ];
+const zoneData: ZoneData[] = [
+  { name: 'Zone A', consumption: 12543, loss: 780, percentage: 26 },
+  { name: 'Zone B', consumption: 18320, loss: 1150, percentage: 38 },
+  { name: 'Zone C', consumption: 9871, loss: 401, percentage: 20.5 },
+  { name: 'Zone D', consumption: 7500, loss: 180, percentage: 15.5 }
+];
 
-  // Mock data for type-wise consumption (example: usage types)
-  const typeData: TypeData[] = [
-    { name: 'Irrigation', value: 15000, percentage: 31 },
-    { name: 'Domestic', value: 25000, percentage: 52 },
-    { name: 'Industrial', value: 8234, percentage: 17 }
-  ];
-  
+const typeData: TypeData[] = [
+  { name: 'Residential', value: 23100, percentage: 47.9 },
+  { name: 'Commercial', value: 14500, percentage: 30.1 },
+  { name: 'Landscape', value: 8400, percentage: 17.4 },
+  { name: 'Common Areas', value: 2234, percentage: 4.6 }
+];
+
+// Define colors to use in the UI
+const colors = {
+  primary: '#0077cc',
+  teal: '#14b8a6',
+  lavender: '#8b5cf6',
+  gold: '#f59e0b',
+};
+
+const WaterPage: React.FC = () => {
   return (
-    <div className="container mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-2">Water Management</h1>
-      <p className="text-muted-foreground mb-6">
-        Track and optimize water consumption across different zones and types
-      </p>
-      
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+    <div className="container mx-auto p-6 space-y-6">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Water System</h1>
+          <p className="text-muted-foreground">
+            Monitor and manage water consumption and efficiency
+          </p>
+        </div>
+        <div className="flex items-center mt-4 md:mt-0">
+          <select 
+            className="border rounded-md p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            defaultValue="feb-2023"
+          >
+            <option value="jan-2023">January 2023</option>
+            <option value="feb-2023">February 2023</option>
+            <option value="mar-2023">March 2023</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Key metrics section */}
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total Consumption
-            </CardTitle>
+            <CardTitle className="text-lg">Total Consumption</CardTitle>
+            <CardDescription>Monthly water usage across all zones</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatNumber(waterMetrics.totalConsumption)} m³</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              <Droplets className="h-4 w-4 inline-block mr-1" />
-              {formatNumber(waterMetrics.averageDailyUsage)} m³ daily average
+            <div className="text-3xl font-bold">{formatNumber(waterMetrics.totalConsumption)} m³</div>
+            <p className="text-sm text-muted-foreground mt-2">
+              Average daily: {formatNumber(waterMetrics.averageDailyUsage)} m³
             </p>
           </CardContent>
         </Card>
         
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Water Loss
-            </CardTitle>
+            <CardTitle className="text-lg">System Efficiency</CardTitle>
+            <CardDescription>Water delivered vs water lost</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatNumber(waterMetrics.totalLoss)} m³</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {((waterMetrics.totalLoss / waterMetrics.totalConsumption) * 100).toFixed(1)}% of total consumption
+            <div className="text-3xl font-bold">{formatNumber(waterMetrics.efficiency, 1)}%</div>
+            <p className="text-sm text-muted-foreground mt-2">
+              Total loss: {formatNumber(waterMetrics.totalLoss)} m³
             </p>
           </CardContent>
         </Card>
         
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Monthly Cost
-            </CardTitle>
+            <CardTitle className="text-lg">Water Cost</CardTitle>
+            <CardDescription>Total monthly expenditure</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatNumber(waterMetrics.monthlyCost)} OMR</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              <CircleDollarSign className="h-4 w-4 inline-block mr-1" />
-              {formatNumber(waterMetrics.waterRate)} OMR per m³
+            <div className="text-3xl font-bold">{formatNumber(waterMetrics.monthlyCost)} OMR</div>
+            <p className="text-sm text-muted-foreground mt-2">
+              Rate: {waterMetrics.waterRate} OMR/m³
             </p>
           </CardContent>
         </Card>
       </div>
-      
-      <Tabs defaultValue="zones" className="w-full">
-        <TabsList>
-          <TabsTrigger value="zones">Zones</TabsTrigger>
-          <TabsTrigger value="types">Types</TabsTrigger>
-          <TabsTrigger value="performance">Performance</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="zones">
-          <Card>
-            <CardHeader>
-              <CardTitle>Consumption by Zone</CardTitle>
-              <CardDescription>
-                Water usage distribution across different zones
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ul className="list-none pl-0">
-                {zoneData.map((zone) => (
-                  <li key={zone.name} className="flex items-center justify-between py-2">
-                    <div className="flex items-center">
-                      <BarChart3 className="h-4 w-4 mr-2 text-muted-foreground" />
-                      {zone.name}
-                    </div>
-                    <div className="font-medium">
-                      {formatNumber(zone.consumption)} m³ ({zone.percentage}%)
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="types">
-          <Card>
-            <CardHeader>
-              <CardTitle>Consumption by Type</CardTitle>
-              <CardDescription>
-                Water usage distribution by different types of consumption
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ul className="list-none pl-0">
-                {typeData.map((type) => (
-                  <li key={type.name} className="flex items-center justify-between py-2">
-                    <div className="flex items-center">
-                      <Droplets className="h-4 w-4 mr-2 text-muted-foreground" />
-                      {type.name}
-                    </div>
-                    <div className="font-medium">
-                      {formatNumber(type.value)} m³ ({type.percentage}%)
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="performance">
-          <Card>
-            <CardHeader>
-              <CardTitle>System Performance</CardTitle>
-              <CardDescription>
-                Overall water system efficiency and key metrics
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Efficiency</p>
-                  <div className="text-2xl font-bold">
-                    {formatNumber(waterMetrics.efficiency)}%
-                  </div>
+
+      {/* Zones section */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Consumption by Zone</CardTitle>
+          <CardDescription>
+            Distribution of water usage across different zones
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-8">
+            {zoneData.map((zone) => (
+              <div key={zone.name} className="space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <div className="font-medium">{zone.name}</div>
+                  <div>{formatNumber(zone.consumption)} m³</div>
                 </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Water Rate</p>
-                  <div className="text-2xl font-bold">
-                    {formatNumber(waterMetrics.waterRate)} OMR/m³
-                  </div>
+                <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full rounded-full" 
+                    style={{ 
+                      width: `${zone.percentage}%`, 
+                      backgroundColor: colors.primary 
+                    }}
+                  />
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  {formatNumber(zone.percentage, 1)}% of total • Loss: {formatNumber(zone.loss)} m³
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Types section */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Consumption by Type</CardTitle>
+          <CardDescription>
+            Water usage breakdown by property type
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-8">
+            {typeData.map((type, index) => (
+              <div key={type.name} className="space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <div className="font-medium">{type.name}</div>
+                  <div>{formatNumber(type.value)} m³</div>
+                </div>
+                <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full rounded-full" 
+                    style={{ 
+                      width: `${type.percentage}%`,
+                      backgroundColor: index === 0 ? colors.teal : 
+                                       index === 1 ? colors.lavender :
+                                       index === 2 ? colors.gold : 
+                                       colors.primary
+                    }}
+                  />
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  {formatNumber(type.percentage, 1)}% of total
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
 
-export default Water;
+export default WaterPage;

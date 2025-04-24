@@ -34,3 +34,5 @@ export const CriticalAssetsTable: React.FC<CriticalAssetsTableProps> = ({ assets
     </Table>
   );
 };
+
+export default CriticalAssetsTable;

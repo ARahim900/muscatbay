@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { ElectricityRecord, ElectricityConsumptionData } from '@/types/electricity';
+import { ElectricityConsumptionData } from '@/types/electricity';
 
 export const useElectricityData = () => {
   const [data, setData] = useState<ElectricityConsumptionData | null>(null);
@@ -45,7 +45,7 @@ export const useElectricityData = () => {
     fetchData();
   }, []);
 
-  // Fixed by removing the argument
+  // Function to generate random colors
   const getRandomColor = (): string => {
     const letters = '0123456789ABCDEF';
     let color = '#';

@@ -34,3 +34,5 @@ export const AssetConditionsTable: React.FC<AssetConditionsTableProps> = ({ cond
     </Table>
   );
 };
+
+export default AssetConditionsTable;

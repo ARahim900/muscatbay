@@ -14,3 +14,5 @@ export const ReserveCalculator: React.FC = () => {
     </Card>
   );
 };
+
+export default ReserveCalculator;

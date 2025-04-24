@@ -1,5 +1,5 @@
 
-import { STPDailyRecord } from '@/types/stp';
+import { STPDailyRecord, STPMonthlyData } from '@/types/stp';
 
 export const fetchSTPDailyData = async (): Promise<STPDailyRecord[]> => {
   // Mock data
@@ -33,6 +33,38 @@ export const fetchSTPDailyData = async (): Promise<STPDailyRecord[]> => {
       dissolvedOxygen: 5.7,
       temperature: 26.5,
       remarks: 'Normal operation'
+    }
+  ];
+  
+  return mockData;
+};
+
+export const fetchSTPMonthlyData = async (): Promise<STPMonthlyData[]> => {
+  // Mock data
+  const mockData: STPMonthlyData[] = [
+    {
+      month: 'Jan 2023',
+      tankerTrips: 120,
+      expectedVolumeTankers: 3600,
+      directSewageMB: 28500,
+      totalInfluent: 32100,
+      totalWaterProcessed: 30950,
+      tseToIrrigation: 29400,
+      utilizationPercentage: '92%',
+      processingEfficiency: '96%',
+      capacity: 35000
+    },
+    {
+      month: 'Feb 2023',
+      tankerTrips: 115,
+      expectedVolumeTankers: 3450,
+      directSewageMB: 27800,
+      totalInfluent: 31250,
+      totalWaterProcessed: 30100,
+      tseToIrrigation: 28600,
+      utilizationPercentage: '91%',
+      processingEfficiency: '96%',
+      capacity: 35000
     }
   ];
   

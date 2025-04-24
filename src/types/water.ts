@@ -1,91 +1,51 @@
-export interface WaterData {
-  meter_label: string;
-  account_number: string;
-  zone: string;
-  type: string;
-  parent_meter: string;
-  jan_24: number;
-  feb_24: number;
-  mar_24: number;
-  apr_24: number;
-  may_24: number;
-  jun_24: number;
-  jul_24: number;
-  aug_24: number;
-  sep_24: number;
-  oct_24: number;
-  nov_24: number;
-  dec_24: number;
-  jan_25: number;
-  feb_25: number;
-  total: number;
-}
 
-export interface CSVRowData {
-  'Meter Label': string;
-  'Acct #': string;
-  'Zone': string;
-  'Type': string;
-  'Parent Meter': string;
-  'Jan-24': string;
-  'Feb-24': string;
-  'Mar-24': string;
-  'Apr-24': string;
-  'May-24': string;
-  'Jun-24': string;
-  'Jul-24': string;
-  'Aug-24': string;
-  'Sep-24': string;
-  'Oct-24': string;
-  'Nov-24': string;
-  'Dec-24': string;
-  'Jan-25': string;
-  'Feb-25': string;
-  'Total': string;
-  [key: string]: string; // Allow for additional properties
-}
+// Water related type definitions
 
-export interface WaterSystemData {
-  // L1, L2, L3 level data
-  levels: {
-    L1: number;
-    L2: number;
-    L3: number;
+export interface WaterConsumptionData {
+  metadata: {
+    version: string;
+    timestamp: string;
+    description: string;
   };
-  
-  // Zone analysis data
-  zones: {
-    [key: string]: {
-      consumption: number;
-      loss: number;
-    };
+  total: {
+    consumption: number;
+    loss: number;
+    cost: number;
   };
-  
-  // Type breakdown data
-  types: {
-    [key: string]: number;
-  };
-  
-  // Loss analysis data
-  losses: {
-    systemLoss: number;
-    zoneLosses: {
-      [key: string]: number;
-    };
-    financialImpact: number; // in OMR
-  };
-  
-  // Monthly trends
-  monthlyTrends: {
-    [key: string]: {
-      consumption: number;
-      loss: number;
-    };
+  zones: WaterZone[];
+  trend: {
+    [month: string]: number;
   };
 }
 
-export interface WaterFilter {
-  month: string;
-  zone: string;
-  type: string;
+export interface WaterZone {
+  id: string;
+  name: string;
+  consumption: number;
+  loss: number;
+  trend: {
+    [month: string]: number;
+  };
+}
+
+export interface WaterSystemMetrics {
+  totalConsumption: number;
+  totalLoss: number;
+  efficiency: number;
+  averageDailyUsage: number;
+  waterRate: number;
+  monthlyCost: number;
+}
+
+export interface ZoneData {
+  name: string;
+  consumption: number;
+  loss: number;
+  percentage: number;
+}
+
+export interface TypeData {
+  name: string;
+  value: number;
+  percentage: number;
 }

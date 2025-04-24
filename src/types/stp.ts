@@ -1,19 +1,20 @@
 
-export interface STPDailyData {
+// STP related type definitions
+
+export interface STPDailyRecord {
+  id: string;
   date: string;
-  tankerTrips: number;
-  expectedVolumeTankers: number;
-  directSewageMB: number;
-  totalInfluent: number;
-  totalWaterProcessed: number;
-  tseToIrrigation: number;
-  "NH4-N"?: number;
-  pH?: number;
-  BOD?: number;
-  COD?: number;
-  TSS?: number;
-  TN?: number;
-  TP?: number;
+  plantId: string;
+  plantName: string;
+  influentFlow: number;
+  effluentFlow: number;
+  totalSuspendedSolids: number;
+  biochemicalOxygenDemand: number;
+  chemicalOxygenDemand: number;
+  pH: number;
+  dissolvedOxygen: number;
+  temperature: number;
+  remarks?: string;
 }
 
 export interface STPMonthlyData {
@@ -49,4 +50,3 @@ export interface ChartDataPoint {
   value: number;
   fill?: string;
 }
-

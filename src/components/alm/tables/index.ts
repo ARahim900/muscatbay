@@ -1,7 +1,7 @@
 
 // Export all table components from the tables directory
-export { default as AssetCategoriesTable } from './AssetCategoriesTable';
-export { default as AssetConditionsTable } from './AssetConditionsTable';
-export { default as CriticalAssetsTable } from './CriticalAssetsTable';
-export { default as MaintenanceForecastTable } from './MaintenanceForecastTable';
-export { default as UpcomingMaintenanceTable } from './UpcomingMaintenanceTable';
+export { AssetCategoriesTable } from './AssetCategoriesTable';
+export { AssetConditionsTable } from './AssetConditionsTable';
+export { CriticalAssetsTable } from './CriticalAssetsTable';
+export { MaintenanceForecastTable } from './MaintenanceForecastTable';
+export { UpcomingMaintenanceTable } from './UpcomingMaintenanceTable';

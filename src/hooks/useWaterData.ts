@@ -4,6 +4,8 @@ import { WaterConsumptionData } from '@/types/water';
 
 export const useWaterData = () => {
   const [data, setData] = useState<WaterConsumptionData | null>(null);
+  const [zoneData, setZoneData] = useState<any[]>([]);
+  const [systemEfficiency, setSystemEfficiency] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -21,64 +23,49 @@ export const useWaterData = () => {
           },
           total: {
             consumption: 48234,
-            loss: 2865,
-            cost: 14470
+            loss: 2511,
+            cost: 4250
           },
           zones: [
             {
               id: 'z1',
-              name: 'Residential',
-              consumption: 28940,
-              loss: 1736,
-              trend: {
-                'Jan': 27500,
-                'Feb': 28100,
-                'Mar': 28400,
-                'Apr': 28940,
-                'May': 29300,
-                'Jun': 30100
-              }
+              name: 'Zone A',
+              consumption: 12543,
+              loss: 780,
+              trend: { 'Jan': 11800, 'Feb': 12100, 'Mar': 12543 }
             },
             {
               id: 'z2',
-              name: 'Commercial',
-              consumption: 12450,
-              loss: 747,
-              trend: {
-                'Jan': 11900,
-                'Feb': 12200,
-                'Mar': 12000,
-                'Apr': 12450,
-                'May': 12600,
-                'Jun': 12800
-              }
-            },
-            {
-              id: 'z3',
-              name: 'Common Areas',
-              consumption: 6844,
-              loss: 382,
-              trend: {
-                'Jan': 6500,
-                'Feb': 6600,
-                'Mar': 6750,
-                'Apr': 6844,
-                'May': 6900,
-                'Jun': 7100
-              }
+              name: 'Zone B',
+              consumption: 18320,
+              loss: 1150,
+              trend: { 'Jan': 17900, 'Feb': 18100, 'Mar': 18320 }
             }
           ],
           trend: {
-            'Jan': 45900,
-            'Feb': 46900,
-            'Mar': 47150,
-            'Apr': 48234,
-            'May': 48800,
-            'Jun': 50000
+            'Jan': 46100,
+            'Feb': 47200,
+            'Mar': 48234
           }
         };
         
+        // Calculate system efficiency
+        const totalConsumption = mockData.total.consumption;
+        const totalLoss = mockData.total.loss;
+        const efficiency = totalConsumption > 0 ? 
+          ((totalConsumption - totalLoss) / totalConsumption) * 100 : 0;
+        
+        // Format zone data for display
+        const zones = mockData.zones.map(zone => ({
+          name: zone.name,
+          consumption: zone.consumption,
+          loss: zone.loss,
+          percentage: totalConsumption > 0 ? (zone.consumption / totalConsumption) * 100 : 0
+        }));
+        
         setData(mockData);
+        setZoneData(zones);
+        setSystemEfficiency(parseFloat(efficiency.toFixed(1)));
         setLoading(false);
       } catch (err) {
         console.error('Error fetching water data:', err);
@@ -90,5 +77,10 @@ export const useWaterData = () => {
     fetchData();
   }, []);
 
-  return { data, loading, error };
+  const updateFilters = (filters: any) => {
+    console.log('Updating filters:', filters);
+    // In a real app, this would filter the data based on the provided filters
+  };
+
+  return { data, zoneData, systemEfficiency, loading, error, updateFilters };
 };

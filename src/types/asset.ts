@@ -1,44 +1,51 @@
 
-export interface PropertyUnit {
-  id: number;
-  unit_no: string;
-  zone: string;
-  sector_zone: string;
-  unit_type: string;
-  property_type: string;
-  status: string;
-  bua: number;
-  plot: number | null;
-  building: string | null;
-  bedrooms: number | null;
-}
+// Asset related type definitions
 
-export interface ContributionRate {
-  category: string;
-  zone: string;
-  property_type: string;
-  rate: number;
-}
-
-export interface ContributionBreakdown {
+export interface Asset {
+  id: string;
   name: string;
   category: string;
-  share: number;
+  location: string;
+  acquisitionDate: string;
+  value: number;
+  lifeExpectancy: number;
+  condition: string;
+  criticality: string;
+  nextMaintenanceDate: string;
 }
 
-export interface ContributionCalculation {
-  propertyDetails: PropertyUnit;
-  calculation: {
-    totalAnnualContribution: number;
-    zoneBreakdown: {
-      master: number;
-      zone: number;
-      building: number;
-    };
-    componentBreakdown: Array<{
-      name: string;
-      category: string;
-      share: number;
-    }>;
-  };
+export interface AssetCategorySummary {
+  category: string;
+  count: number;
+  totalValue: number;
+  assets: Asset[];
+}
+
+export interface AssetLocationSummary {
+  location: string;
+  count: number;
+  totalValue: number;
+  assets: Asset[];
+}
+
+export interface AssetCondition {
+  condition: string;
+  count: number;
+}
+
+export interface AssetMaintenance {
+  id: string;
+  assetId: string;
+  assetName: string;
+  maintenanceType: string;
+  scheduledDate: string;
+  estimatedCost: number;
+  priority: 'Low' | 'Medium' | 'High' | 'Critical';
+}
+
+export interface AssetLifecycleForecast {
+  year: number;
+  replacements: number;
+  maintenanceCosts: number;
+  assets: Asset[];
 }

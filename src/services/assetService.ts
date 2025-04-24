@@ -1,3 +1,4 @@
+
 // Import necessary types from the asset type definitions
 import { Asset, AssetCategorySummary, AssetLocationSummary, AssetCondition } from '@/types/asset';
 
@@ -173,4 +174,46 @@ export function getAssetConditions(): AssetCondition[] {
   });
   
   return conditions;
+}
+
+export function getAssetMaintenanceSchedule() {
+  // Mock maintenance schedule
+  return [
+    {
+      id: 'maint-001',
+      assetId: 'asset-001',
+      assetName: 'HVAC System - Building A',
+      maintenanceType: 'Preventive',
+      scheduledDate: '2023-09-15',
+      estimatedCost: 2500,
+      priority: 'Medium'
+    },
+    {
+      id: 'maint-002',
+      assetId: 'asset-002',
+      assetName: 'Elevators - Main Building',
+      maintenanceType: 'Inspection',
+      scheduledDate: '2023-08-05',
+      estimatedCost: 1800,
+      priority: 'High'
+    }
+  ];
+}
+
+export function getAssetLifecycleForecast() {
+  // Mock lifecycle forecast
+  return [
+    {
+      year: 2023,
+      replacements: 2,
+      maintenanceCosts: 45000,
+      assets: []
+    },
+    {
+      year: 2024,
+      replacements: 5,
+      maintenanceCosts: 78000,
+      assets: []
+    }
+  ];
 }

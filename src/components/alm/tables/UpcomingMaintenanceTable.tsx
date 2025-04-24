@@ -34,3 +34,5 @@ export const UpcomingMaintenanceTable: React.FC<UpcomingMaintenanceTableProps> =
     </Table>
   );
 };
+
+export default UpcomingMaintenanceTable;

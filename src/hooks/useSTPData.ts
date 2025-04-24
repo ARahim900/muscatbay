@@ -24,7 +24,6 @@ export const useSTPData = () => {
   // Fetch data when component mounts
   useEffect(() => {
     const controller = new AbortController();
-    const { signal } = controller;
 
     const fetchData = async () => {
       try {
@@ -32,16 +31,12 @@ export const useSTPData = () => {
         setError(null);
 
         // Fetch daily data
-        const dailyResult = await fetchSTPDailyData(signal);
-        const processedDailyData = processData(
-          dailyResult, 
-          filters.dateRange,
-          filters.plant
-        );
+        const dailyResult = await fetchSTPDailyData();
+        const processedDailyData = processData(dailyResult);
         setDailyData(processedDailyData);
 
         // Fetch monthly data
-        const monthlyResult = await fetchSTPMonthlyData(signal);
+        const monthlyResult = await fetchSTPMonthlyData();
         setMonthlyData(monthlyResult || []);
       } catch (err) {
         if (err instanceof Error && err.name !== 'AbortError') {

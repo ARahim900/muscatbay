@@ -30,3 +30,5 @@ export const MaintenanceForecastTable: React.FC<MaintenanceForecastTableProps> =
     </Table>
   );
 };
+
+export default MaintenanceForecastTable;
