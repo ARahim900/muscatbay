@@ -47,6 +47,7 @@ export const parseCSVFromClipboard = async (
         dec_24: 0,
         jan_25: 0,
         feb_25: 0,
+        mar_25: 0,
         total: 0
       };
       
@@ -65,6 +66,11 @@ export const parseCSVFromClipboard = async (
           }
         }
       });
+      
+      // Calculate total
+      waterDataEntry.total = Object.keys(waterDataEntry)
+        .filter(key => key.match(/^(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)_\d{2}$/))
+        .reduce((sum, key) => sum + ((waterDataEntry as any)[key] || 0), 0);
       
       return waterDataEntry;
     });
@@ -107,6 +113,7 @@ export const saveWaterData = async (data: WaterData[]): Promise<{ success: boole
       dec_24: item.dec_24 || 0,
       jan_25: item.jan_25 || 0,
       feb_25: item.feb_25 || 0,
+      mar_25: item.mar_25 || 0,
       total: item.total || 0
     }));
     

@@ -1,8 +1,31 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { STPDailyData } from '@/types/stp';
+import { fetchData } from '@/services/dataService';
 
-// Mock data for STP daily records
+// Fetch STP daily data from JSON
+export const fetchSTPDailyData = async () => {
+  try {
+    const data = await fetchData('stp/daily.json');
+    return data.records || [];
+  } catch (error) {
+    console.error("Error fetching STP daily data:", error);
+    return [];
+  }
+};
+
+// Fetch STP monthly data from JSON
+export const fetchSTPMonthlyData = async () => {
+  try {
+    const data = await fetchData('stp/monthly.json');
+    return data.records || [];
+  } catch (error) {
+    console.error("Error fetching STP monthly data:", error);
+    return [];
+  }
+};
+
+// For immediate use in components before async data loads
 export const stpDailyData = [
   {
     id: "1",
@@ -36,7 +59,7 @@ export const stpDailyData = [
   }
 ];
 
-// Mock data for monthly STP data
+// For immediate use in components before async data loads
 export const stpMonthlyData = [
   {
     month: "2024-01",
@@ -45,7 +68,9 @@ export const stpMonthlyData = [
     directSewageMB: 10500,
     totalInfluent: 16900,
     totalWaterProcessed: 16200,
-    tseToIrrigation: 14800
+    tseToIrrigation: 14800,
+    utilizationPercentage: "91.4%",
+    processingEfficiency: "95.9%"
   },
   {
     month: "2024-02",
@@ -54,7 +79,9 @@ export const stpMonthlyData = [
     directSewageMB: 11200,
     totalInfluent: 17000,
     totalWaterProcessed: 16400,
-    tseToIrrigation: 15000
+    tseToIrrigation: 15000,
+    utilizationPercentage: "91.5%",
+    processingEfficiency: "96.5%"
   },
   {
     month: "2024-03",
@@ -63,7 +90,9 @@ export const stpMonthlyData = [
     directSewageMB: 11000,
     totalInfluent: 17200,
     totalWaterProcessed: 16700,
-    tseToIrrigation: 15200
+    tseToIrrigation: 15200,
+    utilizationPercentage: "91.0%",
+    processingEfficiency: "97.1%"
   }
 ];
 
@@ -83,26 +112,6 @@ export const importSTPData = async (data: STPDailyData[]): Promise<{ success: bo
       success: false, 
       message: error instanceof Error ? error.message : "Unknown error occurred" 
     };
-  }
-};
-
-export const fetchSTPData = async (): Promise<STPDailyData[]> => {
-  try {
-    // Mock data fetch
-    return stpDailyData.map(item => ({
-      date: item.date,
-      tankerTrips: item.tankerTrips,
-      expectedVolumeTankers: item.expectedVolumeTankers,
-      directSewageMB: item.directSewageMB,
-      totalInfluent: item.totalInfluent,
-      totalWaterProcessed: item.totalWaterProcessed,
-      tseToIrrigation: item.tseToIrrigation,
-      utilizationPercentage: ((item.tseToIrrigation / item.totalWaterProcessed) * 100).toFixed(1),
-      processingEfficiency: ((item.totalWaterProcessed / item.totalInfluent) * 100).toFixed(1)
-    }));
-  } catch (error) {
-    console.error("Error fetching STP data:", error);
-    throw new Error("Failed to fetch STP data");
   }
 };
 

@@ -1,60 +1,62 @@
 
 import React from 'react';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Asset } from '@/types/asset';
-import { format } from 'date-fns';
 
-export interface CriticalAssetsTableProps {
+interface CriticalAssetsTableProps {
   assets: Asset[];
 }
 
-export const CriticalAssetsTable: React.FC<CriticalAssetsTableProps> = ({ assets }) => {
-  // Filter to only show critical assets
-  const criticalAssets = assets.filter(asset => 
-    asset.criticality === 'High' || asset.criticality === 'Critical'
-  ).sort((a, b) => a.nextMaintenanceDate.localeCompare(b.nextMaintenanceDate));
+const CriticalAssetsTable: React.FC<CriticalAssetsTableProps> = ({ assets }) => {
+  // Filter and sort assets by criticality level
+  const criticalAssets = assets
+    .filter(asset => asset.criticalityLevel === 'High' || asset.criticalityLevel === 'Critical')
+    .sort((a, b) => {
+      // Sort by criticality level first (Critical > High)
+      const criticalityOrder: Record<string, number> = { 'Critical': 0, 'High': 1 };
+      return criticalityOrder[a.criticalityLevel] - criticalityOrder[b.criticalityLevel];
+    });
 
   return (
-    <div className="rounded-md border overflow-hidden">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Asset</TableHead>
-            <TableHead>Category</TableHead>
-            <TableHead>Location</TableHead>
-            <TableHead>Condition</TableHead>
-            <TableHead>Next Maintenance</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {criticalAssets.length === 0 ? (
+    <Card>
+      <CardHeader>
+        <CardTitle>Critical Assets</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <Table>
+          <TableHeader>
             <TableRow>
-              <TableCell colSpan={5} className="text-center">No critical assets found</TableCell>
+              <TableHead>Asset Name</TableHead>
+              <TableHead>Location</TableHead>
+              <TableHead>Category</TableHead>
+              <TableHead>Criticality</TableHead>
+              <TableHead>Condition</TableHead>
+              <TableHead>Value (OMR)</TableHead>
             </TableRow>
-          ) : (
-            criticalAssets.map((asset) => (
+          </TableHeader>
+          <TableBody>
+            {criticalAssets.map((asset) => (
               <TableRow key={asset.id}>
-                <TableCell className="font-medium">{asset.name}</TableCell>
-                <TableCell>{asset.category}</TableCell>
+                <TableCell>{asset.name}</TableCell>
                 <TableCell>{asset.location}</TableCell>
-                <TableCell>
-                  <span className={`px-2 py-1 rounded-full text-xs ${
-                    asset.condition === 'Good' ? 'bg-green-100 text-green-800' :
-                    asset.condition === 'Fair' ? 'bg-yellow-100 text-yellow-800' :
-                    'bg-red-100 text-red-800'
-                  }`}>
-                    {asset.condition}
-                  </span>
+                <TableCell>{asset.category}</TableCell>
+                <TableCell className={asset.criticalityLevel === 'Critical' ? 'text-red-500 font-medium' : 'text-orange-500'}>
+                  {asset.criticalityLevel}
                 </TableCell>
-                <TableCell>
-                  {format(new Date(asset.nextMaintenanceDate), 'MMM dd, yyyy')}
-                </TableCell>
+                <TableCell>{asset.condition}</TableCell>
+                <TableCell>{asset.value.toLocaleString()}</TableCell>
               </TableRow>
-            ))
-          )}
-        </TableBody>
-      </Table>
-    </div>
+            ))}
+            {criticalAssets.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center py-4">No critical assets found</TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
   );
 };
 

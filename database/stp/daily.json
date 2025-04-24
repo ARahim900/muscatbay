@@ -1,365 +1,61 @@
 
 {
   "metadata": {
-    "version": "1.0.0",
-    "timestamp": "2025-04-24T12:00:00Z",
-    "description": "Sewage Treatment Plant (STP) daily operational data",
-    "units": {
-      "volume": "m³",
-      "tankerTrips": "count"
-    }
+    "version": "1.0",
+    "timestamp": "2025-04-24T10:00:00Z",
+    "description": "STP (Sewage Treatment Plant) daily operational data"
   },
-  "data": [
+  "records": [
     {
-      "date": "2024-07-01",
+      "id": "1",
+      "date": "2024-03-01",
+      "tankerTrips": 12,
+      "expectedVolumeTankers": 240,
+      "directSewageMB": 380,
+      "totalInfluent": 620,
+      "totalWaterProcessed": 595,
+      "tseToIrrigation": 520,
+      "bod": 25,
+      "cod": 45,
+      "tss": 30,
+      "ph": 7.2,
+      "dissolved_oxygen": 5.8,
+      "temperature": 26.5,
+      "remarks": "Normal operation"
+    },
+    {
+      "id": "2",
+      "date": "2024-03-02",
       "tankerTrips": 10,
       "expectedVolumeTankers": 200,
-      "directSewageMB": 139,
-      "totalInfluent": 339,
-      "totalWaterProcessed": 385,
-      "tseToIrrigation": 340
+      "directSewageMB": 400,
+      "totalInfluent": 600,
+      "totalWaterProcessed": 580,
+      "tseToIrrigation": 510,
+      "bod": 28,
+      "cod": 48,
+      "tss": 32,
+      "ph": 7.3,
+      "dissolved_oxygen": 5.7,
+      "temperature": 27.0,
+      "remarks": "Normal operation"
     },
     {
-      "date": "2024-07-02",
+      "id": "3",
+      "date": "2024-03-03",
       "tankerTrips": 14,
       "expectedVolumeTankers": 280,
-      "directSewageMB": 246,
-      "totalInfluent": 526,
-      "totalWaterProcessed": 519,
-      "tseToIrrigation": 458
-    },
-    {
-      "date": "2024-07-03",
-      "tankerTrips": 13,
-      "expectedVolumeTankers": 260,
-      "directSewageMB": 208,
-      "totalInfluent": 468,
-      "totalWaterProcessed": 479,
-      "tseToIrrigation": 425
-    },
-    {
-      "date": "2024-07-04",
-      "tankerTrips": 11,
-      "expectedVolumeTankers": 220,
-      "directSewageMB": 244,
-      "totalInfluent": 464,
-      "totalWaterProcessed": 547,
-      "tseToIrrigation": 489
-    },
-    {
-      "date": "2024-07-05",
-      "tankerTrips": 15,
-      "expectedVolumeTankers": 300,
-      "directSewageMB": 265,
-      "totalInfluent": 565,
-      "totalWaterProcessed": 653,
-      "tseToIrrigation": 574
-    },
-    {
-      "date": "2024-07-06",
-      "tankerTrips": 14,
-      "expectedVolumeTankers": 280,
-      "directSewageMB": 222,
-      "totalInfluent": 502,
-      "totalWaterProcessed": 552,
-      "tseToIrrigation": 492
-    },
-    {
-      "date": "2024-07-07",
-      "tankerTrips": 13,
-      "expectedVolumeTankers": 260,
-      "directSewageMB": 289,
-      "totalInfluent": 549,
-      "totalWaterProcessed": 575,
-      "tseToIrrigation": 498
-    },
-    {
-      "date": "2024-07-08",
-      "tankerTrips": 16,
-      "expectedVolumeTankers": 320,
-      "directSewageMB": 212,
-      "totalInfluent": 532,
-      "totalWaterProcessed": 587,
-      "tseToIrrigation": 515
-    },
-    {
-      "date": "2024-07-09",
-      "tankerTrips": 13,
-      "expectedVolumeTankers": 260,
-      "directSewageMB": 272,
-      "totalInfluent": 532,
-      "totalWaterProcessed": 586,
-      "tseToIrrigation": 519
-    },
-    {
-      "date": "2024-07-10",
-      "tankerTrips": 12,
-      "expectedVolumeTankers": 240,
-      "directSewageMB": 253,
-      "totalInfluent": 493,
-      "totalWaterProcessed": 542,
-      "tseToIrrigation": 462
-    },
-    {
-      "date": "2024-07-11",
-      "tankerTrips": 12,
-      "expectedVolumeTankers": 240,
-      "directSewageMB": 266,
-      "totalInfluent": 506,
-      "totalWaterProcessed": 533,
-      "tseToIrrigation": 468
-    },
-    {
-      "date": "2024-07-12",
-      "tankerTrips": 16,
-      "expectedVolumeTankers": 320,
-      "directSewageMB": 258,
-      "totalInfluent": 578,
-      "totalWaterProcessed": 654,
-      "tseToIrrigation": 580
-    },
-    {
-      "date": "2024-07-13",
-      "tankerTrips": 10,
-      "expectedVolumeTankers": 200,
-      "directSewageMB": 279,
-      "totalInfluent": 479,
-      "totalWaterProcessed": 464,
-      "tseToIrrigation": 402
-    },
-    {
-      "date": "2024-07-14",
-      "tankerTrips": 13,
-      "expectedVolumeTankers": 260,
-      "directSewageMB": 226,
-      "totalInfluent": 486,
-      "totalWaterProcessed": 506,
-      "tseToIrrigation": 448
-    },
-    {
-      "date": "2024-07-15",
-      "tankerTrips": 6,
-      "expectedVolumeTankers": 120,
-      "directSewageMB": 271,
-      "totalInfluent": 391,
-      "totalWaterProcessed": 482,
-      "tseToIrrigation": 418
-    },
-    {
-      "date": "2024-07-16",
-      "tankerTrips": 18,
-      "expectedVolumeTankers": 360,
-      "directSewageMB": 216,
-      "totalInfluent": 576,
-      "totalWaterProcessed": 670,
-      "tseToIrrigation": 600
-    },
-    {
-      "date": "2024-07-17",
-      "tankerTrips": 12,
-      "expectedVolumeTankers": 240,
-      "directSewageMB": 266,
-      "totalInfluent": 506,
-      "totalWaterProcessed": 344,
-      "tseToIrrigation": 300
-    },
-    {
-      "date": "2024-07-18",
-      "tankerTrips": 8,
-      "expectedVolumeTankers": 160,
-      "directSewageMB": 209,
-      "totalInfluent": 369,
-      "totalWaterProcessed": 585,
-      "tseToIrrigation": 517
-    },
-    {
-      "date": "2024-07-19",
-      "tankerTrips": 15,
-      "expectedVolumeTankers": 300,
-      "directSewageMB": 314,
-      "totalInfluent": 614,
-      "totalWaterProcessed": 687,
-      "tseToIrrigation": 605
-    },
-    {
-      "date": "2024-07-20",
-      "tankerTrips": 12,
-      "expectedVolumeTankers": 240,
-      "directSewageMB": 243,
-      "totalInfluent": 483,
-      "totalWaterProcessed": 536,
-      "tseToIrrigation": 465
-    },
-    {
-      "date": "2024-07-21",
-      "tankerTrips": 13,
-      "expectedVolumeTankers": 260,
-      "directSewageMB": 241,
-      "totalInfluent": 501,
-      "totalWaterProcessed": 504,
-      "tseToIrrigation": 455
-    },
-    {
-      "date": "2024-07-22",
-      "tankerTrips": 13,
-      "expectedVolumeTankers": 260,
-      "directSewageMB": 220,
-      "totalInfluent": 480,
-      "totalWaterProcessed": 549,
-      "tseToIrrigation": 492
-    },
-    {
-      "date": "2024-07-23",
-      "tankerTrips": 16,
-      "expectedVolumeTankers": 320,
-      "directSewageMB": 248,
-      "totalInfluent": 568,
-      "totalWaterProcessed": 611,
-      "tseToIrrigation": 535
-    },
-    {
-      "date": "2024-07-24",
-      "tankerTrips": 18,
-      "expectedVolumeTankers": 360,
-      "directSewageMB": 203,
-      "totalInfluent": 563,
-      "totalWaterProcessed": 599,
-      "tseToIrrigation": 528
-    },
-    {
-      "date": "2024-07-25",
-      "tankerTrips": 14,
-      "expectedVolumeTankers": 280,
-      "directSewageMB": 135,
-      "totalInfluent": 415,
-      "totalWaterProcessed": 517,
-      "tseToIrrigation": 444
-    },
-    {
-      "date": "2024-07-26",
-      "tankerTrips": 18,
-      "expectedVolumeTankers": 360,
-      "directSewageMB": 224,
-      "totalInfluent": 584,
-      "totalWaterProcessed": 650,
-      "tseToIrrigation": 570
-    },
-    {
-      "date": "2024-07-27",
-      "tankerTrips": 10,
-      "expectedVolumeTankers": 200,
-      "directSewageMB": 337,
-      "totalInfluent": 537,
-      "totalWaterProcessed": 475,
-      "tseToIrrigation": 414
-    },
-    {
-      "date": "2024-07-28",
-      "tankerTrips": 12,
-      "expectedVolumeTankers": 240,
-      "directSewageMB": 213,
-      "totalInfluent": 453,
-      "totalWaterProcessed": 512,
-      "tseToIrrigation": 449
-    },
-    {
-      "date": "2024-07-29",
-      "tankerTrips": 19,
-      "expectedVolumeTankers": 380,
-      "directSewageMB": 305,
-      "totalInfluent": 685,
-      "totalWaterProcessed": 671,
-      "tseToIrrigation": 577
-    },
-    {
-      "date": "2024-07-30",
-      "tankerTrips": 13,
-      "expectedVolumeTankers": 260,
-      "directSewageMB": 267,
-      "totalInfluent": 527,
-      "totalWaterProcessed": 668,
-      "tseToIrrigation": 582
-    },
-    {
-      "date": "2024-07-31",
-      "tankerTrips": 17,
-      "expectedVolumeTankers": 340,
-      "directSewageMB": 266,
-      "totalInfluent": 606,
-      "totalWaterProcessed": 613,
-      "tseToIrrigation": 529
-    },
-    {
-      "date": "2024-08-01",
-      "tankerTrips": 15,
-      "expectedVolumeTankers": 300,
-      "directSewageMB": 242,
-      "totalInfluent": 542,
-      "totalWaterProcessed": 601,
-      "tseToIrrigation": 528
-    },
-    {
-      "date": "2024-08-02",
-      "tankerTrips": 15,
-      "expectedVolumeTankers": 300,
-      "directSewageMB": 360,
-      "totalInfluent": 660,
-      "totalWaterProcessed": 676,
-      "tseToIrrigation": 590
-    },
-    {
-      "date": "2024-08-03",
-      "tankerTrips": 13,
-      "expectedVolumeTankers": 260,
-      "directSewageMB": 233,
-      "totalInfluent": 493,
-      "totalWaterProcessed": 544,
-      "tseToIrrigation": 474
-    },
-    {
-      "date": "2024-08-04",
-      "tankerTrips": 13,
-      "expectedVolumeTankers": 260,
-      "directSewageMB": 250,
-      "totalInfluent": 510,
-      "totalWaterProcessed": 571,
-      "tseToIrrigation": 497
-    },
-    {
-      "date": "2024-08-05",
-      "tankerTrips": 13,
-      "expectedVolumeTankers": 260,
-      "directSewageMB": 255,
-      "totalInfluent": 515,
-      "totalWaterProcessed": 574,
-      "tseToIrrigation": 500
-    },
-    {
-      "date": "2024-08-06",
-      "tankerTrips": 16,
-      "expectedVolumeTankers": 320,
-      "directSewageMB": 284,
-      "totalInfluent": 604,
-      "totalWaterProcessed": 643,
-      "tseToIrrigation": 554
-    },
-    {
-      "date": "2024-08-07",
-      "tankerTrips": 19,
-      "expectedVolumeTankers": 380,
-      "directSewageMB": 110,
-      "totalInfluent": 490,
-      "totalWaterProcessed": 608,
-      "tseToIrrigation": 516
-    },
-    {
-      "date": "2024-08-08",
-      "tankerTrips": 17,
-      "expectedVolumeTankers": 340,
-      "directSewageMB": 302,
-      "totalInfluent": 642,
-      "totalWaterProcessed": 610,
-      "tseToIrrigation": 524
+      "directSewageMB": 350,
+      "totalInfluent": 630,
+      "totalWaterProcessed": 605,
+      "tseToIrrigation": 530,
+      "bod": 24,
+      "cod": 42,
+      "tss": 28,
+      "ph": 7.1,
+      "dissolved_oxygen": 5.9,
+      "temperature": 26.8,
+      "remarks": "Normal operation"
     }
   ]
 }

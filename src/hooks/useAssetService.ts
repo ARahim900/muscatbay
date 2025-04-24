@@ -1,86 +1,88 @@
 
 import { useState, useEffect } from 'react';
 import { 
-  getAssets, 
-  getAssetCategorySummary, 
-  getAssetLocationSummary, 
-  getCriticalAssets, 
-  getAssetConditions,
+  Asset, 
+  AssetCategorySummary, 
+  AssetLocationSummary, 
+  AssetCondition 
+} from '@/types/asset';
+import { 
+  getAssets,
+  getAssetsByCategory,
+  getAssetsByLocation,
+  getAssetConditions
 } from '@/services/assetService';
-import { Asset, AssetCategorySummary, AssetLocationSummary, AssetCondition } from '@/types/asset';
 
-export interface AssetServiceState {
+interface AssetServiceState {
   assets: Asset[];
-  categorySummary: AssetCategorySummary[];
-  locationSummary: AssetLocationSummary[];
+  categorySummaries: AssetCategorySummary[];
+  locationSummaries: AssetLocationSummary[];
   criticalAssets: Asset[];
   conditions: AssetCondition[];
   propertyUnits: any[];
   contributionRates: any[];
   loading: boolean;
-  error: string | null;
+  error: string;
 }
 
 export const useAssetService = () => {
   const [state, setState] = useState<AssetServiceState>({
     assets: [],
-    categorySummary: [],
-    locationSummary: [],
+    categorySummaries: [],
+    locationSummaries: [],
     criticalAssets: [],
     conditions: [],
     propertyUnits: [],
     contributionRates: [],
     loading: true,
-    error: null
+    error: ''
   });
 
   useEffect(() => {
-    const loadData = async () => {
+    const fetchData = async () => {
       try {
-        setState(prev => ({ ...prev, loading: true, error: null }));
+        setState(prev => ({ ...prev, loading: true, error: '' }));
         
-        // Fetch all asset data
-        const assets = getAssets();
-        const categorySummary = getAssetCategorySummary();
-        const locationSummary = getAssetLocationSummary();
-        const criticalAssets = getCriticalAssets();
-        const conditions = getAssetConditions();
-        const propertyUnits = [];
-        const contributionRates = [];
+        // Fetch all assets
+        const assets = await getAssets();
         
-        setState(prev => ({
-          ...prev,
+        // Get assets by category
+        const categorySummaries = await getAssetsByCategory();
+        
+        // Get assets by location
+        const locationSummaries = await getAssetsByLocation();
+        
+        // Get asset conditions
+        const conditions = await getAssetConditions();
+        
+        // Filter for critical assets
+        const criticalAssets = assets.filter(
+          asset => asset.criticalityLevel === 'High' || asset.criticalityLevel === 'Critical'
+        );
+        
+        setState({
           assets,
-          categorySummary,
-          locationSummary,
+          categorySummaries,
+          locationSummaries,
           criticalAssets,
           conditions,
-          propertyUnits,
-          contributionRates,
-          loading: false
-        }));
+          propertyUnits: [],
+          contributionRates: [],
+          loading: false,
+          error: ''
+        });
       } catch (error) {
-        console.error('Error loading asset data:', error);
-        setState(prev => ({ 
-          ...prev, 
-          loading: false, 
-          error: error instanceof Error ? error.message : 'An unknown error occurred' 
+        console.error('Error fetching asset data:', error);
+        setState(prev => ({
+          ...prev,
+          loading: false,
+          error: error instanceof Error ? error.message : 'Failed to load asset data'
         }));
       }
     };
-
-    loadData();
+    
+    fetchData();
   }, []);
-  
-  // Provide a function to calculate contributions
-  const calculateContribution = (unit: any, rate: any): number => {
-    return 0; // Mock implementation
-  };
 
-  return {
-    ...state,
-    calculateContribution
-  };
+  return state;
 };
-
-export default useAssetService;

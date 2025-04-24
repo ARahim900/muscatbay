@@ -1,0 +1,106 @@
+
+{
+  "metadata": {
+    "version": "1.0",
+    "timestamp": "2025-04-24T10:00:00Z",
+    "description": "Water consumption and distribution data"
+  },
+  "waterTypes": [
+    {
+      "type": "Residential",
+      "consumption": 24120,
+      "percentage": 50.0
+    },
+    {
+      "type": "Commercial",
+      "consumption": 8152,
+      "percentage": 16.9
+    },
+    {
+      "type": "Irrigation",
+      "consumption": 12045,
+      "percentage": 25.0
+    },
+    {
+      "type": "Recreation",
+      "consumption": 3917,
+      "percentage": 8.1
+    }
+  ],
+  "waterZones": [
+    {
+      "id": "zone-1",
+      "name": "Residential Area",
+      "consumption": 24120,
+      "loss": 1446,
+      "lossPercentage": 6.0,
+      "trend": {
+        "Jan": 1950,
+        "Feb": 1870,
+        "Mar": 2050,
+        "Apr": 2120,
+        "May": 2300,
+        "Jun": 2410
+      }
+    },
+    {
+      "id": "zone-2",
+      "name": "Golf Course",
+      "consumption": 12045,
+      "loss": 723,
+      "lossPercentage": 6.0,
+      "trend": {
+        "Jan": 950,
+        "Feb": 1020,
+        "Mar": 1100,
+        "Apr": 1150,
+        "May": 1000,
+        "Jun": 1050
+      }
+    },
+    {
+      "id": "zone-3",
+      "name": "Commercial Area",
+      "consumption": 8152,
+      "loss": 489,
+      "lossPercentage": 6.0,
+      "trend": {
+        "Jan": 650,
+        "Feb": 670,
+        "Mar": 700,
+        "Apr": 720,
+        "May": 650,
+        "Jun": 600
+      }
+    },
+    {
+      "id": "zone-4",
+      "name": "Recreational Areas",
+      "consumption": 3917,
+      "loss": 235,
+      "lossPercentage": 6.0,
+      "trend": {
+        "Jan": 300,
+        "Feb": 320,
+        "Mar": 350,
+        "Apr": 340,
+        "May": 310,
+        "Jun": 330
+      }
+    }
+  ],
+  "systemStats": {
+    "totalConsumption": 48234,
+    "totalLoss": 2893,
+    "lossPercentage": 6.0,
+    "systemEfficiency": 94.0,
+    "trend": {
+      "Jan": 3850,
+      "Feb": 3880,
+      "Mar": 4200,
+      "Apr": 4330,
+      "May": 4260,
+      "Jun": 4390
+    }
+  }
+}

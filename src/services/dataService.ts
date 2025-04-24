@@ -1,38 +1,46 @@
 
 /**
- * Core data service for fetching data from the API or local JSON files
+ * Central data service for fetching data from JSON files
  */
 
 /**
- * Options for fetching data
+ * Fetches data from a JSON file in the database folder
+ * @param path Path to the JSON file relative to the database folder
+ * @returns Promise with parsed JSON data
  */
-interface FetchDataOptions {
-  signal?: AbortSignal;
-  errorMessage?: string;
+export async function fetchData<T>(path: string): Promise<T> {
+  try {
+    // In a real app, this would typically be an API call
+    // For this project, we're loading local JSON files
+    const response = await fetch(`/database/${path}`);
+    
+    if (!response.ok) {
+      throw new Error(`Failed to load data: ${response.statusText}`);
+    }
+    
+    return await response.json() as T;
+  } catch (error) {
+    console.error(`Error fetching data from ${path}:`, error);
+    throw new Error(`Failed to load data from ${path}`);
+  }
 }
 
 /**
- * Fetches data from the API or local JSON files
- * @param path Path to the data resource
- * @param options Fetch options
- * @returns Promise with the fetched data
+ * Fetches data with a simulated delay (useful for testing loading states)
+ * @param path Path to the JSON file relative to the database folder
+ * @param delayMs Delay in milliseconds
+ * @returns Promise with parsed JSON data
  */
-export async function fetchData<T>(path: string, options: FetchDataOptions = {}): Promise<T> {
-  const { signal, errorMessage } = options;
-  
-  try {
-    // In a real application, this would fetch from an API
-    // For development, we'll simulate a delay and return mock data
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    // Mock implementation for development
-    // In a real app, this would be something like:
-    // const response = await fetch(`/api/${path}`, { signal });
-    // return response.json();
-    
-    return {} as T; // Return empty object as mock data
-  } catch (error) {
-    console.error(`Error fetching data from ${path}:`, error);
-    throw new Error(errorMessage || `Failed to fetch data from ${path}`);
-  }
+export async function fetchDataWithDelay<T>(path: string, delayMs: number = 1000): Promise<T> {
+  // Simulate network delay
+  await new Promise(resolve => setTimeout(resolve, delayMs));
+  return fetchData<T>(path);
+}
+
+/**
+ * Checks if the browser is in development mode
+ * @returns True if in development mode
+ */
+export function isDevelopment(): boolean {
+  return process.env.NODE_ENV === 'development';
 }
