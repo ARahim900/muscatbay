@@ -3,11 +3,17 @@ import React from 'react';
 import { formatNumber } from "@/lib/utils";
 import type { LucideIcon } from "lucide-react";
 
+interface TrendInfo {
+  value: number;
+  icon: React.ComponentType<any>;
+  label?: string;
+}
+
 interface MetricCardProps {
   title: string;
   value: number | string;
   unit?: string;
-  trend?: number;
+  trend?: number | TrendInfo;
   icon: React.ReactElement;
   className?: string;
   lossPercent?: number;
@@ -31,7 +37,10 @@ export function MetricCard({
     (typeof secondaryValue === "number" ? formatNumber(secondaryValue) : secondaryValue) : 
     null;
   
-  const trendColor = trend && trend > 0 ? "text-green-500" : "text-red-500";
+  // Handle the trend which can now be a number or an object
+  const trendValue = typeof trend === 'object' ? trend.value : trend;
+  const trendColor = trendValue && trendValue > 0 ? "text-green-500" : "text-red-500";
+  const TrendIcon = typeof trend === 'object' ? trend.icon : null;
 
   return (
     <div className={`bg-white dark:bg-gray-800 rounded-lg shadow-md p-5 ${className}`}>
@@ -61,9 +70,15 @@ export function MetricCard({
           </div>
         )}
 
-        {trend !== undefined && (
-          <div className={`mt-1 text-sm ${trendColor}`}>
-            {trend >= 0 ? "+" : ""}{formatNumber(trend, 1)}%
+        {trendValue !== undefined && (
+          <div className={`mt-1 text-sm ${trendColor} flex items-center`}>
+            {TrendIcon && <TrendIcon size={16} className="mr-1" />}
+            {trendValue >= 0 ? "+" : ""}{formatNumber(trendValue, 1)}%
+            {typeof trend === 'object' && trend.label && (
+              <span className="ml-1 text-gray-500 dark:text-gray-400 text-xs">
+                {trend.label}
+              </span>
+            )}
           </div>
         )}
       </div>
