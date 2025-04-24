@@ -1,164 +1,121 @@
 
-import { supabase } from '@/integrations/supabase/client';
-import { STPDailyData } from '@/types/stp';
 import { fetchData } from '@/services/dataService';
+import { STPDailyData } from '@/types/stp';
 
-// Fetch STP daily data from JSON
-export const fetchSTPDailyData = async () => {
+/**
+ * Loads STP daily data from JSON file
+ */
+export async function stpDailyData(): Promise<STPDailyData[]> {
   try {
-    const data = await fetchData('stp/daily.json');
-    return data.records || [];
+    const data = await fetchData<{ records: STPDailyData[] }>('stp/daily.json');
+    return data?.records || [];
   } catch (error) {
-    console.error("Error fetching STP daily data:", error);
+    console.error('Error loading STP daily data:', error);
     return [];
   }
-};
+}
 
-// Fetch STP monthly data from JSON
-export const fetchSTPMonthlyData = async () => {
+/**
+ * Loads STP monthly data from JSON file
+ */
+export async function stpMonthlyData(): Promise<any[]> {
   try {
-    const data = await fetchData('stp/monthly.json');
-    return data.records || [];
+    const data = await fetchData<{ records: any[] }>('stp/monthly.json');
+    return data?.records || [];
   } catch (error) {
-    console.error("Error fetching STP monthly data:", error);
+    console.error('Error loading STP monthly data:', error);
     return [];
   }
-};
+}
 
-// For immediate use in components before async data loads
-export const stpDailyData = [
-  {
-    id: "1",
-    date: "2024-03-01",
-    tankerTrips: 12,
-    expectedVolumeTankers: 240,
-    directSewageMB: 380,
-    totalInfluent: 620,
-    totalWaterProcessed: 595,
-    tseToIrrigation: 520
-  },
-  {
-    id: "2",
-    date: "2024-03-02",
-    tankerTrips: 10,
-    expectedVolumeTankers: 200,
-    directSewageMB: 400,
-    totalInfluent: 600,
-    totalWaterProcessed: 580,
-    tseToIrrigation: 510
-  },
-  {
-    id: "3",
-    date: "2024-03-03",
-    tankerTrips: 14,
-    expectedVolumeTankers: 280,
-    directSewageMB: 350,
-    totalInfluent: 630,
-    totalWaterProcessed: 605,
-    tseToIrrigation: 530
-  }
-];
+/**
+ * Formats a date string to a readable format
+ * @param dateStr Date string in YYYY-MM-DD format
+ */
+export function formatDate(dateStr: string): string {
+  const date = new Date(dateStr);
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  });
+}
 
-// For immediate use in components before async data loads
-export const stpMonthlyData = [
-  {
-    month: "2024-01",
-    tankerTrips: 320,
-    expectedVolumeTankers: 6400,
-    directSewageMB: 10500,
-    totalInfluent: 16900,
-    totalWaterProcessed: 16200,
-    tseToIrrigation: 14800,
-    utilizationPercentage: "91.4%",
-    processingEfficiency: "95.9%"
-  },
-  {
-    month: "2024-02",
-    tankerTrips: 290,
-    expectedVolumeTankers: 5800,
-    directSewageMB: 11200,
-    totalInfluent: 17000,
-    totalWaterProcessed: 16400,
-    tseToIrrigation: 15000,
-    utilizationPercentage: "91.5%",
-    processingEfficiency: "96.5%"
-  },
-  {
-    month: "2024-03",
-    tankerTrips: 310,
-    expectedVolumeTankers: 6200,
-    directSewageMB: 11000,
-    totalInfluent: 17200,
-    totalWaterProcessed: 16700,
-    tseToIrrigation: 15200,
-    utilizationPercentage: "91.0%",
-    processingEfficiency: "97.1%"
-  }
-];
+/**
+ * Formats a month string to a readable format
+ * @param monthStr Month string in YYYY-MM format
+ */
+export function formatMonth(monthStr: string): string {
+  const [year, month] = monthStr.split('-');
+  const date = new Date(parseInt(year), parseInt(month) - 1);
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long'
+  });
+}
 
-export const importSTPData = async (data: STPDailyData[]): Promise<{ success: boolean; message: string }> => {
-  try {
-    if (!Array.isArray(data) || data.length === 0) {
-      return { success: false, message: "Invalid data format." };
-    }
-    
-    // Mock successful import for now
-    console.log("Importing STP data:", data.length, "records");
-    
-    return { success: true, message: `Successfully imported ${data.length} STP records.` };
-  } catch (error) {
-    console.error("Error in importSTPData:", error);
-    return { 
-      success: false, 
-      message: error instanceof Error ? error.message : "Unknown error occurred" 
+/**
+ * Calculates efficiency statistics from monthly data
+ * @param monthlyData Array of monthly STP data
+ */
+export function calculateEfficiencyStats(monthlyData: any[]): any {
+  if (!monthlyData || monthlyData.length === 0) {
+    return {
+      avgUtilization: 0,
+      avgProcessing: 0,
+      trend: []
     };
   }
-};
 
-// Format month for display
-export const formatMonth = (monthStr: string): string => {
-  const date = new Date(monthStr + "-01");
-  return date.toLocaleDateString('default', { month: 'short', year: 'numeric' });
-};
+  const trend = monthlyData.map(month => ({
+    month: formatMonth(month.month),
+    utilization: month.utilizationPercentage || 0,
+    processing: month.processingEfficiency || 0
+  }));
 
-// Format date for display
-export const formatDate = (dateStr: string): string => {
-  const date = new Date(dateStr);
-  return date.toLocaleDateString('default', { month: 'short', day: 'numeric' });
-};
+  const avgUtilization = monthlyData.reduce((sum, month) => sum + (month.utilizationPercentage || 0), 0) / monthlyData.length;
+  const avgProcessing = monthlyData.reduce((sum, month) => sum + (month.processingEfficiency || 0), 0) / monthlyData.length;
 
-// Calculate monthly metrics
-export const calculateMonthlyMetrics = (selectedMonth: string) => {
-  const monthData = stpMonthlyData.find(m => m.month === selectedMonth);
-  
-  if (!monthData) return null;
-  
-  const processingEfficiency = Number(monthData.totalWaterProcessed) / Number(monthData.totalInfluent);
-  const irrigationUtilization = Number(monthData.tseToIrrigation) / Number(monthData.totalWaterProcessed);
-  const directSewagePercentage = Number(monthData.directSewageMB) / Number(monthData.totalInfluent);
-  const tankerPercentage = Number(monthData.expectedVolumeTankers) / Number(monthData.totalInfluent);
-  
   return {
-    processingEfficiency,
-    irrigationUtilization,
-    directSewagePercentage,
-    tankerPercentage
+    avgUtilization: parseFloat(avgUtilization.toFixed(1)),
+    avgProcessing: parseFloat(avgProcessing.toFixed(1)),
+    trend
   };
-};
+}
 
-// Calculate efficiency statistics
-export const calculateEfficiencyStats = (data: typeof stpDailyData) => {
-  if (!data || data.length === 0) return null;
+/**
+ * Calculates daily metrics for a specific month
+ * @param dailyData Array of daily STP data
+ * @param month Month in YYYY-MM format
+ */
+export function calculateMonthlyMetrics(dailyData: STPDailyData[], month: string): any {
+  if (!dailyData || dailyData.length === 0) {
+    return {
+      totalTankerTrips: 0,
+      totalInfluent: 0,
+      avgProcessingEfficiency: 0
+    };
+  }
+
+  const monthData = dailyData.filter(day => day.date.startsWith(month));
   
-  const totalInfluent = data.reduce((sum, day) => sum + day.totalInfluent, 0);
-  const totalProcessed = data.reduce((sum, day) => sum + day.totalWaterProcessed, 0);
-  const totalIrrigation = data.reduce((sum, day) => sum + day.tseToIrrigation, 0);
-  
+  if (monthData.length === 0) {
+    return {
+      totalTankerTrips: 0,
+      totalInfluent: 0,
+      avgProcessingEfficiency: 0
+    };
+  }
+
+  const totalTankerTrips = monthData.reduce((sum, day) => sum + day.tankerTrips, 0);
+  const totalInfluent = monthData.reduce((sum, day) => sum + day.totalInfluent, 0);
+  const totalWaterProcessed = monthData.reduce((sum, day) => sum + day.totalWaterProcessed, 0);
+  const avgProcessingEfficiency = totalInfluent > 0 ? (totalWaterProcessed / totalInfluent) * 100 : 0;
+
   return {
-    processingEfficiency: totalProcessed / totalInfluent,
-    irrigationUtilization: totalIrrigation / totalProcessed,
-    averageInfluentVolume: totalInfluent / data.length,
-    averageProcessingVolume: totalProcessed / data.length,
-    totalDays: data.length
+    totalTankerTrips,
+    totalInfluent,
+    totalWaterProcessed,
+    avgProcessingEfficiency: parseFloat(avgProcessingEfficiency.toFixed(1))
   };
-};
+}

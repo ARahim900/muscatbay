@@ -1,132 +1,76 @@
 
-/**
- * Property management service for Muscat Bay operations web application
- */
 import { fetchData } from './dataService';
-import { PropertyUnit } from '@/types/property';
 
 /**
- * Fetches property unit data
- * @param options Filter options for properties
- * @param signal Optional AbortSignal for request cancellation
- * @returns Promise with property unit data
+ * Service for retrieving property data
  */
-export async function fetchPropertyUnits(
-  options: { 
-    zone?: string, 
-    sector?: string, 
-    unitType?: string,
-    status?: string
-  } = {},
-  signal?: AbortSignal
-): Promise<PropertyUnit[]> {
+
+/**
+ * Fetches property data
+ * @returns Promise with property data
+ */
+export async function fetchPropertyData(): Promise<any> {
   try {
-    const response = await fetchData<{metadata: any, data: PropertyUnit[]}>(
-      'property/units.json',
-      {
-        signal,
-        errorMessage: 'Failed to load property units data'
-      }
-    );
-    
-    let filteredData = response.data || [];
-    
-    // Apply filters if provided
-    if (options.zone) {
-      filteredData = filteredData.filter(unit => unit.zone === options.zone);
-    }
-    
-    if (options.sector) {
-      filteredData = filteredData.filter(unit => unit.sector === options.sector);
-    }
-    
-    if (options.unitType) {
-      filteredData = filteredData.filter(unit => unit.unitType === options.unitType);
-    }
-    
-    if (options.status) {
-      filteredData = filteredData.filter(unit => unit.status === options.status);
-    }
-    
-    return filteredData;
+    const data = await fetchData<any>('property/property-units.json');
+    return data;
   } catch (error) {
-    console.error('Error in fetchPropertyUnits:', error);
-    return [];
+    console.error('Error fetching property data:', error);
+    throw new Error('Failed to load property data');
   }
 }
 
 /**
- * Gets available zones from property data
- * @param signal Optional AbortSignal for request cancellation
- * @returns Promise with available zones
+ * Fetches property owner data
+ * @returns Promise with property owner data
  */
-export async function getAvailableZones(signal?: AbortSignal): Promise<string[]> {
+export async function fetchPropertyOwners(): Promise<any> {
   try {
-    const properties = await fetchPropertyUnits({}, signal);
-    
-    const zones = new Set<string>();
-    properties.forEach(property => {
-      if (property.zone) {
-        zones.add(property.zone);
-      }
-    });
-    
-    return Array.from(zones).sort();
+    const data = await fetchData<any>('property/property-owners.json');
+    return data;
   } catch (error) {
-    console.error('Error in getAvailableZones:', error);
-    return [];
+    console.error('Error fetching property owners data:', error);
+    throw new Error('Failed to load property owners data');
   }
 }
 
 /**
- * Gets available sectors from property data
- * @param zone Optional zone filter
- * @param signal Optional AbortSignal for request cancellation
- * @returns Promise with available sectors
+ * Fetches property by type summary
+ * @returns Promise with property by type summary
  */
-export async function getAvailableSectors(zone?: string, signal?: AbortSignal): Promise<string[]> {
+export async function fetchPropertyByType(): Promise<any> {
   try {
-    const properties = await fetchPropertyUnits({ zone }, signal);
-    
-    const sectors = new Set<string>();
-    properties.forEach(property => {
-      if (property.sector) {
-        sectors.add(property.sector);
-      }
-    });
-    
-    return Array.from(sectors).sort();
+    const data = await fetchData<any>('property/by-type.json');
+    return data;
   } catch (error) {
-    console.error('Error in getAvailableSectors:', error);
-    return [];
+    console.error('Error fetching property by type:', error);
+    throw new Error('Failed to load property by type data');
   }
 }
 
 /**
- * Gets available unit types from property data
- * @param zone Optional zone filter
- * @param sector Optional sector filter
- * @param signal Optional AbortSignal for request cancellation
- * @returns Promise with available unit types
+ * Fetches property by status summary
+ * @returns Promise with property by status summary
  */
-export async function getAvailableUnitTypes(
-  zone?: string,
-  sector?: string,
-  signal?: AbortSignal
-): Promise<string[]> {
+export async function fetchPropertyByStatus(): Promise<any> {
   try {
-    const properties = await fetchPropertyUnits({ zone, sector }, signal);
-    
-    const unitTypes = new Set<string>();
-    properties.forEach(property => {
-      if (property.unitType) {
-        unitTypes.add(property.unitType);
-      }
-    });
-    
-    return Array.from(unitTypes).sort();
+    const data = await fetchData<any>('property/by-status.json');
+    return data;
   } catch (error) {
-    console.error('Error in getAvailableUnitTypes:', error);
-    return [];
+    console.error('Error fetching property by status:', error);
+    throw new Error('Failed to load property by status data');
+  }
+}
+
+/**
+ * Fetches property by sector summary
+ * @returns Promise with property by sector summary
+ */
+export async function fetchPropertyBySector(): Promise<any> {
+  try {
+    const data = await fetchData<any>('property/by-sector.json');
+    return data;
+  } catch (error) {
+    console.error('Error fetching property by sector:', error);
+    throw new Error('Failed to load property by sector data');
   }
 }

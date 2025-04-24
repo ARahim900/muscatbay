@@ -8,13 +8,7 @@ import { fetchData } from './dataService';
  */
 export async function fetchWaterData(signal?: AbortSignal): Promise<any> {
   try {
-    const response = await fetchData<any>(
-      'water/consumption.json',
-      {
-        signal,
-        errorMessage: 'Failed to load water consumption data'
-      }
-    );
+    const response = await fetchData<any>('water/consumption.json');
     
     return response || {};
   } catch (error) {

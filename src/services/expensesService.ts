@@ -2,101 +2,47 @@
 import { fetchData } from './dataService';
 
 /**
- * Fetches expenses data
- * @param signal Optional AbortSignal for request cancellation
+ * Service for retrieving expense data
+ */
+
+/**
+ * Fetches operating expenses data
  * @returns Promise with expenses data
  */
-export async function fetchExpenses(signal?: AbortSignal): Promise<any[]> {
+export async function fetchExpensesData(): Promise<any> {
   try {
-    const response = await fetchData<{ expenses: any[] }>(
-      'expenses/expenses.json',
-      {
-        signal,
-        errorMessage: 'Failed to load expenses data'
-      }
-    );
-    
-    return response.expenses || [];
+    const data = await fetchData<any>('expenses/operating-expenses.json');
+    return data;
   } catch (error) {
-    console.error('Error in fetchExpenses:', error);
-    throw error;
+    console.error('Error fetching expenses data:', error);
+    throw new Error('Failed to load expenses data');
   }
 }
 
 /**
- * Categorizes expenses by category
- * @param expenses Array of expenses
- * @returns Object with expenses categorized by their category
+ * Fetches expense summary by type
+ * @returns Promise with expense summary by type
  */
-export function categorizeExpensesByCategory(expenses: any[]): Record<string, any[]> {
-  if (!expenses || expenses.length === 0) return {};
-  
-  const categorized: Record<string, any[]> = {};
-  
-  expenses.forEach(expense => {
-    const category = expense.category || 'Uncategorized';
-    
-    if (!categorized[category]) {
-      categorized[category] = [];
-    }
-    
-    categorized[category].push(expense);
-  });
-  
-  return categorized;
+export async function fetchExpenseSummaryByType(): Promise<any> {
+  try {
+    const data = await fetchData<any>('expenses/summary-by-type.json');
+    return data;
+  } catch (error) {
+    console.error('Error fetching expense summary by type:', error);
+    throw new Error('Failed to load expense summary by type');
+  }
 }
 
 /**
- * Calculates expense summary
- * @param expenses Array of expenses
- * @returns Summary object with various aggregations
+ * Fetches expense summary by status
+ * @returns Promise with expense summary by status
  */
-export function calculateExpenseSummary(expenses: any[]): any {
-  if (!expenses || expenses.length === 0) {
-    return {
-      totalAnnual: 0,
-      totalMonthly: 0,
-      categoryCounts: {},
-      statusCounts: {},
-      byCategory: {},
-      byStatus: {}
-    };
+export async function fetchExpenseSummaryByStatus(): Promise<any> {
+  try {
+    const data = await fetchData<any>('expenses/summary-by-status.json');
+    return data;
+  } catch (error) {
+    console.error('Error fetching expense summary by status:', error);
+    throw new Error('Failed to load expense summary by status');
   }
-  
-  let totalAnnual = 0;
-  let totalMonthly = 0;
-  const categoryCounts: Record<string, number> = {};
-  const statusCounts: Record<string, number> = {};
-  const byCategory: Record<string, number> = {};
-  const byStatus: Record<string, number> = {};
-  
-  expenses.forEach(expense => {
-    const category = expense.category || 'Uncategorized';
-    const status = expense.status || 'Unknown';
-    
-    // Update totals
-    totalAnnual += expense.annualCost || 0;
-    totalMonthly += expense.monthlyCost || 0;
-    
-    // Update category counts
-    categoryCounts[category] = (categoryCounts[category] || 0) + 1;
-    
-    // Update status counts
-    statusCounts[status] = (statusCounts[status] || 0) + 1;
-    
-    // Update by category totals
-    byCategory[category] = (byCategory[category] || 0) + (expense.annualCost || 0);
-    
-    // Update by status totals
-    byStatus[status] = (byStatus[status] || 0) + (expense.annualCost || 0);
-  });
-  
-  return {
-    totalAnnual,
-    totalMonthly,
-    categoryCounts,
-    statusCounts,
-    byCategory,
-    byStatus
-  };
 }

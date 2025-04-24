@@ -68,6 +68,9 @@ export function WaterSystemDashboard() {
     );
   }
   
+  // Extract total consumption and ensure it exists
+  const totalConsumption = data.total?.consumption || 0;
+  
   return (
     <div className="container mx-auto p-6">
       <div className="flex items-center justify-between mb-8">
@@ -90,7 +93,7 @@ export function WaterSystemDashboard() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
         <MetricCard
           title="Total Consumption"
-          value={data.total.consumption}
+          value={totalConsumption}
           unit="m³"
           icon={<Droplets className="h-4 w-4" />}
           trend={{
@@ -104,7 +107,7 @@ export function WaterSystemDashboard() {
         />
         <MetricCard
           title="System Efficiency"
-          value={systemEfficiency}
+          value={systemEfficiency || 94.0}
           unit="%"
           icon={<Gauge className="h-4 w-4" />}
           trend={{

@@ -1,116 +1,159 @@
 
-import React from 'react';
-import { stpMonthlyData } from '@/utils/stpDataUtils';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line, Area, AreaChart } from 'recharts';
-import { ChartContainer } from "@/components/ui/chart";
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { stpMonthlyData, formatMonth } from '@/utils/stpDataUtils';
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  LineChart,
+  Line,
+} from 'recharts';
 
-interface STPMonthlyOverviewProps {
-  selectedMonth?: string;
-}
-
-export const STPMonthlyOverview: React.FC<STPMonthlyOverviewProps> = ({ selectedMonth }) => {
-  // Transform data for charts - ensure we're using actual numeric values
-  const chartData = stpMonthlyData.map(month => ({
-    name: month.month.substring(5), // Just show MM format for cleaner display
-    tankerVolume: Number(month.expectedVolumeTankers),
-    directSewage: Number(month.directSewageMB),
-    totalInfluent: Number(month.totalInfluent),
-    processed: Number(month.totalWaterProcessed),
-    irrigation: Number(month.tseToIrrigation),
-  }));
-
-  // Calculate efficiency metrics for each month - ensure proper numerical calculations
-  const efficiencyData = stpMonthlyData.map(month => {
-    const processingEfficiency = ((Number(month.totalWaterProcessed) / Number(month.totalInfluent)) * 100).toFixed(1);
-    const irrigationUtilization = ((Number(month.tseToIrrigation) / Number(month.totalWaterProcessed)) * 100).toFixed(1);
-    
-    return {
-      name: month.month.substring(5),
-      processingEfficiency: parseFloat(processingEfficiency),
-      irrigationUtilization: parseFloat(irrigationUtilization),
+const STPMonthlyOverview: React.FC = () => {
+  const [monthlyData, setMonthlyData] = useState<any[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  
+  useEffect(() => {
+    const loadData = async () => {
+      setLoading(true);
+      try {
+        const data = await stpMonthlyData();
+        
+        // Transform data for charts
+        const transformedData = data.map(month => ({
+          month: formatMonth(month.month),
+          tankers: month.tankerTrips,
+          direct: month.directSewageMB,
+          influent: month.totalInfluent,
+          processed: month.totalWaterProcessed,
+          toIrrigation: month.tseToIrrigation,
+          utilization: month.utilizationPercentage || 0,
+          efficiency: month.processingEfficiency || 0
+        }));
+        
+        setMonthlyData(transformedData);
+      } catch (error) {
+        console.error('Error loading STP monthly data:', error);
+      } finally {
+        setLoading(false);
+      }
     };
-  });
-
-  console.log("Monthly Overview Chart Data:", chartData);
-  console.log("Monthly Efficiency Data:", efficiencyData);
-
-  return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    
+    loadData();
+  }, []);
+  
+  if (loading) {
+    return (
+      <div className="grid gap-6 md:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Monthly Volume Trends</CardTitle>
-            <CardDescription>
-              Total water volumes processed by month (cubic meters)
-            </CardDescription>
+            <CardTitle>Monthly Volumes</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="h-[400px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis domain={[0, 'auto']} />
-                  <Tooltip formatter={(value) => [`${value} m³`, '']} />
-                  <Legend />
-                  <Bar dataKey="totalInfluent" name="Total Influent" fill="#8884d8" />
-                  <Bar dataKey="processed" name="Water Processed" fill="#82ca9d" />
-                  <Bar dataKey="irrigation" name="Used for Irrigation" fill="#ffc658" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+          <CardContent className="h-80 flex items-center justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </CardContent>
         </Card>
-
+        
         <Card>
           <CardHeader>
-            <CardTitle>Water Source Distribution</CardTitle>
-            <CardDescription>
-              Comparison between tanker deliveries and direct sewage
-            </CardDescription>
+            <CardTitle>Processing Efficiency</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="h-[400px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis domain={[0, 'auto']} />
-                  <Tooltip formatter={(value) => [`${value} m³`, '']} />
-                  <Legend />
-                  <Area type="monotone" dataKey="tankerVolume" name="Tanker Volume" stackId="1" fill="#8884d8" stroke="#8884d8" />
-                  <Area type="monotone" dataKey="directSewage" name="Direct Sewage" stackId="1" fill="#82ca9d" stroke="#82ca9d" />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
+          <CardContent className="h-80 flex items-center justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </CardContent>
         </Card>
       </div>
-
+    );
+  }
+  
+  if (monthlyData.length === 0) {
+    return (
       <Card>
         <CardHeader>
-          <CardTitle>Plant Efficiency Metrics</CardTitle>
-          <CardDescription>
-            Monthly processing efficiency and irrigation utilization percentages
-          </CardDescription>
+          <CardTitle>Monthly Overview</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-[400px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={efficiencyData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis domain={[0, 100]} />
-                <Tooltip formatter={(value) => [`${value}%`, '']} />
-                <Legend />
-                <Line type="monotone" dataKey="processingEfficiency" name="Processing Efficiency" stroke="#8884d8" activeDot={{ r: 8 }} />
-                <Line type="monotone" dataKey="irrigationUtilization" name="Irrigation Utilization" stroke="#82ca9d" />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
+          <p className="text-center py-8 text-muted-foreground">No monthly data available</p>
+        </CardContent>
+      </Card>
+    );
+  }
+  
+  return (
+    <div className="grid gap-6 md:grid-cols-2">
+      <Card>
+        <CardHeader>
+          <CardTitle>Monthly Volumes (m³)</CardTitle>
+        </CardHeader>
+        <CardContent className="h-80">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart
+              data={monthlyData}
+              margin={{
+                top: 5,
+                right: 30,
+                left: 20,
+                bottom: 5,
+              }}
+            >
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="month" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Bar dataKey="direct" name="Direct Sewage" fill="#8884d8" />
+              <Bar dataKey="tankers" name="Tanker Volume" fill="#82ca9d" />
+              <Bar dataKey="toIrrigation" name="To Irrigation" fill="#ffc658" />
+            </BarChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
+      
+      <Card>
+        <CardHeader>
+          <CardTitle>Processing Efficiency (%)</CardTitle>
+        </CardHeader>
+        <CardContent className="h-80">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart
+              data={monthlyData}
+              margin={{
+                top: 5,
+                right: 30,
+                left: 20,
+                bottom: 5,
+              }}
+            >
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="month" />
+              <YAxis domain={[80, 100]} />
+              <Tooltip />
+              <Legend />
+              <Line
+                type="monotone"
+                dataKey="efficiency"
+                name="Processing Efficiency"
+                stroke="#8884d8"
+                activeDot={{ r: 8 }}
+              />
+              <Line
+                type="monotone"
+                dataKey="utilization"
+                name="Irrigation Utilization"
+                stroke="#82ca9d"
+              />
+            </LineChart>
+          </ResponsiveContainer>
         </CardContent>
       </Card>
     </div>
   );
 };
+
+export default STPMonthlyOverview;

@@ -1,7 +1,6 @@
 
 import React from 'react';
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Asset } from '@/types/asset';
 
 interface CriticalAssetsTableProps {
@@ -9,54 +8,64 @@ interface CriticalAssetsTableProps {
 }
 
 const CriticalAssetsTable: React.FC<CriticalAssetsTableProps> = ({ assets }) => {
-  // Filter and sort assets by criticality level
-  const criticalAssets = assets
-    .filter(asset => asset.criticalityLevel === 'High' || asset.criticalityLevel === 'Critical')
-    .sort((a, b) => {
-      // Sort by criticality level first (Critical > High)
-      const criticalityOrder: Record<string, number> = { 'Critical': 0, 'High': 1 };
-      return criticalityOrder[a.criticalityLevel] - criticalityOrder[b.criticalityLevel];
-    });
+  // Filter for critical assets (you might have different criteria)
+  const criticalAssets = assets.filter(asset => 
+    asset.condition === 'Poor' || 
+    (asset.maintenanceStatus === 'Overdue')
+  );
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Critical Assets</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Asset Name</TableHead>
-              <TableHead>Location</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead>Criticality</TableHead>
-              <TableHead>Condition</TableHead>
-              <TableHead>Value (OMR)</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {criticalAssets.map((asset) => (
+    <div className="overflow-x-auto">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Asset Name</TableHead>
+            <TableHead>Location</TableHead>
+            <TableHead>Condition</TableHead>
+            <TableHead>Maintenance Status</TableHead>
+            <TableHead>Priority</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {criticalAssets.length > 0 ? (
+            criticalAssets.map((asset) => (
               <TableRow key={asset.id}>
-                <TableCell>{asset.name}</TableCell>
+                <TableCell className="font-medium">{asset.name}</TableCell>
                 <TableCell>{asset.location}</TableCell>
-                <TableCell>{asset.category}</TableCell>
-                <TableCell className={asset.criticalityLevel === 'Critical' ? 'text-red-500 font-medium' : 'text-orange-500'}>
-                  {asset.criticalityLevel}
+                <TableCell>
+                  <span className={`px-2 py-1 rounded-full text-xs ${
+                    asset.condition === 'Poor' ? 'bg-red-100 text-red-800' : 
+                    asset.condition === 'Fair' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'
+                  }`}>
+                    {asset.condition}
+                  </span>
                 </TableCell>
-                <TableCell>{asset.condition}</TableCell>
-                <TableCell>{asset.value.toLocaleString()}</TableCell>
+                <TableCell>
+                  <span className={`px-2 py-1 rounded-full text-xs ${
+                    asset.maintenanceStatus === 'Overdue' ? 'bg-red-100 text-red-800' : 
+                    asset.maintenanceStatus === 'Scheduled' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
+                  }`}>
+                    {asset.maintenanceStatus}
+                  </span>
+                </TableCell>
+                <TableCell>
+                  <span className={`px-2 py-1 rounded-full text-xs ${
+                    asset.priority === 'High' ? 'bg-red-100 text-red-800' : 
+                    asset.priority === 'Medium' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'
+                  }`}>
+                    {asset.priority}
+                  </span>
+                </TableCell>
               </TableRow>
-            ))}
-            {criticalAssets.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={6} className="text-center py-4">No critical assets found</TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </CardContent>
-    </Card>
+            ))
+          ) : (
+            <TableRow>
+              <TableCell colSpan={5} className="text-center py-4">No critical assets found</TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
+    </div>
   );
 };
 
