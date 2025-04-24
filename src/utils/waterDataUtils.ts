@@ -1,118 +1,142 @@
 
-import { fetchData } from '@/services/dataService';
-import { WaterData } from '@/types/water';
+import { WaterData, CSVRowData } from '@/types/water';
+import { toast } from '@/components/ui/use-toast';
 
-/**
- * Loads water consumption data
- */
-export async function loadWaterConsumptionData(): Promise<any> {
+// Function to parse CSV data from clipboard
+export const parseCSVFromClipboard = async (
+  text?: string, 
+  onSuccess?: (data: WaterData[]) => void, 
+  onError?: (message: string) => void
+): Promise<void> => {
   try {
-    const data = await fetchData<any>('water/consumption.json');
-    return data;
+    // Get text from clipboard or use provided text
+    const clipboardText = text || await navigator.clipboard.readText();
+    
+    if (!clipboardText.trim()) {
+      if (onError) onError("No data found on clipboard");
+      return;
+    }
+    
+    // Split into rows and remove any empty rows
+    const rows = clipboardText.split('\n')
+      .map(row => row.trim())
+      .filter(row => row.length > 0);
+    
+    if (rows.length < 2) {
+      if (onError) onError("Invalid data format: Expected header row and at least one data row");
+      return;
+    }
+    
+    // Parse header row
+    const headers = rows[0].split(',').map(header => header.trim());
+    
+    // Check required headers
+    const requiredHeaders = ['Zone', 'Type', 'Parent Meter'];
+    const missingHeaders = requiredHeaders.filter(header => !headers.includes(header));
+    
+    if (missingHeaders.length > 0) {
+      if (onError) onError(`Missing required headers: ${missingHeaders.join(', ')}`);
+      return;
+    }
+    
+    // Parse data rows
+    const csvData: CSVRowData[] = [];
+    for (let i = 1; i < rows.length; i++) {
+      const values = rows[i].split(',').map(value => value.trim());
+      
+      // Skip rows with incorrect number of columns
+      if (values.length !== headers.length) continue;
+      
+      const rowData: Record<string, any> = {};
+      headers.forEach((header, index) => {
+        rowData[header] = values[index];
+      });
+      
+      csvData.push(rowData as CSVRowData);
+    }
+    
+    // Transform to WaterData format
+    const waterData: WaterData[] = csvData.map((row, index) => {
+      // Extract monthly values
+      const monthlyData: Record<string, number> = {};
+      Object.entries(row).forEach(([key, value]) => {
+        if (key.includes('_') && !isNaN(Number(value))) {
+          monthlyData[key] = Number(value);
+        }
+      });
+      
+      // Calculate total
+      const total = Object.values(monthlyData).reduce((sum, val) => sum + val, 0);
+      
+      return {
+        meter_label: row['Meter Label'] || `Meter-${index}`,
+        account_number: row['Acct #'] || '',
+        zone: row.Zone || 'Unknown',
+        type: row.Type || 'Unknown',
+        parent_meter: row['Parent Meter'] || null,
+        ...monthlyData,
+        total
+      };
+    });
+    
+    if (onSuccess) onSuccess(waterData);
+    
   } catch (error) {
-    console.error('Error loading water consumption data:', error);
-    return null;
+    console.error("Error parsing clipboard data:", error);
+    if (onError) onError(error instanceof Error ? error.message : "Unknown error parsing data");
   }
-}
+};
 
-/**
- * Parses CSV data for water consumption
- * @param csvData CSV data string
- */
-export function parseWaterCSV(csvData: string): WaterData[] {
+// Function to save water data
+export const saveWaterData = async (data: WaterData[]): Promise<{success: boolean; message: string}> => {
   try {
-    // Simple CSV parsing
-    const lines = csvData.trim().split('\n');
-    const headers = lines[0].split(',').map(header => header.trim());
+    // This would normally save to an API or database
+    // For now, we'll just simulate success
+    console.log('Saving water data:', data);
     
-    return lines.slice(1).map((line, index) => {
-      const values = line.split(',').map(val => val.trim());
-      const entry: any = { id: `water-${index}` };
-      
-      headers.forEach((header, i) => {
-        // Convert known numeric fields
-        const monthFields = ['jan_24', 'feb_24', 'mar_24', 'apr_24', 'may_24', 'jun_24', 
-                            'jul_24', 'aug_24', 'sep_24', 'oct_24', 'nov_24', 'dec_24',
-                            'jan_25', 'feb_25', 'total'];
-        
-        const headerKey = header.toLowerCase().replace(/ /g, '_').replace(/-/g, '_');
-        
-        if (monthFields.includes(headerKey) && !isNaN(parseFloat(values[i]))) {
-          entry[headerKey] = parseFloat(values[i]);
-        } else {
-          entry[headerKey] = values[i];
-        }
-      });
-      
-      return entry as WaterData;
-    });
-  } catch (error) {
-    console.error('Error parsing water CSV data:', error);
-    return [];
-  }
-}
-
-/**
- * Processes water data for visualization
- * @param data Water consumption data array
- */
-export function processWaterData(data: WaterData[]): any {
-  try {
-    if (!data || data.length === 0) return null;
-    
-    // Group by type
-    const typeGroups: Record<string, any> = {};
-    data.forEach(item => {
-      const type = item.type || 'Unspecified';
-      if (!typeGroups[type]) {
-        typeGroups[type] = {
-          type,
-          jan_24: 0, feb_24: 0, mar_24: 0, apr_24: 0, may_24: 0, jun_24: 0,
-          jul_24: 0, aug_24: 0, sep_24: 0, oct_24: 0, nov_24: 0, dec_24: 0,
-          jan_25: 0, feb_25: 0, total: 0
-        };
-      }
-      
-      // Sum consumption for each month
-      ['jan_24', 'feb_24', 'mar_24', 'apr_24', 'may_24', 'jun_24', 
-       'jul_24', 'aug_24', 'sep_24', 'oct_24', 'nov_24', 'dec_24',
-       'jan_25', 'feb_25', 'total'].forEach(month => {
-        if (typeof item[month] === 'number' && !isNaN(item[month])) {
-          typeGroups[type][month] += item[month];
-        }
-      });
-    });
-    
-    // Group by zone
-    const zoneGroups: Record<string, any> = {};
-    data.forEach(item => {
-      const zone = item.zone || 'Unspecified';
-      if (!zoneGroups[zone]) {
-        zoneGroups[zone] = {
-          zone,
-          jan_24: 0, feb_24: 0, mar_24: 0, apr_24: 0, may_24: 0, jun_24: 0,
-          jul_24: 0, aug_24: 0, sep_24: 0, oct_24: 0, nov_24: 0, dec_24: 0,
-          jan_25: 0, feb_25: 0, total: 0
-        };
-      }
-      
-      // Sum consumption for each month
-      ['jan_24', 'feb_24', 'mar_24', 'apr_24', 'may_24', 'jun_24', 
-       'jul_24', 'aug_24', 'sep_24', 'oct_24', 'nov_24', 'dec_24',
-       'jan_25', 'feb_25', 'total'].forEach(month => {
-        if (typeof item[month] === 'number' && !isNaN(item[month])) {
-          zoneGroups[zone][month] += item[month];
-        }
-      });
-    });
+    // Simulate API call delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
     
     return {
-      byType: Object.values(typeGroups),
-      byZone: Object.values(zoneGroups),
-      raw: data
+      success: true,
+      message: `Successfully imported ${data.length} water data records`
     };
   } catch (error) {
-    console.error('Error processing water data:', error);
-    return null;
+    console.error("Error saving water data:", error);
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : "Unknown error saving data"
+    };
   }
-}
+};
+
+// Function to validate water data
+export const validateWaterData = (data: WaterData[]): { valid: boolean; errors: string[] } => {
+  const errors: string[] = [];
+  
+  // Check if data array is empty
+  if (!data || data.length === 0) {
+    errors.push("No water data records provided");
+    return { valid: false, errors };
+  }
+  
+  // Validate each record
+  data.forEach((record, index) => {
+    if (!record.meter_label) {
+      errors.push(`Record #${index + 1}: Missing meter label`);
+    }
+    
+    if (!record.zone) {
+      errors.push(`Record #${index + 1}: Missing zone`);
+    }
+    
+    if (!record.type) {
+      errors.push(`Record #${index + 1}: Missing type`);
+    }
+  });
+  
+  return {
+    valid: errors.length === 0,
+    errors
+  };
+};

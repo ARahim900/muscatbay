@@ -1,101 +1,150 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { stpDailyData, formatDate } from '@/utils/stpDataUtils';
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar as CalendarIcon, Download } from "lucide-react";
+import { format } from "date-fns";
 import { STPDailyData } from '@/types/stp';
 
+import { useToast } from "@/components/ui/use-toast";
+
+// Mock data for STP daily details
+const mockSTPDailyData: STPDailyData[] = [
+  {
+    date: '2025-03-10',
+    tankerTrips: 15,
+    expectedVolumeTankers: 75000,
+    directSewageMB: 120000,
+    totalInfluent: 195000,
+    totalWaterProcessed: 185000,
+    tseToIrrigation: 175000,
+    utilizationPercentage: '89.7%',
+    processingEfficiency: '94.9%'
+  },
+  {
+    date: '2025-03-11',
+    tankerTrips: 16,
+    expectedVolumeTankers: 80000,
+    directSewageMB: 125000,
+    totalInfluent: 205000,
+    totalWaterProcessed: 194000,
+    tseToIrrigation: 183000,
+    utilizationPercentage: '91.5%',
+    processingEfficiency: '94.6%'
+  }
+];
+
 const STPDailyDetails: React.FC = () => {
-  const [dailyData, setDailyData] = useState<STPDailyData[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  
-  useEffect(() => {
-    const loadData = async () => {
-      setLoading(true);
-      try {
-        const data = await stpDailyData();
-        setDailyData(data);
-      } catch (error) {
-        console.error('Error loading STP daily data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const [date, setDate] = useState<Date | undefined>(new Date());
+  const { toast } = useToast();
+
+  // Function to export data as CSV
+  const exportData = () => {
+    const headers = ['Date', 'Tanker Trips', 'Tanker Volume', 'Direct Sewage', 'Total Influent', 'Processed Water', 'TSE to Irrigation'];
+    const dataRows = mockSTPDailyData.map(record => [
+      record.date,
+      record.tankerTrips,
+      record.expectedVolumeTankers,
+      record.directSewageMB,
+      record.totalInfluent,
+      record.totalWaterProcessed,
+      record.tseToIrrigation
+    ]);
     
-    loadData();
-  }, []);
-  
-  if (loading) {
-    return (
+    const csvContent = [
+      headers.join(','),
+      ...dataRows.map(row => row.join(','))
+    ].join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'stp_daily_data.csv';
+    a.click();
+    
+    toast({
+      title: "Data exported successfully",
+      description: "STP daily data has been downloaded as CSV"
+    });
+  };
+
+  // Filter data based on selected date
+  const filteredData = mockSTPDailyData.filter(
+    record => record.date === (date ? format(date, 'yyyy-MM-dd') : '')
+  );
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div className="flex items-center space-x-4">
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className="flex items-center gap-2">
+                <CalendarIcon className="h-4 w-4" />
+                {date ? format(date, 'PPP') : 'Pick a date'}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0">
+              <Calendar
+                mode="single"
+                selected={date}
+                onSelect={setDate}
+                initialFocus
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
+        <Button variant="outline" size="sm" onClick={exportData}>
+          <Download className="h-4 w-4 mr-2" /> Export Data
+        </Button>
+      </div>
+      
       <Card>
         <CardHeader>
-          <CardTitle>Daily Processing Data</CardTitle>
+          <CardTitle>Daily Processing Details</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-center p-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-  
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Daily Processing Data</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Date</TableHead>
                 <TableHead>Tanker Trips</TableHead>
-                <TableHead>Direct Sewage (m³)</TableHead>
-                <TableHead>Total Influent (m³)</TableHead>
-                <TableHead>Processed Water (m³)</TableHead>
-                <TableHead>TSE to Irrigation (m³)</TableHead>
-                <TableHead>Processing Efficiency</TableHead>
+                <TableHead>Tanker Volume (L)</TableHead>
+                <TableHead>Direct Sewage (L)</TableHead>
+                <TableHead>Total Influent (L)</TableHead>
+                <TableHead>Processed Water (L)</TableHead>
+                <TableHead>TSE to Irrigation (L)</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {dailyData.length > 0 ? (
-                dailyData.map((day) => {
-                  const efficiency = day.totalInfluent > 0 
-                    ? (day.totalWaterProcessed / day.totalInfluent) * 100 
-                    : 0;
-                    
-                  return (
-                    <TableRow key={day.id}>
-                      <TableCell>{formatDate(day.date)}</TableCell>
-                      <TableCell>{day.tankerTrips}</TableCell>
-                      <TableCell>{day.directSewageMB.toLocaleString()}</TableCell>
-                      <TableCell>{day.totalInfluent.toLocaleString()}</TableCell>
-                      <TableCell>{day.totalWaterProcessed.toLocaleString()}</TableCell>
-                      <TableCell>{day.tseToIrrigation.toLocaleString()}</TableCell>
-                      <TableCell>
-                        <span className={`px-2 py-1 rounded-full text-xs ${
-                          efficiency >= 95 ? 'bg-green-100 text-green-800' :
-                          efficiency >= 90 ? 'bg-yellow-100 text-yellow-800' :
-                                           'bg-red-100 text-red-800'
-                        }`}>
-                          {efficiency.toFixed(1)}%
-                        </span>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
+              {filteredData.length > 0 ? (
+                filteredData.map((record, index) => (
+                  <TableRow key={`${record.date}-${index}`}>
+                    <TableCell>{format(new Date(record.date), 'MMM dd, yyyy')}</TableCell>
+                    <TableCell>{record.tankerTrips}</TableCell>
+                    <TableCell>{record.expectedVolumeTankers.toLocaleString()}</TableCell>
+                    <TableCell>{record.directSewageMB.toLocaleString()}</TableCell>
+                    <TableCell>{record.totalInfluent.toLocaleString()}</TableCell>
+                    <TableCell>{record.totalWaterProcessed.toLocaleString()}</TableCell>
+                    <TableCell>{record.tseToIrrigation.toLocaleString()}</TableCell>
+                  </TableRow>
+                ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-4">No daily data available</TableCell>
+                  <TableCell colSpan={7} className="text-center py-4">
+                    No data available for the selected date
+                  </TableCell>
                 </TableRow>
               )}
             </TableBody>
           </Table>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 

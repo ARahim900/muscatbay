@@ -34,11 +34,13 @@ export const useWaterData = () => {
         // Load data from JSON file
         const data = await fetchData<WaterConsumptionData>('water/data.json');
         
-        // Calculate system efficiency
-        const systemEfficiency = data.systemStats?.systemEfficiency || 94.0;
+        // Calculate system efficiency (with fallback)
+        const systemEfficiency = data.total ? 
+          ((data.total.consumption - (data.total.loss || 0)) / data.total.consumption) * 100 : 
+          94.0;
         
-        // Extract zone data
-        const zoneData = data.waterZones || [];
+        // Extract zone data (with fallback)
+        const zoneData = data.zones || [];
         
         setState({
           data,

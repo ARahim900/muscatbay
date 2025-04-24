@@ -8,6 +8,24 @@ interface MaintenanceForecastTableProps {
 }
 
 const MaintenanceForecastTable: React.FC<MaintenanceForecastTableProps> = ({ forecasts }) => {
+  // Format forecasts as needed for the table
+  const formattedForecasts = forecasts.map(forecast => ({
+    ...forecast,
+    assets: forecast.assets || []
+  }));
+  
+  // Flatten forecasts to display assets
+  const forecastItems = formattedForecasts.flatMap(forecast => 
+    forecast.assets.map(asset => ({
+      assetId: asset.id,
+      assetName: asset.name,
+      category: asset.category,
+      expectedReplacement: forecast.year,
+      estimatedCost: asset.value * 0.2, // Estimation based on asset value
+      priority: asset.criticalityLevel || 'Medium'
+    }))
+  );
+
   return (
     <div className="overflow-x-auto">
       <Table>
@@ -21,19 +39,19 @@ const MaintenanceForecastTable: React.FC<MaintenanceForecastTableProps> = ({ for
           </TableRow>
         </TableHeader>
         <TableBody>
-          {forecasts.length > 0 ? (
-            forecasts.map((forecast) => (
-              <TableRow key={forecast.id}>
-                <TableCell className="font-medium">{forecast.assetName}</TableCell>
-                <TableCell>{forecast.category}</TableCell>
-                <TableCell>{new Date(forecast.expectedReplacement).toLocaleDateString()}</TableCell>
-                <TableCell>${forecast.estimatedCost.toLocaleString()}</TableCell>
+          {forecastItems.length > 0 ? (
+            forecastItems.map((item, index) => (
+              <TableRow key={`${item.assetId}-${index}`}>
+                <TableCell className="font-medium">{item.assetName}</TableCell>
+                <TableCell>{item.category}</TableCell>
+                <TableCell>{item.expectedReplacement}</TableCell>
+                <TableCell>${item.estimatedCost.toLocaleString()}</TableCell>
                 <TableCell>
                   <span className={`px-2 py-1 rounded-full text-xs ${
-                    forecast.priority === 'High' ? 'bg-red-100 text-red-800' : 
-                    forecast.priority === 'Medium' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'
+                    item.priority === 'High' ? 'bg-red-100 text-red-800' : 
+                    item.priority === 'Medium' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'
                   }`}>
-                    {forecast.priority}
+                    {item.priority}
                   </span>
                 </TableCell>
               </TableRow>

@@ -1,449 +1,246 @@
 
-import React, { useEffect, useState, useMemo } from 'react';
-import Layout from '@/components/layout/Layout';
-import { stpDailyData, stpMonthlyData, formatMonth, calculateEfficiencyStats, formatDate } from '@/utils/stpDataUtils';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { format, differenceInDays } from 'date-fns';
-import { STPDailyData } from '@/types/stp';
-import { 
-  LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, 
-  Scatter, ComposedChart, ScatterChart, XAxis, YAxis, 
-  CartesianGrid, Tooltip, Legend, ResponsiveContainer, 
-  Area, ZAxis 
-} from 'recharts';
-import { BarChart2, CalendarRange, DropletIcon, FlaskConical, PieChart as PieChartIcon, LineChart as LineChartIcon, Sigma, TrendingUp } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Layout } from '@/components/layout';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { STPDailyData, STPMonthlyData } from '@/types/stp';
+import { fetchData } from '@/services/dataService';
 
-const STPAnalytics = () => {
-  const [dateRange, setDateRange] = useState<[Date | undefined, Date | undefined]>([
-    new Date(stpDailyData[0].date),
-    new Date(stpDailyData[stpDailyData.length - 1].date)
-  ]);
-  const [comparisonRange, setComparisonRange] = useState<[Date | undefined, Date | undefined]>([undefined, undefined]);
-  const [chartType, setChartType] = useState<'volume' | 'efficiency' | 'source' | 'correlation'>('volume');
+// Helper functions for formatting dates
+const formatMonth = (month: string): string => {
+  const [year, monthNum] = month.split('-');
+  const date = new Date(parseInt(year), parseInt(monthNum) - 1);
+  return date.toLocaleDateString('default', { month: 'long', year: 'numeric' });
+};
 
-  useEffect(() => {
-    document.title = 'STP Analytics | Muscat Bay Asset Manager';
-  }, []);
+const formatDate = (dateStr: string): string => {
+  const date = new Date(dateStr);
+  return date.toLocaleDateString('default', { month: 'short', day: 'numeric', year: 'numeric' });
+};
 
-  const filteredData = useMemo(() => {
-    if (!dateRange[0] || !dateRange[1]) return stpDailyData;
+// Helper function to calculate efficiency statistics
+const calculateEfficiencyStats = (data: STPMonthlyData[]) => {
+  const processingEfficiency = data.reduce((sum, record) => 
+    sum + (parseFloat(record.processingEfficiency || '0') || 0), 0) / (data.length || 1);
     
-    return stpDailyData.filter(day => {
-      const date = new Date(day.date);
-      return date >= dateRange[0]! && date <= dateRange[1]!;
-    });
-  }, [dateRange]);
-
-  const comparisonData = useMemo(() => {
-    if (!comparisonRange[0] || !comparisonRange[1]) return [];
+  const utilizationPercentage = data.reduce((sum, record) => 
+    sum + (parseFloat(record.utilizationPercentage || '0') || 0), 0) / (data.length || 1);
     
-    return stpDailyData.filter(day => {
-      const date = new Date(day.date);
-      return date >= comparisonRange[0]! && date <= comparisonRange[1]!;
-    });
-  }, [comparisonRange]);
+  return { processingEfficiency, utilizationPercentage };
+};
 
-  const statsData = useMemo(() => {
-    const currentStats = calculateEfficiencyStats(filteredData);
-    const comparisonStats = comparisonRange[0] && comparisonRange[1] ? 
-      calculateEfficiencyStats(comparisonData) : null;
-    
-    return { currentStats, comparisonStats };
-  }, [filteredData, comparisonData, comparisonRange]);
-
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
-
-  const getPieData = () => {
-    const totalInfluent = filteredData.reduce((sum, day) => sum + day.totalInfluent, 0);
-    const totalTankers = filteredData.reduce((sum, day) => sum + day.expectedVolumeTankers, 0);
-    const totalDirect = filteredData.reduce((sum, day) => sum + day.directSewageMB, 0);
-    const otherSources = totalInfluent - totalTankers - totalDirect;
-    
+const STPAnalytics: React.FC = () => {
+  const [dailyData, setDailyData] = useState<STPDailyData[]>([]);
+  const [monthlyData, setMonthlyData] = useState<STPMonthlyData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
+  // Mock data fetching function for STP daily data
+  const fetchSTPDailyData = async (): Promise<STPDailyData[]> => {
     return [
-      { name: 'Tanker Deliveries', value: totalTankers },
-      { name: 'Direct Sewage', value: totalDirect },
-      { name: 'Other Sources', value: otherSources > 0 ? otherSources : 0 }
+      {
+        date: '2025-03-10',
+        tankerTrips: 15,
+        expectedVolumeTankers: 75000,
+        directSewageMB: 120000,
+        totalInfluent: 195000,
+        totalWaterProcessed: 185000,
+        tseToIrrigation: 175000,
+        utilizationPercentage: '89.7%',
+        processingEfficiency: '94.9%'
+      },
+      {
+        date: '2025-03-11',
+        tankerTrips: 16,
+        expectedVolumeTankers: 80000,
+        directSewageMB: 125000,
+        totalInfluent: 205000,
+        totalWaterProcessed: 194000,
+        tseToIrrigation: 183000,
+        utilizationPercentage: '91.5%',
+        processingEfficiency: '94.6%'
+      }
     ];
   };
 
-  const getVolumeChartData = () => {
-    return filteredData.map(day => ({
-      date: formatDate(day.date),
-      totalWaterProcessed: day.totalWaterProcessed,
-      tseToIrrigation: day.tseToIrrigation,
-      totalInfluent: day.totalInfluent,
-      efficiency: (day.totalWaterProcessed / day.totalInfluent * 100).toFixed(1)
-    }));
+  // Mock data fetching function for STP monthly data
+  const fetchSTPMonthlyData = async (): Promise<STPMonthlyData[]> => {
+    return [
+      {
+        month: '2025-01',
+        tankerTrips: 450,
+        expectedVolumeTankers: 2250000,
+        directSewageMB: 3600000,
+        totalInfluent: 5850000,
+        totalWaterProcessed: 5550000,
+        tseToIrrigation: 5250000,
+        utilizationPercentage: '89.7%',
+        processingEfficiency: '94.9%'
+      },
+      {
+        month: '2025-02',
+        tankerTrips: 420,
+        expectedVolumeTankers: 2100000,
+        directSewageMB: 3400000,
+        totalInfluent: 5500000,
+        totalWaterProcessed: 5225000,
+        tseToIrrigation: 4950000,
+        utilizationPercentage: '90.0%',
+        processingEfficiency: '95.0%'
+      }
+    ];
   };
 
-  const getCorrelationData = () => {
-    return filteredData.map(day => ({
-      influent: day.totalInfluent,
-      processed: day.totalWaterProcessed,
-      tankerVolume: day.expectedVolumeTankers,
-      directSewage: day.directSewageMB,
-      efficiency: (day.totalWaterProcessed / day.totalInfluent * 100),
-      irrigation: day.tseToIrrigation,
-      date: formatDate(day.date)
-    }));
-  };
-
-  const getMonthTotals = () => {
-    const monthMap = new Map<string, {
-      totalWaterProcessed: number,
-      tseToIrrigation: number,
-      totalInfluent: number,
-      efficiency: number
-    }>();
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        // Get daily and monthly data
+        const fetchedDailyData = await fetchSTPDailyData();
+        const fetchedMonthlyData = await fetchSTPMonthlyData();
+        
+        // Filter last 30 days
+        const last30DaysData = fetchedDailyData;
+        
+        // Filter last 12 months
+        const last12MonthsData = fetchedMonthlyData;
+        
+        setDailyData(last30DaysData);
+        setMonthlyData(last12MonthsData);
+        setLoading(false);
+      } catch (err) {
+        console.error('Failed to load STP analytics data:', err);
+        setError('Failed to load STP analytics data');
+        setLoading(false);
+      }
+    };
     
-    filteredData.forEach(day => {
-      const monthYear = day.date.substring(0, 7); // YYYY-MM
-      const current = monthMap.get(monthYear) || {
-        totalWaterProcessed: 0,
-        tseToIrrigation: 0,
-        totalInfluent: 0,
-        efficiency: 0
-      };
-      
-      current.totalWaterProcessed += day.totalWaterProcessed;
-      current.tseToIrrigation += day.tseToIrrigation;
-      current.totalInfluent += day.totalInfluent;
-      
-      monthMap.set(monthYear, current);
-    });
-    
-    // Calculate efficiency for each month
-    const result = Array.from(monthMap.entries()).map(([month, data]) => ({
-      month: formatMonth(month),
-      totalWaterProcessed: data.totalWaterProcessed,
-      tseToIrrigation: data.tseToIrrigation,
-      totalInfluent: data.totalInfluent,
-      efficiency: (data.totalWaterProcessed / data.totalInfluent * 100).toFixed(1)
-    }));
-    
-    return result;
-  };
-
-  const renderVolumeChart = () => (
-    <ResponsiveContainer width="100%" height={400}>
-      <ComposedChart data={getVolumeChartData()} margin={{ top: 20, right: 30, left: 20, bottom: 40 }}>
-        <CartesianGrid strokeDasharray="3 3" />
-        <XAxis 
-          dataKey="date" 
-          angle={-45} 
-          textAnchor="end" 
-          height={70} 
-          interval={Math.floor(filteredData.length / 20)}
-        />
-        <YAxis yAxisId="left" />
-        <YAxis yAxisId="right" orientation="right" domain={[0, 100]} />
-        <Tooltip />
-        <Legend />
-        <Bar yAxisId="left" dataKey="totalInfluent" name="Total Influent" fill="#8884d8" />
-        <Bar yAxisId="left" dataKey="totalWaterProcessed" name="Water Processed" fill="#82ca9d" />
-        <Bar yAxisId="left" dataKey="tseToIrrigation" name="TSE to Irrigation" fill="#ffc658" />
-        <Line yAxisId="right" type="monotone" dataKey="efficiency" name="Efficiency %" stroke="#ff7300" />
-      </ComposedChart>
-    </ResponsiveContainer>
-  );
-
-  const renderEfficiencyChart = () => (
-    <ResponsiveContainer width="100%" height={400}>
-      <LineChart data={getMonthTotals()} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-        <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="month" />
-        <YAxis />
-        <Tooltip />
-        <Legend />
-        <Line type="monotone" dataKey="efficiency" name="Processing Efficiency %" stroke="#ff7300" activeDot={{ r: 8 }} />
-      </LineChart>
-    </ResponsiveContainer>
-  );
-
-  const renderSourcesPieChart = () => (
-    <ResponsiveContainer width="100%" height={400}>
-      <PieChart>
-        <Pie
-          data={getPieData()}
-          cx="50%"
-          cy="50%"
-          labelLine={true}
-          outerRadius={150}
-          fill="#8884d8"
-          dataKey="value"
-          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(1)}%`}
-        >
-          {getPieData().map((entry, index) => (
-            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-          ))}
-        </Pie>
-        <Tooltip formatter={(value) => [`${value.toLocaleString()} m³`, '']} />
-        <Legend />
-      </PieChart>
-    </ResponsiveContainer>
-  );
-
-  const renderCorrelationChart = () => (
-    <ResponsiveContainer width="100%" height={400}>
-      <ScatterChart margin={{ top: 20, right: 30, left: 20, bottom: 10 }}>
-        <CartesianGrid strokeDasharray="3 3" />
-        <XAxis 
-          type="number" 
-          dataKey="influent" 
-          name="Total Influent" 
-          unit=" m³" 
-        />
-        <YAxis 
-          type="number" 
-          dataKey="processed" 
-          name="Water Processed" 
-          unit=" m³" 
-        />
-        <ZAxis type="number" dataKey="efficiency" range={[20, 200]} name="Efficiency" unit="%" />
-        <Tooltip cursor={{ strokeDasharray: '3 3' }} formatter={(value, name) => [
-          name === 'Efficiency' ? `${value}%` : `${value} m³`, 
-          name
-        ]} />
-        <Legend />
-        <Scatter 
-          name="Processing Correlation" 
-          data={getCorrelationData()} 
-          fill="#8884d8"
-          shape="circle"
-        />
-      </ScatterChart>
-    </ResponsiveContainer>
-  );
-
-  return (
-    <Layout>
-      <div className="container mx-auto py-6">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-muscat-primary flex items-center">
-              <FlaskConical className="mr-2 h-6 w-6" />
-              STP Analytics & Insights
-            </h1>
-            <p className="text-gray-500 mt-1">Advanced analytics and trend analysis for the STP plant operations</p>
+    loadData();
+  }, []);
+  
+  if (loading) {
+    return (
+      <Layout>
+        <div className="p-6">
+          <h1 className="text-2xl font-semibold mb-6">STP Analytics</h1>
+          <div className="grid gap-6 md:grid-cols-2">
+            <Card className="md:col-span-2">
+              <CardHeader>
+                <CardTitle>Loading STP analytics data...</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="h-64 flex items-center justify-center">
+                  <div className="animate-pulse flex space-x-4">
+                    <div className="rounded-full bg-gray-200 h-12 w-12"></div>
+                    <div className="flex-1 space-y-4 py-1">
+                      <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                      <div className="space-y-2">
+                        <div className="h-4 bg-gray-200 rounded"></div>
+                        <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
-          <Card className="col-span-2 lg:col-span-1">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base font-medium">Primary Analysis Period</CardTitle>
-              <CardDescription>
-                Select date range for analysis
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className="w-full justify-start text-left">
-                    <CalendarRange className="mr-2 h-4 w-4" />
-                    {dateRange[0] && dateRange[1] ? (
-                      `${format(dateRange[0], 'PPP')} - ${format(dateRange[1], 'PPP')}`
-                    ) : (
-                      "Select date range"
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="range"
-                    selected={{
-                      from: dateRange[0],
-                      to: dateRange[1],
-                    }}
-                    onSelect={(selected) => {
-                      setDateRange([selected?.from, selected?.to]);
-                    }}
-                    className="rounded-md border"
-                  />
-                </PopoverContent>
-              </Popover>
-              {dateRange[0] && dateRange[1] && (
-                <div className="text-xs text-muted-foreground mt-2">
-                  Period: {differenceInDays(dateRange[1], dateRange[0])} days
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card className="col-span-2 lg:col-span-1">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base font-medium">Comparison Period (Optional)</CardTitle>
-              <CardDescription>
-                Select another period to compare
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className="w-full justify-start text-left">
-                    <CalendarRange className="mr-2 h-4 w-4" />
-                    {comparisonRange[0] && comparisonRange[1] ? (
-                      `${format(comparisonRange[0], 'PPP')} - ${format(comparisonRange[1], 'PPP')}`
-                    ) : (
-                      "Select comparison range"
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="range"
-                    selected={{
-                      from: comparisonRange[0],
-                      to: comparisonRange[1],
-                    }}
-                    onSelect={(selected) => {
-                      setComparisonRange([selected?.from, selected?.to]);
-                    }}
-                    className="rounded-md border"
-                  />
-                  <div className="p-3 border-t border-border/20">
-                    <Button 
-                      size="sm" 
-                      variant="ghost" 
-                      onClick={() => setComparisonRange([undefined, undefined])}
-                      className="w-full"
-                    >
-                      Clear
-                    </Button>
-                  </div>
-                </PopoverContent>
-              </Popover>
-              {comparisonRange[0] && comparisonRange[1] && (
-                <div className="text-xs text-muted-foreground mt-2">
-                  Period: {differenceInDays(comparisonRange[1], comparisonRange[0])} days
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base font-medium">Summary Statistics</CardTitle>
-              <CardDescription>
-                Key performance metrics
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <div className="grid grid-cols-2 gap-2 mt-4">
-                <div className="text-center p-2 rounded-md bg-slate-50">
-                  <div className="text-xs text-muted-foreground">Processing Efficiency</div>
-                  <div className="text-xl font-bold text-muscat-primary">
-                    {(statsData.currentStats?.processingEfficiency || 0) * 100}%
-                  </div>
-                  {statsData.comparisonStats && (
-                    <div className="text-xs text-muted-foreground">
-                      vs {(statsData.comparisonStats.processingEfficiency || 0) * 100}%
-                    </div>
-                  )}
-                </div>
-                <div className="text-center p-2 rounded-md bg-slate-50">
-                  <div className="text-xs text-muted-foreground">Irrigation Usage</div>
-                  <div className="text-xl font-bold text-green-600">
-                    {(statsData.currentStats?.irrigationUtilization || 0) * 100}%
-                  </div>
-                  {statsData.comparisonStats && (
-                    <div className="text-xs text-muted-foreground">
-                      vs {(statsData.comparisonStats.irrigationUtilization || 0) * 100}%
-                    </div>
-                  )}
-                </div>
-                <div className="text-center p-2 rounded-md bg-slate-50">
-                  <div className="text-xs text-muted-foreground">Avg. Processed</div>
-                  <div className="text-xl font-bold text-blue-600">
-                    {Math.round(statsData.currentStats?.averageProcessingVolume || 0)} m³
-                  </div>
-                  {statsData.comparisonStats && (
-                    <div className="text-xs text-muted-foreground">
-                      vs {Math.round(statsData.comparisonStats.averageProcessingVolume || 0)} m³
-                    </div>
-                  )}
-                </div>
-                <div className="text-center p-2 rounded-md bg-slate-50">
-                  <div className="text-xs text-muted-foreground">Avg. Influent</div>
-                  <div className="text-xl font-bold text-purple-600">
-                    {Math.round(statsData.currentStats?.averageInfluentVolume || 0)} m³
-                  </div>
-                  {statsData.comparisonStats && (
-                    <div className="text-xs text-muted-foreground">
-                      vs {Math.round(statsData.comparisonStats.averageInfluentVolume || 0)} m³
-                    </div>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="grid grid-cols-1 gap-4">
-          <Card>
+      </Layout>
+    );
+  }
+  
+  if (error) {
+    return (
+      <Layout>
+        <div className="p-6">
+          <h1 className="text-2xl font-semibold mb-6">STP Analytics</h1>
+          <Card className="bg-red-50 border-red-200">
             <CardHeader>
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
-                <div>
-                  <CardTitle>Advanced STP Analytics</CardTitle>
-                  <CardDescription>
-                    Detailed analytics for the selected time period
-                  </CardDescription>
-                </div>
-                <div className="flex flex-wrap mt-4 sm:mt-0 gap-2">
-                  <Button
-                    size="sm"
-                    variant={chartType === 'volume' ? 'default' : 'outline'}
-                    onClick={() => setChartType('volume')}
-                  >
-                    <BarChart2 className="h-4 w-4 mr-1" />
-                    Volumes
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant={chartType === 'efficiency' ? 'default' : 'outline'}
-                    onClick={() => setChartType('efficiency')}
-                  >
-                    <TrendingUp className="h-4 w-4 mr-1" />
-                    Efficiency
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant={chartType === 'source' ? 'default' : 'outline'}
-                    onClick={() => setChartType('source')}
-                  >
-                    <PieChartIcon className="h-4 w-4 mr-1" />
-                    Sources
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant={chartType === 'correlation' ? 'default' : 'outline'}
-                    onClick={() => setChartType('correlation')}
-                  >
-                    <Sigma className="h-4 w-4 mr-1" />
-                    Correlation
-                  </Button>
-                </div>
-              </div>
+              <CardTitle className="text-red-800">Error Loading Data</CardTitle>
             </CardHeader>
             <CardContent>
-              {chartType === 'volume' && renderVolumeChart()}
-              {chartType === 'efficiency' && renderEfficiencyChart()}
-              {chartType === 'source' && renderSourcesPieChart()}
-              {chartType === 'correlation' && renderCorrelationChart()}
+              <p className="text-red-600">{error}</p>
+              <button 
+                className="mt-4 bg-red-100 hover:bg-red-200 text-red-800 py-2 px-4 rounded"
+                onClick={() => window.location.reload()}
+              >
+                Retry
+              </button>
             </CardContent>
-            <CardFooter className="border-t pt-4">
-              <div className="text-sm text-muted-foreground">
-                Showing data from {dateRange[0] ? format(dateRange[0], 'PPP') : 'beginning'} to {dateRange[1] ? format(dateRange[1], 'PPP') : 'end'}
-              </div>
-            </CardFooter>
           </Card>
         </div>
+      </Layout>
+    );
+  }
+  
+  return (
+    <Layout>
+      <div className="p-6">
+        <h1 className="text-2xl font-semibold mb-6">STP Analytics</h1>
+        
+        {/* Monthly Performance Overview */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>Monthly Performance Overview</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+              {monthlyData.slice(0, 1).map((month, index) => (
+                <div key={index} className="bg-gray-50 p-4 rounded-lg">
+                  <h3 className="font-medium text-gray-700">{formatMonth(month.month)}</h3>
+                  <div className="mt-2 space-y-2">
+                    <div>
+                      <span className="text-sm text-gray-500">Processing Efficiency</span>
+                      <p className="font-semibold text-lg">{month.processingEfficiency}</p>
+                    </div>
+                    <div>
+                      <span className="text-sm text-gray-500">Utilization Rate</span>
+                      <p className="font-semibold text-lg">{month.utilizationPercentage}</p>
+                    </div>
+                    <div>
+                      <span className="text-sm text-gray-500">Total Processed</span>
+                      <p className="font-semibold text-lg">{(month.totalWaterProcessed / 1000).toFixed(1)} m³</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+        
+        {/* Daily Processing Records */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Daily Processing Records</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tanker Trips</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Direct Sewage</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Processed</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Efficiency</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {dailyData.map((record, index) => (
+                    <tr key={index}>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{formatDate(record.date)}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{record.tankerTrips}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{(record.directSewageMB / 1000).toFixed(1)} m³</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{(record.totalWaterProcessed / 1000).toFixed(1)} m³</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{record.processingEfficiency}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </Layout>
   );

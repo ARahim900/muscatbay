@@ -8,10 +8,10 @@ interface CriticalAssetsTableProps {
 }
 
 const CriticalAssetsTable: React.FC<CriticalAssetsTableProps> = ({ assets }) => {
-  // Filter for critical assets (you might have different criteria)
+  // Filter for critical assets based on available properties
   const criticalAssets = assets.filter(asset => 
     asset.condition === 'Poor' || 
-    (asset.maintenanceStatus === 'Overdue')
+    asset.criticalityLevel === 'High'
   );
 
   return (
@@ -22,8 +22,8 @@ const CriticalAssetsTable: React.FC<CriticalAssetsTableProps> = ({ assets }) => 
             <TableHead>Asset Name</TableHead>
             <TableHead>Location</TableHead>
             <TableHead>Condition</TableHead>
-            <TableHead>Maintenance Status</TableHead>
-            <TableHead>Priority</TableHead>
+            <TableHead>Criticality Level</TableHead>
+            <TableHead>Installation Date</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -42,20 +42,13 @@ const CriticalAssetsTable: React.FC<CriticalAssetsTableProps> = ({ assets }) => 
                 </TableCell>
                 <TableCell>
                   <span className={`px-2 py-1 rounded-full text-xs ${
-                    asset.maintenanceStatus === 'Overdue' ? 'bg-red-100 text-red-800' : 
-                    asset.maintenanceStatus === 'Scheduled' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
+                    asset.criticalityLevel === 'High' ? 'bg-red-100 text-red-800' : 
+                    asset.criticalityLevel === 'Medium' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
                   }`}>
-                    {asset.maintenanceStatus}
+                    {asset.criticalityLevel}
                   </span>
                 </TableCell>
-                <TableCell>
-                  <span className={`px-2 py-1 rounded-full text-xs ${
-                    asset.priority === 'High' ? 'bg-red-100 text-red-800' : 
-                    asset.priority === 'Medium' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'
-                  }`}>
-                    {asset.priority}
-                  </span>
-                </TableCell>
+                <TableCell>{asset.installationDate}</TableCell>
               </TableRow>
             ))
           ) : (
