@@ -1,3 +1,4 @@
+
 "use client"
 
 import { Button } from "@/components/ui/button"
@@ -638,3 +639,51 @@ const WaterSystemSection = ({ fullView = false }: { fullView?: boolean }) => {
                             `${formatNumber(value)} m³ (${calculatedMetrics.totalL3Volume > 0 ? formatPercentage((value / calculatedMetrics.totalL3Volume) * 100) : "0.0%"})`,
                             name,
                           ]}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </main>
+      </div>
+    )
+  }
+
+  // For compact view mode, return a simplified display
+  return (
+    <div className="bg-white rounded-lg shadow p-6 h-full">
+      <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+        <Droplet className="h-5 w-5" style={{ color: THEME.primary }} />
+        Water System Overview
+      </h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <KPI_Card
+          title="Total L1 Supply"
+          value={`${formatNumber(calculatedMetrics.totalL1Supply)} m³`}
+          description="Main Input"
+          icon={Layers}
+          theme={THEME}
+          bgColor={THEME.primary}
+        />
+        <KPI_Card
+          title="Total Loss"
+          value={formatPercentage(calculatedMetrics.totalLossPercentage)}
+          description={`${formatNumber(calculatedMetrics.totalLoss)} m³`}
+          icon={Percent}
+          theme={THEME}
+          bgColor={THEME.accent}
+        />
+      </div>
+      <div className="flex justify-end">
+        <Button className="text-white" style={{ backgroundColor: THEME.primary }}>
+          View Full Dashboard
+        </Button>
+      </div>
+    </div>
+  )
+}
+
+export default WaterSystemSection
