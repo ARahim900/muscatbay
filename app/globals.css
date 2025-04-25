@@ -1,0 +1,149 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 270 6% 90%;
+    --foreground: 270 10% 25%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 270 10% 25%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 270 10% 25%;
+
+    --primary: 270 10% 30%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 270 5% 96%;
+    --secondary-foreground: 270 10% 25%;
+
+    --muted: 270 5% 96%;
+    --muted-foreground: 270 5% 50%;
+
+    --accent: 175 45% 70%;
+    --accent-foreground: 270 10% 25%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 270 10% 90%;
+    --input: 270 10% 90%;
+    --ring: 270 10% 30%;
+
+    --radius: 0.5rem;
+
+    /* Chart colors */
+    --chart-water: #9ad0d2;
+    --chart-pressure: #7cbba7;
+    --chart-electricity: #d8bc74;
+
+    /* Custom theme colors */
+    --theme-header: #4e4456;
+    --theme-background: #e4e2e7;
+    --theme-card-primary: #4e4456;
+    --theme-card-secondary: #a5a0ab;
+    --theme-card-accent: #9ad0d2;
+    --theme-card-success: #7cbba7;
+    --theme-card-warning: #d8bc74;
+    --theme-card-error: #c48b9f;
+  }
+
+  .dark {
+    --background: 270 10% 15%;
+    --foreground: 0 0% 98%;
+
+    --card: 270 10% 20%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 270 10% 20%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 270 10% 30%;
+    --primary-foreground: 0 0% 98%;
+
+    --secondary: 270 10% 25%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 270 10% 25%;
+    --muted-foreground: 270 5% 70%;
+
+    --accent: 175 45% 35%;
+    --accent-foreground: 0 0% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 270 10% 30%;
+    --input: 270 10% 30%;
+    --ring: 270 5% 70%;
+
+    /* Chart colors */
+    --chart-water: #7cbba7;
+    --chart-pressure: #9ad0d2;
+    --chart-electricity: #d8bc74;
+
+    /* Custom theme colors */
+    --theme-header: #4e4456;
+    --theme-background: #2a2630;
+    --theme-card-primary: #4e4456;
+    --theme-card-secondary: #a5a0ab;
+    --theme-card-accent: #7cbba7;
+    --theme-card-success: #7cbba7;
+    --theme-card-warning: #d8bc74;
+    --theme-card-error: #c48b9f;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+  }
+
+  .animate-fade-in-up {
+    animation: fadeInUp 0.5s ease-in-out;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Add these z-index utilities */
+  .z-header {
+    z-index: 50;
+  }
+
+  .z-dropdown {
+    z-index: 40;
+  }
+
+  .z-content {
+    z-index: 10;
+  }
+}
