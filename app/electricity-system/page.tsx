@@ -25,23 +25,8 @@ import { useElectricityData } from "@/context/electricity-data-context"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
 import { ErrorAlert } from "@/components/ui/error-alert"
 
-// Define proper types for our mock data
-type MonthKey = "Jan-24" | "Feb-24" | "Mar-24" | "Apr-24" | "May-24" | "Jun-24" | 
-                "Jul-24" | "Aug-24" | "Sep-24" | "Oct-24" | "Nov-24" | "Dec-24";
-
-interface ElectricityDataRecord {
-  [key: string]: number;
-}
-
-interface MockElectricityData {
-  months: MonthKey[];
-  mainSupply: Record<MonthKey, number>;
-  solarGeneration: Record<MonthKey, number>;
-  gridConsumption: Record<MonthKey, number>;
-}
-
-// Mock data with correct types
-const mockElectricityData: MockElectricityData = {
+// Mock data for demonstration purposes (replace with actual data fetching)
+const mockElectricityData = {
   months: [
     "Jan-24",
     "Feb-24",
@@ -370,17 +355,17 @@ export default function ElectricitySystemPage() {
               {hasCurrentData ? (
                 <AreaChart
                   data={
-                    // Create trend data for the current year with type-safe access
+                    // Create trend data for the current year
                     yearOptions
                       .filter((year) => year.value === selectedYear)
                       .flatMap(() => {
                         return monthOptions
                           .filter((month) => {
-                            const monthYearKey = `${month.label.split(" ")[0]}-${selectedYear.slice(-2)}` as MonthKey;
-                            return mockElectricityData.months.includes(monthYearKey);
+                            const monthYearKey = `${month.label.split(" ")[0]}-${selectedYear.slice(-2)}`
+                            return mockElectricityData.months.includes(monthYearKey)
                           })
                           .map((month) => {
-                            const monthYearKey = `${month.label.split(" ")[0]}-${selectedYear.slice(-2)}` as MonthKey;
+                            const monthYearKey = `${month.label.split(" ")[0]}-${selectedYear.slice(-2)}`
                             return {
                               month: month.label.split(" ")[0],
                               consumption: mockElectricityData.mainSupply[monthYearKey] || 0,

@@ -1,6 +1,7 @@
 "use client"
 
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
+import { loadElectricityData, clearElectricityDataCache } from "@/services/electricity-data-service"
 
 // Define types for electricity meter data
 export interface ElectricityMeter {
@@ -531,7 +532,19 @@ export function ElectricityDataProvider({ children }: { children: ReactNode }) {
   // Function to refresh data
   const refreshData = async () => {
     setDataLoadAttempt((prev) => prev + 1)
-    return Promise.resolve()
+    clearElectricityDataCache() // Clear the cache to force a fresh load
+    try {
+      setIsLoading(true)
+      setError(null) // Clear any previous errors
+      await loadElectricityData() // Wait for the data to load
+      setIsLoading(false)
+      return Promise.resolve()
+    } catch (error) {
+      console.error("Error refreshing electricity data:", error)
+      setIsLoading(false)
+      setError(error instanceof Error ? error : new Error("Failed to refresh electricity data"))
+      return Promise.reject(error)
+    }
   }
 
   // Handle year selection change
@@ -565,18 +578,115 @@ export function ElectricityDataProvider({ children }: { children: ReactNode }) {
 
   // Load mock data
   useEffect(() => {
-    setIsLoading(true)
+    const fetchData = async () => {
+      setIsLoading(true)
+      try {
+        // Load data from Airtable
+        const electricityData = await loadElectricityData()
 
-    // Simulate API call delay
-    setTimeout(() => {
-      setData(mockElectricityData)
+        // If no data was returned, use mock data
+        if (!electricityData || electricityData.length === 0) {
+          console.warn("No electricity data found in Airtable, using mock data")
+          setData(mockElectricityData)
+        } else {
+          // Process the data into the format needed by the UI
+          // This would need to be expanded to transform the Airtable data into the expected format
+          // For now, we'll use the mock data structure but populate it with real values where possible
 
-      // Set available months based on selected year
-      const monthsForYear = getMonthsForYear(mockElectricityData.months, selectedYear)
-      setAvailableMonths(monthsForYear)
+          // Get all available months from the data
+          const months = Object.keys(electricityData[0])
+            .filter((key) => /^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)-\d{2}$/.test(key))
+            .sort((a, b) => {
+              // Sort chronologically
+              const [monthA, yearA] = a.split("-")
+              const [monthB, yearB] = b.split("-")
 
-      setIsLoading(false)
-    }, 1000)
+              if (yearA !== yearB) {
+                return Number(yearA) - Number(yearB)
+              }
+
+              const monthOrder = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+              return monthOrder.indexOf(monthA) - monthOrder.indexOf(monthB)
+            })
+
+          // Extract years from months
+          const years = [...new Set(months.map((month) => `20${month.split("-")[1]}`))]
+
+          // Create a new data object based on the mock structure but with real data
+          const processedData = {
+            ...mockElectricityData,
+            meters: electricityData,
+            months,
+            years,
+          }
+
+          // For each month, calculate the main metrics
+          months.forEach((month) => {
+            // Calculate main supply (total consumption)
+            const totalConsumption = electricityData.reduce((sum, meter) => sum + (meter[month] || 0), 0)
+            processedData.mainSupply[month] = totalConsumption
+
+            // For simplicity, we'll use fixed percentages for solar and grid
+            // In a real implementation, this would come from the actual data
+            processedData.solarGeneration[month] = Math.round(totalConsumption * 0.2) // 20% solar
+            processedData.gridConsumption[month] = Math.round(totalConsumption * 0.8) // 80% grid
+
+            // Peak load is typically about 1/200 of monthly consumption in kWh
+            processedData.peakLoad[month] = Math.round(totalConsumption / 200)
+
+            // Group consumption by type
+            const typeConsumption: Record<string, number> = {}
+            electricityData.forEach((meter) => {
+              const type = meter.Type || "Unknown"
+              if (!typeConsumption[type]) typeConsumption[type] = 0
+              typeConsumption[type] += meter[month] || 0
+            })
+            processedData.typeConsumption[month] = typeConsumption
+
+            // Create consumption by type data for charts
+            processedData.consumptionByType[month] = Object.entries(typeConsumption)
+              .map(([name, value]) => ({ name, value }))
+              .filter((item) => item.value > 0)
+              .sort((a, b) => b.value - a.value)
+
+            // Group consumption by zone
+            // For simplicity, we'll create mock zone data
+            // In a real implementation, this would come from the actual data
+            const zoneConsumption = {
+              "Zone A": Math.round(totalConsumption * 0.3),
+              "Zone B": Math.round(totalConsumption * 0.25),
+              "Zone C": Math.round(totalConsumption * 0.25),
+              "Zone D": Math.round(totalConsumption * 0.2),
+            }
+            processedData.zoneConsumption[month] = zoneConsumption
+
+            // Create consumption by zone data for charts
+            processedData.consumptionByZone[month] = Object.entries(zoneConsumption).map(([name, value]) => ({
+              name,
+              value,
+            }))
+          })
+
+          setData(processedData)
+        }
+
+        // Set available months based on selected year
+        const monthsForYear = getMonthsForYear(data ? data.months : mockElectricityData.months, selectedYear)
+        setAvailableMonths(monthsForYear)
+      } catch (error) {
+        console.error("Error loading electricity data:", error)
+        setError(error instanceof Error ? error : new Error("Failed to load electricity data"))
+        setData(mockElectricityData)
+
+        // Set available months based on mock data
+        const monthsForYear = getMonthsForYear(mockElectricityData.months, selectedYear)
+        setAvailableMonths(monthsForYear)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchData()
   }, [dataLoadAttempt, selectedYear])
 
   // Get current data based on selected month and year
@@ -698,7 +808,9 @@ export function ElectricityDataProvider({ children }: { children: ReactNode }) {
 
   // Get month options for dropdown
   const getMonthOptions = () => {
-    if (!data) return []
+    if (!data || !availableMonths || !Array.isArray(availableMonths) || availableMonths.length === 0) {
+      return []
+    }
 
     return availableMonths.map((monthYear) => {
       const [month, year] = monthYear.split("-")
