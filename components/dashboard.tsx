@@ -17,6 +17,7 @@ import {
   ClipboardList,
   ChevronDown,
   ChevronRight,
+  Thermometer,
 } from "lucide-react"
 import { DashboardOverview } from "./sections/dashboard-overview"
 import { PumpingStations } from "./sections/pumping-stations"
@@ -66,6 +67,11 @@ export default function MusbatBayDashboard() {
       ],
     },
     {
+      title: "HVAC/BMS",
+      icon: <Thermometer className="h-5 w-5" />,
+      section: "hvac",
+    },
+    {
       title: "Pumping Stations",
       icon: <Building2 className="h-5 w-5" />,
       section: "pumping",
@@ -112,18 +118,17 @@ export default function MusbatBayDashboard() {
 
     return (
       <div key={item.title} className="space-y-1">
-        <Button
-          variant={isActive ? "default" : "ghost"}
-          className={cn("w-full justify-between", hasChildren && "mb-1")}
+        <div
+          className="flex items-center justify-between p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
           onClick={() => (hasChildren ? toggleExpandItem(item.section) : handleNavigation(item.section))}
         >
-          <span className="flex items-center">
+          <div className="flex items-center">
             {item.icon}
-            <span className="ml-2">{item.title}</span>
-          </span>
+            <span className={`ml-2 ${isActive ? "font-medium" : ""}`}>{item.title}</span>
+          </div>
           {hasChildren &&
             (isExpanded(item.section) ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />)}
-        </Button>
+        </div>
 
         {hasChildren && isExpanded(item.section) && (
           <div className="pl-8 space-y-1">
@@ -210,6 +215,7 @@ export default function MusbatBayDashboard() {
           {activeSection === "contractor" && <ContractorTracker />}
           {activeSection === "residents" && <PlaceholderSection title="Residents Management" />}
           {activeSection === "settings" && <PlaceholderSection title="System Settings" />}
+          {activeSection === "hvac" && <PlaceholderSection title="HVAC & Building Management System" />}
         </div>
       </div>
     </div>
