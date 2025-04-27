@@ -619,7 +619,7 @@ const WaterSystemSection = ({ fullView = false }: { fullView?: boolean }) => {
                         </Pie>
                         <Tooltip
                           formatter={(value, name) => [
-                            `${formatNumber(value)} m³ (${calculatedMetrics.totalL3Volume > 0 ? formatPercentage((value / calculatedMetrics.totalL3Volume) * 100) : "0.0%"})`,
+                            `${formatNumber(typeof value === 'number' ? value : 0)} m³ (${calculatedMetrics.totalL3Volume > 0 ? formatPercentage((typeof value === 'number' ? value : 0) / calculatedMetrics.totalL3Volume * 100) : "0.0%"})`,
                             name,
                           ]}
                         />
@@ -1331,7 +1331,7 @@ const WaterSystemSection = ({ fullView = false }: { fullView?: boolean }) => {
                 </Pie>
                 <Tooltip
                   formatter={(value, name) => [
-                    `${formatNumber(value)} m³ (${calculatedMetrics.totalL3Volume > 0 ? formatPercentage((value / calculatedMetrics.totalL3Volume) * 100) : "0.0%"})`,
+                    `${formatNumber(typeof value === 'number' ? value : 0)} m³ (${calculatedMetrics.totalL3Volume > 0 ? formatPercentage((typeof value === 'number' ? value : 0) / calculatedMetrics.totalL3Volume * 100) : "0.0%"})`,
                     name,
                   ]}
                 />

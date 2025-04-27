@@ -14,7 +14,7 @@ export async function loadCsvFile(filePath: string) {
 
     const csvText = await response.text()
     return parseCsvData(csvText)
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error loading CSV file:", error)
     throw error
   }

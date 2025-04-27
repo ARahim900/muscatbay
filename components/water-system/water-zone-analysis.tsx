@@ -140,7 +140,6 @@ export default function WaterZoneAnalysis({ year, month }: WaterZoneAnalysisProp
             colors={["blue"]}
             valueFormatter={(value) => `${value.toLocaleString()} m³`}
             yAxisWidth={60}
-            layout="horizontal"
           />
         </CardContent>
       </Card>
