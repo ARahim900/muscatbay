@@ -2,7 +2,7 @@
 import * as React from "react"
 import { BarChart as RechartsBarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart as RechartsPieChart, Pie, Cell, LineChart as RechartsLineChart, Line, AreaChart as RechartsAreaChart, Area } from "recharts"
 
-interface ChartProps {
+export interface ChartProps {
   data: any[]
   index: string
   categories: string[]
@@ -12,6 +12,7 @@ interface ChartProps {
   showLabel?: boolean
   valueKey?: string
   categoryKey?: string
+  className?: string
 }
 
 export function BarChart({
@@ -21,16 +22,17 @@ export function BarChart({
   colors = ["blue", "green", "red", "yellow", "purple"],
   valueFormatter,
   yAxisWidth = 40,
+  className,
 }: ChartProps) {
   return (
-    <ResponsiveContainer width="100%" height="100%">
+    <ResponsiveContainer width="100%" height="100%" className={className}>
       <RechartsBarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 5 }}>
         <CartesianGrid strokeDasharray="3 3" vertical={false} />
         <XAxis dataKey={index} />
         <YAxis width={yAxisWidth} tickFormatter={valueFormatter} />
         <Tooltip
-          formatter={(value, name, props) => {
-            return [valueFormatter ? valueFormatter(Number(value)) : value, name]
+          formatter={(value: number, name: string) => {
+            return [valueFormatter ? valueFormatter(value) : value, name]
           }}
         />
         <Legend />
@@ -47,9 +49,17 @@ export function BarChart({
   )
 }
 
-export function PieChart({ data, valueKey = "value", categoryKey = "name", colors = ["blue", "green", "red"], showLabel = false }: ChartProps) {
+export function PieChart({ 
+  data, 
+  valueKey = "value", 
+  categoryKey = "name", 
+  colors = ["blue", "green", "red"], 
+  showLabel = false,
+  valueFormatter,
+  className,
+}: ChartProps) {
   return (
-    <ResponsiveContainer width="100%" height="100%">
+    <ResponsiveContainer width="100%" height="100%" className={className}>
       <RechartsPieChart>
         <Pie
           data={data}
@@ -66,21 +76,28 @@ export function PieChart({ data, valueKey = "value", categoryKey = "name", color
             <Cell key={`cell-${index}`} fill={`var(--${colors[index % colors.length]}-500)`} />
           ))}
         </Pie>
-        <Tooltip />
+        <Tooltip formatter={(value: number) => [valueFormatter ? valueFormatter(value) : value, ""]} />
         <Legend />
       </RechartsPieChart>
     </ResponsiveContainer>
   );
 }
 
-export function LineChart({ data, index, categories, colors = ["blue", "green", "red"], valueFormatter }: ChartProps) {
+export function LineChart({ 
+  data, 
+  index, 
+  categories, 
+  colors = ["blue", "green", "red"], 
+  valueFormatter,
+  className,
+}: ChartProps) {
   return (
-    <ResponsiveContainer width="100%" height="100%">
+    <ResponsiveContainer width="100%" height="100%" className={className}>
       <RechartsLineChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
         <CartesianGrid strokeDasharray="3 3" />
         <XAxis dataKey={index} />
         <YAxis tickFormatter={valueFormatter} />
-        <Tooltip formatter={(value: number, name: string) => [valueFormatter ? valueFormatter(Number(value)) : value, name]} />
+        <Tooltip formatter={(value: number, name: string) => [valueFormatter ? valueFormatter(value) : value, name]} />
         <Legend />
         {categories.map((category, i) => (
           <Line
@@ -95,14 +112,22 @@ export function LineChart({ data, index, categories, colors = ["blue", "green", 
   );
 }
 
-export function AreaChart({ data, index, categories, colors = ["blue", "green", "red"], valueFormatter, yAxisWidth = 40 }: ChartProps) {
+export function AreaChart({ 
+  data, 
+  index, 
+  categories, 
+  colors = ["blue", "green", "red"], 
+  valueFormatter, 
+  yAxisWidth = 40,
+  className,
+}: ChartProps) {
   return (
-    <ResponsiveContainer width="100%" height="100%">
+    <ResponsiveContainer width="100%" height="100%" className={className}>
       <RechartsAreaChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
         <CartesianGrid strokeDasharray="3 3" />
         <XAxis dataKey={index} />
         <YAxis width={yAxisWidth} tickFormatter={valueFormatter} />
-        <Tooltip formatter={(value: number, name: string) => [valueFormatter ? valueFormatter(Number(value)) : value, name]} />
+        <Tooltip formatter={(value: number, name: string) => [valueFormatter ? valueFormatter(value) : value, name]} />
         <Legend />
         {categories.map((category, i) => (
           <Area

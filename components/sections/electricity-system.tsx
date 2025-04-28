@@ -1,9 +1,7 @@
 "use client"
 
 import ErrorBoundary from "@/components/error-boundary"
-
 import { CardFooter } from "@/components/ui/card"
-
 import { useRouter } from "next/navigation"
 import { useState, useEffect } from "react"
 import {
