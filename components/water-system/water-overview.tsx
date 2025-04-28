@@ -1,11 +1,13 @@
+
 "use client"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useWaterData } from "@/context/water-data-context"
-import { BarChart } from "@/components/ui/chart"
-import { TrendingDown, TrendingUp, AlertTriangle, RefreshCw } from "lucide-react"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
+import { AlertTriangle, RefreshCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { FeaturesSectionWithHoverEffects } from "./feature-section-with-hover-effects"
+import { WaterHierarchyVisualization } from "./water-hierarchy-visualization"
 
 interface WaterOverviewProps {
   year: string
@@ -19,7 +21,7 @@ export default function WaterOverview({ year, month }: WaterOverviewProps) {
     return (
       <div className="flex flex-col justify-center items-center h-64 space-y-4">
         <LoadingSpinner size="lg" />
-        <p className="text-gray-500 dark:text-gray-400">Loading water system data...</p>
+        <p className="text-gray-500 dark:text-gray-400">Loading overview data...</p>
       </div>
     )
   }
@@ -47,173 +49,69 @@ export default function WaterOverview({ year, month }: WaterOverviewProps) {
     )
   }
 
-  // Format number with commas
-  const formatNumber = (num: number) => {
-    return num.toLocaleString()
-  }
-
-  // Prepare data for the chart
-  const chartData = data.monthlyData.map((item) => ({
-    month: item.month,
-    l1: item.l1,
-    l2: item.l2,
-    l3: item.l3,
-    totalLoss: item.totalLoss,
-  }))
-
   return (
     <div className="space-y-6">
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        <KpiCard
-          title="L1 TOTAL"
-          value={`${formatNumber(data.summary.l1Total)}m³`}
-          change={data.summary.l1Change}
-          description="vs previous month"
-        />
-        <KpiCard
-          title="L2 TOTAL"
-          value={`${formatNumber(data.summary.l2Total)}m³`}
-          change={data.summary.l2Change}
-          description="vs previous month"
-        />
-        <KpiCard
-          title="L3 TOTAL"
-          value={`${formatNumber(data.summary.l3Total)}m³`}
-          change={data.summary.l3Change}
-          description="vs previous month"
-        />
-        <KpiCard
-          title="LOSS (L1→L2)"
-          value={`${formatNumber(data.summary.l1ToL2Loss)}m³`}
-          change={data.summary.l1ToL2LossChange}
-          description="vs previous month"
-        />
-        <KpiCard
-          title="LOSS (L2→L3)"
-          value={`${formatNumber(data.summary.l2ToL3Loss)}m³`}
-          change={data.summary.l2ToL3LossChange}
-          description="vs previous month"
-        />
-        <KpiCard
-          title="TOTAL LOSS"
-          value={`${formatNumber(data.summary.totalLoss)}m³`}
-          change={data.summary.totalLossChange}
-          description="vs previous month"
-        />
+      <h2 className="text-2xl font-bold">Water System Overview</h2>
+      <p className="text-muted-foreground">
+        Showing: {month} {year} | System Performance Summary
+      </p>
+
+      {/* New Feature Section with Hover Effects */}
+      <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800">
+        <FeaturesSectionWithHoverEffects summaryData={data.summary} />
       </div>
 
-      {/* Water Flow Over Time Chart */}
+      {/* Water Distribution Hierarchy */}
       <Card>
         <CardHeader>
-          <CardTitle>Water Flow Over Time</CardTitle>
+          <CardTitle>Water Distribution Hierarchy</CardTitle>
         </CardHeader>
-        <CardContent className="h-80">
-          <BarChart
-            data={chartData}
-            index="month"
-            categories={["l1", "l2", "l3", "totalLoss"]}
-            colors={["blue", "cyan", "teal", "red"]}
-            valueFormatter={(value) => `${value.toLocaleString()} m³`}
-            yAxisWidth={60}
-          />
+        <CardContent className="pt-4">
+          <WaterHierarchyVisualization data={data.hierarchy} />
         </CardContent>
       </Card>
 
-      {/* Monthly Summary Table */}
+      {/* Financial Impact Section */}
       <Card>
         <CardHeader>
-          <CardTitle>Monthly Summary</CardTitle>
+          <CardTitle>Financial Impact Analysis</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50 dark:bg-gray-800">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    MONTH
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    L1 (M³)
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    L2 (M³)
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    L3 (M³)
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    L1→L2 LOSS (M³)
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    L2→L3 LOSS (M³)
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    TOTAL LOSS (M³)
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
-                {data.monthlyData.map((item, index) => (
-                  <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-800">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                      {item.month}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                      {formatNumber(item.l1)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                      {formatNumber(item.l2)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                      {formatNumber(item.l3)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                      {formatNumber(item.l1ToL2Loss)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                      {formatNumber(item.l2ToL3Loss)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                      {formatNumber(item.totalLoss)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-blue-50 dark:bg-blue-900/20 p-6 rounded-lg">
+              <h3 className="text-sm font-medium text-blue-600 dark:text-blue-300 mb-2">Total Loss Value</h3>
+              <p className="text-2xl font-bold">{data.financialImpact.totalLossValue.toLocaleString()} OMR</p>
+              <p className="text-sm text-gray-500 mt-1">Monthly financial impact</p>
+            </div>
+
+            <div className="bg-amber-50 dark:bg-amber-900/20 p-6 rounded-lg">
+              <h3 className="text-sm font-medium text-amber-600 dark:text-amber-300 mb-2">Distribution Loss Value</h3>
+              <p className="text-2xl font-bold">
+                {data.financialImpact.zoneDistributionLossValue.toLocaleString()} OMR
+              </p>
+              <p className="text-sm text-gray-500 mt-1">Zone distribution losses</p>
+            </div>
+
+            <div className="bg-green-50 dark:bg-green-900/20 p-6 rounded-lg">
+              <h3 className="text-sm font-medium text-green-600 dark:text-green-300 mb-2">Potential Annual Savings</h3>
+              <p className="text-2xl font-bold">
+                {data.financialImpact.potentialAnnualSavings.toLocaleString()} OMR
+              </p>
+              <p className="text-sm text-gray-500 mt-1">With 5% loss reduction</p>
+            </div>
           </div>
         </CardContent>
       </Card>
-    </div>
-  )
-}
 
-// KPI Card Component
-function KpiCard({
-  title,
-  value,
-  change,
-  description,
-}: { title: string; value: string; change: number; description: string }) {
-  const isPositive = change >= 0
-
-  return (
-    <Card>
-      <CardContent className="p-4">
-        <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{title}</p>
-        <p className="text-2xl font-bold mt-1">{value}</p>
-        <div className="flex items-center mt-1 text-sm">
-          {isPositive ? (
-            <TrendingUp className="h-3 w-3 text-green-500 mr-1" />
-          ) : (
-            <TrendingDown className="h-3 w-3 text-red-500 mr-1" />
-          )}
-          <span className={isPositive ? "text-green-500" : "text-red-500"}>
-            {isPositive ? "▲" : "▼"} {Math.abs(change).toLocaleString()} m³
-          </span>
-          <span className="text-gray-500 dark:text-gray-400 ml-1">{description}</span>
+      <div className="text-sm text-gray-500 dark:text-gray-400 flex justify-between items-center">
+        <span>Data source: Muscat Bay Water Management System | Rate: {data.financialImpact.waterRate} OMR/m³</span>
+        <div className="flex gap-2">
+          <button className="text-blue-500 hover:text-blue-700" onClick={refreshData}>
+            Refresh Data
+          </button>
+          <button className="text-blue-500 hover:text-blue-700">Advanced Search</button>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   )
 }

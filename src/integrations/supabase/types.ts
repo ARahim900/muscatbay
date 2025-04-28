@@ -1488,6 +1488,78 @@ export type Database = {
         }
         Relationships: []
       }
+      "Water Ma25": {
+        Row: {
+          "Acct #": string | null
+          "Apr-24": number | null
+          "Aug-24": number | null
+          "Dec-24": number | null
+          "Feb-24": number | null
+          "Feb-25": number | null
+          "Jan-24": number | null
+          "Jan-25": number | null
+          "Jul-24": number | null
+          "Jun-24": number | null
+          Label: string | null
+          "Mar-24": number | null
+          "Mar-25": number | null
+          "May-24": number | null
+          "Meter Label": string | null
+          "Nov-24": number | null
+          "Oct-24": number | null
+          "Parent Meter": string | null
+          "Sep-24": number | null
+          Type: string | null
+          Zone: string | null
+        }
+        Insert: {
+          "Acct #"?: string | null
+          "Apr-24"?: number | null
+          "Aug-24"?: number | null
+          "Dec-24"?: number | null
+          "Feb-24"?: number | null
+          "Feb-25"?: number | null
+          "Jan-24"?: number | null
+          "Jan-25"?: number | null
+          "Jul-24"?: number | null
+          "Jun-24"?: number | null
+          Label?: string | null
+          "Mar-24"?: number | null
+          "Mar-25"?: number | null
+          "May-24"?: number | null
+          "Meter Label"?: string | null
+          "Nov-24"?: number | null
+          "Oct-24"?: number | null
+          "Parent Meter"?: string | null
+          "Sep-24"?: number | null
+          Type?: string | null
+          Zone?: string | null
+        }
+        Update: {
+          "Acct #"?: string | null
+          "Apr-24"?: number | null
+          "Aug-24"?: number | null
+          "Dec-24"?: number | null
+          "Feb-24"?: number | null
+          "Feb-25"?: number | null
+          "Jan-24"?: number | null
+          "Jan-25"?: number | null
+          "Jul-24"?: number | null
+          "Jun-24"?: number | null
+          Label?: string | null
+          "Mar-24"?: number | null
+          "Mar-25"?: number | null
+          "May-24"?: number | null
+          "Meter Label"?: string | null
+          "Nov-24"?: number | null
+          "Oct-24"?: number | null
+          "Parent Meter"?: string | null
+          "Sep-24"?: number | null
+          Type?: string | null
+          Zone?: string | null
+        }
+        Relationships: []
+      }
       water_consumption_types: {
         Row: {
           created_at: string | null
@@ -2304,6 +2376,78 @@ export type Database = {
           sep_24: number | null
           total: number | null
           zone: string | null
+        }
+        Relationships: []
+      }
+      water_management_view: {
+        Row: {
+          account_number: string | null
+          apr_24: number | null
+          aug_24: number | null
+          dec_24: number | null
+          feb_24: number | null
+          feb_25: number | null
+          jan_24: number | null
+          jan_25: number | null
+          jul_24: number | null
+          jun_24: number | null
+          label: string | null
+          mar_24: number | null
+          mar_25: number | null
+          may_24: number | null
+          meter_label: string | null
+          nov_24: number | null
+          oct_24: number | null
+          parent_meter: string | null
+          sep_24: number | null
+          type: string | null
+          zone: string | null
+        }
+        Insert: {
+          account_number?: string | null
+          apr_24?: number | null
+          aug_24?: number | null
+          dec_24?: number | null
+          feb_24?: number | null
+          feb_25?: number | null
+          jan_24?: number | null
+          jan_25?: number | null
+          jul_24?: number | null
+          jun_24?: number | null
+          label?: string | null
+          mar_24?: number | null
+          mar_25?: number | null
+          may_24?: number | null
+          meter_label?: string | null
+          nov_24?: number | null
+          oct_24?: number | null
+          parent_meter?: string | null
+          sep_24?: number | null
+          type?: string | null
+          zone?: string | null
+        }
+        Update: {
+          account_number?: string | null
+          apr_24?: number | null
+          aug_24?: number | null
+          dec_24?: number | null
+          feb_24?: number | null
+          feb_25?: number | null
+          jan_24?: number | null
+          jan_25?: number | null
+          jul_24?: number | null
+          jun_24?: number | null
+          label?: string | null
+          mar_24?: number | null
+          mar_25?: number | null
+          may_24?: number | null
+          meter_label?: string | null
+          nov_24?: number | null
+          oct_24?: number | null
+          parent_meter?: string | null
+          sep_24?: number | null
+          type?: string | null
+          zone?: string | null
         }
         Relationships: []
       }

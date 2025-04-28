@@ -10,5 +10,8 @@ export default defineConfig({
     alias: {
       '@': path.resolve(__dirname, './')
     }
+  },
+  server: {
+    port: 8080
   }
 })

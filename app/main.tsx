@@ -8,7 +8,9 @@ import RootLayout from './layout'
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <ThemeProvider defaultTheme="light" storageKey="theme">
-      <RootLayout />
+      <RootLayout>
+        <div>App content will be rendered here</div>
+      </RootLayout>
     </ThemeProvider>
   </React.StrictMode>,
 )
