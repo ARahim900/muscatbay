@@ -25,8 +25,14 @@ import { useElectricityData } from "@/context/electricity-data-context"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
 import { ErrorAlert } from "@/components/ui/error-alert"
 
-// Mock data for demonstration purposes (replace with actual data fetching)
-const mockElectricityData = {
+interface ElectricityDataType {
+  months: string[];
+  mainSupply: Record<string, number>;
+  solarGeneration: Record<string, number>;
+  gridConsumption: Record<string, number>;
+}
+
+const mockElectricityData: ElectricityDataType = {
   months: [
     "Jan-24",
     "Feb-24",
@@ -102,12 +108,10 @@ export default function ElectricitySystemPage() {
     refreshData,
   } = useElectricityData()
 
-  // Get current data
   const currentData = getCurrentData()
   const monthOptions = getMonthOptions()
   const yearOptions = getYearOptions()
 
-  // Handle refresh button click
   const handleRefresh = async () => {
     setIsRefreshing(true)
     try {
@@ -117,7 +121,6 @@ export default function ElectricitySystemPage() {
     }
   }
 
-  // If there are no month options available, use default values
   useEffect(() => {
     if (monthOptions.length > 0 && !monthOptions.some((opt) => opt.value === selectedMonth.toLowerCase())) {
       setSelectedMonth(monthOptions[0].value)
@@ -145,10 +148,20 @@ export default function ElectricitySystemPage() {
     )
   }
 
-  // Check if we have data for the current selection
   const hasCurrentData = currentData.mainSupply > 0
   const hasConsumptionByType = currentData.consumptionByType && currentData.consumptionByType.length > 0
   const hasConsumptionByZone = currentData.consumptionByZone && currentData.consumptionByZone.length > 0
+
+  const getDataForPeriod = (
+    data: Record<string, number>,
+    period: string,
+    fallback: number = 0
+  ): number => {
+    if (period in data) {
+      return data[period]
+    }
+    return fallback
+  }
 
   return (
     <div className="p-6 space-y-6 animate-fade-in">
@@ -184,7 +197,6 @@ export default function ElectricitySystemPage() {
         </div>
       </div>
 
-      {/* Data Status Alert */}
       {!hasCurrentData && (
         <div className="p-4 bg-amber-100 dark:bg-amber-900/30 border border-amber-300 dark:border-amber-700 rounded-md text-amber-800 dark:text-amber-300 flex items-start space-x-3">
           <Info className="h-5 w-5 mt-0.5 flex-shrink-0" />
@@ -203,7 +215,6 @@ export default function ElectricitySystemPage() {
         </div>
       )}
 
-      {/* Tab Navigation */}
       <div className="border-b border-gray-200 dark:border-gray-800">
         <div className="flex overflow-x-auto">
           <TabButton active={activeTab === "overview"} onClick={() => setActiveTab("overview")}>
@@ -224,10 +235,8 @@ export default function ElectricitySystemPage() {
         </div>
       </div>
 
-      {/* Overview Tab Content */}
       {activeTab === "overview" && (
         <>
-          {/* Key Metrics Row */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Card className="bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/30 dark:to-amber-950/40 shadow-lg rounded-lg border border-amber-200 dark:border-amber-800/50 transition-all duration-300 hover:shadow-xl group">
               <CardHeader className="pb-2">
@@ -273,7 +282,6 @@ export default function ElectricitySystemPage() {
             </Card>
           </div>
 
-          {/* Energy Source Breakdown */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card className="bg-white dark:bg-gray-800 shadow-lg rounded-lg border border-gray-200 dark:border-gray-700">
               <CardHeader>
@@ -340,7 +348,6 @@ export default function ElectricitySystemPage() {
             </Card>
           </div>
 
-          {/* Monthly Consumption Trend */}
           <Card className="bg-white dark:bg-gray-800 shadow-lg rounded-lg border border-gray-200 dark:border-gray-700">
             <CardHeader>
               <CardTitle className="text-lg font-semibold text-gray-700 dark:text-gray-300 flex items-center">
@@ -355,7 +362,6 @@ export default function ElectricitySystemPage() {
               {hasCurrentData ? (
                 <AreaChart
                   data={
-                    // Create trend data for the current year
                     yearOptions
                       .filter((year) => year.value === selectedYear)
                       .flatMap(() => {
@@ -394,7 +400,6 @@ export default function ElectricitySystemPage() {
             </CardContent>
           </Card>
 
-          {/* Zone Consumption Analysis */}
           <Card className="bg-white dark:bg-gray-800 shadow-lg rounded-lg border border-gray-200 dark:border-gray-700">
             <CardHeader>
               <CardTitle className="text-lg font-semibold text-gray-700 dark:text-gray-300 flex items-center">
@@ -479,7 +484,6 @@ export default function ElectricitySystemPage() {
         </>
       )}
 
-      {/* Other tabs would be implemented here */}
       {activeTab !== "overview" && (
         <Card className="bg-white dark:bg-gray-800 shadow-lg rounded-lg border border-gray-200 dark:border-gray-700">
           <CardContent className="p-12 text-center">

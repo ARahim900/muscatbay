@@ -1,11 +1,13 @@
+
 "use client"
 
+import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useWaterData } from "@/context/water-data-context"
-import { BarChart } from "@/components/ui/chart"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
-import { AlertTriangle, RefreshCw } from "lucide-react"
+import { AlertTriangle, RefreshCw, MapPin, BarChart2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { BarChart } from "@/components/ui/chart"
 
 interface WaterZoneAnalysisProps {
   year: string
@@ -14,6 +16,25 @@ interface WaterZoneAnalysisProps {
 
 export default function WaterZoneAnalysis({ year, month }: WaterZoneAnalysisProps) {
   const { data, loading, error, refreshData } = useWaterData()
+  const [selectedZone, setSelectedZone] = useState<string>("All Zones")
+  
+  // Placeholder zone data for demonstration
+  const zones = [
+    { id: "all", name: "All Zones" },
+    { id: "zone_01", name: "Zone 01" },
+    { id: "zone_03a", name: "Zone 03A" },
+    { id: "zone_03b", name: "Zone 03B" },
+    { id: "zone_05", name: "Zone 05" },
+  ]
+  
+  // Sample zone consumption data for the chart
+  const zoneConsumptionData = [
+    { name: "Zone 01", consumption: 3250 },
+    { name: "Zone 03A", consumption: 4120 },
+    { name: "Zone 03B", consumption: 2980 },
+    { name: "Zone 05", consumption: 5340 },
+    { name: "Other Zones", consumption: 1870 },
+  ]
 
   if (loading) {
     return (
@@ -47,112 +68,84 @@ export default function WaterZoneAnalysis({ year, month }: WaterZoneAnalysisProp
     )
   }
 
-  // Format number with commas
-  const formatNumber = (num: number) => {
-    return num.toLocaleString()
-  }
-
-  // Prepare data for the chart
-  const chartData = data.zoneData.map((zone) => ({
-    name: zone.name,
-    consumption: zone.consumption,
-  }))
-
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold">Zone Analysis</h2>
+      <p className="text-muted-foreground">
+        Showing: {month} {year} | Water Consumption by Zone
+      </p>
 
-      {/* Zone Analysis Table */}
+      {/* Zone Selection */}
       <Card>
         <CardHeader>
-          <CardTitle>Zone Analysis</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <MapPin className="h-5 w-5" />
+            Zone Selection
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50 dark:bg-gray-800">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    METER
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    JAN (M³)
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    FEB (M³)
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    MAR (M³)
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    TOTAL (M³)
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    LOSS (M³)
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    LOSS %
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
-                {data.zoneData.map((zone, index) => (
-                  <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-800">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                      {zone.name}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                      {formatNumber(zone.jan)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                      {formatNumber(zone.feb)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                      {formatNumber(zone.mar)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                      {formatNumber(zone.total)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                      {formatNumber(zone.loss)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                      {zone.lossPercentage.toFixed(1)}%
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="flex flex-wrap gap-2">
+            {zones.map(zone => (
+              <Button
+                key={zone.id}
+                variant={selectedZone === zone.name ? "default" : "outline"}
+                onClick={() => setSelectedZone(zone.name)}
+                className="mb-2"
+              >
+                {zone.name}
+              </Button>
+            ))}
           </div>
         </CardContent>
       </Card>
 
-      {/* Zone Consumption Comparison Chart */}
+      {/* Zone Consumption Chart */}
       <Card>
         <CardHeader>
-          <CardTitle>Zone Consumption Comparison</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <BarChart2 className="h-5 w-5" />
+            Water Consumption by Zone
+          </CardTitle>
         </CardHeader>
-        <CardContent className="h-80">
-          <BarChart
-            data={chartData}
-            index="name"
-            categories={["consumption"]}
-            colors={["blue"]}
-            valueFormatter={(value) => `${value.toLocaleString()} m³`}
-            yAxisWidth={60}
-          />
+        <CardContent>
+          <div className="h-80 w-full">
+            <BarChart 
+              data={zoneConsumptionData}
+              index="name"
+              categories={["consumption"]}
+              colors={["blue"]}
+              valueFormatter={(value: number) => `${value.toLocaleString()} m³`}
+              yAxisWidth={60}
+            />
+          </div>
         </CardContent>
       </Card>
 
-      <div className="text-sm text-gray-500 dark:text-gray-400 flex justify-between items-center">
-        <span>Data source: Muscat Bay Water Management System | Rate: 1.32 OMR/m³</span>
-        <div className="flex gap-2">
-          <button className="text-blue-500 hover:text-blue-700" onClick={refreshData}>
-            Refresh Data
-          </button>
-          <button className="text-blue-500 hover:text-blue-700">Advanced Search</button>
-        </div>
-      </div>
+      {/* Zone Details */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Zone Details</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+              <h3 className="text-sm font-medium text-blue-600 dark:text-blue-300">Total Consumption</h3>
+              <p className="text-2xl font-bold">17,560 m³</p>
+              <p className="text-sm text-gray-500">Across all zones</p>
+            </div>
+            <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
+              <h3 className="text-sm font-medium text-green-600 dark:text-green-300">Highest Consuming Zone</h3>
+              <p className="text-2xl font-bold">Zone 05</p>
+              <p className="text-sm text-gray-500">5,340 m³ (30.4%)</p>
+            </div>
+            <div className="bg-amber-50 dark:bg-amber-900/20 p-4 rounded-lg">
+              <h3 className="text-sm font-medium text-amber-600 dark:text-amber-300">Average Consumption</h3>
+              <p className="text-2xl font-bold">3,512 m³</p>
+              <p className="text-sm text-gray-500">Per zone</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }

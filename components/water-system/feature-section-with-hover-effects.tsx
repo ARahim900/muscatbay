@@ -12,17 +12,19 @@ import {
   Activity,
 } from "lucide-react";
 
+interface SummaryData {
+  l1Total: number;
+  l2Total: number;
+  l3Total: number;
+  l1ToL2Loss: number;
+  l2ToL3Loss: number;
+  totalLoss: number;
+}
+
 export function FeaturesSectionWithHoverEffects({
   summaryData,
 }: {
-  summaryData: {
-    l1Total: number;
-    l2Total: number;
-    l3Total: number;
-    l1ToL2Loss: number;
-    l2ToL3Loss: number;
-    totalLoss: number;
-  };
+  summaryData: SummaryData;
 }) {
   // Format numbers with commas
   const formatNumber = (num: number) => {
