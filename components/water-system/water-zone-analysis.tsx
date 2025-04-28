@@ -7,7 +7,8 @@ import { useWaterData } from "@/context/water-data-context"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
 import { AlertTriangle, RefreshCw, MapPin, BarChart2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { BarChart } from "@/components/ui/chart"
+import { BarChart } from "recharts"
+import { CartesianGrid, XAxis, YAxis, Tooltip, Legend, Bar, ResponsiveContainer } from "recharts"
 
 interface WaterZoneAnalysisProps {
   year: string
@@ -109,14 +110,16 @@ export default function WaterZoneAnalysis({ year, month }: WaterZoneAnalysisProp
         </CardHeader>
         <CardContent>
           <div className="h-80 w-full">
-            <BarChart 
-              data={zoneConsumptionData}
-              index="name"
-              categories={["consumption"]}
-              colors={["blue"]}
-              valueFormatter={(value: number) => `${value.toLocaleString()} m³`}
-              yAxisWidth={60}
-            />
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={zoneConsumptionData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip formatter={(value) => [`${value.toLocaleString()} m³`, 'Consumption']} />
+                <Legend />
+                <Bar dataKey="consumption" fill="#3b82f6" name="Consumption (m³)" />
+              </BarChart>
+            </ResponsiveContainer>
           </div>
         </CardContent>
       </Card>

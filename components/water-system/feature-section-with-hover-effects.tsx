@@ -11,6 +11,7 @@ import {
   CircleHelp,
   Activity,
 } from "lucide-react";
+import { formatNumber, formatPercentage } from "./water-data-utils";
 
 interface SummaryData {
   l1Total: number;
@@ -26,11 +27,6 @@ export function FeaturesSectionWithHoverEffects({
 }: {
   summaryData: SummaryData;
 }) {
-  // Format numbers with commas
-  const formatNumber = (num: number) => {
-    return num.toLocaleString();
-  };
-
   // Calculate percentages
   const l1ToL2LossPercent = ((summaryData.l1ToL2Loss / summaryData.l1Total) * 100).toFixed(1);
   const l2ToL3LossPercent = ((summaryData.l2ToL3Loss / summaryData.l2Total) * 100).toFixed(1);

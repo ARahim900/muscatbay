@@ -56,7 +56,7 @@ export default function WaterOverview({ year, month }: WaterOverviewProps) {
         Showing: {month} {year} | System Performance Summary
       </p>
 
-      {/* New Feature Section with Hover Effects */}
+      {/* Feature Section with Hover Effects */}
       <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800">
         <FeaturesSectionWithHoverEffects summaryData={data.summary} />
       </div>
@@ -67,7 +67,10 @@ export default function WaterOverview({ year, month }: WaterOverviewProps) {
           <CardTitle>Water Distribution Hierarchy</CardTitle>
         </CardHeader>
         <CardContent className="pt-4">
-          <WaterHierarchyVisualization data={data.hierarchy} />
+          <WaterHierarchyVisualization 
+            data={data.hierarchy}
+            summaryData={data.summary}
+          />
         </CardContent>
       </Card>
 
