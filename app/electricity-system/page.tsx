@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
+import { useRouter } from "next/navigation"
 import {
   Zap,
   Calendar,
@@ -16,7 +17,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { PieChart, BarChart, AreaChart } from "@/components/ui/chart"
+import { PieChart, BarChart, LineChart } from "@/components/ui/chart"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { CircularGauge } from "@/components/ui/circular-gauge"
 import { TabButton } from "@/components/ui/tab-button"
@@ -158,9 +159,9 @@ export default function ElectricitySystemPage() {
     fallback: number = 0
   ): number => {
     if (period in data) {
-      return data[period]
+      return data[period];
     }
-    return fallback
+    return fallback;
   }
 
   return (
@@ -328,10 +329,12 @@ export default function ElectricitySystemPage() {
                 {hasConsumptionByType ? (
                   <PieChart
                     data={currentData.consumptionByType}
-                    category="value"
+                    valueKey="value"
+                    categoryKey="name"
                     index="name"
+                    categories={["value"]}
                     colors={["blue", "purple", "cyan"]}
-                    valueFormatter={(value) => `${value.toLocaleString()} kWh`}
+                    valueFormatter={(value: number) => `${value.toLocaleString()} kWh`}
                     className="h-full"
                   />
                 ) : (

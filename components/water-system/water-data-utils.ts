@@ -1,12 +1,13 @@
 
 import { WaterMeterRow } from "@/types/water-system";
+import { ParsedCsvRow, WaterMeterData } from "@/types/water-section";
 
 /**
  * Processes water meter raw data
  * @param rawDataArray Array of raw water meter data
  * @returns Processed water meter data
  */
-export function processWaterMeterData(rawDataArray: any[]): WaterMeterRow[] {
+export function processWaterMeterData(rawDataArray: ParsedCsvRow[]): WaterMeterRow[] {
   const allMonths = [
     "Jan-24", "Feb-24", "Mar-24", "Apr-24", "May-24", "Jun-24", 
     "Jul-24", "Aug-24", "Sep-24", "Oct-24", "Nov-24", "Dec-24",
@@ -31,7 +32,11 @@ export function processWaterMeterData(rawDataArray: any[]): WaterMeterRow[] {
 
       // Ensure all potential month columns are numbers
       allMonths.forEach((key) => {
-        processedRow[key] = key in row ? Number(row[key]) || 0 : 0;
+        if (key in row) {
+          processedRow[key] = Number(row[key]) || 0;
+        } else {
+          processedRow[key] = 0;
+        }
       });
       
       return processedRow;
@@ -67,7 +72,7 @@ export function formatPercentage(value: number, decimals = 1): string {
  * @param theme Color theme object
  * @returns Color from theme
  */
-export function getLossStatusColor(lossPercentage: number, theme: any): string {
+export function getLossStatusColor(lossPercentage: number, theme: Record<string, string>): string {
   if (isNaN(lossPercentage) || lossPercentage === null || lossPercentage === undefined || !isFinite(lossPercentage))
     return theme.secondary;
   if (lossPercentage > 20) return theme.error;
@@ -88,4 +93,27 @@ export function getLossStatusText(lossPercentage: number): string {
   if (lossPercentage > 10) return "Medium Loss";
   if (lossPercentage >= 0) return "Good";
   return "Gain";
+}
+
+/**
+ * Process CSV data for water meters
+ * @param csvData CSV data string
+ * @returns Array of processed water meter data
+ */
+export function processCsvData(csvData: string): WaterMeterData[] {
+  // Use the JSON.parse method as a placeholder for true CSV parsing
+  try {
+    const parsedData = JSON.parse(csvData) as Record<string, unknown>[];
+    return parsedData.map(row => ({
+      meterLabel: String(row["Meter Label"] || ""),
+      acctNum: String(row["Acct #"] || ""),
+      zone: String(row.Zone || "Unknown"),
+      type: String(row.Type || "Unknown"),
+      parentMeterLabel: String(row["Parent Meter"] || "") || null,
+      label: String(row.Label || row["Level "] || "Unknown"),
+    }));
+  } catch (error) {
+    console.error("Error parsing CSV data:", error);
+    return [];
+  }
 }

@@ -1,6 +1,5 @@
 "use client"
 
-// Add this import at the top
 import ErrorBoundary from "@/components/error-boundary"
 
 import { CardFooter } from "@/components/ui/card"
@@ -21,7 +20,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { PieChart, BarChart, AreaChart } from "@/components/ui/chart"
+import { PieChart, BarChart, LineChart } from "@/components/ui/chart"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { CircularGauge } from "@/components/ui/circular-gauge"
 import { TabButton } from "@/components/ui/tab-button"
@@ -47,12 +46,10 @@ export function ElectricitySystem({ fullView = false }) {
     refreshData,
   } = useElectricityData()
 
-  // Get current data
   const currentData = getCurrentData()
   const monthOptions = getMonthOptions()
   const yearOptions = getYearOptions()
 
-  // Handle refresh button click
   const handleRefresh = async () => {
     setIsRefreshing(true)
     try {
@@ -62,7 +59,6 @@ export function ElectricitySystem({ fullView = false }) {
     }
   }
 
-  // If there are no month options available, use default values
   useEffect(() => {
     if (monthOptions.length > 0 && !monthOptions.some((opt) => opt.value === selectedMonth.toLowerCase())) {
       setSelectedMonth(monthOptions[0].value)
@@ -90,17 +86,14 @@ export function ElectricitySystem({ fullView = false }) {
     )
   }
 
-  // Check if we have data for the current selection
   const hasCurrentData = currentData.mainSupply > 0
   const hasConsumptionByType = currentData.consumptionByType && currentData.consumptionByType.length > 0
   const hasConsumptionByZone = currentData.consumptionByZone && currentData.consumptionByZone.length > 0
 
-  // If fullView is true, render the full electricity system
   if (fullView) {
     return (
       <ErrorBoundary>
         <div className="p-6 space-y-6 animate-fade-in">
-          {/* Header removed - using main application header instead */}
           <div className="flex items-center mb-4">
             <Badge
               variant="outline"
@@ -111,7 +104,6 @@ export function ElectricitySystem({ fullView = false }) {
             </Badge>
           </div>
 
-          {/* Data Status Alert */}
           {!hasCurrentData && (
             <div className="p-4 bg-amber-100 dark:bg-amber-900/30 border border-amber-300 dark:border-amber-700 rounded-md text-amber-800 dark:text-amber-300 flex items-start space-x-3">
               <Info className="h-5 w-5 mt-0.5 flex-shrink-0" />
@@ -130,7 +122,6 @@ export function ElectricitySystem({ fullView = false }) {
             </div>
           )}
 
-          {/* Tab Navigation */}
           <div className="border-b border-gray-200 dark:border-gray-800">
             <div className="flex overflow-x-auto">
               <TabButton active={activeTab === "overview"} onClick={() => setActiveTab("overview")}>
@@ -151,10 +142,8 @@ export function ElectricitySystem({ fullView = false }) {
             </div>
           </div>
 
-          {/* Overview Tab Content */}
           {activeTab === "overview" && (
             <>
-              {/* Key Metrics Row */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <Card className="bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/30 dark:to-amber-950/40 shadow-lg rounded-lg border border-amber-200 dark:border-amber-800/50 transition-all duration-300 hover:shadow-xl group">
                   <CardHeader className="pb-2">
@@ -200,7 +189,6 @@ export function ElectricitySystem({ fullView = false }) {
                 </Card>
               </div>
 
-              {/* Energy Source Breakdown */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <Card className="bg-white dark:bg-gray-800 shadow-lg rounded-lg border border-gray-200 dark:border-gray-700">
                   <CardHeader>
@@ -247,10 +235,12 @@ export function ElectricitySystem({ fullView = false }) {
                     {hasConsumptionByType ? (
                       <PieChart
                         data={currentData.consumptionByType}
-                        category="value"
+                        valueKey="value"
+                        categoryKey="name"
                         index="name"
+                        categories={["value"]}
                         colors={["blue", "purple", "cyan"]}
-                        valueFormatter={(value) => `${value.toLocaleString()} kWh`}
+                        valueFormatter={(value: number) => `${value.toLocaleString()} kWh`}
                         className="h-full"
                       />
                     ) : (
@@ -267,7 +257,6 @@ export function ElectricitySystem({ fullView = false }) {
                 </Card>
               </div>
 
-              {/* Monthly Consumption Trend */}
               <Card className="bg-white dark:bg-gray-800 shadow-lg rounded-lg border border-gray-200 dark:border-gray-700">
                 <CardHeader>
                   <CardTitle className="text-lg font-semibold text-gray-700 dark:text-gray-300 flex items-center">
@@ -280,7 +269,7 @@ export function ElectricitySystem({ fullView = false }) {
                 </CardHeader>
                 <CardContent className="h-80">
                   {hasCurrentData ? (
-                    <AreaChart
+                    <LineChart
                       data={[
                         { month: "Jan", consumption: 165000, solar: 33000, grid: 132000 },
                         { month: "Feb", consumption: 158000, solar: 31600, grid: 126400 },
@@ -289,7 +278,7 @@ export function ElectricitySystem({ fullView = false }) {
                       index="month"
                       categories={["consumption", "solar", "grid"]}
                       colors={["amber", "green", "blue"]}
-                      valueFormatter={(value) => `${value.toLocaleString()} kWh`}
+                      valueFormatter={(value: number) => `${value.toLocaleString()} kWh`}
                       yAxisWidth={80}
                     />
                   ) : (
@@ -305,7 +294,6 @@ export function ElectricitySystem({ fullView = false }) {
                 </CardContent>
               </Card>
 
-              {/* Zone Consumption Analysis */}
               <Card className="bg-white dark:bg-gray-800 shadow-lg rounded-lg border border-gray-200 dark:border-gray-700">
                 <CardHeader>
                   <CardTitle className="text-lg font-semibold text-gray-700 dark:text-gray-300 flex items-center">
@@ -390,7 +378,6 @@ export function ElectricitySystem({ fullView = false }) {
             </>
           )}
 
-          {/* Other tabs would be implemented here */}
           {activeTab !== "overview" && (
             <Card className="bg-white dark:bg-gray-800 shadow-lg rounded-lg border border-gray-200 dark:border-gray-700">
               <CardContent className="p-12 text-center">
@@ -411,7 +398,6 @@ export function ElectricitySystem({ fullView = false }) {
     )
   }
 
-  // Otherwise, render the summary view for the dashboard
   return (
     <ErrorBoundary>
       <div className="p-6 space-y-6 animate-fade-in">
@@ -433,7 +419,6 @@ export function ElectricitySystem({ fullView = false }) {
           </div>
         </div>
 
-        {/* Key Metrics Row */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card className="bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/30 dark:to-amber-950/40 shadow-lg rounded-lg border border-amber-200 dark:border-amber-800/50 transition-all duration-300 hover:shadow-xl group">
             <CardHeader className="pb-2">
@@ -479,9 +464,7 @@ export function ElectricitySystem({ fullView = false }) {
           </Card>
         </div>
 
-        {/* Charts Row */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Chart Card: Monthly Consumption */}
           <Card className="bg-white dark:bg-gray-800 shadow-lg rounded-lg border border-gray-200 dark:border-gray-700">
             <CardHeader>
               <CardTitle className="text-lg font-semibold text-gray-700 dark:text-gray-300 flex items-center">
@@ -490,7 +473,7 @@ export function ElectricitySystem({ fullView = false }) {
               </CardTitle>
             </CardHeader>
             <CardContent className="h-72">
-              <AreaChart
+              <LineChart
                 data={[
                   { month: "Jan", consumption: 165000, solar: 33000, grid: 132000 },
                   { month: "Feb", consumption: 158000, solar: 31600, grid: 126400 },
@@ -499,7 +482,7 @@ export function ElectricitySystem({ fullView = false }) {
                 index="month"
                 categories={["consumption", "solar", "grid"]}
                 colors={["amber", "green", "blue"]}
-                valueFormatter={(value) => `${value.toLocaleString()} kWh`}
+                valueFormatter={(value: number) => `${value.toLocaleString()} kWh`}
                 yAxisWidth={80}
               />
             </CardContent>
@@ -510,7 +493,6 @@ export function ElectricitySystem({ fullView = false }) {
             </CardFooter>
           </Card>
 
-          {/* Chart Card: Energy Source Mix */}
           <Card className="bg-white dark:bg-gray-800 shadow-lg rounded-lg border border-gray-200 dark:border-gray-700">
             <CardHeader>
               <CardTitle className="text-lg font-semibold text-gray-700 dark:text-gray-300 flex items-center">
@@ -524,10 +506,12 @@ export function ElectricitySystem({ fullView = false }) {
                   { name: "Grid", value: currentData.gridConsumption },
                   { name: "Solar", value: currentData.solarGeneration },
                 ]}
-                category="value"
+                valueKey="value"
+                categoryKey="name"
                 index="name"
+                categories={["value"]}
                 colors={["blue", "green"]}
-                valueFormatter={(value) => `${value.toLocaleString()} kWh`}
+                valueFormatter={(value: number) => `${value.toLocaleString()} kWh`}
                 className="h-full"
               />
             </CardContent>
@@ -539,7 +523,6 @@ export function ElectricitySystem({ fullView = false }) {
           </Card>
         </div>
 
-        {/* System Status Overview */}
         <Card className="bg-white dark:bg-gray-800 shadow-lg rounded-lg border border-gray-200 dark:border-gray-700">
           <CardHeader>
             <CardTitle className="text-lg font-semibold text-gray-700 dark:text-gray-300 flex items-center">

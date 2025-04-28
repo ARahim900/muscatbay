@@ -1,5 +1,6 @@
+
 import * as React from "react"
-import { BarChart as RechartsBarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart as RechartsPieChart, Pie, Cell, LineChart as RechartsLineChart, Line } from "recharts"
+import { BarChart as RechartsBarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart as RechartsPieChart, Pie, Cell, LineChart as RechartsLineChart, Line, AreaChart as RechartsAreaChart, Area } from "recharts"
 
 interface ChartProps {
   data: any[]
@@ -46,7 +47,7 @@ export function BarChart({
   )
 }
 
-export function PieChart({ data, valueKey, categoryKey, colors = ["blue", "green", "red"], showLabel = false }: ChartProps) {
+export function PieChart({ data, valueKey = "value", categoryKey = "name", colors = ["blue", "green", "red"], showLabel = false }: ChartProps) {
   return (
     <ResponsiveContainer width="100%" height="100%">
       <RechartsPieChart>
@@ -59,7 +60,7 @@ export function PieChart({ data, valueKey, categoryKey, colors = ["blue", "green
           outerRadius={80}
           fill="#8884d8"
           labelLine={false}
-          label={showLabel ? ({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%` : undefined}
+          label={showLabel ? ({ name, percent }: { name: string; percent: number }) => `${name} ${(percent * 100).toFixed(0)}%` : undefined}
         >
           {data.map((entry, index) => (
             <Cell key={`cell-${index}`} fill={`var(--${colors[index % colors.length]}-500)`} />
@@ -79,7 +80,7 @@ export function LineChart({ data, index, categories, colors = ["blue", "green", 
         <CartesianGrid strokeDasharray="3 3" />
         <XAxis dataKey={index} />
         <YAxis tickFormatter={valueFormatter} />
-        <Tooltip formatter={(value, name) => [valueFormatter ? valueFormatter(Number(value)) : value, name]} />
+        <Tooltip formatter={(value: number, name: string) => [valueFormatter ? valueFormatter(Number(value)) : value, name]} />
         <Legend />
         {categories.map((category, i) => (
           <Line
@@ -90,6 +91,31 @@ export function LineChart({ data, index, categories, colors = ["blue", "green", 
           />
         ))}
       </RechartsLineChart>
+    </ResponsiveContainer>
+  );
+}
+
+export function AreaChart({ data, index, categories, colors = ["blue", "green", "red"], valueFormatter, yAxisWidth = 40 }: ChartProps) {
+  return (
+    <ResponsiveContainer width="100%" height="100%">
+      <RechartsAreaChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+        <CartesianGrid strokeDasharray="3 3" />
+        <XAxis dataKey={index} />
+        <YAxis width={yAxisWidth} tickFormatter={valueFormatter} />
+        <Tooltip formatter={(value: number, name: string) => [valueFormatter ? valueFormatter(Number(value)) : value, name]} />
+        <Legend />
+        {categories.map((category, i) => (
+          <Area
+            key={category}
+            type="monotone"
+            dataKey={category}
+            stackId="1"
+            stroke={`var(--${colors[i % colors.length]}-500)`}
+            fill={`var(--${colors[i % colors.length]}-200)`}
+            name={category}
+          />
+        ))}
+      </RechartsAreaChart>
     </ResponsiveContainer>
   );
 }
