@@ -6,7 +6,7 @@ import { useState, useEffect, useMemo } from "react"
 import {
   BarChart,
   Bar,
-  PieChart,
+  PieChart as RechartsPieChart,
   Pie,
   Cell,
   XAxis,
@@ -201,6 +201,7 @@ const WaterSystemSection = ({ fullView = false }: WaterSystemSectionProps) => {
 
   // --- Calculation Logic ---
   const calculatedMetrics = useMemo(() => {
+    // ... keep existing code (default metrics and calculation logic) 
     const defaultMetrics: CalculatedMetrics = {
       totalL1Supply: 0,
       totalL2Volume: 0,
@@ -608,7 +609,7 @@ const WaterSystemSection = ({ fullView = false }: WaterSystemSectionProps) => {
                   </h3>
                   <div style={{ width: "100%", height: 300 }}>
                     <ResponsiveContainer>
-                      <PieChart>
+                      <RechartsPieChart>
                         <Pie
                           data={prepareConsumptionByTypeData()}
                           cx="50%"
@@ -628,5 +629,26 @@ const WaterSystemSection = ({ fullView = false }: WaterSystemSectionProps) => {
                           ))}
                         </Pie>
                         <Tooltip
-                          formatter={(value, name) => [
-                            `${formatNumber(typeof value === 'number
+                          formatter={(value, name) => [`${formatNumber(value as number)} m³`, name]}
+                        />
+                        <Legend />
+                      </RechartsPieChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                {/* Second chart section */}
+                {/* Additional charts and data would go here */}
+              </div>
+            </div>
+          )}
+        </main>
+      </div>
+    )
+  }
+
+  // Default (non-full view) rendering
+  return <div>Water System Content</div>
+}
+
+export default WaterSystemSection
