@@ -1,5 +1,5 @@
 
-import { processWaterData } from "@/utils/csv-parser"
+import { ParsedCsvRow, CsvParseResult } from "@/utils/csv-parser"
 
 export async function loadCsvFile(filePath: string): Promise<any[]> {
   try {
@@ -62,4 +62,85 @@ export function getLatestMonthFromData(data: any[]): string {
     const monthOrder = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
     return monthOrder.indexOf(monthA) - monthOrder.indexOf(monthB)
   })[months.length - 1] // Get the last (most recent) month
+}
+
+// Add the missing exported processor functions
+export function processWaterData(rawData: ParsedCsvRow[]): ParsedCsvRow[] {
+  if (!rawData || !Array.isArray(rawData) || rawData.length === 0) {
+    console.warn('Invalid or empty raw data provided to processWaterData')
+    return []
+  }
+  
+  const processedData = rawData
+    .filter(row => row && typeof row === 'object' && Object.keys(row).length > 0)
+    .map(row => {
+      const processed: ParsedCsvRow = { ...row }
+      
+      // Convert meter readings to numbers
+      const monthColumns = Object.keys(row).filter(key => 
+        /^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)-\d{2}$/.test(key)
+      )
+      
+      monthColumns.forEach(month => {
+        processed[month] = typeof row[month] === 'number' ? row[month] : 
+                         typeof row[month] === 'string' && row[month].trim() !== '' ? 
+                         Number(row[month].replace(/,/g, '')) : 0
+      })
+      
+      return processed
+    })
+  
+  return processedData
+}
+
+export function processSTPData(rawData: ParsedCsvRow[]): ParsedCsvRow[] {
+  if (!rawData || !Array.isArray(rawData) || rawData.length === 0) {
+    console.warn('Invalid or empty raw data provided to processSTPData')
+    return []
+  }
+  
+  const processedData = rawData
+    .filter(row => row && typeof row === 'object' && Object.keys(row).length > 0)
+    .map(row => {
+      const processed: ParsedCsvRow = { ...row }
+      
+      // Convert numeric values to numbers
+      Object.keys(row).forEach(key => {
+        if (typeof row[key] === 'string' && /^\d+(\.\d+)?$/.test(row[key] as string)) {
+          processed[key] = Number(row[key])
+        }
+      })
+      
+      return processed
+    })
+  
+  return processedData
+}
+
+export function processElectricityData(rawData: ParsedCsvRow[]): ParsedCsvRow[] {
+  if (!rawData || !Array.isArray(rawData) || rawData.length === 0) {
+    console.warn('Invalid or empty raw data provided to processElectricityData')
+    return []
+  }
+  
+  const processedData = rawData
+    .filter(row => row && typeof row === 'object' && Object.keys(row).length > 0)
+    .map(row => {
+      const processed: ParsedCsvRow = { ...row }
+      
+      // Convert meter readings to numbers
+      const monthColumns = Object.keys(row).filter(key => 
+        /^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)-\d{2}$/.test(key)
+      )
+      
+      monthColumns.forEach(month => {
+        processed[month] = typeof row[month] === 'number' ? row[month] : 
+                         typeof row[month] === 'string' && row[month].trim() !== '' ? 
+                         Number(row[month].replace(/,/g, '')) : 0
+      })
+      
+      return processed
+    })
+  
+  return processedData
 }
