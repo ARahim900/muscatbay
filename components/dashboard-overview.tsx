@@ -1,5 +1,4 @@
 
-/* Replace only the specific PieChart component usage with the correct props */
 import { PieChart } from "@/components/ui/chart";
 
 export default function DashboardOverview() {

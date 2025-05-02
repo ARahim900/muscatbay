@@ -1,3 +1,4 @@
+
 "use client"
 
 import type React from "react"
@@ -18,6 +19,8 @@ import {
   ChevronDown,
   ChevronRight,
   Thermometer,
+  Search,
+  Bell,
 } from "lucide-react"
 import { DashboardOverview } from "./sections/dashboard-overview"
 import { PumpingStations } from "./sections/pumping-stations"
@@ -28,7 +31,6 @@ import { STPPlant } from "./sections/stp-plant"
 import { ContractorTracker } from "./sections/contractor-tracker"
 import { useMediaQuery } from "@/hooks/use-media-query"
 import { cn } from "@/lib/utils"
-import { MainHeader } from "./main-header"
 
 interface NavItem {
   title: string
@@ -40,12 +42,12 @@ interface NavItem {
 export default function MusbatBayDashboard() {
   const [activeSection, setActiveSection] = useState("overview")
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [expandedItems, setExpandedItems] = useState<string[]>([])
+  const [expandedItems, setExpandedItems] = useState<string[]>(["utilities"])
   const isDesktop = useMediaQuery("(min-width: 1024px)")
 
   const navItems: NavItem[] = [
     {
-      title: "Dashboard",
+      title: "Overview",
       icon: <LayoutDashboard className="h-5 w-5" />,
       section: "overview",
     },
@@ -119,7 +121,12 @@ export default function MusbatBayDashboard() {
     return (
       <div key={item.title} className="space-y-1">
         <div
-          className="flex items-center justify-between p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
+          className={cn(
+            "flex items-center justify-between p-2 rounded-md cursor-pointer",
+            isActive
+              ? "bg-white/10 text-white"
+              : "text-gray-300 hover:bg-white/10 hover:text-white"
+          )}
           onClick={() => (hasChildren ? toggleExpandItem(item.section) : handleNavigation(item.section))}
         >
           <div className="flex items-center">
@@ -133,15 +140,19 @@ export default function MusbatBayDashboard() {
         {hasChildren && isExpanded(item.section) && (
           <div className="pl-8 space-y-1">
             {item.children?.map((child) => (
-              <Button
+              <div
                 key={child.section}
-                variant={activeSection === child.section ? "default" : "ghost"}
-                className="w-full justify-start"
+                className={cn(
+                  "flex items-center p-2 rounded-md cursor-pointer",
+                  activeSection === child.section
+                    ? "bg-white/10 text-white"
+                    : "text-gray-300 hover:bg-white/10 hover:text-white"
+                )}
                 onClick={() => handleNavigation(child.section)}
               >
                 {child.icon}
                 <span className="ml-2">{child.title}</span>
-              </Button>
+              </div>
             ))}
           </div>
         )}
@@ -149,64 +160,75 @@ export default function MusbatBayDashboard() {
     )
   }
 
-  // Set page title based on active section
-  const getPageTitle = () => {
-    const activeItem =
-      navItems.find((item) => item.section === activeSection) ||
-      navItems.flatMap((item) => item.children || []).find((item) => item.section === activeSection)
-
-    return activeItem?.title || "Dashboard"
-  }
-
-  // Get icon for header based on active section
-  const getHeaderIcon = () => {
-    const activeItem =
-      navItems.find((item) => item.section === activeSection) ||
-      navItems.flatMap((item) => item.children || []).find((item) => item.section === activeSection)
-
-    return activeItem?.icon || <LayoutDashboard className="h-6 w-6 mr-2 text-[#9AD0D2]" />
-  }
-
   return (
     <div className="flex flex-col h-screen overflow-hidden">
       {/* Main Header */}
-      <MainHeader
-        title={`Muscat Bay Operations - ${getPageTitle()}`}
-        icon={getHeaderIcon()}
-        showControls={activeSection === "water" || activeSection === "electricity"}
-      />
+      <header className="bg-white border-b h-16 flex items-center justify-between px-4 z-20">
+        <div className="flex items-center">
+          <div className="lg:hidden mr-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              aria-label="Toggle sidebar"
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
+          </div>
+          <div className="relative w-64">
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search..."
+              className="w-full pl-9 pr-4 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-purple-600"
+            />
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" className="relative">
+            <Bell className="h-5 w-5" />
+            <span className="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full"></span>
+          </Button>
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center">
+              <span className="font-medium text-purple-800">AU</span>
+            </div>
+            <div className="hidden md:block">
+              <p className="text-sm font-medium">Admin User</p>
+            </div>
+          </div>
+        </div>
+      </header>
 
       <div className="flex flex-1 overflow-hidden">
-        {/* Mobile sidebar toggle */}
-        <div className="lg:hidden fixed top-20 left-4 z-50">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            aria-label="Toggle sidebar"
-          >
-            <Menu className="h-5 w-5" />
-          </Button>
-        </div>
-
         {/* Sidebar */}
         <div
           className={cn(
-            "fixed inset-y-0 left-0 z-30 w-64 bg-background border-r transform transition-transform duration-200 ease-in-out lg:translate-x-0 lg:static lg:h-auto",
+            "fixed inset-y-0 left-0 z-30 w-64 bg-[#4E4456] transform transition-transform duration-200 ease-in-out lg:translate-x-0 lg:static lg:h-auto",
             sidebarOpen ? "translate-x-0" : "-translate-x-full",
             "top-16", // Position below header
           )}
         >
           <div className="flex flex-col h-full">
-            <div className="p-4 border-b">
-              <h1 className="text-xl font-bold">Navigation</h1>
+            <div className="p-4 border-b border-[#635870]">
+              <h1 className="text-xl font-bold text-white">Muscat Bay</h1>
+              <p className="text-sm text-gray-300">Assets and Operation</p>
             </div>
-            <nav className="flex-1 p-4 space-y-1 overflow-y-auto">{navItems.map(renderNavItem)}</nav>
+            <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+              {navItems.map(renderNavItem)}
+            </nav>
+            <div className="p-4 border-t border-[#635870]">
+              <Button variant="ghost" className="w-full justify-start text-gray-300 hover:text-white hover:bg-white/10">
+                <Settings className="h-5 w-5 mr-2" />
+                Help & Support
+              </Button>
+            </div>
           </div>
         </div>
 
         {/* Main content */}
-        <div className="flex-1 overflow-y-auto p-4 lg:p-6">
+        <div className="flex-1 overflow-y-auto bg-gray-50">
           {activeSection === "overview" && <DashboardOverview />}
           {activeSection === "water" && <WaterSystemSection fullView={true} />}
           {activeSection === "electricity" && <ElectricitySystem fullView={true} />}
