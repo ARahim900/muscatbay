@@ -1,3 +1,4 @@
+
 import { processElectricityData } from "@/utils/csv-loader"
 
 // Define types for electricity data
@@ -108,7 +109,8 @@ export async function loadElectricityData(): Promise<ElectricityData[]> {
     })
 
     // Process the data (similar to what we did with CSV data)
-    const processedData = processElectricityData(transformedData)
+    // We need to cast the result to ElectricityData[] since processElectricityData returns ParsedCsvRow[]
+    const processedData = processElectricityData(transformedData) as unknown as ElectricityData[]
 
     // Cache the data
     electricityDataCache = processedData
