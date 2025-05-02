@@ -105,8 +105,12 @@ export default function WaterTypeAnalysis({ year, month }: WaterTypeAnalysisProp
             <PieChart 
               data={consumptionByTypeData} 
               valueKey="value" 
-              categoryKey="name" 
+              categoryKey="name"
+              index="name"
+              categories={["value"]}
+              colors={["blue", "green", "amber", "purple", "red"]}
               showLabel={true} 
+              className="h-full"
             />
           </div>
         </CardContent>

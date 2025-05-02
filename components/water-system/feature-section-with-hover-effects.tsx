@@ -1,96 +1,60 @@
 
-import { cn } from "@/lib/utils";
-import { DollarSign, Droplets, BarChart3, Map, AlertTriangle, PieChart, Layers, Activity } from "lucide-react";
+import React from 'react'
+import { Droplet, Layers, ArrowDownRight, Percent } from "lucide-react"
 
-interface FeatureProps {
-  title: string;
-  description: string;
-  icon: React.ReactNode;
-  value: string;
-  index: number;
-  trend?: string;
-  status?: string;
+export interface FeatureProps {
+  title: string
+  value: string
+  description: string
+  icon: string
+  color: string
+  index?: number
 }
 
-export function FeaturesSectionWithHoverEffects({ features }: { features: Omit<FeatureProps, 'index'>[] }) {
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 relative z-10 py-4 max-w-7xl mx-auto">
-      {features.map((feature, index) => (
-        <Feature key={feature.title} {...feature} index={index} />
-      ))}
-    </div>
-  );
+interface FeaturesSectionProps {
+  features: Omit<FeatureProps, "index">[]
 }
 
-const Feature = ({
-  title,
-  description,
-  icon,
-  value,
-  index,
-  trend,
-  status,
-}: FeatureProps) => {
-  return (
-    <div
-      className={cn(
-        "flex flex-col lg:border-r py-6 relative group/feature dark:border-neutral-800",
-        (index === 0 || index === 4) && "lg:border-l dark:border-neutral-800",
-        index < 4 && "lg:border-b dark:border-neutral-800"
-      )}
-    >
-      {index < 4 && (
-        <div className="opacity-0 group-hover/feature:opacity-100 transition duration-200 absolute inset-0 h-full w-full bg-gradient-to-t from-neutral-100 dark:from-neutral-800 to-transparent pointer-events-none" />
-      )}
-      {index >= 4 && (
-        <div className="opacity-0 group-hover/feature:opacity-100 transition duration-200 absolute inset-0 h-full w-full bg-gradient-to-b from-neutral-100 dark:from-neutral-800 to-transparent pointer-events-none" />
-      )}
-      <div className="mb-4 relative z-10 px-6 text-neutral-600 dark:text-neutral-400">
-        {icon}
-      </div>
-      <div className="text-lg font-bold mb-1 relative z-10 px-6">
-        <div className="absolute left-0 inset-y-0 h-6 group-hover/feature:h-8 w-1 rounded-tr-full rounded-br-full bg-neutral-300 dark:bg-neutral-700 group-hover/feature:bg-blue-500 transition-all duration-200 origin-center" />
-        <span className="group-hover/feature:translate-x-1 transition duration-200 inline-block text-neutral-800 dark:text-neutral-100">
-          {title}
-        </span>
-      </div>
-      <p className="text-3xl font-semibold mb-1 px-6 relative z-10">
-        {value}
-        {trend && (
-          <span className={cn(
-            "text-xs ml-2",
-            trend.startsWith('+') ? "text-green-500" : "text-red-500"
-          )}>
-            {trend}
-          </span>
-        )}
-      </p>
-      <p className="text-sm text-neutral-600 dark:text-neutral-300 max-w-xs relative z-10 px-6">
-        {description}
-      </p>
-      {status && (
-        <div className={cn(
-          "mt-2 px-6 text-xs py-1 rounded-full w-fit ml-6",
-          status === "Good" ? "bg-green-100 text-green-800" : 
-          status === "Warning" ? "bg-yellow-100 text-yellow-800" : 
-          "bg-red-100 text-red-800"
-        )}>
-          {status}
-        </div>
-      )}
-    </div>
-  );
-};
-
-export const getWaterSystemIcons = () => {
-  return {
-    mainBulk: <Droplets className="h-5 w-5" />,
-    zonesBulk: <Map className="h-5 w-5" />,
-    individual: <BarChart3 className="h-5 w-5" />,
-    stage1Loss: <AlertTriangle className="h-5 w-5" />,
-    stage2Loss: <PieChart className="h-5 w-5" />,
-    totalLoss: <Activity className="h-5 w-5" />,
-    consumption: <DollarSign className="h-5 w-5" />,
-    distribution: <Layers className="h-5 w-5" />
+export const FeaturesSectionWithHoverEffects: React.FC<FeaturesSectionProps> = ({ features }) => {
+  // Map of icon strings to Lucide React components
+  const iconMap: Record<string, React.ReactNode> = {
+    "Droplet": <Droplet className="h-6 w-6" />,
+    "Layers": <Layers className="h-6 w-6" />,
+    "ArrowDownRight": <ArrowDownRight className="h-6 w-6" />,
+    "Percent": <Percent className="h-6 w-6" />
   };
+
+  // Map of color names to tailwind color classes
+  const colorMap: Record<string, string> = {
+    "blue": "bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-300",
+    "green": "bg-green-50 text-green-600 dark:bg-green-900/20 dark:text-green-300",
+    "amber": "bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-300",
+    "red": "bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-300",
+    "purple": "bg-purple-50 text-purple-600 dark:bg-purple-900/20 dark:text-purple-300"
+  };
+
+  return (
+    <div className="py-12 px-4 sm:px-6 lg:py-16 lg:px-8">
+      <div className="grid grid-cols-1 gap-y-8 sm:grid-cols-2 lg:grid-cols-4 gap-x-8">
+        {features.map((feature, index) => (
+          <div 
+            key={index} 
+            className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700 transition-all hover:shadow-md hover:-translate-y-1 hover:border-gray-300 dark:hover:border-gray-600"
+          >
+            <div 
+              className={`inline-flex p-3 rounded-lg mb-4 ${colorMap[feature.color] || colorMap.blue}`}
+            >
+              {iconMap[feature.icon] || <Droplet className="h-6 w-6" />}
+            </div>
+            
+            <div>
+              <h3 className="text-base font-medium text-gray-900 dark:text-gray-100">{feature.title}</h3>
+              <p className="mt-2 text-2xl font-bold text-gray-900 dark:text-white">{feature.value}</p>
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{feature.description}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 };

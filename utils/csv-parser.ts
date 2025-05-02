@@ -1,127 +1,67 @@
 
-/**
- * CSV Parser Utility
- * This utility wraps PapaParse for CSV parsing with type safety
- */
-
-// Define generic type for parsed CSV rows
-export type ParsedCsvRow = Record<string, any>;
-
-// Type for parse configuration
-export interface CsvParseConfig {
-  header?: boolean;
-  dynamicTyping?: boolean;
-  skipEmptyLines?: boolean;
-  transformHeader?: (header: string) => string;
+export interface ParsedCsvRow {
+  [key: string]: any;
 }
 
-// Type for parse results
-export interface CsvParseResult<T = ParsedCsvRow> {
+export interface CsvParseResult<T> {
   data: T[];
-  errors: Array<{
-    type: string;
-    code: string;
-    message: string;
-    row?: number;
-  }>;
+  errors: any[];
   meta: {
     delimiter: string;
     linebreak: string;
     aborted: boolean;
     truncated: boolean;
     cursor: number;
+    fields: string[];
   };
 }
 
-// Parse CSV string to array of objects
-export const parseCsv = <T = ParsedCsvRow>(
-  csvString: string, 
-  config: CsvParseConfig = {}
-): CsvParseResult<T> => {
-  // If window is not defined or Papa is not loaded, return an empty result
-  if (typeof window === 'undefined' || !window.Papa) {
-    console.error('PapaParse is not loaded. Make sure to include the script.');
-    return {
-      data: [],
-      errors: [{
-        type: 'Parser',
-        code: 'LibraryNotLoaded',
-        message: 'PapaParse library is not loaded'
-      }],
-      meta: {
-        delimiter: '',
-        linebreak: '',
-        aborted: true,
-        truncated: false,
-        cursor: 0
-      }
-    };
+/**
+ * Process raw water data from CSV
+ * @param rawData Raw data from CSV
+ * @returns Processed water data
+ */
+export function processWaterData(rawData: ParsedCsvRow[]): ParsedCsvRow[] {
+  if (!rawData || !Array.isArray(rawData) || rawData.length === 0) {
+    console.warn('Invalid or empty raw data provided to processWaterData')
+    return []
   }
+  
+  const processedData = rawData
+    .filter(row => row && typeof row === 'object' && Object.keys(row).length > 0)
+    .map(row => {
+      const processed: ParsedCsvRow = { ...row }
+      
+      // Convert meter readings to numbers
+      const monthColumns = Object.keys(row).filter(key => 
+        /^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)-\d{2}$/.test(key)
+      )
+      
+      monthColumns.forEach(month => {
+        processed[month] = typeof row[month] === 'number' ? row[month] : 
+                          typeof row[month] === 'string' && row[month].trim() !== '' ? 
+                          Number(row[month].replace(/,/g, '')) : 0
+      })
+      
+      return processed
+    })
+  
+  return processedData
+}
 
-  // Parse the CSV string
-  return window.Papa.parse(csvString, {
-    header: true,
-    dynamicTyping: true,
-    skipEmptyLines: true,
-    ...config
-  });
-};
-
-// Import PapaParse from CDN and return a promise
-export const loadPapaParseFromCDN = (): Promise<void> => {
-  return new Promise((resolve, reject) => {
-    if (typeof window === 'undefined') {
-      reject(new Error('Cannot load PapaParse in a non-browser environment'));
-      return;
-    }
-
-    // If PapaParse is already loaded, resolve immediately
-    if (window.Papa) {
-      resolve();
-      return;
-    }
-
-    const scriptId = 'papaparse-cdn-script';
-    
-    // Check if script already exists
-    if (document.getElementById(scriptId)) {
-      // Script tag exists but hasn't loaded yet
-      const existingScript = document.getElementById(scriptId) as HTMLScriptElement;
-      existingScript.onload = () => resolve();
-      existingScript.onerror = (error: any) => reject(new Error(`Failed to load PapaParse: ${error}`));
-      return;
-    }
-
-    // Create script element
-    const script = document.createElement('script');
-    script.id = scriptId;
-    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js';
-    script.async = true;
-    
-    // Setup event handlers
-    script.onload = () => {
-      console.log('PapaParse loaded successfully');
-      resolve();
-    };
-    
-    script.onerror = (error: any) => {
-      reject(new Error(`Failed to load PapaParse: ${error}`));
-    };
-
-    // Append to document body
-    document.body.appendChild(script);
-  });
-};
-
-// Declare global Papa object for TypeScript
-declare global {
-  interface Window {
-    Papa: {
-      parse: (
-        input: string,
-        config?: any
-      ) => CsvParseResult;
-      unparse: (data: any, config?: any) => string;
-    };
+/**
+ * Parse CSV data with specified configuration
+ * @param csvText CSV text content
+ * @param config Parse configuration
+ * @returns Parse result
+ */
+export function parseCsvData<T = ParsedCsvRow>(
+  csvText: string, 
+  config: { header: boolean; dynamicTyping: boolean; skipEmptyLines: boolean }
+): CsvParseResult<ParsedCsvRow> {
+  if (!(window as any).Papa) {
+    throw new Error('PapaParse library not available')
   }
+  
+  return (window as any).Papa.parse(csvText, config)
 }

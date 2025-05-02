@@ -22,14 +22,38 @@ interface WaterFinancialImpact {
 
 interface WaterHierarchyData {
   // This would be a more complex structure for the hierarchy visualization
-  // For now, we'll use a placeholder
   levels: string[]
+}
+
+// Add missing data types for the components
+interface WaterLossData {
+  name: string
+  supply: number
+  consumption: number
+  loss: number
+  lossPercentage: number
+}
+
+interface WaterZoneData {
+  name: string
+  consumption: number
+  loss: number
+}
+
+interface WaterTypeData {
+  name: string
+  consumption: number
+  percentage: number
 }
 
 interface WaterData {
   summary: WaterDataSummary
   financialImpact: WaterFinancialImpact
   hierarchy: WaterHierarchyData
+  // Add the missing data arrays
+  lossData: WaterLossData[]
+  zoneData: WaterZoneData[]
+  typeData: WaterTypeData[]
 }
 
 // Define context shape
@@ -60,6 +84,10 @@ const WaterDataContext = createContext<WaterDataContextType>({
     hierarchy: {
       levels: [],
     },
+    // Add the missing data defaults
+    lossData: [],
+    zoneData: [],
+    typeData: [],
   },
   loading: false,
   error: null,
@@ -86,6 +114,25 @@ export function WaterDataProvider({ children }: { children: ReactNode }) {
     hierarchy: {
       levels: ["L1", "L2", "L3"],
     },
+    // Add sample data for the new properties
+    lossData: [
+      { name: "January", supply: 14250, consumption: 11714, loss: 2536, lossPercentage: 17.8 },
+      { name: "February", supply: 13800, consumption: 11320, loss: 2480, lossPercentage: 18.0 },
+      { name: "March", supply: 14500, consumption: 12100, loss: 2400, lossPercentage: 16.6 },
+    ],
+    zoneData: [
+      { name: "Zone 01", consumption: 3250, loss: 12.5 },
+      { name: "Zone 03A", consumption: 4120, loss: 18.7 },
+      { name: "Zone 03B", consumption: 2980, loss: 15.2 },
+      { name: "Zone 05", consumption: 5340, loss: 21.3 },
+    ],
+    typeData: [
+      { name: "Residential (Villa)", consumption: 8250, percentage: 47 },
+      { name: "Residential (Apartment)", consumption: 5120, percentage: 29 },
+      { name: "Commercial", consumption: 2100, percentage: 12 },
+      { name: "Landscape", consumption: 1870, percentage: 11 },
+      { name: "Other", consumption: 220, percentage: 1 },
+    ],
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<Error | null>(null)
@@ -136,3 +183,6 @@ export function useWaterData() {
   }
   return context
 }
+
+// Export the interfaces
+export type { WaterData, WaterDataSummary, WaterFinancialImpact, WaterHierarchyData, WaterLossData, WaterZoneData, WaterTypeData }

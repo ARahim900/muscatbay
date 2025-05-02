@@ -58,7 +58,38 @@ export default function WaterOverview({ year, month }: WaterOverviewProps) {
 
       {/* Feature Section with Hover Effects */}
       <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800">
-        <FeaturesSectionWithHoverEffects summaryData={data.summary} />
+        <FeaturesSectionWithHoverEffects 
+          features={[
+            { 
+              title: "Total L1 Supply", 
+              value: `${data.summary.l1Total.toLocaleString()} m³`, 
+              description: "Main Source Input", 
+              icon: "Layers",
+              color: "blue" 
+            },
+            { 
+              title: "Total L3 Consumption", 
+              value: `${data.summary.l3Total.toLocaleString()} m³`, 
+              description: "End User + DC", 
+              icon: "Droplet", 
+              color: "green" 
+            },
+            { 
+              title: "Total Loss", 
+              value: `${((data.summary.totalLoss / data.summary.l1Total) * 100).toFixed(1)}%`, 
+              description: `${data.summary.totalLoss.toLocaleString()} m³ of L1`, 
+              icon: "Percent", 
+              color: "amber" 
+            },
+            { 
+              title: "Stage 1 Loss", 
+              value: `${((data.summary.l1ToL2Loss / data.summary.l1Total) * 100).toFixed(1)}%`, 
+              description: `${data.summary.l1ToL2Loss.toLocaleString()} m³ (Trunk)`, 
+              icon: "ArrowDownRight", 
+              color: "red" 
+            }
+          ]} 
+        />
       </div>
 
       {/* Water Distribution Hierarchy */}
