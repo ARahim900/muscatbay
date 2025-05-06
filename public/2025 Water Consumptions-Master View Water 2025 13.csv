@@ -1,0 +1,8 @@
+Meter Label,Acct #,Level,Zone,Type,Parent Meter,Jan-25,Feb-25,Mar-25
+"Main Bulk (NAMA)",C43659,L1,"Main Bulk","Main BULK",NAMA,32580,44043,34915
+"ZONE 3A (Bulk Zone 3A)",4300343,L2,"Zone_03_(A)","Zone Bulk","Main Bulk (NAMA)",4235,4273,3591
+"ZONE 5 (Bulk Zone 5)",4300345,L2,"Zone_05","Zone Bulk","Main Bulk (NAMA)",4267,4231,3862
+"Hotel Main Building",4300334,DC,"Direct Connection ","Retail","Main Bulk (NAMA)",18048,19482,22151
+"Z3-42 (Villa)",4300002,L3,"Zone_03_(A)","Residential (Villa)","ZONE 3A (BULK ZONE 3A)",32,46,19
+"Z5-17",4300001,L3,"Zone_05","Residential (Villa)","ZONE 5 (Bulk Zone 5)",112,80,81
+"Z3-74(3) (Building)",4300322,L3,"Zone_03_(A)","Residential (Apart)","ZONE 3A (BULK ZONE 3A)",,,19

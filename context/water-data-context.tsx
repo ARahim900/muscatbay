@@ -1,188 +1,276 @@
-
 "use client"
 
-import { createContext, useContext, useState, useEffect, ReactNode } from "react"
+import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
+import type { ProcessedData, ZoneData, TypeData } from "@/lib/water-data-utils"
+import { getWaterDataForPeriod } from "@/services/water-service"
 
-// Define the shape of the water data
-interface WaterDataSummary {
-  l1Total: number
-  l2Total: number
-  l3Total: number
-  l1ToL2Loss: number
-  l2ToL3Loss: number
-  totalLoss: number
-}
-
-interface WaterFinancialImpact {
-  totalLossValue: number
-  zoneDistributionLossValue: number
-  potentialAnnualSavings: number
-  waterRate: number
-}
-
-interface WaterHierarchyData {
-  // This would be a more complex structure for the hierarchy visualization
-  levels: string[]
-}
-
-// Add missing data types for the components
-interface WaterLossData {
-  name: string
-  supply: number
-  consumption: number
-  loss: number
-  lossPercentage: number
-}
-
-interface WaterZoneData {
-  name: string
-  consumption: number
-  loss: number
-}
-
-interface WaterTypeData {
-  name: string
-  consumption: number
-  percentage: number
-}
-
-interface WaterData {
-  summary: WaterDataSummary
-  financialImpact: WaterFinancialImpact
-  hierarchy: WaterHierarchyData
-  // Add the missing data arrays
-  lossData: WaterLossData[]
-  zoneData: WaterZoneData[]
-  typeData: WaterTypeData[]
-}
-
-// Define context shape
+// Define the context type
 interface WaterDataContextType {
-  data: WaterData
-  loading: boolean
+  isLoading: boolean
   error: Error | null
+  data: ProcessedData | null
+  selectedYear: string
+  selectedMonth: string
+  availableMonths: string[]
+  availableYears: string[]
+  setSelectedYear: (year: string) => void
+  setSelectedMonth: (month: string) => void
+  getCurrentData: () => {
+    l1Supply: number
+    l2Volume: number
+    l3Volume: number
+    stage1Loss: number
+    stage2Loss: number
+    totalLoss: number
+    stage1LossPercent: number
+    stage2LossPercent: number
+    totalLossPercent: number
+    consumptionByType: { name: string; value: number }[]
+    zoneData: Record<string, ZoneData>
+    typeData: Record<string, TypeData>
+  }
+  getZoneData: (zone: string) => ZoneData | null
+  getTypeData: (type: string) => TypeData | null
+  getZoneOptions: () => { value: string; label: string }[]
+  getTypeOptions: () => { value: string; label: string }[]
+  getMonthOptions: () => { value: string; label: string }[]
+  getYearOptions: () => { value: string; label: string }[]
   refreshData: () => Promise<void>
 }
 
-// Create context with default values
-const WaterDataContext = createContext<WaterDataContextType>({
-  data: {
-    summary: {
-      l1Total: 0,
-      l2Total: 0,
-      l3Total: 0,
-      l1ToL2Loss: 0,
-      l2ToL3Loss: 0,
-      totalLoss: 0,
-    },
-    financialImpact: {
-      totalLossValue: 0,
-      zoneDistributionLossValue: 0,
-      potentialAnnualSavings: 0,
-      waterRate: 0,
-    },
-    hierarchy: {
-      levels: [],
-    },
-    // Add the missing data defaults
-    lossData: [],
-    zoneData: [],
-    typeData: [],
-  },
-  loading: false,
-  error: null,
-  refreshData: async () => {},
-})
+const WaterDataContext = createContext<WaterDataContextType | undefined>(undefined)
 
-// Provider component
 export function WaterDataProvider({ children }: { children: ReactNode }) {
-  const [data, setData] = useState<WaterData>({
-    summary: {
-      l1Total: 14250,
-      l2Total: 13020,
-      l3Total: 11714,
-      l1ToL2Loss: 1230,
-      l2ToL3Loss: 1306,
-      totalLoss: 2536,
-    },
-    financialImpact: {
-      totalLossValue: 3347.52,
-      zoneDistributionLossValue: 1723.92,
-      potentialAnnualSavings: 40170.24,
-      waterRate: 1.32,
-    },
-    hierarchy: {
-      levels: ["L1", "L2", "L3"],
-    },
-    // Add sample data for the new properties
-    lossData: [
-      { name: "January", supply: 14250, consumption: 11714, loss: 2536, lossPercentage: 17.8 },
-      { name: "February", supply: 13800, consumption: 11320, loss: 2480, lossPercentage: 18.0 },
-      { name: "March", supply: 14500, consumption: 12100, loss: 2400, lossPercentage: 16.6 },
-    ],
-    zoneData: [
-      { name: "Zone 01", consumption: 3250, loss: 12.5 },
-      { name: "Zone 03A", consumption: 4120, loss: 18.7 },
-      { name: "Zone 03B", consumption: 2980, loss: 15.2 },
-      { name: "Zone 05", consumption: 5340, loss: 21.3 },
-    ],
-    typeData: [
-      { name: "Residential (Villa)", consumption: 8250, percentage: 47 },
-      { name: "Residential (Apartment)", consumption: 5120, percentage: 29 },
-      { name: "Commercial", consumption: 2100, percentage: 12 },
-      { name: "Landscape", consumption: 1870, percentage: 11 },
-      { name: "Other", consumption: 220, percentage: 1 },
-    ],
-  })
-  const [loading, setLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
+  const [data, setData] = useState<any>(null)
+  const [selectedYear, setSelectedYear] = useState("2025")
+  const [selectedMonth, setSelectedMonth] = useState("Mar")
+  const [availableMonths, setAvailableMonths] = useState<string[]>([])
+  const [availableYears, setAvailableYears] = useState<string[]>(["2024", "2025"])
+  const [dataLoadAttempt, setDataLoadAttempt] = useState(0)
 
-  // Function to fetch water data
-  const fetchWaterData = async () => {
-    setLoading(true)
+  // Function to refresh data
+  const refreshData = async () => {
+    setIsLoading(true)
     setError(null)
-    
+
     try {
-      // In a real app, you would fetch data from an API
-      // For this demo, we'll simulate a delay and use the default data
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      // Mock data is already set as the default state
-      // In a real app, you would update the state with fetched data
+      // Use the water service to fetch data
+      const data = await getWaterDataForPeriod(selectedYear, selectedMonth)
+
+      // Update state with the fetched data
+      setData(data)
+
+      // Update available months if needed
+      if (data.availableMonths && data.availableMonths.length > 0) {
+        setAvailableMonths(data.availableMonths)
+      }
+
+      setDataLoadAttempt((prev) => prev + 1)
     } catch (err) {
-      setError(err instanceof Error ? err : new Error("Failed to fetch water data"))
+      console.error("Error refreshing water data:", err)
+      setError(err instanceof Error ? err : new Error("Unknown error refreshing data"))
     } finally {
-      setLoading(false)
+      setIsLoading(false)
+    }
+
+    return Promise.resolve()
+  }
+
+  // Handle year selection change
+  const handleYearChange = (year: string) => {
+    console.log(`Year changed to: ${year}`)
+    setSelectedYear(year)
+    fetchAvailableMonths(year)
+  }
+
+  // Handle month selection change
+  const handleMonthChange = (month: string) => {
+    console.log(`Month changed to: ${month}`)
+    setSelectedMonth(month)
+  }
+
+  // Fetch available months for a year
+  const fetchAvailableMonths = async (year: string) => {
+    try {
+      const response = await fetch(`/api/water/periods`)
+      if (!response.ok) {
+        throw new Error(`Failed to fetch periods: ${response.status}`)
+      }
+
+      const result = await response.json()
+      if (result.success && result.data.months[year]) {
+        setAvailableMonths(result.data.months[year])
+
+        // If current month is not available, select the first available month
+        if (!result.data.months[year].includes(selectedMonth)) {
+          setSelectedMonth(result.data.months[year][0])
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching available months:", error)
+      // Fallback to default months
+      setAvailableMonths(["Jan", "Feb", "Mar"])
     }
   }
 
-  // Load data on initial mount
+  // Fetch data for the selected period
   useEffect(() => {
-    fetchWaterData()
-  }, [])
+    async function fetchData() {
+      setIsLoading(true)
+      setError(null)
 
-  return (
-    <WaterDataContext.Provider
-      value={{
-        data,
-        loading,
-        error,
-        refreshData: fetchWaterData,
-      }}
-    >
-      {children}
-    </WaterDataContext.Provider>
-  )
+      try {
+        // Fetch available periods first
+        const periodsResponse = await fetch(`/api/water/periods`)
+        if (!periodsResponse.ok) {
+          throw new Error(`Failed to fetch periods: ${periodsResponse.status}`)
+        }
+
+        const periodsResult = await periodsResponse.json()
+        if (periodsResult.success) {
+          setAvailableYears(periodsResult.data.years)
+          setAvailableMonths(periodsResult.data.months[selectedYear] || [])
+        }
+
+        // Fetch data for the selected period
+        const dataResponse = await fetch(`/api/water/data?year=${selectedYear}&month=${selectedMonth}`)
+        if (!dataResponse.ok) {
+          throw new Error(`Failed to fetch data: ${dataResponse.status}`)
+        }
+
+        const dataResult = await dataResponse.json()
+        if (dataResult.success) {
+          setData(dataResult.data)
+        } else {
+          throw new Error(dataResult.error || "Unknown error")
+        }
+      } catch (error) {
+        console.error("Error fetching water data:", error)
+        setError(error instanceof Error ? error : new Error("Unknown error"))
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [selectedYear, selectedMonth, dataLoadAttempt])
+
+  // Get current data based on selected month and year
+  const getCurrentData = () => {
+    if (!data) {
+      return {
+        l1Supply: 0,
+        l2Volume: 0,
+        l3Volume: 0,
+        stage1Loss: 0,
+        stage2Loss: 0,
+        totalLoss: 0,
+        stage1LossPercent: 0,
+        stage2LossPercent: 0,
+        totalLossPercent: 0,
+        consumptionByType: [],
+        zoneData: {},
+        typeData: {},
+      }
+    }
+
+    return {
+      l1Supply: data.l1Supply || 0,
+      l2Volume: data.l2Volume || 0,
+      l3Volume: data.l3Volume || 0,
+      stage1Loss: data.stage1Loss || 0,
+      stage2Loss: data.stage2Loss || 0,
+      totalLoss: data.totalLoss || 0,
+      stage1LossPercent: data.stage1LossPercent || 0,
+      stage2LossPercent: data.stage2LossPercent || 0,
+      totalLossPercent: data.totalLossPercent || 0,
+      consumptionByType: data.consumptionByType || [],
+      zoneData: data.zoneData || {},
+      typeData: data.typeData || {},
+    }
+  }
+
+  // Get zone data for a specific zone
+  const getZoneData = (zone: string): ZoneData | null => {
+    if (!data || !data.zoneData) return null
+    return data.zoneData[zone] || null
+  }
+
+  // Get type data for a specific type
+  const getTypeData = (type: string): TypeData | null => {
+    if (!data || !data.typeData) return null
+    return data.typeData[type] || null
+  }
+
+  // Get zone options for dropdown
+  const getZoneOptions = () => {
+    if (!data || !data.zoneData) return []
+    return Object.keys(data.zoneData).map((zone) => ({
+      value: zone,
+      label: zone,
+    }))
+  }
+
+  // Get type options for dropdown
+  const getTypeOptions = () => {
+    if (!data || !data.typeData) return [{ value: "all", label: "All Types" }]
+
+    const options = [{ value: "all", label: "All Types" }]
+    Object.keys(data.typeData).forEach((type) => {
+      options.push({
+        value: type.toLowerCase().replace(/\s+/g, "-"),
+        label: type,
+      })
+    })
+
+    return options
+  }
+
+  // Get month options for dropdown
+  const getMonthOptions = () => {
+    return availableMonths.map((month) => ({
+      value: month.toLowerCase(),
+      label: `${month} ${selectedYear}`,
+    }))
+  }
+
+  // Get year options for dropdown
+  const getYearOptions = () => {
+    return availableYears.map((year) => ({
+      value: year,
+      label: year,
+    }))
+  }
+
+  const contextValue: WaterDataContextType = {
+    isLoading,
+    error,
+    data,
+    selectedYear,
+    selectedMonth,
+    availableMonths,
+    availableYears,
+    setSelectedYear: handleYearChange,
+    setSelectedMonth: handleMonthChange,
+    getCurrentData,
+    getZoneData,
+    getTypeData,
+    getZoneOptions,
+    getTypeOptions,
+    getMonthOptions,
+    getYearOptions,
+    refreshData,
+  }
+
+  return <WaterDataContext.Provider value={contextValue}>{children}</WaterDataContext.Provider>
 }
 
-// Custom hook to use the context
 export function useWaterData() {
   const context = useContext(WaterDataContext)
-  if (!context) {
+  if (context === undefined) {
     throw new Error("useWaterData must be used within a WaterDataProvider")
   }
   return context
 }
-
-// Export the interfaces
-export type { WaterData, WaterDataSummary, WaterFinancialImpact, WaterHierarchyData, WaterLossData, WaterZoneData, WaterTypeData }
