@@ -56,6 +56,7 @@ export async function signUp(email: string, password: string, fullName?: string)
             data: {
                 full_name: sanitizedName,
             },
+            emailRedirectTo: `${window.location.origin}/auth/callback`,
         },
     });
 
@@ -242,7 +243,7 @@ export async function resetPassword(email: string) {
     // Always succeed to prevent user enumeration
     try {
         await supabase.auth.resetPasswordForEmail(sanitizedEmail, {
-            redirectTo: `${window.location.origin}/auth/reset-password`,
+            redirectTo: `${window.location.origin}/auth/callback?next=/auth/reset-password`,
         });
     } catch {
         // Silently handle errors to prevent user enumeration
