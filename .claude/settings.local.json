@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find:*)",
+      "Bash(grep:*)",
+      "Bash(ls:*)",
+      "Bash(xargs -I {} bash -c 'echo \"\"\"\"=== {} ===\"\"\"\" && head -20 {}')",
+      "Bash(npm run build:*)",
+      "Bash(npm install:*)",
+      "Bash(node scripts/verify-amc.js:*)",
+      "Bash(dir \"C:\\Users\\Abdulrahim.Albalushi\\Downloads\\anti G\\app\\out\")",
+      "Bash(git add:*)",
+      "Bash(gh repo create:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nFix: Remove _redirects causing blank pages on Netlify\n\nThe catch-all redirect rule (/* -> /index.html) was conflicting with\nstatic export, preventing route-specific HTML files from being served.\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(gh.exe repo create:*)",
+      "Bash(where:*)",
+      "Bash(cmd.exe /c \"where gh\")",
+      "Bash(powershell -Command \"Get-Command gh -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source\")",
+      "Bash(/c/Program Files/GitHub CLI/gh.exe --version)",
+      "Bash(/c/Users/Abdulrahim.Albalushi/AppData/Local/Programs/gh/bin/gh.exe --version)",
+      "Bash(git push:*)",
+      "Bash(git remote add:*)",
+      "Bash(cat:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nFix: Move netlify.toml to repo root with correct base directory\n\n- Netlify needs config at repo root, not in subdirectory\n- Set base = \"app\" since Next.js project is in app folder\n- publish = \"out\" relative to the base directory\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git ls-tree:*)",
+      "Bash(git rev-parse:*)",
+      "Bash(git commit:*)"
+    ]
+  }
+}

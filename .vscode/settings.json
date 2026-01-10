@@ -1,0 +1,21 @@
+{
+    "git.ignoreLimitWarning": true,
+    "git.repositoryScanMaxDepth": 1,
+    "files.exclude": {
+        "**/node_modules": true,
+        "**/.next": true,
+        "**/out": true,
+        "**/.git": true,
+        "**/coverage": true
+    },
+    "search.exclude": {
+        "**/node_modules": true,
+        "**/.next": true,
+        "**/out": true
+    },
+    "files.watcherExclude": {
+        "**/node_modules/**": true,
+        "**/.next/**": true,
+        "**/out/**": true
+    }
+}
