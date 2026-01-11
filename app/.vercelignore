@@ -1,0 +1,44 @@
+# Dependencies
+node_modules/
+
+# Build output (Vercel builds this)
+.next/
+out/
+
+# Test files
+__tests__/
+**/*.test.ts
+**/*.test.tsx
+**/*.spec.ts
+**/*.spec.tsx
+coverage/
+
+# Development files
+*.md
+*.txt
+db-discovery-report.txt
+
+# SQL scripts (not needed for deployment)
+sql/
+scripts/
+
+# Local environment files
+.env.local
+.env.local.txt
+.env*.local
+
+# IDE and editor files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# TypeScript build info
+*.tsbuildinfo
+tsconfig.tsbuildinfo
+
+# Miscellaneous
+*.log
+*.pem
