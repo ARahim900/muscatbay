@@ -3,6 +3,17 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Global Selection */
+::selection {
+  background-color: #4E4456;
+  color: #FFFFFF;
+}
+
+::-moz-selection {
+  background-color: #4E4456;
+  color: #FFFFFF;
+}
+
 /* 
   ================================================
   LIQUID GLASS PRO - DESIGN SYSTEM
@@ -76,9 +87,9 @@
   --color-mb-secondary-light: #A8E5DF;
   --color-mb-secondary-foreground: #4E4456;
 
-  --color-mb-success: #5BA88B;
-  --color-mb-success-hover: #4A8C73;
-  --color-mb-success-light: #D1F0E3;
+  --color-mb-success: #10B981;
+  --color-mb-success-hover: #059669;
+  --color-mb-success-light: #D1FAE5;
   --color-mb-success-foreground: #FFFFFF;
 
   --color-mb-warning: #E8A838;
@@ -205,20 +216,28 @@
 /* === UTILITY CLASSES FOR LIQUID GLASS PRO === */
 @layer utilities {
 
-  /* KPI Shadow */
+  /* Kpi Shadow */
   .shadow-kpi {
-    box-shadow: 0px 2px 4px 1px rgba(0, 0, 0, 0.1);
+    box-shadow: 0px 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   }
 
   /* Liquid Glass Style */
   .glass-card {
-    background-color: rgba(255, 255, 255, 0.7);
+    background-color: rgba(255, 255, 255, 0.75);
     backdrop-filter: blur(24px);
     -webkit-backdrop-filter: blur(24px);
-    border: 1px solid rgba(255, 255, 255, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.5);
     border-radius: 20px;
     box-shadow:
-      0 4px 24px -1px rgba(0, 0, 0, 0.04),
+      0 10px 30px -5px rgba(0, 0, 0, 0.08),
+      0 0 1px 0 rgba(0, 0, 0, 0.08) inset;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .glass-card:hover {
+    transform: translateY(-2px) scale(1.005);
+    box-shadow:
+      0 20px 40px -5px rgba(0, 0, 0, 0.12),
       0 0 1px 0 rgba(0, 0, 0, 0.08) inset;
   }
 
@@ -226,6 +245,11 @@
     background-color: rgba(31, 41, 55, 0.6);
     border: 1px solid rgba(255, 255, 255, 0.05);
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+  }
+
+  .dark .glass-card:hover {
+    background-color: rgba(31, 41, 55, 0.7);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
   }
 
   .glass-card-header {

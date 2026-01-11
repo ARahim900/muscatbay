@@ -19,14 +19,14 @@ const AuthContext = createContext<AuthContextType>({
     profile: null,
     loading: true,
     isAuthenticated: false,
-    logout: async () => {},
-    refreshProfile: async () => {},
+    logout: async () => { },
+    refreshProfile: async () => { },
 });
 
 export const useAuth = () => useContext(AuthContext);
 
 // Public routes that don't require authentication
-const PUBLIC_ROUTES = ["/login", "/signup", "/forgot-password", "/auth/reset-password"];
+const PUBLIC_ROUTES = ["/login", "/signup", "/forgot-password", "/auth/callback", "/auth/reset-password"];
 
 interface AuthProviderProps {
     children: ReactNode;

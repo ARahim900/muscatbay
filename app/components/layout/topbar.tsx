@@ -1,105 +1,37 @@
-"use client"
+"use client";
 
-import { Menu, LogOut, Settings, User } from "lucide-react"
-import { Sidebar } from "@/components/layout/sidebar"
-import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { useAuth } from "@/components/auth/auth-provider"
-import Link from "next/link"
+import { useSidebar } from "./sidebar-context";
+import { Menu, Search, Bell } from "lucide-react";
 
 export function Topbar() {
-    const { user, profile, logout, isAuthenticated } = useAuth();
-
-    const displayName = profile?.full_name || user?.user_metadata?.full_name || user?.email?.split("@")[0] || "User";
-    const initials = displayName.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2);
+    const { isCollapsed, setIsCollapsed } = useSidebar();
 
     return (
-        <div className="flex items-center p-4 border-b h-16 bg-background">
-            <Sheet>
-                <SheetTrigger className="md:hidden inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-10 w-10">
-                    <Menu />
-                </SheetTrigger>
-                <SheetContent
-                    side="left"
-                    className="p-0 w-72 text-white border-r border-white/10"
-                    style={{ background: "linear-gradient(180deg, #4E4456 0%, #3A3341 100%)" }}
+        <div className="h-16 border-b bg-white px-4 flex items-center justify-between sticky top-0 z-10 transition-all duration-300">
+            <div className="flex items-center gap-4">
+                <button
+                    onClick={() => setIsCollapsed(!isCollapsed)}
+                    className="p-2 hover:bg-gray-100 rounded-lg md:hidden"
                 >
-                    <SheetTitle className="sr-only">Menu</SheetTitle>
-                    <Sidebar mobile />
-                </SheetContent>
-            </Sheet>
+                    <Menu className="w-5 h-5" />
+                </button>
+                <h1 className="text-xl font-semibold text-[var(--mb-primary)] hidden md:block">
+                    Dashboard
+                </h1>
+            </div>
 
-            <div className="ml-4 md:ml-0 flex w-full justify-between items-center">
-                <h2 className="text-lg font-semibold md:hidden">
-                    Muscat Bay Ops
-                </h2>
-                <div className="hidden md:block">
-                </div>
-
-                <div className="flex items-center gap-x-2 ml-auto">
-                    {isAuthenticated ? (
-                        <DropdownMenu>
-                            <DropdownMenuTrigger className="flex items-center gap-2 px-2 py-1 rounded-md hover:bg-accent transition-colors outline-none">
-                                <span className="text-sm text-muted-foreground hidden md:block">
-                                    {displayName}
-                                </span>
-                                <Avatar className="h-8 w-8">
-                                    <AvatarImage src={profile?.avatar_url || ""} />
-                                    <AvatarFallback className="bg-[var(--mb-secondary)] text-white text-xs">
-                                        {initials}
-                                    </AvatarFallback>
-                                </Avatar>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-56">
-                                <DropdownMenuLabel>
-                                    <div className="flex flex-col space-y-1">
-                                        <p className="text-sm font-medium">{displayName}</p>
-                                        <p className="text-xs text-muted-foreground">{user?.email}</p>
-                                    </div>
-                                </DropdownMenuLabel>
-                                <DropdownMenuSeparator />
-                                <Link href="/settings/">
-                                    <DropdownMenuItem className="cursor-pointer">
-                                        <User className="mr-2 h-4 w-4" />
-                                        Profile
-                                    </DropdownMenuItem>
-                                </Link>
-                                <Link href="/settings/">
-                                    <DropdownMenuItem className="cursor-pointer">
-                                        <Settings className="mr-2 h-4 w-4" />
-                                        Settings
-                                    </DropdownMenuItem>
-                                </Link>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem
-                                    onClick={logout}
-                                    className="cursor-pointer text-red-600 focus:text-red-600"
-                                >
-                                    <LogOut className="mr-2 h-4 w-4" />
-                                    Sign out
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    ) : (
-                        <div className="flex items-center gap-x-2">
-                            <span className="text-sm text-muted-foreground hidden md:block">
-                                Guest
-                            </span>
-                            <Avatar className="h-8 w-8">
-                                <AvatarFallback>G</AvatarFallback>
-                            </Avatar>
-                        </div>
-                    )}
+            <div className="flex items-center gap-4">
+                <button className="p-2 hover:bg-gray-100 rounded-full">
+                    <Search className="w-5 h-5 text-gray-500" />
+                </button>
+                <button className="p-2 hover:bg-gray-100 rounded-full relative">
+                    <Bell className="w-5 h-5 text-gray-500" />
+                    <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"></span>
+                </button>
+                <div className="w-8 h-8 bg-[var(--mb-primary)] rounded-full flex items-center justify-center text-white text-sm font-medium">
+                    U
                 </div>
             </div>
         </div>
-    )
+    );
 }

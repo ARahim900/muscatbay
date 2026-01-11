@@ -9,6 +9,7 @@ import {
     Tooltip,
     ResponsiveContainer,
     TooltipProps,
+    LabelList,
 } from "recharts";
 
 interface LiquidAreaChartProps {
@@ -19,6 +20,7 @@ interface LiquidAreaChartProps {
     height?: number;
     showGrid?: boolean;
     elementId?: string; // For gradient definitions
+    showLabels?: boolean;
 }
 
 const DEFAULT_COLORS = ["#4E4456", "#81D8D0", "#5BA88B"];
@@ -57,19 +59,30 @@ export function LiquidAreaChart({
     height = 350,
     showGrid = false,
     elementId = "liquid-area",
+    showLabels = false,
 }: LiquidAreaChartProps) {
+    // Format value for display - using any to satisfy Recharts LabelFormatter type
+    const formatLabel = (value: any): string => {
+        if (value === undefined || value === null) return '';
+        const numValue = typeof value === 'string' ? parseFloat(value) : Number(value);
+        if (isNaN(numValue)) return String(value);
+        if (numValue >= 1000000) return `${(numValue / 1000000).toFixed(1)}M`;
+        if (numValue >= 1000) return `${(numValue / 1000).toFixed(1)}k`;
+        return numValue.toLocaleString();
+    };
+
     return (
         <div style={{ width: "100%", height, minHeight: 200 }}>
             <ResponsiveContainer>
-                <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                <AreaChart data={data} margin={{ top: showLabels ? 25 : 10, right: 10, left: 0, bottom: 0 }}>
                     <defs>
                         {categories.map((cat, i) => {
                             const color = colors[i % colors.length];
                             const id = `${elementId}-gradient-${i}`;
                             return (
                                 <linearGradient key={cat} id={id} x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor={color} stopOpacity={0.4} />
-                                    <stop offset="95%" stopColor={color} stopOpacity={0} />
+                                    <stop offset="5%" stopColor={color} stopOpacity={0.6} />
+                                    <stop offset="95%" stopColor={color} stopOpacity={0.1} />
                                 </linearGradient>
                             );
                         })}
@@ -100,14 +113,28 @@ export function LiquidAreaChart({
                     {categories.map((cat, i) => (
                         <Area
                             key={cat}
-                            type="monotone" // Smooth curve
+                            type="monotone"
                             dataKey={cat}
                             stroke={colors[i % colors.length]}
                             strokeWidth={3}
                             fill={`url(#${elementId}-gradient-${i})`}
                             animationDuration={1500}
-                        // Smooth animation
-                        />
+                            dot={{ r: 4, strokeWidth: 2, fill: "#fff", stroke: colors[i % colors.length] }}
+                            activeDot={{ r: 6, strokeWidth: 0 }}
+                        >
+                            {showLabels && (
+                                <LabelList
+                                    dataKey={cat}
+                                    position="top"
+                                    formatter={formatLabel}
+                                    style={{
+                                        fill: "#374151",
+                                        fontSize: 9,
+                                        fontWeight: 600,
+                                    }}
+                                />
+                            )}
+                        </Area>
                     ))}
                 </AreaChart>
             </ResponsiveContainer>

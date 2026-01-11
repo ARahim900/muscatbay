@@ -24,6 +24,13 @@ function AuthCallbackContent() {
 
     useEffect(() => {
         const handleAuthCallback = async () => {
+            const supabase = getSupabaseClient();
+            if (!supabase) {
+                setError('Supabase configuration missing');
+                return;
+            }
+
+            // Get parameters from query string
             const code = searchParams.get('code');
             const next = searchParams.get('next') || '/';
             const errorDescription = searchParams.get('error_description');
@@ -33,20 +40,63 @@ function AuthCallbackContent() {
                 return;
             }
 
-            if (code) {
-                const supabase = getSupabaseClient();
-                if (!supabase) {
-                    setError('Supabase configuration missing');
+            // Handle hash fragment (magic link / implicit flow)
+            // Supabase may send tokens as hash fragments: #access_token=...&type=signup
+            if (typeof window !== 'undefined' && window.location.hash) {
+                const hashParams = new URLSearchParams(
+                    window.location.hash.substring(1) // Remove the leading '#'
+                );
+                const accessToken = hashParams.get('access_token');
+                const refreshToken = hashParams.get('refresh_token');
+                const type = hashParams.get('type');
+                const hashError = hashParams.get('error_description');
+
+                if (hashError) {
+                    setError(hashError);
                     return;
                 }
 
+                // Handle email confirmation or recovery via hash fragment
+                if (accessToken && (type === 'signup' || type === 'recovery' || type === 'magiclink')) {
+                    try {
+                        // Set the session from the token in the hash
+                        const { error: sessionError } = await supabase.auth.setSession({
+                            access_token: accessToken,
+                            refresh_token: refreshToken || '',
+                        });
+
+                        if (sessionError) {
+                            setError(sessionError.message);
+                            return;
+                        }
+
+                        // Clear the hash from the URL for cleaner navigation
+                        window.history.replaceState(null, '', window.location.pathname);
+
+                        // For recovery (password reset), redirect to reset page
+                        if (type === 'recovery') {
+                            router.push('/auth/reset-password');
+                        } else {
+                            router.push('/');
+                        }
+                        router.refresh();
+                        return;
+                    } catch (err) {
+                        console.error('Hash fragment auth error:', err);
+                        setError('Failed to process authentication');
+                        return;
+                    }
+                }
+            }
+
+            // Handle PKCE code flow (query parameter: ?code=...)
+            if (code) {
                 try {
-                    const { error } = await supabase.auth.exchangeCodeForSession(code);
-                    if (error) {
-                        setError(error.message);
+                    const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+                    if (exchangeError) {
+                        setError(exchangeError.message);
                     } else {
-                        // Successful exchange - clean up URL and redirect
-                        // Verify we have a session
+                        // Successful exchange - verify we have a session
                         const { data: { session } } = await supabase.auth.getSession();
                         if (session) {
                             router.push(next);
@@ -60,13 +110,7 @@ function AuthCallbackContent() {
                     console.error(err);
                 }
             } else {
-                // No code implies we might already be logged in or just visited the page directly
-                // Check session
-                const supabase = getSupabaseClient();
-                if (!supabase) {
-                    router.push('/login');
-                    return;
-                }
+                // No code or hash token - check if already logged in
                 const { data: { session } } = await supabase.auth.getSession();
                 if (session) {
                     router.push(next);

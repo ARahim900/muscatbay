@@ -1,50 +1,42 @@
 "use client";
 
-import { useSidebar } from "@/components/layout/sidebar-context";
-import { Sidebar } from "@/components/layout/sidebar";
-import { Topbar } from "@/components/layout/topbar";
-import { ErrorBoundary } from "@/components/ui/error-boundary";
-import { useEffect, useState } from "react";
+import React from 'react';
+import { SidebarProvider, useSidebar } from './sidebar-context';
+import { Sidebar } from './sidebar';
 
-export function ClientLayout({ children }: { children: React.ReactNode }) {
-    const { isCollapsed, setIsCollapsed } = useSidebar();
-    const [isMounted, setIsMounted] = useState(false);
+// This internal component consumes the context to adjust its margin
+function LayoutContent({ children }: { children: React.ReactNode }) {
+  const { isCollapsed } = useSidebar();
 
-    useEffect(() => {
-        setIsMounted(true);
-        // Auto-collapse on smaller screens
-        const handleResize = () => {
-            if (window.innerWidth < 768) {
-                setIsCollapsed(true);
-            } else {
-                setIsCollapsed(false);
-            }
-        };
-        handleResize();
-        window.addEventListener("resize", handleResize);
-        return () => window.removeEventListener("resize", handleResize);
-    }, [setIsCollapsed]);
+  return (
+    <div className="flex min-h-screen bg-slate-50/50">
+      {/* Sidebar is fixed, so we don't need it inside the flex flow for width, 
+          but we use the margin on the content to push it over */}
+      <Sidebar />
 
-    return (
-        <div className="h-full relative overflow-x-hidden">
-            {/* Sidebar - fixed position */}
-            <div
-                className={`hidden h-full md:flex md:flex-col md:fixed md:inset-y-0 z-[80] transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-72'}`}
-                style={{
-                    backgroundColor: "var(--mb-primary)"
-                }}
-            >
-                <Sidebar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
-            </div>
-            {/* Main content - dynamic padding */}
-            <main
-                className={`pb-10 transition-all duration-300 w-full min-w-0 overflow-x-hidden pl-0 ${isMounted ? (isCollapsed ? 'md:pl-20' : 'md:pl-72') : 'md:pl-72'}`}
-            >
-                <Topbar />
-                <ErrorBoundary>
-                    {children}
-                </ErrorBoundary>
-            </main>
+      {/* Main Content Area */}
+      <main
+        className={`
+          flex-1 transition-all duration-300 ease-in-out w-full
+          ${isCollapsed ? "md:ml-20" : "md:ml-72"}
+          min-h-screen
+        `}
+      >
+        <div className="p-4 md:p-8 pt-20 md:pt-8 max-w-7xl mx-auto">
+          {children}
         </div>
-    );
+      </main>
+    </div>
+  );
+}
+
+// Export the wrapper that provides the context
+export function ClientLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <SidebarProvider>
+      <LayoutContent>
+        {children}
+      </LayoutContent>
+    </SidebarProvider>
+  );
 }

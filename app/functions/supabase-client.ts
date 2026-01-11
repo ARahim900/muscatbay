@@ -42,7 +42,15 @@ export function getSupabaseClient(): SupabaseClient | null {
         return null;
     }
     if (!supabaseClient) {
-        supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
+        supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
+            auth: {
+                persistSession: true,
+                autoRefreshToken: true,
+                detectSessionInUrl: true,
+                // Use PKCE flow for better security on web applications
+                flowType: 'pkce',
+            },
+        });
     }
     return supabaseClient;
 }

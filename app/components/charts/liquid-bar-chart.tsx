@@ -10,6 +10,7 @@ import {
     ResponsiveContainer,
     TooltipProps,
     Cell,
+    LabelList,
 } from "recharts";
 
 interface LiquidBarChartProps {
@@ -20,6 +21,7 @@ interface LiquidBarChartProps {
     height?: number;
     barRadius?: [number, number, number, number];
     showGrid?: boolean;
+    showLabels?: boolean;
 }
 
 const DEFAULT_COLORS = ["#4E4456", "#81D8D0", "#5BA88B"];
@@ -56,13 +58,24 @@ export function LiquidBarChart({
     index,
     colors = DEFAULT_COLORS,
     height = 350,
-    barRadius = [8, 8, 8, 8],
+    barRadius = [8, 8, 0, 0],
     showGrid = false,
+    showLabels = true,
 }: LiquidBarChartProps) {
+    // Format value for display - using any to satisfy Recharts LabelFormatter type
+    const formatLabel = (value: any): string => {
+        if (value === undefined || value === null) return '';
+        const numValue = typeof value === 'string' ? parseFloat(value) : Number(value);
+        if (isNaN(numValue)) return String(value);
+        if (numValue >= 1000000) return `${(numValue / 1000000).toFixed(1)}M`;
+        if (numValue >= 1000) return `${(numValue / 1000).toFixed(1)}k`;
+        return numValue.toLocaleString();
+    };
+
     return (
         <div style={{ width: "100%", height, minHeight: 200 }}>
             <ResponsiveContainer>
-                <BarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }} barGap={2}>
+                <BarChart data={data} margin={{ top: 25, right: 10, left: 0, bottom: 0 }} barGap={2}>
                     {showGrid && (
                         <CartesianGrid
                             strokeDasharray="3 3"
@@ -96,7 +109,20 @@ export function LiquidBarChart({
                             fill={colors[i % colors.length]}
                             radius={barRadius}
                             animationDuration={1500}
-                        />
+                        >
+                            {showLabels && (
+                                <LabelList
+                                    dataKey={cat}
+                                    position="top"
+                                    formatter={formatLabel}
+                                    style={{
+                                        fill: "#374151",
+                                        fontSize: 10,
+                                        fontWeight: 600,
+                                    }}
+                                />
+                            )}
+                        </Bar>
                     ))}
                 </BarChart>
             </ResponsiveContainer>
