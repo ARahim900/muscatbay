@@ -182,6 +182,60 @@
     /* Removed custom background image to strictly follow design doc "Main Content Area: #F9FAFB" */
   }
 
+  main {
+    width: 100%;
+  }
+
+  /* Responsive layout shell - Mobile-first approach with tighter left spacing */
+  .layout-shell {
+    width: 100%;
+    max-width: 100%;
+    /* Reduced left padding to minimize gap with sidebar, balanced right padding */
+    padding-left: 0.5rem;
+    /* 8px - tight against sidebar */
+    padding-right: 1rem;
+    /* 16px */
+  }
+
+  /* Tablet and up */
+  @media (min-width: 640px) {
+    .layout-shell {
+      padding-left: 0.75rem;
+      /* 12px */
+      padding-right: 1.5rem;
+      /* 24px */
+    }
+  }
+
+  /* Desktop and up */
+  @media (min-width: 1024px) {
+    .layout-shell {
+      padding-left: 1rem;
+      /* 16px */
+      padding-right: 2rem;
+      /* 32px */
+    }
+  }
+
+  /* Large screens */
+  @media (min-width: 1280px) {
+    .layout-shell {
+      padding-left: 1.5rem;
+      /* 24px */
+      padding-right: 2.5rem;
+      /* 40px */
+    }
+  }
+
+  /* Extra-large screens - add max-width constraint */
+  @media (min-width: 1536px) {
+    .layout-shell {
+      max-width: 1536px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+  }
+
   h1,
   h2,
   h3,
@@ -195,12 +249,17 @@
 
 @layer components {
 
-  /* Glass Card - white with soft shadow for subtle depth */
+  /* Glass Card - white with soft shadow and subtle border for better definition */
   .glass-card {
     background-color: #FFFFFF;
     border-radius: var(--radius-lg);
-    border: none;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.03);
+    border: 1px solid rgba(0, 0, 0, 0.04);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05), 0 2px 4px rgba(0, 0, 0, 0.03);
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+  }
+
+  .glass-card:hover {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08), 0 4px 8px rgba(0, 0, 0, 0.04);
   }
 
   .glass-card-header {
@@ -210,7 +269,32 @@
   /* Dark mode glass card */
   .dark .glass-card {
     background-color: #1F2937;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2), 0 1px 3px rgba(0, 0, 0, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+
+  .dark .glass-card:hover {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 4px 8px rgba(0, 0, 0, 0.25);
+  }
+
+  /* Consistent card row spacing */
+  .card-row {
+    margin-bottom: 1.5rem;
+    /* 24px */
+  }
+
+  @media (min-width: 640px) {
+    .card-row {
+      margin-bottom: 1.75rem;
+      /* 28px */
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .card-row {
+      margin-bottom: 2rem;
+      /* 32px */
+    }
   }
 }
 

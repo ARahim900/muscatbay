@@ -324,9 +324,9 @@ export default function WaterPage() {
     }
 
     return (
-        <div className="flex-1 space-y-6 p-4 sm:p-6 lg:p-8 pt-6">
+        <div className="space-y-6 sm:space-y-7 md:space-y-8 w-full">
             {/* Header */}
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <PageHeader
                     title="Water System Analysis"
                     description="Comprehensive water consumption and loss analysis across the network"
@@ -390,7 +390,7 @@ export default function WaterPage() {
 
                     {/* Date Range Picker */}
                     <Card className="glass-card">
-                        <CardContent className="pt-6">
+                        <CardContent className="p-4 sm:p-5 md:p-6">
                             <DateRangePicker
                                 startMonth={startMonth}
                                 endMonth={endMonth}
@@ -409,11 +409,11 @@ export default function WaterPage() {
 
                             {/* A-Values Distribution Chart */}
                             <Card className="glass-card">
-                                <CardHeader className="glass-card-header">
-                                    <CardTitle className="text-lg">Water System A-Values Distribution</CardTitle>
+                                <CardHeader className="glass-card-header p-4 sm:p-5 md:p-6">
+                                    <CardTitle className="text-base sm:text-lg">Water System A-Values Distribution</CardTitle>
                                 </CardHeader>
-                                <CardContent>
-                                    <div className="h-[350px] w-full">
+                                <CardContent className="p-4 sm:p-5 md:p-6 pt-0">
+                                    <div className="h-[250px] sm:h-[300px] md:h-[350px] w-full">
                                         <ResponsiveContainer width="100%" height="100%">
                                             <AreaChart data={monthlyTrends} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                                                 <defs>
@@ -441,11 +441,11 @@ export default function WaterPage() {
 
                             {/* Water Loss Analysis Chart */}
                             <Card className="glass-card">
-                                <CardHeader className="glass-card-header">
-                                    <CardTitle className="text-lg">Water Loss Analysis</CardTitle>
+                                <CardHeader className="glass-card-header p-4 sm:p-5 md:p-6">
+                                    <CardTitle className="text-base sm:text-lg">Water Loss Analysis</CardTitle>
                                 </CardHeader>
-                                <CardContent>
-                                    <div className="h-[300px] w-full">
+                                <CardContent className="p-4 sm:p-5 md:p-6 pt-0">
+                                    <div className="h-[200px] sm:h-[250px] md:h-[300px] w-full">
                                         <ResponsiveContainer width="100%" height="100%">
                                             <AreaChart data={monthlyTrends} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                                                 <defs>
@@ -474,7 +474,7 @@ export default function WaterPage() {
                         <div className="space-y-6">
                             {/* Month/Zone Selectors */}
                             <Card className="glass-card">
-                                <CardContent className="pt-6">
+                                <CardContent className="p-4 sm:p-5 md:p-6">
                                     <div className="flex flex-wrap items-center gap-4">
                                         <div className="flex items-center gap-2">
                                             <span className="text-sm font-medium text-slate-600 dark:text-slate-400">Select Month</span>
@@ -523,7 +523,7 @@ export default function WaterPage() {
                                 </p>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 md:gap-6">
                                 <LiquidProgressRing
                                     value={zoneAnalysis.bulkMeterReading}
                                     max={Math.max(zoneAnalysis.bulkMeterReading, zoneAnalysis.individualTotal) * 1.2 || 100}
@@ -558,12 +558,12 @@ export default function WaterPage() {
 
                             {/* Zone Consumption Trend Chart */}
                             <Card className="glass-card">
-                                <CardHeader className="glass-card-header">
-                                    <CardTitle className="text-lg">Zone Consumption Trend</CardTitle>
-                                    <p className="text-sm text-slate-500">Monthly comparison of L2 (Bulk) vs L3 + L4 totals</p>
+                                <CardHeader className="glass-card-header p-4 sm:p-5 md:p-6">
+                                    <CardTitle className="text-base sm:text-lg">Zone Consumption Trend</CardTitle>
+                                    <p className="text-xs sm:text-sm text-slate-500">Monthly comparison of L2 (Bulk) vs L3 + L4 totals</p>
                                 </CardHeader>
-                                <CardContent>
-                                    <div className="h-[300px] w-full">
+                                <CardContent className="p-4 sm:p-5 md:p-6 pt-0">
+                                    <div className="h-[200px] sm:h-[250px] md:h-[300px] w-full">
                                         <ResponsiveContainer width="100%" height="100%">
                                             <AreaChart data={(() => {
                                                 // Calculate zone-specific monthly trends
@@ -602,15 +602,15 @@ export default function WaterPage() {
 
                             {/* Individual Meters Table */}
                             <Card className="glass-card">
-                                <CardHeader className="glass-card-header">
+                                <CardHeader className="glass-card-header p-4 sm:p-5 md:p-6">
                                     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                                         <div>
-                                            <CardTitle className="text-lg">Individual Meters - Zone {ZONE_CONFIG.find(z => z.code === selectedZone)?.name}</CardTitle>
-                                            <p className="text-sm text-slate-500">All individual meters (L3 Villas + L4 Building Apts) in this zone</p>
+                                            <CardTitle className="text-base sm:text-lg">Individual Meters - Zone {ZONE_CONFIG.find(z => z.code === selectedZone)?.name}</CardTitle>
+                                            <p className="text-xs sm:text-sm text-slate-500">All individual meters (L3 Villas + L4 Building Apts) in this zone</p>
                                         </div>
                                     </div>
                                 </CardHeader>
-                                <CardContent>
+                                <CardContent className="p-4 sm:p-5 md:p-6 pt-0">
                                     <MeterTable
                                         meters={waterMeters.filter(m => m.zone === selectedZone && (m.level === 'L3' || m.level === 'L4'))}
                                         months={AVAILABLE_MONTHS}
@@ -665,12 +665,12 @@ export default function WaterPage() {
 
                             {/* Consumption by Type Chart */}
                             <Card className="glass-card">
-                                <CardHeader className="glass-card-header">
-                                    <CardTitle className="text-lg">Consumption by Type (m³)</CardTitle>
-                                    <p className="text-sm text-slate-500">Aggregated for {startMonth} - {endMonth}</p>
+                                <CardHeader className="glass-card-header p-4 sm:p-5 md:p-6">
+                                    <CardTitle className="text-base sm:text-lg">Consumption by Type (m³)</CardTitle>
+                                    <p className="text-xs sm:text-sm text-slate-500">Aggregated for {startMonth} - {endMonth}</p>
                                 </CardHeader>
-                                <CardContent>
-                                    <div className="h-[400px] w-full">
+                                <CardContent className="p-4 sm:p-5 md:p-6 pt-0">
+                                    <div className="h-[300px] sm:h-[350px] md:h-[400px] w-full">
                                         <ResponsiveContainer width="100%" height="100%">
                                             <BarChart data={consumptionChartData} layout="vertical" margin={{ left: 120 }}>
                                                 <XAxis type="number" tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#6B7280" }} />
@@ -692,10 +692,10 @@ export default function WaterPage() {
                     {/* Database Tab */}
                     {monthlyTab === 'database' && (
                         <Card className="glass-card">
-                            <CardHeader className="glass-card-header">
-                                <CardTitle className="text-lg">Full Meter Database</CardTitle>
+                            <CardHeader className="glass-card-header p-4 sm:p-5 md:p-6">
+                                <CardTitle className="text-base sm:text-lg">Full Meter Database</CardTitle>
                             </CardHeader>
-                            <CardContent>
+                            <CardContent className="p-4 sm:p-5 md:p-6 pt-0">
                                 <MeterTable
                                     meters={waterMeters}
                                     months={AVAILABLE_MONTHS}

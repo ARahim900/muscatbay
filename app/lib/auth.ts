@@ -20,6 +20,33 @@ export interface AuthUser {
     };
 }
 
+// =============================================================================
+// DEVELOPMENT MODE HELPERS
+// =============================================================================
+
+const isDevMode = () => {
+    return process.env.NEXT_PUBLIC_DEV_MODE === 'true';
+};
+
+const DEV_USER: AuthUser = {
+    id: 'dev-user-123',
+    email: 'dev@muscatbay.com',
+    user_metadata: {
+        full_name: 'Development User',
+        avatar_url: undefined,
+    },
+};
+
+const DEV_PROFILE: UserProfile = {
+    id: 'dev-user-123',
+    email: 'dev@muscatbay.com',
+    full_name: 'Development User',
+    username: 'devuser',
+    avatar_url: null,
+    website: null,
+    role: 'admin',
+};
+
 // Sign up with email and password
 export async function signUp(email: string, password: string, fullName?: string) {
     // Input validation
@@ -66,6 +93,15 @@ export async function signUp(email: string, password: string, fullName?: string)
 
 // Sign in with email and password
 export async function signIn(email: string, password: string) {
+    // DEV MODE: Bypass authentication
+    if (isDevMode()) {
+        console.log('🔧 DEV MODE: Authentication bypassed');
+        return {
+            user: DEV_USER,
+            session: null,
+        };
+    }
+
     // Basic input validation (don't reveal what's wrong for security)
     const emailValidation = validateEmail(email);
     if (!emailValidation.isValid) {
@@ -108,6 +144,11 @@ export async function signOut() {
 
 // Get current user
 export async function getCurrentUser(): Promise<AuthUser | null> {
+    // DEV MODE: Return dev user
+    if (isDevMode()) {
+        return DEV_USER;
+    }
+
     const supabase = getSupabaseClient();
     if (!supabase) {
         return null;
@@ -125,6 +166,11 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
 
 // Get user profile from profiles table
 export async function getUserProfile(userId: string): Promise<UserProfile | null> {
+    // DEV MODE: Return dev profile
+    if (isDevMode()) {
+        return DEV_PROFILE;
+    }
+
     const supabase = getSupabaseClient();
     if (!supabase) {
         return null;
