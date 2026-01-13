@@ -5,12 +5,10 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useSidebar } from './sidebar-context';
-import { useAuth } from '../auth/auth-provider';
 import {
   LayoutDashboard,
   Droplets,
   Zap,
-  Activity,
   Users,
   Package,
   Bug,
@@ -21,7 +19,6 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
-  Wrench,
 } from 'lucide-react';
 
 interface NavigationItem {
@@ -29,25 +26,32 @@ interface NavigationItem {
   name: string;
   icon: React.ComponentType<{ className?: string }>;
   href: string;
-  badge?: string;
+  section?: string;
 }
 
-// Muscat Bay O&M Navigation Map
+// Muscat Bay O&M Navigation Map - organized by sections
 const navigationItems: NavigationItem[] = [
-  { id: "dashboard", name: "Dashboard", icon: LayoutDashboard, href: "/" },
-  { id: "water", name: "Water System", icon: Droplets, href: "/water" },
-  { id: "electricity", name: "Electricity System", icon: Zap, href: "/electricity" },
-  { id: "stp", name: "STP Plant", icon: Settings, href: "/stp" },
-  { id: "contractors", name: "Contractor Tracker", icon: Users, href: "/contractors" },
-  { id: "assets", name: "Assets", icon: Package, href: "/assets" },
-  { id: "pest-control", name: "Pest Control", icon: Bug, href: "/pest-control" },
-  { id: "fire-safety", name: "Firefighting & Alarm", icon: Flame, href: "/firefighting" },
-  { id: "settings", name: "Settings", icon: Settings, href: "/settings" },
+  { id: "dashboard", name: "Dashboard", icon: LayoutDashboard, href: "/", section: "main" },
+  { id: "water", name: "Water System", icon: Droplets, href: "/water", section: "utilities" },
+  { id: "electricity", name: "Electricity", icon: Zap, href: "/electricity", section: "utilities" },
+  { id: "stp", name: "STP Plant", icon: Settings, href: "/stp", section: "utilities" },
+  { id: "contractors", name: "Contractors", icon: Users, href: "/contractors", section: "operations" },
+  { id: "assets", name: "Assets", icon: Package, href: "/assets", section: "operations" },
+  { id: "pest-control", name: "Pest Control", icon: Bug, href: "/pest-control", section: "operations" },
+  { id: "fire-safety", name: "Fire & Safety", icon: Flame, href: "/firefighting", section: "operations" },
+  { id: "settings", name: "Settings", icon: Settings, href: "/settings", section: "system" },
 ];
+
+// Section labels for better organization
+const sectionLabels: Record<string, string> = {
+  main: "Overview",
+  utilities: "Utilities",
+  operations: "Operations",
+  system: "System",
+};
 
 export function Sidebar() {
   const { isOpen, setIsOpen, toggleSidebar, isCollapsed, toggleCollapse } = useSidebar();
-  const { isDevMode } = useAuth();
   const pathname = usePathname();
 
   const handleItemClick = () => {
@@ -57,12 +61,22 @@ export function Sidebar() {
     }
   };
 
+  // Group navigation items by section
+  const groupedItems = navigationItems.reduce((acc, item) => {
+    const section = item.section || 'main';
+    if (!acc[section]) acc[section] = [];
+    acc[section].push(item);
+    return acc;
+  }, {} as Record<string, NavigationItem[]>);
+
+  const sectionOrder = ['main', 'utilities', 'operations', 'system'];
+
   return (
     <>
       {/* Mobile hamburger button - positioned consistently */}
       <button
         onClick={toggleSidebar}
-        className="fixed top-4 left-4 z-50 p-2 rounded-lg bg-sidebar text-white shadow-lg md:hidden hover:bg-white/10 transition-all duration-[150ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
+        className="fixed top-4 left-4 z-50 p-2.5 rounded-xl bg-[#4E4456] text-white shadow-lg md:hidden hover:bg-[#5d5366] active:scale-95 transition-all duration-200"
         aria-label="Toggle sidebar"
       >
         {isOpen ?
@@ -74,49 +88,49 @@ export function Sidebar() {
       {/* Mobile overlay */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-30 md:hidden transition-opacity duration-300"
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-30 md:hidden transition-opacity duration-300"
           onClick={() => setIsOpen(false)}
         />
       )}
 
-      {/* Sidebar Container - Updated dimensions: 70px collapsed, 208px expanded */}
+      {/* Sidebar Container */}
       <div
         className={`
-          fixed top-0 left-0 h-screen min-h-screen bg-sidebar z-40 transition-all duration-[200ms] ease-[cubic-bezier(0.4,0,0.2,1)] flex flex-col
+          fixed top-0 left-0 h-screen min-h-screen z-40 transition-all duration-300 ease-out flex flex-col shadow-2xl
           ${isOpen ? "translate-x-0" : "-translate-x-full"}
-          ${isCollapsed ? "w-[70px]" : "w-[208px]"}
-          md:translate-x-0 md:sticky md:top-0 md:z-auto
+          ${isCollapsed ? "w-[72px]" : "w-[240px]"}
+          md:translate-x-0
         `}
         style={{ backgroundColor: '#4E4456' }}
       >
-        {/* Header with logo and collapse button - height: 60.5px */}
-        <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'} px-[10.5px] border-b border-white/10 h-[60.5px]`}>
+        {/* Header with logo and collapse button */}
+        <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'} px-4 border-b border-white/10 h-16`}>
           {!isCollapsed && (
-            <div className="flex items-center gap-[10.5px]">
-              <div className="w-[35px] h-[35px] rounded-lg overflow-hidden flex items-center justify-center">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl overflow-hidden flex items-center justify-center bg-white/10 p-1">
                 <Image
                   src="/mb-logo.png"
                   alt="Muscat Bay Logo"
-                  width={35}
-                  height={35}
+                  width={32}
+                  height={32}
                   className="object-cover"
                   priority
                 />
               </div>
               <div className="flex flex-col">
-                <span className="font-bold text-[#F8FAFC] text-[15.75px] leading-[24.5px] tracking-tight">Muscat Bay</span>
-                <span className="text-[12px] text-white/50 font-normal whitespace-nowrap">Resource Management</span>
+                <span className="font-semibold text-white text-base leading-tight tracking-tight">Muscat Bay</span>
+                <span className="text-[11px] text-white/60 font-normal">Resource Management</span>
               </div>
             </div>
           )}
 
           {isCollapsed && (
-            <div className="w-[35px] h-[35px] rounded-lg overflow-hidden flex items-center justify-center">
+            <div className="w-9 h-9 rounded-xl overflow-hidden flex items-center justify-center bg-white/10 p-1">
               <Image
                 src="/mb-logo.png"
                 alt="Muscat Bay Logo"
-                width={35}
-                height={35}
+                width={32}
+                height={32}
                 className="object-cover"
                 priority
               />
@@ -127,7 +141,7 @@ export function Sidebar() {
           {!isCollapsed && (
             <button
               onClick={toggleCollapse}
-              className="hidden md:flex p-1.5 rounded-[5px] hover:bg-white/10 text-[#E4E4E7] hover:text-white transition-all duration-[150ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
+              className="hidden md:flex p-1.5 rounded-lg hover:bg-white/10 text-white/70 hover:text-white transition-all duration-200"
               aria-label="Collapse sidebar"
             >
               <ChevronLeft className="h-4 w-4" />
@@ -139,95 +153,118 @@ export function Sidebar() {
         {isCollapsed && (
           <button
             onClick={toggleCollapse}
-            className="hidden md:flex w-full items-center justify-center py-2 hover:bg-white/10 text-[#E4E4E7] hover:text-white transition-colors duration-[200ms] border-b border-white/10"
+            className="hidden md:flex w-full items-center justify-center py-3 hover:bg-white/10 text-white/70 hover:text-white transition-colors duration-200 border-b border-white/10"
             aria-label="Expand sidebar"
           >
             <ChevronRight className="h-4 w-4" />
           </button>
         )}
 
-        {/* Dev Mode Indicator */}
-        {isDevMode && (
-          <div className={`${isCollapsed ? 'px-2' : 'px-[10.5px]'} py-2 border-b border-white/10`}>
-            <div className={`flex items-center gap-2 bg-yellow-500/20 text-yellow-300 rounded-md ${isCollapsed ? 'justify-center p-2' : 'px-3 py-2'}`}>
-              <Wrench className={`${isCollapsed ? 'h-4 w-4' : 'h-3.5 w-3.5'} flex-shrink-0`} />
-              {!isCollapsed && (
-                <span className="text-xs font-bold uppercase tracking-wider">Dev Mode</span>
-              )}
-            </div>
-          </div>
-        )}
-
         {/* Navigation */}
-        <nav className="flex-1 px-[10.5px] py-2 overflow-y-auto scrollbar-thin scrollbar-thumb-white/10 hover:scrollbar-thumb-white/20">
-          <ul className="space-y-1">
-            {navigationItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = item.href === '/'
-                ? pathname === '/'
-                : pathname?.startsWith(item.href);
+        <nav className="flex-1 px-3 py-4 overflow-y-auto scrollbar-thin scrollbar-thumb-white/10 hover:scrollbar-thumb-white/20">
+          {sectionOrder.map((sectionKey, sectionIndex) => {
+            const items = groupedItems[sectionKey];
+            if (!items?.length) return null;
 
-              return (
-                <li key={item.id}>
-                  <Link
-                    href={item.href}
-                    onClick={handleItemClick}
-                    className={`
-                      group/sidebar w-full flex items-center gap-[7px] py-[8.75px] px-[10.5px] rounded-[7px] text-left transition-all duration-[200ms] ease-[cubic-bezier(0.4,0,0.2,1)] relative
-                      ${isActive
-                        ? "bg-white/20 text-white shadow-md"
-                        : "text-[#E4E4E7] hover:bg-white/10 hover:text-white"
-                      }
-                      ${isCollapsed ? "justify-center px-2" : ""}
-                    `}
-                    title={isCollapsed ? item.name : undefined}
-                  >
-                    <div className="flex items-center justify-center flex-shrink-0">
-                      <Icon
-                        className={`
-                          w-[17.5px] h-[17.5px] transition-colors duration-[150ms] ease-[cubic-bezier(0.4,0,0.2,1)]
-                          ${isActive ? "text-white" : "text-current"}
-                        `}
-                      />
-                    </div>
+            return (
+              <div key={sectionKey} className={sectionIndex > 0 ? 'mt-6' : ''}>
+                {/* Section Label */}
+                {!isCollapsed && (
+                  <div className="px-3 mb-2">
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-white/40">
+                      {sectionLabels[sectionKey]}
+                    </span>
+                  </div>
+                )}
 
-                    {!isCollapsed && (
-                      <span className="text-[14px] font-normal leading-[21px] truncate transition-transform duration-[150ms] ease-[cubic-bezier(0.4,0,0.2,1)] group-hover/sidebar:translate-x-1">
-                        {item.name}
-                      </span>
-                    )}
+                {isCollapsed && sectionIndex > 0 && (
+                  <div className="mx-2 mb-3 border-t border-white/10" />
+                )}
 
-                    {/* Tooltip for collapsed state */}
-                    {isCollapsed && (
-                      <div className="absolute left-full ml-3 px-2 py-1.5 bg-white text-sidebar text-xs rounded-[5px] opacity-0 invisible group-hover/sidebar:opacity-100 group-hover/sidebar:visible transition-all duration-[150ms] whitespace-nowrap z-50 shadow-lg font-medium">
-                        {item.name}
-                        {/* Triangle */}
-                        <div className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-1 w-2 h-2 bg-white rotate-45" />
-                      </div>
-                    )}
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
+                <ul className="space-y-1">
+                  {items.map((item) => {
+                    const Icon = item.icon;
+                    const isActive = item.href === '/'
+                      ? pathname === '/'
+                      : pathname?.startsWith(item.href);
+
+                    return (
+                      <li key={item.id}>
+                        <Link
+                          href={item.href}
+                          onClick={handleItemClick}
+                          className={`
+                            group/sidebar w-full flex items-center gap-3 py-2.5 px-3 rounded-xl text-left transition-all duration-200 relative
+                            ${isActive
+                              ? "bg-white text-[#4E4456] shadow-lg font-medium"
+                              : "text-white/80 hover:bg-white/10 hover:text-white"
+                            }
+                            ${isCollapsed ? "justify-center px-2" : ""}
+                          `}
+                          title={isCollapsed ? item.name : undefined}
+                        >
+                          {/* Active indicator bar */}
+                          {isActive && !isCollapsed && (
+                            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-[#4E4456] rounded-r-full" />
+                          )}
+
+                          <div className="flex items-center justify-center flex-shrink-0">
+                            <Icon
+                              className={`
+                                w-5 h-5 transition-all duration-200
+                                ${isActive ? "text-[#4E4456]" : "text-current group-hover/sidebar:scale-110"}
+                              `}
+                            />
+                          </div>
+
+                          {!isCollapsed && (
+                            <span className="text-sm leading-tight truncate transition-transform duration-200 group-hover/sidebar:translate-x-0.5">
+                              {item.name}
+                            </span>
+                          )}
+
+                          {/* Tooltip for collapsed state */}
+                          {isCollapsed && (
+                            <div className="absolute left-full ml-3 px-3 py-2 bg-white text-[#4E4456] text-sm rounded-lg opacity-0 invisible group-hover/sidebar:opacity-100 group-hover/sidebar:visible transition-all duration-200 whitespace-nowrap z-50 shadow-xl font-medium pointer-events-none">
+                              {item.name}
+                              {/* Triangle */}
+                              <div className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-1 w-2 h-2 bg-white rotate-45" />
+                            </div>
+                          )}
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            );
+          })}
         </nav>
 
         {/* Bottom section with logout */}
         <div className="mt-auto border-t border-white/10">
-          <div className="p-[10.5px]">
+          <div className="p-3">
             <button
               onClick={() => console.log("Logout clicked")}
               className={`
-                group/sidebar w-full flex items-center gap-[7px] rounded-[7px] text-left transition-all duration-[200ms] ease-[cubic-bezier(0.4,0,0.2,1)]
-                text-[#E4E4E7] hover:bg-red-500/10 hover:text-red-400
-                ${isCollapsed ? "justify-center py-[8.75px] px-2" : "py-[8.75px] px-[10.5px]"}
+                group/sidebar w-full flex items-center gap-3 rounded-xl text-left transition-all duration-200
+                text-white/70 hover:bg-red-500/20 hover:text-red-300
+                ${isCollapsed ? "justify-center py-2.5 px-2" : "py-2.5 px-3"}
               `}
               title={isCollapsed ? "Logout" : undefined}
             >
-              <LogOut className="h-[17.5px] w-[17.5px] flex-shrink-0" />
+              <LogOut className="h-5 w-5 flex-shrink-0 transition-transform duration-200 group-hover/sidebar:scale-110" />
 
               {!isCollapsed && (
-                <span className="text-[14px] font-normal leading-[21px] transition-transform duration-[150ms] group-hover/sidebar:translate-x-1">Logout</span>
+                <span className="text-sm leading-tight transition-transform duration-200 group-hover/sidebar:translate-x-0.5">Sign Out</span>
+              )}
+
+              {/* Tooltip for collapsed state */}
+              {isCollapsed && (
+                <div className="absolute left-full ml-3 px-3 py-2 bg-white text-[#4E4456] text-sm rounded-lg opacity-0 invisible group-hover/sidebar:opacity-100 group-hover/sidebar:visible transition-all duration-200 whitespace-nowrap z-50 shadow-xl font-medium pointer-events-none">
+                  Sign Out
+                  <div className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-1 w-2 h-2 bg-white rotate-45" />
+                </div>
               )}
             </button>
           </div>

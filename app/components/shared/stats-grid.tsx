@@ -48,8 +48,9 @@ export function StatsGrid({ stats, className }: StatsGridProps) {
 
                 return (
                     // Added glass-card and border-l-4 for consistent "Liquid Glass" look
+                    // Added h-full for consistent row heights
                     <Card key={index} className={cn(
-                        "glass-card border-none border-l-4 transition-all hover:shadow-lg",
+                        "glass-card border-none border-l-4 h-full transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5",
                         styles.border
                     )}>
                         <CardContent className="p-4 sm:p-5 md:p-6 flex items-center justify-between gap-3">

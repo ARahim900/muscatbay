@@ -33,7 +33,7 @@ const DEV_USER: AuthUser = {
     email: 'dev@muscatbay.com',
     user_metadata: {
         full_name: 'Development User',
-        avatar_url: null,
+        avatar_url: undefined,
     },
 };
 
