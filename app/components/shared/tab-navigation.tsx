@@ -30,8 +30,8 @@ export function TabNavigation({ tabs, activeTab, onTabChange, className }: TabNa
                         className={cn(
                             "gap-2 transition-all",
                             isActive
-                                ? "bg-[var(--mb-primary)] text-[var(--mb-primary-foreground)] shadow-sm hover:bg-[var(--mb-primary-hover)]"
-                                : "text-muted-foreground hover:bg-[var(--mb-primary)] hover:text-[var(--mb-primary-foreground)]"
+                                ? "bg-[#4E4456] !text-white shadow-sm hover:bg-[#3d3544] hover:!text-white"
+                                : "text-muted-foreground hover:bg-[#4E4456] hover:!text-white"
                         )}
                     >
                         {tab.icon && <tab.icon className="w-4 h-4" />}

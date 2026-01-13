@@ -9,20 +9,20 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
   const { isCollapsed } = useSidebar();
 
   return (
-    <div className="flex min-h-screen bg-slate-50/50">
+    <div className="flex min-h-screen">
       {/* Sidebar is fixed, so we don't need it inside the flex flow for width, 
           but we use the margin on the content to push it over */}
       <Sidebar />
 
-      {/* Main Content Area */}
+      {/* Main Content Area - Updated margins for new sidebar widths */}
       <main
         className={`
-          flex-1 transition-all duration-300 ease-in-out w-full
-          ${isCollapsed ? "md:ml-20" : "md:ml-72"}
-          min-h-screen
+          flex-1 transition-all duration-[200ms] ease-[cubic-bezier(0.4,0,0.2,1)] w-full
+          ${isCollapsed ? "md:ml-[70px]" : "md:ml-[208px]"}
+          min-h-screen bg-background
         `}
       >
-        <div className="p-4 md:p-8 pt-20 md:pt-8 max-w-7xl mx-auto">
+        <div className="p-3 sm:p-4 lg:p-6 w-full">
           {children}
         </div>
       </main>

@@ -59,8 +59,8 @@ export default function DashboardPage() {
 
             <StatsGrid stats={statsWithIcons} />
 
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-                <Card className="glass-card col-span-4">
+            <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-7">
+                <Card className="glass-card col-span-1 md:col-span-2 lg:col-span-4">
                     <CardHeader className="glass-card-header">
                         <CardTitle className="flex items-center gap-2">
                             <Droplets className="h-5 w-5 text-mb-secondary" />
@@ -69,7 +69,7 @@ export default function DashboardPage() {
                         <p className="text-sm text-muted-foreground">Monthly water production in thousand m³</p>
                     </CardHeader>
                     <CardContent className="pl-2">
-                        <div className="h-[300px]">
+                        <div className="h-[250px] sm:h-[300px]">
                             <ResponsiveContainer width="100%" height="100%">
                                 <AreaChart data={chartData}>
                                     <defs>
@@ -89,7 +89,7 @@ export default function DashboardPage() {
                     </CardContent>
                 </Card>
 
-                <Card className="glass-card col-span-3">
+                <Card className="glass-card col-span-1 md:col-span-2 lg:col-span-3">
                     <CardHeader className="glass-card-header">
                         <CardTitle className="flex items-center gap-2">
                             <Recycle className="h-5 w-5 text-mb-primary" />
@@ -98,7 +98,7 @@ export default function DashboardPage() {
                         <p className="text-sm text-muted-foreground">Monthly inlet vs TSE output (k m³)</p>
                     </CardHeader>
                     <CardContent>
-                        <div className="h-[300px]">
+                        <div className="h-[250px] sm:h-[300px]">
                             <ResponsiveContainer width="100%" height="100%">
                                 <BarChart data={stpChartData}>
                                     <CartesianGrid strokeDasharray="3 3" className="stroke-slate-200 dark:stroke-slate-700" opacity={0.5} />

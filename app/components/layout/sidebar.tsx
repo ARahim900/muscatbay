@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useSidebar } from './sidebar-context';
 import {
@@ -20,10 +21,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Search,
-  Bell,
-  HelpCircle
 } from 'lucide-react';
-import Image from 'next/image';
 
 interface NavigationItem {
   id: string;
@@ -35,15 +33,15 @@ interface NavigationItem {
 
 // Muscat Bay O&M Navigation Map
 const navigationItems: NavigationItem[] = [
-  { id: "dashboard", name: "Dashboard", icon: LayoutDashboard, href: "/app" },
-  { id: "water", name: "Water Management", icon: Droplets, href: "/app/water" },
-  { id: "electricity", name: "Electricity", icon: Zap, href: "/app/electricity" },
-  { id: "stp", name: "STP Operations", icon: Activity, href: "/app/stp" },
-  { id: "contractors", name: "Contractors", icon: Users, href: "/app/contractors" },
-  { id: "assets", name: "Assets", icon: Package, href: "/app/assets" },
-  { id: "pest-control", name: "Pest Control", icon: Bug, href: "/app/pest-control" },
-  { id: "fire-safety", name: "Fire Safety", icon: Flame, href: "/app/firefighting" },
-  { id: "settings", name: "Settings", icon: Settings, href: "/app/settings" },
+  { id: "dashboard", name: "Dashboard", icon: LayoutDashboard, href: "/" },
+  { id: "water", name: "Water System", icon: Droplets, href: "/water" },
+  { id: "electricity", name: "Electricity System", icon: Zap, href: "/electricity" },
+  { id: "stp", name: "STP Plant", icon: Settings, href: "/stp" },
+  { id: "contractors", name: "Contractor Tracker", icon: Users, href: "/contractors" },
+  { id: "assets", name: "Assets", icon: Package, href: "/assets" },
+  { id: "pest-control", name: "Pest Control", icon: Bug, href: "/pest-control" },
+  { id: "fire-safety", name: "Firefighting & Alarm", icon: Flame, href: "/firefighting" },
+  { id: "settings", name: "Settings", icon: Settings, href: "/settings" },
 ];
 
 export function Sidebar() {
@@ -62,12 +60,12 @@ export function Sidebar() {
       {/* Mobile hamburger button */}
       <button
         onClick={toggleSidebar}
-        className="fixed top-4 left-4 z-50 p-2.5 rounded-lg bg-white shadow-md border border-slate-100 md:hidden hover:bg-slate-50 transition-all duration-200"
+        className="fixed top-4 left-4 z-50 p-[7px] rounded-[5px] bg-sidebar text-white shadow-md md:hidden hover:bg-white/10 transition-all duration-[150ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
         aria-label="Toggle sidebar"
       >
         {isOpen ?
-          <X className="h-5 w-5 text-slate-600" /> :
-          <Menu className="h-5 w-5 text-slate-600" />
+          <X className="h-[17.5px] w-[17.5px]" /> :
+          <Menu className="h-[17.5px] w-[17.5px]" />
         }
       </button>
 
@@ -79,36 +77,47 @@ export function Sidebar() {
         />
       )}
 
-      {/* Sidebar Container */}
+      {/* Sidebar Container - Updated dimensions: 70px collapsed, 208px expanded */}
       <div
         className={`
-          fixed top-0 left-0 h-full bg-white border-r border-slate-200 z-40 transition-all duration-300 ease-in-out flex flex-col
+          fixed top-0 left-0 h-screen min-h-screen bg-sidebar z-40 transition-all duration-[200ms] ease-[cubic-bezier(0.4,0,0.2,1)] flex flex-col
           ${isOpen ? "translate-x-0" : "-translate-x-full"}
-          ${isCollapsed ? "w-20" : "w-72"}
-          md:translate-x-0 md:static md:z-auto
+          ${isCollapsed ? "w-[70px]" : "w-[208px]"}
+          md:translate-x-0 md:sticky md:top-0 md:z-auto
         `}
+        style={{ backgroundColor: '#4E4456' }}
       >
-        {/* Header with logo and collapse button */}
-        <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'} p-5 border-b border-slate-200 bg-slate-50/60 h-20`}>
+        {/* Header with logo and collapse button - height: 60.5px */}
+        <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'} px-[10.5px] border-b border-white/10 h-[60.5px]`}>
           {!isCollapsed && (
-            <div className="flex items-center space-x-3">
-              {/* Use Image component if available, otherwise fallback to styled div */}
-              <div className="w-8 h-8 relative flex-shrink-0">
-                {/* Fallback Icon for Logo */}
-                <div className="w-full h-full bg-slate-900 rounded-lg flex items-center justify-center text-white font-bold text-xs">
-                  MB
-                </div>
+            <div className="flex items-center gap-[10.5px]">
+              <div className="w-[35px] h-[35px] rounded-lg overflow-hidden flex items-center justify-center">
+                <Image
+                  src="/mb-logo.png"
+                  alt="Muscat Bay Logo"
+                  width={35}
+                  height={35}
+                  className="object-cover"
+                  priority
+                />
               </div>
               <div className="flex flex-col">
-                <span className="font-bold text-slate-800 text-sm tracking-tight">MUSCAT BAY</span>
-                <span className="text-[10px] text-slate-500 font-medium uppercase tracking-wider">O&M Dashboard</span>
+                <span className="font-bold text-[#F8FAFC] text-[15.75px] leading-[24.5px] tracking-tight">Muscat Bay</span>
+                <span className="text-[12px] text-white/50 font-normal whitespace-nowrap">Resource Management</span>
               </div>
             </div>
           )}
 
           {isCollapsed && (
-            <div className="w-9 h-9 bg-slate-900 rounded-lg flex items-center justify-center shadow-sm">
-              <span className="text-white font-bold text-xs">MB</span>
+            <div className="w-[35px] h-[35px] rounded-lg overflow-hidden flex items-center justify-center">
+              <Image
+                src="/mb-logo.png"
+                alt="Muscat Bay Logo"
+                width={35}
+                height={35}
+                className="object-cover"
+                priority
+              />
             </div>
           )}
 
@@ -116,7 +125,7 @@ export function Sidebar() {
           {!isCollapsed && (
             <button
               onClick={toggleCollapse}
-              className="hidden md:flex p-1.5 rounded-md hover:bg-slate-200 text-slate-500 transition-all duration-200"
+              className="hidden md:flex p-1.5 rounded-[5px] hover:bg-white/10 text-[#E4E4E7] hover:text-white transition-all duration-[150ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
               aria-label="Collapse sidebar"
             >
               <ChevronLeft className="h-4 w-4" />
@@ -128,7 +137,7 @@ export function Sidebar() {
         {isCollapsed && (
           <button
             onClick={toggleCollapse}
-            className="hidden md:flex w-full items-center justify-center py-2 hover:bg-slate-50 text-slate-400 hover:text-slate-600 transition-colors border-b border-slate-100"
+            className="hidden md:flex w-full items-center justify-center py-2 hover:bg-white/10 text-[#E4E4E7] hover:text-white transition-colors duration-[200ms] border-b border-white/10"
             aria-label="Expand sidebar"
           >
             <ChevronRight className="h-4 w-4" />
@@ -137,26 +146,25 @@ export function Sidebar() {
 
         {/* Search Bar (Hidden when collapsed) */}
         {!isCollapsed && (
-          <div className="px-4 py-4">
+          <div className="px-[10.5px] py-3">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-[14px] w-[14px] text-[#E4E4E7]" />
               <input
                 type="text"
-                placeholder="Search assets..."
-                className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200"
+                placeholder="Search..."
+                className="w-full pl-9 pr-3 py-[8.75px] bg-white/5 border border-white/10 rounded-[7px] text-[14px] leading-[21px] text-white placeholder-white/30 focus:outline-none focus:ring-1 focus:ring-secondary/50 focus:border-secondary/50 transition-all duration-[150ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
               />
             </div>
           </div>
         )}
 
         {/* Navigation */}
-        <nav className="flex-1 px-3 py-4 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200">
+        <nav className="flex-1 px-[10.5px] py-2 overflow-y-auto scrollbar-thin scrollbar-thumb-white/10 hover:scrollbar-thumb-white/20">
           <ul className="space-y-1">
             {navigationItems.map((item) => {
               const Icon = item.icon;
-              // Check active state - handles exact match for root and sub-paths for others
-              const isActive = item.href === '/app'
-                ? pathname === '/app'
+              const isActive = item.href === '/'
+                ? pathname === '/'
                 : pathname?.startsWith(item.href);
 
               return (
@@ -165,50 +173,36 @@ export function Sidebar() {
                     href={item.href}
                     onClick={handleItemClick}
                     className={`
-                      w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-left transition-all duration-200 group relative
+                      group/sidebar w-full flex items-center gap-[7px] py-[8.75px] px-[10.5px] rounded-[7px] text-left transition-all duration-[200ms] ease-[cubic-bezier(0.4,0,0.2,1)] relative
                       ${isActive
-                        ? "bg-blue-50/80 text-blue-700 font-medium shadow-sm ring-1 ring-blue-100"
-                        : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                        ? "bg-white/20 text-white shadow-md"
+                        : "text-[#E4E4E7] hover:bg-white/10 hover:text-white"
                       }
                       ${isCollapsed ? "justify-center px-2" : ""}
                     `}
                     title={isCollapsed ? item.name : undefined}
                   >
-                    <div className="flex items-center justify-center min-w-[20px]">
+                    <div className="flex items-center justify-center flex-shrink-0">
                       <Icon
                         className={`
-                          h-5 w-5 flex-shrink-0 transition-colors duration-200
-                          ${isActive
-                            ? "text-blue-600"
-                            : "text-slate-500 group-hover:text-slate-700"
-                          }
+                          w-[17.5px] h-[17.5px] transition-colors duration-[150ms] ease-[cubic-bezier(0.4,0,0.2,1)]
+                          ${isActive ? "text-white" : "text-current"}
                         `}
                       />
                     </div>
 
                     {!isCollapsed && (
-                      <div className="flex items-center justify-between w-full overflow-hidden">
-                        <span className="truncate text-sm">{item.name}</span>
-                        {item.badge && (
-                          <span className={`
-                            px-1.5 py-0.5 text-[10px] font-bold rounded-full ml-2
-                            ${isActive
-                              ? "bg-blue-100 text-blue-700"
-                              : "bg-slate-100 text-slate-600"
-                            }
-                          `}>
-                            {item.badge}
-                          </span>
-                        )}
-                      </div>
+                      <span className="text-[14px] font-normal leading-[21px] truncate transition-transform duration-[150ms] ease-[cubic-bezier(0.4,0,0.2,1)] group-hover/sidebar:translate-x-1">
+                        {item.name}
+                      </span>
                     )}
 
                     {/* Tooltip for collapsed state */}
                     {isCollapsed && (
-                      <div className="absolute left-full ml-3 px-2 py-1.5 bg-slate-800 text-white text-xs rounded-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50 shadow-lg">
+                      <div className="absolute left-full ml-3 px-2 py-1.5 bg-white text-sidebar text-xs rounded-[5px] opacity-0 invisible group-hover/sidebar:opacity-100 group-hover/sidebar:visible transition-all duration-[150ms] whitespace-nowrap z-50 shadow-lg font-medium">
                         {item.name}
-                        {/* Little triangle pointer */}
-                        <div className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-1 w-2 h-2 bg-slate-800 rotate-45" />
+                        {/* Triangle */}
+                        <div className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-1 w-2 h-2 bg-white rotate-45" />
                       </div>
                     )}
                   </Link>
@@ -218,61 +212,22 @@ export function Sidebar() {
           </ul>
         </nav>
 
-        {/* Bottom section with profile and logout */}
-        <div className="mt-auto border-t border-slate-200 bg-white">
-          {/* Profile Section */}
-          <div className={`border-b border-slate-200 ${isCollapsed ? 'py-4 px-2' : 'p-4'}`}>
-            {!isCollapsed ? (
-              <div className="flex items-center px-3 py-2 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors duration-200 cursor-pointer">
-                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center border border-blue-200">
-                  <span className="text-blue-700 font-bold text-xs">AD</span>
-                </div>
-                <div className="flex-1 min-w-0 ml-3">
-                  <p className="text-sm font-semibold text-slate-800 truncate">Admin User</p>
-                  <p className="text-xs text-slate-500 truncate">O&M Manager</p>
-                </div>
-              </div>
-            ) : (
-              <div className="flex justify-center group relative">
-                <div className="relative cursor-pointer">
-                  <div className="w-9 h-9 bg-blue-100 rounded-full flex items-center justify-center border border-blue-200">
-                    <span className="text-blue-700 font-bold text-xs">AD</span>
-                  </div>
-                  <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-white" />
-                </div>
-                {/* Profile Tooltip */}
-                <div className="absolute left-full ml-3 px-3 py-2 bg-slate-800 text-white text-xs rounded-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50 shadow-lg top-0">
-                  <p className="font-semibold">Admin User</p>
-                  <p className="text-slate-300 text-[10px]">O&M Manager</p>
-                  <div className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-1 w-2 h-2 bg-slate-800 rotate-45" />
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Logout Button */}
-          <div className="p-3">
+        {/* Bottom section with logout */}
+        <div className="mt-auto border-t border-white/10">
+          <div className="p-[10.5px]">
             <button
-              onClick={() => console.log("Logout clicked")} // Add actual logout logic here
+              onClick={() => console.log("Logout clicked")}
               className={`
-                w-full flex items-center rounded-lg text-left transition-all duration-200 group
-                text-red-600 hover:bg-red-50 hover:text-red-700 hover:shadow-sm
-                ${isCollapsed ? "justify-center p-2.5" : "space-x-3 px-3 py-2.5"}
+                group/sidebar w-full flex items-center gap-[7px] rounded-[7px] text-left transition-all duration-[200ms] ease-[cubic-bezier(0.4,0,0.2,1)]
+                text-[#E4E4E7] hover:bg-red-500/10 hover:text-red-400
+                ${isCollapsed ? "justify-center py-[8.75px] px-2" : "py-[8.75px] px-[10.5px]"}
               `}
               title={isCollapsed ? "Logout" : undefined}
             >
-              <LogOut className="h-5 w-5 flex-shrink-0" />
+              <LogOut className="h-[17.5px] w-[17.5px] flex-shrink-0" />
 
               {!isCollapsed && (
-                <span className="text-sm font-medium">Logout</span>
-              )}
-
-              {/* Tooltip for collapsed state */}
-              {isCollapsed && (
-                <div className="absolute left-full ml-3 px-2 py-1.5 bg-slate-800 text-white text-xs rounded-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50 shadow-lg">
-                  Logout
-                  <div className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-1 w-2 h-2 bg-slate-800 rotate-45" />
-                </div>
+                <span className="text-[14px] font-normal leading-[21px] transition-transform duration-[150ms] group-hover/sidebar:translate-x-1">Logout</span>
               )}
             </button>
           </div>

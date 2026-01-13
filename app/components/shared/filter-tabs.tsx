@@ -28,8 +28,8 @@ export function FilterTabs({ label, options, value, onChange, className }: Filte
                             className={cn(
                                 "px-3 py-1.5 text-xs font-medium rounded-md transition-all",
                                 isSelected
-                                    ? "bg-[var(--mb-primary)] text-[var(--mb-primary-foreground)] shadow-sm"
-                                    : "text-muted-foreground hover:text-[var(--mb-primary)] hover:bg-[var(--mb-secondary)]/20"
+                                    ? "bg-[#4E4456] text-white shadow-sm"
+                                    : "text-muted-foreground hover:bg-[#4E4456] hover:text-white"
                             )}
                         >
                             {option.label}

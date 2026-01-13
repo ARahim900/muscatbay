@@ -4,7 +4,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 
 interface SidebarContextType {
   isOpen: boolean; // Mobile state
-  setIsOpen: (isOpen: boolean) => void;
+  setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
   isCollapsed: boolean; // Desktop state
   setIsCollapsed: (isCollapsed: boolean) => void;
   toggleSidebar: () => void;

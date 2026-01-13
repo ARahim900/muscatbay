@@ -1,36 +1,88 @@
 "use client";
 
 import { useSidebar } from "./sidebar-context";
-import { Menu, Search, Bell } from "lucide-react";
+import { Menu, Search, Bell, Sun, Moon } from "lucide-react";
+import { useState } from "react";
+import Link from "next/link";
 
 export function Topbar() {
-    const { isCollapsed, setIsCollapsed } = useSidebar();
+    const { isCollapsed, setIsCollapsed, setIsOpen } = useSidebar();
+    const [isDarkMode, setIsDarkMode] = useState(false);
 
     return (
-        <div className="h-16 border-b bg-white px-4 flex items-center justify-between sticky top-0 z-10 transition-all duration-300">
-            <div className="flex items-center gap-4">
+        <div
+            className="h-[60.5px] bg-transparent px-[14px] py-[10.5px] flex items-center justify-between sticky top-0 z-10 border-b border-white/10"
+            style={{
+                boxShadow: '0px 0px 0px 0px rgba(0, 0, 0, 0), 0px 0px 0px 0px rgba(0, 0, 0, 0), 0px 20px 25px -5px rgba(0, 0, 0, 0.1), 0px 8px 10px -6px rgba(0, 0, 0, 0.1)'
+            }}
+        >
+            {/* Left Section */}
+            <div className="flex items-center gap-[10.5px]">
+                {/* Mobile hamburger */}
                 <button
-                    onClick={() => setIsCollapsed(!isCollapsed)}
-                    className="p-2 hover:bg-gray-100 rounded-lg md:hidden"
+                    onClick={() => setIsOpen(prev => !prev)}
+                    className="w-[35px] h-[35px] flex items-center justify-center hover:bg-white/10 rounded-[5px] md:hidden text-[#F8FAFC] transition-all duration-[150ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
+                    aria-label="Toggle menu"
                 >
-                    <Menu className="w-5 h-5" />
+                    <Menu className="w-[17.5px] h-[17.5px]" />
                 </button>
-                <h1 className="text-xl font-semibold text-[var(--mb-primary)] hidden md:block">
-                    Dashboard
-                </h1>
+
+                {/* Page Title */}
+                <div className="hidden md:block">
+                    <h1 className="text-[15.75px] font-bold leading-[24.5px] text-[#F8FAFC]">
+                        Water System
+                    </h1>
+                    <p className="text-[14px] font-normal text-white/60">
+                        Muscat Bay Resource Management
+                    </p>
+                </div>
             </div>
 
-            <div className="flex items-center gap-4">
-                <button className="p-2 hover:bg-gray-100 rounded-full">
-                    <Search className="w-5 h-5 text-gray-500" />
+            {/* Right Section - Action Buttons */}
+            <div className="flex items-center gap-2">
+                {/* Theme Toggle */}
+                <button
+                    onClick={() => setIsDarkMode(!isDarkMode)}
+                    className="w-[35px] h-[35px] flex items-center justify-center hover:bg-white/10 rounded-[5px] text-[#F4F4F5] transition-all duration-[150ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
+                    aria-label="Toggle theme"
+                >
+                    {isDarkMode ? (
+                        <Moon className="w-[14px] h-[14px] rotate-0 scale-100 transition-all" />
+                    ) : (
+                        <Sun className="w-[14px] h-[14px] rotate-0 scale-100 transition-all" />
+                    )}
                 </button>
-                <button className="p-2 hover:bg-gray-100 rounded-full relative">
-                    <Bell className="w-5 h-5 text-gray-500" />
-                    <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"></span>
+
+                {/* Search Button */}
+                <button
+                    className="w-[35px] h-[35px] flex items-center justify-center hover:bg-white/10 rounded-[5px] text-[#E4E4E7] transition-all duration-[150ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
+                    aria-label="Search"
+                >
+                    <Search className="w-[14px] h-[14px]" />
                 </button>
-                <div className="w-8 h-8 bg-[var(--mb-primary)] rounded-full flex items-center justify-center text-white text-sm font-medium">
-                    U
-                </div>
+
+                {/* Notifications Button */}
+                <button
+                    className="w-[35px] h-[35px] flex items-center justify-center hover:bg-white/10 rounded-[5px] relative text-[#F4F4F5] transition-all duration-[150ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
+                    aria-label="Notifications"
+                >
+                    <Bell className="w-[14px] h-[14px]" />
+                    {/* Notification badge */}
+                    <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border border-sidebar"></span>
+                </button>
+
+                {/* User Profile */}
+                <Link
+                    href="/settings"
+                    className="flex items-center gap-2 ml-2"
+                >
+                    <div className="w-[35px] h-[35px] bg-secondary rounded-full flex items-center justify-center text-white text-[14px] font-medium">
+                        A
+                    </div>
+                    <span className="hidden md:block text-[14px] font-medium text-[#F8FAFC]">
+                        Admin
+                    </span>
+                </Link>
             </div>
         </div>
     );
