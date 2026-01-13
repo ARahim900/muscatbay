@@ -33,10 +33,13 @@ export default function DashboardPage() {
 
     if (error) {
         return (
-            <div className="flex-1 space-y-8 p-4 sm:p-6 lg:p-8 pt-6">
-                <div className="text-center">
-                    <p className="text-red-500">{error}</p>
-                    <button onClick={() => window.location.reload()} className="mt-4 px-4 py-2 bg-blue-500 text-white rounded">
+            <div className="flex items-center justify-center min-h-[400px]">
+                <div className="text-center space-y-4">
+                    <p className="text-red-500 text-sm">{error}</p>
+                    <button
+                        onClick={() => window.location.reload()}
+                        className="px-4 py-2 bg-mb-primary text-white rounded-lg hover:bg-mb-primary/90 transition-colors"
+                    >
                         Retry
                     </button>
                 </div>
@@ -45,7 +48,7 @@ export default function DashboardPage() {
     }
 
     return (
-        <div className="flex-1 space-y-8 p-4 sm:p-6 lg:p-8 pt-6">
+        <div className="space-y-6 sm:space-y-7 md:space-y-8 w-full">
             <div className="flex items-center justify-between">
                 <PageHeader
                     title="Dashboard"
@@ -59,17 +62,17 @@ export default function DashboardPage() {
 
             <StatsGrid stats={statsWithIcons} />
 
-            <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-7">
-                <Card className="glass-card col-span-1 md:col-span-2 lg:col-span-4">
-                    <CardHeader className="glass-card-header">
-                        <CardTitle className="flex items-center gap-2">
+            <div className="grid gap-4 sm:gap-5 md:gap-6 grid-cols-1 lg:grid-cols-7">
+                <Card className="glass-card col-span-1 lg:col-span-4">
+                    <CardHeader className="glass-card-header p-4 sm:p-5 md:p-6">
+                        <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
                             <Droplets className="h-5 w-5 text-mb-secondary" />
                             Water Production Trend
                         </CardTitle>
-                        <p className="text-sm text-muted-foreground">Monthly water production in thousand m³</p>
+                        <p className="text-xs sm:text-sm text-muted-foreground">Monthly water production in thousand m³</p>
                     </CardHeader>
-                    <CardContent className="pl-2">
-                        <div className="h-[250px] sm:h-[300px]">
+                    <CardContent className="p-4 sm:p-5 md:p-6 pt-0">
+                        <div className="h-[200px] sm:h-[250px] md:h-[300px]">
                             <ResponsiveContainer width="100%" height="100%">
                                 <AreaChart data={chartData}>
                                     <defs>
@@ -89,16 +92,16 @@ export default function DashboardPage() {
                     </CardContent>
                 </Card>
 
-                <Card className="glass-card col-span-1 md:col-span-2 lg:col-span-3">
-                    <CardHeader className="glass-card-header">
-                        <CardTitle className="flex items-center gap-2">
+                <Card className="glass-card col-span-1 lg:col-span-3">
+                    <CardHeader className="glass-card-header p-4 sm:p-5 md:p-6">
+                        <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
                             <Recycle className="h-5 w-5 text-mb-primary" />
                             STP Treatment Overview
                         </CardTitle>
-                        <p className="text-sm text-muted-foreground">Monthly inlet vs TSE output (k m³)</p>
+                        <p className="text-xs sm:text-sm text-muted-foreground">Monthly inlet vs TSE output (k m³)</p>
                     </CardHeader>
-                    <CardContent>
-                        <div className="h-[250px] sm:h-[300px]">
+                    <CardContent className="p-4 sm:p-5 md:p-6 pt-0">
+                        <div className="h-[200px] sm:h-[250px] md:h-[300px]">
                             <ResponsiveContainer width="100%" height="100%">
                                 <BarChart data={stpChartData}>
                                     <CartesianGrid strokeDasharray="3 3" className="stroke-slate-200 dark:stroke-slate-700" opacity={0.5} />
@@ -117,8 +120,8 @@ export default function DashboardPage() {
 
             {/* Recent Activity Card */}
             <Card className="glass-card">
-                <CardHeader className="glass-card-header">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <CardHeader className="glass-card-header p-4 sm:p-5 md:p-6">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
                         <div>
                             <CardTitle>Recent Activity</CardTitle>
                             <p className="text-sm text-muted-foreground">
@@ -144,8 +147,8 @@ export default function DashboardPage() {
                         </div>
                     </div>
                 </CardHeader>
-                <CardContent>
-                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <CardContent className="p-4 sm:p-5 md:p-6 pt-0">
+                    <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                         {[
                             { title: "High Water Loss Detected", time: "2 hours ago", type: "critical" },
                             { title: "STP Pump Station Maintenance", time: "5 hours ago", type: "warning" },

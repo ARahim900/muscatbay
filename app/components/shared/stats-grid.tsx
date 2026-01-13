@@ -37,7 +37,11 @@ const variantStyles: Record<StatVariant, { bg: string; text: string; border: str
 
 export function StatsGrid({ stats, className }: StatsGridProps) {
     return (
-        <div className={cn("grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4", className)}>
+        <div className={cn(
+            "grid gap-3 sm:gap-4 w-full",
+            "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4",
+            className
+        )}>
             {stats.map((stat, index) => {
                 const variant = stat.variant || "primary";
                 const styles = variantStyles[variant];
@@ -45,10 +49,10 @@ export function StatsGrid({ stats, className }: StatsGridProps) {
                 return (
                     // Added glass-card and border-l-4 for consistent "Liquid Glass" look
                     <Card key={index} className={cn(
-                        "glass-card border-none border-l-4 transition-all",
+                        "glass-card border-none border-l-4 transition-all hover:shadow-lg",
                         styles.border
                     )}>
-                        <CardContent className="p-6 flex items-center justify-between">
+                        <CardContent className="p-4 sm:p-5 md:p-6 flex items-center justify-between gap-3">
                             <div>
                                 <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{stat.label}</p>
                                 <div className="flex items-center gap-2 mt-1">

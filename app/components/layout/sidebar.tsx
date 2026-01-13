@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useSidebar } from './sidebar-context';
+import { useAuth } from '../auth/auth-provider';
 import {
   LayoutDashboard,
   Droplets,
@@ -20,7 +21,7 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
-  Search,
+  Wrench,
 } from 'lucide-react';
 
 interface NavigationItem {
@@ -46,6 +47,7 @@ const navigationItems: NavigationItem[] = [
 
 export function Sidebar() {
   const { isOpen, setIsOpen, toggleSidebar, isCollapsed, toggleCollapse } = useSidebar();
+  const { isDevMode } = useAuth();
   const pathname = usePathname();
 
   const handleItemClick = () => {
@@ -57,15 +59,15 @@ export function Sidebar() {
 
   return (
     <>
-      {/* Mobile hamburger button */}
+      {/* Mobile hamburger button - positioned consistently */}
       <button
         onClick={toggleSidebar}
-        className="fixed top-4 left-4 z-50 p-[7px] rounded-[5px] bg-sidebar text-white shadow-md md:hidden hover:bg-white/10 transition-all duration-[150ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
+        className="fixed top-4 left-4 z-50 p-2 rounded-lg bg-sidebar text-white shadow-lg md:hidden hover:bg-white/10 transition-all duration-[150ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
         aria-label="Toggle sidebar"
       >
         {isOpen ?
-          <X className="h-[17.5px] w-[17.5px]" /> :
-          <Menu className="h-[17.5px] w-[17.5px]" />
+          <X className="h-5 w-5" /> :
+          <Menu className="h-5 w-5" />
         }
       </button>
 
@@ -144,16 +146,14 @@ export function Sidebar() {
           </button>
         )}
 
-        {/* Search Bar (Hidden when collapsed) */}
-        {!isCollapsed && (
-          <div className="px-[10.5px] py-3">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-[14px] w-[14px] text-[#E4E4E7]" />
-              <input
-                type="text"
-                placeholder="Search..."
-                className="w-full pl-9 pr-3 py-[8.75px] bg-white/5 border border-white/10 rounded-[7px] text-[14px] leading-[21px] text-white placeholder-white/30 focus:outline-none focus:ring-1 focus:ring-secondary/50 focus:border-secondary/50 transition-all duration-[150ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
-              />
+        {/* Dev Mode Indicator */}
+        {isDevMode && (
+          <div className={`${isCollapsed ? 'px-2' : 'px-[10.5px]'} py-2 border-b border-white/10`}>
+            <div className={`flex items-center gap-2 bg-yellow-500/20 text-yellow-300 rounded-md ${isCollapsed ? 'justify-center p-2' : 'px-3 py-2'}`}>
+              <Wrench className={`${isCollapsed ? 'h-4 w-4' : 'h-3.5 w-3.5'} flex-shrink-0`} />
+              {!isCollapsed && (
+                <span className="text-xs font-bold uppercase tracking-wider">Dev Mode</span>
+              )}
             </div>
           </div>
         )}

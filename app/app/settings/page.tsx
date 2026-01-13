@@ -115,9 +115,9 @@ export default function SettingsPage() {
     const initials = displayName.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)
 
     return (
-        <div className="flex-1 p-4 sm:p-6 lg:p-8 pt-6 space-y-8 max-w-6xl mx-auto">
+        <div className="space-y-6 sm:space-y-7 md:space-y-8 w-full max-w-6xl mx-auto">
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
                     <h1 className="text-3xl font-bold text-mb-primary">Settings</h1>
                     <p className="text-muted-foreground mt-2">Manage your account settings and profile information.</p>

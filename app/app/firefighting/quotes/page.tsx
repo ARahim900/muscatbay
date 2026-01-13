@@ -99,7 +99,7 @@ export default function FireQuotesPage() {
     }));
 
     return (
-        <div className="flex-1 space-y-6 p-4 sm:p-6 lg:p-8 pt-6">
+        <div className="space-y-6 sm:space-y-7 md:space-y-8 w-full">
             <div className="flex items-center gap-4">
                 <Link href="/firefighting">
                     <Button variant="ghost" size="icon"><ArrowLeft className="h-4 w-4" /></Button>

@@ -10,15 +10,21 @@ interface AuthContextType {
     profile: UserProfile | null;
     loading: boolean;
     isAuthenticated: boolean;
+    isDevMode: boolean;
     logout: () => Promise<void>;
     refreshProfile: () => Promise<void>;
 }
+
+const isDevMode = () => {
+    return process.env.NEXT_PUBLIC_DEV_MODE === 'true';
+};
 
 const AuthContext = createContext<AuthContextType>({
     user: null,
     profile: null,
     loading: true,
     isAuthenticated: false,
+    isDevMode: false,
     logout: async () => { },
     refreshProfile: async () => { },
 });
@@ -148,6 +154,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
                 profile,
                 loading,
                 isAuthenticated: !!user,
+                isDevMode: isDevMode(),
                 logout,
                 refreshProfile,
             }}

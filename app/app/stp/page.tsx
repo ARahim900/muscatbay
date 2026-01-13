@@ -248,9 +248,9 @@ export default function STPPage() {
     }
 
     return (
-        <div className="flex-1 space-y-6 p-4 sm:p-6 lg:p-8 pt-6">
+        <div className="space-y-6 sm:space-y-7 md:space-y-8 w-full">
             {/* Header Section */}
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <PageHeader
                     title="STP Plant"
                     description="Water Treatment Management"
