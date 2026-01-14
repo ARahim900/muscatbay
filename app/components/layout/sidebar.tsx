@@ -107,7 +107,7 @@ export function Sidebar() {
               <div className="flex flex-col">
                 <span className="font-semibold text-base leading-tight tracking-tight">
                   <span className="text-white">MUSCAT</span>
-                  <span className="text-brand-accent"> BAY</span>
+                  <span style={{ color: '#81D8D0' }}> BAY</span>
                 </span>
                 <span className="text-[11px] text-white/60 font-normal">Resource Management</span>
               </div>
@@ -118,7 +118,7 @@ export function Sidebar() {
             <div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center bg-white/10">
               <span className="text-white font-bold text-sm">
                 <span className="text-white">M</span>
-                <span className="text-brand-accent">B</span>
+                <span style={{ color: '#81D8D0' }}>B</span>
               </span>
             </div>
           )}
