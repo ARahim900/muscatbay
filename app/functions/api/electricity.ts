@@ -18,14 +18,23 @@ export async function getElectricityMetersFromSupabase(): Promise<MeterReading[]
     }
 
     try {
-        // Fetch all meters
-        const { data: meters, error: metersError } = await client
-            .from('electricity_meters')
-            .select('*')
-            .order('name');
+        // Fetch all meters with network error handling
+        let metersResult;
+        try {
+            metersResult = await client
+                .from('electricity_meters')
+                .select('*')
+                .order('name');
+        } catch (networkError) {
+            // Network error (e.g., Failed to fetch, proxy errors) - silently return empty
+            console.warn('Network error fetching electricity meters - using fallback data');
+            return [];
+        }
+
+        const { data: meters, error: metersError } = metersResult;
 
         if (metersError) {
-            console.error('Error fetching electricity meters:', metersError.message);
+            console.warn('Error fetching electricity meters:', metersError.message);
             return [];
         }
 
@@ -41,13 +50,22 @@ export async function getElectricityMetersFromSupabase(): Promise<MeterReading[]
         let hasMore = true;
 
         while (hasMore) {
-            const { data: batchReadings, error: readingsError } = await client
-                .from('electricity_readings')
-                .select('*')
-                .range(offset, offset + batchSize - 1);
+            let readingsResult;
+            try {
+                readingsResult = await client
+                    .from('electricity_readings')
+                    .select('*')
+                    .range(offset, offset + batchSize - 1);
+            } catch (networkError) {
+                // Network error - break out of loop and use what we have
+                console.warn('Network error fetching electricity readings batch - using partial data');
+                break;
+            }
+
+            const { data: batchReadings, error: readingsError } = readingsResult;
 
             if (readingsError) {
-                console.error('Error fetching electricity readings:', readingsError.message);
+                console.warn('Error fetching electricity readings:', readingsError.message);
                 break;
             }
 

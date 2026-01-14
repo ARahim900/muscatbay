@@ -2,7 +2,6 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { LucideIcon, TrendingUp, TrendingDown, Minus } from "lucide-react";
-// import { ScrollAnimation } from "./scroll-animation"; // Optional: Add if we want animation
 
 export type StatVariant = "primary" | "secondary" | "success" | "warning" | "danger" | "info" | "water" | "default";
 
@@ -11,11 +10,11 @@ interface StatItem {
     value: string;
     subtitle?: string;
     icon: LucideIcon;
-    variant?: StatVariant; // Use semantic color variant
-    color?: string; // Fallback: Optional text color class
-    bgColor?: string; // Fallback: Optional bg color class for icon container
-    trend?: 'up' | 'down' | 'neutral'; // Trend direction
-    trendValue?: string; // e.g., "+5.2%" or "-3.1%"
+    variant?: StatVariant;
+    color?: string;
+    bgColor?: string;
+    trend?: 'up' | 'down' | 'neutral';
+    trendValue?: string;
 }
 
 interface StatsGridProps {
@@ -23,66 +22,67 @@ interface StatsGridProps {
     className?: string;
 }
 
-// Map variants to CSS custom properties
-const variantStyles: Record<StatVariant, { bg: string; text: string; border: string }> = {
-    primary: { bg: "bg-mb-primary/10", text: "text-mb-primary", border: "border-l-mb-primary" },
-    secondary: { bg: "bg-mb-secondary/10", text: "text-mb-secondary-active", border: "border-l-mb-secondary" },
-    success: { bg: "bg-mb-success/10", text: "text-mb-success", border: "border-l-mb-success" },
-    warning: { bg: "bg-mb-warning/10", text: "text-mb-warning", border: "border-l-mb-warning" },
-    danger: { bg: "bg-mb-danger/10", text: "text-mb-danger", border: "border-l-mb-danger" },
-    info: { bg: "bg-mb-info/10", text: "text-mb-info", border: "border-l-mb-info" },
-    water: { bg: "bg-mb-water/10", text: "text-mb-water", border: "border-l-mb-water" },
-    default: { bg: "bg-slate-100 dark:bg-slate-800", text: "text-slate-700 dark:text-slate-300", border: "border-l-slate-400" },
+// Map variants to icon colors
+const variantIconColors: Record<StatVariant, string> = {
+    primary: "text-[#3B82F6]",      // Blue
+    secondary: "text-[#F59E0B]",    // Yellow/Amber
+    success: "text-[#10B981]",      // Green
+    warning: "text-[#F59E0B]",      // Yellow
+    danger: "text-[#EF4444]",       // Red
+    info: "text-[#3B82F6]",         // Blue
+    water: "text-[#3B82F6]",        // Blue
+    default: "text-slate-500",
 };
 
 export function StatsGrid({ stats, className }: StatsGridProps) {
     return (
         <div className={cn(
-            "grid gap-3 sm:gap-4 w-full",
+            "grid gap-4 sm:gap-5 w-full",
             "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4",
             className
         )}>
             {stats.map((stat, index) => {
                 const variant = stat.variant || "primary";
-                const styles = variantStyles[variant];
+                const iconColor = variantIconColors[variant];
 
                 return (
-                    // Added glass-card and border-l-4 for consistent "Liquid Glass" look
-                    // Added h-full for consistent row heights
-                    <Card key={index} className={cn(
-                        "glass-card border-none border-l-4 h-full transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5",
-                        styles.border
-                    )}>
-                        <CardContent className="p-4 sm:p-5 md:p-6 flex items-center justify-between gap-3">
-                            <div>
-                                <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{stat.label}</p>
-                                <div className="flex items-center gap-2 mt-1">
-                                    <h3 className="text-2xl font-bold tracking-tight text-mb-primary dark:text-mb-primary-light">{stat.value}</h3>
-                                    {stat.trend && stat.trendValue && (
+                    <Card key={index} className="bg-white rounded-xl shadow-sm border border-gray-100 h-full transition-all duration-200 hover:shadow-md">
+                        <CardContent className="p-5 flex items-start justify-between gap-3">
+                            {/* Left side - Text content */}
+                            <div className="flex-1 min-w-0">
+                                <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-500 mb-2">
+                                    {stat.label}
+                                </p>
+                                <h3 className="text-2xl font-bold tracking-tight text-gray-900 mb-1">
+                                    {stat.value}
+                                </h3>
+                                {/* Trend indicator */}
+                                {stat.trend && stat.trendValue && (
+                                    <div className="flex items-center gap-1.5 mt-2">
                                         <span className={cn(
-                                            "inline-flex items-center gap-0.5 text-xs font-medium px-1.5 py-0.5 rounded",
-                                            stat.trend === 'up' ? "text-mb-success bg-mb-success-light dark:text-mb-success-hover dark:bg-mb-success-light/20" :
-                                                stat.trend === 'down' ? "text-mb-danger bg-mb-danger-light dark:text-mb-danger-hover dark:bg-mb-danger-light/20" :
-                                                    "text-mb-primary bg-mb-primary-light/20 dark:text-mb-primary-light dark:bg-mb-primary-light/10"
+                                            "inline-flex items-center gap-0.5 text-xs font-medium",
+                                            stat.trend === 'up' ? "text-emerald-600" :
+                                                stat.trend === 'down' ? "text-red-500" :
+                                                    "text-gray-500"
                                         )}>
-                                            {stat.trend === 'up' && <TrendingUp className="w-3 h-3" />}
-                                            {stat.trend === 'down' && <TrendingDown className="w-3 h-3" />}
-                                            {stat.trend === 'neutral' && <Minus className="w-3 h-3" />}
+                                            {stat.trend === 'up' && <TrendingUp className="w-3.5 h-3.5" />}
+                                            {stat.trend === 'down' && <TrendingDown className="w-3.5 h-3.5" />}
+                                            {stat.trend === 'neutral' && <Minus className="w-3.5 h-3.5" />}
                                             {stat.trendValue}
                                         </span>
-                                    )}
-                                </div>
-                                {stat.subtitle && (
-                                    <p className="text-xs text-muted-foreground mt-1">{stat.subtitle}</p>
+                                        <span className="text-[11px] text-gray-400">vs last month</span>
+                                    </div>
+                                )}
+                                {stat.subtitle && !stat.trendValue && (
+                                    <p className="text-xs text-gray-400 mt-1">{stat.subtitle}</p>
                                 )}
                             </div>
-                            <div className={cn(
-                                "p-3 rounded-xl backdrop-blur-sm",
-                                stat.bgColor || styles.bg
-                            )}>
+
+                            {/* Right side - Icon in circle outline */}
+                            <div className="flex-shrink-0 w-11 h-11 rounded-full border-2 border-gray-200 flex items-center justify-center">
                                 <stat.icon className={cn(
-                                    "w-6 h-6",
-                                    stat.color || styles.text
+                                    "w-5 h-5",
+                                    stat.color || iconColor
                                 )} />
                             </div>
                         </CardContent>

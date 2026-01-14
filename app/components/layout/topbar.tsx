@@ -11,17 +11,14 @@ export function Topbar() {
 
     return (
         <div
-            className="h-[60.5px] bg-transparent px-[14px] py-[10.5px] flex items-center justify-between sticky top-0 z-10 border-b border-white/10"
-            style={{
-                boxShadow: '0px 0px 0px 0px rgba(0, 0, 0, 0), 0px 0px 0px 0px rgba(0, 0, 0, 0), 0px 20px 25px -5px rgba(0, 0, 0, 0.1), 0px 8px 10px -6px rgba(0, 0, 0, 0.1)'
-            }}
+            className="h-[60.5px] bg-white px-[14px] py-[10.5px] flex items-center justify-between sticky top-0 z-10 border-b border-gray-200"
         >
             {/* Left Section */}
             <div className="flex items-center gap-[10.5px]">
                 {/* Mobile hamburger */}
                 <button
                     onClick={() => setIsOpen(prev => !prev)}
-                    className="w-[35px] h-[35px] flex items-center justify-center hover:bg-white/10 rounded-[5px] md:hidden text-[#F8FAFC] transition-all duration-[150ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
+                    className="w-[35px] h-[35px] flex items-center justify-center hover:bg-gray-100 rounded-[5px] md:hidden text-brand-primary transition-all duration-[150ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
                     aria-label="Toggle menu"
                 >
                     <Menu className="w-[17.5px] h-[17.5px]" />
@@ -29,10 +26,10 @@ export function Topbar() {
 
                 {/* Page Title */}
                 <div className="hidden md:block">
-                    <h1 className="text-[15.75px] font-bold leading-[24.5px] text-[#F8FAFC]">
+                    <h1 className="text-[15.75px] font-bold leading-[24.5px] text-brand-primary">
                         Water System
                     </h1>
-                    <p className="text-[14px] font-normal text-white/60">
+                    <p className="text-[14px] font-normal text-gray-500">
                         Muscat Bay Resource Management
                     </p>
                 </div>
@@ -43,7 +40,7 @@ export function Topbar() {
                 {/* Theme Toggle */}
                 <button
                     onClick={() => setIsDarkMode(!isDarkMode)}
-                    className="w-[35px] h-[35px] flex items-center justify-center hover:bg-white/10 rounded-[5px] text-[#F4F4F5] transition-all duration-[150ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
+                    className="w-[35px] h-[35px] flex items-center justify-center hover:bg-gray-100 rounded-[5px] text-gray-600 transition-all duration-[150ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
                     aria-label="Toggle theme"
                 >
                     {isDarkMode ? (
@@ -55,7 +52,7 @@ export function Topbar() {
 
                 {/* Search Button */}
                 <button
-                    className="w-[35px] h-[35px] flex items-center justify-center hover:bg-white/10 rounded-[5px] text-[#E4E4E7] transition-all duration-[150ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
+                    className="w-[35px] h-[35px] flex items-center justify-center hover:bg-gray-100 rounded-[5px] text-gray-600 transition-all duration-[150ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
                     aria-label="Search"
                 >
                     <Search className="w-[14px] h-[14px]" />
@@ -63,12 +60,12 @@ export function Topbar() {
 
                 {/* Notifications Button */}
                 <button
-                    className="w-[35px] h-[35px] flex items-center justify-center hover:bg-white/10 rounded-[5px] relative text-[#F4F4F5] transition-all duration-[150ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
+                    className="w-[35px] h-[35px] flex items-center justify-center hover:bg-gray-100 rounded-[5px] relative text-gray-600 transition-all duration-[150ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
                     aria-label="Notifications"
                 >
                     <Bell className="w-[14px] h-[14px]" />
                     {/* Notification badge */}
-                    <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border border-sidebar"></span>
+                    <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
                 </button>
 
                 {/* User Profile */}
@@ -76,10 +73,10 @@ export function Topbar() {
                     href="/settings"
                     className="flex items-center gap-2 ml-2"
                 >
-                    <div className="w-[35px] h-[35px] bg-secondary rounded-full flex items-center justify-center text-white text-[14px] font-medium">
+                    <div className="w-[35px] h-[35px] bg-brand-accent rounded-full flex items-center justify-center text-white text-[14px] font-medium">
                         A
                     </div>
-                    <span className="hidden md:block text-[14px] font-medium text-[#F8FAFC]">
+                    <span className="hidden md:block text-[14px] font-medium text-brand-primary">
                         Admin
                     </span>
                 </Link>

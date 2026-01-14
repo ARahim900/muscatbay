@@ -74,7 +74,7 @@ export function LiquidBarChart({
 
     return (
         <div style={{ width: "100%", height, minHeight: 200 }}>
-            <ResponsiveContainer>
+            <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                 <BarChart data={data} margin={{ top: 25, right: 10, left: 0, bottom: 0 }} barGap={2}>
                     {showGrid && (
                         <CartesianGrid

@@ -76,7 +76,7 @@ export function Sidebar() {
       {/* Mobile hamburger button - positioned consistently */}
       <button
         onClick={toggleSidebar}
-        className="fixed top-4 left-4 z-50 p-2.5 rounded-xl bg-[#4E4456] text-white shadow-lg md:hidden hover:bg-[#5d5366] active:scale-95 transition-all duration-200"
+        className="fixed top-4 left-4 z-50 p-2.5 rounded-xl bg-brand-primary text-white shadow-lg md:hidden hover:bg-brand-primary/90 active:scale-95 transition-all duration-200"
         aria-label="Toggle sidebar"
       >
         {isOpen ?
@@ -96,12 +96,11 @@ export function Sidebar() {
       {/* Sidebar Container */}
       <div
         className={`
-          fixed top-0 left-0 h-screen min-h-screen z-40 transition-all duration-300 ease-out flex flex-col shadow-2xl
+          fixed top-0 left-0 h-screen min-h-screen z-40 transition-all duration-300 ease-out flex flex-col shadow-2xl bg-brand-primary
           ${isOpen ? "translate-x-0" : "-translate-x-full"}
           ${isCollapsed ? "w-[72px]" : "w-[240px]"}
           md:translate-x-0
         `}
-        style={{ backgroundColor: '#4E4456' }}
       >
         {/* Header with logo and collapse button */}
         <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'} px-4 border-b border-white/10 h-16`}>
@@ -118,22 +117,21 @@ export function Sidebar() {
                 />
               </div>
               <div className="flex flex-col">
-                <span className="font-semibold text-white text-base leading-tight tracking-tight">Muscat Bay</span>
+                <span className="font-semibold text-base leading-tight tracking-tight">
+                  <span className="text-white">MUSCAT</span>
+                  <span className="text-brand-accent"> BAY</span>
+                </span>
                 <span className="text-[11px] text-white/60 font-normal">Resource Management</span>
               </div>
             </div>
           )}
 
           {isCollapsed && (
-            <div className="w-9 h-9 rounded-xl overflow-hidden flex items-center justify-center bg-white/10 p-1">
-              <Image
-                src="/mb-logo.png"
-                alt="Muscat Bay Logo"
-                width={32}
-                height={32}
-                className="object-cover"
-                priority
-              />
+            <div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center bg-white/10">
+              <span className="text-white font-bold text-sm">
+                <span className="text-white">M</span>
+                <span className="text-brand-accent">B</span>
+              </span>
             </div>
           )}
 
@@ -196,36 +194,37 @@ export function Sidebar() {
                           className={`
                             group/sidebar w-full flex items-center gap-3 py-2.5 px-3 rounded-xl text-left transition-all duration-200 relative
                             ${isActive
-                              ? "bg-white text-[#4E4456] shadow-lg font-medium"
-                              : "text-white/80 hover:bg-white/10 hover:text-white"
+                              ? "bg-white/10 text-white"
+                              : "text-gray-300 hover:bg-white/10 hover:text-white"
                             }
                             ${isCollapsed ? "justify-center px-2" : ""}
                           `}
                           title={isCollapsed ? item.name : undefined}
                         >
-                          {/* Active indicator bar */}
-                          {isActive && !isCollapsed && (
-                            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-[#4E4456] rounded-r-full" />
-                          )}
-
                           <div className="flex items-center justify-center flex-shrink-0">
                             <Icon
                               className={`
                                 w-5 h-5 transition-all duration-200
-                                ${isActive ? "text-[#4E4456]" : "text-current group-hover/sidebar:scale-110"}
+                                ${isActive ? "text-brand-accent" : "text-current group-hover/sidebar:scale-110"}
                               `}
                             />
                           </div>
 
                           {!isCollapsed && (
-                            <span className="text-sm leading-tight truncate transition-transform duration-200 group-hover/sidebar:translate-x-0.5">
-                              {item.name}
-                            </span>
+                            <>
+                              <span className="text-sm leading-tight truncate transition-transform duration-200 group-hover/sidebar:translate-x-0.5 flex-1">
+                                {item.name}
+                              </span>
+                              {/* Active indicator dot on the right */}
+                              {isActive && (
+                                <div className="w-2 h-2 rounded-full bg-brand-accent flex-shrink-0" />
+                              )}
+                            </>
                           )}
 
                           {/* Tooltip for collapsed state */}
                           {isCollapsed && (
-                            <div className="absolute left-full ml-3 px-3 py-2 bg-white text-[#4E4456] text-sm rounded-lg opacity-0 invisible group-hover/sidebar:opacity-100 group-hover/sidebar:visible transition-all duration-200 whitespace-nowrap z-50 shadow-xl font-medium pointer-events-none">
+                            <div className="absolute left-full ml-3 px-3 py-2 bg-white text-brand-primary text-sm rounded-lg opacity-0 invisible group-hover/sidebar:opacity-100 group-hover/sidebar:visible transition-all duration-200 whitespace-nowrap z-50 shadow-xl font-medium pointer-events-none">
                               {item.name}
                               {/* Triangle */}
                               <div className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-1 w-2 h-2 bg-white rotate-45" />
@@ -261,7 +260,7 @@ export function Sidebar() {
 
               {/* Tooltip for collapsed state */}
               {isCollapsed && (
-                <div className="absolute left-full ml-3 px-3 py-2 bg-white text-[#4E4456] text-sm rounded-lg opacity-0 invisible group-hover/sidebar:opacity-100 group-hover/sidebar:visible transition-all duration-200 whitespace-nowrap z-50 shadow-xl font-medium pointer-events-none">
+                <div className="absolute left-full ml-3 px-3 py-2 bg-white text-brand-primary text-sm rounded-lg opacity-0 invisible group-hover/sidebar:opacity-100 group-hover/sidebar:visible transition-all duration-200 whitespace-nowrap z-50 shadow-xl font-medium pointer-events-none">
                   Sign Out
                   <div className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-1 w-2 h-2 bg-white rotate-45" />
                 </div>

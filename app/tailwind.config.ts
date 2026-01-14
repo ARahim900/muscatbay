@@ -9,16 +9,27 @@ const config: Config = {
     theme: {
         extend: {
             colors: {
+                // Muscat Bay Brand Colors
+                brand: {
+                    primary: '#4E4456', // Deep Purple - Sidebar background and Headings
+                    accent: '#81D8D0',  // Tiffany Blue - Active links, Highlights, and Buttons
+                },
+                // Semantic Colors
+                semantic: {
+                    info: '#3B82F6',    // Water
+                    warning: '#F59E0B', // Electricity
+                    success: '#10B981', // STP
+                },
                 primary: {
                     DEFAULT: '#4E4456', // Brand Purple-Gray
                     foreground: '#FFFFFF',
                 },
                 secondary: {
-                    DEFAULT: '#00D2B3', // Teal/Cyan
+                    DEFAULT: '#81D8D0', // Tiffany Blue (Brand Accent)
                     foreground: '#FFFFFF',
                 },
                 success: '#10B981',
-                warning: '#E8A838',
+                warning: '#F59E0B',
                 danger: '#EF4444',
                 background: '#F9FAFB', // Main content area
                 card: '#FFFFFF',
@@ -49,8 +60,8 @@ const config: Config = {
                 }
             },
             boxShadow: {
-                'card-primary': '0px 10px 15px -3px rgba(0, 0, 0, 0.1), 0px 4px 6px -4px rgba(0, 0, 0, 0.1)',
-                'card-standard': '0px 4px 6px -1px rgba(0, 0, 0, 0.1), 0px 2px 4px -2px rgba(0, 0, 0, 0.1)',
+                'card-primary': '0px 12px 18px -3px rgba(0, 0, 0, 0.15), 0px 6px 8px -4px rgba(0, 0, 0, 0.12)',
+                'card-standard': '0px 6px 10px -1px rgba(0, 0, 0, 0.12), 0px 3px 6px -2px rgba(0, 0, 0, 0.1)',
             },
             fontFamily: {
                 sans: [

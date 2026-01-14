@@ -8,8 +8,9 @@ import { PageHeader } from "@/components/shared/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Activity, Droplets, Zap, Users, AlertTriangle, ArrowUpRight, Boxes, Recycle, TrendingUp, Wifi, WifiOff } from "lucide-react";
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend } from "recharts";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar, Legend } from "recharts";
 import { LiquidTooltip } from "../components/charts/liquid-tooltip";
+import { ChartContainer } from "../components/charts/chart-container";
 
 export default function DashboardPage() {
     const { stats, chartData, stpChartData, loading, isLiveData, error } = useDashboardData();
@@ -71,25 +72,21 @@ export default function DashboardPage() {
                         </CardTitle>
                         <p className="text-xs sm:text-sm text-muted-foreground">Monthly water production in thousand m³</p>
                     </CardHeader>
-                    <CardContent className="p-4 sm:p-5 md:p-6 pt-0">
-                        <div className="h-[200px] sm:h-[250px] md:h-[300px]">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <AreaChart data={chartData}>
-                                    <defs>
-                                        <linearGradient id="colorWater" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="#81D8D0" stopOpacity={0.4} />
-                                            <stop offset="95%" stopColor="#81D8D0" stopOpacity={0} />
-                                        </linearGradient>
-                                    </defs>
-                                    <CartesianGrid strokeDasharray="3 3" className="stroke-slate-200 dark:stroke-slate-700" opacity={0.5} />
-                                    <XAxis dataKey="month" className="text-xs" tick={{ fontSize: 11, fill: "#6B7280" }} axisLine={false} tickLine={false} dy={10} />
-                                    <YAxis className="text-xs" tick={{ fontSize: 11, fill: "#6B7280" }} axisLine={false} tickLine={false} />
-                                    <Tooltip content={<LiquidTooltip />} cursor={{ stroke: 'rgba(0,0,0,0.1)', strokeWidth: 2 }} />
-                                    <Area type="monotone" dataKey="water" stroke="#81D8D0" fill="url(#colorWater)" name="Water (k m³)" strokeWidth={3} activeDot={{ r: 6, stroke: '#fff', strokeWidth: 2 }} animationDuration={1500} />
-                                </AreaChart>
-                            </ResponsiveContainer>
-                        </div>
-                    </CardContent>
+                    <ChartContainer height="100%" className="h-[200px] sm:h-[250px] md:h-[300px]">
+                        <AreaChart data={chartData}>
+                            <defs>
+                                <linearGradient id="colorWater" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor="#81D8D0" stopOpacity={0.4} />
+                                    <stop offset="95%" stopColor="#81D8D0" stopOpacity={0} />
+                                </linearGradient>
+                            </defs>
+                            <CartesianGrid strokeDasharray="3 3" className="stroke-slate-200 dark:stroke-slate-700" opacity={0.5} />
+                            <XAxis dataKey="month" className="text-xs" tick={{ fontSize: 11, fill: "#6B7280" }} axisLine={false} tickLine={false} dy={10} />
+                            <YAxis className="text-xs" tick={{ fontSize: 11, fill: "#6B7280" }} axisLine={false} tickLine={false} />
+                            <Tooltip content={<LiquidTooltip />} cursor={{ stroke: 'rgba(0,0,0,0.1)', strokeWidth: 2 }} />
+                            <Area type="monotone" dataKey="water" stroke="#81D8D0" fill="url(#colorWater)" name="Water (k m³)" strokeWidth={3} activeDot={{ r: 6, stroke: '#fff', strokeWidth: 2 }} animationDuration={1500} />
+                        </AreaChart>
+                    </ChartContainer>
                 </Card>
 
                 <Card className="glass-card col-span-1 lg:col-span-3">
@@ -100,21 +97,17 @@ export default function DashboardPage() {
                         </CardTitle>
                         <p className="text-xs sm:text-sm text-muted-foreground">Monthly inlet vs TSE output (k m³)</p>
                     </CardHeader>
-                    <CardContent className="p-4 sm:p-5 md:p-6 pt-0">
-                        <div className="h-[200px] sm:h-[250px] md:h-[300px]">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={stpChartData}>
-                                    <CartesianGrid strokeDasharray="3 3" className="stroke-slate-200 dark:stroke-slate-700" opacity={0.5} />
-                                    <XAxis dataKey="month" className="text-xs" tick={{ fontSize: 10, fill: "#6B7280" }} axisLine={false} tickLine={false} dy={10} />
-                                    <YAxis className="text-xs" tick={{ fontSize: 10, fill: "#6B7280" }} axisLine={false} tickLine={false} />
-                                    <Tooltip content={<LiquidTooltip />} cursor={{ fill: 'rgba(0,0,0,0.04)', radius: 4 }} />
-                                    <Legend iconType="circle" />
-                                    <Bar dataKey="inlet" name="Inlet" fill="#4E4456" radius={[4, 4, 0, 0]} animationDuration={1500} />
-                                    <Bar dataKey="tse" name="TSE Output" fill="#81D8D0" radius={[4, 4, 0, 0]} animationDuration={1500} />
-                                </BarChart>
-                            </ResponsiveContainer>
-                        </div>
-                    </CardContent>
+                    <ChartContainer height="100%" className="h-[200px] sm:h-[250px] md:h-[300px]">
+                        <BarChart data={stpChartData}>
+                            <CartesianGrid strokeDasharray="3 3" className="stroke-slate-200 dark:stroke-slate-700" opacity={0.5} />
+                            <XAxis dataKey="month" className="text-xs" tick={{ fontSize: 10, fill: "#6B7280" }} axisLine={false} tickLine={false} dy={10} />
+                            <YAxis className="text-xs" tick={{ fontSize: 10, fill: "#6B7280" }} axisLine={false} tickLine={false} />
+                            <Tooltip content={<LiquidTooltip />} cursor={{ fill: 'rgba(0,0,0,0.04)', radius: 4 }} />
+                            <Legend iconType="circle" />
+                            <Bar dataKey="inlet" name="Inlet" fill="#4E4456" radius={[4, 4, 0, 0]} animationDuration={1500} />
+                            <Bar dataKey="tse" name="TSE Output" fill="#81D8D0" radius={[4, 4, 0, 0]} animationDuration={1500} />
+                        </BarChart>
+                    </ChartContainer>
                 </Card>
             </div>
 
@@ -171,6 +164,6 @@ export default function DashboardPage() {
                     </div>
                 </CardContent>
             </Card>
-        </div>
+        </div >
     );
 }
