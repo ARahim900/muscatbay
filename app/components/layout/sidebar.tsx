@@ -73,18 +73,6 @@ export function Sidebar() {
 
   return (
     <>
-      {/* Mobile hamburger button - positioned consistently */}
-      <button
-        onClick={toggleSidebar}
-        className="fixed top-4 left-4 z-50 p-2.5 rounded-xl bg-brand-primary text-white shadow-lg md:hidden hover:bg-brand-primary/90 active:scale-95 transition-all duration-200"
-        aria-label="Toggle sidebar"
-      >
-        {isOpen ?
-          <X className="h-5 w-5" /> :
-          <Menu className="h-5 w-5" />
-        }
-      </button>
-
       {/* Mobile overlay */}
       {isOpen && (
         <div

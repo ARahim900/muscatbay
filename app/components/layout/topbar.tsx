@@ -6,81 +6,81 @@ import { useState } from "react";
 import Link from "next/link";
 
 export function Topbar() {
-    const { isCollapsed, setIsCollapsed, setIsOpen } = useSidebar();
+    const { setIsOpen } = useSidebar();
     const [isDarkMode, setIsDarkMode] = useState(false);
 
     return (
-        <div
-            className="h-[60.5px] bg-white px-[14px] py-[10.5px] flex items-center justify-between sticky top-0 z-10 border-b border-gray-200"
-        >
-            {/* Left Section */}
-            <div className="flex items-center gap-[10.5px]">
-                {/* Mobile hamburger */}
+        <header className="h-16 sm:h-[60.5px] bg-white px-4 sm:px-6 flex items-center justify-between sticky top-0 z-20 border-b border-slate-200 shadow-sm">
+            {/* Left Section - Mobile hamburger + Title */}
+            <div className="flex items-center gap-3">
+                {/* Mobile hamburger - Always visible on mobile */}
                 <button
                     onClick={() => setIsOpen(prev => !prev)}
-                    className="w-[35px] h-[35px] flex items-center justify-center hover:bg-gray-100 rounded-[5px] md:hidden text-brand-primary transition-all duration-[150ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
+                    className="w-10 h-10 flex items-center justify-center rounded-lg bg-[#4e4456] text-white md:hidden hover:bg-[#4e4456]/90 active:scale-95 transition-all duration-200 shadow-md"
                     aria-label="Toggle menu"
                 >
-                    <Menu className="w-[17.5px] h-[17.5px]" />
+                    <Menu className="w-5 h-5" />
                 </button>
 
-                {/* Page Title */}
-                <div className="hidden md:block">
-                    <h1 className="text-[15.75px] font-bold leading-[24.5px] text-brand-primary">
-                        Water System
+                {/* App Title - Mobile first */}
+                <div>
+                    <h1 className="text-lg sm:text-xl font-bold leading-tight tracking-tight">
+                        <span className="text-[#4e4456]">MUSCAT </span>
+                        <span style={{ color: '#81D8D0' }}>BAY</span>
                     </h1>
-                    <p className="text-[14px] font-normal text-gray-500">
-                        Muscat Bay Resource Management
+                    <p className="text-xs sm:text-sm text-slate-500 hidden sm:block">
+                        Resource Management
                     </p>
                 </div>
             </div>
 
             {/* Right Section - Action Buttons */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 sm:gap-2">
                 {/* Theme Toggle */}
                 <button
                     onClick={() => setIsDarkMode(!isDarkMode)}
-                    className="w-[35px] h-[35px] flex items-center justify-center hover:bg-gray-100 rounded-[5px] text-gray-600 transition-all duration-[150ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
+                    className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center hover:bg-slate-100 rounded-lg text-slate-500 transition-all duration-200"
                     aria-label="Toggle theme"
                 >
                     {isDarkMode ? (
-                        <Moon className="w-[14px] h-[14px] rotate-0 scale-100 transition-all" />
+                        <Moon className="w-4 h-4 sm:w-5 sm:h-5" />
                     ) : (
-                        <Sun className="w-[14px] h-[14px] rotate-0 scale-100 transition-all" />
+                        <Sun className="w-4 h-4 sm:w-5 sm:h-5" />
                     )}
                 </button>
 
-                {/* Search Button */}
+                {/* Search Button - Hidden on small mobile */}
                 <button
-                    className="w-[35px] h-[35px] flex items-center justify-center hover:bg-gray-100 rounded-[5px] text-gray-600 transition-all duration-[150ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
+                    className="w-9 h-9 sm:w-10 sm:h-10 hidden sm:flex items-center justify-center hover:bg-slate-100 rounded-lg text-slate-500 transition-all duration-200"
                     aria-label="Search"
                 >
-                    <Search className="w-[14px] h-[14px]" />
+                    <Search className="w-4 h-4 sm:w-5 sm:h-5" />
                 </button>
 
                 {/* Notifications Button */}
                 <button
-                    className="w-[35px] h-[35px] flex items-center justify-center hover:bg-gray-100 rounded-[5px] relative text-gray-600 transition-all duration-[150ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
+                    className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center hover:bg-slate-100 rounded-lg relative text-slate-500 transition-all duration-200"
                     aria-label="Notifications"
                 >
-                    <Bell className="w-[14px] h-[14px]" />
+                    <Bell className="w-4 h-4 sm:w-5 sm:h-5" />
                     {/* Notification badge */}
-                    <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
+                    <span className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
                 </button>
 
                 {/* User Profile */}
                 <Link
                     href="/settings"
-                    className="flex items-center gap-2 ml-2"
+                    className="flex items-center gap-2 ml-1 sm:ml-2"
                 >
-                    <div className="w-[35px] h-[35px] bg-brand-accent rounded-full flex items-center justify-center text-white text-[14px] font-medium">
+                    <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-white text-sm font-semibold" style={{ backgroundColor: '#81D8D0' }}>
                         A
                     </div>
-                    <span className="hidden md:block text-[14px] font-medium text-brand-primary">
+                    <span className="hidden lg:block text-sm font-medium text-[#4e4456]">
                         Admin
                     </span>
                 </Link>
             </div>
-        </div>
+        </header>
     );
 }
+
