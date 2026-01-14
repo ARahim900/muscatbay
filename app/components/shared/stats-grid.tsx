@@ -1,5 +1,4 @@
 
-import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { LucideIcon, TrendingUp, TrendingDown, Minus } from "lucide-react";
 
@@ -24,20 +23,20 @@ interface StatsGridProps {
 
 // Map variants to icon colors
 const variantIconColors: Record<StatVariant, string> = {
-    primary: "text-[#3B82F6]",      // Blue
-    secondary: "text-[#F59E0B]",    // Yellow/Amber
-    success: "text-[#10B981]",      // Green
-    warning: "text-[#F59E0B]",      // Yellow
-    danger: "text-[#EF4444]",       // Red
-    info: "text-[#3B82F6]",         // Blue
-    water: "text-[#3B82F6]",        // Blue
-    default: "text-slate-500",
+    primary: "#4E4456",      // Brand Primary
+    secondary: "#F59E0B",    // Yellow/Amber
+    success: "#10B981",      // Green
+    warning: "#F59E0B",      // Yellow
+    danger: "#EF4444",       // Red
+    info: "#3B82F6",         // Blue
+    water: "#3B82F6",        // Blue
+    default: "#64748b",
 };
 
 export function StatsGrid({ stats, className }: StatsGridProps) {
     return (
         <div className={cn(
-            "grid gap-4 sm:gap-5 w-full",
+            "grid gap-6 w-full",
             "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4",
             className
         )}>
@@ -46,47 +45,47 @@ export function StatsGrid({ stats, className }: StatsGridProps) {
                 const iconColor = variantIconColors[variant];
 
                 return (
-                    <Card key={index} className="bg-white rounded-xl shadow-sm border border-gray-100 h-full transition-all duration-200 hover:shadow-md">
-                        <CardContent className="p-5 flex items-start justify-between gap-3">
-                            {/* Left side - Text content */}
-                            <div className="flex-1 min-w-0">
-                                <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-500 mb-2">
+                    <div
+                        key={index}
+                        className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow duration-200"
+                    >
+                        <div className="flex justify-between items-start">
+                            <div>
+                                <p className="text-slate-500 text-sm font-medium mb-1 uppercase tracking-wide">
                                     {stat.label}
                                 </p>
-                                <h3 className="text-2xl font-bold tracking-tight text-gray-900 mb-1">
+                                <h3 className="text-2xl font-bold text-slate-800">
                                     {stat.value}
                                 </h3>
-                                {/* Trend indicator */}
-                                {stat.trend && stat.trendValue && (
-                                    <div className="flex items-center gap-1.5 mt-2">
-                                        <span className={cn(
-                                            "inline-flex items-center gap-0.5 text-xs font-medium",
-                                            stat.trend === 'up' ? "text-emerald-600" :
-                                                stat.trend === 'down' ? "text-red-500" :
-                                                    "text-gray-500"
-                                        )}>
-                                            {stat.trend === 'up' && <TrendingUp className="w-3.5 h-3.5" />}
-                                            {stat.trend === 'down' && <TrendingDown className="w-3.5 h-3.5" />}
-                                            {stat.trend === 'neutral' && <Minus className="w-3.5 h-3.5" />}
-                                            {stat.trendValue}
-                                        </span>
-                                        <span className="text-[11px] text-gray-400">vs last month</span>
-                                    </div>
-                                )}
-                                {stat.subtitle && !stat.trendValue && (
-                                    <p className="text-xs text-gray-400 mt-1">{stat.subtitle}</p>
-                                )}
                             </div>
-
-                            {/* Right side - Icon in circle outline */}
-                            <div className="flex-shrink-0 w-11 h-11 rounded-full border-2 border-gray-200 flex items-center justify-center">
-                                <stat.icon className={cn(
-                                    "w-5 h-5",
-                                    stat.color || iconColor
-                                )} />
+                            <div className="p-3 rounded-lg bg-gray-50">
+                                <stat.icon
+                                    size={22}
+                                    style={{ color: stat.color || iconColor }}
+                                />
                             </div>
-                        </CardContent>
-                    </Card>
+                        </div>
+                        {/* Trend indicator */}
+                        {stat.trend && stat.trendValue && (
+                            <div className="mt-4 flex items-center text-sm">
+                                <span className={cn(
+                                    "flex items-center font-medium",
+                                    stat.trend === 'up' ? "text-emerald-600" :
+                                        stat.trend === 'down' ? "text-rose-600" :
+                                            "text-slate-500"
+                                )}>
+                                    {stat.trend === 'up' && <TrendingUp size={16} className="mr-1" />}
+                                    {stat.trend === 'down' && <TrendingDown size={16} className="mr-1" />}
+                                    {stat.trend === 'neutral' && <Minus size={16} className="mr-1" />}
+                                    {stat.trendValue}
+                                </span>
+                                <span className="text-slate-400 ml-2">vs last month</span>
+                            </div>
+                        )}
+                        {stat.subtitle && !stat.trendValue && (
+                            <p className="text-xs text-slate-400 mt-3">{stat.subtitle}</p>
+                        )}
+                    </div>
                 );
             })}
         </div>

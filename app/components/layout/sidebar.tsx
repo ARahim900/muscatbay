@@ -96,14 +96,14 @@ export function Sidebar() {
       {/* Sidebar Container */}
       <div
         className={`
-          fixed top-0 left-0 h-screen min-h-screen z-40 transition-all duration-300 ease-out flex flex-col shadow-2xl bg-brand-primary
+          fixed top-0 left-0 h-screen min-h-screen z-40 transition-all duration-300 ease-out flex flex-col shadow-2xl bg-[#4e4456]
           ${isOpen ? "translate-x-0" : "-translate-x-full"}
           ${isCollapsed ? "w-[72px]" : "w-[240px]"}
           md:translate-x-0
         `}
       >
         {/* Header with logo and collapse button */}
-        <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'} px-4 border-b border-white/10 h-16`}>
+        <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'} px-4 border-b border-gray-600 h-20`}>
           {!isCollapsed && (
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-xl overflow-hidden flex items-center justify-center bg-white/10 p-1">
@@ -241,8 +241,8 @@ export function Sidebar() {
         </nav>
 
         {/* Bottom section with logout */}
-        <div className="mt-auto border-t border-white/10">
-          <div className="p-3">
+        <div className="mt-auto border-t border-gray-600">
+          <div className="p-4">
             <button
               onClick={() => console.log("Logout clicked")}
               className={`
