@@ -73,7 +73,7 @@ export function LiquidAreaChart({
 
     return (
         <div style={{ width: "100%", height, minHeight: 200 }}>
-            <ResponsiveContainer>
+            <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                 <AreaChart data={data} margin={{ top: showLabels ? 25 : 10, right: 10, left: 0, bottom: 0 }}>
                     <defs>
                         {categories.map((cat, i) => {

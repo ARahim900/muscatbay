@@ -48,15 +48,13 @@ export default function RootLayout({
         <meta name="description" content="Operations Dashboard for Muscat Bay" />
       </head>
       <body className={inter.className} suppressHydrationWarning>
-        <SidebarProvider>
-          <ToastProvider>
-            <AuthProvider>
-              <ClientLayout>
-                {children}
-              </ClientLayout>
-            </AuthProvider>
-          </ToastProvider>
-        </SidebarProvider>
+        <ToastProvider>
+          <AuthProvider>
+            <ClientLayout>
+              {children}
+            </ClientLayout>
+          </AuthProvider>
+        </ToastProvider>
       </body>
     </html>
   );
