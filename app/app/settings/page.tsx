@@ -141,8 +141,8 @@ export default function SettingsPage() {
                             key={item.id}
                             onClick={() => setActiveTab(item.id as any)}
                             className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-lg transition-colors ${activeTab === item.id
-                                ? "bg-mb-primary text-white shadow-md"
-                                : "text-muted-foreground hover:bg-mb-primary/5 hover:text-mb-primary"
+                                ? "bg-sidebar text-white shadow-md"
+                                : "text-muted-foreground hover:bg-sidebar/10 hover:text-sidebar"
                                 }`}
                         >
                             <item.icon className="w-4 h-4" />
@@ -186,7 +186,7 @@ export default function SettingsPage() {
                                         <div className="flex items-center gap-3">
                                             <Label
                                                 htmlFor="avatar-upload"
-                                                className="cursor-pointer inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-mb-primary text-white hover:bg-mb-primary-hover h-9 px-4 py-2"
+                                                className="cursor-pointer inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-sidebar text-white hover:bg-sidebar/90 h-9 px-4 py-2"
                                             >
                                                 <Upload className="mr-2 h-4 w-4" />
                                                 Change Avatar
@@ -250,14 +250,14 @@ export default function SettingsPage() {
                                     </div>
                                 </div>
                             </CardContent>
-                            <CardFooter className="flex justify-between border-t border-mb-primary/10 px-6 py-4 bg-mb-primary/5">
+                            <CardFooter className="flex justify-between border-t border-sidebar/10 px-6 py-4 bg-sidebar/5">
                                 <p className="text-sm text-muted-foreground">
                                     Changes will be saved to your account.
                                 </p>
                                 <Button
                                     onClick={updateProfile}
                                     disabled={updating}
-                                    className="bg-mb-primary hover:bg-mb-primary-hover text-white"
+                                    className="bg-sidebar hover:bg-sidebar/90 text-white"
                                 >
                                     {updating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                                     Save Changes
@@ -308,14 +308,14 @@ export default function SettingsPage() {
                                     </div>
                                 </div>
                             </CardContent>
-                            <CardFooter className="flex justify-between border-t border-mb-primary/10 px-6 py-4 bg-mb-primary/5">
+                            <CardFooter className="flex justify-between border-t border-sidebar/10 px-6 py-4 bg-sidebar/5">
                                 <p className="text-sm text-muted-foreground">
                                     Session management options.
                                 </p>
                                 <Button
                                     onClick={updateProfile}
                                     disabled={updating}
-                                    className="bg-mb-primary hover:bg-mb-primary-hover text-white"
+                                    className="bg-sidebar hover:bg-sidebar/90 text-white"
                                 >
                                     {updating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                                     Save Changes
@@ -348,19 +348,19 @@ export default function SettingsPage() {
                                         <Label className="text-base">Critical Alarms</Label>
                                         <p className="text-sm text-muted-foreground">Immediate notifications for critical system failures (SMS).</p>
                                     </div>
-                                    <div className="h-6 w-11 rounded-full bg-mb-primary relative cursor-pointer">
+                                    <div className="h-6 w-11 rounded-full bg-sidebar relative cursor-pointer">
                                         <div className="absolute top-1 right-1 h-4 w-4 rounded-full bg-white shadow-sm transition-transform" />
                                     </div>
                                 </div>
                             </CardContent>
-                            <CardFooter className="flex justify-between border-t border-mb-primary/10 px-6 py-4 bg-mb-primary/5">
+                            <CardFooter className="flex justify-between border-t border-sidebar/10 px-6 py-4 bg-sidebar/5">
                                 <p className="text-sm text-muted-foreground">
                                     Configure your notification preferences.
                                 </p>
                                 <Button
                                     onClick={updateProfile}
                                     disabled={updating}
-                                    className="bg-mb-primary hover:bg-mb-primary-hover text-white"
+                                    className="bg-sidebar hover:bg-sidebar/90 text-white"
                                 >
                                     {updating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                                     Save Changes

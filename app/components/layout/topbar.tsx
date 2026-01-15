@@ -1,6 +1,8 @@
 "use client";
 
 import { useSidebar } from "./sidebar-context";
+import { useAuth } from "@/components/auth/auth-provider";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Menu, Search, Bell, Sun, Moon } from "lucide-react";
 import { useState } from "react";
 import Link from "next/link";
@@ -8,6 +10,11 @@ import Link from "next/link";
 export function Topbar() {
     const { setIsOpen } = useSidebar();
     const [isDarkMode, setIsDarkMode] = useState(false);
+    const { profile, user } = useAuth();
+
+    // Compute display name and initials for user profile
+    const displayName = profile?.full_name || user?.email?.split("@")[0] || "User";
+    const initials = displayName.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2);
 
     return (
         <header className="h-16 sm:h-[60.5px] bg-white px-4 sm:px-6 flex items-center justify-between sticky top-0 z-20 border-b border-slate-200 shadow-sm">
@@ -72,15 +79,17 @@ export function Topbar() {
                     href="/settings"
                     className="flex items-center gap-2 ml-1 sm:ml-2"
                 >
-                    <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-white text-sm font-semibold" style={{ backgroundColor: '#81D8D0' }}>
-                        A
-                    </div>
+                    <Avatar className="w-9 h-9 sm:w-10 sm:h-10">
+                        <AvatarImage src={profile?.avatar_url || undefined} alt={displayName} />
+                        <AvatarFallback className="bg-[#81D8D0] text-[#4e4456] text-sm font-bold">
+                            {initials}
+                        </AvatarFallback>
+                    </Avatar>
                     <span className="hidden lg:block text-sm font-medium text-[#4e4456]">
-                        Admin
+                        {displayName}
                     </span>
                 </Link>
             </div>
         </header>
     );
 }
-

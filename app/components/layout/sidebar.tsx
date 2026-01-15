@@ -5,6 +5,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useSidebar } from './sidebar-context';
+import { useAuth } from '@/components/auth/auth-provider';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   LayoutDashboard,
   Droplets,
@@ -47,6 +49,11 @@ const bottomNavItems: NavigationItem[] = [
 export function Sidebar() {
   const { isOpen, setIsOpen, isCollapsed, toggleCollapse } = useSidebar();
   const pathname = usePathname();
+  const { profile, user, logout } = useAuth();
+
+  // Compute display name and initials for user profile
+  const displayName = profile?.full_name || user?.email?.split("@")[0] || "User";
+  const initials = displayName.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2);
 
   const handleItemClick = () => {
     // Close sidebar on mobile when an item is clicked
@@ -192,7 +199,7 @@ export function Sidebar() {
         </nav>
 
         {/* Bottom section - Settings & Logout */}
-        <div className="mt-auto border-t border-white/10 px-3 py-3 space-y-1">
+        <div className="mt-auto border-t border-white/10 px-3 py-3 space-y-2">
           {/* Settings */}
           {bottomNavItems.map((item) => {
             const Icon = item.icon;
@@ -236,7 +243,7 @@ export function Sidebar() {
 
           {/* Logout Button */}
           <button
-            onClick={() => console.log("Logout clicked")}
+            onClick={logout}
             className={`
               group/nav w-full flex items-center gap-3 py-2.5 px-3 rounded-lg transition-all duration-200 relative
               text-white/70 hover:bg-red-500/20 hover:text-red-300

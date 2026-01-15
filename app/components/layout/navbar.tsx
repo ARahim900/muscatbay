@@ -4,6 +4,8 @@ import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
+import { useAuth } from "@/components/auth/auth-provider";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
     Menu,
     Search,
@@ -41,12 +43,7 @@ interface DropdownItem {
     divider?: boolean;
 }
 
-const profileDropdownItems: DropdownItem[] = [
-    { name: "Profile", href: "/profile", icon: User },
-    { name: "Settings", href: "/settings", icon: Settings },
-    { name: "divider", divider: true, icon: User },
-    { name: "Logout", icon: LogOut, onClick: () => console.log("Logout clicked") },
-];
+// Profile dropdown items are now created dynamically inside the component to use the real logout function
 
 export function Navbar() {
     const [isDarkMode, setIsDarkMode] = useState(false);
@@ -55,6 +52,12 @@ export function Navbar() {
     const pathname = usePathname();
     const dropdownRef = useRef<HTMLDivElement>(null);
     const mobileMenuRef = useRef<HTMLDivElement>(null);
+    const { profile, user, logout } = useAuth();
+
+    // Compute display name and initials for user profile
+    const displayName = profile?.full_name || user?.email?.split("@")[0] || "User";
+    const initials = displayName.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2);
+    const userRole = profile?.role === 'admin' ? 'Administrator' : 'User';
 
     // Close dropdowns when clicking outside
     useEffect(() => {
@@ -182,13 +185,12 @@ export function Navbar() {
                     >
                         {/* Profile Picture */}
                         <div className="relative">
-                            <div
-                                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-white text-sm font-semibold overflow-hidden border-2 border-white/20 group-hover:border-white/40 transition-colors duration-200"
-                                style={{ backgroundColor: "#81D8D0" }}
-                            >
-                                {/* You can replace this with an actual image */}
-                                <span>A</span>
-                            </div>
+                            <Avatar className="w-9 h-9 sm:w-10 sm:h-10 border-2 border-white/20 group-hover:border-white/40 transition-colors duration-200">
+                                <AvatarImage src={profile?.avatar_url || undefined} alt={displayName} />
+                                <AvatarFallback className="bg-[#81D8D0] text-[#4e4456] text-sm font-bold">
+                                    {initials}
+                                </AvatarFallback>
+                            </Avatar>
                             {/* Online status indicator */}
                             <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-[#4E4456]"></span>
                         </div>
@@ -196,10 +198,10 @@ export function Navbar() {
                         {/* User name - Hidden on mobile */}
                         <div className="hidden md:flex flex-col items-start">
                             <span className="text-sm font-medium text-white leading-tight">
-                                Admin User
+                                {displayName}
                             </span>
                             <span className="text-xs text-white/60 leading-tight">
-                                Administrator
+                                {userRole}
                             </span>
                         </div>
 
@@ -216,18 +218,18 @@ export function Navbar() {
                             {/* User Info Header */}
                             <div className="px-4 py-3 border-b border-slate-100">
                                 <div className="flex items-center gap-3">
-                                    <div
-                                        className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-semibold"
-                                        style={{ backgroundColor: "#81D8D0" }}
-                                    >
-                                        A
-                                    </div>
+                                    <Avatar className="w-10 h-10">
+                                        <AvatarImage src={profile?.avatar_url || undefined} alt={displayName} />
+                                        <AvatarFallback className="bg-[#81D8D0] text-[#4e4456] text-sm font-bold">
+                                            {initials}
+                                        </AvatarFallback>
+                                    </Avatar>
                                     <div className="flex flex-col">
                                         <span className="text-sm font-semibold text-slate-800">
-                                            Admin User
+                                            {displayName}
                                         </span>
                                         <span className="text-xs text-slate-500">
-                                            admin@muscatbay.com
+                                            {user?.email || 'user@muscatbay.com'}
                                         </span>
                                     </div>
                                 </div>
@@ -235,46 +237,33 @@ export function Navbar() {
 
                             {/* Dropdown Items */}
                             <div className="py-1">
-                                {profileDropdownItems.map((item, index) => {
-                                    if (item.divider) {
-                                        return (
-                                            <div
-                                                key={`divider-${index}`}
-                                                className="my-1 border-t border-slate-100"
-                                            />
-                                        );
-                                    }
-
-                                    const Icon = item.icon;
-
-                                    if (item.href) {
-                                        return (
-                                            <Link
-                                                key={item.name}
-                                                href={item.href}
-                                                onClick={() => setIsProfileDropdownOpen(false)}
-                                                className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 hover:text-[#4E4456] transition-colors duration-150"
-                                            >
-                                                <Icon className="w-4 h-4 text-slate-400" />
-                                                {item.name}
-                                            </Link>
-                                        );
-                                    }
-
-                                    return (
-                                        <button
-                                            key={item.name}
-                                            onClick={() => {
-                                                item.onClick?.();
-                                                setIsProfileDropdownOpen(false);
-                                            }}
-                                            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors duration-150"
-                                        >
-                                            <Icon className="w-4 h-4" />
-                                            {item.name}
-                                        </button>
-                                    );
-                                })}
+                                <Link
+                                    href="/settings"
+                                    onClick={() => setIsProfileDropdownOpen(false)}
+                                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 hover:text-[#4E4456] transition-colors duration-150"
+                                >
+                                    <User className="w-4 h-4 text-slate-400" />
+                                    Profile
+                                </Link>
+                                <Link
+                                    href="/settings"
+                                    onClick={() => setIsProfileDropdownOpen(false)}
+                                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 hover:text-[#4E4456] transition-colors duration-150"
+                                >
+                                    <Settings className="w-4 h-4 text-slate-400" />
+                                    Settings
+                                </Link>
+                                <div className="my-1 border-t border-slate-100" />
+                                <button
+                                    onClick={() => {
+                                        logout();
+                                        setIsProfileDropdownOpen(false);
+                                    }}
+                                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors duration-150"
+                                >
+                                    <LogOut className="w-4 h-4" />
+                                    Logout
+                                </button>
                             </div>
                         </div>
                     )}
