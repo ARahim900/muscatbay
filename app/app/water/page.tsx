@@ -35,7 +35,7 @@ import { StatsGrid } from "@/components/shared/stats-grid";
 import { Button } from "@/components/ui/button";
 
 // Dashboard view type
-type DashboardView = 'monthly' | 'daily' | 'hierarchy';
+type DashboardView = 'monthly' | 'hierarchy';
 
 // Helper functions that work with dynamic data
 function calculateRangeAnalysisFromData(meters: WaterMeter[], startMonth: string, endMonth: string) {
@@ -351,16 +351,7 @@ export default function WaterPage() {
                     <BarChart3 className="w-4 h-4" />
                     Monthly Dashboard
                 </button>
-                <button
-                    onClick={() => setDashboardView('daily')}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${dashboardView === 'daily'
-                        ? 'bg-background text-foreground shadow-sm'
-                        : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
-                        }`}
-                >
-                    <Calendar className="w-4 h-4" />
-                    Daily Analysis
-                </button>
+
                 <button
                     onClick={() => setDashboardView('hierarchy')}
                     className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${dashboardView === 'hierarchy'
@@ -708,19 +699,7 @@ export default function WaterPage() {
             )}
 
             {/* Other Dashboard Views */}
-            {dashboardView === 'daily' && (
-                <div className="flex flex-col items-center justify-center p-12 text-center space-y-4 glass-card rounded-xl">
-                    <div className="p-4 bg-mb-primary/10 rounded-full">
-                        <Calendar className="w-8 h-8 text-mb-primary" />
-                    </div>
-                    <div>
-                        <h3 className="text-lg font-semibold text-mb-primary">Daily Analysis Implemented</h3>
-                        <p className="text-muted-foreground max-w-md">
-                            Detailed daily water consumption tracking and individual meter logging functionality is coming soon.
-                        </p>
-                    </div>
-                </div>
-            )}
+
 
             {dashboardView === 'hierarchy' && (
                 <div className="space-y-6 animate-in fade-in duration-300">
