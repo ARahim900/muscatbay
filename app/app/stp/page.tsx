@@ -5,14 +5,12 @@ import { getSTPOperations, STPOperation } from "@/lib/mock-data";
 import { getSTPOperationsFromSupabase, isSupabaseConfigured } from "@/lib/supabase";
 import { STP_RATES } from "@/lib/config";
 import { StatsGridSkeleton, ChartSkeleton, Skeleton } from "@/components/shared/skeleton";
-import { ScrollAnimation } from "@/components/shared/scroll-animation";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatsGrid } from "@/components/shared/stats-grid";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Slider } from "@/components/ui/slider";
 import {
     Droplets,
     Recycle,
@@ -23,10 +21,8 @@ import {
     Gauge,
     Activity,
     Database,
-    CalendarDays,
     Wifi,
     WifiOff,
-    RotateCcw,
     ArrowUpDown,
     ChevronLeft,
     ChevronRight
@@ -35,6 +31,7 @@ import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, BarChart, 
 import { LiquidTooltip } from "../../components/charts/liquid-tooltip";
 import { format } from "date-fns";
 import { saveFilterPreferences, loadFilterPreferences } from "@/lib/filter-preferences";
+import { DateRangePicker } from "@/components/water/date-range-picker";
 
 // Use centralized config for rates
 const { TANKER_FEE, TSE_SAVING_RATE } = STP_RATES;
@@ -46,8 +43,10 @@ export default function STPPage() {
     const [isLiveData, setIsLiveData] = useState(false);
     const [selectedMonth, setSelectedMonth] = useState<string>("");
 
-    // Date range filter state
-    const [dateRangeIndex, setDateRangeIndex] = useState<[number, number]>([0, 100]);
+    // Date range filter state with year selector (matching Electricity section)
+    const [selectedYear, setSelectedYear] = useState<string>('All');
+    const [startMonth, setStartMonth] = useState<string>('');
+    const [endMonth, setEndMonth] = useState<string>('');
 
     // Daily Operations Log sorting and pagination state
     const [logSortField, setLogSortField] = useState<string>('date');
@@ -84,12 +83,16 @@ export default function STPPage() {
         // Load saved filter preferences
         const savedPrefs = loadFilterPreferences<{
             activeTab?: string;
-            dateRangeIndex?: [number, number];
+            selectedYear?: string;
+            startMonth?: string;
+            endMonth?: string;
             selectedMonth?: string;
         }>('stp');
         if (savedPrefs) {
             if (savedPrefs.activeTab) setActiveTab(savedPrefs.activeTab);
-            if (savedPrefs.dateRangeIndex) setDateRangeIndex(savedPrefs.dateRangeIndex);
+            if (savedPrefs.selectedYear) setSelectedYear(savedPrefs.selectedYear);
+            if (savedPrefs.startMonth) setStartMonth(savedPrefs.startMonth);
+            if (savedPrefs.endMonth) setEndMonth(savedPrefs.endMonth);
             if (savedPrefs.selectedMonth) setSelectedMonth(savedPrefs.selectedMonth);
         }
     }, []);
@@ -98,53 +101,96 @@ export default function STPPage() {
     useEffect(() => {
         saveFilterPreferences('stp', {
             activeTab,
-            dateRangeIndex,
+            selectedYear,
+            startMonth,
+            endMonth,
             selectedMonth
         });
-    }, [activeTab, dateRangeIndex, selectedMonth]);
+    }, [activeTab, selectedYear, startMonth, endMonth, selectedMonth]);
 
-    // Get all unique months for the slider
+    // Get all unique months for the slider (in MMM-YY format for display, sorted chronologically)
     const allMonths = useMemo(() => {
         const monthsSet = new Set<string>();
         allOperations.forEach(op => {
-            monthsSet.add(format(new Date(op.date), "yyyy-MM"));
+            monthsSet.add(format(new Date(op.date), "MMM-yy"));
         });
-        return Array.from(monthsSet).sort();
+        // Sort chronologically
+        return Array.from(monthsSet).sort((a, b) => {
+            const [aM, aY] = a.split('-');
+            const [bM, bY] = b.split('-');
+            const monthOrder: Record<string, number> = {
+                'Jan': 0, 'Feb': 1, 'Mar': 2, 'Apr': 3, 'May': 4, 'Jun': 5,
+                'Jul': 6, 'Aug': 7, 'Sep': 8, 'Oct': 9, 'Nov': 10, 'Dec': 11
+            };
+            const yearDiff = parseInt('20' + aY) - parseInt('20' + bY);
+            if (yearDiff !== 0) return yearDiff;
+            return monthOrder[aM] - monthOrder[bM];
+        });
     }, [allOperations]);
 
-    // Calculate filtered operations based on date range slider
+    // Get available years from data
+    const availableYears = useMemo(() => {
+        const yearsSet = new Set<string>();
+        allOperations.forEach(op => {
+            yearsSet.add(format(new Date(op.date), "yyyy"));
+        });
+        return ['All', ...Array.from(yearsSet).sort()];
+    }, [allOperations]);
+
+    // Filter months by selected year
+    const filteredMonthsByYear = useMemo(() => {
+        if (selectedYear === 'All') return allMonths;
+        return allMonths.filter(m => {
+            const [, y] = m.split('-');
+            return '20' + y === selectedYear;
+        });
+    }, [allMonths, selectedYear]);
+
+    // Initialize start and end months when data loads
+    useEffect(() => {
+        if (allMonths.length > 0 && !startMonth && !endMonth) {
+            setStartMonth(allMonths[0]);
+            setEndMonth(allMonths[allMonths.length - 1]);
+        }
+    }, [allMonths, startMonth, endMonth]);
+
+    // Calculate filtered operations based on start/end month selection
     const operations = useMemo(() => {
-        if (allMonths.length === 0) return allOperations;
+        if (allMonths.length === 0 || !startMonth || !endMonth) return allOperations;
 
-        const startIdx = Math.floor((dateRangeIndex[0] / 100) * (allMonths.length - 1));
-        const endIdx = Math.floor((dateRangeIndex[1] / 100) * (allMonths.length - 1));
-
-        const startMonth = allMonths[startIdx];
-        const endMonth = allMonths[endIdx];
+        const startIdx = allMonths.indexOf(startMonth);
+        const endIdx = allMonths.indexOf(endMonth);
+        const rangeMonths = startIdx >= 0 && endIdx >= 0
+            ? allMonths.slice(startIdx, endIdx + 1)
+            : allMonths;
 
         return allOperations.filter(op => {
-            const opMonth = format(new Date(op.date), "yyyy-MM");
-            return opMonth >= startMonth && opMonth <= endMonth;
+            const opMonth = format(new Date(op.date), "MMM-yy");
+            return rangeMonths.includes(opMonth);
         });
-    }, [allOperations, allMonths, dateRangeIndex]);
+    }, [allOperations, allMonths, startMonth, endMonth]);
 
     // Get selected date range display
     const selectedDateRange = useMemo(() => {
-        if (allMonths.length === 0) return { start: "", end: "", startMonth: "", endMonth: "" };
+        if (!startMonth || !endMonth) return { start: "", end: "", startMonth: "", endMonth: "" };
 
-        const startIdx = Math.floor((dateRangeIndex[0] / 100) * (allMonths.length - 1));
-        const endIdx = Math.floor((dateRangeIndex[1] / 100) * (allMonths.length - 1));
-
-        const startMonth = allMonths[startIdx];
-        const endMonth = allMonths[endIdx];
+        const formatMonthDisplay = (m: string) => {
+            const [month, year] = m.split('-');
+            const months: Record<string, string> = {
+                'Jan': 'January', 'Feb': 'February', 'Mar': 'March', 'Apr': 'April',
+                'May': 'May', 'Jun': 'June', 'Jul': 'July', 'Aug': 'August',
+                'Sep': 'September', 'Oct': 'October', 'Nov': 'November', 'Dec': 'December'
+            };
+            return `${months[month] || month} 20${year}`;
+        };
 
         return {
-            start: format(new Date(`${startMonth}-01`), "MMM yyyy"),
-            end: format(new Date(`${endMonth}-01`), "MMM yyyy"),
+            start: formatMonthDisplay(startMonth),
+            end: formatMonthDisplay(endMonth),
             startMonth,
             endMonth
         };
-    }, [allMonths, dateRangeIndex]);
+    }, [startMonth, endMonth]);
 
     // Set default month for daily log once operations load
     useEffect(() => {
@@ -179,19 +225,18 @@ export default function STPPage() {
         const dailyAverageInlet = operations.length > 0 ? totalInlet / operations.length : 0;
 
         // Calculate previous period data for trends
-        const startIdx = Math.floor((dateRangeIndex[0] / 100) * (allMonths.length - 1));
-        const endIdx = Math.floor((dateRangeIndex[1] / 100) * (allMonths.length - 1));
-        const rangeLength = endIdx - startIdx + 1;
+        const startIdx = allMonths.indexOf(startMonth);
+        const endIdx = allMonths.indexOf(endMonth);
+        const rangeLength = endIdx >= startIdx ? endIdx - startIdx + 1 : 1;
         const prevEndIdx = startIdx > 0 ? startIdx - 1 : -1;
         const prevStartIdx = prevEndIdx >= 0 ? Math.max(0, prevEndIdx - rangeLength + 1) : -1;
 
         let prevInlet = 0, prevTSE = 0, prevTrips = 0, prevOperationsCount = 0;
         if (prevStartIdx >= 0 && prevEndIdx >= 0 && allMonths.length > 0) {
-            const prevStartMonth = allMonths[prevStartIdx];
-            const prevEndMonth = allMonths[prevEndIdx];
+            const prevRangeMonths = allMonths.slice(prevStartIdx, prevEndIdx + 1);
             const prevOps = allOperations.filter(op => {
-                const opMonth = format(new Date(op.date), "yyyy-MM");
-                return opMonth >= prevStartMonth && opMonth <= prevEndMonth;
+                const opMonth = format(new Date(op.date), "MMM-yy");
+                return prevRangeMonths.includes(opMonth);
             });
             prevInlet = prevOps.reduce((sum, op) => sum + op.inlet_sewage, 0);
             prevTSE = prevOps.reduce((sum, op) => sum + op.tse_for_irrigation, 0);
@@ -288,7 +333,7 @@ export default function STPPage() {
                 trendValue: dailyAvgTrend.trendValue
             }
         ];
-    }, [operations, selectedDateRange, allMonths, allOperations, dateRangeIndex]);
+    }, [operations, selectedDateRange, allMonths, allOperations, startMonth, endMonth]);
 
     // Monthly chart data from filtered operations
     const monthlyChartData = useMemo(() => {
@@ -373,14 +418,21 @@ export default function STPPage() {
         setLogCurrentPage(1);
     };
 
-    // Reset date range to full
-    const handleResetRange = () => {
-        setDateRangeIndex([0, 100]);
+    // Range change handler for DateRangePicker
+    const handleRangeChange = (start: string, end: string) => {
+        setStartMonth(start);
+        setEndMonth(end);
     };
 
-    // Handle slider change
-    const handleSliderChange = (value: number[]) => {
-        setDateRangeIndex([value[0], value[1]]);
+    // Reset date range to full
+    const handleResetRange = () => {
+        if (filteredMonthsByYear.length > 0) {
+            setStartMonth(filteredMonthsByYear[0]);
+            setEndMonth(filteredMonthsByYear[filteredMonthsByYear.length - 1]);
+        } else if (allMonths.length > 0) {
+            setStartMonth(allMonths[0]);
+            setEndMonth(allMonths[allMonths.length - 1]);
+        }
     };
 
     if (loading) {
@@ -466,47 +518,59 @@ export default function STPPage() {
 
             {activeTab === "dashboard" && (
                 <div className="space-y-6 animate-in fade-in duration-300">
-                    {/* Date Range Filter Card */}
-                    <Card className="glass-card mb-6">
-                        <CardContent className="p-4 space-y-4">
-                            {/* Date Range Header */}
-                            <div className="flex flex-wrap items-center justify-between gap-4">
-                                <div className="flex items-center gap-4">
-                                    <div className="flex items-center gap-2 text-sm">
-                                        <CalendarDays className="h-4 w-4 text-muted-foreground" />
-                                        <span className="font-semibold text-mb-primary">{selectedDateRange.start}</span>
-                                        <span className="text-muted-foreground">to</span>
-                                        <span className="font-semibold text-mb-primary">{selectedDateRange.end}</span>
+                    {/* Date Range Filter Card with Year Selector */}
+                    {allMonths.length > 0 && (
+                        <Card>
+                            <CardContent className="pt-6">
+                                <div className="flex flex-col gap-4">
+                                    {/* Year Selector Row */}
+                                    <div className="flex items-center justify-between flex-wrap gap-4">
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-sm font-medium text-slate-600 dark:text-slate-400">Filter by Year:</span>
+                                            <div className="flex items-center gap-2">
+                                                {availableYears.map((year) => (
+                                                    <Button
+                                                        key={year}
+                                                        variant={selectedYear === year ? "default" : "outline"}
+                                                        size="sm"
+                                                        onClick={() => {
+                                                            setSelectedYear(year);
+                                                            // Update the month range to match the selected year
+                                                            if (year === 'All') {
+                                                                setStartMonth(allMonths[0]);
+                                                                setEndMonth(allMonths[allMonths.length - 1]);
+                                                            } else {
+                                                                const yearMonths = allMonths.filter(m => '20' + m.split('-')[1] === year);
+                                                                if (yearMonths.length > 0) {
+                                                                    setStartMonth(yearMonths[0]);
+                                                                    setEndMonth(yearMonths[yearMonths.length - 1]);
+                                                                }
+                                                            }
+                                                        }}
+                                                        className={`rounded-full px-4 ${selectedYear === year ? "bg-[#4E4456] hover:bg-[#4E4456]/90 text-white" : "border-slate-200 dark:border-slate-700"}`}
+                                                    >
+                                                        {year}
+                                                    </Button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                        <Badge variant="outline" className="px-3 py-1.5 text-sm font-normal">
+                                            {filteredMonthsByYear.length} Months Available
+                                        </Badge>
                                     </div>
-                                </div>
-                                <Button variant="outline" size="sm" onClick={handleResetRange} className="flex items-center gap-2 border-mb-secondary/50 hover:bg-mb-secondary-light/20 hover:text-mb-primary">
-                                    <RotateCcw className="h-3 w-3" />
-                                    Reset Range
-                                </Button>
-                            </div>
 
-                            {/* Date Range Slider */}
-                            <div className="px-2">
-                                <Slider
-                                    value={dateRangeIndex}
-                                    onValueChange={handleSliderChange}
-                                    max={100}
-                                    min={0}
-                                    step={1}
-                                    className="w-full"
-                                />
-                                <div className="flex justify-between mt-2 text-xs text-muted-foreground">
-                                    <span>{allMonths.length > 0 ? format(new Date(`${allMonths[0]}-01`), "MMM yyyy") : ""}</span>
-                                    <span>{allMonths.length > 0 ? format(new Date(`${allMonths[allMonths.length - 1]}-01`), "MMM yyyy") : ""}</span>
+                                    {/* Date Range Picker */}
+                                    <DateRangePicker
+                                        startMonth={startMonth || allMonths[0]}
+                                        endMonth={endMonth || allMonths[allMonths.length - 1]}
+                                        availableMonths={selectedYear === 'All' ? allMonths : filteredMonthsByYear}
+                                        onRangeChange={handleRangeChange}
+                                        onReset={handleResetRange}
+                                    />
                                 </div>
-                            </div>
-
-                            {/* Formula Info */}
-                            <div className="text-xs text-muted-foreground border-t border-mb-primary/10 pt-3">
-                                Current STP economic rates applied when calculating financial impact: <span className="font-medium text-mb-primary">Discharge Fee = {TANKER_FEE} OMR/trip</span> | <span className="font-medium text-mb-primary">TSE Saving = {TSE_SAVING_RATE} OMR per m³</span> | TSE (Treated Sewage Effluent) water is reused for irrigation, offsetting freshwater costs.
-                            </div>
-                        </CardContent>
-                    </Card>
+                            </CardContent>
+                        </Card>
+                    )}
 
                     {/* Unified Stats Grid */}
                     <StatsGrid stats={stats} />
