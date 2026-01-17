@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo } from "react";
 import { getSTPOperations, STPOperation } from "@/lib/mock-data";
 import { getSTPOperationsFromSupabase, isSupabaseConfigured } from "@/lib/supabase";
 import { STP_RATES } from "@/lib/config";
-import { LoadingSpinner } from "@/components/shared/loading-spinner";
+import { StatsGridSkeleton, ChartSkeleton, Skeleton } from "@/components/shared/skeleton";
 import { ScrollAnimation } from "@/components/shared/scroll-animation";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatsGrid } from "@/components/shared/stats-grid";
@@ -384,7 +384,44 @@ export default function STPPage() {
     };
 
     if (loading) {
-        return <LoadingSpinner />;
+        return (
+            <div className="space-y-6 sm:space-y-7 md:space-y-8 w-full animate-in fade-in duration-300">
+                {/* Header skeleton */}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div className="space-y-2">
+                        <div className="flex items-center gap-2 mb-1">
+                            <Skeleton className="h-4 w-20" />
+                            <Skeleton className="h-4 w-4" />
+                            <Skeleton className="h-4 w-20" />
+                        </div>
+                        <Skeleton className="h-9 w-48" />
+                        <Skeleton className="h-4 w-64" />
+                    </div>
+                    <Skeleton className="h-6 w-32 rounded-full" />
+                </div>
+                {/* Tabs skeleton */}
+                <div className="flex gap-2">
+                    <Skeleton className="h-9 w-28 rounded-lg" />
+                    <Skeleton className="h-9 w-28 rounded-lg" />
+                </div>
+                {/* Filter skeleton */}
+                <div className="p-6 rounded-xl border border-slate-200/60 bg-white dark:bg-slate-800/50">
+                    <div className="flex justify-between items-center mb-4">
+                        <Skeleton className="h-6 w-48" />
+                        <Skeleton className="h-8 w-24" />
+                    </div>
+                    <Skeleton className="h-4 w-full" />
+                </div>
+                {/* Stats skeleton */}
+                <StatsGridSkeleton />
+                {/* Chart skeleton */}
+                <ChartSkeleton height="h-[350px]" />
+                <div className="grid gap-6 md:grid-cols-2">
+                    <ChartSkeleton height="h-[350px]" />
+                    <ChartSkeleton height="h-[350px]" />
+                </div>
+            </div>
+        );
     }
 
     return (

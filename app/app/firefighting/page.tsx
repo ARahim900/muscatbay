@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo } from "react";
 import { getFireSafetyEquipment, FireSafetyEquipment } from "@/lib/mock-data";
 import { StatsGrid } from "@/components/shared/stats-grid";
 import { TabNavigation } from "@/components/shared/tab-navigation";
-import { LoadingSpinner } from "@/components/shared/loading-spinner";
+import { StatsGridSkeleton, ChartSkeleton, Skeleton } from "@/components/shared/skeleton";
 import { PageHeader } from "@/components/shared/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -130,7 +130,30 @@ export default function FirefightingPage() {
     };
 
     if (loading) {
-        return <LoadingSpinner />;
+        return (
+            <div className="space-y-6 sm:space-y-7 md:space-y-8 w-full animate-in fade-in duration-300">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div className="space-y-2">
+                        <Skeleton className="h-9 w-64" />
+                        <Skeleton className="h-4 w-48" />
+                    </div>
+                    <Skeleton className="h-9 w-32" />
+                </div>
+
+                <div className="flex gap-2">
+                    <Skeleton className="h-10 w-32 rounded-lg" />
+                    <Skeleton className="h-10 w-40 rounded-lg" />
+                    <Skeleton className="h-10 w-40 rounded-lg" />
+                </div>
+
+                <StatsGridSkeleton />
+
+                <div className="grid lg:grid-cols-2 gap-6">
+                    <ChartSkeleton height="h-80" />
+                    <ChartSkeleton height="h-80" />
+                </div>
+            </div>
+        );
     }
 
     return (
