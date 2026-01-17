@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo } from "react";
 import { getAssets, Asset } from "@/lib/mock-data";
 import { getAssetsFromSupabase, isSupabaseConfigured } from "@/lib/supabase";
 import { StatsGrid } from "@/components/shared/stats-grid";
+import { StatsGridSkeleton, TableSkeleton, Skeleton } from "@/components/shared/skeleton";
 import { PageHeader } from "@/components/shared/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -220,9 +221,7 @@ export default function AssetsPage() {
                         </TableHeader>
                         <TableBody>
                             {loading ? (
-                                <TableRow>
-                                    <TableCell colSpan={7} className="text-center py-8">Loading assets...</TableCell>
-                                </TableRow>
+                                <TableSkeleton columns={7} rows={10} />
                             ) : filteredAssets.length === 0 ? (
                                 <TableRow>
                                     <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">No assets found</TableCell>

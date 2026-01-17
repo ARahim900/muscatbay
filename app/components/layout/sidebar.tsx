@@ -159,27 +159,27 @@ export function Sidebar() {
                     className={`
                       group/nav flex items-center gap-3 py-2.5 px-3 rounded-lg text-left transition-all duration-200 relative
                       ${isActive
-                        ? "bg-white/15 text-white"
+                        ? "bg-white/20 text-white shadow-[0_0_15px_rgba(129,216,208,0.3)] border-l-[3px] border-[#81D8D0] ml-[-3px] pl-[15px]"
                         : "text-white/70 hover:bg-white/10 hover:text-white"
                       }
-                      ${isCollapsed ? "justify-center px-2" : ""}
+                      ${isCollapsed ? "justify-center px-2 !border-l-0 !ml-0 !pl-2" : ""}
                     `}
                     title={isCollapsed ? item.name : undefined}
                   >
                     <Icon
                       className={`
-                        w-5 h-5 flex-shrink-0 transition-transform duration-200
-                        ${isActive ? "text-[#81D8D0]" : "group-hover/nav:scale-110"}
+                        w-5 h-5 flex-shrink-0 transition-all duration-200
+                        ${isActive ? "text-[#81D8D0] drop-shadow-[0_0_6px_rgba(129,216,208,0.6)]" : "group-hover/nav:scale-110"}
                       `}
                     />
 
                     {!isCollapsed && (
                       <>
-                        <span className="text-sm font-medium truncate flex-1">
+                        <span className={`text-sm font-medium truncate flex-1 ${isActive ? "font-semibold" : ""}`}>
                           {item.name}
                         </span>
                         {isActive && (
-                          <div className="w-1.5 h-1.5 rounded-full bg-[#81D8D0] flex-shrink-0" />
+                          <div className="w-2 h-2 rounded-full bg-[#81D8D0] flex-shrink-0 shadow-[0_0_8px_rgba(129,216,208,0.8)]" />
                         )}
                       </>
                     )}

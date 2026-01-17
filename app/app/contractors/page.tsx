@@ -6,7 +6,7 @@ import {
     isSupabaseConfigured,
     ContractorTracker
 } from "@/lib/supabase";
-import { LoadingSpinner } from "@/components/shared/loading-spinner";
+import { StatsGridSkeleton, TableSkeleton, Skeleton } from "@/components/shared/skeleton";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatsGrid } from "@/components/shared/stats-grid";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -69,7 +69,25 @@ export default function ContractorsPage() {
     };
 
     if (loading) {
-        return <LoadingSpinner />;
+        return (
+            <div className="space-y-6 sm:space-y-7 md:space-y-8 w-full animate-in fade-in duration-300">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div className="space-y-2">
+                        <Skeleton className="h-9 w-48" />
+                        <Skeleton className="h-4 w-64" />
+                    </div>
+                </div>
+                <StatsGridSkeleton />
+                <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6">
+                    <div className="flex gap-4 mb-6">
+                        <Skeleton className="h-10 w-full max-w-sm" />
+                        <Skeleton className="h-10 w-32" />
+                        <Skeleton className="h-10 w-32" />
+                    </div>
+                    <TableSkeleton columns={8} rows={8} />
+                </div>
+            </div>
+        );
     }
 
     // Get unique statuses and contract types for filters
