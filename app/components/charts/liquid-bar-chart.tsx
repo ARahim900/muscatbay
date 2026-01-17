@@ -11,6 +11,7 @@ import {
     TooltipProps,
     Cell,
     LabelList,
+    Legend,
 } from "recharts";
 
 interface LiquidBarChartProps {
@@ -22,6 +23,8 @@ interface LiquidBarChartProps {
     barRadius?: [number, number, number, number];
     showGrid?: boolean;
     showLabels?: boolean;
+    showLegend?: boolean; // Always show legend
+    yAxisLabel?: string; // Y-axis label with units (e.g., "m³", "kWh")
 }
 
 const DEFAULT_COLORS = ["#4E4456", "#81D8D0", "#5BA88B"];
@@ -61,6 +64,8 @@ export function LiquidBarChart({
     barRadius = [8, 8, 0, 0],
     showGrid = false,
     showLabels = true,
+    showLegend = true,
+    yAxisLabel,
 }: LiquidBarChartProps) {
     // Format value for display - using any to satisfy Recharts LabelFormatter type
     const formatLabel = (value: any): string => {
@@ -97,11 +102,13 @@ export function LiquidBarChart({
                         tickFormatter={(value) =>
                             value >= 1000 ? `${(value / 1000).toFixed(0)}k` : value
                         }
+                        label={yAxisLabel ? { value: yAxisLabel, angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: '#6B7280', fontSize: 11 } } : undefined}
                     />
                     <Tooltip
                         content={<CustomTooltip />}
                         cursor={{ fill: "rgba(0,0,0,0.04)", radius: 8 }}
                     />
+                    {showLegend && <Legend iconType="circle" wrapperStyle={{ paddingTop: 10 }} />}
                     {categories.map((cat, i) => (
                         <Bar
                             key={cat}

@@ -33,6 +33,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { TabNavigation } from "@/components/shared/tab-navigation";
 import { StatsGrid } from "@/components/shared/stats-grid";
 import { Button } from "@/components/ui/button";
+import { saveFilterPreferences, loadFilterPreferences } from "@/lib/filter-preferences";
 
 // Dashboard view type
 type DashboardView = 'monthly' | 'hierarchy';
@@ -163,7 +164,37 @@ export default function WaterPage() {
             }
         }
         fetchWaterData();
+
+        // Load saved filter preferences
+        const savedPrefs = loadFilterPreferences<{
+            dashboardView?: DashboardView;
+            monthlyTab?: string;
+            startMonth?: string;
+            endMonth?: string;
+            selectedZone?: string;
+            selectedType?: string;
+        }>('water');
+        if (savedPrefs) {
+            if (savedPrefs.dashboardView) setDashboardView(savedPrefs.dashboardView);
+            if (savedPrefs.monthlyTab) setMonthlyTab(savedPrefs.monthlyTab);
+            if (savedPrefs.startMonth) setStartMonth(savedPrefs.startMonth);
+            if (savedPrefs.endMonth) setEndMonth(savedPrefs.endMonth);
+            if (savedPrefs.selectedZone) setSelectedZone(savedPrefs.selectedZone);
+            if (savedPrefs.selectedType) setSelectedType(savedPrefs.selectedType);
+        }
     }, []);
+
+    // Save filter preferences when they change
+    useEffect(() => {
+        saveFilterPreferences('water', {
+            dashboardView,
+            monthlyTab,
+            startMonth,
+            endMonth,
+            selectedZone,
+            selectedType
+        });
+    }, [dashboardView, monthlyTab, startMonth, endMonth, selectedZone, selectedType]);
 
     // Calculate analysis data using the loaded meters
     const rangeAnalysis = useMemo(() =>
@@ -466,7 +497,7 @@ export default function WaterPage() {
                                                     </linearGradient>
                                                 </defs>
                                                 <XAxis dataKey="month" className="text-xs" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#6B7280" }} dy={10} />
-                                                <YAxis className="text-xs" tickFormatter={(v) => `${v / 1000}k`} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#6B7280" }} />
+                                                <YAxis className="text-xs" tickFormatter={(v) => `${v / 1000}k`} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#6B7280" }} label={{ value: 'm³', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: '#6B7280', fontSize: 11 } }} />
                                                 <Tooltip content={<LiquidTooltip />} cursor={{ stroke: 'rgba(0,0,0,0.1)', strokeWidth: 2 }} />
                                                 <Legend iconType="circle" />
                                                 <Area type="monotone" name="A1 - Main Source" dataKey="A1" stroke="#4E4456" fill="url(#gradA1)" strokeWidth={3} activeDot={{ r: 6, stroke: '#fff', strokeWidth: 2 }} animationDuration={1500} />
@@ -494,7 +525,7 @@ export default function WaterPage() {
                                                     </linearGradient>
                                                 </defs>
                                                 <XAxis dataKey="month" className="text-xs" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#6B7280" }} dy={10} />
-                                                <YAxis className="text-xs" tickFormatter={(v) => `${v / 1000}k`} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#6B7280" }} />
+                                                <YAxis className="text-xs" tickFormatter={(v) => `${v / 1000}k`} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#6B7280" }} label={{ value: 'm³', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: '#6B7280', fontSize: 11 } }} />
                                                 <Tooltip content={<LiquidTooltip />} cursor={{ stroke: 'rgba(0,0,0,0.1)', strokeWidth: 2 }} />
                                                 <Legend iconType="circle" />
                                                 <Area type="monotone" name="Total Loss" dataKey="totalLoss" stroke="#C95D63" fill="url(#gradLoss)" strokeWidth={2} strokeDasharray="5 5" animationDuration={1500} />
@@ -627,7 +658,7 @@ export default function WaterPage() {
                                                     </linearGradient>
                                                 </defs>
                                                 <XAxis dataKey="month" className="text-xs" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#6B7280" }} dy={10} />
-                                                <YAxis className="text-xs" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#6B7280" }} />
+                                                <YAxis className="text-xs" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#6B7280" }} label={{ value: 'm³', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: '#6B7280', fontSize: 11 } }} />
                                                 <Tooltip content={<LiquidTooltip />} cursor={{ stroke: 'rgba(0,0,0,0.1)', strokeWidth: 2 }} />
                                                 <Legend iconType="circle" />
                                                 <Area type="monotone" name="Individual Total" dataKey="Individual Total" stroke="#4E4456" fill="url(#gradIndividual)" strokeWidth={3} activeDot={{ r: 6, stroke: '#fff', strokeWidth: 2 }} animationDuration={1500} />
@@ -712,7 +743,7 @@ export default function WaterPage() {
                                     <div className="h-[300px] sm:h-[350px] md:h-[400px] w-full">
                                         <ResponsiveContainer width="100%" height="100%">
                                             <BarChart data={consumptionChartData} layout="vertical" margin={{ left: 120 }}>
-                                                <XAxis type="number" tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#6B7280" }} />
+                                                <XAxis type="number" tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#6B7280" }} label={{ value: 'm³', position: 'insideBottom', offset: -5, style: { textAnchor: 'middle', fill: '#6B7280', fontSize: 11 } }} />
                                                 <YAxis type="category" dataKey="type" width={110} className="text-xs" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#6B7280" }} />
                                                 <Tooltip content={<LiquidTooltip />} cursor={{ fill: 'rgba(0,0,0,0.04)', radius: 6 }} />
                                                 <Bar dataKey="total" radius={[0, 6, 6, 0]} barSize={24} animationDuration={1500}>
