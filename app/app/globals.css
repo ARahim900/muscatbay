@@ -151,13 +151,16 @@
 }
 
 .dark {
-  /* Dark mode mappings (if strictly needed, though design spec didn't detail dark mode full palette, inferring from design doc) */
-  --background: #111827;
-  --foreground: #F9FAFB;
-  --card: #1A1F2E;
-  --card-foreground: #F9FAFB;
-  --component: #161B27;
-  --component-foreground: #F9FAFB;
+  /* Dark mode mappings */
+  --background: #0f172a;
+  /* slate-950/deep navy */
+  --foreground: #F1F5F9;
+  /* slate-100 */
+  --card: #1E293B;
+  /* slate-800 */
+  --card-foreground: #F1F5F9;
+  --component: #1E293B;
+  --component-foreground: #F1F5F9;
   --primary: #4E4456;
   --primary-foreground: #FFFFFF;
   --secondary: #00D2B3;
@@ -173,8 +176,43 @@
 }
 
 @layer base {
+  :root {
+    @apply dark:bg-slate-950 dark:text-slate-100;
+  }
+
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border outline-ring/50 focus-visible:ring-2 focus-visible:ring-secondary focus-visible:ring-offset-2 focus-visible:ring-offset-background;
+  }
+
+  /* Custom Scrollbar */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .dark ::-webkit-scrollbar-track {
+    background: #1e293b;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 5px;
+  }
+
+  .dark ::-webkit-scrollbar-thumb {
+    background: #475569;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+  }
+
+  .dark ::-webkit-scrollbar-thumb:hover {
+    background: #64748b;
   }
 
   body {
@@ -271,8 +309,8 @@
 
   /* Dark mode glass card */
   .dark .glass-card {
-    background-color: #1F2937;
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    background-color: #1E293B;
+    border: 1px solid #334155;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2);
   }
 

@@ -132,7 +132,7 @@ export default function DashboardPage() {
                                             : filter === 'warning' ? 'bg-mb-warning text-white'
                                                 : filter === 'info' ? 'bg-mb-info text-white'
                                                     : 'bg-mb-primary text-white'
-                                        : 'text-muted-foreground hover:bg-white/50 dark:hover:bg-slate-700/50'
+                                        : 'text-muted-foreground hover:bg-white/50 dark:hover:bg-slate-700/50 dark:text-slate-400'
                                         }`}
                                 >
                                     {filter}
@@ -149,7 +149,7 @@ export default function DashboardPage() {
                             { title: "New Contractor Onboarded", time: "1 day ago", type: "info" },
                             { title: "Monthly Reports Generated", time: "2 days ago", type: "info" },
                         ].filter(item => activityFilter === 'all' || item.type === activityFilter).map((item, i) => (
-                            <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-white/30 dark:bg-slate-800/30 border border-mb-primary/5 hover:bg-white/50 dark:hover:bg-slate-800/50 transition-colors">
+                            <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-white/30 dark:bg-slate-800/50 border border-mb-primary/5 dark:border-slate-700 hover:bg-white/50 dark:hover:bg-slate-700 transition-colors">
                                 <div className={`rounded-full p-2 ${item.type === 'critical' ? 'bg-mb-danger/20 text-mb-danger' :
                                     item.type === 'warning' ? 'bg-mb-warning/20 text-mb-warning' :
                                         'bg-mb-info/20 text-mb-info' // Info/Normal items use Light Teal
@@ -157,7 +157,7 @@ export default function DashboardPage() {
                                     {item.type === 'critical' ? <AlertTriangle className="h-4 w-4" /> : <ArrowUpRight className="h-4 w-4" />}
                                 </div>
                                 <div className="space-y-1">
-                                    <p className="text-sm font-medium leading-none text-mb-primary dark:text-mb-primary-light">{item.title}</p>
+                                    <p className="text-sm font-medium leading-none text-mb-primary dark:text-slate-100">{item.title}</p>
                                     <p className="text-xs text-muted-foreground">{item.time}</p>
                                 </div>
                             </div>

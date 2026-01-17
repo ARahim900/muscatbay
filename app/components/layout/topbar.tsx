@@ -4,20 +4,36 @@ import { useSidebar } from "./sidebar-context";
 import { useAuth } from "@/components/auth/auth-provider";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Menu, Search, Bell, Sun, Moon } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useTheme } from "next-themes";
 
 export function Topbar() {
     const { setIsOpen } = useSidebar();
-    const [isDarkMode, setIsDarkMode] = useState(false);
+    const { setTheme, theme } = useTheme();
+    const [mounted, setMounted] = useState(false);
     const { profile, user } = useAuth();
 
     // Compute display name and initials for user profile
     const displayName = profile?.full_name || user?.email?.split("@")[0] || "User";
     const initials = displayName.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2);
 
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    if (!mounted) {
+        return (
+            <header className="h-16 sm:h-[60.5px] bg-white dark:bg-slate-900 px-4 sm:px-6 flex items-center justify-between sticky top-0 z-20 border-b border-slate-200 dark:border-slate-800 shadow-sm">
+                <div className="flex items-center gap-3">
+                    {/* Skeleton or simple loading state if needed, or just return null to avoid flash */}
+                </div>
+            </header>
+        );
+    }
+
     return (
-        <header className="h-16 sm:h-[60.5px] bg-white px-4 sm:px-6 flex items-center justify-between sticky top-0 z-20 border-b border-slate-200 shadow-sm">
+        <header className="h-16 sm:h-[60.5px] bg-white dark:bg-slate-900 px-4 sm:px-6 flex items-center justify-between sticky top-0 z-20 border-b border-slate-200 dark:border-slate-800 shadow-sm">
             {/* Left Section - Mobile hamburger + Title */}
             <div className="flex items-center gap-3">
                 {/* Mobile hamburger - Always visible on mobile */}
@@ -32,10 +48,10 @@ export function Topbar() {
                 {/* App Title - Mobile first */}
                 <div>
                     <h1 className="text-lg sm:text-xl font-bold leading-tight tracking-tight">
-                        <span className="text-[#4e4456]">MUSCAT </span>
+                        <span className="text-[#4e4456] dark:text-slate-100">MUSCAT </span>
                         <span style={{ color: '#81D8D0' }}>BAY</span>
                     </h1>
-                    <p className="text-xs sm:text-sm text-slate-500 hidden sm:block">
+                    <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 hidden sm:block">
                         Resource Management
                     </p>
                 </div>
@@ -45,11 +61,11 @@ export function Topbar() {
             <div className="flex items-center gap-1 sm:gap-2">
                 {/* Theme Toggle */}
                 <button
-                    onClick={() => setIsDarkMode(!isDarkMode)}
-                    className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center hover:bg-slate-100 rounded-lg text-slate-500 transition-all duration-200"
+                    onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                    className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-500 dark:text-slate-400 transition-all duration-200"
                     aria-label="Toggle theme"
                 >
-                    {isDarkMode ? (
+                    {theme === "dark" ? (
                         <Moon className="w-4 h-4 sm:w-5 sm:h-5" />
                     ) : (
                         <Sun className="w-4 h-4 sm:w-5 sm:h-5" />

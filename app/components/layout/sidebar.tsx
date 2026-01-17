@@ -78,7 +78,7 @@ export function Sidebar() {
         className={`
           fixed top-0 left-0 h-screen z-40 
           flex flex-col
-          bg-[#4e4456] shadow-xl
+          bg-[#4e4456] dark:bg-[#1E293B] shadow-xl
           transition-all duration-300 ease-out
           ${isOpen ? "translate-x-0" : "-translate-x-full"}
           ${isCollapsed ? "w-[72px]" : "w-[220px]"}

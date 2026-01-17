@@ -20,7 +20,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
       <main
         className={`
           flex-1 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]
-          w-full min-h-screen bg-gray-50
+          w-full min-h-screen bg-gray-50 dark:bg-slate-950
           ${isOpen ? "ml-[220px] md:ml-0" : "ml-0"}
           ${isCollapsed ? "md:ml-[72px]" : "md:ml-[220px]"}
         `}

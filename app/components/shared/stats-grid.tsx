@@ -47,18 +47,18 @@ export function StatsGrid({ stats, className }: StatsGridProps) {
                 return (
                     <div
                         key={index}
-                        className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow duration-200"
+                        className="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md hover:bg-slate-50 dark:hover:bg-slate-750/50 transition-all duration-200"
                     >
                         <div className="flex justify-between items-start">
                             <div>
-                                <p className="text-slate-500 text-sm font-medium mb-1 uppercase tracking-wide">
+                                <p className="text-slate-500 dark:text-slate-400 text-sm font-medium mb-1 uppercase tracking-wide">
                                     {stat.label}
                                 </p>
-                                <h3 className="text-2xl font-bold text-slate-800">
+                                <h3 className="text-2xl font-bold text-slate-800 dark:text-slate-100">
                                     {stat.value}
                                 </h3>
                             </div>
-                            <div className="p-3 rounded-lg bg-gray-50">
+                            <div className="p-3 rounded-lg bg-gray-50 dark:bg-slate-700/50">
                                 <stat.icon
                                     size={22}
                                     style={{ color: stat.color || iconColor }}
