@@ -10,6 +10,7 @@ import {
     ResponsiveContainer,
     TooltipProps,
     LabelList,
+    Legend,
 } from "recharts";
 
 interface LiquidAreaChartProps {
@@ -21,6 +22,8 @@ interface LiquidAreaChartProps {
     showGrid?: boolean;
     elementId?: string; // For gradient definitions
     showLabels?: boolean;
+    showLegend?: boolean; // Always show legend
+    yAxisLabel?: string; // Y-axis label with units (e.g., "m³", "kWh")
 }
 
 const DEFAULT_COLORS = ["#4E4456", "#81D8D0", "#5BA88B"];
@@ -60,6 +63,8 @@ export function LiquidAreaChart({
     showGrid = false,
     elementId = "liquid-area",
     showLabels = false,
+    showLegend = true,
+    yAxisLabel,
 }: LiquidAreaChartProps) {
     // Format value for display - using any to satisfy Recharts LabelFormatter type
     const formatLabel = (value: any): string => {
@@ -108,8 +113,10 @@ export function LiquidAreaChart({
                         tickFormatter={(value) =>
                             value >= 1000 ? `${(value / 1000).toFixed(0)}k` : value
                         }
+                        label={yAxisLabel ? { value: yAxisLabel, angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: '#6B7280', fontSize: 11 } } : undefined}
                     />
                     <Tooltip content={<CustomTooltip />} cursor={{ stroke: "rgba(0,0,0,0.1)", strokeWidth: 2 }} />
+                    {showLegend && <Legend iconType="circle" wrapperStyle={{ paddingTop: 10 }} />}
                     {categories.map((cat, i) => (
                         <Area
                             key={cat}

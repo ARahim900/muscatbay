@@ -15,6 +15,8 @@ export interface DashboardStats {
     subtitle: string;
     icon: any;
     variant: "water" | "warning" | "success" | "primary";
+    trend?: 'up' | 'down' | 'neutral';
+    trendValue?: string;
 }
 
 export interface ChartData {
@@ -142,7 +144,57 @@ export function useDashboardData() {
             });
             const sortedMonths = Object.keys(allReadings).sort();
             const latestMonth = sortedMonths[sortedMonths.length - 1] || "";
+            const prevMonth = sortedMonths[sortedMonths.length - 2] || "";
             elecTotal = allReadings[latestMonth] || 0;
+            const elecPrevTotal = allReadings[prevMonth] || 0;
+
+            // Helper function to calculate trend
+            const calcTrend = (current: number, previous: number): { trend: 'up' | 'down' | 'neutral'; trendValue: string } => {
+                if (previous === 0) return { trend: 'neutral', trendValue: '0%' };
+                const change = ((current - previous) / previous) * 100;
+                if (Math.abs(change) < 0.5) return { trend: 'neutral', trendValue: '0%' };
+                return {
+                    trend: change > 0 ? 'up' : 'down',
+                    trendValue: `${Math.abs(change).toFixed(1)}%`
+                };
+            };
+
+            // Calculate trends for water
+            const prevWater = water.monthlyTrends.length >= 2 ? water.monthlyTrends[water.monthlyTrends.length - 2] : null;
+            const waterTrend = prevWater ? calcTrend(latestWater.A1, prevWater.A1) : { trend: 'neutral' as const, trendValue: '0%' };
+
+            // Calculate trends for electricity
+            const elecTrend = calcTrend(elecTotal, elecPrevTotal);
+
+            // Calculate trends for STP (using monthly aggregated data)
+            const stpMonthlyCalc: Record<string, { inlet: number; tse: number }> = {};
+            stpData.forEach(op => {
+                if (op.date) {
+                    try {
+                        const monthKey = format(new Date(op.date), "yyyy-MM");
+                        if (!stpMonthlyCalc[monthKey]) {
+                            stpMonthlyCalc[monthKey] = { inlet: 0, tse: 0 };
+                        }
+                        stpMonthlyCalc[monthKey].inlet += op.inlet_sewage || 0;
+                        stpMonthlyCalc[monthKey].tse += op.tse_for_irrigation || 0;
+                    } catch (e) {
+                        // Skip invalid dates
+                    }
+                }
+            });
+            const stpSortedMonths = Object.keys(stpMonthlyCalc).sort();
+            const stpLatestMonth = stpSortedMonths[stpSortedMonths.length - 1];
+            const stpPrevMonth = stpSortedMonths[stpSortedMonths.length - 2];
+            const stpLatestData = stpLatestMonth ? stpMonthlyCalc[stpLatestMonth] : { inlet: 0, tse: 0 };
+            const stpPrevData = stpPrevMonth ? stpMonthlyCalc[stpPrevMonth] : { inlet: 0, tse: 0 };
+            const stpInletTrend = calcTrend(stpLatestData.inlet, stpPrevData.inlet);
+            const stpTseTrend = calcTrend(stpLatestData.tse, stpPrevData.tse);
+
+            // Calculate STP economic trend
+            const prevTotalTrips = Math.floor(stpPrevData.inlet / 15); // Estimated trips based on avg trip capacity
+            const prevIncome = (prevTotalTrips * TANKER_FEE) + (stpPrevData.tse * TSE_SAVING_RATE);
+            const currentIncome = (Math.floor(stpLatestData.inlet / 15) * TANKER_FEE) + (stpLatestData.tse * TSE_SAVING_RATE);
+            const stpEconomicTrend = calcTrend(currentIncome, prevIncome);
 
             setStats([
                 {
@@ -150,49 +202,63 @@ export function useDashboardData() {
                     value: `${(latestWater.A1 / 1000).toFixed(1)}k m³`,
                     subtitle: `${latestWater.month}`,
                     icon: null, // Will be imported in component
-                    variant: "water" as const
+                    variant: "water" as const,
+                    trend: waterTrend.trend,
+                    trendValue: waterTrend.trendValue
                 },
                 {
                     label: "ELECTRICITY USAGE",
                     value: `${(elecTotal / 1000).toFixed(1)} MWh`,
                     subtitle: latestMonth || "Latest Month",
                     icon: null,
-                    variant: "warning" as const
+                    variant: "warning" as const,
+                    trend: elecTrend.trend,
+                    trendValue: elecTrend.trendValue
                 },
                 {
                     label: "STP INLET FLOW",
                     value: `${(stpTotalInlet / 1000).toFixed(1)}k m³`,
                     subtitle: "Total Processed",
                     icon: null,
-                    variant: "success" as const
+                    variant: "success" as const,
+                    trend: stpInletTrend.trend,
+                    trendValue: stpInletTrend.trendValue
                 },
                 {
                     label: "TSE OUTPUT",
                     value: `${(stpTotalTSE / 1000).toFixed(1)}k m³`,
                     subtitle: "Recycled Water",
                     icon: null,
-                    variant: "primary" as const
+                    variant: "primary" as const,
+                    trend: stpTseTrend.trend,
+                    trendValue: stpTseTrend.trendValue
                 },
                 {
                     label: "STP ECONOMIC IMPACT",
                     value: `${(stpTotalIncome / 1000).toFixed(1)}k OMR`,
                     subtitle: "Income + Savings",
                     icon: null,
-                    variant: "success" as const
+                    variant: "success" as const,
+                    trend: stpEconomicTrend.trend,
+                    trendValue: stpEconomicTrend.trendValue
                 },
                 {
                     label: "ACTIVE CONTRACTORS",
                     value: contractorsCount.toString(),
                     subtitle: "Service Providers",
                     icon: null,
-                    variant: "primary" as const
+                    variant: "primary" as const,
+                    trend: 'neutral',
+                    trendValue: '—'
                 },
                 {
                     label: "TOTAL ASSETS",
                     value: assetsCount.toLocaleString('en-US'),
                     subtitle: "Registered Items",
                     icon: null,
-                    variant: "water" as const
+                    variant: "water" as const,
+                    trend: 'neutral',
+                    trendValue: '—'
                 }
             ]);
 

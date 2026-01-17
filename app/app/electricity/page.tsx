@@ -10,12 +10,13 @@ import { LoadingSpinner } from "@/components/shared/loading-spinner";
 import { PageHeader } from "@/components/shared/page-header";
 import { DateRangePicker } from "@/components/water/date-range-picker";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Zap, DollarSign, MapPin, TrendingUp, BarChart3, Database, Wifi, WifiOff, CalendarDays, RotateCcw } from "lucide-react";
+import { Zap, DollarSign, MapPin, TrendingUp, BarChart3, Database, Wifi, WifiOff, CalendarDays, RotateCcw, ArrowUpDown, ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar, Cell, Legend } from "recharts";
 import { LiquidTooltip } from "../../components/charts/liquid-tooltip";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { saveFilterPreferences, loadFilterPreferences } from "@/lib/filter-preferences";
 
 // Use centralized config for rates
 const ratePerKWh = ELECTRICITY_RATES.RATE_PER_KWH;
@@ -32,6 +33,13 @@ export default function ElectricityPage() {
     // Date range state for Overview tab
     const [startMonth, setStartMonth] = useState<string>("Apr-24");
     const [endMonth, setEndMonth] = useState<string>("Dec-25");
+
+    // Database table sorting and pagination state
+    const [dbSortField, setDbSortField] = useState<string>('label');
+    const [dbSortDirection, setDbSortDirection] = useState<'asc' | 'desc'>('asc');
+    const [dbCurrentPage, setDbCurrentPage] = useState(1);
+    const dbPageSize = 15;
+    const [dbSearchTerm, setDbSearchTerm] = useState('');
     // Year filter state
     const [selectedYear, setSelectedYear] = useState<string>("All");
 
@@ -65,7 +73,37 @@ export default function ElectricityPage() {
             }
         }
         loadData();
+
+        // Load saved filter preferences
+        const savedPrefs = loadFilterPreferences<{
+            activeTab?: string;
+            startMonth?: string;
+            endMonth?: string;
+            selectedYear?: string;
+            analysisType?: string;
+            dateRangeIndex?: [number, number];
+        }>('electricity');
+        if (savedPrefs) {
+            if (savedPrefs.activeTab) setActiveTab(savedPrefs.activeTab);
+            if (savedPrefs.startMonth) setStartMonth(savedPrefs.startMonth);
+            if (savedPrefs.endMonth) setEndMonth(savedPrefs.endMonth);
+            if (savedPrefs.selectedYear) setSelectedYear(savedPrefs.selectedYear);
+            if (savedPrefs.analysisType) setAnalysisType(savedPrefs.analysisType);
+            if (savedPrefs.dateRangeIndex) setDateRangeIndex(savedPrefs.dateRangeIndex);
+        }
     }, []);
+
+    // Save filter preferences when they change
+    useEffect(() => {
+        saveFilterPreferences('electricity', {
+            activeTab,
+            startMonth,
+            endMonth,
+            selectedYear,
+            analysisType,
+            dateRangeIndex
+        });
+    }, [activeTab, startMonth, endMonth, selectedYear, analysisType, dateRangeIndex]);
 
     // Get all unique months and sort them (must be declared before stats)
     const allMonths = useMemo(() => {
@@ -103,6 +141,75 @@ export default function ElectricityPage() {
         });
     }, [allMonths, selectedYear]);
 
+    // Database view: filter, sort, and paginate meters
+    const dbFilteredMeters = useMemo(() => {
+        let result = [...meters];
+
+        // Search filter
+        if (dbSearchTerm) {
+            const term = dbSearchTerm.toLowerCase();
+            result = result.filter(m =>
+                m.name.toLowerCase().includes(term) ||
+                m.account_number.toLowerCase().includes(term) ||
+                m.type.toLowerCase().includes(term)
+            );
+        }
+
+        // Sort
+        result.sort((a, b) => {
+            let aVal: string | number = '';
+            let bVal: string | number = '';
+
+            switch (dbSortField) {
+                case 'label': aVal = a.name; bVal = b.name; break;
+                case 'account': aVal = a.account_number; bVal = b.account_number; break;
+                case 'type': aVal = a.type; bVal = b.type; break;
+                default:
+                    // Check if it's a month column
+                    if (allMonths.includes(dbSortField)) {
+                        aVal = a.readings[dbSortField] || 0;
+                        bVal = b.readings[dbSortField] || 0;
+                    } else {
+                        aVal = a.name; bVal = b.name;
+                    }
+            }
+
+            if (typeof aVal === 'string') {
+                return dbSortDirection === 'asc'
+                    ? aVal.localeCompare(bVal as string)
+                    : (bVal as string).localeCompare(aVal);
+            }
+            return dbSortDirection === 'asc' ? (aVal as number) - (bVal as number) : (bVal as number) - (aVal as number);
+        });
+
+        return result;
+    }, [meters, dbSearchTerm, dbSortField, dbSortDirection, allMonths]);
+
+    const dbTotalPages = Math.ceil(dbFilteredMeters.length / dbPageSize);
+    const dbStartIndex = (dbCurrentPage - 1) * dbPageSize;
+    const dbPaginatedMeters = dbFilteredMeters.slice(dbStartIndex, dbStartIndex + dbPageSize);
+
+    const handleDbSort = (field: string) => {
+        if (dbSortField === field) {
+            setDbSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+        } else {
+            setDbSortField(field);
+            setDbSortDirection('asc');
+        }
+        setDbCurrentPage(1);
+    };
+
+    // Helper function to calculate trend
+    const calcTrend = (current: number, previous: number): { trend: 'up' | 'down' | 'neutral'; trendValue: string } => {
+        if (previous === 0) return { trend: 'neutral', trendValue: '0%' };
+        const change = ((current - previous) / previous) * 100;
+        if (Math.abs(change) < 0.5) return { trend: 'neutral', trendValue: '0%' };
+        return {
+            trend: change > 0 ? 'up' : 'down',
+            trendValue: `${Math.abs(change).toFixed(1)}%`
+        };
+    };
+
     const stats = useMemo(() => {
         // Get months within selected range
         const startIdx = allMonths.indexOf(startMonth);
@@ -127,34 +234,59 @@ export default function ElectricityPage() {
 
         const rangeLabel = startMonth && endMonth ? `${startMonth} - ${endMonth}` : "All Time";
 
+        // Calculate previous period for trend comparison
+        const prevEndIdx = startIdx > 0 ? startIdx - 1 : -1;
+        const prevStartIdx = prevEndIdx >= 0 ? Math.max(0, prevEndIdx - (endIdx - startIdx)) : -1;
+
+        let prevConsumption = 0;
+        let prevCost = 0;
+        if (prevStartIdx >= 0 && prevEndIdx >= 0) {
+            const prevMonths = allMonths.slice(prevStartIdx, prevEndIdx + 1);
+            prevConsumption = meters.reduce((sum, meter) => {
+                return sum + prevMonths.reduce((mSum, month) => mSum + (meter.readings[month] || 0), 0);
+            }, 0);
+            prevCost = prevConsumption * ratePerKWh;
+        }
+
+        const consumptionTrend = calcTrend(totalConsumption, prevConsumption);
+        const costTrend = calcTrend(totalCost, prevCost);
+
         return [
             {
                 label: "TOTAL CONSUMPTION",
                 value: `${(totalConsumption / 1000).toFixed(1)} MWh`,
                 subtitle: rangeLabel,
                 icon: Zap,
-                variant: "warning" as const
+                variant: "warning" as const,
+                trend: consumptionTrend.trend,
+                trendValue: consumptionTrend.trendValue
             },
             {
                 label: "TOTAL COST",
                 value: `${totalCost.toLocaleString('en-US')} OMR`,
                 subtitle: `@ ${ratePerKWh} OMR/kWh`,
                 icon: DollarSign,
-                variant: "success" as const
+                variant: "success" as const,
+                trend: costTrend.trend,
+                trendValue: costTrend.trendValue
             },
             {
                 label: "METER COUNT",
                 value: meters.length.toString(),
                 subtitle: "Active Meters",
                 icon: MapPin,
-                variant: "water" as const
+                variant: "water" as const,
+                trend: 'neutral' as const,
+                trendValue: '—'
             },
             {
                 label: "HIGHEST CONSUMER",
                 value: highest.name,
                 subtitle: `${Math.round(highest.val).toLocaleString('en-US')} kWh`,
                 icon: TrendingUp,
-                variant: "danger" as const
+                variant: "danger" as const,
+                trend: 'neutral' as const,
+                trendValue: '—'
             }
         ];
     }, [meters, allMonths, startMonth, endMonth]);
@@ -277,28 +409,36 @@ export default function ElectricityPage() {
                 value: `${(totalConsumption / 1000).toFixed(2)} MWh`,
                 subtitle: "in selected period",
                 icon: Zap,
-                variant: "primary" as const
+                variant: "primary" as const,
+                trend: 'neutral' as const,
+                trendValue: '—'
             },
             {
                 label: "TOTAL COST",
                 value: `${totalCost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} OMR`,
                 subtitle: `at ${ratePerKWh} OMR/kWh`,
                 icon: DollarSign,
-                variant: "success" as const
+                variant: "success" as const,
+                trend: 'neutral' as const,
+                trendValue: '—'
             },
             {
                 label: "METER COUNT",
                 value: filteredMeters.length.toString(),
                 subtitle: analysisType === "All" ? "Total Meters" : `${analysisType} Meters`,
                 icon: MapPin,
-                variant: "warning" as const
+                variant: "warning" as const,
+                trend: 'neutral' as const,
+                trendValue: '—'
             },
             {
                 label: "HIGHEST CONSUMER",
                 value: highestConsumer.name,
                 subtitle: `${(highestConsumer.val / 1000).toFixed(1)} MWh`,
                 icon: TrendingUp,
-                variant: "danger" as const
+                variant: "danger" as const,
+                trend: 'neutral' as const,
+                trendValue: '—'
             }
         ];
 
@@ -435,9 +575,10 @@ export default function ElectricityPage() {
                                                 </linearGradient>
                                             </defs>
                                             <XAxis dataKey="month" className="text-xs" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#6B7280" }} dy={10} />
-                                            <YAxis className="text-xs" tickFormatter={(v) => `${v / 1000}k`} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#6B7280" }} />
+                                            <YAxis className="text-xs" tickFormatter={(v) => `${v / 1000}k`} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#6B7280" }} label={{ value: 'kWh', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: '#6B7280', fontSize: 11 } }} />
                                             <Tooltip content={<LiquidTooltip />} cursor={{ stroke: 'rgba(0,0,0,0.1)', strokeWidth: 2 }} />
-                                            <Area type="natural" dataKey="consumption" stroke="#E8A838" fill="url(#elecGrad)" strokeWidth={3} activeDot={{ r: 6, stroke: '#fff', strokeWidth: 2 }} animationDuration={1500} />
+                                            <Legend iconType="circle" wrapperStyle={{ paddingTop: 10 }} />
+                                            <Area type="natural" dataKey="consumption" name="Consumption" stroke="#E8A838" fill="url(#elecGrad)" strokeWidth={3} activeDot={{ r: 6, stroke: '#fff', strokeWidth: 2 }} animationDuration={1500} />
                                         </AreaChart>
                                     </ResponsiveContainer>
                                 </div>
@@ -713,22 +854,42 @@ export default function ElectricityPage() {
 
             {
                 activeTab === 'database' && (
-                    <div className="animate-in fade-in duration-500">
+                    <div className="space-y-4 animate-in fade-in duration-500">
                         <Card>
-                            <CardHeader><CardTitle>Meter Database</CardTitle></CardHeader>
+                            <CardHeader>
+                                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                                    <CardTitle>Meter Database</CardTitle>
+                                    <div className="relative flex-1 max-w-md">
+                                        <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                                        <input
+                                            type="text"
+                                            placeholder="Search meters..."
+                                            value={dbSearchTerm}
+                                            onChange={(e) => { setDbSearchTerm(e.target.value); setDbCurrentPage(1); }}
+                                            className="pl-10 pr-4 py-2 w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                                        />
+                                    </div>
+                                </div>
+                            </CardHeader>
                             <CardContent>
-                                <div className="overflow-auto max-h-[500px]">
+                                <div className="overflow-auto max-h-[500px] rounded-md border">
                                     <table className="w-full text-sm">
-                                        <thead className="text-left bg-slate-50 dark:bg-slate-800">
+                                        <thead className="text-left bg-slate-50 dark:bg-slate-800 sticky top-0 z-10">
                                             <tr>
-                                                <th className="p-3 font-medium">Name</th>
-                                                <th className="p-3 font-medium">Account</th>
-                                                <th className="p-3 font-medium">Type</th>
+                                                <th className="p-3 font-medium cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700" onClick={() => handleDbSort('label')}>
+                                                    <div className="flex items-center gap-1">Name <ArrowUpDown className="w-3 h-3" /></div>
+                                                </th>
+                                                <th className="p-3 font-medium cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700" onClick={() => handleDbSort('account')}>
+                                                    <div className="flex items-center gap-1">Account <ArrowUpDown className="w-3 h-3" /></div>
+                                                </th>
+                                                <th className="p-3 font-medium cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700" onClick={() => handleDbSort('type')}>
+                                                    <div className="flex items-center gap-1">Type <ArrowUpDown className="w-3 h-3" /></div>
+                                                </th>
                                                 <th className="p-3 font-medium text-right">Total (kWh)</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {meters.map(meter => {
+                                            {dbPaginatedMeters.map(meter => {
                                                 const sum = Object.values(meter.readings).reduce((a, b) => a + b, 0);
                                                 return (
                                                     <tr key={meter.id} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50">
@@ -746,6 +907,37 @@ export default function ElectricityPage() {
                                         </tbody>
                                     </table>
                                 </div>
+                                {/* Pagination Controls */}
+                                {dbFilteredMeters.length > 0 && (
+                                    <div className="flex items-center justify-between mt-4 px-2">
+                                        <span className="text-sm text-muted-foreground">
+                                            Showing {dbStartIndex + 1} - {Math.min(dbStartIndex + dbPageSize, dbFilteredMeters.length)} of {dbFilteredMeters.length}
+                                        </span>
+                                        {dbTotalPages > 1 && (
+                                            <div className="flex items-center gap-2">
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => setDbCurrentPage(prev => Math.max(1, prev - 1))}
+                                                    disabled={dbCurrentPage === 1}
+                                                >
+                                                    <ChevronLeft className="w-4 h-4" />
+                                                </Button>
+                                                <span className="text-sm text-muted-foreground">
+                                                    Page {dbCurrentPage} of {dbTotalPages}
+                                                </span>
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => setDbCurrentPage(prev => Math.min(dbTotalPages, prev + 1))}
+                                                    disabled={dbCurrentPage === dbTotalPages}
+                                                >
+                                                    <ChevronRight className="w-4 h-4" />
+                                                </Button>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
                             </CardContent>
                         </Card>
                     </div>

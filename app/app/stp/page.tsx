@@ -26,11 +26,15 @@ import {
     CalendarDays,
     Wifi,
     WifiOff,
-    RotateCcw
+    RotateCcw,
+    ArrowUpDown,
+    ChevronLeft,
+    ChevronRight
 } from "lucide-react";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, BarChart, Bar, LineChart, Line, Legend } from "recharts";
 import { LiquidTooltip } from "../../components/charts/liquid-tooltip";
 import { format } from "date-fns";
+import { saveFilterPreferences, loadFilterPreferences } from "@/lib/filter-preferences";
 
 // Use centralized config for rates
 const { TANKER_FEE, TSE_SAVING_RATE } = STP_RATES;
@@ -44,6 +48,12 @@ export default function STPPage() {
 
     // Date range filter state
     const [dateRangeIndex, setDateRangeIndex] = useState<[number, number]>([0, 100]);
+
+    // Daily Operations Log sorting and pagination state
+    const [logSortField, setLogSortField] = useState<string>('date');
+    const [logSortDirection, setLogSortDirection] = useState<'asc' | 'desc'>('desc');
+    const [logCurrentPage, setLogCurrentPage] = useState(1);
+    const logPageSize = 15;
 
     useEffect(() => {
         async function loadData() {
@@ -70,7 +80,28 @@ export default function STPPage() {
             }
         }
         loadData();
+
+        // Load saved filter preferences
+        const savedPrefs = loadFilterPreferences<{
+            activeTab?: string;
+            dateRangeIndex?: [number, number];
+            selectedMonth?: string;
+        }>('stp');
+        if (savedPrefs) {
+            if (savedPrefs.activeTab) setActiveTab(savedPrefs.activeTab);
+            if (savedPrefs.dateRangeIndex) setDateRangeIndex(savedPrefs.dateRangeIndex);
+            if (savedPrefs.selectedMonth) setSelectedMonth(savedPrefs.selectedMonth);
+        }
     }, []);
+
+    // Save filter preferences when they change
+    useEffect(() => {
+        saveFilterPreferences('stp', {
+            activeTab,
+            dateRangeIndex,
+            selectedMonth
+        });
+    }, [activeTab, dateRangeIndex, selectedMonth]);
 
     // Get all unique months for the slider
     const allMonths = useMemo(() => {
@@ -125,7 +156,18 @@ export default function STPPage() {
         }
     }, [operations, selectedMonth]);
 
-    // Calculate statistics from filtered operations
+    // Helper function to calculate trend
+    const calcTrend = (current: number, previous: number): { trend: 'up' | 'down' | 'neutral'; trendValue: string } => {
+        if (previous === 0) return { trend: 'neutral', trendValue: '0%' };
+        const change = ((current - previous) / previous) * 100;
+        if (Math.abs(change) < 0.5) return { trend: 'neutral', trendValue: '0%' };
+        return {
+            trend: change > 0 ? 'up' : 'down',
+            trendValue: `${Math.abs(change).toFixed(1)}%`
+        };
+    };
+
+    // Calculate statistics from filtered operations with trends
     const stats = useMemo(() => {
         const totalInlet = operations.reduce((sum, op) => sum + op.inlet_sewage, 0);
         const totalTSE = operations.reduce((sum, op) => sum + op.tse_for_irrigation, 0);
@@ -136,65 +178,117 @@ export default function STPPage() {
         const treatmentEfficiency = totalInlet > 0 ? (totalTSE / totalInlet) * 100 : 0;
         const dailyAverageInlet = operations.length > 0 ? totalInlet / operations.length : 0;
 
+        // Calculate previous period data for trends
+        const startIdx = Math.floor((dateRangeIndex[0] / 100) * (allMonths.length - 1));
+        const endIdx = Math.floor((dateRangeIndex[1] / 100) * (allMonths.length - 1));
+        const rangeLength = endIdx - startIdx + 1;
+        const prevEndIdx = startIdx > 0 ? startIdx - 1 : -1;
+        const prevStartIdx = prevEndIdx >= 0 ? Math.max(0, prevEndIdx - rangeLength + 1) : -1;
+
+        let prevInlet = 0, prevTSE = 0, prevTrips = 0, prevOperationsCount = 0;
+        if (prevStartIdx >= 0 && prevEndIdx >= 0 && allMonths.length > 0) {
+            const prevStartMonth = allMonths[prevStartIdx];
+            const prevEndMonth = allMonths[prevEndIdx];
+            const prevOps = allOperations.filter(op => {
+                const opMonth = format(new Date(op.date), "yyyy-MM");
+                return opMonth >= prevStartMonth && opMonth <= prevEndMonth;
+            });
+            prevInlet = prevOps.reduce((sum, op) => sum + op.inlet_sewage, 0);
+            prevTSE = prevOps.reduce((sum, op) => sum + op.tse_for_irrigation, 0);
+            prevTrips = prevOps.reduce((sum, op) => sum + op.tanker_trips, 0);
+            prevOperationsCount = prevOps.length;
+        }
+
+        const prevIncome = prevTrips * TANKER_FEE;
+        const prevSavings = prevTSE * TSE_SAVING_RATE;
+        const prevEconomicImpact = prevIncome + prevSavings;
+        const prevEfficiency = prevInlet > 0 ? (prevTSE / prevInlet) * 100 : 0;
+        const prevDailyAvg = prevOperationsCount > 0 ? prevInlet / prevOperationsCount : 0;
+
+        const inletTrend = calcTrend(totalInlet, prevInlet);
+        const tseTrend = calcTrend(totalTSE, prevTSE);
+        const tripsTrend = calcTrend(totalTrips, prevTrips);
+        const incomeTrend = calcTrend(generatedIncome, prevIncome);
+        const savingsTrend = calcTrend(waterSavings, prevSavings);
+        const economicTrend = calcTrend(totalEconomicImpact, prevEconomicImpact);
+        const efficiencyTrend = calcTrend(treatmentEfficiency, prevEfficiency);
+        const dailyAvgTrend = calcTrend(dailyAverageInlet, prevDailyAvg);
+
         return [
             {
                 label: "Inlet Sewage",
                 value: `${totalInlet.toLocaleString('en-US')} m³`,
                 subtitle: `Range: ${selectedDateRange.start} - ${selectedDateRange.end}`,
                 icon: Droplets,
-                variant: "primary" as const
+                variant: "primary" as const,
+                trend: inletTrend.trend,
+                trendValue: inletTrend.trendValue
             },
             {
                 label: "TSE for Irrigation",
                 value: `${totalTSE.toLocaleString('en-US')} m³`,
                 subtitle: "Recycled Water Output",
                 icon: Recycle,
-                variant: "secondary" as const
+                variant: "secondary" as const,
+                trend: tseTrend.trend,
+                trendValue: tseTrend.trendValue
             },
             {
                 label: "Tanker Trips",
                 value: `${totalTrips.toLocaleString('en-US')}`,
                 subtitle: `at ${TANKER_FEE} OMR / trip`,
                 icon: Truck,
-                variant: "warning" as const
+                variant: "warning" as const,
+                trend: tripsTrend.trend,
+                trendValue: tripsTrend.trendValue
             },
             {
                 label: "Generated Income",
                 value: `${generatedIncome.toLocaleString('en-US', { minimumFractionDigits: 2 })} OMR`,
                 subtitle: "from discharge fees",
                 icon: DollarSign,
-                variant: "success" as const
+                variant: "success" as const,
+                trend: incomeTrend.trend,
+                trendValue: incomeTrend.trendValue
             },
             {
                 label: "Water Savings",
                 value: `${waterSavings.toLocaleString('en-US', { minimumFractionDigits: 2 })} OMR`,
                 subtitle: `${TSE_SAVING_RATE} OMR per m³`,
                 icon: PiggyBank,
-                variant: "primary" as const
+                variant: "primary" as const,
+                trend: savingsTrend.trend,
+                trendValue: savingsTrend.trendValue
             },
             {
                 label: "Total Economic Impact",
                 value: `${totalEconomicImpact.toLocaleString('en-US', { minimumFractionDigits: 2 })} OMR`,
                 subtitle: "Income + Savings",
                 icon: TrendingUp,
-                variant: "success" as const
+                variant: "success" as const,
+                trend: economicTrend.trend,
+                trendValue: economicTrend.trendValue
             },
             {
                 label: "Treatment Efficiency",
                 value: `${treatmentEfficiency.toFixed(1)}%`,
                 subtitle: "TSE Output to Inlet Ratio",
                 icon: Gauge,
-                variant: "secondary" as const
+                variant: "secondary" as const,
+                trend: efficiencyTrend.trend,
+                trendValue: efficiencyTrend.trendValue
             },
             {
                 label: "Daily Average Inlet",
                 value: `${Math.round(dailyAverageInlet).toLocaleString('en-US')} m³`,
                 subtitle: "Average Daily Input",
                 icon: Activity,
-                variant: "primary" as const
+                variant: "primary" as const,
+                trend: dailyAvgTrend.trend,
+                trendValue: dailyAvgTrend.trendValue
             }
         ];
-    }, [operations, selectedDateRange]);
+    }, [operations, selectedDateRange, allMonths, allOperations, dateRangeIndex]);
 
     // Monthly chart data from filtered operations
     const monthlyChartData = useMemo(() => {
@@ -224,14 +318,60 @@ export default function STPPage() {
         return Array.from(months).sort().reverse();
     }, [operations]);
 
-    // Daily operations for selected month
+    // Daily operations for selected month with sorting
     const dailyOperations = useMemo(() => {
         if (!selectedMonth) return [];
-        return operations.filter(op => {
+        let filtered = operations.filter(op => {
             const opMonth = format(new Date(op.date), "yyyy-MM");
             return opMonth === selectedMonth;
-        }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    }, [operations, selectedMonth]);
+        });
+
+        // Sort based on logSortField and logSortDirection
+        filtered.sort((a, b) => {
+            let aVal: number | string = 0;
+            let bVal: number | string = 0;
+            const aEfficiency = a.inlet_sewage > 0 ? (a.tse_for_irrigation / a.inlet_sewage) * 100 : 0;
+            const bEfficiency = b.inlet_sewage > 0 ? (b.tse_for_irrigation / b.inlet_sewage) * 100 : 0;
+            const aIncome = a.tanker_trips * TANKER_FEE;
+            const bIncome = b.tanker_trips * TANKER_FEE;
+            const aSavings = a.tse_for_irrigation * TSE_SAVING_RATE;
+            const bSavings = b.tse_for_irrigation * TSE_SAVING_RATE;
+
+            switch (logSortField) {
+                case 'date': aVal = new Date(a.date).getTime(); bVal = new Date(b.date).getTime(); break;
+                case 'inlet': aVal = a.inlet_sewage; bVal = b.inlet_sewage; break;
+                case 'tse': aVal = a.tse_for_irrigation; bVal = b.tse_for_irrigation; break;
+                case 'efficiency': aVal = aEfficiency; bVal = bEfficiency; break;
+                case 'trips': aVal = a.tanker_trips; bVal = b.tanker_trips; break;
+                case 'income': aVal = aIncome; bVal = bIncome; break;
+                case 'savings': aVal = aSavings; bVal = bSavings; break;
+                case 'total': aVal = aIncome + aSavings; bVal = bIncome + bSavings; break;
+                default: aVal = new Date(a.date).getTime(); bVal = new Date(b.date).getTime();
+            }
+            return logSortDirection === 'asc' ? (aVal as number) - (bVal as number) : (bVal as number) - (aVal as number);
+        });
+
+        return filtered;
+    }, [operations, selectedMonth, logSortField, logSortDirection]);
+
+    // Paginated daily operations
+    const paginatedDailyOperations = useMemo(() => {
+        const startIndex = (logCurrentPage - 1) * logPageSize;
+        return dailyOperations.slice(startIndex, startIndex + logPageSize);
+    }, [dailyOperations, logCurrentPage, logPageSize]);
+
+    const logTotalPages = Math.ceil(dailyOperations.length / logPageSize);
+
+    // Handle sort for daily log
+    const handleLogSort = (field: string) => {
+        if (logSortField === field) {
+            setLogSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+        } else {
+            setLogSortField(field);
+            setLogSortDirection('desc');
+        }
+        setLogCurrentPage(1);
+    };
 
     // Reset date range to full
     const handleResetRange = () => {
@@ -355,7 +495,7 @@ export default function STPPage() {
                                             </linearGradient>
                                         </defs>
                                         <XAxis dataKey="month" className="text-xs" tick={{ fontSize: 11, fill: "#6B7280" }} axisLine={false} tickLine={false} dy={10} />
-                                        <YAxis className="text-xs" tick={{ fontSize: 11, fill: "#6B7280" }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} axisLine={false} tickLine={false} />
+                                        <YAxis className="text-xs" tick={{ fontSize: 11, fill: "#6B7280" }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} axisLine={false} tickLine={false} label={{ value: 'm³', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: '#6B7280', fontSize: 11 } }} />
                                         <Tooltip content={<LiquidTooltip />} cursor={{ stroke: 'rgba(0,0,0,0.1)', strokeWidth: 2 }} />
                                         <Legend iconType="circle" />
                                         <Area type="monotone" dataKey="inlet" name="Sewage Inlet" stroke="#4E4456" fill="url(#gradInlet)" strokeWidth={3} activeDot={{ r: 6, stroke: '#fff', strokeWidth: 2 }} animationDuration={1500} />
@@ -381,8 +521,9 @@ export default function STPPage() {
                                     <ResponsiveContainer width="100%" height="100%">
                                         <BarChart data={monthlyChartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                                             <XAxis dataKey="month" className="text-xs" tick={{ fontSize: 10, fill: "#6B7280" }} axisLine={false} tickLine={false} dy={10} />
-                                            <YAxis className="text-xs" tick={{ fontSize: 10, fill: "#6B7280" }} axisLine={false} tickLine={false} />
+                                            <YAxis className="text-xs" tick={{ fontSize: 10, fill: "#6B7280" }} axisLine={false} tickLine={false} label={{ value: 'OMR', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: '#6B7280', fontSize: 10 } }} />
                                             <Tooltip content={<LiquidTooltip />} cursor={{ fill: 'rgba(0,0,0,0.04)', radius: 6 }} />
+                                            <Legend iconType="circle" wrapperStyle={{ paddingTop: 10 }} />
                                             <Bar dataKey="income" name="Income" fill="#5BA88B" radius={[6, 6, 0, 0]} animationDuration={1500} />
                                             <Bar dataKey="savings" name="Savings" fill="#4E4456" radius={[6, 6, 0, 0]} animationDuration={1500} />
                                         </BarChart>
@@ -404,8 +545,9 @@ export default function STPPage() {
                                     <ResponsiveContainer width="100%" height="100%">
                                         <LineChart data={monthlyChartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                                             <XAxis dataKey="month" className="text-xs" tick={{ fontSize: 10, fill: "#6B7280" }} axisLine={false} tickLine={false} dy={10} />
-                                            <YAxis className="text-xs" tick={{ fontSize: 10, fill: "#6B7280" }} axisLine={false} tickLine={false} />
+                                            <YAxis className="text-xs" tick={{ fontSize: 10, fill: "#6B7280" }} axisLine={false} tickLine={false} label={{ value: 'trips', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: '#6B7280', fontSize: 10 } }} />
                                             <Tooltip content={<LiquidTooltip />} cursor={{ stroke: 'rgba(0,0,0,0.1)', strokeWidth: 2 }} />
+                                            <Legend iconType="circle" wrapperStyle={{ paddingTop: 10 }} />
                                             <Line
                                                 type="monotone"
                                                 dataKey="trips"
@@ -453,18 +595,34 @@ export default function STPPage() {
                                 <table className="w-full text-sm">
                                     <thead>
                                         <tr className="border-b border-mb-primary/10 bg-mb-primary/5">
-                                            <th className="text-left p-3 font-medium text-mb-primary">Date</th>
-                                            <th className="text-right p-3 font-medium text-mb-primary">Inlet (m³)</th>
-                                            <th className="text-right p-3 font-medium text-mb-primary">TSE Output (m³)</th>
-                                            <th className="text-right p-3 font-medium text-mb-primary">Efficiency %</th>
-                                            <th className="text-right p-3 font-medium text-mb-primary">Tanker Trips</th>
-                                            <th className="text-right p-3 font-medium text-mb-primary">Income (OMR)</th>
-                                            <th className="text-right p-3 font-medium text-mb-primary">Savings (OMR)</th>
-                                            <th className="text-right p-3 font-medium text-mb-primary">Total Impact (OMR)</th>
+                                            <th className="text-left p-3 font-medium text-mb-primary cursor-pointer hover:bg-mb-primary/10" onClick={() => handleLogSort('date')}>
+                                                <div className="flex items-center gap-1">Date <ArrowUpDown className="w-3 h-3" /></div>
+                                            </th>
+                                            <th className="text-right p-3 font-medium text-mb-primary cursor-pointer hover:bg-mb-primary/10" onClick={() => handleLogSort('inlet')}>
+                                                <div className="flex items-center justify-end gap-1">Inlet (m³) <ArrowUpDown className="w-3 h-3" /></div>
+                                            </th>
+                                            <th className="text-right p-3 font-medium text-mb-primary cursor-pointer hover:bg-mb-primary/10" onClick={() => handleLogSort('tse')}>
+                                                <div className="flex items-center justify-end gap-1">TSE Output (m³) <ArrowUpDown className="w-3 h-3" /></div>
+                                            </th>
+                                            <th className="text-right p-3 font-medium text-mb-primary cursor-pointer hover:bg-mb-primary/10" onClick={() => handleLogSort('efficiency')}>
+                                                <div className="flex items-center justify-end gap-1">Efficiency % <ArrowUpDown className="w-3 h-3" /></div>
+                                            </th>
+                                            <th className="text-right p-3 font-medium text-mb-primary cursor-pointer hover:bg-mb-primary/10" onClick={() => handleLogSort('trips')}>
+                                                <div className="flex items-center justify-end gap-1">Tanker Trips <ArrowUpDown className="w-3 h-3" /></div>
+                                            </th>
+                                            <th className="text-right p-3 font-medium text-mb-primary cursor-pointer hover:bg-mb-primary/10" onClick={() => handleLogSort('income')}>
+                                                <div className="flex items-center justify-end gap-1">Income (OMR) <ArrowUpDown className="w-3 h-3" /></div>
+                                            </th>
+                                            <th className="text-right p-3 font-medium text-mb-primary cursor-pointer hover:bg-mb-primary/10" onClick={() => handleLogSort('savings')}>
+                                                <div className="flex items-center justify-end gap-1">Savings (OMR) <ArrowUpDown className="w-3 h-3" /></div>
+                                            </th>
+                                            <th className="text-right p-3 font-medium text-mb-primary cursor-pointer hover:bg-mb-primary/10" onClick={() => handleLogSort('total')}>
+                                                <div className="flex items-center justify-end gap-1">Total Impact (OMR) <ArrowUpDown className="w-3 h-3" /></div>
+                                            </th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {dailyOperations.map((op, idx) => {
+                                        {paginatedDailyOperations.map((op, idx) => {
                                             const efficiency = op.inlet_sewage > 0 ? (op.tse_for_irrigation / op.inlet_sewage) * 100 : 0;
                                             const income = op.tanker_trips * TANKER_FEE;
                                             const savings = op.tse_for_irrigation * TSE_SAVING_RATE;
@@ -490,6 +648,35 @@ export default function STPPage() {
                             {dailyOperations.length === 0 && (
                                 <div className="text-center py-8 text-muted-foreground">
                                     No data available for the selected month
+                                </div>
+                            )}
+                            {/* Pagination Controls */}
+                            {dailyOperations.length > 0 && logTotalPages > 1 && (
+                                <div className="flex items-center justify-between mt-4 px-2">
+                                    <span className="text-sm text-muted-foreground">
+                                        Showing {(logCurrentPage - 1) * logPageSize + 1} - {Math.min(logCurrentPage * logPageSize, dailyOperations.length)} of {dailyOperations.length}
+                                    </span>
+                                    <div className="flex items-center gap-2">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => setLogCurrentPage(prev => Math.max(1, prev - 1))}
+                                            disabled={logCurrentPage === 1}
+                                        >
+                                            <ChevronLeft className="w-4 h-4" />
+                                        </Button>
+                                        <span className="text-sm text-muted-foreground">
+                                            Page {logCurrentPage} of {logTotalPages}
+                                        </span>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => setLogCurrentPage(prev => Math.min(logTotalPages, prev + 1))}
+                                            disabled={logCurrentPage === logTotalPages}
+                                        >
+                                            <ChevronRight className="w-4 h-4" />
+                                        </Button>
+                                    </div>
                                 </div>
                             )}
                         </CardContent>

@@ -50,6 +50,7 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                 else if (sortField === 'account') { aVal = a.accountNumber; bVal = b.accountNumber; }
                 else if (sortField === 'level') { aVal = a.level; bVal = b.level; }
                 else if (sortField === 'zone') { aVal = a.zone; bVal = b.zone; }
+                else if (sortField === 'parentMeter') { aVal = a.parentMeter || ''; bVal = b.parentMeter || ''; }
                 else if (sortField === 'type') { aVal = a.type; bVal = b.type; }
                 else if (months.includes(sortField)) {
                     aVal = getConsumption(a, sortField);
@@ -119,7 +120,9 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                             <th className="text-left py-3 px-4 font-semibold text-slate-700 dark:text-slate-300 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700" onClick={() => handleSort('zone')}>
                                 <div className="flex items-center gap-1">Zone <ArrowUpDown className="w-3 h-3" /></div>
                             </th>
-                            <th className="text-left py-3 px-4 font-semibold text-slate-700 dark:text-slate-300">Parent Meter</th>
+                            <th className="text-left py-3 px-4 font-semibold text-slate-700 dark:text-slate-300 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700" onClick={() => handleSort('parentMeter')}>
+                                <div className="flex items-center gap-1">Parent Meter <ArrowUpDown className="w-3 h-3" /></div>
+                            </th>
                             <th className="text-left py-3 px-4 font-semibold text-slate-700 dark:text-slate-300 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700" onClick={() => handleSort('type')}>
                                 <div className="flex items-center gap-1">Type <ArrowUpDown className="w-3 h-3" /></div>
                             </th>

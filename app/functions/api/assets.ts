@@ -10,6 +10,7 @@ import type { Asset } from '@/lib/mock-data';
 
 /**
  * Fetch assets from Supabase with pagination and search
+ * Uses the Assets_Register_Database table
  */
 export async function getAssetsFromSupabase(
     page: number = 1,
@@ -27,16 +28,16 @@ export async function getAssetsFromSupabase(
 
     try {
         let query = client
-            .from('mb_assets')
+            .from('Assets_Register_Database')
             .select('*', { count: 'exact' });
 
-        // Apply search filter if provided
+        // Apply search filter if provided - using new column names
         if (search) {
-            query = query.or(`asset_name.ilike.%${search}%,location_name.ilike.%${search}%,asset_tag.ilike.%${search}%,category.ilike.%${search}%`);
+            query = query.or(`Asset_Name.ilike.%${search}%,Location_Name.ilike.%${search}%,Asset_Tag.ilike.%${search}%,Category.ilike.%${search}%,Discipline.ilike.%${search}%`);
         }
 
         const { data, error, count } = await query
-            .order('asset_name', { ascending: true })
+            .order('Asset_Name', { ascending: true })
             .range(start, end);
 
         if (error) {
@@ -53,3 +54,4 @@ export async function getAssetsFromSupabase(
         throw err;
     }
 }
+

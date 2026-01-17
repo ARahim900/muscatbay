@@ -33,9 +33,10 @@ import { PageHeader } from "@/components/shared/page-header";
 import { TabNavigation } from "@/components/shared/tab-navigation";
 import { StatsGrid } from "@/components/shared/stats-grid";
 import { Button } from "@/components/ui/button";
+import { saveFilterPreferences, loadFilterPreferences } from "@/lib/filter-preferences";
 
 // Dashboard view type
-type DashboardView = 'monthly' | 'daily' | 'hierarchy';
+type DashboardView = 'monthly' | 'hierarchy';
 
 // Helper functions that work with dynamic data
 function calculateRangeAnalysisFromData(meters: WaterMeter[], startMonth: string, endMonth: string) {
@@ -163,7 +164,37 @@ export default function WaterPage() {
             }
         }
         fetchWaterData();
+
+        // Load saved filter preferences
+        const savedPrefs = loadFilterPreferences<{
+            dashboardView?: DashboardView;
+            monthlyTab?: string;
+            startMonth?: string;
+            endMonth?: string;
+            selectedZone?: string;
+            selectedType?: string;
+        }>('water');
+        if (savedPrefs) {
+            if (savedPrefs.dashboardView) setDashboardView(savedPrefs.dashboardView);
+            if (savedPrefs.monthlyTab) setMonthlyTab(savedPrefs.monthlyTab);
+            if (savedPrefs.startMonth) setStartMonth(savedPrefs.startMonth);
+            if (savedPrefs.endMonth) setEndMonth(savedPrefs.endMonth);
+            if (savedPrefs.selectedZone) setSelectedZone(savedPrefs.selectedZone);
+            if (savedPrefs.selectedType) setSelectedType(savedPrefs.selectedType);
+        }
     }, []);
+
+    // Save filter preferences when they change
+    useEffect(() => {
+        saveFilterPreferences('water', {
+            dashboardView,
+            monthlyTab,
+            startMonth,
+            endMonth,
+            selectedZone,
+            selectedType
+        });
+    }, [dashboardView, monthlyTab, startMonth, endMonth, selectedZone, selectedType]);
 
     // Calculate analysis data using the loaded meters
     const rangeAnalysis = useMemo(() =>
@@ -256,68 +287,116 @@ export default function WaterPage() {
         'D_Building_Common': '#4E4456' // Primary
     };
 
-    // Generate stats for Overview using StatsGrid format
-    const overviewStats = useMemo(() => [
-        {
-            label: "A1 - MAIN SOURCE",
-            value: `${(rangeAnalysis.A1 / 1000).toFixed(1)}k m³`,
-            subtitle: "L1 (Main source input)",
-            icon: Droplets,
-            variant: "default" as const
-        },
-        {
-            label: "A2 - ZONE DISTRIBUTION",
-            value: `${(rangeAnalysis.A2 / 1000).toFixed(1)}k m³`,
-            subtitle: "L2 Bulks + DC",
-            icon: ChevronsRight,
-            variant: "secondary" as const
-        },
-        {
-            label: "A3 - INDIVIDUAL",
-            value: `${(rangeAnalysis.A3Individual / 1000).toFixed(1)}k m³`,
-            subtitle: "Villas + Apts + DC",
-            icon: Users,
-            variant: "primary" as const
-        },
-        {
-            label: "SYSTEM EFFICIENCY",
-            value: `${rangeAnalysis.efficiency}%`,
-            subtitle: "A3 / A1 Ratio",
-            icon: ArrowRightLeft,
-            variant: "success" as const
-        }
-    ], [rangeAnalysis]);
+    // Helper function to calculate trend
+    const calcTrend = (current: number, previous: number): { trend: 'up' | 'down' | 'neutral'; trendValue: string } => {
+        if (previous === 0) return { trend: 'neutral', trendValue: '0%' };
+        const change = ((current - previous) / previous) * 100;
+        if (Math.abs(change) < 0.5) return { trend: 'neutral', trendValue: '0%' };
+        return {
+            trend: change > 0 ? 'up' : 'down',
+            trendValue: `${Math.abs(change).toFixed(1)}%`
+        };
+    };
 
-    const lossStats = useMemo(() => [
-        {
-            label: "STAGE 1 LOSS",
-            value: `${rangeAnalysis.stage1Loss.toLocaleString('en-US')} m³`,
-            subtitle: `Loss Rate: ${rangeAnalysis.A1 > 0 ? ((rangeAnalysis.stage1Loss / rangeAnalysis.A1) * 100).toFixed(1) : 0}%`,
-            icon: Minus,
-            variant: "danger" as const
-        },
-        {
-            label: "STAGE 2 LOSS",
-            value: `${rangeAnalysis.stage2Loss.toLocaleString('en-US')} m³`,
-            subtitle: `Loss Rate: ${rangeAnalysis.A2 > 0 ? ((rangeAnalysis.stage2Loss / rangeAnalysis.A2) * 100).toFixed(1) : 0}%`,
-            icon: Minus,
-            variant: "warning" as const
-        },
-        {
-            label: "TOTAL SYSTEM LOSS",
-            value: `${rangeAnalysis.totalLoss.toLocaleString('en-US')} m³`,
-            subtitle: `Loss Rate: ${rangeAnalysis.lossPercentage}%`,
-            icon: AlertTriangle,
-            variant: "danger" as const
-        },
-        {
-            label: "HIGHEST CONSUMER",
-            value: highestConsumer.meter.label,
-            subtitle: `${highestConsumer.total.toLocaleString('en-US')} m³`,
-            icon: TrendingUp,
-            variant: "warning" as const
-        }
-    ], [rangeAnalysis, highestConsumer]);
+    // Calculate previous month analysis for trend comparison
+    const prevMonthAnalysis = useMemo(() => {
+        const endIdx = AVAILABLE_MONTHS.indexOf(endMonth);
+        if (endIdx <= 0) return null;
+        const prevMonth = AVAILABLE_MONTHS[endIdx - 1];
+        return calculateRangeAnalysisFromData(waterMeters, prevMonth, prevMonth);
+    }, [waterMeters, endMonth]);
+
+    // Generate stats for Overview using StatsGrid format with trends
+    const overviewStats = useMemo(() => {
+        const a1Trend = prevMonthAnalysis ? calcTrend(rangeAnalysis.A1, prevMonthAnalysis.A1) : { trend: 'neutral' as const, trendValue: '—' };
+        const a2Trend = prevMonthAnalysis ? calcTrend(rangeAnalysis.A2, prevMonthAnalysis.A2) : { trend: 'neutral' as const, trendValue: '—' };
+        const a3Trend = prevMonthAnalysis ? calcTrend(rangeAnalysis.A3Individual, prevMonthAnalysis.A3Individual) : { trend: 'neutral' as const, trendValue: '—' };
+        const effTrend = prevMonthAnalysis ? calcTrend(rangeAnalysis.efficiency, prevMonthAnalysis.efficiency) : { trend: 'neutral' as const, trendValue: '—' };
+
+        return [
+            {
+                label: "A1 - MAIN SOURCE",
+                value: `${(rangeAnalysis.A1 / 1000).toFixed(1)}k m³`,
+                subtitle: "L1 (Main source input)",
+                icon: Droplets,
+                variant: "default" as const,
+                trend: a1Trend.trend,
+                trendValue: a1Trend.trendValue
+            },
+            {
+                label: "A2 - ZONE DISTRIBUTION",
+                value: `${(rangeAnalysis.A2 / 1000).toFixed(1)}k m³`,
+                subtitle: "L2 Bulks + DC",
+                icon: ChevronsRight,
+                variant: "secondary" as const,
+                trend: a2Trend.trend,
+                trendValue: a2Trend.trendValue
+            },
+            {
+                label: "A3 - INDIVIDUAL",
+                value: `${(rangeAnalysis.A3Individual / 1000).toFixed(1)}k m³`,
+                subtitle: "Villas + Apts + DC",
+                icon: Users,
+                variant: "primary" as const,
+                trend: a3Trend.trend,
+                trendValue: a3Trend.trendValue
+            },
+            {
+                label: "SYSTEM EFFICIENCY",
+                value: `${rangeAnalysis.efficiency}%`,
+                subtitle: "A3 / A1 Ratio",
+                icon: ArrowRightLeft,
+                variant: "success" as const,
+                trend: effTrend.trend,
+                trendValue: effTrend.trendValue
+            }
+        ];
+    }, [rangeAnalysis, prevMonthAnalysis]);
+
+    const lossStats = useMemo(() => {
+        const s1LossTrend = prevMonthAnalysis ? calcTrend(rangeAnalysis.stage1Loss, prevMonthAnalysis.stage1Loss) : { trend: 'neutral' as const, trendValue: '—' };
+        const s2LossTrend = prevMonthAnalysis ? calcTrend(rangeAnalysis.stage2Loss, prevMonthAnalysis.stage2Loss) : { trend: 'neutral' as const, trendValue: '—' };
+        const totalLossTrend = prevMonthAnalysis ? calcTrend(rangeAnalysis.totalLoss, prevMonthAnalysis.totalLoss) : { trend: 'neutral' as const, trendValue: '—' };
+
+        return [
+            {
+                label: "STAGE 1 LOSS",
+                value: `${rangeAnalysis.stage1Loss.toLocaleString('en-US')} m³`,
+                subtitle: `Loss Rate: ${rangeAnalysis.A1 > 0 ? ((rangeAnalysis.stage1Loss / rangeAnalysis.A1) * 100).toFixed(1) : 0}%`,
+                icon: Minus,
+                variant: "danger" as const,
+                trend: s1LossTrend.trend,
+                trendValue: s1LossTrend.trendValue
+            },
+            {
+                label: "STAGE 2 LOSS",
+                value: `${rangeAnalysis.stage2Loss.toLocaleString('en-US')} m³`,
+                subtitle: `Loss Rate: ${rangeAnalysis.A2 > 0 ? ((rangeAnalysis.stage2Loss / rangeAnalysis.A2) * 100).toFixed(1) : 0}%`,
+                icon: Minus,
+                variant: "warning" as const,
+                trend: s2LossTrend.trend,
+                trendValue: s2LossTrend.trendValue
+            },
+            {
+                label: "TOTAL SYSTEM LOSS",
+                value: `${rangeAnalysis.totalLoss.toLocaleString('en-US')} m³`,
+                subtitle: `Loss Rate: ${rangeAnalysis.lossPercentage}%`,
+                icon: AlertTriangle,
+                variant: "danger" as const,
+                trend: totalLossTrend.trend,
+                trendValue: totalLossTrend.trendValue
+            },
+            {
+                label: "HIGHEST CONSUMER",
+                value: highestConsumer.meter.label,
+                subtitle: `${highestConsumer.total.toLocaleString('en-US')} m³`,
+                icon: TrendingUp,
+                variant: "warning" as const,
+                trend: 'neutral' as const,
+                trendValue: '—'
+            }
+        ];
+    }, [rangeAnalysis, highestConsumer, prevMonthAnalysis]);
 
     if (isLoading) {
         return <div className="p-8"><div className="flex items-center gap-2"><Loader2 className="animate-spin" /> Loading...</div></div>;
@@ -351,16 +430,7 @@ export default function WaterPage() {
                     <BarChart3 className="w-4 h-4" />
                     Monthly Dashboard
                 </button>
-                <button
-                    onClick={() => setDashboardView('daily')}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${dashboardView === 'daily'
-                        ? 'bg-background text-foreground shadow-sm'
-                        : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
-                        }`}
-                >
-                    <Calendar className="w-4 h-4" />
-                    Daily Analysis
-                </button>
+
                 <button
                     onClick={() => setDashboardView('hierarchy')}
                     className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${dashboardView === 'hierarchy'
@@ -427,7 +497,7 @@ export default function WaterPage() {
                                                     </linearGradient>
                                                 </defs>
                                                 <XAxis dataKey="month" className="text-xs" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#6B7280" }} dy={10} />
-                                                <YAxis className="text-xs" tickFormatter={(v) => `${v / 1000}k`} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#6B7280" }} />
+                                                <YAxis className="text-xs" tickFormatter={(v) => `${v / 1000}k`} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#6B7280" }} label={{ value: 'm³', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: '#6B7280', fontSize: 11 } }} />
                                                 <Tooltip content={<LiquidTooltip />} cursor={{ stroke: 'rgba(0,0,0,0.1)', strokeWidth: 2 }} />
                                                 <Legend iconType="circle" />
                                                 <Area type="monotone" name="A1 - Main Source" dataKey="A1" stroke="#4E4456" fill="url(#gradA1)" strokeWidth={3} activeDot={{ r: 6, stroke: '#fff', strokeWidth: 2 }} animationDuration={1500} />
@@ -455,7 +525,7 @@ export default function WaterPage() {
                                                     </linearGradient>
                                                 </defs>
                                                 <XAxis dataKey="month" className="text-xs" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#6B7280" }} dy={10} />
-                                                <YAxis className="text-xs" tickFormatter={(v) => `${v / 1000}k`} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#6B7280" }} />
+                                                <YAxis className="text-xs" tickFormatter={(v) => `${v / 1000}k`} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#6B7280" }} label={{ value: 'm³', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: '#6B7280', fontSize: 11 } }} />
                                                 <Tooltip content={<LiquidTooltip />} cursor={{ stroke: 'rgba(0,0,0,0.1)', strokeWidth: 2 }} />
                                                 <Legend iconType="circle" />
                                                 <Area type="monotone" name="Total Loss" dataKey="totalLoss" stroke="#C95D63" fill="url(#gradLoss)" strokeWidth={2} strokeDasharray="5 5" animationDuration={1500} />
@@ -588,7 +658,7 @@ export default function WaterPage() {
                                                     </linearGradient>
                                                 </defs>
                                                 <XAxis dataKey="month" className="text-xs" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#6B7280" }} dy={10} />
-                                                <YAxis className="text-xs" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#6B7280" }} />
+                                                <YAxis className="text-xs" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#6B7280" }} label={{ value: 'm³', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: '#6B7280', fontSize: 11 } }} />
                                                 <Tooltip content={<LiquidTooltip />} cursor={{ stroke: 'rgba(0,0,0,0.1)', strokeWidth: 2 }} />
                                                 <Legend iconType="circle" />
                                                 <Area type="monotone" name="Individual Total" dataKey="Individual Total" stroke="#4E4456" fill="url(#gradIndividual)" strokeWidth={3} activeDot={{ r: 6, stroke: '#fff', strokeWidth: 2 }} animationDuration={1500} />
@@ -673,7 +743,7 @@ export default function WaterPage() {
                                     <div className="h-[300px] sm:h-[350px] md:h-[400px] w-full">
                                         <ResponsiveContainer width="100%" height="100%">
                                             <BarChart data={consumptionChartData} layout="vertical" margin={{ left: 120 }}>
-                                                <XAxis type="number" tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#6B7280" }} />
+                                                <XAxis type="number" tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#6B7280" }} label={{ value: 'm³', position: 'insideBottom', offset: -5, style: { textAnchor: 'middle', fill: '#6B7280', fontSize: 11 } }} />
                                                 <YAxis type="category" dataKey="type" width={110} className="text-xs" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#6B7280" }} />
                                                 <Tooltip content={<LiquidTooltip />} cursor={{ fill: 'rgba(0,0,0,0.04)', radius: 6 }} />
                                                 <Bar dataKey="total" radius={[0, 6, 6, 0]} barSize={24} animationDuration={1500}>
@@ -708,19 +778,7 @@ export default function WaterPage() {
             )}
 
             {/* Other Dashboard Views */}
-            {dashboardView === 'daily' && (
-                <div className="flex flex-col items-center justify-center p-12 text-center space-y-4 glass-card rounded-xl">
-                    <div className="p-4 bg-mb-primary/10 rounded-full">
-                        <Calendar className="w-8 h-8 text-mb-primary" />
-                    </div>
-                    <div>
-                        <h3 className="text-lg font-semibold text-mb-primary">Daily Analysis Implemented</h3>
-                        <p className="text-muted-foreground max-w-md">
-                            Detailed daily water consumption tracking and individual meter logging functionality is coming soon.
-                        </p>
-                    </div>
-                </div>
-            )}
+
 
             {dashboardView === 'hierarchy' && (
                 <div className="space-y-6 animate-in fade-in duration-300">
