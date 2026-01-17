@@ -103,6 +103,17 @@ export default function ElectricityPage() {
         });
     }, [allMonths, selectedYear]);
 
+    // Helper function to calculate trend
+    const calcTrend = (current: number, previous: number): { trend: 'up' | 'down' | 'neutral'; trendValue: string } => {
+        if (previous === 0) return { trend: 'neutral', trendValue: '0%' };
+        const change = ((current - previous) / previous) * 100;
+        if (Math.abs(change) < 0.5) return { trend: 'neutral', trendValue: '0%' };
+        return {
+            trend: change > 0 ? 'up' : 'down',
+            trendValue: `${Math.abs(change).toFixed(1)}%`
+        };
+    };
+
     const stats = useMemo(() => {
         // Get months within selected range
         const startIdx = allMonths.indexOf(startMonth);
@@ -127,34 +138,59 @@ export default function ElectricityPage() {
 
         const rangeLabel = startMonth && endMonth ? `${startMonth} - ${endMonth}` : "All Time";
 
+        // Calculate previous period for trend comparison
+        const prevEndIdx = startIdx > 0 ? startIdx - 1 : -1;
+        const prevStartIdx = prevEndIdx >= 0 ? Math.max(0, prevEndIdx - (endIdx - startIdx)) : -1;
+
+        let prevConsumption = 0;
+        let prevCost = 0;
+        if (prevStartIdx >= 0 && prevEndIdx >= 0) {
+            const prevMonths = allMonths.slice(prevStartIdx, prevEndIdx + 1);
+            prevConsumption = meters.reduce((sum, meter) => {
+                return sum + prevMonths.reduce((mSum, month) => mSum + (meter.readings[month] || 0), 0);
+            }, 0);
+            prevCost = prevConsumption * ratePerKWh;
+        }
+
+        const consumptionTrend = calcTrend(totalConsumption, prevConsumption);
+        const costTrend = calcTrend(totalCost, prevCost);
+
         return [
             {
                 label: "TOTAL CONSUMPTION",
                 value: `${(totalConsumption / 1000).toFixed(1)} MWh`,
                 subtitle: rangeLabel,
                 icon: Zap,
-                variant: "warning" as const
+                variant: "warning" as const,
+                trend: consumptionTrend.trend,
+                trendValue: consumptionTrend.trendValue
             },
             {
                 label: "TOTAL COST",
                 value: `${totalCost.toLocaleString('en-US')} OMR`,
                 subtitle: `@ ${ratePerKWh} OMR/kWh`,
                 icon: DollarSign,
-                variant: "success" as const
+                variant: "success" as const,
+                trend: costTrend.trend,
+                trendValue: costTrend.trendValue
             },
             {
                 label: "METER COUNT",
                 value: meters.length.toString(),
                 subtitle: "Active Meters",
                 icon: MapPin,
-                variant: "water" as const
+                variant: "water" as const,
+                trend: 'neutral' as const,
+                trendValue: '—'
             },
             {
                 label: "HIGHEST CONSUMER",
                 value: highest.name,
                 subtitle: `${Math.round(highest.val).toLocaleString('en-US')} kWh`,
                 icon: TrendingUp,
-                variant: "danger" as const
+                variant: "danger" as const,
+                trend: 'neutral' as const,
+                trendValue: '—'
             }
         ];
     }, [meters, allMonths, startMonth, endMonth]);
@@ -277,28 +313,36 @@ export default function ElectricityPage() {
                 value: `${(totalConsumption / 1000).toFixed(2)} MWh`,
                 subtitle: "in selected period",
                 icon: Zap,
-                variant: "primary" as const
+                variant: "primary" as const,
+                trend: 'neutral' as const,
+                trendValue: '—'
             },
             {
                 label: "TOTAL COST",
                 value: `${totalCost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} OMR`,
                 subtitle: `at ${ratePerKWh} OMR/kWh`,
                 icon: DollarSign,
-                variant: "success" as const
+                variant: "success" as const,
+                trend: 'neutral' as const,
+                trendValue: '—'
             },
             {
                 label: "METER COUNT",
                 value: filteredMeters.length.toString(),
                 subtitle: analysisType === "All" ? "Total Meters" : `${analysisType} Meters`,
                 icon: MapPin,
-                variant: "warning" as const
+                variant: "warning" as const,
+                trend: 'neutral' as const,
+                trendValue: '—'
             },
             {
                 label: "HIGHEST CONSUMER",
                 value: highestConsumer.name,
                 subtitle: `${(highestConsumer.val / 1000).toFixed(1)} MWh`,
                 icon: TrendingUp,
-                variant: "danger" as const
+                variant: "danger" as const,
+                trend: 'neutral' as const,
+                trendValue: '—'
             }
         ];
 

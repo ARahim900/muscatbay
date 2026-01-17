@@ -256,68 +256,116 @@ export default function WaterPage() {
         'D_Building_Common': '#4E4456' // Primary
     };
 
-    // Generate stats for Overview using StatsGrid format
-    const overviewStats = useMemo(() => [
-        {
-            label: "A1 - MAIN SOURCE",
-            value: `${(rangeAnalysis.A1 / 1000).toFixed(1)}k m³`,
-            subtitle: "L1 (Main source input)",
-            icon: Droplets,
-            variant: "default" as const
-        },
-        {
-            label: "A2 - ZONE DISTRIBUTION",
-            value: `${(rangeAnalysis.A2 / 1000).toFixed(1)}k m³`,
-            subtitle: "L2 Bulks + DC",
-            icon: ChevronsRight,
-            variant: "secondary" as const
-        },
-        {
-            label: "A3 - INDIVIDUAL",
-            value: `${(rangeAnalysis.A3Individual / 1000).toFixed(1)}k m³`,
-            subtitle: "Villas + Apts + DC",
-            icon: Users,
-            variant: "primary" as const
-        },
-        {
-            label: "SYSTEM EFFICIENCY",
-            value: `${rangeAnalysis.efficiency}%`,
-            subtitle: "A3 / A1 Ratio",
-            icon: ArrowRightLeft,
-            variant: "success" as const
-        }
-    ], [rangeAnalysis]);
+    // Helper function to calculate trend
+    const calcTrend = (current: number, previous: number): { trend: 'up' | 'down' | 'neutral'; trendValue: string } => {
+        if (previous === 0) return { trend: 'neutral', trendValue: '0%' };
+        const change = ((current - previous) / previous) * 100;
+        if (Math.abs(change) < 0.5) return { trend: 'neutral', trendValue: '0%' };
+        return {
+            trend: change > 0 ? 'up' : 'down',
+            trendValue: `${Math.abs(change).toFixed(1)}%`
+        };
+    };
 
-    const lossStats = useMemo(() => [
-        {
-            label: "STAGE 1 LOSS",
-            value: `${rangeAnalysis.stage1Loss.toLocaleString('en-US')} m³`,
-            subtitle: `Loss Rate: ${rangeAnalysis.A1 > 0 ? ((rangeAnalysis.stage1Loss / rangeAnalysis.A1) * 100).toFixed(1) : 0}%`,
-            icon: Minus,
-            variant: "danger" as const
-        },
-        {
-            label: "STAGE 2 LOSS",
-            value: `${rangeAnalysis.stage2Loss.toLocaleString('en-US')} m³`,
-            subtitle: `Loss Rate: ${rangeAnalysis.A2 > 0 ? ((rangeAnalysis.stage2Loss / rangeAnalysis.A2) * 100).toFixed(1) : 0}%`,
-            icon: Minus,
-            variant: "warning" as const
-        },
-        {
-            label: "TOTAL SYSTEM LOSS",
-            value: `${rangeAnalysis.totalLoss.toLocaleString('en-US')} m³`,
-            subtitle: `Loss Rate: ${rangeAnalysis.lossPercentage}%`,
-            icon: AlertTriangle,
-            variant: "danger" as const
-        },
-        {
-            label: "HIGHEST CONSUMER",
-            value: highestConsumer.meter.label,
-            subtitle: `${highestConsumer.total.toLocaleString('en-US')} m³`,
-            icon: TrendingUp,
-            variant: "warning" as const
-        }
-    ], [rangeAnalysis, highestConsumer]);
+    // Calculate previous month analysis for trend comparison
+    const prevMonthAnalysis = useMemo(() => {
+        const endIdx = AVAILABLE_MONTHS.indexOf(endMonth);
+        if (endIdx <= 0) return null;
+        const prevMonth = AVAILABLE_MONTHS[endIdx - 1];
+        return calculateRangeAnalysisFromData(waterMeters, prevMonth, prevMonth);
+    }, [waterMeters, endMonth]);
+
+    // Generate stats for Overview using StatsGrid format with trends
+    const overviewStats = useMemo(() => {
+        const a1Trend = prevMonthAnalysis ? calcTrend(rangeAnalysis.A1, prevMonthAnalysis.A1) : { trend: 'neutral' as const, trendValue: '—' };
+        const a2Trend = prevMonthAnalysis ? calcTrend(rangeAnalysis.A2, prevMonthAnalysis.A2) : { trend: 'neutral' as const, trendValue: '—' };
+        const a3Trend = prevMonthAnalysis ? calcTrend(rangeAnalysis.A3Individual, prevMonthAnalysis.A3Individual) : { trend: 'neutral' as const, trendValue: '—' };
+        const effTrend = prevMonthAnalysis ? calcTrend(rangeAnalysis.efficiency, prevMonthAnalysis.efficiency) : { trend: 'neutral' as const, trendValue: '—' };
+
+        return [
+            {
+                label: "A1 - MAIN SOURCE",
+                value: `${(rangeAnalysis.A1 / 1000).toFixed(1)}k m³`,
+                subtitle: "L1 (Main source input)",
+                icon: Droplets,
+                variant: "default" as const,
+                trend: a1Trend.trend,
+                trendValue: a1Trend.trendValue
+            },
+            {
+                label: "A2 - ZONE DISTRIBUTION",
+                value: `${(rangeAnalysis.A2 / 1000).toFixed(1)}k m³`,
+                subtitle: "L2 Bulks + DC",
+                icon: ChevronsRight,
+                variant: "secondary" as const,
+                trend: a2Trend.trend,
+                trendValue: a2Trend.trendValue
+            },
+            {
+                label: "A3 - INDIVIDUAL",
+                value: `${(rangeAnalysis.A3Individual / 1000).toFixed(1)}k m³`,
+                subtitle: "Villas + Apts + DC",
+                icon: Users,
+                variant: "primary" as const,
+                trend: a3Trend.trend,
+                trendValue: a3Trend.trendValue
+            },
+            {
+                label: "SYSTEM EFFICIENCY",
+                value: `${rangeAnalysis.efficiency}%`,
+                subtitle: "A3 / A1 Ratio",
+                icon: ArrowRightLeft,
+                variant: "success" as const,
+                trend: effTrend.trend,
+                trendValue: effTrend.trendValue
+            }
+        ];
+    }, [rangeAnalysis, prevMonthAnalysis]);
+
+    const lossStats = useMemo(() => {
+        const s1LossTrend = prevMonthAnalysis ? calcTrend(rangeAnalysis.stage1Loss, prevMonthAnalysis.stage1Loss) : { trend: 'neutral' as const, trendValue: '—' };
+        const s2LossTrend = prevMonthAnalysis ? calcTrend(rangeAnalysis.stage2Loss, prevMonthAnalysis.stage2Loss) : { trend: 'neutral' as const, trendValue: '—' };
+        const totalLossTrend = prevMonthAnalysis ? calcTrend(rangeAnalysis.totalLoss, prevMonthAnalysis.totalLoss) : { trend: 'neutral' as const, trendValue: '—' };
+
+        return [
+            {
+                label: "STAGE 1 LOSS",
+                value: `${rangeAnalysis.stage1Loss.toLocaleString('en-US')} m³`,
+                subtitle: `Loss Rate: ${rangeAnalysis.A1 > 0 ? ((rangeAnalysis.stage1Loss / rangeAnalysis.A1) * 100).toFixed(1) : 0}%`,
+                icon: Minus,
+                variant: "danger" as const,
+                trend: s1LossTrend.trend,
+                trendValue: s1LossTrend.trendValue
+            },
+            {
+                label: "STAGE 2 LOSS",
+                value: `${rangeAnalysis.stage2Loss.toLocaleString('en-US')} m³`,
+                subtitle: `Loss Rate: ${rangeAnalysis.A2 > 0 ? ((rangeAnalysis.stage2Loss / rangeAnalysis.A2) * 100).toFixed(1) : 0}%`,
+                icon: Minus,
+                variant: "warning" as const,
+                trend: s2LossTrend.trend,
+                trendValue: s2LossTrend.trendValue
+            },
+            {
+                label: "TOTAL SYSTEM LOSS",
+                value: `${rangeAnalysis.totalLoss.toLocaleString('en-US')} m³`,
+                subtitle: `Loss Rate: ${rangeAnalysis.lossPercentage}%`,
+                icon: AlertTriangle,
+                variant: "danger" as const,
+                trend: totalLossTrend.trend,
+                trendValue: totalLossTrend.trendValue
+            },
+            {
+                label: "HIGHEST CONSUMER",
+                value: highestConsumer.meter.label,
+                subtitle: `${highestConsumer.total.toLocaleString('en-US')} m³`,
+                icon: TrendingUp,
+                variant: "warning" as const,
+                trend: 'neutral' as const,
+                trendValue: '—'
+            }
+        ];
+    }, [rangeAnalysis, highestConsumer, prevMonthAnalysis]);
 
     if (isLoading) {
         return <div className="p-8"><div className="flex items-center gap-2"><Loader2 className="animate-spin" /> Loading...</div></div>;
