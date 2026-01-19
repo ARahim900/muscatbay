@@ -151,3 +151,117 @@ export function transformWaterMeter(dbMeter: SupabaseWaterMeter): WaterMeter {
         consumption,
     };
 }
+
+// =============================================================================
+// WATER LOSS ENTITIES
+// =============================================================================
+
+/**
+ * Water loss summary from "water_loss_summary" table in Supabase
+ */
+export interface SupabaseWaterLossSummary {
+    id: number;
+    zone: string;
+    l2_bulk_account: string | null;
+    l3_meters_count: number | null;
+    l2_total_m3: number | null;
+    l3_total_m3: number | null;
+    loss_m3: number | null;
+    loss_percent: number | null;
+    status: string | null;
+    month: string;
+    year: number;
+    generated_at: string | null;
+    created_at?: string;
+    updated_at?: string;
+}
+
+/**
+ * Transformed water loss summary for frontend use
+ */
+export interface WaterLossSummary {
+    id: number;
+    zone: string;
+    l2BulkAccount: string;
+    l3MetersCount: number;
+    l2TotalM3: number;
+    l3TotalM3: number;
+    lossM3: number;
+    lossPercent: number;
+    status: string;
+    month: string;
+    year: number;
+    generatedAt: string | null;
+}
+
+/**
+ * Transform Supabase water loss summary to frontend format
+ */
+export function transformWaterLossSummary(record: SupabaseWaterLossSummary): WaterLossSummary {
+    return {
+        id: record.id,
+        zone: record.zone,
+        l2BulkAccount: record.l2_bulk_account || '',
+        l3MetersCount: record.l3_meters_count || 0,
+        l2TotalM3: record.l2_total_m3 || 0,
+        l3TotalM3: record.l3_total_m3 || 0,
+        lossM3: record.loss_m3 || 0,
+        lossPercent: record.loss_percent || 0,
+        status: record.status || '',
+        month: record.month,
+        year: record.year,
+        generatedAt: record.generated_at,
+    };
+}
+
+/**
+ * Water loss daily from "water_loss_daily" table in Supabase
+ */
+export interface SupabaseWaterLossDaily {
+    id: number;
+    zone: string;
+    day: number;
+    date: string;
+    l2_total_m3: number | null;
+    l3_total_m3: number | null;
+    loss_m3: number | null;
+    loss_percent: number | null;
+    month: string;
+    year: number;
+    created_at?: string;
+    updated_at?: string;
+}
+
+/**
+ * Transformed water loss daily for frontend use
+ */
+export interface WaterLossDaily {
+    id: number;
+    zone: string;
+    day: number;
+    date: string;
+    l2TotalM3: number;
+    l3TotalM3: number;
+    lossM3: number;
+    lossPercent: number;
+    month: string;
+    year: number;
+}
+
+/**
+ * Transform Supabase water loss daily to frontend format
+ */
+export function transformWaterLossDaily(record: SupabaseWaterLossDaily): WaterLossDaily {
+    return {
+        id: record.id,
+        zone: record.zone,
+        day: record.day,
+        date: record.date,
+        l2TotalM3: record.l2_total_m3 || 0,
+        l3TotalM3: record.l3_total_m3 || 0,
+        lossM3: record.loss_m3 || 0,
+        lossPercent: record.loss_percent || 0,
+        month: record.month,
+        year: record.year,
+    };
+}

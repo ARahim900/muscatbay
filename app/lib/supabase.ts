@@ -77,6 +77,13 @@ export {
     type SupabaseDailyWaterConsumption,
     type DailyWaterConsumption,
     transformDailyWaterConsumption,
+    // Water Loss
+    type SupabaseWaterLossSummary,
+    type WaterLossSummary,
+    transformWaterLossSummary,
+    type SupabaseWaterLossDaily,
+    type WaterLossDaily,
+    transformWaterLossDaily,
     // Fire Safety
     type FireSafetyEquipment,
     type FireQuotation,
@@ -105,4 +112,7 @@ export {
     // Water
     getWaterMetersFromSupabase,
     getDailyWaterConsumptionFromSupabase,
+    // Water Loss
+    getWaterLossSummaryFromSupabase,
+    getWaterLossDailyFromSupabase,
 } from '@/functions';
