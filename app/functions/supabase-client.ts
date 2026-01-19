@@ -4,7 +4,8 @@
  * @module functions/supabase-client
  */
 
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { SupabaseClient } from '@supabase/supabase-js';
+import { createBrowserClient } from '@supabase/ssr';
 
 // =============================================================================
 // CLIENT CONFIGURATION
@@ -42,15 +43,32 @@ export function getSupabaseClient(): SupabaseClient | null {
         return null;
     }
     if (!supabaseClient) {
-        supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
-            auth: {
-                persistSession: true,
-                autoRefreshToken: true,
-                detectSessionInUrl: true,
-                // Use PKCE flow for better security on web applications
-                flowType: 'pkce',
+        console.log('🔌 Initializing Supabase client with URL:', supabaseUrl?.split('.')[0] + '...');
+        supabaseClient = createBrowserClient(supabaseUrl, supabaseAnonKey, {
+            // Global fetch options for better performance
+            global: {
+                fetch: (url, options = {}) => {
+                    // Add 10 second timeout to all requests
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+                    return fetch(url, {
+                        ...options,
+                        signal: controller.signal,
+                    }).finally(() => clearTimeout(timeoutId));
+                },
             },
-        });
+            // Database configuration
+            db: {
+                schema: 'public',
+            },
+            // Realtime configuration (disabled if not needed for performance)
+            realtime: {
+                params: {
+                    eventsPerSecond: 2,
+                },
+            },
+        }) as SupabaseClient;
     }
     return supabaseClient;
 }

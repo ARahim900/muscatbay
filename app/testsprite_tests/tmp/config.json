@@ -1,0 +1,16 @@
+{
+  "status": "commited",
+  "type": "frontend",
+  "scope": "codebase",
+  "localEndpoint": "http://localhost:3002",
+  "executionArgs": {
+    "projectName": "app",
+    "projectPath": "C:\\Users\\Abdulrahim.Albalushi\\Downloads\\anti_G\\app",
+    "testIds": [],
+    "additionalInstruction": "DEV_MODE is enabled - the app should be accessible without login. Navigate directly to \"/\" to access the dashboard.",
+    "envs": {
+      "API_KEY": "sk-user-X2ZKZzLKC6GiTsSxjOtszm_S5-IOb7U9sC75ffdB2kCX8fG_8wyubqASJH7ZkLvlQx0tUS67yXfGfk_fsPzeG5QnVn1nBrqp8ugwfgXyknhXg9QC7J3tRdcbKvz3sirlqgo"
+    }
+  },
+  "proxy": "http://e794b25d-cbe6-4852-b161-20649ee07990:LatrXdaHjFik5h1vTfc5yO8M4AokUps6@tun.testsprite.com:8080"
+}

@@ -2,7 +2,8 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { getAssets, Asset } from "@/lib/mock-data";
-import { getAssetsFromSupabase, isSupabaseConfigured } from "@/lib/supabase";
+import { isSupabaseConfigured } from "@/lib/supabase";
+import { fetchAssetsAction } from "@/actions/assets";
 import { StatsGrid } from "@/components/shared/stats-grid";
 import { StatsGridSkeleton, TableSkeleton, Skeleton } from "@/components/shared/skeleton";
 import { PageHeader } from "@/components/shared/page-header";
@@ -49,8 +50,12 @@ export default function AssetsPage() {
                 return;
             }
 
-            // Supabase with pagination
-            const { data, count } = await getAssetsFromSupabase(currentPage, pageSize, debouncedSearch);
+            // Supabase with pagination via Server Action
+            const { data, count, error: fetchError } = await fetchAssetsAction(currentPage, pageSize, debouncedSearch);
+
+            if (fetchError) {
+                throw new Error(fetchError);
+            }
 
             if (data) {
                 setAssets(data);
@@ -61,8 +66,8 @@ export default function AssetsPage() {
                 setTotalCount(0);
             }
         } catch (e) {
-            // console.error("Supabase fetch failed, using mock data:", e);
-            setError("Supabase connection failed. Using demo data.");
+            console.error("Supabase fetch failed:", e);
+            setError("Connection failed (check extensions/adblock). Using demo data.");
             const mockData = await getAssets();
             setAssets(mockData);
             setDataSource('mock');

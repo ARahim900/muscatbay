@@ -36,6 +36,7 @@
 // =============================================================================
 
 export interface WaterMeter {
+  id?: number;
   label: string;
   accountNumber: string;
   level: 'L1' | 'L2' | 'L3' | 'L4' | 'DC' | 'N/A';

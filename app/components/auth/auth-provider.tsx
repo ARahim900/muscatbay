@@ -113,6 +113,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
     // Handle route protection
     useEffect(() => {
         if (!loading) {
+            // Skip route protection in DEV_MODE - user is always authenticated
+            if (isDevMode()) {
+                if (isPublicRoute && pathname !== "/auth/reset-password") {
+                    // In DEV_MODE, redirect away from auth pages to dashboard
+                    router.push("/");
+                }
+                return;
+            }
+
             if (!user && !isPublicRoute) {
                 // Not authenticated and trying to access protected route
                 router.push("/login");
@@ -135,8 +144,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
         );
     }
 
-    // Don't render protected content if not authenticated
-    if (!user && !isPublicRoute) {
+    // Don't render protected content if not authenticated (skip in DEV_MODE)
+    if (!user && !isPublicRoute && !isDevMode()) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900">
                 <div className="flex flex-col items-center gap-4">

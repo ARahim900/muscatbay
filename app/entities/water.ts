@@ -142,6 +142,7 @@ export function transformWaterMeter(dbMeter: SupabaseWaterMeter): WaterMeter {
     };
 
     return {
+        id: dbMeter.id,
         label: dbMeter.label || 'Unknown Meter',
         accountNumber: dbMeter.account_number || '',
         level: (dbMeter.level as WaterMeter['level']) || 'N/A',

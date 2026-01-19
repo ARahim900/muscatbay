@@ -64,47 +64,43 @@ export function useDashboardData() {
             let elecTotal = 0;
 
             if (isSupabaseConfigured()) {
-                // Fetch STP data
-                try {
-                    const stpResult = await getSTPOperationsFromSupabase();
-                    if (stpResult.length > 0) {
-                        stpData = stpResult;
-                        liveDataFetched = true;
-                    }
-                } catch (e) {
+                // Fetch all data in PARALLEL for better performance
+                const [stpResult, elecResult, contractorsResult, assetsResult] = await Promise.allSettled([
+                    getSTPOperationsFromSupabase(),
+                    getElectricityMetersFromSupabase(),
+                    getContractorSummary(),
+                    getAssetsFromSupabase(1, 1, '')
+                ]);
+
+                // Process STP data
+                if (stpResult.status === 'fulfilled' && stpResult.value.length > 0) {
+                    stpData = stpResult.value;
+                    liveDataFetched = true;
+                } else if (stpResult.status === 'rejected') {
                     console.warn("STP fetch from Supabase failed, using mock");
                 }
 
-                // Fetch Electricity data
-                try {
-                    const elecResult = await getElectricityMetersFromSupabase();
-                    if (elecResult.length > 0) {
-                        elecData = elecResult;
-                        liveDataFetched = true;
-                    }
-                } catch (e) {
+                // Process Electricity data
+                if (elecResult.status === 'fulfilled' && elecResult.value.length > 0) {
+                    elecData = elecResult.value;
+                    liveDataFetched = true;
+                } else if (elecResult.status === 'rejected') {
                     console.warn("Electricity fetch from Supabase failed, using mock");
                 }
 
-                // Fetch Contractors count
-                try {
-                    const contractorsSummary = await getContractorSummary();
-                    if (contractorsSummary.length > 0) {
-                        contractorsCount = contractorsSummary.filter(c => c.status === "Active").length;
-                        liveDataFetched = true;
-                    }
-                } catch (e) {
+                // Process Contractors count
+                if (contractorsResult.status === 'fulfilled' && contractorsResult.value.length > 0) {
+                    contractorsCount = contractorsResult.value.filter(c => c.status === "Active").length;
+                    liveDataFetched = true;
+                } else if (contractorsResult.status === 'rejected') {
                     console.warn("Contractors fetch from Supabase failed, using mock");
                 }
 
-                // Fetch Assets count
-                try {
-                    const assetsResult = await getAssetsFromSupabase(1, 1, '');
-                    if (assetsResult.count > 0) {
-                        assetsCount = assetsResult.count;
-                        liveDataFetched = true;
-                    }
-                } catch (e) {
+                // Process Assets count
+                if (assetsResult.status === 'fulfilled' && assetsResult.value.count > 0) {
+                    assetsCount = assetsResult.value.count;
+                    liveDataFetched = true;
+                } else if (assetsResult.status === 'rejected') {
                     console.warn("Assets fetch from Supabase failed, using mock");
                 }
             }

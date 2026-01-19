@@ -42,19 +42,21 @@ export async function getElectricityMetersFromSupabase(): Promise<MeterReading[]
             return [];
         }
 
-        // Fetch all readings using pagination to ensure we get ALL records
-        // Supabase has a default limit, so we need to fetch in batches
+        // Fetch readings with limit for performance (2 batches max for dashboard)
         let allReadings: ElectricityReading[] = [];
         let offset = 0;
         const batchSize = 1000;
+        const maxBatches = 2; // Limit to 2000 records for performance
+        let currentBatch = 0;
         let hasMore = true;
 
-        while (hasMore) {
+        while (hasMore && currentBatch < maxBatches) {
             let readingsResult;
             try {
                 readingsResult = await client
                     .from('electricity_readings')
                     .select('*')
+                    .order('month', { ascending: false })
                     .range(offset, offset + batchSize - 1);
             } catch (networkError) {
                 // Network error - break out of loop and use what we have
@@ -72,6 +74,7 @@ export async function getElectricityMetersFromSupabase(): Promise<MeterReading[]
             if (batchReadings && batchReadings.length > 0) {
                 allReadings = [...allReadings, ...batchReadings];
                 offset += batchSize;
+                currentBatch++;
                 // If we got fewer than batchSize, we've reached the end
                 hasMore = batchReadings.length === batchSize;
             } else {

@@ -1,0 +1,293 @@
+[
+  {
+    "id": "TC001",
+    "title": "Loading spinner appears during data fetch on dashboard load",
+    "description": "Verify that the loading spinner is displayed while the dashboard data is being asynchronously fetched upon navigating to the root path `/`.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to the root path `/` to access the dashboard."
+      },
+      {
+        "type": "assertion",
+        "description": "Check that a loading spinner is rendered during the data fetch period."
+      }
+    ]
+  },
+  {
+    "id": "TC002",
+    "title": "Error message and retry button on data fetch failure",
+    "description": "Ensure that if the dashboard data fetch fails, an error message and a retry button are displayed, and clicking retry attempts data loading again.",
+    "category": "error handling",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Simulate data fetch failure by interrupting backend connectivity."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify that an appropriate error message is shown with a retry button."
+      },
+      {
+        "type": "action",
+        "description": "Click the retry button."
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm the system attempts to fetch the data again and either loading spinner or data appears accordingly."
+      }
+    ]
+  },
+  {
+    "id": "TC003",
+    "title": "Dashboard header displays correct title, description, and data status badge",
+    "description": "Verify that upon successful data load, the dashboard header shows the correct title 'Dashboard', description, and a data status badge indicating 'Live Data' or 'Demo Mode'.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Load dashboard successfully with backend connected."
+      },
+      {
+        "type": "assertion",
+        "description": "Check that the header shows the title 'Dashboard' and correct descriptive text."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the data status badge reads 'Live Data' with the correct icon."
+      },
+      {
+        "type": "action",
+        "description": "Simulate backend disconnection to cause fallback demo mode."
+      },
+      {
+        "type": "assertion",
+        "description": "Ensure the data status badge switches to 'Demo Mode' with relevant icon."
+      }
+    ]
+  },
+  {
+    "id": "TC004",
+    "title": "Stats grid displays all 7 KPI cards with correct data and trend indicators",
+    "description": "Validate that the stats grid renders 7 KPI cards showing current metric values, trend directions (up/down/neutral), percentage changes, and corresponding icons.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Load dashboard with active data connection."
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm exactly 7 KPI cards are shown for water production, electricity usage, STP inlet flow, TSE output, STP economic impact, active contractors, and total assets."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify that each card displays the correct icon, the current numeric value, trend indicator arrow direction, and percentage change."
+      }
+    ]
+  },
+  {
+    "id": "TC005",
+    "title": "Water Production area chart renders accurately with tooltips and legends",
+    "description": "Ensure that the Water Production area chart displays accurate historical data for the last 8 months and that hovering shows detailed tooltips and visible legends.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to the dashboard page with loaded data."
+      },
+      {
+        "type": "assertion",
+        "description": "Check that the Water Production area chart is rendered correctly for the last 8 months."
+      },
+      {
+        "type": "action",
+        "description": "Hover over various data points on the area chart."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify that tooltips appear with detailed data and legends remain visible and accurate."
+      }
+    ]
+  },
+  {
+    "id": "TC006",
+    "title": "STP Treatment overview bar chart renders with interactive tooltips and legends",
+    "description": "Validate that the STP Treatment overview bar chart displays comparison data for STP inlet and TSE output over 8 months and supports interactive tooltips and legends.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Access the dashboard with data loaded."
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm the bar chart shows correct data for STP inlet flow and TSE output across 8 months."
+      },
+      {
+        "type": "action",
+        "description": "Hover over individual bars in the chart."
+      },
+      {
+        "type": "assertion",
+        "description": "Ensure interactive tooltips display correct values and legends highlight relevant series."
+      }
+    ]
+  },
+  {
+    "id": "TC007",
+    "title": "Recent activity feed filters correctly by alert types",
+    "description": "Test the recent activity feed filtering capability by all, critical, warning, and info alert types, verifying the active filter button highlight and accurate filtered results.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Load dashboard with recent activity feed displaying mixed alert types."
+      },
+      {
+        "type": "action",
+        "description": "Click on the 'All' filter button."
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm that all recent activity items (critical, warning, info) are displayed and the 'All' button is highlighted."
+      },
+      {
+        "type": "action",
+        "description": "Click on the 'Critical' filter button."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify only critical alerts are displayed and the 'Critical' button is highlighted."
+      },
+      {
+        "type": "action",
+        "description": "Click on the 'Warning' filter button."
+      },
+      {
+        "type": "assertion",
+        "description": "Check that only warning alerts appear and 'Warning' button is active."
+      },
+      {
+        "type": "action",
+        "description": "Click on the 'Info' filter button."
+      },
+      {
+        "type": "assertion",
+        "description": "Ensure only informational alerts are shown and 'Info' button is highlighted."
+      }
+    ]
+  },
+  {
+    "id": "TC008",
+    "title": "Hover effects on stat cards and activity items provide visual feedback",
+    "description": "Verify that hovering over KPI stat cards and recent activity feed items triggers expected UI feedback such as tooltip display, highlight changes, or cursor changes to enhance interactivity.",
+    "category": "ui",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Hover mouse pointer over each KPI stat card."
+      },
+      {
+        "type": "assertion",
+        "description": "Check that hover effects such as shadow, color change, or tooltip appear as designed."
+      },
+      {
+        "type": "action",
+        "description": "Hover over recent activity feed items."
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm consistent hover style changes and tooltip details appear for activity items."
+      }
+    ]
+  },
+  {
+    "id": "TC009",
+    "title": "Responsive layout adjusts grids and charts across viewport sizes",
+    "description": "Validate that the dashboard layout, including stats grid and charts, adjusts correctly on various screen sizes: mobile, tablet, desktop, and large desktop.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Open the dashboard on a mobile-size viewport."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify that the layout stacks elements vertically with readable charts and cards."
+      },
+      {
+        "type": "action",
+        "description": "Resize or open dashboard on a tablet viewport."
+      },
+      {
+        "type": "assertion",
+        "description": "Check the grid adjusts to fit both cards and charts comfortably and remains user-friendly."
+      },
+      {
+        "type": "action",
+        "description": "Resize or open dashboard on desktop and large desktop screens."
+      },
+      {
+        "type": "assertion",
+        "description": "Ensure grid and charts spread out properly, maximizing available space with no overlapping or clipping."
+      }
+    ]
+  },
+  {
+    "id": "TC010",
+    "title": "Data status badge accurately reflects live or demo mode state",
+    "description": "Confirm that the data status badge switches between 'Live Data' and 'Demo Mode' states correctly based on backend connectivity, including icon changes and text.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Load dashboard with working backend connection."
+      },
+      {
+        "type": "assertion",
+        "description": "Check that the data status badge shows 'Live Data' and appropriate icon."
+      },
+      {
+        "type": "action",
+        "description": "Simulate loss of backend connectivity or data fetch failure."
+      },
+      {
+        "type": "assertion",
+        "description": "Ensure the status badge updates instantly to 'Demo Mode' with distinct icon indicating fallback mock data."
+      }
+    ]
+  },
+  {
+    "id": "TC011",
+    "title": "Dark mode rendering and accessibility contrast validation",
+    "description": "Verify that the dashboard UI correctly renders in dark mode and meets accessibility contrast standards for text, icons, and interactive elements.",
+    "category": "ui",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Enable dark mode on the application."
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm all text, icons, and UI elements render with colors that comply with WCAG contrast ratios."
+      },
+      {
+        "type": "assertion",
+        "description": "Ensure no visual artifacts or readability issues occur in dark mode."
+      }
+    ]
+  }
+]

@@ -1,0 +1,228 @@
+{
+  "meta": {
+    "project": "Muscat Bay Management System Dashboard",
+    "date": "2026-01-15",
+    "prepared_by": "Software Development Manager"
+  },
+  "product_overview": "The Muscat Bay Management System Dashboard is the central interface providing a comprehensive overview of utility and facility operations including water, electricity, sewage treatment, contractors, and assets management. It consolidates key metrics, trends, and recent activity alerts in an interactive and user-friendly interface for effective monitoring and decision making.",
+  "core_goals": [
+    "Provide real-time and fallback demo mode operational data for water, electricity, STP, contractors, and assets.",
+    "Display key performance indicators (KPIs) in an engaging and easy-to-understand stats grid.",
+    "Visualize water production trends and STP treatment data through interactive charts.",
+    "Offer a filterable recent activity feed highlighting critical, warning, and informational alerts.",
+    "Ensure responsive design across devices from mobile to large desktops.",
+    "Provide robust user feedback including loading states, error handling, and data connectivity status."
+  ],
+  "key_features": [
+    "Dynamic stats grid with 7 KPI cards showing current values, trend indicators, and percentage changes.",
+    "Two main data visualization charts: Water Production Area Chart and STP Treatment Overview Bar Chart with interactive tooltips and legends.",
+    "Recent activity feed with filter buttons to show all, critical, warning, or info alerts with color-coded icons and backgrounds.",
+    "Data status badge indicating live data connection or demo mode with iconic representation.",
+    "Loading spinner and error state UI with retry functionality on data fetch failure.",
+    "Responsive layout adjusting grids and charts across different viewport sizes.",
+    "Hover effects on stat cards and activity items to enhance interactivity and user engagement."
+  ],
+  "user_flow_summary": [
+    "User navigates to the root path `/` and the dashboard page begins loading data via the useDashboardData hook.",
+    "While fetching data, a spinner is displayed; if an error occurs, an error message with a retry button is shown.",
+    "Upon successful data load, the header displays the Dashboard title, description, and data status badge indicating live or demo mode.",
+    "The user views the stats grid with KPI cards presenting metrics such as water production, electricity usage, STP inlet flow, TSE output, STP economic impact, active contractors, and total assets with trend indicators.",
+    "The user inspects two main charts: an area chart of water production trends over the last 8 months and a bar chart comparing STP inlet and TSE output over the same period.",
+    "At the bottom, the user interacts with a recent activity feed, filtering alerts by all, critical, warning, or info categories. Filter buttons update the displayed list accordingly.",
+    "Hover states provide tooltip details on charts and visual feedback on stat cards and activity items.",
+    "In case of connectivity issues, the data status badge shows demo mode and fallback mock data is displayed."
+  ],
+  "validation_criteria": [
+    "Verify the loading spinner appears during asynchronous data fetch on page load.",
+    "Confirm the stats grid displays all 7 KPI cards with correct icons, values, and trend directions.",
+    "Ensure water production area chart and STP treatment bar chart render accurately with tooltips and legends visible on hover.",
+    "Test recent activity filters to correctly show alert types and highlight the active filter button.",
+    "Validate the data status badge correctly switches between 'Live Data' and 'Demo Mode' states based on backend connectivity.",
+    "Check that error messages appear on data fetch failure and the retry button reloads the data successfully.",
+    "Confirm responsive design functions correctly across mobile, tablet, desktop, and large desktop viewports.",
+    "Assess hover effects on cards, filter buttons, and activity items for consistent user experience.",
+    "Test dark mode rendering and accessibility contrast ratios for text and interactive elements."
+  ],
+  "code_summary": {
+    "tech_stack": [
+      "TypeScript",
+      "Next.js 16",
+      "React 19",
+      "Supabase",
+      "TailwindCSS 4",
+      "Recharts",
+      "Radix UI",
+      "Lucide Icons",
+      "Vitest"
+    ],
+    "features": [
+      {
+        "name": "Dashboard",
+        "description": "Main dashboard displaying operational metrics, water production trends, STP treatment overview, and recent activity alerts with filtering",
+        "files": [
+          "app/page.tsx",
+          "hooks/useDashboardData.ts",
+          "components/shared/stats-grid.tsx",
+          "components/charts/chart-container.tsx",
+          "components/charts/liquid-tooltip.tsx"
+        ]
+      },
+      {
+        "name": "Water Management",
+        "description": "Water consumption tracking with zone tabs, meter tables, circular gauges, anomaly alerts, and date range filtering",
+        "files": [
+          "app/water/page.tsx",
+          "functions/api/water.ts",
+          "components/water/zone-tabs.tsx",
+          "components/water/meter-table.tsx",
+          "components/water/circular-gauge.tsx",
+          "components/water/anomaly-alerts.tsx",
+          "components/water/date-range-picker.tsx",
+          "components/water/type-filter-pills.tsx",
+          "components/water/network-hierarchy.tsx"
+        ]
+      },
+      {
+        "name": "Electricity Monitoring",
+        "description": "Electricity consumption monitoring and analysis",
+        "files": [
+          "app/electricity/page.tsx",
+          "functions/api/electricity.ts"
+        ]
+      },
+      {
+        "name": "STP Management",
+        "description": "Sewage Treatment Plant monitoring with inlet/outlet tracking and data visualization",
+        "files": [
+          "app/stp/page.tsx",
+          "functions/api/stp.ts",
+          "hooks/useSTPData.ts"
+        ]
+      },
+      {
+        "name": "Assets Management",
+        "description": "Asset tracking and management functionality",
+        "files": [
+          "app/assets/page.tsx",
+          "functions/api/assets.ts"
+        ]
+      },
+      {
+        "name": "Contractors Management",
+        "description": "Contractor information and management",
+        "files": [
+          "app/contractors/page.tsx",
+          "functions/api/contractors.ts"
+        ]
+      },
+      {
+        "name": "Authentication",
+        "description": "User authentication with login, signup, forgot password, and password reset functionality using Supabase Auth",
+        "files": [
+          "app/login/page.tsx",
+          "app/login/layout.tsx",
+          "app/signup/page.tsx",
+          "app/signup/layout.tsx",
+          "app/forgot-password/page.tsx",
+          "app/forgot-password/layout.tsx",
+          "app/auth/callback/page.tsx",
+          "app/auth/reset-password/page.tsx",
+          "components/auth/auth-provider.tsx"
+        ]
+      },
+      {
+        "name": "Settings",
+        "description": "Application settings and configuration page",
+        "files": [
+          "app/settings/page.tsx"
+        ]
+      },
+      {
+        "name": "Firefighting",
+        "description": "Firefighting management with quotes functionality",
+        "files": [
+          "app/firefighting/page.tsx",
+          "app/firefighting/quotes/page.tsx"
+        ]
+      },
+      {
+        "name": "Pest Control",
+        "description": "Pest control tracking and management",
+        "files": [
+          "app/pest-control/page.tsx"
+        ]
+      },
+      {
+        "name": "Layout and Navigation",
+        "description": "Application layout with sidebar navigation, topbar, and client-side layout components",
+        "files": [
+          "app/layout.tsx",
+          "components/layout/sidebar.tsx",
+          "components/layout/topbar.tsx",
+          "components/layout/navbar.tsx",
+          "components/layout/client-layout.tsx",
+          "components/layout/sidebar-context.tsx"
+        ]
+      },
+      {
+        "name": "UI Components",
+        "description": "Reusable UI components including buttons, cards, dialogs, forms, and more",
+        "files": [
+          "components/ui/button.tsx",
+          "components/ui/card.tsx",
+          "components/ui/dialog.tsx",
+          "components/ui/input.tsx",
+          "components/ui/select.tsx",
+          "components/ui/badge.tsx",
+          "components/ui/table.tsx",
+          "components/ui/slider.tsx",
+          "components/ui/sheet.tsx",
+          "components/ui/popover.tsx",
+          "components/ui/calendar.tsx",
+          "components/ui/toast-provider.tsx",
+          "components/ui/error-boundary.tsx"
+        ]
+      },
+      {
+        "name": "Shared Components",
+        "description": "Shared utility components like loading spinner, page header, breadcrumbs, and skeleton loaders",
+        "files": [
+          "components/shared/loading-spinner.tsx",
+          "components/shared/page-header.tsx",
+          "components/shared/breadcrumbs.tsx",
+          "components/shared/skeleton.tsx",
+          "components/shared/filter-tabs.tsx",
+          "components/shared/tab-navigation.tsx",
+          "components/shared/scroll-animation.tsx"
+        ]
+      },
+      {
+        "name": "Charts",
+        "description": "Data visualization components including area charts, bar charts, and liquid progress rings",
+        "files": [
+          "components/charts/chart-container.tsx",
+          "components/charts/liquid-area-chart.tsx",
+          "components/charts/liquid-bar-chart.tsx",
+          "components/charts/liquid-progress-ring.tsx",
+          "components/charts/liquid-tooltip.tsx"
+        ]
+      },
+      {
+        "name": "Supabase Client",
+        "description": "Supabase client configuration with authentication, realtime support, and mock data fallback",
+        "files": [
+          "functions/supabase-client.ts",
+          "functions/index.ts",
+          "functions/api/index.ts"
+        ]
+      },
+      {
+        "name": "Providers",
+        "description": "React context providers for theme and global state management",
+        "files": [
+          "components/providers.tsx"
+        ]
+      }
+    ]
+  }
+}

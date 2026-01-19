@@ -24,7 +24,29 @@
       "Bash(git commit -m \"$(cat <<''EOF''\nFix: Move netlify.toml to repo root with correct base directory\n\n- Netlify needs config at repo root, not in subdirectory\n- Set base = \"app\" since Next.js project is in app folder\n- publish = \"out\" relative to the base directory\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n)\")",
       "Bash(git ls-tree:*)",
       "Bash(git rev-parse:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(claude mcp add:*)",
+      "mcp__TestSprite__testsprite_bootstrap",
+      "Bash(npm run dev:*)",
+      "mcp__TestSprite__testsprite_generate_code_summary",
+      "mcp__TestSprite__testsprite_generate_standardized_prd",
+      "mcp__TestSprite__testsprite_generate_frontend_test_plan",
+      "mcp__TestSprite__testsprite_generate_code_and_execute",
+      "Bash(node:*)",
+      "Bash(dir \"C:\\\\Users\\\\Abdulrahim.Albalushi\\\\Downloads\\\\anti_G\\\\app\\\\testsprite_tests\" /s /b)",
+      "mcp__TestSprite__testsprite_rerun_tests",
+      "Bash(claude mcp list:*)",
+      "Bash(npx:*)",
+      "Bash(claude mcp remove:*)",
+      "mcp__supabase__list_tables",
+      "mcp__supabase__apply_migration",
+      "mcp__supabase__execute_sql",
+      "mcp__supabase__get_advisors",
+      "Bash(python -c:*)",
+      "Bash(dir:*)",
+      "Bash(findstr:*)",
+      "Bash(curl:*)",
+      "Bash(taskkill:*)"
     ]
   }
 }
