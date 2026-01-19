@@ -74,6 +74,9 @@ export {
     // Water
     type SupabaseWaterMeter,
     transformWaterMeter,
+    type SupabaseDailyWaterConsumption,
+    type DailyWaterConsumption,
+    transformDailyWaterConsumption,
     // Fire Safety
     type FireSafetyEquipment,
     type FireQuotation,
@@ -101,4 +104,5 @@ export {
     getSTPOperationsFromSupabase,
     // Water
     getWaterMetersFromSupabase,
+    getDailyWaterConsumptionFromSupabase,
 } from '@/functions';

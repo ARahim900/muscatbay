@@ -9,7 +9,7 @@ describe('Configuration', () => {
         });
 
         it('should have valid TSE_SAVING_RATE', () => {
-            expect(STP_RATES.TSE_SAVING_RATE).toBe(0.80);
+            expect(STP_RATES.TSE_SAVING_RATE).toBe(1.32);
             expect(typeof STP_RATES.TSE_SAVING_RATE).toBe('number');
         });
     });

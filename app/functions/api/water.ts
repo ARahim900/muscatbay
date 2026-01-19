@@ -5,7 +5,13 @@
  */
 
 import { getSupabaseClient } from '../supabase-client';
-import { SupabaseWaterMeter, transformWaterMeter } from '@/entities/water';
+import {
+    SupabaseWaterMeter,
+    transformWaterMeter,
+    SupabaseDailyWaterConsumption,
+    transformDailyWaterConsumption,
+    DailyWaterConsumption
+} from '@/entities/water';
 import type { WaterMeter } from '@/lib/water-data';
 
 /**
@@ -35,6 +41,50 @@ export async function getWaterMetersFromSupabase(): Promise<WaterMeter[]> {
         return result;
     } catch (err) {
         console.error('Error in getWaterMetersFromSupabase:', err);
+        return [];
+    }
+}
+
+/**
+ * Fetch daily water consumption data from Supabase
+ * @param month - Optional month filter (e.g., "Jan-26")
+ * @param year - Optional year filter (e.g., 2026)
+ */
+export async function getDailyWaterConsumptionFromSupabase(
+    month?: string,
+    year?: number
+): Promise<DailyWaterConsumption[]> {
+    const client = getSupabaseClient();
+    if (!client) {
+        return [];
+    }
+
+    try {
+        let query = client
+            .from('water_daily_consumption')
+            .select('*');
+
+        if (month) {
+            query = query.eq('month', month);
+        }
+        if (year) {
+            query = query.eq('year', year);
+        }
+
+        const { data, error } = await query;
+
+        if (error) {
+            console.error('Error fetching daily water consumption:', error.message);
+            return [];
+        }
+
+        if (!data || data.length === 0) {
+            return [];
+        }
+
+        return data.map((record: SupabaseDailyWaterConsumption) => transformDailyWaterConsumption(record));
+    } catch (err) {
+        console.error('Error in getDailyWaterConsumptionFromSupabase:', err);
         return [];
     }
 }

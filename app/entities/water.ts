@@ -7,6 +7,94 @@
 import type { WaterMeter } from '@/lib/water-data';
 
 /**
+ * Daily water consumption record from "water_daily_consumption" table in Supabase
+ */
+export interface SupabaseDailyWaterConsumption {
+    id: number;
+    meter_name: string;
+    account_number: string;
+    label: string | null;
+    zone: string | null;
+    parent_meter: string | null;
+    type: string | null;
+    month: string;
+    year: number;
+    day_1: number | null;
+    day_2: number | null;
+    day_3: number | null;
+    day_4: number | null;
+    day_5: number | null;
+    day_6: number | null;
+    day_7: number | null;
+    day_8: number | null;
+    day_9: number | null;
+    day_10: number | null;
+    day_11: number | null;
+    day_12: number | null;
+    day_13: number | null;
+    day_14: number | null;
+    day_15: number | null;
+    day_16: number | null;
+    day_17: number | null;
+    day_18: number | null;
+    day_19: number | null;
+    day_20: number | null;
+    day_21: number | null;
+    day_22: number | null;
+    day_23: number | null;
+    day_24: number | null;
+    day_25: number | null;
+    day_26: number | null;
+    day_27: number | null;
+    day_28: number | null;
+    day_29: number | null;
+    day_30: number | null;
+    day_31: number | null;
+    created_at?: string;
+    updated_at?: string;
+}
+
+/**
+ * Transformed daily water consumption for frontend use
+ */
+export interface DailyWaterConsumption {
+    id: number;
+    meterName: string;
+    accountNumber: string;
+    label: string;
+    zone: string;
+    parentMeter: string;
+    type: string;
+    month: string;
+    year: number;
+    dailyReadings: Record<number, number | null>;
+}
+
+/**
+ * Transform Supabase daily water consumption to frontend format
+ */
+export function transformDailyWaterConsumption(record: SupabaseDailyWaterConsumption): DailyWaterConsumption {
+    const dailyReadings: Record<number, number | null> = {};
+    for (let i = 1; i <= 31; i++) {
+        const key = `day_${i}` as keyof SupabaseDailyWaterConsumption;
+        dailyReadings[i] = record[key] as number | null;
+    }
+
+    return {
+        id: record.id,
+        meterName: record.meter_name || '',
+        accountNumber: record.account_number || '',
+        label: record.label || '',
+        zone: record.zone || '',
+        parentMeter: record.parent_meter || '',
+        type: record.type || '',
+        month: record.month,
+        year: record.year,
+        dailyReadings,
+    };
+}
+
+/**
  * Water meter from "Water System" table in Supabase
  */
 export interface SupabaseWaterMeter {
