@@ -7,6 +7,7 @@ import { STP_RATES } from "@/lib/config";
 import { StatsGridSkeleton, ChartSkeleton, Skeleton } from "@/components/shared/skeleton";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatsGrid } from "@/components/shared/stats-grid";
+import { TabNavigation } from "@/components/shared/tab-navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -493,28 +494,15 @@ export default function STPPage() {
             </div>
 
             {/* Tabs */}
-            <div className="flex gap-2 p-1 bg-muted rounded-lg w-fit">
-                <button
-                    onClick={() => setActiveTab("dashboard")}
-                    className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${activeTab === "dashboard"
-                        ? "bg-background text-foreground shadow-sm"
-                        : "text-muted-foreground hover:text-foreground hover:bg-background/50"
-                        }`}
-                >
-                    <Activity className="w-4 h-4 inline-block mr-2" />
-                    Dashboard
-                </button>
-                <button
-                    onClick={() => setActiveTab("details")}
-                    className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${activeTab === "details"
-                        ? "bg-background text-foreground shadow-sm"
-                        : "text-muted-foreground hover:text-foreground hover:bg-background/50"
-                        }`}
-                >
-                    <Database className="w-4 h-4 inline-block mr-2" />
-                    Details Data
-                </button>
-            </div>
+            <TabNavigation
+                activeTab={activeTab}
+                onTabChange={setActiveTab}
+                variant="secondary"
+                tabs={[
+                    { key: "dashboard", label: "Dashboard", icon: Activity },
+                    { key: "details", label: "Details Data", icon: Database },
+                ]}
+            />
 
             {activeTab === "dashboard" && (
                 <div className="space-y-6 animate-in fade-in duration-300">

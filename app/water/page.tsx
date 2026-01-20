@@ -1,7 +1,7 @@
 ﻿'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import { Droplets, TrendingDown, Map, Tag, Database, ChevronDown, Wifi, WifiOff } from 'lucide-react';
+import { Droplets, TrendingDown, Map, Tag, Database, ChevronDown } from 'lucide-react';
 import {
   AVAILABLE_MONTHS,
   ZONE_CONFIG,
@@ -755,42 +755,6 @@ export default function WaterPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="border-b bg-card">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold">Water System Analysis</h1>
-              <p className="text-sm text-muted-foreground">Muscat Bay Resource Management</p>
-            </div>
-            {/* Data Source Indicator */}
-            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium ${isLoading
-                ? 'bg-yellow-100 text-yellow-700'
-                : dataSource === 'supabase'
-                  ? 'bg-green-100 text-green-700'
-                  : 'bg-gray-100 text-gray-600'
-              }`}>
-              {isLoading ? (
-                <>
-                  <div className="w-3 h-3 border-2 border-yellow-600 border-t-transparent rounded-full animate-spin" />
-                  Loading...
-                </>
-              ) : dataSource === 'supabase' ? (
-                <>
-                  <Wifi className="w-3 h-3" />
-                  Live Data ({getWaterMeters().length} meters)
-                </>
-              ) : (
-                <>
-                  <WifiOff className="w-3 h-3" />
-                  Static Data
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Tab Navigation */}
       <div className="border-b bg-card sticky top-0 z-10">
         <div className="container mx-auto px-4">

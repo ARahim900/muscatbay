@@ -456,41 +456,17 @@ export default function WaterPage() {
                 </div>
             </div>
 
-            {/* View Switching Tabs - Custom for this page as it switches modes */}
-            <div className="flex items-center gap-2 bg-muted/50 p-1 rounded-lg w-fit">
-                <button
-                    onClick={() => setDashboardView('monthly')}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${dashboardView === 'monthly'
-                        ? 'bg-background text-foreground shadow-sm'
-                        : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
-                        }`}
-                >
-                    <BarChart3 className="w-4 h-4" />
-                    Monthly Dashboard
-                </button>
-
-                <button
-                    onClick={() => setDashboardView('hierarchy')}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${dashboardView === 'hierarchy'
-                        ? 'bg-background text-foreground shadow-sm'
-                        : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
-                        }`}
-                >
-                    <Network className="w-4 h-4" />
-                    Water Hierarchy
-                </button>
-
-                <button
-                    onClick={() => setDashboardView('daily')}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${dashboardView === 'daily'
-                        ? 'bg-background text-foreground shadow-sm'
-                        : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
-                        }`}
-                >
-                    <CalendarDays className="w-4 h-4" />
-                    Daily Report
-                </button>
-            </div>
+            {/* View Switching Tabs */}
+            <TabNavigation
+                activeTab={dashboardView}
+                onTabChange={(key) => setDashboardView(key as 'monthly' | 'hierarchy' | 'daily')}
+                variant="secondary"
+                tabs={[
+                    { key: 'monthly', label: 'Monthly Dashboard', icon: BarChart3 },
+                    { key: 'hierarchy', label: 'Water Hierarchy', icon: Network },
+                    { key: 'daily', label: 'Daily Report', icon: CalendarDays },
+                ]}
+            />
 
             {/* Monthly Dashboard View */}
             {dashboardView === 'monthly' && (
