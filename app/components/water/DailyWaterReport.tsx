@@ -179,42 +179,33 @@ export function DailyWaterReport() {
 
     // Individual meters data for the table
     const meterTableData = useMemo<MeterDailyReading[]>(() => {
-        // Filter consumption data by zone and get reading for selected day
+        // Filter consumption data by zone field from database
         return dailyConsumption
             .filter(d => {
-                // Match by zone code in the meterName or accountNumber patterns
-                const zoneName = selectedZoneCode.toLowerCase();
-                const meterZone = (d.meterName || '').toLowerCase();
+                // Use the zone field from database for accurate filtering
+                const dbZone = (d.zone || '').toLowerCase();
 
-                // Basic zone matching logic
+                // Map selectedZone to database zone codes
                 if (selectedZone === 'Zone FM') {
-                    return meterZone.includes('fm') || meterZone.includes('b1') || meterZone.includes('b2') ||
-                        meterZone.includes('b3') || meterZone.includes('b4') || meterZone.includes('b5') ||
-                        meterZone.includes('b6') || meterZone.includes('b7') || meterZone.includes('b8') ||
-                        meterZone.includes('cif');
+                    return dbZone === 'zone_01_(fm)';
                 }
                 if (selectedZone === 'Zone 3A') {
-                    return (meterZone.includes('z3-') || meterZone.includes('d-44') ||
-                        meterZone.includes('d-45') || meterZone.includes('d-46') ||
-                        meterZone.includes('d-47') || meterZone.includes('d-51') ||
-                        meterZone.includes('d-74') || meterZone.includes('d-75')) &&
-                        !meterZone.includes('z3-3') && !meterZone.includes('z3-8') && !meterZone.includes('z3-12');
+                    return dbZone === 'zone_03_(a)';
                 }
                 if (selectedZone === 'Zone 3B') {
-                    return meterZone.includes('z3-3') || meterZone.includes('z3-8') || meterZone.includes('z3-12') ||
-                        meterZone.includes('d-52') || meterZone.includes('d-53') || meterZone.includes('d-54');
+                    return dbZone === 'zone_03_(b)';
                 }
                 if (selectedZone === 'Zone 5') {
-                    return meterZone.includes('z5-');
+                    return dbZone === 'zone_05';
                 }
                 if (selectedZone === 'Zone 08') {
-                    return meterZone.includes('z8-');
+                    return dbZone === 'zone_08';
                 }
                 if (selectedZone === 'Village Square') {
-                    return meterZone.includes('coffee') || meterZone.includes('laundry') || meterZone.includes('village');
+                    return dbZone === 'zone_vs';
                 }
                 if (selectedZone === 'Sales Center') {
-                    return meterZone.includes('sale') || meterZone.includes('caffe');
+                    return dbZone === 'zone_sc';
                 }
                 return false;
             })
@@ -226,7 +217,7 @@ export function DailyWaterReport() {
                 zone: selectedZone,
                 reading: d.dailyReadings[selectedDay] || 0
             }));
-    }, [dailyConsumption, selectedZone, selectedDay, selectedZoneCode]);
+    }, [dailyConsumption, selectedZone, selectedDay]);
 
     // Filtered, sorted, and paginated meters
     const processedMeters = useMemo(() => {
