@@ -1,0 +1,103 @@
+name: Sync Water Consumption Data
+
+on:
+  schedule:
+    # Runs daily at 06:00 AM UTC (10:00 AM Oman time - UTC+4)
+    - cron: '0 2 * * *'
+  workflow_dispatch: # Allows manual triggering
+
+jobs:
+  sync:
+    runs-on: self-hosted    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Install dependencies
+        run: |
+          npm install axios
+      
+      - name: Sync Grafana to Supabase
+        env:
+          GRAFANA_URL: ${{ secrets.GRAFANA_URL }}
+          GRAFANA_USERNAME: ${{ secrets.GRAFANA_USERNAME }}
+          GRAFANA_PASSWORD: ${{ secrets.GRAFANA_PASSWORD }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: |
+          node - <<'EOF'
+          const axios = require('axios');
+          
+          async function syncData() {
+            try {
+              console.log('Starting sync process...');
+              
+              // Login to Grafana
+              const loginResponse = await axios.post(
+                `${process.env.GRAFANA_URL}/login`,
+                {
+                  user: process.env.GRAFANA_USERNAME,
+                  password: process.env.GRAFANA_PASSWORD
+                },
+                {
+                  headers: { 'Content-Type': 'application/json' },
+                  withCredentials: true
+                }
+              );
+              
+              console.log('Logged in to Grafana');
+              
+              // Extract cookies from login response
+              const cookies = loginResponse.headers['set-cookie'];
+              const cookieHeader = cookies ? cookies.join('; ') : '';
+              
+              // Fetch data from Grafana
+              // Note: You'll need to update the query parameters based on your specific needs
+              const dataResponse = await axios.get(
+                `${process.env.GRAFANA_URL}/api/ds/query`,
+                {
+                  headers: {
+                    'Cookie': cookieHeader,
+                    'Content-Type': 'application/json'
+                  }
+                }
+              );
+              
+              console.log('Fetched data from Grafana');
+              
+              // Process and insert data into Supabase
+              // This is a placeholder - you'll need to adapt based on your data structure
+              const dataToInsert = dataResponse.data; // Transform as needed
+              
+              const supabaseResponse = await axios.post(
+                `${process.env.SUPABASE_URL}/rest/v1/water_daily_consumption`,
+                dataToInsert,
+                {
+                  headers: {
+                    'apikey': process.env.SUPABASE_KEY,
+                    'Authorization': `Bearer ${process.env.SUPABASE_KEY}`,
+                    'Content-Type': 'application/json',
+                    'Prefer': 'resolution=merge-duplicates'
+                  }
+                }
+              );
+              
+              console.log('Data synced to Supabase successfully');
+              
+            } catch (error) {
+              console.error('Error during sync:', error.message);
+              if (error.response) {
+                console.error('Response data:', error.response.data);
+                console.error('Response status:', error.response.status);
+              }
+              process.exit(1);
+            }
+          }
+          
+          syncData();
+          EOF
