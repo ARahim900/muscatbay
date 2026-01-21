@@ -221,7 +221,7 @@ export function DailyWaterReport() {
             .map(d => ({
                 accountNumber: d.accountNumber,
                 meterName: d.meterName,
-                level: d.level || 'L3',
+                level: d.label || 'L3',
                 type: d.type || 'Residential',
                 zone: selectedZone,
                 reading: d.dailyReadings[selectedDay] || 0
