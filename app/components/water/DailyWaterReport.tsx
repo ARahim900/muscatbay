@@ -8,10 +8,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { LiquidProgressRing } from "@/components/charts/liquid-progress-ring";
 import { LiquidTooltip } from "@/components/charts/liquid-tooltip";
 import { StatsGridSkeleton, ChartSkeleton, Skeleton } from "@/components/shared/skeleton";
-import { WaterLossDaily, DailyWaterConsumption } from "@/entities/water";
+import { DailyWaterConsumption } from "@/entities/water";
 import { ZONE_CONFIG } from "@/lib/water-data";
 import {
-    getWaterLossDailyFromSupabase,
     getDailyWaterConsumptionFromSupabase,
     isSupabaseConfigured
 } from "@/lib/supabase";
@@ -49,7 +48,7 @@ const BRAND = {
     muted: '#6B7280',
 };
 
-// Zone display mapping for daily data (matching water_loss_daily table zones)
+// Zone display mapping for daily data (matching water_daily_consumption table zones)
 const DAILY_ZONES = [
     { code: 'Zone FM', name: 'Zone FM', zoneCode: 'Zone_01_(FM)' },
     { code: 'Zone 3A', name: 'Zone 3A', zoneCode: 'Zone_03_(A)' },
@@ -82,7 +81,6 @@ export function DailyWaterReport() {
     // State
     const [selectedDay, setSelectedDay] = useState(1);
     const [selectedZone, setSelectedZone] = useState('Zone FM');
-    const [dailyLossData, setDailyLossData] = useState<WaterLossDaily[]>([]);
     const [dailyConsumption, setDailyConsumption] = useState<DailyWaterConsumption[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [hasError, setHasError] = useState(false);
@@ -98,26 +96,27 @@ export function DailyWaterReport() {
     const currentYear = 2026;
     const currentMonth = 'Jan-26';
 
-    // Get max day from data
+    // Get max day from data - find the highest day that has any readings
     const maxDay = useMemo(() => {
-        if (dailyLossData.length === 0) return 19;
-        return Math.max(...dailyLossData.map(d => d.day));
-    }, [dailyLossData]);
+        if (dailyConsumption.length === 0) return 21;
+        // Check each day from 31 down to 1 to find the highest day with data
+        for (let day = 31; day >= 1; day--) {
+            const hasData = dailyConsumption.some(d => d.dailyReadings[day] !== undefined && d.dailyReadings[day] !== null);
+            if (hasData) return day;
+        }
+        return 21; // Default to 21 days for Jan-26
+    }, [dailyConsumption]);
 
-    // Fetch data
+    // Fetch data from the main water_daily_consumption table only
     useEffect(() => {
         async function fetchDailyData() {
             setIsLoading(true);
             setHasError(false);
             try {
                 if (isSupabaseConfigured()) {
-                    const [lossData, consumptionData] = await Promise.all([
-                        getWaterLossDailyFromSupabase(undefined, currentMonth, currentYear),
-                        getDailyWaterConsumptionFromSupabase(currentMonth, currentYear)
-                    ]);
+                    const consumptionData = await getDailyWaterConsumptionFromSupabase(currentMonth, currentYear);
 
-                    if (lossData.length > 0) {
-                        setDailyLossData(lossData);
+                    if (consumptionData.length > 0) {
                         setDailyConsumption(consumptionData);
                         setDataSource('supabase');
                     } else {
@@ -136,41 +135,85 @@ export function DailyWaterReport() {
         fetchDailyData();
     }, []);
 
-    // Get analysis for selected zone and day
-    const zoneAnalysis = useMemo(() => {
-        const record = dailyLossData.find(d => d.zone === selectedZone && d.day === selectedDay);
-        if (!record) {
-            return {
-                bulkMeterReading: 0,
-                individualTotal: 0,
-                loss: 0,
-                lossPercent: 0,
-                efficiency: 0
-            };
-        }
-        return {
-            bulkMeterReading: record.l2TotalM3,
-            individualTotal: record.l3TotalM3,
-            loss: record.lossM3,
-            lossPercent: record.lossPercent,
-            efficiency: record.l2TotalM3 > 0 ? (record.l3TotalM3 / record.l2TotalM3) * 100 : 0
+    // Get the database zone code for the selected zone
+    const getDbZoneCode = (zone: string): string => {
+        const mapping: Record<string, string> = {
+            'Zone FM': 'zone_01_(fm)',
+            'Zone 3A': 'zone_03_(a)',
+            'Zone 3B': 'zone_03_(b)',
+            'Zone 5': 'zone_05',
+            'Zone 08': 'zone_08',
+            'Village Square': 'zone_vs',
+            'Sales Center': 'zone_sc'
         };
-    }, [dailyLossData, selectedZone, selectedDay]);
+        return mapping[zone] || '';
+    };
 
-    // Daily trend data for the selected zone
+    // Calculate analysis for selected zone and day from the main consumption table
+    const zoneAnalysis = useMemo(() => {
+        const dbZoneCode = getDbZoneCode(selectedZone);
+
+        // Filter meters for this zone
+        const zoneMeters = dailyConsumption.filter(d =>
+            (d.zone || '').toLowerCase() === dbZoneCode
+        );
+
+        // Calculate L2 total (bulk meters for zone)
+        const l2Total = zoneMeters
+            .filter(d => d.label === 'L2')
+            .reduce((sum, d) => sum + (d.dailyReadings[selectedDay] || 0), 0);
+
+        // Calculate L3 + L4 total (individual meters)
+        const l3l4Total = zoneMeters
+            .filter(d => d.label === 'L3' || d.label === 'L4')
+            .reduce((sum, d) => sum + (d.dailyReadings[selectedDay] || 0), 0);
+
+        const loss = l2Total - l3l4Total;
+        const lossPercent = l2Total > 0 ? (loss / l2Total) * 100 : 0;
+        const efficiency = l2Total > 0 ? (l3l4Total / l2Total) * 100 : (l3l4Total > 0 ? 100 : 0);
+
+        return {
+            bulkMeterReading: l2Total,
+            individualTotal: l3l4Total,
+            loss: loss,
+            lossPercent: lossPercent,
+            efficiency: efficiency
+        };
+    }, [dailyConsumption, selectedZone, selectedDay]);
+
+    // Daily trend data for the selected zone - calculated from main consumption table
     const zoneTrendData = useMemo(() => {
-        const zoneRecords = dailyLossData
-            .filter(d => d.zone === selectedZone)
-            .sort((a, b) => a.day - b.day);
+        const dbZoneCode = getDbZoneCode(selectedZone);
 
-        return zoneRecords.map(d => ({
-            day: `Day ${d.day}`,
-            dayNum: d.day,
-            'Zone Bulk': d.l2TotalM3,
-            'Individual Total': d.l3TotalM3,
-            'Loss': Math.abs(d.lossM3)
-        }));
-    }, [dailyLossData, selectedZone]);
+        // Filter meters for this zone
+        const zoneMeters = dailyConsumption.filter(d =>
+            (d.zone || '').toLowerCase() === dbZoneCode
+        );
+
+        // Build trend data for each day
+        const trendData = [];
+        for (let day = 1; day <= maxDay; day++) {
+            const l2Total = zoneMeters
+                .filter(d => d.label === 'L2')
+                .reduce((sum, d) => sum + (d.dailyReadings[day] || 0), 0);
+
+            const l3l4Total = zoneMeters
+                .filter(d => d.label === 'L3' || d.label === 'L4')
+                .reduce((sum, d) => sum + (d.dailyReadings[day] || 0), 0);
+
+            const loss = l2Total - l3l4Total;
+
+            trendData.push({
+                day: `Day ${day}`,
+                dayNum: day,
+                'Zone Bulk': l2Total,
+                'Individual Total': l3l4Total,
+                'Loss': Math.abs(loss)
+            });
+        }
+
+        return trendData;
+    }, [dailyConsumption, selectedZone, maxDay]);
 
     // Get zone code for filtering meters
     const selectedZoneCode = useMemo(() => {
@@ -292,14 +335,14 @@ export function DailyWaterReport() {
     }
 
     // Error state
-    if (hasError || dailyLossData.length === 0) {
+    if (hasError || dailyConsumption.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center py-16 text-center">
                 <AlertTriangle className="h-12 w-12 text-amber-500 mb-4" />
                 <h3 className="text-lg font-semibold mb-2">No Daily Data Available</h3>
                 <p className="text-muted-foreground max-w-md">
-                    Daily water loss data for {currentMonth} is not yet available in the database.
-                    Please ensure the <code className="bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-sm">water_loss_daily</code> table is populated.
+                    Daily water consumption data for {currentMonth} is not yet available in the database.
+                    Please ensure the <code className="bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-sm">water_daily_consumption</code> table is populated.
                 </p>
             </div>
         );
