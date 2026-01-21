@@ -1,4 +1,5 @@
 ﻿"use client";
+import { cn } from "@/lib/utils";
 
 import { useEffect, useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -32,14 +33,17 @@ import {
 import { getWaterMetersFromSupabase, getWaterLossDailyFromSupabase, getDailyWaterConsumptionFromSupabase, isSupabaseConfigured } from "@/lib/supabase";
 import type { WaterLossDaily, DailyWaterConsumption } from "@/entities/water";
 import { networkData, NetworkNode } from "@/lib/water-network-data";
+import { buildDailyHierarchy, DailyMeterNode } from "@/lib/water-daily-hierarchy";
 
 // Components
 import { DateRangePicker } from "@/components/water/date-range-picker";
 import { TypeFilterPills } from "@/components/water/type-filter-pills";
 import { LiquidProgressRing } from "../../components/charts/liquid-progress-ring";
+import { WaterLossGauge } from "@/components/water/water-loss-gauge";
 import { LiquidTooltip } from "../../components/charts/liquid-tooltip";
 import { MeterTable } from "@/components/water/meter-table";
 import { WaterNetworkHierarchy } from "@/components/water/network-hierarchy";
+import { DailyWaterReport } from "@/components/water/DailyWaterReport";
 import { PageHeader } from "@/components/shared/page-header";
 import { TabNavigation } from "@/components/shared/tab-navigation";
 import { StatsGrid } from "@/components/shared/stats-grid";
@@ -813,7 +817,7 @@ export default function WaterPage() {
 
             {/* Daily Dashboard View */}
             {dashboardView === 'daily' && (
-                <DailyWaterDashboard />
+                <DailyWaterReport />
             )}
         </div>
     );
@@ -848,18 +852,24 @@ const DAILY_BRAND = {
     lightAmber: '#FBBF24',   // Light amber for gradients
 };
 
+
 function DailyWaterDashboard() {
+    const [viewMode, setViewMode] = useState<'hierarchy' | 'zone'>('hierarchy');
     const [selectedDay, setSelectedDay] = useState(1);
-    const [selectedZone, setSelectedZone] = useState<string | null>(null);
     const [dailyLossData, setDailyLossData] = useState<WaterLossDaily[]>([]);
     const [dailyConsumption, setDailyConsumption] = useState<DailyWaterConsumption[]>([]);
     const [waterMeters, setWaterMeters] = useState<WaterMeter[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [hasError, setHasError] = useState(false);
-    const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set(['C43659', 'DC', '4300346', '4300343', '4300345', '4300342', '4300335', '4300295']));
+
+    // Zone Analysis State
+    const [selectedTrendZone, setSelectedTrendZone] = useState<string>('Zone 01 (FM)'); // Default
+    const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set(['C43659', 'DC']));
 
     const currentYear = 2026;
     const currentMonth = 'Jan-26';
+
+    const hierarchy = useMemo(() => buildDailyHierarchy(), []);
 
     useEffect(() => {
         async function fetchDailyData() {
@@ -902,176 +912,196 @@ function DailyWaterDashboard() {
         setExpandedNodes(newExpanded);
     };
 
-    // Helper to get reading for a node on selected day
-    const getNodeReading = (node: NetworkNode, day: number): number => {
-        // 1. Try finding in WaterLossDaily (for Zones)
-        if (node.zone) {
+    // Helper to get reading/usage
+    const getNodeReading = (node: DailyMeterNode, day: number): number => {
+        if (node.zone && node.label === 'L2') {
+            // Find by Zone Name in Loss Data
+            // Map generic zone names if needed, or rely on exact match
             const zoneRecord = dailyLossData.find(d => d.zone === node.zone && d.day === day);
             if (zoneRecord) return zoneRecord.l2TotalM3;
         }
-
-        // 2. Try finding in DailyWaterConsumption (for Meters)
-        // Match node.id with meterName or accountNumber
-        const reading = dailyConsumption.find(d => d.meterName === node.id || d.accountNumber === node.id);
+        const reading = dailyConsumption.find(d => d.accountNumber === node.id || d.meterName === node.id);
         if (reading) {
             const val = reading.dailyReadings[day];
             return typeof val === 'number' ? val : 0;
         }
-
         return 0;
     };
 
-    // Calculate aggregated children reading
-    const getChildrenAggregate = (node: NetworkNode, day: number): number => {
+    const getChildrenAggregate = (node: DailyMeterNode, day: number): number => {
         if (!node.children || node.children.length === 0) return 0;
         return node.children.reduce((sum, child) => sum + getNodeReading(child, day), 0);
     };
 
-    const RecursiveRow = ({ node, depth = 0 }: { node: NetworkNode, depth?: number }) => {
+    // Calculate Gauge Data for a Zone/Node
+    const getZoneGaugeData = (node: DailyMeterNode) => {
+        const input = getNodeReading(node, selectedDay);
+        const childrenSum = getChildrenAggregate(node, selectedDay);
+        let loss = 0;
+        if (input > 0) loss = input - childrenSum;
+
+        // Efficiency score: (Consumed / Input) * 100
+        // Or (Input - Loss) / Input * 100
+        let efficiency = 100;
+        if (input > 0) {
+            efficiency = ((input - Math.max(0, loss)) / input) * 100;
+        } else if (loss > 0) {
+            efficiency = 0;
+        }
+
+        return {
+            id: node.id,
+            name: node.name,
+            input,
+            loss,
+            efficiency
+        };
+    };
+
+    // Memoize Gauge Data
+    const gaugeData = useMemo(() => {
+        const mainBulk = getZoneGaugeData(hierarchy);
+        // Get L2 Zones
+        const zones = hierarchy.children
+            ?.filter(c => c.label === 'L2')
+            .map(z => getZoneGaugeData(z)) || [];
+
+        return [mainBulk, ...zones];
+    }, [hierarchy, dailyConsumption, dailyLossData, selectedDay]);
+
+    // ---- Zone Trend Analysis Logic ----
+    const zoneTrendData = useMemo(() => {
+        if (!dailyLossData.length) return [];
+        // Filter by selected zone
+        // Note: Supabase data 'zone' name (e.g. "Zone 3A") might need normalization to match selectedTrendZone
+
+        const filtered = dailyLossData.filter(d => d.zone === selectedTrendZone).sort((a, b) => a.day - b.day);
+
+        return filtered.map(d => ({
+            day: d.day,
+            date: new Date(d.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }),
+            bulkInput: d.l2TotalM3,
+            individualSum: d.l3TotalM3,
+            loss: d.lossM3,
+            efficiency: d.l2TotalM3 > 0 ? (d.l3TotalM3 / d.l2TotalM3) * 100 : 0
+        }));
+    }, [dailyLossData, selectedTrendZone]);
+
+    const zoneStats = useMemo(() => {
+        if (!zoneTrendData.length) return null;
+        const totalBulk = zoneTrendData.reduce((acc, curr) => acc + curr.bulkInput, 0);
+        const totalIndiv = zoneTrendData.reduce((acc, curr) => acc + curr.individualSum, 0);
+        const totalLoss = zoneTrendData.reduce((acc, curr) => acc + curr.loss, 0);
+        const avgEff = totalBulk > 0 ? (totalIndiv / totalBulk) * 100 : 0;
+
+        return { totalBulk, totalIndiv, totalLoss, avgEff };
+    }, [zoneTrendData]);
+
+    const availableZones = useMemo(() => {
+        // Extract unique zones from dailyLossData
+        const zones = new Set(dailyLossData.map(d => d.zone));
+        return Array.from(zones).sort();
+    }, [dailyLossData]);
+
+
+    const RecursiveRow = ({ node, depth = 0 }: { node: DailyMeterNode, depth?: number }) => {
         const isExpanded = expandedNodes.has(node.id);
         const hasChildren = node.children && node.children.length > 0;
         const reading = getNodeReading(node, selectedDay);
         const childrenSum = getChildrenAggregate(node, selectedDay);
 
-        // Calculate Loss
-        // For L2 (Zones), use the official DB calculation if available, otherwise calculate manually
         let loss = 0;
         let lossPercent = 0;
         let isHighLoss = false;
         let isMedLoss = false;
+        const isReconciliationNode = ['L1', 'L2', 'L3'].includes(node.label) && hasChildren;
 
-        if (node.zone) {
-            const zoneRecord = dailyLossData.find(d => d.zone === node.zone && d.day === selectedDay);
-            if (zoneRecord) {
-                loss = zoneRecord.lossM3;
-                lossPercent = zoneRecord.lossPercent;
-                isHighLoss = lossPercent > 50;
-                isMedLoss = lossPercent > 20 && lossPercent <= 50;
-            } else {
-                // Fallback manual calc
-                loss = reading - childrenSum;
-                lossPercent = reading > 0 ? (loss / reading) * 100 : 0;
-            }
-        } else if (hasChildren && reading > 0) {
-            // For intermediate nodes like Building Bulk
+        if (isReconciliationNode) {
             loss = reading - childrenSum;
             lossPercent = reading > 0 ? (loss / reading) * 100 : 0;
-            // Define thresholds for buildings?? defaulting strictly for now
             isHighLoss = lossPercent > 20;
             isMedLoss = lossPercent > 5 && lossPercent <= 20;
         }
 
-
-        // Trend Data (Sparkline)
-        const trendData = useMemo(() => {
-            const daysInMonth = 31;
-            const data = [];
-            for (let i = 1; i <= daysInMonth; i++) {
-                let dLoss = 0;
-                if (node.zone) {
-                    const z = dailyLossData.find(d => d.zone === node.zone && d.day === i);
-                    if (z) dLoss = z.lossPercent;
-                } else if (hasChildren) {
-                    const r = getNodeReading(node, i);
-                    const c = getChildrenAggregate(node, i);
-                    if (r > 0) dLoss = ((r - c) / r) * 100;
-                }
-                data.push({ day: i, loss: dLoss });
-            }
-            return data;
-        }, [node]);
-
-        // Get Account Number
-        const accountNo = useMemo(() => {
-            // 1. Try from DailyConsumption
-            const consumption = dailyConsumption.find(d => d.meterName === node.id || d.accountNumber === node.id);
-            if (consumption?.accountNumber) return consumption.accountNumber;
-
-            // 2. Try from WaterMeters list
-            const meter = waterMeters.find(m => (m.id && m.id.toString() === node.id) || m.accountNumber === node.id);
-            if (meter?.accountNumber) return meter.accountNumber;
-
-            return '-';
-        }, [node]);
-
         return (
             <>
-                <TableRow className={`hover:bg-muted/20 border-border/40 group ${isExpanded ? 'bg-muted/5' : ''}`}>
-                    <TableCell className="font-medium p-2">
-                        <div className="flex items-center" style={{ paddingLeft: `${depth * 20}px` }}>
+                <TableRow className={cn(
+                    "transition-all duration-200 border-b border-white/5 hover:bg-white/5",
+                    depth === 0 ? "bg-white/5 font-medium" : ""
+                )}>
+                    <TableCell className="font-medium p-3 w-[280px]">
+                        <div className="flex items-center gap-2" style={{ paddingLeft: `${depth * 24}px` }}>
                             {hasChildren ? (
                                 <Button
                                     type="button"
                                     variant="ghost"
                                     size="icon"
-                                    className="h-6 w-6 p-0 mr-2 shrink-0"
+                                    className="h-6 w-6 p-0 hover:bg-white/10 rounded-md transition-colors text-muted-foreground"
                                     onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleNode(node.id); }}
                                 >
                                     {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                                 </Button>
-                            ) : (
-                                <div className="w-6 mr-2 shrink-0" />
-                            )}
-                            <div className="flex flex-col min-w-0">
-                                <span className="text-foreground flex items-center gap-2 truncate text-sm">
-                                    {node.label}
-                                    {node.alert && <AlertTriangle size={12} className="text-red-500 shrink-0" />}
-                                </span>
-                                {node.note && isExpanded && <span className="text-[10px] text-muted-foreground truncate">{node.note}</span>}
-                            </div>
+                            ) : <div className="w-6" />}
+
+                            <span className={cn(
+                                "truncate text-sm tracking-tight",
+                                node.label === 'L1' ? "text-primary font-bold" : "text-foreground/90"
+                            )} title={node.name}>
+                                {node.name}
+                            </span>
                         </div>
                     </TableCell>
-                    <TableCell className="text-left font-mono text-xs text-muted-foreground hidden sm:table-cell">
-                        {accountNo}
+
+                    <TableCell className="font-mono text-xs text-muted-foreground/70">{node.id}</TableCell>
+
+                    <TableCell className="text-center">
+                        <span className={cn(
+                            "px-2 py-0.5 rounded text-[10px] font-semibold border",
+                            node.label === 'L1' ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" :
+                                node.label === 'L2' ? "bg-blue-500/10 text-blue-400 border-blue-500/20" :
+                                    node.label === 'L3' ? "bg-indigo-500/10 text-indigo-300 border-indigo-500/20" :
+                                        "bg-slate-500/10 text-slate-400 border-slate-500/20"
+                        )}>
+                            {node.label}
+                        </span>
                     </TableCell>
-                    <TableCell className="text-right font-mono text-sm text-foreground/90">
-                        {reading > 0 ? reading.toFixed(2) : '-'}
+
+                    <TableCell className="hidden sm:table-cell text-xs text-muted-foreground/60">{node.zone}</TableCell>
+                    <TableCell className="hidden md:table-cell text-xs text-muted-foreground/60 truncate max-w-[100px]">{node.parent}</TableCell>
+                    <TableCell className="hidden lg:table-cell text-xs">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] bg-white/5 border border-white/10 text-muted-foreground">
+                            {node.type}
+                        </span>
                     </TableCell>
-                    <TableCell className="text-right font-mono text-sm text-muted-foreground">
-                        {hasChildren && childrenSum > 0 ? childrenSum.toFixed(2) : '-'}
-                    </TableCell>
+
                     <TableCell className="text-right font-mono text-sm">
-                        {(node.zone || (hasChildren && reading > 0)) ? (
-                            <span className={isHighLoss ? 'text-red-500 font-bold' : isMedLoss ? 'text-orange-500 font-medium' : 'text-green-600'}>
-                                {loss > 0 ? '+' : ''}{loss.toFixed(2)}
-                            </span>
+                        {reading > 0 ? reading.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 2 }) : '-'}
+                    </TableCell>
+
+                    <TableCell className="text-center font-mono text-sm">
+                        {isReconciliationNode ? (
+                            <div className={cn(
+                                "inline-flex items-center gap-1 font-medium",
+                                loss > 0.1 ? "text-red-400" : "text-emerald-400"
+                            )}>
+                                {loss > 0.1 ? '+' : ''}{loss.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 2 })}
+                            </div>
                         ) : '-'}
                     </TableCell>
+
                     <TableCell className="text-center">
-                        {(node.zone || (hasChildren && reading > 0)) ? (
-                            <div className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium border ${isHighLoss
-                                ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-900/30'
-                                : isMedLoss
-                                    ? 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-900/20 dark:text-orange-400 dark:border-orange-900/30'
-                                    : 'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-900/30'
-                                }`}>
+                        {isReconciliationNode ? (
+                            <div className={cn(
+                                "inline-flex items-center justify-center min-w-[60px] px-2 py-1 rounded text-[10px] font-bold border backdrop-blur-sm shadow-sm transition-all",
+                                isHighLoss
+                                    ? "bg-red-500/10 text-red-400 border-red-500/20 shadow-red-500/5"
+                                    : isMedLoss
+                                        ? "bg-amber-500/10 text-amber-400 border-amber-500/20 shadow-amber-500/5"
+                                        : "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                            )}>
                                 {lossPercent.toFixed(1)}%
                             </div>
                         ) : '-'}
-                    </TableCell>
-                    <TableCell>
-                        {(node.zone || (hasChildren && reading > 0)) && (
-                            <div className="h-[25px] w-[80px]">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <AreaChart data={trendData}>
-                                        <defs>
-                                            <linearGradient id={`gradSpark-${node.id}`} x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor={isHighLoss ? DAILY_BRAND.lossRed : isMedLoss ? DAILY_BRAND.warningOrange : DAILY_BRAND.successGreen} stopOpacity={0.3} />
-                                                <stop offset="95%" stopColor={isHighLoss ? DAILY_BRAND.lossRed : isMedLoss ? DAILY_BRAND.warningOrange : DAILY_BRAND.successGreen} stopOpacity={0} />
-                                            </linearGradient>
-                                        </defs>
-                                        <Area
-                                            type="monotone"
-                                            dataKey="loss"
-                                            stroke={isHighLoss ? DAILY_BRAND.lossRed : isMedLoss ? DAILY_BRAND.warningOrange : DAILY_BRAND.successGreen}
-                                            fill={`url(#gradSpark-${node.id})`}
-                                            strokeWidth={2}
-                                            baseLine={0}
-                                        />
-                                    </AreaChart>
-                                </ResponsiveContainer>
-                            </div>
-                        )}
                     </TableCell>
                 </TableRow>
                 {isExpanded && node.children && node.children.map(child => (
@@ -1083,126 +1113,319 @@ function DailyWaterDashboard() {
 
     if (isLoading) {
         return (
-            <div className="h-64 flex flex-col items-center justify-center space-y-4">
-                <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                <p className="text-muted-foreground animate-pulse">Loading daily water data...</p>
+            <div className="h-[500px] flex flex-col items-center justify-center gap-4 bg-muted/5 rounded-xl border border-white/5">
+                <div className="relative">
+                    <div className="h-12 w-12 rounded-full border-4 border-primary/30 border-t-primary animate-spin" />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                        <Droplets className="h-4 w-4 text-primary animate-pulse" />
+                    </div>
+                </div>
+                <p className="text-muted-foreground font-medium animate-pulse">Analyzing daily flow data...</p>
             </div>
         );
     }
 
     if (hasError) {
-        return <div className="p-8 text-center text-red-500">Error loading data. Please check connection.</div>;
+        return (
+            <div className="p-8 text-center border border-red-500/20 bg-red-500/5 rounded-xl text-red-400">
+                <AlertCircle className="h-8 w-8 mx-auto mb-2 text-red-500" />
+                Error loading data. Please check your connection.
+            </div>
+        );
     }
 
-    // Get zones for summary cards
-    const zonesForDay = dailyLossData.filter(d => d.day === selectedDay);
-
-    const fmt = (n: number) => n?.toFixed(1) || '0.0';
-
     return (
-        <div className="space-y-6 animate-in fade-in duration-500">
-            {/* Header / Date Selection */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="space-y-8 animate-in fade-in zoom-in-95 duration-500">
+            {/* Header & Controls */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 p-1">
                 <div>
-                    <h3 className="text-lg font-semibold flex items-center gap-2">
-                        <CalendarDays className="h-5 w-5 text-primary" />
-                        Daily Analysis: Jan {selectedDay}, {currentYear}
+                    <h3 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-white/60 flex items-center gap-3">
+                        <CalendarDays className="h-6 w-6 text-primary" />
+                        Daily Water Analysis
                     </h3>
-                </div>
-                <div className="flex items-center gap-4 bg-muted/30 p-2 rounded-lg border border-border/50">
-                    <span className="text-sm font-medium whitespace-nowrap">Day of Month:</span>
-                    <input
-                        type="range"
-                        min="1"
-                        max="31"
-                        value={selectedDay}
-                        onChange={(e) => setSelectedDay(parseInt(e.target.value))}
-                        className="w-full md:w-48 accent-primary h-2 bg-secondary rounded-lg appearance-none cursor-pointer"
-                    />
-                    <span className="text-sm font-bold w-6">{selectedDay}</span>
-                </div>
-            </div>
-
-            {/* Summary KPI Cards - Keep these as they give good overview */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card className="glass-card">
-                    <CardHeader className="glass-card-header pb-2">
-                        <CardTitle className="text-base flex items-center gap-2">
-                            <Droplets size={18} className="text-blue-500" /> Total Metered L2
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold font-mono">
-                            {fmt(zonesForDay.reduce((acc, z) => acc + z.l2TotalM3, 0))} <span className="text-sm font-normal text-muted-foreground">mÂ³</span>
-                        </div>
-                    </CardContent>
-                </Card>
-                <Card className="glass-card">
-                    <CardHeader className="glass-card-header pb-2">
-                        <CardTitle className="text-base flex items-center gap-2">
-                            <Home size={18} className="text-amber-500" /> Total Consumed L3
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold font-mono">
-                            {fmt(zonesForDay.reduce((acc, z) => acc + z.l3TotalM3, 0))} <span className="text-sm font-normal text-muted-foreground">mÂ³</span>
-                        </div>
-                    </CardContent>
-                </Card>
-                <Card className="glass-card">
-                    <CardHeader className="glass-card-header pb-2">
-                        <CardTitle className="text-base flex items-center gap-2">
-                            <AlertTriangle size={18} className="text-red-500" /> Total Network Loss
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="flex items-baseline gap-2">
-                            <span className="text-2xl font-bold font-mono text-red-500">
-                                {fmt(zonesForDay.reduce((acc, z) => acc + z.lossM3, 0))}
-                            </span>
-                            <span className="text-sm text-muted-foreground">mÂ³</span>
-                            <span className="text-sm font-bold text-red-500 ml-2">
-                                ({zonesForDay.reduce((acc, z) => acc + z.l2TotalM3, 0) > 0 ? ((zonesForDay.reduce((acc, z) => acc + z.lossM3, 0) / zonesForDay.reduce((acc, z) => acc + z.l2TotalM3, 0)) * 100).toFixed(1) : 0}%)
-                            </span>
-                        </div>
-                    </CardContent>
-                </Card>
-            </div>
-
-
-            {/* Detailed Hierarchical Table */}
-            <Card className="glass-card">
-                <CardHeader className="glass-card-header px-6 py-4 border-b border-border/40">
-                    <CardTitle className="text-base sm:text-lg flex items-center gap-2">
-                        <Layers size={18} className="text-primary" />
-                        Network Hierarchy Loss Report
-                    </CardTitle>
-                    <p className="text-sm text-muted-foreground mt-1">
-                        Breakdown of loss between parent and child meters
+                    <p className="text-muted-foreground mt-1 ml-9">
+                        {currentMonth.replace('-', ' ')} {currentYear}
                     </p>
-                </CardHeader>
-                <div className="overflow-x-auto">
-                    <Table>
-                        <TableHeader className="bg-muted/30">
-                            <TableRow className="hover:bg-transparent border-border/40">
-                                <TableHead className="w-[300px] font-semibold">Hierarchy Node</TableHead>
-                                <TableHead className="text-left font-semibold hidden sm:table-cell w-[120px]">Account #</TableHead>
-                                <TableHead className="text-right font-semibold">Meter Reading (m³)</TableHead>
-                                <TableHead className="text-right font-semibold">Child Sum (mÂ³)</TableHead>
-                                <TableHead className="text-right font-semibold">Loss (mÂ³)</TableHead>
-                                <TableHead className="text-center font-semibold">Loss %</TableHead>
-                                <TableHead className="w-[100px] font-semibold">Trend</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {/* Render children of Root individually to skip the specific 'C43659 Main Bulk' single row if desired, or render root. let's render root children directly to save level */}
-                            {networkData.children?.map(child => (
-                                <RecursiveRow key={child.id} node={child} depth={0} />
-                            ))}
-                        </TableBody>
-                    </Table>
                 </div>
-            </Card>
+
+                {/* View Switcher */}
+                <div className="flex p-1 bg-muted/20 rounded-lg border border-white/5 backdrop-blur-md">
+                    <button
+                        onClick={() => setViewMode('hierarchy')}
+                        className={cn(
+                            "px-4 py-2 text-sm font-medium rounded-md transition-all",
+                            viewMode === 'hierarchy'
+                                ? "bg-primary/20 text-primary shadow-sm border border-primary/20"
+                                : "text-muted-foreground hover:text-foreground hover:bg-white/5"
+                        )}
+                    >
+                        Hierarchy Snapshot
+                    </button>
+                    <button
+                        onClick={() => setViewMode('zone')}
+                        className={cn(
+                            "px-4 py-2 text-sm font-medium rounded-md transition-all",
+                            viewMode === 'zone'
+                                ? "bg-primary/20 text-primary shadow-sm border border-primary/20"
+                                : "text-muted-foreground hover:text-foreground hover:bg-white/5"
+                        )}
+                    >
+                        Zone Trends
+                    </button>
+                </div>
+            </div>
+
+            {/* Content Based on View Mode */}
+            {viewMode === 'hierarchy' ? (
+                <div className="space-y-8 animate-in slide-in-from-left-4 duration-500">
+                    {/* Day Selector for Hierarchy */}
+                    <div className="flex justify-end">
+                        <div className="flex items-center gap-4 bg-card/40 p-3 rounded-xl border border-white/10 backdrop-blur-sm shadow-xl">
+                            <span className="text-sm font-medium text-muted-foreground whitespace-nowrap pl-2">Select Day:</span>
+                            <input
+                                type="range"
+                                min="1"
+                                max="31"
+                                value={selectedDay}
+                                onChange={(e) => setSelectedDay(parseInt(e.target.value))}
+                                className="w-full md:w-48 h-2 bg-gradient-to-r from-primary/20 to-primary/60 rounded-lg appearance-none cursor-pointer accent-primary hover:accent-primary/80 transition-all"
+                            />
+                            <div className="h-8 w-10 flex items-center justify-center rounded bg-primary/20 border border-primary/30 font-bold text-primary font-mono shadow-inner">
+                                {selectedDay}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Gauges */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        {gaugeData.slice(0, 8).map((gauge) => (
+                            <WaterLossGauge
+                                key={gauge.id}
+                                label={gauge.name.replace(' (NAMA)', '').replace(' (Bulk Zone 3A)', '').replace(' (Bulk Zone 3B)', '').replace(' (Bulk Zone 5)', '')}
+                                subLabel={`Input: ${gauge.input.toLocaleString()} m³`}
+                                score={gauge.efficiency}
+                                className="h-full bg-gradient-to-br from-card/30 to-card/10 hover:from-card/40 hover:to-card/20 transition-all duration-300 transform hover:-translate-y-1"
+                            />
+                        ))}
+                    </div>
+
+                    {/* Table */}
+                    <Card className="border-none shadow-2xl bg-card/20 backdrop-blur-xl ring-1 ring-white/5 overflow-hidden">
+                        <CardHeader className="px-6 py-6 border-b border-white/5 bg-white/5">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <CardTitle className="text-lg flex items-center gap-2 text-foreground/90">
+                                        <Layers className="text-primary h-5 w-5" />
+                                        Hierarchical Breakdown
+                                    </CardTitle>
+                                    <p className="text-sm text-muted-foreground/70 mt-1">
+                                        Detailed meter-level readings and reconciliation analysis.
+                                    </p>
+                                </div>
+                                <Button variant="outline" size="sm" className="hidden sm:flex gap-2 bg-white/5 border-white/10 hover:bg-white/10 text-muted-foreground">
+                                    <Database size={14} /> Export CSV
+                                </Button>
+                            </div>
+                        </CardHeader>
+                        <div className="overflow-x-auto">
+                            <Table>
+                                <TableHeader className="bg-black/20">
+                                    <TableRow className="hover:bg-transparent border-white/5">
+                                        <TableHead className="w-[280px] font-semibold text-white/70">Meter Hierarchy</TableHead>
+                                        <TableHead className="w-[100px] font-semibold text-white/50">Acct #</TableHead>
+                                        <TableHead className="w-[80px] text-center font-semibold text-white/50">Level</TableHead>
+                                        <TableHead className="hidden sm:table-cell font-semibold text-white/50">Zone</TableHead>
+                                        <TableHead className="hidden md:table-cell font-semibold text-white/50">Parent Node</TableHead>
+                                        <TableHead className="hidden lg:table-cell font-semibold text-white/50">Details</TableHead>
+                                        <TableHead className="text-right font-semibold text-white/70">Flow (m³)</TableHead>
+                                        <TableHead className="text-center font-semibold text-white/70">Diff</TableHead>
+                                        <TableHead className="text-center font-semibold text-white/70">Loss %</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    <RecursiveRow node={hierarchy} depth={0} />
+                                </TableBody>
+                            </Table>
+                        </div>
+                    </Card>
+                </div>
+            ) : (
+                <div className="space-y-8 animate-in slide-in-from-right-4 duration-500">
+                    {/* Zone Trends View */}
+                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                        {/* Sidebar / Controls */}
+                        <div className="lg:col-span-1 space-y-4">
+                            <Card className="glass-card bg-card/10 h-full">
+                                <CardHeader>
+                                    <CardTitle className="text-base">Filter Zone</CardTitle>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    <div className="space-y-2">
+                                        <label className="text-xs text-muted-foreground uppercase font-semibold">Select Zone</label>
+                                        <select
+                                            className="w-full bg-black/20 border border-white/10 rounded-lg p-2 text-sm focus:ring-2 focus:ring-primary/50 outline-none transition-all"
+                                            value={selectedTrendZone}
+                                            onChange={(e) => setSelectedTrendZone(e.target.value)}
+                                        >
+                                            {availableZones.length > 0 ? availableZones.map(z => (
+                                                <option key={z} value={z}>{z}</option>
+                                            )) : <option>Loading...</option>}
+                                        </select>
+                                    </div>
+
+                                    {/* Monthly Stats Summary for Zone */}
+                                    {zoneStats && (
+                                        <div className="space-y-4 pt-4 border-t border-white/5">
+                                            <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                                                <div className="text-xs text-blue-400 mb-1">Total Input (Bulk)</div>
+                                                <div className="text-xl font-bold text-blue-100">{zoneStats.totalBulk.toLocaleString()} m³</div>
+                                            </div>
+                                            <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                                                <div className="text-xs text-emerald-400 mb-1">Total Consumed</div>
+                                                <div className="text-xl font-bold text-emerald-100">{zoneStats.totalIndiv.toLocaleString()} m³</div>
+                                            </div>
+                                            <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20">
+                                                <div className="text-xs text-red-400 mb-1">Total Loss</div>
+                                                <div className="text-xl font-bold text-red-100">{zoneStats.totalLoss.toLocaleString()} m³</div>
+                                            </div>
+                                            <div className="p-3 rounded-lg bg-white/5 border border-white/10">
+                                                <div className="text-xs text-muted-foreground mb-1">Avg Efficiency</div>
+                                                <div className="text-xl font-bold text-white">{zoneStats.avgEff.toFixed(1)}%</div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </CardContent>
+                            </Card>
+                        </div>
+
+                        {/* Main Chart Area */}
+                        <div className="lg:col-span-3 space-y-6">
+                            <Card className="glass-card">
+                                <CardHeader>
+                                    <div className="flex items-center justify-between">
+                                        <CardTitle className="flex items-center gap-2">
+                                            <Activity className="h-5 w-5 text-primary" />
+                                            Daily Loss Trend: {selectedTrendZone}
+                                        </CardTitle>
+                                    </div>
+                                    <p className="text-sm text-muted-foreground">Comparing Bulk Input vs. Aggregate Individual Consumption over the month.</p>
+                                </CardHeader>
+                                <CardContent className="h-[350px]">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <AreaChart data={zoneTrendData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                                            <defs>
+                                                <linearGradient id="colorBulk" x1="0" y1="0" x2="0" y2="1">
+                                                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
+                                                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                                                </linearGradient>
+                                                <linearGradient id="colorIndiv" x1="0" y1="0" x2="0" y2="1">
+                                                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
+                                                    <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                                                </linearGradient>
+                                            </defs>
+                                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" vertical={false} />
+                                            <XAxis
+                                                dataKey="day"
+                                                stroke="#888888"
+                                                fontSize={12}
+                                                tickLine={false}
+                                                axisLine={false}
+                                            />
+                                            <YAxis
+                                                stroke="#888888"
+                                                fontSize={12}
+                                                tickLine={false}
+                                                axisLine={false}
+                                                tickFormatter={value => `${value}`}
+                                            />
+                                            <Tooltip
+                                                contentStyle={{ backgroundColor: 'rgba(23, 23, 23, 0.9)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }}
+                                                itemStyle={{ color: '#fff' }}
+                                            />
+                                            <Legend wrapperStyle={{ paddingTop: '20px' }} />
+                                            <Area
+                                                type="monotone"
+                                                dataKey="bulkInput"
+                                                name="Bulk Input"
+                                                stroke="#3b82f6"
+                                                fillOpacity={1}
+                                                fill="url(#colorBulk)"
+                                                strokeWidth={2}
+                                            />
+                                            <Area
+                                                type="monotone"
+                                                dataKey="individualSum"
+                                                name="Total Consumed"
+                                                stroke="#10b981"
+                                                fillOpacity={1}
+                                                fill="url(#colorIndiv)"
+                                                strokeWidth={2}
+                                            />
+                                            <Line
+                                                type="monotone"
+                                                dataKey="loss"
+                                                name="Loss Gap"
+                                                stroke="#ef4444"
+                                                strokeWidth={2}
+                                                strokeDasharray="5 5"
+                                                dot={false}
+                                            />
+                                        </AreaChart>
+                                    </ResponsiveContainer>
+                                </CardContent>
+                            </Card>
+
+                            {/* Detailed List */}
+                            <Card className="glass-card">
+                                <CardHeader>
+                                    <div className="flex items-center justify-between">
+                                        <CardTitle className="text-base">Daily Records</CardTitle>
+                                        <Button variant="outline" size="sm" className="bg-white/5 border-white/10 hover:bg-white/10">
+                                            <Database size={14} className="mr-2" /> Export
+                                        </Button>
+                                    </div>
+                                </CardHeader>
+                                <div className="overflow-x-auto max-h-[300px] overflow-y-auto">
+                                    <Table>
+                                        <TableHeader className="sticky top-0 bg-black/40 backdrop-blur-md z-10">
+                                            <TableRow className="border-white/5 hover:bg-transparent">
+                                                <TableHead>Day</TableHead>
+                                                <TableHead className="text-right">Bulk Input (m³)</TableHead>
+                                                <TableHead className="text-right">Billed (m³)</TableHead>
+                                                <TableHead className="text-right">Loss (m³)</TableHead>
+                                                <TableHead className="text-right">Efficiency</TableHead>
+                                                <TableHead className="text-center">Status</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {zoneTrendData.map((day) => (
+                                                <TableRow key={day.day} className="border-white/5 hover:bg-white/5">
+                                                    <TableCell className="font-mono">{day.date}</TableCell>
+                                                    <TableCell className="text-right text-blue-300 font-mono">{day.bulkInput.toFixed(2)}</TableCell>
+                                                    <TableCell className="text-right text-emerald-300 font-mono">{day.individualSum.toFixed(2)}</TableCell>
+                                                    <TableCell className="text-right text-red-300 font-mono">{day.loss.toFixed(2)}</TableCell>
+                                                    <TableCell className="text-right font-mono">{day.efficiency.toFixed(1)}%</TableCell>
+                                                    <TableCell className="text-center">
+                                                        <span className={cn(
+                                                            "text-[10px] px-2 py-0.5 rounded-full border",
+                                                            day.loss > (day.bulkInput * 0.2)
+                                                                ? "bg-red-500/10 text-red-500 border-red-500/20"
+                                                                : "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
+                                                        )}>
+                                                            {day.loss > (day.bulkInput * 0.2) ? 'High Loss' : 'Normal'}
+                                                        </span>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                </div>
+                            </Card>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
+
