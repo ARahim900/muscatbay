@@ -64,7 +64,6 @@ Built by the **Assets & Operations Manager** to solve real-world infrastructure 
 
 ## 📁 Project Structure
 
-```
 muscatbay/
 ├── app/                        # Main Next.js application
 │   ├── app/                    # Next.js App Router pages
@@ -88,16 +87,18 @@ muscatbay/
 │   │   ├── supabase.ts         # Database operations
 │   │   ├── water-data.ts       # Water meter data & analysis
 │   │   └── auth.ts             # Authentication
-│   ├── sql/                    # SQL schema and data files
+│   ├── sql/                    # Database (schema, data, migrations)
 │   ├── scripts/                # Utility scripts
 │   ├── hooks/                  # Custom React hooks
-│   └── __tests__/              # Test files
-├── docs/                       # Documentation
+│   ├── testsprite_tests/       # E2E tests (Python)
+│   └── __tests__/              # Unit test files
+├── docs/                       # Documentation and examples
 ├── App_Logo/                   # Branding assets
 ├── .github/workflows/          # GitHub Actions CI/CD
 ├── .vscode/                    # VS Code settings
 ├── .claude/                    # AI assistant configurations
 ├── vercel.json                 # Vercel deployment config
+├── CONTRIBUTING.md             # Contribution guidelines
 ├── CHANGELOG.md                # Version history
 └── README.md                   # This file
 ```
@@ -214,8 +215,16 @@ muscatbay/
 | `npm run lint` | Run ESLint |
 
 ### Running Tests
+
+**Unit Tests (Vitest):**
 ```bash
 npm test
+```
+
+**E2E Tests (TestSprite):**
+Python-based E2E tests are located in `testsprite_tests/`.
+```bash
+# Refer to TestSprite documentation for execution
 ```
 
 ### Building for Production
@@ -299,6 +308,7 @@ For questions or issues:
 - [Application Documentation](./app/README.md) - Detailed app structure
 - [Architecture Overview](./app/ARCHITECTURE.md) - System design
 - [Design System](./app/DESIGN_SYSTEM.md) - UI styling guide
+- [Contributing Guidelines](./CONTRIBUTING.md) - Development setup and contribution guide
 - [Changelog](./CHANGELOG.md) - Version history and updates
 - [SQL Reference](./app/sql/README.md) - Database schema files
 

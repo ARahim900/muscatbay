@@ -1,5 +1,15 @@
 ## Changelog
 
+### 2026-01-24
+- **Codebase Reorganization**: Implemented comprehensive file structure improvements.
+  - Organized `/sql` directory into `schema`, `data`, `migrations`, and `fixes` subdirectories.
+  - Moved unused example components to `docs/examples/`.
+  - Consolidated documentation references.
+- **Documentation**: 
+  - Added `CONTRIBUTING.md` guide.
+  - Updated `Folder_Structure.md` to reflect new organization.
+- **Cleanup**: Removed extraneous temporary files and organized data exports.
+
 ### 2026-01-13
 - Tightened main content container spacing for consistent left/right gutters next to the sidebar.
 - Further reduced container padding and increased max width so dashboard cards sit closer to the sidebar while keeping balanced gutters.

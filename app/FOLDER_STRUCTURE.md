@@ -12,10 +12,12 @@ app/
 ├── functions/        # Backend utility functions
 ├── lib/              # Shared utilities and configuration
 ├── hooks/            # Custom React hooks
+├── docs/             # Documentation and examples
+│   └── examples/     # Code examples and references
 ├── public/           # Static assets
 ├── scripts/          # Development and data scripts
-├── sql/              # Database SQL scripts
-└── __tests__/        # Test files
+├── sql/              # Database SQL scripts (schema, data, migrations)
+└── __tests__/        # Unit test files
 ```
 
 ---

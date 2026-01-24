@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { LiquidProgressRing } from "@/components/charts/liquid-progress-ring";
 import { LiquidTooltip } from "@/components/charts/liquid-tooltip";
 import { StatsGridSkeleton, ChartSkeleton, Skeleton } from "@/components/shared/skeleton";
+import { CSVUploadDialog } from "@/components/water/CSVUploadDialog";
 import { WaterLossDaily, DailyWaterConsumption } from "@/entities/water";
 import { ZONE_CONFIG } from "@/lib/water-data";
 import {
@@ -87,6 +88,7 @@ export function DailyWaterReport() {
     const [isLoading, setIsLoading] = useState(true);
     const [hasError, setHasError] = useState(false);
     const [dataSource, setDataSource] = useState<'supabase' | 'mock'>('mock');
+    const [refreshKey, setRefreshKey] = useState(0);
 
     // Table state
     const [searchTerm, setSearchTerm] = useState('');
@@ -97,6 +99,12 @@ export function DailyWaterReport() {
 
     const currentYear = 2026;
     const currentMonth = 'Jan-26';
+
+    // Callback to trigger refresh after CSV upload
+    const handleUploadComplete = useCallback(() => {
+        console.log('[DailyWaterReport] CSV upload complete, refreshing data...');
+        setRefreshKey(prev => prev + 1);
+    }, []);
 
     // Get max day from data
     const maxDay = useMemo(() => {
@@ -134,7 +142,7 @@ export function DailyWaterReport() {
             }
         }
         fetchDailyData();
-    }, []);
+    }, [refreshKey]);
 
     // Get analysis for selected zone and day
     const zoneAnalysis = useMemo(() => {
@@ -393,15 +401,22 @@ export function DailyWaterReport() {
                                     );
                                 })}
                             </div>
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={resetFilters}
-                                className="ml-auto text-muted-foreground hover:text-foreground"
-                            >
-                                <RotateCcw className="mr-2 h-3.5 w-3.5" />
-                                Reset
-                            </Button>
+                            <div className="flex items-center gap-2 ml-auto">
+                                <CSVUploadDialog
+                                    month={currentMonth}
+                                    year={currentYear}
+                                    onUploadComplete={handleUploadComplete}
+                                />
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={resetFilters}
+                                    className="text-muted-foreground hover:text-foreground"
+                                >
+                                    <RotateCcw className="mr-2 h-3.5 w-3.5" />
+                                    Reset
+                                </Button>
+                            </div>
                         </div>
                     </div>
                 </CardContent>
