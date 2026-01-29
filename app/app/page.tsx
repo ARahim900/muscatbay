@@ -144,7 +144,6 @@ export default function DashboardPage() {
                 <CardContent className="p-4 sm:p-5 md:p-6 pt-0">
                     <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                         {[
-                            { title: "High Water Loss Detected", time: "2 hours ago", type: "critical" },
                             { title: "STP Pump Station Maintenance", time: "5 hours ago", type: "warning" },
                             { title: "New Contractor Onboarded", time: "1 day ago", type: "info" },
                             { title: "Monthly Reports Generated", time: "2 days ago", type: "info" },

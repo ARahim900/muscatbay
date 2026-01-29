@@ -274,21 +274,41 @@ export function calculateMonthlyAnalysis(month: string): WaterAnalysis {
   const l4Meters = getMetersByLevel('L4');
   const dcMeters = getMetersByLevel('DC');
 
-  const A1 = l1Meters.reduce((sum, m) => sum + getConsumption(m, month), 0);
-  const A2 = l2Meters.reduce((sum, m) => sum + getConsumption(m, month), 0) +
-    dcMeters.reduce((sum, m) => sum + getConsumption(m, month), 0);
-  const A3Bulk = l3Meters.reduce((sum, m) => sum + getConsumption(m, month), 0) +
-    dcMeters.reduce((sum, m) => sum + getConsumption(m, month), 0);
+  // Helper to check if a meter has data for the month
+  const hasData = (m: WaterMeter) => m.consumption[month] !== null && m.consumption[month] !== undefined;
+
+  // Helper to get consumption only if it exists
+  const getVal = (m: WaterMeter) => getConsumption(m, month);
+
+  const A1 = l1Meters.reduce((sum, m) => sum + getVal(m), 0);
+  const A2 = l2Meters.reduce((sum, m) => sum + getVal(m), 0) +
+    dcMeters.reduce((sum, m) => sum + getVal(m), 0);
+
+  // For A3, we need to be careful. If we have a lot of missing data, the sum will be low, 
+  // leading to high calculated loss.
+  // Current approach: Sum what we have. 
+  // IMPACT: If individual meters are missing (null), A3 is lower -> Loss (A1-A3) is higher.
+  // IMPROVEMENT: We could try to estimate, but for now, let's strictly sum. 
+  // However, identifying if data is "complete" is hard without a schedule.
+  // A better approach for the "Analysis" object might be to flag potential inaccuracy?
+  // For now, let's keep the sum but maybe we can ensure we don't return negative loss if A3 > A1 (unlikely but possible with bad data).
+
+  const A3Bulk = l3Meters.reduce((sum, m) => sum + getVal(m), 0) +
+    dcMeters.reduce((sum, m) => sum + getVal(m), 0);
   const l3NonBuildings = l3Meters.filter(m => !m.type.includes('Building_Bulk'));
-  const A3Individual = l3NonBuildings.reduce((sum, m) => sum + getConsumption(m, month), 0) +
-    l4Meters.reduce((sum, m) => sum + getConsumption(m, month), 0) +
-    dcMeters.reduce((sum, m) => sum + getConsumption(m, month), 0);
+  const A3Individual = l3NonBuildings.reduce((sum, m) => sum + getVal(m), 0) +
+    l4Meters.reduce((sum, m) => sum + getVal(m), 0) +
+    dcMeters.reduce((sum, m) => sum + getVal(m), 0);
 
   const stage1Loss = A1 - A2;
   const stage2Loss = A2 - A3Individual;
   const stage3Loss = A3Bulk - A3Individual;
   const totalLoss = A1 - A3Individual;
-  const efficiency = A1 > 0 ? (A3Individual / A1) * 100 : 0;
+
+  // Clamp efficiency to 100 max to avoid confusing users if data is weird
+  const efficiency = A1 > 0 ? Math.min(100, (A3Individual / A1) * 100) : 0;
+  // Allow negative loss? It implies metering errors (generating water). 
+  // Let's keep it real for diagnosis.
   const lossPercentage = A1 > 0 ? (totalLoss / A1) * 100 : 0;
 
   return {
@@ -338,7 +358,8 @@ export function calculateZoneAnalysis(zone: string, month: string): ZoneAnalysis
 
   const loss = bulkMeterReading - individualTotal;
   const lossPercentage = bulkMeterReading > 0 ? (loss / bulkMeterReading) * 100 : 0;
-  const efficiency = bulkMeterReading > 0 ? (individualTotal / bulkMeterReading) * 100 : 0;
+  // Clamp efficiency to 100 max
+  const efficiency = bulkMeterReading > 0 ? Math.min(100, (individualTotal / bulkMeterReading) * 100) : 0;
 
   return {
     zone, zoneName: config.name, bulkMeterReading, individualTotal, loss,
