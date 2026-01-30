@@ -11,24 +11,43 @@
 -- Ensure RLS is enabled
 ALTER TABLE water_daily_consumption ENABLE ROW LEVEL SECURITY;
 
--- Drop existing policies (if any) to avoid conflicts
+-- Drop ALL existing policies to start clean
 DROP POLICY IF EXISTS "Allow anonymous read access" ON water_daily_consumption;
 DROP POLICY IF EXISTS "Allow anonymous insert" ON water_daily_consumption;
 DROP POLICY IF EXISTS "Allow anonymous update" ON water_daily_consumption;
 DROP POLICY IF EXISTS "Allow anonymous delete" ON water_daily_consumption;
+DROP POLICY IF EXISTS "Allow public read access to water_daily_consumption" ON water_daily_consumption;
+DROP POLICY IF EXISTS "Allow authenticated read" ON water_daily_consumption;
+DROP POLICY IF EXISTS "Allow authenticated insert" ON water_daily_consumption;
+DROP POLICY IF EXISTS "Allow authenticated update" ON water_daily_consumption;
+DROP POLICY IF EXISTS "Allow authenticated delete" ON water_daily_consumption;
 
--- Recreate all policies for anonymous (anon) access
-CREATE POLICY "Allow anonymous read access" ON water_daily_consumption
+-- Create policies for BOTH anon and authenticated roles
+-- (anon = not logged in, authenticated = logged in user)
+
+-- SELECT
+CREATE POLICY "Allow anon read" ON water_daily_consumption
     FOR SELECT TO anon USING (true);
+CREATE POLICY "Allow authenticated read" ON water_daily_consumption
+    FOR SELECT TO authenticated USING (true);
 
-CREATE POLICY "Allow anonymous insert" ON water_daily_consumption
+-- INSERT
+CREATE POLICY "Allow anon insert" ON water_daily_consumption
     FOR INSERT TO anon WITH CHECK (true);
+CREATE POLICY "Allow authenticated insert" ON water_daily_consumption
+    FOR INSERT TO authenticated WITH CHECK (true);
 
-CREATE POLICY "Allow anonymous update" ON water_daily_consumption
+-- UPDATE
+CREATE POLICY "Allow anon update" ON water_daily_consumption
     FOR UPDATE TO anon USING (true);
+CREATE POLICY "Allow authenticated update" ON water_daily_consumption
+    FOR UPDATE TO authenticated USING (true);
 
-CREATE POLICY "Allow anonymous delete" ON water_daily_consumption
+-- DELETE
+CREATE POLICY "Allow anon delete" ON water_daily_consumption
     FOR DELETE TO anon USING (true);
+CREATE POLICY "Allow authenticated delete" ON water_daily_consumption
+    FOR DELETE TO authenticated USING (true);
 
 -- Also ensure the unique constraint exists (needed for upsert)
 DO $$

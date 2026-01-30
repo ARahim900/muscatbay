@@ -156,7 +156,7 @@ export function parseCSV(
 
     // Find column indices - support multiple column name formats
     const meterNameIdx = findColumnIndex(headerLower, ['meter_name', 'metername', 'meter name', 'name']);
-    const accountNumberIdx = findColumnIndex(headerLower, ['account_number', 'accountnumber', 'account', 'meter_id', 'meterid']);
+    const accountNumberIdx = findColumnIndex(headerLower, ['account_number', 'accountnumber', 'account', 'acct #', 'acct#', 'acct', 'acct no', 'meter_id', 'meterid']);
     const labelIdx = findColumnIndex(headerLower, ['label', 'level']);
     const zoneIdx = findColumnIndex(headerLower, ['zone']);
     const parentMeterIdx = findColumnIndex(headerLower, ['parent_meter', 'parentmeter', 'parent']);
@@ -230,7 +230,9 @@ export function parseCSV(
         for (const [day, colIdx] of Object.entries(dayColumns)) {
             const value = values[colIdx];
             if (value !== undefined && value !== null && value.trim() !== '' && value.toUpperCase() !== 'NULL') {
-                const parsed = parseFloat(value);
+                // Strip commas from numbers (e.g., "2,154.00" → "2154.00")
+                const cleaned = value.trim().replace(/,/g, '');
+                const parsed = parseFloat(cleaned);
                 dailyReadings[parseInt(day, 10)] = isNaN(parsed) ? null : parsed;
             } else {
                 dailyReadings[parseInt(day, 10)] = null;
@@ -549,7 +551,7 @@ export async function processCSVUpload(
         const parsedRows = parseCSV(csvContent, month, year);
 
         if (parsedRows.length === 0) {
-            result.errors.push('No valid data rows found in CSV. Ensure the file has a header row with columns like "account_number" or "meter_name" and day columns (day_1...day_31 or 1...31).');
+            result.errors.push('No valid data rows found in CSV. Ensure the file has a header row with an account column ("Acct #", "account_number", or "meter_name") and day columns ("Day 1"..."Day 31", "day_1"..."day_31", or "1"..."31").');
             return result;
         }
 
