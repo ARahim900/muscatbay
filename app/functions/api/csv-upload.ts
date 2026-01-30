@@ -159,7 +159,7 @@ export function parseCSV(
     const accountNumberIdx = findColumnIndex(headerLower, ['account_number', 'accountnumber', 'account', 'acct #', 'acct#', 'acct', 'acct no', 'meter_id', 'meterid']);
     const labelIdx = findColumnIndex(headerLower, ['label', 'level']);
     const zoneIdx = findColumnIndex(headerLower, ['zone']);
-    const parentMeterIdx = findColumnIndex(headerLower, ['parent_meter', 'parentmeter', 'parent']);
+    const parentMeterIdx = findColumnIndex(headerLower, ['parent_meter', 'parentmeter', 'parent', 'parent meter']);
     const typeIdx = findColumnIndex(headerLower, ['type', 'meter_type']);
 
     // Check for pivot format with READING_MNTH column
@@ -525,6 +525,203 @@ async function fallbackDeleteInsert(
     return imported;
 }
 
+// =============================================================================
+// WATER LOSS DAILY COMPUTATION
+// =============================================================================
+
+/**
+ * Zone code mapping from Water System format (CSV) to display format (water_loss_daily table).
+ * The water_loss_daily table uses display names like "Zone FM", while the
+ * Water System / CSV uses codes like "Zone_01_(FM)".
+ */
+const ZONE_CODE_TO_DISPLAY: Record<string, string> = {
+    'zone_01_(fm)': 'Zone FM',
+    'zone_03_(a)': 'Zone 3A',
+    'zone_03_(b)': 'Zone 3B',
+    'zone_05': 'Zone 5',
+    'zone_08': 'Zone 08',
+    'zone_vs': 'Village Square',
+    'zone_sc': 'Sales Center',
+};
+
+/**
+ * Convert a month string like "Jan-26" + day number to a date string "2026-01-01"
+ */
+function buildDateString(month: string, year: number, day: number): string {
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const monthPrefix = month.split('-')[0];
+    const monthNum = monthNames.indexOf(monthPrefix) + 1;
+    return `${year}-${monthNum.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+}
+
+/**
+ * Resolve a zone string from CSV data to the display format used in water_loss_daily.
+ * Handles both the code format (Zone_01_(FM)) and direct display format (Zone FM).
+ */
+function resolveZoneDisplay(zone: string): string | null {
+    if (!zone) return null;
+    const lower = zone.toLowerCase().trim();
+
+    // Direct lookup from code format
+    const mapped = ZONE_CODE_TO_DISPLAY[lower];
+    if (mapped) return mapped;
+
+    // Check if it's already in display format
+    const displayValues = Object.values(ZONE_CODE_TO_DISPLAY);
+    const existing = displayValues.find(v => v.toLowerCase() === lower);
+    if (existing) return existing;
+
+    return null;
+}
+
+/**
+ * Compute and upsert water_loss_daily records from imported consumption data.
+ *
+ * After CSV data is imported into water_daily_consumption, the zone analysis
+ * (progress rings, chart) in DailyWaterReport reads from the water_loss_daily table.
+ * This function aggregates the imported meter data by zone and day to produce
+ * the L2 bulk total, L3/L4 individual total, and loss calculations,
+ * then upserts them into water_loss_daily.
+ *
+ * @param rows - The validated CSV rows that were imported
+ * @param month - Month identifier (e.g., "Jan-26")
+ * @param year - Year (e.g., 2026)
+ * @returns Number of records upserted and any errors
+ */
+async function computeAndUpdateWaterLossDaily(
+    rows: CSVWaterConsumptionRow[],
+    month: string,
+    year: number
+): Promise<{ upserted: number; errors: string[] }> {
+    const client = getSupabaseClient();
+    if (!client) {
+        return { upserted: 0, errors: ['Supabase client not configured'] };
+    }
+
+    const errors: string[] = [];
+
+    // Group rows by display zone
+    const zoneGroups = new Map<string, CSVWaterConsumptionRow[]>();
+    for (const row of rows) {
+        const displayZone = resolveZoneDisplay(row.zone || '');
+        if (!displayZone) continue; // Skip rows with unknown zone
+
+        if (!zoneGroups.has(displayZone)) {
+            zoneGroups.set(displayZone, []);
+        }
+        zoneGroups.get(displayZone)!.push(row);
+    }
+
+    if (zoneGroups.size === 0) {
+        console.log('[Water Loss] No zone-mapped rows found, skipping water_loss_daily update');
+        return { upserted: 0, errors: [] };
+    }
+
+    // Find the max day with data across all rows
+    let maxDay = 0;
+    for (const row of rows) {
+        for (let d = 1; d <= 31; d++) {
+            if (row.dailyReadings[d] !== null && row.dailyReadings[d] !== undefined) {
+                if (d > maxDay) maxDay = d;
+            }
+        }
+    }
+
+    if (maxDay === 0) {
+        console.log('[Water Loss] No daily readings found, skipping water_loss_daily update');
+        return { upserted: 0, errors: [] };
+    }
+
+    // Build water_loss_daily records
+    const records: Record<string, unknown>[] = [];
+
+    for (const [displayZone, zoneRows] of zoneGroups.entries()) {
+        // Separate L2 (bulk) meters from L3/L4 (individual) meters
+        // row.label holds the level: "L2", "L3", "L4", etc.
+        const l2Rows = zoneRows.filter(r => (r.label || '').toUpperCase() === 'L2');
+        const individualRows = zoneRows.filter(r => {
+            const level = (r.label || '').toUpperCase();
+            return level !== 'L2' && level !== 'L1'; // L3, L4, DC, etc.
+        });
+
+        for (let day = 1; day <= maxDay; day++) {
+            // Sum L2 bulk meter readings for this day
+            let l2Total = 0;
+            let hasL2Data = false;
+            for (const r of l2Rows) {
+                const val = r.dailyReadings[day];
+                if (val !== null && val !== undefined) {
+                    l2Total += val;
+                    hasL2Data = true;
+                }
+            }
+
+            // Sum L3/L4 individual meter readings for this day
+            let l3Total = 0;
+            let hasL3Data = false;
+            for (const r of individualRows) {
+                const val = r.dailyReadings[day];
+                if (val !== null && val !== undefined) {
+                    l3Total += val;
+                    hasL3Data = true;
+                }
+            }
+
+            // Only create a record if we have some data for this day
+            if (!hasL2Data && !hasL3Data) continue;
+
+            const lossM3 = l2Total - l3Total;
+            const lossPercent = l2Total > 0 ? (lossM3 / l2Total) * 100 : 0;
+            const dateStr = buildDateString(month, year, day);
+
+            records.push({
+                zone: displayZone,
+                day,
+                date: dateStr,
+                l2_total_m3: Math.round(l2Total * 100) / 100,
+                l3_total_m3: Math.round(l3Total * 100) / 100,
+                loss_m3: Math.round(lossM3 * 100) / 100,
+                loss_percent: Math.round(lossPercent * 100) / 100,
+                month,
+                year,
+            });
+        }
+    }
+
+    if (records.length === 0) {
+        console.log('[Water Loss] No loss records to insert');
+        return { upserted: 0, errors: [] };
+    }
+
+    console.log(`[Water Loss] Upserting ${records.length} water_loss_daily records for ${zoneGroups.size} zones, days 1-${maxDay}`);
+
+    // Upsert in batches
+    let upserted = 0;
+    const batchSize = 50;
+
+    for (let i = 0; i < records.length; i += batchSize) {
+        const batch = records.slice(i, i + batchSize);
+
+        const { error } = await client
+            .from('water_loss_daily')
+            .upsert(batch, {
+                onConflict: 'zone,day,month,year',
+                ignoreDuplicates: false
+            });
+
+        if (error) {
+            console.error(`[Water Loss] Batch upsert error:`, error.message);
+            errors.push(`Water loss daily batch ${Math.floor(i / batchSize) + 1}: ${error.message}`);
+        } else {
+            upserted += batch.length;
+        }
+    }
+
+    console.log(`[Water Loss] Upserted ${upserted}/${records.length} water_loss_daily records`);
+    return { upserted, errors };
+}
+
 /**
  * Complete CSV import workflow
  * @param file - CSV file to import
@@ -579,6 +776,18 @@ export async function processCSVUpload(
         const { imported, errors } = await importWaterConsumptionData(validRows);
         result.imported = imported;
         result.errors.push(...errors);
+
+        // Step 5: Compute and update water_loss_daily (zone analysis)
+        if (imported > 0) {
+            console.log('[CSV Upload] Step 5: Computing water loss daily data...');
+            const lossResult = await computeAndUpdateWaterLossDaily(validRows, month, year);
+            if (lossResult.errors.length > 0) {
+                result.errors.push(...lossResult.errors);
+            }
+            if (lossResult.upserted > 0) {
+                console.log(`[CSV Upload] Water loss daily: ${lossResult.upserted} zone-day records updated`);
+            }
+        }
 
         result.success = imported > 0;
         console.log(`[CSV Upload] Complete! Imported: ${imported}, Skipped: ${skippedCount}`);
