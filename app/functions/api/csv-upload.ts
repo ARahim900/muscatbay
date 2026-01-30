@@ -402,6 +402,14 @@ export async function importWaterConsumptionData(
         errors.push(`Import error: ${err instanceof Error ? err.message : 'Unknown error'}`);
     }
 
+    // Detect RLS errors and replace with a clear, actionable message
+    const hasRLSError = errors.some(e => e.includes('row-level security policy'));
+    if (hasRLSError) {
+        const rlsMsg = 'Database security policies are blocking write access. Please run the RLS fix script in the Supabase SQL Editor: sql/fixes/fix_water_daily_consumption_rls.sql';
+        errors.length = 0;
+        errors.push(rlsMsg);
+    }
+
     console.log(`[CSV Import] Imported: ${imported}, Errors: ${errors.length}`);
     return { imported, errors };
 }
