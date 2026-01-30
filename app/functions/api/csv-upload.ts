@@ -116,11 +116,23 @@ function parseReadingMonth(readingMonth: string): { month: string; year: number 
 }
 
 /**
+ * Strip BOM (Byte Order Mark) from string content.
+ * Excel and Windows tools often add a BOM character (\uFEFF) at the start of CSV files,
+ * which breaks header parsing if not removed.
+ */
+function stripBOM(content: string): string {
+    if (content.charCodeAt(0) === 0xFEFF) {
+        return content.slice(1);
+    }
+    return content;
+}
+
+/**
  * Parse CSV content into structured water consumption rows
  * Supports two formats:
  * 1. Standard format: meter_name, account_number, ..., day_1, day_2, ...
  * 2. Pivot format: ACCOUNT_NUMBER, READING_MNTH, 1, 2, 3, ... 31
- * 
+ *
  * @param csvContent - Raw CSV string content
  * @param month - Default month for the data (e.g., "Jan-26") - can be overridden by READING_MNTH
  * @param year - Default year for the data (e.g., 2026) - can be overridden by READING_MNTH
@@ -131,7 +143,8 @@ export function parseCSV(
     month: string,
     year: number
 ): CSVWaterConsumptionRow[] {
-    const lines = csvContent.trim().split('\n');
+    const cleanContent = stripBOM(csvContent);
+    const lines = cleanContent.trim().split('\n');
     if (lines.length < 2) {
         return [];
     }
@@ -328,7 +341,9 @@ export async function filterMetersByConfiguration(
 }
 
 /**
- * Import filtered water consumption data into the database
+ * Import filtered water consumption data into the database.
+ * Uses upsert with fallback to delete+insert if the unique constraint is missing.
+ * Only updates metadata fields (label, zone, etc.) if the CSV provides non-empty values.
  * @param rows - Validated rows to import
  * @returns Import result with counts
  */
@@ -347,18 +362,21 @@ export async function importWaterConsumptionData(
     const errors: string[] = [];
     let imported = 0;
 
-    // Prepare records for upsert
+    // Prepare records for upsert - only include metadata fields if they have values
     const records = rows.map(row => {
         const record: Record<string, unknown> = {
             meter_name: row.meterName,
             account_number: row.accountNumber,
-            label: row.label || null,
-            zone: row.zone || null,
-            parent_meter: row.parentMeter || null,
-            type: row.type || null,
             month: row.month,
             year: row.year,
         };
+
+        // Only include metadata fields if CSV provided non-empty values
+        // This prevents overwriting existing data with null
+        if (row.label) record.label = row.label;
+        if (row.zone) record.zone = row.zone;
+        if (row.parentMeter) record.parent_meter = row.parentMeter;
+        if (row.type) record.type = row.type;
 
         // Add daily readings
         for (let day = 1; day <= 31; day++) {
@@ -369,23 +387,16 @@ export async function importWaterConsumptionData(
     });
 
     try {
-        // Upsert in batches to handle large files
-        const batchSize = 50;
-        for (let i = 0; i < records.length; i += batchSize) {
-            const batch = records.slice(i, i + batchSize);
+        // Try upsert first (requires UNIQUE constraint on account_number,month,year)
+        const upsertSuccess = await tryUpsertBatch(client, records, errors);
 
-            const { error } = await client
-                .from('water_daily_consumption')
-                .upsert(batch, {
-                    onConflict: 'account_number,month,year',
-                    ignoreDuplicates: false
-                });
-
-            if (error) {
-                errors.push(`Batch ${Math.floor(i / batchSize) + 1}: ${error.message}`);
-            } else {
-                imported += batch.length;
-            }
+        if (upsertSuccess !== null) {
+            imported = upsertSuccess;
+        } else {
+            // Fallback: delete existing + insert new (when unique constraint is missing)
+            console.log('[CSV Import] Upsert failed, using delete+insert fallback...');
+            errors.length = 0; // Clear upsert errors
+            imported = await fallbackDeleteInsert(client, records, rows, errors);
         }
     } catch (err) {
         errors.push(`Import error: ${err instanceof Error ? err.message : 'Unknown error'}`);
@@ -393,6 +404,108 @@ export async function importWaterConsumptionData(
 
     console.log(`[CSV Import] Imported: ${imported}, Errors: ${errors.length}`);
     return { imported, errors };
+}
+
+/**
+ * Try to upsert records in batches.
+ * Returns number of imported records, or null if upsert failed due to missing constraint.
+ */
+async function tryUpsertBatch(
+    client: ReturnType<typeof getSupabaseClient>,
+    records: Record<string, unknown>[],
+    errors: string[]
+): Promise<number | null> {
+    if (!client) return null;
+
+    let imported = 0;
+    const batchSize = 50;
+
+    for (let i = 0; i < records.length; i += batchSize) {
+        const batch = records.slice(i, i + batchSize);
+
+        const { error } = await client
+            .from('water_daily_consumption')
+            .upsert(batch, {
+                onConflict: 'account_number,month,year',
+                ignoreDuplicates: false
+            });
+
+        if (error) {
+            // If the error is about missing unique constraint, signal fallback
+            if (error.message.includes('unique') ||
+                error.message.includes('constraint') ||
+                error.message.includes('ON CONFLICT') ||
+                error.code === '42P10') {
+                console.warn('[CSV Import] Upsert constraint error:', error.message);
+                return null; // Signal to use fallback
+            }
+            errors.push(`Batch ${Math.floor(i / batchSize) + 1}: ${error.message}`);
+        } else {
+            imported += batch.length;
+        }
+    }
+
+    return imported;
+}
+
+/**
+ * Fallback import: delete existing records for the same account/month/year, then insert.
+ * Used when the table doesn't have the required unique constraint for upsert.
+ */
+async function fallbackDeleteInsert(
+    client: ReturnType<typeof getSupabaseClient>,
+    records: Record<string, unknown>[],
+    rows: CSVWaterConsumptionRow[],
+    errors: string[]
+): Promise<number> {
+    if (!client) return 0;
+
+    let imported = 0;
+
+    // Group rows by month/year for efficient deletion
+    const monthYearGroups = new Map<string, Set<string>>();
+    for (const row of rows) {
+        const key = `${row.month}|${row.year}`;
+        if (!monthYearGroups.has(key)) {
+            monthYearGroups.set(key, new Set());
+        }
+        monthYearGroups.get(key)!.add(row.accountNumber);
+    }
+
+    // Delete existing records for these account/month/year combinations
+    for (const [key, accountNumbers] of monthYearGroups.entries()) {
+        const [month, yearStr] = key.split('|');
+        const year = parseInt(yearStr, 10);
+
+        const { error: deleteError } = await client
+            .from('water_daily_consumption')
+            .delete()
+            .eq('month', month)
+            .eq('year', year)
+            .in('account_number', Array.from(accountNumbers));
+
+        if (deleteError) {
+            errors.push(`Delete error for ${month}: ${deleteError.message}`);
+        }
+    }
+
+    // Insert all records in batches
+    const batchSize = 50;
+    for (let i = 0; i < records.length; i += batchSize) {
+        const batch = records.slice(i, i + batchSize);
+
+        const { error } = await client
+            .from('water_daily_consumption')
+            .insert(batch);
+
+        if (error) {
+            errors.push(`Insert batch ${Math.floor(i / batchSize) + 1}: ${error.message}`);
+        } else {
+            imported += batch.length;
+        }
+    }
+
+    return imported;
 }
 
 /**
@@ -428,7 +541,7 @@ export async function processCSVUpload(
         const parsedRows = parseCSV(csvContent, month, year);
 
         if (parsedRows.length === 0) {
-            result.errors.push('No valid data rows found in CSV');
+            result.errors.push('No valid data rows found in CSV. Ensure the file has a header row with columns like "account_number" or "meter_name" and day columns (day_1...day_31 or 1...31).');
             return result;
         }
 
@@ -440,7 +553,7 @@ export async function processCSVUpload(
         result.skipped = skippedCount;
 
         if (validRows.length === 0) {
-            result.errors.push('No matching meters found in your configuration');
+            result.errors.push(`No matching meters found. ${parsedRows.length} rows were parsed but none matched the Water System configuration. Check that account numbers or meter names in the CSV match the configured meters.`);
             return result;
         }
 

@@ -41,6 +41,10 @@ export function CSVUploadDialog({ month, year, onUploadComplete }: CSVUploadDial
         setUploadState('idle');
         setSelectedFile(null);
         setResult(null);
+        // Reset file input so the same file can be re-uploaded
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
     }, []);
 
     const handleOpenChange = useCallback((newOpen: boolean) => {
