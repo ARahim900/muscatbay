@@ -301,7 +301,9 @@ function findColumnIndex(headers: string[], possibleNames: string[]): number {
 }
 
 /**
- * Filter CSV rows to only include meters that are configured in the system
+ * Filter CSV rows to only include meters that are configured in the system.
+ * Also enriches rows with metadata (meter_name, label, zone, etc.) from
+ * the Water System configuration when the CSV doesn't provide these fields.
  * @param rows - Parsed CSV rows
  * @returns Object with filtered rows and skip count
  */
@@ -311,13 +313,13 @@ export async function filterMetersByConfiguration(
     // Get all configured meters from database
     const configuredMeters = await getWaterMetersFromSupabase();
 
-    // Create sets of valid identifiers
-    const validAccountNumbers = new Set(
-        configuredMeters.map(m => m.accountNumber?.toLowerCase().trim()).filter(Boolean)
-    );
-    const validMeterNames = new Set(
-        configuredMeters.map(m => m.label?.toLowerCase().trim()).filter(Boolean)
-    );
+    // Create lookup maps for enrichment
+    const meterByAccount = new Map<string, typeof configuredMeters[0]>();
+    const meterByName = new Map<string, typeof configuredMeters[0]>();
+    for (const m of configuredMeters) {
+        if (m.accountNumber) meterByAccount.set(m.accountNumber.toLowerCase().trim(), m);
+        if (m.label) meterByName.set(m.label.toLowerCase().trim(), m);
+    }
 
     const validRows: CSVWaterConsumptionRow[] = [];
     let skippedCount = 0;
@@ -326,12 +328,19 @@ export async function filterMetersByConfiguration(
         const accountLower = row.accountNumber?.toLowerCase().trim();
         const nameLower = row.meterName?.toLowerCase().trim();
 
-        // Check if meter is in our configured list
-        const isValid =
-            (accountLower && validAccountNumbers.has(accountLower)) ||
-            (nameLower && validMeterNames.has(nameLower));
+        // Find matching configured meter
+        const configuredMeter =
+            (accountLower && meterByAccount.get(accountLower)) ||
+            (nameLower && meterByName.get(nameLower)) ||
+            null;
 
-        if (isValid) {
+        if (configuredMeter) {
+            // Enrich row with missing metadata from Water System configuration
+            if (!row.meterName) row.meterName = configuredMeter.label || '';
+            if (!row.label) row.label = configuredMeter.level || '';
+            if (!row.zone) row.zone = configuredMeter.zone || '';
+            if (!row.parentMeter) row.parentMeter = configuredMeter.parentMeter || '';
+            if (!row.type) row.type = configuredMeter.type || '';
             validRows.push(row);
         } else {
             skippedCount++;
@@ -367,14 +376,12 @@ export async function importWaterConsumptionData(
     // Prepare records for upsert - only include metadata fields if they have values
     const records = rows.map(row => {
         const record: Record<string, unknown> = {
-            meter_name: row.meterName,
+            // meter_name: enriched from Water System config, fallback to account_number
+            meter_name: row.meterName || row.accountNumber,
             account_number: row.accountNumber,
             month: row.month,
             year: row.year,
         };
-
-        // Only include metadata fields if CSV provided non-empty values
-        // This prevents overwriting existing data with null
         if (row.label) record.label = row.label;
         if (row.zone) record.zone = row.zone;
         if (row.parentMeter) record.parent_meter = row.parentMeter;
