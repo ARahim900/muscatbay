@@ -65,9 +65,13 @@ export function StatsGrid({ stats, className }: StatsGridProps) {
                                 />
                             </div>
                         </div>
+                        {/* Subtitle always visible */}
+                        {stat.subtitle && (
+                            <p className="text-xs text-slate-400 mt-2">{stat.subtitle}</p>
+                        )}
                         {/* Trend indicator */}
                         {stat.trend && stat.trendValue && (
-                            <div className="mt-4 flex items-center text-sm">
+                            <div className="mt-1 flex items-center text-sm">
                                 <span className={cn(
                                     "flex items-center font-medium",
                                     stat.trend === 'up' ? "text-emerald-600" :
@@ -79,11 +83,8 @@ export function StatsGrid({ stats, className }: StatsGridProps) {
                                     {stat.trend === 'neutral' && <Minus size={16} className="mr-1" />}
                                     {stat.trendValue}
                                 </span>
-                                <span className="text-slate-400 ml-2">vs last month</span>
+                                <span className="text-slate-400 ml-2">vs prev period</span>
                             </div>
-                        )}
-                        {stat.subtitle && !stat.trendValue && (
-                            <p className="text-xs text-slate-400 mt-3">{stat.subtitle}</p>
                         )}
                     </div>
                 );

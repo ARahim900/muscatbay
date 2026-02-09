@@ -33,11 +33,13 @@ import { LiquidTooltip } from "../../components/charts/liquid-tooltip";
 import { format } from "date-fns";
 import { saveFilterPreferences, loadFilterPreferences } from "@/lib/filter-preferences";
 import { DateRangePicker } from "@/components/water/date-range-picker";
+import { useDataRefresh } from "@/components/layout/data-refresh-context";
 
 // Use centralized config for rates
 const { TANKER_FEE, TSE_SAVING_RATE } = STP_RATES;
 
 export default function STPPage() {
+    const { notifyUpdate } = useDataRefresh();
     const [activeTab, setActiveTab] = useState("dashboard");
     const [allOperations, setAllOperations] = useState<STPOperation[]>([]);
     const [loading, setLoading] = useState(true);
@@ -77,6 +79,7 @@ export default function STPPage() {
                 setIsLiveData(false);
             } finally {
                 setLoading(false);
+                notifyUpdate('stp');
             }
         }
         loadData();

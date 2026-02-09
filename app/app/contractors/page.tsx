@@ -16,8 +16,10 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, Plus, Users, DollarSign, AlertCircle, Database, Download, Calendar, Building2, FileText, RefreshCw, Wifi, WifiOff } from "lucide-react";
 import { exportToCSV, getDateForFilename } from "@/lib/export-utils";
+import { useDataRefresh } from "@/components/layout/data-refresh-context";
 
 export default function ContractorsPage() {
+    const { notifyUpdate } = useDataRefresh();
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
     const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -47,6 +49,7 @@ export default function ContractorsPage() {
                 setDataSource('none');
             } finally {
                 setLoading(false);
+                notifyUpdate('contractors');
             }
         }
         loadData();

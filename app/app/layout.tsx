@@ -5,6 +5,7 @@ import "./globals.css";
 import { ToastProvider } from "@/components/ui/toast-provider";
 import { AuthProvider } from "@/components/auth/auth-provider";
 import { SidebarProvider } from "@/components/layout/sidebar-context";
+import { DataRefreshProvider } from "@/components/layout/data-refresh-context";
 import { ClientLayout } from "@/components/layout/client-layout";
 import { Providers } from "@/components/providers";
 import { usePathname } from "next/navigation";
@@ -52,9 +53,11 @@ export default function RootLayout({
         <Providers>
           <ToastProvider>
             <AuthProvider>
-              <ClientLayout>
-                {children}
-              </ClientLayout>
+              <DataRefreshProvider>
+                <ClientLayout>
+                  {children}
+                </ClientLayout>
+              </DataRefreshProvider>
             </AuthProvider>
           </ToastProvider>
         </Providers>

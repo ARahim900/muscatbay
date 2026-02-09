@@ -1,20 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useDashboardData } from "@/hooks/useDashboardData";
+import { useDataRefresh } from "@/components/layout/data-refresh-context";
 import { StatsGrid } from "@/components/shared/stats-grid";
 import { LoadingSpinner } from "@/components/shared/loading-spinner";
 import { PageHeader } from "@/components/shared/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Activity, Droplets, Zap, Users, AlertTriangle, ArrowUpRight, Boxes, Recycle, TrendingUp, Wifi, WifiOff } from "lucide-react";
+import { Activity, Droplets, Zap, Users, AlertTriangle, ArrowUpRight, Boxes, Recycle, TrendingUp, Wifi, WifiOff, RefreshCw, Clock } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar, Legend } from "recharts";
 import { LiquidTooltip } from "../components/charts/liquid-tooltip";
 import { ChartContainer } from "../components/charts/chart-container";
 
 export default function DashboardPage() {
-    const { stats, chartData, stpChartData, loading, isLiveData, error } = useDashboardData();
+    const { stats, chartData, stpChartData, loading, isLiveData, error, lastUpdated, refetch } = useDashboardData();
     const [activityFilter, setActivityFilter] = useState<'all' | 'critical' | 'warning' | 'info'>('all');
+    const [isRefreshing, setIsRefreshing] = useState(false);
 
     // Add icons to stats
     const statsWithIcons = stats.map(stat => ({
@@ -28,6 +30,61 @@ export default function DashboardPage() {
                                 stat.label.includes('ASSETS') ? Boxes : Activity
     }));
 
+    // Generate dynamic activity items based on actual dashboard data
+    const activityItems = useMemo(() => {
+        const items: { title: string; time: string; type: 'critical' | 'warning' | 'info' }[] = [];
+
+        if (stats.length > 0) {
+            // Check STP trends for alerts
+            const stpStat = stats.find(s => s.label === 'STP INLET FLOW');
+            if (stpStat?.trend === 'down') {
+                items.push({ title: "STP Inlet Flow Decreased", time: "Current period", type: "warning" });
+            }
+
+            // Check electricity trends
+            const elecStat = stats.find(s => s.label === 'ELECTRICITY USAGE');
+            if (elecStat?.trend === 'up') {
+                items.push({ title: "Electricity Usage Trending Up", time: "Current period", type: "warning" });
+            }
+
+            // Check water production
+            const waterStat = stats.find(s => s.label === 'WATER PRODUCTION');
+            if (waterStat?.trend === 'down') {
+                items.push({ title: "Water Production Decreased", time: "Current period", type: "critical" });
+            } else if (waterStat?.trend === 'up') {
+                items.push({ title: "Water Production Increased", time: "Current period", type: "info" });
+            }
+
+            // TSE output status
+            const tseStat = stats.find(s => s.label === 'TSE OUTPUT');
+            if (tseStat) {
+                items.push({ title: "TSE Recycled Water Output Updated", time: "Current period", type: "info" });
+            }
+
+            // Economic impact
+            const ecoStat = stats.find(s => s.label === 'STP ECONOMIC IMPACT');
+            if (ecoStat?.trend === 'up') {
+                items.push({ title: "STP Economic Impact Improved", time: "Current period", type: "info" });
+            }
+        }
+
+        // Always show at least some items
+        if (items.length === 0) {
+            items.push(
+                { title: "Dashboard Data Loaded", time: "Just now", type: "info" },
+                { title: "All Systems Operational", time: "Current", type: "info" }
+            );
+        }
+
+        return items;
+    }, [stats]);
+
+    const handleRefresh = async () => {
+        setIsRefreshing(true);
+        await refetch();
+        setIsRefreshing(false);
+    };
+
     if (loading) {
         return <LoadingSpinner />;
     }
@@ -38,7 +95,7 @@ export default function DashboardPage() {
                 <div className="text-center space-y-4">
                     <p className="text-red-500 text-sm">{error}</p>
                     <button
-                        onClick={() => window.location.reload()}
+                        onClick={handleRefresh}
                         className="px-4 py-2 bg-mb-primary text-white rounded-lg hover:bg-mb-primary/90 transition-colors"
                     >
                         Retry
@@ -55,10 +112,30 @@ export default function DashboardPage() {
                     title="Dashboard"
                     description="Overview of all operations and key metrics"
                 />
-                <Badge variant={isLiveData ? "default" : "secondary"} className={`flex items-center gap-1.5 ${isLiveData ? "bg-mb-success text-white" : "bg-mb-secondary text-mb-secondary-foreground"}`}>
-                    {isLiveData ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
-                    {isLiveData ? "Live Data" : "Demo Mode"}
-                </Badge>
+                <div className="flex items-center gap-3">
+                    {/* Last Updated Timestamp */}
+                    {lastUpdated && (
+                        <div className="hidden sm:flex items-center gap-1.5 text-xs text-muted-foreground">
+                            <Clock className="h-3 w-3" />
+                            <span>Updated {lastUpdated.toLocaleTimeString()}</span>
+                        </div>
+                    )}
+                    {/* Refresh Button */}
+                    <button
+                        onClick={handleRefresh}
+                        disabled={isRefreshing}
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors disabled:opacity-50"
+                        title="Refresh dashboard data"
+                    >
+                        <RefreshCw className={`h-3 w-3 ${isRefreshing ? 'animate-spin' : ''}`} />
+                        {isRefreshing ? 'Refreshing...' : 'Refresh'}
+                    </button>
+                    {/* Live/Demo Badge */}
+                    <Badge variant={isLiveData ? "default" : "secondary"} className={`flex items-center gap-1.5 ${isLiveData ? "bg-mb-success text-white" : "bg-mb-secondary text-mb-secondary-foreground"}`}>
+                        {isLiveData ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
+                        {isLiveData ? "Live Data" : "Demo Mode"}
+                    </Badge>
+                </div>
             </div>
 
             <StatsGrid stats={statsWithIcons} />
@@ -143,15 +220,13 @@ export default function DashboardPage() {
                 </CardHeader>
                 <CardContent className="p-4 sm:p-5 md:p-6 pt-0">
                     <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                        {[
-                            { title: "STP Pump Station Maintenance", time: "5 hours ago", type: "warning" },
-                            { title: "New Contractor Onboarded", time: "1 day ago", type: "info" },
-                            { title: "Monthly Reports Generated", time: "2 days ago", type: "info" },
-                        ].filter(item => activityFilter === 'all' || item.type === activityFilter).map((item, i) => (
+                        {activityItems
+                            .filter(item => activityFilter === 'all' || item.type === activityFilter)
+                            .map((item, i) => (
                             <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-white/30 dark:bg-slate-800/50 border border-mb-primary/5 dark:border-slate-700 hover:bg-white/50 dark:hover:bg-slate-700 transition-colors">
                                 <div className={`rounded-full p-2 ${item.type === 'critical' ? 'bg-mb-danger/20 text-mb-danger' :
                                     item.type === 'warning' ? 'bg-mb-warning/20 text-mb-warning' :
-                                        'bg-mb-info/20 text-mb-info' // Info/Normal items use Light Teal
+                                        'bg-mb-info/20 text-mb-info'
                                     }`}>
                                     {item.type === 'critical' ? <AlertTriangle className="h-4 w-4" /> : <ArrowUpRight className="h-4 w-4" />}
                                 </div>
@@ -161,6 +236,11 @@ export default function DashboardPage() {
                                 </div>
                             </div>
                         ))}
+                        {activityItems.filter(item => activityFilter === 'all' || item.type === activityFilter).length === 0 && (
+                            <div className="col-span-full text-center py-4 text-sm text-muted-foreground">
+                                No {activityFilter} alerts at this time
+                            </div>
+                        )}
                     </div>
                 </CardContent>
             </Card>

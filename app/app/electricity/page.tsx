@@ -17,11 +17,13 @@ import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { saveFilterPreferences, loadFilterPreferences } from "@/lib/filter-preferences";
+import { useDataRefresh } from "@/components/layout/data-refresh-context";
 
 // Use centralized config for rates
 const ratePerKWh = ELECTRICITY_RATES.RATE_PER_KWH;
 
 export default function ElectricityPage() {
+    const { notifyUpdate } = useDataRefresh();
     const [activeTab, setActiveTab] = useState("overview");
     const [meters, setMeters] = useState<MeterReading[]>([]);
     const [loading, setLoading] = useState(true);
@@ -70,6 +72,7 @@ export default function ElectricityPage() {
                 }
             } finally {
                 setLoading(false);
+                notifyUpdate('electricity');
             }
         }
         loadData();

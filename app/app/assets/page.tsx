@@ -14,8 +14,10 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Boxes, MapPin, DollarSign, Wrench, Search, Plus, Filter, Database, AlertCircle, Info } from "lucide-react";
 import { format } from "date-fns";
+import { useDataRefresh } from "@/components/layout/data-refresh-context";
 
 export default function AssetsPage() {
+    const { notifyUpdate } = useDataRefresh();
     const [assets, setAssets] = useState<Asset[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
@@ -73,6 +75,7 @@ export default function AssetsPage() {
             setDataSource('mock');
         } finally {
             setLoading(false);
+            notifyUpdate('assets');
         }
     }
 

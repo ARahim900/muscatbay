@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import { format } from "date-fns";
 import { getWaterSystemData, getElectricityMeters, getSTPOperations, getContractors, getAssets, WaterSystemData } from "@/lib/mock-data";
 import {
@@ -34,16 +34,24 @@ export function useDashboardData() {
     const [loading, setLoading] = useState(true);
     const [isLiveData, setIsLiveData] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [lastFetch, setLastFetch] = useState<number>(0);
+    const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
-    const loadDashboardData = async () => {
-        // Simple rate limiting: prevent fetches more than once per 30 seconds
+    // Use ref for rate limiting to avoid stale closure issues
+    const lastFetchRef = useRef<number>(0);
+    const isFetchingRef = useRef(false);
+
+    const loadDashboardData = useCallback(async (force = false) => {
+        // Prevent concurrent fetches
+        if (isFetchingRef.current) return;
+
+        // Rate limit: 10 seconds minimum between fetches (unless forced)
         const now = Date.now();
-        if (now - lastFetch < 30000) {
-            console.warn("Rate limited: please wait before refetching");
+        if (!force && now - lastFetchRef.current < 10000) {
             return;
         }
-        setLastFetch(now);
+
+        isFetchingRef.current = true;
+        lastFetchRef.current = now;
 
         try {
             setError(null);
@@ -291,17 +299,42 @@ export function useDashboardData() {
                 .slice(-8);
             setStpChartData(stpChartArr);
 
+            setLastUpdated(new Date());
         } catch (error) {
             console.error("Failed to load dashboard data", error);
             setError("Failed to load dashboard data. Please try again.");
         } finally {
             setLoading(false);
+            isFetchingRef.current = false;
         }
-    };
-
-    useEffect(() => {
-        loadDashboardData();
     }, []);
+
+    // Initial load
+    useEffect(() => {
+        loadDashboardData(true);
+    }, [loadDashboardData]);
+
+    // Auto-refresh when the page becomes visible (user navigates back from a section)
+    useEffect(() => {
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
+                loadDashboardData();
+            }
+        };
+
+        // Also refresh when the window regains focus (covers SPA navigation)
+        const handleFocus = () => {
+            loadDashboardData();
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        window.addEventListener('focus', handleFocus);
+
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+            window.removeEventListener('focus', handleFocus);
+        };
+    }, [loadDashboardData]);
 
     // Memoize computed values if needed
     const memoizedStats = useMemo(() => stats, [stats]);
@@ -313,6 +346,7 @@ export function useDashboardData() {
         loading,
         isLiveData,
         error,
-        refetch: loadDashboardData
+        lastUpdated,
+        refetch: () => loadDashboardData(true)
     };
 }

@@ -50,6 +50,7 @@ import { StatsGrid } from "@/components/shared/stats-grid";
 import { StatsGridSkeleton, ChartSkeleton, Skeleton } from "@/components/shared/skeleton";
 import { Button } from "@/components/ui/button";
 import { saveFilterPreferences, loadFilterPreferences } from "@/lib/filter-preferences";
+import { useDataRefresh } from "@/components/layout/data-refresh-context";
 
 // Dashboard view type
 type DashboardView = 'monthly' | 'hierarchy' | 'daily';
@@ -138,6 +139,7 @@ function getMeterCountsByLevelFromData(meters: WaterMeter[]) {
 }
 
 export default function WaterPage() {
+    const { notifyUpdate } = useDataRefresh();
     const [dashboardView, setDashboardView] = useState<DashboardView>('monthly');
     const [monthlyTab, setMonthlyTab] = useState("overview"); // Changed to string for TabNavigation compatibility
     const [startMonth, setStartMonth] = useState('Jan-25');
@@ -177,6 +179,7 @@ export default function WaterPage() {
                 setDataSource('mock');
             } finally {
                 setIsLoading(false);
+                notifyUpdate('water');
             }
         }
         fetchWaterData();
