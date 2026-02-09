@@ -487,18 +487,20 @@ export default function WaterPage() {
                         ]}
                     />
 
-                    {/* Date Range Picker */}
-                    <Card className="glass-card">
-                        <CardContent className="p-4 sm:p-5 md:p-6">
-                            <DateRangePicker
-                                startMonth={startMonth}
-                                endMonth={endMonth}
-                                availableMonths={AVAILABLE_MONTHS}
-                                onRangeChange={handleRangeChange}
-                                onReset={handleResetRange}
-                            />
-                        </CardContent>
-                    </Card>
+                    {/* Date Range Picker - hidden on database tab since it uses external Airtable embed */}
+                    {monthlyTab !== 'database' && (
+                        <Card className="glass-card">
+                            <CardContent className="p-4 sm:p-5 md:p-6">
+                                <DateRangePicker
+                                    startMonth={startMonth}
+                                    endMonth={endMonth}
+                                    availableMonths={AVAILABLE_MONTHS}
+                                    onRangeChange={handleRangeChange}
+                                    onReset={handleResetRange}
+                                />
+                            </CardContent>
+                        </Card>
+                    )}
 
                     {/* Overview Tab */}
                     {monthlyTab === 'overview' && (
@@ -790,18 +792,16 @@ export default function WaterPage() {
 
                     {/* Database Tab */}
                     {monthlyTab === 'database' && (
-                        <Card className="glass-card">
-                            <CardHeader className="glass-card-header p-4 sm:p-5 md:p-6">
-                                <CardTitle className="text-base sm:text-lg">Full Meter Database</CardTitle>
-                            </CardHeader>
-                            <CardContent className="p-4 sm:p-5 md:p-6 pt-0">
-                                <MeterTable
-                                    meters={waterMeters}
-                                    months={AVAILABLE_MONTHS}
-                                    pageSize={15}
-                                />
-                            </CardContent>
-                        </Card>
+                        <div className="w-full animate-in fade-in duration-300">
+                            <iframe
+                                className="airtable-embed"
+                                src="https://airtable.com/embed/appvmeThHxvhcbgcx/shrwfK2evoJkUEl5Y?viewControls=on"
+                                frameBorder="0"
+                                width="100%"
+                                height="533"
+                                style={{ background: 'transparent', border: '1px solid #ccc' }}
+                            />
+                        </div>
                     )}
                 </div>
             )}
