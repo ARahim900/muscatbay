@@ -118,6 +118,7 @@ export interface SupabaseWaterMeter {
     oct_25: number | null;
     nov_25: number | null;
     dec_25: number | null;
+  jan_26: number | null;
     created_at?: string;
     updated_at?: string;
 }
@@ -139,6 +140,7 @@ export function transformWaterMeter(dbMeter: SupabaseWaterMeter): WaterMeter {
         'Oct-25': dbMeter.oct_25,
         'Nov-25': dbMeter.nov_25,
         'Dec-25': dbMeter.dec_25,
+      'Jan-26': dbMeter.jan_26,
     };
 
     return {
