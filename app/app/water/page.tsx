@@ -141,7 +141,7 @@ export default function WaterPage() {
     const [dashboardView, setDashboardView] = useState<DashboardView>('monthly');
     const [monthlyTab, setMonthlyTab] = useState("overview"); // Changed to string for TabNavigation compatibility
     const [startMonth, setStartMonth] = useState('Jan-25');
-    const [endMonth, setEndMonth] = useState('Oct-25');
+    const [endMonth, setEndMonth] = useState('Jan-26');
     const [selectedZone, setSelectedZone] = useState('Zone_01_(FM)');
     const [selectedType, setSelectedType] = useState('All');
 
@@ -270,7 +270,7 @@ export default function WaterPage() {
 
     const handleResetRange = () => {
         setStartMonth('Jan-25');
-        setEndMonth('Oct-25');
+        setEndMonth('Jan-26');
     };
 
     // Consumption by type chart data
