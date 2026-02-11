@@ -33,7 +33,15 @@ export async function getAssetsFromSupabase(
 
         // Apply search filter if provided - using new column names
         if (search) {
-            query = query.or(`Asset_Name.ilike.%${search}%,Location_Name.ilike.%${search}%,Asset_Tag.ilike.%${search}%,Category.ilike.%${search}%,Discipline.ilike.%${search}%`);
+            // Sanitize search input: remove characters that could manipulate PostgREST filters
+            const sanitized = search
+                .trim()
+                .slice(0, 200)
+                .replace(/[%_\\,.()"']/g, '');
+
+            if (sanitized.length > 0) {
+                query = query.or(`Asset_Name.ilike.%${sanitized}%,Location_Name.ilike.%${sanitized}%,Asset_Tag.ilike.%${sanitized}%,Category.ilike.%${sanitized}%,Discipline.ilike.%${sanitized}%`);
+            }
         }
 
         const { data, error, count } = await query
