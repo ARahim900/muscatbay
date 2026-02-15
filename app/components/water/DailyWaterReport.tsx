@@ -10,7 +10,7 @@ import { LiquidTooltip } from "@/components/charts/liquid-tooltip";
 import { StatsGridSkeleton, ChartSkeleton, Skeleton } from "@/components/shared/skeleton";
 import { CSVUploadDialog } from "@/components/water/CSVUploadDialog";
 import { WaterLossDaily, DailyWaterConsumption } from "@/entities/water";
-import { ZONE_CONFIG } from "@/lib/water-data";
+import { ZONE_CONFIG, AVAILABLE_MONTHS } from "@/lib/water-data";
 import {
     getWaterLossDailyFromSupabase,
     getDailyWaterConsumptionFromSupabase,
@@ -97,8 +97,12 @@ export function DailyWaterReport() {
     const [currentPage, setCurrentPage] = useState(1);
     const pageSize = 10;
 
-    const currentYear = 2026;
-    const currentMonth = 'Jan-26';
+    // Get the most recent month with data (last in AVAILABLE_MONTHS that has daily data)
+    const [selectedMonth, setSelectedMonth] = useState(AVAILABLE_MONTHS[AVAILABLE_MONTHS.length - 1]);
+
+    // Parse month and year from the selected month (e.g., "Jan-26" -> year: 2026, month: "Jan-26")
+    const currentMonth = selectedMonth;
+    const currentYear = parseInt('20' + selectedMonth.split('-')[1]);
 
     // Callback to trigger refresh after CSV upload
     const handleUploadComplete = useCallback(() => {
@@ -142,7 +146,7 @@ export function DailyWaterReport() {
             }
         }
         fetchDailyData();
-    }, [refreshKey]);
+    }, [refreshKey, selectedMonth, currentMonth, currentYear]);
 
     // Get analysis for selected zone and day
     const zoneAnalysis = useMemo(() => {
@@ -288,6 +292,7 @@ export function DailyWaterReport() {
     const resetFilters = () => {
         setSelectedDay(1);
         setSelectedZone('Zone FM');
+        setSelectedMonth(AVAILABLE_MONTHS[AVAILABLE_MONTHS.length - 1]);
         setSearchTerm('');
         setCurrentPage(1);
     };
@@ -365,7 +370,15 @@ export function DailyWaterReport() {
 
                             <div className="flex items-center gap-2">
                                 <CalendarDays className="h-4 w-4 text-muted-foreground" />
-                                <span className="text-sm text-muted-foreground">{currentMonth}</span>
+                                <select
+                                    value={selectedMonth}
+                                    onChange={(e) => { setSelectedMonth(e.target.value); setSelectedDay(1); }}
+                                    className="px-2 py-1 text-sm rounded-md border border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                                >
+                                    {AVAILABLE_MONTHS.map((m) => (
+                                        <option key={m} value={m}>{m}</option>
+                                    ))}
+                                </select>
                             </div>
 
                             <div className={cn(

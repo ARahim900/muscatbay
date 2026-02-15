@@ -97,7 +97,7 @@ export const ZONE_CONFIG: ZoneConfig[] = [
   { code: 'Zone_SC', name: 'Sales Center', bulkMeterAccount: '4300295', hasBuildings: false },
 ];
 
-export const AVAILABLE_MONTHS = ['Jan-25', 'Feb-25', 'Mar-25', 'Apr-25', 'May-25', 'Jun-25', 'Jul-25', 'Aug-25', 'Sep-25', 'Oct-25', 'Nov-25', 'Dec-25', 'Jan-26'];
+export const AVAILABLE_MONTHS = ['Jan-25', 'Feb-25', 'Mar-25', 'Apr-25', 'May-25', 'Jun-25', 'Jul-25', 'Aug-25', 'Sep-25', 'Oct-25', 'Nov-25', 'Dec-25', 'Jan-26', 'Feb-26'];
 
 export const TYPE_CATEGORIES: Record<string, string[]> = {
   Commercial: ['Retail', 'Building'],
@@ -114,90 +114,182 @@ const c = (vals: (number | null)[]): Record<string, number | null> => {
 
 export const WATER_METERS: WaterMeter[] = [
   // L1 - Main Source
-  { label: 'Main Bulk (NAMA)', accountNumber: 'C43659', level: 'L1', zone: 'Main Bulk', parentMeter: 'NAMA', type: 'Main BULK', consumption: c([32580, 44043, 34915, 46039, 58425, 41840, 41475, 41743, 42088, 46049, 47347]) },
+  { label: 'Main Bulk (NAMA)', accountNumber: 'C43659', level: 'L1', zone: 'Main Bulk', parentMeter: 'NAMA', type: 'Main BULK', consumption: c([32580, 44043, 34915, 46039, 58425, 41840, 41475, 41743, 42088, 46049, 47347, 45922, 41320]) },
 
   // L2 - Zone Bulks
-  { label: 'ZONE 8 (Bulk Zone 8)', accountNumber: '4300342', level: 'L2', zone: 'Zone_08', parentMeter: 'Main Bulk (NAMA)', type: 'Zone Bulk', consumption: c([1547, 1498, 2605, 3203, 2937, 3142, 3542, 3840, 3385, 14550, null]) },
-  { label: 'ZONE 3A (Bulk Zone 3A)', accountNumber: '4300343', level: 'L2', zone: 'Zone_03_(A)', parentMeter: 'Main Bulk (NAMA)', type: 'Zone Bulk', consumption: c([4235, 4273, 3591, 4041, 4898, 6484, 6440, 6212, 6075, 7219, 5208]) },
-  { label: 'ZONE 3B (Bulk Zone 3B)', accountNumber: '4300344', level: 'L2', zone: 'Zone_03_(B)', parentMeter: 'Main Bulk (NAMA)', type: 'Zone Bulk', consumption: c([3256, 2962, 3331, 2157, 3093, 3231, 3243, 2886, 3466, 5467, 11824]) },
-  { label: 'ZONE 5 (Bulk Zone 5)', accountNumber: '4300345', level: 'L2', zone: 'Zone_05', parentMeter: 'Main Bulk (NAMA)', type: 'Zone Bulk', consumption: c([4267, 4231, 3862, 3737, 3849, 4116, 3497, 3968, 3823, 4218, 4433]) },
-  { label: 'ZONE FM ( BULK ZONE FM )', accountNumber: '4300346', level: 'L2', zone: 'Zone_01_(FM)', parentMeter: 'Main Bulk (NAMA)', type: 'Zone Bulk', consumption: c([2008, 1740, 1880, 1880, 1693, 1659, 1974, 2305, 1966, 2002, 2059]) },
-  { label: 'Village Square (Zone Bulk)', accountNumber: '4300335', level: 'L2', zone: 'Zone_VS', parentMeter: 'Main Bulk (NAMA)', type: 'Zone Bulk', consumption: c([14, 12, 21, 13, 21, 19, 60, 77, 75, 122, 126]) },
-  { label: 'Sales Center Common Building', accountNumber: '4300295', level: 'L2', zone: 'Zone_SC', parentMeter: 'Main Bulk (NAMA)', type: 'Zone Bulk', consumption: c([76, 68, 37, 67, 63, 55, 60, 61, 82, 78, 78]) },
+  { label: 'ZONE 8 (Bulk Zone 8)', accountNumber: '4300342', level: 'L2', zone: 'Zone_08', parentMeter: 'Main Bulk (NAMA)', type: 'Zone Bulk', consumption: c([1547, 1498, 3072, 3138, 2937, 3142, 3072, 3840, 3385, 3468, 3881, 3868, 10017]) },
+  { label: 'ZONE 3A (Bulk Zone 3A)', accountNumber: '4300343', level: 'L2', zone: 'Zone_03_(A)', parentMeter: 'Main Bulk (NAMA)', type: 'Zone Bulk', consumption: c([4235, 4273, 3591, 3996, 4898, 6566, 5949, 6207, 6440, 7219, 5208, 1483, 2616]) },
+  { label: 'ZONE 3B (Bulk Zone 3B)', accountNumber: '4300344', level: 'L2', zone: 'Zone_03_(B)', parentMeter: 'Main Bulk (NAMA)', type: 'Zone Bulk', consumption: c([3256, 2962, 3331, 935, 2083, 3231, 3243, 2886, 16402, 5467, 11824, 2050, 6529]) },
+  { label: 'ZONE 5 (Bulk Zone 5)', accountNumber: '4300345', level: 'L2', zone: 'Zone_05', parentMeter: 'Main Bulk (NAMA)', type: 'Zone Bulk', consumption: c([4267, 4231, 3862, 3663, 3849, 4137, 3476, 3968, 4030, 4218, 4433, 4874, 4598]) },
+  { label: 'ZONE FM ( BULK ZONE FM )', accountNumber: '4300346', level: 'L2', zone: 'Zone_01_(FM)', parentMeter: 'Main Bulk (NAMA)', type: 'Zone Bulk', consumption: c([2008, 1740, 1880, 1756, 1693, 1673, 1960, 2305, 2089, 2002, 2059, 2130, 2271]) },
+  { label: 'Village Square (Zone Bulk)', accountNumber: '4300335', level: 'L2', zone: 'Zone_VS', parentMeter: 'Main Bulk (NAMA)', type: 'Zone Bulk', consumption: c([14, 12, 21, 13, 96, 19, 60, 77, 81, 122, 126, 189, 249]) },
+  { label: 'Sales Center Common Building', accountNumber: '4300295', level: 'L2', zone: 'Zone_SC', parentMeter: 'Main Bulk (NAMA)', type: 'Zone Bulk', consumption: c([75, 63, 44, 66, 63, 55, 59, 61, 87, 78, 78, 21, 152]) },
 
-  // DC - Direct Connections
-  { label: 'Hotel Main Building', accountNumber: '4300334', level: 'DC', zone: 'Direct Connection', parentMeter: 'Main Bulk (NAMA)', type: 'Retail', consumption: c([18048, 19482, 22151, 27676, 26963, 17379, 14713, 16249, 16249, 18876, 18876]) },
-  { label: 'Al Adrak Camp', accountNumber: '4300348', level: 'DC', zone: 'Direct Connection', parentMeter: 'Main Bulk (NAMA)', type: 'Retail', consumption: c([1038, 702, 1161, 1000, 1228, 1015, 972, 924, 769, 879, 875]) },
-  { label: 'Al Adrak Company', accountNumber: '4300349', level: 'DC', zone: 'Direct Connection', parentMeter: 'Main Bulk (NAMA)', type: 'Retail', consumption: c([0, 0, 0, 0, 0, 1758, 1802, 1511, 1776, 1687, 1448]) },
-  { label: 'Community Mgmt - Technical Zone, STP', accountNumber: '4300336', level: 'DC', zone: 'Direct Connection', parentMeter: 'Main Bulk (NAMA)', type: 'MB_Common', consumption: c([29, 37, 25, 35, 29, 53, 50, 56, 50, 62, 42]) },
-  { label: 'Building (Security)', accountNumber: '4300297', level: 'DC', zone: 'Direct Connection', parentMeter: 'Main Bulk (NAMA)', type: 'MB_Common', consumption: c([17, 18, 13, 16, 16, 13, 19, 16, 16, 20, 25]) },
-  { label: 'Building (ROP)', accountNumber: '4300299', level: 'DC', zone: 'Direct Connection', parentMeter: 'Main Bulk (NAMA)', type: 'MB_Common', consumption: c([23, 21, 19, 20, 20, 17, 22, 20, 20, 23, 31]) },
-  { label: 'PHASE 02, MAIN ENTRANCE', accountNumber: '4300338', level: 'DC', zone: 'Direct Connection', parentMeter: 'Main Bulk (NAMA)', type: 'MB_Common', consumption: c([11, 8, 6, 7, 6, 6, 7, 8, 7, 12, 10]) },
-  { label: 'Irrigation Tank 01 (Inlet)', accountNumber: '4300323', level: 'DC', zone: 'Direct Connection', parentMeter: 'Main Bulk (NAMA)', type: 'IRR_Servies', consumption: c([0, 0, 0, 0, 2, 0, 1, 0, 0, 0, 0]) },
-  { label: 'Irrigation- Controller UP', accountNumber: '4300340', level: 'DC', zone: 'Direct Connection', parentMeter: 'Main Bulk (NAMA)', type: 'IRR_Servies', consumption: c([0, 0, 0, 1000, 313, 491, 554, 272, 266, 181, 328]) },
-  { label: 'Irrigation- Controller DOWN', accountNumber: '4300341', level: 'DC', zone: 'Direct Connection', parentMeter: 'Main Bulk (NAMA)', type: 'IRR_Servies', consumption: c([159, 239, 283, 411, 910, 511, 611, 394, 0, 0, 0]) },
+  // DC - Direct Connections (11 meters)
+  { label: 'Hotel Main Building', accountNumber: '4300334', level: 'DC', zone: 'Direct Connection', parentMeter: 'Main Bulk (NAMA)', type: 'Retail', consumption: c([18048, 19482, 22151, 11667, 26963, 17379, 14713, 16192, 14546, 17927, 18624, 18471, 16000]) },
+  { label: 'Al Adrak Camp', accountNumber: '4300348', level: 'DC', zone: 'Direct Connection', parentMeter: 'Main Bulk (NAMA)', type: 'Retail', consumption: c([1038, 702, 1161, 1000, 1228, 1015, 972, 924, 769, 879, 875, 686, 833]) },
+  { label: 'Al Adrak Company (accommodation)Camp Area', accountNumber: '4300349', level: 'DC', zone: 'Direct Connection', parentMeter: 'Main Bulk (NAMA)', type: 'Retail', consumption: c([0, 0, 0, 0, 0, 1758, 1802, 1511, 1776, 1687, 1448, 1066, 1352]) },
+  { label: 'Community Mgmt - Technical Zone, STP', accountNumber: '4300336', level: 'DC', zone: 'Direct Connection', parentMeter: 'Main Bulk (NAMA)', type: 'MB_Common', consumption: c([29, 37, 26, 35, 29, 53, 50, 56, 55, 62, 42, 38, 40]) },
+  { label: 'Building (Security)', accountNumber: '4300297', level: 'DC', zone: 'Direct Connection', parentMeter: 'Main Bulk (NAMA)', type: 'MB_Common', consumption: c([17, 16, 15, 16, 16, 13, 18, 16, 17, 20, 25, 27, 27]) },
+  { label: 'Building (ROP)', accountNumber: '4300299', level: 'DC', zone: 'Direct Connection', parentMeter: 'Main Bulk (NAMA)', type: 'MB_Common', consumption: c([22, 21, 20, 20, 20, 17, 22, 20, 21, 23, 31, 31, 33]) },
+  { label: 'PHASE 02, MAIN ENTRANCE (Infrastructure)', accountNumber: '4300338', level: 'DC', zone: 'Direct Connection', parentMeter: 'Main Bulk (NAMA)', type: 'MB_Common', consumption: c([10, 8, 6, 6, 6, 6, 7, 7, 8, 12, 10, 18, 16]) },
+  { label: 'Irrigation Tank 01 (Inlet)', accountNumber: '4300323', level: 'DC', zone: 'Direct Connection', parentMeter: 'Main Bulk (NAMA)', type: 'IRR_Servies', consumption: c([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]) },
+  { label: 'Irrigation Tank 04 - (Z08)', accountNumber: '4300294', level: 'DC', zone: 'Direct Connection', parentMeter: 'Main Bulk (NAMA)', type: 'IRR_Servies', consumption: c([0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0]) },
+  { label: 'Irrigation- Controller UP', accountNumber: '4300340', level: 'DC', zone: 'Direct Connection', parentMeter: 'Main Bulk (NAMA)', type: 'IRR_Servies', consumption: c([0, 0, 0, 0, 33, 491, 554, 272, 266, 181, 328, 253, 124]) },
+  { label: 'Irrigation- Controller DOWN', accountNumber: '4300341', level: 'DC', zone: 'Direct Connection', parentMeter: 'Main Bulk (NAMA)', type: 'IRR_Servies', consumption: c([159, 239, 283, 0, 910, 511, 611, 343, 0, 0, 0, 0, 0]) },
 
-  // L3 - Zone FM
-  { label: 'Building FM', accountNumber: '4300296', level: 'L3', zone: 'Zone_01_(FM)', parentMeter: 'ZONE FM ( BULK ZONE FM )', type: 'MB_Common', consumption: c([37, 39, 49, 40, 41, 32, 44, 40, 34, 39, 44]) },
-  { label: 'Building B1', accountNumber: '4300300', level: 'L3', zone: 'Zone_01_(FM)', parentMeter: 'ZONE FM ( BULK ZONE FM )', type: 'Retail', consumption: c([228, 225, 235, 253, 233, 144, 229, 298, 256, 265, 250]) },
-  { label: 'Building B2', accountNumber: '4300301', level: 'L3', zone: 'Zone_01_(FM)', parentMeter: 'ZONE FM ( BULK ZONE FM )', type: 'Retail', consumption: c([236, 213, 202, 187, 199, 171, 191, 240, 212, 248, 256]) },
-  { label: 'Building B3', accountNumber: '4300302', level: 'L3', zone: 'Zone_01_(FM)', parentMeter: 'ZONE FM ( BULK ZONE FM )', type: 'Retail', consumption: c([169, 165, 132, 134, 160, 151, 170, 149, 156, 210, 257]) },
-  { label: 'Building B4', accountNumber: '4300303', level: 'L3', zone: 'Zone_01_(FM)', parentMeter: 'ZONE FM ( BULK ZONE FM )', type: 'Retail', consumption: c([108, 108, 148, 148, 121, 149, 159, 179, 201, 175, 169]) },
-  { label: 'Building B5', accountNumber: '4300304', level: 'L3', zone: 'Zone_01_(FM)', parentMeter: 'ZONE FM ( BULK ZONE FM )', type: 'Retail', consumption: c([1, 2, 1, 1, 0, 179, 62, 54, 39, 42, 37]) },
-  { label: 'Building B6', accountNumber: '4300305', level: 'L3', zone: 'Zone_01_(FM)', parentMeter: 'ZONE FM ( BULK ZONE FM )', type: 'Retail', consumption: c([254, 228, 268, 281, 214, 194, 196, 210, 210, 229, 231]) },
-  { label: 'Building B7', accountNumber: '4300306', level: 'L3', zone: 'Zone_01_(FM)', parentMeter: 'ZONE FM ( BULK ZONE FM )', type: 'Retail', consumption: c([178, 190, 174, 201, 200, 154, 192, 155, 158, 200, 201]) },
-  { label: 'Building B8', accountNumber: '4300307', level: 'L3', zone: 'Zone_01_(FM)', parentMeter: 'ZONE FM ( BULK ZONE FM )', type: 'Retail', consumption: c([268, 250, 233, 0, 413, 213, 62, 84, 371, 579, 281]) },
-  { label: 'Building CIF/CB', accountNumber: '4300324', level: 'L3', zone: 'Zone_01_(FM)', parentMeter: 'ZONE FM ( BULK ZONE FM )', type: 'Retail', consumption: c([420, 331, 306, 307, 284, 241, 443, 731, 484, 274, 270]) },
+  // L3 - Zone FM (17 meters)
+  { label: 'Building FM', accountNumber: '4300296', level: 'L3', zone: 'Zone_01_(FM)', parentMeter: 'ZONE FM ( BULK ZONE FM )', type: 'MB_Common', consumption: c([36, 37, 52, 40, 41, 32, 44, 40, 38, 39, 44, 41, 30]) },
+  { label: 'Building Taxi', accountNumber: '4300298', level: 'L3', zone: 'Zone_01_(FM)', parentMeter: 'ZONE FM ( BULK ZONE FM )', type: 'Retail', consumption: c([11, 15, 13, 15, 13, 14, 13, 17, 17, 17, 15, 20, 15]) },
+  { label: 'Building B1', accountNumber: '4300300', level: 'L3', zone: 'Zone_01_(FM)', parentMeter: 'ZONE FM ( BULK ZONE FM )', type: 'Retail', consumption: c([225, 200, 266, 248, 233, 146, 227, 298, 273, 265, 250, 253, 256]) },
+  { label: 'Building B2', accountNumber: '4300301', level: 'L3', zone: 'Zone_01_(FM)', parentMeter: 'ZONE FM ( BULK ZONE FM )', type: 'Retail', consumption: c([231, 189, 232, 183, 199, 172, 190, 240, 224, 248, 256, 255, 280]) },
+  { label: 'Building B3', accountNumber: '4300302', level: 'L3', zone: 'Zone_01_(FM)', parentMeter: 'ZONE FM ( BULK ZONE FM )', type: 'Retail', consumption: c([166, 148, 152, 132, 160, 153, 168, 148, 165, 210, 257, 214, 177]) },
+  { label: 'Building B4', accountNumber: '4300303', level: 'L3', zone: 'Zone_01_(FM)', parentMeter: 'ZONE FM ( BULK ZONE FM )', type: 'Retail', consumption: c([106, 96, 165, 145, 121, 150, 158, 179, 211, 175, 169, 161, 153]) },
+  { label: 'Building B5', accountNumber: '4300304', level: 'L3', zone: 'Zone_01_(FM)', parentMeter: 'ZONE FM ( BULK ZONE FM )', type: 'Retail', consumption: c([2, 1, 1, 1, 0, 179, 62, 54, 41, 42, 37, 32, 6]) },
+  { label: 'Building B6', accountNumber: '4300305', level: 'L3', zone: 'Zone_01_(FM)', parentMeter: 'ZONE FM ( BULK ZONE FM )', type: 'Retail', consumption: c([250, 220, 282, 278, 214, 195, 194, 210, 221, 229, 231, 260, 287]) },
+  { label: 'Building B7', accountNumber: '4300306', level: 'L3', zone: 'Zone_01_(FM)', parentMeter: 'ZONE FM ( BULK ZONE FM )', type: 'Retail', consumption: c([175, 170, 197, 200, 200, 155, 191, 155, 168, 200, 201, 211, 214]) },
+  { label: 'Building B8', accountNumber: '4300307', level: 'L3', zone: 'Zone_01_(FM)', parentMeter: 'ZONE FM ( BULK ZONE FM )', type: 'Retail', consumption: c([268, 250, 233, 0, 413, 213, 62, 84, 380, 579, 281, 280, 262]) },
+  { label: 'Irrigation Tank (Z01_FM)', accountNumber: '4300308', level: 'L3', zone: 'Zone_01_(FM)', parentMeter: 'ZONE FM ( BULK ZONE FM )', type: 'IRR_Servies', consumption: c([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]) },
+  { label: 'Room PUMP (FIRE)', accountNumber: '4300309', level: 'L3', zone: 'Zone_01_(FM)', parentMeter: 'ZONE FM ( BULK ZONE FM )', type: 'MB_Common', consumption: c([76, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 1, 1]) },
+  { label: 'Building (MEP)', accountNumber: '4300310', level: 'L3', zone: 'Zone_01_(FM)', parentMeter: 'ZONE FM ( BULK ZONE FM )', type: 'MB_Common', consumption: c([2, 2, 1, 0, 6, 2, 1, 2, 3, 4, 4, 4, 4]) },
+  { label: 'Building CIF/CB', accountNumber: '4300324', level: 'L3', zone: 'Zone_01_(FM)', parentMeter: 'ZONE FM ( BULK ZONE FM )', type: 'Retail', consumption: c([415, 294, 352, 304, 284, 242, 442, 731, 516, 274, 270, 254, 319]) },
+  { label: 'Building CIF/CB (COFFEE SH)', accountNumber: '4300339', level: 'L3', zone: 'Zone_01_(FM)', parentMeter: 'ZONE FM ( BULK ZONE FM )', type: 'Retail', consumption: c([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]) },
+  { label: 'Building Nursery Building', accountNumber: '4300325', level: 'L3', zone: 'Zone_01_(FM)', parentMeter: 'ZONE FM ( BULK ZONE FM )', type: 'Retail', consumption: c([4, 4, 4, 0, 6, 4, 2, 2, 7, 5, 5, 3, 4]) },
+  { label: 'Cabinet FM (CONTRACTORS OFFICE)', accountNumber: '4300337', level: 'L3', zone: 'Zone_01_(FM)', parentMeter: 'ZONE FM ( BULK ZONE FM )', type: 'Building', consumption: c([67, 53, 59, 57, 51, 50, 56, 49, 39, 0, 64, 43, 36]) },
 
-  // L3 - Zone 3A Villas (sample)
-  { label: 'Z3-31 (Villa)', accountNumber: '4300052', level: 'L3', zone: 'Zone_03_(A)', parentMeter: 'ZONE 3A (BULK ZONE 3A)', type: 'Residential (Villa)', consumption: c([165, 133, 30, 306, 527, 240, 109, 235, 205, 242, 233]) },
-  { label: 'Z3-35 (Villa)', accountNumber: '4300075', level: 'L3', zone: 'Zone_03_(A)', parentMeter: 'ZONE 3A (BULK ZONE 3A)', type: 'Residential (Villa)', consumption: c([65, 61, 52, 74, 68, 86, 70, 65, 65, 79, 74]) },
-  { label: 'Z3-36 (Villa)', accountNumber: '4300084', level: 'L3', zone: 'Zone_03_(A)', parentMeter: 'ZONE 3A (BULK ZONE 3A)', type: 'Residential (Villa)', consumption: c([81, 83, 69, 83, 170, 166, 157, 115, 103, 89, 87]) },
-  { label: 'Z3-42 (Villa)', accountNumber: '4300002', level: 'L3', zone: 'Zone_03_(A)', parentMeter: 'ZONE 3A (BULK ZONE 3A)', type: 'Residential (Villa)', consumption: c([32, 46, 19, 62, 87, 59, 53, 65, 44, 25, 24]) },
+  // L3 - Zone 3A Villas
+  { label: 'Z3-23 (Villa)', accountNumber: '4300038', level: 'L3', zone: 'Zone_03_(A)', parentMeter: 'ZONE 3A (BULK ZONE 3A)', type: 'Residential (Villa)', consumption: c([1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 34, 68, 20]) },
+  { label: 'Z3-24 (Villa)', accountNumber: '4300091', level: 'L3', zone: 'Zone_03_(A)', parentMeter: 'ZONE 3A (BULK ZONE 3A)', type: 'Residential (Villa)', consumption: c([18, 32, 86, 100, 75, 60, 70, 63, 57, 65, 52, 65, 57]) },
+  { label: 'Z3-27 (Villa)', accountNumber: '4300089', level: 'L3', zone: 'Zone_03_(A)', parentMeter: 'ZONE 3A (BULK ZONE 3A)', type: 'Residential (Villa)', consumption: c([14, 25, 63, 73, 25, 65, 121, 38, 53, 34, 81, 18, 44]) },
+  { label: 'Z3-28 (Villa)', accountNumber: '4300101', level: 'L3', zone: 'Zone_03_(A)', parentMeter: 'ZONE 3A (BULK ZONE 3A)', type: 'Residential (Villa)', consumption: c([44, 33, 36, 40, 53, 43, 57, 37, 39, 22, 6, 58, 95]) },
+  { label: 'Z3-29 (Villa)', accountNumber: '4300097', level: 'L3', zone: 'Zone_03_(A)', parentMeter: 'ZONE 3A (BULK ZONE 3A)', type: 'Residential (Villa)', consumption: c([0, 7, 4, 0, 0, 6, 3, 34, 20, 20, 20, 24, 23]) },
+  { label: 'Z3-30 (Villa)', accountNumber: '4300081', level: 'L3', zone: 'Zone_03_(A)', parentMeter: 'ZONE 3A (BULK ZONE 3A)', type: 'Residential (Villa)', consumption: c([0, 2, 4, 0, 0, 0, 1, 0, 0, 0, 0, 0, 3]) },
+  { label: 'Z3-31 (Villa)', accountNumber: '4300052', level: 'L3', zone: 'Zone_03_(A)', parentMeter: 'ZONE 3A (BULK ZONE 3A)', type: 'Residential (Villa)', consumption: c([165, 133, 30, 241, 527, 240, 109, 235, 219, 242, 233, 128, 97]) },
+  { label: 'Z3-32 (Villa)', accountNumber: '4300085', level: 'L3', zone: 'Zone_03_(A)', parentMeter: 'ZONE 3A (BULK ZONE 3A)', type: 'Residential (Villa)', consumption: c([37, 36, 37, 38, 40, 40, 35, 30, 41, 38, 40, 35, 34]) },
+  { label: 'Z3-33 (Villa)', accountNumber: '4300082', level: 'L3', zone: 'Zone_03_(A)', parentMeter: 'ZONE 3A (BULK ZONE 3A)', type: 'Residential (Villa)', consumption: c([44, 40, 47, 48, 49, 34, 0, 48, 48, 54, 52, 54, 49]) },
+  { label: 'Z3-34 (Villa)', accountNumber: '4300087', level: 'L3', zone: 'Zone_03_(A)', parentMeter: 'ZONE 3A (BULK ZONE 3A)', type: 'Residential (Villa)', consumption: c([0, 0, 0, 20, 18, 9, 10, 41, 24, 52, 27, 29, 42]) },
+  { label: 'Z3-35 (Villa)', accountNumber: '4300075', level: 'L3', zone: 'Zone_03_(A)', parentMeter: 'ZONE 3A (BULK ZONE 3A)', type: 'Residential (Villa)', consumption: c([64, 54, 62, 73, 68, 86, 70, 65, 71, 79, 74, 82, 66]) },
+  { label: 'Z3-36 (Villa)', accountNumber: '4300084', level: 'L3', zone: 'Zone_03_(A)', parentMeter: 'ZONE 3A (BULK ZONE 3A)', type: 'Residential (Villa)', consumption: c([78, 74, 81, 82, 170, 168, 155, 115, 110, 89, 87, 76, 86]) },
+  { label: 'Z3-37 (Villa)', accountNumber: '4300049', level: 'L3', zone: 'Zone_03_(A)', parentMeter: 'ZONE 3A (BULK ZONE 3A)', type: 'Residential (Villa)', consumption: c([26, 14, 20, 27, 49, 15, 37, 24, 20, 28, 41, 32, 30]) },
+  { label: 'Z3-38 (Villa)', accountNumber: '4300005', level: 'L3', zone: 'Zone_03_(A)', parentMeter: 'ZONE 3A (BULK ZONE 3A)', type: 'Residential (Villa)', consumption: c([9, 7, 8, 7, 8, 6, 109, 24, 6, 4, 8, 4, 1]) },
+  { label: 'Z3-39 (Villa)', accountNumber: '4300086', level: 'L3', zone: 'Zone_03_(A)', parentMeter: 'ZONE 3A (BULK ZONE 3A)', type: 'Residential (Villa)', consumption: c([37, 32, 35, 33, 41, 33, 38, 34, 35, 32, 41, 29, 37]) },
+  { label: 'Z3-40 (Villa)', accountNumber: '4300079', level: 'L3', zone: 'Zone_03_(A)', parentMeter: 'ZONE 3A (BULK ZONE 3A)', type: 'Residential (Villa)', consumption: c([19, 23, 39, 35, 139, 39, 13, 23, 7, 42, 32, 34, 40]) },
+  { label: 'Z3-41 (Villa)', accountNumber: '4300044', level: 'L3', zone: 'Zone_03_(A)', parentMeter: 'ZONE 3A (BULK ZONE 3A)', type: 'Residential (Villa)', consumption: c([13, 16, 37, 26, 25, 43, 30, 5, 75, 28, 30, 26, 27]) },
+  { label: 'Z3-42 (Villa)', accountNumber: '4300002', level: 'L3', zone: 'Zone_03_(A)', parentMeter: 'ZONE 3A (BULK ZONE 3A)', type: 'Residential (Villa)', consumption: c([31, 46, 21, 62, 87, 59, 53, 65, 47, 25, 24, 23, 29]) },
+  { label: 'Z3-43 (Villa)', accountNumber: '4300050', level: 'L3', zone: 'Zone_03_(A)', parentMeter: 'ZONE 3A (BULK ZONE 3A)', type: 'Residential (Villa)', consumption: c([68, 62, 53, 52, 48, 78, 55, 48, 50, 43, 40, 50, 145]) },
 
   // L3 - Zone 3A Building Bulks
-  { label: 'D-44 Building Bulk Meter', accountNumber: '4300178', level: 'L3', zone: 'Zone_03_(A)', parentMeter: 'ZONE 3A (BULK ZONE 3A)', type: 'D_Building_Bulk', consumption: c([180, 198, 92, 87, 62, 49, 52, 59, 60, 68, 66]) },
-  { label: 'D-45 Building Bulk Meter', accountNumber: '4300179', level: 'L3', zone: 'Zone_03_(A)', parentMeter: 'ZONE 3A (BULK ZONE 3A)', type: 'D_Building_Bulk', consumption: c([20, 32, 44, 56, 55, 10, 12, 11, 35, 29, 39]) },
-  { label: 'D-46 Building Bulk Meter', accountNumber: '4300180', level: 'L3', zone: 'Zone_03_(A)', parentMeter: 'ZONE 3A (BULK ZONE 3A)', type: 'D_Building_Bulk', consumption: c([61, 46, 29, 68, 69, 55, 65, 85, 114, 134, 68]) },
-  { label: 'D-47 Building Bulk Meter', accountNumber: '4300181', level: 'L3', zone: 'Zone_03_(A)', parentMeter: 'ZONE 3A (BULK ZONE 3A)', type: 'D_Building_Bulk', consumption: c([103, 70, 55, 69, 57, 83, 121, 62, 72, 96, 83]) },
-  { label: 'D-51 Building Bulk Meter', accountNumber: '4300185', level: 'L3', zone: 'Zone_03_(A)', parentMeter: 'ZONE 3A (BULK ZONE 3A)', type: 'D_Building_Bulk', consumption: c([92, 108, 152, 166, 111, 100, 149, 154, 164, 202, 107]) },
-  { label: 'D-74 Building Bulk Meter', accountNumber: '4300177', level: 'L3', zone: 'Zone_03_(A)', parentMeter: 'ZONE 3A (BULK ZONE 3A)', type: 'D_Building_Bulk', consumption: c([41, 35, 36, 54, 51, 62, 101, 106, 128, 116, 66]) },
-  { label: 'D-75 Building Bulk Meter', accountNumber: '4300176', level: 'L3', zone: 'Zone_03_(A)', parentMeter: 'ZONE 3A (BULK ZONE 3A)', type: 'D_Building_Bulk', consumption: c([63, 60, 66, 71, 59, 62, 67, 101, 66, 65, 64]) },
+  { label: 'D-44 Building Bulk Meter', accountNumber: '4300178', level: 'L3', zone: 'Zone_03_(A)', parentMeter: 'ZONE 3A (BULK ZONE 3A)', type: 'D_Building_Bulk', consumption: c([178, 211, 83, 86, 62, 49, 52, 59, 64, 68, 66, 66, 114]) },
+  { label: 'D-45 Building Bulk Meter', accountNumber: '4300179', level: 'L3', zone: 'Zone_03_(A)', parentMeter: 'ZONE 3A (BULK ZONE 3A)', type: 'D_Building_Bulk', consumption: c([20, 30, 47, 56, 55, 10, 12, 11, 36, 29, 39, 36, 27]) },
+  { label: 'D-46 Building Bulk Meter', accountNumber: '4300180', level: 'L3', zone: 'Zone_03_(A)', parentMeter: 'ZONE 3A (BULK ZONE 3A)', type: 'D_Building_Bulk', consumption: c([60, 45, 31, 68, 69, 55, 65, 85, 121, 134, 68, 60, 50]) },
+  { label: 'D-47 Building Bulk Meter', accountNumber: '4300181', level: 'L3', zone: 'Zone_03_(A)', parentMeter: 'ZONE 3A (BULK ZONE 3A)', type: 'D_Building_Bulk', consumption: c([102, 64, 62, 70, 57, 83, 121, 62, 76, 96, 83, 65, 71]) },
+  { label: 'D-51 Building Bulk Meter', accountNumber: '4300185', level: 'L3', zone: 'Zone_03_(A)', parentMeter: 'ZONE 3A (BULK ZONE 3A)', type: 'D_Building_Bulk', consumption: c([91, 96, 165, 166, 111, 101, 149, 154, 175, 202, 107, 96, 129]) },
+  { label: 'D-74 Building Bulk Meter', accountNumber: '4300177', level: 'L3', zone: 'Zone_03_(A)', parentMeter: 'ZONE 3A (BULK ZONE 3A)', type: 'D_Building_Bulk', consumption: c([40, 32, 40, 54, 51, 63, 101, 106, 136, 116, 66, 59, 56]) },
+  { label: 'D-75 Building Bulk Meter', accountNumber: '4300176', level: 'L3', zone: 'Zone_03_(A)', parentMeter: 'ZONE 3A (BULK ZONE 3A)', type: 'D_Building_Bulk', consumption: c([63, 58, 68, 72, 59, 62, 67, 101, 68, 65, 64, 57, 74]) },
 
   // L4 - D-44 Apartments
-  { label: 'Z3-44(1A)', accountNumber: '4300030', level: 'L4', zone: 'Zone_03_(A)', parentMeter: 'D-44 Building Bulk Meter', type: 'Residential (Apart)', consumption: c([11, 11, 10, 6, 11, 8, 2, 7, 9, 9, 11]) },
-  { label: 'Z3-44(2A)', accountNumber: '4300032', level: 'L4', zone: 'Zone_03_(A)', parentMeter: 'D-44 Building Bulk Meter', type: 'Residential (Apart)', consumption: c([9, 3, 5, 10, 7, 2, 3, 5, 6, 7, 3]) },
-  { label: 'Z3-44(5)', accountNumber: '4300034', level: 'L4', zone: 'Zone_03_(A)', parentMeter: 'D-44 Building Bulk Meter', type: 'Residential (Apart)', consumption: c([118, 139, 38, 25, 6, 6, 9, 8, 7, 4, 1]) },
-  { label: 'Z3-44(6)', accountNumber: '4300035', level: 'L4', zone: 'Zone_03_(A)', parentMeter: 'D-44 Building Bulk Meter', type: 'Residential (Apart)', consumption: c([34, 37, 31, 37, 35, 32, 37, 38, 37, 40, 44]) },
-  { label: 'D 44-Building Common', accountNumber: '4300144', level: 'L4', zone: 'Zone_03_(A)', parentMeter: 'D-44 Building Bulk Meter', type: 'D_Building_Common', consumption: c([1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1]) },
+  { label: 'Z3-44(1A) (Building)', accountNumber: '4300030', level: 'L4', zone: 'Zone_03_(A)', parentMeter: 'D-44 Building Bulk Meter', type: 'Residential (Apart)', consumption: c([11, 10, 11, 7, 11, 8, 2, 7, 9, 9, 11, 9, 12]) },
+  { label: 'Z3-44(1B) (Building)', accountNumber: '4300031', level: 'L4', zone: 'Zone_03_(A)', parentMeter: 'D-44 Building Bulk Meter', type: 'Residential (Apart)', consumption: c([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]) },
+  { label: 'Z3-44(2A) (Building)', accountNumber: '4300032', level: 'L4', zone: 'Zone_03_(A)', parentMeter: 'D-44 Building Bulk Meter', type: 'Residential (Apart)', consumption: c([8, 3, 5, 9, 7, 2, 3, 5, 6, 7, 3, 9, 9]) },
+  { label: 'Z3-44(2B) (Building)', accountNumber: '4300033', level: 'L4', zone: 'Zone_03_(A)', parentMeter: 'D-44 Building Bulk Meter', type: 'Residential (Apart)', consumption: c([7, 6, 8, 8, 3, 0, 0, 0, 0, 7, 5, 6, 6]) },
+  { label: 'Z3-44(5) (Building)', accountNumber: '4300034', level: 'L4', zone: 'Zone_03_(A)', parentMeter: 'D-44 Building Bulk Meter', type: 'Residential (Apart)', consumption: c([116, 134, 45, 25, 6, 6, 9, 8, 7, 4, 1, 0, 0]) },
+  { label: 'Z3-44(6) (Building)', accountNumber: '4300035', level: 'L4', zone: 'Zone_03_(A)', parentMeter: 'D-44 Building Bulk Meter', type: 'Residential (Apart)', consumption: c([33, 32, 37, 36, 35, 32, 36, 38, 39, 40, 44, 41, 85]) },
+  { label: 'D 44-Building Common Meter', accountNumber: '4300144', level: 'L4', zone: 'Zone_03_(A)', parentMeter: 'D-44 Building Bulk Meter', type: 'D_Building_Common', consumption: c([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]) },
 
   // L3 - Zone 3B Villas
-  { label: 'Z3-3 (Villa)', accountNumber: '4300088', level: 'L3', zone: 'Zone_03_(B)', parentMeter: 'ZONE 3B (BULK ZONE 3B)', type: 'Residential (Villa)', consumption: c([66, 59, 63, 73, 176, 192, 136, 118, 106, 119, 96]) },
-  { label: 'Z3-8 (Villa)', accountNumber: '4300105', level: 'L3', zone: 'Zone_03_(B)', parentMeter: 'ZONE 3B (BULK ZONE 3B)', type: 'Residential (Villa)', consumption: c([83, 106, 196, 358, 414, 346, 132, 54, 48, 53, 54]) },
-  { label: 'Z3-12 (Villa)', accountNumber: '4300076', level: 'L3', zone: 'Zone_03_(B)', parentMeter: 'ZONE 3B (BULK ZONE 3B)', type: 'Residential (Villa)', consumption: c([73, 59, 54, 181, 178, 249, 188, 179, 161, 77, 114]) },
+  { label: 'Z3-1 (Villa)', accountNumber: '4300094', level: 'L3', zone: 'Zone_03_(B)', parentMeter: 'ZONE 3B (BULK ZONE 3B)', type: 'Residential (Villa)', consumption: c([3, 4, 6, 7, 7, 14, 37, 44, 37, 37, 13, 7, 10]) },
+  { label: 'Z3-2 (Villa)', accountNumber: '4300098', level: 'L3', zone: 'Zone_03_(B)', parentMeter: 'ZONE 3B (BULK ZONE 3B)', type: 'Residential (Villa)', consumption: c([6, 6, 9, 7, 38, 17, 26, 20, 56, 28, 24, 19, 22]) },
+  { label: 'Z3-3 (Villa)', accountNumber: '4300088', level: 'L3', zone: 'Zone_03_(B)', parentMeter: 'ZONE 3B (BULK ZONE 3B)', type: 'Residential (Villa)', consumption: c([64, 53, 71, 73, 176, 193, 136, 118, 112, 119, 96, 93, 76]) },
+  { label: 'Z3-4 (Villa)', accountNumber: '4300078', level: 'L3', zone: 'Zone_03_(B)', parentMeter: 'ZONE 3B (BULK ZONE 3B)', type: 'Residential (Villa)', consumption: c([89, 49, 29, 24, 113, 129, 221, 129, 77, 95, 91, 62, 48]) },
+  { label: 'Z3-5 (Villa)', accountNumber: '4300104', level: 'L3', zone: 'Zone_03_(B)', parentMeter: 'ZONE 3B (BULK ZONE 3B)', type: 'Residential (Villa)', consumption: c([40, 50, 46, 53, 51, 34, 74, 95, 102, 127, 174, 314, 163]) },
+  { label: 'Z3-6 (Villa)', accountNumber: '4300100', level: 'L3', zone: 'Zone_03_(B)', parentMeter: 'ZONE 3B (BULK ZONE 3B)', type: 'Residential (Villa)', consumption: c([30, 30, 42, 36, 30, 32, 58, 34, 31, 30, 39, 27, 25]) },
+  { label: 'Z3-7 (Villa)', accountNumber: '4300090', level: 'L3', zone: 'Zone_03_(B)', parentMeter: 'ZONE 3B (BULK ZONE 3B)', type: 'Residential (Villa)', consumption: c([37, 42, 51, 56, 58, 45, 47, 15, 28, 32, 44, 35, 43]) },
+  { label: 'Z3-8 (Villa)', accountNumber: '4300105', level: 'L3', zone: 'Zone_03_(B)', parentMeter: 'ZONE 3B (BULK ZONE 3B)', type: 'Residential (Villa)', consumption: c([81, 92, 224, 350, 414, 347, 132, 54, 51, 53, 54, 62, 61]) },
+  { label: 'Z3-9 (Villa)', accountNumber: '4300096', level: 'L3', zone: 'Zone_03_(B)', parentMeter: 'ZONE 3B (BULK ZONE 3B)', type: 'Residential (Villa)', consumption: c([65, 43, 62, 60, 69, 75, 81, 72, 44, 49, 47, 52, 60]) },
+  { label: 'Z3-10 (Villa)', accountNumber: '4300092', level: 'L3', zone: 'Zone_03_(B)', parentMeter: 'ZONE 3B (BULK ZONE 3B)', type: 'Residential (Villa)', consumption: c([75, 76, 70, 100, 89, 95, 84, 79, 68, 68, 52, 39, 32]) },
+  { label: 'Z3-12 (Villa)', accountNumber: '4300076', level: 'L3', zone: 'Zone_03_(B)', parentMeter: 'ZONE 3B (BULK ZONE 3B)', type: 'Residential (Villa)', consumption: c([72, 55, 60, 181, 178, 249, 188, 179, 165, 77, 114, 90, 110]) },
+  { label: 'Z3-13 (Villa)', accountNumber: '4300025', level: 'L3', zone: 'Zone_03_(B)', parentMeter: 'ZONE 3B (BULK ZONE 3B)', type: 'Residential (Villa)', consumption: c([20, 19, 21, 24, 20, 15, 6, 18, 18, 17, 18, 12, 18]) },
+  { label: 'Z3-14 (Villa)', accountNumber: '4300060', level: 'L3', zone: 'Zone_03_(B)', parentMeter: 'ZONE 3B (BULK ZONE 3B)', type: 'Residential (Villa)', consumption: c([160, 102, 33, 42, 32, 83, 74, 15, 15, 14, 14, 7, 6]) },
+  { label: 'Z3-15 (Villa)', accountNumber: '4300057', level: 'L3', zone: 'Zone_03_(B)', parentMeter: 'ZONE 3B (BULK ZONE 3B)', type: 'Residential (Villa)', consumption: c([40, 36, 40, 46, 44, 44, 38, 45, 41, 39, 38, 38, 38]) },
+  { label: 'Z3-16 (Villa)', accountNumber: '4300103', level: 'L3', zone: 'Zone_03_(B)', parentMeter: 'ZONE 3B (BULK ZONE 3B)', type: 'Residential (Villa)', consumption: c([1, 28, 3, 5, 21, 64, 51, 22, 54, 12, 11, 19, 16]) },
+  { label: 'Z3-17 (Villa)', accountNumber: '4300080', level: 'L3', zone: 'Zone_03_(B)', parentMeter: 'ZONE 3B (BULK ZONE 3B)', type: 'Residential (Villa)', consumption: c([16, 10, 6, 13, 15, 13, 14, 12, 14, 20, 22, 22, 28]) },
+  { label: 'Z3-18 (Villa)', accountNumber: '4300083', level: 'L3', zone: 'Zone_03_(B)', parentMeter: 'ZONE 3B (BULK ZONE 3B)', type: 'Residential (Villa)', consumption: c([35, 32, 38, 40, 76, 99, 92, 83, 63, 61, 21, 6, 2]) },
+  { label: 'Z3-19 (Villa)', accountNumber: '4300099', level: 'L3', zone: 'Zone_03_(B)', parentMeter: 'ZONE 3B (BULK ZONE 3B)', type: 'Residential (Villa)', consumption: c([138, 4, 27, 108, 77, 8, 0, 45, 85, 11, 7, 9, 7]) },
+  { label: 'Z3-20 (Villa)', accountNumber: '4300020', level: 'L3', zone: 'Zone_03_(B)', parentMeter: 'ZONE 3B (BULK ZONE 3B)', type: 'Residential (Villa)', consumption: c([12, 13, 8, 3, 5, 14, 12, 10, 3, 9, 5, 10, 9]) },
+  { label: 'Z3-21 (Villa)', accountNumber: '4300009', level: 'L3', zone: 'Zone_03_(B)', parentMeter: 'ZONE 3B (BULK ZONE 3B)', type: 'Residential (Villa)', consumption: c([39, 50, 46, 47, 51, 39, 69, 56, 50, 47, 43, 50, 41]) },
+  { label: 'Z3-22 (Villa)', accountNumber: '4300102', level: 'L3', zone: 'Zone_03_(B)', parentMeter: 'ZONE 3B (BULK ZONE 3B)', type: 'Residential (Villa)', consumption: c([21, 21, 56, 31, 32, 34, 34, 32, 74, 54, 25, 27, 22]) },
 
   // L3 - Zone 3B Building Bulks
-  { label: 'D-52 Building Bulk Meter', accountNumber: '4300186', level: 'L3', zone: 'Zone_03_(B)', parentMeter: 'ZONE 3B (BULK ZONE 3B)', type: 'D_Building_Bulk', consumption: c([40, 35, 25, 37, 48, 46, 52, 47, 26, 104, 41]) },
-  { label: 'D-53 Building Bulk Meter', accountNumber: '4300311', level: 'L3', zone: 'Zone_03_(B)', parentMeter: 'ZONE 3B (BULK ZONE 3B)', type: 'D_Building_Bulk', consumption: c([18, 27, 26, 39, 21, 27, 26, 30, 45, 94, 106]) },
-  { label: 'D-54 Building Bulk Meter', accountNumber: '4300312', level: 'L3', zone: 'Zone_03_(B)', parentMeter: 'ZONE 3B (BULK ZONE 3B)', type: 'D_Building_Bulk', consumption: c([63, 52, 66, 95, 51, 55, 76, 55, 50, 45, 67]) },
+  { label: 'D-52 Building Bulk Meter', accountNumber: '4300186', level: 'L3', zone: 'Zone_03_(B)', parentMeter: 'ZONE 3B (BULK ZONE 3B)', type: 'D_Building_Bulk', consumption: c([40, 34, 27, 37, 48, 46, 52, 47, 26, 104, 41, 36, 37]) },
+  { label: 'D-53 Building Bulk Meter', accountNumber: '4300311', level: 'L3', zone: 'Zone_03_(B)', parentMeter: 'ZONE 3B (BULK ZONE 3B)', type: 'D_Building_Bulk', consumption: c([17, 25, 28, 39, 21, 27, 26, 30, 46, 94, 106, 100, 96]) },
+  { label: 'D-54 Building Bulk Meter', accountNumber: '4300312', level: 'L3', zone: 'Zone_03_(B)', parentMeter: 'ZONE 3B (BULK ZONE 3B)', type: 'D_Building_Bulk', consumption: c([62, 50, 68, 96, 51, 56, 75, 55, 53, 45, 67, 46, 50]) },
+  { label: 'D-55 Building Bulk Meter', accountNumber: '4300313', level: 'L3', zone: 'Zone_03_(B)', parentMeter: 'ZONE 3B (BULK ZONE 3B)', type: 'D_Building_Bulk', consumption: c([70, 58, 112, 181, 94, 61, 78, 82, 54, 90, 76, 77, 74]) },
+  { label: 'D-56 Building Bulk Meter', accountNumber: '4300314', level: 'L3', zone: 'Zone_03_(B)', parentMeter: 'ZONE 3B (BULK ZONE 3B)', type: 'D_Building_Bulk', consumption: c([92, 17, 39, 0, 40, 40, 91, 28, 29, 27, 40, 42, 43]) },
+  { label: 'D-57 Building Bulk Meter', accountNumber: '4300315', level: 'L3', zone: 'Zone_03_(B)', parentMeter: 'ZONE 3B (BULK ZONE 3B)', type: 'D_Building_Bulk', consumption: c([47, 64, 49, 64, 72, 46, 50, 54, 66, 31, 0, 0, 87]) },
+  { label: 'D-58 Building Bulk Meter', accountNumber: '4300316', level: 'L3', zone: 'Zone_03_(B)', parentMeter: 'ZONE 3B (BULK ZONE 3B)', type: 'D_Building_Bulk', consumption: c([55, 47, 63, 94, 83, 62, 63, 81, 75, 66, 54, 58, 64]) },
+  { label: 'D-59 Building Bulk Meter', accountNumber: '4300317', level: 'L3', zone: 'Zone_03_(B)', parentMeter: 'ZONE 3B (BULK ZONE 3B)', type: 'D_Building_Bulk', consumption: c([57, 54, 53, 66, 47, 44, 53, 56, 57, 51, 45, 63, 62]) },
+  { label: 'D-60 Building Bulk Meter', accountNumber: '4300318', level: 'L3', zone: 'Zone_03_(B)', parentMeter: 'ZONE 3B (BULK ZONE 3B)', type: 'D_Building_Bulk', consumption: c([55, 75, 94, 102, 91, 84, 83, 73, 88, 32, 49, 66, 99]) },
+  { label: 'D-61 Building Bulk Meter', accountNumber: '4300319', level: 'L3', zone: 'Zone_03_(B)', parentMeter: 'ZONE 3B (BULK ZONE 3B)', type: 'D_Building_Bulk', consumption: c([41, 43, 76, 82, 49, 43, 62, 66, 50, 49, 40, 40, 46]) },
+  { label: 'D-62 Building Bulk Meter', accountNumber: '4300187', level: 'L3', zone: 'Zone_03_(B)', parentMeter: 'ZONE 3B (BULK ZONE 3B)', type: 'D_Building_Bulk', consumption: c([50, 29, 42, 34, 22, 27, 46, 33, 37, 38, 96, 87, 82]) },
+  { label: 'Irrigation Tank 02 (Z03)', accountNumber: '4300320', level: 'L3', zone: 'Zone_03_(B)', parentMeter: 'ZONE 3B (BULK ZONE 3B)', type: 'IRR_Servies', consumption: c([49, 47, 43, 15, 322, 106, 91, 92, 225, 548, 873, 321, 0]) },
+
+  // L3 - Zone 3A - D-48, D-49, D-50 Building Bulks
+  { label: 'D-48 Building Bulk Meter', accountNumber: '4300182', level: 'L3', zone: 'Zone_03_(A)', parentMeter: 'ZONE 3A (BULK ZONE 3A)', type: 'D_Building_Bulk', consumption: c([16, 16, 20, 18, 25, 47, 28, 37, 24, 39, 30, 33, 35]) },
+  { label: 'D-49 Building Bulk Meter', accountNumber: '4300183', level: 'L3', zone: 'Zone_03_(A)', parentMeter: 'ZONE 3A (BULK ZONE 3A)', type: 'D_Building_Bulk', consumption: c([58, 63, 59, 0, 108, 42, 96, 96, 96, 340, 96, 96, 78]) },
+  { label: 'D-50 Building Bulk Meter', accountNumber: '4300184', level: 'L3', zone: 'Zone_03_(A)', parentMeter: 'ZONE 3A (BULK ZONE 3A)', type: 'D_Building_Bulk', consumption: c([65, 73, 91, 49, 34, 40, 60, 44, 6, 75, 41, 41, 57]) },
 
   // L3 - Zone 5 Villas
-  { label: 'Z5-3', accountNumber: '4300170', level: 'L3', zone: 'Zone_05', parentMeter: 'ZONE 5 (Bulk Zone 5)', type: 'Residential (Villa)', consumption: c([149, 86, 67, 100, 70, 82, 95, 100, 135, 120, 114]) },
-  { label: 'Z5-13', accountNumber: '4300058', level: 'L3', zone: 'Zone_05', parentMeter: 'ZONE 5 (Bulk Zone 5)', type: 'Residential (Villa)', consumption: c([72, 106, 89, 120, 109, 115, 155, 146, 123, 168, 67]) },
-  { label: 'Z5-17', accountNumber: '4300001', level: 'L3', zone: 'Zone_05', parentMeter: 'ZONE 5 (Bulk Zone 5)', type: 'Residential (Villa)', consumption: c([112, 80, 81, 90, 58, 72, 88, 74, 103, 84, 83]) },
-  { label: 'Z5-22', accountNumber: '4300163', level: 'L3', zone: 'Zone_05', parentMeter: 'ZONE 5 (Bulk Zone 5)', type: 'Residential (Villa)', consumption: c([15, 40, 186, 243, 201, 186, 192, 175, 80, 108, 78]) },
-  { label: 'Z5-30', accountNumber: '4300147', level: 'L3', zone: 'Zone_05', parentMeter: 'ZONE 5 (Bulk Zone 5)', type: 'Residential (Villa)', consumption: c([65, 87, 71, 113, 203, 238, 212, 155, 76, 73, 110]) },
+  { label: 'Z5-1', accountNumber: '4300172', level: 'L3', zone: 'Zone_05', parentMeter: 'ZONE 5 (Bulk Zone 5)', type: 'Residential (Villa)', consumption: c([5, 5, 4, 5, 47, 5, 33, 12, 7, 8, 9, 10, 4]) },
+  { label: 'Z5-3', accountNumber: '4300170', level: 'L3', zone: 'Zone_05', parentMeter: 'ZONE 5 (Bulk Zone 5)', type: 'Residential (Villa)', consumption: c([147, 80, 75, 100, 70, 82, 95, 100, 142, 120, 114, 105, 109]) },
+  { label: 'Z5-4', accountNumber: '4300150', level: 'L3', zone: 'Zone_05', parentMeter: 'ZONE 5 (Bulk Zone 5)', type: 'Residential (Villa)', consumption: c([78, 96, 47, 41, 29, 14, 49, 31, 34, 20, 10, 88, 45]) },
+  { label: 'Z5-5', accountNumber: '4300146', level: 'L3', zone: 'Zone_05', parentMeter: 'ZONE 5 (Bulk Zone 5)', type: 'Residential (Villa)', consumption: c([3, 4, 4, 5, 39, 1, 60, 240, 54, 67, 55, 49, 44]) },
+  { label: 'Z5-9', accountNumber: '4300155', level: 'L3', zone: 'Zone_05', parentMeter: 'ZONE 5 (Bulk Zone 5)', type: 'Residential (Villa)', consumption: c([37, 45, 46, 56, 77, 67, 56, 54, 45, 60, 63, 48, 66]) },
+  { label: 'Z5-12', accountNumber: '4300166', level: 'L3', zone: 'Zone_05', parentMeter: 'ZONE 5 (Bulk Zone 5)', type: 'Residential (Villa)', consumption: c([43, 42, 45, 67, 81, 97, 84, 58, 64, 93, 53, 49, 56]) },
+  { label: 'Z5-13', accountNumber: '4300058', level: 'L3', zone: 'Zone_05', parentMeter: 'ZONE 5 (Bulk Zone 5)', type: 'Residential (Villa)', consumption: c([71, 97, 101, 118, 109, 116, 154, 146, 130, 168, 67, 48, 117]) },
+  { label: 'Z5-14', accountNumber: '4300059', level: 'L3', zone: 'Zone_05', parentMeter: 'ZONE 5 (Bulk Zone 5)', type: 'Residential (Villa)', consumption: c([71, 86, 87, 91, 82, 96, 67, 81, 58, 98, 80, 34, 35]) },
+  { label: 'Z5-15', accountNumber: '4300154', level: 'L3', zone: 'Zone_05', parentMeter: 'ZONE 5 (Bulk Zone 5)', type: 'Residential (Villa)', consumption: c([34, 19, 18, 22, 30, 18, 20, 21, 18, 18, 15, 13, 16]) },
+  { label: 'Z5-16', accountNumber: '4300168', level: 'L3', zone: 'Zone_05', parentMeter: 'ZONE 5 (Bulk Zone 5)', type: 'Residential (Villa)', consumption: c([27, 25, 42, 51, 53, 48, 71, 50, 53, 49, 52, 56, 64]) },
+  { label: 'Z5-17', accountNumber: '4300001', level: 'L3', zone: 'Zone_05', parentMeter: 'ZONE 5 (Bulk Zone 5)', type: 'Residential (Villa)', consumption: c([110, 77, 86, 89, 58, 72, 87, 74, 109, 84, 83, 77, 97]) },
+  { label: 'Z5-20', accountNumber: '4300152', level: 'L3', zone: 'Zone_05', parentMeter: 'ZONE 5 (Bulk Zone 5)', type: 'Residential (Villa)', consumption: c([24, 28, 151, 165, 202, 214, 196, 161, 131, 102, 97, 80, 76]) },
+  { label: 'Z5-21', accountNumber: '4300169', level: 'L3', zone: 'Zone_05', parentMeter: 'ZONE 5 (Bulk Zone 5)', type: 'Residential (Villa)', consumption: c([25, 20, 36, 58, 57, 43, 38, 22, 97, 25, 89, 31, 11]) },
+  { label: 'Z5-22', accountNumber: '4300163', level: 'L3', zone: 'Zone_05', parentMeter: 'ZONE 5 (Bulk Zone 5)', type: 'Residential (Villa)', consumption: c([14, 34, 192, 244, 201, 186, 192, 175, 80, 108, 78, 15, 35]) },
+  { label: 'Z5-25', accountNumber: '4300157', level: 'L3', zone: 'Zone_05', parentMeter: 'ZONE 5 (Bulk Zone 5)', type: 'Residential (Villa)', consumption: c([37, 22, 12, 72, 104, 83, 57, 31, 13, 45, 33, 36, 34]) },
+  { label: 'Z5-26', accountNumber: '4300156', level: 'L3', zone: 'Zone_05', parentMeter: 'ZONE 5 (Bulk Zone 5)', type: 'Residential (Villa)', consumption: c([60, 39, 18, 69, 107, 82, 57, 28, 29, 11, 19, 22, 11]) },
+  { label: 'Z5-27', accountNumber: '4300165', level: 'L3', zone: 'Zone_05', parentMeter: 'ZONE 5 (Bulk Zone 5)', type: 'Residential (Villa)', consumption: c([35, 13, 19, 12, 15, 9, 9, 10, 3, 11, 9, 11, 31]) },
+  { label: 'Z5-28', accountNumber: '4300161', level: 'L3', zone: 'Zone_05', parentMeter: 'ZONE 5 (Bulk Zone 5)', type: 'Residential (Villa)', consumption: c([50, 21, 9, 8, 14, 19, 16, 6, 8, 69, 54, 47, 55]) },
+  { label: 'Z5-29', accountNumber: '4300160', level: 'L3', zone: 'Zone_05', parentMeter: 'ZONE 5 (Bulk Zone 5)', type: 'Residential (Villa)', consumption: c([48, 64, 23, 19, 28, 24, 19, 18, 7, 4, 5, 25, 2]) },
+  { label: 'Z5-30', accountNumber: '4300147', level: 'L3', zone: 'Zone_05', parentMeter: 'ZONE 5 (Bulk Zone 5)', type: 'Residential (Villa)', consumption: c([65, 82, 75, 113, 203, 238, 212, 155, 83, 73, 110, 144, 120]) },
+  { label: 'Z5-31', accountNumber: '4300158', level: 'L3', zone: 'Zone_05', parentMeter: 'ZONE 5 (Bulk Zone 5)', type: 'Residential (Villa)', consumption: c([32, 23, 16, 16, 4, 1, 0, 0, 41, 13, 9, 12, 28]) },
+  { label: 'Z5-32', accountNumber: '4300162', level: 'L3', zone: 'Zone_05', parentMeter: 'ZONE 5 (Bulk Zone 5)', type: 'Residential (Villa)', consumption: c([60, 111, 80, 71, 68, 51, 25, 43, 36, 49, 42, 50, 18]) },
+  { label: 'Irrigation Tank 03 (Z05)', accountNumber: '4300321', level: 'L3', zone: 'Zone_05', parentMeter: 'ZONE 5 (Bulk Zone 5)', type: 'IRR_Servies', consumption: c([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]) },
 
   // L3 - Zone 8 Villas
-  { label: 'Z8-5', accountNumber: '4300287', level: 'L3', zone: 'Zone_08', parentMeter: 'BULK ZONE 8', type: 'Residential (Villa)', consumption: c([208, 341, 313, 336, 325, 236, 224, 98, 326, 203, 155]) },
-  { label: 'Z8-12', accountNumber: '4300196', level: 'L3', zone: 'Zone_08', parentMeter: 'BULK ZONE 8', type: 'Residential (Villa)', consumption: c([236, 192, 249, 267, 295, 386, 466, 550, 302, 233, 199]) },
-  { label: 'Z8-15', accountNumber: '4300198', level: 'L3', zone: 'Zone_08', parentMeter: 'BULK ZONE 8', type: 'Residential (Villa)', consumption: c([99, 61, 70, 125, 112, 121, 123, 126, 106, 107, 129]) },
-  { label: 'Z8-17', accountNumber: '4300200', level: 'L3', zone: 'Zone_08', parentMeter: 'BULK ZONE 8', type: 'Residential (Villa)', consumption: c([164, 162, 171, 207, 238, 211, 192, 200, 177, 206, 200]) },
+  { label: 'Z8-1', accountNumber: '4300188', level: 'L3', zone: 'Zone_08', parentMeter: 'BULK ZONE 8', type: 'Residential (Villa)', consumption: c([1, 2, 3, 16, 7, 0, 2, 0, 0, 1, 1, 0, 0]) },
+  { label: 'Z8-5', accountNumber: '4300287', level: 'L3', zone: 'Zone_08', parentMeter: 'BULK ZONE 8', type: 'Residential (Villa)', consumption: c([142, 278, 313, 336, 325, 236, 224, 98, 343, 203, 155, 183, 156]) },
+  { label: 'Z8-9', accountNumber: '4300288', level: 'L3', zone: 'Zone_08', parentMeter: 'BULK ZONE 8', type: 'Residential (Villa)', consumption: c([5, 12, 6, 4, 6, 3, 1, 1, 1, 1, 1, 1, 0]) },
+  { label: 'Z8-11', accountNumber: '4300023', level: 'L3', zone: 'Zone_08', parentMeter: 'BULK ZONE 8', type: 'Residential (Villa)', consumption: c([0, 0, 0, 0, 0, 0, 0, 0, 15, 4, 0, 0, 0]) },
+  { label: 'Z8-12', accountNumber: '4300196', level: 'L3', zone: 'Zone_08', parentMeter: 'BULK ZONE 8', type: 'Residential (Villa)', consumption: c([235, 185, 258, 266, 295, 388, 464, 550, 320, 233, 199, 134, 110]) },
+  { label: 'Z8-13', accountNumber: '4300024', level: 'L3', zone: 'Zone_08', parentMeter: 'BULK ZONE 8', type: 'Residential (Villa)', consumption: c([0, 0, 0, 0, 0, 1, 229, 245, 254, 258, 263, 173, 157]) },
+  { label: 'Z8-15', accountNumber: '4300198', level: 'L3', zone: 'Zone_08', parentMeter: 'BULK ZONE 8', type: 'Residential (Villa)', consumption: c([98, 58, 73, 125, 112, 121, 123, 126, 109, 107, 129, 126, 92]) },
+  { label: 'Z8-16', accountNumber: '4300199', level: 'L3', zone: 'Zone_08', parentMeter: 'BULK ZONE 8', type: 'Residential (Villa)', consumption: c([66, 68, 59, 98, 95, 82, 129, 252, 99, 98, 78, 94, 72]) },
+  { label: 'Z8-17', accountNumber: '4300200', level: 'L3', zone: 'Zone_08', parentMeter: 'BULK ZONE 8', type: 'Residential (Villa)', consumption: c([161, 152, 187, 205, 238, 211, 191, 200, 189, 206, 200, 170, 156]) },
+  { label: 'Z8-18', accountNumber: '4300289', level: 'L3', zone: 'Zone_08', parentMeter: 'BULK ZONE 8', type: 'Residential (Villa)', consumption: c([122, 102, 331, 342, 359, 361, 242, 127, 157, 137, 141, 111, 113]) },
+  { label: 'Z8-19', accountNumber: '4300290', level: 'L3', zone: 'Zone_08', parentMeter: 'BULK ZONE 8', type: 'Residential (Villa)', consumption: c([104, 71, 226, 275, 274, 244, 197, 187, 168, 223, 164, 79, 91]) },
+  { label: 'Z8-20', accountNumber: '4300291', level: 'L3', zone: 'Zone_08', parentMeter: 'BULK ZONE 8', type: 'Residential (Villa)', consumption: c([146, 101, 307, 298, 300, 90, 122, 106, 160, 125, 96, 94, 108]) },
+  { label: 'Z8-21', accountNumber: '4300292', level: 'L3', zone: 'Zone_08', parentMeter: 'BULK ZONE 8', type: 'Residential (Villa)', consumption: c([99, 53, 284, 254, 154, 115, 60, 60, 63, 62, 84, 30, 47]) },
+  { label: 'Z8-22', accountNumber: '4300293', level: 'L3', zone: 'Zone_08', parentMeter: 'BULK ZONE 8', type: 'Residential (Villa)', consumption: c([225, 147, 327, 451, 387, 254, 105, 55, 48, 31, 35, 38, 16]) },
 
-  // L3 - Village Square & Sales Center
-  { label: 'Coffee 2 (GF Shop No.594 A)', accountNumber: '4300329', level: 'L3', zone: 'Zone_VS', parentMeter: 'Village Square (Zone Bulk)', type: 'Retail', consumption: c([2, 3, 5, 5, 5, 4, 9, 5, 15, 10, 11]) },
-  { label: 'Laundry Services', accountNumber: '4300332', level: 'L3', zone: 'Zone_VS', parentMeter: 'Village Square (Zone Bulk)', type: 'Retail', consumption: c([33, 25, 22, 0, 44, 28, 44, 42, 42, 49, 61]) },
-  { label: 'Sale Centre Caffe & Bar', accountNumber: '4300328', level: 'L3', zone: 'Zone_SC', parentMeter: 'Sale Centre (Zone Bulk)', type: 'Retail', consumption: c([0, 2, 3, 5, 12, 5, 20, 33, 27, 43, 40]) },
+  // L3 - Village Square
+  { label: 'Irrigation Tank - VS PO Water', accountNumber: '4300326', level: 'L3', zone: 'Zone_VS', parentMeter: 'Village Square (Zone Bulk)', type: 'IRR_Servies', consumption: c([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]) },
+  { label: 'Coffee 1 (GF Shop No.591)', accountNumber: '4300327', level: 'L3', zone: 'Zone_VS', parentMeter: 'Village Square (Zone Bulk)', type: 'Retail', consumption: c([1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]) },
+  { label: 'Coffee 2 (GF Shop No.594 A)', accountNumber: '4300329', level: 'L3', zone: 'Zone_VS', parentMeter: 'Village Square (Zone Bulk)', type: 'Retail', consumption: c([3, 3, 4, 5, 5, 4, 9, 5, 16, 10, 11, 14, 7]) },
+  { label: 'Supermarket (FF Shop No.591)', accountNumber: '4300330', level: 'L3', zone: 'Zone_VS', parentMeter: 'Village Square (Zone Bulk)', type: 'Retail', consumption: c([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0]) },
+  { label: 'Pharmacy (FF Shop No.591 A)', accountNumber: '4300331', level: 'L3', zone: 'Zone_VS', parentMeter: 'Village Square (Zone Bulk)', type: 'Retail', consumption: c([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]) },
+  { label: 'Laundry Services (FF Shop No.593)', accountNumber: '4300332', level: 'L3', zone: 'Zone_VS', parentMeter: 'Village Square (Zone Bulk)', type: 'Retail', consumption: c([33, 25, 22, 0, 44, 28, 44, 42, 45, 49, 61, 75, 86]) },
+  { label: 'Shop No.593 A', accountNumber: '4300333', level: 'L3', zone: 'Zone_VS', parentMeter: 'Village Square (Zone Bulk)', type: 'Retail', consumption: c([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]) },
+
+  // L3 - Sales Center
+  { label: 'Sale Centre Caffe & Bar (GF Shop No.592 A)', accountNumber: '4300328', level: 'L3', zone: 'Zone_SC', parentMeter: 'Sale Centre (Zone Bulk)', type: 'Retail', consumption: c([0, 1, 3, 5, 12, 5, 20, 33, 28, 43, 40, 60, 53]) },
 ];
 
 // =============================================================================
@@ -244,7 +336,7 @@ export function getWaterMeters(): WaterMeter[] {
 // Calculation Functions
 export function getConsumption(meter: WaterMeter, month: string): number {
   const val = meter.consumption[month];
-  return val !== null && val !== undefined && val >= 0 ? val : 0;
+  return val !== null && val !== undefined ? val : 0;
 }
 
 export function getMetersByLevel(level: string): WaterMeter[] {

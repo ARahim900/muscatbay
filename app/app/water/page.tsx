@@ -314,6 +314,11 @@ export default function WaterPage() {
         };
     };
 
+    // Calculate current end month analysis for trend comparison (single month values)
+    const endMonthAnalysis = useMemo(() => {
+        return calculateRangeAnalysisFromData(waterMeters, endMonth, endMonth);
+    }, [waterMeters, endMonth]);
+
     // Calculate previous month analysis for trend comparison
     const prevMonthAnalysis = useMemo(() => {
         const endIdx = AVAILABLE_MONTHS.indexOf(endMonth);
@@ -323,16 +328,17 @@ export default function WaterPage() {
     }, [waterMeters, endMonth]);
 
     // Generate stats for Overview using StatsGrid format with trends
+    // Trends compare endMonth vs prevMonth (not cumulative range vs single month)
     const overviewStats = useMemo(() => {
-        const a1Trend = prevMonthAnalysis ? calcTrend(rangeAnalysis.A1, prevMonthAnalysis.A1) : { trend: 'neutral' as const, trendValue: 'â€”' };
-        const a2Trend = prevMonthAnalysis ? calcTrend(rangeAnalysis.A2, prevMonthAnalysis.A2) : { trend: 'neutral' as const, trendValue: 'â€”' };
-        const a3Trend = prevMonthAnalysis ? calcTrend(rangeAnalysis.A3Individual, prevMonthAnalysis.A3Individual) : { trend: 'neutral' as const, trendValue: 'â€”' };
-        const effTrend = prevMonthAnalysis ? calcTrend(rangeAnalysis.efficiency, prevMonthAnalysis.efficiency) : { trend: 'neutral' as const, trendValue: 'â€”' };
+        const a1Trend = prevMonthAnalysis ? calcTrend(endMonthAnalysis.A1, prevMonthAnalysis.A1) : { trend: 'neutral' as const, trendValue: '—' };
+        const a2Trend = prevMonthAnalysis ? calcTrend(endMonthAnalysis.A2, prevMonthAnalysis.A2) : { trend: 'neutral' as const, trendValue: '—' };
+        const a3Trend = prevMonthAnalysis ? calcTrend(endMonthAnalysis.A3Individual, prevMonthAnalysis.A3Individual) : { trend: 'neutral' as const, trendValue: '—' };
+        const effTrend = prevMonthAnalysis ? calcTrend(endMonthAnalysis.efficiency, prevMonthAnalysis.efficiency) : { trend: 'neutral' as const, trendValue: '—' };
 
         return [
             {
                 label: "A1 - MAIN SOURCE",
-                value: `${(rangeAnalysis.A1 / 1000).toFixed(1)}k mÂ³`,
+                value: `${(rangeAnalysis.A1 / 1000).toFixed(1)}k m³`,
                 subtitle: "L1 (Main source input)",
                 icon: Droplets,
                 variant: "default" as const,
@@ -341,7 +347,7 @@ export default function WaterPage() {
             },
             {
                 label: "A2 - ZONE DISTRIBUTION",
-                value: `${(rangeAnalysis.A2 / 1000).toFixed(1)}k mÂ³`,
+                value: `${(rangeAnalysis.A2 / 1000).toFixed(1)}k m³`,
                 subtitle: "L2 Bulks + DC",
                 icon: ChevronsRight,
                 variant: "secondary" as const,
@@ -350,7 +356,7 @@ export default function WaterPage() {
             },
             {
                 label: "A3 - INDIVIDUAL",
-                value: `${(rangeAnalysis.A3Individual / 1000).toFixed(1)}k mÂ³`,
+                value: `${(rangeAnalysis.A3Individual / 1000).toFixed(1)}k m³`,
                 subtitle: "Villas + Apts + DC",
                 icon: Users,
                 variant: "primary" as const,
@@ -367,17 +373,18 @@ export default function WaterPage() {
                 trendValue: effTrend.trendValue
             }
         ];
-    }, [rangeAnalysis, prevMonthAnalysis]);
+    }, [rangeAnalysis, endMonthAnalysis, prevMonthAnalysis]);
 
+    // Loss trends also compare endMonth vs prevMonth
     const lossStats = useMemo(() => {
-        const s1LossTrend = prevMonthAnalysis ? calcTrend(rangeAnalysis.stage1Loss, prevMonthAnalysis.stage1Loss) : { trend: 'neutral' as const, trendValue: 'â€”' };
-        const s2LossTrend = prevMonthAnalysis ? calcTrend(rangeAnalysis.stage2Loss, prevMonthAnalysis.stage2Loss) : { trend: 'neutral' as const, trendValue: 'â€”' };
-        const totalLossTrend = prevMonthAnalysis ? calcTrend(rangeAnalysis.totalLoss, prevMonthAnalysis.totalLoss) : { trend: 'neutral' as const, trendValue: 'â€”' };
+        const s1LossTrend = prevMonthAnalysis ? calcTrend(endMonthAnalysis.stage1Loss, prevMonthAnalysis.stage1Loss) : { trend: 'neutral' as const, trendValue: '—' };
+        const s2LossTrend = prevMonthAnalysis ? calcTrend(endMonthAnalysis.stage2Loss, prevMonthAnalysis.stage2Loss) : { trend: 'neutral' as const, trendValue: '—' };
+        const totalLossTrend = prevMonthAnalysis ? calcTrend(endMonthAnalysis.totalLoss, prevMonthAnalysis.totalLoss) : { trend: 'neutral' as const, trendValue: '—' };
 
         return [
             {
                 label: "STAGE 1 LOSS",
-                value: `${rangeAnalysis.stage1Loss.toLocaleString('en-US')} mÂ³`,
+                value: `${rangeAnalysis.stage1Loss.toLocaleString('en-US')} m³`,
                 subtitle: `Loss Rate: ${rangeAnalysis.A1 > 0 ? ((rangeAnalysis.stage1Loss / rangeAnalysis.A1) * 100).toFixed(1) : 0}%`,
                 icon: Minus,
                 variant: "danger" as const,
@@ -386,7 +393,7 @@ export default function WaterPage() {
             },
             {
                 label: "STAGE 2 LOSS",
-                value: `${rangeAnalysis.stage2Loss.toLocaleString('en-US')} mÂ³`,
+                value: `${rangeAnalysis.stage2Loss.toLocaleString('en-US')} m³`,
                 subtitle: `Loss Rate: ${rangeAnalysis.A2 > 0 ? ((rangeAnalysis.stage2Loss / rangeAnalysis.A2) * 100).toFixed(1) : 0}%`,
                 icon: Minus,
                 variant: "warning" as const,
@@ -395,7 +402,7 @@ export default function WaterPage() {
             },
             {
                 label: "TOTAL SYSTEM LOSS",
-                value: `${rangeAnalysis.totalLoss.toLocaleString('en-US')} mÂ³`,
+                value: `${rangeAnalysis.totalLoss.toLocaleString('en-US')} m³`,
                 subtitle: `Loss Rate: ${rangeAnalysis.lossPercentage}%`,
                 icon: AlertTriangle,
                 variant: "danger" as const,
@@ -405,14 +412,14 @@ export default function WaterPage() {
             {
                 label: "HIGHEST CONSUMER",
                 value: highestConsumer.meter.label,
-                subtitle: `${highestConsumer.total.toLocaleString('en-US')} mÂ³`,
+                subtitle: `${highestConsumer.total.toLocaleString('en-US')} m³`,
                 icon: TrendingUp,
                 variant: "warning" as const,
                 trend: 'neutral' as const,
-                trendValue: 'â€”'
+                trendValue: '—'
             }
         ];
-    }, [rangeAnalysis, highestConsumer, prevMonthAnalysis]);
+    }, [rangeAnalysis, endMonthAnalysis, highestConsumer, prevMonthAnalysis]);
 
     if (isLoading) {
         return (
@@ -528,7 +535,7 @@ export default function WaterPage() {
                                                     </linearGradient>
                                                 </defs>
                                                 <XAxis dataKey="month" className="text-xs" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#6B7280" }} dy={10} />
-                                                <YAxis className="text-xs" tickFormatter={(v) => `${v / 1000}k`} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#6B7280" }} label={{ value: 'mÂ³', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: '#6B7280', fontSize: 11 } }} />
+                                                <YAxis className="text-xs" tickFormatter={(v) => `${v / 1000}k`} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#6B7280" }} label={{ value: 'm³', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: '#6B7280', fontSize: 11 } }} />
                                                 <Tooltip content={<LiquidTooltip />} cursor={{ stroke: 'rgba(0,0,0,0.1)', strokeWidth: 2 }} />
                                                 <Legend iconType="circle" />
                                                 <Area type="monotone" name="A1 - Main Source" dataKey="A1" stroke="#4E4456" fill="url(#gradA1)" strokeWidth={3} activeDot={{ r: 6, stroke: '#fff', strokeWidth: 2 }} animationDuration={1500} />
@@ -556,7 +563,7 @@ export default function WaterPage() {
                                                     </linearGradient>
                                                 </defs>
                                                 <XAxis dataKey="month" className="text-xs" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#6B7280" }} dy={10} />
-                                                <YAxis className="text-xs" tickFormatter={(v) => `${v / 1000}k`} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#6B7280" }} label={{ value: 'mÂ³', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: '#6B7280', fontSize: 11 } }} />
+                                                <YAxis className="text-xs" tickFormatter={(v) => `${v / 1000}k`} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#6B7280" }} label={{ value: 'm³', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: '#6B7280', fontSize: 11 } }} />
                                                 <Tooltip content={<LiquidTooltip />} cursor={{ stroke: 'rgba(0,0,0,0.1)', strokeWidth: 2 }} />
                                                 <Legend iconType="circle" />
                                                 <Area type="monotone" name="Total Loss" dataKey="totalLoss" stroke="#C95D63" fill="url(#gradLoss)" strokeWidth={2} strokeDasharray="5 5" animationDuration={1500} />
@@ -603,7 +610,7 @@ export default function WaterPage() {
                                         </div>
                                         <Button
                                             variant="secondary"
-                                            onClick={() => { setEndMonth('Oct-25'); setSelectedZone('Zone_01_(FM)'); }}
+                                            onClick={() => { setEndMonth('Jan-26'); setSelectedZone('Zone_01_(FM)'); }}
                                             className="ml-auto"
                                         >
                                             Reset Filters
@@ -618,8 +625,8 @@ export default function WaterPage() {
                                     {ZONE_CONFIG.find(z => z.code === selectedZone)?.name} Analysis for {endMonth}
                                 </h2>
                                 <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                                    <span className="text-mb-secondary font-medium">Zone Bulk</span> = L2 only â€¢
-                                    <span className="text-mb-primary font-medium"> L3/L4 total</span> = L3 + L4 (metered) â€¢
+                                    <span className="text-mb-secondary font-medium">Zone Bulk</span> = L2 only •
+                                    <span className="text-mb-primary font-medium"> L3/L4 total</span> = L3 + L4 (metered) •
                                     <span className="text-mb-danger font-medium"> Difference</span> = L2 - (L3 + L4)
                                 </p>
                             </div>
@@ -689,7 +696,7 @@ export default function WaterPage() {
                                                     </linearGradient>
                                                 </defs>
                                                 <XAxis dataKey="month" className="text-xs" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#6B7280" }} dy={10} />
-                                                <YAxis className="text-xs" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#6B7280" }} label={{ value: 'mÂ³', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: '#6B7280', fontSize: 11 } }} />
+                                                <YAxis className="text-xs" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#6B7280" }} label={{ value: 'm³', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: '#6B7280', fontSize: 11 } }} />
                                                 <Tooltip content={<LiquidTooltip />} cursor={{ stroke: 'rgba(0,0,0,0.1)', strokeWidth: 2 }} />
                                                 <Legend iconType="circle" />
                                                 <Area type="monotone" name="Individual Total" dataKey="Individual Total" stroke="#4E4456" fill="url(#gradIndividual)" strokeWidth={3} activeDot={{ r: 6, stroke: '#fff', strokeWidth: 2 }} animationDuration={1500} />
@@ -736,7 +743,7 @@ export default function WaterPage() {
                             <StatsGrid stats={[
                                 {
                                     label: "TOTAL CONSUMPTION",
-                                    value: `${totalConsumption.toLocaleString('en-US')} mÂ³`,
+                                    value: `${totalConsumption.toLocaleString('en-US')} m³`,
                                     subtitle: "Selected range",
                                     icon: Droplets,
                                     variant: "success"
@@ -751,7 +758,7 @@ export default function WaterPage() {
                                 {
                                     label: "HIGHEST CONSUMER",
                                     value: highestConsumer.meter.label,
-                                    subtitle: `${highestConsumer.total.toLocaleString('en-US')} mÂ³`,
+                                    subtitle: `${highestConsumer.total.toLocaleString('en-US')} m³`,
                                     icon: TrendingUp,
                                     variant: "primary"
                                 },
@@ -767,14 +774,14 @@ export default function WaterPage() {
                             {/* Consumption by Type Chart */}
                             <Card className="glass-card">
                                 <CardHeader className="glass-card-header p-4 sm:p-5 md:p-6">
-                                    <CardTitle className="text-base sm:text-lg">Consumption by Type (mÂ³)</CardTitle>
+                                    <CardTitle className="text-base sm:text-lg">Consumption by Type (m³)</CardTitle>
                                     <p className="text-xs sm:text-sm text-slate-500">Aggregated for {startMonth} - {endMonth}</p>
                                 </CardHeader>
                                 <CardContent className="p-4 sm:p-5 md:p-6 pt-0">
                                     <div className="h-[300px] sm:h-[350px] md:h-[400px] w-full">
                                         <ResponsiveContainer width="100%" height="100%">
                                             <BarChart data={consumptionChartData} layout="vertical" margin={{ left: 120 }}>
-                                                <XAxis type="number" tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#6B7280" }} label={{ value: 'mÂ³', position: 'insideBottom', offset: -5, style: { textAnchor: 'middle', fill: '#6B7280', fontSize: 11 } }} />
+                                                <XAxis type="number" tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#6B7280" }} label={{ value: 'm³', position: 'insideBottom', offset: -5, style: { textAnchor: 'middle', fill: '#6B7280', fontSize: 11 } }} />
                                                 <YAxis type="category" dataKey="type" width={110} className="text-xs" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#6B7280" }} />
                                                 <Tooltip content={<LiquidTooltip />} cursor={{ fill: 'rgba(0,0,0,0.04)', radius: 6 }} />
                                                 <Bar dataKey="total" radius={[0, 6, 6, 0]} barSize={24} animationDuration={1500}>
@@ -818,612 +825,6 @@ export default function WaterPage() {
             {/* Daily Dashboard View */}
             {dashboardView === 'daily' && (
                 <DailyWaterReport />
-            )}
-        </div>
-    );
-}
-
-// ============================================
-// Daily Water Dashboard Component (Using water_loss_daily table)
-// ============================================
-
-// Zone display name mapping
-const ZONE_DISPLAY_NAMES: Record<string, string> = {
-    'Zone FM': 'Zone FM (Bulk)',
-    'Zone 3A': 'Zone 3A (Bulk)',
-    'Zone 3B': 'Zone 3B (Bulk)',
-    'Zone 5': 'Zone 5 (Bulk)',
-    'Zone 8': 'Zone 8 (Bulk)',
-    'Zone 08': 'Zone 8 (Bulk)',
-    'Sales Center': 'Sales Center',
-    'Village Square': 'Village Square',
-};
-
-
-// Brand colors - matching Electricity section
-const DAILY_BRAND = {
-    primary: '#E8A838',      // Amber (main accent like Electricity)
-    secondary: '#81D8D0',    // Teal
-    tertiary: '#5BA88B',     // Success green
-    purple: '#4E4456',       // Brand purple
-    lossRed: '#C95D63',      // Danger red
-    warningOrange: '#F59E0B', // Warning
-    successGreen: '#5BA88B',  // Success
-    lightAmber: '#FBBF24',   // Light amber for gradients
-};
-
-
-function DailyWaterDashboard() {
-    const [viewMode, setViewMode] = useState<'hierarchy' | 'zone'>('hierarchy');
-    const [selectedDay, setSelectedDay] = useState(1);
-    const [dailyLossData, setDailyLossData] = useState<WaterLossDaily[]>([]);
-    const [dailyConsumption, setDailyConsumption] = useState<DailyWaterConsumption[]>([]);
-    const [waterMeters, setWaterMeters] = useState<WaterMeter[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [hasError, setHasError] = useState(false);
-
-    // Zone Analysis State
-    const [selectedTrendZone, setSelectedTrendZone] = useState<string>('Zone 01 (FM)'); // Default
-    const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set(['C43659', 'DC']));
-
-    const currentYear = 2026;
-    const currentMonth = 'Jan-26';
-
-    const hierarchy = useMemo(() => buildDailyHierarchy(), []);
-
-    useEffect(() => {
-        async function fetchDailyData() {
-            setIsLoading(true);
-            setHasError(false);
-            try {
-                if (isSupabaseConfigured()) {
-                    const [lossData, consumptionData, metersData] = await Promise.all([
-                        getWaterLossDailyFromSupabase(undefined, currentMonth, currentYear),
-                        getDailyWaterConsumptionFromSupabase(currentMonth, currentYear),
-                        getWaterMetersFromSupabase()
-                    ]);
-                    setDailyLossData(lossData);
-                    setDailyConsumption(consumptionData);
-                    setWaterMeters(metersData);
-
-                    if (lossData.length === 0 && consumptionData.length === 0 && metersData.length === 0) {
-                        setHasError(true);
-                    }
-                } else {
-                    setHasError(true);
-                }
-            } catch (error) {
-                console.error('Error fetching daily water data:', error);
-                setHasError(true);
-            } finally {
-                setIsLoading(false);
-            }
-        }
-        fetchDailyData();
-    }, []);
-
-    const toggleNode = (nodeId: string) => {
-        const newExpanded = new Set(expandedNodes);
-        if (newExpanded.has(nodeId)) {
-            newExpanded.delete(nodeId);
-        } else {
-            newExpanded.add(nodeId);
-        }
-        setExpandedNodes(newExpanded);
-    };
-
-    // Helper to get reading/usage
-    const getNodeReading = (node: DailyMeterNode, day: number): number => {
-        if (node.zone && node.label === 'L2') {
-            // Find by Zone Name in Loss Data
-            // Map generic zone names if needed, or rely on exact match
-            const zoneRecord = dailyLossData.find(d => d.zone === node.zone && d.day === day);
-            if (zoneRecord) return zoneRecord.l2TotalM3;
-        }
-        const reading = dailyConsumption.find(d => d.accountNumber === node.id || d.meterName === node.id);
-        if (reading) {
-            const val = reading.dailyReadings[day];
-            return typeof val === 'number' ? val : 0;
-        }
-        return 0;
-    };
-
-    const getChildrenAggregate = (node: DailyMeterNode, day: number): number => {
-        if (!node.children || node.children.length === 0) return 0;
-        return node.children.reduce((sum, child) => sum + getNodeReading(child, day), 0);
-    };
-
-    // Calculate Gauge Data for a Zone/Node
-    const getZoneGaugeData = (node: DailyMeterNode) => {
-        const input = getNodeReading(node, selectedDay);
-        const childrenSum = getChildrenAggregate(node, selectedDay);
-        let loss = 0;
-        if (input > 0) loss = input - childrenSum;
-
-        // Efficiency score: (Consumed / Input) * 100
-        // Or (Input - Loss) / Input * 100
-        let efficiency = 100;
-        if (input > 0) {
-            efficiency = ((input - Math.max(0, loss)) / input) * 100;
-        } else if (loss > 0) {
-            efficiency = 0;
-        }
-
-        return {
-            id: node.id,
-            name: node.name,
-            input,
-            loss,
-            efficiency
-        };
-    };
-
-    // Memoize Gauge Data
-    const gaugeData = useMemo(() => {
-        const mainBulk = getZoneGaugeData(hierarchy);
-        // Get L2 Zones
-        const zones = hierarchy.children
-            ?.filter(c => c.label === 'L2')
-            .map(z => getZoneGaugeData(z)) || [];
-
-        return [mainBulk, ...zones];
-    }, [hierarchy, dailyConsumption, dailyLossData, selectedDay]);
-
-    // ---- Zone Trend Analysis Logic ----
-    const zoneTrendData = useMemo(() => {
-        if (!dailyLossData.length) return [];
-        // Filter by selected zone
-        // Note: Supabase data 'zone' name (e.g. "Zone 3A") might need normalization to match selectedTrendZone
-
-        const filtered = dailyLossData.filter(d => d.zone === selectedTrendZone).sort((a, b) => a.day - b.day);
-
-        return filtered.map(d => ({
-            day: d.day,
-            date: new Date(d.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }),
-            bulkInput: d.l2TotalM3,
-            individualSum: d.l3TotalM3,
-            loss: d.lossM3,
-            efficiency: d.l2TotalM3 > 0 ? (d.l3TotalM3 / d.l2TotalM3) * 100 : 0
-        }));
-    }, [dailyLossData, selectedTrendZone]);
-
-    const zoneStats = useMemo(() => {
-        if (!zoneTrendData.length) return null;
-        const totalBulk = zoneTrendData.reduce((acc, curr) => acc + curr.bulkInput, 0);
-        const totalIndiv = zoneTrendData.reduce((acc, curr) => acc + curr.individualSum, 0);
-        const totalLoss = zoneTrendData.reduce((acc, curr) => acc + curr.loss, 0);
-        const avgEff = totalBulk > 0 ? (totalIndiv / totalBulk) * 100 : 0;
-
-        return { totalBulk, totalIndiv, totalLoss, avgEff };
-    }, [zoneTrendData]);
-
-    const availableZones = useMemo(() => {
-        // Extract unique zones from dailyLossData
-        const zones = new Set(dailyLossData.map(d => d.zone));
-        return Array.from(zones).sort();
-    }, [dailyLossData]);
-
-
-    const RecursiveRow = ({ node, depth = 0 }: { node: DailyMeterNode, depth?: number }) => {
-        const isExpanded = expandedNodes.has(node.id);
-        const hasChildren = node.children && node.children.length > 0;
-        const reading = getNodeReading(node, selectedDay);
-        const childrenSum = getChildrenAggregate(node, selectedDay);
-
-        let loss = 0;
-        let lossPercent = 0;
-        let isHighLoss = false;
-        let isMedLoss = false;
-        const isReconciliationNode = ['L1', 'L2', 'L3'].includes(node.label) && hasChildren;
-
-        if (isReconciliationNode) {
-            loss = reading - childrenSum;
-            lossPercent = reading > 0 ? (loss / reading) * 100 : 0;
-            isHighLoss = lossPercent > 20;
-            isMedLoss = lossPercent > 5 && lossPercent <= 20;
-        }
-
-        return (
-            <>
-                <TableRow className={cn(
-                    "transition-all duration-200 border-b border-white/5 hover:bg-white/5",
-                    depth === 0 ? "bg-white/5 font-medium" : ""
-                )}>
-                    <TableCell className="font-medium p-3 w-[280px]">
-                        <div className="flex items-center gap-2" style={{ paddingLeft: `${depth * 24}px` }}>
-                            {hasChildren ? (
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-6 w-6 p-0 hover:bg-white/10 rounded-md transition-colors text-muted-foreground"
-                                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleNode(node.id); }}
-                                >
-                                    {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-                                </Button>
-                            ) : <div className="w-6" />}
-
-                            <span className={cn(
-                                "truncate text-sm tracking-tight",
-                                node.label === 'L1' ? "text-primary font-bold" : "text-foreground/90"
-                            )} title={node.name}>
-                                {node.name}
-                            </span>
-                        </div>
-                    </TableCell>
-
-                    <TableCell className="font-mono text-xs text-muted-foreground/70">{node.id}</TableCell>
-
-                    <TableCell className="text-center">
-                        <span className={cn(
-                            "px-2 py-0.5 rounded text-[10px] font-semibold border",
-                            node.label === 'L1' ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" :
-                                node.label === 'L2' ? "bg-blue-500/10 text-blue-400 border-blue-500/20" :
-                                    node.label === 'L3' ? "bg-indigo-500/10 text-indigo-300 border-indigo-500/20" :
-                                        "bg-slate-500/10 text-slate-400 border-slate-500/20"
-                        )}>
-                            {node.label}
-                        </span>
-                    </TableCell>
-
-                    <TableCell className="hidden sm:table-cell text-xs text-muted-foreground/60">{node.zone}</TableCell>
-                    <TableCell className="hidden md:table-cell text-xs text-muted-foreground/60 truncate max-w-[100px]">{node.parent}</TableCell>
-                    <TableCell className="hidden lg:table-cell text-xs">
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] bg-white/5 border border-white/10 text-muted-foreground">
-                            {node.type}
-                        </span>
-                    </TableCell>
-
-                    <TableCell className="text-right font-mono text-sm">
-                        {reading > 0 ? reading.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 2 }) : '-'}
-                    </TableCell>
-
-                    <TableCell className="text-center font-mono text-sm">
-                        {isReconciliationNode ? (
-                            <div className={cn(
-                                "inline-flex items-center gap-1 font-medium",
-                                loss > 0.1 ? "text-red-400" : "text-emerald-400"
-                            )}>
-                                {loss > 0.1 ? '+' : ''}{loss.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 2 })}
-                            </div>
-                        ) : '-'}
-                    </TableCell>
-
-                    <TableCell className="text-center">
-                        {isReconciliationNode ? (
-                            <div className={cn(
-                                "inline-flex items-center justify-center min-w-[60px] px-2 py-1 rounded text-[10px] font-bold border backdrop-blur-sm shadow-sm transition-all",
-                                isHighLoss
-                                    ? "bg-red-500/10 text-red-400 border-red-500/20 shadow-red-500/5"
-                                    : isMedLoss
-                                        ? "bg-amber-500/10 text-amber-400 border-amber-500/20 shadow-amber-500/5"
-                                        : "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
-                            )}>
-                                {lossPercent.toFixed(1)}%
-                            </div>
-                        ) : '-'}
-                    </TableCell>
-                </TableRow>
-                {isExpanded && node.children && node.children.map(child => (
-                    <RecursiveRow key={child.id} node={child} depth={depth + 1} />
-                ))}
-            </>
-        );
-    };
-
-    if (isLoading) {
-        return (
-            <div className="h-[500px] flex flex-col items-center justify-center gap-4 bg-muted/5 rounded-xl border border-white/5">
-                <div className="relative">
-                    <div className="h-12 w-12 rounded-full border-4 border-primary/30 border-t-primary animate-spin" />
-                    <div className="absolute inset-0 flex items-center justify-center">
-                        <Droplets className="h-4 w-4 text-primary animate-pulse" />
-                    </div>
-                </div>
-                <p className="text-muted-foreground font-medium animate-pulse">Analyzing daily flow data...</p>
-            </div>
-        );
-    }
-
-    if (hasError) {
-        return (
-            <div className="p-8 text-center border border-red-500/20 bg-red-500/5 rounded-xl text-red-400">
-                <AlertCircle className="h-8 w-8 mx-auto mb-2 text-red-500" />
-                Error loading data. Please check your connection.
-            </div>
-        );
-    }
-
-    return (
-        <div className="space-y-8 animate-in fade-in zoom-in-95 duration-500">
-            {/* Header & Controls */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 p-1">
-                <div>
-                    <h3 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-white/60 flex items-center gap-3">
-                        <CalendarDays className="h-6 w-6 text-primary" />
-                        Daily Water Analysis
-                    </h3>
-                    <p className="text-muted-foreground mt-1 ml-9">
-                        {currentMonth.replace('-', ' ')} {currentYear}
-                    </p>
-                </div>
-
-                {/* View Switcher */}
-                <div className="flex p-1 bg-muted/20 rounded-lg border border-white/5 backdrop-blur-md">
-                    <button
-                        onClick={() => setViewMode('hierarchy')}
-                        className={cn(
-                            "px-4 py-2 text-sm font-medium rounded-md transition-all",
-                            viewMode === 'hierarchy'
-                                ? "bg-primary/20 text-primary shadow-sm border border-primary/20"
-                                : "text-muted-foreground hover:text-foreground hover:bg-white/5"
-                        )}
-                    >
-                        Hierarchy Snapshot
-                    </button>
-                    <button
-                        onClick={() => setViewMode('zone')}
-                        className={cn(
-                            "px-4 py-2 text-sm font-medium rounded-md transition-all",
-                            viewMode === 'zone'
-                                ? "bg-primary/20 text-primary shadow-sm border border-primary/20"
-                                : "text-muted-foreground hover:text-foreground hover:bg-white/5"
-                        )}
-                    >
-                        Zone Trends
-                    </button>
-                </div>
-            </div>
-
-            {/* Content Based on View Mode */}
-            {viewMode === 'hierarchy' ? (
-                <div className="space-y-8 animate-in slide-in-from-left-4 duration-500">
-                    {/* Day Selector for Hierarchy */}
-                    <div className="flex justify-end">
-                        <div className="flex items-center gap-4 bg-card/40 p-3 rounded-xl border border-white/10 backdrop-blur-sm shadow-xl">
-                            <span className="text-sm font-medium text-muted-foreground whitespace-nowrap pl-2">Select Day:</span>
-                            <input
-                                type="range"
-                                min="1"
-                                max="31"
-                                value={selectedDay}
-                                onChange={(e) => setSelectedDay(parseInt(e.target.value))}
-                                className="w-full md:w-48 h-2 bg-gradient-to-r from-primary/20 to-primary/60 rounded-lg appearance-none cursor-pointer accent-primary hover:accent-primary/80 transition-all"
-                            />
-                            <div className="h-8 w-10 flex items-center justify-center rounded bg-primary/20 border border-primary/30 font-bold text-primary font-mono shadow-inner">
-                                {selectedDay}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Gauges */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                        {gaugeData.slice(0, 8).map((gauge) => (
-                            <WaterLossGauge
-                                key={gauge.id}
-                                label={gauge.name.replace(' (NAMA)', '').replace(' (Bulk Zone 3A)', '').replace(' (Bulk Zone 3B)', '').replace(' (Bulk Zone 5)', '')}
-                                subLabel={`Input: ${gauge.input.toLocaleString()} m³`}
-                                score={gauge.efficiency}
-                                className="h-full bg-gradient-to-br from-card/30 to-card/10 hover:from-card/40 hover:to-card/20 transition-all duration-300 transform hover:-translate-y-1"
-                            />
-                        ))}
-                    </div>
-
-                    {/* Table */}
-                    <Card className="border-none shadow-2xl bg-card/20 backdrop-blur-xl ring-1 ring-white/5 overflow-hidden">
-                        <CardHeader className="px-6 py-6 border-b border-white/5 bg-white/5">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <CardTitle className="text-lg flex items-center gap-2 text-foreground/90">
-                                        <Layers className="text-primary h-5 w-5" />
-                                        Hierarchical Breakdown
-                                    </CardTitle>
-                                    <p className="text-sm text-muted-foreground/70 mt-1">
-                                        Detailed meter-level readings and reconciliation analysis.
-                                    </p>
-                                </div>
-                                <Button variant="outline" size="sm" className="hidden sm:flex gap-2 bg-white/5 border-white/10 hover:bg-white/10 text-muted-foreground">
-                                    <Database size={14} /> Export CSV
-                                </Button>
-                            </div>
-                        </CardHeader>
-                        <div className="overflow-x-auto">
-                            <Table>
-                                <TableHeader className="bg-black/20">
-                                    <TableRow className="hover:bg-transparent border-white/5">
-                                        <TableHead className="w-[280px] font-semibold text-white/70">Meter Hierarchy</TableHead>
-                                        <TableHead className="w-[100px] font-semibold text-white/50">Acct #</TableHead>
-                                        <TableHead className="w-[80px] text-center font-semibold text-white/50">Level</TableHead>
-                                        <TableHead className="hidden sm:table-cell font-semibold text-white/50">Zone</TableHead>
-                                        <TableHead className="hidden md:table-cell font-semibold text-white/50">Parent Node</TableHead>
-                                        <TableHead className="hidden lg:table-cell font-semibold text-white/50">Details</TableHead>
-                                        <TableHead className="text-right font-semibold text-white/70">Flow (m³)</TableHead>
-                                        <TableHead className="text-center font-semibold text-white/70">Diff</TableHead>
-                                        <TableHead className="text-center font-semibold text-white/70">Loss %</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    <RecursiveRow node={hierarchy} depth={0} />
-                                </TableBody>
-                            </Table>
-                        </div>
-                    </Card>
-                </div>
-            ) : (
-                <div className="space-y-8 animate-in slide-in-from-right-4 duration-500">
-                    {/* Zone Trends View */}
-                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                        {/* Sidebar / Controls */}
-                        <div className="lg:col-span-1 space-y-4">
-                            <Card className="glass-card bg-card/10 h-full">
-                                <CardHeader>
-                                    <CardTitle className="text-base">Filter Zone</CardTitle>
-                                </CardHeader>
-                                <CardContent className="space-y-4">
-                                    <div className="space-y-2">
-                                        <label className="text-xs text-muted-foreground uppercase font-semibold">Select Zone</label>
-                                        <select
-                                            className="w-full bg-black/20 border border-white/10 rounded-lg p-2 text-sm focus:ring-2 focus:ring-primary/50 outline-none transition-all"
-                                            value={selectedTrendZone}
-                                            onChange={(e) => setSelectedTrendZone(e.target.value)}
-                                        >
-                                            {availableZones.length > 0 ? availableZones.map(z => (
-                                                <option key={z} value={z}>{z}</option>
-                                            )) : <option>Loading...</option>}
-                                        </select>
-                                    </div>
-
-                                    {/* Monthly Stats Summary for Zone */}
-                                    {zoneStats && (
-                                        <div className="space-y-4 pt-4 border-t border-white/5">
-                                            <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
-                                                <div className="text-xs text-blue-400 mb-1">Total Input (Bulk)</div>
-                                                <div className="text-xl font-bold text-blue-100">{zoneStats.totalBulk.toLocaleString()} m³</div>
-                                            </div>
-                                            <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
-                                                <div className="text-xs text-emerald-400 mb-1">Total Consumed</div>
-                                                <div className="text-xl font-bold text-emerald-100">{zoneStats.totalIndiv.toLocaleString()} m³</div>
-                                            </div>
-                                            <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20">
-                                                <div className="text-xs text-red-400 mb-1">Total Loss</div>
-                                                <div className="text-xl font-bold text-red-100">{zoneStats.totalLoss.toLocaleString()} m³</div>
-                                            </div>
-                                            <div className="p-3 rounded-lg bg-white/5 border border-white/10">
-                                                <div className="text-xs text-muted-foreground mb-1">Avg Efficiency</div>
-                                                <div className="text-xl font-bold text-white">{zoneStats.avgEff.toFixed(1)}%</div>
-                                            </div>
-                                        </div>
-                                    )}
-                                </CardContent>
-                            </Card>
-                        </div>
-
-                        {/* Main Chart Area */}
-                        <div className="lg:col-span-3 space-y-6">
-                            <Card className="glass-card">
-                                <CardHeader>
-                                    <div className="flex items-center justify-between">
-                                        <CardTitle className="flex items-center gap-2">
-                                            <Activity className="h-5 w-5 text-primary" />
-                                            Daily Loss Trend: {selectedTrendZone}
-                                        </CardTitle>
-                                    </div>
-                                    <p className="text-sm text-muted-foreground">Comparing Bulk Input vs. Aggregate Individual Consumption over the month.</p>
-                                </CardHeader>
-                                <CardContent className="h-[350px]">
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <AreaChart data={zoneTrendData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-                                            <defs>
-                                                <linearGradient id="colorBulk" x1="0" y1="0" x2="0" y2="1">
-                                                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                                                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                                                </linearGradient>
-                                                <linearGradient id="colorIndiv" x1="0" y1="0" x2="0" y2="1">
-                                                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
-                                                    <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
-                                                </linearGradient>
-                                            </defs>
-                                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" vertical={false} />
-                                            <XAxis
-                                                dataKey="day"
-                                                stroke="#888888"
-                                                fontSize={12}
-                                                tickLine={false}
-                                                axisLine={false}
-                                            />
-                                            <YAxis
-                                                stroke="#888888"
-                                                fontSize={12}
-                                                tickLine={false}
-                                                axisLine={false}
-                                                tickFormatter={value => `${value}`}
-                                            />
-                                            <Tooltip
-                                                contentStyle={{ backgroundColor: 'rgba(23, 23, 23, 0.9)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }}
-                                                itemStyle={{ color: '#fff' }}
-                                            />
-                                            <Legend wrapperStyle={{ paddingTop: '20px' }} />
-                                            <Area
-                                                type="monotone"
-                                                dataKey="bulkInput"
-                                                name="Bulk Input"
-                                                stroke="#3b82f6"
-                                                fillOpacity={1}
-                                                fill="url(#colorBulk)"
-                                                strokeWidth={2}
-                                            />
-                                            <Area
-                                                type="monotone"
-                                                dataKey="individualSum"
-                                                name="Total Consumed"
-                                                stroke="#10b981"
-                                                fillOpacity={1}
-                                                fill="url(#colorIndiv)"
-                                                strokeWidth={2}
-                                            />
-                                            <Line
-                                                type="monotone"
-                                                dataKey="loss"
-                                                name="Loss Gap"
-                                                stroke="#ef4444"
-                                                strokeWidth={2}
-                                                strokeDasharray="5 5"
-                                                dot={false}
-                                            />
-                                        </AreaChart>
-                                    </ResponsiveContainer>
-                                </CardContent>
-                            </Card>
-
-                            {/* Detailed List */}
-                            <Card className="glass-card">
-                                <CardHeader>
-                                    <div className="flex items-center justify-between">
-                                        <CardTitle className="text-base">Daily Records</CardTitle>
-                                        <Button variant="outline" size="sm" className="bg-white/5 border-white/10 hover:bg-white/10">
-                                            <Database size={14} className="mr-2" /> Export
-                                        </Button>
-                                    </div>
-                                </CardHeader>
-                                <div className="overflow-x-auto max-h-[300px] overflow-y-auto">
-                                    <Table>
-                                        <TableHeader className="sticky top-0 bg-black/40 backdrop-blur-md z-10">
-                                            <TableRow className="border-white/5 hover:bg-transparent">
-                                                <TableHead>Day</TableHead>
-                                                <TableHead className="text-right">Bulk Input (m³)</TableHead>
-                                                <TableHead className="text-right">Billed (m³)</TableHead>
-                                                <TableHead className="text-right">Loss (m³)</TableHead>
-                                                <TableHead className="text-right">Efficiency</TableHead>
-                                                <TableHead className="text-center">Status</TableHead>
-                                            </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                            {zoneTrendData.map((day) => (
-                                                <TableRow key={day.day} className="border-white/5 hover:bg-white/5">
-                                                    <TableCell className="font-mono">{day.date}</TableCell>
-                                                    <TableCell className="text-right text-blue-300 font-mono">{day.bulkInput.toFixed(2)}</TableCell>
-                                                    <TableCell className="text-right text-emerald-300 font-mono">{day.individualSum.toFixed(2)}</TableCell>
-                                                    <TableCell className="text-right text-red-300 font-mono">{day.loss.toFixed(2)}</TableCell>
-                                                    <TableCell className="text-right font-mono">{day.efficiency.toFixed(1)}%</TableCell>
-                                                    <TableCell className="text-center">
-                                                        <span className={cn(
-                                                            "text-[10px] px-2 py-0.5 rounded-full border",
-                                                            day.loss > (day.bulkInput * 0.2)
-                                                                ? "bg-red-500/10 text-red-500 border-red-500/20"
-                                                                : "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
-                                                        )}>
-                                                            {day.loss > (day.bulkInput * 0.2) ? 'High Loss' : 'Normal'}
-                                                        </span>
-                                                    </TableCell>
-                                                </TableRow>
-                                            ))}
-                                        </TableBody>
-                                    </Table>
-                                </div>
-                            </Card>
-                        </div>
-                    </div>
-                </div>
             )}
         </div>
     );

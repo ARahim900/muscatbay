@@ -21,6 +21,38 @@ import {
 import type { WaterMeter } from '@/lib/water-data';
 
 /**
+ * Log meters with negative consumption values for debugging
+ */
+function logNegativeValues(records: SupabaseWaterMeter[]): void {
+    const monthColumns = [
+        'jan_25', 'feb_25', 'mar_25', 'apr_25', 'may_25', 'jun_25',
+        'jul_25', 'aug_25', 'sep_25', 'oct_25', 'nov_25', 'dec_25',
+        'jan_26', 'feb_26'
+    ] as const;
+
+    const negativeMeters: { label: string; account: string; month: string; value: number }[] = [];
+
+    for (const record of records) {
+        for (const month of monthColumns) {
+            const value = record[month];
+            if (value !== null && value < 0) {
+                negativeMeters.push({
+                    label: record.label,
+                    account: record.account_number,
+                    month: month.replace('_', '-').replace('25', '-25').replace('26', '-26'),
+                    value
+                });
+            }
+        }
+    }
+
+    if (negativeMeters.length > 0) {
+        console.warn(`[Water Data] Found ${negativeMeters.length} negative consumption values in Supabase:`);
+        console.table(negativeMeters);
+    }
+}
+
+/**
  * Fetch water meters from Supabase
  */
 export async function getWaterMetersFromSupabase(): Promise<WaterMeter[]> {
@@ -42,6 +74,9 @@ export async function getWaterMetersFromSupabase(): Promise<WaterMeter[]> {
         if (!data || data.length === 0) {
             return [];
         }
+
+        // Log any negative values found in the data for debugging
+        logNegativeValues(data);
 
         const result = data.map((record: SupabaseWaterMeter) => transformWaterMeter(record));
         return result;

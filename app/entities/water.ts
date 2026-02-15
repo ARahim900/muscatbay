@@ -71,13 +71,21 @@ export interface DailyWaterConsumption {
 }
 
 /**
+ * Sanitize daily reading value - convert negative values to 0
+ */
+function sanitizeDailyReading(value: number | null): number | null {
+    if (value === null || value === undefined) return null;
+    return value < 0 ? 0 : value;
+}
+
+/**
  * Transform Supabase daily water consumption to frontend format
  */
 export function transformDailyWaterConsumption(record: SupabaseDailyWaterConsumption): DailyWaterConsumption {
     const dailyReadings: Record<number, number | null> = {};
     for (let i = 1; i <= 31; i++) {
         const key = `day_${i}` as keyof SupabaseDailyWaterConsumption;
-        dailyReadings[i] = record[key] as number | null;
+        dailyReadings[i] = sanitizeDailyReading(record[key] as number | null);
     }
 
     return {
@@ -118,9 +126,19 @@ export interface SupabaseWaterMeter {
     oct_25: number | null;
     nov_25: number | null;
     dec_25: number | null;
-  jan_26: number | null;
+    jan_26: number | null;
+    feb_26: number | null;
     created_at?: string;
     updated_at?: string;
+}
+
+/**
+ * Sanitize consumption value - convert negative values to 0
+ * Negative consumption values indicate meter reading errors in the source data
+ */
+function sanitizeConsumption(value: number | null): number | null {
+    if (value === null || value === undefined) return null;
+    return value < 0 ? 0 : value;
 }
 
 /**
@@ -128,19 +146,20 @@ export interface SupabaseWaterMeter {
  */
 export function transformWaterMeter(dbMeter: SupabaseWaterMeter): WaterMeter {
     const consumption: Record<string, number | null> = {
-        'Jan-25': dbMeter.jan_25,
-        'Feb-25': dbMeter.feb_25,
-        'Mar-25': dbMeter.mar_25,
-        'Apr-25': dbMeter.apr_25,
-        'May-25': dbMeter.may_25,
-        'Jun-25': dbMeter.jun_25,
-        'Jul-25': dbMeter.jul_25,
-        'Aug-25': dbMeter.aug_25,
-        'Sep-25': dbMeter.sep_25,
-        'Oct-25': dbMeter.oct_25,
-        'Nov-25': dbMeter.nov_25,
-        'Dec-25': dbMeter.dec_25,
-      'Jan-26': dbMeter.jan_26,
+        'Jan-25': sanitizeConsumption(dbMeter.jan_25),
+        'Feb-25': sanitizeConsumption(dbMeter.feb_25),
+        'Mar-25': sanitizeConsumption(dbMeter.mar_25),
+        'Apr-25': sanitizeConsumption(dbMeter.apr_25),
+        'May-25': sanitizeConsumption(dbMeter.may_25),
+        'Jun-25': sanitizeConsumption(dbMeter.jun_25),
+        'Jul-25': sanitizeConsumption(dbMeter.jul_25),
+        'Aug-25': sanitizeConsumption(dbMeter.aug_25),
+        'Sep-25': sanitizeConsumption(dbMeter.sep_25),
+        'Oct-25': sanitizeConsumption(dbMeter.oct_25),
+        'Nov-25': sanitizeConsumption(dbMeter.nov_25),
+        'Dec-25': sanitizeConsumption(dbMeter.dec_25),
+        'Jan-26': sanitizeConsumption(dbMeter.jan_26),
+        'Feb-26': sanitizeConsumption(dbMeter.feb_26),
     };
 
     return {
