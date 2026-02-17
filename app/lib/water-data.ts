@@ -97,7 +97,11 @@ export const ZONE_CONFIG: ZoneConfig[] = [
   { code: 'Zone_SC', name: 'Sales Center', bulkMeterAccount: '4300295', hasBuildings: false },
 ];
 
-export const AVAILABLE_MONTHS = ['Jan-25', 'Feb-25', 'Mar-25', 'Apr-25', 'May-25', 'Jun-25', 'Jul-25', 'Aug-25', 'Sep-25', 'Oct-25', 'Nov-25', 'Dec-25', 'Jan-26', 'Feb-26'];
+export const AVAILABLE_MONTHS = [
+  'Jan-24', 'Feb-24', 'Mar-24', 'Apr-24', 'May-24', 'Jun-24', 'Jul-24', 'Aug-24', 'Sep-24', 'Oct-24', 'Nov-24', 'Dec-24',
+  'Jan-25', 'Feb-25', 'Mar-25', 'Apr-25', 'May-25', 'Jun-25', 'Jul-25', 'Aug-25', 'Sep-25', 'Oct-25', 'Nov-25', 'Dec-25',
+  'Jan-26', 'Feb-26'
+];
 
 export const TYPE_CATEGORIES: Record<string, string[]> = {
   Commercial: ['Retail', 'Building'],

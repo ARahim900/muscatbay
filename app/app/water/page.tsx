@@ -140,7 +140,7 @@ function getMeterCountsByLevelFromData(meters: WaterMeter[]) {
 export default function WaterPage() {
     const [dashboardView, setDashboardView] = useState<DashboardView>('monthly');
     const [monthlyTab, setMonthlyTab] = useState("overview"); // Changed to string for TabNavigation compatibility
-    const [startMonth, setStartMonth] = useState('Jan-25');
+    const [startMonth, setStartMonth] = useState('Jan-24');
     const [endMonth, setEndMonth] = useState('Jan-26');
     const [selectedZone, setSelectedZone] = useState('Zone_01_(FM)');
     const [selectedType, setSelectedType] = useState('All');
@@ -269,7 +269,7 @@ export default function WaterPage() {
     };
 
     const handleResetRange = () => {
-        setStartMonth('Jan-25');
+        setStartMonth('Jan-24');
         setEndMonth('Jan-26');
     };
 

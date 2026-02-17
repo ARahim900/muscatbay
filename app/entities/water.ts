@@ -113,7 +113,20 @@ export interface SupabaseWaterMeter {
     zone: string;
     parent_meter: string;
     type: string;
-    // Monthly consumption columns
+    // 2024 Monthly consumption columns
+    jan_24: number | null;
+    feb_24: number | null;
+    mar_24: number | null;
+    apr_24: number | null;
+    may_24: number | null;
+    jun_24: number | null;
+    jul_24: number | null;
+    aug_24: number | null;
+    sep_24: number | null;
+    oct_24: number | null;
+    nov_24: number | null;
+    dec_24: number | null;
+    // 2025 Monthly consumption columns
     jan_25: number | null;
     feb_25: number | null;
     mar_25: number | null;
@@ -146,6 +159,18 @@ function sanitizeConsumption(value: number | null): number | null {
  */
 export function transformWaterMeter(dbMeter: SupabaseWaterMeter): WaterMeter {
     const consumption: Record<string, number | null> = {
+        'Jan-24': sanitizeConsumption(dbMeter.jan_24),
+        'Feb-24': sanitizeConsumption(dbMeter.feb_24),
+        'Mar-24': sanitizeConsumption(dbMeter.mar_24),
+        'Apr-24': sanitizeConsumption(dbMeter.apr_24),
+        'May-24': sanitizeConsumption(dbMeter.may_24),
+        'Jun-24': sanitizeConsumption(dbMeter.jun_24),
+        'Jul-24': sanitizeConsumption(dbMeter.jul_24),
+        'Aug-24': sanitizeConsumption(dbMeter.aug_24),
+        'Sep-24': sanitizeConsumption(dbMeter.sep_24),
+        'Oct-24': sanitizeConsumption(dbMeter.oct_24),
+        'Nov-24': sanitizeConsumption(dbMeter.nov_24),
+        'Dec-24': sanitizeConsumption(dbMeter.dec_24),
         'Jan-25': sanitizeConsumption(dbMeter.jan_25),
         'Feb-25': sanitizeConsumption(dbMeter.feb_25),
         'Mar-25': sanitizeConsumption(dbMeter.mar_25),
