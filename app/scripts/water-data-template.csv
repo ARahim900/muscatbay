@@ -1,0 +1,3 @@
+account_number,label,level,zone,parent_meter,type,jan_25,feb_25,mar_25,apr_25,may_25,jun_25,jul_25,aug_25,sep_25,oct_25,nov_25,dec_25,jan_26,feb_26
+C43659,Main Bulk NAMA,L1,Main,,Bulk,32580,44043,34915,46039,58425,41840,41475,41743,42088,46049,47347,45922,41320,
+4300324,Zone 8 Bulk,L2,Zone 8,Main Bulk NAMA,Zone_Bulk,5200,7800,6100,8200,9500,7200,7000,7300,7500,8500,9000,8200,10017,
