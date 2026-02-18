@@ -194,41 +194,10 @@ export function DailyWaterReport() {
         // Filter consumption data by zone and get reading for selected day
         return dailyConsumption
             .filter(d => {
-                // Match by zone code in the meterName or accountNumber patterns
-                const zoneName = selectedZoneCode.toLowerCase();
-                const meterZone = (d.meterName || '').toLowerCase();
-
-                // Basic zone matching logic
-                if (selectedZone === 'Zone FM') {
-                    return meterZone.includes('fm') || meterZone.includes('b1') || meterZone.includes('b2') ||
-                        meterZone.includes('b3') || meterZone.includes('b4') || meterZone.includes('b5') ||
-                        meterZone.includes('b6') || meterZone.includes('b7') || meterZone.includes('b8') ||
-                        meterZone.includes('cif');
-                }
-                if (selectedZone === 'Zone 3A') {
-                    return (meterZone.includes('z3-') || meterZone.includes('d-44') ||
-                        meterZone.includes('d-45') || meterZone.includes('d-46') ||
-                        meterZone.includes('d-47') || meterZone.includes('d-51') ||
-                        meterZone.includes('d-74') || meterZone.includes('d-75')) &&
-                        !meterZone.includes('z3-3') && !meterZone.includes('z3-8') && !meterZone.includes('z3-12');
-                }
-                if (selectedZone === 'Zone 3B') {
-                    return meterZone.includes('z3-3') || meterZone.includes('z3-8') || meterZone.includes('z3-12') ||
-                        meterZone.includes('d-52') || meterZone.includes('d-53') || meterZone.includes('d-54');
-                }
-                if (selectedZone === 'Zone 5') {
-                    return meterZone.includes('z5-');
-                }
-                if (selectedZone === 'Zone 08') {
-                    return meterZone.includes('z8-');
-                }
-                if (selectedZone === 'Village Square') {
-                    return meterZone.includes('coffee') || meterZone.includes('laundry') || meterZone.includes('village');
-                }
-                if (selectedZone === 'Sales Center') {
-                    return meterZone.includes('sale') || meterZone.includes('caffe');
-                }
-                return false;
+                // Match meter to zone using the zone field from the data
+                // The zone field contains the zone code (e.g., 'Zone_01_(FM)', 'Zone_05')
+                // which maps to the selectedZoneCode from DAILY_ZONES
+                return d.zone === selectedZoneCode;
             })
             .map(d => ({
                 accountNumber: d.accountNumber,
