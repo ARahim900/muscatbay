@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { signIn } from "@/lib/auth";
-import { validateEmail, checkRateLimit, resetRateLimit } from "@/lib/validation";
+import { validateEmail, checkRateLimit, resetRateLimit, recordRateLimitAttempt } from "@/lib/validation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -56,6 +56,7 @@ export default function LoginPage() {
             router.push("/");
             router.refresh();
         } catch (err: unknown) {
+            recordRateLimitAttempt('login');
             const errorMessage = err instanceof Error ? err.message : 'Invalid email or password';
             setError(errorMessage);
         } finally {
@@ -220,10 +221,10 @@ export default function LoginPage() {
                                         onFocus={() => setFocusedField('email')}
                                         onBlur={() => setFocusedField(null)}
                                         className={`pl-12 h-12 rounded-xl border-2 transition-all duration-300 ${emailError
-                                                ? 'border-red-500 focus:border-red-500'
-                                                : focusedField === 'email'
-                                                    ? 'border-[#4E4456] shadow-lg shadow-[#4E4456]/10'
-                                                    : 'border-slate-200 dark:border-slate-600 hover:border-slate-300'
+                                            ? 'border-red-500 focus:border-red-500'
+                                            : focusedField === 'email'
+                                                ? 'border-[#4E4456] shadow-lg shadow-[#4E4456]/10'
+                                                : 'border-slate-200 dark:border-slate-600 hover:border-slate-300'
                                             }`}
                                         required
                                         autoComplete="email"
@@ -263,8 +264,8 @@ export default function LoginPage() {
                                         onFocus={() => setFocusedField('password')}
                                         onBlur={() => setFocusedField(null)}
                                         className={`pl-12 pr-12 h-12 rounded-xl border-2 transition-all duration-300 ${focusedField === 'password'
-                                                ? 'border-[#4E4456] shadow-lg shadow-[#4E4456]/10'
-                                                : 'border-slate-200 dark:border-slate-600 hover:border-slate-300'
+                                            ? 'border-[#4E4456] shadow-lg shadow-[#4E4456]/10'
+                                            : 'border-slate-200 dark:border-slate-600 hover:border-slate-300'
                                             }`}
                                         required
                                         autoComplete="current-password"

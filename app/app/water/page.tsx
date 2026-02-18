@@ -288,7 +288,7 @@ export default function WaterPage() {
         return Object.entries(typeConsumption)
             .map(([type, total]) => ({ type, total }))
             .sort((a, b) => b.total - a.total);
-    }, [startMonth, endMonth]);
+    }, [waterMeters, startMonth, endMonth]);
 
     const TYPE_COLORS = {
         'Main BULK': '#5BA88B', // Success/Green

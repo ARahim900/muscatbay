@@ -11,6 +11,7 @@ import {
     getPasswordRequirements,
     checkRateLimit,
     resetRateLimit,
+    recordRateLimitAttempt,
     getSafeErrorMessage,
 } from '@/lib/validation';
 
@@ -203,8 +204,10 @@ describe('Search Query Sanitization', () => {
 
 describe('Rate Limiting', () => {
     beforeEach(() => {
-        // Reset rate limits before each test
         resetRateLimit('test-key');
+        resetRateLimit('block-test');
+        resetRateLimit('reset-test');
+        resetRateLimit('check-only-test');
     });
 
     it('should allow requests within limit', () => {
@@ -212,22 +215,30 @@ describe('Rate Limiting', () => {
         expect(result.isAllowed).toBe(true);
     });
 
-    it('should block after exceeding limit', () => {
-        // Make 5 requests
+    it('should not increment counter when only checking', () => {
+        // Call checkRateLimit many times without recording
+        for (let i = 0; i < 10; i++) {
+            const result = checkRateLimit('check-only-test', 5, 60000, 300000);
+            expect(result.isAllowed).toBe(true);
+        }
+    });
+
+    it('should block after recording enough failed attempts', () => {
+        // Record 5 failed attempts
         for (let i = 0; i < 5; i++) {
-            checkRateLimit('block-test', 5, 60000, 300000);
+            recordRateLimitAttempt('block-test');
         }
 
-        // 6th request should be blocked
+        // Next check should be blocked
         const result = checkRateLimit('block-test', 5, 60000, 300000);
         expect(result.isAllowed).toBe(false);
         expect(result.waitSeconds).toBeDefined();
     });
 
     it('should reset rate limit correctly', () => {
-        // Use up attempts
+        // Record failed attempts
         for (let i = 0; i < 5; i++) {
-            checkRateLimit('reset-test', 5, 60000, 300000);
+            recordRateLimitAttempt('reset-test');
         }
 
         // Reset

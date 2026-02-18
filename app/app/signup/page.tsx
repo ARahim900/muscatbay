@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { signUp } from "@/lib/auth";
-import { validateEmail, validateFullName, getPasswordRequirements, checkRateLimit, resetRateLimit } from "@/lib/validation";
+import { validateEmail, validateFullName, getPasswordRequirements, checkRateLimit, resetRateLimit, recordRateLimitAttempt } from "@/lib/validation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -82,6 +82,7 @@ export default function SignUpPage() {
             resetRateLimit('signup');
             setSuccess(true);
         } catch (err: unknown) {
+            recordRateLimitAttempt('signup');
             const errorMessage = err instanceof Error ? err.message : "Failed to create account. Please try again.";
             setError(errorMessage);
         } finally {

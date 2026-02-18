@@ -355,19 +355,27 @@ export function checkRateLimit(
         state.attempts = 0;
     }
 
-    // Check attempt count
+    // Check attempt count (don't record — caller must call recordRateLimitAttempt on failure)
     if (state.attempts >= maxAttempts) {
         state.lockedUntil = now + lockoutMs;
         rateLimitStore.set(key, state);
         return { isAllowed: false, waitSeconds: Math.ceil(lockoutMs / 1000) };
     }
 
-    // Record attempt
+    return { isAllowed: true };
+}
+
+/**
+ * Records a failed attempt for rate limiting
+ * Call this only when the action fails (e.g., wrong password)
+ * @param key - Rate limit key to record attempt for
+ */
+export function recordRateLimitAttempt(key: string): void {
+    const now = Date.now();
+    const state = rateLimitStore.get(key) || { attempts: 0, lastAttempt: 0, lockedUntil: 0 };
     state.attempts++;
     state.lastAttempt = now;
     rateLimitStore.set(key, state);
-
-    return { isAllowed: true };
 }
 
 /**

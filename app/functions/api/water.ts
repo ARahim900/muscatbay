@@ -25,6 +25,8 @@ import type { WaterMeter } from '@/lib/water-data';
  */
 function logNegativeValues(records: SupabaseWaterMeter[]): void {
     const monthColumns = [
+        'jan_24', 'feb_24', 'mar_24', 'apr_24', 'may_24', 'jun_24',
+        'jul_24', 'aug_24', 'sep_24', 'oct_24', 'nov_24', 'dec_24',
         'jan_25', 'feb_25', 'mar_25', 'apr_25', 'may_25', 'jun_25',
         'jul_25', 'aug_25', 'sep_25', 'oct_25', 'nov_25', 'dec_25',
         'jan_26', 'feb_26'
