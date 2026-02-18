@@ -42,6 +42,7 @@ import { LiquidProgressRing } from "../../components/charts/liquid-progress-ring
 import { WaterLossGauge } from "@/components/water/water-loss-gauge";
 import { LiquidTooltip } from "../../components/charts/liquid-tooltip";
 import { MeterTable } from "@/components/water/meter-table";
+import { WaterDatabaseTable } from "@/components/water/water-database-table";
 import { WaterNetworkHierarchy } from "@/components/water/network-hierarchy";
 import { DailyWaterReport } from "@/components/water/DailyWaterReport";
 import { PageHeader } from "@/components/shared/page-header";
@@ -795,59 +796,13 @@ export default function WaterPage() {
                         </div>
                     )}
 
-                    {/* Database Tab */}
+                    {/* Database Tab - Airtable-Style Table */}
                     {monthlyTab === 'database' && (
-                        <div className="space-y-6 animate-in fade-in duration-300">
-                            {/* Summary Stats */}
-                            <StatsGrid stats={[
-                                {
-                                    label: "TOTAL METERS",
-                                    value: waterMeters.length.toString(),
-                                    subtitle: "All levels combined",
-                                    icon: Gauge,
-                                    variant: "primary"
-                                },
-                                {
-                                    label: "L1 + L2 METERS",
-                                    value: `${waterMeters.filter(m => m.level === 'L1' || m.level === 'L2').length}`,
-                                    subtitle: "Main source + zone bulks",
-                                    icon: Droplets,
-                                    variant: "success"
-                                },
-                                {
-                                    label: "L3 + L4 METERS",
-                                    value: `${waterMeters.filter(m => m.level === 'L3' || m.level === 'L4').length}`,
-                                    subtitle: "Individual + apartments",
-                                    icon: Users,
-                                    variant: "secondary"
-                                },
-                                {
-                                    label: "DC METERS",
-                                    value: `${waterMeters.filter(m => m.level === 'DC').length}`,
-                                    subtitle: "Direct connections",
-                                    icon: ChevronsRight,
-                                    variant: "warning"
-                                }
-                            ]} />
-
-                            {/* Full Meter Database Table */}
-                            <Card className="glass-card">
-                                <CardHeader className="glass-card-header p-4 sm:p-5 md:p-6">
-                                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                                        <div>
-                                            <CardTitle className="text-base sm:text-lg">Complete Water Meter Database</CardTitle>
-                                            <p className="text-xs sm:text-sm text-slate-500">All {waterMeters.length} meters across all zones and levels</p>
-                                        </div>
-                                    </div>
-                                </CardHeader>
-                                <CardContent className="p-4 sm:p-5 md:p-6 pt-0">
-                                    <MeterTable
-                                        meters={waterMeters}
-                                        months={AVAILABLE_MONTHS}
-                                        pageSize={20}
-                                    />
-                                </CardContent>
-                            </Card>
+                        <div className="animate-in fade-in duration-300">
+                            <WaterDatabaseTable
+                                meters={waterMeters}
+                                months={AVAILABLE_MONTHS}
+                            />
                         </div>
                     )}
                 </div>
