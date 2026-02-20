@@ -269,12 +269,12 @@ export function WaterDatabaseTable({ meters, months }: WaterDatabaseTableProps) 
         return Array.from(types).sort();
     }, [meters]);
 
-    // Initialize selected types if empty
-    useMemo(() => {
+    // Initialize selected types when allTypes changes
+    React.useEffect(() => {
         if (selectedTypes.length === 0 && allTypes.length > 0) {
             setSelectedTypes([...allTypes]);
         }
-    }, [allTypes, selectedTypes.length]);
+    }, [allTypes]); // eslint-disable-line react-hooks/exhaustive-deps
 
     // Filter meters
     const filteredMeters = useMemo(() => {

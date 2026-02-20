@@ -15,7 +15,17 @@ interface AuthContextType {
     refreshProfile: () => Promise<void>;
 }
 
+/**
+ * Check if development mode is enabled.
+ * DEV_MODE only works when:
+ * 1. NODE_ENV is 'development' (not in production builds)
+ * 2. NEXT_PUBLIC_DEV_MODE is explicitly set to 'true'
+ */
 const isDevMode = () => {
+    // SECURITY: Never allow dev mode in production builds
+    if (process.env.NODE_ENV === 'production') {
+        return false;
+    }
     return process.env.NEXT_PUBLIC_DEV_MODE === 'true';
 };
 
