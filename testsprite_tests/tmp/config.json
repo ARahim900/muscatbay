@@ -1,0 +1,19 @@
+{
+  "status": "commited",
+  "type": "frontend",
+  "scope": "codebase",
+  "localEndpoint": "http://localhost:3000",
+  "loginUser": "alameeri900@gmail.com",
+  "loginPassword": "Audi@2016",
+  "executionArgs": {
+    "projectName": "muscatbay_app",
+    "projectPath": "/Users/sam24/Downloads/muscatbay_app",
+    "testIds": [],
+    "additionalInstruction": "Execute all 25 water page test cases (W001-W025). The app is running on localhost:3000. Login is required - use configured credentials. The app is connected to live Supabase. IMPORTANT: The water meter table with search, sort, and pagination is on the \"Zone Analysis\" sub-tab (NOT the default Overview sub-tab). You must click \"Zone Analysis\" sub-tab first before interacting with the meter table. The type filter pills are on the \"Consumption by Type\" sub-tab.",
+    "envs": {
+      "API_KEY": "sk-user-yZcty_Wd-0EFPzcTHhuqqmaAXQBhitX4nOiRVIn2Eeino--Vp2AOb9A2Utat9p6hDWC1yz7Ex75tPLT03g5WOGpfljzNYihcqC2rF_j6sJDOkEtpY2VVWlIqGMBq_nFPpwg"
+    }
+  },
+  "serverPort": 65201,
+  "proxy": "http://8c61c6b7-d0a0-49b6-b1ce-a8410bbc7ef8:GL0T958vj8xxG3es2jnFvY3ScSZVGmGP@tun.testsprite.com:8080"
+}

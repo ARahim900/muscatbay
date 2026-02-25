@@ -1,0 +1,19 @@
+{
+  "status": "commited",
+  "type": "frontend",
+  "scope": "codebase",
+  "localEndpoint": "http://localhost:3000",
+  "loginUser": "alameeri900@gmail.com",
+  "loginPassword": "Audi@2016",
+  "executionArgs": {
+    "projectName": "muscatbay",
+    "projectPath": "/Users/sam24/Downloads/muscatbay_app/muscatbay/app",
+    "testIds": [],
+    "additionalInstruction": "Run all 26 test cases comprehensively. This is a Next.js app running on port 3000. The app requires Supabase authentication - test credentials should use the LOGIN_USER and LOGIN_PASSWORD environment variables. Test all dashboard features including KPI cards, charts, activity feed, and data status indicators.",
+    "envs": {
+      "API_KEY": "sk-user-yZcty_Wd-0EFPzcTHhuqqmaAXQBhitX4nOiRVIn2Eeino--Vp2AOb9A2Utat9p6hDWC1yz7Ex75tPLT03g5WOGpfljzNYihcqC2rF_j6sJDOkEtpY2VVWlIqGMBq_nFPpwg"
+    }
+  },
+  "serverPort": 55573,
+  "proxy": "http://bb4d00b6-7c9f-4dde-a4d2-761a1d661c29:HkrhICFROX22QsmJP59E1DPyeVayjv4y@tun.testsprite.com:8080"
+}

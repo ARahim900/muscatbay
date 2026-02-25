@@ -1,0 +1,1068 @@
+[
+  {
+    "id": "TC001",
+    "title": "Dashboard loads successfully and displays core header elements",
+    "description": "Verifies the authenticated user can load the Dashboard and see the title/description plus a data status badge after loading completes.",
+    "category": "Dashboard Page Load & Data Status",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Sign in\" button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Dashboard\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Data Status\" badge is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Live Data\" is visible OR verify text \"Demo Mode\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC002",
+    "title": "Dashboard indicates Live Data mode when live data is available",
+    "description": "Verifies the data status badge can show \"Live Data\" after loading completes and the header remains visible.",
+    "category": "Dashboard Page Load & Data Status",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Sign in\" button"
+      },
+      {
+        "type": "action",
+        "description": "Wait for element \"Data Status\" badge to appear"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Live Data\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Dashboard\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Recent Activity\" section is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC003",
+    "title": "Dashboard indicates Demo Mode when live fetch is unavailable and falls back to demo data",
+    "description": "Verifies the dashboard can complete loading and show \"Demo Mode\" with normal dashboard sections visible when fallback data is used.",
+    "category": "Dashboard Page Load & Data Status",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Sign in\" button"
+      },
+      {
+        "type": "action",
+        "description": "Wait for element \"Data Status\" badge to appear"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Demo Mode\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Dashboard\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Recent Activity\" section is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC004",
+    "title": "Dashboard header includes title and descriptive text after load",
+    "description": "Verifies the top-level header includes the expected title and a visible description/subtitle once data loading finishes.",
+    "category": "Dashboard Page Load & Data Status",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Sign in\" button"
+      },
+      {
+        "type": "action",
+        "description": "Wait for element \"Data Status\" badge to appear"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Dashboard\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Dashboard\" page description text is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Data Status\" badge is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC005",
+    "title": "Dashboard content sections render after loading (KPI cards, charts, and activity feed)",
+    "description": "Verifies that key dashboard sections appear after loading completes, indicating data aggregation completed (live or demo).",
+    "category": "Dashboard Page Load & Data Status",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Sign in\" button"
+      },
+      {
+        "type": "action",
+        "description": "Wait for element \"Data Status\" badge to appear"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Stats\" or \"KPI\" cards section is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Water\" chart section is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Recent Activity\" section is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC006",
+    "title": "Dashboard content remains intact after scrolling down and back to top",
+    "description": "Verifies the dashboard content (including Data Status badge) remains intact after scrolling down and returning to the top. The badge is in the page header and is not sticky by design, so it is only expected to be visible when scrolled to top.",
+    "category": "Dashboard Page Load & Data Status",
+    "priority": "Low",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Sign in\" button"
+      },
+      {
+        "type": "action",
+        "description": "Wait for element \"Data Status\" badge to appear"
+      },
+      {
+        "type": "action",
+        "description": "Scroll to the \"Recent Activity\" section"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Recent Activity\" section is visible"
+      },
+      {
+        "type": "action",
+        "description": "Scroll to the top of the dashboard page"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Live Data\" is visible OR verify text \"Demo Mode\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC007",
+    "title": "Dashboard does not remain stuck in loading state",
+    "description": "Verifies the dashboard completes loading within a reasonable time and shows a final data status (Live Data or Demo Mode).",
+    "category": "Dashboard Page Load & Data Status",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Sign in\" button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Loading\" spinner is visible"
+      },
+      {
+        "type": "action",
+        "description": "Wait for element \"Data Status\" badge to appear"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Live Data\" is visible OR verify text \"Demo Mode\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Dashboard\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC008",
+    "title": "Dashboard KPI grid shows all 7 stat cards with trends after login",
+    "description": "Verifies the main dashboard loads and displays seven KPI cards with visible trend indicators.",
+    "category": "Stats Grid (KPI Cards)",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Sign in\" button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Water Production\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Electricity Usage\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Active Contractors\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC009",
+    "title": "Dashboard KPI grid includes STP and Assets stat cards",
+    "description": "Verifies remaining KPI cards for STP metrics and Assets are visible on the dashboard.",
+    "category": "Stats Grid (KPI Cards)",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Sign in\" button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"STP Inlet Flow\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"TSE Output\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Total Assets\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC010",
+    "title": "KPI cards show trend indicator and percentage vs previous month",
+    "description": "Verifies at least one KPI card displays a trend arrow and percentage comparing to the previous month.",
+    "category": "Stats Grid (KPI Cards)",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Sign in\" button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"vs last month\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"%\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC011",
+    "title": "KPI grid remains visible after scrolling and returning to top",
+    "description": "Verifies the KPI cards remain visible and stable during basic page interaction.",
+    "category": "Stats Grid (KPI Cards)",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Sign in\" button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/\""
+      },
+      {
+        "type": "action",
+        "description": "Scroll to the bottom of the dashboard page"
+      },
+      {
+        "type": "action",
+        "description": "Scroll to the top of the dashboard page"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Water Production\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC012",
+    "title": "When partial data exists, KPI cards can show placeholder or N/A messaging",
+    "description": "Verifies the dashboard can render KPI cards even when some values are missing, showing a placeholder such as N/A where applicable.",
+    "category": "Stats Grid (KPI Cards)",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Sign in\" button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"N/A\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC013",
+    "title": "Retry reloads dashboard data from an error state (if presented)",
+    "description": "Verifies that a visible error state provides a Retry action and that using it returns the user to populated KPI cards when possible.",
+    "category": "Stats Grid (KPI Cards)",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Sign in\" button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/\""
+      },
+      {
+        "type": "action",
+        "description": "Wait for text \"Retry\" to appear"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Retry\" button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Water Production\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Electricity Usage\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC014",
+    "title": "KPI grid labels remain consistent after reloading the dashboard page",
+    "description": "Verifies the KPI card labels remain correct after a full page reload initiated by the browser automation (URL navigation to the same route).",
+    "category": "Stats Grid (KPI Cards)",
+    "priority": "Low",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Sign in\" button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/\""
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"STP Economic Impact\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Active Contractors\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC015",
+    "title": "Water production trend chart renders on Dashboard after login",
+    "description": "Verifies the water production trend area chart is visible on the main dashboard and shows expected baseline UI elements.",
+    "category": "Water Production Trend Chart",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Sign in\" button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/\""
+      },
+      {
+        "type": "action",
+        "description": "Scroll to the charts section"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Water Production\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"water production trend area chart\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC016",
+    "title": "Water production chart tooltip shows month and value on hover interaction",
+    "description": "Verifies that interacting with a data point reveals a tooltip with the exact month and water volume value.",
+    "category": "Water Production Trend Chart",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Sign in\" button"
+      },
+      {
+        "type": "action",
+        "description": "Scroll to the charts section"
+      },
+      {
+        "type": "action",
+        "description": "Click on the water production trend area chart"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"chart tooltip\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"tooltip month label\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC017",
+    "title": "Water production chart tooltip remains readable across multiple points",
+    "description": "Verifies that the tooltip can be triggered repeatedly and remains visible/updated when interacting with the chart more than once.",
+    "category": "Water Production Trend Chart",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Sign in\" button"
+      },
+      {
+        "type": "action",
+        "description": "Scroll to the charts section"
+      },
+      {
+        "type": "action",
+        "description": "Click near the left side of the water production trend area chart plotting area"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"chart tooltip\" is visible"
+      },
+      {
+        "type": "action",
+        "description": "Click near the right side of the water production trend area chart plotting area"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"chart tooltip\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC018",
+    "title": "Water production trend chart renders last-8-months series (baseline presence check)",
+    "description": "Verifies the chart appears to contain a multi-month series rather than a single point or missing series.",
+    "category": "Water Production Trend Chart",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Sign in\" button"
+      },
+      {
+        "type": "action",
+        "description": "Scroll to the charts section"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"water production area series\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"x-axis month labels\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"y-axis values\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC019",
+    "title": "Water production chart remains stable after page refresh-like reload via first navigation",
+    "description": "Verifies that on a fresh session start (initial navigation and login), the chart consistently renders without showing a persistent blank state.",
+    "category": "Water Production Trend Chart",
+    "priority": "Low",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Sign in\" button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/\""
+      },
+      {
+        "type": "action",
+        "description": "Scroll to the charts section"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"water production trend area chart\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"No data\" is not visible"
+      }
+    ]
+  },
+  {
+    "id": "TC020",
+    "title": "View STP treatment overview chart and verify core UI elements (bars + legend)",
+    "description": "Ensures the STP Inlet vs TSE Output grouped bar chart renders on the dashboard with a visible legend.",
+    "category": "STP Treatment Overview Chart",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Sign in\" button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Inlet\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"TSE\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"STP treatment overview bar chart\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC021",
+    "title": "STP chart renders with data or gracefully falls back to demo data",
+    "description": "Verifies the STP Treatment Overview chart always renders with either live or demo data. The app has a built-in demo data fallback, so an empty/placeholder state is not expected under normal conditions. This test confirms the fallback mechanism works correctly.",
+    "category": "STP Treatment Overview Chart",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Sign in\" button"
+      },
+      {
+        "type": "action",
+        "description": "Scroll to the charts section of the dashboard"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"STP treatment overview bar chart\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Inlet\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"TSE\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC022",
+    "title": "Retry from chart error state attempts reload and renders chart when available",
+    "description": "Ensures the Retry action transitions from an error/empty state to a populated chart when data becomes available.",
+    "category": "STP Treatment Overview Chart",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Sign in\" button"
+      },
+      {
+        "type": "action",
+        "description": "Scroll to the charts section of the dashboard"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Retry\" button is visible"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Retry\" button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"STP treatment overview bar chart\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Inlet\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC023",
+    "title": "STP treatment chart displays an 8-month time window (x-axis present)",
+    "description": "Checks that the chart presents a time-based x-axis (months) consistent with the last 8 months view.",
+    "category": "STP Treatment Overview Chart",
+    "priority": "Low",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Sign in\" button"
+      },
+      {
+        "type": "action",
+        "description": "Scroll to the charts section of the dashboard"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"STP chart x-axis month labels\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"STP treatment overview bar chart\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC024",
+    "title": "Recent Activity items display required visible fields",
+    "description": "Verifies each activity item shows key visible information such as a title and timestamp and an indicator of type (icon/badge).",
+    "category": "Recent Activity Feed & Filters",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Sign in\" button"
+      },
+      {
+        "type": "action",
+        "description": "Scroll to the \"Recent Activity\" section"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify an activity item title text is visible within the activity list"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify an activity item timestamp text is visible within the activity list"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify an activity item type indicator (icon or badge) is visible within the activity list"
+      }
+    ]
+  },
+  {
+    "id": "TC025",
+    "title": "Empty-state message is shown when Recent Activity feed has no items",
+    "description": "Verifies that if the activity feed is empty, the Recent Activity section shows a clear empty-state message (and does not appear broken).",
+    "category": "Recent Activity Feed & Filters",
+    "priority": "Low",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Sign in\" button"
+      },
+      {
+        "type": "action",
+        "description": "Scroll to the \"Recent Activity\" section"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify either an activity list is visible or an empty-state message is visible in the activity area"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the filter buttons \"All\", \"Critical\", \"Warning\", and \"Info\" are visible"
+      }
+    ]
+  },
+  {
+    "id": "TC026",
+    "title": "Recent Activity feed renders with data or shows empty state after login",
+    "description": "Verifies the Recent Activity section loads successfully after login, displaying either activity items or a graceful empty-state message. The app uses demo data fallback, so an error/Retry state is not expected under normal conditions. Error recovery is covered by TC013 at the dashboard level.",
+    "category": "Recent Activity Feed & Filters",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Sign in\" button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/\""
+      },
+      {
+        "type": "action",
+        "description": "Scroll to the \"Recent Activity\" section"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Recent Activity\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify either an activity list is visible with items or an empty-state message is visible in the activity area"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the filter buttons \"All\", \"Critical\", \"Warning\", and \"Info\" are visible"
+      }
+    ]
+  }
+]

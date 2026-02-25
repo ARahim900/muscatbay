@@ -1,0 +1,210 @@
+version: "2"
+type: frontend
+tech_stack:
+  - TypeScript
+  - Next.js 16
+  - React 19
+  - Tailwind CSS 4
+  - Recharts 3
+  - Supabase (auth + database)
+  - Radix UI / shadcn components
+  - Lucide React icons
+routes:
+  - path: /
+    file: app/app/page.tsx
+    auth_required: true
+    description: Main dashboard with overview stats, water production chart, STP treatment chart, and recent activity feed
+  - path: /water
+    file: app/app/water/page.tsx
+    auth_required: true
+    description: Water management page with monthly dashboard, water hierarchy view, and daily report tabs
+  - path: /electricity
+    file: app/app/electricity/page.tsx
+    auth_required: true
+    description: Electricity monitoring with consumption trends, analysis by type, and meter database
+  - path: /stp
+    file: app/app/stp/page.tsx
+    auth_required: true
+    description: STP (Sewage Treatment Plant) operations dashboard with treatment volumes, economic impact, and daily operations log
+  - path: /assets
+    file: app/app/assets/page.tsx
+    auth_required: true
+    description: Asset register with searchable, filterable, paginated table of equipment and infrastructure
+  - path: /contractors
+    file: app/app/contractors/page.tsx
+    auth_required: true
+    description: Contractor registry with search, status/type filters, and CSV export
+  - path: /pest-control
+    file: app/app/pest-control/page.tsx
+    auth_required: true
+    description: Pest control management page
+  - path: /firefighting
+    file: app/app/firefighting/quotes/page.tsx
+    auth_required: true
+    description: Fire safety and firefighting quotes page
+  - path: /settings
+    file: app/app/settings/page.tsx
+    auth_required: true
+    description: Application settings page
+  - path: /login
+    file: app/app/login/layout.tsx
+    auth_required: false
+    description: User login page
+  - path: /signup
+    file: app/app/signup/layout.tsx
+    auth_required: false
+    description: User registration page
+  - path: /forgot-password
+    file: app/app/forgot-password/page.tsx
+    auth_required: false
+    description: Password reset request page
+features:
+  - name: Sidebar Navigation
+    description: Persistent sidebar with links to all pages - Dashboard, Water, Electricity, STP Plant, Contractors, Assets, Pest Control, Fire Safety, Settings, and Sign Out. Sidebar can be collapsed/expanded on desktop and opens as overlay on mobile.
+    files:
+      - app/components/layout/sidebar.tsx
+      - app/components/layout/sidebar-context.tsx
+      - app/components/layout/client-layout.tsx
+      - app/components/layout/navbar.tsx
+    entry_route: /
+    user_interactions:
+      - Click sidebar navigation items to navigate between pages
+      - Click collapse/expand button to toggle sidebar width
+      - Active page is highlighted with teal accent and glow effect
+      - Hover over collapsed sidebar items to see tooltip labels
+      - Click Sign Out button to log out
+      - On mobile tap hamburger to open sidebar overlay
+    api_calls: []
+    auth_required: true
+  - name: Water Dashboard
+    description: Comprehensive water management with monthly stats (A1 source, A2 zone distribution, A3 individual), system efficiency, water loss analysis, zone consumption, consumption by meter type, searchable meter table, and network hierarchy view
+    files:
+      - app/app/water/page.tsx
+      - app/components/water/zone-tabs.tsx
+      - app/components/water/type-filter-pills.tsx
+      - app/components/water/meter-table.tsx
+      - app/components/water/water-loss-gauge.tsx
+      - app/components/water/circular-gauge.tsx
+      - app/components/water/network-hierarchy.tsx
+      - app/components/water/anomaly-alerts.tsx
+      - app/components/water/CSVUploadDialog.tsx
+      - app/components/charts/liquid-area-chart.tsx
+      - app/components/charts/liquid-bar-chart.tsx
+      - app/components/charts/liquid-progress-ring.tsx
+    entry_route: /water
+    user_interactions:
+      - Switch between Monthly Dashboard, Water Hierarchy, and Daily Report tabs
+      - Within Monthly Dashboard switch between Overview, Zone Analysis, Consumption by Type, and Main Database sub-tabs
+      - Use date range slider to filter by month range with quick presets (3M, 6M, YTD, Reset)
+      - Select specific zones from zone dropdown filter
+      - Click type filter pills to filter by meter type (Residential Villa, Apartment, Bulk, IRR, etc.)
+      - Search meters by name in the meter table
+      - Sort meter table columns by clicking headers
+      - Navigate paginated meter table (10 items per page)
+      - Expand/collapse nodes in the network hierarchy tree view
+      - View area charts for water distribution and loss analysis
+      - View bar charts for consumption by type
+      - View circular gauge progress rings for zone metrics
+    api_calls:
+      - method: GET
+        endpoint: Supabase RPC getWaterMetersFromSupabase
+      - method: GET
+        endpoint: Supabase RPC getWaterLossDailyFromSupabase
+      - method: GET
+        endpoint: Supabase RPC getDailyWaterConsumptionFromSupabase
+    auth_required: true
+  - name: Electricity Dashboard
+    description: Electricity consumption monitoring with monthly trends, cost analysis, consumption by meter type, top 10 consumers chart, and full meter database with search and pagination
+    files:
+      - app/app/electricity/page.tsx
+      - app/entities/electricity.ts
+      - app/functions/api/electricity.ts
+    entry_route: /electricity
+    user_interactions:
+      - Switch between Overview, Analysis by Type, and Database tabs
+      - Click year filter buttons (All, 2024, 2025, 2026)
+      - Select start and end months for date range filtering
+      - Select meter type in Analysis tab to see filtered data
+      - View monthly consumption area chart
+      - View consumption by type bar chart
+      - View top 10 consumers bar chart in Analysis tab
+      - Search meters by name, account, or type in Database tab
+      - Sort database table columns by clicking headers
+      - Navigate paginated database table (15 items per page)
+      - Click Reset Filters button to clear all filters
+    api_calls:
+      - method: GET
+        endpoint: Supabase RPC getElectricityMetersFromSupabase
+    auth_required: true
+  - name: STP Operations Dashboard
+    description: Sewage Treatment Plant monitoring with inlet/TSE volumes, tanker operations, economic impact tracking, treatment efficiency, and daily operations log with sorting and pagination
+    files:
+      - app/app/stp/page.tsx
+      - app/hooks/useSTPData.ts
+      - app/entities/stp.ts
+      - app/functions/api/stp.ts
+    entry_route: /stp
+    user_interactions:
+      - Switch between Dashboard and Details Data tabs
+      - Click year filter buttons (All, 2024, 2025, 2026)
+      - Select start and end months for date range
+      - View water treatment volumes area chart (Inlet vs TSE)
+      - View economic impact bar chart (Income vs Savings)
+      - View tanker operations line chart
+      - Select month from dropdown for daily operations log
+      - Sort daily log table columns (Date, Inlet, TSE, Efficiency, Tanker Trips, Income, Savings, Total)
+      - Navigate paginated daily log table (15 rows per page)
+      - See color-coded efficiency badges (green >=95%, yellow >=90%, red <90%)
+    api_calls:
+      - method: GET
+        endpoint: Supabase RPC getSTPOperationsFromSupabase
+    auth_required: true
+  - name: Assets Register
+    description: Equipment and infrastructure asset inventory with searchable and filterable table, status tracking, and pagination
+    files:
+      - app/app/assets/page.tsx
+      - app/actions/assets.ts
+      - app/entities/asset.ts
+      - app/functions/api/assets.ts
+    entry_route: /assets
+    user_interactions:
+      - Search assets by name, location, or serial number
+      - Filter by status (All, Active, Under Maintenance, In Storage)
+      - View asset table with columns for name, serial number, category, location, status, last service, value
+      - See color-coded status badges (green=Active, orange=Maintenance, red=Decommissioned, gray=Storage)
+      - Navigate paginated table (25 items per page)
+      - View stats cards showing total assets, total value, active count, and maintenance count
+    api_calls:
+      - method: GET
+        endpoint: Supabase fetchAssetsAction server action
+    auth_required: true
+  - name: Contractor Registry
+    description: Contractor management with search, status and contract type filtering, financial tracking, and CSV export capability
+    files:
+      - app/app/contractors/page.tsx
+      - app/entities/contractor.ts
+      - app/functions/api/contractors.ts
+      - app/lib/export-utils.ts
+    entry_route: /contractors
+    user_interactions:
+      - Search contractors by name, service, or notes
+      - Filter by status dropdown (All, Active, Expired, Retain)
+      - Filter by contract type dropdown (All, Contract, PO, Quotation)
+      - View contractor table with name, service, status, contract type, dates, monthly/annual values, renewal plan, notes
+      - See color-coded status badges and contract type badges
+      - Click Export CSV button to download filtered data
+      - View stats cards showing total contractors, active count, expired count, and annual value
+    api_calls:
+      - method: GET
+        endpoint: Supabase getContractorTrackerData
+    auth_required: true
+known_limitations:
+  - issue: App requires Supabase connection for live data; falls back to demo/mock data when not configured
+    location: app/lib/supabase.ts
+    impact: Tests may see Demo Mode badge instead of Live Data when Supabase is not connected
+  - issue: Water page Daily Report tab has separate data loading that may take additional time
+    location: app/app/water/page.tsx
+    impact: Daily report data may load independently from monthly dashboard data
+  - issue: Assets page uses server actions for data fetching with server-side pagination
+    location: app/actions/assets.ts
+    impact: Search is debounced at 500ms, pagination happens server-side

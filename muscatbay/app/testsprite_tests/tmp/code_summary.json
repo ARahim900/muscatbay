@@ -1,0 +1,95 @@
+{
+  "tech_stack": [
+    "TypeScript",
+    "Next.js 16",
+    "React 19",
+    "Supabase",
+    "TailwindCSS 4",
+    "Recharts",
+    "Radix UI",
+    "Lucide Icons",
+    "Vitest"
+  ],
+  "features": [
+    {
+      "name": "Dashboard",
+      "description": "Main dashboard displaying operational metrics, water production trends, STP treatment overview, and recent activity alerts with filtering",
+      "files": ["app/page.tsx", "hooks/useDashboardData.ts", "components/shared/stats-grid.tsx", "components/charts/chart-container.tsx", "components/charts/liquid-tooltip.tsx"]
+    },
+    {
+      "name": "Water Management",
+      "description": "Water consumption tracking with zone tabs, meter tables, circular gauges, anomaly alerts, and date range filtering",
+      "files": ["app/water/page.tsx", "functions/api/water.ts", "components/water/zone-tabs.tsx", "components/water/meter-table.tsx", "components/water/circular-gauge.tsx", "components/water/anomaly-alerts.tsx", "components/water/date-range-picker.tsx", "components/water/type-filter-pills.tsx", "components/water/network-hierarchy.tsx"]
+    },
+    {
+      "name": "Electricity Monitoring",
+      "description": "Electricity consumption monitoring and analysis",
+      "files": ["app/electricity/page.tsx", "functions/api/electricity.ts"]
+    },
+    {
+      "name": "STP Management",
+      "description": "Sewage Treatment Plant monitoring with inlet/outlet tracking and data visualization",
+      "files": ["app/stp/page.tsx", "functions/api/stp.ts", "hooks/useSTPData.ts"]
+    },
+    {
+      "name": "Assets Management",
+      "description": "Asset tracking and management functionality",
+      "files": ["app/assets/page.tsx", "functions/api/assets.ts"]
+    },
+    {
+      "name": "Contractors Management",
+      "description": "Contractor information and management",
+      "files": ["app/contractors/page.tsx", "functions/api/contractors.ts"]
+    },
+    {
+      "name": "Authentication",
+      "description": "User authentication with login, signup, forgot password, and password reset functionality using Supabase Auth",
+      "files": ["app/login/page.tsx", "app/login/layout.tsx", "app/signup/page.tsx", "app/signup/layout.tsx", "app/forgot-password/page.tsx", "app/forgot-password/layout.tsx", "app/auth/callback/page.tsx", "app/auth/reset-password/page.tsx", "components/auth/auth-provider.tsx"]
+    },
+    {
+      "name": "Settings",
+      "description": "Application settings and configuration page",
+      "files": ["app/settings/page.tsx"]
+    },
+    {
+      "name": "Firefighting",
+      "description": "Firefighting management with quotes functionality",
+      "files": ["app/firefighting/page.tsx", "app/firefighting/quotes/page.tsx"]
+    },
+    {
+      "name": "Pest Control",
+      "description": "Pest control tracking and management",
+      "files": ["app/pest-control/page.tsx"]
+    },
+    {
+      "name": "Layout and Navigation",
+      "description": "Application layout with sidebar navigation, topbar, and client-side layout components",
+      "files": ["app/layout.tsx", "components/layout/sidebar.tsx", "components/layout/topbar.tsx", "components/layout/navbar.tsx", "components/layout/client-layout.tsx", "components/layout/sidebar-context.tsx"]
+    },
+    {
+      "name": "UI Components",
+      "description": "Reusable UI components including buttons, cards, dialogs, forms, and more",
+      "files": ["components/ui/button.tsx", "components/ui/card.tsx", "components/ui/dialog.tsx", "components/ui/input.tsx", "components/ui/select.tsx", "components/ui/badge.tsx", "components/ui/table.tsx", "components/ui/slider.tsx", "components/ui/sheet.tsx", "components/ui/popover.tsx", "components/ui/calendar.tsx", "components/ui/toast-provider.tsx", "components/ui/error-boundary.tsx"]
+    },
+    {
+      "name": "Shared Components",
+      "description": "Shared utility components like loading spinner, page header, breadcrumbs, and skeleton loaders",
+      "files": ["components/shared/loading-spinner.tsx", "components/shared/page-header.tsx", "components/shared/breadcrumbs.tsx", "components/shared/skeleton.tsx", "components/shared/filter-tabs.tsx", "components/shared/tab-navigation.tsx", "components/shared/scroll-animation.tsx"]
+    },
+    {
+      "name": "Charts",
+      "description": "Data visualization components including area charts, bar charts, and liquid progress rings",
+      "files": ["components/charts/chart-container.tsx", "components/charts/liquid-area-chart.tsx", "components/charts/liquid-bar-chart.tsx", "components/charts/liquid-progress-ring.tsx", "components/charts/liquid-tooltip.tsx"]
+    },
+    {
+      "name": "Supabase Client",
+      "description": "Supabase client configuration with authentication, realtime support, and mock data fallback",
+      "files": ["functions/supabase-client.ts", "functions/index.ts", "functions/api/index.ts"]
+    },
+    {
+      "name": "Providers",
+      "description": "React context providers for theme and global state management",
+      "files": ["components/providers.tsx"]
+    }
+  ]
+}

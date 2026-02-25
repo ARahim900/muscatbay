@@ -1,0 +1,118 @@
+﻿Connecting to Supabase: https://utnlgeuqajmwibqmdmgt.supabase.co
+============================================================
+
+≡ƒôè DATABASE DISCOVERY REPORT
+============================================================
+
+≡ƒôü Table: Water System
+   Γ£à Status: OK
+   ≡ƒôê Record Count: 62
+   ≡ƒôï Columns (21): id, label, account_number, level, zone, parent_meter, type, jan_25, feb_25, mar_25, apr_25, may_25, jun_25, jul_25, aug_25, sep_25, oct_25, nov_25, dec_25, created_at, updated_at
+   ≡ƒô¥ Sample Record:
+      {
+            "id": 63,
+            "label": "Main Bulk (NAMA)",
+            "account_number": "C43659",
+            "level": "L1",
+            "zone": "Main Bulk",
+            "parent_meter": "NAMA",
+            "type": "Main BULK",
+            "jan_25": 32580,
+            "feb_25": 44043,
+            "mar_25": 34915,
+            "apr_25": 46039,
+            "may_25": 58425,
+            "jun_25": 41840,
+            "jul_25": 41475,
+            "aug_25": 41743,
+            "sep_25": 42088,
+            "oct_25": 46049,
+            "nov_25": 47347,
+            "dec_25": null,
+            "created_at": "2025-12-28T15:34:36.129697+00:00",
+            "updated_at": "2025-12-28T15:34:36.129697+00:00"
+      }
+
+≡ƒôü Table: stp_operations
+   Γ£à Status: OK
+   ≡ƒôê Record Count: 518
+   ≡ƒôï Columns (15): id, date, inlet_sewage, tse_for_irrigation, tanker_trips, generated_income, water_savings, total_impact, monthly_volume_input, monthly_volume_output, monthly_income, monthly_savings, original_id, created_at, updated_at
+   ≡ƒô¥ Sample Record:
+      {
+            "id": 1,
+            "date": "2025-11-15",
+            "inlet_sewage": 320,
+            "tse_for_irrigation": 454,
+            "tanker_trips": 16,
+            "generated_income": 668,
+            "water_savings": 72,
+            "total_impact": null,
+            "monthly_volume_input": 774,
+            "monthly_volume_output": 760,
+            "monthly_income": 882,
+            "monthly_savings": 954,
+            "original_id": "692e576c3bc29799a7a45029",
+            "created_at": "2025-12-20T08:09:20.228273+00:00",
+            "updated_at": "2025-12-20T08:09:20.228273+00:00"
+      }
+
+≡ƒôü Table: electricity_meters
+   Γ£à Status: OK
+   ≡ƒôê Record Count: 57
+   ≡ƒôï Columns (5): id, name, meter_type, account_number, created_at
+   ≡ƒô¥ Sample Record:
+      {
+            "id": "420266ca-9f69-420a-9c4b-4fec8efe6aec",
+            "name": "Beachwell",
+            "meter_type": "Beach well",
+            "account_number": "R51903",
+            "created_at": "2025-12-20T05:49:13.876+00:00"
+      }
+
+≡ƒôü Table: electricity_readings
+   Γ£à Status: OK
+   ≡ƒôê Record Count: 1083
+   ≡ƒôï Columns (5): id, meter_id, month, consumption, created_at
+   ≡ƒô¥ Sample Record:
+      {
+            "id": "b6605602-8202-42cd-b8f2-a37804fb4f07",
+            "meter_id": "420266ca-9f69-420a-9c4b-4fec8efe6aec",
+            "month": "Apr-24",
+            "consumption": 16908,
+            "created_at": "2025-12-20T05:49:13.876+00:00"
+      }
+
+≡ƒôü Table: mb_assets
+   Γ¥î Error: Could not find the table 'public.mb_assets' in the schema cache
+
+≡ƒôü Table: Contractor_Tracker
+   Γ£à Status: OK
+   ≡ƒôê Record Count: 0
+   ≡ƒôï Columns (0): 
+
+≡ƒôü Table: amc_contractor_summary
+   Γ¥î Error: Could not find the table 'public.amc_contractor_summary' in the schema cache
+
+≡ƒôü Table: amc_contractor_details
+   Γ¥î Error: Could not find the table 'public.amc_contractor_details' in the schema cache
+
+≡ƒôü Table: amc_contractor_expiry
+   Γ¥î Error: Could not find the table 'public.amc_contractor_expiry' in the schema cache
+
+≡ƒôü Table: amc_contractor_pricing
+   Γ¥î Error: Could not find the table 'public.amc_contractor_pricing' in the schema cache
+
+≡ƒôü Table: amc_contracts
+   Γ¥î Error: Could not find the table 'public.amc_contracts' in the schema cache
+
+≡ƒôü Table: amc_expiry
+   Γ¥î Error: Could not find the table 'public.amc_expiry' in the schema cache
+
+≡ƒôü Table: amc_contacts
+   Γ¥î Error: Could not find the table 'public.amc_contacts' in the schema cache
+
+≡ƒôü Table: amc_pricing
+   Γ¥î Error: Could not find the table 'public.amc_pricing' in the schema cache
+
+============================================================
+Discovery complete!

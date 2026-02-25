@@ -1,0 +1,1852 @@
+[
+  {
+    "id": "TC001",
+    "title": "Collapse and expand sidebar from Dashboard",
+    "description": "Verifies the desktop sidebar can be collapsed and expanded using the toggle control.",
+    "category": "Sidebar Navigation",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email/username field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Sign in\" button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/\""
+      },
+      {
+        "type": "action",
+        "description": "Click the sidebar collapse/expand button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Expand sidebar\" is visible"
+      },
+      {
+        "type": "action",
+        "description": "Click the sidebar collapse/expand button"
+      }
+    ]
+  },
+  {
+    "id": "TC002",
+    "title": "Sign Out from sidebar returns user to Login",
+    "description": "Verifies clicking Sign Out logs the user out and navigates to the login page.",
+    "category": "Sidebar Navigation",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email/username field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Sign in\" button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/\""
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Sign Out\" button in the sidebar"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/login\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Sign in\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC003",
+    "title": "Sidebar includes Demo Mode badge when Supabase is not connected (Assets navigation)",
+    "description": "Verifies the Demo Mode badge is shown after navigating to Assets when the app is running in demo/mock data mode.",
+    "category": "Sidebar Navigation",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email/username field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Sign in\" button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/\""
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Assets\" item in the sidebar navigation"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/assets\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Demo Mode\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC004",
+    "title": "Monthly Dashboard Overview filters update charts (3M preset + zone + Residential Villa)",
+    "description": "Verifies Monthly Dashboard Overview visuals respond to the 3M date preset, zone selection, and meter type pill filtering.",
+    "category": "Water Dashboard",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email/username field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Sign in\" button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/\""
+      },
+      {
+        "type": "action",
+        "description": "Click \"Water\" in the main navigation"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Monthly Dashboard\" tab"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Overview\" sub-tab"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Overview\" is visible"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"3M\" date range preset"
+      },
+      {
+        "type": "action",
+        "description": "Select a zone from the zone dropdown filter"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Residential Villa\" type filter pill"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Water distribution area chart\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC005",
+    "title": "Meter table search filters results by name",
+    "description": "Verifies the meter table can be searched by meter name and shows matching results.",
+    "category": "Water Dashboard",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email/username field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Sign in\" button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/\""
+      },
+      {
+        "type": "action",
+        "description": "Click \"Water\" in the main navigation"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Monthly Dashboard\" tab"
+      },
+      {
+        "type": "action",
+        "description": "Click the meter search field in the meter table"
+      },
+      {
+        "type": "action",
+        "description": "Type \"meter\" into the meter search field"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Meter table\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"meter\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC006",
+    "title": "Meter table sorting by column header updates row order",
+    "description": "Verifies clicking a meter table column header changes the visible sort order.",
+    "category": "Water Dashboard",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email/username field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Sign in\" button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/\""
+      },
+      {
+        "type": "action",
+        "description": "Click \"Water\" in the main navigation"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Monthly Dashboard\" tab"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Meter table\" is visible"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Name\" column header in the meter table"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Meter table\" is visible"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Name\" column header in the meter table again"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Meter table\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC007",
+    "title": "Meter table pagination navigates to page 2 and updates table view",
+    "description": "Verifies the meter table pagination controls load page 2 of results.",
+    "category": "Water Dashboard",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email/username field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Sign in\" button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/\""
+      },
+      {
+        "type": "action",
+        "description": "Click \"Water\" in the main navigation"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Monthly Dashboard\" tab"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Meter table\" is visible"
+      },
+      {
+        "type": "action",
+        "description": "Click the pagination control for page \"2\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"2\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Meter table\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC008",
+    "title": "Water Hierarchy: expand nodes and see L4 meters listed",
+    "description": "Verifies expanding the network hierarchy displays deeper levels and shows individual L4 meters.",
+    "category": "Water Dashboard",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email/username field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Sign in\" button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/\""
+      },
+      {
+        "type": "action",
+        "description": "Click \"Water\" in the main navigation"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Water Hierarchy\" tab"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Network hierarchy tree\" is visible"
+      },
+      {
+        "type": "action",
+        "description": "Click the expand control for the root node in the network hierarchy"
+      },
+      {
+        "type": "action",
+        "description": "Click the expand control for a child node in the network hierarchy"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"L4\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC009",
+    "title": "Water Hierarchy: open a meter detail from the hierarchy list",
+    "description": "Verifies selecting a meter in the hierarchy opens its detail view (modal or in-panel).",
+    "category": "Water Dashboard",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email/username field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Sign in\" button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/\""
+      },
+      {
+        "type": "action",
+        "description": "Click \"Water\" in the main navigation"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Water Hierarchy\" tab"
+      },
+      {
+        "type": "action",
+        "description": "Click the expand control for the root node in the network hierarchy"
+      },
+      {
+        "type": "action",
+        "description": "Click a visible meter entry in the hierarchy list"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Meter details\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC010",
+    "title": "Daily Report: charts render after data load",
+    "description": "Verifies the Daily Report tab loads and displays daily consumption and loss analysis charts.",
+    "category": "Water Dashboard",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email/username field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Sign in\" button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/\""
+      },
+      {
+        "type": "action",
+        "description": "Click \"Water\" in the main navigation"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Daily Report\" tab"
+      },
+      {
+        "type": "action",
+        "description": "Wait for element \"Daily consumption chart\" to be visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Daily consumption chart\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Loss analysis chart\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC011",
+    "title": "Analysis by Type: filter by year, date range, and meter type updates charts",
+    "description": "Verifies that selecting year, month range, and meter type in Analysis by Type updates the visible charts.",
+    "category": "Electricity Dashboard",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email/username field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Sign in\" button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/\""
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Electricity\" in the main navigation"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Analysis by Type\" tab"
+      },
+      {
+        "type": "action",
+        "description": "Click the year filter button \"2025\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"2025\" is visible"
+      },
+      {
+        "type": "action",
+        "description": "Select a start month from the date range start-month dropdown"
+      },
+      {
+        "type": "action",
+        "description": "Select an end month from the date range end-month dropdown"
+      },
+      {
+        "type": "action",
+        "description": "Select a meter type from the meter type dropdown"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Monthly consumption\" chart is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Top 10 consumers\" chart is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC012",
+    "title": "Database: search by meter name returns filtered rows",
+    "description": "Verifies that searching in the meter database filters the table results.",
+    "category": "Electricity Dashboard",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email/username field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Sign in\" button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/\""
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Electricity\" in the main navigation"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Database\" tab"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Search\" field is visible"
+      },
+      {
+        "type": "action",
+        "description": "Click inside the \"Search\" field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"meter\" into the \"Search\" field"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Meter database table\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"No results\" is not visible"
+      }
+    ]
+  },
+  {
+    "id": "TC013",
+    "title": "Database: sort a column by clicking header changes visible ordering",
+    "description": "Verifies that clicking a table column header applies a visible sort in the database table.",
+    "category": "Electricity Dashboard",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email/username field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Sign in\" button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/\""
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Electricity\" in the main navigation"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Database\" tab"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Name\" column header"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Sorted\" indicator is visible on the \"Name\" column header"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Name\" column header"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Sorted\" indicator is visible on the \"Name\" column header"
+      }
+    ]
+  },
+  {
+    "id": "TC014",
+    "title": "Database: pagination navigates to next page and shows different results",
+    "description": "Verifies that the paginated meter database can move to the next page and updates the visible page indicator/results.",
+    "category": "Electricity Dashboard",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email/username field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Sign in\" button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/\""
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Electricity\" in the main navigation"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Database\" tab"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Pagination\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Page 1\" is visible"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Next page\" button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Page 2\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Meter database table\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC015",
+    "title": "Reset Filters clears Analysis filters and returns charts to All data",
+    "description": "Verifies that Reset Filters clears selections and restores charts to an unfiltered 'All' state.",
+    "category": "Electricity Dashboard",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email/username field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Sign in\" button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/\""
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Electricity\" in the main navigation"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Analysis by Type\" tab"
+      },
+      {
+        "type": "action",
+        "description": "Click the year filter button \"2025\""
+      },
+      {
+        "type": "action",
+        "description": "Select a meter type from the meter type dropdown"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Reset Filters\" button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"All\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Monthly consumption\" chart is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC016",
+    "title": "No data year shows empty state and chart placeholders",
+    "description": "Verifies that selecting a year with no data shows an empty state message and no-chart placeholders.",
+    "category": "Electricity Dashboard",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email/username field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Sign in\" button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/\""
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Electricity\" in the main navigation"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Analysis by Type\" tab"
+      },
+      {
+        "type": "action",
+        "description": "Click the year filter button \"2026\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"No data\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"No chart data\" placeholder is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC017",
+    "title": "Overview tab renders monthly trend charts for a selected year",
+    "description": "Verifies that the Overview tab displays the monthly trends when a specific year filter is applied.",
+    "category": "Electricity Dashboard",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email/username field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Sign in\" button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/\""
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Electricity\" in the main navigation"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Overview\" tab"
+      },
+      {
+        "type": "action",
+        "description": "Click the year filter button \"2024\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Monthly consumption\" chart is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Cost analysis\" section is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC018",
+    "title": "Database: search for a non-existent value shows no results state",
+    "description": "Verifies that an unlikely search query results in a clear empty/no-results state in the database tab.",
+    "category": "Electricity Dashboard",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email/username field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Sign in\" button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/\""
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Electricity\" in the main navigation"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Database\" tab"
+      },
+      {
+        "type": "action",
+        "description": "Click inside the \"Search\" field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"zzzz-nonexistent-meter-99999\" into the \"Search\" field"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"No results\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC019",
+    "title": "Dashboard tab renders charts after selecting a custom month range under 'All' year filter",
+    "description": "Verifies STP Dashboard charts render when the user selects 'All' year filter and sets a start/end month range.",
+    "category": "STP Operations Dashboard",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email/username field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Sign in\" button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/\""
+      },
+      {
+        "type": "action",
+        "description": "Click on \"STP\" in the main navigation"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Dashboard\" tab"
+      },
+      {
+        "type": "action",
+        "description": "Click the year filter button \"All\""
+      }
+    ]
+  },
+  {
+    "id": "TC020",
+    "title": "Set start and end months and confirm Inlet vs TSE area chart and Economic Impact bar chart are visible",
+    "description": "Verifies date range selection drives chart rendering for treatment volumes and economic impact.",
+    "category": "STP Operations Dashboard",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email/username field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Sign in\" button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/\""
+      },
+      {
+        "type": "action",
+        "description": "Click on \"STP\" in the main navigation"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Dashboard\" tab"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Water Treatment Volumes\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC021",
+    "title": "Dashboard shows tanker operations line chart",
+    "description": "Verifies the tanker operations visualization is present on the STP Dashboard.",
+    "category": "STP Operations Dashboard",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email/username field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Sign in\" button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/\""
+      },
+      {
+        "type": "action",
+        "description": "Click on \"STP\" in the main navigation"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Dashboard\" tab"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Tanker\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC022",
+    "title": "Details Data tab loads daily operations log for a selected month",
+    "description": "Verifies the user can switch to Details Data and load the daily operations log by selecting a month.",
+    "category": "STP Operations Dashboard",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email/username field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Sign in\" button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/\""
+      },
+      {
+        "type": "action",
+        "description": "Click on \"STP\" in the main navigation"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Details Data\" tab"
+      },
+      {
+        "type": "action",
+        "description": "Select a month option from the month dropdown for the daily operations log"
+      }
+    ]
+  },
+  {
+    "id": "TC023",
+    "title": "Sort daily operations log by Efficiency column",
+    "description": "Verifies sorting works when clicking the 'Efficiency' column header in the daily operations log.",
+    "category": "STP Operations Dashboard",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email/username field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Sign in\" button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/\""
+      },
+      {
+        "type": "action",
+        "description": "Click on \"STP\" in the main navigation"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Details Data\" tab"
+      },
+      {
+        "type": "action",
+        "description": "Click the daily log table column header \"Efficiency\""
+      }
+    ]
+  },
+  {
+    "id": "TC024",
+    "title": "Paginate daily operations log table",
+    "description": "Verifies the user can navigate between pages of the daily operations log (15 rows per page).",
+    "category": "STP Operations Dashboard",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email/username field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Sign in\" button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/\""
+      },
+      {
+        "type": "action",
+        "description": "Click on \"STP\" in the main navigation"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Details Data\" tab"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Next\" pagination control for the daily log table"
+      }
+    ]
+  },
+  {
+    "id": "TC025",
+    "title": "Efficiency badges are visible and color-coded per row in daily log table",
+    "description": "Verifies the daily log shows efficiency badges beside rows and that the Efficiency column is present for interpretation.",
+    "category": "STP Operations Dashboard",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email/username field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Sign in\" button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/\""
+      },
+      {
+        "type": "action",
+        "description": "Click on \"STP\" in the main navigation"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Details Data\" tab"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Efficiency\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC026",
+    "title": "Empty state appears when selecting a month with no operations data",
+    "description": "Verifies the app shows an empty table state with guidance when the selected month has no operations data.",
+    "category": "STP Operations Dashboard",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email/username field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Sign in\" button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/\""
+      },
+      {
+        "type": "action",
+        "description": "Click on \"STP\" in the main navigation"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Details Data\" tab"
+      },
+      {
+        "type": "action",
+        "description": "Select a month option from the month dropdown that is expected to have no operations data"
+      }
+    ]
+  },
+  {
+    "id": "TC027",
+    "title": "Demo Mode badge or offline/error message is shown when STP data cannot be fetched",
+    "description": "Verifies the UI communicates demo/offline fallback state for STP data loading failures.",
+    "category": "STP Operations Dashboard",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email/username field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Sign in\" button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/\""
+      },
+      {
+        "type": "action",
+        "description": "Click on \"STP\" in the main navigation"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Demo Mode\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/stp\""
+      }
+    ]
+  },
+  {
+    "id": "TC028",
+    "title": "Filter assets by search term and Under Maintenance status",
+    "description": "Verifies the assets table can be searched and filtered to Under Maintenance and displays matching status badges.",
+    "category": "Assets Register",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email/username field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Sign in\" button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/\""
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Assets\" in the main navigation"
+      },
+      {
+        "type": "action",
+        "description": "Click inside the assets search field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"Pump\" into the assets search field"
+      },
+      {
+        "type": "action",
+        "description": "Select \"Under Maintenance\" from the Status filter dropdown"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Under Maintenance\" is visible in the table"
+      }
+    ]
+  },
+  {
+    "id": "TC029",
+    "title": "Sort by Last Service and paginate to page 3",
+    "description": "Verifies sorting by Last Service works and pagination updates the visible rows when moving to page 3.",
+    "category": "Assets Register",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email/username field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Sign in\" button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/\""
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Assets\" in the main navigation"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Last Service\" column header"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Next page\" pagination control"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Next page\" pagination control"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Page 3\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC030",
+    "title": "View assets summary stats cards",
+    "description": "Verifies the stats cards for total assets, total value, active count, and maintenance count are visible on the Assets page.",
+    "category": "Assets Register",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email/username field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Sign in\" button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/\""
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Assets\" in the main navigation"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Total Assets\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Total Value\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Active\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Maintenance\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC031",
+    "title": "Verify Demo Mode indicator and graceful empty/partial table handling",
+    "description": "Verifies that when live data is unavailable the page indicates Demo Mode and the table still renders (even if empty/partial).",
+    "category": "Assets Register",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email/username field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Sign in\" button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/\""
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Assets\" in the main navigation"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Demo Mode badge\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Assets table\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC032",
+    "title": "Filter by In Storage status and verify storage results display",
+    "description": "Verifies the Status filter can be set to In Storage and the table shows storage-related status labeling.",
+    "category": "Assets Register",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email/username field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Sign in\" button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/\""
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Assets\" in the main navigation"
+      },
+      {
+        "type": "action",
+        "description": "Select \"In Storage\" from the Status filter dropdown"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"In Storage\" is visible in the table"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Assets table\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC033",
+    "title": "Toggle sort direction on Last Service and verify table remains populated",
+    "description": "Verifies clicking the Last Service header twice toggles sort direction without breaking table rendering.",
+    "category": "Assets Register",
+    "priority": "Low",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email/username field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Sign in\" button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/\""
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Assets\" in the main navigation"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Last Service\" column header"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Last Service\" column header"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Assets table\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC034",
+    "title": "Filter contractors by search + status Active + contract type PO and verify filtered results show badges",
+    "description": "Verifies that the contractor table can be narrowed using search plus status and contract type filters and that badges remain visible on results.",
+    "category": "Contractor Registry",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email/username field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Sign in\" button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/\""
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Contractors\" link in the main navigation"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/contractors"
+      },
+      {
+        "type": "action",
+        "description": "Click inside the contractors search field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"Al\" into the contractors search field"
+      },
+      {
+        "type": "action",
+        "description": "Select \"Active\" from the Status dropdown"
+      },
+      {
+        "type": "action",
+        "description": "Select \"PO\" from the Contract Type dropdown"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"contractors table\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a visible \"Active\" status badge is shown in the table"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a visible \"PO\" contract type badge is shown in the table"
+      }
+    ]
+  },
+  {
+    "id": "TC035",
+    "title": "Search contractors by name and verify the table updates",
+    "description": "Verifies that typing into the search field filters contractor rows by matching name/service/notes.",
+    "category": "Contractor Registry",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email/username field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Sign in\" button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/\""
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Contractors\" link in the main navigation"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/contractors"
+      },
+      {
+        "type": "action",
+        "description": "Click inside the contractors search field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"pest\" into the contractors search field"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"contractors table\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"pest\" is visible in the table"
+      }
+    ]
+  },
+  {
+    "id": "TC036",
+    "title": "Filter by status Expired and verify status badges reflect Expired",
+    "description": "Verifies that selecting Expired in the status filter limits the visible rows and shows Expired status badges in the table.",
+    "category": "Contractor Registry",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email/username field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Sign in\" button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/\""
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Contractors\" link in the main navigation"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/contractors"
+      },
+      {
+        "type": "action",
+        "description": "Select \"Expired\" from the Status dropdown"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"contractors table\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a visible \"Expired\" status badge is shown in the table"
+      }
+    ]
+  },
+  {
+    "id": "TC037",
+    "title": "Filter by contract type Contract and verify contract type badges reflect Contract",
+    "description": "Verifies that selecting Contract in the contract type filter limits rows and shows Contract type badges in the table.",
+    "category": "Contractor Registry",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email/username field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Sign in\" button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/\""
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Contractors\" link in the main navigation"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/contractors"
+      },
+      {
+        "type": "action",
+        "description": "Select \"Contract\" from the Contract Type dropdown"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"contractors table\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a visible \"Contract\" contract type badge is shown in the table"
+      }
+    ]
+  },
+  {
+    "id": "TC038",
+    "title": "View stats cards and verify key summary metrics are displayed",
+    "description": "Verifies that summary stats cards are visible and present totals for contractors, counts by status, and annual value.",
+    "category": "Contractor Registry",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email/username field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Sign in\" button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/\""
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Contractors\" link in the main navigation"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/contractors"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Total\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Active\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Expired\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Annual\" is visible"
+      }
+    ]
+  }
+]

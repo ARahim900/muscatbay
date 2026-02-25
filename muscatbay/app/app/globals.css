@@ -1,0 +1,454 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* Global Selection */
+::selection {
+  background-color: #4E4456;
+  color: #FFFFFF;
+}
+
+::-moz-selection {
+  background-color: #4E4456;
+  color: #FFFFFF;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-sans);
+
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+
+  --color-component: var(--component);
+  --color-component-foreground: var(--component-foreground);
+
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* Sidebar colors for Tailwind v4 */
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-foreground-active: var(--sidebar-foreground-active);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-border: var(--sidebar-border);
+
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+}
+
+:root {
+  /* Muscat Bay Design System Variables */
+
+  /* Muscat Bay Brand Colors (for auth pages and legacy usage) */
+  --mb-primary: #4E4456;
+  --mb-primary-hover: #3A3341;
+  --mb-secondary: #A8D5E3;
+
+  /* Backgrounds */
+  --background: #F9FAFB;
+  /* Main Content Area */
+  --foreground: #0A0A0A;
+  /* Primary Text */
+
+  /* Cards - slightly darker than background for subtle contrast */
+  --card: #EFF0F3;
+  --card-foreground: #0A0A0A;
+
+  /* Component surfaces - for subtle layering */
+  --component: #ECEDF0;
+  --component-foreground: #0A0A0A;
+
+  /* Primary Brand (Purple-Gray) */
+  --primary: #4E4456;
+  --primary-foreground: #FFFFFF;
+
+  /* Secondary (Teal/Cyan) */
+  --secondary: #00D2B3;
+  --secondary-foreground: #FFFFFF;
+
+  /* Muted / Neutral */
+  --muted: #F3F4F6;
+  --muted-foreground: #454545;
+
+  /* Accents */
+  --accent: #00D2B3;
+  --accent-foreground: #FFFFFF;
+
+  /* Destructive */
+  --destructive: #EF4444;
+  --destructive-foreground: #FFFFFF;
+
+  /* Borders & Inputs */
+  --border: #E5E7EB;
+  --border-light: #E5E5E5;
+  --input: #E5E7EB;
+  --ring: #00D2B3;
+
+  /* Chart Colors */
+  --chart-1: #3B7ED2;
+  --chart-2: #00D2B3;
+  --chart-3: #E8A838;
+  --chart-4: #10B981;
+  --chart-5: #4E4456;
+
+  /* Chart Background Colors */
+  --chart-bg-blue: #EFF6FF;
+  --chart-bg-green: #F0FDF4;
+  --chart-bg-yellow: #FEFCE8;
+  --chart-bg-red: #FEF2F2;
+  --chart-bg-purple: #FAF5FF;
+  --chart-bg-cyan: #F0FDFA;
+  --chart-bg-orange: #FFF7ED;
+  --chart-bg-pink: #FDF2F8;
+
+  /* Sidebar Layout */
+  --sidebar-width-collapsed: 70px;
+  --sidebar-width-expanded: 208px;
+  --header-height: 60.5px;
+
+  /* Sidebar Colors */
+  --sidebar: #4E4456;
+  --sidebar-foreground: #E4E4E7;
+  --sidebar-foreground-active: #FFFFFF;
+  --sidebar-primary: #FFFFFF;
+  --sidebar-primary-foreground: #4E4456;
+  --sidebar-accent: rgba(255, 255, 255, 0.1);
+  --sidebar-accent-foreground: #FFFFFF;
+  --sidebar-border: rgba(255, 255, 255, 0.1);
+
+  /* Text Colors Extended */
+  --text-zinc-200: #E4E4E7;
+
+  /* Transitions & Animation */
+  --transition-timing: cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-fast: 0.15s;
+  --transition-normal: 0.2s;
+  --transition-duration: 0.15s;
+
+  /* Border Radius */
+  --radius: 10.5px;
+  --radius-sm: 5px;
+  --radius-md: 7px;
+  --radius-lg: 10.5px;
+
+  /* Typography Scale */
+  --font-size-xs: 12.25px;
+  --font-size-sm: 14px;
+  --font-size-base: 14px;
+  --font-size-lg: 15px;
+  --font-size-xl: 15.75px;
+  --line-height-tight: 20px;
+  --line-height-normal: 21px;
+  --line-height-relaxed: 24.5px;
+}
+
+.dark {
+  /* Dark mode mappings */
+  --mb-primary: #5f5168;
+  --mb-primary-hover: #4E4456;
+  --mb-secondary: #A8D5E3;
+
+  --background: #0f172a;
+  /* slate-950/deep navy */
+  --foreground: #F1F5F9;
+  /* slate-100 */
+  --card: #1E293B;
+  /* slate-800 */
+  --card-foreground: #F1F5F9;
+  --component: #1E293B;
+  --component-foreground: #F1F5F9;
+  --primary: #4E4456;
+  --primary-foreground: #FFFFFF;
+  --secondary: #00D2B3;
+  --secondary-foreground: #1F2937;
+  --muted: #374151;
+  --muted-foreground: #9CA3AF;
+  --accent: #00D2B3;
+  --accent-foreground: #1F2937;
+  --destructive: #EF4444;
+  --border: rgba(255, 255, 255, 0.1);
+  --input: rgba(255, 255, 255, 0.1);
+  --ring: #00D2B3;
+}
+
+@layer base {
+  :root {
+    @apply dark:bg-slate-950 dark:text-slate-100;
+  }
+
+  * {
+    @apply border-border outline-ring/50 focus-visible:ring-2 focus-visible:ring-secondary focus-visible:ring-offset-2 focus-visible:ring-offset-background;
+  }
+
+  /* Custom Scrollbar */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .dark ::-webkit-scrollbar-track {
+    background: #1e293b;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 5px;
+  }
+
+  .dark ::-webkit-scrollbar-thumb {
+    background: #475569;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+  }
+
+  .dark ::-webkit-scrollbar-thumb:hover {
+    background: #64748b;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    /* Removed custom background image to strictly follow design doc "Main Content Area: #F9FAFB" */
+  }
+
+  main {
+    width: 100%;
+  }
+
+  /* Responsive layout shell - Mobile-first approach with tighter left spacing */
+  .layout-shell {
+    width: 100%;
+    max-width: 100%;
+    /* Reduced left padding to minimize gap with sidebar, balanced right padding */
+    padding-left: 0.5rem;
+    /* 8px - tight against sidebar */
+    padding-right: 1rem;
+    /* 16px */
+  }
+
+  /* Tablet and up */
+  @media (min-width: 640px) {
+    .layout-shell {
+      padding-left: 0.75rem;
+      /* 12px */
+      padding-right: 1.5rem;
+      /* 24px */
+    }
+  }
+
+  /* Desktop and up */
+  @media (min-width: 1024px) {
+    .layout-shell {
+      padding-left: 1rem;
+      /* 16px */
+      padding-right: 2rem;
+      /* 32px */
+    }
+  }
+
+  /* Large screens */
+  @media (min-width: 1280px) {
+    .layout-shell {
+      padding-left: 1.5rem;
+      /* 24px */
+      padding-right: 2.5rem;
+      /* 40px */
+    }
+  }
+
+  /* Extra-large screens - add max-width constraint */
+  @media (min-width: 1536px) {
+    .layout-shell {
+      max-width: 1536px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-semibold tracking-tight;
+    color: var(--primary);
+  }
+}
+
+@layer components {
+
+  /* Glass Card - white with subtle border matching example design */
+  .glass-card {
+    background-color: #FFFFFF;
+    border-radius: 0.75rem;
+    border: 1px solid #e2e8f0;
+    /* slate-200 */
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    /* shadow-sm */
+    transition: box-shadow 0.2s ease;
+  }
+
+  .glass-card:hover {
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    /* shadow-md */
+  }
+
+  .glass-card-header {
+    background-color: transparent;
+  }
+
+  /* Dark mode glass card */
+  .dark .glass-card {
+    background-color: #1E293B;
+    border: 1px solid #334155;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+
+  .dark .glass-card:hover {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 4px 8px rgba(0, 0, 0, 0.25);
+  }
+
+  /* Consistent card row spacing */
+  .card-row {
+    margin-bottom: 1.5rem;
+    /* 24px */
+  }
+
+  @media (min-width: 640px) {
+    .card-row {
+      margin-bottom: 1.75rem;
+      /* 28px */
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .card-row {
+      margin-bottom: 2rem;
+      /* 32px */
+    }
+  }
+}
+
+@layer utilities {
+
+  /* Design Spec Shadows */
+  .shadow-card-primary {
+    box-shadow: 0px 12px 18px -3px rgba(0, 0, 0, 0.15), 0px 6px 8px -4px rgba(0, 0, 0, 0.12);
+  }
+
+  .shadow-card-standard {
+    box-shadow: 0px 6px 10px -1px rgba(0, 0, 0, 0.12), 0px 3px 6px -2px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Chart Background Utilities */
+  .bg-chart-blue {
+    background-color: var(--chart-bg-blue);
+  }
+
+  .bg-chart-green {
+    background-color: var(--chart-bg-green);
+  }
+
+  .bg-chart-yellow {
+    background-color: var(--chart-bg-yellow);
+  }
+
+  .bg-chart-red {
+    background-color: var(--chart-bg-red);
+  }
+
+  .bg-chart-purple {
+    background-color: var(--chart-bg-purple);
+  }
+
+  .bg-chart-cyan {
+    background-color: var(--chart-bg-cyan);
+  }
+
+  .bg-chart-orange {
+    background-color: var(--chart-bg-orange);
+  }
+
+  .bg-chart-pink {
+    background-color: var(--chart-bg-pink);
+  }
+
+  /* Design System Transitions */
+  .transition-design {
+    transition: all var(--transition-duration) var(--transition-timing);
+  }
+
+  .transition-colors-design {
+    transition: color var(--transition-duration) var(--transition-timing),
+      background-color var(--transition-duration) var(--transition-timing),
+      border-color var(--transition-duration) var(--transition-timing),
+      fill var(--transition-duration) var(--transition-timing),
+      stroke var(--transition-duration) var(--transition-timing);
+  }
+
+  /* Dropdown animation utilities */
+  .animate-in {
+    animation-duration: 200ms;
+    animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    animation-fill-mode: both;
+  }
+
+  .fade-in {
+    animation-name: fadeIn;
+  }
+
+  .slide-in-from-top-2 {
+    animation-name: slideInFromTop;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes slideInFromTop {
+    from {
+      transform: translateY(-8px);
+      opacity: 0;
+    }
+
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  /* Scrollbar hide utility */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
