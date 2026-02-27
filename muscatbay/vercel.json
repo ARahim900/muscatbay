@@ -1,5 +1,4 @@
 {
       "framework": "nextjs",
-      "installCommand": "npm install --legacy-peer-deps",
-      "rootDirectory": "app"
+      "installCommand": "npm install --legacy-peer-deps"
 }
