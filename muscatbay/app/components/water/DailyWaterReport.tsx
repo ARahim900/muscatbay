@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { LiquidProgressRing } from "@/components/charts/liquid-progress-ring";
 import { LiquidTooltip } from "@/components/charts/liquid-tooltip";
+import { WaterLossGauge } from "@/components/water/water-loss-gauge";
 import { StatsGridSkeleton, ChartSkeleton, Skeleton } from "@/components/shared/skeleton";
 import { CSVUploadDialog } from "@/components/water/CSVUploadDialog";
 import { WaterLossDaily, DailyWaterConsumption } from "@/entities/water";
@@ -26,7 +27,9 @@ import {
     WifiOff,
     RotateCcw,
     Search,
-    ArrowUpDown
+    ArrowUpDown,
+    Clock,
+    RefreshCw
 } from "lucide-react";
 import {
     ResponsiveContainer,
@@ -49,6 +52,18 @@ const BRAND = {
     danger: '#EF4444',
     muted: '#6B7280',
 };
+
+// Auto-refresh interval (5 minutes)
+const AUTO_REFRESH_MS = 5 * 60 * 1000;
+
+// Get loss status label and color
+function getLossStatus(lossPercent: number): { label: string; color: string } {
+    if (lossPercent <= 5) return { label: 'Excellent', color: BRAND.success };
+    if (lossPercent <= 15) return { label: 'Good', color: '#84cc16' };
+    if (lossPercent <= 25) return { label: 'Moderate', color: BRAND.warning };
+    if (lossPercent <= 40) return { label: 'High Loss', color: '#f97316' };
+    return { label: 'Critical', color: BRAND.danger };
+}
 
 // Zone display mapping for daily data (matching water_loss_daily table zones)
 const DAILY_ZONES = [
@@ -89,6 +104,9 @@ export function DailyWaterReport() {
     const [hasError, setHasError] = useState(false);
     const [dataSource, setDataSource] = useState<'supabase' | 'mock'>('mock');
     const [refreshKey, setRefreshKey] = useState(0);
+    const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+    const [isRefreshing, setIsRefreshing] = useState(false);
+    const initialLoadDone = useRef(false);
 
     // Table state
     const [searchTerm, setSearchTerm] = useState('');
@@ -119,7 +137,11 @@ export function DailyWaterReport() {
     // Fetch data
     useEffect(() => {
         async function fetchDailyData() {
-            setIsLoading(true);
+            if (initialLoadDone.current) {
+                setIsRefreshing(true);
+            } else {
+                setIsLoading(true);
+            }
             setHasError(false);
             try {
                 if (isSupabaseConfigured()) {
@@ -132,6 +154,14 @@ export function DailyWaterReport() {
                         setDailyLossData(lossData);
                         setDailyConsumption(consumptionData);
                         setDataSource('supabase');
+                        setLastUpdated(new Date());
+
+                        // Auto-select latest day on first load
+                        if (!initialLoadDone.current) {
+                            const latestDay = Math.max(...lossData.map(d => d.day));
+                            setSelectedDay(latestDay);
+                            initialLoadDone.current = true;
+                        }
                     } else {
                         setHasError(true);
                     }
@@ -143,10 +173,20 @@ export function DailyWaterReport() {
                 setHasError(true);
             } finally {
                 setIsLoading(false);
+                setIsRefreshing(false);
             }
         }
         fetchDailyData();
     }, [refreshKey, selectedMonth, currentMonth, currentYear]);
+
+    // Auto-refresh interval
+    useEffect(() => {
+        const interval = setInterval(() => {
+            console.log('[DailyWaterReport] Auto-refreshing data...');
+            setRefreshKey(prev => prev + 1);
+        }, AUTO_REFRESH_MS);
+        return () => clearInterval(interval);
+    }, []);
 
     // Get analysis for selected zone and day
     const zoneAnalysis = useMemo(() => {
@@ -168,6 +208,29 @@ export function DailyWaterReport() {
             efficiency: record.l2TotalM3 > 0 ? (record.l3TotalM3 / record.l2TotalM3) * 100 : 0
         };
     }, [dailyLossData, selectedZone, selectedDay]);
+
+    // System-wide summary for the selected day (all zones)
+    const systemSummary = useMemo(() => {
+        const dayRecords = dailyLossData.filter(d => d.day === selectedDay);
+        if (dayRecords.length === 0) {
+            return { totalSupply: 0, totalMetered: 0, totalLoss: 0, efficiency: 0 };
+        }
+        const totalSupply = dayRecords.reduce((s, d) => s + d.l2TotalM3, 0);
+        const totalMetered = dayRecords.reduce((s, d) => s + d.l3TotalM3, 0);
+        const totalLoss = totalSupply - totalMetered;
+        const efficiency = totalSupply > 0 ? (totalMetered / totalSupply) * 100 : 0;
+        return { totalSupply, totalMetered, totalLoss, efficiency: Math.min(efficiency, 100) };
+    }, [dailyLossData, selectedDay]);
+
+    // Format the actual date for the selected day
+    const selectedDate = useMemo(() => {
+        const record = dailyLossData.find(d => d.day === selectedDay);
+        if (!record?.date) return null;
+        try {
+            const d = new Date(record.date);
+            return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+        } catch { return null; }
+    }, [dailyLossData, selectedDay]);
 
     // Daily trend data for the selected zone
     const zoneTrendData = useMemo(() => {
@@ -253,11 +316,15 @@ export function DailyWaterReport() {
     };
 
     const resetFilters = () => {
-        setSelectedDay(1);
+        setSelectedDay(maxDay);
         setSelectedZone('Zone FM');
         setSelectedMonth(AVAILABLE_MONTHS[AVAILABLE_MONTHS.length - 1]);
         setSearchTerm('');
         setCurrentPage(1);
+    };
+
+    const formatLastUpdated = (date: Date) => {
+        return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
     };
 
     // Loading state
@@ -344,14 +411,23 @@ export function DailyWaterReport() {
                                 </select>
                             </div>
 
-                            <div className={cn(
-                                "flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium",
-                                dataSource === 'supabase'
-                                    ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-                                    : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
-                            )}>
-                                {dataSource === 'supabase' ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
-                                {dataSource === 'supabase' ? 'Live Data' : 'Demo Data'}
+                            <div className="flex items-center gap-3">
+                                <div className={cn(
+                                    "flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium",
+                                    dataSource === 'supabase'
+                                        ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                                        : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                                )}>
+                                    {dataSource === 'supabase' ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
+                                    {dataSource === 'supabase' ? 'Live Data' : 'Demo Data'}
+                                    {isRefreshing && <RefreshCw className="h-3 w-3 animate-spin" />}
+                                </div>
+                                {lastUpdated && (
+                                    <span className="flex items-center gap-1 text-[10px] text-slate-400 dark:text-slate-500">
+                                        <Clock className="h-3 w-3" />
+                                        {formatLastUpdated(lastUpdated)}
+                                    </span>
+                                )}
                             </div>
                         </div>
 
@@ -398,10 +474,57 @@ export function DailyWaterReport() {
                 </CardContent>
             </Card>
 
+            {/* System-Wide Summary Gauges */}
+            <Card className="glass-card border-l-4 border-l-primary/50">
+                <CardHeader className="glass-card-header p-4 sm:p-5 md:p-6 pb-2">
+                    <CardTitle className="text-base sm:text-lg">System Overview — Day {selectedDay}{selectedDate && <span className="text-sm font-normal text-muted-foreground ml-2">({selectedDate})</span>}</CardTitle>
+                    <p className="text-xs sm:text-sm text-slate-500">Aggregated across all zones for this day</p>
+                </CardHeader>
+                <CardContent className="p-4 sm:p-5 md:p-6 pt-0">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+                        <div className="flex justify-center">
+                            <LiquidProgressRing
+                                value={systemSummary.totalSupply}
+                                max={Math.max(systemSummary.totalSupply, systemSummary.totalMetered) * 1.2 || 100}
+                                label="Total Supply"
+                                sublabel="All zones L2 bulk total"
+                                color={BRAND.accent}
+                                size={140}
+                                showPercentage={false}
+                                elementId="gauge-sys-supply"
+                                unit="m³"
+                            />
+                        </div>
+                        <div className="flex justify-center">
+                            <LiquidProgressRing
+                                value={systemSummary.totalMetered}
+                                max={Math.max(systemSummary.totalSupply, systemSummary.totalMetered) * 1.2 || 100}
+                                label="Total Metered"
+                                sublabel="All zones L3+L4 total"
+                                color={BRAND.primary}
+                                size={140}
+                                showPercentage={false}
+                                elementId="gauge-sys-metered"
+                                unit="m³"
+                            />
+                        </div>
+                        <div className="flex justify-center">
+                            <WaterLossGauge
+                                score={systemSummary.efficiency}
+                                label="Overall Efficiency"
+                                subLabel={`${systemSummary.totalLoss.toFixed(1)} m³ total loss`}
+                                size={140}
+                            />
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+
             {/* Zone Heading */}
             <div>
                 <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">
                     {selectedZone} Analysis for Day {selectedDay}
+                    {selectedDate && <span className="text-sm font-normal text-muted-foreground ml-2">— {selectedDate}</span>}
                 </h2>
                 <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
                     <span className="text-secondary font-medium">Zone Bulk</span> = L2 only •
@@ -410,7 +533,7 @@ export function DailyWaterReport() {
                 </p>
             </div>
 
-            {/* Progress Rings */}
+            {/* Zone Progress Rings */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 md:gap-6">
                 <Card className="glass-card">
                     <CardContent className="p-6 flex justify-center">
@@ -423,6 +546,7 @@ export function DailyWaterReport() {
                             size={160}
                             showPercentage={false}
                             elementId="gauge-daily-1"
+                            unit="m³"
                         />
                     </CardContent>
                 </Card>
@@ -437,22 +561,30 @@ export function DailyWaterReport() {
                             size={160}
                             showPercentage={false}
                             elementId="gauge-daily-2"
+                            unit="m³"
                         />
                     </CardContent>
                 </Card>
                 <Card className="glass-card">
-                    <CardContent className="p-6 flex justify-center">
-                        <LiquidProgressRing
-                            value={Math.abs(zoneAnalysis.loss)}
-                            max={zoneAnalysis.bulkMeterReading || 100}
-                            label="Water Loss Distribution"
-                            sublabel={`${zoneAnalysis.lossPercent.toFixed(1)}% • Leakage, meter loss, etc.`}
-                            color={zoneAnalysis.loss > 0 ? BRAND.danger : BRAND.success}
-                            size={160}
-                            showPercentage={true}
-                            elementId="gauge-daily-3"
-                        />
-                    </CardContent>
+                    {(() => {
+                        const status = getLossStatus(Math.abs(zoneAnalysis.lossPercent));
+                        return (
+                            <CardContent className="p-6 flex justify-center">
+                                <LiquidProgressRing
+                                    value={Math.abs(zoneAnalysis.loss)}
+                                    max={zoneAnalysis.bulkMeterReading || 100}
+                                    label="Water Loss Distribution"
+                                    sublabel={`${zoneAnalysis.lossPercent.toFixed(1)}% • Leakage, meter loss, etc.`}
+                                    color={zoneAnalysis.loss > 0 ? BRAND.danger : BRAND.success}
+                                    size={160}
+                                    showPercentage={true}
+                                    elementId="gauge-daily-3"
+                                    statusBadge={status.label}
+                                    statusColor={status.color}
+                                />
+                            </CardContent>
+                        );
+                    })()}
                 </Card>
             </div>
 
