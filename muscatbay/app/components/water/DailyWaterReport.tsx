@@ -15,7 +15,8 @@ import { ZONE_CONFIG, AVAILABLE_MONTHS } from "@/lib/water-data";
 import {
     getWaterLossDailyFromSupabase,
     getDailyWaterConsumptionFromSupabase,
-    isSupabaseConfigured
+    isSupabaseConfigured,
+    getSupabaseClient
 } from "@/lib/supabase";
 import {
     AlertTriangle,
@@ -53,8 +54,8 @@ const BRAND = {
     muted: '#6B7280',
 };
 
-// Auto-refresh interval (5 minutes)
-const AUTO_REFRESH_MS = 5 * 60 * 1000;
+// Polling fallback interval (1 minute) — real-time subscription is the primary mechanism
+const AUTO_REFRESH_MS = 60 * 1000;
 
 // Get loss status label and color
 function getLossStatus(lossPercent: number): { label: string; color: string } {
@@ -106,6 +107,7 @@ export function DailyWaterReport() {
     const [refreshKey, setRefreshKey] = useState(0);
     const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
     const [isRefreshing, setIsRefreshing] = useState(false);
+    const [realtimeConnected, setRealtimeConnected] = useState(false);
     const initialLoadDone = useRef(false);
 
     // Table state
@@ -179,14 +181,48 @@ export function DailyWaterReport() {
         fetchDailyData();
     }, [refreshKey, selectedMonth, currentMonth, currentYear]);
 
-    // Auto-refresh interval
+    // Polling fallback interval
     useEffect(() => {
         const interval = setInterval(() => {
-            console.log('[DailyWaterReport] Auto-refreshing data...');
+            console.log('[DailyWaterReport] Polling refresh...');
             setRefreshKey(prev => prev + 1);
         }, AUTO_REFRESH_MS);
         return () => clearInterval(interval);
     }, []);
+
+    // Supabase real-time subscription — re-subscribes when month changes
+    useEffect(() => {
+        const client = getSupabaseClient();
+        if (!client) return;
+
+        const channel = client
+            .channel(`water-daily-${currentMonth}`)
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'water_loss_daily', filter: `month=eq.${currentMonth}` },
+                () => {
+                    console.log('[DailyWaterReport] Realtime: water_loss_daily changed, refreshing...');
+                    setRefreshKey(prev => prev + 1);
+                }
+            )
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'water_daily_consumption', filter: `month=eq.${currentMonth}` },
+                () => {
+                    console.log('[DailyWaterReport] Realtime: water_daily_consumption changed, refreshing...');
+                    setRefreshKey(prev => prev + 1);
+                }
+            )
+            .subscribe((status) => {
+                setRealtimeConnected(status === 'SUBSCRIBED');
+                console.log('[DailyWaterReport] Realtime status:', status);
+            });
+
+        return () => {
+            client.removeChannel(channel);
+            setRealtimeConnected(false);
+        };
+    }, [currentMonth]);
 
     // Get analysis for selected zone and day
     const zoneAnalysis = useMemo(() => {
@@ -422,6 +458,12 @@ export function DailyWaterReport() {
                                     {dataSource === 'supabase' ? 'Live Data' : 'Demo Data'}
                                     {isRefreshing && <RefreshCw className="h-3 w-3 animate-spin" />}
                                 </div>
+                                {realtimeConnected && (
+                                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400 text-[10px] font-medium">
+                                        <span className="h-1.5 w-1.5 rounded-full bg-teal-500 animate-pulse" />
+                                        Real-time
+                                    </div>
+                                )}
                                 {lastUpdated && (
                                     <span className="flex items-center gap-1 text-[10px] text-slate-400 dark:text-slate-500">
                                         <Clock className="h-3 w-3" />
@@ -469,52 +511,6 @@ export function DailyWaterReport() {
                                     Reset
                                 </Button>
                             </div>
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
-
-            {/* System-Wide Summary Gauges */}
-            <Card className="glass-card border-l-4 border-l-primary/50">
-                <CardHeader className="glass-card-header p-4 sm:p-5 md:p-6 pb-2">
-                    <CardTitle className="text-base sm:text-lg">System Overview — Day {selectedDay}{selectedDate && <span className="text-sm font-normal text-muted-foreground ml-2">({selectedDate})</span>}</CardTitle>
-                    <p className="text-xs sm:text-sm text-slate-500">Aggregated across all zones for this day</p>
-                </CardHeader>
-                <CardContent className="p-4 sm:p-5 md:p-6 pt-0">
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
-                        <div className="flex justify-center">
-                            <LiquidProgressRing
-                                value={systemSummary.totalSupply}
-                                max={Math.max(systemSummary.totalSupply, systemSummary.totalMetered) * 1.2 || 100}
-                                label="Total Supply"
-                                sublabel="All zones L2 bulk total"
-                                color={BRAND.accent}
-                                size={140}
-                                showPercentage={false}
-                                elementId="gauge-sys-supply"
-                                unit="m³"
-                            />
-                        </div>
-                        <div className="flex justify-center">
-                            <LiquidProgressRing
-                                value={systemSummary.totalMetered}
-                                max={Math.max(systemSummary.totalSupply, systemSummary.totalMetered) * 1.2 || 100}
-                                label="Total Metered"
-                                sublabel="All zones L3+L4 total"
-                                color={BRAND.primary}
-                                size={140}
-                                showPercentage={false}
-                                elementId="gauge-sys-metered"
-                                unit="m³"
-                            />
-                        </div>
-                        <div className="flex justify-center">
-                            <WaterLossGauge
-                                score={systemSummary.efficiency}
-                                label="Overall Efficiency"
-                                subLabel={`${systemSummary.totalLoss.toFixed(1)} m³ total loss`}
-                                size={140}
-                            />
                         </div>
                     </div>
                 </CardContent>

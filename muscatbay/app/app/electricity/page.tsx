@@ -887,30 +887,30 @@ export default function ElectricityPage() {
                         <CardContent>
                             <div className="overflow-auto max-h-[600px] rounded-md border">
                                 <table className="w-full text-sm">
-                                    <thead className="bg-muted/50 sticky top-0 backdrop-blur-sm z-10">
-                                        <tr className="border-b">
-                                            <th className="p-4 text-left font-medium text-muted-foreground w-[250px]">Name</th>
-                                            <th className="p-4 text-left font-medium text-muted-foreground">Account #</th>
-                                            <th className="p-4 text-left font-medium text-muted-foreground">Type</th>
-                                            <th className="p-4 text-right font-medium text-muted-foreground">Consumption (Range)</th>
-                                            <th className="p-4 text-right font-medium text-muted-foreground">Cost (Range)</th>
+                                    <thead className="bg-slate-50/80 dark:bg-slate-800/60 sticky top-0 backdrop-blur-sm z-10">
+                                        <tr>
+                                            <th className="py-3 px-4 text-left font-semibold text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 w-[250px]">Name</th>
+                                            <th className="py-3 px-4 text-left font-semibold text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">Account #</th>
+                                            <th className="py-3 px-4 text-left font-semibold text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">Type</th>
+                                            <th className="py-3 px-4 text-right font-semibold text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">Consumption (Range)</th>
+                                            <th className="py-3 px-4 text-right font-semibold text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">Cost (Range)</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y">
                                         {analysisData.tableData.map((meter) => (
-                                            <tr key={meter.id} className="hover:bg-muted/30 transition-colors">
-                                                <td className="p-4 font-medium text-foreground">{meter.name}</td>
-                                                <td className="p-4 text-muted-foreground text-xs font-mono">{meter.account_number}</td>
-                                                <td className="p-4">
+                                            <tr key={meter.id} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+                                                <td className="py-3 px-4 font-medium text-slate-800 dark:text-slate-200">{meter.name}</td>
+                                                <td className="py-3 px-4 text-slate-500 dark:text-slate-400 text-xs font-mono">{meter.account_number}</td>
+                                                <td className="py-3 px-4">
                                                     <Badge variant="secondary" className="font-normal text-xs bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
                                                         {meter.type}
                                                     </Badge>
                                                 </td>
-                                                <td className="p-4 text-right font-mono font-medium">
-                                                    {meter.rangeConsumption.toLocaleString()} <span className="text-xs text-muted-foreground">kWh</span>
+                                                <td className="py-3 px-4 text-right font-mono font-medium text-slate-700 dark:text-slate-300">
+                                                    {meter.rangeConsumption.toLocaleString()} <span className="text-xs text-slate-400">kWh</span>
                                                 </td>
-                                                <td className="p-4 text-right font-mono font-medium text-mb-success dark:text-mb-success-hover">
-                                                    {meter.rangeCost.toLocaleString('en-US', { minimumFractionDigits: 2 })} <span className="text-xs text-muted-foreground">OMR</span>
+                                                <td className="py-3 px-4 text-right font-mono font-medium text-mb-success dark:text-mb-success-hover">
+                                                    {meter.rangeCost.toLocaleString('en-US', { minimumFractionDigits: 2 })} <span className="text-xs text-slate-400">OMR</span>
                                                 </td>
                                             </tr>
                                         ))}
@@ -923,128 +923,177 @@ export default function ElectricityPage() {
             )
             }
 
-            {activeTab === 'database' && (
-                <div className="space-y-4 animate-in fade-in duration-500">
-                    {/* Toolbar */}
-                    <TableToolbar>
-                        <div className="relative flex-1 min-w-[200px] max-w-md">
-                            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                            <input
-                                type="text"
-                                placeholder="Search meters..."
-                                value={dbSearchTerm}
-                                onChange={(e) => { setDbSearchTerm(e.target.value); setDbCurrentPage(1); }}
-                                className="pl-10 pr-4 py-2 w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+            {activeTab === 'database' && (() => {
+                // Show last 6 months by default for anomaly detection
+                const displayMonths = allMonths.slice(-6);
+
+                // Helper to detect anomalies: compares value to meter's average across all months
+                const getAnomalyClass = (value: number, meter: typeof meters[0]) => {
+                    const allVals = Object.values(meter.readings).filter(v => v > 0);
+                    if (allVals.length < 3 || value === 0) return '';
+                    const avg = allVals.reduce((a, b) => a + b, 0) / allVals.length;
+                    if (avg === 0) return '';
+                    const ratio = value / avg;
+                    if (ratio > 2) return 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 font-bold';
+                    if (ratio > 1.5) return 'bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-300 font-semibold';
+                    if (ratio < 0.3) return 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-semibold';
+                    return '';
+                };
+
+                return (
+                    <div className="space-y-4 animate-in fade-in duration-500">
+                        {/* Toolbar */}
+                        <TableToolbar>
+                            <div className="relative flex-1 min-w-[200px] max-w-md">
+                                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                                <input
+                                    type="text"
+                                    placeholder="Search meters..."
+                                    value={dbSearchTerm}
+                                    onChange={(e) => { setDbSearchTerm(e.target.value); setDbCurrentPage(1); }}
+                                    className="pl-10 pr-4 py-2 w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+                                />
+                            </div>
+
+                            <MultiSelectDropdown
+                                label="Type"
+                                options={allMeterTypes}
+                                selected={dbSelectedTypes}
+                                onChange={(s) => { setDbSelectedTypes(s); setDbCurrentPage(1); }}
                             />
-                        </div>
 
-                        <MultiSelectDropdown
-                            label="Type"
-                            options={allMeterTypes}
-                            selected={dbSelectedTypes}
-                            onChange={(s) => { setDbSelectedTypes(s); setDbCurrentPage(1); }}
-                        />
+                            {dbHasActiveFilters && (
+                                <button
+                                    onClick={() => { setDbSearchTerm(''); setDbSelectedTypes([...allMeterTypes]); setDbCurrentPage(1); }}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors"
+                                >
+                                    <X className="w-3.5 h-3.5" />
+                                    Clear
+                                </button>
+                            )}
 
-                        {dbHasActiveFilters && (
                             <button
-                                onClick={() => { setDbSearchTerm(''); setDbSelectedTypes([...allMeterTypes]); setDbCurrentPage(1); }}
-                                className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors"
+                                onClick={handleDbExportCSV}
+                                className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors ml-auto"
                             >
-                                <X className="w-3.5 h-3.5" />
-                                Clear
+                                <Download className="w-3.5 h-3.5" />
+                                <span>Export CSV</span>
                             </button>
-                        )}
 
-                        <button
-                            onClick={handleDbExportCSV}
-                            className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors ml-auto"
-                        >
-                            <Download className="w-3.5 h-3.5" />
-                            <span>Export CSV</span>
-                        </button>
+                            <div className="text-sm text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                                <span className="font-semibold text-slate-700 dark:text-slate-300">{dbFilteredMeters.length}</span>
+                                {dbFilteredMeters.length !== meters.length && (
+                                    <span> of {meters.length}</span>
+                                )} meters
+                            </div>
+                        </TableToolbar>
 
-                        <div className="text-sm text-slate-500 dark:text-slate-400 whitespace-nowrap">
-                            <span className="font-semibold text-slate-700 dark:text-slate-300">{dbFilteredMeters.length}</span>
-                            {dbFilteredMeters.length !== meters.length && (
-                                <span> of {meters.length}</span>
-                            )} meters
+                        {/* Anomaly Legend */}
+                        <div className="flex items-center gap-4 px-1 text-xs text-slate-500 dark:text-slate-400">
+                            <span className="font-medium text-slate-600 dark:text-slate-300">Anomaly Detection:</span>
+                            <span className="flex items-center gap-1.5">
+                                <span className="w-3 h-3 rounded bg-red-100 dark:bg-red-900/30 border border-red-200 dark:border-red-800" />
+                                &gt;2× average (High)
+                            </span>
+                            <span className="flex items-center gap-1.5">
+                                <span className="w-3 h-3 rounded bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800" />
+                                &gt;1.5× average (Elevated)
+                            </span>
+                            <span className="flex items-center gap-1.5">
+                                <span className="w-3 h-3 rounded bg-blue-100 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800" />
+                                &lt;0.3× average (Low)
+                            </span>
                         </div>
-                    </TableToolbar>
 
-                    {/* Active Filter Pills */}
-                    <ActiveFilterPills pills={[
-                        ...(dbSearchTerm ? [{
-                            key: 'search',
-                            label: `Search: "${dbSearchTerm}"`,
-                            onRemove: () => { setDbSearchTerm(''); setDbCurrentPage(1); }
-                        }] : []),
-                        ...(dbSelectedTypes.length > 0 && dbSelectedTypes.length < allMeterTypes.length ? [{
-                            key: 'types',
-                            label: `${dbSelectedTypes.length} type${dbSelectedTypes.length !== 1 ? 's' : ''}`,
-                            colorClass: 'bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300',
-                            onRemove: () => { setDbSelectedTypes([...allMeterTypes]); setDbCurrentPage(1); }
-                        }] : []),
-                    ]} />
+                        {/* Active Filter Pills */}
+                        <ActiveFilterPills pills={[
+                            ...(dbSearchTerm ? [{
+                                key: 'search',
+                                label: `Search: "${dbSearchTerm}"`,
+                                onRemove: () => { setDbSearchTerm(''); setDbCurrentPage(1); }
+                            }] : []),
+                            ...(dbSelectedTypes.length > 0 && dbSelectedTypes.length < allMeterTypes.length ? [{
+                                key: 'types',
+                                label: `${dbSelectedTypes.length} type${dbSelectedTypes.length !== 1 ? 's' : ''}`,
+                                colorClass: 'bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300',
+                                onRemove: () => { setDbSelectedTypes([...allMeterTypes]); setDbCurrentPage(1); }
+                            }] : []),
+                        ]} />
 
-                    {/* Table */}
-                    <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
-                        <table className="w-full text-sm border-collapse">
-                            <thead>
-                                <tr className="bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700">
-                                    <th className="text-left py-2.5 px-3 font-semibold text-slate-600 dark:text-slate-400 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors min-w-[200px]" onClick={() => handleDbSort('label')}>
-                                        <div className="flex items-center gap-1.5">Name <SortIcon field="label" currentSortField={dbSortField} currentSortDirection={dbSortDirection} /></div>
-                                    </th>
-                                    <th className="text-left py-2.5 px-3 font-semibold text-slate-600 dark:text-slate-400 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" onClick={() => handleDbSort('account')}>
-                                        <div className="flex items-center gap-1.5">Account # <SortIcon field="account" currentSortField={dbSortField} currentSortDirection={dbSortDirection} /></div>
-                                    </th>
-                                    <th className="text-left py-2.5 px-3 font-semibold text-slate-600 dark:text-slate-400 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" onClick={() => handleDbSort('type')}>
-                                        <div className="flex items-center gap-1.5">Type <SortIcon field="type" currentSortField={dbSortField} currentSortDirection={dbSortDirection} /></div>
-                                    </th>
-                                    <th className="text-right py-2.5 px-3 font-semibold text-slate-600 dark:text-slate-400">Total (kWh)</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {dbPaginatedMeters.map((meter, idx) => {
-                                    const sum = Object.values(meter.readings).reduce((a, b) => a + b, 0);
-                                    return (
-                                        <tr key={meter.id} className={`border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors ${idx % 2 === 0 ? 'bg-white dark:bg-slate-900/50' : 'bg-slate-50/30 dark:bg-slate-800/20'}`}>
-                                            <td className="py-2 px-3 font-medium text-slate-800 dark:text-slate-200">{meter.name}</td>
-                                            <td className="py-2 px-3 text-slate-600 dark:text-slate-400 font-mono text-xs">{meter.account_number}</td>
-                                            <td className="py-2 px-3">
-                                                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
-                                                    {meter.type}
-                                                </span>
-                                            </td>
-                                            <td className="py-2 px-3 text-right font-mono text-xs text-slate-700 dark:text-slate-300">{sum.toLocaleString('en-US')}</td>
-                                        </tr>
-                                    );
-                                })}
-                                {dbFilteredMeters.length === 0 && (
-                                    <tr>
-                                        <td colSpan={4} className="py-12 text-center text-slate-500 dark:text-slate-400">
-                                            No meters found matching your filters.
-                                        </td>
+                        {/* Table */}
+                        <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
+                            <table className="w-full text-sm border-collapse">
+                                <thead>
+                                    <tr className="bg-slate-50/80 dark:bg-slate-800/60">
+                                        <th className="text-left py-3 px-4 font-semibold text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors sticky left-0 bg-slate-50/80 dark:bg-slate-800/60 z-20 min-w-[200px]" onClick={() => handleDbSort('label')}>
+                                            <div className="flex items-center gap-1.5">Name <SortIcon field="label" currentSortField={dbSortField} currentSortDirection={dbSortDirection} /></div>
+                                        </th>
+                                        <th className="text-left py-3 px-4 font-semibold text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" onClick={() => handleDbSort('account')}>
+                                            <div className="flex items-center gap-1.5">Account # <SortIcon field="account" currentSortField={dbSortField} currentSortDirection={dbSortDirection} /></div>
+                                        </th>
+                                        <th className="text-left py-3 px-4 font-semibold text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" onClick={() => handleDbSort('type')}>
+                                            <div className="flex items-center gap-1.5">Type <SortIcon field="type" currentSortField={dbSortField} currentSortDirection={dbSortDirection} /></div>
+                                        </th>
+                                        {displayMonths.map(month => (
+                                            <th key={month} className="text-right py-3 px-4 font-semibold text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors min-w-[90px] whitespace-nowrap" onClick={() => handleDbSort(month)}>
+                                                <div className="flex items-center justify-end gap-1.5">{month} <SortIcon field={month} currentSortField={dbSortField} currentSortDirection={dbSortDirection} /></div>
+                                            </th>
+                                        ))}
+                                        <th className="text-right py-3 px-4 font-semibold text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 border-l border-slate-200 dark:border-slate-700 min-w-[100px]">Total (kWh)</th>
                                     </tr>
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
+                                </thead>
+                                <tbody>
+                                    {dbPaginatedMeters.map((meter) => {
+                                        const sum = Object.values(meter.readings).reduce((a, b) => a + b, 0);
+                                        return (
+                                            <tr key={meter.id} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+                                                <td className="py-3 px-4 font-medium text-slate-800 dark:text-slate-200 sticky left-0 bg-white dark:bg-slate-900 z-10">{meter.name}</td>
+                                                <td className="py-3 px-4 text-slate-600 dark:text-slate-400 font-mono text-xs">{meter.account_number}</td>
+                                                <td className="py-3 px-4">
+                                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                                                        {meter.type}
+                                                    </span>
+                                                </td>
+                                                {displayMonths.map(month => {
+                                                    const val = meter.readings[month] || 0;
+                                                    const anomaly = getAnomalyClass(val, meter);
+                                                    return (
+                                                        <td key={month} className={`py-3 px-4 text-right font-mono text-xs ${anomaly || 'text-slate-700 dark:text-slate-300'}`}>
+                                                            {val > 0 ? val.toLocaleString('en-US', { maximumFractionDigits: 1 }) : <span className="text-slate-300 dark:text-slate-600">—</span>}
+                                                        </td>
+                                                    );
+                                                })}
+                                                <td className="py-3 px-4 text-right font-mono text-xs font-semibold text-slate-800 dark:text-slate-200 border-l border-slate-100 dark:border-slate-800">{sum.toLocaleString('en-US', { maximumFractionDigits: 1 })}</td>
+                                            </tr>
+                                        );
+                                    })}
+                                    {dbFilteredMeters.length === 0 && (
+                                        <tr>
+                                            <td colSpan={4 + displayMonths.length} className="py-12 text-center text-slate-500 dark:text-slate-400">
+                                                No meters found matching your filters.
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
 
-                    {/* Pagination */}
-                    {dbFilteredMeters.length > 0 && (
-                        <TablePagination
-                            currentPage={dbCurrentPage}
-                            totalPages={dbTotalPages}
-                            totalItems={dbFilteredMeters.length}
-                            pageSize={dbPageSize}
-                            startIndex={dbStartIndex}
-                            endIndex={Math.min(dbStartIndex + dbEffectivePageSize, dbFilteredMeters.length)}
-                            onPageChange={setDbCurrentPage}
-                            onPageSizeChange={(size) => { setDbPageSize(size); setDbCurrentPage(1); }}
-                        />
-                    )}
-                </div>
-            )}
+                        {/* Pagination */}
+                        {dbFilteredMeters.length > 0 && (
+                            <TablePagination
+                                currentPage={dbCurrentPage}
+                                totalPages={dbTotalPages}
+                                totalItems={dbFilteredMeters.length}
+                                pageSize={dbPageSize}
+                                startIndex={dbStartIndex}
+                                endIndex={Math.min(dbStartIndex + dbEffectivePageSize, dbFilteredMeters.length)}
+                                onPageChange={setDbCurrentPage}
+                                onPageSizeChange={(size) => { setDbPageSize(size); setDbCurrentPage(1); }}
+                            />
+                        )}
+                    </div>
+                );
+            })()}
         </div >
     );
 }

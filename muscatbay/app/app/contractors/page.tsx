@@ -408,75 +408,75 @@ export default function ContractorsPage() {
                 <div className="hidden md:block overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
                     <table className="w-full text-sm border-collapse">
                         <thead>
-                            <tr className="bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700">
-                                <th className="text-left py-2.5 px-3 font-semibold text-slate-600 dark:text-slate-400 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" onClick={() => handleSort('contractor')}>
+                            <tr className="bg-slate-50/80 dark:bg-slate-800/60">
+                                <th className="text-left py-3 px-4 font-semibold text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" onClick={() => handleSort('contractor')}>
                                     <div className="flex items-center gap-1.5">Contractor <SortIcon field="contractor" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
                                 </th>
-                                <th className="text-left py-2.5 px-3 font-semibold text-slate-600 dark:text-slate-400 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" onClick={() => handleSort('service')}>
+                                <th className="text-left py-3 px-4 font-semibold text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" onClick={() => handleSort('service')}>
                                     <div className="flex items-center gap-1.5">Service <SortIcon field="service" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
                                 </th>
-                                <th className="text-left py-2.5 px-3 font-semibold text-slate-600 dark:text-slate-400 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" onClick={() => handleSort('status')}>
+                                <th className="text-left py-3 px-4 font-semibold text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" onClick={() => handleSort('status')}>
                                     <div className="flex items-center gap-1.5">Status <SortIcon field="status" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
                                 </th>
-                                <th className="text-left py-2.5 px-3 font-semibold text-slate-600 dark:text-slate-400 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" onClick={() => handleSort('contractType')}>
+                                <th className="text-left py-3 px-4 font-semibold text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" onClick={() => handleSort('contractType')}>
                                     <div className="flex items-center gap-1.5">Type <SortIcon field="contractType" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
                                 </th>
-                                <th className="text-left py-2.5 px-3 font-semibold text-slate-600 dark:text-slate-400 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors hidden lg:table-cell" onClick={() => handleSort('startDate')}>
+                                <th className="text-left py-3 px-4 font-semibold text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors hidden lg:table-cell" onClick={() => handleSort('startDate')}>
                                     <div className="flex items-center gap-1.5">Start <SortIcon field="startDate" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
                                 </th>
-                                <th className="text-left py-2.5 px-3 font-semibold text-slate-600 dark:text-slate-400 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors hidden lg:table-cell" onClick={() => handleSort('endDate')}>
+                                <th className="text-left py-3 px-4 font-semibold text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors hidden lg:table-cell" onClick={() => handleSort('endDate')}>
                                     <div className="flex items-center gap-1.5">End <SortIcon field="endDate" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
                                 </th>
-                                <th className="text-right py-2.5 px-3 font-semibold text-slate-600 dark:text-slate-400 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors hidden xl:table-cell" onClick={() => handleSort('monthly')}>
+                                <th className="text-right py-3 px-4 font-semibold text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors hidden xl:table-cell" onClick={() => handleSort('monthly')}>
                                     <div className="flex items-center justify-end gap-1.5">Monthly <SortIcon field="monthly" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
                                 </th>
-                                <th className="text-right py-2.5 px-3 font-semibold text-slate-600 dark:text-slate-400 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" onClick={() => handleSort('annual')}>
+                                <th className="text-right py-3 px-4 font-semibold text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" onClick={() => handleSort('annual')}>
                                     <div className="flex items-center justify-end gap-1.5">Annual <SortIcon field="annual" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
                                 </th>
-                                <th className="text-left py-2.5 px-3 font-semibold text-slate-600 dark:text-slate-400 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors hidden xl:table-cell" onClick={() => handleSort('renewal')}>
+                                <th className="text-left py-3 px-4 font-semibold text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors hidden xl:table-cell" onClick={() => handleSort('renewal')}>
                                     <div className="flex items-center gap-1.5">Renewal <SortIcon field="renewal" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
                                 </th>
-                                <th className="text-left py-2.5 px-3 font-semibold text-slate-600 dark:text-slate-400 hidden xl:table-cell">Note</th>
+                                <th className="text-left py-3 px-4 font-semibold text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 hidden xl:table-cell">Note</th>
                             </tr>
                         </thead>
                         <tbody>
                             {paginatedContractors.map((contractor, index) => (
-                                <tr key={`${contractor.Contractor}-${index}`} className={`border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors ${index % 2 === 0 ? 'bg-white dark:bg-slate-900/50' : 'bg-slate-50/30 dark:bg-slate-800/20'}`}>
-                                    <td className="py-2 px-3 font-medium text-slate-800 dark:text-slate-200">
+                                <tr key={`${contractor.Contractor}-${index}`} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+                                    <td className="py-3 px-4 font-medium text-slate-800 dark:text-slate-200">
                                         {contractor.Contractor || '-'}
                                     </td>
-                                    <td className="py-2 px-3 text-slate-600 dark:text-slate-400 text-xs">
+                                    <td className="py-3 px-4 text-slate-600 dark:text-slate-400 text-xs">
                                         {contractor["Service Provided"] || '-'}
                                     </td>
-                                    <td className="py-2 px-3">
+                                    <td className="py-3 px-4">
                                         <Badge variant="secondary" className={`font-normal text-xs ${getStatusColor(contractor.Status)}`}>
                                             {contractor.Status || 'N/A'}
                                         </Badge>
                                     </td>
-                                    <td className="py-2 px-3">
+                                    <td className="py-3 px-4">
                                         <Badge variant="outline" className={`font-normal text-xs ${getContractTypeColor(contractor["Contract Type"])}`}>
                                             {contractor["Contract Type"] || 'N/A'}
                                         </Badge>
                                     </td>
-                                    <td className="py-2 px-3 text-xs text-slate-500 dark:text-slate-400 hidden lg:table-cell">
+                                    <td className="py-3 px-4 text-xs text-slate-500 dark:text-slate-400 hidden lg:table-cell">
                                         <div className="flex items-center gap-1">
                                             <Calendar className="h-3 w-3" />
                                             {contractor["Start Date"] || '-'}
                                         </div>
                                     </td>
-                                    <td className="py-2 px-3 text-xs text-slate-500 dark:text-slate-400 hidden lg:table-cell">
+                                    <td className="py-3 px-4 text-xs text-slate-500 dark:text-slate-400 hidden lg:table-cell">
                                         <div className="flex items-center gap-1">
                                             <Calendar className="h-3 w-3" />
                                             {contractor["End Date"] || '-'}
                                         </div>
                                     </td>
-                                    <td className="py-2 px-3 text-right font-mono text-xs text-slate-700 dark:text-slate-300 hidden xl:table-cell">
+                                    <td className="py-3 px-4 text-right font-mono text-xs text-slate-700 dark:text-slate-300 hidden xl:table-cell">
                                         {contractor["Contract (OMR)/Month"] || '-'}
                                     </td>
-                                    <td className="py-2 px-3 text-right font-mono text-xs font-semibold text-primary">
+                                    <td className="py-3 px-4 text-right font-mono text-xs font-semibold text-primary">
                                         {contractor["Annual Value (OMR)"]?.toLocaleString() || '-'}
                                     </td>
-                                    <td className="py-2 px-3 text-xs text-slate-600 dark:text-slate-400 hidden xl:table-cell">
+                                    <td className="py-3 px-4 text-xs text-slate-600 dark:text-slate-400 hidden xl:table-cell">
                                         {contractor["Renewal Plan"] ? (
                                             <div className="flex items-center gap-1">
                                                 <RefreshCw className="h-3 w-3 text-blue-500" />
@@ -484,7 +484,7 @@ export default function ContractorsPage() {
                                             </div>
                                         ) : '-'}
                                     </td>
-                                    <td className="py-2 px-3 text-xs text-slate-500 dark:text-slate-500 max-w-[200px] truncate hidden xl:table-cell" title={contractor.Note || ''}>
+                                    <td className="py-3 px-4 text-xs text-slate-500 dark:text-slate-500 max-w-[200px] truncate hidden xl:table-cell" title={contractor.Note || ''}>
                                         {contractor.Note || '-'}
                                     </td>
                                 </tr>

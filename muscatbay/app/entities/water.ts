@@ -141,6 +141,7 @@ export interface SupabaseWaterMeter {
     dec_25: number | null;
     jan_26: number | null;
     feb_26: number | null;
+    mar_26: number | null;
     created_at?: string;
     updated_at?: string;
 }
@@ -185,6 +186,7 @@ export function transformWaterMeter(dbMeter: SupabaseWaterMeter): WaterMeter {
         'Dec-25': sanitizeConsumption(dbMeter.dec_25),
         'Jan-26': sanitizeConsumption(dbMeter.jan_26),
         'Feb-26': sanitizeConsumption(dbMeter.feb_26),
+        'Mar-26': sanitizeConsumption(dbMeter.mar_26),
     };
 
     return {

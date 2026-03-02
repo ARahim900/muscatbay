@@ -33,46 +33,49 @@ export function TablePagination({
     if (totalItems === 0) return null;
 
     return (
-        <div className="flex flex-wrap items-center justify-between gap-4 px-1">
-            {/* Page Size Selector */}
-            <div className="flex items-center gap-2">
-                <span className="text-sm text-slate-500 dark:text-slate-400">Show</span>
-                <select
-                    value={pageSize}
-                    onChange={(e) => {
-                        const val = e.target.value;
-                        onPageSizeChange(val === 'All' ? 'All' : parseInt(val));
-                    }}
-                    className="px-2 py-1 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-primary/50"
-                >
-                    {pageSizeOptions.map(size => (
-                        <option key={size} value={size}>{size}</option>
-                    ))}
-                </select>
-                <span className="text-sm text-slate-500 dark:text-slate-400">entries</span>
+        <div className="flex flex-wrap items-center justify-between gap-4 py-3 px-1">
+            {/* Left side: Page Size + Showing info */}
+            <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                    <span className="text-sm text-slate-500 dark:text-slate-400">Show</span>
+                    <select
+                        value={pageSize}
+                        onChange={(e) => {
+                            const val = e.target.value;
+                            onPageSizeChange(val === 'All' ? 'All' : parseInt(val));
+                        }}
+                        className="px-2 py-1.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-colors"
+                    >
+                        {pageSizeOptions.map(size => (
+                            <option key={size} value={size}>{size}</option>
+                        ))}
+                    </select>
+                    <span className="text-sm text-slate-500 dark:text-slate-400">entries</span>
+                </div>
+
+                <div className="text-sm text-slate-500 dark:text-slate-400">
+                    Showing <span className="font-medium text-slate-700 dark:text-slate-300">{startIndex + 1}</span> to <span className="font-medium text-slate-700 dark:text-slate-300">{endIndex}</span> of <span className="font-medium text-slate-700 dark:text-slate-300">{totalItems}</span>
+                </div>
             </div>
 
-            {/* Page Info */}
-            <div className="text-sm text-slate-500 dark:text-slate-400">
-                Showing {startIndex + 1} to {endIndex} of {totalItems}
-            </div>
-
-            {/* Page Navigation */}
+            {/* Right side: Page Navigation */}
             {pageSize !== 'All' && totalPages > 1 && (
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1.5">
                     <button
                         onClick={() => onPageChange(1)}
                         disabled={currentPage === 1}
-                        className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                        className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                        title="First page"
                     >
-                        <ChevronsLeft className="w-4 h-4" />
+                        <ChevronsLeft className="w-4 h-4 text-slate-600 dark:text-slate-400" />
                     </button>
                     <button
                         onClick={() => onPageChange(Math.max(1, currentPage - 1))}
                         disabled={currentPage === 1}
-                        className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                        className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                        title="Previous page"
                     >
-                        <ChevronLeft className="w-4 h-4" />
+                        <ChevronLeft className="w-4 h-4 text-slate-600 dark:text-slate-400" />
                     </button>
 
                     {/* Page Numbers */}
@@ -94,16 +97,16 @@ export function TablePagination({
 
                         return pages.map((page, idx) => (
                             page === '...' ? (
-                                <span key={`ellipsis-${idx}`} className="px-2 text-slate-400">...</span>
+                                <span key={`ellipsis-${idx}`} className="px-1.5 text-slate-400 dark:text-slate-500 text-sm">...</span>
                             ) : (
                                 <button
                                     key={page}
                                     onClick={() => onPageChange(page as number)}
                                     className={cn(
-                                        "w-8 h-8 rounded-lg text-sm font-medium transition-colors",
+                                        "min-w-[32px] h-8 rounded-lg text-sm font-medium transition-all duration-200",
                                         currentPage === page
-                                            ? "bg-primary text-white"
-                                            : "border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300"
+                                            ? "bg-primary text-white shadow-sm"
+                                            : "border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400"
                                     )}
                                 >
                                     {page}
@@ -115,16 +118,18 @@ export function TablePagination({
                     <button
                         onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
                         disabled={currentPage === totalPages}
-                        className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                        className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                        title="Next page"
                     >
-                        <ChevronRight className="w-4 h-4" />
+                        <ChevronRight className="w-4 h-4 text-slate-600 dark:text-slate-400" />
                     </button>
                     <button
                         onClick={() => onPageChange(totalPages)}
                         disabled={currentPage === totalPages}
-                        className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                        className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                        title="Last page"
                     >
-                        <ChevronsRight className="w-4 h-4" />
+                        <ChevronsRight className="w-4 h-4 text-slate-600 dark:text-slate-400" />
                     </button>
                 </div>
             )}
