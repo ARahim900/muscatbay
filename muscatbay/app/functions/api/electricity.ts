@@ -46,7 +46,7 @@ export async function getElectricityMetersFromSupabase(): Promise<MeterReading[]
         let allReadings: ElectricityReading[] = [];
         let offset = 0;
         const batchSize = 1000;
-        const maxBatches = 2; // Limit to 2000 records for performance
+        const maxBatches = 5; // Limit to 5000 records to accommodate reading growth over coming years
         let currentBatch = 0;
         let hasMore = true;
 

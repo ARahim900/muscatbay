@@ -185,8 +185,8 @@ const generateElectricityMeters = (): MeterReading[] => {
         const readings: Record<string, number> = {};
         const baseConsumption = Math.random() * 5000 + 1000;
 
-        // Generate readings for Jan-25 to Dec-25 (full year)
-        ["Jan-25", "Feb-25", "Mar-25", "Apr-25", "May-25", "Jun-25", "Jul-25", "Aug-25", "Sep-25", "Oct-25", "Nov-25", "Dec-25"].forEach((month, idx) => {
+        // Generate readings for Jan-25 to Feb-26 (full year + 2 months)
+        ["Jan-25", "Feb-25", "Mar-25", "Apr-25", "May-25", "Jun-25", "Jul-25", "Aug-25", "Sep-25", "Oct-25", "Nov-25", "Dec-25", "Jan-26", "Feb-26"].forEach((month, idx) => {
             // Add some seasonality/randomness
             const variance = Math.random() * 0.4 + 0.8; // 0.8 to 1.2 multiplier
             // Higher consumption in summer months (Apr-Sep)
