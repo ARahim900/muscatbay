@@ -15,6 +15,7 @@ import { ZONE_CONFIG, AVAILABLE_MONTHS } from "@/lib/water-data";
 import {
     getWaterLossDailyFromSupabase,
     getDailyWaterConsumptionFromSupabase,
+    updateDailyWaterConsumption,
     isSupabaseConfigured
 } from "@/lib/supabase";
 import {
@@ -29,7 +30,10 @@ import {
     Search,
     ArrowUpDown,
     Clock,
-    RefreshCw
+    RefreshCw,
+    Pencil,
+    Check,
+    X
 } from "lucide-react";
 import {
     ResponsiveContainer,
@@ -86,12 +90,13 @@ const LEVEL_COLORS: Record<string, { bg: string; text: string }> = {
 };
 
 interface MeterDailyReading {
+    id: number;
     accountNumber: string;
     meterName: string;
     level: string;
     type: string;
     zone: string;
-    reading: number;
+    reading: number | null;
 }
 
 export function DailyWaterReport() {
@@ -114,6 +119,13 @@ export function DailyWaterReport() {
     const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
     const [currentPage, setCurrentPage] = useState(1);
     const pageSize = 10;
+
+    // Inline edit state
+    const [editingCell, setEditingCell] = useState<{ id: number; accountNumber: string } | null>(null);
+    const [editValue, setEditValue] = useState('');
+    const [originalValue, setOriginalValue] = useState<number | null>(null);
+    const [isUpdating, setIsUpdating] = useState(false);
+    const [updateError, setUpdateError] = useState<string | null>(null);
 
     // Get the most recent month with data (last in AVAILABLE_MONTHS that has daily data)
     const [selectedMonth, setSelectedMonth] = useState(AVAILABLE_MONTHS[AVAILABLE_MONTHS.length - 1]);
@@ -257,12 +269,13 @@ export function DailyWaterReport() {
                 return d.zone === selectedZone;
             })
             .map(d => ({
+                id: d.id,
                 accountNumber: d.accountNumber,
                 meterName: d.meterName,
                 level: d.label || 'L3',
                 type: d.type || 'Residential',
                 zone: selectedZone,
-                reading: d.dailyReadings[selectedDay] || 0
+                reading: d.dailyReadings[selectedDay] ?? null
             }));
     }, [dailyConsumption, selectedZone, selectedDay]);
 
@@ -289,7 +302,7 @@ export function DailyWaterReport() {
                 case 'meterName': aVal = a.meterName; bVal = b.meterName; break;
                 case 'accountNumber': aVal = a.accountNumber; bVal = b.accountNumber; break;
                 case 'type': aVal = a.type; bVal = b.type; break;
-                case 'reading': aVal = a.reading; bVal = b.reading; break;
+                case 'reading': aVal = a.reading ?? 0; bVal = b.reading ?? 0; break;
                 default: aVal = a.meterName; bVal = b.meterName;
             }
 
@@ -326,6 +339,59 @@ export function DailyWaterReport() {
     const formatLastUpdated = (date: Date) => {
         return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
     };
+
+    const handleEditStart = useCallback((meter: MeterDailyReading) => {
+        setEditingCell({ id: meter.id, accountNumber: meter.accountNumber });
+        setEditValue(meter.reading !== null ? String(meter.reading) : '');
+        setOriginalValue(meter.reading);
+        setUpdateError(null);
+    }, []);
+
+    const handleEditCancel = useCallback(() => {
+        setEditingCell(null);
+        setEditValue('');
+        setOriginalValue(null);
+        setUpdateError(null);
+    }, []);
+
+    const handleEditSave = useCallback(async () => {
+        if (!editingCell) return;
+
+        const trimmed = editValue.trim();
+        const numericValue = trimmed === '' ? null : parseFloat(trimmed);
+        if (trimmed !== '' && (isNaN(numericValue!) || numericValue! < 0)) {
+            setUpdateError('Enter a valid non-negative number');
+            return;
+        }
+
+        setIsUpdating(true);
+        setUpdateError(null);
+
+        // Optimistic update
+        setDailyConsumption(prev => prev.map(d =>
+            d.id === editingCell.id
+                ? { ...d, dailyReadings: { ...d.dailyReadings, [selectedDay]: numericValue } }
+                : d
+        ));
+
+        const result = await updateDailyWaterConsumption(editingCell.id, selectedDay, numericValue);
+
+        setIsUpdating(false);
+
+        if (!result.success) {
+            // Revert on failure
+            setDailyConsumption(prev => prev.map(d =>
+                d.id === editingCell.id
+                    ? { ...d, dailyReadings: { ...d.dailyReadings, [selectedDay]: originalValue } }
+                    : d
+            ));
+            setUpdateError(result.error || 'Update failed');
+        } else {
+            setEditingCell(null);
+            setEditValue('');
+            setOriginalValue(null);
+        }
+    }, [editingCell, editValue, originalValue, selectedDay]);
 
     // Loading state
     if (isLoading) {
@@ -683,6 +749,7 @@ export function DailyWaterReport() {
                                 ) : (
                                     paginatedMeters.map((meter, idx) => {
                                         const levelColor = LEVEL_COLORS[meter.level] || LEVEL_COLORS['L3'];
+                                        const isEditing = editingCell?.id === meter.id;
                                         return (
                                             <TableRow key={`${meter.accountNumber}-${idx}`} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
                                                 <TableCell className="font-medium text-sm">{meter.meterName}</TableCell>
@@ -694,7 +761,62 @@ export function DailyWaterReport() {
                                                 </TableCell>
                                                 <TableCell className="text-sm text-muted-foreground">{meter.type}</TableCell>
                                                 <TableCell className="text-right font-mono text-sm font-medium">
-                                                    {meter.reading > 0 ? meter.reading.toFixed(1) : '—'}
+                                                    {isEditing ? (
+                                                        <div className="flex flex-col items-end gap-1">
+                                                            <div className="flex items-center gap-1">
+                                                                <input
+                                                                    type="number"
+                                                                    value={editValue}
+                                                                    onChange={(e) => { setEditValue(e.target.value); setUpdateError(null); }}
+                                                                    onKeyDown={(e) => {
+                                                                        if (e.key === 'Enter') handleEditSave();
+                                                                        if (e.key === 'Escape') handleEditCancel();
+                                                                    }}
+                                                                    className="w-20 text-right border border-slate-300 dark:border-slate-600 rounded px-1.5 py-0.5 text-sm bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                                                                    autoFocus
+                                                                    min={0}
+                                                                    step={0.1}
+                                                                    disabled={isUpdating}
+                                                                />
+                                                                <Button
+                                                                    size="icon"
+                                                                    variant="ghost"
+                                                                    className="h-6 w-6"
+                                                                    onClick={handleEditSave}
+                                                                    disabled={isUpdating}
+                                                                    title="Save"
+                                                                >
+                                                                    <Check className="h-3 w-3 text-green-600" />
+                                                                </Button>
+                                                                <Button
+                                                                    size="icon"
+                                                                    variant="ghost"
+                                                                    className="h-6 w-6"
+                                                                    onClick={handleEditCancel}
+                                                                    disabled={isUpdating}
+                                                                    title="Cancel"
+                                                                >
+                                                                    <X className="h-3 w-3 text-red-500" />
+                                                                </Button>
+                                                            </div>
+                                                            {updateError && (
+                                                                <span className="text-[10px] text-red-500">{updateError}</span>
+                                                            )}
+                                                        </div>
+                                                    ) : (
+                                                        <div className="flex items-center justify-end gap-1 group">
+                                                            <span>{meter.reading !== null && meter.reading > 0 ? meter.reading.toFixed(1) : '—'}</span>
+                                                            <Button
+                                                                size="icon"
+                                                                variant="ghost"
+                                                                className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                                onClick={() => handleEditStart(meter)}
+                                                                title="Edit reading"
+                                                            >
+                                                                <Pencil className="h-3 w-3 text-muted-foreground" />
+                                                            </Button>
+                                                        </div>
+                                                    )}
                                                 </TableCell>
                                             </TableRow>
                                         );

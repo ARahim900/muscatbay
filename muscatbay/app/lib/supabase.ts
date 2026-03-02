@@ -112,6 +112,7 @@ export {
     // Water
     getWaterMetersFromSupabase,
     getDailyWaterConsumptionFromSupabase,
+    updateDailyWaterConsumption,
     // Water Loss
     getWaterLossSummaryFromSupabase,
     getWaterLossDailyFromSupabase,

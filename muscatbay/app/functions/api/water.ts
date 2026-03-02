@@ -224,3 +224,41 @@ export async function getWaterLossDailyFromSupabase(
         return [];
     }
 }
+
+/**
+ * Update a single day's reading for a meter in water_daily_consumption
+ * @param id - Row id in the water_daily_consumption table
+ * @param day - Day number (1-31)
+ * @param value - New consumption value in m³, or null to clear
+ */
+export async function updateDailyWaterConsumption(
+    id: number,
+    day: number,
+    value: number | null
+): Promise<{ success: boolean; error?: string }> {
+    const client = getSupabaseClient();
+    if (!client) {
+        return { success: false, error: 'Supabase client not configured' };
+    }
+
+    if (day < 1 || day > 31) {
+        return { success: false, error: `Invalid day: ${day}` };
+    }
+
+    try {
+        const { error } = await client
+            .from('water_daily_consumption')
+            .update({ [`day_${day}`]: value })
+            .eq('id', id);
+
+        if (error) {
+            console.error('Error updating daily water consumption:', error.message);
+            return { success: false, error: error.message };
+        }
+
+        return { success: true };
+    } catch (err) {
+        console.error('Error in updateDailyWaterConsumption:', err);
+        return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
+    }
+}
