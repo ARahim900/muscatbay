@@ -264,7 +264,7 @@ function ZoneBulkTable({ rows }: { rows: ZoneRow[] }) {
                             <TableCell className="text-right font-mono font-bold text-sm">{Math.round(l3Total).toLocaleString()}</TableCell>
                             <TableCell className={cn(
                                 "text-right font-mono font-bold text-sm",
-                                diffTotal > 20 && "text-red-600 dark:text-red-400",
+                                Math.abs(diffTotal) > 20 && "text-red-600 dark:text-red-400",
                             )}>
                                 {diffCell(diffTotal)}
                             </TableCell>

@@ -43,6 +43,10 @@ function buildAuthHeader(): string | null {
 
 // ─── SQL builder ──────────────────────────────────────────────────────────────
 
+function escapeSql(value: string): string {
+    return value.replace(/'/g, "''");
+}
+
 function buildSQL(dd: string, mmYYYY: string, accountList: string): string {
     return `SELECT ACCOUNT_NUMBER, ADDRESS, [${dd}] FROM (
   SELECT ACCOUNT_NUMBER, ADDRESS, READING_MNTH,
@@ -126,7 +130,14 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     }
 
     const dd = String(day).padStart(2, '0');
-    const accountList = getAllReportAccounts().map(a => `'${a}'`).join(',');
+    const accounts = getAllReportAccounts();
+    if (accounts.length === 0) {
+        return NextResponse.json(
+            { error: 'No accounts configured for water report' },
+            { status: 500 }
+        );
+    }
+    const accountList = accounts.map(a => `'${escapeSql(a)}'`).join(',');
     const sql = buildSQL(dd, mmYYYY, accountList);
 
     const authHeader = buildAuthHeader();
