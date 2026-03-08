@@ -5,7 +5,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { Bug } from "lucide-react";
 
 export default function PestControlPage() {
-    const embedUrl = "https://aitable.ai/share/shrCvd8kL1KLz6p09zcrv";
+    const embedUrl = "https://aitable.ai/embed/shrCvd8kL1KLz6p09zcrv";
 
     return (
         <div className="space-y-6 sm:space-y-7 md:space-y-8 w-full">
@@ -14,7 +14,7 @@ export default function PestControlPage() {
                 description="Monitor and manage pest control operations"
             />
 
-            <Card className="glass-card h-[500px] sm:h-[600px] md:h-[800px] animate-in fade-in duration-500">
+            <Card className="glass-card h-[500px] sm:h-[600px] md:h-[800px] flex flex-col animate-in fade-in duration-500">
                 <CardHeader className="glass-card-header">
                     <div className="flex items-center gap-4">
                         <Bug className="w-6 h-6 text-mb-primary" />
@@ -26,13 +26,16 @@ export default function PestControlPage() {
                         </div>
                     </div>
                 </CardHeader>
-                <CardContent className="h-full p-0 overflow-hidden">
+                <CardContent className="flex-1 p-0 overflow-hidden">
                     <iframe
                         src={embedUrl}
-                        frameBorder="0"
                         width="100%"
                         height="100%"
+                        loading="lazy"
+                        referrerPolicy="no-referrer-when-downgrade"
+                        allow="fullscreen"
                         className="w-full h-full"
+                        style={{ border: 'none' }}
                         title="Pest Control Daily Report Database"
                     />
                 </CardContent>

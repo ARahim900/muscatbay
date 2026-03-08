@@ -1004,6 +1004,7 @@ export function DailyWaterReport() {
                         <CardContent className="p-0">
                             <iframe
                                 className="w-full"
+                                title="Grafana Daily Account Consumption Details"
                                 src={`https://grafana.nec-oman.com/d-solo/aMGcGVPHz/daily-account-consumption-details?orgId=7&var-BillMonth=${(() => {
                                     const monthMap: Record<string, string> = {
                                         'Jan': '01', 'Feb': '02', 'Mar': '03', 'Apr': '04',
@@ -1013,8 +1014,9 @@ export function DailyWaterReport() {
                                     const [mon, yr] = selectedMonth.split('-');
                                     return `${monthMap[mon] ?? '01'}20${yr}`;
                                 })()}&panelId=17&kiosk`}
-                                frameBorder="0"
                                 width="100%"
+                                loading="lazy"
+                                sandbox="allow-scripts allow-popups allow-top-navigation-by-user-activation allow-forms allow-same-origin"
                                 style={{ background: 'transparent', border: 'none', height: '800px' }}
                             />
                         </CardContent>

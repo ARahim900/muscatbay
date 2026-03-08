@@ -839,8 +839,11 @@ export default function WaterPage() {
                                     <iframe
                                         className="airtable-embed w-full"
                                         src="https://airtable.com/embed/appvmeThHxvhcbgcx/shrc2NpaEz7nXwZWm"
-                                        frameBorder="0"
                                         width="100%"
+                                        loading="lazy"
+                                        title="Water Operations Database"
+                                        referrerPolicy="no-referrer-when-downgrade"
+                                        allow="fullscreen"
                                         style={{ background: 'transparent', border: '1px solid #ccc', height: '1200px' }}
                                     />
                                 </CardContent>

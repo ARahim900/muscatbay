@@ -820,7 +820,7 @@ export default function STPPage() {
             )}
 
             {activeTab === "details" && (
-                <Card className="h-[800px] animate-in fade-in duration-500">
+                <Card className="h-[800px] flex flex-col animate-in fade-in duration-500">
                     <CardHeader>
                         <div className="flex items-center gap-4">
                             <Database className="w-6 h-6 text-primary" />
@@ -830,10 +830,14 @@ export default function STPPage() {
                             </div>
                         </div>
                     </CardHeader>
-                    <CardContent className="h-full p-0 overflow-hidden">
+                    <CardContent className="flex-1 p-0 overflow-hidden">
                         <iframe
-                            src="https://aitable.ai/share/shrdXgjQnQar66QJXXADh"
-                            className="w-full h-full border-none"
+                            src="https://aitable.ai/embed/shrdXgjQnQar66QJXXADh"
+                            className="w-full h-full"
+                            style={{ border: 'none' }}
+                            loading="lazy"
+                            referrerPolicy="no-referrer-when-downgrade"
+                            allow="fullscreen"
                             title="STP Operations Database"
                         />
                     </CardContent>
