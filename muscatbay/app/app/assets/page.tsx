@@ -8,10 +8,12 @@ import { StatsGrid } from "@/components/shared/stats-grid";
 import { StatsGridSkeleton, TableBodySkeleton, Skeleton } from "@/components/shared/skeleton";
 import { PageHeader } from "@/components/shared/page-header";
 import { Badge } from "@/components/ui/badge";
-import { Boxes, MapPin, DollarSign, Wrench, Search, Plus, Database, AlertCircle, Download, X } from "lucide-react";
+import { Boxes, MapPin, DollarSign, Wrench, Search, Plus, Database, AlertCircle, Download, X, Clock, Radio } from "lucide-react";
 import { format } from "date-fns";
 import { MultiSelectDropdown, SortIcon, TablePagination, ActiveFilterPills, TableToolbar, type PageSizeOption } from "@/components/shared/data-table";
 import { exportToCSV, getDateForFilename } from "@/lib/export-utils";
+import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
+import { cn } from "@/lib/utils";
 
 // Mapping from UI sort field to Supabase column
 const SORT_FIELD_MAP: Record<string, string> = {
@@ -31,6 +33,7 @@ export default function AssetsPage() {
     const [selectedStatuses, setSelectedStatuses] = useState<string[]>([...STATUS_OPTIONS]);
     const [dataSource, setDataSource] = useState<'supabase' | 'mock'>('mock');
     const [error, setError] = useState<string | null>(null);
+    const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
     // Sorting state
     const [sortField, setSortField] = useState<string>('name');
@@ -85,6 +88,7 @@ export default function AssetsPage() {
                 setAssets(data);
                 setTotalCount(count);
                 setDataSource('supabase');
+                setLastUpdated(new Date());
             } else {
                 setAssets([]);
                 setTotalCount(0);
@@ -105,6 +109,14 @@ export default function AssetsPage() {
     useEffect(() => {
         loadData();
     }, [currentPage, pageSize, debouncedSearch, sortField, sortDirection, selectedStatuses]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    // ── Supabase real-time subscription for Assets_Register_Database table ─
+    const { isLive } = useSupabaseRealtime({
+        table: 'Assets_Register_Database',
+        channelName: 'assets-register-rt',
+        onChanged: () => loadData(),
+        enabled: dataSource === 'supabase',
+    });
 
     // Client-side filtering for mock data only
     const filteredAssets = useMemo(() => {
@@ -243,7 +255,7 @@ export default function AssetsPage() {
             />
 
             {/* Data source indicator */}
-            <div className="flex items-center gap-2 text-sm">
+            <div className="flex items-center gap-2 text-sm flex-wrap">
                 <Database className="w-4 h-4" />
                 <span className="text-muted-foreground">Data source:</span>
                 <Badge variant={dataSource === 'supabase' ? 'default' : 'secondary'} className="gap-2 pl-2">
@@ -264,6 +276,21 @@ export default function AssetsPage() {
                         </>
                     )}
                 </Badge>
+                <span className={cn(
+                    "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold transition-colors",
+                    isLive
+                        ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                        : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400"
+                )}>
+                    <Radio className={cn("h-3 w-3", isLive && "animate-pulse")} />
+                    {isLive ? "Live" : "Offline"}
+                </span>
+                {lastUpdated && (
+                    <span className="flex items-center gap-1 text-[11px] text-slate-400 dark:text-slate-500">
+                        <Clock className="h-3 w-3" />
+                        {lastUpdated.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                    </span>
+                )}
                 {error && (
                     <span className="text-mb-warning flex items-center gap-1">
                         <AlertCircle className="w-4 h-4" /> {error}

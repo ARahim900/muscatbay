@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { getSTPOperations, STPOperation } from "@/lib/mock-data";
 import { getSTPOperationsFromSupabase, isSupabaseConfigured } from "@/lib/supabase";
 import { STP_RATES } from "@/lib/config";
@@ -25,6 +25,8 @@ import {
     WifiOff,
     Search,
     Download,
+    Clock,
+    Radio,
 } from "lucide-react";
 import { SortIcon } from "@/components/shared/data-table/sort-icon";
 import { TablePagination, type PageSizeOption } from "@/components/shared/data-table/table-pagination";
@@ -34,6 +36,8 @@ import { LiquidTooltip } from "../../components/charts/liquid-tooltip";
 import { format } from "date-fns";
 import { saveFilterPreferences, loadFilterPreferences } from "@/lib/filter-preferences";
 import { DateRangePicker } from "@/components/water/date-range-picker";
+import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
+import { cn } from "@/lib/utils";
 
 // Use centralized config for rates
 const { TANKER_FEE, TSE_SAVING_RATE } = STP_RATES;
@@ -44,6 +48,7 @@ export default function STPPage() {
     const [loading, setLoading] = useState(true);
     const [isLiveData, setIsLiveData] = useState(false);
     const [selectedMonth, setSelectedMonth] = useState<string>("");
+    const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
     // Date range filter state
     const [startMonth, setStartMonth] = useState<string>('');
@@ -56,30 +61,46 @@ export default function STPPage() {
     const [logPageSize, setLogPageSize] = useState<PageSizeOption>(25);
     const [logSearchTerm, setLogSearchTerm] = useState('');
 
-    useEffect(() => {
-        async function loadData() {
-            try {
-                if (isSupabaseConfigured()) {
-                    const supabaseData = await getSTPOperationsFromSupabase();
-                    if (supabaseData.length > 0) {
-                        setAllOperations(supabaseData);
-                        setIsLiveData(true);
-                        setLoading(false);
-                        return;
-                    }
+    // Stable fetch function — used both on mount and by real-time handler
+    const loadData = useCallback(async (silent = false) => {
+        if (!silent) setLoading(true);
+        try {
+            if (isSupabaseConfigured()) {
+                const supabaseData = await getSTPOperationsFromSupabase();
+                if (supabaseData.length > 0) {
+                    setAllOperations(supabaseData);
+                    setIsLiveData(true);
+                    setLastUpdated(new Date());
+                    if (!silent) setLoading(false);
+                    return;
                 }
+            }
+            if (!silent) {
                 const result = await getSTPOperations();
                 setAllOperations(result);
                 setIsLiveData(false);
-            } catch (e) {
+            }
+        } catch (e) {
+            if (!silent) {
                 // Silent fallback to mock data
                 const result = await getSTPOperations();
                 setAllOperations(result);
                 setIsLiveData(false);
-            } finally {
-                setLoading(false);
             }
+        } finally {
+            if (!silent) setLoading(false);
         }
+    }, []);
+
+    // ── Supabase real-time subscription for stp_operations table ──────────
+    const { isLive } = useSupabaseRealtime({
+        table: 'stp_operations',
+        channelName: 'stp-operations-rt',
+        onChanged: () => loadData(true),
+        enabled: isLiveData,
+    });
+
+    useEffect(() => {
         loadData();
 
         // Load saved filter preferences (selectedMonth is auto-derived from data range)
@@ -93,7 +114,7 @@ export default function STPPage() {
             if (savedPrefs.startMonth) setStartMonth(savedPrefs.startMonth);
             if (savedPrefs.endMonth) setEndMonth(savedPrefs.endMonth);
         }
-    }, []);
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     // Save filter preferences when they change
     useEffect(() => {
@@ -503,11 +524,30 @@ export default function STPPage() {
                     title="STP Plant"
                     description="Water Treatment Management"
                 />
-                <div className="flex flex-col items-end gap-1">
+                <div className="flex flex-col items-end gap-1.5">
                     <Badge variant={isLiveData ? "default" : "secondary"} className={`flex items-center gap-1.5 ${isLiveData ? "bg-mb-success text-white" : "bg-mb-secondary text-mb-secondary-foreground"}`}>
                         {isLiveData ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
                         {isLiveData ? "Live Data Connected" : "Demo Mode"}
                     </Badge>
+                    <div className="flex items-center gap-2 flex-wrap justify-end">
+                        {/* Real-time status badge */}
+                        <span className={cn(
+                            "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold transition-colors",
+                            isLive
+                                ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                                : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400"
+                        )}>
+                            <Radio className={cn("h-3 w-3", isLive && "animate-pulse")} />
+                            {isLive ? "Live" : "Offline"}
+                        </span>
+                        {/* Last updated timestamp */}
+                        {lastUpdated && (
+                            <span className="flex items-center gap-1 text-[11px] text-slate-400 dark:text-slate-500">
+                                <Clock className="h-3 w-3" />
+                                {lastUpdated.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                            </span>
+                        )}
+                    </div>
                 </div>
             </div>
 

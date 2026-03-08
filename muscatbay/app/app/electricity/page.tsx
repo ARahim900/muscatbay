@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { getElectricityMeters, MeterReading } from "@/lib/mock-data";
 import { getElectricityMetersFromSupabase } from "@/lib/supabase";
 import { ELECTRICITY_RATES } from "@/lib/config";
@@ -10,7 +10,7 @@ import { StatsGridSkeleton, ChartSkeleton, Skeleton } from "@/components/shared/
 import { PageHeader } from "@/components/shared/page-header";
 import { DateRangePicker } from "@/components/water/date-range-picker";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Zap, DollarSign, MapPin, TrendingUp, BarChart3, Database, Wifi, WifiOff, CalendarDays, RotateCcw, Search, Download, X } from "lucide-react";
+import { Zap, DollarSign, MapPin, TrendingUp, BarChart3, Database, Wifi, WifiOff, CalendarDays, RotateCcw, Search, Download, X, Clock, Radio } from "lucide-react";
 import { MultiSelectDropdown, SortIcon, TablePagination, ActiveFilterPills, TableToolbar, type PageSizeOption } from "@/components/shared/data-table";
 import { exportToCSV, getDateForFilename } from "@/lib/export-utils";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar, Cell, Legend } from "recharts";
@@ -19,6 +19,8 @@ import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { saveFilterPreferences, loadFilterPreferences } from "@/lib/filter-preferences";
+import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
+import { cn } from "@/lib/utils";
 
 // Use centralized config for rates
 const ratePerKWh = ELECTRICITY_RATES.RATE_PER_KWH;
@@ -30,6 +32,7 @@ export default function ElectricityPage() {
     const [dataSource, setDataSource] = useState<"supabase" | "mock">("mock");
     const [debugError, setDebugError] = useState<string | null>(null);
     const [readingsCount, setReadingsCount] = useState<number>(0);
+    const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
     const [analysisType, setAnalysisType] = useState<string>("All");
     const [dateRangeIndex, setDateRangeIndex] = useState<[number, number]>([0, 100]);
     // Date range state for Overview tab
@@ -46,24 +49,24 @@ export default function ElectricityPage() {
     // Year filter state
     const [selectedYear, setSelectedYear] = useState<string>("All");
 
-    useEffect(() => {
-        async function loadData() {
-            try {
-                // Try to fetch from Supabase first
-                const supabaseData = await getElectricityMetersFromSupabase();
-                if (supabaseData && supabaseData.length > 0) {
-                    setMeters(supabaseData);
-                    setDataSource("supabase");
-                    // Count total readings
-                    const totalReadings = supabaseData.reduce((sum, m) => sum + Object.keys(m.readings).length, 0);
-                    setReadingsCount(totalReadings);
-                } else {
-                    throw new Error("Supabase returned empty data");
-                }
-            } catch (e: any) {
+    // Stable fetch function — used both on mount and by real-time handler
+    const loadData = useCallback(async (silent = false) => {
+        if (!silent) setLoading(true);
+        try {
+            const supabaseData = await getElectricityMetersFromSupabase();
+            if (supabaseData && supabaseData.length > 0) {
+                setMeters(supabaseData);
+                setDataSource("supabase");
+                setLastUpdated(new Date());
+                const totalReadings = supabaseData.reduce((sum, m) => sum + Object.keys(m.readings).length, 0);
+                if (!silent) setReadingsCount(totalReadings);
+            } else if (!silent) {
+                throw new Error("Supabase returned empty data");
+            }
+        } catch (e: any) {
+            if (!silent) {
                 console.error("Supabase load error:", e);
                 setDebugError(e.message || "Unknown error");
-
                 try {
                     const mockData = await getElectricityMeters();
                     setMeters(mockData);
@@ -71,10 +74,21 @@ export default function ElectricityPage() {
                 } catch (mockError) {
                     // console.error("Failed to load mock data as well", mockError);
                 }
-            } finally {
-                setLoading(false);
             }
+        } finally {
+            if (!silent) setLoading(false);
         }
+    }, []);
+
+    // ── Supabase real-time subscription for electricity_meters table ────
+    const { isLive } = useSupabaseRealtime({
+        table: 'electricity_meters',
+        channelName: 'electricity-meters-rt',
+        onChanged: () => loadData(true),
+        enabled: dataSource === 'supabase',
+    });
+
+    useEffect(() => {
         loadData();
 
         // Load saved filter preferences
@@ -94,7 +108,7 @@ export default function ElectricityPage() {
             if (savedPrefs.analysisType) setAnalysisType(savedPrefs.analysisType);
             if (savedPrefs.dateRangeIndex) setDateRangeIndex(savedPrefs.dateRangeIndex);
         }
-    }, []);
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     // Save filter preferences when they change
     useEffect(() => {
@@ -552,12 +566,31 @@ export default function ElectricityPage() {
                     title="Electricity Monitoring"
                     description="Track power consumption and costs across all meters"
                 />
-                <div className="flex flex-col items-end gap-1">
+                <div className="flex flex-col items-end gap-1.5">
                     <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium ${dataSource === 'supabase' ? 'bg-mb-success-light text-mb-success dark:bg-mb-success-light/20 dark:text-mb-success-hover' : 'bg-mb-warning-light text-mb-warning dark:bg-mb-warning-light/20 dark:text-mb-warning'}`}>
                         {dataSource === 'supabase' ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
                         {dataSource === 'supabase' ? 'Live Data (Supabase)' : 'Demo Data (Local)'}
                     </div>
-                    {dataSource === 'supabase' && <span className="text-[10px] text-muted-foreground mr-2">{readingsCount} readings</span>}
+                    <div className="flex items-center gap-2 flex-wrap justify-end">
+                        {dataSource === 'supabase' && <span className="text-[10px] text-muted-foreground">{readingsCount} readings</span>}
+                        {/* Real-time status badge */}
+                        <span className={cn(
+                            "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold transition-colors",
+                            isLive
+                                ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                                : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400"
+                        )}>
+                            <Radio className={cn("h-3 w-3", isLive && "animate-pulse")} />
+                            {isLive ? "Live" : "Offline"}
+                        </span>
+                        {/* Last updated timestamp */}
+                        {lastUpdated && (
+                            <span className="flex items-center gap-1 text-[11px] text-slate-400 dark:text-slate-500">
+                                <Clock className="h-3 w-3" />
+                                {lastUpdated.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                            </span>
+                        )}
+                    </div>
                     {debugError && <span className="text-[10px] text-red-500 font-bold mr-2">Error: {debugError}</span>}
                 </div>
             </div>

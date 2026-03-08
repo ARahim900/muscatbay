@@ -14,6 +14,7 @@ import {
 } from "@/lib/water-accounts";
 import { getSupabaseClient } from "@/lib/supabase";
 import type { SupabaseDailyWaterConsumption } from "@/entities/water";
+import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
 import {
     AlertTriangle, ChevronLeft, ChevronRight, CalendarDays,
     Droplets, Building2, Zap, Activity, CheckCircle2,
@@ -536,14 +537,14 @@ function ZoneAnalyticsPanel({ reportData, monthData, selectedDay, month }: ZoneA
     }, [monthData]);
 
     // Active zone report row
-    const zoneRow    = reportData.zoneRows.find(r => r.zoneName === activeZoneName) ?? null;
-    const l2Value    = zoneRow?.l2Value ?? 0;
-    const l3Sum      = zoneRow?.l3Sum   ?? 0;
-    const diff       = zoneRow?.diff    ?? null;
+    const zoneRow = reportData.zoneRows.find(r => r.zoneName === activeZoneName) ?? null;
+    const l2Value = zoneRow?.l2Value ?? 0;
+    const l3Sum = zoneRow?.l3Sum ?? 0;
+    const diff = zoneRow?.diff ?? null;
 
     // Shared gauge scale (same as Zone Analysis page)
-    const gaugeMax   = Math.max(l2Value, l3Sum) * 1.2 || 100;
-    const lossColor  = diff !== null && diff > 0 ? '#C95D63' : '#5BA88B';
+    const gaugeMax = Math.max(l2Value, l3Sum) * 1.2 || 100;
+    const lossColor = diff !== null && diff > 0 ? '#C95D63' : '#5BA88B';
 
     // 31-day trend for the active zone
     const trendData = useMemo(() => {
@@ -584,10 +585,10 @@ function ZoneAnalyticsPanel({ reportData, monthData, selectedDay, month }: ZoneA
                             Select Zone
                         </span>
                         {ZONE_BULK_CONFIG.map(z => {
-                            const zr          = reportData.zoneRows.find(r => r.zoneName === z.zoneName);
-                            const isActive    = z.zoneName === activeZoneName;
+                            const zr = reportData.zoneRows.find(r => r.zoneName === z.zoneName);
+                            const isActive = z.zoneName === activeZoneName;
                             const hasHighLoss = zr?.isHighLoss;
-                            const hasNullL2   = zr?.isNullL2;
+                            const hasNullL2 = zr?.isNullL2;
                             return (
                                 <button
                                     key={z.zoneName}
@@ -605,7 +606,7 @@ function ZoneAnalyticsPanel({ reportData, monthData, selectedDay, month }: ZoneA
                                 >
                                     {z.zoneName}
                                     {!isActive && hasHighLoss && <span className="ml-1 text-[10px]">🔴</span>}
-                                    {!isActive && hasNullL2   && <span className="ml-1 text-[10px]">⚠️</span>}
+                                    {!isActive && hasNullL2 && <span className="ml-1 text-[10px]">⚠️</span>}
                                 </button>
                             );
                         })}
@@ -682,11 +683,11 @@ function ZoneAnalyticsPanel({ reportData, monthData, selectedDay, month }: ZoneA
                                 <AreaChart data={trendData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                                     <defs>
                                         <linearGradient id="gradDailyBulk" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%"  stopColor="#81D8D0" stopOpacity={0.4} />
+                                            <stop offset="5%" stopColor="#81D8D0" stopOpacity={0.4} />
                                             <stop offset="95%" stopColor="#81D8D0" stopOpacity={0} />
                                         </linearGradient>
                                         <linearGradient id="gradDailyL3" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%"  stopColor="#4E4456" stopOpacity={0.4} />
+                                            <stop offset="5%" stopColor="#4E4456" stopOpacity={0.4} />
                                             <stop offset="95%" stopColor="#4E4456" stopOpacity={0} />
                                         </linearGradient>
                                     </defs>
@@ -794,12 +795,11 @@ export function DailyWaterReport() {
         AVAILABLE_MONTHS[AVAILABLE_MONTHS.length - 1]
     );
     const [selectedDay, setSelectedDay] = useState(1);
-    const [status, setStatus]           = useState<ReportStatus>('loading');
-    const [monthData, setMonthData]     = useState<SupabaseDailyWaterConsumption[]>([]);
-    const [reportData, setReportData]   = useState<ReportData | null>(null);
-    const [errorMsg, setErrorMsg]       = useState('');
+    const [status, setStatus] = useState<ReportStatus>('loading');
+    const [monthData, setMonthData] = useState<SupabaseDailyWaterConsumption[]>([]);
+    const [reportData, setReportData] = useState<ReportData | null>(null);
+    const [errorMsg, setErrorMsg] = useState('');
     const [lastFetched, setLastFetched] = useState<Date | null>(null);
-    const [isLive, setIsLive]           = useState(false);
 
     // ── Build report from cached month rows for any day (no network call) ──────
     const computeReport = useCallback((rows: SupabaseDailyWaterConsumption[], day: number) => {
@@ -868,34 +868,12 @@ export function DailyWaterReport() {
     }, [selectedMonth]); // eslint-disable-line react-hooks/exhaustive-deps
 
     // ── Supabase real-time subscription ───────────────────────────────────────
-    useEffect(() => {
-        const client = getSupabaseClient();
-        if (!client) return;
-
-        const channel = client
-            .channel(`water-daily-rt-${selectedMonth}`)
-            .on(
-                'postgres_changes',
-                {
-                    event: '*',
-                    schema: 'public',
-                    table: 'water_daily_consumption',
-                    filter: `month=eq.${selectedMonth}`,
-                },
-                () => {
-                    // Silent background refresh — report updates automatically
-                    fetchMonth(selectedMonth, true);
-                }
-            )
-            .subscribe(subStatus => {
-                setIsLive(subStatus === 'SUBSCRIBED');
-            });
-
-        return () => {
-            setIsLive(false);
-            client.removeChannel(channel);
-        };
-    }, [selectedMonth, fetchMonth]);
+    const { isLive } = useSupabaseRealtime({
+        table: 'water_daily_consumption',
+        channelName: `water-daily-rt-${selectedMonth}`,
+        filter: `month=eq.${selectedMonth}`,
+        onChanged: () => fetchMonth(selectedMonth, true),
+    });
 
     // ── Controls bar ──────────────────────────────────────────────────────────
     return (
@@ -998,7 +976,7 @@ export function DailyWaterReport() {
 
             {/* ─── Content ─────────────────────────────────────────────────── */}
             {status === 'loading' && !reportData && <LoadingState />}
-            {status === 'error'   && <ErrorState message={errorMsg} onRetry={() => fetchMonth(selectedMonth)} />}
+            {status === 'error' && <ErrorState message={errorMsg} onRetry={() => fetchMonth(selectedMonth)} />}
 
             {reportData && (
                 <>
@@ -1012,6 +990,35 @@ export function DailyWaterReport() {
                     <BuildingBulkTable rows={reportData.buildingRows} />
                     <DCMetersTable rows={reportData.dcRows} />
                     <SummaryCard data={reportData} day={selectedDay} month={selectedMonth} />
+
+                    {/* Grafana Daily Account Consumption Details */}
+                    <Card className="glass-card overflow-hidden">
+                        <CardHeader className="glass-card-header p-4 sm:p-5">
+                            <SectionHeader
+                                icon={<Activity className="h-5 w-5" />}
+                                title="Daily Account Consumption Details"
+                                subtitle="Live Grafana panel — daily readings per customer meter for the selected month"
+                                color="teal"
+                            />
+                        </CardHeader>
+                        <CardContent className="p-0">
+                            <iframe
+                                className="w-full"
+                                src={`https://grafana.nec-oman.com/d-solo/aMGcGVPHz/daily-account-consumption-details?orgId=7&var-BillMonth=${(() => {
+                                    const monthMap: Record<string, string> = {
+                                        'Jan': '01', 'Feb': '02', 'Mar': '03', 'Apr': '04',
+                                        'May': '05', 'Jun': '06', 'Jul': '07', 'Aug': '08',
+                                        'Sep': '09', 'Oct': '10', 'Nov': '11', 'Dec': '12',
+                                    };
+                                    const [mon, yr] = selectedMonth.split('-');
+                                    return `${monthMap[mon] ?? '01'}20${yr}`;
+                                })()}&panelId=17&kiosk`}
+                                frameBorder="0"
+                                width="100%"
+                                style={{ background: 'transparent', border: 'none', height: '800px' }}
+                            />
+                        </CardContent>
+                    </Card>
                 </>
             )}
         </div>

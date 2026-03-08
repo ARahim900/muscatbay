@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import {
     getContractorTrackerData,
     isSupabaseConfigured,
@@ -10,9 +10,11 @@ import { StatsGridSkeleton, TableSkeleton, Skeleton } from "@/components/shared/
 import { PageHeader } from "@/components/shared/page-header";
 import { StatsGrid } from "@/components/shared/stats-grid";
 import { Badge } from "@/components/ui/badge";
-import { Search, Plus, Users, DollarSign, AlertCircle, Download, Calendar, Building2, FileText, RefreshCw, Wifi, WifiOff, X } from "lucide-react";
+import { Search, Plus, Users, DollarSign, AlertCircle, Download, Calendar, Building2, FileText, RefreshCw, Wifi, WifiOff, X, Clock, Radio } from "lucide-react";
 import { exportToCSV, getDateForFilename } from "@/lib/export-utils";
 import { MultiSelectDropdown, SortIcon, TablePagination, ActiveFilterPills, TableToolbar, type PageSizeOption } from "@/components/shared/data-table";
+import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
+import { cn } from "@/lib/utils";
 
 export default function ContractorsPage() {
     const [loading, setLoading] = useState(true);
@@ -29,31 +31,46 @@ export default function ContractorsPage() {
     // Data state for new Contractor_Tracker table
     const [contractors, setContractors] = useState<ContractorTracker[]>([]);
     const [dataSource, setDataSource] = useState<'supabase' | 'none'>('none');
+    const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
-    useEffect(() => {
-        async function loadData() {
-            setLoading(true);
+    // Stable fetch function — used both on mount and by real-time handler
+    const loadData = useCallback(async (silent = false) => {
+        if (!silent) setLoading(true);
 
-            // Check if Supabase is configured
-            if (!isSupabaseConfigured()) {
+        if (!isSupabaseConfigured()) {
+            if (!silent) {
                 setDataSource('none');
                 setLoading(false);
-                return;
             }
+            return;
+        }
 
-            try {
-                const data = await getContractorTrackerData();
-                setContractors(data);
-                setDataSource(data.length > 0 ? 'supabase' : 'none');
-            } catch (e) {
+        try {
+            const data = await getContractorTrackerData();
+            setContractors(data);
+            setDataSource(data.length > 0 ? 'supabase' : 'none');
+            if (data.length > 0) setLastUpdated(new Date());
+        } catch (e) {
+            if (!silent) {
                 console.error("Failed to load contractors data", e);
                 setDataSource('none');
-            } finally {
-                setLoading(false);
             }
+        } finally {
+            if (!silent) setLoading(false);
         }
-        loadData();
     }, []);
+
+    // ── Supabase real-time subscription for Contractor_Tracker table ────
+    const { isLive } = useSupabaseRealtime({
+        table: 'Contractor_Tracker',
+        channelName: 'contractor-tracker-rt',
+        onChanged: () => loadData(true),
+        enabled: dataSource === 'supabase',
+    });
+
+    useEffect(() => {
+        loadData();
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     const getStatusColor = (status: string | null) => {
         const s = status?.toLowerCase() || '';
@@ -260,10 +277,27 @@ export default function ContractorsPage() {
                     description="Monitor AMC service providers, contracts, and renewal plans"
                     action={{ label: "Add Contractor", icon: Plus }}
                 />
-                <div className="flex flex-col items-end gap-1">
+                <div className="flex flex-col items-end gap-1.5">
                     <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium ${dataSource === 'supabase' ? 'bg-mb-success-light text-mb-success dark:bg-mb-success-light/20 dark:text-mb-success-hover' : 'bg-mb-warning-light text-mb-warning dark:bg-mb-warning-light/20 dark:text-mb-warning'}`}>
                         {dataSource === 'supabase' ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
                         {dataSource === 'supabase' ? 'Connected to Supabase' : 'No Data Connection'}
+                    </div>
+                    <div className="flex items-center gap-2 flex-wrap justify-end">
+                        <span className={cn(
+                            "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold transition-colors",
+                            isLive
+                                ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                                : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400"
+                        )}>
+                            <Radio className={cn("h-3 w-3", isLive && "animate-pulse")} />
+                            {isLive ? "Live" : "Offline"}
+                        </span>
+                        {lastUpdated && (
+                            <span className="flex items-center gap-1 text-[11px] text-slate-400 dark:text-slate-500">
+                                <Clock className="h-3 w-3" />
+                                {lastUpdated.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                            </span>
+                        )}
                     </div>
                 </div>
             </div>

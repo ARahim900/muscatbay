@@ -1,7 +1,7 @@
 ﻿"use client";
 import { cn } from "@/lib/utils";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
     Table,
@@ -16,7 +16,7 @@ import {
     BarChart3, TestTube2, Database, Network, Minus, TrendingUp,
     Gauge, Calendar, Activity, Loader2, CalendarDays,
     Wifi, WifiOff, Building2, Home, Layers, AlertCircle, MapPin,
-    TrendingDown, ChevronDown, ChevronRight
+    TrendingDown, ChevronDown, ChevronRight, Clock, Radio,
 } from "lucide-react";
 import {
     AreaChart, Area, XAxis, YAxis, Tooltip,
@@ -32,6 +32,7 @@ import {
 // Supabase imports
 import { getWaterMetersFromSupabase, getWaterLossDailyFromSupabase, getDailyWaterConsumptionFromSupabase, isSupabaseConfigured } from "@/lib/supabase";
 import type { WaterLossDaily, DailyWaterConsumption } from "@/entities/water";
+import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
 import { networkData, NetworkNode } from "@/lib/water-network-data";
 import { buildDailyHierarchy, DailyMeterNode } from "@/lib/water-daily-hierarchy";
 
@@ -149,36 +150,50 @@ export default function WaterPage() {
     const [waterMeters, setWaterMeters] = useState<WaterMeter[]>(MOCK_WATER_METERS);
     const [isLoading, setIsLoading] = useState(true);
     const [dataSource, setDataSource] = useState<'supabase' | 'mock'>('mock');
+    const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
-    // Fetch water data from Supabase on mount
-    useEffect(() => {
-        async function fetchWaterData() {
-            setIsLoading(true);
-            try {
-                if (isSupabaseConfigured()) {
-                    const supabaseData = await getWaterMetersFromSupabase();
-                    if (supabaseData.length > 0) {
-                        setWaterMeters(supabaseData);
-                        setDataSource('supabase');
-                        console.log(`Water data loaded from Supabase: ${supabaseData.length} meters`);
-                    } else {
-                        setWaterMeters(MOCK_WATER_METERS);
-                        setDataSource('mock');
-                        console.log('No Supabase data, using mock data');
-                    }
-                } else {
+    // Stable fetch function — used both on mount and by real-time handler
+    const fetchWaterData = useCallback(async (silent = false) => {
+        if (!silent) setIsLoading(true);
+        try {
+            if (isSupabaseConfigured()) {
+                const supabaseData = await getWaterMetersFromSupabase();
+                if (supabaseData.length > 0) {
+                    setWaterMeters(supabaseData);
+                    setDataSource('supabase');
+                    setLastUpdated(new Date());
+                    if (!silent) console.log(`Water data loaded from Supabase: ${supabaseData.length} meters`);
+                } else if (!silent) {
                     setWaterMeters(MOCK_WATER_METERS);
                     setDataSource('mock');
-                    console.log('Supabase not configured, using mock data');
+                    console.log('No Supabase data, using mock data');
                 }
-            } catch (error) {
+            } else if (!silent) {
+                setWaterMeters(MOCK_WATER_METERS);
+                setDataSource('mock');
+                console.log('Supabase not configured, using mock data');
+            }
+        } catch (error) {
+            if (!silent) {
                 console.error('Error fetching water data:', error);
                 setWaterMeters(MOCK_WATER_METERS);
                 setDataSource('mock');
-            } finally {
-                setIsLoading(false);
             }
+        } finally {
+            if (!silent) setIsLoading(false);
         }
+    }, []);
+
+    // ── Supabase real-time subscription for Water System table ─────────────
+    const { isLive } = useSupabaseRealtime({
+        table: 'Water System',
+        channelName: 'water-system-rt',
+        onChanged: () => fetchWaterData(true),
+        enabled: dataSource === 'supabase',
+    });
+
+    // Fetch on mount + load saved preferences
+    useEffect(() => {
         fetchWaterData();
 
         // Load saved filter preferences
@@ -198,7 +213,7 @@ export default function WaterPage() {
             if (savedPrefs.selectedZone) setSelectedZone(savedPrefs.selectedZone);
             if (savedPrefs.selectedType) setSelectedType(savedPrefs.selectedType);
         }
-    }, []);
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     // Save filter preferences when they change
     useEffect(() => {
@@ -459,10 +474,29 @@ export default function WaterPage() {
                     title="Water System Analysis"
                     description="Comprehensive water consumption and loss analysis across the network"
                 />
-                <div className="flex flex-col items-end gap-1">
+                <div className="flex flex-col items-end gap-1.5">
                     <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium ${dataSource === 'supabase' ? 'bg-mb-success-light text-mb-success dark:bg-mb-success-light/20 dark:text-mb-success-hover' : 'bg-mb-warning-light text-mb-warning dark:bg-mb-warning-light/20 dark:text-mb-warning'}`}>
                         {dataSource === 'supabase' ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
                         {dataSource === 'supabase' ? 'Live Data (Supabase)' : 'Demo Data (Local)'}
+                    </div>
+                    <div className="flex items-center gap-2 flex-wrap justify-end">
+                        {/* Real-time status badge */}
+                        <span className={cn(
+                            "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold transition-colors",
+                            isLive
+                                ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                                : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400"
+                        )}>
+                            <Radio className={cn("h-3 w-3", isLive && "animate-pulse")} />
+                            {isLive ? "Live" : "Offline"}
+                        </span>
+                        {/* Last updated timestamp */}
+                        {lastUpdated && (
+                            <span className="flex items-center gap-1 text-[11px] text-slate-400 dark:text-slate-500">
+                                <Clock className="h-3 w-3" />
+                                {lastUpdated.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                            </span>
+                        )}
                     </div>
                 </div>
             </div>
