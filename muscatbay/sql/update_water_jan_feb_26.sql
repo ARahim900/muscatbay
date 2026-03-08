@@ -1,6 +1,14 @@
--- Update Water Readings Jan/Feb 2026
+-- =====================================================
+-- Corrected Water Readings Jan/Feb 2026
 -- Execute this script in the Supabase SQL Editor
+-- Generated: 2026-03-04
+-- =====================================================
 
+-- Ensure columns exist
+ALTER TABLE "Water System" ADD COLUMN IF NOT EXISTS jan_26 REAL;
+ALTER TABLE "Water System" ADD COLUMN IF NOT EXISTS feb_26 REAL;
+
+-- Zone 05 / Zone 03A / Zone 03B / Zone 08 Individual Meters
 UPDATE "Water System" SET "jan_26" = 97, "feb_26" = 73 WHERE "account_number" = '4300001';
 UPDATE "Water System" SET "jan_26" = 29, "feb_26" = 24 WHERE "account_number" = '4300002';
 UPDATE "Water System" SET "jan_26" = 26, "feb_26" = 23 WHERE "account_number" = '4300003';
@@ -176,6 +184,8 @@ UPDATE "Water System" SET "jan_26" = 4, "feb_26" = 11 WHERE "account_number" = '
 UPDATE "Water System" SET "jan_26" = 2, "feb_26" = 80 WHERE "account_number" = '4300173';
 UPDATE "Water System" SET "jan_26" = 9, "feb_26" = 12 WHERE "account_number" = '4300174';
 UPDATE "Water System" SET "jan_26" = 0, "feb_26" = 0 WHERE "account_number" = '4300175';
+
+-- Building Bulk Meters (Zone 3A)
 UPDATE "Water System" SET "jan_26" = 74, "feb_26" = 59 WHERE "account_number" = '4300176';
 UPDATE "Water System" SET "jan_26" = 56, "feb_26" = 60 WHERE "account_number" = '4300177';
 UPDATE "Water System" SET "jan_26" = 114, "feb_26" = 58 WHERE "account_number" = '4300178';
@@ -186,8 +196,12 @@ UPDATE "Water System" SET "jan_26" = 35, "feb_26" = 23 WHERE "account_number" = 
 UPDATE "Water System" SET "jan_26" = 78, "feb_26" = 65 WHERE "account_number" = '4300183';
 UPDATE "Water System" SET "jan_26" = 57, "feb_26" = 33 WHERE "account_number" = '4300184';
 UPDATE "Water System" SET "jan_26" = 129, "feb_26" = 141 WHERE "account_number" = '4300185';
+
+-- Building Bulk Meters (Zone 3B)
 UPDATE "Water System" SET "jan_26" = 37, "feb_26" = 26 WHERE "account_number" = '4300186';
 UPDATE "Water System" SET "jan_26" = 82, "feb_26" = 41 WHERE "account_number" = '4300187';
+
+-- Zone 08 Villas
 UPDATE "Water System" SET "jan_26" = 0, "feb_26" = 0 WHERE "account_number" = '4300188';
 UPDATE "Water System" SET "jan_26" = 0, "feb_26" = 0 WHERE "account_number" = '4300189';
 UPDATE "Water System" SET "jan_26" = 1, "feb_26" = 2 WHERE "account_number" = '4300190';
@@ -201,6 +215,8 @@ UPDATE "Water System" SET "jan_26" = 0, "feb_26" = 0 WHERE "account_number" = '4
 UPDATE "Water System" SET "jan_26" = 92, "feb_26" = 88 WHERE "account_number" = '4300198';
 UPDATE "Water System" SET "jan_26" = 72, "feb_26" = 108 WHERE "account_number" = '4300199';
 UPDATE "Water System" SET "jan_26" = 156, "feb_26" = 152 WHERE "account_number" = '4300200';
+
+-- Building Common Meters (Zone 3B)
 UPDATE "Water System" SET "jan_26" = 0, "feb_26" = 1 WHERE "account_number" = '4300201';
 UPDATE "Water System" SET "jan_26" = 0, "feb_26" = 0 WHERE "account_number" = '4300202';
 UPDATE "Water System" SET "jan_26" = 0, "feb_26" = 0 WHERE "account_number" = '4300203';
@@ -210,6 +226,8 @@ UPDATE "Water System" SET "jan_26" = 0, "feb_26" = 0 WHERE "account_number" = '4
 UPDATE "Water System" SET "jan_26" = 0, "feb_26" = 0 WHERE "account_number" = '4300207';
 UPDATE "Water System" SET "jan_26" = 0, "feb_26" = 1 WHERE "account_number" = '4300208';
 UPDATE "Water System" SET "jan_26" = 1, "feb_26" = 2 WHERE "account_number" = '4300209';
+
+-- D-53 Apartments
 UPDATE "Water System" SET "jan_26" = 16, "feb_26" = 10 WHERE "account_number" = '4300210';
 UPDATE "Water System" SET "jan_26" = 8, "feb_26" = 6 WHERE "account_number" = '4300211';
 UPDATE "Water System" SET "jan_26" = 0, "feb_26" = 0 WHERE "account_number" = '4300212';
@@ -218,6 +236,8 @@ UPDATE "Water System" SET "jan_26" = 4, "feb_26" = 0 WHERE "account_number" = '4
 UPDATE "Water System" SET "jan_26" = 3, "feb_26" = 1 WHERE "account_number" = '4300215';
 UPDATE "Water System" SET "jan_26" = 11, "feb_26" = 3 WHERE "account_number" = '4300216';
 UPDATE "Water System" SET "jan_26" = 3, "feb_26" = 3 WHERE "account_number" = '4300217';
+
+-- D-54 Apartments
 UPDATE "Water System" SET "jan_26" = 14, "feb_26" = 11 WHERE "account_number" = '4300218';
 UPDATE "Water System" SET "jan_26" = 2, "feb_26" = 2 WHERE "account_number" = '4300219';
 UPDATE "Water System" SET "jan_26" = 1, "feb_26" = 2 WHERE "account_number" = '4300220';
@@ -228,6 +248,8 @@ UPDATE "Water System" SET "jan_26" = 8, "feb_26" = 6 WHERE "account_number" = '4
 UPDATE "Water System" SET "jan_26" = 0, "feb_26" = 0 WHERE "account_number" = '4300225';
 UPDATE "Water System" SET "jan_26" = 14, "feb_26" = 12 WHERE "account_number" = '4300226';
 UPDATE "Water System" SET "jan_26" = 5, "feb_26" = 26 WHERE "account_number" = '4300227';
+
+-- D-55 Apartments
 UPDATE "Water System" SET "jan_26" = 0, "feb_26" = 0 WHERE "account_number" = '4300228';
 UPDATE "Water System" SET "jan_26" = 19, "feb_26" = 7 WHERE "account_number" = '4300229';
 UPDATE "Water System" SET "jan_26" = 3, "feb_26" = 2 WHERE "account_number" = '4300230';
@@ -237,6 +259,8 @@ UPDATE "Water System" SET "jan_26" = 0, "feb_26" = 0 WHERE "account_number" = '4
 UPDATE "Water System" SET "jan_26" = 6, "feb_26" = 6 WHERE "account_number" = '4300234';
 UPDATE "Water System" SET "jan_26" = 0, "feb_26" = 0 WHERE "account_number" = '4300235';
 UPDATE "Water System" SET "jan_26" = 5, "feb_26" = 0 WHERE "account_number" = '4300236';
+
+-- D-56 Apartments
 UPDATE "Water System" SET "jan_26" = 0, "feb_26" = 3 WHERE "account_number" = '4300237';
 UPDATE "Water System" SET "jan_26" = 1, "feb_26" = 0 WHERE "account_number" = '4300238';
 UPDATE "Water System" SET "jan_26" = 2, "feb_26" = 2 WHERE "account_number" = '4300239';
@@ -247,6 +271,8 @@ UPDATE "Water System" SET "jan_26" = 3, "feb_26" = 11 WHERE "account_number" = '
 UPDATE "Water System" SET "jan_26" = 9, "feb_26" = 15 WHERE "account_number" = '4300244';
 UPDATE "Water System" SET "jan_26" = 13, "feb_26" = 3 WHERE "account_number" = '4300245';
 UPDATE "Water System" SET "jan_26" = 0, "feb_26" = 0 WHERE "account_number" = '4300246';
+
+-- D-57 Apartments
 UPDATE "Water System" SET "jan_26" = 1, "feb_26" = 0 WHERE "account_number" = '4300247';
 UPDATE "Water System" SET "jan_26" = 4, "feb_26" = 5 WHERE "account_number" = '4300248';
 UPDATE "Water System" SET "jan_26" = 12, "feb_26" = 12 WHERE "account_number" = '4300249';
@@ -257,12 +283,16 @@ UPDATE "Water System" SET "jan_26" = 0, "feb_26" = 5 WHERE "account_number" = '4
 UPDATE "Water System" SET "jan_26" = 5, "feb_26" = 0 WHERE "account_number" = '4300254';
 UPDATE "Water System" SET "jan_26" = 30, "feb_26" = 16 WHERE "account_number" = '4300255';
 UPDATE "Water System" SET "jan_26" = 8, "feb_26" = 9 WHERE "account_number" = '4300256';
+
+-- D-58 Apartments
 UPDATE "Water System" SET "jan_26" = 3, "feb_26" = 5 WHERE "account_number" = '4300257';
 UPDATE "Water System" SET "jan_26" = 0, "feb_26" = 0 WHERE "account_number" = '4300258';
 UPDATE "Water System" SET "jan_26" = 4, "feb_26" = 5 WHERE "account_number" = '4300259';
 UPDATE "Water System" SET "jan_26" = 3, "feb_26" = 2 WHERE "account_number" = '4300260';
 UPDATE "Water System" SET "jan_26" = 1, "feb_26" = 2 WHERE "account_number" = '4300261';
 UPDATE "Water System" SET "jan_26" = 18, "feb_26" = 17 WHERE "account_number" = '4300262';
+
+-- D-59 Apartments
 UPDATE "Water System" SET "jan_26" = 7, "feb_26" = 5 WHERE "account_number" = '4300263';
 UPDATE "Water System" SET "jan_26" = 1, "feb_26" = 0 WHERE "account_number" = '4300264';
 UPDATE "Water System" SET "jan_26" = 9, "feb_26" = 4 WHERE "account_number" = '4300265';
@@ -271,12 +301,16 @@ UPDATE "Water System" SET "jan_26" = 0, "feb_26" = 0 WHERE "account_number" = '4
 UPDATE "Water System" SET "jan_26" = 9, "feb_26" = 10 WHERE "account_number" = '4300268';
 UPDATE "Water System" SET "jan_26" = 1, "feb_26" = 5 WHERE "account_number" = '4300269';
 UPDATE "Water System" SET "jan_26" = 17, "feb_26" = 9 WHERE "account_number" = '4300270';
+
+-- D-60 Apartments
 UPDATE "Water System" SET "jan_26" = 8, "feb_26" = 7 WHERE "account_number" = '4300271';
 UPDATE "Water System" SET "jan_26" = 3, "feb_26" = 7 WHERE "account_number" = '4300272';
 UPDATE "Water System" SET "jan_26" = 7, "feb_26" = 15 WHERE "account_number" = '4300273';
 UPDATE "Water System" SET "jan_26" = 0, "feb_26" = 0 WHERE "account_number" = '4300274';
 UPDATE "Water System" SET "jan_26" = 0, "feb_26" = 0 WHERE "account_number" = '4300275';
 UPDATE "Water System" SET "jan_26" = 59, "feb_26" = 45 WHERE "account_number" = '4300276';
+
+-- D-61 Apartments
 UPDATE "Water System" SET "jan_26" = 0, "feb_26" = 2 WHERE "account_number" = '4300277';
 UPDATE "Water System" SET "jan_26" = 9, "feb_26" = 9 WHERE "account_number" = '4300278';
 UPDATE "Water System" SET "jan_26" = 1, "feb_26" = 2 WHERE "account_number" = '4300279';
@@ -287,6 +321,8 @@ UPDATE "Water System" SET "jan_26" = 9, "feb_26" = 7 WHERE "account_number" = '4
 UPDATE "Water System" SET "jan_26" = 3, "feb_26" = 4 WHERE "account_number" = '4300284';
 UPDATE "Water System" SET "jan_26" = 0, "feb_26" = 0 WHERE "account_number" = '4300285';
 UPDATE "Water System" SET "jan_26" = 16, "feb_26" = 14 WHERE "account_number" = '4300286';
+
+-- Zone 08 additional villas
 UPDATE "Water System" SET "jan_26" = 156, "feb_26" = 144 WHERE "account_number" = '4300287';
 UPDATE "Water System" SET "jan_26" = 0, "feb_26" = 0 WHERE "account_number" = '4300288';
 UPDATE "Water System" SET "jan_26" = 113, "feb_26" = 125 WHERE "account_number" = '4300289';
@@ -294,6 +330,8 @@ UPDATE "Water System" SET "jan_26" = 91, "feb_26" = 92 WHERE "account_number" = 
 UPDATE "Water System" SET "jan_26" = 108, "feb_26" = 119 WHERE "account_number" = '4300291';
 UPDATE "Water System" SET "jan_26" = 47, "feb_26" = 52 WHERE "account_number" = '4300292';
 UPDATE "Water System" SET "jan_26" = 16, "feb_26" = 14 WHERE "account_number" = '4300293';
+
+-- Services and Infrastructure
 UPDATE "Water System" SET "jan_26" = -1, "feb_26" = 0 WHERE "account_number" = '4300294';
 UPDATE "Water System" SET "jan_26" = 152, "feb_26" = 159 WHERE "account_number" = '4300295';
 UPDATE "Water System" SET "jan_26" = 30, "feb_26" = 25 WHERE "account_number" = '4300296';
@@ -311,6 +349,8 @@ UPDATE "Water System" SET "jan_26" = 262, "feb_26" = 223 WHERE "account_number" 
 UPDATE "Water System" SET "jan_26" = 0, "feb_26" = 0 WHERE "account_number" = '4300308';
 UPDATE "Water System" SET "jan_26" = 1, "feb_26" = 1 WHERE "account_number" = '4300309';
 UPDATE "Water System" SET "jan_26" = 4, "feb_26" = 4 WHERE "account_number" = '4300310';
+
+-- Building Bulk Meters (Zone 3B continued)
 UPDATE "Water System" SET "jan_26" = 96, "feb_26" = 65 WHERE "account_number" = '4300311';
 UPDATE "Water System" SET "jan_26" = 50, "feb_26" = 74 WHERE "account_number" = '4300312';
 UPDATE "Water System" SET "jan_26" = 74, "feb_26" = 55 WHERE "account_number" = '4300313';
@@ -320,6 +360,8 @@ UPDATE "Water System" SET "jan_26" = 64, "feb_26" = 64 WHERE "account_number" = 
 UPDATE "Water System" SET "jan_26" = 62, "feb_26" = 50 WHERE "account_number" = '4300317';
 UPDATE "Water System" SET "jan_26" = 99, "feb_26" = 96 WHERE "account_number" = '4300318';
 UPDATE "Water System" SET "jan_26" = 46, "feb_26" = 40 WHERE "account_number" = '4300319';
+
+-- Irrigation and other services
 UPDATE "Water System" SET "jan_26" = 0, "feb_26" = 0 WHERE "account_number" = '4300320';
 UPDATE "Water System" SET "jan_26" = 0, "feb_26" = 0 WHERE "account_number" = '4300321';
 UPDATE "Water System" SET "jan_26" = 0, "feb_26" = 0 WHERE "account_number" = '4300322';
@@ -334,7 +376,10 @@ UPDATE "Water System" SET "jan_26" = 0, "feb_26" = 0 WHERE "account_number" = '4
 UPDATE "Water System" SET "jan_26" = 0, "feb_26" = 0 WHERE "account_number" = '4300331';
 UPDATE "Water System" SET "jan_26" = 86, "feb_26" = 76 WHERE "account_number" = '4300332';
 UPDATE "Water System" SET "jan_26" = 0, "feb_26" = 0 WHERE "account_number" = '4300333';
-UPDATE "Water System" SET "jan_26" = 35824, "feb_26" = 13931 WHERE "account_number" = '4300334';
+
+-- CORRECTED: Hotel Main Building jan_26 was 35824, now 17722
+UPDATE "Water System" SET "jan_26" = 17722, "feb_26" = 13931 WHERE "account_number" = '4300334';
+
 UPDATE "Water System" SET "jan_26" = 249, "feb_26" = 153 WHERE "account_number" = '4300335';
 UPDATE "Water System" SET "jan_26" = 40, "feb_26" = 71 WHERE "account_number" = '4300336';
 UPDATE "Water System" SET "jan_26" = 36, "feb_26" = 31 WHERE "account_number" = '4300337';
@@ -342,12 +387,18 @@ UPDATE "Water System" SET "jan_26" = 16, "feb_26" = 4 WHERE "account_number" = '
 UPDATE "Water System" SET "jan_26" = 0, "feb_26" = 0 WHERE "account_number" = '4300339';
 UPDATE "Water System" SET "jan_26" = 124, "feb_26" = 75 WHERE "account_number" = '4300340';
 UPDATE "Water System" SET "jan_26" = 0, "feb_26" = 0 WHERE "account_number" = '4300341';
+
+-- Zone Bulks
 UPDATE "Water System" SET "jan_26" = 2336, "feb_26" = 2425 WHERE "account_number" = '4300342';
 UPDATE "Water System" SET "jan_26" = 2616, "feb_26" = 8545 WHERE "account_number" = '4300343';
 UPDATE "Water System" SET "jan_26" = 5996, "feb_26" = 5374 WHERE "account_number" = '4300344';
 UPDATE "Water System" SET "jan_26" = 4598, "feb_26" = 3348 WHERE "account_number" = '4300345';
 UPDATE "Water System" SET "jan_26" = 2271, "feb_26" = 2193 WHERE "account_number" = '4300346';
+
+-- Other
 UPDATE "Water System" SET "jan_26" = 917, "feb_26" = 697 WHERE "account_number" = '4300347';
 UPDATE "Water System" SET "jan_26" = 833, "feb_26" = 1094 WHERE "account_number" = '4300348';
 UPDATE "Water System" SET "jan_26" = 1352, "feb_26" = 1452 WHERE "account_number" = '4300349';
-UPDATE "Water System" SET "jan_26" = 41320, "feb_26" = 34758 WHERE "account_number" = 'C43659';
+
+-- CORRECTED: Main Bulk jan_26 was 41320, now 33666
+UPDATE "Water System" SET "jan_26" = 33666, "feb_26" = 34758 WHERE "account_number" = 'C43659';

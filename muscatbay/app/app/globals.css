@@ -30,6 +30,9 @@
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
 
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+
   --color-component: var(--component);
   --color-component-foreground: var(--component-foreground);
 
@@ -92,6 +95,10 @@
   --destructive-foreground: #FFFFFF;
 
   /* Borders & Inputs */
+  /* Popover */
+  --popover: #FFFFFF;
+  --popover-foreground: #0A0A0A;
+
   --border: #E5E7EB;
   --border-light: #E5E5E5;
   --input: #E5E7EB;
@@ -179,6 +186,8 @@
   --accent: #00D2B3;
   --accent-foreground: #1F2937;
   --destructive: #EF4444;
+  --popover: #1E293B;
+  --popover-foreground: #F1F5F9;
   --border: rgba(255, 255, 255, 0.1);
   --input: rgba(255, 255, 255, 0.1);
   --ring: #00D2B3;

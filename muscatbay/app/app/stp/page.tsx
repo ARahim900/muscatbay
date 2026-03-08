@@ -151,9 +151,15 @@ export default function STPPage() {
         if (allMonths.length > 0) {
             const startValid = startMonth && allMonths.includes(startMonth);
             const endValid = endMonth && allMonths.includes(endMonth);
+            const latestMonth = allMonths[allMonths.length - 1];
+
             if (!startValid || !endValid) {
+                // If saved prefs are invalid, reset to full range
                 setStartMonth(allMonths[0]);
-                setEndMonth(allMonths[allMonths.length - 1]);
+                setEndMonth(latestMonth);
+            } else if (endMonth !== latestMonth) {
+                // If new data is available beyond the saved end month, auto-expand to latest
+                setEndMonth(latestMonth);
             }
         }
     }, [allMonths, startMonth, endMonth]);
@@ -711,7 +717,7 @@ export default function STPPage() {
                                 <SelectTrigger className="w-[200px]">
                                     <SelectValue placeholder="Select month" />
                                 </SelectTrigger>
-                                <SelectContent>
+                                <SelectContent alignItemWithTrigger={false}>
                                     {availableMonths.map(month => (
                                         <SelectItem key={month} value={month}>
                                             {format(new Date(`${month}-01`), "MMMM yyyy")}
