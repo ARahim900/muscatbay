@@ -8,11 +8,13 @@ import { SidebarProvider } from "@/components/layout/sidebar-context";
 import { ClientLayout } from "@/components/layout/client-layout";
 import { Providers } from "@/components/providers";
 import { usePathname } from "next/navigation";
+import { Inter } from "next/font/google";
 
-// Use system font stack instead of Google Fonts to avoid build issues
-const inter = {
-  className: 'font-sans'
-};
+const inter = Inter({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-sans",
+});
 
 // Auth pages that don't need the main layout
 const AUTH_PAGES = ["/login", "/signup", "/forgot-password", "/auth"];
@@ -33,7 +35,7 @@ export default function RootLayout({
           <title>Muscat Bay Operations</title>
           <meta name="description" content="Operations Dashboard for Muscat Bay" />
         </head>
-        <body className={inter.className} suppressHydrationWarning>
+        <body className={`${inter.className} ${inter.variable}`} suppressHydrationWarning>
           <ToastProvider>
             {children}
           </ToastProvider>
@@ -48,7 +50,7 @@ export default function RootLayout({
         <title>Muscat Bay Operations</title>
         <meta name="description" content="Operations Dashboard for Muscat Bay" />
       </head>
-      <body className={inter.className} suppressHydrationWarning>
+      <body className={`${inter.className} ${inter.variable}`} suppressHydrationWarning>
         <Providers>
           <ToastProvider>
             <AuthProvider>

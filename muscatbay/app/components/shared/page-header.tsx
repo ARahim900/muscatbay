@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { LucideIcon } from "lucide-react";
 import { ReactNode } from "react";
 import { Breadcrumbs } from "./breadcrumbs";
+import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 
 interface PageHeaderProps {
     title: string;
@@ -20,8 +21,15 @@ interface PageHeaderProps {
 }
 
 export function PageHeader({ title, description, className, showBreadcrumbs = true, action, children }: PageHeaderProps) {
+    const headerRef = useScrollAnimation<HTMLDivElement>({
+        y: 20,
+        opacity: 0,
+        duration: 0.4,
+        stagger: 0.1,
+    });
+
     return (
-        <div className={cn("flex flex-col gap-2", className)}>
+        <div ref={headerRef} className={cn("flex flex-col gap-2", className)}>
             {showBreadcrumbs && <Breadcrumbs className="mb-1" />}
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                 <div>
