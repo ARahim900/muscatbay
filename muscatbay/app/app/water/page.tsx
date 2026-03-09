@@ -50,6 +50,7 @@ import { TabNavigation } from "@/components/shared/tab-navigation";
 import { StatsGrid } from "@/components/shared/stats-grid";
 import { StatsGridSkeleton, ChartSkeleton, Skeleton } from "@/components/shared/skeleton";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { saveFilterPreferences, loadFilterPreferences } from "@/lib/filter-preferences";
 
 // Dashboard view type
@@ -145,6 +146,7 @@ export default function WaterPage() {
     const [endMonth, setEndMonth] = useState('Jan-26');
     const [selectedZone, setSelectedZone] = useState('Zone_01_(FM)');
     const [selectedType, setSelectedType] = useState('All');
+    const [selectedYear, setSelectedYear] = useState<string>('All');
 
     // Supabase data state
     const [waterMeters, setWaterMeters] = useState<WaterMeter[]>(MOCK_WATER_METERS);
@@ -204,6 +206,7 @@ export default function WaterPage() {
             endMonth?: string;
             selectedZone?: string;
             selectedType?: string;
+            selectedYear?: string;
         }>('water');
         if (savedPrefs) {
             if (savedPrefs.dashboardView) setDashboardView(savedPrefs.dashboardView);
@@ -212,6 +215,7 @@ export default function WaterPage() {
             if (savedPrefs.endMonth) setEndMonth(savedPrefs.endMonth);
             if (savedPrefs.selectedZone) setSelectedZone(savedPrefs.selectedZone);
             if (savedPrefs.selectedType) setSelectedType(savedPrefs.selectedType);
+            if (savedPrefs.selectedYear) setSelectedYear(savedPrefs.selectedYear);
         }
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -223,9 +227,29 @@ export default function WaterPage() {
             startMonth,
             endMonth,
             selectedZone,
-            selectedType
+            selectedType,
+            selectedYear
         });
-    }, [dashboardView, monthlyTab, startMonth, endMonth, selectedZone, selectedType]);
+    }, [dashboardView, monthlyTab, startMonth, endMonth, selectedZone, selectedType, selectedYear]);
+
+    // Extract available years from AVAILABLE_MONTHS
+    const availableYears = useMemo(() => {
+        const yearsSet = new Set<string>();
+        AVAILABLE_MONTHS.forEach(month => {
+            const year = '20' + month.split('-')[1];
+            yearsSet.add(year);
+        });
+        return ['All', ...Array.from(yearsSet).sort()];
+    }, []);
+
+    // Filter months by selected year
+    const filteredMonthsByYear = useMemo(() => {
+        if (selectedYear === 'All') return AVAILABLE_MONTHS;
+        return AVAILABLE_MONTHS.filter(month => {
+            const year = '20' + month.split('-')[1];
+            return year === selectedYear;
+        });
+    }, [selectedYear]);
 
     // Calculate analysis data using the loaded meters
     const rangeAnalysis = useMemo(() =>
@@ -284,8 +308,9 @@ export default function WaterPage() {
     };
 
     const handleResetRange = () => {
-        setStartMonth('Jan-24');
-        setEndMonth('Jan-26');
+        setSelectedYear('All');
+        setStartMonth(AVAILABLE_MONTHS[0]);
+        setEndMonth(AVAILABLE_MONTHS[AVAILABLE_MONTHS.length - 1]);
     };
 
     // Consumption by type chart data
@@ -532,13 +557,51 @@ export default function WaterPage() {
                     {monthlyTab !== 'database' && (
                         <Card className="glass-card">
                             <CardContent className="p-4 sm:p-5 md:p-6">
-                                <DateRangePicker
-                                    startMonth={startMonth}
-                                    endMonth={endMonth}
-                                    availableMonths={AVAILABLE_MONTHS}
-                                    onRangeChange={handleRangeChange}
-                                    onReset={handleResetRange}
-                                />
+                                <div className="flex flex-col gap-4">
+                                    {/* Year Selector Row */}
+                                    <div className="flex items-center justify-between flex-wrap gap-4">
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-sm font-medium text-slate-600 dark:text-slate-400">Filter by Year:</span>
+                                            <div className="flex items-center gap-2">
+                                                {availableYears.map((year) => (
+                                                    <Button
+                                                        key={year}
+                                                        variant={selectedYear === year ? "default" : "outline"}
+                                                        size="sm"
+                                                        onClick={() => {
+                                                            setSelectedYear(year);
+                                                            if (year === 'All') {
+                                                                setStartMonth(AVAILABLE_MONTHS[0]);
+                                                                setEndMonth(AVAILABLE_MONTHS[AVAILABLE_MONTHS.length - 1]);
+                                                            } else {
+                                                                const yearMonths = AVAILABLE_MONTHS.filter(m => '20' + m.split('-')[1] === year);
+                                                                if (yearMonths.length > 0) {
+                                                                    setStartMonth(yearMonths[0]);
+                                                                    setEndMonth(yearMonths[yearMonths.length - 1]);
+                                                                }
+                                                            }
+                                                        }}
+                                                        className={`rounded-full px-4 ${selectedYear === year ? "bg-[#4E4456] hover:bg-[#4E4456]/90 text-white dark:bg-[#81D8D0] dark:hover:bg-[#81D8D0]/90 dark:text-slate-900" : "border-slate-200 dark:border-slate-700"}`}
+                                                    >
+                                                        {year}
+                                                    </Button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                        <Badge variant="outline" className="px-3 py-1.5 text-sm font-normal">
+                                            {filteredMonthsByYear.length} Months Available
+                                        </Badge>
+                                    </div>
+
+                                    {/* Date Range Picker */}
+                                    <DateRangePicker
+                                        startMonth={startMonth}
+                                        endMonth={endMonth}
+                                        availableMonths={filteredMonthsByYear}
+                                        onRangeChange={handleRangeChange}
+                                        onReset={handleResetRange}
+                                    />
+                                </div>
                             </CardContent>
                         </Card>
                     )}

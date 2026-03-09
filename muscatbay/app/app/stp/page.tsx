@@ -36,6 +36,7 @@ import { LiquidTooltip } from "../../components/charts/liquid-tooltip";
 import { format } from "date-fns";
 import { saveFilterPreferences, loadFilterPreferences } from "@/lib/filter-preferences";
 import { DateRangePicker } from "@/components/water/date-range-picker";
+import { Button } from "@/components/ui/button";
 import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
 import { cn } from "@/lib/utils";
 
@@ -53,6 +54,7 @@ export default function STPPage() {
     // Date range filter state
     const [startMonth, setStartMonth] = useState<string>('');
     const [endMonth, setEndMonth] = useState<string>('');
+    const [selectedYear, setSelectedYear] = useState<string>('All');
 
     // Daily Operations Log sorting and pagination state
     const [logSortField, setLogSortField] = useState<string>('date');
@@ -108,11 +110,13 @@ export default function STPPage() {
             activeTab?: string;
             startMonth?: string;
             endMonth?: string;
+            selectedYear?: string;
         }>('stp');
         if (savedPrefs) {
             if (savedPrefs.activeTab) setActiveTab(savedPrefs.activeTab);
             if (savedPrefs.startMonth) setStartMonth(savedPrefs.startMonth);
             if (savedPrefs.endMonth) setEndMonth(savedPrefs.endMonth);
+            if (savedPrefs.selectedYear) setSelectedYear(savedPrefs.selectedYear);
         }
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -122,8 +126,9 @@ export default function STPPage() {
             activeTab,
             startMonth,
             endMonth,
+            selectedYear,
         });
-    }, [activeTab, startMonth, endMonth]);
+    }, [activeTab, startMonth, endMonth, selectedYear]);
 
     // Get all unique months for the slider (in MMM-YY format for display, sorted chronologically)
     const allMonths = useMemo(() => {
@@ -145,6 +150,25 @@ export default function STPPage() {
         });
     }, [allOperations]);
 
+
+    // Extract available years from data
+    const availableYears = useMemo(() => {
+        const yearsSet = new Set<string>();
+        allMonths.forEach(month => {
+            const year = '20' + month.split('-')[1];
+            yearsSet.add(year);
+        });
+        return ['All', ...Array.from(yearsSet).sort()];
+    }, [allMonths]);
+
+    // Filter months by selected year
+    const filteredMonthsByYear = useMemo(() => {
+        if (selectedYear === 'All') return allMonths;
+        return allMonths.filter(month => {
+            const year = '20' + month.split('-')[1];
+            return year === selectedYear;
+        });
+    }, [allMonths, selectedYear]);
 
     // Initialize start and end months when data loads, and validate saved prefs against actual data
     useEffect(() => {
@@ -475,6 +499,7 @@ export default function STPPage() {
 
     // Reset date range to full
     const handleResetRange = () => {
+        setSelectedYear('All');
         if (allMonths.length > 0) {
             setStartMonth(allMonths[0]);
             setEndMonth(allMonths[allMonths.length - 1]);
@@ -574,13 +599,51 @@ export default function STPPage() {
                     {allMonths.length > 0 && (
                         <Card>
                             <CardContent className="pt-6">
-                                <DateRangePicker
-                                    startMonth={startMonth || allMonths[0]}
-                                    endMonth={endMonth || allMonths[allMonths.length - 1]}
-                                    availableMonths={allMonths}
-                                    onRangeChange={handleRangeChange}
-                                    onReset={handleResetRange}
-                                />
+                                <div className="flex flex-col gap-4">
+                                    {/* Year Selector Row */}
+                                    <div className="flex items-center justify-between flex-wrap gap-4">
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-sm font-medium text-slate-600 dark:text-slate-400">Filter by Year:</span>
+                                            <div className="flex items-center gap-2">
+                                                {availableYears.map((year) => (
+                                                    <Button
+                                                        key={year}
+                                                        variant={selectedYear === year ? "default" : "outline"}
+                                                        size="sm"
+                                                        onClick={() => {
+                                                            setSelectedYear(year);
+                                                            if (year === 'All') {
+                                                                setStartMonth(allMonths[0]);
+                                                                setEndMonth(allMonths[allMonths.length - 1]);
+                                                            } else {
+                                                                const yearMonths = allMonths.filter(m => '20' + m.split('-')[1] === year);
+                                                                if (yearMonths.length > 0) {
+                                                                    setStartMonth(yearMonths[0]);
+                                                                    setEndMonth(yearMonths[yearMonths.length - 1]);
+                                                                }
+                                                            }
+                                                        }}
+                                                        className={`rounded-full px-4 ${selectedYear === year ? "bg-[#4E4456] hover:bg-[#4E4456]/90 text-white dark:bg-[#81D8D0] dark:hover:bg-[#81D8D0]/90 dark:text-slate-900" : "border-slate-200 dark:border-slate-700"}`}
+                                                    >
+                                                        {year}
+                                                    </Button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                        <Badge variant="outline" className="px-3 py-1.5 text-sm font-normal">
+                                            {filteredMonthsByYear.length} Months Available
+                                        </Badge>
+                                    </div>
+
+                                    {/* Date Range Picker */}
+                                    <DateRangePicker
+                                        startMonth={startMonth || allMonths[0]}
+                                        endMonth={endMonth || allMonths[allMonths.length - 1]}
+                                        availableMonths={filteredMonthsByYear}
+                                        onRangeChange={handleRangeChange}
+                                        onReset={handleResetRange}
+                                    />
+                                </div>
                             </CardContent>
                         </Card>
                     )}

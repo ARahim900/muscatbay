@@ -382,6 +382,7 @@ export default function ElectricityPage() {
     };
 
     const handleResetRange = () => {
+        setSelectedYear('All');
         if (allMonths.length > 0) {
             setStartMonth(allMonths[0]);
             setEndMonth(allMonths[allMonths.length - 1]);

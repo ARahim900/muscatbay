@@ -192,6 +192,9 @@ export function useDashboardData() {
             const currentIncome = (Math.floor(stpLatestData.inlet / 15) * TANKER_FEE) + (stpLatestData.tse * TSE_SAVING_RATE);
             const stpEconomicTrend = calcTrend(currentIncome, prevIncome);
 
+            const formattedElecMonth = latestMonth ? latestMonth.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : "Latest Month";
+            const formattedStpMonth = stpLatestMonth ? format(new Date(stpLatestMonth + "-01"), "MMM yy") : "Latest Month";
+
             setStats([
                 {
                     label: "WATER PRODUCTION",
@@ -205,7 +208,7 @@ export function useDashboardData() {
                 {
                     label: "ELECTRICITY USAGE",
                     value: `${(elecTotal / 1000).toFixed(1)} MWh`,
-                    subtitle: latestMonth || "Latest Month",
+                    subtitle: formattedElecMonth,
                     icon: null,
                     variant: "warning" as const,
                     trend: elecTrend.trend,
@@ -213,8 +216,8 @@ export function useDashboardData() {
                 },
                 {
                     label: "STP INLET FLOW",
-                    value: `${(stpTotalInlet / 1000).toFixed(1)}k m³`,
-                    subtitle: "Total Processed",
+                    value: `${(stpLatestData.inlet / 1000).toFixed(1)}k m³`,
+                    subtitle: formattedStpMonth,
                     icon: null,
                     variant: "success" as const,
                     trend: stpInletTrend.trend,
@@ -222,8 +225,8 @@ export function useDashboardData() {
                 },
                 {
                     label: "TSE OUTPUT",
-                    value: `${(stpTotalTSE / 1000).toFixed(1)}k m³`,
-                    subtitle: "Recycled Water",
+                    value: `${(stpLatestData.tse / 1000).toFixed(1)}k m³`,
+                    subtitle: formattedStpMonth,
                     icon: null,
                     variant: "primary" as const,
                     trend: stpTseTrend.trend,
@@ -231,8 +234,8 @@ export function useDashboardData() {
                 },
                 {
                     label: "STP ECONOMIC IMPACT",
-                    value: `${(stpTotalIncome / 1000).toFixed(1)}k OMR`,
-                    subtitle: "Income + Savings",
+                    value: `${(currentIncome / 1000).toFixed(1)}k OMR`,
+                    subtitle: formattedStpMonth,
                     icon: null,
                     variant: "success" as const,
                     trend: stpEconomicTrend.trend,
