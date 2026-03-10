@@ -119,16 +119,14 @@ function calculateZoneAnalysisFromData(meters: WaterMeter[], zone: string, month
 
     const bulkMeter = meters.find(m => m.accountNumber === config.bulkMeterAccount);
     const bulkMeterReading = bulkMeter ? getConsumption(bulkMeter, month) : 0;
-    const zoneMeters = meters.filter(m => m.zone === zone && (m.level === 'L3' || m.level === 'L4'));
-    const l3Meters = zoneMeters.filter(m => m.level === 'L3' && !m.type.includes('Building_Bulk'));
-    const l4Meters = zoneMeters.filter(m => m.level === 'L4');
-    const individualTotal = l3Meters.reduce((sum, m) => sum + getConsumption(m, month), 0) + l4Meters.reduce((sum, m) => sum + getConsumption(m, month), 0);
+    const l3Meters = meters.filter(m => m.zone === zone && m.level === 'L3');
+    const individualTotal = l3Meters.reduce((sum, m) => sum + getConsumption(m, month), 0);
 
     const loss = bulkMeterReading - individualTotal;
     const lossPercentage = bulkMeterReading > 0 ? Math.round((loss / bulkMeterReading) * 1000) / 10 : 0;
     const efficiency = bulkMeterReading > 0 ? Math.round((individualTotal / bulkMeterReading) * 1000) / 10 : 0;
 
-    return { zone, zoneName: config.name, bulkMeterReading, individualTotal, loss, lossPercentage, efficiency, meterCount: zoneMeters.length };
+    return { zone, zoneName: config.name, bulkMeterReading, individualTotal, loss, lossPercentage, efficiency, meterCount: l3Meters.length };
 }
 
 function getAllZonesAnalysisFromData(meters: WaterMeter[], month: string) {
@@ -725,8 +723,8 @@ export default function WaterPage() {
                                 </h2>
                                 <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
                                     <span className="text-mb-secondary font-medium">Zone Bulk</span> = L2 only •
-                                    <span className="text-mb-primary font-medium"> L3/L4 total</span> = L3 + L4 (metered) •
-                                    <span className="text-mb-danger font-medium"> Difference</span> = L2 - (L3 + L4)
+                                    <span className="text-mb-primary font-medium"> L3 Total</span> = Sum of all L3 meters in zone •
+                                    <span className="text-mb-danger font-medium"> Difference</span> = L2 − L3
                                 </p>
                             </div>
 
@@ -744,8 +742,8 @@ export default function WaterPage() {
                                 <LiquidProgressRing
                                     value={zoneAnalysis.individualTotal}
                                     max={Math.max(zoneAnalysis.bulkMeterReading, zoneAnalysis.individualTotal) * 1.2 || 100}
-                                    label="Individual Meters Sum"
-                                    sublabel="Recorded by individual meters"
+                                    label="L3 Individual Total"
+                                    sublabel="Sum of all L3 meters in zone"
                                     color="#4E4456"
                                     size={160}
                                     showPercentage={false}
@@ -767,7 +765,7 @@ export default function WaterPage() {
                             <Card className="glass-card">
                                 <CardHeader className="glass-card-header p-4 sm:p-5 md:p-6">
                                     <CardTitle className="text-base sm:text-lg">Zone Consumption Trend</CardTitle>
-                                    <p className="text-xs sm:text-sm text-slate-500">Monthly comparison of L2 (Bulk) vs L3 + L4 totals</p>
+                                    <p className="text-xs sm:text-sm text-slate-500">Monthly comparison of L2 (Bulk) vs L3 totals</p>
                                 </CardHeader>
                                 <CardContent className="p-4 sm:p-5 md:p-6 pt-0">
                                     <div className="h-[200px] sm:h-[250px] md:h-[300px] w-full">
@@ -812,14 +810,14 @@ export default function WaterPage() {
                                 <CardHeader className="glass-card-header p-4 sm:p-5 md:p-6">
                                     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                                         <div>
-                                            <CardTitle className="text-base sm:text-lg">Individual Meters - Zone {ZONE_CONFIG.find(z => z.code === selectedZone)?.name}</CardTitle>
-                                            <p className="text-xs sm:text-sm text-slate-500">All individual meters (L3 Villas + L4 Building Apts) in this zone</p>
+                                            <CardTitle className="text-base sm:text-lg">L3 Meters - Zone {ZONE_CONFIG.find(z => z.code === selectedZone)?.name}</CardTitle>
+                                            <p className="text-xs sm:text-sm text-slate-500">All L3 meters in this zone</p>
                                         </div>
                                     </div>
                                 </CardHeader>
                                 <CardContent className="p-4 sm:p-5 md:p-6 pt-0">
                                     <MeterTable
-                                        meters={waterMeters.filter(m => m.zone === selectedZone && (m.level === 'L3' || m.level === 'L4'))}
+                                        meters={waterMeters.filter(m => m.zone === selectedZone && m.level === 'L3')}
                                         months={AVAILABLE_MONTHS}
                                         pageSize={10}
                                     />
@@ -903,7 +901,7 @@ export default function WaterPage() {
                                 <CardContent className="p-0">
                                     <iframe
                                         className="airtable-embed w-full"
-                                        src="https://airtable.com/embed/appvmeThHxvhcbgcx/shrqFMNu0bROIBfVe?viewControls=on"
+                                        src="https://airtable.com/embed/appvmeThHxvhcbgcx/shrc2NpaEz7nXwZWm"
                                         width="100%"
                                         loading="lazy"
                                         title="Water Operations Database"
