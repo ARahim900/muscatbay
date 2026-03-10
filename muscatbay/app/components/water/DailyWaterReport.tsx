@@ -1769,16 +1769,10 @@ export function DailyWaterReport() {
                                                 "px-3 py-1.5 rounded-full text-sm font-medium transition-all border",
                                                 isActive
                                                     ? "bg-primary text-white border-primary shadow-sm"
-                                                    : hasHighLoss
-                                                        ? "bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800 hover:bg-red-100"
-                                                        : hasNullL2
-                                                            ? "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800 hover:bg-amber-100"
-                                                            : "bg-white text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700"
+                                                    : "bg-white text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700"
                                             )}
                                         >
                                             {z.zoneName}
-                                            {!isActive && hasHighLoss && <span className="ml-1 text-[10px]">🔴</span>}
-                                            {!isActive && hasNullL2 && <span className="ml-1 text-[10px]">⚠️</span>}
                                         </button>
                                     );
                                 })}

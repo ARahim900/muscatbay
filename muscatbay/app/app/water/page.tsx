@@ -529,8 +529,8 @@ export default function WaterPage() {
                 onTabChange={(key) => setDashboardView(key as 'monthly' | 'daily')}
                 variant="secondary"
                 tabs={[
-                    { key: 'monthly', label: 'Monthly Dashboard', icon: BarChart3 },
-                    { key: 'daily', label: 'Daily Report', icon: CalendarDays },
+                    { key: 'monthly', label: 'Monthly', icon: BarChart3 },
+                    { key: 'daily', label: 'Daily', icon: CalendarDays },
                 ]}
             />
 
