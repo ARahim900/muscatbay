@@ -34,6 +34,7 @@ export default function RootLayout({
         <head>
           <title>Muscat Bay Operations</title>
           <meta name="description" content="Operations Dashboard for Muscat Bay" />
+          <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
         </head>
         <body className={`${inter.className} ${inter.variable}`} suppressHydrationWarning>
           <ToastProvider>
@@ -49,6 +50,7 @@ export default function RootLayout({
       <head>
         <title>Muscat Bay Operations</title>
         <meta name="description" content="Operations Dashboard for Muscat Bay" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
       </head>
       <body className={`${inter.className} ${inter.variable}`} suppressHydrationWarning>
         <Providers>

@@ -11,7 +11,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { DateRangePicker } from "@/components/water/date-range-picker";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Zap, DollarSign, MapPin, TrendingUp, BarChart3, Database, Wifi, WifiOff, CalendarDays, RotateCcw, Search, Download, X, Clock, Radio } from "lucide-react";
-import { MultiSelectDropdown, SortIcon, TablePagination, ActiveFilterPills, TableToolbar, type PageSizeOption } from "@/components/shared/data-table";
+import { MultiSelectDropdown, SortIcon, TablePagination, ActiveFilterPills, TableToolbar, StatusBadge, type PageSizeOption } from "@/components/shared/data-table";
 import { exportToCSV, getDateForFilename } from "@/lib/export-utils";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar, Cell, Legend } from "recharts";
 import { LiquidTooltip } from "../../components/charts/liquid-tooltip";
@@ -379,6 +379,8 @@ export default function ElectricityPage() {
     const handleRangeChange = (start: string, end: string) => {
         setStartMonth(start);
         setEndMonth(end);
+        // Clear year filter when user manually adjusts range via slider
+        setSelectedYear('All');
     };
 
     const handleResetRange = () => {
@@ -664,13 +666,13 @@ export default function ElectricityPage() {
 
                     <StatsGrid stats={stats} />
 
-                    <div className="grid gap-6 lg:grid-cols-5">
+                    <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-5">
                         <Card className="lg:col-span-3">
                             <CardHeader>
                                 <CardTitle>Monthly Consumption Trend</CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <div className="h-[300px]">
+                                <div className="h-[220px] sm:h-[260px] md:h-[300px]">
                                     <ResponsiveContainer width="100%" height="100%">
                                         <AreaChart data={filteredMonthlyData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                                             <defs>
@@ -695,7 +697,7 @@ export default function ElectricityPage() {
                                 <CardTitle>Consumption by Type</CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <div className="h-[300px]">
+                                <div className="h-[220px] sm:h-[260px] md:h-[300px]">
                                     <ResponsiveContainer width="100%" height="100%">
                                         <BarChart data={consumptionByType} layout="vertical" margin={{ left: 10 }}>
                                             <XAxis type="number" hide />
@@ -812,7 +814,7 @@ export default function ElectricityPage() {
                             <CardTitle className="text-lg">Monthly Trend for {analysisType === "All" ? "All Types (Total)" : analysisType}</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <div className="h-[350px]">
+                            <div className="h-[250px] sm:h-[300px] md:h-[350px]">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <AreaChart data={analysisData.chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                                         <defs>
@@ -837,7 +839,7 @@ export default function ElectricityPage() {
                             <CardTitle className="text-lg">Top 10 {analysisType === "All" ? "Overall" : analysisType} Consumers</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <div className="h-[400px]">
+                            <div className="h-[300px] sm:h-[350px] md:h-[400px]">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <BarChart
                                         data={analysisData.topConsumers}
@@ -919,31 +921,29 @@ export default function ElectricityPage() {
                             </div>
                         </CardHeader>
                         <CardContent>
-                            <div className="overflow-auto max-h-[600px] rounded-md border">
-                                <table className="w-full text-sm">
-                                    <thead className="bg-slate-50/80 dark:bg-slate-800/60 sticky top-0 backdrop-blur-sm z-10">
+                            <div className="overflow-auto max-h-[calc(100vh-20rem)] sm:max-h-[600px] rounded-md border">
+                                <table className="w-full text-sm min-w-[600px]">
+                                    <thead className="bg-slate-50/70 dark:bg-slate-800/50 sticky top-0 backdrop-blur-sm z-10">
                                         <tr>
-                                            <th className="py-3 px-4 text-left font-semibold text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 w-[250px]">Name</th>
-                                            <th className="py-3 px-4 text-left font-semibold text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">Account #</th>
-                                            <th className="py-3 px-4 text-left font-semibold text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">Type</th>
-                                            <th className="py-3 px-4 text-right font-semibold text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">Consumption (Range)</th>
-                                            <th className="py-3 px-4 text-right font-semibold text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">Cost (Range)</th>
+                                            <th className="py-2.5 sm:py-3 px-3 sm:px-5 text-left font-medium text-[12px] sm:text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 w-[200px] sm:w-[250px]">Name</th>
+                                            <th className="py-2.5 sm:py-3 px-3 sm:px-5 text-left font-medium text-[12px] sm:text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">Account #</th>
+                                            <th className="py-2.5 sm:py-3 px-3 sm:px-5 text-left font-medium text-[12px] sm:text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">Type</th>
+                                            <th className="py-2.5 sm:py-3 px-3 sm:px-5 text-right font-medium text-[12px] sm:text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">Consumption</th>
+                                            <th className="py-2.5 sm:py-3 px-3 sm:px-5 text-right font-medium text-[12px] sm:text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">Cost</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y">
                                         {analysisData.tableData.map((meter) => (
-                                            <tr key={meter.id} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
-                                                <td className="py-3 px-4 font-medium text-slate-800 dark:text-slate-200">{meter.name}</td>
-                                                <td className="py-3 px-4 text-slate-500 dark:text-slate-400 text-xs font-mono">{meter.account_number}</td>
-                                                <td className="py-3 px-4">
-                                                    <Badge variant="secondary" className="font-normal text-xs bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-                                                        {meter.type}
-                                                    </Badge>
+                                            <tr key={meter.id} className="border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors">
+                                                <td className="py-3.5 px-5 font-medium text-slate-800 dark:text-slate-200">{meter.name}</td>
+                                                <td className="py-3.5 px-5 text-slate-500 dark:text-slate-400 text-xs font-mono">{meter.account_number}</td>
+                                                <td className="py-3.5 px-5">
+                                                    <StatusBadge label={meter.type} color="blue" />
                                                 </td>
-                                                <td className="py-3 px-4 text-right font-mono font-medium text-slate-700 dark:text-slate-300">
+                                                <td className="py-3.5 px-5 text-right font-mono font-medium text-slate-700 dark:text-slate-300">
                                                     {meter.rangeConsumption.toLocaleString()} <span className="text-xs text-slate-400">kWh</span>
                                                 </td>
-                                                <td className="py-3 px-4 text-right font-mono font-medium text-mb-success dark:text-mb-success-hover">
+                                                <td className="py-3.5 px-5 text-right font-mono font-medium text-mb-success dark:text-mb-success-hover">
                                                     {meter.rangeCost.toLocaleString('en-US', { minimumFractionDigits: 2 })} <span className="text-xs text-slate-400">OMR</span>
                                                 </td>
                                             </tr>
@@ -985,7 +985,7 @@ export default function ElectricityPage() {
                                     placeholder="Search meters..."
                                     value={dbSearchTerm}
                                     onChange={(e) => { setDbSearchTerm(e.target.value); setDbCurrentPage(1); }}
-                                    className="pl-10 pr-4 py-2 w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+                                    className="pl-10 pr-4 py-2 w-full rounded-lg border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-sm placeholder:text-slate-400 shadow-sm transition-shadow focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40"
                                 />
                             </div>
 
@@ -1055,49 +1055,47 @@ export default function ElectricityPage() {
                         ]} />
 
                         {/* Table */}
-                        <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
+                        <div className="overflow-x-auto rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900 shadow-sm">
                             <table className="w-full text-sm border-collapse">
                                 <thead>
-                                    <tr className="bg-slate-50/80 dark:bg-slate-800/60">
-                                        <th className="text-left py-3 px-4 font-semibold text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors sticky left-0 bg-slate-50/80 dark:bg-slate-800/60 z-20 min-w-[200px]" onClick={() => handleDbSort('label')}>
+                                    <tr className="bg-slate-50/70 dark:bg-slate-800/50">
+                                        <th className="text-left py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors sticky left-0 bg-slate-50/70 dark:bg-slate-800/50 z-20 min-w-[200px]" onClick={() => handleDbSort('label')}>
                                             <div className="flex items-center gap-1.5">Name <SortIcon field="label" currentSortField={dbSortField} currentSortDirection={dbSortDirection} /></div>
                                         </th>
-                                        <th className="text-left py-3 px-4 font-semibold text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" onClick={() => handleDbSort('account')}>
+                                        <th className="text-left py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" onClick={() => handleDbSort('account')}>
                                             <div className="flex items-center gap-1.5">Account # <SortIcon field="account" currentSortField={dbSortField} currentSortDirection={dbSortDirection} /></div>
                                         </th>
-                                        <th className="text-left py-3 px-4 font-semibold text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" onClick={() => handleDbSort('type')}>
+                                        <th className="text-left py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" onClick={() => handleDbSort('type')}>
                                             <div className="flex items-center gap-1.5">Type <SortIcon field="type" currentSortField={dbSortField} currentSortDirection={dbSortDirection} /></div>
                                         </th>
                                         {displayMonths.map(month => (
-                                            <th key={month} className="text-right py-3 px-4 font-semibold text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors min-w-[90px] whitespace-nowrap" onClick={() => handleDbSort(month)}>
+                                            <th key={month} className="text-right py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors min-w-[90px] whitespace-nowrap" onClick={() => handleDbSort(month)}>
                                                 <div className="flex items-center justify-end gap-1.5">{month} <SortIcon field={month} currentSortField={dbSortField} currentSortDirection={dbSortDirection} /></div>
                                             </th>
                                         ))}
-                                        <th className="text-right py-3 px-4 font-semibold text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 border-l border-slate-200 dark:border-slate-700 min-w-[100px]">Total (kWh)</th>
+                                        <th className="text-right py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 border-l border-slate-200 dark:border-slate-700 min-w-[100px]">Total (kWh)</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {dbPaginatedMeters.map((meter) => {
                                         const sum = Object.values(meter.readings).reduce((a, b) => a + b, 0);
                                         return (
-                                            <tr key={meter.id} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
-                                                <td className="py-3 px-4 font-medium text-slate-800 dark:text-slate-200 sticky left-0 bg-white dark:bg-slate-900 z-10">{meter.name}</td>
-                                                <td className="py-3 px-4 text-slate-600 dark:text-slate-400 font-mono text-xs">{meter.account_number}</td>
-                                                <td className="py-3 px-4">
-                                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
-                                                        {meter.type}
-                                                    </span>
+                                            <tr key={meter.id} className="border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors">
+                                                <td className="py-3.5 px-5 font-medium text-slate-800 dark:text-slate-200 sticky left-0 bg-white dark:bg-slate-900 z-10">{meter.name}</td>
+                                                <td className="py-3.5 px-5 text-slate-600 dark:text-slate-400 font-mono text-xs">{meter.account_number}</td>
+                                                <td className="py-3.5 px-5">
+                                                    <StatusBadge label={meter.type} color="blue" />
                                                 </td>
                                                 {displayMonths.map(month => {
                                                     const val = meter.readings[month] || 0;
                                                     const anomaly = getAnomalyClass(val, meter);
                                                     return (
-                                                        <td key={month} className={`py-3 px-4 text-right font-mono text-xs ${anomaly || 'text-slate-700 dark:text-slate-300'}`}>
+                                                        <td key={month} className={`py-3.5 px-5 text-right font-mono text-xs ${anomaly || 'text-slate-700 dark:text-slate-300'}`}>
                                                             {val > 0 ? val.toLocaleString('en-US', { maximumFractionDigits: 1 }) : <span className="text-slate-300 dark:text-slate-600">—</span>}
                                                         </td>
                                                     );
                                                 })}
-                                                <td className="py-3 px-4 text-right font-mono text-xs font-semibold text-slate-800 dark:text-slate-200 border-l border-slate-100 dark:border-slate-800">{sum.toLocaleString('en-US', { maximumFractionDigits: 1 })}</td>
+                                                <td className="py-3.5 px-5 text-right font-mono text-xs font-semibold text-slate-800 dark:text-slate-200 border-l border-slate-100 dark:border-slate-800">{sum.toLocaleString('en-US', { maximumFractionDigits: 1 })}</td>
                                             </tr>
                                         );
                                     })}

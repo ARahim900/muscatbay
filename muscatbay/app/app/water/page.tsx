@@ -305,6 +305,8 @@ export default function WaterPage() {
     const handleRangeChange = (start: string, end: string) => {
         setStartMonth(start);
         setEndMonth(end);
+        // Clear year filter when user manually adjusts range via slider
+        setSelectedYear('All');
     };
 
     const handleResetRange = () => {
@@ -906,7 +908,7 @@ export default function WaterPage() {
                                         loading="lazy"
                                         title="Water Operations Database"
                                         sandbox="allow-scripts allow-popups allow-top-navigation-by-user-activation allow-forms allow-same-origin"
-                                        style={{ background: 'transparent', border: 'none', height: '1200px' }}
+                                        style={{ background: 'transparent', border: 'none', height: 'clamp(600px, 80vh, 1200px)' }}
                                     />
                                 </CardContent>
                             </Card>

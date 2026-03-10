@@ -33,9 +33,9 @@ export function PageHeader({ title, description, className, showBreadcrumbs = tr
             {showBreadcrumbs && <Breadcrumbs className="mb-1" />}
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                 <div>
-                    <h2 className="text-3xl font-bold tracking-tight">{title}</h2>
+                    <h2 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight">{title}</h2>
                     {description && (
-                        <p className="text-muted-foreground mt-1">{description}</p>
+                        <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 sm:mt-1">{description}</p>
                     )}
                 </div>
                 <div className="flex items-center gap-2">

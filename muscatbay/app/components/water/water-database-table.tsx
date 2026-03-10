@@ -8,10 +8,7 @@ import {
 } from 'lucide-react';
 import { WaterMeter, getConsumption, ZONE_CONFIG } from '@/lib/water-data';
 import { cn } from '@/lib/utils';
-import { MultiSelectDropdown } from '@/components/shared/data-table/multi-select-dropdown';
-import { SortIcon } from '@/components/shared/data-table/sort-icon';
-import { TablePagination } from '@/components/shared/data-table/table-pagination';
-import { TableToolbar } from '@/components/shared/data-table/table-toolbar';
+import { MultiSelectDropdown, SortIcon, TablePagination, TableToolbar } from '@/components/shared/data-table';
 
 interface WaterDatabaseTableProps {
     meters: WaterMeter[];
@@ -102,7 +99,7 @@ function ColumnVisibilityDropdown({
         <div className="relative">
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 text-slate-700 dark:text-slate-300 transition-colors"
+                className="flex items-center gap-2 px-3.5 py-2 text-sm rounded-lg border border-slate-200/80 dark:border-slate-700/80 hover:border-slate-300 dark:hover:border-slate-600 hover:shadow-sm text-slate-600 dark:text-slate-300 transition-all duration-200"
             >
                 <Columns className="w-3.5 h-3.5" />
                 <span>Columns</span>
@@ -326,7 +323,7 @@ export function WaterDatabaseTable({ meters, months }: WaterDatabaseTableProps) 
         (selectedTypes.length > 0 && selectedTypes.length < allTypes.length);
 
     // Render table row
-    const renderRow = (meter: WaterMeter, index: number, isGrouped: boolean = false) => {
+    const renderRow = (meter: WaterMeter, _index: number, isGrouped: boolean = false) => {
         const zoneColor = ZONE_COLORS[meter.zone] || ZONE_COLORS['N/A'];
         const levelStyle = LEVEL_STYLES[meter.level] || 'bg-slate-100 text-slate-700';
 
@@ -334,35 +331,35 @@ export function WaterDatabaseTable({ meters, months }: WaterDatabaseTableProps) 
             <tr
                 key={meter.accountNumber}
                 className={cn(
-                    "border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors",
+                    "border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors",
                     "border-l-4",
                     zoneColor
                 )}
             >
-                <td className="py-3 px-4 font-medium text-slate-800 dark:text-slate-200 whitespace-nowrap sticky left-0 bg-inherit z-10">
+                <td className="py-3.5 px-5 font-medium text-slate-800 dark:text-slate-200 whitespace-nowrap sticky left-0 bg-inherit z-10">
                     {meter.label}
                 </td>
-                <td className="py-3 px-4 text-slate-600 dark:text-slate-400 font-mono text-xs sticky left-[200px] bg-inherit z-10">
+                <td className="py-3.5 px-5 text-slate-600 dark:text-slate-400 font-mono text-xs sticky left-[200px] bg-inherit z-10">
                     {meter.accountNumber}
                 </td>
-                <td className="py-3 px-4 text-center">
+                <td className="py-3.5 px-5 text-center">
                     <span className={cn("px-2.5 py-0.5 rounded-md text-xs font-medium", levelStyle)}>
                         {meter.level}
                     </span>
                 </td>
-                <td className="py-3 px-4 text-slate-600 dark:text-slate-400 text-xs">
+                <td className="py-3.5 px-5 text-slate-600 dark:text-slate-400 text-xs">
                     {ZONE_NAMES[meter.zone] || meter.zone}
                 </td>
-                <td className="py-3 px-4 text-slate-500 dark:text-slate-500 text-xs max-w-[150px] truncate">
+                <td className="py-3.5 px-5 text-slate-500 dark:text-slate-500 text-xs max-w-[150px] truncate">
                     {meter.parentMeter || '—'}
                 </td>
-                <td className="py-3 px-4 text-slate-600 dark:text-slate-400 text-xs">
+                <td className="py-3.5 px-5 text-slate-600 dark:text-slate-400 text-xs">
                     {meter.type}
                 </td>
                 {visibleMonths.map(month => {
                     const val = getConsumption(meter, month);
                     return (
-                        <td key={month} className="py-3 px-4 text-right font-mono text-xs text-slate-700 dark:text-slate-300">
+                        <td key={month} className="py-3.5 px-5 text-right font-mono text-xs text-slate-700 dark:text-slate-300">
                             {val > 0 ? val.toLocaleString('en-US') : <span className="text-slate-300 dark:text-slate-600">—</span>}
                         </td>
                     );
@@ -383,7 +380,7 @@ export function WaterDatabaseTable({ meters, months }: WaterDatabaseTableProps) 
                         placeholder="Search meters..."
                         value={searchTerm}
                         onChange={(e) => { setSearchTerm(e.target.value); handleFilterChange(); }}
-                        className="pl-10 pr-4 py-2 w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+                        className="pl-10 pr-4 py-2 w-full rounded-lg border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40 shadow-sm transition-shadow"
                     />
                 </div>
 
@@ -499,42 +496,42 @@ export function WaterDatabaseTable({ meters, months }: WaterDatabaseTableProps) 
             )}
 
             {/* Table */}
-            <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
+            <div className="overflow-x-auto rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900 shadow-sm">
                 <table className="w-full text-sm border-collapse">
                     <thead>
-                        <tr className="bg-slate-50/80 dark:bg-slate-800/60">
+                        <tr className="bg-slate-50/70 dark:bg-slate-800/50">
                             <th
-                                className="text-left py-3 px-4 font-semibold text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors sticky left-0 bg-slate-50/80 dark:bg-slate-800/60 z-20 min-w-[200px]"
+                                className="text-left py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors sticky left-0 bg-slate-50/70 dark:bg-slate-800/50 z-20 min-w-[200px]"
                                 onClick={() => handleSort('label')}
                             >
                                 <div className="flex items-center gap-1.5">Label <SortIcon field="label" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
                             </th>
                             <th
-                                className="text-left py-3 px-4 font-semibold text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors sticky left-[200px] bg-slate-50/80 dark:bg-slate-800/60 z-20 min-w-[100px]"
+                                className="text-left py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors sticky left-[200px] bg-slate-50/70 dark:bg-slate-800/50 z-20 min-w-[100px]"
                                 onClick={() => handleSort('account')}
                             >
                                 <div className="flex items-center gap-1.5">Account # <SortIcon field="account" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
                             </th>
                             <th
-                                className="text-center py-3 px-4 font-semibold text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors min-w-[70px]"
+                                className="text-center py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors min-w-[70px]"
                                 onClick={() => handleSort('level')}
                             >
                                 <div className="flex items-center justify-center gap-1.5">Level <SortIcon field="level" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
                             </th>
                             <th
-                                className="text-left py-3 px-4 font-semibold text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors min-w-[100px]"
+                                className="text-left py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors min-w-[100px]"
                                 onClick={() => handleSort('zone')}
                             >
                                 <div className="flex items-center gap-1.5">Zone <SortIcon field="zone" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
                             </th>
                             <th
-                                className="text-left py-3 px-4 font-semibold text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors min-w-[150px]"
+                                className="text-left py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors min-w-[150px]"
                                 onClick={() => handleSort('parentMeter')}
                             >
                                 <div className="flex items-center gap-1.5">Parent <SortIcon field="parentMeter" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
                             </th>
                             <th
-                                className="text-left py-3 px-4 font-semibold text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors min-w-[120px]"
+                                className="text-left py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors min-w-[120px]"
                                 onClick={() => handleSort('type')}
                             >
                                 <div className="flex items-center gap-1.5">Type <SortIcon field="type" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
@@ -542,7 +539,7 @@ export function WaterDatabaseTable({ meters, months }: WaterDatabaseTableProps) 
                             {visibleMonths.map(month => (
                                 <th
                                     key={month}
-                                    className="text-right py-3 px-4 font-semibold text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors min-w-[80px] whitespace-nowrap"
+                                    className="text-right py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors min-w-[80px] whitespace-nowrap"
                                     onClick={() => handleSort(month)}
                                 >
                                     <div className="flex items-center justify-end gap-1.5">{month} <SortIcon field={month} currentSortField={sortField} currentSortDirection={sortDirection} /></div>

@@ -95,7 +95,7 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                         placeholder="Search meters..."
                         value={searchTerm}
                         onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-                        className="pl-10 pr-4 py-2 w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                        className="pl-10 pr-4 py-2 w-full rounded-lg border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40 shadow-sm transition-shadow"
                     />
                 </div>
                 <span className="text-sm text-slate-500 dark:text-slate-400">
@@ -104,54 +104,54 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
             </div>
 
             {/* Table */}
-            <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+            <div className="overflow-x-auto rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900 shadow-sm">
                 <table className="w-full text-sm">
                     <thead>
-                        <tr className="bg-slate-50/80 dark:bg-slate-800/60">
-                            <th className="text-left py-3 px-4 font-semibold text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" onClick={() => handleSort('label')}>
+                        <tr className="bg-slate-50/70 dark:bg-slate-800/50">
+                            <th className="text-left py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" onClick={() => handleSort('label')}>
                                 <div className="flex items-center gap-1.5">Meter Label <ArrowUpDown className="w-3 h-3" /></div>
                             </th>
-                            <th className="text-left py-3 px-4 font-semibold text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" onClick={() => handleSort('account')}>
+                            <th className="text-left py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" onClick={() => handleSort('account')}>
                                 <div className="flex items-center gap-1.5">Account # <ArrowUpDown className="w-3 h-3" /></div>
                             </th>
-                            <th className="text-center py-3 px-4 font-semibold text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" onClick={() => handleSort('level')}>
+                            <th className="text-center py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" onClick={() => handleSort('level')}>
                                 <div className="flex items-center justify-center gap-1.5">Level <ArrowUpDown className="w-3 h-3" /></div>
                             </th>
-                            <th className="text-left py-3 px-4 font-semibold text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" onClick={() => handleSort('zone')}>
+                            <th className="text-left py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" onClick={() => handleSort('zone')}>
                                 <div className="flex items-center gap-1.5">Zone <ArrowUpDown className="w-3 h-3" /></div>
                             </th>
-                            <th className="text-left py-3 px-4 font-semibold text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" onClick={() => handleSort('parentMeter')}>
+                            <th className="text-left py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" onClick={() => handleSort('parentMeter')}>
                                 <div className="flex items-center gap-1.5">Parent Meter <ArrowUpDown className="w-3 h-3" /></div>
                             </th>
-                            <th className="text-left py-3 px-4 font-semibold text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" onClick={() => handleSort('type')}>
+                            <th className="text-left py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" onClick={() => handleSort('type')}>
                                 <div className="flex items-center gap-1.5">Type <ArrowUpDown className="w-3 h-3" /></div>
                             </th>
                             {displayMonths.map(m => (
-                                <th key={m} className="text-right py-3 px-4 font-semibold text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" onClick={() => handleSort(m)}>
+                                <th key={m} className="text-right py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" onClick={() => handleSort(m)}>
                                     <div className="flex items-center justify-end gap-1.5">{m} <ArrowUpDown className="w-3 h-3" /></div>
                                 </th>
                             ))}
                         </tr>
                     </thead>
                     <tbody>
-                        {paginatedMeters.map((meter, idx) => {
+                        {paginatedMeters.map((meter) => {
                             const levelColors = LEVEL_COLORS[meter.level] || LEVEL_COLORS['N/A'];
                             return (
-                                <tr key={meter.accountNumber} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
-                                    <td className="py-3 px-4 font-medium text-slate-800 dark:text-slate-200">{meter.label}</td>
-                                    <td className="py-3 px-4 text-slate-600 dark:text-slate-400 font-mono text-xs">{meter.accountNumber}</td>
-                                    <td className="py-3 px-4 text-center">
+                                <tr key={meter.accountNumber} className="border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors">
+                                    <td className="py-3.5 px-5 font-medium text-slate-800 dark:text-slate-200">{meter.label}</td>
+                                    <td className="py-3.5 px-5 text-slate-600 dark:text-slate-400 font-mono text-xs">{meter.accountNumber}</td>
+                                    <td className="py-3.5 px-5 text-center">
                                         <span className={`px-2.5 py-0.5 rounded-md text-xs font-bold ${levelColors.bg} ${levelColors.text}`}>
                                             {meter.level}
                                         </span>
                                     </td>
-                                    <td className="py-3 px-4 text-slate-600 dark:text-slate-400 text-xs">{meter.zone}</td>
-                                    <td className="py-3 px-4 text-slate-600 dark:text-slate-400 text-xs max-w-[200px] truncate">{meter.parentMeter}</td>
-                                    <td className="py-3 px-4 text-slate-600 dark:text-slate-400 text-xs">{meter.type}</td>
+                                    <td className="py-3.5 px-5 text-slate-600 dark:text-slate-400 text-xs">{meter.zone}</td>
+                                    <td className="py-3.5 px-5 text-slate-600 dark:text-slate-400 text-xs max-w-[200px] truncate">{meter.parentMeter}</td>
+                                    <td className="py-3.5 px-5 text-slate-600 dark:text-slate-400 text-xs">{meter.type}</td>
                                     {displayMonths.map(m => {
                                         const val = getConsumption(meter, m);
                                         return (
-                                            <td key={m} className="py-3 px-4 text-right font-medium text-slate-700 dark:text-slate-300">
+                                            <td key={m} className="py-3.5 px-5 text-right font-medium text-slate-700 dark:text-slate-300">
                                                 {val > 0 ? val.toLocaleString('en-US') : '-'}
                                             </td>
                                         );

@@ -33,34 +33,33 @@ export function TablePagination({
     if (totalItems === 0) return null;
 
     return (
-        <div className="flex flex-wrap items-center justify-between gap-4 py-3 px-1">
+        <div className="flex flex-col sm:flex-row flex-wrap items-center justify-between gap-3 sm:gap-4 py-3 sm:py-3.5 px-2">
             {/* Left side: Page Size + Showing info */}
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3 sm:gap-4 w-full sm:w-auto justify-between sm:justify-start">
                 <div className="flex items-center gap-2">
-                    <span className="text-sm text-slate-500 dark:text-slate-400">Show</span>
+                    <span className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">Show</span>
                     <select
                         value={pageSize}
                         onChange={(e) => {
                             const val = e.target.value;
                             onPageSizeChange(val === 'All' ? 'All' : parseInt(val));
                         }}
-                        className="px-2 py-1.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-colors"
+                        className="px-2 py-1.5 text-xs sm:text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-colors"
                     >
                         {pageSizeOptions.map(size => (
                             <option key={size} value={size}>{size}</option>
                         ))}
                     </select>
-                    <span className="text-sm text-slate-500 dark:text-slate-400">entries</span>
                 </div>
 
-                <div className="text-sm text-slate-500 dark:text-slate-400">
-                    Showing <span className="font-medium text-slate-700 dark:text-slate-300">{startIndex + 1}</span> to <span className="font-medium text-slate-700 dark:text-slate-300">{endIndex}</span> of <span className="font-medium text-slate-700 dark:text-slate-300">{totalItems}</span>
+                <div className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+                    <span className="font-medium text-slate-700 dark:text-slate-300">{startIndex + 1}</span>–<span className="font-medium text-slate-700 dark:text-slate-300">{endIndex}</span> of <span className="font-medium text-slate-700 dark:text-slate-300">{totalItems}</span>
                 </div>
             </div>
 
             {/* Right side: Page Navigation */}
             {pageSize !== 'All' && totalPages > 1 && (
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1 sm:gap-1.5">
                     <button
                         onClick={() => onPageChange(1)}
                         disabled={currentPage === 1}

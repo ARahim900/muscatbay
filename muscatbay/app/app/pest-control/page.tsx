@@ -14,7 +14,7 @@ export default function PestControlPage() {
                 description="Monitor and manage pest control operations"
             />
 
-            <Card className="glass-card h-[500px] sm:h-[600px] md:h-[800px] flex flex-col animate-in fade-in duration-500">
+            <Card className="glass-card h-[calc(100vh-14rem)] min-h-[400px] max-h-[800px] flex flex-col animate-in fade-in duration-500">
                 <CardHeader className="glass-card-header">
                     <div className="flex items-center gap-4">
                         <Bug className="w-6 h-6 text-mb-primary" />

@@ -41,10 +41,10 @@ export function MultiSelectDropdown({
             <button
                 onClick={() => setIsOpen(!isOpen)}
                 className={cn(
-                    "flex items-center gap-2 px-3 py-1.5 text-sm rounded-lg border transition-colors",
+                    "flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1.5 sm:py-2 text-xs sm:text-sm rounded-lg border transition-all duration-200",
                     selected.length > 0 && selected.length < options.length
-                        ? "border-primary bg-primary/5 text-primary"
-                        : "border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 text-slate-700 dark:text-slate-300"
+                        ? "border-primary/40 bg-primary/5 text-primary shadow-sm"
+                        : "border-slate-200/80 dark:border-slate-700/80 hover:border-slate-300 dark:hover:border-slate-600 hover:shadow-sm text-slate-600 dark:text-slate-300"
                 )}
             >
                 <Icon className="w-3.5 h-3.5" />
@@ -60,7 +60,7 @@ export function MultiSelectDropdown({
             {isOpen && (
                 <>
                     <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
-                    <div className="absolute top-full left-0 mt-1 z-50 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg min-w-[180px] py-1">
+                    <div className="absolute top-full left-0 sm:left-0 right-0 sm:right-auto mt-1 z-50 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg min-w-[180px] max-w-[calc(100vw-2rem)] py-1">
                         <div className="flex items-center justify-between px-3 py-1.5 border-b border-slate-100 dark:border-slate-700">
                             <button
                                 onClick={selectAll}

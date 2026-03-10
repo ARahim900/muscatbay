@@ -133,7 +133,7 @@ export function Topbar() {
 
                     {/* Profile Dropdown */}
                     {isProfileOpen && (
-                        <div className="absolute right-0 mt-2 w-60 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 py-1 z-50 animate-in fade-in slide-in-from-top-2 duration-200"
+                        <div className="absolute right-0 mt-2 w-[calc(100vw-2rem)] sm:w-60 max-w-60 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 py-1 z-50 animate-in fade-in slide-in-from-top-2 duration-200"
                             id="profile-dropdown-menu"
                         >
                             {/* User Info Header */}

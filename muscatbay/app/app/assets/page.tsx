@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { getAssets, Asset } from "@/lib/mock-data";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import { fetchAssetsAction } from "@/actions/assets";
@@ -10,7 +10,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Boxes, MapPin, DollarSign, Wrench, Search, Plus, Database, AlertCircle, Download, X, Clock, Radio } from "lucide-react";
 import { format } from "date-fns";
-import { MultiSelectDropdown, SortIcon, TablePagination, ActiveFilterPills, TableToolbar, type PageSizeOption } from "@/components/shared/data-table";
+import { MultiSelectDropdown, SortIcon, TablePagination, ActiveFilterPills, TableToolbar, StatusBadge, type PageSizeOption } from "@/components/shared/data-table";
 import { exportToCSV, getDateForFilename } from "@/lib/export-utils";
 import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
 import { cn } from "@/lib/utils";
@@ -54,7 +54,7 @@ export default function AssetsPage() {
         return () => clearTimeout(timer);
     }, [search]);
 
-    async function loadData() {
+    const loadData = useCallback(async () => {
         setLoading(true);
         const effectivePageSize = pageSize === 'All' ? 9999 : pageSize;
         const supabaseSort = SORT_FIELD_MAP[sortField] || 'Asset_Name';
@@ -103,12 +103,12 @@ export default function AssetsPage() {
         } finally {
             setLoading(false);
         }
-    }
+    }, [currentPage, pageSize, debouncedSearch, sortField, sortDirection, selectedStatuses]);
 
     // Reload when page, size, search, sort, or status changes
     useEffect(() => {
         loadData();
-    }, [currentPage, pageSize, debouncedSearch, sortField, sortDirection, selectedStatuses]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [loadData]);
 
     // ── Supabase real-time subscription for Assets_Register_Database table ─
     const { isLive } = useSupabaseRealtime({
@@ -236,13 +236,13 @@ export default function AssetsPage() {
         ];
     }, [assets, totalCount, dataSource]);
 
-    const getStatusBadge = (status: string) => {
+    const getStatusDotColor = (status: string): 'green' | 'orange' | 'red' | 'slate' => {
         switch (status) {
-            case 'Active': return 'bg-mb-success-light text-mb-success dark:bg-mb-success-light/20 dark:text-mb-success-hover';
-            case 'Under Maintenance': return 'bg-mb-warning-light text-mb-warning dark:bg-mb-warning-light/20 dark:text-mb-warning';
-            case 'Decommissioned': return 'bg-mb-danger-light text-mb-danger dark:bg-mb-danger-light/20 dark:text-mb-danger-hover';
-            case 'In Storage': return 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300';
-            default: return 'bg-slate-100 text-slate-800';
+            case 'Active': return 'green';
+            case 'Under Maintenance': return 'orange';
+            case 'Decommissioned': return 'red';
+            case 'In Storage': return 'slate';
+            default: return 'slate';
         }
     };
 
@@ -310,7 +310,7 @@ export default function AssetsPage() {
                             placeholder="Search by name, location or serial..."
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            className="pl-10 pr-4 py-2 w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+                            className="pl-10 pr-4 py-2 w-full rounded-lg border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40 shadow-sm transition-shadow"
                         />
                     </div>
 
@@ -392,9 +392,7 @@ export default function AssetsPage() {
                                         <p className="font-semibold text-sm text-slate-800 dark:text-slate-200 truncate">{asset.name}</p>
                                         <p className="text-xs text-slate-400 font-mono mt-0.5">{asset.serialNumber}</p>
                                     </div>
-                                    <Badge variant="outline" className={`${getStatusBadge(asset.status)} border-transparent text-xs flex-shrink-0`}>
-                                        {asset.status}
-                                    </Badge>
+                                    <StatusBadge label={asset.status} color={getStatusDotColor(asset.status)} />
                                 </div>
                                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
                                     <span className="flex items-center gap-1">
@@ -422,27 +420,27 @@ export default function AssetsPage() {
                 </div>
 
                 {/* Desktop Table View */}
-                <div className="hidden md:block overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
+                <div className="hidden md:block overflow-x-auto rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900 shadow-sm">
                     <table className="w-full text-sm border-collapse">
                         <thead>
-                            <tr className="bg-slate-50/80 dark:bg-slate-800/60">
-                                <th className="text-left py-3 px-4 font-semibold text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" onClick={() => handleSort('name')}>
+                            <tr className="bg-slate-50/70 dark:bg-slate-800/50">
+                                <th className="text-left py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" onClick={() => handleSort('name')}>
                                     <div className="flex items-center gap-1.5">Asset Name <SortIcon field="name" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
                                 </th>
-                                <th className="text-left py-3 px-4 font-semibold text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors hidden lg:table-cell" onClick={() => handleSort('serial')}>
+                                <th className="text-left py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors hidden lg:table-cell" onClick={() => handleSort('serial')}>
                                     <div className="flex items-center gap-1.5">Serial # <SortIcon field="serial" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
                                 </th>
-                                <th className="text-left py-3 px-4 font-semibold text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" onClick={() => handleSort('category')}>
+                                <th className="text-left py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" onClick={() => handleSort('category')}>
                                     <div className="flex items-center gap-1.5">Category <SortIcon field="category" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
                                 </th>
-                                <th className="text-left py-3 px-4 font-semibold text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" onClick={() => handleSort('location')}>
+                                <th className="text-left py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" onClick={() => handleSort('location')}>
                                     <div className="flex items-center gap-1.5">Location <SortIcon field="location" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
                                 </th>
-                                <th className="text-left py-3 px-4 font-semibold text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" onClick={() => handleSort('status')}>
+                                <th className="text-left py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" onClick={() => handleSort('status')}>
                                     <div className="flex items-center gap-1.5">Status <SortIcon field="status" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
                                 </th>
-                                <th className="text-left py-3 px-4 font-semibold text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 hidden xl:table-cell">Last Service</th>
-                                <th className="text-right py-3 px-4 font-semibold text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" onClick={() => handleSort('value')}>
+                                <th className="text-left py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 hidden xl:table-cell">Last Service</th>
+                                <th className="text-right py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" onClick={() => handleSort('value')}>
                                     <div className="flex items-center justify-end gap-1.5">Value (OMR) <SortIcon field="value" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
                                 </th>
                             </tr>
@@ -456,22 +454,20 @@ export default function AssetsPage() {
                                 </tr>
                             ) : (
                                 filteredAssets.map((asset, idx) => (
-                                    <tr key={asset.id} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
-                                        <td className="py-3 px-4 font-medium text-slate-800 dark:text-slate-200">{asset.name}</td>
-                                        <td className="py-3 px-4 font-mono text-xs text-slate-500 dark:text-slate-400 hidden lg:table-cell">{asset.serialNumber}</td>
-                                        <td className="py-3 px-4 text-slate-600 dark:text-slate-400 text-xs">{asset.type}</td>
-                                        <td className="py-3 px-4 text-slate-600 dark:text-slate-400 text-xs">{asset.location}</td>
-                                        <td className="py-3 px-4">
-                                            <Badge variant="outline" className={`${getStatusBadge(asset.status)} border-transparent text-xs`}>
-                                                {asset.status}
-                                            </Badge>
+                                    <tr key={asset.id} className="border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors">
+                                        <td className="py-3.5 px-5 font-medium text-slate-800 dark:text-slate-200">{asset.name}</td>
+                                        <td className="py-3.5 px-5 font-mono text-xs text-slate-500 dark:text-slate-400 hidden lg:table-cell">{asset.serialNumber}</td>
+                                        <td className="py-3.5 px-5 text-slate-600 dark:text-slate-400 text-xs">{asset.type}</td>
+                                        <td className="py-3.5 px-5 text-slate-600 dark:text-slate-400 text-xs">{asset.location}</td>
+                                        <td className="py-3.5 px-5">
+                                            <StatusBadge label={asset.status} color={getStatusDotColor(asset.status)} />
                                         </td>
-                                        <td className="py-3 px-4 text-xs text-slate-500 dark:text-slate-400 hidden xl:table-cell">
+                                        <td className="py-3.5 px-5 text-xs text-slate-500 dark:text-slate-400 hidden xl:table-cell">
                                             {asset.lastService && !isNaN(new Date(asset.lastService).getTime())
                                                 ? format(new Date(asset.lastService), "MMM d, yyyy")
                                                 : <span className="text-slate-300 dark:text-slate-600">-</span>}
                                         </td>
-                                        <td className="py-3 px-4 text-right font-mono text-xs text-slate-700 dark:text-slate-300">{asset.value.toLocaleString('en-US')}</td>
+                                        <td className="py-3.5 px-5 text-right font-mono text-xs text-slate-700 dark:text-slate-300">{asset.value.toLocaleString('en-US')}</td>
                                     </tr>
                                 ))
                             )}
