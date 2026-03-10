@@ -43,7 +43,7 @@ export function MultiSelectDropdown({
                 className={cn(
                     "flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1.5 sm:py-2 text-xs sm:text-sm rounded-lg border transition-all duration-200",
                     selected.length > 0 && selected.length < options.length
-                        ? "border-primary/40 bg-primary/5 text-primary shadow-sm"
+                        ? "border-primary/40 bg-primary/5 text-primary shadow-sm dark:border-primary/50 dark:bg-primary/15 dark:text-slate-100 dark:shadow-primary/10"
                         : "border-slate-200/80 dark:border-slate-700/80 hover:border-slate-300 dark:hover:border-slate-600 hover:shadow-sm text-slate-600 dark:text-slate-300"
                 )}
             >
