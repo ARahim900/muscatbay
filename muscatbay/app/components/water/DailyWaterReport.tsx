@@ -4,21 +4,20 @@ import { useState, useCallback, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
-import {
-    Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from "@/components/ui/table";
 import { AVAILABLE_MONTHS } from "@/lib/water-data";
 import {
     ZONE_BULK_CONFIG, BUILDING_CONFIG, DC_METERS, NULL_AS_ZERO_ACCOUNTS,
+    BUILDING_CHILD_METERS,
     type ZoneBulkConfig, type BuildingConfig, type DCMeterConfig,
+    type ChildMeterInfo,
 } from "@/lib/water-accounts";
 import { getSupabaseClient } from "@/lib/supabase";
 import type { SupabaseDailyWaterConsumption } from "@/entities/water";
 import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
 import {
-    AlertTriangle, ChevronLeft, ChevronRight, CalendarDays,
-    Droplets, Building2, Zap, Activity, CheckCircle2,
-    Clock, Loader2, RefreshCw, WifiOff, Radio,
+    AlertTriangle, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, CalendarDays,
+    Droplets, Building2, Zap, Activity, CheckCircle2, Search, ArrowUpDown,
+    Clock, Loader2, RefreshCw, WifiOff, Radio, Home, Users, Filter,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LiquidProgressRing } from "@/components/charts/liquid-progress-ring";
@@ -40,6 +39,13 @@ interface ZoneRow {
     isHighLoss: boolean;
 }
 
+interface ChildMeterReading {
+    label: string;
+    account: string;
+    type: 'Apartment' | 'Common';
+    value: number | null;
+}
+
 interface BuildingRow {
     buildingName: string;
     zone: '3A' | '3B';
@@ -48,6 +54,7 @@ interface BuildingRow {
     l4Sum: number;
     diff: number | null;
     hasNonZeroDiff: boolean;
+    childMeters: ChildMeterReading[];
 }
 
 interface DCRow {
@@ -73,6 +80,9 @@ type ReportStatus = 'loading' | 'success' | 'error';
 
 // ─── Data processing ──────────────────────────────────────────────────────────
 
+/** Round to 2 decimal places */
+const r2 = (v: number) => Math.round(v * 100) / 100;
+
 function processReport(readings: Record<string, number | null>): ReportData {
     const get = (acc: string): number | null =>
         acc in readings ? readings[acc] : null;
@@ -81,31 +91,42 @@ function processReport(readings: Record<string, number | null>): ReportData {
     const zoneRows: ZoneRow[] = ZONE_BULK_CONFIG.map(z => {
         const l2Value = get(z.l2Account);
         const l3Sum = z.l3Accounts.reduce((s, a) => s + (get(a) ?? 0), 0);
-        const diff = l2Value !== null ? Math.round(l2Value - l3Sum) : null;
+        const diff = l2Value !== null ? r2(l2Value - l3Sum) : null;
         return {
             zoneName: z.zoneName,
             l2Account: z.l2Account,
-            l2Value: l2Value !== null ? Math.round(l2Value) : null,
-            l3Sum: Math.round(l3Sum),
+            l2Value: l2Value !== null ? r2(l2Value) : null,
+            l3Sum: r2(l3Sum),
             diff,
             isNullL2: l2Value === null,
             isHighLoss: diff !== null && Math.abs(diff) > 20,
         };
     });
 
-    // TABLE 2 — Building rows
+    // TABLE 2 — Building rows (with child meter details)
     const buildingRows: BuildingRow[] = BUILDING_CONFIG.map(b => {
         const l3Bulk = get(b.bulkAccount);
         const l4Sum = b.l4Accounts.reduce((s, a) => s + (get(a) ?? 0), 0);
-        const diff = l3Bulk !== null ? Math.round(l3Bulk - l4Sum) : null;
+        const diff = l3Bulk !== null ? r2(l3Bulk - l4Sum) : null;
+
+        // Map child meter details from BUILDING_CHILD_METERS
+        const childInfo = BUILDING_CHILD_METERS[b.buildingName] ?? [];
+        const childMeters: ChildMeterReading[] = childInfo.map(cm => ({
+            label: cm.label,
+            account: cm.account,
+            type: cm.type,
+            value: get(cm.account),
+        }));
+
         return {
             buildingName: b.buildingName,
             zone: b.zone,
             bulkAccount: b.bulkAccount,
-            l3Bulk: l3Bulk !== null ? Math.round(l3Bulk) : null,
-            l4Sum: Math.round(l4Sum),
+            l3Bulk: l3Bulk !== null ? r2(l3Bulk) : null,
+            l4Sum: r2(l4Sum),
             diff,
-            hasNonZeroDiff: diff !== null && diff !== 0,
+            hasNonZeroDiff: diff !== null && Math.abs(diff) >= 0.01,
+            childMeters,
         };
     });
 
@@ -113,7 +134,7 @@ function processReport(readings: Record<string, number | null>): ReportData {
     const dcRows: DCRow[] = DC_METERS.map(dc => {
         const rawValue = get(dc.account);
         const isNullAsZero = dc.isIrr || NULL_AS_ZERO_ACCOUNTS.has(dc.account);
-        const displayValue = rawValue !== null ? Math.round(rawValue)
+        const displayValue = rawValue !== null ? r2(rawValue)
             : isNullAsZero ? 0 : null;
         return {
             meterName: dc.meterName,
@@ -126,23 +147,24 @@ function processReport(readings: Record<string, number | null>): ReportData {
     });
 
     // SUMMARY
-    const l2Total = Math.round(zoneRows.reduce((s, r) => s + (r.l2Value ?? 0), 0));
-    const dcTotal = Math.round(dcRows.reduce((s, r) => s + (r.displayValue ?? 0), 0));
+    const l2Total = r2(zoneRows.reduce((s, r) => s + (r.l2Value ?? 0), 0));
+    const dcTotal = r2(dcRows.reduce((s, r) => s + (r.displayValue ?? 0), 0));
 
-    return { zoneRows, buildingRows, dcRows, l2Total, dcTotal, grandTotal: l2Total + dcTotal };
+    return { zoneRows, buildingRows, dcRows, l2Total, dcTotal, grandTotal: r2(l2Total + dcTotal) };
 }
 
 // ─── Number formatter ─────────────────────────────────────────────────────────
 
 function n(v: number | null, fallback = '—'): string {
     if (v === null) return fallback;
-    return v.toLocaleString();
+    return v.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 function diffCell(diff: number | null): string {
     if (diff === null) return '—';
-    if (diff === 0) return '0';
-    return (diff > 0 ? '+' : '') + diff.toLocaleString();
+    if (diff === 0) return '0.00';
+    const formatted = Math.abs(diff).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return (diff > 0 ? '+' : '-') + formatted;
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -156,10 +178,10 @@ function SectionHeader({
     color?: 'teal' | 'violet' | 'amber' | 'emerald';
 }) {
     const bg = {
-        teal: 'bg-teal-100 dark:bg-teal-900/30',
-        violet: 'bg-violet-100 dark:bg-violet-900/30',
-        amber: 'bg-amber-100 dark:bg-amber-900/30',
-        emerald: 'bg-emerald-100 dark:bg-emerald-900/30',
+        teal: 'bg-gradient-to-br from-teal-100 to-teal-50 dark:from-teal-900/30 dark:to-teal-800/10',
+        violet: 'bg-gradient-to-br from-violet-100 to-violet-50 dark:from-violet-900/30 dark:to-violet-800/10',
+        amber: 'bg-gradient-to-br from-amber-100 to-amber-50 dark:from-amber-900/30 dark:to-amber-800/10',
+        emerald: 'bg-gradient-to-br from-emerald-100 to-emerald-50 dark:from-emerald-900/30 dark:to-emerald-800/10',
     }[color];
     const text = {
         teal: 'text-teal-600 dark:text-teal-400',
@@ -169,12 +191,12 @@ function SectionHeader({
     }[color];
     return (
         <div className="flex items-center gap-3">
-            <div className={cn("p-2 rounded-lg", bg)}>
+            <div className={cn("p-2.5 rounded-xl shadow-sm", bg)}>
                 <div className={cn("h-5 w-5", text)}>{icon}</div>
             </div>
             <div>
-                <CardTitle className="text-base sm:text-lg">{title}</CardTitle>
-                {subtitle && <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{subtitle}</p>}
+                <h3 className="text-[15px] sm:text-[17px] font-semibold tracking-tight text-slate-800 dark:text-slate-100">{title}</h3>
+                {subtitle && <p className="text-[12px] text-slate-400 dark:text-slate-500 mt-0.5">{subtitle}</p>}
             </div>
         </div>
     );
@@ -182,304 +204,770 @@ function SectionHeader({
 
 function NullBadge() {
     return (
-        <span className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-400 font-medium">
-            <AlertTriangle className="h-3.5 w-3.5" /> NULL
+        <span className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-400 font-medium text-xs">
+            <AlertTriangle className="h-3 w-3" /> NULL
         </span>
+    );
+}
+
+// ─── Modern table primitives ─────────────────────────────────────────────────
+// Uses raw HTML table elements styled inline to avoid shadcn's double-border wrapper.
+
+const thBase = "h-11 px-4 text-left align-middle font-semibold text-[11px] uppercase tracking-wider text-slate-400 dark:text-slate-500 whitespace-nowrap";
+const tdBase = "px-4 py-3 align-middle text-[13px] text-slate-700 dark:text-slate-300";
+
+type SortDir = 'asc' | 'desc' | null;
+interface SortState { key: string; dir: SortDir }
+
+function nextSort(current: SortState, key: string): SortState {
+    if (current.key !== key) return { key, dir: 'asc' };
+    if (current.dir === 'asc') return { key, dir: 'desc' };
+    return { key: '', dir: null };
+}
+
+function SortIcon({ active, dir }: { active: boolean; dir: SortDir }) {
+    if (!active || !dir) return <ArrowUpDown className="h-3 w-3 opacity-30" />;
+    return dir === 'asc'
+        ? <ChevronUp className="h-3.5 w-3.5 text-[#00D2B3]" />
+        : <ChevronDown className="h-3.5 w-3.5 text-[#00D2B3]" />;
+}
+
+function Th({
+    children, sortKey, sort, onSort, className,
+}: {
+    children: React.ReactNode; sortKey?: string; sort?: SortState;
+    onSort?: (s: SortState) => void; className?: string;
+}) {
+    const sortable = sortKey && sort && onSort;
+    return (
+        <th
+            className={cn(thBase, sortable && "cursor-pointer select-none group hover:text-slate-600 dark:hover:text-slate-300 transition-colors", className)}
+            onClick={sortable ? () => onSort(nextSort(sort, sortKey)) : undefined}
+        >
+            <span className="inline-flex items-center gap-1">
+                {children}
+                {sortable && <SortIcon active={sort.key === sortKey} dir={sort.key === sortKey ? sort.dir : null} />}
+            </span>
+        </th>
+    );
+}
+
+function TableSearch({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder: string }) {
+    return (
+        <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <input
+                type="text"
+                value={value}
+                onChange={e => onChange(e.target.value)}
+                placeholder={placeholder}
+                className="h-9 w-full sm:w-64 pl-9 pr-8 text-[13px] rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50/80 dark:bg-slate-800/50 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#00D2B3]/30 focus:border-[#00D2B3]/50 transition-all"
+            />
+            {value && (
+                <button onClick={() => onChange('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 h-4 w-4 rounded-full bg-slate-200 dark:bg-slate-600 flex items-center justify-center text-slate-500 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-500 transition-colors">
+                    <span className="text-[10px] leading-none font-bold">&times;</span>
+                </button>
+            )}
+        </div>
+    );
+}
+
+function StatusChip({ label, color }: { label: string; color: 'success' | 'danger' | 'warning' | 'default' | 'primary' }) {
+    const styles = {
+        success: 'bg-emerald-50 text-emerald-600 ring-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-400 dark:ring-emerald-500/20',
+        danger: 'bg-red-50 text-red-600 ring-red-500/20 dark:bg-red-500/10 dark:text-red-400 dark:ring-red-500/20',
+        warning: 'bg-amber-50 text-amber-600 ring-amber-500/20 dark:bg-amber-500/10 dark:text-amber-400 dark:ring-amber-500/20',
+        default: 'bg-slate-100 text-slate-500 ring-slate-500/10 dark:bg-slate-500/10 dark:text-slate-400 dark:ring-slate-500/20',
+        primary: 'bg-violet-50 text-violet-600 ring-violet-500/20 dark:bg-violet-500/10 dark:text-violet-400 dark:ring-violet-500/20',
+    }[color];
+    return (
+        <span className={cn("inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium ring-1 ring-inset", styles)}>
+            {label}
+        </span>
+    );
+}
+
+function FilterSelect({ value, onChange, children, icon }: {
+    value: string; onChange: (v: string) => void; children: React.ReactNode; icon?: React.ReactNode;
+}) {
+    return (
+        <div className="relative">
+            {icon && <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">{icon}</span>}
+            <select
+                value={value}
+                onChange={e => onChange(e.target.value)}
+                className={cn(
+                    "h-9 text-[13px] rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50/80 dark:bg-slate-800/50",
+                    "focus:outline-none focus:ring-2 focus:ring-[#00D2B3]/30 focus:border-[#00D2B3]/50 transition-all appearance-none cursor-pointer pr-8",
+                    icon ? "pl-9" : "pl-3",
+                )}
+            >
+                {children}
+            </select>
+            <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+        </div>
+    );
+}
+
+function TablePagination({
+    page, totalPages, totalItems, onPageChange, rowsPerPage, onRowsPerPageChange,
+}: {
+    page: number; totalPages: number; totalItems: number;
+    onPageChange: (p: number) => void; rowsPerPage: number; onRowsPerPageChange: (n: number) => void;
+}) {
+    return (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-1 py-2">
+            <span className="text-[12px] text-slate-400 dark:text-slate-500 tabular-nums">
+                {totalItems} result{totalItems !== 1 ? 's' : ''}
+            </span>
+            <div className="flex items-center gap-1">
+                <button
+                    className="h-8 px-3 text-[12px] font-medium rounded-lg border border-slate-200 dark:border-slate-700 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    disabled={page <= 1}
+                    onClick={() => onPageChange(page - 1)}
+                >
+                    Prev
+                </button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+                    <button
+                        key={p}
+                        onClick={() => onPageChange(p)}
+                        className={cn(
+                            "h-8 w-8 rounded-lg text-[12px] font-medium transition-all",
+                            p === page
+                                ? "bg-[#4E4456] text-white shadow-sm dark:bg-[#00D2B3] dark:text-slate-900"
+                                : "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800",
+                        )}
+                    >
+                        {p}
+                    </button>
+                ))}
+                <button
+                    className="h-8 px-3 text-[12px] font-medium rounded-lg border border-slate-200 dark:border-slate-700 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    disabled={page >= totalPages}
+                    onClick={() => onPageChange(page + 1)}
+                >
+                    Next
+                </button>
+            </div>
+            <label className="flex items-center gap-1.5 text-[12px] text-slate-400 dark:text-slate-500">
+                Rows
+                <select
+                    value={rowsPerPage}
+                    onChange={e => onRowsPerPageChange(Number(e.target.value))}
+                    className="h-8 rounded-lg border border-slate-200 dark:border-slate-700 bg-transparent text-[12px] px-2 focus:outline-none focus:ring-2 focus:ring-[#00D2B3]/30 cursor-pointer"
+                >
+                    {[5, 10, 15, 21].map(n => <option key={n} value={n}>{n}</option>)}
+                </select>
+            </label>
+        </div>
     );
 }
 
 // TABLE 1 ─────────────────────────────────────────────────────────────────────
 
 function ZoneBulkTable({ rows }: { rows: ZoneRow[] }) {
-    const l2Total = rows.reduce((s, r) => s + (r.l2Value ?? 0), 0);
-    const l3Total = rows.reduce((s, r) => s + r.l3Sum, 0);
-    const diffTotal = Math.round(l2Total - l3Total);
+    const [sort, setSort] = useState<SortState>({ key: '', dir: null });
+    const [statusFilter, setStatusFilter] = useState<'all' | 'normal' | 'high_loss' | 'null'>('all');
+
+    const filtered = useMemo(() => {
+        let result = [...rows];
+        if (statusFilter === 'normal') result = result.filter(r => !r.isHighLoss && !r.isNullL2);
+        else if (statusFilter === 'high_loss') result = result.filter(r => r.isHighLoss);
+        else if (statusFilter === 'null') result = result.filter(r => r.isNullL2);
+        if (sort.dir && sort.key) {
+            result.sort((a, b) => {
+                let va: number | string, vb: number | string;
+                if (sort.key === 'zone') { va = a.zoneName; vb = b.zoneName; }
+                else if (sort.key === 'l2') { va = a.l2Value ?? -1; vb = b.l2Value ?? -1; }
+                else if (sort.key === 'l3') { va = a.l3Sum; vb = b.l3Sum; }
+                else { va = a.diff ?? 0; vb = b.diff ?? 0; }
+                const cmp = va < vb ? -1 : va > vb ? 1 : 0;
+                return sort.dir === 'desc' ? -cmp : cmp;
+            });
+        }
+        return result;
+    }, [rows, sort, statusFilter]);
+
+    const l2Total = r2(rows.reduce((s, r) => s + (r.l2Value ?? 0), 0));
+    const l3Total = r2(rows.reduce((s, r) => s + r.l3Sum, 0));
+    const diffTotal = r2(l2Total - l3Total);
+    const normalCount = rows.filter(r => !r.isHighLoss && !r.isNullL2).length;
+    const lossCount = rows.filter(r => r.isHighLoss).length;
 
     return (
-        <Card className="glass-card">
-            <CardHeader className="glass-card-header p-4 sm:p-5">
-                <SectionHeader
-                    icon={<Droplets className="h-5 w-5" />}
-                    title="Zone Bulk (L2) vs Sum of L3 Meters"
-                    subtitle="L2 bulk meter reading vs sum of all L3 meters per zone — values in m³"
-                    color="teal"
-                />
-            </CardHeader>
-            <CardContent className="p-0 overflow-x-auto">
-                <Table>
-                    <TableHeader>
-                        <TableRow className="bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/50">
-                            <TableHead className="min-w-[130px]">Zone</TableHead>
-                            <TableHead className="text-center text-xs">L2 Account</TableHead>
-                            <TableHead className="text-right">L2 (m³)</TableHead>
-                            <TableHead className="text-right">ΣL3 (m³)</TableHead>
-                            <TableHead className="text-right">Diff</TableHead>
-                            <TableHead className="text-center min-w-[120px]">Status</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {rows.map(row => (
-                            <TableRow
-                                key={row.zoneName}
-                                className={cn(
-                                    row.isNullL2 && "bg-amber-50/70 dark:bg-amber-900/10",
-                                    row.isHighLoss && "bg-red-50/70 dark:bg-red-900/10",
-                                )}
-                            >
-                                <TableCell className="font-semibold text-sm">{row.zoneName}</TableCell>
-                                <TableCell className="text-center font-mono text-xs text-slate-500">{row.l2Account}</TableCell>
-                                <TableCell className="text-right font-mono text-sm font-medium">
+        <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
+            {/* ── Toolbar ─────────────────────────────────── */}
+            <div className="p-5 sm:p-6 space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <SectionHeader
+                        icon={<Droplets className="h-5 w-5" />}
+                        title="Zone Bulk (L2) vs Sum of L3 Meters"
+                        subtitle="L2 bulk meter reading vs sum of all L3 meters per zone"
+                        color="teal"
+                    />
+                    <FilterSelect
+                        value={statusFilter}
+                        onChange={v => setStatusFilter(v as typeof statusFilter)}
+                        icon={<Filter className="h-3.5 w-3.5" />}
+                    >
+                        <option value="all">All Status</option>
+                        <option value="normal">Normal ({normalCount})</option>
+                        <option value="high_loss">High Loss ({lossCount})</option>
+                        <option value="null">NULL L2</option>
+                    </FilterSelect>
+                </div>
+                <span className="text-[12px] text-slate-400 dark:text-slate-500">
+                    {filtered.length} of {rows.length} zones
+                </span>
+            </div>
+            {/* ── Table ───────────────────────────────────── */}
+            <div className="overflow-x-auto">
+                <table className="w-full border-collapse">
+                    <thead>
+                        <tr className="border-t border-b border-slate-100 dark:border-slate-800">
+                            <Th sortKey="zone" sort={sort} onSort={setSort} className="min-w-[130px]">Zone</Th>
+                            <th className={cn(thBase, "text-center")}>L2 Account</th>
+                            <Th sortKey="l2" sort={sort} onSort={setSort} className="text-right">L2 (m³)</Th>
+                            <Th sortKey="l3" sort={sort} onSort={setSort} className="text-right">ΣL3 (m³)</Th>
+                            <Th sortKey="diff" sort={sort} onSort={setSort} className="text-right">Diff</Th>
+                            <th className={cn(thBase, "text-center min-w-[100px]")}>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {filtered.map(row => (
+                            <tr key={row.zoneName} className="border-b border-slate-50 dark:border-slate-800/60 hover:bg-slate-50/70 dark:hover:bg-slate-800/30 transition-colors">
+                                <td className={cn(tdBase, "font-semibold")}>{row.zoneName}</td>
+                                <td className={cn(tdBase, "text-center font-mono text-[11px] text-slate-400 dark:text-slate-500")}>{row.l2Account}</td>
+                                <td className={cn(tdBase, "text-right tabular-nums font-medium")}>
                                     {row.isNullL2 ? <NullBadge /> : n(row.l2Value)}
-                                </TableCell>
-                                <TableCell className="text-right font-mono text-sm">{n(row.l3Sum)}</TableCell>
-                                <TableCell className={cn(
-                                    "text-right font-mono text-sm font-semibold",
+                                </td>
+                                <td className={cn(tdBase, "text-right tabular-nums")}>{n(row.l3Sum)}</td>
+                                <td className={cn(
+                                    tdBase, "text-right tabular-nums font-semibold",
                                     row.isHighLoss && "text-red-600 dark:text-red-400",
-                                    !row.isHighLoss && !row.isNullL2 && row.diff === 0 && "text-emerald-600 dark:text-emerald-400",
+                                    !row.isHighLoss && !row.isNullL2 && "text-emerald-600 dark:text-emerald-400",
                                 )}>
                                     {row.diff !== null ? diffCell(row.diff) : '—'}
-                                </TableCell>
-                                <TableCell className="text-center">
-                                    {row.isNullL2 && (
-                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
-                                            <AlertTriangle className="h-2.5 w-2.5" /> NULL L2
-                                        </span>
-                                    )}
-                                    {row.isHighLoss && (
-                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300">
-                                            🔴 High Loss
-                                        </span>
-                                    )}
-                                    {!row.isNullL2 && !row.isHighLoss && (
-                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
-                                            <CheckCircle2 className="h-2.5 w-2.5" /> Normal
-                                        </span>
-                                    )}
-                                </TableCell>
-                            </TableRow>
+                                </td>
+                                <td className={cn(tdBase, "text-center")}>
+                                    {row.isNullL2 && <StatusChip label="NULL L2" color="warning" />}
+                                    {row.isHighLoss && <StatusChip label="High Loss" color="danger" />}
+                                    {!row.isNullL2 && !row.isHighLoss && <StatusChip label="Normal" color="success" />}
+                                </td>
+                            </tr>
                         ))}
-                        {/* Totals row */}
-                        <TableRow className="border-t-2 border-slate-200 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-800/30 font-bold">
-                            <TableCell className="font-bold text-sm" colSpan={2}>Total</TableCell>
-                            <TableCell className="text-right font-mono font-bold text-sm">{Math.round(l2Total).toLocaleString()}</TableCell>
-                            <TableCell className="text-right font-mono font-bold text-sm">{Math.round(l3Total).toLocaleString()}</TableCell>
-                            <TableCell className={cn(
-                                "text-right font-mono font-bold text-sm",
-                                Math.abs(diffTotal) > 20 && "text-red-600 dark:text-red-400",
-                            )}>
+                        {/* Totals */}
+                        <tr className="border-t-2 border-slate-200 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-800/20">
+                            <td className={cn(tdBase, "font-bold")} colSpan={2}>Total</td>
+                            <td className={cn(tdBase, "text-right tabular-nums font-bold")}>{n(l2Total)}</td>
+                            <td className={cn(tdBase, "text-right tabular-nums font-bold")}>{n(l3Total)}</td>
+                            <td className={cn(tdBase, "text-right tabular-nums font-bold", Math.abs(diffTotal) > 20 && "text-red-600 dark:text-red-400")}>
                                 {diffCell(diffTotal)}
-                            </TableCell>
-                            <TableCell />
-                        </TableRow>
-                    </TableBody>
-                </Table>
-            </CardContent>
-        </Card>
+                            </td>
+                            <td className={tdBase} />
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     );
 }
 
 // TABLE 2 ─────────────────────────────────────────────────────────────────────
 
 function BuildingBulkTable({ rows }: { rows: BuildingRow[] }) {
-    const zone3A = rows.filter(r => r.zone === '3A');
-    const zone3B = rows.filter(r => r.zone === '3B');
+    const [expandedBuildings, setExpandedBuildings] = useState<Set<string>>(new Set());
+    const [search, setSearch] = useState('');
+    const [zoneFilter, setZoneFilter] = useState<'all' | '3A' | '3B'>('all');
+    const [sort, setSort] = useState<SortState>({ key: '', dir: null });
+    const [page, setPage] = useState(1);
+    const [rowsPerPage, setRowsPerPage] = useState(10);
 
-    function renderRows(group: BuildingRow[]) {
-        return group.map(row => (
-            <TableRow
+    const toggleBuilding = (name: string) => {
+        setExpandedBuildings(prev => {
+            const next = new Set(prev);
+            if (next.has(name)) next.delete(name);
+            else next.add(name);
+            return next;
+        });
+    };
+
+    const expandAll = () => setExpandedBuildings(new Set(filtered.map(r => r.buildingName)));
+    const collapseAll = () => setExpandedBuildings(new Set());
+
+    // Filter + sort
+    const filtered = useMemo(() => {
+        let result = [...rows];
+        if (zoneFilter !== 'all') result = result.filter(r => r.zone === zoneFilter);
+        if (search) {
+            const q = search.toLowerCase();
+            result = result.filter(r =>
+                r.buildingName.toLowerCase().includes(q) || r.bulkAccount.includes(q),
+            );
+        }
+        if (sort.dir && sort.key) {
+            result.sort((a, b) => {
+                let va: number | string, vb: number | string;
+                if (sort.key === 'building') { va = a.buildingName; vb = b.buildingName; }
+                else if (sort.key === 'l3') { va = a.l3Bulk ?? -1; vb = b.l3Bulk ?? -1; }
+                else if (sort.key === 'l4') { va = a.l4Sum; vb = b.l4Sum; }
+                else { va = a.diff ?? 0; vb = b.diff ?? 0; }
+                const cmp = va < vb ? -1 : va > vb ? 1 : 0;
+                return sort.dir === 'desc' ? -cmp : cmp;
+            });
+        }
+        return result;
+    }, [rows, search, zoneFilter, sort]);
+
+    // Reset page on filter change
+    useEffect(() => { setPage(1); }, [search, zoneFilter, sort]);
+
+    const totalPages = Math.max(1, Math.ceil(filtered.length / rowsPerPage));
+    const paginatedRows = filtered.slice((page - 1) * rowsPerPage, page * rowsPerPage);
+
+    const z3ACount = rows.filter(r => r.zone === '3A').length;
+    const z3BCount = rows.filter(r => r.zone === '3B').length;
+
+    function renderBuildingRow(row: BuildingRow) {
+        const isExpanded = expandedBuildings.has(row.buildingName);
+        const childCount = row.childMeters.length;
+        const aptCount = row.childMeters.filter(c => c.type === 'Apartment').length;
+
+        const mainRow = (
+            <tr
                 key={row.buildingName}
-                className={row.hasNonZeroDiff ? "bg-amber-50/50 dark:bg-amber-900/10" : undefined}
+                className={cn(
+                    "border-b border-slate-50 dark:border-slate-800/60 cursor-pointer select-none transition-colors hover:bg-slate-50/70 dark:hover:bg-slate-800/30",
+                    isExpanded && "bg-violet-50/30 dark:bg-violet-900/10",
+                )}
+                onClick={() => toggleBuilding(row.buildingName)}
             >
-                <TableCell className="font-semibold text-sm">{row.buildingName}</TableCell>
-                <TableCell className="font-mono text-xs text-slate-500">{row.bulkAccount}</TableCell>
-                <TableCell className="text-right font-mono text-sm font-medium">
-                    {row.l3Bulk === null ? <NullBadge /> : n(row.l3Bulk)}
-                </TableCell>
-                <TableCell className="text-right font-mono text-sm">{n(row.l4Sum)}</TableCell>
-                <TableCell className={cn(
-                    "text-right font-mono text-sm font-semibold",
-                    row.hasNonZeroDiff && "text-amber-600 dark:text-amber-400",
-                    !row.hasNonZeroDiff && row.diff === 0 && "text-emerald-600 dark:text-emerald-400",
-                )}>
-                    {row.diff !== null ? (
-                        <span className="inline-flex items-center justify-end gap-1">
-                            {row.hasNonZeroDiff && <AlertTriangle className="h-3 w-3" />}
-                            {diffCell(row.diff)}
+                <td className={cn(tdBase, "font-semibold")}>
+                    <span className="inline-flex items-center gap-2">
+                        <span className={cn(
+                            "flex items-center justify-center h-5 w-5 rounded-md transition-all duration-200",
+                            isExpanded ? "bg-[#4E4456] dark:bg-[#00D2B3]" : "bg-slate-200 dark:bg-slate-700",
+                        )}>
+                            <ChevronDown className={cn(
+                                "h-3 w-3 transition-transform duration-200",
+                                isExpanded ? "rotate-0 text-white dark:text-slate-900" : "-rotate-90 text-slate-500 dark:text-slate-400",
+                            )} />
                         </span>
+                        {row.buildingName}
+                        <span className="text-[10px] font-normal text-slate-400 dark:text-slate-500">
+                            {aptCount} apt{aptCount !== 1 ? 's' : ''}
+                        </span>
+                    </span>
+                </td>
+                <td className={cn(tdBase, "font-mono text-[11px] text-slate-400 dark:text-slate-500")}>{row.bulkAccount}</td>
+                <td className={cn(tdBase, "text-center")}>
+                    <StatusChip label={`Zone ${row.zone}`} color={row.zone === '3A' ? 'primary' : 'default'} />
+                </td>
+                <td className={cn(tdBase, "text-right tabular-nums font-medium")}>
+                    {row.l3Bulk === null ? <NullBadge /> : n(row.l3Bulk)}
+                </td>
+                <td className={cn(tdBase, "text-right tabular-nums")}>{n(row.l4Sum)}</td>
+                <td className={cn(tdBase, "text-right")}>
+                    {row.diff !== null ? (
+                        row.hasNonZeroDiff
+                            ? <StatusChip label={diffCell(row.diff)} color="warning" />
+                            : <StatusChip label={diffCell(row.diff)} color="success" />
                     ) : '—'}
-                </TableCell>
-            </TableRow>
-        ));
+                </td>
+            </tr>
+        );
+
+        if (!isExpanded) return [mainRow];
+
+        const childRow = (
+            <tr key={`${row.buildingName}-children`} className="bg-slate-50/40 dark:bg-slate-800/20">
+                <td colSpan={6} className="py-0 px-0">
+                    <div className="border-l-[3px] border-[#00D2B3]/40 dark:border-[#00D2B3]/30 ml-5 sm:ml-7">
+                        <table className="w-full">
+                            <thead>
+                                <tr className="border-b border-slate-100 dark:border-slate-800/60">
+                                    <th className="text-left py-2 px-4 text-[10px] uppercase tracking-wider font-semibold text-slate-400 dark:text-slate-500 w-[40%]">Meter</th>
+                                    <th className="text-left py-2 px-4 text-[10px] uppercase tracking-wider font-semibold text-slate-400 dark:text-slate-500">Account</th>
+                                    <th className="text-center py-2 px-4 text-[10px] uppercase tracking-wider font-semibold text-slate-400 dark:text-slate-500">Type</th>
+                                    <th className="text-right py-2 px-4 text-[10px] uppercase tracking-wider font-semibold text-slate-400 dark:text-slate-500">Reading (m³)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {row.childMeters.map(cm => {
+                                    const val = cm.value !== null ? r2(cm.value) : null;
+                                    return (
+                                        <tr
+                                            key={cm.account}
+                                            className={cn(
+                                                "border-b border-slate-50 dark:border-slate-800/40 transition-colors hover:bg-white/60 dark:hover:bg-slate-800/30",
+                                                cm.type === 'Common' && "bg-indigo-50/30 dark:bg-indigo-900/5",
+                                            )}
+                                        >
+                                            <td className="py-2 px-4 text-[12px] font-medium text-slate-700 dark:text-slate-300">
+                                                <span className="inline-flex items-center gap-1.5">
+                                                    {cm.type === 'Common'
+                                                        ? <Users className="h-3 w-3 text-indigo-500 shrink-0" />
+                                                        : <Home className="h-3 w-3 text-slate-400 shrink-0" />
+                                                    }
+                                                    {cm.label}
+                                                </span>
+                                            </td>
+                                            <td className="py-2 px-4 font-mono text-[11px] text-slate-400 dark:text-slate-500">{cm.account}</td>
+                                            <td className="py-2 px-4 text-center">
+                                                <StatusChip label={cm.type} color={cm.type === 'Common' ? 'primary' : 'default'} />
+                                            </td>
+                                            <td className="py-2 px-4 text-right font-mono text-[12px] font-medium tabular-nums text-slate-700 dark:text-slate-300">
+                                                {val === null ? '—' : val === 0 ? <span className="text-slate-400">0.00</span> : n(val)}
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                                <tr className="border-t-2 border-slate-200/80 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-800/20">
+                                    <td className="py-2 px-4 text-[12px] font-bold text-slate-600 dark:text-slate-300" colSpan={3}>
+                                        Sum of {childCount} meters
+                                    </td>
+                                    <td className="py-2 px-4 text-right font-mono text-[12px] font-bold tabular-nums">{n(row.l4Sum)}</td>
+                                </tr>
+                                <tr className={cn(
+                                    "border-t border-dashed border-slate-200 dark:border-slate-700",
+                                    row.hasNonZeroDiff ? "bg-amber-50/50 dark:bg-amber-900/5" : "bg-emerald-50/30 dark:bg-emerald-900/5",
+                                )}>
+                                    <td className="py-2 px-4 text-[12px] font-bold" colSpan={3}>
+                                        Bulk ({n(row.l3Bulk)}) − Sum ({n(row.l4Sum)}) = Difference
+                                    </td>
+                                    <td className={cn("py-2 px-4 text-right font-mono text-[12px] font-bold tabular-nums",
+                                        row.hasNonZeroDiff ? "text-amber-600 dark:text-amber-400" : "text-emerald-600 dark:text-emerald-400",
+                                    )}>
+                                        {row.diff !== null ? diffCell(row.diff) : '—'}
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </td>
+            </tr>
+        );
+
+        return [mainRow, childRow];
     }
 
     return (
-        <Card className="glass-card">
-            <CardHeader className="glass-card-header p-4 sm:p-5">
-                <SectionHeader
-                    icon={<Building2 className="h-5 w-5" />}
-                    title="Building Bulk (L3) vs Apartments (L4)"
-                    subtitle="21 buildings — L3 bulk meter vs sum of L4 apartment meters • ⚠️ = non-zero difference"
-                    color="violet"
+        <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
+            {/* ── Toolbar ─────────────────────────────────── */}
+            <div className="p-5 sm:p-6 space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <SectionHeader
+                        icon={<Building2 className="h-5 w-5" />}
+                        title="Building Bulk (L3) vs Apartments (L4)"
+                        subtitle="Click a building to expand apartment details"
+                        color="violet"
+                    />
+                    <div className="flex items-center gap-1.5">
+                        <button onClick={expandAll} className="h-8 px-3 text-[11px] font-medium rounded-lg border border-slate-200 dark:border-slate-700 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                            Expand All
+                        </button>
+                        <button onClick={collapseAll} className="h-8 px-3 text-[11px] font-medium rounded-lg border border-slate-200 dark:border-slate-700 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                            Collapse All
+                        </button>
+                    </div>
+                </div>
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                    <TableSearch value={search} onChange={setSearch} placeholder="Search building..." />
+                    <FilterSelect
+                        value={zoneFilter}
+                        onChange={v => setZoneFilter(v as typeof zoneFilter)}
+                        icon={<Filter className="h-3.5 w-3.5" />}
+                    >
+                        <option value="all">All Zones ({rows.length})</option>
+                        <option value="3A">Zone 3A ({z3ACount})</option>
+                        <option value="3B">Zone 3B ({z3BCount})</option>
+                    </FilterSelect>
+                </div>
+            </div>
+            {/* ── Table ───────────────────────────────────── */}
+            <div className="overflow-x-auto">
+                <table className="w-full border-collapse">
+                    <thead>
+                        <tr className="border-t border-b border-slate-100 dark:border-slate-800">
+                            <Th sortKey="building" sort={sort} onSort={setSort} className="min-w-[140px]">Building</Th>
+                            <th className={cn(thBase)}>Bulk Account</th>
+                            <th className={cn(thBase, "text-center")}>Zone</th>
+                            <Th sortKey="l3" sort={sort} onSort={setSort} className="text-right">L3 Bulk (m³)</Th>
+                            <Th sortKey="l4" sort={sort} onSort={setSort} className="text-right">ΣL4 (m³)</Th>
+                            <Th sortKey="diff" sort={sort} onSort={setSort} className="text-right">Diff</Th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {paginatedRows.length === 0 ? (
+                            <tr>
+                                <td colSpan={6} className="text-center py-10 text-[13px] text-slate-400 dark:text-slate-500">
+                                    No buildings found
+                                </td>
+                            </tr>
+                        ) : (
+                            paginatedRows.flatMap(row => renderBuildingRow(row))
+                        )}
+                    </tbody>
+                </table>
+            </div>
+            {/* ── Pagination ──────────────────────────────── */}
+            <div className="px-5 sm:px-6 pb-4">
+                <TablePagination
+                    page={page}
+                    totalPages={totalPages}
+                    totalItems={filtered.length}
+                    onPageChange={setPage}
+                    rowsPerPage={rowsPerPage}
+                    onRowsPerPageChange={n => { setRowsPerPage(n); setPage(1); }}
                 />
-            </CardHeader>
-            <CardContent className="p-0 overflow-x-auto">
-                <Table>
-                    <TableHeader>
-                        <TableRow className="bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/50">
-                            <TableHead className="min-w-[80px]">Building</TableHead>
-                            <TableHead className="text-xs">Bulk Account</TableHead>
-                            <TableHead className="text-right">L3 Bulk (m³)</TableHead>
-                            <TableHead className="text-right">ΣL4 (m³)</TableHead>
-                            <TableHead className="text-right">Diff</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {/* Zone 3A group */}
-                        <TableRow className="bg-violet-50/40 dark:bg-violet-900/10 hover:bg-violet-50/40 dark:hover:bg-violet-900/10">
-                            <TableCell colSpan={5} className="py-2 text-xs font-semibold uppercase tracking-wider text-violet-600 dark:text-violet-400">
-                                Zone 3A — {zone3A.length} Buildings
-                            </TableCell>
-                        </TableRow>
-                        {renderRows(zone3A)}
-                        {/* Zone 3B group */}
-                        <TableRow className="bg-blue-50/40 dark:bg-blue-900/10 hover:bg-blue-50/40 dark:hover:bg-blue-900/10">
-                            <TableCell colSpan={5} className="py-2 text-xs font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400">
-                                Zone 3B — {zone3B.length} Buildings
-                            </TableCell>
-                        </TableRow>
-                        {renderRows(zone3B)}
-                    </TableBody>
-                </Table>
-            </CardContent>
-        </Card>
+            </div>
+        </div>
     );
 }
 
 // TABLE 3 ─────────────────────────────────────────────────────────────────────
 
 function DCMetersTable({ rows }: { rows: DCRow[] }) {
-    const total = rows.reduce((s, r) => s + (r.displayValue ?? 0), 0);
+    const [search, setSearch] = useState('');
+    const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'no-data' | 'idle'>('all');
+    const [sort, setSort] = useState<SortState>({ key: '', dir: null });
+
+    const total = r2(rows.reduce((s, r) => s + (r.displayValue ?? 0), 0));
+
+    // Derive status for each row
+    function getStatus(row: DCRow): 'active' | 'no-data' | 'idle' {
+        if (row.rawValue !== null) return 'active';
+        if (row.isIrr || NULL_AS_ZERO_ACCOUNTS.has(row.account)) return 'idle';
+        return 'no-data';
+    }
+
+    // Filter
+    const filtered = rows.filter(row => {
+        if (search) {
+            const q = search.toLowerCase();
+            if (!row.meterName.toLowerCase().includes(q) && !row.account.includes(q)) return false;
+        }
+        if (statusFilter !== 'all' && getStatus(row) !== statusFilter) return false;
+        return true;
+    });
+
+    // Sort
+    const sorted = [...filtered].sort((a, b) => {
+        if (!sort.dir) return 0;
+        const mul = sort.dir === 'asc' ? 1 : -1;
+        switch (sort.key) {
+            case 'name': return mul * a.meterName.localeCompare(b.meterName);
+            case 'account': return mul * a.account.localeCompare(b.account);
+            case 'status': return mul * getStatus(a).localeCompare(getStatus(b));
+            case 'reading': return mul * ((a.displayValue ?? 0) - (b.displayValue ?? 0));
+            default: return 0;
+        }
+    });
+
+    const activeCount = rows.filter(r => r.rawValue !== null).length;
+    const noDataCount = rows.filter(r => r.isNullFlag).length;
+    const idleCount = rows.length - activeCount - noDataCount;
 
     return (
-        <Card className="glass-card">
-            <CardHeader className="glass-card-header p-4 sm:p-5">
-                <SectionHeader
-                    icon={<Zap className="h-5 w-5" />}
-                    title="Direct Connections (DC)"
-                    subtitle="Hotels, irrigation, facilities — connected directly to the L1 main supply"
-                    color="amber"
-                />
-            </CardHeader>
-            <CardContent className="p-0 overflow-x-auto">
-                <Table>
-                    <TableHeader>
-                        <TableRow className="bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/50">
-                            <TableHead>Meter Name</TableHead>
-                            <TableHead className="text-xs">Account</TableHead>
-                            <TableHead className="text-right">Reading (m³)</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {rows.map(row => (
-                            <TableRow
-                                key={row.account}
-                                className={row.isNullFlag ? "bg-amber-50/70 dark:bg-amber-900/10" : undefined}
-                            >
-                                <TableCell className="text-sm font-medium">
-                                    {row.meterName}
-                                    {row.isIrr && (
-                                        <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded bg-sky-100 dark:bg-sky-900/30 text-sky-600 dark:text-sky-400 font-medium">
-                                            IRR
-                                        </span>
-                                    )}
-                                </TableCell>
-                                <TableCell className="font-mono text-xs text-slate-500">{row.account}</TableCell>
-                                <TableCell className="text-right font-mono text-sm font-medium">
-                                    {row.isNullFlag ? (
-                                        <NullBadge />
-                                    ) : row.rawValue === null ? (
-                                        <span className="text-slate-400 dark:text-slate-500">0</span>
-                                    ) : (
-                                        n(row.displayValue)
-                                    )}
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                        {/* Totals row */}
-                        <TableRow className="border-t-2 border-slate-200 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-800/30">
-                            <TableCell className="font-bold text-sm" colSpan={2}>Total DC</TableCell>
-                            <TableCell className="text-right font-mono font-bold text-sm">
-                                {Math.round(total).toLocaleString()}
-                            </TableCell>
-                        </TableRow>
-                    </TableBody>
-                </Table>
-            </CardContent>
-        </Card>
+        <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
+            {/* ── Toolbar ──────────────────────────────────── */}
+            <div className="p-5 sm:p-6 space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <SectionHeader
+                        icon={<Zap className="h-5 w-5" />}
+                        title="Direct Connections (DC)"
+                        subtitle="Hotels, irrigation, facilities — connected directly to the L1 main supply"
+                        color="amber"
+                    />
+                    <span className="text-[12px] text-slate-400 dark:text-slate-500 whitespace-nowrap tabular-nums">
+                        {sorted.length} of {rows.length} meters
+                    </span>
+                </div>
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                    <TableSearch value={search} onChange={setSearch} placeholder="Search meter name or account…" />
+                    <FilterSelect
+                        value={statusFilter}
+                        onChange={v => setStatusFilter(v as typeof statusFilter)}
+                        icon={<Filter className="h-3.5 w-3.5" />}
+                    >
+                        <option value="all">All Status</option>
+                        <option value="active">Active ({activeCount})</option>
+                        <option value="no-data">No Data ({noDataCount})</option>
+                        <option value="idle">Idle ({idleCount})</option>
+                    </FilterSelect>
+                </div>
+            </div>
+            {/* ── Table ────────────────────────────────────── */}
+            <div className="overflow-x-auto">
+                <table className="w-full border-collapse">
+                    <thead>
+                        <tr className="border-t border-b border-slate-100 dark:border-slate-800">
+                            <Th sortKey="name" sort={sort} onSort={setSort} className="min-w-[180px]">Meter Name</Th>
+                            <Th sortKey="account" sort={sort} onSort={setSort}>Account</Th>
+                            <Th sortKey="status" sort={sort} onSort={setSort} className="text-center min-w-[80px]">Status</Th>
+                            <Th sortKey="reading" sort={sort} onSort={setSort} className="text-right min-w-[110px]">Reading (m³)</Th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {sorted.length === 0 ? (
+                            <tr>
+                                <td colSpan={4} className="text-center py-10 text-[13px] text-slate-400 dark:text-slate-500">
+                                    No meters found
+                                </td>
+                            </tr>
+                        ) : (
+                            sorted.map(row => {
+                                const status = getStatus(row);
+                                return (
+                                    <tr key={row.account} className="border-b border-slate-50 dark:border-slate-800/60 hover:bg-slate-50/70 dark:hover:bg-slate-800/30 transition-colors">
+                                        <td className={cn(tdBase, "font-semibold")}>
+                                            <span className="inline-flex items-center gap-2">
+                                                {row.meterName}
+                                                {row.isIrr && <StatusChip label="IRR" color="primary" />}
+                                            </span>
+                                        </td>
+                                        <td className={cn(tdBase, "font-mono text-[11px] text-slate-400 dark:text-slate-500")}>{row.account}</td>
+                                        <td className={cn(tdBase, "text-center")}>
+                                            {status === 'active' && <StatusChip label="Active" color="success" />}
+                                            {status === 'idle' && <StatusChip label="Idle" color="default" />}
+                                            {status === 'no-data' && <StatusChip label="No Data" color="warning" />}
+                                        </td>
+                                        <td className={cn(tdBase, "text-right tabular-nums font-medium")}>
+                                            {row.isNullFlag ? (
+                                                <span className="text-amber-500 dark:text-amber-400 text-xs">—</span>
+                                            ) : row.rawValue === null ? (
+                                                <span className="text-slate-400 dark:text-slate-500">0.00</span>
+                                            ) : (
+                                                n(row.displayValue)
+                                            )}
+                                        </td>
+                                    </tr>
+                                );
+                            })
+                        )}
+                        {/* Totals */}
+                        <tr className="border-t-2 border-slate-200 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-800/20">
+                            <td className={cn(tdBase, "font-bold")} colSpan={3}>Total DC</td>
+                            <td className={cn(tdBase, "text-right tabular-nums font-bold")}>
+                                {n(total)}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     );
 }
 
 // SUMMARY CARD ────────────────────────────────────────────────────────────────
 
-function SummaryCard({ data, day, month }: { data: ReportData; day: number; month: string }) {
+function SummaryCard({ data, day, month, meterCount }: { data: ReportData; day: number; month: string; meterCount: number }) {
     const highLossZones = data.zoneRows.filter(r => r.isHighLoss);
     const nullL2Zones = data.zoneRows.filter(r => r.isNullL2);
     const nullDCMeters = data.dcRows.filter(r => r.isNullFlag);
     const flaggedBuildings = data.buildingRows.filter(r => r.hasNonZeroDiff);
-    const hasIssues = highLossZones.length > 0 || nullL2Zones.length > 0 || nullDCMeters.length > 0;
+    const activeDC = data.dcRows.filter(r => r.rawValue !== null).length;
+    const l3Total = r2(data.zoneRows.reduce((s, r) => s + r.l3Sum, 0));
+    const totalLoss = r2(data.l2Total - l3Total);
+    const lossPct = data.l2Total > 0 ? r2((totalLoss / data.l2Total) * 100) : 0;
+
+    const criticalCount = highLossZones.length + nullL2Zones.length;
+    const warningCount = nullDCMeters.length + flaggedBuildings.length;
 
     return (
-        <Card className="glass-card">
-            <CardHeader className="glass-card-header p-4 sm:p-5">
+        <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
+            <div className="p-5 sm:p-6">
                 <SectionHeader
                     icon={<Activity className="h-5 w-5" />}
                     title="Report Summary"
-                    subtitle={`Day ${day}, ${month} — Grand total of all measured consumption`}
+                    subtitle={`Day ${day}, ${month} — ${meterCount} meters loaded from database`}
                     color="emerald"
                 />
-            </CardHeader>
-            <CardContent className="p-4 sm:p-6 space-y-6">
+            </div>
+            <div className="px-5 sm:px-6 pb-6 space-y-6">
                 {/* Stat tiles */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div className="text-center p-5 rounded-xl bg-teal-50 dark:bg-teal-900/20 border border-teal-100 dark:border-teal-900/30">
-                        <Droplets className="h-6 w-6 text-teal-500 mx-auto mb-2" />
-                        <div className="text-3xl font-bold text-teal-700 dark:text-teal-300">
-                            {data.l2Total.toLocaleString()}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+                    <div className="text-center p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-teal-50 to-white dark:from-teal-900/15 dark:to-slate-900 border border-teal-100/80 dark:border-teal-900/30">
+                        <Droplets className="h-5 w-5 text-teal-500 mx-auto mb-2" />
+                        <div className="text-2xl sm:text-3xl font-bold text-teal-700 dark:text-teal-300 tabular-nums tracking-tight">
+                            {n(data.l2Total)}
                         </div>
-                        <div className="text-xs font-medium text-teal-600/70 dark:text-teal-400/70 mt-1">L2 Zone Bulk Total (m³)</div>
+                        <div className="text-[11px] font-medium text-teal-600/60 dark:text-teal-400/60 mt-1">L2 Zone Bulk (m³)</div>
                     </div>
-                    <div className="text-center p-5 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-900/30">
-                        <Zap className="h-6 w-6 text-amber-500 mx-auto mb-2" />
-                        <div className="text-3xl font-bold text-amber-700 dark:text-amber-300">
-                            {data.dcTotal.toLocaleString()}
+                    <div className="text-center p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-violet-50 to-white dark:from-violet-900/15 dark:to-slate-900 border border-violet-100/80 dark:border-violet-900/30">
+                        <Building2 className="h-5 w-5 text-violet-500 mx-auto mb-2" />
+                        <div className="text-2xl sm:text-3xl font-bold text-violet-700 dark:text-violet-300 tabular-nums tracking-tight">
+                            {n(l3Total)}
                         </div>
-                        <div className="text-xs font-medium text-amber-600/70 dark:text-amber-400/70 mt-1">DC Connections Total (m³)</div>
+                        <div className="text-[11px] font-medium text-violet-600/60 dark:text-violet-400/60 mt-1">ΣL3 Meters (m³)</div>
                     </div>
-                    <div className="text-center p-5 rounded-xl bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
-                        <Activity className="h-6 w-6 text-slate-500 mx-auto mb-2" />
-                        <div className="text-3xl font-bold text-slate-700 dark:text-slate-200">
-                            {data.grandTotal.toLocaleString()}
+                    <div className="text-center p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-amber-50 to-white dark:from-amber-900/15 dark:to-slate-900 border border-amber-100/80 dark:border-amber-900/30">
+                        <Zap className="h-5 w-5 text-amber-500 mx-auto mb-2" />
+                        <div className="text-2xl sm:text-3xl font-bold text-amber-700 dark:text-amber-300 tabular-nums tracking-tight">
+                            {n(data.dcTotal)}
                         </div>
-                        <div className="text-xs font-medium text-slate-500 mt-1">Grand Total (L2 + DC) (m³)</div>
+                        <div className="text-[11px] font-medium text-amber-600/60 dark:text-amber-400/60 mt-1">DC Total ({activeDC}/{data.dcRows.length} active)</div>
+                    </div>
+                    <div className="text-center p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-slate-50 to-white dark:from-slate-800/40 dark:to-slate-900 border border-slate-200/80 dark:border-slate-700/60">
+                        <Activity className="h-5 w-5 text-slate-500 mx-auto mb-2" />
+                        <div className="text-2xl sm:text-3xl font-bold text-slate-700 dark:text-slate-200 tabular-nums tracking-tight">
+                            {n(data.grandTotal)}
+                        </div>
+                        <div className="text-[11px] font-medium text-slate-400 mt-1">Grand Total (m³)</div>
                     </div>
                 </div>
 
-                {/* Flags */}
-                <div className="space-y-2">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-                        Flags & Alerts
-                    </p>
+                {/* Water loss summary bar */}
+                <div className="rounded-2xl border border-slate-200/80 dark:border-slate-700/60 p-4 space-y-2.5 bg-slate-50/50 dark:bg-slate-800/20">
+                    <div className="flex items-center justify-between">
+                        <span className="text-[13px] font-semibold text-slate-700 dark:text-slate-200">Network Water Loss (L2 − ΣL3)</span>
+                        <span className={cn(
+                            "text-[13px] font-bold tabular-nums",
+                            lossPct > 30 ? "text-red-600 dark:text-red-400" : lossPct > 15 ? "text-amber-600 dark:text-amber-400" : "text-emerald-600 dark:text-emerald-400",
+                        )}>
+                            {n(totalLoss)} m³ ({lossPct}%)
+                        </span>
+                    </div>
+                    <div className="w-full h-2 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+                        <div
+                            className={cn(
+                                "h-full rounded-full transition-all duration-500",
+                                lossPct > 30 ? "bg-gradient-to-r from-red-400 to-red-500" : lossPct > 15 ? "bg-gradient-to-r from-amber-400 to-amber-500" : "bg-gradient-to-r from-emerald-400 to-emerald-500",
+                            )}
+                            style={{ width: `${Math.min(Math.max(lossPct, 0), 100)}%` }}
+                        />
+                    </div>
+                    <div className="flex justify-between text-[10px] text-slate-400 dark:text-slate-500">
+                        <span>0% (No loss)</span>
+                        <span>15% threshold</span>
+                        <span>30%+ critical</span>
+                    </div>
+                </div>
 
-                    {!hasIssues && (
-                        <div className="flex items-center gap-2 text-sm text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-900/30 rounded-lg px-4 py-2.5">
+                {/* Flags — grouped by severity */}
+                <div className="space-y-2.5">
+                    <div className="flex items-center gap-3">
+                        <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                            Flags & Alerts
+                        </p>
+                        {criticalCount === 0 && warningCount === 0 && <StatusChip label="All Clear" color="success" />}
+                        {criticalCount > 0 && <StatusChip label={`${criticalCount} critical`} color="danger" />}
+                        {warningCount > 0 && <StatusChip label={`${warningCount} warning${warningCount > 1 ? 's' : ''}`} color="warning" />}
+                    </div>
+
+                    {criticalCount === 0 && warningCount === 0 && (
+                        <div className="flex items-center gap-2 text-[13px] text-emerald-700 dark:text-emerald-400 bg-emerald-50/80 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-900/20 rounded-xl px-4 py-3">
                             <CheckCircle2 className="h-4 w-4 shrink-0" />
                             All zones within acceptable range. No critical issues detected for day {day}.
                         </div>
                     )}
 
                     {highLossZones.map(z => (
-                        <div key={z.zoneName} className="flex items-start gap-2 text-sm text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-900/30 rounded-lg px-4 py-2.5">
-                            <span className="shrink-0 mt-0.5">🔴</span>
+                        <div key={z.zoneName} className="flex items-start gap-2.5 text-[13px] text-red-700 dark:text-red-400 bg-red-50/80 dark:bg-red-900/10 border border-red-100 dark:border-red-900/20 rounded-xl px-4 py-3">
+                            <span className="shrink-0 mt-0.5 h-4 w-4 rounded-full bg-red-500 flex items-center justify-center">
+                                <span className="text-white text-[8px] font-bold">!</span>
+                            </span>
                             <span>
                                 <strong>High Loss — {z.zoneName}:</strong>{" "}
                                 L2 = {n(z.l2Value)} m³, ΣL3 = {n(z.l3Sum)} m³, Diff = {n(z.diff)} m³
@@ -489,31 +977,34 @@ function SummaryCard({ data, day, month }: { data: ReportData; day: number; mont
                     ))}
 
                     {nullL2Zones.map(z => (
-                        <div key={z.zoneName} className="flex items-center gap-2 text-sm text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-900/30 rounded-lg px-4 py-2.5">
+                        <div key={z.zoneName} className="flex items-center gap-2 text-[13px] text-amber-700 dark:text-amber-400 bg-amber-50/80 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/20 rounded-xl px-4 py-3">
                             <AlertTriangle className="h-4 w-4 shrink-0" />
                             <span><strong>NULL L2 — {z.zoneName}:</strong> Bulk meter has no reading for this day</span>
                         </div>
                     ))}
 
-                    {nullDCMeters.map(dc => (
-                        <div key={dc.account} className="flex items-center gap-2 text-sm text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-900/30 rounded-lg px-4 py-2.5">
-                            <AlertTriangle className="h-4 w-4 shrink-0" />
-                            <span><strong>NULL Meter — {dc.meterName}</strong> ({dc.account})</span>
-                        </div>
-                    ))}
-
-                    {flaggedBuildings.length > 0 && (
-                        <div className="flex items-start gap-2 text-sm text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-900/30 rounded-lg px-4 py-2.5">
+                    {nullDCMeters.length > 0 && (
+                        <div className="flex items-start gap-2 text-[13px] text-amber-700 dark:text-amber-400 bg-amber-50/80 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/20 rounded-xl px-4 py-3">
                             <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
                             <span>
-                                <strong>{flaggedBuildings.length} building{flaggedBuildings.length > 1 ? 's' : ''} with non-zero L3/L4 diff:</strong>{" "}
-                                {flaggedBuildings.map(b => `${b.buildingName} (${b.diff && b.diff > 0 ? '+' : ''}${b.diff})`).join(', ')}
+                                <strong>{nullDCMeters.length} DC meter{nullDCMeters.length > 1 ? 's' : ''} with no data:</strong>{" "}
+                                {nullDCMeters.map(dc => dc.meterName).join(', ')}
+                            </span>
+                        </div>
+                    )}
+
+                    {flaggedBuildings.length > 0 && (
+                        <div className="flex items-start gap-2 text-[13px] text-amber-700 dark:text-amber-400 bg-amber-50/80 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/20 rounded-xl px-4 py-3">
+                            <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
+                            <span>
+                                <strong>{flaggedBuildings.length} building{flaggedBuildings.length > 1 ? 's' : ''} with L3/L4 diff:</strong>{" "}
+                                {flaggedBuildings.map(b => `${b.buildingName} (${diffCell(b.diff)})`).join(', ')}
                             </span>
                         </div>
                     )}
                 </div>
-            </CardContent>
-        </Card>
+            </div>
+        </div>
     );
 }
 
@@ -524,10 +1015,10 @@ interface ZoneAnalyticsPanelProps {
     monthData: SupabaseDailyWaterConsumption[];
     selectedDay: number;
     month: string;
+    activeZoneName: string;
 }
 
-function ZoneAnalyticsPanel({ reportData, monthData, selectedDay, month }: ZoneAnalyticsPanelProps) {
-    const [activeZoneName, setActiveZoneName] = useState(ZONE_BULK_CONFIG[0].zoneName);
+function ZoneAnalyticsPanel({ reportData, monthData, selectedDay, month, activeZoneName }: ZoneAnalyticsPanelProps) {
 
     // O(1) lookup map keyed by account_number
     const accountMap = useMemo(() => {
@@ -564,9 +1055,9 @@ function ZoneAnalyticsPanel({ reportData, monthData, selectedDay, month }: ZoneA
             results.push({
                 day: `D${String(day).padStart(2, '0')}`,
                 dayNum: day,
-                'L2 Bulk': l2 !== null ? Math.round(l2) : null,
-                'ΣL3': Math.round(l3),
-                Loss: l2 !== null ? Math.round(Math.max(0, l2 - l3)) : null,
+                'L2 Bulk': l2 !== null ? r2(l2) : null,
+                'ΣL3': r2(l3),
+                Loss: l2 !== null ? r2(Math.max(0, l2 - l3)) : null,
             });
         }
         return results;
@@ -576,43 +1067,6 @@ function ZoneAnalyticsPanel({ reportData, monthData, selectedDay, month }: ZoneA
 
     return (
         <div className="space-y-6">
-
-            {/* ── Zone selector ────────────────────────────────────────────── */}
-            <Card className="glass-card">
-                <CardContent className="p-4 sm:p-5">
-                    <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-sm font-medium text-slate-600 dark:text-slate-400 mr-1">
-                            Select Zone
-                        </span>
-                        {ZONE_BULK_CONFIG.map(z => {
-                            const zr = reportData.zoneRows.find(r => r.zoneName === z.zoneName);
-                            const isActive = z.zoneName === activeZoneName;
-                            const hasHighLoss = zr?.isHighLoss;
-                            const hasNullL2 = zr?.isNullL2;
-                            return (
-                                <button
-                                    key={z.zoneName}
-                                    onClick={() => setActiveZoneName(z.zoneName)}
-                                    className={cn(
-                                        "px-3 py-1.5 rounded-full text-sm font-medium transition-all border",
-                                        isActive
-                                            ? "bg-primary text-white border-primary shadow-sm"
-                                            : hasHighLoss
-                                                ? "bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800 hover:bg-red-100"
-                                                : hasNullL2
-                                                    ? "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800 hover:bg-amber-100"
-                                                    : "bg-white text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700"
-                                    )}
-                                >
-                                    {z.zoneName}
-                                    {!isActive && hasHighLoss && <span className="ml-1 text-[10px]">🔴</span>}
-                                    {!isActive && hasNullL2 && <span className="ml-1 text-[10px]">⚠️</span>}
-                                </button>
-                            );
-                        })}
-                    </div>
-                </CardContent>
-            </Card>
 
             {/* ── Zone heading ─────────────────────────────────────────────── */}
             <div>
@@ -742,6 +1196,308 @@ function ZoneAnalyticsPanel({ reportData, monthData, selectedDay, month }: ZoneA
     );
 }
 
+// ─── Zone L3 Meters Table (hierarchical with expandable L4) ──────────────────
+
+function ZoneL3Table({
+    zoneRow,
+    zoneConfig,
+    readings,
+    buildingRows,
+}: {
+    zoneRow: ZoneRow;
+    zoneConfig: ZoneBulkConfig;
+    readings: Record<string, number | null>;
+    buildingRows: BuildingRow[];
+}) {
+    const [expandedMeters, setExpandedMeters] = useState<Set<string>>(new Set());
+    const [search, setSearch] = useState('');
+    const [sort, setSort] = useState<SortState>({ key: '', dir: null });
+    const [page, setPage] = useState(1);
+    const [rowsPerPage, setRowsPerPage] = useState(15);
+
+    // Map building bulk accounts to building info (only buildings in this zone)
+    const buildingMap = useMemo(() => {
+        const map = new Map<string, BuildingRow>();
+        for (const b of buildingRows) {
+            if (zoneConfig.l3Accounts.includes(b.bulkAccount)) {
+                map.set(b.bulkAccount, b);
+            }
+        }
+        return map;
+    }, [buildingRows, zoneConfig]);
+
+    const toggleMeter = (account: string) => {
+        setExpandedMeters(prev => {
+            const next = new Set(prev);
+            next.has(account) ? next.delete(account) : next.add(account);
+            return next;
+        });
+    };
+
+    // Build L3 meter list
+    const l3Meters = useMemo(() => {
+        return zoneConfig.l3Accounts.map(account => {
+            const building = buildingMap.get(account) ?? null;
+            const rawValue = readings[account] ?? null;
+            const isNullAsZero = NULL_AS_ZERO_ACCOUNTS.has(account);
+            const displayValue = rawValue !== null ? r2(rawValue) : isNullAsZero ? 0 : null;
+            return { account, rawValue, displayValue, isNullAsZero, building, label: building ? building.buildingName : account };
+        });
+    }, [zoneConfig, readings, buildingMap]);
+
+    // Filter & sort
+    const filtered = useMemo(() => {
+        let result = [...l3Meters];
+        if (search) {
+            const q = search.toLowerCase();
+            result = result.filter(m => m.label.toLowerCase().includes(q) || m.account.includes(q));
+        }
+        if (sort.dir && sort.key) {
+            result.sort((a, b) => {
+                let va: number | string, vb: number | string;
+                if (sort.key === 'label') { va = a.label; vb = b.label; }
+                else if (sort.key === 'reading') { va = a.displayValue ?? -1; vb = b.displayValue ?? -1; }
+                else { va = a.account; vb = b.account; }
+                const cmp = va < vb ? -1 : va > vb ? 1 : 0;
+                return sort.dir === 'desc' ? -cmp : cmp;
+            });
+        }
+        return result;
+    }, [l3Meters, search, sort]);
+
+    useEffect(() => { setPage(1); }, [search, sort]);
+
+    const totalPages = Math.max(1, Math.ceil(filtered.length / rowsPerPage));
+    const paginated = filtered.slice((page - 1) * rowsPerPage, page * rowsPerPage);
+    const buildingCount = l3Meters.filter(m => m.building).length;
+    const individualCount = l3Meters.length - buildingCount;
+
+    const expandAll = () => setExpandedMeters(new Set(l3Meters.filter(m => m.building).map(m => m.account)));
+    const collapseAll = () => setExpandedMeters(new Set());
+
+    function renderL3Row(meter: typeof l3Meters[number]) {
+        const isExpanded = expandedMeters.has(meter.account);
+        const building = meter.building;
+
+        const mainRow = (
+            <tr
+                key={meter.account}
+                className={cn(
+                    "border-b border-slate-50 dark:border-slate-800/60 transition-colors hover:bg-slate-50/70 dark:hover:bg-slate-800/30",
+                    building && "cursor-pointer select-none",
+                    isExpanded && "bg-violet-50/30 dark:bg-violet-900/10",
+                )}
+                onClick={building ? () => toggleMeter(meter.account) : undefined}
+            >
+                <td className={cn(tdBase, "font-semibold")}>
+                    <span className="inline-flex items-center gap-2">
+                        {building && (
+                            <span className={cn(
+                                "flex items-center justify-center h-5 w-5 rounded-md transition-all duration-200",
+                                isExpanded ? "bg-[#4E4456] dark:bg-[#00D2B3]" : "bg-slate-200 dark:bg-slate-700",
+                            )}>
+                                <ChevronDown className={cn(
+                                    "h-3 w-3 transition-transform duration-200",
+                                    isExpanded ? "rotate-0 text-white dark:text-slate-900" : "-rotate-90 text-slate-500 dark:text-slate-400",
+                                )} />
+                            </span>
+                        )}
+                        {building ? (
+                            <>
+                                <Building2 className="h-3.5 w-3.5 text-violet-500 shrink-0" />
+                                {building.buildingName}
+                                <span className="text-[10px] font-normal text-slate-400 dark:text-slate-500">
+                                    {building.childMeters.filter(c => c.type === 'Apartment').length} apts
+                                </span>
+                            </>
+                        ) : (
+                            <>
+                                <Home className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                                {meter.account}
+                                {meter.isNullAsZero && <StatusChip label="IRR" color="primary" />}
+                            </>
+                        )}
+                    </span>
+                </td>
+                <td className={cn(tdBase, "font-mono text-[11px] text-slate-400 dark:text-slate-500")}>{meter.account}</td>
+                <td className={cn(tdBase, "text-center")}>
+                    <StatusChip label={building ? "Building" : "Individual"} color={building ? "primary" : "default"} />
+                </td>
+                <td className={cn(tdBase, "text-right tabular-nums font-medium")}>
+                    {meter.rawValue === null && !meter.isNullAsZero ? (
+                        <NullBadge />
+                    ) : meter.displayValue === 0 ? (
+                        <span className="text-slate-400">0.00</span>
+                    ) : (
+                        n(meter.displayValue)
+                    )}
+                </td>
+            </tr>
+        );
+
+        if (!building || !isExpanded) return [mainRow];
+
+        // Expanded L4 child meters
+        const childRow = (
+            <tr key={`${meter.account}-children`} className="bg-slate-50/40 dark:bg-slate-800/20">
+                <td colSpan={4} className="py-0 px-0">
+                    <div className="border-l-[3px] border-[#00D2B3]/40 dark:border-[#00D2B3]/30 ml-5 sm:ml-7">
+                        <table className="w-full">
+                            <thead>
+                                <tr className="border-b border-slate-100 dark:border-slate-800/60">
+                                    <th className="text-left py-2 px-4 text-[10px] uppercase tracking-wider font-semibold text-slate-400 dark:text-slate-500 w-[40%]">Meter</th>
+                                    <th className="text-left py-2 px-4 text-[10px] uppercase tracking-wider font-semibold text-slate-400 dark:text-slate-500">Account</th>
+                                    <th className="text-center py-2 px-4 text-[10px] uppercase tracking-wider font-semibold text-slate-400 dark:text-slate-500">Type</th>
+                                    <th className="text-right py-2 px-4 text-[10px] uppercase tracking-wider font-semibold text-slate-400 dark:text-slate-500">Reading (m³)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {building.childMeters.map(cm => {
+                                    const val = cm.value !== null ? r2(cm.value) : null;
+                                    return (
+                                        <tr
+                                            key={cm.account}
+                                            className={cn(
+                                                "border-b border-slate-50 dark:border-slate-800/40 transition-colors hover:bg-white/60 dark:hover:bg-slate-800/30",
+                                                cm.type === 'Common' && "bg-indigo-50/30 dark:bg-indigo-900/5",
+                                            )}
+                                        >
+                                            <td className="py-2 px-4 text-[12px] font-medium text-slate-700 dark:text-slate-300">
+                                                <span className="inline-flex items-center gap-1.5">
+                                                    {cm.type === 'Common'
+                                                        ? <Users className="h-3 w-3 text-indigo-500 shrink-0" />
+                                                        : <Home className="h-3 w-3 text-slate-400 shrink-0" />}
+                                                    {cm.label}
+                                                </span>
+                                            </td>
+                                            <td className="py-2 px-4 font-mono text-[11px] text-slate-400 dark:text-slate-500">{cm.account}</td>
+                                            <td className="py-2 px-4 text-center">
+                                                <StatusChip label={cm.type} color={cm.type === 'Common' ? 'primary' : 'default'} />
+                                            </td>
+                                            <td className="py-2 px-4 text-right font-mono text-[12px] font-medium tabular-nums text-slate-700 dark:text-slate-300">
+                                                {val === null ? '—' : val === 0 ? <span className="text-slate-400">0.00</span> : n(val)}
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                                <tr className="border-t-2 border-slate-200/80 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-800/20">
+                                    <td className="py-2 px-4 text-[12px] font-bold text-slate-600 dark:text-slate-300" colSpan={3}>
+                                        Sum of {building.childMeters.length} meters
+                                    </td>
+                                    <td className="py-2 px-4 text-right font-mono text-[12px] font-bold tabular-nums">{n(building.l4Sum)}</td>
+                                </tr>
+                                <tr className={cn(
+                                    "border-t border-dashed border-slate-200 dark:border-slate-700",
+                                    building.hasNonZeroDiff ? "bg-amber-50/50 dark:bg-amber-900/5" : "bg-emerald-50/30 dark:bg-emerald-900/5",
+                                )}>
+                                    <td className="py-2 px-4 text-[12px] font-bold" colSpan={3}>
+                                        Bulk ({n(building.l3Bulk)}) − Sum ({n(building.l4Sum)}) = Difference
+                                    </td>
+                                    <td className={cn("py-2 px-4 text-right font-mono text-[12px] font-bold tabular-nums",
+                                        building.hasNonZeroDiff ? "text-amber-600 dark:text-amber-400" : "text-emerald-600 dark:text-emerald-400",
+                                    )}>
+                                        {building.diff !== null ? diffCell(building.diff) : '—'}
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </td>
+            </tr>
+        );
+
+        return [mainRow, childRow];
+    }
+
+    return (
+        <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
+            <div className="p-5 sm:p-6 space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <SectionHeader
+                        icon={<Droplets className="h-5 w-5" />}
+                        title={`${zoneRow.zoneName} — L3 Meters`}
+                        subtitle={`${l3Meters.length} meters${buildingCount > 0 ? ` (${buildingCount} buildings, ${individualCount} individual)` : ''}`}
+                        color="teal"
+                    />
+                    {buildingCount > 0 && (
+                        <div className="flex items-center gap-1.5">
+                            <button onClick={expandAll} className="h-8 px-3 text-[11px] font-medium rounded-lg border border-slate-200 dark:border-slate-700 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                                Expand All
+                            </button>
+                            <button onClick={collapseAll} className="h-8 px-3 text-[11px] font-medium rounded-lg border border-slate-200 dark:border-slate-700 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                                Collapse All
+                            </button>
+                        </div>
+                    )}
+                </div>
+
+                {/* Zone L2 vs L3 summary tiles */}
+                <div className="grid grid-cols-3 gap-3">
+                    <div className="text-center p-3 rounded-xl bg-teal-50/50 dark:bg-teal-900/10 border border-teal-100/80 dark:border-teal-900/20">
+                        <div className="text-lg font-bold text-teal-700 dark:text-teal-300 tabular-nums">{zoneRow.isNullL2 ? '—' : n(zoneRow.l2Value)}</div>
+                        <div className="text-[10px] text-teal-600/60 dark:text-teal-400/60 mt-0.5">L2 Bulk (m³)</div>
+                    </div>
+                    <div className="text-center p-3 rounded-xl bg-violet-50/50 dark:bg-violet-900/10 border border-violet-100/80 dark:border-violet-900/20">
+                        <div className="text-lg font-bold text-violet-700 dark:text-violet-300 tabular-nums">{n(zoneRow.l3Sum)}</div>
+                        <div className="text-[10px] text-violet-600/60 dark:text-violet-400/60 mt-0.5">ΣL3 (m³)</div>
+                    </div>
+                    <div className="text-center p-3 rounded-xl bg-slate-50/50 dark:bg-slate-800/30 border border-slate-200/80 dark:border-slate-700/40">
+                        <div className={cn(
+                            "text-lg font-bold tabular-nums",
+                            zoneRow.isHighLoss ? "text-red-600 dark:text-red-400" : !zoneRow.isNullL2 ? "text-emerald-600 dark:text-emerald-400" : "text-slate-400",
+                        )}>{zoneRow.isNullL2 ? '—' : diffCell(zoneRow.diff)}</div>
+                        <div className="text-[10px] text-slate-400 mt-0.5">Difference</div>
+                    </div>
+                </div>
+
+                <TableSearch value={search} onChange={setSearch} placeholder="Search meter or account..." />
+            </div>
+
+            {/* Table */}
+            <div className="overflow-x-auto">
+                <table className="w-full border-collapse">
+                    <thead>
+                        <tr className="border-t border-b border-slate-100 dark:border-slate-800">
+                            <Th sortKey="label" sort={sort} onSort={setSort} className="min-w-[160px]">Meter</Th>
+                            <Th sortKey="account" sort={sort} onSort={setSort}>Account</Th>
+                            <th className={cn(thBase, "text-center min-w-[100px]")}>Type</th>
+                            <Th sortKey="reading" sort={sort} onSort={setSort} className="text-right min-w-[110px]">Reading (m³)</Th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {paginated.length === 0 ? (
+                            <tr>
+                                <td colSpan={4} className="text-center py-10 text-[13px] text-slate-400 dark:text-slate-500">
+                                    No meters found
+                                </td>
+                            </tr>
+                        ) : (
+                            paginated.flatMap(meter => renderL3Row(meter))
+                        )}
+                        <tr className="border-t-2 border-slate-200 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-800/20">
+                            <td className={cn(tdBase, "font-bold")} colSpan={3}>ΣL3 Total ({l3Meters.length} meters)</td>
+                            <td className={cn(tdBase, "text-right tabular-nums font-bold")}>{n(zoneRow.l3Sum)}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            {filtered.length > rowsPerPage && (
+                <div className="px-5 sm:px-6 pb-4">
+                    <TablePagination
+                        page={page}
+                        totalPages={totalPages}
+                        totalItems={filtered.length}
+                        onPageChange={setPage}
+                        rowsPerPage={rowsPerPage}
+                        onRowsPerPageChange={rpp => { setRowsPerPage(rpp); setPage(1); }}
+                    />
+                </div>
+            )}
+        </div>
+    );
+}
+
 // ─── Loading / Error states ───────────────────────────────────────────────────
 
 function LoadingState() {
@@ -800,6 +1556,19 @@ export function DailyWaterReport() {
     const [reportData, setReportData] = useState<ReportData | null>(null);
     const [errorMsg, setErrorMsg] = useState('');
     const [lastFetched, setLastFetched] = useState<Date | null>(null);
+    const [activeView, setActiveView] = useState<string>(ZONE_BULK_CONFIG[0].zoneName);
+
+    // ── Per-account readings map for the selected day ─────────────────────────
+    const readings = useMemo(() => {
+        if (monthData.length === 0) return {};
+        const dayCol = `day_${selectedDay}` as keyof SupabaseDailyWaterConsumption;
+        const map: Record<string, number | null> = {};
+        for (const row of monthData) {
+            const val = row[dayCol];
+            map[row.account_number] = val != null ? Number(val) : null;
+        }
+        return map;
+    }, [monthData, selectedDay]);
 
     // ── Build report from cached month rows for any day (no network call) ──────
     const computeReport = useCallback((rows: SupabaseDailyWaterConsumption[], day: number) => {
@@ -980,47 +1749,79 @@ export function DailyWaterReport() {
 
             {reportData && (
                 <>
-                    <ZoneAnalyticsPanel
-                        reportData={reportData}
-                        monthData={monthData}
-                        selectedDay={selectedDay}
-                        month={selectedMonth}
-                    />
-                    <ZoneBulkTable rows={reportData.zoneRows} />
-                    <BuildingBulkTable rows={reportData.buildingRows} />
-                    <DCMetersTable rows={reportData.dcRows} />
-                    <SummaryCard data={reportData} day={selectedDay} month={selectedMonth} />
-
-                    {/* Grafana Daily Account Consumption Details */}
-                    <Card className="glass-card overflow-hidden">
-                        <CardHeader className="glass-card-header p-4 sm:p-5">
-                            <SectionHeader
-                                icon={<Activity className="h-5 w-5" />}
-                                title="Daily Account Consumption Details"
-                                subtitle="Live Grafana panel — daily readings per customer meter for the selected month"
-                                color="teal"
-                            />
-                        </CardHeader>
-                        <CardContent className="p-0">
-                            <iframe
-                                className="w-full"
-                                title="Grafana Daily Account Consumption Details"
-                                src={`https://grafana.nec-oman.com/d-solo/aMGcGVPHz/daily-account-consumption-details?orgId=7&var-BillMonth=${(() => {
-                                    const monthMap: Record<string, string> = {
-                                        'Jan': '01', 'Feb': '02', 'Mar': '03', 'Apr': '04',
-                                        'May': '05', 'Jun': '06', 'Jul': '07', 'Aug': '08',
-                                        'Sep': '09', 'Oct': '10', 'Nov': '11', 'Dec': '12',
-                                    };
-                                    const [mon, yr] = selectedMonth.split('-');
-                                    return `${monthMap[mon] ?? '01'}20${yr}`;
-                                })()}&panelId=17&kiosk`}
-                                width="100%"
-                                loading="lazy"
-                                sandbox="allow-scripts allow-popups allow-top-navigation-by-user-activation allow-forms allow-same-origin"
-                                style={{ background: 'transparent', border: 'none', height: '800px' }}
-                            />
+                    {/* ── Zone / DC Selector ─────────────────────────────── */}
+                    <Card className="glass-card">
+                        <CardContent className="p-4 sm:p-5">
+                            <div className="flex flex-wrap items-center gap-2">
+                                <span className="text-sm font-medium text-slate-600 dark:text-slate-400 mr-1">
+                                    Select Zone
+                                </span>
+                                {ZONE_BULK_CONFIG.map(z => {
+                                    const zr = reportData.zoneRows.find(r => r.zoneName === z.zoneName);
+                                    const isActive = z.zoneName === activeView;
+                                    const hasHighLoss = zr?.isHighLoss;
+                                    const hasNullL2 = zr?.isNullL2;
+                                    return (
+                                        <button
+                                            key={z.zoneName}
+                                            onClick={() => setActiveView(z.zoneName)}
+                                            className={cn(
+                                                "px-3 py-1.5 rounded-full text-sm font-medium transition-all border",
+                                                isActive
+                                                    ? "bg-primary text-white border-primary shadow-sm"
+                                                    : hasHighLoss
+                                                        ? "bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800 hover:bg-red-100"
+                                                        : hasNullL2
+                                                            ? "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800 hover:bg-amber-100"
+                                                            : "bg-white text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700"
+                                            )}
+                                        >
+                                            {z.zoneName}
+                                            {!isActive && hasHighLoss && <span className="ml-1 text-[10px]">🔴</span>}
+                                            {!isActive && hasNullL2 && <span className="ml-1 text-[10px]">⚠️</span>}
+                                        </button>
+                                    );
+                                })}
+                                <div className="w-px h-6 bg-slate-200 dark:bg-slate-700 mx-1" />
+                                <button
+                                    onClick={() => setActiveView('dc')}
+                                    className={cn(
+                                        "px-3 py-1.5 rounded-full text-sm font-medium transition-all border inline-flex items-center gap-1.5",
+                                        activeView === 'dc'
+                                            ? "bg-amber-500 text-white border-amber-500 shadow-sm"
+                                            : "bg-white text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700"
+                                    )}
+                                >
+                                    <Zap className="h-3.5 w-3.5" />
+                                    Direct Connections
+                                </button>
+                            </div>
                         </CardContent>
                     </Card>
+
+                    {/* ── Content based on selection ─────────────────────── */}
+                    {activeView === 'dc' ? (
+                        <DCMetersTable rows={reportData.dcRows} />
+                    ) : (
+                        <>
+                            <ZoneAnalyticsPanel
+                                reportData={reportData}
+                                monthData={monthData}
+                                selectedDay={selectedDay}
+                                month={selectedMonth}
+                                activeZoneName={activeView}
+                            />
+                            <ZoneL3Table
+                                key={activeView}
+                                zoneRow={reportData.zoneRows.find(r => r.zoneName === activeView)!}
+                                zoneConfig={ZONE_BULK_CONFIG.find(z => z.zoneName === activeView)!}
+                                readings={readings}
+                                buildingRows={reportData.buildingRows}
+                            />
+                        </>
+                    )}
+
+                    <SummaryCard data={reportData} day={selectedDay} month={selectedMonth} meterCount={monthData.length} />
                 </>
             )}
         </div>

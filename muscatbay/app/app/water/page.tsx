@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/table";
 import {
     Droplets, ChevronsRight, Users, AlertTriangle, ArrowRightLeft,
-    BarChart3, TestTube2, Database, Network, Minus, TrendingUp,
+    BarChart3, TestTube2, Database, Minus, TrendingUp,
     Gauge, Calendar, Activity, Loader2, CalendarDays,
     Wifi, WifiOff, Building2, Home, Layers, AlertCircle, MapPin,
     TrendingDown, ChevronDown, ChevronRight, Clock, Radio,
@@ -33,8 +33,6 @@ import {
 import { getWaterMetersFromSupabase, getWaterLossDailyFromSupabase, getDailyWaterConsumptionFromSupabase, isSupabaseConfigured } from "@/lib/supabase";
 import type { WaterLossDaily, DailyWaterConsumption } from "@/entities/water";
 import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
-import { networkData, NetworkNode } from "@/lib/water-network-data";
-import { buildDailyHierarchy, DailyMeterNode } from "@/lib/water-daily-hierarchy";
 
 // Components
 import { DateRangePicker } from "@/components/water/date-range-picker";
@@ -43,7 +41,6 @@ import { LiquidProgressRing } from "../../components/charts/liquid-progress-ring
 import { WaterLossGauge } from "@/components/water/water-loss-gauge";
 import { LiquidTooltip } from "../../components/charts/liquid-tooltip";
 import { MeterTable } from "@/components/water/meter-table";
-import { WaterNetworkHierarchy } from "@/components/water/network-hierarchy";
 import { DailyWaterReport } from "@/components/water/DailyWaterReport";
 import { PageHeader } from "@/components/shared/page-header";
 import { TabNavigation } from "@/components/shared/tab-navigation";
@@ -54,7 +51,7 @@ import { Badge } from "@/components/ui/badge";
 import { saveFilterPreferences, loadFilterPreferences } from "@/lib/filter-preferences";
 
 // Dashboard view type
-type DashboardView = 'monthly' | 'hierarchy' | 'daily';
+type DashboardView = 'monthly' | 'daily';
 
 // Helper functions that work with dynamic data
 function calculateRangeAnalysisFromData(meters: WaterMeter[], startMonth: string, endMonth: string) {
@@ -529,11 +526,10 @@ export default function WaterPage() {
             {/* View Switching Tabs */}
             <TabNavigation
                 activeTab={dashboardView}
-                onTabChange={(key) => setDashboardView(key as 'monthly' | 'hierarchy' | 'daily')}
+                onTabChange={(key) => setDashboardView(key as 'monthly' | 'daily')}
                 variant="secondary"
                 tabs={[
                     { key: 'monthly', label: 'Monthly Dashboard', icon: BarChart3 },
-                    { key: 'hierarchy', label: 'Water Hierarchy', icon: Network },
                     { key: 'daily', label: 'Daily Report', icon: CalendarDays },
                 ]}
             />
@@ -912,15 +908,6 @@ export default function WaterPage() {
                             </Card>
                         </div>
                     )}
-                </div>
-            )}
-
-            {/* Other Dashboard Views */}
-
-
-            {dashboardView === 'hierarchy' && (
-                <div className="space-y-6 animate-in fade-in duration-300">
-                    <WaterNetworkHierarchy />
                 </div>
             )}
 
