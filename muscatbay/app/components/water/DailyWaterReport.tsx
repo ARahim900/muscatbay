@@ -1184,22 +1184,58 @@ function ZoneL3Table({
                 </div>
             </CardHeader>
             <CardContent className="p-4 sm:p-5 md:p-6 pt-0 space-y-4">
-                {/* Zone summary tiles */}
-                <div className="grid grid-cols-3 gap-3">
-                    <div className="text-center p-3 rounded-xl bg-teal-50/50 dark:bg-teal-900/10 border border-teal-100/80 dark:border-teal-900/20">
-                        <div className="text-lg font-bold text-teal-700 dark:text-teal-300 tabular-nums">{n(l2GrandTotal)}</div>
-                        <div className="text-[10px] text-teal-600/60 dark:text-teal-400/60 mt-0.5">L2 Bulk (m³)</div>
+                {/* Zone summary KPI cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+                    {/* L2 Bulk */}
+                    <div className="bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] hover:shadow-[0_8px_30px_-4px_rgba(6,81,237,0.15)] hover:-translate-y-1 transition-all duration-300 ease-out group/stat overflow-hidden relative">
+                        <div className="absolute top-0 left-0 w-full h-[3px] bg-teal-500 opacity-0 group-hover/stat:opacity-100 transition-opacity duration-300" />
+                        <div className="flex justify-between items-start gap-2">
+                            <div className="min-w-0">
+                                <p className="text-slate-500 dark:text-slate-400 text-[10px] sm:text-xs font-medium mb-1 uppercase tracking-wide">L2 Bulk (m³)</p>
+                                <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-slate-800 dark:text-slate-100 tabular-nums tracking-tight">{n(l2GrandTotal)}</h3>
+                            </div>
+                            <div className="p-2 sm:p-3 rounded-lg bg-teal-50 dark:bg-teal-900/20 group-hover/stat:scale-110 group-hover/stat:-rotate-3 transition-all duration-300 ease-out flex-shrink-0">
+                                <Droplets className="w-4 h-4 sm:w-5 sm:h-5 text-teal-500" />
+                            </div>
+                        </div>
                     </div>
-                    <div className="text-center p-3 rounded-xl bg-violet-50/50 dark:bg-violet-900/10 border border-violet-100/80 dark:border-violet-900/20">
-                        <div className="text-lg font-bold text-violet-700 dark:text-violet-300 tabular-nums">{n(grandTotal)}</div>
-                        <div className="text-[10px] text-violet-600/60 dark:text-violet-400/60 mt-0.5">ΣL3 (m³)</div>
+                    {/* ΣL3 */}
+                    <div className="bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] hover:shadow-[0_8px_30px_-4px_rgba(6,81,237,0.15)] hover:-translate-y-1 transition-all duration-300 ease-out group/stat overflow-hidden relative">
+                        <div className="absolute top-0 left-0 w-full h-[3px] bg-violet-500 opacity-0 group-hover/stat:opacity-100 transition-opacity duration-300" />
+                        <div className="flex justify-between items-start gap-2">
+                            <div className="min-w-0">
+                                <p className="text-slate-500 dark:text-slate-400 text-[10px] sm:text-xs font-medium mb-1 uppercase tracking-wide">ΣL3 (m³)</p>
+                                <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-slate-800 dark:text-slate-100 tabular-nums tracking-tight">{n(grandTotal)}</h3>
+                            </div>
+                            <div className="p-2 sm:p-3 rounded-lg bg-violet-50 dark:bg-violet-900/20 group-hover/stat:scale-110 group-hover/stat:-rotate-3 transition-all duration-300 ease-out flex-shrink-0">
+                                <Activity className="w-4 h-4 sm:w-5 sm:h-5 text-violet-500" />
+                            </div>
+                        </div>
                     </div>
-                    <div className="text-center p-3 rounded-xl bg-slate-50/50 dark:bg-slate-800/30 border border-slate-200/80 dark:border-slate-700/40">
+                    {/* Difference */}
+                    <div className="bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] hover:shadow-[0_8px_30px_-4px_rgba(6,81,237,0.15)] hover:-translate-y-1 transition-all duration-300 ease-out group/stat overflow-hidden relative">
                         <div className={cn(
-                            "text-lg font-bold tabular-nums",
-                            Math.abs(diffGrandTotal) > 20 ? "text-red-600 dark:text-red-400" : "text-emerald-600 dark:text-emerald-400",
-                        )}>{diffCell(diffGrandTotal)}</div>
-                        <div className="text-[10px] text-slate-400 mt-0.5">Difference</div>
+                            "absolute top-0 left-0 w-full h-[3px] opacity-0 group-hover/stat:opacity-100 transition-opacity duration-300",
+                            Math.abs(diffGrandTotal) > 20 ? "bg-red-500" : "bg-emerald-500",
+                        )} />
+                        <div className="flex justify-between items-start gap-2">
+                            <div className="min-w-0">
+                                <p className="text-slate-500 dark:text-slate-400 text-[10px] sm:text-xs font-medium mb-1 uppercase tracking-wide">Difference</p>
+                                <h3 className={cn(
+                                    "text-lg sm:text-xl md:text-2xl font-bold tabular-nums tracking-tight",
+                                    Math.abs(diffGrandTotal) > 20 ? "text-red-600 dark:text-red-400" : "text-emerald-600 dark:text-emerald-400",
+                                )}>{diffCell(diffGrandTotal)}</h3>
+                            </div>
+                            <div className={cn(
+                                "p-2 sm:p-3 rounded-lg group-hover/stat:scale-110 group-hover/stat:-rotate-3 transition-all duration-300 ease-out flex-shrink-0",
+                                Math.abs(diffGrandTotal) > 20 ? "bg-red-50 dark:bg-red-900/20" : "bg-emerald-50 dark:bg-emerald-900/20",
+                            )}>
+                                <ArrowUpDown className={cn(
+                                    "w-4 h-4 sm:w-5 sm:h-5",
+                                    Math.abs(diffGrandTotal) > 20 ? "text-red-500" : "text-emerald-500",
+                                )} />
+                            </div>
+                        </div>
                     </div>
                 </div>
 
