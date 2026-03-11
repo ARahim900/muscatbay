@@ -19,7 +19,7 @@ const monthFullNames: Record<string, string> = {
     'Sep': 'September', 'Oct': 'October', 'Nov': 'November', 'Dec': 'December'
 };
 
-type PresetKey = 'ytd' | 'last3' | 'last6' | null;
+type PresetKey = 'ytd' | 'last3' | 'last6' | 'last12' | null;
 
 export function DateRangePicker({
     startMonth,
@@ -68,7 +68,7 @@ export function DateRangePicker({
     };
 
     // Quick preset handlers
-    const applyPreset = (preset: 'ytd' | 'last3' | 'last6') => {
+    const applyPreset = (preset: 'ytd' | 'last3' | 'last6' | 'last12') => {
         if (availableMonths.length === 0) return;
         setActivePreset(preset);
         const lastIndex = availableMonths.length - 1;
@@ -85,12 +85,16 @@ export function DateRangePicker({
             case 'last6':
                 onRangeChange(availableMonths[Math.max(0, lastIndex - 5)], availableMonths[lastIndex]);
                 break;
+            case 'last12':
+                onRangeChange(availableMonths[Math.max(0, lastIndex - 11)], availableMonths[lastIndex]);
+                break;
         }
     };
 
     const presets: { key: PresetKey; label: string }[] = [
         { key: 'last3', label: '3M' },
         { key: 'last6', label: '6M' },
+        { key: 'last12', label: '1Y' },
         { key: 'ytd', label: 'YTD' },
     ];
 

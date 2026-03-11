@@ -1,0 +1,46 @@
+{
+  "skill_name": "code-guardian",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Review my recent code changes",
+      "expected_output": "A Code Guardian Report using git diff mode that lists changed files, categorizes findings by severity (critical/warning/info), includes file paths and line numbers, and ends with a conventions check summary.",
+      "expectations": [
+        "The output includes a 'Code Guardian Report' header",
+        "The report shows 'Mode: Git Diff'",
+        "The report lists files reviewed with a count",
+        "Findings are categorized as Critical, Warning, or Info",
+        "Each finding includes a file path and line number",
+        "The report includes a Conventions Check section with PASS/FAIL for naming, file structure, Tailwind, and TypeScript",
+        "The skill ran git diff to identify changed files"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Full scan of the codebase for issues",
+      "expected_output": "A comprehensive Code Guardian Report in full-scan mode that reviews all TypeScript and TSX files under muscatbay/app/, checking for bugs, security issues, style violations, and maintainability problems across the entire codebase.",
+      "expectations": [
+        "The output includes a 'Code Guardian Report' header",
+        "The report shows 'Mode: Full Scan'",
+        "The report reviews multiple files across the muscatbay/app/ directory",
+        "The report checks for security issues like exposed API keys or unsanitized input",
+        "The report checks Tailwind usage against theme tokens",
+        "The report checks naming conventions against project standards",
+        "The report includes a Summary section with issue counts"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Review and fix any issues in my code changes",
+      "expected_output": "A Code Guardian Report that first identifies issues via git diff review, then auto-fixes safe mechanical issues like unused imports, missing key props, and import ordering. Shows a diff summary of fixes applied while leaving logic, security, and architectural issues for manual review.",
+      "expectations": [
+        "The output includes a 'Code Guardian Report' header",
+        "The report identifies issues before attempting fixes",
+        "Auto-fixes are limited to safe mechanical changes like unused imports or import ordering",
+        "The report explicitly states it did NOT auto-fix logic or security issues",
+        "The report includes an 'Auto-fixed: N issues' count in the Summary",
+        "Each auto-fix shows what was changed with before/after context"
+      ]
+    }
+  ]
+}

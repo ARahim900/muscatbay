@@ -44,7 +44,7 @@ export function TablePagination({
                             const val = e.target.value;
                             onPageSizeChange(val === 'All' ? 'All' : parseInt(val));
                         }}
-                        className="px-2 py-1.5 text-xs sm:text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-colors"
+                        className="px-2 py-1.5 text-xs sm:text-sm rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-colors"
                     >
                         {pageSizeOptions.map(size => (
                             <option key={size} value={size}>{size}</option>
@@ -63,7 +63,7 @@ export function TablePagination({
                     <button
                         onClick={() => onPageChange(1)}
                         disabled={currentPage === 1}
-                        className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                        className="w-8 h-8 flex items-center justify-center rounded-full border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                         title="First page"
                     >
                         <ChevronsLeft className="w-4 h-4 text-slate-600 dark:text-slate-400" />
@@ -71,7 +71,7 @@ export function TablePagination({
                     <button
                         onClick={() => onPageChange(Math.max(1, currentPage - 1))}
                         disabled={currentPage === 1}
-                        className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                        className="w-8 h-8 flex items-center justify-center rounded-full border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                         title="Previous page"
                     >
                         <ChevronLeft className="w-4 h-4 text-slate-600 dark:text-slate-400" />
@@ -102,7 +102,7 @@ export function TablePagination({
                                     key={page}
                                     onClick={() => onPageChange(page as number)}
                                     className={cn(
-                                        "min-w-[32px] h-8 rounded-lg text-sm font-medium transition-all duration-200",
+                                        "min-w-[32px] h-8 rounded-full text-sm font-medium transition-all duration-200",
                                         currentPage === page
                                             ? "bg-primary text-white shadow-sm"
                                             : "border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400"
@@ -117,7 +117,7 @@ export function TablePagination({
                     <button
                         onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
                         disabled={currentPage === totalPages}
-                        className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                        className="w-8 h-8 flex items-center justify-center rounded-full border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                         title="Next page"
                     >
                         <ChevronRight className="w-4 h-4 text-slate-600 dark:text-slate-400" />
@@ -125,7 +125,7 @@ export function TablePagination({
                     <button
                         onClick={() => onPageChange(totalPages)}
                         disabled={currentPage === totalPages}
-                        className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                        className="w-8 h-8 flex items-center justify-center rounded-full border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                         title="Last page"
                     >
                         <ChevronsRight className="w-4 h-4 text-slate-600 dark:text-slate-400" />

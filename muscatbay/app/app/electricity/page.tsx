@@ -47,7 +47,7 @@ export default function ElectricityPage() {
     const [dbSearchTerm, setDbSearchTerm] = useState('');
     const [dbSelectedTypes, setDbSelectedTypes] = useState<string[]>([]);
     // Year filter state
-    const [selectedYear, setSelectedYear] = useState<string>("All");
+    const [selectedYear, setSelectedYear] = useState<string>("");
 
     // Stable fetch function — used both on mount and by real-time handler
     const loadData = useCallback(async (silent = false) => {
@@ -146,12 +146,12 @@ export default function ElectricityPage() {
             const year = '20' + month.split('-')[1];
             yearsSet.add(year);
         });
-        return ['All', ...Array.from(yearsSet).sort()];
+        return Array.from(yearsSet).sort();
     }, [allMonths]);
 
     // Filter months by selected year
     const filteredMonthsByYear = useMemo(() => {
-        if (selectedYear === 'All') return allMonths;
+        if (!selectedYear) return allMonths;
         return allMonths.filter(month => {
             const year = '20' + month.split('-')[1];
             return year === selectedYear;
@@ -379,12 +379,10 @@ export default function ElectricityPage() {
     const handleRangeChange = (start: string, end: string) => {
         setStartMonth(start);
         setEndMonth(end);
-        // Clear year filter when user manually adjusts range via slider
-        setSelectedYear('All');
     };
 
     const handleResetRange = () => {
-        setSelectedYear('All');
+        setSelectedYear('');
         if (allMonths.length > 0) {
             setStartMonth(allMonths[0]);
             setEndMonth(allMonths[allMonths.length - 1]);
@@ -518,7 +516,7 @@ export default function ElectricityPage() {
     const handleReset = () => {
         setDateRangeIndex([0, 100]);
         setAnalysisType("All");
-        setSelectedYear("All");
+        setSelectedYear("");
     };
 
     if (loading) {
@@ -627,16 +625,10 @@ export default function ElectricityPage() {
                                                         size="sm"
                                                         onClick={() => {
                                                             setSelectedYear(year);
-                                                            // Update the month range to match the selected year
-                                                            if (year === 'All') {
-                                                                setStartMonth(allMonths[0]);
-                                                                setEndMonth(allMonths[allMonths.length - 1]);
-                                                            } else {
-                                                                const yearMonths = allMonths.filter(m => '20' + m.split('-')[1] === year);
-                                                                if (yearMonths.length > 0) {
-                                                                    setStartMonth(yearMonths[0]);
-                                                                    setEndMonth(yearMonths[yearMonths.length - 1]);
-                                                                }
+                                                            const yearMonths = allMonths.filter(m => '20' + m.split('-')[1] === year);
+                                                            if (yearMonths.length > 0) {
+                                                                setStartMonth(yearMonths[0]);
+                                                                setEndMonth(yearMonths[yearMonths.length - 1]);
                                                             }
                                                         }}
                                                         className={`rounded-full px-4 ${selectedYear === year ? "bg-amber-500 hover:bg-amber-600 text-white" : "border-slate-200 dark:border-slate-700"}`}
@@ -655,7 +647,7 @@ export default function ElectricityPage() {
                                     <DateRangePicker
                                         startMonth={startMonth || allMonths[0]}
                                         endMonth={endMonth || allMonths[allMonths.length - 1]}
-                                        availableMonths={selectedYear === 'All' ? allMonths : filteredMonthsByYear}
+                                        availableMonths={!selectedYear ? allMonths : filteredMonthsByYear}
                                         onRangeChange={handleRangeChange}
                                         onReset={handleResetRange}
                                     />

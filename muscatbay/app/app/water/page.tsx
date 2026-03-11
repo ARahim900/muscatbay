@@ -141,7 +141,7 @@ export default function WaterPage() {
     const [endMonth, setEndMonth] = useState('Jan-26');
     const [selectedZone, setSelectedZone] = useState('Zone_01_(FM)');
     const [selectedType, setSelectedType] = useState('All');
-    const [selectedYear, setSelectedYear] = useState<string>('All');
+    const [selectedYear, setSelectedYear] = useState<string>('');
 
     // Supabase data state
     const [waterMeters, setWaterMeters] = useState<WaterMeter[]>(MOCK_WATER_METERS);
@@ -234,12 +234,12 @@ export default function WaterPage() {
             const year = '20' + month.split('-')[1];
             yearsSet.add(year);
         });
-        return ['All', ...Array.from(yearsSet).sort()];
+        return Array.from(yearsSet).sort();
     }, []);
 
     // Filter months by selected year
     const filteredMonthsByYear = useMemo(() => {
-        if (selectedYear === 'All') return AVAILABLE_MONTHS;
+        if (!selectedYear) return AVAILABLE_MONTHS;
         return AVAILABLE_MONTHS.filter(month => {
             const year = '20' + month.split('-')[1];
             return year === selectedYear;
@@ -300,12 +300,10 @@ export default function WaterPage() {
     const handleRangeChange = (start: string, end: string) => {
         setStartMonth(start);
         setEndMonth(end);
-        // Clear year filter when user manually adjusts range via slider
-        setSelectedYear('All');
     };
 
     const handleResetRange = () => {
-        setSelectedYear('All');
+        setSelectedYear('');
         setStartMonth(AVAILABLE_MONTHS[0]);
         setEndMonth(AVAILABLE_MONTHS[AVAILABLE_MONTHS.length - 1]);
     };
@@ -566,15 +564,10 @@ export default function WaterPage() {
                                                         size="sm"
                                                         onClick={() => {
                                                             setSelectedYear(year);
-                                                            if (year === 'All') {
-                                                                setStartMonth(AVAILABLE_MONTHS[0]);
-                                                                setEndMonth(AVAILABLE_MONTHS[AVAILABLE_MONTHS.length - 1]);
-                                                            } else {
-                                                                const yearMonths = AVAILABLE_MONTHS.filter(m => '20' + m.split('-')[1] === year);
-                                                                if (yearMonths.length > 0) {
-                                                                    setStartMonth(yearMonths[0]);
-                                                                    setEndMonth(yearMonths[yearMonths.length - 1]);
-                                                                }
+                                                            const yearMonths = AVAILABLE_MONTHS.filter(m => '20' + m.split('-')[1] === year);
+                                                            if (yearMonths.length > 0) {
+                                                                setStartMonth(yearMonths[0]);
+                                                                setEndMonth(yearMonths[yearMonths.length - 1]);
                                                             }
                                                         }}
                                                         className={`rounded-full px-4 ${selectedYear === year ? "bg-[#4E4456] hover:bg-[#4E4456]/90 text-white dark:bg-[#81D8D0] dark:hover:bg-[#81D8D0]/90 dark:text-slate-900" : "border-slate-200 dark:border-slate-700"}`}

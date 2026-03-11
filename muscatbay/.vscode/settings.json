@@ -17,5 +17,7 @@
         "**/node_modules/**": true,
         "**/.next/**": true,
         "**/out/**": true
-    }
+    },
+    "css.lint.unknownAtRules": "ignore",
+    "typescript.tsdk": "app/node_modules/typescript/lib"
 }

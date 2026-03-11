@@ -1,13 +1,16 @@
 import { useEffect, useState, useMemo } from "react";
 import { format } from "date-fns";
-import { getWaterSystemData, getElectricityMeters, getSTPOperations, getContractors, getAssets, WaterSystemData } from "@/lib/mock-data";
+import { getWaterSystemData, getElectricityMeters, getSTPOperations, getContractors, getAssets } from "@/lib/mock-data";
 import {
     getSTPOperationsFromSupabase,
     getContractorSummary,
     getAssetsFromSupabase,
     getElectricityMetersFromSupabase,
+    getWaterMetersFromSupabase,
     isSupabaseConfigured
 } from "@/lib/supabase";
+import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
+import type { WaterMeter } from "@/lib/water-data";
 
 export interface DashboardStats {
     label: string;
@@ -27,52 +30,79 @@ export interface ChartData {
     tse?: number;
 }
 
+export interface RecentActivityItem {
+    title: string;
+    description: string;
+    type: 'critical' | 'warning' | 'info';
+}
+
+// Sort month keys like 'Jan-25', 'Feb-26' chronologically
+const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+function sortMonthKeys(keys: string[]): string[] {
+    return [...keys].sort((a, b) => {
+        const [mA, yA] = a.split('-');
+        const [mB, yB] = b.split('-');
+        const yearDiff = parseInt('20' + yA) - parseInt('20' + yB);
+        if (yearDiff !== 0) return yearDiff;
+        return MONTH_NAMES.indexOf(mA) - MONTH_NAMES.indexOf(mB);
+    });
+}
+
+/**
+ * Build monthly water production totals from L1 meters in Supabase
+ */
+function buildWaterMonthlyFromSupabase(waterMeters: WaterMeter[]): { month: string; value: number }[] {
+    const l1Meters = waterMeters.filter(m => m.level === 'L1');
+    if (l1Meters.length === 0) return [];
+
+    const monthTotals: Record<string, number> = {};
+    for (const meter of l1Meters) {
+        for (const [monthKey, val] of Object.entries(meter.consumption)) {
+            if (val !== null && val !== undefined && val > 0) {
+                monthTotals[monthKey] = (monthTotals[monthKey] || 0) + val;
+            }
+        }
+    }
+
+    const sortedKeys = sortMonthKeys(Object.keys(monthTotals));
+    return sortedKeys.map(month => ({ month, value: monthTotals[month] }));
+}
+
 export function useDashboardData() {
     const [stats, setStats] = useState<DashboardStats[]>([]);
     const [chartData, setChartData] = useState<ChartData[]>([]);
     const [stpChartData, setStpChartData] = useState<ChartData[]>([]);
+    const [recentActivity, setRecentActivity] = useState<RecentActivityItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [isLiveData, setIsLiveData] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [lastFetch, setLastFetch] = useState<number>(0);
+    const [refreshCount, setRefreshCount] = useState(0);
 
     const loadDashboardData = async () => {
-        // Simple rate limiting: prevent fetches more than once per 30 seconds
-        const now = Date.now();
-        if (now - lastFetch < 30000) {
-            console.warn("Rate limited: please wait before refetching");
-            return;
-        }
-        setLastFetch(now);
 
         try {
             setError(null);
             let liveDataFetched = false;
 
-            // Fetch water data (mock for now as no Supabase table)
-            const water = await getWaterSystemData();
-            const latestWater = water.monthlyTrends[water.monthlyTrends.length - 1];
+            // Fetch water mock data as fallback
+            const waterMock = await getWaterSystemData();
 
-            // Try to fetch live data from Supabase
             let stpData: any[] = [];
             let elecData: any[] = [];
             let contractorsCount = 0;
             let assetsCount = 0;
-            let stpTotalInlet = 0;
-            let stpTotalTSE = 0;
-            let stpTotalIncome = 0;
-            let elecTotal = 0;
+            let waterMeters: WaterMeter[] = [];
 
             if (isSupabaseConfigured()) {
-                // Fetch all data in PARALLEL for better performance
-                const [stpResult, elecResult, contractorsResult, assetsResult] = await Promise.allSettled([
+                const [stpResult, elecResult, contractorsResult, assetsResult, waterResult] = await Promise.allSettled([
                     getSTPOperationsFromSupabase(),
                     getElectricityMetersFromSupabase(),
                     getContractorSummary(),
-                    getAssetsFromSupabase(1, 1, '')
+                    getAssetsFromSupabase(1, 1, ''),
+                    getWaterMetersFromSupabase()
                 ]);
 
-                // Process STP data
                 if (stpResult.status === 'fulfilled' && stpResult.value.length > 0) {
                     stpData = stpResult.value;
                     liveDataFetched = true;
@@ -80,7 +110,6 @@ export function useDashboardData() {
                     console.warn("STP fetch from Supabase failed, using mock");
                 }
 
-                // Process Electricity data
                 if (elecResult.status === 'fulfilled' && elecResult.value.length > 0) {
                     elecData = elecResult.value;
                     liveDataFetched = true;
@@ -88,7 +117,6 @@ export function useDashboardData() {
                     console.warn("Electricity fetch from Supabase failed, using mock");
                 }
 
-                // Process Contractors count
                 if (contractorsResult.status === 'fulfilled' && contractorsResult.value.length > 0) {
                     contractorsCount = contractorsResult.value.filter(c => c.status === "Active").length;
                     liveDataFetched = true;
@@ -96,22 +124,24 @@ export function useDashboardData() {
                     console.warn("Contractors fetch from Supabase failed, using mock");
                 }
 
-                // Process Assets count
                 if (assetsResult.status === 'fulfilled' && assetsResult.value.count > 0) {
                     assetsCount = assetsResult.value.count;
                     liveDataFetched = true;
                 } else if (assetsResult.status === 'rejected') {
                     console.warn("Assets fetch from Supabase failed, using mock");
                 }
+
+                if (waterResult.status === 'fulfilled' && waterResult.value.length > 0) {
+                    waterMeters = waterResult.value;
+                    liveDataFetched = true;
+                } else if (waterResult.status === 'rejected') {
+                    console.warn("Water fetch from Supabase failed, using mock");
+                }
             }
 
-            // Fallback to mock data if no live data
-            if (stpData.length === 0) {
-                stpData = await getSTPOperations();
-            }
-            if (elecData.length === 0) {
-                elecData = await getElectricityMeters();
-            }
+            // Fallback to mock data
+            if (stpData.length === 0) stpData = await getSTPOperations();
+            if (elecData.length === 0) elecData = await getElectricityMeters();
             if (contractorsCount === 0) {
                 const contractorsMock = await getContractors();
                 contractorsCount = contractorsMock.filter(c => c.status === "Active").length;
@@ -123,28 +153,73 @@ export function useDashboardData() {
 
             setIsLiveData(liveDataFetched);
 
-            // Calculate STP Totals (all data)
+            // === WATER PRODUCTION (Supabase L1 meters → fallback to mock) ===
+            const waterMonthly = buildWaterMonthlyFromSupabase(waterMeters);
+            const useSupabaseWater = waterMonthly.length > 0;
+
+            let waterValue: number;
+            let waterMonth: string;
+            let waterPrevValue: number;
+
+            if (useSupabaseWater) {
+                const latest = waterMonthly[waterMonthly.length - 1];
+                const prev = waterMonthly.length >= 2 ? waterMonthly[waterMonthly.length - 2] : null;
+                waterValue = latest.value;
+                waterMonth = latest.month;
+                waterPrevValue = prev?.value || 0;
+            } else {
+                const latestWater = waterMock.monthlyTrends[waterMock.monthlyTrends.length - 1];
+                const prevWater = waterMock.monthlyTrends.length >= 2 ? waterMock.monthlyTrends[waterMock.monthlyTrends.length - 2] : null;
+                waterValue = latestWater.A1;
+                waterMonth = latestWater.month;
+                waterPrevValue = prevWater?.A1 || 0;
+            }
+
+            // === STP CALCULATIONS ===
             const TANKER_FEE = 4.50;
             const TSE_SAVING_RATE = 1.32;
-            stpTotalInlet = stpData.reduce((acc, op) => acc + (op.inlet_sewage || 0), 0);
-            stpTotalTSE = stpData.reduce((acc, op) => acc + (op.tse_for_irrigation || 0), 0);
-            const totalTrips = stpData.reduce((acc, op) => acc + (op.tanker_trips || 0), 0);
-            stpTotalIncome = (totalTrips * TANKER_FEE) + (stpTotalTSE * TSE_SAVING_RATE);
 
-            // Calculate Electricity Totals
+            const stpMonthlyCalc: Record<string, { inlet: number; tse: number; days: number }> = {};
+            stpData.forEach(op => {
+                if (op.date) {
+                    try {
+                        const monthKey = format(new Date(op.date), "yyyy-MM");
+                        if (!stpMonthlyCalc[monthKey]) stpMonthlyCalc[monthKey] = { inlet: 0, tse: 0, days: 0 };
+                        stpMonthlyCalc[monthKey].inlet += op.inlet_sewage || 0;
+                        stpMonthlyCalc[monthKey].tse += op.tse_for_irrigation || 0;
+                        stpMonthlyCalc[monthKey].days += 1;
+                    } catch (e) { /* skip invalid dates */ }
+                }
+            });
+            const stpSortedMonths = Object.keys(stpMonthlyCalc).sort();
+
+            // Use the latest COMPLETE month for stats (>= 25 days of data)
+            // Partial current month would show misleadingly low values
+            let stpStatsMonthIdx = stpSortedMonths.length - 1;
+            for (let i = stpSortedMonths.length - 1; i >= 0; i--) {
+                if (stpMonthlyCalc[stpSortedMonths[i]].days >= 25) {
+                    stpStatsMonthIdx = i;
+                    break;
+                }
+            }
+            const stpLatestMonth = stpSortedMonths[stpStatsMonthIdx];
+            const stpPrevMonth = stpStatsMonthIdx > 0 ? stpSortedMonths[stpStatsMonthIdx - 1] : undefined;
+            const stpLatestData = stpLatestMonth ? stpMonthlyCalc[stpLatestMonth] : { inlet: 0, tse: 0, days: 0 };
+            const stpPrevData = stpPrevMonth ? stpMonthlyCalc[stpPrevMonth] : { inlet: 0, tse: 0, days: 0 };
+            // === ELECTRICITY CALCULATIONS ===
             const allReadings: Record<string, number> = {};
             elecData.forEach(meter => {
                 Object.entries(meter.readings || {}).forEach(([month, value]) => {
                     allReadings[month] = (allReadings[month] || 0) + (value as number);
                 });
             });
-            const sortedMonths = Object.keys(allReadings).sort();
-            const latestMonth = sortedMonths[sortedMonths.length - 1] || "";
-            const prevMonth = sortedMonths[sortedMonths.length - 2] || "";
-            elecTotal = allReadings[latestMonth] || 0;
-            const elecPrevTotal = allReadings[prevMonth] || 0;
+            const sortedElecMonths = sortMonthKeys(Object.keys(allReadings));
+            const latestElecMonth = sortedElecMonths[sortedElecMonths.length - 1] || "";
+            const prevElecMonth = sortedElecMonths[sortedElecMonths.length - 2] || "";
+            const elecTotal = allReadings[latestElecMonth] || 0;
+            const elecPrevTotal = allReadings[prevElecMonth] || 0;
 
-            // Helper function to calculate trend
+            // === TREND HELPER ===
             const calcTrend = (current: number, previous: number): { trend: 'up' | 'down' | 'neutral'; trendValue: string } => {
                 if (previous === 0) return { trend: 'neutral', trendValue: '0%' };
                 const change = ((current - previous) / previous) * 100;
@@ -155,52 +230,26 @@ export function useDashboardData() {
                 };
             };
 
-            // Calculate trends for water
-            const prevWater = water.monthlyTrends.length >= 2 ? water.monthlyTrends[water.monthlyTrends.length - 2] : null;
-            const waterTrend = prevWater ? calcTrend(latestWater.A1, prevWater.A1) : { trend: 'neutral' as const, trendValue: '0%' };
-
-            // Calculate trends for electricity
+            const waterTrend = calcTrend(waterValue, waterPrevValue);
             const elecTrend = calcTrend(elecTotal, elecPrevTotal);
-
-            // Calculate trends for STP (using monthly aggregated data)
-            const stpMonthlyCalc: Record<string, { inlet: number; tse: number }> = {};
-            stpData.forEach(op => {
-                if (op.date) {
-                    try {
-                        const monthKey = format(new Date(op.date), "yyyy-MM");
-                        if (!stpMonthlyCalc[monthKey]) {
-                            stpMonthlyCalc[monthKey] = { inlet: 0, tse: 0 };
-                        }
-                        stpMonthlyCalc[monthKey].inlet += op.inlet_sewage || 0;
-                        stpMonthlyCalc[monthKey].tse += op.tse_for_irrigation || 0;
-                    } catch (e) {
-                        // Skip invalid dates
-                    }
-                }
-            });
-            const stpSortedMonths = Object.keys(stpMonthlyCalc).sort();
-            const stpLatestMonth = stpSortedMonths[stpSortedMonths.length - 1];
-            const stpPrevMonth = stpSortedMonths[stpSortedMonths.length - 2];
-            const stpLatestData = stpLatestMonth ? stpMonthlyCalc[stpLatestMonth] : { inlet: 0, tse: 0 };
-            const stpPrevData = stpPrevMonth ? stpMonthlyCalc[stpPrevMonth] : { inlet: 0, tse: 0 };
             const stpInletTrend = calcTrend(stpLatestData.inlet, stpPrevData.inlet);
             const stpTseTrend = calcTrend(stpLatestData.tse, stpPrevData.tse);
 
-            // Calculate STP economic trend
-            const prevTotalTrips = Math.floor(stpPrevData.inlet / 15); // Estimated trips based on avg trip capacity
+            const prevTotalTrips = Math.floor(stpPrevData.inlet / 15);
             const prevIncome = (prevTotalTrips * TANKER_FEE) + (stpPrevData.tse * TSE_SAVING_RATE);
             const currentIncome = (Math.floor(stpLatestData.inlet / 15) * TANKER_FEE) + (stpLatestData.tse * TSE_SAVING_RATE);
             const stpEconomicTrend = calcTrend(currentIncome, prevIncome);
 
-            const formattedElecMonth = latestMonth ? latestMonth.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : "Latest Month";
+            const formattedElecMonth = latestElecMonth ? latestElecMonth.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : "Latest Month";
             const formattedStpMonth = stpLatestMonth ? format(new Date(stpLatestMonth + "-01"), "MMM yy") : "Latest Month";
 
+            // === STATS ===
             setStats([
                 {
                     label: "WATER PRODUCTION",
-                    value: `${(latestWater.A1 / 1000).toFixed(1)}k m³`,
-                    subtitle: `${latestWater.month}`,
-                    icon: null, // Will be imported in component
+                    value: `${(waterValue / 1000).toFixed(1)}k m³`,
+                    subtitle: waterMonth,
+                    icon: null,
                     variant: "water" as const,
                     trend: waterTrend.trend,
                     trendValue: waterTrend.trendValue
@@ -261,38 +310,83 @@ export function useDashboardData() {
                 }
             ]);
 
-            // Chart Data: Water Trend
-            const trendData = water.monthlyTrends.slice(-8).map(w => ({
-                month: w.month,
-                water: Math.round(w.A1 / 1000),
-                efficiency: w.efficiency
-            }));
-            setChartData(trendData);
+            // === WATER CHART (Supabase L1 → fallback to mock) ===
+            if (useSupabaseWater) {
+                setChartData(waterMonthly.slice(-8).map(m => ({
+                    month: m.month,
+                    water: Math.round(m.value / 1000)
+                })));
+            } else {
+                setChartData(waterMock.monthlyTrends.slice(-8).map(w => ({
+                    month: w.month,
+                    water: Math.round(w.A1 / 1000),
+                    efficiency: w.efficiency
+                })));
+            }
 
-            // STP Monthly Chart Data
-            const stpMonthly: Record<string, { inlet: number; tse: number }> = {};
+            // === STP CHART (sorted chronologically, last 8 complete months) ===
+            const stpMonthlyChart: Record<string, { inlet: number; tse: number }> = {};
             stpData.forEach(op => {
                 if (op.date) {
                     try {
                         const monthKey = format(new Date(op.date), "MMM-yy");
-                        if (!stpMonthly[monthKey]) {
-                            stpMonthly[monthKey] = { inlet: 0, tse: 0 };
-                        }
-                        stpMonthly[monthKey].inlet += op.inlet_sewage || 0;
-                        stpMonthly[monthKey].tse += op.tse_for_irrigation || 0;
-                    } catch (e) {
-                        // Skip invalid dates
-                    }
+                        if (!stpMonthlyChart[monthKey]) stpMonthlyChart[monthKey] = { inlet: 0, tse: 0 };
+                        stpMonthlyChart[monthKey].inlet += op.inlet_sewage || 0;
+                        stpMonthlyChart[monthKey].tse += op.tse_for_irrigation || 0;
+                    } catch (e) { /* skip */ }
                 }
             });
-            const stpChartArr = Object.entries(stpMonthly)
-                .map(([month, data]) => ({
-                    month,
-                    inlet: Math.round(data.inlet / 1000),
-                    tse: Math.round(data.tse / 1000)
-                }))
-                .slice(-8);
-            setStpChartData(stpChartArr);
+            const stpChartMonthsSorted = sortMonthKeys(Object.keys(stpMonthlyChart));
+            setStpChartData(stpChartMonthsSorted.slice(-8).map(month => ({
+                month,
+                inlet: Math.round(stpMonthlyChart[month].inlet / 1000),
+                tse: Math.round(stpMonthlyChart[month].tse / 1000)
+            })));
+
+            // === GENERATE RECENT ACTIVITY from real data ===
+            const trendDesc = (t: { trend: string; trendValue: string }) =>
+                t.trend === 'up' ? `Up ${t.trendValue} vs prev month`
+                    : t.trend === 'down' ? `Down ${t.trendValue} vs prev month`
+                        : 'Stable vs previous month';
+
+            const activities: RecentActivityItem[] = [
+                {
+                    title: `Water Production — ${waterMonth}`,
+                    description: `${(waterValue / 1000).toFixed(1)}k m³ · ${trendDesc(waterTrend)}`,
+                    type: waterTrend.trend === 'up' ? 'warning' : 'info'
+                },
+                {
+                    title: `Electricity Usage — ${formattedElecMonth}`,
+                    description: `${(elecTotal / 1000).toFixed(1)} MWh · ${trendDesc(elecTrend)}`,
+                    type: elecTrend.trend === 'up' ? 'warning' : 'info'
+                },
+                {
+                    title: `STP Inlet Flow — ${formattedStpMonth}`,
+                    description: `${(stpLatestData.inlet / 1000).toFixed(1)}k m³ · ${trendDesc(stpInletTrend)}`,
+                    type: 'info'
+                },
+                {
+                    title: `TSE Output — ${formattedStpMonth}`,
+                    description: `${(stpLatestData.tse / 1000).toFixed(1)}k m³ · ${trendDesc(stpTseTrend)}`,
+                    type: stpTseTrend.trend === 'down' ? 'warning' : 'info'
+                },
+                {
+                    title: `STP Revenue — ${formattedStpMonth}`,
+                    description: `${(currentIncome / 1000).toFixed(1)}k OMR · ${trendDesc(stpEconomicTrend)}`,
+                    type: stpEconomicTrend.trend === 'down' ? 'warning' : 'info'
+                },
+                {
+                    title: `Active Contractors`,
+                    description: `${contractorsCount} service providers currently registered`,
+                    type: 'info'
+                },
+                {
+                    title: `Total Assets`,
+                    description: `${assetsCount.toLocaleString('en-US')} items tracked in the system`,
+                    type: 'info'
+                }
+            ];
+            setRecentActivity(activities);
 
         } catch (error) {
             console.error("Failed to load dashboard data", error);
@@ -302,20 +396,37 @@ export function useDashboardData() {
         }
     };
 
+    // Initial load + refetch when refreshCount changes
     useEffect(() => {
         loadDashboardData();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [refreshCount]);
+
+    // Auto-refresh every 5 minutes
+    useEffect(() => {
+        const id = setInterval(() => setRefreshCount(n => n + 1), 5 * 60 * 1000);
+        return () => clearInterval(id);
     }, []);
 
-    // Memoize computed values if needed
+    // Real-time subscriptions — refresh dashboard when data changes
+    const triggerRefresh = () => setRefreshCount(n => n + 1);
+
+    useSupabaseRealtime({ table: 'stp_operations', channelName: 'dashboard-stp-rt', onChanged: triggerRefresh });
+    useSupabaseRealtime({ table: 'Water System', channelName: 'dashboard-water-rt', onChanged: triggerRefresh });
+    useSupabaseRealtime({ table: 'electricity_readings', channelName: 'dashboard-elec-rt', onChanged: triggerRefresh });
+    useSupabaseRealtime({ table: 'Contractor_Tracker', channelName: 'dashboard-contractors-rt', onChanged: triggerRefresh });
+    useSupabaseRealtime({ table: 'assets_register', channelName: 'dashboard-assets-rt', onChanged: triggerRefresh });
+
     const memoizedStats = useMemo(() => stats, [stats]);
 
     return {
         stats: memoizedStats,
         chartData,
         stpChartData,
+        recentActivity,
         loading,
         isLiveData,
         error,
-        refetch: loadDashboardData
+        refetch: triggerRefresh
     };
 }

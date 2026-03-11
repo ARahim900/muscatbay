@@ -14,7 +14,7 @@ import { ChartContainer } from "../components/charts/chart-container";
 import { AnimateOnScroll } from "@/components/shared/scroll-animation";
 
 export default function DashboardPage() {
-    const { stats, chartData, stpChartData, loading, isLiveData, error } = useDashboardData();
+    const { stats, chartData, stpChartData, recentActivity, loading, isLiveData, error } = useDashboardData();
     const [activityFilter, setActivityFilter] = useState<'all' | 'critical' | 'warning' | 'info'>('all');
 
     // Add icons to stats
@@ -119,9 +119,9 @@ export default function DashboardPage() {
                     <CardHeader className="glass-card-header p-4 sm:p-5 md:p-6">
                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
                             <div>
-                                <CardTitle>Recent Activity</CardTitle>
+                                <CardTitle>Latest Updates</CardTitle>
                                 <p className="text-sm text-muted-foreground">
-                                    Latest operational alerts and logs
+                                    Live data from all operational systems
                                 </p>
                             </div>
                             <div className="flex items-center gap-1 bg-white/50 dark:bg-slate-800/50 p-1 rounded-lg">
@@ -145,24 +145,22 @@ export default function DashboardPage() {
                     </CardHeader>
                     <CardContent className="p-4 sm:p-5 md:p-6 pt-0">
                         <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                            {[
-                                { title: "STP Pump Station Maintenance", time: "5 hours ago", type: "warning" },
-                                { title: "New Contractor Onboarded", time: "1 day ago", type: "info" },
-                                { title: "Monthly Reports Generated", time: "2 days ago", type: "info" },
-                            ].filter(item => activityFilter === 'all' || item.type === activityFilter).map((item, i) => (
-                                <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-white/30 dark:bg-slate-800/50 border border-mb-primary/5 dark:border-slate-700 hover:bg-white/50 dark:hover:bg-slate-700 transition-colors">
-                                    <div className={`rounded-full p-2 ${item.type === 'critical' ? 'bg-mb-danger/20 text-mb-danger' :
-                                        item.type === 'warning' ? 'bg-mb-warning/20 text-mb-warning' :
-                                            'bg-mb-info/20 text-mb-info' // Info/Normal items use Light Teal
-                                        }`}>
-                                        {item.type === 'critical' ? <AlertTriangle className="h-4 w-4" /> : <ArrowUpRight className="h-4 w-4" />}
+                            {recentActivity
+                                .filter(item => activityFilter === 'all' || item.type === activityFilter)
+                                .map((item, i) => (
+                                    <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-white/30 dark:bg-slate-800/50 border border-mb-primary/5 dark:border-slate-700 hover:bg-white/50 dark:hover:bg-slate-700 transition-colors">
+                                        <div className={`shrink-0 rounded-full p-2 ${item.type === 'critical' ? 'bg-mb-danger/20 text-mb-danger' :
+                                            item.type === 'warning' ? 'bg-mb-warning/20 text-mb-warning' :
+                                                'bg-mb-info/20 text-mb-info'
+                                            }`}>
+                                            {item.type === 'critical' ? <AlertTriangle className="h-4 w-4" /> : <ArrowUpRight className="h-4 w-4" />}
+                                        </div>
+                                        <div className="space-y-1 min-w-0">
+                                            <p className="text-sm font-medium leading-none text-mb-primary dark:text-slate-100">{item.title}</p>
+                                            <p className="text-xs text-muted-foreground truncate">{item.description}</p>
+                                        </div>
                                     </div>
-                                    <div className="space-y-1">
-                                        <p className="text-sm font-medium leading-none text-mb-primary dark:text-slate-100">{item.title}</p>
-                                        <p className="text-xs text-muted-foreground">{item.time}</p>
-                                    </div>
-                                </div>
-                            ))}
+                                ))}
                         </div>
                     </CardContent>
                 </Card>

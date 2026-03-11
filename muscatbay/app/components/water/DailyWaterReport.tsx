@@ -16,7 +16,7 @@ import type { SupabaseDailyWaterConsumption } from "@/entities/water";
 import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
 import {
     AlertTriangle, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, CalendarDays,
-    Droplets, Building2, Zap, Activity, CheckCircle2, Search, ArrowUpDown,
+    Droplets, Building2, Zap, Activity, Search, ArrowUpDown,
     Clock, Loader2, RefreshCw, WifiOff, Radio, Home, Users, Filter,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -261,7 +261,7 @@ function TableSearch({ value, onChange, placeholder }: { value: string; onChange
                 value={value}
                 onChange={e => onChange(e.target.value)}
                 placeholder={placeholder}
-                className="h-9 w-full sm:w-64 pl-9 pr-8 text-[13px] rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50/80 dark:bg-slate-800/50 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#00D2B3]/30 focus:border-[#00D2B3]/50 transition-all"
+                className="h-9 w-full sm:w-64 pl-9 pr-8 text-[13px] rounded-full border border-slate-200 dark:border-slate-700/80 bg-slate-50/80 dark:bg-slate-800/50 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#00D2B3]/30 focus:border-[#00D2B3]/50 transition-all"
             />
             {value && (
                 <button onClick={() => onChange('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 h-4 w-4 rounded-full bg-slate-200 dark:bg-slate-600 flex items-center justify-center text-slate-500 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-500 transition-colors">
@@ -322,7 +322,7 @@ function TablePagination({
             </span>
             <div className="flex items-center gap-1">
                 <button
-                    className="h-8 px-3 text-[12px] font-medium rounded-lg border border-slate-200 dark:border-slate-700 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    className="h-8 px-3 text-[12px] font-medium rounded-full border border-slate-200 dark:border-slate-700 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                     disabled={page <= 1}
                     onClick={() => onPageChange(page - 1)}
                 >
@@ -333,7 +333,7 @@ function TablePagination({
                         key={p}
                         onClick={() => onPageChange(p)}
                         className={cn(
-                            "h-8 w-8 rounded-lg text-[12px] font-medium transition-all",
+                            "h-8 w-8 rounded-full flex items-center justify-center text-[12px] font-medium transition-all",
                             p === page
                                 ? "bg-[#4E4456] text-white shadow-sm dark:bg-[#00D2B3] dark:text-slate-900"
                                 : "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800",
@@ -343,7 +343,7 @@ function TablePagination({
                     </button>
                 ))}
                 <button
-                    className="h-8 px-3 text-[12px] font-medium rounded-lg border border-slate-200 dark:border-slate-700 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    className="h-8 px-3 text-[12px] font-medium rounded-full border border-slate-200 dark:border-slate-700 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                     disabled={page >= totalPages}
                     onClick={() => onPageChange(page + 1)}
                 >
@@ -355,7 +355,7 @@ function TablePagination({
                 <select
                     value={rowsPerPage}
                     onChange={e => onRowsPerPageChange(Number(e.target.value))}
-                    className="h-8 rounded-lg border border-slate-200 dark:border-slate-700 bg-transparent text-[12px] px-2 focus:outline-none focus:ring-2 focus:ring-[#00D2B3]/30 cursor-pointer"
+                    className="h-8 rounded-full border border-slate-200 dark:border-slate-700 bg-transparent text-[12px] px-2 focus:outline-none focus:ring-2 focus:ring-[#00D2B3]/30 cursor-pointer"
                 >
                     {[5, 10, 15, 21].map(n => <option key={n} value={n}>{n}</option>)}
                 </select>
@@ -664,10 +664,10 @@ function BuildingBulkTable({ rows }: { rows: BuildingRow[] }) {
                         color="violet"
                     />
                     <div className="flex items-center gap-1.5">
-                        <button onClick={expandAll} className="h-8 px-3 text-[11px] font-medium rounded-lg border border-slate-200 dark:border-slate-700 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                        <button onClick={expandAll} className="h-8 px-3 text-[11px] font-medium rounded-full border border-slate-200 dark:border-slate-700 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
                             Expand All
                         </button>
-                        <button onClick={collapseAll} className="h-8 px-3 text-[11px] font-medium rounded-lg border border-slate-200 dark:border-slate-700 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                        <button onClick={collapseAll} className="h-8 px-3 text-[11px] font-medium rounded-full border border-slate-200 dark:border-slate-700 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
                             Collapse All
                         </button>
                     </div>
@@ -860,153 +860,6 @@ function DCMetersTable({ rows }: { rows: DCRow[] }) {
     );
 }
 
-// SUMMARY CARD ────────────────────────────────────────────────────────────────
-
-function SummaryCard({ data, day, month, meterCount }: { data: ReportData; day: number; month: string; meterCount: number }) {
-    const highLossZones = data.zoneRows.filter(r => r.isHighLoss);
-    const nullL2Zones = data.zoneRows.filter(r => r.isNullL2);
-    const nullDCMeters = data.dcRows.filter(r => r.isNullFlag);
-    const flaggedBuildings = data.buildingRows.filter(r => r.hasNonZeroDiff);
-    const activeDC = data.dcRows.filter(r => r.rawValue !== null).length;
-    const l3Total = r2(data.zoneRows.reduce((s, r) => s + r.l3Sum, 0));
-    const totalLoss = r2(data.l2Total - l3Total);
-    const lossPct = data.l2Total > 0 ? r2((totalLoss / data.l2Total) * 100) : 0;
-
-    const criticalCount = highLossZones.length + nullL2Zones.length;
-    const warningCount = nullDCMeters.length + flaggedBuildings.length;
-
-    return (
-        <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
-            <div className="p-5 sm:p-6">
-                <SectionHeader
-                    icon={<Activity className="h-5 w-5" />}
-                    title="Report Summary"
-                    subtitle={`Day ${day}, ${month} — ${meterCount} meters loaded from database`}
-                    color="emerald"
-                />
-            </div>
-            <div className="px-5 sm:px-6 pb-6 space-y-6">
-                {/* Stat tiles */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-                    <div className="text-center p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-teal-50 to-white dark:from-teal-900/15 dark:to-slate-900 border border-teal-100/80 dark:border-teal-900/30">
-                        <Droplets className="h-5 w-5 text-teal-500 mx-auto mb-2" />
-                        <div className="text-2xl sm:text-3xl font-bold text-teal-700 dark:text-teal-300 tabular-nums tracking-tight">
-                            {n(data.l2Total)}
-                        </div>
-                        <div className="text-[11px] font-medium text-teal-600/60 dark:text-teal-400/60 mt-1">L2 Zone Bulk (m³)</div>
-                    </div>
-                    <div className="text-center p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-violet-50 to-white dark:from-violet-900/15 dark:to-slate-900 border border-violet-100/80 dark:border-violet-900/30">
-                        <Building2 className="h-5 w-5 text-violet-500 mx-auto mb-2" />
-                        <div className="text-2xl sm:text-3xl font-bold text-violet-700 dark:text-violet-300 tabular-nums tracking-tight">
-                            {n(l3Total)}
-                        </div>
-                        <div className="text-[11px] font-medium text-violet-600/60 dark:text-violet-400/60 mt-1">ΣL3 Meters (m³)</div>
-                    </div>
-                    <div className="text-center p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-amber-50 to-white dark:from-amber-900/15 dark:to-slate-900 border border-amber-100/80 dark:border-amber-900/30">
-                        <Zap className="h-5 w-5 text-amber-500 mx-auto mb-2" />
-                        <div className="text-2xl sm:text-3xl font-bold text-amber-700 dark:text-amber-300 tabular-nums tracking-tight">
-                            {n(data.dcTotal)}
-                        </div>
-                        <div className="text-[11px] font-medium text-amber-600/60 dark:text-amber-400/60 mt-1">DC Total ({activeDC}/{data.dcRows.length} active)</div>
-                    </div>
-                    <div className="text-center p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-slate-50 to-white dark:from-slate-800/40 dark:to-slate-900 border border-slate-200/80 dark:border-slate-700/60">
-                        <Activity className="h-5 w-5 text-slate-500 mx-auto mb-2" />
-                        <div className="text-2xl sm:text-3xl font-bold text-slate-700 dark:text-slate-200 tabular-nums tracking-tight">
-                            {n(data.grandTotal)}
-                        </div>
-                        <div className="text-[11px] font-medium text-slate-400 mt-1">Grand Total (m³)</div>
-                    </div>
-                </div>
-
-                {/* Water loss summary bar */}
-                <div className="rounded-2xl border border-slate-200/80 dark:border-slate-700/60 p-4 space-y-2.5 bg-slate-50/50 dark:bg-slate-800/20">
-                    <div className="flex items-center justify-between">
-                        <span className="text-[13px] font-semibold text-slate-700 dark:text-slate-200">Network Water Loss (L2 − ΣL3)</span>
-                        <span className={cn(
-                            "text-[13px] font-bold tabular-nums",
-                            lossPct > 30 ? "text-red-600 dark:text-red-400" : lossPct > 15 ? "text-amber-600 dark:text-amber-400" : "text-emerald-600 dark:text-emerald-400",
-                        )}>
-                            {n(totalLoss)} m³ ({lossPct}%)
-                        </span>
-                    </div>
-                    <div className="w-full h-2 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
-                        <div
-                            className={cn(
-                                "h-full rounded-full transition-all duration-500",
-                                lossPct > 30 ? "bg-gradient-to-r from-red-400 to-red-500" : lossPct > 15 ? "bg-gradient-to-r from-amber-400 to-amber-500" : "bg-gradient-to-r from-emerald-400 to-emerald-500",
-                            )}
-                            style={{ width: `${Math.min(Math.max(lossPct, 0), 100)}%` }}
-                        />
-                    </div>
-                    <div className="flex justify-between text-[10px] text-slate-400 dark:text-slate-500">
-                        <span>0% (No loss)</span>
-                        <span>15% threshold</span>
-                        <span>30%+ critical</span>
-                    </div>
-                </div>
-
-                {/* Flags — grouped by severity */}
-                <div className="space-y-2.5">
-                    <div className="flex items-center gap-3">
-                        <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-                            Flags & Alerts
-                        </p>
-                        {criticalCount === 0 && warningCount === 0 && <StatusChip label="All Clear" color="success" />}
-                        {criticalCount > 0 && <StatusChip label={`${criticalCount} critical`} color="danger" />}
-                        {warningCount > 0 && <StatusChip label={`${warningCount} warning${warningCount > 1 ? 's' : ''}`} color="warning" />}
-                    </div>
-
-                    {criticalCount === 0 && warningCount === 0 && (
-                        <div className="flex items-center gap-2 text-[13px] text-emerald-700 dark:text-emerald-400 bg-emerald-50/80 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-900/20 rounded-xl px-4 py-3">
-                            <CheckCircle2 className="h-4 w-4 shrink-0" />
-                            All zones within acceptable range. No critical issues detected for day {day}.
-                        </div>
-                    )}
-
-                    {highLossZones.map(z => (
-                        <div key={z.zoneName} className="flex items-start gap-2.5 text-[13px] text-red-700 dark:text-red-400 bg-red-50/80 dark:bg-red-900/10 border border-red-100 dark:border-red-900/20 rounded-xl px-4 py-3">
-                            <span className="shrink-0 mt-0.5 h-4 w-4 rounded-full bg-red-500 flex items-center justify-center">
-                                <span className="text-white text-[8px] font-bold">!</span>
-                            </span>
-                            <span>
-                                <strong>High Loss — {z.zoneName}:</strong>{" "}
-                                L2 = {n(z.l2Value)} m³, ΣL3 = {n(z.l3Sum)} m³, Diff = {n(z.diff)} m³
-                                {z.diff !== null && z.l2Value ? ` (${Math.round(Math.abs(z.diff) / z.l2Value * 100)}%)` : ''}
-                            </span>
-                        </div>
-                    ))}
-
-                    {nullL2Zones.map(z => (
-                        <div key={z.zoneName} className="flex items-center gap-2 text-[13px] text-amber-700 dark:text-amber-400 bg-amber-50/80 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/20 rounded-xl px-4 py-3">
-                            <AlertTriangle className="h-4 w-4 shrink-0" />
-                            <span><strong>NULL L2 — {z.zoneName}:</strong> Bulk meter has no reading for this day</span>
-                        </div>
-                    ))}
-
-                    {nullDCMeters.length > 0 && (
-                        <div className="flex items-start gap-2 text-[13px] text-amber-700 dark:text-amber-400 bg-amber-50/80 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/20 rounded-xl px-4 py-3">
-                            <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
-                            <span>
-                                <strong>{nullDCMeters.length} DC meter{nullDCMeters.length > 1 ? 's' : ''} with no data:</strong>{" "}
-                                {nullDCMeters.map(dc => dc.meterName).join(', ')}
-                            </span>
-                        </div>
-                    )}
-
-                    {flaggedBuildings.length > 0 && (
-                        <div className="flex items-start gap-2 text-[13px] text-amber-700 dark:text-amber-400 bg-amber-50/80 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/20 rounded-xl px-4 py-3">
-                            <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
-                            <span>
-                                <strong>{flaggedBuildings.length} building{flaggedBuildings.length > 1 ? 's' : ''} with L3/L4 diff:</strong>{" "}
-                                {flaggedBuildings.map(b => `${b.buildingName} (${diffCell(b.diff)})`).join(', ')}
-                            </span>
-                        </div>
-                    )}
-                </div>
-            </div>
-        </div>
-    );
-}
 
 // ─── Zone Analytics Panel ─────────────────────────────────────────────────────
 
@@ -1196,24 +1049,30 @@ function ZoneAnalyticsPanel({ reportData, monthData, selectedDay, month, activeZ
     );
 }
 
-// ─── Zone L3 Meters Table (hierarchical with expandable L4) ──────────────────
+// ─── Zone L3 Meters Table — All-Days View ────────────────────────────────────
 
 function ZoneL3Table({
     zoneRow,
     zoneConfig,
-    readings,
+    monthData,
     buildingRows,
 }: {
     zoneRow: ZoneRow;
     zoneConfig: ZoneBulkConfig;
-    readings: Record<string, number | null>;
+    monthData: SupabaseDailyWaterConsumption[];
     buildingRows: BuildingRow[];
 }) {
-    const [expandedMeters, setExpandedMeters] = useState<Set<string>>(new Set());
     const [search, setSearch] = useState('');
     const [sort, setSort] = useState<SortState>({ key: '', dir: null });
     const [page, setPage] = useState(1);
     const [rowsPerPage, setRowsPerPage] = useState(15);
+
+    // Build account map for quick lookups
+    const accountMap = useMemo(() => {
+        const map = new Map<string, SupabaseDailyWaterConsumption>();
+        for (const row of monthData) map.set(row.account_number, row);
+        return map;
+    }, [monthData]);
 
     // Map building bulk accounts to building info (only buildings in this zone)
     const buildingMap = useMemo(() => {
@@ -1226,24 +1085,67 @@ function ZoneL3Table({
         return map;
     }, [buildingRows, zoneConfig]);
 
-    const toggleMeter = (account: string) => {
-        setExpandedMeters(prev => {
-            const next = new Set(prev);
-            next.has(account) ? next.delete(account) : next.add(account);
-            return next;
-        });
-    };
+    // Determine latest day with data for any L3 account in this zone
+    const latestDay = useMemo(() => {
+        let maxDay = 0;
+        for (const account of zoneConfig.l3Accounts) {
+            const row = accountMap.get(account);
+            if (!row) continue;
+            for (let d = 31; d >= 1; d--) {
+                if (d <= maxDay) break;
+                const val = row[`day_${d}` as keyof SupabaseDailyWaterConsumption];
+                if (val != null) { maxDay = d; break; }
+            }
+        }
+        return Math.max(maxDay, 1);
+    }, [accountMap, zoneConfig]);
 
-    // Build L3 meter list
+    const days = useMemo(() => Array.from({ length: latestDay }, (_, i) => i + 1), [latestDay]);
+
+    // Build L3 meter list with all daily readings
     const l3Meters = useMemo(() => {
         return zoneConfig.l3Accounts.map(account => {
             const building = buildingMap.get(account) ?? null;
-            const rawValue = readings[account] ?? null;
+            const dbRow = accountMap.get(account);
             const isNullAsZero = NULL_AS_ZERO_ACCOUNTS.has(account);
-            const displayValue = rawValue !== null ? r2(rawValue) : isNullAsZero ? 0 : null;
-            return { account, rawValue, displayValue, isNullAsZero, building, label: building ? building.buildingName : account };
+
+            const dailyValues: (number | null)[] = [];
+            let total = 0;
+            for (let d = 1; d <= latestDay; d++) {
+                const raw = dbRow ? (dbRow[`day_${d}` as keyof SupabaseDailyWaterConsumption] as number | null) : null;
+                const val = raw != null ? r2(Number(raw)) : isNullAsZero ? 0 : null;
+                dailyValues.push(val);
+                total += val ?? 0;
+            }
+
+            return {
+                account,
+                isNullAsZero,
+                building,
+                label: building ? building.buildingName : account,
+                dailyValues,
+                total: r2(total),
+            };
         });
-    }, [zoneConfig, readings, buildingMap]);
+    }, [zoneConfig, accountMap, buildingMap, latestDay]);
+
+    // Per-day ΣL3 totals for footer
+    const dayTotals = useMemo(() => {
+        return days.map((_, i) => r2(l3Meters.reduce((sum, m) => sum + (m.dailyValues[i] ?? 0), 0)));
+    }, [days, l3Meters]);
+    const grandTotal = r2(dayTotals.reduce((s, v) => s + v, 0));
+
+    // L2 per-day values for tiles
+    const l2DayTotals = useMemo(() => {
+        const row = accountMap.get(zoneConfig.l2Account);
+        return days.map(d => {
+            if (!row) return null;
+            const val = row[`day_${d}` as keyof SupabaseDailyWaterConsumption];
+            return val != null ? r2(Number(val)) : null;
+        });
+    }, [accountMap, zoneConfig, days]);
+    const l2GrandTotal = r2(l2DayTotals.reduce<number>((s, v) => s + (v ?? 0), 0));
+    const diffGrandTotal = r2(l2GrandTotal - grandTotal);
 
     // Filter & sort
     const filtered = useMemo(() => {
@@ -1256,7 +1158,7 @@ function ZoneL3Table({
             result.sort((a, b) => {
                 let va: number | string, vb: number | string;
                 if (sort.key === 'label') { va = a.label; vb = b.label; }
-                else if (sort.key === 'reading') { va = a.displayValue ?? -1; vb = b.displayValue ?? -1; }
+                else if (sort.key === 'total') { va = a.total; vb = b.total; }
                 else { va = a.account; vb = b.account; }
                 const cmp = va < vb ? -1 : va > vb ? 1 : 0;
                 return sort.dir === 'desc' ? -cmp : cmp;
@@ -1269,221 +1171,123 @@ function ZoneL3Table({
 
     const totalPages = Math.max(1, Math.ceil(filtered.length / rowsPerPage));
     const paginated = filtered.slice((page - 1) * rowsPerPage, page * rowsPerPage);
-    const buildingCount = l3Meters.filter(m => m.building).length;
-    const individualCount = l3Meters.length - buildingCount;
-
-    const expandAll = () => setExpandedMeters(new Set(l3Meters.filter(m => m.building).map(m => m.account)));
-    const collapseAll = () => setExpandedMeters(new Set());
-
-    function renderL3Row(meter: typeof l3Meters[number]) {
-        const isExpanded = expandedMeters.has(meter.account);
-        const building = meter.building;
-
-        const mainRow = (
-            <tr
-                key={meter.account}
-                className={cn(
-                    "border-b border-slate-50 dark:border-slate-800/60 transition-colors hover:bg-slate-50/70 dark:hover:bg-slate-800/30",
-                    building && "cursor-pointer select-none",
-                    isExpanded && "bg-violet-50/30 dark:bg-violet-900/10",
-                )}
-                onClick={building ? () => toggleMeter(meter.account) : undefined}
-            >
-                <td className={cn(tdBase, "font-semibold")}>
-                    <span className="inline-flex items-center gap-2">
-                        {building && (
-                            <span className={cn(
-                                "flex items-center justify-center h-5 w-5 rounded-md transition-all duration-200",
-                                isExpanded ? "bg-[#4E4456] dark:bg-[#00D2B3]" : "bg-slate-200 dark:bg-slate-700",
-                            )}>
-                                <ChevronDown className={cn(
-                                    "h-3 w-3 transition-transform duration-200",
-                                    isExpanded ? "rotate-0 text-white dark:text-slate-900" : "-rotate-90 text-slate-500 dark:text-slate-400",
-                                )} />
-                            </span>
-                        )}
-                        {building ? (
-                            <>
-                                <Building2 className="h-3.5 w-3.5 text-violet-500 shrink-0" />
-                                {building.buildingName}
-                                <span className="text-[10px] font-normal text-slate-400 dark:text-slate-500">
-                                    {building.childMeters.filter(c => c.type === 'Apartment').length} apts
-                                </span>
-                            </>
-                        ) : (
-                            <>
-                                <Home className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                                {meter.account}
-                                {meter.isNullAsZero && <StatusChip label="IRR" color="primary" />}
-                            </>
-                        )}
-                    </span>
-                </td>
-                <td className={cn(tdBase, "font-mono text-[11px] text-slate-400 dark:text-slate-500")}>{meter.account}</td>
-                <td className={cn(tdBase, "text-center")}>
-                    <StatusChip label={building ? "Building" : "Individual"} color={building ? "primary" : "default"} />
-                </td>
-                <td className={cn(tdBase, "text-right tabular-nums font-medium")}>
-                    {meter.rawValue === null && !meter.isNullAsZero ? (
-                        <NullBadge />
-                    ) : meter.displayValue === 0 ? (
-                        <span className="text-slate-400">0.00</span>
-                    ) : (
-                        n(meter.displayValue)
-                    )}
-                </td>
-            </tr>
-        );
-
-        if (!building || !isExpanded) return [mainRow];
-
-        // Expanded L4 child meters
-        const childRow = (
-            <tr key={`${meter.account}-children`} className="bg-slate-50/40 dark:bg-slate-800/20">
-                <td colSpan={4} className="py-0 px-0">
-                    <div className="border-l-[3px] border-[#00D2B3]/40 dark:border-[#00D2B3]/30 ml-5 sm:ml-7">
-                        <table className="w-full">
-                            <thead>
-                                <tr className="border-b border-slate-100 dark:border-slate-800/60">
-                                    <th className="text-left py-2 px-4 text-[10px] uppercase tracking-wider font-semibold text-slate-400 dark:text-slate-500 w-[40%]">Meter</th>
-                                    <th className="text-left py-2 px-4 text-[10px] uppercase tracking-wider font-semibold text-slate-400 dark:text-slate-500">Account</th>
-                                    <th className="text-center py-2 px-4 text-[10px] uppercase tracking-wider font-semibold text-slate-400 dark:text-slate-500">Type</th>
-                                    <th className="text-right py-2 px-4 text-[10px] uppercase tracking-wider font-semibold text-slate-400 dark:text-slate-500">Reading (m³)</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {building.childMeters.map(cm => {
-                                    const val = cm.value !== null ? r2(cm.value) : null;
-                                    return (
-                                        <tr
-                                            key={cm.account}
-                                            className={cn(
-                                                "border-b border-slate-50 dark:border-slate-800/40 transition-colors hover:bg-white/60 dark:hover:bg-slate-800/30",
-                                                cm.type === 'Common' && "bg-indigo-50/30 dark:bg-indigo-900/5",
-                                            )}
-                                        >
-                                            <td className="py-2 px-4 text-[12px] font-medium text-slate-700 dark:text-slate-300">
-                                                <span className="inline-flex items-center gap-1.5">
-                                                    {cm.type === 'Common'
-                                                        ? <Users className="h-3 w-3 text-indigo-500 shrink-0" />
-                                                        : <Home className="h-3 w-3 text-slate-400 shrink-0" />}
-                                                    {cm.label}
-                                                </span>
-                                            </td>
-                                            <td className="py-2 px-4 font-mono text-[11px] text-slate-400 dark:text-slate-500">{cm.account}</td>
-                                            <td className="py-2 px-4 text-center">
-                                                <StatusChip label={cm.type} color={cm.type === 'Common' ? 'primary' : 'default'} />
-                                            </td>
-                                            <td className="py-2 px-4 text-right font-mono text-[12px] font-medium tabular-nums text-slate-700 dark:text-slate-300">
-                                                {val === null ? '—' : val === 0 ? <span className="text-slate-400">0.00</span> : n(val)}
-                                            </td>
-                                        </tr>
-                                    );
-                                })}
-                                <tr className="border-t-2 border-slate-200/80 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-800/20">
-                                    <td className="py-2 px-4 text-[12px] font-bold text-slate-600 dark:text-slate-300" colSpan={3}>
-                                        Sum of {building.childMeters.length} meters
-                                    </td>
-                                    <td className="py-2 px-4 text-right font-mono text-[12px] font-bold tabular-nums">{n(building.l4Sum)}</td>
-                                </tr>
-                                <tr className={cn(
-                                    "border-t border-dashed border-slate-200 dark:border-slate-700",
-                                    building.hasNonZeroDiff ? "bg-amber-50/50 dark:bg-amber-900/5" : "bg-emerald-50/30 dark:bg-emerald-900/5",
-                                )}>
-                                    <td className="py-2 px-4 text-[12px] font-bold" colSpan={3}>
-                                        Bulk ({n(building.l3Bulk)}) − Sum ({n(building.l4Sum)}) = Difference
-                                    </td>
-                                    <td className={cn("py-2 px-4 text-right font-mono text-[12px] font-bold tabular-nums",
-                                        building.hasNonZeroDiff ? "text-amber-600 dark:text-amber-400" : "text-emerald-600 dark:text-emerald-400",
-                                    )}>
-                                        {building.diff !== null ? diffCell(building.diff) : '—'}
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </td>
-            </tr>
-        );
-
-        return [mainRow, childRow];
-    }
+    const colCount = 3 + days.length + 1; // Meter, Account, Type, ...days, Total
 
     return (
-        <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
-            <div className="p-5 sm:p-6 space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                    <SectionHeader
-                        icon={<Droplets className="h-5 w-5" />}
-                        title={`${zoneRow.zoneName} — L3 Meters`}
-                        subtitle={`${l3Meters.length} meters${buildingCount > 0 ? ` (${buildingCount} buildings, ${individualCount} individual)` : ''}`}
-                        color="teal"
-                    />
-                    {buildingCount > 0 && (
-                        <div className="flex items-center gap-1.5">
-                            <button onClick={expandAll} className="h-8 px-3 text-[11px] font-medium rounded-lg border border-slate-200 dark:border-slate-700 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
-                                Expand All
-                            </button>
-                            <button onClick={collapseAll} className="h-8 px-3 text-[11px] font-medium rounded-lg border border-slate-200 dark:border-slate-700 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
-                                Collapse All
-                            </button>
-                        </div>
-                    )}
+        <Card className="glass-card">
+            <CardHeader className="glass-card-header p-4 sm:p-5 md:p-6">
+                <div>
+                    <CardTitle className="text-base sm:text-lg">{zoneRow.zoneName} — L3 Meters</CardTitle>
+                    <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+                        {l3Meters.length} meters — Day 1 to Day {latestDay}
+                    </p>
                 </div>
-
-                {/* Zone L2 vs L3 summary tiles */}
+            </CardHeader>
+            <CardContent className="p-4 sm:p-5 md:p-6 pt-0 space-y-4">
+                {/* Zone summary tiles */}
                 <div className="grid grid-cols-3 gap-3">
                     <div className="text-center p-3 rounded-xl bg-teal-50/50 dark:bg-teal-900/10 border border-teal-100/80 dark:border-teal-900/20">
-                        <div className="text-lg font-bold text-teal-700 dark:text-teal-300 tabular-nums">{zoneRow.isNullL2 ? '—' : n(zoneRow.l2Value)}</div>
+                        <div className="text-lg font-bold text-teal-700 dark:text-teal-300 tabular-nums">{n(l2GrandTotal)}</div>
                         <div className="text-[10px] text-teal-600/60 dark:text-teal-400/60 mt-0.5">L2 Bulk (m³)</div>
                     </div>
                     <div className="text-center p-3 rounded-xl bg-violet-50/50 dark:bg-violet-900/10 border border-violet-100/80 dark:border-violet-900/20">
-                        <div className="text-lg font-bold text-violet-700 dark:text-violet-300 tabular-nums">{n(zoneRow.l3Sum)}</div>
+                        <div className="text-lg font-bold text-violet-700 dark:text-violet-300 tabular-nums">{n(grandTotal)}</div>
                         <div className="text-[10px] text-violet-600/60 dark:text-violet-400/60 mt-0.5">ΣL3 (m³)</div>
                     </div>
                     <div className="text-center p-3 rounded-xl bg-slate-50/50 dark:bg-slate-800/30 border border-slate-200/80 dark:border-slate-700/40">
                         <div className={cn(
                             "text-lg font-bold tabular-nums",
-                            zoneRow.isHighLoss ? "text-red-600 dark:text-red-400" : !zoneRow.isNullL2 ? "text-emerald-600 dark:text-emerald-400" : "text-slate-400",
-                        )}>{zoneRow.isNullL2 ? '—' : diffCell(zoneRow.diff)}</div>
+                            Math.abs(diffGrandTotal) > 20 ? "text-red-600 dark:text-red-400" : "text-emerald-600 dark:text-emerald-400",
+                        )}>{diffCell(diffGrandTotal)}</div>
                         <div className="text-[10px] text-slate-400 mt-0.5">Difference</div>
                     </div>
                 </div>
 
                 <TableSearch value={search} onChange={setSearch} placeholder="Search meter or account..." />
-            </div>
 
-            {/* Table */}
-            <div className="overflow-x-auto">
-                <table className="w-full border-collapse">
-                    <thead>
-                        <tr className="border-t border-b border-slate-100 dark:border-slate-800">
-                            <Th sortKey="label" sort={sort} onSort={setSort} className="min-w-[160px]">Meter</Th>
-                            <Th sortKey="account" sort={sort} onSort={setSort}>Account</Th>
-                            <th className={cn(thBase, "text-center min-w-[100px]")}>Type</th>
-                            <Th sortKey="reading" sort={sort} onSort={setSort} className="text-right min-w-[110px]">Reading (m³)</Th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {paginated.length === 0 ? (
-                            <tr>
-                                <td colSpan={4} className="text-center py-10 text-[13px] text-slate-400 dark:text-slate-500">
-                                    No meters found
-                                </td>
+                {/* Horizontally scrollable table */}
+                <div className="overflow-x-auto -mx-4 sm:-mx-5 md:-mx-6 border-t border-slate-100 dark:border-slate-800">
+                    <table className="w-full border-collapse" style={{ minWidth: `${420 + days.length * 72}px` }}>
+                        <thead>
+                            <tr className="border-b border-slate-100 dark:border-slate-800">
+                                <Th
+                                    sortKey="label" sort={sort} onSort={setSort}
+                                    className="sticky left-0 z-10 bg-white dark:bg-slate-900 min-w-[150px]"
+                                >Meter</Th>
+                                <Th sortKey="account" sort={sort} onSort={setSort} className="min-w-[100px]">Account</Th>
+                                <th className={cn(thBase, "text-center min-w-[90px]")}>Type</th>
+                                {days.map(d => (
+                                    <th key={d} className={cn(thBase, "text-right min-w-[64px] px-2")}>D{d}</th>
+                                ))}
+                                <Th
+                                    sortKey="total" sort={sort} onSort={setSort}
+                                    className="text-right min-w-[80px] bg-slate-50/80 dark:bg-slate-800/40"
+                                >Total</Th>
                             </tr>
-                        ) : (
-                            paginated.flatMap(meter => renderL3Row(meter))
-                        )}
-                        <tr className="border-t-2 border-slate-200 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-800/20">
-                            <td className={cn(tdBase, "font-bold")} colSpan={3}>ΣL3 Total ({l3Meters.length} meters)</td>
-                            <td className={cn(tdBase, "text-right tabular-nums font-bold")}>{n(zoneRow.l3Sum)}</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+                        </thead>
+                        <tbody>
+                            {paginated.length === 0 ? (
+                                <tr>
+                                    <td colSpan={colCount} className="text-center py-10 text-[13px] text-slate-400 dark:text-slate-500">
+                                        No meters found
+                                    </td>
+                                </tr>
+                            ) : paginated.map(meter => (
+                                <tr
+                                    key={meter.account}
+                                    className="border-b border-slate-50 dark:border-slate-800/60 transition-colors hover:bg-slate-50/70 dark:hover:bg-slate-800/30"
+                                >
+                                    <td className={cn(tdBase, "font-semibold sticky left-0 z-10 bg-white dark:bg-slate-900")}>
+                                        <span className="inline-flex items-center gap-2">
+                                            {meter.building ? (
+                                                <>
+                                                    <Building2 className="h-3.5 w-3.5 text-violet-500 shrink-0" />
+                                                    {meter.building.buildingName}
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Home className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                                                    {meter.account}
+                                                    {meter.isNullAsZero && <StatusChip label="IRR" color="primary" />}
+                                                </>
+                                            )}
+                                        </span>
+                                    </td>
+                                    <td className={cn(tdBase, "font-mono text-[11px] text-slate-400 dark:text-slate-500")}>{meter.account}</td>
+                                    <td className={cn(tdBase, "text-center")}>
+                                        <StatusChip label={meter.building ? "Building" : "Individual"} color={meter.building ? "primary" : "default"} />
+                                    </td>
+                                    {meter.dailyValues.map((val, i) => (
+                                        <td key={i} className={cn(tdBase, "text-right tabular-nums px-2 text-[12px]")}>
+                                            {val === null ? (
+                                                <span className="text-slate-300 dark:text-slate-600">—</span>
+                                            ) : val === 0 ? (
+                                                <span className="text-slate-400">0.00</span>
+                                            ) : (
+                                                n(val)
+                                            )}
+                                        </td>
+                                    ))}
+                                    <td className={cn(tdBase, "text-right tabular-nums font-semibold bg-slate-50/80 dark:bg-slate-800/40")}>
+                                        {n(meter.total)}
+                                    </td>
+                                </tr>
+                            ))}
+                            {/* ΣL3 Footer */}
+                            <tr className="border-t-2 border-slate-200 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-800/20">
+                                <td className={cn(tdBase, "font-bold sticky left-0 z-10 bg-slate-50/60 dark:bg-slate-800/20")} colSpan={3}>
+                                    ΣL3 Total ({l3Meters.length} meters)
+                                </td>
+                                {dayTotals.map((t, i) => (
+                                    <td key={i} className={cn(tdBase, "text-right tabular-nums font-bold px-2 text-[12px]")}>{n(t)}</td>
+                                ))}
+                                <td className={cn(tdBase, "text-right tabular-nums font-bold bg-slate-50/80 dark:bg-slate-800/40")}>{n(grandTotal)}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
 
-            {filtered.length > rowsPerPage && (
-                <div className="px-5 sm:px-6 pb-4">
+                {filtered.length > rowsPerPage && (
                     <TablePagination
                         page={page}
                         totalPages={totalPages}
@@ -1492,9 +1296,9 @@ function ZoneL3Table({
                         rowsPerPage={rowsPerPage}
                         onRowsPerPageChange={rpp => { setRowsPerPage(rpp); setPage(1); }}
                     />
-                </div>
-            )}
-        </div>
+                )}
+            </CardContent>
+        </Card>
     );
 }
 
@@ -1557,18 +1361,6 @@ export function DailyWaterReport() {
     const [errorMsg, setErrorMsg] = useState('');
     const [lastFetched, setLastFetched] = useState<Date | null>(null);
     const [activeView, setActiveView] = useState<string>(ZONE_BULK_CONFIG[0].zoneName);
-
-    // ── Per-account readings map for the selected day ─────────────────────────
-    const readings = useMemo(() => {
-        if (monthData.length === 0) return {};
-        const dayCol = `day_${selectedDay}` as keyof SupabaseDailyWaterConsumption;
-        const map: Record<string, number | null> = {};
-        for (const row of monthData) {
-            const val = row[dayCol];
-            map[row.account_number] = val != null ? Number(val) : null;
-        }
-        return map;
-    }, [monthData, selectedDay]);
 
     // ── Build report from cached month rows for any day (no network call) ──────
     const computeReport = useCallback((rows: SupabaseDailyWaterConsumption[], day: number) => {
@@ -1809,13 +1601,12 @@ export function DailyWaterReport() {
                                 key={activeView}
                                 zoneRow={reportData.zoneRows.find(r => r.zoneName === activeView)!}
                                 zoneConfig={ZONE_BULK_CONFIG.find(z => z.zoneName === activeView)!}
-                                readings={readings}
+                                monthData={monthData}
                                 buildingRows={reportData.buildingRows}
                             />
                         </>
                     )}
 
-                    <SummaryCard data={reportData} day={selectedDay} month={selectedMonth} meterCount={monthData.length} />
                 </>
             )}
         </div>

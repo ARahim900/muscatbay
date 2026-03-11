@@ -53,7 +53,7 @@ export default function STPPage() {
     // Date range filter state
     const [startMonth, setStartMonth] = useState<string>('');
     const [endMonth, setEndMonth] = useState<string>('');
-    const [selectedYear, setSelectedYear] = useState<string>('All');
+    const [selectedYear, setSelectedYear] = useState<string>('');
 
     // Daily Operations Log sorting and pagination state
     const [logSortField, setLogSortField] = useState<string>('date');
@@ -157,12 +157,12 @@ export default function STPPage() {
             const year = '20' + month.split('-')[1];
             yearsSet.add(year);
         });
-        return ['All', ...Array.from(yearsSet).sort()];
+        return Array.from(yearsSet).sort();
     }, [allMonths]);
 
     // Filter months by selected year
     const filteredMonthsByYear = useMemo(() => {
-        if (selectedYear === 'All') return allMonths;
+        if (!selectedYear) return allMonths;
         return allMonths.filter(month => {
             const year = '20' + month.split('-')[1];
             return year === selectedYear;
@@ -494,13 +494,11 @@ export default function STPPage() {
     const handleRangeChange = (start: string, end: string) => {
         setStartMonth(start);
         setEndMonth(end);
-        // Clear year filter when user manually adjusts range via slider
-        setSelectedYear('All');
     };
 
     // Reset date range to full
     const handleResetRange = () => {
-        setSelectedYear('All');
+        setSelectedYear('');
         if (allMonths.length > 0) {
             setStartMonth(allMonths[0]);
             setEndMonth(allMonths[allMonths.length - 1]);
@@ -613,15 +611,10 @@ export default function STPPage() {
                                                         size="sm"
                                                         onClick={() => {
                                                             setSelectedYear(year);
-                                                            if (year === 'All') {
-                                                                setStartMonth(allMonths[0]);
-                                                                setEndMonth(allMonths[allMonths.length - 1]);
-                                                            } else {
-                                                                const yearMonths = allMonths.filter(m => '20' + m.split('-')[1] === year);
-                                                                if (yearMonths.length > 0) {
-                                                                    setStartMonth(yearMonths[0]);
-                                                                    setEndMonth(yearMonths[yearMonths.length - 1]);
-                                                                }
+                                                            const yearMonths = allMonths.filter(m => '20' + m.split('-')[1] === year);
+                                                            if (yearMonths.length > 0) {
+                                                                setStartMonth(yearMonths[0]);
+                                                                setEndMonth(yearMonths[yearMonths.length - 1]);
                                                             }
                                                         }}
                                                         className={`rounded-full px-4 ${selectedYear === year ? "bg-[#4E4456] hover:bg-[#4E4456]/90 text-white dark:bg-[#81D8D0] dark:hover:bg-[#81D8D0]/90 dark:text-slate-900" : "border-slate-200 dark:border-slate-700"}`}
