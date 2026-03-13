@@ -7,7 +7,7 @@ import { LoadingSpinner } from "@/components/shared/loading-spinner";
 import { PageHeader } from "@/components/shared/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Activity, Droplets, Zap, Users, AlertTriangle, ArrowUpRight, Boxes, Recycle, TrendingUp, Wifi, WifiOff } from "lucide-react";
+import { Activity, Droplets, Zap, AlertTriangle, ArrowUpRight, Boxes, Recycle, TrendingUp, Wifi, WifiOff } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar, Legend } from "recharts";
 import { LiquidTooltip } from "../components/charts/liquid-tooltip";
 import { ChartContainer } from "../components/charts/chart-container";
@@ -25,8 +25,7 @@ export default function DashboardPage() {
                 stat.label.includes('STP INLET') ? Activity :
                     stat.label.includes('TSE') ? Recycle :
                         stat.label.includes('ECONOMIC') ? TrendingUp :
-                            stat.label.includes('CONTRACTORS') ? Users :
-                                stat.label.includes('ASSETS') ? Boxes : Activity
+                            stat.label.includes('ASSETS') ? Boxes : Activity
     }));
 
     if (loading) {

@@ -291,15 +291,6 @@ export function useDashboardData() {
                     trendValue: stpEconomicTrend.trendValue
                 },
                 {
-                    label: "ACTIVE CONTRACTORS",
-                    value: contractorsCount.toString(),
-                    subtitle: "Service Providers",
-                    icon: null,
-                    variant: "primary" as const,
-                    trend: 'neutral',
-                    trendValue: '—'
-                },
-                {
                     label: "TOTAL ASSETS",
                     value: assetsCount.toLocaleString('en-US'),
                     subtitle: "Registered Items",

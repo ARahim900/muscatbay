@@ -555,7 +555,7 @@ export default function WaterPage() {
                             <CardContent className="p-4 sm:p-5 md:p-6">
                                 <div className="flex flex-col gap-4">
                                     {/* Year Selector Row */}
-                                    <div className="flex items-center justify-between flex-wrap gap-4">
+                                    <div className="flex items-center justify-between flex-wrap gap-3">
                                         <div className="flex items-center gap-3">
                                             <span className="text-sm font-medium text-slate-600 dark:text-slate-400">Filter by Year:</span>
                                             <div className="flex items-center gap-2">
@@ -579,19 +579,76 @@ export default function WaterPage() {
                                                 ))}
                                             </div>
                                         </div>
-                                        <Badge variant="outline" className="px-3 py-1.5 text-sm font-normal">
-                                            {filteredMonthsByYear.length} Months Available
-                                        </Badge>
+
+                                        {/* Zone tab: Month + Zone selectors inline */}
+                                        {monthlyTab === 'zone' ? (
+                                            <div className="flex items-center gap-3 flex-wrap">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Month:</span>
+                                                    <select
+                                                        value={endMonth}
+                                                        onChange={(e) => setEndMonth(e.target.value)}
+                                                        className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 text-sm font-medium text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-[#4E4456]/30 dark:focus:ring-[#81D8D0]/30"
+                                                    >
+                                                        {filteredMonthsByYear.map((m) => (
+                                                            <option key={m} value={m}>{m}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Zone:</span>
+                                                    <select
+                                                        value={selectedZone}
+                                                        onChange={(e) => setSelectedZone(e.target.value)}
+                                                        className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 text-sm font-medium text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-[#4E4456]/30 dark:focus:ring-[#81D8D0]/30"
+                                                    >
+                                                        {ZONE_CONFIG.map((z) => (
+                                                            <option key={z.code} value={z.code}>{z.name}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={() => { setEndMonth(filteredMonthsByYear[filteredMonthsByYear.length - 1] || 'Jan-26'); setSelectedZone('Zone_01_(FM)'); }}
+                                                    className="text-xs text-slate-400 hover:text-red-500 dark:hover:text-red-400"
+                                                >
+                                                    Reset
+                                                </Button>
+                                            </div>
+                                        ) : monthlyTab === 'consumption' ? (
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                                <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Type:</span>
+                                                <select
+                                                    value={selectedType}
+                                                    onChange={(e) => setSelectedType(e.target.value)}
+                                                    className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 text-sm font-medium text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-[#4E4456]/30 dark:focus:ring-[#81D8D0]/30"
+                                                >
+                                                    {uniqueTypes.map((t) => (
+                                                        <option key={t} value={t}>{t}</option>
+                                                    ))}
+                                                </select>
+                                                <Badge variant="outline" className="px-2.5 py-1 text-xs font-normal">
+                                                    {filteredMonthsByYear.length} Months
+                                                </Badge>
+                                            </div>
+                                        ) : (
+                                            <Badge variant="outline" className="px-3 py-1.5 text-sm font-normal">
+                                                {filteredMonthsByYear.length} Months Available
+                                            </Badge>
+                                        )}
                                     </div>
 
-                                    {/* Date Range Picker */}
-                                    <DateRangePicker
-                                        startMonth={startMonth}
-                                        endMonth={endMonth}
-                                        availableMonths={filteredMonthsByYear}
-                                        onRangeChange={handleRangeChange}
-                                        onReset={handleResetRange}
-                                    />
+                                    {/* Date Range Picker - hidden on zone tab */}
+                                    {monthlyTab !== 'zone' && (
+                                        <DateRangePicker
+                                            startMonth={startMonth}
+                                            endMonth={endMonth}
+                                            availableMonths={filteredMonthsByYear}
+                                            onRangeChange={handleRangeChange}
+                                            onReset={handleResetRange}
+                                        />
+                                    )}
                                 </div>
                             </CardContent>
                         </Card>
@@ -668,45 +725,6 @@ export default function WaterPage() {
                     {/* Zone Analysis Tab */}
                     {monthlyTab === 'zone' && (
                         <div className="space-y-6">
-                            {/* Month/Zone Selectors */}
-                            <Card className="glass-card">
-                                <CardContent className="p-4 sm:p-5 md:p-6">
-                                    <div className="flex flex-wrap items-center gap-4">
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-sm font-medium text-slate-600 dark:text-slate-400">Select Month</span>
-                                            <select
-                                                value={endMonth}
-                                                onChange={(e) => setEndMonth(e.target.value)}
-                                                className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 text-sm font-medium text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-primary/50"
-                                            >
-                                                {AVAILABLE_MONTHS.map((m) => (
-                                                    <option key={m} value={m}>{m}</option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-sm font-medium text-slate-600 dark:text-slate-400">Filter by Zone</span>
-                                            <select
-                                                value={selectedZone}
-                                                onChange={(e) => setSelectedZone(e.target.value)}
-                                                className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 text-sm font-medium text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-primary/50"
-                                            >
-                                                {ZONE_CONFIG.map((z) => (
-                                                    <option key={z.code} value={z.code}>{z.name}</option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                        <Button
-                                            variant="secondary"
-                                            onClick={() => { setEndMonth('Jan-26'); setSelectedZone('Zone_01_(FM)'); }}
-                                            className="ml-auto"
-                                        >
-                                            Reset Filters
-                                        </Button>
-                                    </div>
-                                </CardContent>
-                            </Card>
-
                             {/* Zone Heading */}
                             <div>
                                 <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">
@@ -762,8 +780,8 @@ export default function WaterPage() {
                                     <div className="h-[200px] sm:h-[250px] md:h-[300px] w-full">
                                         <ResponsiveContainer width="100%" height="100%">
                                             <AreaChart data={(() => {
-                                                // Calculate zone-specific monthly trends
-                                                return AVAILABLE_MONTHS.map(month => {
+                                                // Calculate zone-specific monthly trends filtered by selected year
+                                                return filteredMonthsByYear.map(month => {
                                                     const analysis = calculateZoneAnalysisFromData(waterMeters, selectedZone, month);
                                                     return {
                                                         month,
@@ -820,13 +838,6 @@ export default function WaterPage() {
                     {/* Consumption by Type Tab */}
                     {monthlyTab === 'consumption' && (
                         <div className="space-y-6">
-                            {/* Type Filter Pills */}
-                            <TypeFilterPills
-                                types={uniqueTypes}
-                                selectedType={selectedType}
-                                onTypeChange={setSelectedType}
-                            />
-
                             {/* Summary Stats */}
                             <StatsGrid stats={[
                                 {
