@@ -33,20 +33,27 @@ export function DateRangePicker({
     // Timeline is directly the available months passed by parent (already filtered by year if needed)
     const activeTimeline = availableMonths;
 
+    // Guard: nothing to render when the timeline is empty
+    if (activeTimeline.length === 0) return null;
+
     // Calculate slider indices
     let activeStartIndex = activeTimeline.indexOf(startMonth);
     let activeEndIndex = activeTimeline.indexOf(endMonth);
 
     // If out of bounds, default to full range
     if (activeStartIndex === -1) activeStartIndex = 0;
-    if (activeEndIndex === -1) activeEndIndex = Math.max(0, activeTimeline.length - 1);
+    if (activeEndIndex === -1) activeEndIndex = activeTimeline.length - 1;
 
-    // Ensure valid indices
-    activeStartIndex = Math.max(0, activeStartIndex);
-    activeEndIndex = Math.min(Math.max(0, activeEndIndex), Math.max(0, activeTimeline.length - 1));
+    // Ensure start ≤ end and within bounds
+    activeStartIndex = Math.max(0, Math.min(activeStartIndex, activeTimeline.length - 1));
+    activeEndIndex = Math.max(activeStartIndex, Math.min(activeEndIndex, activeTimeline.length - 1));
 
     // Count of selected months
     const selectedDataMonths = activeEndIndex - activeStartIndex + 1;
+
+    // Radix Slider crashes (division by zero) when max === min, so disable
+    // the slider when there are fewer than 2 months in the timeline.
+    const sliderDisabled = activeTimeline.length < 2;
 
     // Detect whether the timeline spans multiple years (for year boundary markers)
     const uniqueYears = useMemo(() => {
@@ -154,20 +161,24 @@ export function DateRangePicker({
 
             {/* Slider + Timeline */}
             <div className="px-1">
-                {/* Dual-Thumb Range Slider */}
+                {/* Dual-Thumb Range Slider — skip when only 1 month (Radix divides by zero when max === min) */}
                 <div className="px-1">
-                    <Slider
-                        value={[activeStartIndex, activeEndIndex]}
-                        onValueChange={handleSliderChange}
-                        max={Math.max(0, activeTimeline.length - 1)}
-                        min={0}
-                        step={1}
-                        className="w-full"
-                        trackClassName="bg-slate-200 dark:bg-slate-700"
-                        rangeClassName="bg-[#81D8D0]"
-                        thumbClassName="border-2 border-[#4E4456] bg-white dark:border-[#81D8D0] dark:bg-slate-900 shadow-md shadow-black/10 dark:shadow-black/30 hover:scale-110 transition-transform"
-                        aria-label="Month Range"
-                    />
+                    {sliderDisabled ? (
+                        <div className="h-2 w-full rounded-full bg-[#81D8D0]" />
+                    ) : (
+                        <Slider
+                            value={[activeStartIndex, activeEndIndex]}
+                            onValueChange={handleSliderChange}
+                            max={activeTimeline.length - 1}
+                            min={0}
+                            step={1}
+                            className="w-full"
+                            trackClassName="bg-slate-200 dark:bg-slate-700"
+                            rangeClassName="bg-[#81D8D0]"
+                            thumbClassName="border-2 border-[#4E4456] bg-white dark:border-[#81D8D0] dark:bg-slate-900 shadow-md shadow-black/10 dark:shadow-black/30 hover:scale-110 transition-transform"
+                            aria-label="Month Range"
+                        />
+                    )}
                 </div>
 
                 {/* Month Labels with Year Separators + Data Dots */}
