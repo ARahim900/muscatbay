@@ -10,12 +10,12 @@ import { StatsGridSkeleton, ChartSkeleton, Skeleton } from "@/components/shared/
 import { PageHeader } from "@/components/shared/page-header";
 import { DateRangePicker } from "@/components/water/date-range-picker";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Zap, DollarSign, MapPin, TrendingUp, BarChart3, Database, Wifi, WifiOff, CalendarDays, RotateCcw, Search, Download, X, Clock, Radio } from "lucide-react";
+import { Zap, DollarSign, MapPin, TrendingUp, BarChart3, Database, Wifi, WifiOff, Search, Download, X, Clock, Radio } from "lucide-react";
 import { MultiSelectDropdown, SortIcon, TablePagination, ActiveFilterPills, TableToolbar, StatusBadge, type PageSizeOption } from "@/components/shared/data-table";
 import { exportToCSV, getDateForFilename } from "@/lib/export-utils";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar, Cell, Legend } from "recharts";
 import { LiquidTooltip } from "../../components/charts/liquid-tooltip";
-import { Slider } from "@/components/ui/slider";
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { saveFilterPreferences, loadFilterPreferences } from "@/lib/filter-preferences";
@@ -402,12 +402,12 @@ export default function ElectricityPage() {
     // 3. Filtered Data Provider
     const analysisData = useMemo(() => {
         const monthsToUse = filteredMonthsByYear.length > 0 ? filteredMonthsByYear : allMonths;
-        if (monthsToUse.length === 0) return { stats: [], chartData: [], tableData: [], dateRangeLabel: "" };
+        if (monthsToUse.length === 0) return { stats: [], chartData: [], tableData: [], dateRangeLabel: "", topConsumers: [] };
 
-        // Determine Index Range based on filtered months
-        const startIdx = Math.floor((dateRangeIndex[0] / 100) * (monthsToUse.length - 1));
-        const endIdx = Math.floor((dateRangeIndex[1] / 100) * (monthsToUse.length - 1));
-        const selectedMonths = monthsToUse.slice(startIdx, endIdx + 1);
+        // Use startMonth/endMonth from DateRangePicker
+        const startIdx = Math.max(0, monthsToUse.indexOf(startMonth));
+        const endIdx = monthsToUse.indexOf(endMonth);
+        const selectedMonths = monthsToUse.slice(startIdx, (endIdx >= 0 ? endIdx : monthsToUse.length - 1) + 1);
 
         // Filter Meters by Type
         const filteredMeters = analysisType === "All"
@@ -511,7 +511,7 @@ export default function ElectricityPage() {
             dateRangeLabel: `${startMonthStr} - ${endMonthStr}`
         };
 
-    }, [meters, allMonths, filteredMonthsByYear, analysisType, dateRangeIndex]);
+    }, [meters, allMonths, filteredMonthsByYear, analysisType, startMonth, endMonth]);
 
     const handleReset = () => {
         setDateRangeIndex([0, 100]);
@@ -606,55 +606,77 @@ export default function ElectricityPage() {
                 ]}
             />
 
-            {activeTab === 'overview' && (
-                <div className="space-y-6 animate-in fade-in duration-500">
-                    {/* Date Range Picker with Year Selector */}
-                    {allMonths.length > 0 && (
-                        <Card>
-                            <CardContent className="pt-6">
-                                <div className="flex flex-col gap-4">
-                                    {/* Year Selector Row */}
-                                    <div className="flex items-center justify-between flex-wrap gap-4">
-                                        <div className="flex items-center gap-3">
-                                            <span className="text-sm font-medium text-slate-600 dark:text-slate-400">Filter by Year:</span>
-                                            <div className="flex items-center gap-2">
-                                                {availableYears.map((year) => (
-                                                    <Button
-                                                        key={year}
-                                                        variant={selectedYear === year ? "default" : "outline"}
-                                                        size="sm"
-                                                        onClick={() => {
-                                                            setSelectedYear(year);
-                                                            const yearMonths = allMonths.filter(m => '20' + m.split('-')[1] === year);
-                                                            if (yearMonths.length > 0) {
-                                                                setStartMonth(yearMonths[0]);
-                                                                setEndMonth(yearMonths[yearMonths.length - 1]);
-                                                            }
-                                                        }}
-                                                        className={`rounded-full px-4 ${selectedYear === year ? "bg-amber-500 hover:bg-amber-600 text-white" : "border-slate-200 dark:border-slate-700"}`}
-                                                    >
-                                                        {year}
-                                                    </Button>
-                                                ))}
-                                            </div>
-                                        </div>
-                                        <Badge variant="outline" className="px-3 py-1.5 text-sm font-normal">
-                                            {filteredMonthsByYear.length} Months Available
+            {/* Unified Date/Filter Control Card — shared by Overview and Analysis tabs */}
+            {activeTab !== 'database' && allMonths.length > 0 && (
+                <Card className="glass-card">
+                    <CardContent className="p-4 sm:p-5 md:p-6">
+                        <div className="flex flex-col gap-4">
+                            {/* Year Selector Row */}
+                            <div className="flex items-center justify-between flex-wrap gap-3">
+                                <div className="flex items-center gap-3">
+                                    <span className="text-sm font-medium text-slate-600 dark:text-slate-400">Filter by Year:</span>
+                                    <div className="flex items-center gap-2">
+                                        {availableYears.map((year) => (
+                                            <Button
+                                                key={year}
+                                                variant={selectedYear === year ? "default" : "outline"}
+                                                size="sm"
+                                                onClick={() => {
+                                                    setSelectedYear(year);
+                                                    const yearMonths = allMonths.filter(m => '20' + m.split('-')[1] === year);
+                                                    if (yearMonths.length > 0) {
+                                                        setStartMonth(yearMonths[0]);
+                                                        setEndMonth(yearMonths[yearMonths.length - 1]);
+                                                    }
+                                                }}
+                                                className={`rounded-full px-4 ${selectedYear === year ? "bg-amber-500 hover:bg-amber-600 text-white" : "border-slate-200 dark:border-slate-700"}`}
+                                            >
+                                                {year}
+                                            </Button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Analysis tab: Type selector inline */}
+                                {activeTab === 'analysis' ? (
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                        <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Type:</span>
+                                        <select
+                                            value={analysisType}
+                                            onChange={(e) => setAnalysisType(e.target.value)}
+                                            className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 text-sm font-medium text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                                        >
+                                            <option value="All">All ({meters.length})</option>
+                                            {meterTypes.map((t) => (
+                                                <option key={t.type} value={t.type}>{t.type} ({t.count})</option>
+                                            ))}
+                                        </select>
+                                        <Badge variant="outline" className="px-2.5 py-1 text-xs font-normal">
+                                            {filteredMonthsByYear.length} Months
                                         </Badge>
                                     </div>
+                                ) : (
+                                    <Badge variant="outline" className="px-3 py-1.5 text-sm font-normal">
+                                        {filteredMonthsByYear.length} Months Available
+                                    </Badge>
+                                )}
+                            </div>
 
-                                    {/* Date Range Picker */}
-                                    <DateRangePicker
-                                        startMonth={startMonth || allMonths[0]}
-                                        endMonth={endMonth || allMonths[allMonths.length - 1]}
-                                        availableMonths={!selectedYear ? allMonths : filteredMonthsByYear}
-                                        onRangeChange={handleRangeChange}
-                                        onReset={handleResetRange}
-                                    />
-                                </div>
-                            </CardContent>
-                        </Card>
-                    )}
+                            {/* Date Range Picker */}
+                            <DateRangePicker
+                                startMonth={startMonth || allMonths[0]}
+                                endMonth={endMonth || allMonths[allMonths.length - 1]}
+                                availableMonths={!selectedYear ? allMonths : filteredMonthsByYear}
+                                onRangeChange={handleRangeChange}
+                                onReset={handleResetRange}
+                            />
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
+
+            {activeTab === 'overview' && (
+                <div className="space-y-6 animate-in fade-in duration-500">
 
                     <StatsGrid stats={stats} />
 
@@ -711,92 +733,6 @@ export default function ElectricityPage() {
 
             {activeTab === 'analysis' && (
                 <div className="space-y-6 animate-in fade-in duration-500">
-
-                    {/* Controls Card */}
-                    <Card className="glass-card">
-                        <CardContent className="p-4 space-y-6">
-                            {/* Year Selector Row */}
-                            <div className="flex items-center justify-between flex-wrap gap-4">
-                                <div className="flex items-center gap-3">
-                                    <span className="text-sm font-medium text-slate-600 dark:text-slate-400">Filter by Year:</span>
-                                    <div className="flex items-center gap-2">
-                                        {availableYears.map((year) => (
-                                            <Button
-                                                key={year}
-                                                variant={selectedYear === year ? "default" : "outline"}
-                                                size="sm"
-                                                onClick={() => setSelectedYear(year)}
-                                                className={`rounded-full px-4 ${selectedYear === year ? "bg-amber-500 hover:bg-amber-600 text-white" : "border-slate-200 dark:border-slate-700"}`}
-                                            >
-                                                {year}
-                                            </Button>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Date Range and Meters Info Row */}
-                            <div className="flex flex-wrap items-center justify-between gap-4">
-                                <div className="flex items-center gap-4">
-                                    <div className="flex items-center gap-2 px-3 py-1.5 bg-muted rounded-md border text-sm font-medium">
-                                        <CalendarDays className="h-4 w-4 text-muted-foreground" />
-                                        <span>{analysisData.dateRangeLabel}</span>
-                                    </div>
-                                    <Badge variant="outline" className="px-3 py-1.5 text-sm font-normal">
-                                        {analysisData.tableData.length} Meters Found
-                                    </Badge>
-                                </div>
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={handleReset}
-                                    className="h-8 text-muted-foreground hover:text-foreground"
-                                >
-                                    <RotateCcw className="mr-2 h-3.5 w-3.5" />
-                                    Reset Filters
-                                </Button>
-                            </div>
-
-                            {/* Slider */}
-                            <div className="px-2 pt-2">
-                                <Slider
-                                    value={dateRangeIndex}
-                                    onValueChange={(val) => setDateRangeIndex([val[0], val[1]])} // force tuple type
-                                    max={100}
-                                    step={1}
-                                    className="w-full"
-                                />
-                                <div className="flex justify-between mt-2 text-xs text-muted-foreground uppercase tracking-wider">
-                                    <span>{filteredMonthsByYear[0] || allMonths[0]}</span>
-                                    <span>{filteredMonthsByYear[filteredMonthsByYear.length - 1] || allMonths[allMonths.length - 1]}</span>
-                                </div>
-                            </div>
-
-                            {/* Type Chips */}
-                            <div className="flex flex-wrap gap-2 pt-2 border-t border-border/50">
-                                <Button
-                                    variant={analysisType === "All" ? "default" : "outline"}
-                                    size="sm"
-                                    onClick={() => setAnalysisType("All")}
-                                    className={`rounded-full h-8 ${analysisType === "All" ? "bg-mb-primary hover:bg-mb-primary/90" : "border-slate-200 dark:border-slate-700"}`}
-                                >
-                                    All <span className="ml-1.5 opacity-70 bg-white/20 px-1.5 py-0.5 rounded-full text-[10px]">{meters.length}</span>
-                                </Button>
-                                {meterTypes.map((t) => (
-                                    <Button
-                                        key={t.type}
-                                        variant={analysisType === t.type ? "default" : "outline"}
-                                        size="sm"
-                                        onClick={() => setAnalysisType(t.type)}
-                                        className={`rounded-full h-8 ${analysisType === t.type ? "bg-mb-secondary-active hover:bg-mb-secondary-active/90 border-transparent text-white" : "border-slate-200 dark:border-slate-700"}`}
-                                    >
-                                        {t.type} <span className="ml-1.5 opacity-70 bg-black/10 dark:bg-white/20 px-1.5 py-0.5 rounded-full text-[10px]">{t.count}</span>
-                                    </Button>
-                                ))}
-                            </div>
-                        </CardContent>
-                    </Card>
-
                     {/* Filtered Stats Grid */}
                     <StatsGrid stats={analysisData.stats} />
 
