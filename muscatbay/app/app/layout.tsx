@@ -7,6 +7,7 @@ import { AuthProvider } from "@/components/auth/auth-provider";
 import { SidebarProvider } from "@/components/layout/sidebar-context";
 import { ClientLayout } from "@/components/layout/client-layout";
 import { Providers } from "@/components/providers";
+import { RegisterSW } from "@/components/pwa/register-sw";
 import { usePathname } from "next/navigation";
 import { Inter } from "next/font/google";
 
@@ -35,8 +36,11 @@ export default function RootLayout({
           <title>Muscat Bay Operations</title>
           <meta name="description" content="Operations Dashboard for Muscat Bay" />
           <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+          <link rel="manifest" href="/manifest.json" />
+          <meta name="theme-color" content="#0f172a" />
         </head>
         <body className={`${inter.className} ${inter.variable}`} suppressHydrationWarning>
+          <RegisterSW />
           <ToastProvider>
             {children}
           </ToastProvider>
@@ -51,8 +55,11 @@ export default function RootLayout({
         <title>Muscat Bay Operations</title>
         <meta name="description" content="Operations Dashboard for Muscat Bay" />
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#0f172a" />
       </head>
       <body className={`${inter.className} ${inter.variable}`} suppressHydrationWarning>
+        <RegisterSW />
         <Providers>
           <ToastProvider>
             <AuthProvider>
