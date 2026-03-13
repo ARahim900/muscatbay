@@ -1384,13 +1384,23 @@ function ErrorState({ message, onRetry }: { message: string; onRetry: () => void
     );
 }
 
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+const MONTH_ABBREVS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+/** Return today's day-of-month if `month` matches the current calendar month, else 1. */
+function getDefaultDay(month: string): number {
+    const now = new Date();
+    const expected = `${MONTH_ABBREVS[now.getMonth()]}-${String(now.getFullYear()).slice(2)}`;
+    return month === expected ? now.getDate() : 1;
+}
+
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export function DailyWaterReport() {
-    const [selectedMonth, setSelectedMonth] = useState(
-        AVAILABLE_MONTHS[AVAILABLE_MONTHS.length - 1]
-    );
-    const [selectedDay, setSelectedDay] = useState(1);
+    const defaultMonth = AVAILABLE_MONTHS[AVAILABLE_MONTHS.length - 1];
+    const [selectedMonth, setSelectedMonth] = useState(defaultMonth);
+    const [selectedDay, setSelectedDay] = useState(() => getDefaultDay(defaultMonth));
     const [status, setStatus] = useState<ReportStatus>('loading');
     const [monthData, setMonthData] = useState<SupabaseDailyWaterConsumption[]>([]);
     const [reportData, setReportData] = useState<ReportData | null>(null);
@@ -1484,7 +1494,7 @@ export function DailyWaterReport() {
                             <CalendarDays className="h-4 w-4 text-muted-foreground shrink-0" />
                             <select
                                 value={selectedMonth}
-                                onChange={e => { setSelectedMonth(e.target.value); setSelectedDay(1); }}
+                                onChange={e => { const m = e.target.value; setSelectedMonth(m); setSelectedDay(getDefaultDay(m)); }}
                                 disabled={status === 'loading'}
                                 className="px-2 py-1.5 text-sm rounded-md border border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
                             >

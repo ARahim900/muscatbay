@@ -4,24 +4,25 @@ import React from 'react';
 import { SidebarProvider, useSidebar } from './sidebar-context';
 import { Sidebar } from './sidebar';
 import { Topbar } from './topbar';
+import { BottomNav } from './bottom-nav';
 
 // This internal component consumes the context to adjust its margin
 function LayoutContent({ children }: { children: React.ReactNode }) {
-  const { isCollapsed, isOpen } = useSidebar();
+  const { isCollapsed } = useSidebar();
 
   return (
     <div className="flex min-h-[100dvh] w-full overflow-x-hidden">
-      {/* Sidebar is fixed, so we use margin on the content to push it over */}
+      {/* Sidebar - hidden on mobile, visible on md+ */}
       <Sidebar />
 
       {/* Main Content Area - Responsive margins that adapt to sidebar state */}
-      {/* On mobile: content shifts when sidebar is open (pushes content) */}
-      {/* On desktop: content always has margin for the sidebar */}
+      {/* On mobile: no left margin, bottom padding for bottom nav */}
+      {/* On desktop: left margin for the sidebar */}
       <main
         className={`
           flex-1 min-w-0 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]
           min-h-[100dvh] bg-gray-50 dark:bg-slate-950
-          ml-0
+          ml-0 pb-16 md:pb-0
           ${isCollapsed ? "md:ml-[72px]" : "md:ml-[220px]"}
         `}
       >
@@ -32,6 +33,9 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
           {children}
         </div>
       </main>
+
+      {/* Bottom navigation - mobile only */}
+      <BottomNav />
     </div>
   );
 }
