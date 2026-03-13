@@ -1,8 +1,7 @@
 "use client";
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useCallback, useRef } from 'react';
 import { Calendar, RotateCcw } from 'lucide-react';
-import { Slider } from '@/components/ui/slider';
 
 interface DateRangePickerProps {
     startMonth: string;
@@ -20,6 +19,114 @@ const monthFullNames: Record<string, string> = {
 };
 
 type PresetKey = 'ytd' | 'last3' | 'last6' | 'last12' | null;
+
+// ─── Custom dual-range slider (replaces Radix Slider for React 19 compat) ────
+
+interface DualRangeSliderProps {
+    min: number;
+    max: number;
+    value: [number, number];
+    onValueChange: (value: [number, number]) => void;
+}
+
+function DualRangeSlider({ min, max, value, onValueChange }: DualRangeSliderProps) {
+    const trackRef = useRef<HTMLDivElement>(null);
+    const draggingRef = useRef<'start' | 'end' | null>(null);
+
+    const range = max - min || 1;
+    const startPct = ((value[0] - min) / range) * 100;
+    const endPct = ((value[1] - min) / range) * 100;
+
+    const getValueFromPointer = useCallback((clientX: number): number => {
+        const track = trackRef.current;
+        if (!track) return min;
+        const rect = track.getBoundingClientRect();
+        const pct = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+        return Math.round(min + pct * (max - min));
+    }, [min, max]);
+
+    const handlePointerDown = useCallback((e: React.PointerEvent, thumb: 'start' | 'end') => {
+        e.preventDefault();
+        (e.target as HTMLElement).setPointerCapture(e.pointerId);
+        draggingRef.current = thumb;
+    }, []);
+
+    const handlePointerMove = useCallback((e: React.PointerEvent) => {
+        if (!draggingRef.current) return;
+        const v = getValueFromPointer(e.clientX);
+        if (draggingRef.current === 'start') {
+            const clamped = Math.min(v, value[1]);
+            if (clamped !== value[0]) onValueChange([clamped, value[1]]);
+        } else {
+            const clamped = Math.max(v, value[0]);
+            if (clamped !== value[1]) onValueChange([value[0], clamped]);
+        }
+    }, [getValueFromPointer, value, onValueChange]);
+
+    const handlePointerUp = useCallback(() => {
+        draggingRef.current = null;
+    }, []);
+
+    // Click on track to jump the nearest thumb
+    const handleTrackClick = useCallback((e: React.MouseEvent) => {
+        if (draggingRef.current) return;
+        const v = getValueFromPointer(e.clientX);
+        const distStart = Math.abs(v - value[0]);
+        const distEnd = Math.abs(v - value[1]);
+        if (distStart <= distEnd) {
+            onValueChange([Math.min(v, value[1]), value[1]]);
+        } else {
+            onValueChange([value[0], Math.max(v, value[0])]);
+        }
+    }, [getValueFromPointer, value, onValueChange]);
+
+    const thumbClass = "absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-5 h-5 rounded-full border-2 border-[#4E4456] bg-white dark:border-[#81D8D0] dark:bg-slate-900 shadow-md shadow-black/10 dark:shadow-black/30 hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 transition-transform cursor-grab active:cursor-grabbing z-10";
+
+    return (
+        <div
+            ref={trackRef}
+            className="relative flex items-center w-full h-5 cursor-pointer touch-none select-none"
+            onClick={handleTrackClick}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            onPointerCancel={handlePointerUp}
+        >
+            {/* Track background */}
+            <div className="absolute inset-x-0 h-2 rounded-full bg-slate-200 dark:bg-slate-700" />
+            {/* Active range */}
+            <div
+                className="absolute h-2 rounded-full bg-[#81D8D0]"
+                style={{ left: `${startPct}%`, right: `${100 - endPct}%` }}
+            />
+            {/* Start thumb */}
+            <div
+                role="slider"
+                tabIndex={0}
+                aria-label="Range start"
+                aria-valuemin={min}
+                aria-valuemax={max}
+                aria-valuenow={value[0]}
+                className={thumbClass}
+                style={{ left: `${startPct}%` }}
+                onPointerDown={e => handlePointerDown(e, 'start')}
+            />
+            {/* End thumb */}
+            <div
+                role="slider"
+                tabIndex={0}
+                aria-label="Range end"
+                aria-valuemin={min}
+                aria-valuemax={max}
+                aria-valuenow={value[1]}
+                className={thumbClass}
+                style={{ left: `${endPct}%` }}
+                onPointerDown={e => handlePointerDown(e, 'end')}
+            />
+        </div>
+    );
+}
+
+// ─── DateRangePicker ─────────────────────────────────────────────────────────
 
 export function DateRangePicker({
     startMonth,
@@ -51,10 +158,6 @@ export function DateRangePicker({
     // Count of selected months
     const selectedDataMonths = activeEndIndex - activeStartIndex + 1;
 
-    // Radix Slider crashes (division by zero) when max === min, so disable
-    // the slider when there are fewer than 2 months in the timeline.
-    const sliderDisabled = activeTimeline.length < 2;
-
     // Detect whether the timeline spans multiple years (for year boundary markers)
     const uniqueYears = useMemo(() => {
         const years = new Set(availableMonths.map(m => m.split('-')[1]));
@@ -67,7 +170,7 @@ export function DateRangePicker({
         return `${monthFullNames[m] || m} 20${y}`;
     };
 
-    const handleSliderChange = (values: number[]) => {
+    const handleSliderChange = (values: [number, number]) => {
         setActivePreset(null);
         const start = activeTimeline[values[0]];
         const end = activeTimeline[values[1]];
@@ -161,22 +264,16 @@ export function DateRangePicker({
 
             {/* Slider + Timeline */}
             <div className="px-1">
-                {/* Dual-Thumb Range Slider — skip when only 1 month (Radix divides by zero when max === min) */}
+                {/* Dual-Thumb Range Slider */}
                 <div className="px-1">
-                    {sliderDisabled ? (
+                    {activeTimeline.length < 2 ? (
                         <div className="h-2 w-full rounded-full bg-[#81D8D0]" />
                     ) : (
-                        <Slider
+                        <DualRangeSlider
                             value={[activeStartIndex, activeEndIndex]}
                             onValueChange={handleSliderChange}
                             max={activeTimeline.length - 1}
                             min={0}
-                            step={1}
-                            className="w-full"
-                            trackClassName="bg-slate-200 dark:bg-slate-700"
-                            rangeClassName="bg-[#81D8D0]"
-                            thumbClassName="border-2 border-[#4E4456] bg-white dark:border-[#81D8D0] dark:bg-slate-900 shadow-md shadow-black/10 dark:shadow-black/30 hover:scale-110 transition-transform"
-                            aria-label="Month Range"
                         />
                     )}
                 </div>
