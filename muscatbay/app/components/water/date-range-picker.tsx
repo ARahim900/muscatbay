@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useCallback, useRef } from 'react';
+import React, { useMemo, useCallback, useRef, useEffect } from 'react';
 import { Calendar, RotateCcw } from 'lucide-react';
 
 interface DateRangePickerProps {
@@ -10,6 +10,9 @@ interface DateRangePickerProps {
     onRangeChange: (start: string, end: string) => void;
     onReset: () => void;
 }
+
+// Maximum number of months visible in the slider at once
+const MAX_VISIBLE_MONTHS = 12;
 
 // Stable reference outside component
 const monthFullNames: Record<string, string> = {
@@ -32,64 +35,100 @@ interface DualRangeSliderProps {
 function DualRangeSlider({ min, max, value, onValueChange }: DualRangeSliderProps) {
     const trackRef = useRef<HTMLDivElement>(null);
     const draggingRef = useRef<'start' | 'end' | null>(null);
+    // Refs to always read the latest props inside window event listeners
+    const valueRef = useRef(value);
+    valueRef.current = value;
+    const onValueChangeRef = useRef(onValueChange);
+    onValueChangeRef.current = onValueChange;
+    const minRef = useRef(min);
+    minRef.current = min;
+    const maxRef = useRef(max);
+    maxRef.current = max;
+    // Prevent the click event that fires after pointerup from jumping a thumb
+    const justDraggedRef = useRef(false);
 
     const range = max - min || 1;
     const startPct = ((value[0] - min) / range) * 100;
     const endPct = ((value[1] - min) / range) * 100;
 
+    // Window-level pointermove/pointerup for reliable drag handling.
+    // This avoids pointer-capture and event-bubbling issues entirely.
+    useEffect(() => {
+        const handleMove = (e: PointerEvent) => {
+            if (!draggingRef.current) return;
+            e.preventDefault();
+            const track = trackRef.current;
+            if (!track) return;
+            const rect = track.getBoundingClientRect();
+            if (rect.width === 0) return;
+            const lo = minRef.current;
+            const hi = maxRef.current;
+            const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+            const v = Math.round(lo + pct * (hi - lo));
+            if (Number.isNaN(v)) return;
+            const current = valueRef.current;
+            if (draggingRef.current === 'start') {
+                const clamped = Math.max(lo, Math.min(v, current[1]));
+                if (clamped !== current[0]) onValueChangeRef.current([clamped, current[1]]);
+            } else {
+                const clamped = Math.min(hi, Math.max(v, current[0]));
+                if (clamped !== current[1]) onValueChangeRef.current([current[0], clamped]);
+            }
+        };
+        const handleUp = () => {
+            if (draggingRef.current) {
+                justDraggedRef.current = true;
+                requestAnimationFrame(() => { justDraggedRef.current = false; });
+            }
+            draggingRef.current = null;
+        };
+        window.addEventListener('pointermove', handleMove);
+        window.addEventListener('pointerup', handleUp);
+        return () => {
+            window.removeEventListener('pointermove', handleMove);
+            window.removeEventListener('pointerup', handleUp);
+        };
+    }, []);
+
+    const handlePointerDown = useCallback((e: React.PointerEvent, thumb: 'start' | 'end') => {
+        e.preventDefault();
+        e.stopPropagation();
+        draggingRef.current = thumb;
+        justDraggedRef.current = false;
+    }, []);
+
     const getValueFromPointer = useCallback((clientX: number): number => {
         const track = trackRef.current;
         if (!track) return min;
         const rect = track.getBoundingClientRect();
+        if (rect.width === 0) return min;
         const pct = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-        return Math.round(min + pct * (max - min));
+        const v = Math.round(min + pct * (max - min));
+        return Number.isNaN(v) ? min : v;
     }, [min, max]);
-
-    const handlePointerDown = useCallback((e: React.PointerEvent, thumb: 'start' | 'end') => {
-        e.preventDefault();
-        (e.target as HTMLElement).setPointerCapture(e.pointerId);
-        draggingRef.current = thumb;
-    }, []);
-
-    const handlePointerMove = useCallback((e: React.PointerEvent) => {
-        if (!draggingRef.current) return;
-        const v = getValueFromPointer(e.clientX);
-        if (draggingRef.current === 'start') {
-            const clamped = Math.min(v, value[1]);
-            if (clamped !== value[0]) onValueChange([clamped, value[1]]);
-        } else {
-            const clamped = Math.max(v, value[0]);
-            if (clamped !== value[1]) onValueChange([value[0], clamped]);
-        }
-    }, [getValueFromPointer, value, onValueChange]);
-
-    const handlePointerUp = useCallback(() => {
-        draggingRef.current = null;
-    }, []);
 
     // Click on track to jump the nearest thumb
     const handleTrackClick = useCallback((e: React.MouseEvent) => {
+        if (justDraggedRef.current) return;
         if (draggingRef.current) return;
         const v = getValueFromPointer(e.clientX);
-        const distStart = Math.abs(v - value[0]);
-        const distEnd = Math.abs(v - value[1]);
+        const current = valueRef.current;
+        const distStart = Math.abs(v - current[0]);
+        const distEnd = Math.abs(v - current[1]);
         if (distStart <= distEnd) {
-            onValueChange([Math.min(v, value[1]), value[1]]);
+            onValueChange([Math.max(min, Math.min(v, current[1])), current[1]]);
         } else {
-            onValueChange([value[0], Math.max(v, value[0])]);
+            onValueChange([current[0], Math.min(max, Math.max(v, current[0]))]);
         }
-    }, [getValueFromPointer, value, onValueChange]);
+    }, [getValueFromPointer, min, max, onValueChange]);
 
     const thumbClass = "absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-5 h-5 rounded-full border-2 border-[#4E4456] bg-white dark:border-[#81D8D0] dark:bg-slate-900 shadow-md shadow-black/10 dark:shadow-black/30 hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 transition-transform cursor-grab active:cursor-grabbing z-10";
 
     return (
         <div
             ref={trackRef}
-            className="relative flex items-center w-full h-5 cursor-pointer touch-none select-none"
+            className="relative flex items-center w-full h-5 cursor-pointer touch-none select-none overflow-visible"
             onClick={handleTrackClick}
-            onPointerMove={handlePointerMove}
-            onPointerUp={handlePointerUp}
-            onPointerCancel={handlePointerUp}
         >
             {/* Track background */}
             <div className="absolute inset-x-0 h-2 rounded-full bg-slate-200 dark:bg-slate-700" />
@@ -136,35 +175,55 @@ export function DateRangePicker({
     onReset
 }: DateRangePickerProps) {
     const [activePreset, setActivePreset] = React.useState<PresetKey>(null);
+    const onRangeChangeRef = useRef(onRangeChange);
+    onRangeChangeRef.current = onRangeChange;
 
-    // Timeline is directly the available months passed by parent (already filtered by year if needed)
-    const activeTimeline = availableMonths;
+    // Cap the visible timeline to the last MAX_VISIBLE_MONTHS months
+    const activeTimeline = useMemo(() => {
+        if (availableMonths.length <= MAX_VISIBLE_MONTHS) return availableMonths;
+        return availableMonths.slice(-MAX_VISIBLE_MONTHS);
+    }, [availableMonths]);
 
-    // Guard: nothing to render when the timeline is empty
-    if (activeTimeline.length === 0) return null;
+    // Calculate slider indices (clamped to visible timeline)
+    let activeStartIndex = activeTimeline.length > 0 ? activeTimeline.indexOf(startMonth) : 0;
+    let activeEndIndex = activeTimeline.length > 0 ? activeTimeline.indexOf(endMonth) : 0;
 
-    // Calculate slider indices
-    let activeStartIndex = activeTimeline.indexOf(startMonth);
-    let activeEndIndex = activeTimeline.indexOf(endMonth);
-
-    // If out of bounds, default to full range
+    // If out of bounds, default to full visible range
     if (activeStartIndex === -1) activeStartIndex = 0;
-    if (activeEndIndex === -1) activeEndIndex = activeTimeline.length - 1;
+    if (activeEndIndex === -1) activeEndIndex = Math.max(0, activeTimeline.length - 1);
 
     // Ensure start ≤ end and within bounds
-    activeStartIndex = Math.max(0, Math.min(activeStartIndex, activeTimeline.length - 1));
-    activeEndIndex = Math.max(activeStartIndex, Math.min(activeEndIndex, activeTimeline.length - 1));
+    activeStartIndex = Math.max(0, Math.min(activeStartIndex, Math.max(0, activeTimeline.length - 1)));
+    activeEndIndex = Math.max(activeStartIndex, Math.min(activeEndIndex, Math.max(0, activeTimeline.length - 1)));
+
+    // The displayed start/end months (what the slider actually shows)
+    const displayStartMonth = activeTimeline[activeStartIndex] || '';
+    const displayEndMonth = activeTimeline[activeEndIndex] || '';
 
     // Count of selected months
     const selectedDataMonths = activeEndIndex - activeStartIndex + 1;
 
     // Detect whether the timeline spans multiple years (for year boundary markers)
     const uniqueYears = useMemo(() => {
-        const years = new Set(availableMonths.map(m => m.split('-')[1]));
+        const years = new Set(activeTimeline.map(m => m.split('-')[1]));
         return years.size;
-    }, [availableMonths]);
+    }, [activeTimeline]);
 
-    // Format: "Jan 2024"
+    // Auto-sync parent when start/end months fall outside visible timeline
+    // (e.g. after timeline cap, or after reset with year filter cleared)
+    useEffect(() => {
+        if (activeTimeline.length === 0) return;
+        const startInTimeline = activeTimeline.includes(startMonth);
+        const endInTimeline = activeTimeline.includes(endMonth);
+        if (!startInTimeline || !endInTimeline) {
+            onRangeChangeRef.current(displayStartMonth, displayEndMonth);
+        }
+    }, [activeTimeline, displayStartMonth, displayEndMonth, startMonth, endMonth]);
+
+    // Guard: nothing to render when the timeline is empty
+    if (activeTimeline.length === 0) return null;
+
+    // Format: "January 2024"
     const formatMonthWithYear = (month: string) => {
         const [m, y] = month.split('-');
         return `${monthFullNames[m] || m} 20${y}`;
@@ -177,26 +236,26 @@ export function DateRangePicker({
         if (start && end) onRangeChange(start, end);
     };
 
-    // Quick preset handlers
+    // Quick preset handlers (operate within the visible timeline)
     const applyPreset = (preset: 'ytd' | 'last3' | 'last6' | 'last12') => {
-        if (availableMonths.length === 0) return;
+        if (activeTimeline.length === 0) return;
         setActivePreset(preset);
-        const lastIndex = availableMonths.length - 1;
+        const lastIndex = activeTimeline.length - 1;
         switch (preset) {
             case 'ytd': {
-                const latestYear = availableMonths[lastIndex].split('-')[1];
-                const janOfLatestYear = availableMonths.find(m => m.startsWith('Jan-') && m.endsWith(latestYear));
-                onRangeChange(janOfLatestYear || availableMonths[0], availableMonths[lastIndex]);
+                const latestYear = activeTimeline[lastIndex].split('-')[1];
+                const janOfLatestYear = activeTimeline.find(m => m.startsWith('Jan-') && m.endsWith(latestYear));
+                onRangeChange(janOfLatestYear || activeTimeline[0], activeTimeline[lastIndex]);
                 break;
             }
             case 'last3':
-                onRangeChange(availableMonths[Math.max(0, lastIndex - 2)], availableMonths[lastIndex]);
+                onRangeChange(activeTimeline[Math.max(0, lastIndex - 2)], activeTimeline[lastIndex]);
                 break;
             case 'last6':
-                onRangeChange(availableMonths[Math.max(0, lastIndex - 5)], availableMonths[lastIndex]);
+                onRangeChange(activeTimeline[Math.max(0, lastIndex - 5)], activeTimeline[lastIndex]);
                 break;
             case 'last12':
-                onRangeChange(availableMonths[Math.max(0, lastIndex - 11)], availableMonths[lastIndex]);
+                onRangeChange(activeTimeline[0], activeTimeline[lastIndex]);
                 break;
         }
     };
@@ -225,9 +284,9 @@ export function DateRangePicker({
                             </span>
                         </div>
                         <p className="text-[13px] text-slate-500 dark:text-slate-400 leading-tight truncate">
-                            <span className="font-semibold text-[#4E4456] dark:text-[#81D8D0]">{formatMonthWithYear(startMonth)}</span>
+                            <span className="font-semibold text-[#4E4456] dark:text-[#81D8D0]">{formatMonthWithYear(displayStartMonth)}</span>
                             <span className="mx-1.5 text-slate-300 dark:text-slate-600">&rarr;</span>
-                            <span className="font-semibold text-[#4E4456] dark:text-[#81D8D0]">{formatMonthWithYear(endMonth)}</span>
+                            <span className="font-semibold text-[#4E4456] dark:text-[#81D8D0]">{formatMonthWithYear(displayEndMonth)}</span>
                         </p>
                     </div>
                 </div>
@@ -263,9 +322,9 @@ export function DateRangePicker({
             </div>
 
             {/* Slider + Timeline */}
-            <div className="px-1">
-                {/* Dual-Thumb Range Slider */}
-                <div className="px-1">
+            <div className="px-1 overflow-visible">
+                {/* Dual-Thumb Range Slider — px-3 keeps thumbs away from Card overflow-hidden edges */}
+                <div className="px-3 overflow-visible">
                     {activeTimeline.length < 2 ? (
                         <div className="h-2 w-full rounded-full bg-[#81D8D0]" />
                     ) : (
@@ -279,7 +338,7 @@ export function DateRangePicker({
                 </div>
 
                 {/* Month Labels with Year Separators + Data Dots */}
-                <div className="flex justify-between px-1.5 mt-4 relative">
+                <div className="flex justify-between px-3 mt-4 relative">
                     {activeTimeline.map((m, i) => {
                         const [monthPart, yearPart] = m.split('-');
                         const prevYear = i > 0 ? activeTimeline[i - 1].split('-')[1] : null;

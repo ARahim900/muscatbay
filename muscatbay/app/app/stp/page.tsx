@@ -180,9 +180,6 @@ export default function STPPage() {
                 // If saved prefs are invalid, reset to full range
                 setStartMonth(allMonths[0]);
                 setEndMonth(latestMonth);
-            } else if (endMonth !== latestMonth) {
-                // If new data is available beyond the saved end month, auto-expand to latest
-                setEndMonth(latestMonth);
             }
         }
     }, [allMonths, startMonth, endMonth]);
@@ -646,7 +643,7 @@ export default function STPPage() {
                     <StatsGrid stats={stats} />
 
                     {/* Monthly Water Treatment Volumes Chart */}
-                    <Card className="glass-card" key={`vol-${startMonth}-${endMonth}`}>
+                    <Card className="glass-card">
                         <CardHeader className="glass-card-header">
                             <CardTitle className="text-lg">Monthly Water Treatment Volumes (m³)</CardTitle>
                             <p className="text-sm text-muted-foreground">
@@ -684,7 +681,7 @@ export default function STPPage() {
                     {/* Two Charts Side by Side */}
                     <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2">
                         {/* Monthly Economic Impact */}
-                        <Card className="glass-card h-full" key={`eco-${startMonth}-${endMonth}`}>
+                        <Card className="glass-card h-full">
                             <CardHeader className="glass-card-header">
                                 <CardTitle className="text-lg flex items-center gap-2">
                                     <DollarSign className="h-5 w-5 text-mb-success" />
@@ -713,7 +710,7 @@ export default function STPPage() {
                         </Card>
 
                         {/* Monthly Tanker Operations */}
-                        <Card className="glass-card h-full" key={`tank-${startMonth}-${endMonth}`}>
+                        <Card className="glass-card h-full">
                             <CardHeader className="glass-card-header">
                                 <CardTitle className="text-lg flex items-center gap-2">
                                     <Truck className="h-5 w-5 text-mb-warning" />
