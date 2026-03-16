@@ -20,6 +20,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Waves,
+  Wrench,
 } from 'lucide-react';
 
 interface NavigationItem {
@@ -36,6 +37,7 @@ const navigationItems: NavigationItem[] = [
   { id: "electricity", name: "Electricity", icon: Zap, href: "/electricity" },
   { id: "stp", name: "STP Plant", icon: Waves, href: "/stp" },
   { id: "contractors", name: "Contractors", icon: Users, href: "/contractors" },
+  { id: "hvac-system", name: "HVAC System", icon: Wrench, href: "/contractors/gulf-expert" },
   { id: "assets", name: "Assets", icon: Package, href: "/assets" },
   { id: "pest-control", name: "Pest Control", icon: Bug, href: "/pest-control" },
   { id: "fire-safety", name: "Fire Safety", icon: Flame, href: "/firefighting" },
@@ -142,14 +144,21 @@ export function Sidebar() {
           </button>
         )}
 
-        {/* Main Navigation - No sections, flat list */}
-        <nav className="flex-1 px-3 py-4">
+        {/* Main Navigation */}
+        <nav className="flex-1 px-3 py-4 overflow-y-auto">
           <ul className="space-y-1">
             {navigationItems.map((item) => {
               const Icon = item.icon;
+              // Check if a more-specific sibling nav item matches the current path
+              const hasMoreSpecificMatch = navigationItems.some(
+                (other) =>
+                  other.href !== item.href &&
+                  other.href.startsWith(item.href + '/') &&
+                  pathname?.startsWith(other.href)
+              );
               const isActive = item.href === '/'
                 ? pathname === '/'
-                : pathname?.startsWith(item.href);
+                : pathname?.startsWith(item.href) && !hasMoreSpecificMatch;
 
               return (
                 <li key={item.id}>
@@ -198,6 +207,7 @@ export function Sidebar() {
               );
             })}
           </ul>
+
         </nav>
 
         {/* Bottom section - Settings & Logout */}

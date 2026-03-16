@@ -17,6 +17,7 @@ import {
   Settings,
   LogOut,
   X,
+  Wrench,
 } from 'lucide-react';
 
 interface NavItem {
@@ -36,6 +37,7 @@ const primaryItems: NavItem[] = [
 
 const overflowItems: NavItem[] = [
   { id: "contractors", name: "Contractors", icon: Users, href: "/contractors" },
+  { id: "hvac-system", name: "HVAC System", icon: Wrench, href: "/contractors/gulf-expert" },
   { id: "assets", name: "Assets", icon: Package, href: "/assets" },
   { id: "pest-control", name: "Pest Control", icon: Bug, href: "/pest-control" },
   { id: "settings", name: "Settings", icon: Settings, href: "/settings" },
