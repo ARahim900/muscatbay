@@ -43,9 +43,15 @@ const overflowItems: NavItem[] = [
   { id: "settings", name: "Settings", icon: Settings, href: "/settings" },
 ];
 
+const allNavItems = [...primaryItems, ...overflowItems];
+
 function isRouteActive(href: string, pathname: string | null) {
   if (href === '/') return pathname === '/';
-  return pathname?.startsWith(href) ?? false;
+  if (pathname === href) return true;
+  const hasMoreSpecific = allNavItems.some(
+    (other) => other.href !== href && other.href.startsWith(href + '/') && pathname?.startsWith(other.href)
+  );
+  return !hasMoreSpecific && (pathname?.startsWith(href) ?? false);
 }
 
 export function BottomNav() {

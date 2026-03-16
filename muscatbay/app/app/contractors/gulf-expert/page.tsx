@@ -77,8 +77,8 @@ export default function GulfExpertPage() {
       ]);
 
       const errors = [findingsRes, equipmentRes, compressorsRes, quotationsRes, recurringRes, summaryRes]
-        .filter((r) => r.error)
-        .map((r) => r.error?.message);
+        .map((r) => r.error?.message)
+        .filter(Boolean);
 
       if (errors.length > 0) {
         throw new Error(`Failed to load data: ${errors.join(", ")}`);

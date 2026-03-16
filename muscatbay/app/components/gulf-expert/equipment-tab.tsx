@@ -46,9 +46,9 @@ export function EquipmentTab({ equipment }: EquipmentTabProps) {
       );
     }
     if (selectedBuildings.length > 0 && selectedBuildings.length < uniqueBuildings.length)
-      result = result.filter((e) => selectedBuildings.includes(e.building));
+      result = result.filter((e) => e.building != null && selectedBuildings.includes(e.building));
     if (selectedStatuses.length > 0 && selectedStatuses.length < uniqueStatuses.length)
-      result = result.filter((e) => selectedStatuses.includes(e.operational_status));
+      result = result.filter((e) => e.operational_status != null && selectedStatuses.includes(e.operational_status));
     return result;
   }, [equipment, search, selectedBuildings, uniqueBuildings, selectedStatuses, uniqueStatuses]);
 

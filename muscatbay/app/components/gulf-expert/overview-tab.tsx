@@ -63,7 +63,8 @@ export function OverviewTab({ data }: OverviewTabProps) {
     findings
       .filter((f) => f.status?.toLowerCase() !== "closed")
       .forEach((f) => {
-        counts[f.building] = (counts[f.building] || 0) + 1;
+        const key = f.building ? String(f.building) : "Unknown";
+        counts[key] = (counts[key] || 0) + 1;
       });
     return Object.entries(counts)
       .map(([building, count]) => ({ building, count }))

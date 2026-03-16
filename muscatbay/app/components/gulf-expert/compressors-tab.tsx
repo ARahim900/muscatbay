@@ -14,9 +14,11 @@ function statusIsOk(status: string): boolean {
   return s === "OK" || s === "WORKING";
 }
 
+const FAULT_STATUSES = new Set(["FAULTY", "NOT WORKING", "NOT OPERATIONAL", "OFFLINE"]);
+
 function statusIsFault(status: string): boolean {
-  const s = status?.toUpperCase() || "";
-  return s.includes("NOT") || s === "FAULTY";
+  const s = status?.toUpperCase().trim() || "";
+  return FAULT_STATUSES.has(s);
 }
 
 export function CompressorsTab({ compressors }: CompressorsTabProps) {
