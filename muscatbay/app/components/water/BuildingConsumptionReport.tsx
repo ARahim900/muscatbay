@@ -20,6 +20,24 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+const MONTH_ABBREVS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+function getDefaultMonth(): string {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const key = `${MONTH_ABBREVS[yesterday.getMonth()]}-${String(yesterday.getFullYear()).slice(2)}`;
+    return AVAILABLE_MONTHS.includes(key) ? key : AVAILABLE_MONTHS[AVAILABLE_MONTHS.length - 1];
+}
+
+function getDefaultDay(month: string): number {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const expected = `${MONTH_ABBREVS[yesterday.getMonth()]}-${String(yesterday.getFullYear()).slice(2)}`;
+    return month === expected ? yesterday.getDate() : 1;
+}
+
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 interface ChildMeterReading {
@@ -323,10 +341,8 @@ function ErrorState({ message, onRetry }: { message: string; onRetry: () => void
 // ─── Main Component ──────────────────────────────────────────────────────────
 
 export function BuildingConsumptionReport() {
-    const [selectedMonth, setSelectedMonth] = useState(
-        AVAILABLE_MONTHS[AVAILABLE_MONTHS.length - 1]
-    );
-    const [selectedDay, setSelectedDay] = useState(1);
+    const [selectedMonth, setSelectedMonth] = useState(getDefaultMonth);
+    const [selectedDay, setSelectedDay] = useState(() => getDefaultDay(getDefaultMonth()));
     const [status, setStatus] = useState<ReportStatus>('loading');
     const [monthData, setMonthData] = useState<SupabaseDailyWaterConsumption[]>([]);
     const [buildingRows, setBuildingRows] = useState<BuildingRow[]>([]);

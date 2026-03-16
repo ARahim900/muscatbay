@@ -1388,17 +1388,26 @@ function ErrorState({ message, onRetry }: { message: string; onRetry: () => void
 
 const MONTH_ABBREVS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
-/** Return today's day-of-month if `month` matches the current calendar month, else 1. */
+/** Return yesterday's day-of-month if `month` matches yesterday's calendar month, else 1. */
 function getDefaultDay(month: string): number {
-    const now = new Date();
-    const expected = `${MONTH_ABBREVS[now.getMonth()]}-${String(now.getFullYear()).slice(2)}`;
-    return month === expected ? now.getDate() : 1;
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const expected = `${MONTH_ABBREVS[yesterday.getMonth()]}-${String(yesterday.getFullYear()).slice(2)}`;
+    return month === expected ? yesterday.getDate() : 1;
+}
+
+/** Return the month string (e.g. "Mar-26") for yesterday. */
+function getDefaultMonth(): string {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const key = `${MONTH_ABBREVS[yesterday.getMonth()]}-${String(yesterday.getFullYear()).slice(2)}`;
+    return AVAILABLE_MONTHS.includes(key) ? key : AVAILABLE_MONTHS[AVAILABLE_MONTHS.length - 1];
 }
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export function DailyWaterReport() {
-    const defaultMonth = AVAILABLE_MONTHS[AVAILABLE_MONTHS.length - 1];
+    const defaultMonth = getDefaultMonth();
     const [selectedMonth, setSelectedMonth] = useState(defaultMonth);
     const [selectedDay, setSelectedDay] = useState(() => getDefaultDay(defaultMonth));
     const [status, setStatus] = useState<ReportStatus>('loading');

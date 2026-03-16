@@ -2,110 +2,117 @@
 
 > **A comprehensive operations management system for tracking critical infrastructure and utilities at Muscat Bay (Saraya Bandar Jissah SAOC)**
 
-[![TypeScript](https://img.shields.io/badge/TypeScript-Primary-blue)](https://www.typescriptlang.org/)
-[![Next.js](https://img.shields.io/badge/Next.js-16-black)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-blue)](https://www.typescriptlang.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-16.1-black)](https://nextjs.org/)
+[![React](https://img.shields.io/badge/React-19-61dafb)](https://react.dev/)
 [![Deployed on Vercel](https://img.shields.io/badge/Deployed-Vercel-black)](https://vercel.com)
 
 ---
 
-## 📋 Overview
+## Overview
 
-This application is designed to streamline operations and maintenance management at Muscat Bay, enabling real-time tracking and analysis of:
+This application streamlines operations and maintenance management at Muscat Bay, enabling real-time tracking and analysis of:
 
-- **STP (Sewage Treatment Plant) Operations** - Daily monitoring, chemical usage, and maintenance logs
-- **Water Systems** - Consumption tracking across 350+ meters (L1-L4 hierarchy)
-- **Electricity Monitoring** - Usage patterns and cost analysis
-- **Contractors & AMC** - Annual Maintenance Contract tracking and vendor coordination
-- **Asset Management** - Equipment registers and lifecycle tracking
-- **Firefighting Systems** - Safety infrastructure monitoring
-- **Pest Control** - Scheduled maintenance and reports
+- **STP (Sewage Treatment Plant) Operations** — Daily monitoring, chemical usage, and maintenance logs
+- **Water Systems** — Consumption tracking across 350+ meters (L1–L4 hierarchy)
+- **Electricity Monitoring** — Usage patterns, zone-wise consumption, and cost analysis
+- **Contractors & AMC** — Annual Maintenance Contract tracking and vendor coordination
+- **Asset Management** — Equipment registers and lifecycle tracking
+- **Fire Safety** — Firefighting systems monitoring and quote management
+- **Pest Control** — Scheduled maintenance and reports
 
 Built by the **Assets & Operations Manager** to solve real-world infrastructure challenges.
 
 ---
 
-## 🎯 Purpose
+## Purpose
 
 **Problem:** Managing utilities, STP operations, and infrastructure across multiple zones requires constant data tracking, vendor coordination, and reporting to management.
 
 **Solution:** A centralized dashboard that:
-- ✅ Eliminates manual spreadsheet tracking
-- ✅ Provides real-time operational insights
-- ✅ Automates reporting and alerts
-- ✅ Improves decision-making with data visualization
-- ✅ Streamlines vendor and contractor management
+- Eliminates manual spreadsheet tracking
+- Provides real-time operational insights via Supabase
+- Automates reporting and alerts
+- Improves decision-making with interactive data visualization
+- Streamlines vendor and contractor management
+- Works offline as a Progressive Web App (PWA)
 
 ---
 
-## 🛠️ Technology Stack
+## Technology Stack
 
 ### Frontend
-- **Next.js 16** - React framework with App Router
-- **TypeScript** - Type-safe development
-- **React 19** - Component-based UI
-- **Tailwind CSS** - Utility-first styling
-- **shadcn/ui** - Modern UI components
-- **Recharts** - Data visualization and charts
+| Technology | Version | Purpose |
+|---|---|---|
+| Next.js | 16.1 | React framework (App Router) |
+| React | 19.2 | Component-based UI |
+| TypeScript | 5 | Type-safe development |
+| Tailwind CSS | 4 | Utility-first styling |
+| shadcn/ui + Radix UI | Latest | Modern UI components |
+| Recharts | 3.6 | Data visualization and charts |
+| GSAP | 3.14 | Micro-animations and transitions |
+| date-fns | 4.1 | Date manipulation |
 
 ### Backend & Database
-- **Supabase** - Backend-as-a-Service (PostgreSQL)
-- **Next.js API Routes** - Server-side logic
+- **Supabase** — Backend-as-a-Service (PostgreSQL + Auth + Realtime)
+- **Next.js API Routes** — Server-side logic
 
 ### Infrastructure
-- **Vercel** - Hosting and deployment
-- **GitHub Actions** - CI/CD automation
-- **Git** - Version control
+- **Vercel** — Hosting and deployment
+- **Git** — Version control
 
 ### Testing
-- **Vitest** - Unit testing framework
-- **Testing Library** - React component testing
+- **Vitest** — Unit testing framework
+- **Testing Library** — React component testing
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
+```
 muscatbay/
-├── app/                        # Main Next.js application
-│   ├── app/                    # Next.js App Router pages
-│   │   ├── water/              # Water meter management
-│   │   ├── electricity/        # Electricity monitoring
-│   │   ├── stp/                # STP plant operations
-│   │   ├── contractors/        # AMC contractor tracking
-│   │   ├── assets/             # Asset management
-│   │   ├── firefighting/       # Firefighting systems
-│   │   ├── pest-control/       # Pest control management
-│   │   ├── settings/           # User settings
-│   │   ├── login/              # Authentication pages
-│   │   └── page.tsx            # Main dashboard
-│   ├── components/             # React components
-│   │   ├── ui/                 # Base UI components (shadcn/ui)
-│   │   ├── shared/             # Reusable shared components
-│   │   ├── charts/             # Chart components
-│   │   ├── layout/             # Layout components (sidebar, topbar)
-│   │   └── water/              # Water-specific components
-│   ├── lib/                    # Core utilities
-│   │   ├── supabase.ts         # Database operations
-│   │   ├── water-data.ts       # Water meter data & analysis
-│   │   └── auth.ts             # Authentication
-│   ├── sql/                    # Database (schema, data, migrations)
-│   ├── scripts/                # Utility scripts
-│   ├── hooks/                  # Custom React hooks
-│   ├── testsprite_tests/       # E2E tests (Python)
-│   └── __tests__/              # Unit test files
-├── docs/                       # Documentation and examples
-├── App_Logo/                   # Branding assets
-├── .github/workflows/          # GitHub Actions CI/CD
-├── .vscode/                    # VS Code settings
-├── .claude/                    # AI assistant configurations
-├── vercel.json                 # Vercel deployment config
-├── CONTRIBUTING.md             # Contribution guidelines
-├── CHANGELOG.md                # Version history
-└── README.md                   # This file
+├── app/                          # Main Next.js application
+│   ├── app/                      # Next.js App Router pages
+│   │   ├── water/                # Water meter management
+│   │   ├── electricity/          # Electricity monitoring
+│   │   ├── stp/                  # STP plant operations
+│   │   ├── contractors/          # AMC contractor tracking
+│   │   ├── assets/               # Asset management
+│   │   ├── firefighting/         # Fire safety (+ /quotes sub-page)
+│   │   ├── pest-control/         # Pest control management
+│   │   ├── settings/             # User settings
+│   │   ├── login/                # Authentication pages
+│   │   ├── signup/               # Registration (+ /professional)
+│   │   ├── forgot-password/      # Password reset
+│   │   ├── auth/                 # Auth callbacks & reset
+│   │   └── page.tsx              # Main dashboard
+│   ├── components/               # React components
+│   │   ├── ui/                   # Base UI components (shadcn/ui)
+│   │   ├── shared/               # Reusable shared components
+│   │   ├── charts/               # Chart components (Recharts)
+│   │   ├── layout/               # Sidebar, topbar, bottom nav
+│   │   ├── water/                # Water-specific components
+│   │   ├── auth/                 # Auth provider
+│   │   └── pwa/                  # Service worker registration
+│   ├── lib/                      # Core utilities
+│   ├── hooks/                    # Custom React hooks
+│   ├── sql/                      # Database schema & seed data
+│   ├── scripts/                  # Utility scripts
+│   ├── public/                   # Static assets, PWA manifest, icons
+│   ├── __tests__/                # Unit test files
+│   ├── ARCHITECTURE.md           # System design overview
+│   └── DESIGN_SYSTEM.md          # UI styling guide
+├── docs/                         # Documentation and examples
+├── App_Logo/                     # Branding assets
+├── vercel.json                   # Vercel deployment config
+├── CONTRIBUTING.md               # Contribution guidelines
+├── CHANGELOG.md                  # Version history
+└── README.md                     # This file
 ```
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -127,10 +134,9 @@ muscatbay/
    ```
 
 3. **Set up environment variables**
-   
+
    Create a `.env.local` file in the `app` directory:
    ```env
-   # Supabase Configuration
    NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
    NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
    ```
@@ -140,69 +146,59 @@ muscatbay/
    npm run dev
    ```
 
-5. **Open your browser**
-   
-   Navigate to `http://localhost:3000`
+5. **Open your browser** at `http://localhost:3000`
 
 ---
 
-## 📊 Key Features
+## Key Features
 
-### 1. STP Operations Dashboard
-- Daily flow rate tracking
-- Chemical usage monitoring (chlorine, coagulants, etc.)
-- Maintenance schedule and alerts
-- Compliance reporting
+### Dashboard
+- KPI cards with real-time stats
+- Interactive charts and trend analysis
+- GSAP micro-animations for smooth transitions
 
-### 2. Water Tracking
-- **Water Hierarchy:** 350+ meter hierarchy (L1→L2→L3→L4)
-- **Daily Reports:** Zone-wise consumption and loss analysis
+### Water Tracking
+- **Meter Hierarchy:** 350+ meters across L1 → L2 → L3 → L4 zones
+- **Daily Reports:** Zone-wise consumption with date range picker
+- **Building Consumption:** Per-building usage breakdown
 - **Loss Detection:** Automated water loss percentage calculations
+- **Zone Analysis:** Filterable by zone and distribution center
 
-### 3. Electricity Monitoring
-- Zone-wise consumption
+### STP Operations
+- Daily flow rate and chemical usage tracking
+- Maintenance schedule monitoring
+- Compliance reporting with embedded data views
+
+### Electricity Monitoring
+- Zone-wise consumption with unified filter controls
 - Cost analysis and monthly billing reconciliation
 
-### 4. Contractor Management
+### Contractor Management
 - AMC (Annual Maintenance Contract) tracking
 - Vendor performance monitoring
 
-### 5. Asset Management
-- Equipment registers
-- Lifecycle tracking
+### Asset Management
+- Equipment registers and lifecycle tracking
 
-### 6. Reporting & Analytics
-- Automated monthly reports
-- Trend analysis with interactive charts
-- Export capabilities
+### Fire Safety
+- Firefighting systems monitoring
+- Quote management sub-page
 
----
+### Pest Control
+- Scheduled maintenance tracking and reports
 
-## 📱 Usage
+### Progressive Web App (PWA)
+- Installable on mobile and desktop
+- Offline caching via service worker
+- App manifest with branded icons
 
-### Daily Operations Checklist
-
-1. **Morning:** Log STP readings (flow, pH, chemicals)
-2. **Midday:** Check utility consumption alerts
-3. **Evening:** Review maintenance tasks and vendor updates
-4. **Weekly:** Generate consumption reports for management
-
-### Common Tasks
-
-**View Water Consumption:**
-1. Navigate to "Water" section
-2. Select "Daily Report" or "Water Hierarchy"
-3. Filter by zone and time period
-4. View consumption graphs and loss analysis
-
-**Check STP Operations:**
-1. Go to "STP" section
-2. View daily operations log
-3. Monitor treatment metrics and charts
+### Responsive Design
+- Fully responsive across PC, tablet, and phone
+- Collapsible sidebar on desktop, bottom navigation on mobile
 
 ---
 
-## 🔧 Development
+## Development
 
 ### Available Scripts
 
@@ -211,35 +207,22 @@ muscatbay/
 | `npm run dev` | Start development server |
 | `npm run build` | Build for production |
 | `npm run start` | Start production server |
-| `npm test` | Run unit tests |
+| `npm test` | Run unit tests (Vitest) |
+| `npm run test:ui` | Run tests with browser UI |
+| `npm run test:coverage` | Run tests with coverage report |
 | `npm run lint` | Run ESLint |
 
-### Running Tests
-
-**Unit Tests (Vitest):**
-```bash
-npm test
-```
-
-**E2E Tests (TestSprite):**
-Python-based E2E tests are located in `testsprite_tests/`.
-```bash
-# Refer to TestSprite documentation for execution
-```
-
-### Building for Production
-```bash
-npm run build
-```
-
 ### Deployment
-Automatic deployment to Vercel on push to `main` branch via GitHub Actions.
+
+Automatic deployment to Vercel on push to `main` branch.
+
+Security headers (CSP, X-Frame-Options) are configured in `vercel.json`.
 
 ---
 
-## 📈 Roadmap
+## Roadmap
 
-### Phase 1: Core Features (Completed ✅)
+### Phase 1: Core Features (Completed)
 - [x] STP operations tracking
 - [x] Water meter hierarchy with daily reports
 - [x] Electricity monitoring
@@ -247,13 +230,18 @@ Automatic deployment to Vercel on push to `main` branch via GitHub Actions.
 - [x] Vercel deployment
 - [x] Dark mode support
 
-### Phase 2: Enhanced Tracking (In Progress 🚧)
-- [ ] Real-time alerts for abnormal readings
-- [ ] Mobile-responsive optimizations
-- [ ] Multi-user access with roles
-- [ ] Advanced data visualization
+### Phase 2: Enhanced Tracking (Completed)
+- [x] Fully responsive design (PC, tablet, phone)
+- [x] Progressive Web App (PWA) support
+- [x] Mobile bottom navigation
+- [x] GSAP animations and UI polish
+- [x] Date range picker with dual-range slider
+- [x] Building consumption reports
+- [x] Unified filter controls
 
-### Phase 3: Automation (Planned 📋)
+### Phase 3: Automation (Planned)
+- [ ] Real-time alerts for abnormal readings
+- [ ] Multi-user access with roles
 - [ ] Auto-email weekly reports to management
 - [ ] SMS alerts for critical failures
 - [ ] Integration with smart meters (Tadoom)
@@ -261,7 +249,7 @@ Automatic deployment to Vercel on push to `main` branch via GitHub Actions.
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 This is a private project for Muscat Bay operations. If you're part of the team:
 
@@ -270,23 +258,25 @@ This is a private project for Muscat Bay operations. If you're part of the team:
 3. Push to branch: `git push origin feature/new-feature`
 4. Open a Pull Request
 
----
-
-## 📝 License
-
-Proprietary - Muscat Bay (Saraya Bandar Jissah SAOC)
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for full guidelines.
 
 ---
 
-## 👤 Author
+## License
 
-**Abdulrahim AlBalushi**  
-*Assets & Operations Manager*  
+Proprietary — Muscat Bay (Saraya Bandar Jissah SAOC)
+
+---
+
+## Author
+
+**Abdulrahim AlBalushi**
+*Assets & Operations Manager*
 Muscat Bay (Saraya Bandar Jissah SAOC)
 
 ---
 
-## 📞 Support
+## Support
 
 For questions or issues:
 - **Internal:** Contact Operations Team
@@ -295,7 +285,7 @@ For questions or issues:
 
 ---
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - Muscat Bay Management Team
 - VP Abdullah AlNasiri
@@ -303,17 +293,17 @@ For questions or issues:
 
 ---
 
-## 📚 Additional Resources
+## Additional Resources
 
-- [Application Documentation](./app/README.md) - Detailed app structure
-- [Architecture Overview](./app/ARCHITECTURE.md) - System design
-- [Design System](./app/DESIGN_SYSTEM.md) - UI styling guide
-- [Contributing Guidelines](./CONTRIBUTING.md) - Development setup and contribution guide
-- [Changelog](./CHANGELOG.md) - Version history and updates
-- [SQL Reference](./app/sql/README.md) - Database schema files
+- [Application Documentation](./app/README.md) — Detailed app structure
+- [Architecture Overview](./app/ARCHITECTURE.md) — System design
+- [Design System](./app/DESIGN_SYSTEM.md) — UI styling guide
+- [Contributing Guidelines](./CONTRIBUTING.md) — Development setup and contribution guide
+- [Changelog](./CHANGELOG.md) — Version history and updates
+- [SQL Reference](./app/sql/README.md) — Database schema files
 
 ---
 
-**Last Updated:** January 2026  
-**Version:** 1.0.0  
-**Status:** 🟢 Active Development
+**Last Updated:** March 2026
+**Version:** 1.1.0
+**Status:** Active Development
