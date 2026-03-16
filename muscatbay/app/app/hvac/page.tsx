@@ -116,7 +116,7 @@ export default function GulfExpertPage() {
     return (
       <div className="space-y-6">
         <PageHeader
-          title="Gulf Expert — HVAC/BMS AMC"
+          title="HVAC System"
           description="Preventive maintenance tracker for HVAC & BMS systems"
         />
         <div className="bg-white dark:bg-slate-900 rounded-xl border border-red-200 dark:border-red-800 p-8 text-center">
@@ -140,7 +140,7 @@ export default function GulfExpertPage() {
     <div className="space-y-6 sm:space-y-7 md:space-y-8 w-full">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <PageHeader
-          title="Gulf Expert — HVAC/BMS AMC"
+          title="HVAC System"
           description="Preventive maintenance tracker for HVAC & BMS systems across Muscat Bay"
         />
         <div className="flex flex-col items-end gap-1.5">

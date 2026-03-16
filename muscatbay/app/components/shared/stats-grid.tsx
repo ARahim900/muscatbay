@@ -3,6 +3,7 @@
 import { cn } from "@/lib/utils";
 import { LucideIcon, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
+import Link from "next/link";
 
 export type StatVariant = "primary" | "secondary" | "success" | "warning" | "danger" | "info" | "water" | "default";
 
@@ -16,6 +17,7 @@ interface StatItem {
     bgColor?: string;
     trend?: 'up' | 'down' | 'neutral';
     trendValue?: string;
+    href?: string;
 }
 
 interface StatsGridProps {
@@ -62,11 +64,8 @@ export function StatsGrid({ stats, className }: StatsGridProps) {
                 const variant = stat.variant || "primary";
                 const iconColor = variantIconColors[variant];
 
-                return (
-                    <div
-                        key={index}
-                        className="bg-white dark:bg-slate-900 p-3 sm:p-4 md:p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] hover:shadow-[0_8px_30px_-4px_rgba(6,81,237,0.15)] hover:-translate-y-1 active:scale-[0.98] transition-all duration-300 ease-out group/stat overflow-hidden relative"
-                    >
+                const cardContent = (
+                    <>
                         {/* Animated top border line */}
                         <div
                             className="absolute top-0 left-0 w-full h-[3px] opacity-0 group-hover/stat:opacity-100 transition-opacity duration-300"
@@ -108,6 +107,22 @@ export function StatsGrid({ stats, className }: StatsGridProps) {
                         {stat.subtitle && !stat.trendValue && (
                             <p className="text-[10px] sm:text-xs text-slate-400 mt-1.5 sm:mt-2 truncate">{stat.subtitle}</p>
                         )}
+                    </>
+                );
+
+                const cardClassName = "bg-white dark:bg-slate-900 p-3 sm:p-4 md:p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] hover:shadow-[0_8px_30px_-4px_rgba(6,81,237,0.15)] hover:-translate-y-1 active:scale-[0.98] transition-all duration-300 ease-out group/stat overflow-hidden relative";
+
+                return stat.href ? (
+                    <Link
+                        key={index}
+                        href={stat.href}
+                        className={cn(cardClassName, "block cursor-pointer")}
+                    >
+                        {cardContent}
+                    </Link>
+                ) : (
+                    <div key={index} className={cardClassName}>
+                        {cardContent}
                     </div>
                 );
             })}

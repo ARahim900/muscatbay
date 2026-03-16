@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { StatsGrid } from "@/components/shared/stats-grid";
 import { LoadingSpinner } from "@/components/shared/loading-spinner";
@@ -12,12 +13,14 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar, L
 import { LiquidTooltip } from "../components/charts/liquid-tooltip";
 import { ChartContainer } from "../components/charts/chart-container";
 import { AnimateOnScroll } from "@/components/shared/scroll-animation";
+import Link from "next/link";
 
 export default function DashboardPage() {
+    const router = useRouter();
     const { stats, chartData, stpChartData, recentActivity, loading, isLiveData, error } = useDashboardData();
     const [activityFilter, setActivityFilter] = useState<'all' | 'critical' | 'warning' | 'info'>('all');
 
-    // Add icons to stats
+    // Add icons and navigation hrefs to stats
     const statsWithIcons = stats.map(stat => ({
         ...stat,
         icon: stat.label.includes('WATER') ? Droplets :
@@ -25,8 +28,30 @@ export default function DashboardPage() {
                 stat.label.includes('STP INLET') ? Activity :
                     stat.label.includes('TSE') ? Recycle :
                         stat.label.includes('ECONOMIC') ? TrendingUp :
-                            stat.label.includes('ASSETS') ? Boxes : Activity
+                            stat.label.includes('ASSETS') ? Boxes : Activity,
+        href: stat.label.includes('WATER') ? '/water' :
+            stat.label.includes('ELECTRICITY') ? '/electricity' :
+                stat.label.includes('STP') || stat.label.includes('TSE') || stat.label.includes('ECONOMIC') ? '/stp' :
+                    stat.label.includes('ASSETS') ? '/assets' :
+                        stat.label.includes('CONTRACTOR') ? '/contractors' :
+                            stat.label.includes('HVAC') ? '/hvac' :
+                                stat.label.includes('PEST') ? '/pest-control' :
+                                    stat.label.includes('FIRE') ? '/firefighting' : undefined
     }));
+
+    // Map activity item titles to their section routes
+    const getActivityHref = (title: string): string | undefined => {
+        const t = title.toLowerCase();
+        if (t.includes('water')) return '/water';
+        if (t.includes('electricity')) return '/electricity';
+        if (t.includes('stp') || t.includes('tse') || t.includes('inlet') || t.includes('revenue')) return '/stp';
+        if (t.includes('contractor')) return '/contractors';
+        if (t.includes('asset')) return '/assets';
+        if (t.includes('hvac')) return '/hvac';
+        if (t.includes('pest')) return '/pest-control';
+        if (t.includes('fire')) return '/firefighting';
+        return undefined;
+    };
 
     if (loading) {
         return <LoadingSpinner />;
@@ -64,11 +89,15 @@ export default function DashboardPage() {
             <StatsGrid stats={statsWithIcons} />
 
             <AnimateOnScroll className="grid gap-4 sm:gap-5 md:gap-6 grid-cols-1 lg:grid-cols-7">
-                <Card className="glass-card col-span-1 lg:col-span-4">
+                <Card
+                    className="glass-card col-span-1 lg:col-span-4 cursor-pointer group/chart transition-shadow duration-300 hover:shadow-[0_8px_30px_-4px_rgba(6,81,237,0.15)]"
+                    onClick={() => router.push('/water')}
+                >
                     <CardHeader className="glass-card-header p-4 sm:p-5 md:p-6">
                         <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
                             <Droplets className="h-5 w-5 text-mb-secondary" />
                             Water Production Trend
+                            <ArrowUpRight className="h-4 w-4 ml-auto text-muted-foreground opacity-0 group-hover/chart:opacity-100 transition-opacity" />
                         </CardTitle>
                         <p className="text-xs sm:text-sm text-muted-foreground">Monthly water production in thousand m³</p>
                     </CardHeader>
@@ -90,11 +119,15 @@ export default function DashboardPage() {
                     </ChartContainer>
                 </Card>
 
-                <Card className="glass-card col-span-1 lg:col-span-3">
+                <Card
+                    className="glass-card col-span-1 lg:col-span-3 cursor-pointer group/chart transition-shadow duration-300 hover:shadow-[0_8px_30px_-4px_rgba(6,81,237,0.15)]"
+                    onClick={() => router.push('/stp')}
+                >
                     <CardHeader className="glass-card-header p-4 sm:p-5 md:p-6">
                         <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
                             <Recycle className="h-5 w-5 text-mb-primary" />
                             STP Treatment Overview
+                            <ArrowUpRight className="h-4 w-4 ml-auto text-muted-foreground opacity-0 group-hover/chart:opacity-100 transition-opacity" />
                         </CardTitle>
                         <p className="text-xs sm:text-sm text-muted-foreground">Monthly inlet vs TSE output (k m³)</p>
                     </CardHeader>
@@ -146,20 +179,38 @@ export default function DashboardPage() {
                         <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                             {recentActivity
                                 .filter(item => activityFilter === 'all' || item.type === activityFilter)
-                                .map((item, i) => (
-                                    <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-white/30 dark:bg-slate-800/50 border border-mb-primary/5 dark:border-slate-700 hover:bg-white/50 dark:hover:bg-slate-700 transition-colors">
-                                        <div className={`shrink-0 rounded-full p-2 ${item.type === 'critical' ? 'bg-mb-danger/20 text-mb-danger' :
-                                            item.type === 'warning' ? 'bg-mb-warning/20 text-mb-warning' :
-                                                'bg-mb-info/20 text-mb-info'
-                                            }`}>
-                                            {item.type === 'critical' ? <AlertTriangle className="h-4 w-4" /> : <ArrowUpRight className="h-4 w-4" />}
+                                .map((item, i) => {
+                                    const activityHref = getActivityHref(item.title);
+                                    const content = (
+                                        <>
+                                            <div className={`shrink-0 rounded-full p-2 ${item.type === 'critical' ? 'bg-mb-danger/20 text-mb-danger' :
+                                                item.type === 'warning' ? 'bg-mb-warning/20 text-mb-warning' :
+                                                    'bg-mb-info/20 text-mb-info'
+                                                }`}>
+                                                {item.type === 'critical' ? <AlertTriangle className="h-4 w-4" /> : <ArrowUpRight className="h-4 w-4" />}
+                                            </div>
+                                            <div className="space-y-1 min-w-0 flex-1">
+                                                <p className="text-sm font-medium leading-none text-mb-primary dark:text-slate-100">{item.title}</p>
+                                                <p className="text-xs text-muted-foreground truncate">{item.description}</p>
+                                            </div>
+                                            {activityHref && (
+                                                <ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover/activity:opacity-100 transition-opacity flex-shrink-0" />
+                                            )}
+                                        </>
+                                    );
+
+                                    const itemClassName = "flex items-center gap-3 p-3 rounded-lg bg-white/30 dark:bg-slate-800/50 border border-mb-primary/5 dark:border-slate-700 hover:bg-white/50 dark:hover:bg-slate-700 transition-colors group/activity";
+
+                                    return activityHref ? (
+                                        <Link key={i} href={activityHref} className={itemClassName}>
+                                            {content}
+                                        </Link>
+                                    ) : (
+                                        <div key={i} className={itemClassName}>
+                                            {content}
                                         </div>
-                                        <div className="space-y-1 min-w-0">
-                                            <p className="text-sm font-medium leading-none text-mb-primary dark:text-slate-100">{item.title}</p>
-                                            <p className="text-xs text-muted-foreground truncate">{item.description}</p>
-                                        </div>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                         </div>
                     </CardContent>
                 </Card>

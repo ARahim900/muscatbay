@@ -37,7 +37,7 @@ const navigationItems: NavigationItem[] = [
   { id: "electricity", name: "Electricity", icon: Zap, href: "/electricity" },
   { id: "stp", name: "STP Plant", icon: Waves, href: "/stp" },
   { id: "contractors", name: "Contractors", icon: Users, href: "/contractors" },
-  { id: "hvac-system", name: "HVAC System", icon: Wrench, href: "/contractors/gulf-expert" },
+  { id: "hvac-system", name: "HVAC System", icon: Wrench, href: "/hvac" },
   { id: "assets", name: "Assets", icon: Package, href: "/assets" },
   { id: "pest-control", name: "Pest Control", icon: Bug, href: "/pest-control" },
   { id: "fire-safety", name: "Fire Safety", icon: Flame, href: "/firefighting" },
