@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { getElectricityMeters, MeterReading } from "@/lib/mock-data";
 import { getElectricityMetersFromSupabase } from "@/lib/supabase";
 import { ELECTRICITY_RATES } from "@/lib/config";
@@ -10,10 +10,10 @@ import { StatsGridSkeleton, ChartSkeleton, Skeleton } from "@/components/shared/
 import { PageHeader } from "@/components/shared/page-header";
 import { DateRangePicker } from "@/components/water/date-range-picker";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Zap, DollarSign, MapPin, TrendingUp, BarChart3, Database, Wifi, WifiOff, Search, Download, X, Clock, Radio } from "lucide-react";
+import { Zap, DollarSign, MapPin, TrendingUp, BarChart3, Database, Wifi, WifiOff, Search, Download, X, Clock, Radio, Filter, LineChart } from "lucide-react";
 import { MultiSelectDropdown, SortIcon, TablePagination, ActiveFilterPills, TableToolbar, StatusBadge, type PageSizeOption } from "@/components/shared/data-table";
 import { exportToCSV, getDateForFilename } from "@/lib/export-utils";
-import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar, Cell, Legend } from "recharts";
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar, Cell, Legend, ReferenceLine, LineChart as RechartsLineChart, Line } from "recharts";
 import { LiquidTooltip } from "../../components/charts/liquid-tooltip";
 
 import { Badge } from "@/components/ui/badge";
@@ -25,6 +25,9 @@ import { cn } from "@/lib/utils";
 // Use centralized config for rates
 const ratePerKWh = ELECTRICITY_RATES.RATE_PER_KWH;
 
+// Color palette for per-meter lines (module-level to avoid recreating on each render)
+const meterColors = ['#E8A838', '#5BA88B', '#81D8D0', '#C95D63', '#6B5F73', '#3b82f6', '#f59e0b', '#10b981', '#8b5cf6', '#06b6d4'];
+
 export default function ElectricityPage() {
     const [activeTab, setActiveTab] = useState("overview");
     const [meters, setMeters] = useState<MeterReading[]>([]);
@@ -34,6 +37,7 @@ export default function ElectricityPage() {
     const [readingsCount, setReadingsCount] = useState<number>(0);
     const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
     const [analysisType, setAnalysisType] = useState<string>("All");
+    const [selectedMeter, setSelectedMeter] = useState<string>("All");
     const [dateRangeIndex, setDateRangeIndex] = useState<[number, number]>([0, 100]);
     // Date range state for Overview tab
     const [startMonth, setStartMonth] = useState<string>("Apr-24");
@@ -98,6 +102,7 @@ export default function ElectricityPage() {
             endMonth?: string;
             selectedYear?: string;
             analysisType?: string;
+            selectedMeter?: string;
             dateRangeIndex?: [number, number];
         }>('electricity');
         if (savedPrefs) {
@@ -106,6 +111,7 @@ export default function ElectricityPage() {
             if (savedPrefs.endMonth) setEndMonth(savedPrefs.endMonth);
             if (savedPrefs.selectedYear) setSelectedYear(savedPrefs.selectedYear);
             if (savedPrefs.analysisType) setAnalysisType(savedPrefs.analysisType);
+            if (savedPrefs.selectedMeter) setSelectedMeter(savedPrefs.selectedMeter);
             if (savedPrefs.dateRangeIndex) setDateRangeIndex(savedPrefs.dateRangeIndex);
         }
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -118,9 +124,10 @@ export default function ElectricityPage() {
             endMonth,
             selectedYear,
             analysisType,
+            selectedMeter,
             dateRangeIndex
         });
-    }, [activeTab, startMonth, endMonth, selectedYear, analysisType, dateRangeIndex]);
+    }, [activeTab, startMonth, endMonth, selectedYear, analysisType, selectedMeter, dateRangeIndex]);
 
     // Get all unique months and sort them (must be declared before stats)
     const allMonths = useMemo(() => {
@@ -399,10 +406,26 @@ export default function ElectricityPage() {
         return Array.from(types.entries()).map(([type, count]) => ({ type, count })).sort((a, b) => b.count - a.count);
     }, [meters]);
 
+    // 2b. Meters belonging to selected type (for sub-filter dropdown)
+    const metersOfSelectedType = useMemo(() => {
+        if (analysisType === "All") return [];
+        return meters.filter(m => m.type === analysisType).sort((a, b) => a.name.localeCompare(b.name));
+    }, [meters, analysisType]);
+
+    // Reset selectedMeter when analysisType changes
+    const prevAnalysisType = useRef(analysisType);
+    useEffect(() => {
+        if (prevAnalysisType.current !== analysisType) {
+            setSelectedMeter("All");
+            prevAnalysisType.current = analysisType;
+        }
+    }, [analysisType]);
+
     // 3. Filtered Data Provider
     const analysisData = useMemo(() => {
-        const monthsToUse = filteredMonthsByYear.length > 0 ? filteredMonthsByYear : allMonths;
-        if (monthsToUse.length === 0) return { stats: [], chartData: [], tableData: [], dateRangeLabel: "", topConsumers: [] };
+        // Always use allMonths as fallback — filteredMonthsByYear may be empty during initial render
+        const monthsToUse = (selectedYear && filteredMonthsByYear.length > 0) ? filteredMonthsByYear : allMonths;
+        if (monthsToUse.length === 0) return { stats: [], chartData: [], tableData: [], dateRangeLabel: "", topConsumers: [], perMeterChartData: [], selectedMonths: [] as string[], typeAverage: 0, comparisonData: [], selectedMeterName: null };
 
         // Use startMonth/endMonth from DateRangePicker
         const startIdx = Math.max(0, monthsToUse.indexOf(startMonth));
@@ -410,9 +433,14 @@ export default function ElectricityPage() {
         const selectedMonths = monthsToUse.slice(startIdx, (endIdx >= 0 ? endIdx : monthsToUse.length - 1) + 1);
 
         // Filter Meters by Type
-        const filteredMeters = analysisType === "All"
+        let typeFilteredMeters = analysisType === "All"
             ? meters
             : meters.filter(m => m.type === analysisType);
+
+        // Further filter by selectedMeter (using ID for uniqueness)
+        const filteredMeters = selectedMeter !== "All"
+            ? typeFilteredMeters.filter(m => m.id === selectedMeter)
+            : typeFilteredMeters;
 
         // Aggregate Data
         let totalConsumption = 0;
@@ -425,10 +453,12 @@ export default function ElectricityPage() {
 
         const tableRows = filteredMeters.map(meter => {
             let meterConsumption = 0;
+            const monthlyReadings: Record<string, number> = {};
             selectedMonths.forEach(month => {
                 const val = meter.readings[month] || 0;
                 meterConsumption += val;
                 chartMap[month] = (chartMap[month] || 0) + val;
+                monthlyReadings[month] = val;
             });
             totalConsumption += meterConsumption;
 
@@ -439,24 +469,57 @@ export default function ElectricityPage() {
             return {
                 ...meter,
                 rangeConsumption: meterConsumption,
-                rangeCost: meterConsumption * ratePerKWh
+                rangeCost: meterConsumption * ratePerKWh,
+                monthlyReadings
             };
         }).sort((a, b) => b.rangeConsumption - a.rangeConsumption);
 
         totalCost = totalConsumption * ratePerKWh;
 
-        // Formats for Chart
+        // Aggregate chart data
         const chartData = selectedMonths.map(month => ({
             month,
             consumption: chartMap[month],
         }));
+
+        // Per-meter chart data for multi-line chart (type aggregate view with ≤10 meters)
+        const perMeterChartData = selectedMonths.map(month => {
+            const point: Record<string, any> = { month };
+            typeFilteredMeters.forEach(meter => {
+                point[meter.name] = meter.readings[month] || 0;
+            });
+            return point;
+        });
+
+        // Comparison data: each meter's total in the type, with avg reference
+        const typeTotal = typeFilteredMeters.reduce((sum, meter) => {
+            return sum + selectedMonths.reduce((s, month) => s + (meter.readings[month] || 0), 0);
+        }, 0);
+        const typeAverage = typeFilteredMeters.length > 0 ? typeTotal / typeFilteredMeters.length : 0;
+
+        const comparisonData = typeFilteredMeters.map((meter, idx) => {
+            const total = selectedMonths.reduce((s, month) => s + (meter.readings[month] || 0), 0);
+            return {
+                name: meter.name.length > 25 ? meter.name.substring(0, 25) + '...' : meter.name,
+                fullName: meter.name,
+                consumption: total,
+                cost: total * ratePerKWh,
+                color: meterColors[idx % meterColors.length],
+                isAboveAvg: total > typeAverage
+            };
+        }).sort((a, b) => b.consumption - a.consumption);
+
+        // Get selected meter name for display (when filtering by ID)
+        const selectedMeterName = selectedMeter !== "All"
+            ? filteredMeters[0]?.name || selectedMeter
+            : null;
 
         // Stats Cards Data
         const stats = [
             {
                 label: "TOTAL CONSUMPTION",
                 value: `${(totalConsumption / 1000).toFixed(2)} MWh`,
-                subtitle: "in selected period",
+                subtitle: selectedMeterName || "in selected period",
                 icon: Zap,
                 variant: "primary" as const,
                 trend: 'neutral' as const,
@@ -508,14 +571,20 @@ export default function ElectricityPage() {
             chartData,
             tableData: tableRows,
             topConsumers,
-            dateRangeLabel: `${startMonthStr} - ${endMonthStr}`
+            perMeterChartData,
+            selectedMonths,
+            typeAverage,
+            comparisonData,
+            dateRangeLabel: `${startMonthStr} - ${endMonthStr}`,
+            selectedMeterName
         };
 
-    }, [meters, allMonths, filteredMonthsByYear, analysisType, startMonth, endMonth]);
+    }, [meters, allMonths, filteredMonthsByYear, selectedYear, analysisType, selectedMeter, startMonth, endMonth]);
 
     const handleReset = () => {
         setDateRangeIndex([0, 100]);
         setAnalysisType("All");
+        setSelectedMeter("All");
         setSelectedYear("");
     };
 
@@ -616,6 +685,20 @@ export default function ElectricityPage() {
                                 <div className="flex items-center gap-3">
                                     <span className="text-sm font-medium text-slate-600 dark:text-slate-400">Filter by Year:</span>
                                     <div className="flex items-center gap-2">
+                                        <Button
+                                            variant={selectedYear === "" ? "default" : "outline"}
+                                            size="sm"
+                                            onClick={() => {
+                                                setSelectedYear("");
+                                                if (allMonths.length > 0) {
+                                                    setStartMonth(allMonths[0]);
+                                                    setEndMonth(allMonths[allMonths.length - 1]);
+                                                }
+                                            }}
+                                            className={`rounded-full px-4 ${selectedYear === "" ? "bg-amber-500 hover:bg-amber-600 text-white" : "border-slate-200 dark:border-slate-700"}`}
+                                        >
+                                            All
+                                        </Button>
                                         {availableYears.map((year) => (
                                             <Button
                                                 key={year}
@@ -637,27 +720,49 @@ export default function ElectricityPage() {
                                     </div>
                                 </div>
 
-                                {/* Analysis tab: Type selector inline */}
+                                {/* Analysis tab: Type and Meter selectors inline */}
                                 {activeTab === 'analysis' ? (
-                                    <div className="flex items-center gap-2 flex-wrap">
-                                        <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Type:</span>
-                                        <select
-                                            value={analysisType}
-                                            onChange={(e) => setAnalysisType(e.target.value)}
-                                            className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 text-sm font-medium text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
-                                        >
-                                            <option value="All">All ({meters.length})</option>
-                                            {meterTypes.map((t) => (
-                                                <option key={t.type} value={t.type}>{t.type} ({t.count})</option>
-                                            ))}
-                                        </select>
+                                    <div className="flex items-center gap-3 flex-wrap">
+                                        {/* Type selector */}
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Type:</span>
+                                            <select
+                                                value={analysisType}
+                                                onChange={(e) => setAnalysisType(e.target.value)}
+                                                className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 text-sm font-medium text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                                            >
+                                                <option value="All">All ({meters.length})</option>
+                                                {meterTypes.map((t) => (
+                                                    <option key={t.type} value={t.type}>{t.type} ({t.count})</option>
+                                                ))}
+                                            </select>
+                                        </div>
+
+                                        {/* Meter selector (appears when a specific type is selected) */}
+                                        {analysisType !== "All" && metersOfSelectedType.length > 0 && (
+                                            <div className="flex items-center gap-2 px-2.5 py-1 rounded-lg bg-amber-50/60 dark:bg-amber-900/20 border border-amber-200/60 dark:border-amber-800/40">
+                                                <Filter className="w-3.5 h-3.5 text-amber-500" />
+                                                <span className="text-xs font-medium text-amber-700 dark:text-amber-400">Meter:</span>
+                                                <select
+                                                    value={selectedMeter}
+                                                    onChange={(e) => setSelectedMeter(e.target.value)}
+                                                    className="px-2.5 py-1.5 rounded-lg border border-amber-300 dark:border-amber-600 bg-white dark:bg-slate-800 text-sm font-medium text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500/30 max-w-[280px]"
+                                                >
+                                                    <option value="All">All {analysisType} ({metersOfSelectedType.length})</option>
+                                                    {metersOfSelectedType.map((m) => (
+                                                        <option key={m.id} value={m.id}>{m.name} ({m.account_number})</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                        )}
+
                                         <Badge variant="outline" className="px-2.5 py-1 text-xs font-normal">
-                                            {filteredMonthsByYear.length} Months
+                                            {selectedYear ? filteredMonthsByYear.length : allMonths.length} Months
                                         </Badge>
                                     </div>
                                 ) : (
                                     <Badge variant="outline" className="px-3 py-1.5 text-sm font-normal">
-                                        {filteredMonthsByYear.length} Months Available
+                                        {selectedYear ? filteredMonthsByYear.length : allMonths.length} Months Available
                                     </Badge>
                                 )}
                             </div>
@@ -666,7 +771,7 @@ export default function ElectricityPage() {
                             <DateRangePicker
                                 startMonth={startMonth || allMonths[0]}
                                 endMonth={endMonth || allMonths[allMonths.length - 1]}
-                                availableMonths={!selectedYear ? allMonths : filteredMonthsByYear}
+                                availableMonths={allMonths}
                                 onRangeChange={handleRangeChange}
                                 onReset={handleResetRange}
                             />
@@ -736,146 +841,316 @@ export default function ElectricityPage() {
                     {/* Filtered Stats Grid */}
                     <StatsGrid stats={analysisData.stats} />
 
-                    {/* Chart & Table */}
+                    {/* Monthly Trend Chart */}
                     <Card className="glass-card">
                         <CardHeader className="glass-card-header">
-                            <CardTitle className="text-lg">Monthly Trend for {analysisType === "All" ? "All Types (Total)" : analysisType}</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="h-[250px] sm:h-[300px] md:h-[350px]">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <AreaChart data={analysisData.chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                                        <defs>
-                                            <linearGradient id="anlGrad" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor="#81D8D0" stopOpacity={0.4} />
-                                                <stop offset="95%" stopColor="#81D8D0" stopOpacity={0} />
-                                            </linearGradient>
-                                        </defs>
-                                        <XAxis dataKey="month" className="text-xs" tick={{ fontSize: 11, fill: "#6B7280" }} axisLine={false} tickLine={false} dy={10} />
-                                        <YAxis className="text-xs" tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#6B7280" }} />
-                                        <Tooltip content={<LiquidTooltip />} cursor={{ stroke: 'rgba(0,0,0,0.1)', strokeWidth: 2 }} />
-                                        <Area type="monotone" dataKey="consumption" stroke="#81D8D0" fill="url(#anlGrad)" strokeWidth={3} activeDot={{ r: 6, stroke: '#fff', strokeWidth: 2 }} animationDuration={1500} />
-                                    </AreaChart>
-                                </ResponsiveContainer>
+                            <div className="flex items-center justify-between">
+                                <CardTitle className="text-lg flex items-center gap-2">
+                                    <LineChart className="w-5 h-5 text-amber-500" />
+                                    {selectedMeter !== "All"
+                                        ? `Monthly Trend — ${analysisData.selectedMeterName}`
+                                        : analysisType !== "All" && metersOfSelectedType.length <= 10
+                                            ? `Per-Meter Breakdown — ${analysisType}`
+                                            : `Monthly Trend — ${analysisType === "All" ? "All Types" : analysisType}`
+                                    }
+                                </CardTitle>
+                                {analysisType !== "All" && selectedMeter === "All" && metersOfSelectedType.length <= 10 && (
+                                    <Badge variant="outline" className="text-xs font-normal px-2.5 py-1">
+                                        {metersOfSelectedType.length} meters
+                                    </Badge>
+                                )}
                             </div>
-                        </CardContent>
-                    </Card>
-
-                    {/* Top Consumers Bar Chart */}
-                    <Card className="glass-card">
-                        <CardHeader className="glass-card-header">
-                            <CardTitle className="text-lg">Top 10 {analysisType === "All" ? "Overall" : analysisType} Consumers</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <div className="h-[300px] sm:h-[350px] md:h-[400px]">
+                            <div className="h-[280px] sm:h-[340px] md:h-[380px]">
                                 <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart
-                                        data={analysisData.topConsumers}
-                                        layout="vertical"
-                                        margin={{ top: 10, right: 30, left: 10, bottom: 10 }}
-                                    >
-                                        <defs>
-                                            <linearGradient id="topConsumerGrad" x1="0" y1="0" x2="1" y2="0">
-                                                <stop offset="0%" stopColor="#E8A838" stopOpacity={0.9} />
-                                                <stop offset="100%" stopColor="#81D8D0" stopOpacity={0.9} />
-                                            </linearGradient>
-                                        </defs>
-                                        <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="rgba(0,0,0,0.06)" />
-                                        <XAxis
-                                            type="number"
-                                            tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`}
-                                            axisLine={false}
-                                            tickLine={false}
-                                            tick={{ fontSize: 11, fill: "#6B7280" }}
-                                        />
-                                        <YAxis
-                                            type="category"
-                                            dataKey="name"
-                                            width={150}
-                                            axisLine={false}
-                                            tickLine={false}
-                                            tick={{ fontSize: 11, fill: "#6B7280" }}
-                                        />
-                                        <Tooltip
-                                            content={({ active, payload }) => {
-                                                if (active && payload && payload.length) {
-                                                    const data = payload[0].payload;
-                                                    return (
-                                                        <div className="glass-card px-4 py-3 border border-white/50 shadow-xl !rounded-xl !bg-white/90 dark:!bg-slate-900/90 backdrop-blur-md">
-                                                            <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">{data.fullName}</p>
-                                                            <div className="flex items-center gap-2 text-xs mb-1">
-                                                                <div className="w-2 h-2 rounded-full bg-amber-500" />
-                                                                <span className="text-slate-500 dark:text-slate-400">Consumption:</span>
-                                                                <span className="font-mono font-medium text-slate-700 dark:text-slate-200">
-                                                                    {data.consumption.toLocaleString()} kWh
-                                                                </span>
+                                    {/* Multi-line chart for type aggregate with ≤10 meters */}
+                                    {analysisType !== "All" && selectedMeter === "All" && metersOfSelectedType.length <= 10 ? (
+                                        <RechartsLineChart data={analysisData.perMeterChartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" />
+                                            <XAxis dataKey="month" tick={{ fontSize: 11, fill: "#6B7280" }} axisLine={false} tickLine={false} dy={10} />
+                                            <YAxis tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : `${v}`} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#6B7280" }} />
+                                            <Tooltip
+                                                content={({ active, payload, label }) => {
+                                                    if (active && payload && payload.length) {
+                                                        return (
+                                                            <div className="glass-card px-4 py-3 border border-white/50 shadow-xl !rounded-xl !bg-white/90 dark:!bg-slate-900/90 backdrop-blur-md max-w-[280px]">
+                                                                <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">{label}</p>
+                                                                {[...payload].sort((a: any, b: any) => (b.value || 0) - (a.value || 0)).map((entry: any, i: number) => (
+                                                                    <div key={i} className="flex items-center gap-2 text-xs mb-0.5">
+                                                                        <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: entry.color }} />
+                                                                        <span className="text-slate-500 dark:text-slate-400 truncate">{entry.name}:</span>
+                                                                        <span className="font-mono font-medium text-slate-700 dark:text-slate-200 ml-auto">
+                                                                            {(entry.value || 0).toLocaleString()} kWh
+                                                                        </span>
+                                                                    </div>
+                                                                ))}
                                                             </div>
-                                                            <div className="flex items-center gap-2 text-xs">
-                                                                <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                                                                <span className="text-slate-500 dark:text-slate-400">Cost:</span>
-                                                                <span className="font-mono font-medium text-emerald-600 dark:text-emerald-400">
-                                                                    {data.cost.toLocaleString('en-US', { minimumFractionDigits: 2 })} OMR
-                                                                </span>
-                                                            </div>
-                                                        </div>
-                                                    );
-                                                }
-                                                return null;
-                                            }}
-                                            cursor={{ fill: 'rgba(0,0,0,0.04)', radius: 6 }}
-                                        />
-                                        <Bar
-                                            dataKey="consumption"
-                                            radius={[0, 8, 8, 0]}
-                                            barSize={28}
-                                            animationDuration={1500}
-                                        >
-                                            {(analysisData.topConsumers || []).map((entry, index) => (
-                                                <Cell key={`cell-${index}`} fill={entry.color} />
+                                                        );
+                                                    }
+                                                    return null;
+                                                }}
+                                            />
+                                            <Legend iconType="circle" wrapperStyle={{ paddingTop: 10, fontSize: 11 }} />
+                                            {metersOfSelectedType.map((meter, idx) => (
+                                                <Line
+                                                    key={meter.id}
+                                                    type="monotone"
+                                                    dataKey={meter.name}
+                                                    stroke={meterColors[idx % meterColors.length]}
+                                                    strokeWidth={2.5}
+                                                    dot={{ r: 3, strokeWidth: 1, fill: '#fff' }}
+                                                    activeDot={{ r: 5, stroke: '#fff', strokeWidth: 2 }}
+                                                    animationDuration={1500}
+                                                />
                                             ))}
-                                        </Bar>
-                                    </BarChart>
+                                        </RechartsLineChart>
+                                    ) : (
+                                        /* Single aggregate area chart */
+                                        <AreaChart data={analysisData.chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                                            <defs>
+                                                <linearGradient id="anlGrad" x1="0" y1="0" x2="0" y2="1">
+                                                    <stop offset="5%" stopColor="#81D8D0" stopOpacity={0.4} />
+                                                    <stop offset="95%" stopColor="#81D8D0" stopOpacity={0} />
+                                                </linearGradient>
+                                            </defs>
+                                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" />
+                                            <XAxis dataKey="month" tick={{ fontSize: 11, fill: "#6B7280" }} axisLine={false} tickLine={false} dy={10} />
+                                            <YAxis tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : `${v}`} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#6B7280" }} />
+                                            <Tooltip content={<LiquidTooltip />} cursor={{ stroke: 'rgba(0,0,0,0.1)', strokeWidth: 2 }} />
+                                            <Legend iconType="circle" wrapperStyle={{ paddingTop: 10 }} />
+                                            <Area type="monotone" dataKey="consumption" name="Consumption" stroke="#81D8D0" fill="url(#anlGrad)" strokeWidth={3} activeDot={{ r: 6, stroke: '#fff', strokeWidth: 2 }} animationDuration={1500} />
+                                        </AreaChart>
+                                    )}
                                 </ResponsiveContainer>
                             </div>
                         </CardContent>
                     </Card>
 
-                    {/* Detailed Table */}
+                    {/* Comparison & Top Consumers Charts Row */}
+                    <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
+                        {/* Top Consumers Bar Chart */}
+                        <Card className="glass-card">
+                            <CardHeader className="glass-card-header">
+                                <CardTitle className="text-lg">Top 10 {analysisType === "All" ? "Overall" : analysisType} Consumers</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="h-[300px] sm:h-[350px] md:h-[400px]">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <BarChart
+                                            data={analysisData.topConsumers}
+                                            layout="vertical"
+                                            margin={{ top: 10, right: 30, left: 10, bottom: 10 }}
+                                        >
+                                            <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="rgba(0,0,0,0.06)" />
+                                            <XAxis
+                                                type="number"
+                                                tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : `${v}`}
+                                                axisLine={false}
+                                                tickLine={false}
+                                                tick={{ fontSize: 11, fill: "#6B7280" }}
+                                            />
+                                            <YAxis
+                                                type="category"
+                                                dataKey="name"
+                                                width={150}
+                                                axisLine={false}
+                                                tickLine={false}
+                                                tick={{ fontSize: 11, fill: "#6B7280" }}
+                                            />
+                                            <Tooltip
+                                                content={({ active, payload }) => {
+                                                    if (active && payload && payload.length) {
+                                                        const data = payload[0].payload;
+                                                        return (
+                                                            <div className="glass-card px-4 py-3 border border-white/50 shadow-xl !rounded-xl !bg-white/90 dark:!bg-slate-900/90 backdrop-blur-md">
+                                                                <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">{data.fullName}</p>
+                                                                <div className="flex items-center gap-2 text-xs mb-1">
+                                                                    <div className="w-2 h-2 rounded-full bg-amber-500" />
+                                                                    <span className="text-slate-500 dark:text-slate-400">Consumption:</span>
+                                                                    <span className="font-mono font-medium text-slate-700 dark:text-slate-200">
+                                                                        {data.consumption.toLocaleString()} kWh
+                                                                    </span>
+                                                                </div>
+                                                                <div className="flex items-center gap-2 text-xs">
+                                                                    <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                                                                    <span className="text-slate-500 dark:text-slate-400">Cost:</span>
+                                                                    <span className="font-mono font-medium text-emerald-600 dark:text-emerald-400">
+                                                                        {data.cost.toLocaleString('en-US', { minimumFractionDigits: 2 })} OMR
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    }
+                                                    return null;
+                                                }}
+                                                cursor={{ fill: 'rgba(0,0,0,0.04)', radius: 6 }}
+                                            />
+                                            <Bar
+                                                dataKey="consumption"
+                                                radius={[0, 8, 8, 0]}
+                                                barSize={28}
+                                                animationDuration={1500}
+                                            >
+                                                {(analysisData.topConsumers || []).map((entry, index) => (
+                                                    <Cell key={`cell-${index}`} fill={entry.color} />
+                                                ))}
+                                            </Bar>
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        {/* Per-Meter Comparison vs Average (only when a specific type is selected) */}
+                        {analysisType !== "All" && analysisData.comparisonData.length > 1 && (
+                            <Card className="glass-card">
+                                <CardHeader className="glass-card-header">
+                                    <div className="flex items-center justify-between">
+                                        <CardTitle className="text-lg">Meter vs Average — {analysisType}</CardTitle>
+                                        <Badge variant="outline" className="text-xs font-normal px-2.5 py-1">
+                                            Avg: {(analysisData.typeAverage / 1000).toFixed(1)} MWh
+                                        </Badge>
+                                    </div>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="h-[300px] sm:h-[350px] md:h-[400px]">
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <BarChart
+                                                data={analysisData.comparisonData}
+                                                layout="vertical"
+                                                margin={{ top: 10, right: 30, left: 10, bottom: 10 }}
+                                            >
+                                                <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="rgba(0,0,0,0.06)" />
+                                                <XAxis
+                                                    type="number"
+                                                    tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : `${v}`}
+                                                    axisLine={false}
+                                                    tickLine={false}
+                                                    tick={{ fontSize: 11, fill: "#6B7280" }}
+                                                />
+                                                <YAxis
+                                                    type="category"
+                                                    dataKey="name"
+                                                    width={160}
+                                                    axisLine={false}
+                                                    tickLine={false}
+                                                    tick={{ fontSize: 11, fill: "#6B7280" }}
+                                                />
+                                                <ReferenceLine
+                                                    x={analysisData.typeAverage}
+                                                    stroke="#E8A838"
+                                                    strokeWidth={2}
+                                                    strokeDasharray="6 4"
+                                                    label={{ value: 'Avg', position: 'top', fill: '#E8A838', fontSize: 11, fontWeight: 600 }}
+                                                />
+                                                <Tooltip
+                                                    content={({ active, payload }) => {
+                                                        if (active && payload && payload.length) {
+                                                            const data = payload[0].payload;
+                                                            const diff = data.consumption - analysisData.typeAverage;
+                                                            const pct = analysisData.typeAverage > 0 ? ((diff / analysisData.typeAverage) * 100).toFixed(1) : '0';
+                                                            return (
+                                                                <div className="glass-card px-4 py-3 border border-white/50 shadow-xl !rounded-xl !bg-white/90 dark:!bg-slate-900/90 backdrop-blur-md">
+                                                                    <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">{data.fullName}</p>
+                                                                    <div className="flex items-center gap-2 text-xs mb-1">
+                                                                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: data.color }} />
+                                                                        <span className="text-slate-500">Total:</span>
+                                                                        <span className="font-mono font-medium">{data.consumption.toLocaleString()} kWh</span>
+                                                                    </div>
+                                                                    <div className="flex items-center gap-2 text-xs">
+                                                                        <div className="w-2 h-2 rounded-full bg-amber-500" />
+                                                                        <span className="text-slate-500">vs Avg:</span>
+                                                                        <span className={`font-mono font-medium ${diff > 0 ? 'text-red-500' : 'text-emerald-500'}`}>
+                                                                            {diff > 0 ? '+' : ''}{pct}%
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        }
+                                                        return null;
+                                                    }}
+                                                    cursor={{ fill: 'rgba(0,0,0,0.04)', radius: 6 }}
+                                                />
+                                                <Bar dataKey="consumption" radius={[0, 8, 8, 0]} barSize={24} animationDuration={1500}>
+                                                    {analysisData.comparisonData.map((entry, index) => (
+                                                        <Cell key={`comp-${index}`} fill={entry.isAboveAvg ? '#C95D63' : '#5BA88B'} />
+                                                    ))}
+                                                </Bar>
+                                            </BarChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        )}
+                    </div>
+
+                    {/* Monthly Breakdown Table */}
                     <Card className="glass-card">
                         <CardHeader className="glass-card-header">
                             <div className="flex justify-between items-center">
-                                <CardTitle className="text-lg">Meter Details</CardTitle>
-                                <div className="text-xs text-muted-foreground">Showing {analysisData.tableData.length} of {meters.length} meters</div>
+                                <CardTitle className="text-lg">Monthly Breakdown</CardTitle>
+                                <div className="text-xs text-muted-foreground">
+                                    Showing {analysisData.tableData.length} of {meters.length} meters · {analysisData.selectedMonths.length} months
+                                </div>
                             </div>
                         </CardHeader>
                         <CardContent>
-                            <div className="overflow-auto max-h-[calc(100vh-20rem)] sm:max-h-[600px] rounded-md border">
-                                <table className="w-full text-sm min-w-[600px]">
-                                    <thead className="bg-slate-50/70 dark:bg-slate-800/50 sticky top-0 backdrop-blur-sm z-10">
-                                        <tr>
-                                            <th className="py-2.5 sm:py-3 px-3 sm:px-5 text-left font-medium text-[12px] sm:text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 w-[200px] sm:w-[250px]">Name</th>
-                                            <th className="py-2.5 sm:py-3 px-3 sm:px-5 text-left font-medium text-[12px] sm:text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">Account #</th>
-                                            <th className="py-2.5 sm:py-3 px-3 sm:px-5 text-left font-medium text-[12px] sm:text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">Type</th>
-                                            <th className="py-2.5 sm:py-3 px-3 sm:px-5 text-right font-medium text-[12px] sm:text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">Consumption</th>
-                                            <th className="py-2.5 sm:py-3 px-3 sm:px-5 text-right font-medium text-[12px] sm:text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">Cost</th>
+                            <div className="overflow-auto max-h-[calc(100vh-20rem)] sm:max-h-[600px] rounded-xl border border-slate-200/80 dark:border-slate-700/80">
+                                <table className="w-full text-sm border-collapse">
+                                    <thead>
+                                        <tr className="bg-slate-50/70 dark:bg-slate-800/50">
+                                            <th className="text-left py-3 px-4 font-medium text-[12px] sm:text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 sticky left-0 bg-slate-50/70 dark:bg-slate-800/50 z-20 min-w-[180px]">Name</th>
+                                            <th className="text-left py-3 px-4 font-medium text-[12px] sm:text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 min-w-[100px]">Account #</th>
+                                            {analysisData.selectedMonths.map(month => (
+                                                <th key={month} className="text-right py-3 px-3 font-medium text-[11px] sm:text-[12px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 min-w-[75px] whitespace-nowrap">{month}</th>
+                                            ))}
+                                            <th className="text-right py-3 px-4 font-medium text-[12px] sm:text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 border-l border-slate-200 dark:border-slate-700 min-w-[90px]">Total (kWh)</th>
+                                            <th className="text-right py-3 px-4 font-medium text-[12px] sm:text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 min-w-[90px]">Cost (OMR)</th>
                                         </tr>
                                     </thead>
-                                    <tbody className="divide-y">
+                                    <tbody>
                                         {analysisData.tableData.map((meter) => (
                                             <tr key={meter.id} className="border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors">
-                                                <td className="py-3.5 px-5 font-medium text-slate-800 dark:text-slate-200">{meter.name}</td>
-                                                <td className="py-3.5 px-5 text-slate-500 dark:text-slate-400 text-xs font-mono">{meter.account_number}</td>
-                                                <td className="py-3.5 px-5">
-                                                    <StatusBadge label={meter.type} color="blue" />
+                                                <td className="py-3 px-4 font-medium text-slate-800 dark:text-slate-200 sticky left-0 bg-white dark:bg-slate-900 z-10">{meter.name}</td>
+                                                <td className="py-3 px-4 text-slate-500 dark:text-slate-400 font-mono text-xs">{meter.account_number}</td>
+                                                {analysisData.selectedMonths.map(month => {
+                                                    const val = meter.monthlyReadings?.[month] || 0;
+                                                    return (
+                                                        <td key={month} className="py-3 px-3 text-right font-mono text-xs text-slate-700 dark:text-slate-300">
+                                                            {val > 0 ? val.toLocaleString('en-US', { maximumFractionDigits: 1 }) : <span className="text-slate-300 dark:text-slate-600">—</span>}
+                                                        </td>
+                                                    );
+                                                })}
+                                                <td className="py-3 px-4 text-right font-mono text-xs font-semibold text-slate-800 dark:text-slate-200 border-l border-slate-100 dark:border-slate-800">
+                                                    {meter.rangeConsumption.toLocaleString('en-US', { maximumFractionDigits: 1 })}
                                                 </td>
-                                                <td className="py-3.5 px-5 text-right font-mono font-medium text-slate-700 dark:text-slate-300">
-                                                    {meter.rangeConsumption.toLocaleString()} <span className="text-xs text-slate-400">kWh</span>
-                                                </td>
-                                                <td className="py-3.5 px-5 text-right font-mono font-medium text-mb-success dark:text-mb-success-hover">
-                                                    {meter.rangeCost.toLocaleString('en-US', { minimumFractionDigits: 2 })} <span className="text-xs text-slate-400">OMR</span>
+                                                <td className="py-3 px-4 text-right font-mono text-xs font-medium text-mb-success dark:text-mb-success-hover">
+                                                    {meter.rangeCost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                                 </td>
                                             </tr>
                                         ))}
+                                        {/* Totals row */}
+                                        {analysisData.tableData.length > 1 && (
+                                            <tr className="bg-slate-50/80 dark:bg-slate-800/60 font-semibold">
+                                                <td className="py-3 px-4 text-slate-700 dark:text-slate-200 sticky left-0 bg-slate-50/80 dark:bg-slate-800/60 z-10">Total</td>
+                                                <td className="py-3 px-4"></td>
+                                                {analysisData.selectedMonths.map(month => {
+                                                    const monthTotal = analysisData.tableData.reduce((sum, m) => sum + (m.monthlyReadings?.[month] || 0), 0);
+                                                    return (
+                                                        <td key={`total-${month}`} className="py-3 px-3 text-right font-mono text-xs text-slate-800 dark:text-slate-200">
+                                                            {monthTotal > 0 ? monthTotal.toLocaleString('en-US', { maximumFractionDigits: 0 }) : '—'}
+                                                        </td>
+                                                    );
+                                                })}
+                                                <td className="py-3 px-4 text-right font-mono text-xs text-slate-800 dark:text-slate-200 border-l border-slate-200 dark:border-slate-700">
+                                                    {analysisData.tableData.reduce((s, m) => s + m.rangeConsumption, 0).toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                                                </td>
+                                                <td className="py-3 px-4 text-right font-mono text-xs text-mb-success dark:text-mb-success-hover">
+                                                    {analysisData.tableData.reduce((s, m) => s + m.rangeCost, 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                </td>
+                                            </tr>
+                                        )}
                                     </tbody>
                                 </table>
                             </div>

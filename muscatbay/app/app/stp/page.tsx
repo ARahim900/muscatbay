@@ -886,7 +886,7 @@ export default function STPPage() {
                     </CardHeader>
                     <CardContent className="flex-1 p-0 overflow-hidden">
                         <iframe
-                            src="https://aitable.ai/embed/shrdXgjQnQar66QJXXADh"
+                            src="https://aitable.ai/share/shripyzrlnlQ91WRSyCLF"
                             className="w-full h-full"
                             style={{ border: 'none' }}
                             loading="lazy"

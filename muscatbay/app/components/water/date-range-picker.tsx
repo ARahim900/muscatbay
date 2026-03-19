@@ -220,24 +220,22 @@ export function DateRangePicker({
         }
     }, [activeTimeline, displayStartMonth, displayEndMonth, startMonth, endMonth]);
 
-    // Guard: nothing to render when the timeline is empty
-    if (activeTimeline.length === 0) return null;
-
     // Format: "January 2024"
-    const formatMonthWithYear = (month: string) => {
+    const formatMonthWithYear = useCallback((month: string) => {
+        if (!month) return '';
         const [m, y] = month.split('-');
         return `${monthFullNames[m] || m} 20${y}`;
-    };
+    }, []);
 
-    const handleSliderChange = (values: [number, number]) => {
+    const handleSliderChange = useCallback((values: [number, number]) => {
         setActivePreset(null);
         const start = activeTimeline[values[0]];
         const end = activeTimeline[values[1]];
         if (start && end) onRangeChange(start, end);
-    };
+    }, [activeTimeline, onRangeChange]);
 
     // Quick preset handlers (operate within the visible timeline)
-    const applyPreset = (preset: 'ytd' | 'last3' | 'last6' | 'last12') => {
+    const applyPreset = useCallback((preset: 'ytd' | 'last3' | 'last6' | 'last12') => {
         if (activeTimeline.length === 0) return;
         setActivePreset(preset);
         const lastIndex = activeTimeline.length - 1;
@@ -258,14 +256,17 @@ export function DateRangePicker({
                 onRangeChange(activeTimeline[0], activeTimeline[lastIndex]);
                 break;
         }
-    };
+    }, [activeTimeline, onRangeChange]);
 
-    const presets: { key: PresetKey; label: string }[] = [
+    const presets = useMemo<{ key: PresetKey; label: string }[]>(() => [
         { key: 'last3', label: '3M' },
         { key: 'last6', label: '6M' },
         { key: 'last12', label: '1Y' },
         { key: 'ytd', label: 'YTD' },
-    ];
+    ], []);
+
+    // Guard: nothing to render when the timeline is empty
+    if (activeTimeline.length === 0) return null;
 
     return (
         <div className="space-y-4">
