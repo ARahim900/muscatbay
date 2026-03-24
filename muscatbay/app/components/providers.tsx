@@ -27,17 +27,9 @@ export function useTheme() {
 }
 
 export function Providers({ children }: { children: ReactNode }) {
-    const [theme, setThemeState] = useState<Theme>(() => {
-        if (typeof window === "undefined") return "system";
-        return (localStorage.getItem(STORAGE_KEY) as Theme) || "system";
-    });
-
-    const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark">(() => {
-        if (typeof window === "undefined") return "dark";
-        const stored = localStorage.getItem(STORAGE_KEY) as Theme | null;
-        if (stored && stored !== "system") return stored as "light" | "dark";
-        return getSystemTheme();
-    });
+    const [theme, setThemeState] = useState<Theme>("system");
+    const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark">("dark");
+    const [mounted, setMounted] = useState(false);
 
     const applyTheme = useCallback((resolved: "light" | "dark") => {
         const root = document.documentElement;
@@ -52,6 +44,15 @@ export function Providers({ children }: { children: ReactNode }) {
         localStorage.setItem(STORAGE_KEY, newTheme);
         const resolved = newTheme === "system" ? getSystemTheme() : newTheme;
         applyTheme(resolved);
+    }, [applyTheme]);
+
+    // Sync theme from localStorage on mount
+    useEffect(() => {
+        const stored = (localStorage.getItem(STORAGE_KEY) as Theme) || "system";
+        setThemeState(stored);
+        const resolved = stored === "system" ? getSystemTheme() : stored;
+        applyTheme(resolved);
+        setMounted(true);
     }, [applyTheme]);
 
     // Listen for system theme changes
@@ -78,12 +79,6 @@ export function Providers({ children }: { children: ReactNode }) {
         window.addEventListener("storage", handler);
         return () => window.removeEventListener("storage", handler);
     }, [applyTheme]);
-
-    // Apply theme on mount
-    useEffect(() => {
-        const resolved = theme === "system" ? getSystemTheme() : theme;
-        applyTheme(resolved);
-    }, []);
 
     const value = useMemo(() => ({ theme, resolvedTheme, setTheme }), [theme, resolvedTheme, setTheme]);
 
