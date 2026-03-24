@@ -110,7 +110,10 @@ export default function ElectricityPage() {
             if (savedPrefs.startMonth) setStartMonth(savedPrefs.startMonth);
             if (savedPrefs.endMonth) setEndMonth(savedPrefs.endMonth);
             if (savedPrefs.selectedYear) setSelectedYear(savedPrefs.selectedYear);
-            if (savedPrefs.analysisType) setAnalysisType(savedPrefs.analysisType);
+            if (savedPrefs.analysisType) {
+                prefApplyingRef.current = true;
+                setAnalysisType(savedPrefs.analysisType);
+            }
             if (savedPrefs.selectedMeter) setSelectedMeter(savedPrefs.selectedMeter);
             if (savedPrefs.dateRangeIndex) setDateRangeIndex(savedPrefs.dateRangeIndex);
         }
@@ -423,13 +426,13 @@ export default function ElectricityPage() {
         return meters.filter(m => m.type === analysisType).sort((a, b) => a.name.localeCompare(b.name));
     }, [meters, analysisType]);
 
-    // Reset selectedMeter when analysisType changes (but not on initial preference load)
+    // Reset selectedMeter when analysisType changes (but not when preferences are being applied)
     const prevAnalysisType = useRef<string | null>(null);
-    const isInitialLoad = useRef(true);
+    const prefApplyingRef = useRef(false);
     useEffect(() => {
-        // Skip the reset during initial preference load
-        if (isInitialLoad.current) {
-            isInitialLoad.current = false;
+        // Skip the reset while preferences are being applied
+        if (prefApplyingRef.current) {
+            prefApplyingRef.current = false;
             prevAnalysisType.current = analysisType;
             return;
         }
