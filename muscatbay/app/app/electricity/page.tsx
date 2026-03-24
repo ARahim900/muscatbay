@@ -178,6 +178,17 @@ export default function ElectricityPage() {
         }
     }, [allMeterTypes]); // eslint-disable-line react-hooks/exhaustive-deps
 
+    // Validate selectedMeter once meters are loaded (handles legacy name-based values)
+    useEffect(() => {
+        if (meters.length > 0 && selectedMeter !== "All") {
+            const isValidId = meters.some(m => m.id === selectedMeter);
+            if (!isValidId) {
+                // Legacy value stored as name - reset to "All"
+                setSelectedMeter("All");
+            }
+        }
+    }, [meters]); // eslint-disable-line react-hooks/exhaustive-deps
+
     // Database view: filter, sort, and paginate meters
     const dbFilteredMeters = useMemo(() => {
         let result = [...meters];
@@ -412,13 +423,20 @@ export default function ElectricityPage() {
         return meters.filter(m => m.type === analysisType).sort((a, b) => a.name.localeCompare(b.name));
     }, [meters, analysisType]);
 
-    // Reset selectedMeter when analysisType changes
-    const prevAnalysisType = useRef(analysisType);
+    // Reset selectedMeter when analysisType changes (but not on initial preference load)
+    const prevAnalysisType = useRef<string | null>(null);
+    const isInitialLoad = useRef(true);
     useEffect(() => {
-        if (prevAnalysisType.current !== analysisType) {
-            setSelectedMeter("All");
+        // Skip the reset during initial preference load
+        if (isInitialLoad.current) {
+            isInitialLoad.current = false;
             prevAnalysisType.current = analysisType;
+            return;
         }
+        if (prevAnalysisType.current !== null && prevAnalysisType.current !== analysisType) {
+            setSelectedMeter("All");
+        }
+        prevAnalysisType.current = analysisType;
     }, [analysisType]);
 
     // 3. Filtered Data Provider
