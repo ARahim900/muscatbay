@@ -1,4 +1,4 @@
-const CACHE_NAME = "muscatbay-v1";
+const CACHE_NAME = "muscatbay-v2";
 const STATIC_ASSETS = [
   "/",
   "/manifest.json",
@@ -45,7 +45,20 @@ self.addEventListener("fetch", (event) => {
           .catch(() => cached || caches.match("/"));
       }
 
-      // Cache-first for static assets
+      // Network-first for _next/ assets (hashed chunks change per build)
+      if (event.request.url.includes("/_next/")) {
+        return fetch(event.request)
+          .then((response) => {
+            if (response.ok) {
+              const clone = response.clone();
+              caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+            }
+            return response;
+          })
+          .catch(() => cached || new Response("", { status: 503 }));
+      }
+
+      // Cache-first for other static assets
       if (cached) return cached;
 
       return fetch(event.request).then((response) => {

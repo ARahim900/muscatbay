@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Menu, Search, Bell, Sun, Moon, User, Settings, LogOut, ChevronDown } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { useTheme } from "next-themes";
+import { useTheme } from "@/components/providers";
 
 export function Topbar() {
     const { setIsOpen } = useSidebar();
