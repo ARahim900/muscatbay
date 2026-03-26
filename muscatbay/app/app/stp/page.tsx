@@ -42,6 +42,35 @@ import { cn } from "@/lib/utils";
 // Use centralized config for rates
 const { TANKER_FEE, TSE_SAVING_RATE } = STP_RATES;
 
+function ChartViewToggle({ value, onChange }: { value: 'daily' | 'monthly'; onChange: (v: 'daily' | 'monthly') => void }) {
+    return (
+        <div className="flex items-center gap-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 p-0.5">
+            <button
+                onClick={() => onChange('daily')}
+                className={cn(
+                    "px-3 py-1 text-xs font-medium rounded-md transition-all",
+                    value === 'daily'
+                        ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-sm"
+                        : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
+                )}
+            >
+                Daily
+            </button>
+            <button
+                onClick={() => onChange('monthly')}
+                className={cn(
+                    "px-3 py-1 text-xs font-medium rounded-md transition-all",
+                    value === 'monthly'
+                        ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-sm"
+                        : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
+                )}
+            >
+                Monthly
+            </button>
+        </div>
+    );
+}
+
 export default function STPPage() {
     const [activeTab, setActiveTab] = useState("dashboard");
     const [allOperations, setAllOperations] = useState<STPOperation[]>([]);
@@ -61,6 +90,11 @@ export default function STPPage() {
     const [logCurrentPage, setLogCurrentPage] = useState(1);
     const [logPageSize, setLogPageSize] = useState<PageSizeOption>(25);
     const [logSearchTerm, setLogSearchTerm] = useState('');
+
+    // Chart view mode state (Daily/Monthly toggle per chart)
+    const [volumeChartView, setVolumeChartView] = useState<'daily' | 'monthly'>('monthly');
+    const [economicChartView, setEconomicChartView] = useState<'daily' | 'monthly'>('monthly');
+    const [tankerChartView, setTankerChartView] = useState<'daily' | 'monthly'>('monthly');
 
     // Stable fetch function — used both on mount and by real-time handler
     const loadData = useCallback(async (silent = false) => {
@@ -390,6 +424,21 @@ export default function STPPage() {
         return Object.values(monthly).sort((a, b) => a.sortKey.localeCompare(b.sortKey));
     }, [operations]);
 
+    // Daily chart data from filtered operations (sorted chronologically)
+    const dailyChartData = useMemo(() => {
+        return operations
+            .map(op => ({
+                month: format(new Date(op.date), "dd MMM"),
+                sortKey: op.date,
+                inlet: op.inlet_sewage,
+                tse: op.tse_for_irrigation,
+                income: op.tanker_trips * TANKER_FEE,
+                savings: op.tse_for_irrigation * TSE_SAVING_RATE,
+                trips: op.tanker_trips,
+            }))
+            .sort((a, b) => a.sortKey.localeCompare(b.sortKey));
+    }, [operations]);
+
     // Get available months for daily log dropdown (from filtered data)
     const availableMonths = useMemo(() => {
         const months = new Set<string>();
@@ -642,20 +691,25 @@ export default function STPPage() {
                     {/* Unified Stats Grid */}
                     <StatsGrid stats={stats} />
 
-                    {/* Monthly Water Treatment Volumes Chart */}
+                    {/* Water Treatment Volumes Chart */}
                     <Card className="glass-card">
                         <CardHeader className="glass-card-header">
-                            <CardTitle className="text-lg">Monthly Water Treatment Volumes (m³)</CardTitle>
-                            <p className="text-sm text-muted-foreground">
-                                {selectedDateRange.start && selectedDateRange.end
-                                    ? `${selectedDateRange.start} \u2013 ${selectedDateRange.end} \u00B7 ${monthlyChartData.length} months`
-                                    : "Sewage Inlet vs TSE Output comparison"}
-                            </p>
+                            <div className="flex items-center justify-between gap-4 flex-wrap">
+                                <div className="space-y-1">
+                                    <CardTitle className="text-lg">Water Treatment Volumes (m³)</CardTitle>
+                                    <p className="text-sm text-muted-foreground">
+                                        {selectedDateRange.start && selectedDateRange.end
+                                            ? `${selectedDateRange.start} \u2013 ${selectedDateRange.end} \u00B7 ${volumeChartView === 'daily' ? `${dailyChartData.length} days` : `${monthlyChartData.length} months`}`
+                                            : "Sewage Inlet vs TSE Output comparison"}
+                                    </p>
+                                </div>
+                                <ChartViewToggle value={volumeChartView} onChange={setVolumeChartView} />
+                            </div>
                         </CardHeader>
                         <CardContent>
                             <div className="h-[350px]">
                                 <ResponsiveContainer width="100%" height="100%">
-                                    <AreaChart data={monthlyChartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                                    <AreaChart data={volumeChartView === 'daily' ? dailyChartData : monthlyChartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                                         <defs>
                                             <linearGradient id="gradInlet" x1="0" y1="0" x2="0" y2="1">
                                                 <stop offset="5%" stopColor="#4E4456" stopOpacity={0.4} />
@@ -666,12 +720,12 @@ export default function STPPage() {
                                                 <stop offset="95%" stopColor="#81D8D0" stopOpacity={0} />
                                             </linearGradient>
                                         </defs>
-                                        <XAxis dataKey="month" className="text-xs" tick={{ fontSize: 11, fill: "#6B7280" }} axisLine={false} tickLine={false} dy={10} />
-                                        <YAxis className="text-xs" tick={{ fontSize: 11, fill: "#6B7280" }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} axisLine={false} tickLine={false} label={{ value: 'm³', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: '#6B7280', fontSize: 11 } }} />
+                                        <XAxis dataKey="month" className="text-xs" tick={{ fontSize: 11, fill: "#6B7280" }} axisLine={false} tickLine={false} dy={10} interval={volumeChartView === 'daily' && dailyChartData.length > 15 ? Math.ceil(dailyChartData.length / 12) - 1 : 0} />
+                                        <YAxis className="text-xs" tick={{ fontSize: 11, fill: "#6B7280" }} tickFormatter={(v: number) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v)} axisLine={false} tickLine={false} label={{ value: 'm³', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: '#6B7280', fontSize: 11 } }} />
                                         <Tooltip content={<LiquidTooltip />} cursor={{ stroke: 'rgba(0,0,0,0.1)', strokeWidth: 2 }} />
                                         <Legend iconType="circle" />
-                                        <Area type="monotone" dataKey="inlet" name="Sewage Inlet" stroke="#4E4456" fill="url(#gradInlet)" strokeWidth={3} activeDot={{ r: 6, stroke: '#fff', strokeWidth: 2 }} animationDuration={800} />
-                                        <Area type="monotone" dataKey="tse" name="TSE Output" stroke="#81D8D0" fill="url(#gradTSE)" strokeWidth={3} animationDuration={800} />
+                                        <Area type="monotone" dataKey="inlet" name="Sewage Inlet" stroke="#4E4456" fill="url(#gradInlet)" strokeWidth={volumeChartView === 'daily' ? 2 : 3} activeDot={{ r: 6, stroke: '#fff', strokeWidth: 2 }} animationDuration={800} />
+                                        <Area type="monotone" dataKey="tse" name="TSE Output" stroke="#81D8D0" fill="url(#gradTSE)" strokeWidth={volumeChartView === 'daily' ? 2 : 3} animationDuration={800} />
                                     </AreaChart>
                                 </ResponsiveContainer>
                             </div>
@@ -680,24 +734,29 @@ export default function STPPage() {
 
                     {/* Two Charts Side by Side */}
                     <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2">
-                        {/* Monthly Economic Impact */}
+                        {/* Economic Impact */}
                         <Card className="glass-card h-full">
                             <CardHeader className="glass-card-header">
-                                <CardTitle className="text-lg flex items-center gap-2">
-                                    <DollarSign className="h-5 w-5 text-mb-success" />
-                                    Monthly Economic Impact (OMR)
-                                </CardTitle>
-                                <p className="text-sm text-muted-foreground">
-                                    {selectedDateRange.start && selectedDateRange.end
-                                        ? `${selectedDateRange.start} \u2013 ${selectedDateRange.end}`
-                                        : "Income & Savings breakdown"}
-                                </p>
+                                <div className="flex items-center justify-between gap-3 flex-wrap">
+                                    <div className="space-y-1">
+                                        <CardTitle className="text-lg flex items-center gap-2">
+                                            <DollarSign className="h-5 w-5 text-mb-success" />
+                                            Economic Impact (OMR)
+                                        </CardTitle>
+                                        <p className="text-sm text-muted-foreground">
+                                            {selectedDateRange.start && selectedDateRange.end
+                                                ? `${selectedDateRange.start} \u2013 ${selectedDateRange.end}`
+                                                : "Income & Savings breakdown"}
+                                        </p>
+                                    </div>
+                                    <ChartViewToggle value={economicChartView} onChange={setEconomicChartView} />
+                                </div>
                             </CardHeader>
                             <CardContent>
                                 <div className="h-[280px]">
                                     <ResponsiveContainer width="100%" height="100%">
-                                        <BarChart data={monthlyChartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                                            <XAxis dataKey="month" className="text-xs" tick={{ fontSize: 10, fill: "#6B7280" }} axisLine={false} tickLine={false} dy={10} />
+                                        <BarChart data={economicChartView === 'daily' ? dailyChartData : monthlyChartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                                            <XAxis dataKey="month" className="text-xs" tick={{ fontSize: 10, fill: "#6B7280" }} axisLine={false} tickLine={false} dy={10} interval={economicChartView === 'daily' && dailyChartData.length > 15 ? Math.ceil(dailyChartData.length / 12) - 1 : 0} />
                                             <YAxis className="text-xs" tick={{ fontSize: 10, fill: "#6B7280" }} axisLine={false} tickLine={false} label={{ value: 'OMR', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: '#6B7280', fontSize: 10 } }} />
                                             <Tooltip content={<LiquidTooltip />} cursor={{ fill: 'rgba(0,0,0,0.04)', radius: 6 }} />
                                             <Legend iconType="circle" wrapperStyle={{ paddingTop: 10 }} />
@@ -709,24 +768,29 @@ export default function STPPage() {
                             </CardContent>
                         </Card>
 
-                        {/* Monthly Tanker Operations */}
+                        {/* Tanker Operations */}
                         <Card className="glass-card h-full">
                             <CardHeader className="glass-card-header">
-                                <CardTitle className="text-lg flex items-center gap-2">
-                                    <Truck className="h-5 w-5 text-mb-warning" />
-                                    Monthly Tanker Operations
-                                </CardTitle>
-                                <p className="text-sm text-muted-foreground">
-                                    {selectedDateRange.start && selectedDateRange.end
-                                        ? `${selectedDateRange.start} \u2013 ${selectedDateRange.end}`
-                                        : "Tanker trip trends"}
-                                </p>
+                                <div className="flex items-center justify-between gap-3 flex-wrap">
+                                    <div className="space-y-1">
+                                        <CardTitle className="text-lg flex items-center gap-2">
+                                            <Truck className="h-5 w-5 text-mb-warning" />
+                                            Tanker Operations
+                                        </CardTitle>
+                                        <p className="text-sm text-muted-foreground">
+                                            {selectedDateRange.start && selectedDateRange.end
+                                                ? `${selectedDateRange.start} \u2013 ${selectedDateRange.end}`
+                                                : "Tanker trip trends"}
+                                        </p>
+                                    </div>
+                                    <ChartViewToggle value={tankerChartView} onChange={setTankerChartView} />
+                                </div>
                             </CardHeader>
                             <CardContent>
                                 <div className="h-[280px]">
                                     <ResponsiveContainer width="100%" height="100%">
-                                        <LineChart data={monthlyChartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                                            <XAxis dataKey="month" className="text-xs" tick={{ fontSize: 10, fill: "#6B7280" }} axisLine={false} tickLine={false} dy={10} />
+                                        <LineChart data={tankerChartView === 'daily' ? dailyChartData : monthlyChartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                                            <XAxis dataKey="month" className="text-xs" tick={{ fontSize: 10, fill: "#6B7280" }} axisLine={false} tickLine={false} dy={10} interval={tankerChartView === 'daily' && dailyChartData.length > 15 ? Math.ceil(dailyChartData.length / 12) - 1 : 0} />
                                             <YAxis className="text-xs" tick={{ fontSize: 10, fill: "#6B7280" }} axisLine={false} tickLine={false} label={{ value: 'trips', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: '#6B7280', fontSize: 10 } }} />
                                             <Tooltip content={<LiquidTooltip />} cursor={{ stroke: 'rgba(0,0,0,0.1)', strokeWidth: 2 }} />
                                             <Legend iconType="circle" wrapperStyle={{ paddingTop: 10 }} />
@@ -735,8 +799,8 @@ export default function STPPage() {
                                                 dataKey="trips"
                                                 name="Tanker Trips"
                                                 stroke="#E8A838"
-                                                strokeWidth={3}
-                                                dot={{ r: 5, fill: "#E8A838", strokeWidth: 2, stroke: "#fff" }}
+                                                strokeWidth={tankerChartView === 'daily' ? 2 : 3}
+                                                dot={tankerChartView === 'daily' && dailyChartData.length > 30 ? false : { r: 5, fill: "#E8A838", strokeWidth: 2, stroke: "#fff" }}
                                                 activeDot={{ r: 7, strokeWidth: 2, stroke: "#fff" }}
                                                 animationDuration={800}
                                             />
