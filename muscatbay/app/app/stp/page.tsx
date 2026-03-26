@@ -424,19 +424,23 @@ export default function STPPage() {
         return Object.values(monthly).sort((a, b) => a.sortKey.localeCompare(b.sortKey));
     }, [operations]);
 
-    // Daily chart data from filtered operations (sorted chronologically)
+    // Daily chart data from filtered operations, grouped by date (sorted chronologically)
     const dailyChartData = useMemo(() => {
-        return operations
-            .map(op => ({
-                month: format(new Date(op.date), "dd MMM"),
-                sortKey: op.date,
-                inlet: op.inlet_sewage,
-                tse: op.tse_for_irrigation,
-                income: op.tanker_trips * TANKER_FEE,
-                savings: op.tse_for_irrigation * TSE_SAVING_RATE,
-                trips: op.tanker_trips,
-            }))
-            .sort((a, b) => a.sortKey.localeCompare(b.sortKey));
+        const daily: Record<string, { month: string; sortKey: string; inlet: number; tse: number; income: number; savings: number; trips: number }> = {};
+
+        operations.forEach(op => {
+            const dateKey = format(new Date(op.date), "yyyy-MM-dd");
+            if (!daily[dateKey]) {
+                daily[dateKey] = { month: format(new Date(op.date), "dd MMM"), sortKey: dateKey, inlet: 0, tse: 0, income: 0, savings: 0, trips: 0 };
+            }
+            daily[dateKey].inlet += op.inlet_sewage;
+            daily[dateKey].tse += op.tse_for_irrigation;
+            daily[dateKey].income += op.tanker_trips * TANKER_FEE;
+            daily[dateKey].savings += op.tse_for_irrigation * TSE_SAVING_RATE;
+            daily[dateKey].trips += op.tanker_trips;
+        });
+
+        return Object.values(daily).sort((a, b) => a.sortKey.localeCompare(b.sortKey));
     }, [operations]);
 
     // Get available months for daily log dropdown (from filtered data)
