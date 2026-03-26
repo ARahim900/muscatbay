@@ -7,7 +7,7 @@ import { TabNavigation } from "@/components/shared/tab-navigation";
 import { PageSkeleton } from "@/components/shared/skeleton";
 import {
   LayoutGrid, Cpu, ClipboardList, FileText,
-  HardDrive, AlertTriangle, Wifi, WifiOff, Clock,
+  HardDrive, AlertTriangle,
 } from "lucide-react";
 import type { GulfExpertData } from "@/components/gulf-expert/types";
 import { OverviewTab } from "@/components/gulf-expert/overview-tab";
@@ -16,6 +16,7 @@ import { FindingsTab } from "@/components/gulf-expert/findings-tab";
 import { QuotationsTab } from "@/components/gulf-expert/quotations-tab";
 import { EquipmentTab } from "@/components/gulf-expert/equipment-tab";
 import { RecurringTab } from "@/components/gulf-expert/recurring-tab";
+import { PageStatusBar } from "@/components/shared/page-status-bar";
 
 const tabs = [
   { key: "overview", label: "Overview", icon: LayoutGrid },
@@ -106,7 +107,7 @@ export default function GulfExpertPage() {
 
   useEffect(() => {
     loadData();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [loadData]);
 
   if (loading) {
     return <PageSkeleton />;
@@ -143,24 +144,12 @@ export default function GulfExpertPage() {
           title="HVAC System"
           description="Preventive maintenance tracker for HVAC & BMS systems across Muscat Bay"
         />
-        <div className="flex flex-col items-end gap-1.5">
-          <div
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium ${
-              dataSource === "supabase"
-                ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400"
-                : "bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400"
-            }`}
-          >
-            {dataSource === "supabase" ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
-            {dataSource === "supabase" ? "Connected" : "No Connection"}
-          </div>
-          {lastUpdated && (
-            <span className="flex items-center gap-1 text-[11px] text-slate-400 dark:text-slate-500">
-              <Clock className="h-3 w-3" />
-              {lastUpdated.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
-            </span>
-          )}
-        </div>
+        <PageStatusBar
+          isConnected={dataSource === "supabase"}
+          lastUpdated={lastUpdated}
+          connectedLabel="Connected"
+          disconnectedLabel="No Connection"
+        />
       </div>
 
       <TabNavigation tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />

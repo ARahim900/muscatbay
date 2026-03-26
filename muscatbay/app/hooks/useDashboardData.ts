@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useCallback, useEffect, useState, useMemo } from "react";
 import { format } from "date-fns";
 import { getWaterSystemData, getElectricityMeters, getSTPOperations, getContractors, getAssets } from "@/lib/mock-data";
 import {
@@ -79,7 +79,7 @@ export function useDashboardData() {
     const [error, setError] = useState<string | null>(null);
     const [refreshCount, setRefreshCount] = useState(0);
 
-    const loadDashboardData = async () => {
+    const loadDashboardData = useCallback(async () => {
 
         try {
             setError(null);
@@ -385,13 +385,12 @@ export function useDashboardData() {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
 
     // Initial load + refetch when refreshCount changes
     useEffect(() => {
         loadDashboardData();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [refreshCount]);
+    }, [refreshCount, loadDashboardData]);
 
     // Auto-refresh every 5 minutes
     useEffect(() => {

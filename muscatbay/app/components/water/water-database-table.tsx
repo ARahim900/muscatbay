@@ -161,6 +161,7 @@ export function WaterDatabaseTable({ meters, months }: WaterDatabaseTableProps) 
     const [selectedLevels, setSelectedLevels] = useState<string[]>([...ALL_LEVELS]);
     const [selectedZones, setSelectedZones] = useState<string[]>([...ALL_ZONES]);
     const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
+    const typesInitializedRef = React.useRef(false);
     const [groupByZone, setGroupByZone] = useState(false);
     const [visibleMonths, setVisibleMonths] = useState<string[]>([...months]);
     const [sortField, setSortField] = useState<string | null>(null);
@@ -174,12 +175,13 @@ export function WaterDatabaseTable({ meters, months }: WaterDatabaseTableProps) 
         return Array.from(types).sort();
     }, [meters]);
 
-    // Initialize selected types when allTypes changes
+    // Initialize selected types once when data first arrives
     React.useEffect(() => {
-        if (selectedTypes.length === 0 && allTypes.length > 0) {
+        if (!typesInitializedRef.current && allTypes.length > 0) {
             setSelectedTypes([...allTypes]);
+            typesInitializedRef.current = true;
         }
-    }, [allTypes]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [allTypes]);
 
     // Filter meters
     const filteredMeters = useMemo(() => {

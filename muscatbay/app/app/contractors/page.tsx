@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import {
     getContractorTrackerData,
     isSupabaseConfigured,
@@ -9,11 +9,11 @@ import {
 import { StatsGridSkeleton, TableSkeleton, Skeleton } from "@/components/shared/skeleton";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatsGrid } from "@/components/shared/stats-grid";
-import { Search, Plus, Users, DollarSign, AlertCircle, Download, Calendar, Building2, FileText, RefreshCw, Wifi, WifiOff, X, Clock, Radio } from "lucide-react";
+import { Search, Plus, Users, DollarSign, AlertCircle, Download, Calendar, Building2, FileText, RefreshCw, X } from "lucide-react";
 import { exportToCSV, getDateForFilename } from "@/lib/export-utils";
 import { MultiSelectDropdown, SortIcon, TablePagination, ActiveFilterPills, TableToolbar, StatusBadge, type PageSizeOption } from "@/components/shared/data-table";
 import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
-import { cn } from "@/lib/utils";
+import { PageStatusBar } from "@/components/shared/page-status-bar";
 
 export default function ContractorsPage() {
     const [loading, setLoading] = useState(true);
@@ -31,6 +31,10 @@ export default function ContractorsPage() {
     const [contractors, setContractors] = useState<ContractorTracker[]>([]);
     const [dataSource, setDataSource] = useState<'supabase' | 'none'>('none');
     const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+
+    // Track one-time initialization of filter defaults
+    const statusesInitializedRef = useRef(false);
+    const typesInitializedRef = useRef(false);
 
     // Stable fetch function — used both on mount and by real-time handler
     const loadData = useCallback(async (silent = false) => {
@@ -69,7 +73,7 @@ export default function ContractorsPage() {
 
     useEffect(() => {
         loadData();
-    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [loadData]);
 
     const getStatusDotColor = (status: string | null): 'green' | 'red' | 'orange' | 'blue' | 'slate' => {
         const s = status?.toLowerCase() || '';
@@ -97,18 +101,20 @@ export default function ContractorsPage() {
         [contractors]
     );
 
-    // Initialize multi-select filters
+    // Initialize multi-select filters once when data first arrives
     useEffect(() => {
-        if (selectedStatuses.length === 0 && uniqueStatuses.length > 0) {
+        if (!statusesInitializedRef.current && uniqueStatuses.length > 0) {
             setSelectedStatuses([...uniqueStatuses]);
+            statusesInitializedRef.current = true;
         }
-    }, [uniqueStatuses]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [uniqueStatuses]);
 
     useEffect(() => {
-        if (selectedTypes.length === 0 && uniqueContractTypes.length > 0) {
+        if (!typesInitializedRef.current && uniqueContractTypes.length > 0) {
             setSelectedTypes([...uniqueContractTypes]);
+            typesInitializedRef.current = true;
         }
-    }, [uniqueContractTypes]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [uniqueContractTypes]);
 
     // Filter and sort contractors
     const filteredContractors = useMemo(() => {
@@ -276,29 +282,11 @@ export default function ContractorsPage() {
                     description="Monitor AMC service providers, contracts, and renewal plans"
                     action={{ label: "Add Contractor", icon: Plus }}
                 />
-                <div className="flex flex-col items-end gap-1.5">
-                    <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium ${dataSource === 'supabase' ? 'bg-mb-success-light text-mb-success dark:bg-mb-success-light/20 dark:text-mb-success-hover' : 'bg-mb-warning-light text-mb-warning dark:bg-mb-warning-light/20 dark:text-mb-warning'}`}>
-                        {dataSource === 'supabase' ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
-                        {dataSource === 'supabase' ? 'Live Data (Supabase)' : 'Demo Data (Local)'}
-                    </div>
-                    <div className="flex items-center gap-2 flex-wrap justify-end">
-                        <span className={cn(
-                            "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold transition-colors",
-                            isLive
-                                ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-                                : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400"
-                        )}>
-                            <Radio className={cn("h-3 w-3", isLive && "animate-pulse")} />
-                            {isLive ? "Live" : "Offline"}
-                        </span>
-                        {lastUpdated && (
-                            <span className="flex items-center gap-1 text-[11px] text-slate-400 dark:text-slate-500">
-                                <Clock className="h-3 w-3" />
-                                {lastUpdated.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-                            </span>
-                        )}
-                    </div>
-                </div>
+                <PageStatusBar
+                    isConnected={dataSource === 'supabase'}
+                    isLive={isLive}
+                    lastUpdated={lastUpdated}
+                />
             </div>
 
             {/* Stats Grid */}

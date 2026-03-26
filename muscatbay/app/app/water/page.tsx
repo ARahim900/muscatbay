@@ -1,5 +1,4 @@
 ﻿"use client";
-import { cn } from "@/lib/utils";
 
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,8 +14,8 @@ import {
     Droplets, ChevronsRight, Users, AlertTriangle, ArrowRightLeft,
     BarChart3, TestTube2, Database, Minus, TrendingUp,
     Gauge, Calendar, Activity, Loader2, CalendarDays,
-    Wifi, WifiOff, Building2, Home, Layers, AlertCircle, MapPin,
-    TrendingDown, ChevronDown, ChevronRight, Clock, Radio,
+    Building2, Home, Layers, AlertCircle, MapPin,
+    TrendingDown, ChevronDown, ChevronRight,
 } from "lucide-react";
 import {
     AreaChart, Area, XAxis, YAxis, Tooltip,
@@ -47,6 +46,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { TabNavigation } from "@/components/shared/tab-navigation";
 import { StatsGrid } from "@/components/shared/stats-grid";
 import { StatsGridSkeleton, ChartSkeleton, Skeleton } from "@/components/shared/skeleton";
+import { PageStatusBar } from "@/components/shared/page-status-bar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { saveFilterPreferences, loadFilterPreferences } from "@/lib/filter-preferences";
@@ -214,7 +214,7 @@ export default function WaterPage() {
             if (savedPrefs.selectedType) setSelectedType(savedPrefs.selectedType);
             if (savedPrefs.selectedYear) setSelectedYear(savedPrefs.selectedYear);
         }
-    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [fetchWaterData]);
 
     // Save filter preferences when they change
     useEffect(() => {
@@ -287,7 +287,7 @@ export default function WaterPage() {
 
     // Find highest consumer
     const highestConsumer = useMemo(() => {
-        let max = { meter: waterMeters[0], total: 0 };
+        let max = { meter: filteredMeters[0] ?? waterMeters[0], total: 0 };
         const startIdx = AVAILABLE_MONTHS.indexOf(startMonth);
         const endIdx = AVAILABLE_MONTHS.indexOf(endMonth);
         const months = AVAILABLE_MONTHS.slice(startIdx, endIdx + 1);
@@ -297,7 +297,7 @@ export default function WaterPage() {
             if (total > max.total) max = { meter, total };
         });
         return max;
-    }, [filteredMeters, startMonth, endMonth]);
+    }, [filteredMeters, waterMeters, startMonth, endMonth]);
 
     const handleRangeChange = (start: string, end: string) => {
         setStartMonth(start);
@@ -496,31 +496,11 @@ export default function WaterPage() {
                     title="Water System Analysis"
                     description="Comprehensive water consumption and loss analysis across the network"
                 />
-                <div className="flex flex-col items-end gap-1.5">
-                    <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium ${dataSource === 'supabase' ? 'bg-mb-success-light text-mb-success dark:bg-mb-success-light/20 dark:text-mb-success-hover' : 'bg-mb-warning-light text-mb-warning dark:bg-mb-warning-light/20 dark:text-mb-warning'}`}>
-                        {dataSource === 'supabase' ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
-                        {dataSource === 'supabase' ? 'Live Data (Supabase)' : 'Demo Data (Local)'}
-                    </div>
-                    <div className="flex items-center gap-2 flex-wrap justify-end">
-                        {/* Real-time status badge */}
-                        <span className={cn(
-                            "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold transition-colors",
-                            isLive
-                                ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-                                : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400"
-                        )}>
-                            <Radio className={cn("h-3 w-3", isLive && "animate-pulse")} />
-                            {isLive ? "Live" : "Offline"}
-                        </span>
-                        {/* Last updated timestamp */}
-                        {lastUpdated && (
-                            <span className="flex items-center gap-1 text-[11px] text-slate-400 dark:text-slate-500">
-                                <Clock className="h-3 w-3" />
-                                {lastUpdated.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-                            </span>
-                        )}
-                    </div>
-                </div>
+                <PageStatusBar
+                    isConnected={dataSource === 'supabase'}
+                    isLive={isLive}
+                    lastUpdated={lastUpdated}
+                />
             </div>
 
             {/* View Switching Tabs */}

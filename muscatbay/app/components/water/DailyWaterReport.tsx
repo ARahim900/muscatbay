@@ -1481,7 +1481,7 @@ export function DailyWaterReport() {
     useEffect(() => {
         setReportData(null);
         fetchMonth(selectedMonth);
-    }, [selectedMonth]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [selectedMonth, fetchMonth]);
 
     // ── Supabase real-time subscription ───────────────────────────────────────
     const { isLive } = useSupabaseRealtime({

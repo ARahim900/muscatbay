@@ -7,12 +7,12 @@ import { fetchAssetsAction } from "@/actions/assets";
 import { StatsGrid } from "@/components/shared/stats-grid";
 import { StatsGridSkeleton, TableBodySkeleton, Skeleton } from "@/components/shared/skeleton";
 import { PageHeader } from "@/components/shared/page-header";
-import { Boxes, MapPin, DollarSign, Wrench, Search, Plus, AlertCircle, Download, X, Clock, Radio, Wifi, WifiOff } from "lucide-react";
+import { Boxes, MapPin, DollarSign, Wrench, Search, Plus, AlertCircle, Download, X } from "lucide-react";
 import { format } from "date-fns";
 import { MultiSelectDropdown, SortIcon, TablePagination, ActiveFilterPills, TableToolbar, StatusBadge, type PageSizeOption } from "@/components/shared/data-table";
 import { exportToCSV, getDateForFilename } from "@/lib/export-utils";
 import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
-import { cn } from "@/lib/utils";
+import { PageStatusBar } from "@/components/shared/page-status-bar";
 
 // Mapping from UI sort field to Supabase column
 const SORT_FIELD_MAP: Record<string, string> = {
@@ -253,34 +253,12 @@ export default function AssetsPage() {
                     description="Track and manage all company assets and equipment"
                     action={{ label: "Register Asset", icon: Plus }}
                 />
-                <div className="flex flex-col items-end gap-1.5">
-                    <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium ${dataSource === 'supabase' ? 'bg-mb-success-light text-mb-success dark:bg-mb-success-light/20 dark:text-mb-success-hover' : 'bg-mb-warning-light text-mb-warning dark:bg-mb-warning-light/20 dark:text-mb-warning'}`}>
-                        {dataSource === 'supabase' ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
-                        {dataSource === 'supabase' ? 'Live Data (Supabase)' : 'Demo Data (Local)'}
-                    </div>
-                    <div className="flex items-center gap-2 flex-wrap justify-end">
-                        <span className={cn(
-                            "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold transition-colors",
-                            isLive
-                                ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-                                : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400"
-                        )}>
-                            <Radio className={cn("h-3 w-3", isLive && "animate-pulse")} />
-                            {isLive ? "Live" : "Offline"}
-                        </span>
-                        {lastUpdated && (
-                            <span className="flex items-center gap-1 text-[11px] text-slate-400 dark:text-slate-500">
-                                <Clock className="h-3 w-3" />
-                                {lastUpdated.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-                            </span>
-                        )}
-                    </div>
-                    {error && (
-                        <span className="text-mb-warning flex items-center gap-1 text-xs">
-                            <AlertCircle className="w-3.5 h-3.5" /> {error}
-                        </span>
-                    )}
-                </div>
+                <PageStatusBar
+                    isConnected={dataSource === 'supabase'}
+                    isLive={isLive}
+                    lastUpdated={lastUpdated}
+                    error={error}
+                />
             </div>
 
             <StatsGrid stats={stats} />

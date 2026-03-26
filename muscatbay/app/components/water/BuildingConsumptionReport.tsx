@@ -419,7 +419,7 @@ export function BuildingConsumptionReport() {
     useEffect(() => {
         setBuildingRows([]);
         fetchMonth(selectedMonth);
-    }, [selectedMonth]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [selectedMonth, fetchMonth]);
 
     // ── Real-time ────────────────────────────────────────────────────────────
     const { isLive } = useSupabaseRealtime({

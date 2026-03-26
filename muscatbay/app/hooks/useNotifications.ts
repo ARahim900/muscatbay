@@ -241,22 +241,26 @@ export function useNotifications(
   }, []);
 
   // ── Supabase realtime watchers ───────────────────────────────────────
-  // Stable ref so the effect doesn't re-run when `notify` identity changes
+  // Stable refs so the effect doesn't re-run when identity changes
   const notifyRef = useRef(notify);
   notifyRef.current = notify;
+
+  const alertsRef = useRef(realtimeAlerts);
+  alertsRef.current = realtimeAlerts;
 
   const alertsKey = realtimeAlerts
     .map((a) => `${a.table}:${a.channelName}:${a.filter ?? ""}`)
     .join("|");
 
   useEffect(() => {
-    if (realtimeAlerts.length === 0) return;
+    const currentAlerts = alertsRef.current;
+    if (currentAlerts.length === 0) return;
 
     const client = getSupabaseClient();
     if (!client) return;
 
     // Create one channel per alert config
-    const channels = realtimeAlerts.map((alert) => {
+    const channels = currentAlerts.map((alert) => {
       const channelConfig: {
         event: "*";
         schema: string;
@@ -298,8 +302,6 @@ export function useNotifications(
     return () => {
       channels.forEach((ch) => client.removeChannel(ch));
     };
-    // Re-subscribe when the set of alerts changes
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [alertsKey]);
 
   return {

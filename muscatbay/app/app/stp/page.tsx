@@ -8,6 +8,7 @@ import { StatsGridSkeleton, ChartSkeleton, Skeleton } from "@/components/shared/
 import { PageHeader } from "@/components/shared/page-header";
 import { StatsGrid } from "@/components/shared/stats-grid";
 import { TabNavigation } from "@/components/shared/tab-navigation";
+import { PageStatusBar } from "@/components/shared/page-status-bar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -21,12 +22,8 @@ import {
     Gauge,
     Activity,
     Database,
-    Wifi,
-    WifiOff,
     Search,
     Download,
-    Clock,
-    Radio,
 } from "lucide-react";
 import { SortIcon, TablePagination, type PageSizeOption } from "@/components/shared/data-table";
 import { exportToCSV, getDateForFilename } from "@/lib/export-utils";
@@ -143,6 +140,12 @@ export default function STPPage() {
     const pushNotifications = useAppNotifications();
     const toast = useToast();
 
+    // Stable refs for notification functions to avoid re-running the threshold effect
+    const toastRef = useRef(toast);
+    toastRef.current = toast;
+    const pushRef = useRef(pushNotifications);
+    pushRef.current = pushNotifications;
+
     // Track which alerts have already been shown to avoid repeats on re-renders
     const alertedRef = useRef<string | null>(null);
 
@@ -159,18 +162,17 @@ export default function STPPage() {
         // Alert if inlet sewage exceeds 4800 m³ (high end of normal range)
         if (latest.inlet_sewage > 4800) {
             const msg = `Inlet sewage is ${latest.inlet_sewage.toLocaleString()} m³ — exceeds 4,800 m³ threshold`;
-            toast.warning("STP Alert: High Inlet", msg);         // in-app toast
-            pushNotifications.warning("STP Alert: High Inlet", msg); // browser push
+            toastRef.current.warning("STP Alert: High Inlet", msg);
+            pushRef.current.warning("STP Alert: High Inlet", msg);
         }
 
         // Alert if tanker trips are unusually high (> 3 in a day)
         if (latest.tanker_trips > 3) {
             const msg = `${latest.tanker_trips} tanker trips recorded today`;
-            toast.info("STP: High Tanker Activity", msg);         // in-app toast
-            pushNotifications.info("STP: High Tanker Activity", msg); // browser push
+            toastRef.current.info("STP: High Tanker Activity", msg);
+            pushRef.current.info("STP: High Tanker Activity", msg);
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [allOperations.length]);
+    }, [allOperations]);
 
     useEffect(() => {
         loadData();
@@ -188,7 +190,7 @@ export default function STPPage() {
             if (savedPrefs.endMonth) setEndMonth(savedPrefs.endMonth);
             if (savedPrefs.selectedYear) setSelectedYear(savedPrefs.selectedYear);
         }
-    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [loadData]);
 
     // Save filter preferences when they change
     useEffect(() => {
@@ -641,31 +643,11 @@ export default function STPPage() {
                     title="STP Plant"
                     description="Water Treatment Management"
                 />
-                <div className="flex flex-col items-end gap-1.5">
-                    <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium ${isLiveData ? 'bg-mb-success-light text-mb-success dark:bg-mb-success-light/20 dark:text-mb-success-hover' : 'bg-mb-warning-light text-mb-warning dark:bg-mb-warning-light/20 dark:text-mb-warning'}`}>
-                        {isLiveData ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
-                        {isLiveData ? 'Live Data (Supabase)' : 'Demo Data (Local)'}
-                    </div>
-                    <div className="flex items-center gap-2 flex-wrap justify-end">
-                        {/* Real-time status badge */}
-                        <span className={cn(
-                            "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold transition-colors",
-                            isLive
-                                ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-                                : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400"
-                        )}>
-                            <Radio className={cn("h-3 w-3", isLive && "animate-pulse")} />
-                            {isLive ? "Live" : "Offline"}
-                        </span>
-                        {/* Last updated timestamp */}
-                        {lastUpdated && (
-                            <span className="flex items-center gap-1 text-[11px] text-slate-400 dark:text-slate-500">
-                                <Clock className="h-3 w-3" />
-                                {lastUpdated.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-                            </span>
-                        )}
-                    </div>
-                </div>
+                <PageStatusBar
+                    isConnected={isLiveData}
+                    isLive={isLive}
+                    lastUpdated={lastUpdated}
+                />
             </div>
 
             {/* Tabs */}

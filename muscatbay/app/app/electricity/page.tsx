@@ -10,7 +10,7 @@ import { StatsGridSkeleton, ChartSkeleton, Skeleton } from "@/components/shared/
 import { PageHeader } from "@/components/shared/page-header";
 import { DateRangePicker } from "@/components/water/date-range-picker";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Zap, DollarSign, MapPin, TrendingUp, BarChart3, Database, Wifi, WifiOff, Search, Download, X, Clock, Radio, Filter, LineChart } from "lucide-react";
+import { Zap, DollarSign, MapPin, TrendingUp, BarChart3, Database, Search, Download, X, Filter, LineChart } from "lucide-react";
 import { MultiSelectDropdown, SortIcon, TablePagination, ActiveFilterPills, TableToolbar, StatusBadge, type PageSizeOption } from "@/components/shared/data-table";
 import { exportToCSV, getDateForFilename } from "@/lib/export-utils";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar, Cell, Legend, ReferenceLine, LineChart as RechartsLineChart, Line } from "recharts";
@@ -20,7 +20,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { saveFilterPreferences, loadFilterPreferences } from "@/lib/filter-preferences";
 import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
-import { cn } from "@/lib/utils";
+import { PageStatusBar } from "@/components/shared/page-status-bar";
 
 // Use centralized config for rates
 const ratePerKWh = ELECTRICITY_RATES.RATE_PER_KWH;
@@ -52,6 +52,10 @@ export default function ElectricityPage() {
     const [dbSelectedTypes, setDbSelectedTypes] = useState<string[]>([]);
     // Year filter state
     const [selectedYear, setSelectedYear] = useState<string>("");
+
+    // Track one-time initialization of filter defaults
+    const typesInitializedRef = useRef(false);
+    const meterValidatedRef = useRef(false);
 
     // Stable fetch function — used both on mount and by real-time handler
     const loadData = useCallback(async (silent = false) => {
@@ -117,7 +121,7 @@ export default function ElectricityPage() {
             if (savedPrefs.selectedMeter) setSelectedMeter(savedPrefs.selectedMeter);
             if (savedPrefs.dateRangeIndex) setDateRangeIndex(savedPrefs.dateRangeIndex);
         }
-    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [loadData]);
 
     // Save filter preferences when they change
     useEffect(() => {
@@ -174,23 +178,24 @@ export default function ElectricityPage() {
         return Array.from(types).sort();
     }, [meters]);
 
-    // Initialize selected types when allMeterTypes changes
+    // Initialize selected types once when data first arrives
     useEffect(() => {
-        if (dbSelectedTypes.length === 0 && allMeterTypes.length > 0) {
+        if (!typesInitializedRef.current && allMeterTypes.length > 0) {
             setDbSelectedTypes([...allMeterTypes]);
+            typesInitializedRef.current = true;
         }
-    }, [allMeterTypes]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [allMeterTypes]);
 
     // Validate selectedMeter once meters are loaded (handles legacy name-based values)
     useEffect(() => {
-        if (meters.length > 0 && selectedMeter !== "All") {
+        if (!meterValidatedRef.current && meters.length > 0 && selectedMeter !== "All") {
             const isValidId = meters.some(m => m.id === selectedMeter);
             if (!isValidId) {
-                // Legacy value stored as name - reset to "All"
                 setSelectedMeter("All");
             }
+            meterValidatedRef.current = true;
         }
-    }, [meters]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [meters, selectedMeter]);
 
     // Database view: filter, sort, and paginate meters
     const dbFilteredMeters = useMemo(() => {
@@ -657,33 +662,14 @@ export default function ElectricityPage() {
                     title="Electricity Monitoring"
                     description="Track power consumption and costs across all meters"
                 />
-                <div className="flex flex-col items-end gap-1.5">
-                    <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium ${dataSource === 'supabase' ? 'bg-mb-success-light text-mb-success dark:bg-mb-success-light/20 dark:text-mb-success-hover' : 'bg-mb-warning-light text-mb-warning dark:bg-mb-warning-light/20 dark:text-mb-warning'}`}>
-                        {dataSource === 'supabase' ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
-                        {dataSource === 'supabase' ? 'Live Data (Supabase)' : 'Demo Data (Local)'}
-                    </div>
-                    <div className="flex items-center gap-2 flex-wrap justify-end">
-                        {dataSource === 'supabase' && <span className="text-[10px] text-muted-foreground">{readingsCount} readings</span>}
-                        {/* Real-time status badge */}
-                        <span className={cn(
-                            "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold transition-colors",
-                            isLive
-                                ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-                                : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400"
-                        )}>
-                            <Radio className={cn("h-3 w-3", isLive && "animate-pulse")} />
-                            {isLive ? "Live" : "Offline"}
-                        </span>
-                        {/* Last updated timestamp */}
-                        {lastUpdated && (
-                            <span className="flex items-center gap-1 text-[11px] text-slate-400 dark:text-slate-500">
-                                <Clock className="h-3 w-3" />
-                                {lastUpdated.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-                            </span>
-                        )}
-                    </div>
-                    {debugError && <span className="text-[10px] text-red-500 font-bold mr-2">Error: {debugError}</span>}
-                </div>
+                <PageStatusBar
+                    isConnected={dataSource === 'supabase'}
+                    isLive={isLive}
+                    lastUpdated={lastUpdated}
+                    error={debugError ? `Error: ${debugError}` : null}
+                >
+                    {dataSource === 'supabase' && <span className="text-[10px] text-muted-foreground">{readingsCount} readings</span>}
+                </PageStatusBar>
             </div>
 
             <TabNavigation
