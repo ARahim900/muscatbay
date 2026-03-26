@@ -12,6 +12,22 @@ const nextConfig: NextConfig = {
             },
                 ],
     },
+    // PWA: ensure the service worker and manifest are served with correct headers
+    headers: async () => [
+        {
+            source: "/sw.js",
+            headers: [
+                { key: "Cache-Control", value: "no-cache, no-store, must-revalidate" },
+                { key: "Service-Worker-Allowed", value: "/" },
+            ],
+        },
+        {
+            source: "/manifest.json",
+            headers: [
+                { key: "Cache-Control", value: "no-cache" },
+            ],
+        },
+    ],
 };
 
 export default nextConfig;

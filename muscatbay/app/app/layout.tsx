@@ -1,6 +1,7 @@
 import "./globals.css";
 
 import { Providers } from "@/components/providers";
+import { NotificationProvider } from "@/components/NotificationProvider";
 import { RegisterSW } from "@/components/pwa/register-sw";
 import { LayoutRouter } from "@/components/layout/layout-router";
 import { Inter } from "next/font/google";
@@ -36,9 +37,11 @@ export default function RootLayout({
       <body className={`${inter.className} ${inter.variable}`} suppressHydrationWarning>
         <RegisterSW />
         <Providers>
-          <LayoutRouter>
-            {children}
-          </LayoutRouter>
+          <NotificationProvider>
+            <LayoutRouter>
+              {children}
+            </LayoutRouter>
+          </NotificationProvider>
         </Providers>
       </body>
     </html>

@@ -572,7 +572,7 @@ export default function WaterPage() {
                                                                 setEndMonth(yearMonths[yearMonths.length - 1]);
                                                             }
                                                         }}
-                                                        className={`rounded-full px-4 ${selectedYear === year ? "bg-[#4E4456] hover:bg-[#4E4456]/90 text-white dark:bg-[#81D8D0] dark:hover:bg-[#81D8D0]/90 dark:text-slate-900" : "border-slate-200 dark:border-slate-700"}`}
+                                                        className={`rounded-full px-4 ${selectedYear === year ? "bg-amber-500 hover:bg-amber-600 text-white" : "border-slate-200 dark:border-slate-700"}`}
                                                     >
                                                         {year}
                                                     </Button>
@@ -588,7 +588,7 @@ export default function WaterPage() {
                                                     <select
                                                         value={endMonth}
                                                         onChange={(e) => setEndMonth(e.target.value)}
-                                                        className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 text-sm font-medium text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-[#4E4456]/30 dark:focus:ring-[#81D8D0]/30"
+                                                        className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 text-sm font-medium text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
                                                     >
                                                         {filteredMonthsByYear.map((m) => (
                                                             <option key={m} value={m}>{m}</option>
@@ -600,7 +600,7 @@ export default function WaterPage() {
                                                     <select
                                                         value={selectedZone}
                                                         onChange={(e) => setSelectedZone(e.target.value)}
-                                                        className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 text-sm font-medium text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-[#4E4456]/30 dark:focus:ring-[#81D8D0]/30"
+                                                        className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 text-sm font-medium text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
                                                     >
                                                         {ZONE_CONFIG.map((z) => (
                                                             <option key={z.code} value={z.code}>{z.name}</option>
@@ -622,7 +622,7 @@ export default function WaterPage() {
                                                 <select
                                                     value={selectedType}
                                                     onChange={(e) => setSelectedType(e.target.value)}
-                                                    className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 text-sm font-medium text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-[#4E4456]/30 dark:focus:ring-[#81D8D0]/30"
+                                                    className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 text-sm font-medium text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
                                                 >
                                                     {uniqueTypes.map((t) => (
                                                         <option key={t} value={t}>{t}</option>

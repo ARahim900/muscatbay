@@ -1,9 +1,11 @@
-const CACHE_NAME = "muscatbay-v2";
+const CACHE_NAME = "muscatbay-v3";
 const STATIC_ASSETS = [
   "/",
   "/manifest.json",
   "/logo.png",
 ];
+
+// ─── Install ────────────────────────────────────────────────────────────────────
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -11,6 +13,8 @@ self.addEventListener("install", (event) => {
   );
   self.skipWaiting();
 });
+
+// ─── Activate ───────────────────────────────────────────────────────────────────
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(
@@ -24,6 +28,8 @@ self.addEventListener("activate", (event) => {
   );
   self.clients.claim();
 });
+
+// ─── Fetch (caching strategy) ───────────────────────────────────────────────────
 
 self.addEventListener("fetch", (event) => {
   // Only cache GET requests
@@ -71,4 +77,76 @@ self.addEventListener("fetch", (event) => {
       });
     })
   );
+});
+
+// ─── Push Notifications ─────────────────────────────────────────────────────────
+// Handles push events from the server (future: web-push integration).
+// Currently used for showNotification() calls from the main thread via
+// ServiceWorkerRegistration.showNotification(), which works on both
+// desktop and mobile (including iOS 16.4+ PWA).
+
+self.addEventListener("push", (event) => {
+  // Default notification if push payload is missing
+  let title = "Muscat Bay Alert";
+  let options = {
+    body: "You have a new notification",
+    icon: "/icons/icon-192x192.png",
+    badge: "/icons/icon-192x192.png",
+    tag: "muscatbay-push",
+    data: { url: "/" },
+  };
+
+  // Try to parse push data if available
+  if (event.data) {
+    try {
+      const payload = event.data.json();
+      title = payload.title || title;
+      options = {
+        body: payload.message || payload.body || options.body,
+        icon: payload.icon || options.icon,
+        badge: options.badge,
+        tag: payload.tag || options.tag,
+        data: { url: payload.url || "/" },
+      };
+    } catch {
+      // If JSON parsing fails, use the text directly
+      options.body = event.data.text() || options.body;
+    }
+  }
+
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+// ─── Notification Click ─────────────────────────────────────────────────────────
+// When the user clicks a browser notification, focus the app or open it.
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+
+  const targetUrl = event.notification.data?.url || "/";
+
+  event.waitUntil(
+    // Check if the app is already open in a tab
+    self.clients
+      .matchAll({ type: "window", includeUncontrolled: true })
+      .then((clientList) => {
+        // If there's already an open tab, focus it and navigate
+        for (const client of clientList) {
+          if (client.url.includes(self.location.origin)) {
+            client.focus();
+            client.navigate(targetUrl);
+            return;
+          }
+        }
+        // Otherwise open a new tab/window
+        return self.clients.openWindow(targetUrl);
+      })
+  );
+});
+
+// ─── Notification Close ─────────────────────────────────────────────────────────
+// Optional: track when notifications are dismissed (useful for analytics later)
+
+self.addEventListener("notificationclose", () => {
+  // No-op — placeholder for future analytics
 });

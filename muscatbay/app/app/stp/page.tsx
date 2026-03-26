@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { getSTPOperations, STPOperation } from "@/lib/mock-data";
 import { getSTPOperationsFromSupabase, isSupabaseConfigured } from "@/lib/supabase";
 import { STP_RATES } from "@/lib/config";
@@ -37,6 +37,8 @@ import { saveFilterPreferences, loadFilterPreferences } from "@/lib/filter-prefe
 import { DateRangePicker } from "@/components/water/date-range-picker";
 import { Button } from "@/components/ui/button";
 import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
+import { useAppNotifications } from "@/components/NotificationProvider";
+import { useToast } from "@/components/ui/toast-provider";
 import { cn } from "@/lib/utils";
 
 // Use centralized config for rates
@@ -134,6 +136,41 @@ export default function STPPage() {
         onChanged: () => loadData(true),
         enabled: isLiveData,
     });
+
+    // ── Notifications: alert when STP data changes exceed thresholds ────
+    // useAppNotifications → browser push + notification history
+    // useToast → in-app floating toast (visible immediately)
+    const pushNotifications = useAppNotifications();
+    const toast = useToast();
+
+    // Track which alerts have already been shown to avoid repeats on re-renders
+    const alertedRef = useRef<string | null>(null);
+
+    // Check latest data for threshold breaches when operations update
+    useEffect(() => {
+        if (allOperations.length === 0) return;
+        const latest = allOperations[0]; // Most recent record
+
+        // Unique key for this record so we don't alert the same data twice
+        const alertKey = `${latest.date}-${latest.inlet_sewage}-${latest.tanker_trips}`;
+        if (alertedRef.current === alertKey) return;
+        alertedRef.current = alertKey;
+
+        // Alert if inlet sewage exceeds 4800 m³ (high end of normal range)
+        if (latest.inlet_sewage > 4800) {
+            const msg = `Inlet sewage is ${latest.inlet_sewage.toLocaleString()} m³ — exceeds 4,800 m³ threshold`;
+            toast.warning("STP Alert: High Inlet", msg);         // in-app toast
+            pushNotifications.warning("STP Alert: High Inlet", msg); // browser push
+        }
+
+        // Alert if tanker trips are unusually high (> 3 in a day)
+        if (latest.tanker_trips > 3) {
+            const msg = `${latest.tanker_trips} tanker trips recorded today`;
+            toast.info("STP: High Tanker Activity", msg);         // in-app toast
+            pushNotifications.info("STP: High Tanker Activity", msg); // browser push
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [allOperations.length]);
 
     useEffect(() => {
         loadData();
@@ -605,10 +642,10 @@ export default function STPPage() {
                     description="Water Treatment Management"
                 />
                 <div className="flex flex-col items-end gap-1.5">
-                    <Badge variant={isLiveData ? "default" : "secondary"} className={`flex items-center gap-1.5 ${isLiveData ? "bg-mb-success text-white" : "bg-mb-secondary text-mb-secondary-foreground"}`}>
+                    <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium ${isLiveData ? 'bg-mb-success-light text-mb-success dark:bg-mb-success-light/20 dark:text-mb-success-hover' : 'bg-mb-warning-light text-mb-warning dark:bg-mb-warning-light/20 dark:text-mb-warning'}`}>
                         {isLiveData ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
-                        {isLiveData ? "Live Data Connected" : "Demo Mode"}
-                    </Badge>
+                        {isLiveData ? 'Live Data (Supabase)' : 'Demo Data (Local)'}
+                    </div>
                     <div className="flex items-center gap-2 flex-wrap justify-end">
                         {/* Real-time status badge */}
                         <span className={cn(
@@ -646,11 +683,11 @@ export default function STPPage() {
                 <div className="space-y-6 animate-in fade-in duration-300">
                     {/* Date Range Filter Card */}
                     {allMonths.length > 0 && (
-                        <Card>
-                            <CardContent className="pt-6">
+                        <Card className="glass-card">
+                            <CardContent className="p-4 sm:p-5 md:p-6">
                                 <div className="flex flex-col gap-4">
                                     {/* Year Selector Row */}
-                                    <div className="flex items-center justify-between flex-wrap gap-4">
+                                    <div className="flex items-center justify-between flex-wrap gap-3">
                                         <div className="flex items-center gap-3">
                                             <span className="text-sm font-medium text-slate-600 dark:text-slate-400">Filter by Year:</span>
                                             <div className="flex items-center gap-2">
@@ -667,7 +704,7 @@ export default function STPPage() {
                                                                 setEndMonth(yearMonths[yearMonths.length - 1]);
                                                             }
                                                         }}
-                                                        className={`rounded-full px-4 ${selectedYear === year ? "bg-[#4E4456] hover:bg-[#4E4456]/90 text-white dark:bg-[#81D8D0] dark:hover:bg-[#81D8D0]/90 dark:text-slate-900" : "border-slate-200 dark:border-slate-700"}`}
+                                                        className={`rounded-full px-4 ${selectedYear === year ? "bg-amber-500 hover:bg-amber-600 text-white" : "border-slate-200 dark:border-slate-700"}`}
                                                     >
                                                         {year}
                                                     </Button>

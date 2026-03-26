@@ -279,7 +279,7 @@ export default function ContractorsPage() {
                 <div className="flex flex-col items-end gap-1.5">
                     <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium ${dataSource === 'supabase' ? 'bg-mb-success-light text-mb-success dark:bg-mb-success-light/20 dark:text-mb-success-hover' : 'bg-mb-warning-light text-mb-warning dark:bg-mb-warning-light/20 dark:text-mb-warning'}`}>
                         {dataSource === 'supabase' ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
-                        {dataSource === 'supabase' ? 'Connected to Supabase' : 'No Data Connection'}
+                        {dataSource === 'supabase' ? 'Live Data (Supabase)' : 'Demo Data (Local)'}
                     </div>
                     <div className="flex items-center gap-2 flex-wrap justify-end">
                         <span className={cn(
@@ -438,34 +438,34 @@ export default function ContractorsPage() {
                     <table className="w-full text-sm border-collapse">
                         <thead>
                             <tr className="bg-slate-50/70 dark:bg-slate-800/50">
-                                <th className="text-left py-3 px-4 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" onClick={() => handleSort('contractor')}>
+                                <th className="text-left py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" onClick={() => handleSort('contractor')}>
                                     <div className="flex items-center gap-1.5">Contractor <SortIcon field="contractor" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
                                 </th>
-                                <th className="text-left py-3 px-4 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" onClick={() => handleSort('service')}>
+                                <th className="text-left py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" onClick={() => handleSort('service')}>
                                     <div className="flex items-center gap-1.5">Service <SortIcon field="service" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
                                 </th>
-                                <th className="text-left py-3 px-4 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" onClick={() => handleSort('status')}>
+                                <th className="text-left py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" onClick={() => handleSort('status')}>
                                     <div className="flex items-center gap-1.5">Status <SortIcon field="status" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
                                 </th>
-                                <th className="text-left py-3 px-4 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" onClick={() => handleSort('contractType')}>
+                                <th className="text-left py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" onClick={() => handleSort('contractType')}>
                                     <div className="flex items-center gap-1.5">Type <SortIcon field="contractType" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
                                 </th>
-                                <th className="text-left py-3 px-4 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors hidden lg:table-cell" onClick={() => handleSort('startDate')}>
+                                <th className="text-left py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors hidden lg:table-cell" onClick={() => handleSort('startDate')}>
                                     <div className="flex items-center gap-1.5">Start <SortIcon field="startDate" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
                                 </th>
-                                <th className="text-left py-3 px-4 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors hidden lg:table-cell" onClick={() => handleSort('endDate')}>
+                                <th className="text-left py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors hidden lg:table-cell" onClick={() => handleSort('endDate')}>
                                     <div className="flex items-center gap-1.5">End <SortIcon field="endDate" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
                                 </th>
-                                <th className="text-right py-3 px-4 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors hidden xl:table-cell" onClick={() => handleSort('monthly')}>
+                                <th className="text-right py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors hidden xl:table-cell" onClick={() => handleSort('monthly')}>
                                     <div className="flex items-center justify-end gap-1.5">Monthly <SortIcon field="monthly" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
                                 </th>
-                                <th className="text-right py-3 px-4 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" onClick={() => handleSort('annual')}>
+                                <th className="text-right py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" onClick={() => handleSort('annual')}>
                                     <div className="flex items-center justify-end gap-1.5">Annual <SortIcon field="annual" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
                                 </th>
-                                <th className="text-left py-3 px-4 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors hidden xl:table-cell" onClick={() => handleSort('renewal')}>
+                                <th className="text-left py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors hidden xl:table-cell" onClick={() => handleSort('renewal')}>
                                     <div className="flex items-center gap-1.5">Renewal <SortIcon field="renewal" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
                                 </th>
-                                <th className="text-left py-3 px-4 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 hidden xl:table-cell">Note</th>
+                                <th className="text-left py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 hidden xl:table-cell">Note</th>
                             </tr>
                         </thead>
                         <tbody>
