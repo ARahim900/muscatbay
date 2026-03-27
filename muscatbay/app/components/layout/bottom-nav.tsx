@@ -18,7 +18,6 @@ import {
   LogOut,
   X,
   Wrench,
-  FolderOpen,
 } from 'lucide-react';
 
 interface NavItem {
@@ -41,7 +40,6 @@ const overflowItems: NavItem[] = [
   { id: "hvac-system", name: "HVAC System", icon: Wrench, href: "/hvac" },
   { id: "assets", name: "Assets", icon: Package, href: "/assets" },
   { id: "pest-control", name: "Pest Control", icon: Bug, href: "/pest-control" },
-  { id: "file-organizer", name: "File Organizer", icon: FolderOpen, href: "/file-organizer" },
   { id: "settings", name: "Settings", icon: Settings, href: "/settings" },
 ];
 

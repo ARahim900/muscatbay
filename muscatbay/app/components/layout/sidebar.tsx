@@ -21,7 +21,6 @@ import {
   ChevronRight,
   Waves,
   Wrench,
-  FolderOpen,
 } from 'lucide-react';
 
 interface NavigationItem {
@@ -42,7 +41,6 @@ const navigationItems: NavigationItem[] = [
   { id: "assets", name: "Assets", icon: Package, href: "/assets" },
   { id: "pest-control", name: "Pest Control", icon: Bug, href: "/pest-control" },
   { id: "fire-safety", name: "Fire Safety", icon: Flame, href: "/firefighting" },
-  { id: "file-organizer", name: "File Organizer", icon: FolderOpen, href: "/file-organizer" },
 ];
 
 // Bottom navigation items
