@@ -476,8 +476,6 @@ const FILE_CATEGORIES: FileCategory[] = [
       "next-env.d.ts",
       "setupTests.ts",
       ".env.example",
-      ".env.local",
-      ".env.production",
       ".gitignore",
       ".vercelignore",
     ],
@@ -734,6 +732,15 @@ export default function FileOrganizerPage() {
     );
   }, [searchQuery]);
 
+  const totalFiles = useMemo(() => {
+    const q = searchQuery.toLowerCase();
+    return visibleCategories.reduce(
+      (sum, c) =>
+        sum + c.files.filter((f) => f.toLowerCase().includes(q)).length,
+      0
+    );
+  }, [visibleCategories, searchQuery]);
+
   return (
     <div className="space-y-6 sm:space-y-7 md:space-y-8 w-full">
       <PageHeader
@@ -848,16 +855,9 @@ export default function FileOrganizerPage() {
         <p className="text-sm text-muted-foreground">
           Found{" "}
           <span className="font-semibold text-gray-900 dark:text-white">
-            {visibleCategories.reduce(
-              (sum, c) =>
-                sum +
-                c.files.filter((f) =>
-                  f.toLowerCase().includes(searchQuery.toLowerCase())
-                ).length,
-              0
-            )}
+            {totalFiles}
           </span>{" "}
-          file{visibleCategories.length !== 1 ? "s" : ""} across{" "}
+          file{totalFiles !== 1 ? "s" : ""} across{" "}
           <span className="font-semibold text-gray-900 dark:text-white">
             {visibleCategories.length}
           </span>{" "}
