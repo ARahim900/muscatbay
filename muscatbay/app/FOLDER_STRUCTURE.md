@@ -37,6 +37,7 @@ Each folder represents a route in the application. One `page.tsx` per route.
 | `/firefighting` | Fire safety equipment |
 | `/login`, `/signup` | Authentication pages |
 | `/settings` | User settings |
+| `/file-organizer` | Project file structure browser |
 
 ---
 

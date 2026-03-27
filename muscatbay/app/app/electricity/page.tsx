@@ -14,7 +14,7 @@ import { Zap, DollarSign, MapPin, TrendingUp, BarChart3, Database, Search, Downl
 import { MultiSelectDropdown, SortIcon, TablePagination, ActiveFilterPills, TableToolbar, StatusBadge, type PageSizeOption } from "@/components/shared/data-table";
 import { exportToCSV, getDateForFilename } from "@/lib/export-utils";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar, Cell, Legend, ReferenceLine, LineChart as RechartsLineChart, Line } from "recharts";
-import { LiquidTooltip } from "../../components/charts/liquid-tooltip";
+import { LiquidTooltip } from "@/components/charts/liquid-tooltip";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -56,6 +56,9 @@ export default function ElectricityPage() {
     // Track one-time initialization of filter defaults
     const typesInitializedRef = useRef(false);
     const meterValidatedRef = useRef(false);
+
+    // PDF export
+    const reportRef = useRef<HTMLDivElement>(null);
 
     // Stable fetch function — used both on mount and by real-time handler
     const loadData = useCallback(async (silent = false) => {
@@ -668,6 +671,7 @@ export default function ElectricityPage() {
                     lastUpdated={lastUpdated}
                     error={debugError ? `Error: ${debugError}` : null}
                 >
+
                     {dataSource === 'supabase' && <span className="text-[10px] text-muted-foreground">{readingsCount} readings</span>}
                 </PageStatusBar>
             </div>

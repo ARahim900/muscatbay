@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { StatsGrid } from "@/components/shared/stats-grid";
@@ -13,6 +13,8 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar, L
 import { LiquidTooltip } from "../components/charts/liquid-tooltip";
 import { ChartContainer } from "../components/charts/chart-container";
 import { AnimateOnScroll } from "@/components/shared/scroll-animation";
+import { Button } from "@/components/ui/button";
+import { Download } from "lucide-react";
 import Link from "next/link";
 
 export default function DashboardPage() {
@@ -80,10 +82,13 @@ export default function DashboardPage() {
                     title="Dashboard"
                     description="Overview of all operations and key metrics"
                 />
-                <Badge variant={isLiveData ? "default" : "secondary"} className={`flex items-center gap-1.5 ${isLiveData ? "bg-mb-success text-white" : "bg-mb-secondary text-mb-secondary-foreground"}`}>
-                    {isLiveData ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
-                    {isLiveData ? "Live Data" : "Demo Mode"}
-                </Badge>
+                <div className="flex items-center gap-2">
+
+                    <Badge variant={isLiveData ? "default" : "secondary"} className={`flex items-center gap-1.5 ${isLiveData ? "bg-mb-success text-white" : "bg-mb-secondary text-mb-secondary-foreground"}`}>
+                        {isLiveData ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
+                        {isLiveData ? "Live Data" : "Demo Mode"}
+                    </Badge>
+                </div>
             </div>
 
             <StatsGrid stats={statsWithIcons} />

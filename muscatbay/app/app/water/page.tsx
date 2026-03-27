@@ -1,6 +1,6 @@
-﻿"use client";
+"use client";
 
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
     Table,
@@ -15,7 +15,7 @@ import {
     BarChart3, TestTube2, Database, Minus, TrendingUp,
     Gauge, Calendar, Activity, Loader2, CalendarDays,
     Building2, Home, Layers, AlertCircle, MapPin,
-    TrendingDown, ChevronDown, ChevronRight,
+    TrendingDown, ChevronDown, ChevronRight, Download
 } from "lucide-react";
 import {
     AreaChart, Area, XAxis, YAxis, Tooltip,
@@ -32,6 +32,7 @@ import {
 import { getWaterMetersFromSupabase, getWaterLossDailyFromSupabase, getDailyWaterConsumptionFromSupabase, isSupabaseConfigured } from "@/lib/supabase";
 import type { WaterLossDaily, DailyWaterConsumption } from "@/entities/water";
 import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
+import { PageStatusBar } from "@/components/shared/page-status-bar";
 
 // Components
 import { DateRangePicker } from "@/components/water/date-range-picker";
@@ -46,7 +47,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { TabNavigation } from "@/components/shared/tab-navigation";
 import { StatsGrid } from "@/components/shared/stats-grid";
 import { StatsGridSkeleton, ChartSkeleton, Skeleton } from "@/components/shared/skeleton";
-import { PageStatusBar } from "@/components/shared/page-status-bar";
+// Remove duplicate PageStatusBar import
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { saveFilterPreferences, loadFilterPreferences } from "@/lib/filter-preferences";
@@ -500,7 +501,9 @@ export default function WaterPage() {
                     isConnected={dataSource === 'supabase'}
                     isLive={isLive}
                     lastUpdated={lastUpdated}
-                />
+                >
+
+                </PageStatusBar>
             </div>
 
             {/* View Switching Tabs */}

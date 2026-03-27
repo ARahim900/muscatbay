@@ -647,7 +647,9 @@ export default function STPPage() {
                     isConnected={isLiveData}
                     isLive={isLive}
                     lastUpdated={lastUpdated}
-                />
+                >
+
+                </PageStatusBar>
             </div>
 
             {/* Tabs */}
