@@ -12,13 +12,20 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-[100dvh] w-full overflow-x-hidden">
+      {/* Skip to main content — accessibility */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:start-4 focus:z-[200] focus:px-4 focus:py-2 focus:rounded-lg focus:bg-[#4E4456] focus:text-white focus:text-sm focus:font-medium focus:shadow-lg"
+      >
+        Skip to main content
+      </a>
+
       {/* Sidebar - hidden on mobile, visible on md+ */}
       <Sidebar />
 
       {/* Main Content Area - Responsive margins that adapt to sidebar state */}
-      {/* On mobile: no left margin, bottom padding for bottom nav */}
-      {/* On desktop: left margin for the sidebar */}
       <main
+        id="main-content"
         className={`
           flex-1 min-w-0 transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]
           min-h-[100dvh] bg-gray-50 dark:bg-slate-950

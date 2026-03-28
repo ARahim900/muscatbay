@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { StatsGrid } from "@/components/shared/stats-grid";
@@ -22,8 +22,8 @@ export default function DashboardPage() {
     const { stats, chartData, stpChartData, recentActivity, loading, isLiveData, error } = useDashboardData();
     const [activityFilter, setActivityFilter] = useState<'all' | 'critical' | 'warning' | 'info'>('all');
 
-    // Add icons and navigation hrefs to stats
-    const statsWithIcons = stats.map(stat => ({
+    // Add icons and navigation hrefs to stats (memoized to avoid recalc on every render)
+    const statsWithIcons = useMemo(() => stats.map(stat => ({
         ...stat,
         icon: stat.label.includes('WATER') ? Droplets :
             stat.label.includes('ELECTRICITY') ? Zap :
@@ -39,10 +39,10 @@ export default function DashboardPage() {
                             stat.label.includes('HVAC') ? '/hvac' :
                                 stat.label.includes('PEST') ? '/pest-control' :
                                     stat.label.includes('FIRE') ? '/firefighting' : undefined
-    }));
+    })), [stats]);
 
     // Map activity item titles to their section routes
-    const getActivityHref = (title: string): string | undefined => {
+    const getActivityHref = useCallback((title: string): string | undefined => {
         const t = title.toLowerCase();
         if (t.includes('water')) return '/water';
         if (t.includes('electricity')) return '/electricity';
@@ -53,7 +53,7 @@ export default function DashboardPage() {
         if (t.includes('pest')) return '/pest-control';
         if (t.includes('fire')) return '/firefighting';
         return undefined;
-    };
+    }, []);
 
     if (loading) {
         return (
@@ -92,7 +92,7 @@ export default function DashboardPage() {
         <div className="space-y-6 sm:space-y-7 md:space-y-8 w-full">
             <div className="flex items-center justify-between">
                 <PageHeader
-                    title="Dashboard"
+                    title={`${new Date().getHours() < 12 ? 'Good morning' : new Date().getHours() < 17 ? 'Good afternoon' : 'Good evening'}`}
                     description="Overview of all operations and key metrics"
                 />
                 <div className="flex items-center gap-2">
