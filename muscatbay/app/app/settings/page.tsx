@@ -130,8 +130,8 @@ export default function SettingsPage() {
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold text-mb-primary">Settings</h1>
-                    <p className="text-muted-foreground mt-2">Manage your account settings and profile information.</p>
+                    <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight">Settings</h1>
+                    <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 sm:mt-1">Manage your account settings and profile.</p>
                 </div>
                 {isAuthenticated && (
                     <Badge variant="secondary" className="w-fit px-4 py-1.5 text-sm bg-mb-success/10 text-mb-success border-mb-success/20">
