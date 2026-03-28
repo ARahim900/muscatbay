@@ -114,6 +114,17 @@ export default function SettingsPage() {
     const displayName = formData.full_name || user?.email?.split("@")[0] || "User"
     const initials = displayName.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)
 
+    // Profile completion calculation
+    const completionFields = [
+        { filled: !!formData.full_name, label: "Full name" },
+        { filled: !!formData.username, label: "Username" },
+        { filled: !!formData.avatar_url || !!avatarPreview, label: "Profile photo" },
+        { filled: !!formData.website, label: "Website" },
+    ];
+    const completedCount = completionFields.filter(f => f.filled).length;
+    const completionPct = Math.round((completedCount / completionFields.length) * 100);
+    const isProfileComplete = completedCount === completionFields.length;
+
     return (
         <div className="space-y-6 sm:space-y-7 md:space-y-8 w-full max-w-6xl mx-auto">
             {/* Header */}
@@ -128,6 +139,30 @@ export default function SettingsPage() {
                     </Badge>
                 )}
             </div>
+
+            {/* Profile Completion Indicator */}
+            {!isProfileComplete && (
+                <div className="rounded-xl border border-[#81D8D0]/30 dark:border-[#81D8D0]/20 bg-[#81D8D0]/5 dark:bg-[#81D8D0]/10 p-4 sm:p-5">
+                    <div className="flex items-start sm:items-center justify-between gap-4 flex-col sm:flex-row">
+                        <div className="space-y-1">
+                            <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                                Complete your profile — {completionPct}% done
+                            </p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                                {completionFields.filter(f => !f.filled).map(f => f.label).join(", ")} still needed.
+                            </p>
+                        </div>
+                        <div className="w-full sm:w-48 flex-shrink-0">
+                            <div className="h-2 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+                                <div
+                                    className="h-full rounded-full bg-[#81D8D0] transition-all duration-500"
+                                    style={{ width: `${completionPct}%` }}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <div className="flex flex-col lg:flex-row gap-8">
                 {/* Sidebar Navigation */}

@@ -937,7 +937,11 @@ export default function STPPage() {
                                     {dailyOperations.length === 0 && (
                                         <tr>
                                             <td colSpan={8} className="py-12 text-center text-slate-500 dark:text-slate-400">
-                                                No data available for the selected month
+                                                <div className="flex flex-col items-center gap-2">
+                                                    <Droplets className="w-7 h-7 text-slate-300 dark:text-slate-600" />
+                                                    <p className="text-sm font-medium">No STP data for this month</p>
+                                                    <p className="text-xs text-slate-400">Select a different month to view operations data.</p>
+                                                </div>
                                             </td>
                                         </tr>
                                     )}

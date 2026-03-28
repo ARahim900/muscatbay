@@ -98,16 +98,34 @@ export default function SignUpPage() {
                         <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
                             <CheckCircle2 className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
                         </div>
-                        <h2 className="text-2xl font-bold mb-2">Check your email</h2>
+                        <h2 className="text-2xl font-bold mb-2">Almost there!</h2>
                         <p className="text-slate-500 dark:text-slate-400 mb-6">
                             We&apos;ve sent a confirmation link to <strong>{email}</strong>.
                             Please check your inbox and click the link to activate your account.
                         </p>
+
+                        {/* Next steps guidance */}
+                        <div className="text-left bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4 mb-6 space-y-3">
+                            <p className="text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wide">What happens next</p>
+                            <div className="space-y-2">
+                                {[
+                                    { step: "1", text: "Open the confirmation email (check spam too)" },
+                                    { step: "2", text: "Click the verification link" },
+                                    { step: "3", text: "Sign in and start monitoring operations" },
+                                ].map(({ step, text }) => (
+                                    <div key={step} className="flex items-start gap-3">
+                                        <span className="flex-shrink-0 w-5 h-5 rounded-full bg-[#81D8D0]/20 text-[#4E4456] dark:text-[#81D8D0] text-xs font-bold flex items-center justify-center">{step}</span>
+                                        <span className="text-sm text-slate-600 dark:text-slate-400">{text}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
                         <Button
                             onClick={() => router.push("/login")}
                             className="bg-[var(--mb-primary)] hover:bg-[var(--mb-primary-hover)] text-white"
                         >
-                            Back to Login
+                            Go to Login
                         </Button>
                     </CardContent>
                 </Card>

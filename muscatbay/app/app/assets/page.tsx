@@ -6,6 +6,7 @@ import { isSupabaseConfigured } from "@/lib/supabase";
 import { fetchAssetsAction } from "@/actions/assets";
 import { StatsGrid } from "@/components/shared/stats-grid";
 import { StatsGridSkeleton, TableBodySkeleton, Skeleton } from "@/components/shared/skeleton";
+import { EmptyState } from "@/components/shared/empty-state";
 import { PageHeader } from "@/components/shared/page-header";
 import { Boxes, MapPin, DollarSign, Wrench, Search, Plus, AlertCircle, Download, X } from "lucide-react";
 import { format } from "date-fns";
@@ -245,6 +246,16 @@ export default function AssetsPage() {
         }
     };
 
+    const getStatusBorderClass = (status: string): string => {
+        switch (status) {
+            case 'Active': return 'border-s-emerald-500';
+            case 'Under Maintenance': return 'border-s-amber-500';
+            case 'Decommissioned': return 'border-s-red-400';
+            case 'In Storage': return 'border-s-slate-400';
+            default: return 'border-s-slate-300';
+        }
+    };
+
     return (
         <div className="space-y-6 sm:space-y-7 md:space-y-8 w-full">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -341,15 +352,18 @@ export default function AssetsPage() {
                             ))}
                         </div>
                     ) : filteredAssets.length === 0 ? (
-                        <div className="py-12 text-center text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700">
-                            <div className="flex flex-col items-center gap-2">
-                                <AlertCircle className="h-8 w-8" />
-                                <p>No assets found</p>
-                            </div>
+                        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700">
+                            <EmptyState
+                                variant={search || selectedStatuses.length < STATUS_OPTIONS.length ? "filter-empty" : "no-data"}
+                                title={search ? "No assets match your search" : "No assets found"}
+                                description={search || selectedStatuses.length < STATUS_OPTIONS.length
+                                    ? "Try adjusting your search or filters to see more results."
+                                    : "Assets will appear here once they are added to the system."}
+                            />
                         </div>
                     ) : (
                         filteredAssets.map((asset, idx) => (
-                            <div key={asset.id} className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 space-y-3">
+                            <div key={asset.id} className={`rounded-xl border border-slate-200 dark:border-slate-700 border-s-4 ${getStatusBorderClass(asset.status)} bg-white dark:bg-slate-900 p-4 space-y-3`}>
                                 <div className="flex items-start justify-between gap-2">
                                     <div className="min-w-0">
                                         <p className="font-semibold text-sm text-slate-800 dark:text-slate-200 truncate">{asset.name}</p>
@@ -413,7 +427,13 @@ export default function AssetsPage() {
                                 <TableBodySkeleton columns={7} rows={10} />
                             ) : filteredAssets.length === 0 ? (
                                 <tr>
-                                    <td colSpan={7} className="py-12 text-center text-slate-500 dark:text-slate-400">No assets found</td>
+                                    <td colSpan={7}>
+                                        <EmptyState
+                                            variant={search ? "filter-empty" : "no-data"}
+                                            title={search ? "No assets match your search" : "No assets found"}
+                                            description={search ? "Try a different search term." : "Assets will appear here once added."}
+                                        />
+                                    </td>
                                 </tr>
                             ) : (
                                 filteredAssets.map((asset, idx) => (

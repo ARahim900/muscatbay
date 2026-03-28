@@ -7,6 +7,7 @@ import {
     ContractorTracker
 } from "@/lib/supabase";
 import { StatsGridSkeleton, TableSkeleton, Skeleton } from "@/components/shared/skeleton";
+import { EmptyState } from "@/components/shared/empty-state";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatsGrid } from "@/components/shared/stats-grid";
 import { Search, Plus, Users, DollarSign, AlertCircle, Download, Calendar, Building2, FileText, RefreshCw, X } from "lucide-react";
@@ -81,6 +82,14 @@ export default function ContractorsPage() {
         if (s.includes('expired')) return 'red';
         if (s.includes('retain')) return 'orange';
         return 'blue';
+    };
+
+    const getStatusBorderClass = (status: string | null): string => {
+        const s = status?.toLowerCase() || '';
+        if (s.includes('active')) return 'border-s-emerald-500';
+        if (s.includes('expired')) return 'border-s-red-400';
+        if (s.includes('retain')) return 'border-s-amber-500';
+        return 'border-s-blue-400';
     };
 
     const getContractTypeDotColor = (type: string | null): 'blue' | 'green' | 'orange' | 'slate' => {
@@ -371,7 +380,7 @@ export default function ContractorsPage() {
                 {/* Mobile Card View */}
                 <div className="md:hidden space-y-3">
                     {paginatedContractors.map((contractor, index) => (
-                        <div key={`mobile-${contractor.Contractor}-${index}`} className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 space-y-3">
+                        <div key={`mobile-${contractor.Contractor}-${index}`} className={`rounded-xl border border-slate-200 dark:border-slate-700 border-s-4 ${getStatusBorderClass(contractor.Status)} bg-white dark:bg-slate-900 p-4 space-y-3`}>
                             <div className="flex items-start justify-between gap-2">
                                 <div className="min-w-0">
                                     <p className="font-semibold text-sm text-slate-800 dark:text-slate-200 truncate">{contractor.Contractor || '-'}</p>
@@ -412,11 +421,16 @@ export default function ContractorsPage() {
                         </div>
                     ))}
                     {filteredContractors.length === 0 && (
-                        <div className="py-12 text-center text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700">
-                            <div className="flex flex-col items-center gap-2">
-                                <AlertCircle className="h-8 w-8" />
-                                <p>No contractors found matching your criteria.</p>
-                            </div>
+                        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700">
+                            <EmptyState
+                                variant={search || selectedStatuses.length < uniqueStatuses.length || selectedTypes.length < uniqueContractTypes.length ? "filter-empty" : "no-data"}
+                                title={search || selectedStatuses.length < uniqueStatuses.length || selectedTypes.length < uniqueContractTypes.length
+                                    ? "No contractors match your filters"
+                                    : "No contractors yet"}
+                                description={search || selectedStatuses.length < uniqueStatuses.length || selectedTypes.length < uniqueContractTypes.length
+                                    ? "Try adjusting your search or removing some filters to see more results."
+                                    : "Contractors will appear here once they are added to the system."}
+                            />
                         </div>
                     )}
                 </div>
@@ -504,11 +518,12 @@ export default function ContractorsPage() {
                             ))}
                             {filteredContractors.length === 0 && (
                                 <tr>
-                                    <td colSpan={10} className="py-12 text-center text-slate-500 dark:text-slate-400">
-                                        <div className="flex flex-col items-center gap-2">
-                                            <AlertCircle className="h-8 w-8" />
-                                            <p>No contractors found matching your criteria.</p>
-                                        </div>
+                                    <td colSpan={10}>
+                                        <EmptyState
+                                            variant={search || selectedStatuses.length < uniqueStatuses.length || selectedTypes.length < uniqueContractTypes.length ? "filter-empty" : "no-data"}
+                                            title={search ? "No contractors match your search" : "No contractors yet"}
+                                            description={search ? "Try a different search term or adjust your filters." : "Contractors will appear here once added."}
+                                        />
                                     </td>
                                 </tr>
                             )}
