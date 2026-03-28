@@ -95,7 +95,7 @@ export default function DashboardPage() {
 
             <AnimateOnScroll className="grid gap-4 sm:gap-5 md:gap-6 grid-cols-1 lg:grid-cols-7">
                 <Card
-                    className="glass-card col-span-1 lg:col-span-4 cursor-pointer group/chart transition-shadow duration-300 hover:shadow-[0_8px_30px_-4px_rgba(6,81,237,0.15)]"
+                    className="glass-card col-span-1 lg:col-span-4 cursor-pointer group/chart transition-shadow duration-200 hover:shadow-[0_8px_30px_-4px_rgba(6,81,237,0.15)]"
                     onClick={() => router.push('/water')}
                 >
                     <CardHeader className="glass-card-header p-4 sm:p-5 md:p-6">
@@ -125,7 +125,7 @@ export default function DashboardPage() {
                 </Card>
 
                 <Card
-                    className="glass-card col-span-1 lg:col-span-3 cursor-pointer group/chart transition-shadow duration-300 hover:shadow-[0_8px_30px_-4px_rgba(6,81,237,0.15)]"
+                    className="glass-card col-span-1 lg:col-span-3 cursor-pointer group/chart transition-shadow duration-200 hover:shadow-[0_8px_30px_-4px_rgba(6,81,237,0.15)]"
                     onClick={() => router.push('/stp')}
                 >
                     <CardHeader className="glass-card-header p-4 sm:p-5 md:p-6">

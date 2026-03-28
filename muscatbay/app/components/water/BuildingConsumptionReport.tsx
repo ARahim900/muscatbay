@@ -208,10 +208,10 @@ function KpiCard({ label, value, sub, variant, icon }: {
     const hex = KPI_COLORS[variant];
 
     return (
-        <div className="bg-white dark:bg-slate-900 p-3 sm:p-4 md:p-5 lg:p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] hover:shadow-[0_8px_30px_-4px_rgba(6,81,237,0.15)] hover:-translate-y-1 active:scale-[0.98] transition-all duration-300 ease-out group/stat overflow-hidden relative">
+        <div className="bg-white dark:bg-slate-900 p-3 sm:p-4 md:p-5 lg:p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] hover:shadow-[0_8px_30px_-4px_rgba(6,81,237,0.15)] hover:-translate-y-1 active:scale-[0.98] transition-all duration-200 ease-out group/stat overflow-hidden relative">
             {/* Animated top border */}
             <div
-                className="absolute top-0 left-0 w-full h-[3px] opacity-0 group-hover/stat:opacity-100 transition-opacity duration-300"
+                className="absolute top-0 left-0 w-full h-[3px] opacity-0 group-hover/stat:opacity-100 transition-opacity duration-200"
                 style={{ backgroundColor: hex }}
             />
             <div className="flex justify-between items-start gap-2">
@@ -229,7 +229,7 @@ function KpiCard({ label, value, sub, variant, icon }: {
                         <p className="text-[10px] sm:text-xs text-slate-400 mt-1.5 sm:mt-2 truncate">{sub}</p>
                     )}
                 </div>
-                <div className="p-2 sm:p-3 rounded-lg bg-gray-50/80 dark:bg-slate-800/80 group-hover/stat:scale-110 group-hover/stat:-rotate-3 group-hover/stat:shadow-sm transition-all duration-300 ease-out flex-shrink-0">
+                <div className="p-2 sm:p-3 rounded-lg bg-gray-50/80 dark:bg-slate-800/80 group-hover/stat:scale-110 group-hover/stat:-rotate-3 group-hover/stat:shadow-sm transition-all duration-200 ease-out flex-shrink-0">
                     {icon}
                 </div>
             </div>
@@ -564,7 +564,7 @@ export function BuildingConsumptionReport() {
     // ─── Render ──────────────────────────────────────────────────────────────
 
     return (
-        <div className="space-y-6 animate-in fade-in duration-300">
+        <div className="space-y-6 animate-in fade-in duration-200">
             {/* ── Controls bar ──────────────────────────────────────────── */}
             <Card className="glass-card">
                 <CardContent className="p-4 sm:p-5 md:p-6">

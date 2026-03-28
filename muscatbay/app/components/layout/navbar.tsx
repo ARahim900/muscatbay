@@ -116,7 +116,7 @@ export function Navbar() {
                 </Link>
 
                 {/* Desktop Navigation Links */}
-                <nav className="hidden lg:flex items-center ml-8 gap-1">
+                <nav className="hidden lg:flex items-center ms-8 gap-1">
                     {navItems.map((item) => {
                         const isActive = item.href === "/"
                             ? pathname === "/"
@@ -180,7 +180,7 @@ export function Navbar() {
                 <div className="relative" ref={dropdownRef}>
                     <button
                         onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
-                        className="flex items-center gap-2 ml-2 p-1.5 rounded-xl hover:bg-white/10 transition-all duration-200 group"
+                        className="flex items-center gap-2 ms-2 p-1.5 rounded-xl hover:bg-white/10 transition-all duration-200 group"
                         aria-label="User profile menu"
                     >
                         {/* Profile Picture */}
@@ -240,7 +240,7 @@ export function Navbar() {
                                 <Link
                                     href="/settings"
                                     onClick={() => setIsProfileDropdownOpen(false)}
-                                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 hover:text-[#4E4456] transition-colors duration-150"
+                                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 hover:text-[#4E4456] transition-colors duration-200"
                                 >
                                     <User className="w-4 h-4 text-slate-400" />
                                     Profile
@@ -248,7 +248,7 @@ export function Navbar() {
                                 <Link
                                     href="/settings"
                                     onClick={() => setIsProfileDropdownOpen(false)}
-                                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 hover:text-[#4E4456] transition-colors duration-150"
+                                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 hover:text-[#4E4456] transition-colors duration-200"
                                 >
                                     <Settings className="w-4 h-4 text-slate-400" />
                                     Settings
@@ -259,7 +259,7 @@ export function Navbar() {
                                         logout();
                                         setIsProfileDropdownOpen(false);
                                     }}
-                                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors duration-150"
+                                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors duration-200"
                                 >
                                     <LogOut className="w-4 h-4" />
                                     Logout

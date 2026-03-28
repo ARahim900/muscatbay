@@ -461,7 +461,7 @@ export default function WaterPage() {
 
     if (isLoading) {
         return (
-            <div className="space-y-6 sm:space-y-7 md:space-y-8 w-full animate-in fade-in duration-300">
+            <div className="space-y-6 sm:space-y-7 md:space-y-8 w-full animate-in fade-in duration-200">
                 {/* Header skeleton */}
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div className="space-y-2">
@@ -519,7 +519,7 @@ export default function WaterPage() {
 
             {/* Monthly Dashboard View */}
             {dashboardView === 'monthly' && (
-                <div className="space-y-6 animate-in fade-in duration-300">
+                <div className="space-y-6 animate-in fade-in duration-200">
 
                     <TabNavigation
                         activeTab={monthlyTab}
@@ -881,7 +881,7 @@ export default function WaterPage() {
 
                     {/* Database Tab - Airtable Embed */}
                     {monthlyTab === 'database' && (
-                        <div className="animate-in fade-in duration-300">
+                        <div className="animate-in fade-in duration-200">
                             <Card className="glass-card overflow-hidden">
                                 <CardContent className="p-0">
                                     <iframe
@@ -902,7 +902,7 @@ export default function WaterPage() {
 
             {/* Daily Dashboard View */}
             {dashboardView === 'daily' && (
-                <div className="space-y-6 animate-in fade-in duration-300">
+                <div className="space-y-6 animate-in fade-in duration-200">
                     <TabNavigation
                         activeTab={dailyTab}
                         onTabChange={setDailyTab}

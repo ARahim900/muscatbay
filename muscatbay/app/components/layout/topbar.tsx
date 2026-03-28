@@ -109,7 +109,7 @@ export function Topbar() {
                 <div className="relative" ref={dropdownRef}>
                     <button
                         onClick={() => setIsProfileOpen(!isProfileOpen)}
-                        className="flex items-center gap-2 ml-1 sm:ml-2 p-1 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-200 group"
+                        className="flex items-center gap-2 ms-1 sm:ms-2 p-1 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-200 group"
                         aria-label="User profile menu"
                         id="profile-menu-trigger"
                     >
@@ -164,7 +164,7 @@ export function Topbar() {
                                 <Link
                                     href="/settings"
                                     onClick={() => setIsProfileOpen(false)}
-                                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-[#4e4456] dark:hover:text-white transition-colors duration-150"
+                                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-[#4e4456] dark:hover:text-white transition-colors duration-200"
                                     id="profile-menu-profile"
                                 >
                                     <User className="w-4 h-4 text-slate-400 dark:text-slate-500" />
@@ -173,7 +173,7 @@ export function Topbar() {
                                 <Link
                                     href="/settings"
                                     onClick={() => setIsProfileOpen(false)}
-                                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-[#4e4456] dark:hover:text-white transition-colors duration-150"
+                                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-[#4e4456] dark:hover:text-white transition-colors duration-200"
                                     id="profile-menu-settings"
                                 >
                                     <Settings className="w-4 h-4 text-slate-400 dark:text-slate-500" />
@@ -189,7 +189,7 @@ export function Topbar() {
                                         logout();
                                         setIsProfileOpen(false);
                                     }}
-                                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors duration-150"
+                                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors duration-200"
                                     id="profile-menu-signout"
                                 >
                                     <LogOut className="w-4 h-4" />

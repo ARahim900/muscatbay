@@ -619,7 +619,7 @@ export default function ElectricityPage() {
 
     if (loading) {
         return (
-            <div className="space-y-6 sm:space-y-7 md:space-y-8 w-full animate-in fade-in duration-300">
+            <div className="space-y-6 sm:space-y-7 md:space-y-8 w-full animate-in fade-in duration-200">
                 {/* Header skeleton */}
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div className="space-y-2">
@@ -792,7 +792,7 @@ export default function ElectricityPage() {
             )}
 
             {activeTab === 'overview' && (
-                <div className="space-y-6 animate-in fade-in duration-500">
+                <div className="space-y-6 animate-in fade-in duration-200">
 
                     <StatsGrid stats={stats} />
 
@@ -848,7 +848,7 @@ export default function ElectricityPage() {
             )}
 
             {activeTab === 'analysis' && (
-                <div className="space-y-6 animate-in fade-in duration-500">
+                <div className="space-y-6 animate-in fade-in duration-200">
                     {/* Filtered Stats Grid */}
                     <StatsGrid stats={analysisData.stats} />
 
@@ -1189,7 +1189,7 @@ export default function ElectricityPage() {
                 };
 
                 return (
-                    <div className="space-y-4 animate-in fade-in duration-500">
+                    <div className="space-y-4 animate-in fade-in duration-200">
                         {/* Toolbar */}
                         <TableToolbar>
                             <div className="relative flex-1 min-w-[200px] max-w-md">

@@ -368,7 +368,7 @@ export function DateRangePicker({
                                 {/* Month label */}
                                 <span
                                     className={`
-                                        text-[11px] leading-none transition-colors duration-150
+                                        text-[11px] leading-none transition-colors duration-200
                                         ${isEndpoint
                                             ? 'font-extrabold text-[#4E4456] dark:text-[#81D8D0]'
                                             : isInRange
@@ -383,7 +383,7 @@ export function DateRangePicker({
                                 {/* Data availability dot */}
                                 <span
                                     className={`
-                                        mt-1.5 w-1 h-1 rounded-full transition-all duration-150
+                                        mt-1.5 w-1 h-1 rounded-full transition-all duration-200
                                         ${isEndpoint
                                             ? 'bg-[#4E4456] dark:bg-[#81D8D0] w-1.5 h-1.5'
                                             : isInRange

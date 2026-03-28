@@ -69,7 +69,7 @@ export function Sidebar() {
       {/* Mobile overlay - only shown on mobile when sidebar is open */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/40 backdrop-blur-[2px] z-30 md:hidden transition-opacity duration-300"
+          className="fixed inset-0 bg-black/40 backdrop-blur-[2px] z-30 md:hidden transition-opacity duration-200"
           onClick={() => setIsOpen(false)}
           aria-hidden="true"
         />
@@ -78,11 +78,11 @@ export function Sidebar() {
       {/* Sidebar Container */}
       <aside
         className={`
-          fixed top-0 left-0 h-screen z-40 
+          fixed top-0 start-0 h-screen z-40 
           flex flex-col
           bg-[#4e4456] dark:bg-[#1E293B] shadow-xl
-          transition-all duration-300 ease-out
-          ${isOpen ? "translate-x-0" : "-translate-x-full"}
+          transition-all duration-200 ease-out
+          ${isOpen ? "translate-x-0 rtl:-translate-x-0" : "-translate-x-full rtl:translate-x-full"}
           ${isCollapsed ? "w-[72px]" : "w-[220px]"}
           md:translate-x-0
         `}
@@ -166,7 +166,7 @@ export function Sidebar() {
                     href={item.href}
                     onClick={handleItemClick}
                     className={`
-                      group/nav flex items-center gap-3 py-2.5 px-3 rounded-lg text-left transition-all duration-300 ease-out relative overflow-hidden
+                      group/nav flex items-center gap-3 py-2.5 px-3 rounded-lg text-left transition-all duration-200 ease-out relative overflow-hidden
                       ${isActive
                         ? "bg-white/10 backdrop-blur-md text-white shadow-[0_0_15px_rgba(129,216,208,0.2)]"
                         : "text-white/70 hover:bg-white/10 hover:backdrop-blur-sm hover:text-white"
@@ -176,7 +176,7 @@ export function Sidebar() {
                     title={isCollapsed ? item.name : undefined}
                   >
                     {/* Animated Active Indicator */}
-                    <div className={`absolute left-0 top-0 bottom-0 w-1 bg-[#81D8D0] shadow-[0_0_10px_rgba(129,216,208,0.8)] transition-all duration-300 ease-out origin-left ${isActive ? 'scale-x-100 opacity-100' : 'scale-x-0 opacity-0'}`} />
+                    <div className={`absolute start-0 top-0 bottom-0 w-1 bg-[#81D8D0] shadow-[0_0_10px_rgba(129,216,208,0.8)] transition-all duration-200 ease-out origin-left ${isActive ? 'scale-x-100 opacity-100' : 'scale-x-0 opacity-0'}`} />
                     <Icon
                       className={`
                         w-5 h-5 flex-shrink-0 transition-all duration-200 relative z-10
@@ -197,9 +197,9 @@ export function Sidebar() {
 
                     {/* Tooltip for collapsed state */}
                     {isCollapsed && (
-                      <div className="absolute left-full ml-3 px-3 py-2 bg-white text-[#4e4456] text-sm rounded-lg opacity-0 invisible group-hover/nav:opacity-100 group-hover/nav:visible transition-all duration-200 whitespace-nowrap z-50 shadow-lg font-medium pointer-events-none">
+                      <div className="absolute start-full ms-3 px-3 py-2 bg-white text-[#4e4456] text-sm rounded-lg opacity-0 invisible group-hover/nav:opacity-100 group-hover/nav:visible transition-all duration-200 whitespace-nowrap z-50 shadow-lg font-medium pointer-events-none">
                         {item.name}
-                        <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1 w-2 h-2 bg-white rotate-45" />
+                        <div className="absolute start-0 top-1/2 -translate-y-1/2 -translate-x-1 rtl:translate-x-1 w-2 h-2 bg-white rotate-45" />
                       </div>
                     )}
                   </Link>
@@ -223,7 +223,7 @@ export function Sidebar() {
                 href={item.href}
                 onClick={handleItemClick}
                 className={`
-                  group/nav flex items-center gap-3 py-2.5 px-3 rounded-lg transition-all duration-300 ease-out relative overflow-hidden
+                  group/nav flex items-center gap-3 py-2.5 px-3 rounded-lg transition-all duration-200 ease-out relative overflow-hidden
                   ${isActive
                     ? "bg-white/10 backdrop-blur-md text-white shadow-[0_0_15px_rgba(129,216,208,0.2)]"
                     : "text-white/70 hover:bg-white/10 hover:backdrop-blur-sm hover:text-white"
@@ -233,10 +233,10 @@ export function Sidebar() {
                 title={isCollapsed ? item.name : undefined}
               >
                 {/* Animated Active Indicator */}
-                <div className={`absolute left-0 top-0 bottom-0 w-1 bg-[#81D8D0] shadow-[0_0_10px_rgba(129,216,208,0.8)] transition-all duration-300 ease-out origin-left ${isActive ? 'scale-x-100 opacity-100' : 'scale-x-0 opacity-0'}`} />
+                <div className={`absolute start-0 top-0 bottom-0 w-1 bg-[#81D8D0] shadow-[0_0_10px_rgba(129,216,208,0.8)] transition-all duration-200 ease-out origin-left ${isActive ? 'scale-x-100 opacity-100' : 'scale-x-0 opacity-0'}`} />
                 <Icon
                   className={`
-                    w-5 h-5 flex-shrink-0 transition-all duration-300 ease-out relative z-10
+                    w-5 h-5 flex-shrink-0 transition-all duration-200 ease-out relative z-10
                     ${isActive ? "text-[#81D8D0] drop-shadow-[0_0_6px_rgba(129,216,208,0.6)]" : "group-hover/nav:scale-110 group-hover/nav:rotate-3"}
                   `}
                 />
@@ -246,9 +246,9 @@ export function Sidebar() {
 
                 {/* Tooltip for collapsed state */}
                 {isCollapsed && (
-                  <div className="absolute left-full ml-3 px-3 py-2 bg-white text-[#4e4456] text-sm rounded-lg opacity-0 invisible group-hover/nav:opacity-100 group-hover/nav:visible transition-all duration-200 whitespace-nowrap z-50 shadow-lg font-medium pointer-events-none">
+                  <div className="absolute start-full ms-3 px-3 py-2 bg-white text-[#4e4456] text-sm rounded-lg opacity-0 invisible group-hover/nav:opacity-100 group-hover/nav:visible transition-all duration-200 whitespace-nowrap z-50 shadow-lg font-medium pointer-events-none">
                     {item.name}
-                    <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1 w-2 h-2 bg-white rotate-45" />
+                    <div className="absolute start-0 top-1/2 -translate-y-1/2 -translate-x-1 rtl:translate-x-1 w-2 h-2 bg-white rotate-45" />
                   </div>
                 )}
               </Link>
@@ -259,7 +259,7 @@ export function Sidebar() {
           <button
             onClick={logout}
             className={`
-              group/nav w-full flex items-center gap-3 py-2.5 px-3 rounded-lg transition-all duration-300 ease-out relative
+              group/nav w-full flex items-center gap-3 py-2.5 px-3 rounded-lg transition-all duration-200 ease-out relative
               text-white/70 hover:bg-red-500/20 hover:text-red-300 hover:backdrop-blur-sm
               ${isCollapsed ? "justify-center px-2" : ""}
             `}
@@ -272,9 +272,9 @@ export function Sidebar() {
 
             {/* Tooltip for collapsed state */}
             {isCollapsed && (
-              <div className="absolute left-full ml-3 px-3 py-2 bg-white text-[#4e4456] text-sm rounded-lg opacity-0 invisible group-hover/nav:opacity-100 group-hover/nav:visible transition-all duration-200 whitespace-nowrap z-50 shadow-lg font-medium pointer-events-none">
+              <div className="absolute start-full ms-3 px-3 py-2 bg-white text-[#4e4456] text-sm rounded-lg opacity-0 invisible group-hover/nav:opacity-100 group-hover/nav:visible transition-all duration-200 whitespace-nowrap z-50 shadow-lg font-medium pointer-events-none">
                 Sign Out
-                <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1 w-2 h-2 bg-white rotate-45" />
+                <div className="absolute start-0 top-1/2 -translate-y-1/2 -translate-x-1 rtl:translate-x-1 w-2 h-2 bg-white rotate-45" />
               </div>
             )}
           </button>

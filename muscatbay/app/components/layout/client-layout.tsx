@@ -20,10 +20,10 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
       {/* On desktop: left margin for the sidebar */}
       <main
         className={`
-          flex-1 min-w-0 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]
+          flex-1 min-w-0 transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]
           min-h-[100dvh] bg-gray-50 dark:bg-slate-950
-          ml-0 pb-16 md:pb-0
-          ${isCollapsed ? "md:ml-[72px]" : "md:ml-[220px]"}
+          ms-0 pb-16 md:pb-0
+          ${isCollapsed ? "md:ms-[72px]" : "md:ms-[220px]"}
         `}
       >
         <Topbar />

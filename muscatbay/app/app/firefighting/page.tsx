@@ -212,8 +212,8 @@ function ProgressBar({ done, total, faults }: { done: number; total: number; fau
     return (
         <div className="flex items-center gap-3">
             <div className="flex-1 h-2.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden flex">
-                <div className="h-full bg-emerald-500 transition-all duration-500" style={{ width: `${pctDone}%` }} />
-                {faults > 0 && <div className="h-full bg-red-400 transition-all duration-500" style={{ width: `${pctFault}%` }} />}
+                <div className="h-full bg-emerald-500 transition-all duration-200" style={{ width: `${pctDone}%` }} />
+                {faults > 0 && <div className="h-full bg-red-400 transition-all duration-200" style={{ width: `${pctFault}%` }} />}
             </div>
             <span className="text-xs font-semibold text-slate-600 dark:text-slate-400 tabular-nums whitespace-nowrap">{done}/{total}</span>
         </div>
@@ -233,7 +233,7 @@ function StageCard({ stage, isExpanded, onToggle, filterStatus }: { stage: Stage
     const notStartedCount = stage.buildings.filter(b => b.status === "not_started").length;
 
     return (
-        <Card className={cn("glass-card overflow-hidden transition-all duration-300", stageStyle.border, isExpanded && "shadow-md")}>
+        <Card className={cn("glass-card overflow-hidden transition-all duration-200", stageStyle.border, isExpanded && "shadow-md")}>
             <button
                 onClick={onToggle}
                 className={cn("w-full flex items-center gap-3 sm:gap-4 px-3 sm:px-5 py-3 sm:py-4 transition-colors text-left", stageStyle.bg)}
@@ -442,7 +442,7 @@ export default function FirefightingPage() {
 
     if (loading) {
         return (
-            <div className="space-y-6 sm:space-y-7 md:space-y-8 w-full animate-in fade-in duration-300">
+            <div className="space-y-6 sm:space-y-7 md:space-y-8 w-full animate-in fade-in duration-200">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div className="space-y-2">
                         <Skeleton className="h-9 w-64" />
@@ -488,7 +488,7 @@ export default function FirefightingPage() {
 
             {/* ══════════ DASHBOARD ══════════ */}
             {activeTab === 'dashboard' && (
-                <div className="space-y-6 animate-in fade-in duration-500">
+                <div className="space-y-6 animate-in fade-in duration-200">
                     <StatsGrid stats={stats} />
 
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
@@ -567,7 +567,7 @@ export default function FirefightingPage() {
 
             {/* ══════════ PPM TRACKER ══════════ */}
             {activeTab === 'ppm' && (
-                <div className="space-y-6 animate-in fade-in duration-500">
+                <div className="space-y-6 animate-in fade-in duration-200">
                     {/* Summary Cards */}
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
                         <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-3 sm:p-4 text-center">
@@ -635,7 +635,7 @@ export default function FirefightingPage() {
 
             {/* ══════════ EQUIPMENT ══════════ */}
             {activeTab === 'equipment' && (
-                <div className="space-y-6 animate-in fade-in duration-500">
+                <div className="space-y-6 animate-in fade-in duration-200">
                     <Card className="glass-card">
                         <CardContent className="p-4">
                             <div className="relative">
@@ -710,7 +710,7 @@ export default function FirefightingPage() {
 
             {/* ══════════ FAULTS ══════════ */}
             {activeTab === 'faults' && (
-                <div className="space-y-6 animate-in fade-in duration-500">
+                <div className="space-y-6 animate-in fade-in duration-200">
                     {/* PO Blocker Alert */}
                     <Card className="glass-card border-red-200 dark:border-red-800 bg-red-50/50 dark:bg-red-900/20">
                         <CardContent className="p-4">
@@ -837,7 +837,7 @@ export default function FirefightingPage() {
 
             {/* ══════════ CONTACTS ══════════ */}
             {activeTab === 'contacts' && (
-                <div className="space-y-6 animate-in fade-in duration-500">
+                <div className="space-y-6 animate-in fade-in duration-200">
                     <Card className="glass-card">
                         <CardHeader className="glass-card-header border-b border-slate-100 dark:border-slate-700">
                             <CardTitle className="flex items-center gap-2">
@@ -876,7 +876,7 @@ export default function FirefightingPage() {
 
             {/* ══════════ CONTRACT INFO ══════════ */}
             {activeTab === 'contract' && (
-                <div className="space-y-6 animate-in fade-in duration-500">
+                <div className="space-y-6 animate-in fade-in duration-200">
                     {/* Contract Summary */}
                     <Card className="glass-card">
                         <CardHeader className="glass-card-header border-b border-slate-100 dark:border-slate-700">

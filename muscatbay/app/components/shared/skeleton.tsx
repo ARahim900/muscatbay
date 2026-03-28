@@ -127,7 +127,7 @@ export function ChartSkeleton({ height = "h-[300px]" }: { height?: string }) {
 // Full page loading skeleton
 export function PageSkeleton() {
     return (
-        <div className="space-y-6 animate-in fade-in duration-500">
+        <div className="space-y-6 animate-in fade-in duration-200">
             {/* Breadcrumb skeleton */}
             <div className="flex items-center gap-2">
                 <Skeleton className="h-4 w-20" />

@@ -119,22 +119,22 @@ export default function LoginPage() {
 
                         {/* Feature Cards */}
                         <div className="grid grid-cols-2 gap-4 max-w-md">
-                            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/10 hover:bg-white/15 transition-all duration-300 group">
+                            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/10 hover:bg-white/15 transition-all duration-200 group">
                                 <Droplets className="h-6 w-6 text-[#A8D5E3] mb-2 group-hover:scale-110 transition-transform" />
                                 <h3 className="text-white font-semibold text-sm">Water Systems</h3>
                                 <p className="text-white/60 text-xs mt-1">Real-time monitoring</p>
                             </div>
-                            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/10 hover:bg-white/15 transition-all duration-300 group">
+                            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/10 hover:bg-white/15 transition-all duration-200 group">
                                 <BarChart3 className="h-6 w-6 text-[#A8D5E3] mb-2 group-hover:scale-110 transition-transform" />
                                 <h3 className="text-white font-semibold text-sm">Analytics</h3>
                                 <p className="text-white/60 text-xs mt-1">Data-driven insights</p>
                             </div>
-                            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/10 hover:bg-white/15 transition-all duration-300 group">
+                            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/10 hover:bg-white/15 transition-all duration-200 group">
                                 <Waves className="h-6 w-6 text-[#A8D5E3] mb-2 group-hover:scale-110 transition-transform" />
                                 <h3 className="text-white font-semibold text-sm">STP Plants</h3>
                                 <p className="text-white/60 text-xs mt-1">Treatment tracking</p>
                             </div>
-                            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/10 hover:bg-white/15 transition-all duration-300 group">
+                            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/10 hover:bg-white/15 transition-all duration-200 group">
                                 <Shield className="h-6 w-6 text-[#A8D5E3] mb-2 group-hover:scale-110 transition-transform" />
                                 <h3 className="text-white font-semibold text-sm">Security</h3>
                                 <p className="text-white/60 text-xs mt-1">Enterprise-grade</p>
@@ -197,7 +197,7 @@ export default function LoginPage() {
                         <form onSubmit={handleSubmit} className="space-y-6">
                             {/* Error Message */}
                             {error && (
-                                <div className="p-4 text-sm text-red-600 bg-red-50 dark:bg-red-900/20 dark:text-red-400 rounded-xl border border-red-200 dark:border-red-800 flex items-center gap-3 animate-in slide-in-from-top duration-300">
+                                <div className="p-4 text-sm text-red-600 bg-red-50 dark:bg-red-900/20 dark:text-red-400 rounded-xl border border-red-200 dark:border-red-800 flex items-center gap-3 animate-in slide-in-from-top duration-200">
                                     <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
                                     {error}
                                 </div>
@@ -208,8 +208,8 @@ export default function LoginPage() {
                                 <Label htmlFor="email" className="text-slate-700 dark:text-slate-300 font-medium">
                                     Email Address
                                 </Label>
-                                <div className={`relative transition-all duration-300 ${focusedField === 'email' ? 'scale-[1.02]' : ''}`}>
-                                    <div className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors duration-300 ${focusedField === 'email' ? 'text-[#4E4456]' : 'text-slate-400'}`}>
+                                <div className={`relative transition-all duration-200 ${focusedField === 'email' ? 'scale-[1.02]' : ''}`}>
+                                    <div className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors duration-200 ${focusedField === 'email' ? 'text-[#4E4456]' : 'text-slate-400'}`}>
                                         <Mail className="h-5 w-5" />
                                     </div>
                                     <Input
@@ -220,7 +220,7 @@ export default function LoginPage() {
                                         onChange={(e) => handleEmailChange(e.target.value)}
                                         onFocus={() => setFocusedField('email')}
                                         onBlur={() => setFocusedField(null)}
-                                        className={`pl-12 h-12 rounded-xl border-2 transition-all duration-300 ${emailError
+                                        className={`pl-12 h-12 rounded-xl border-2 transition-all duration-200 ${emailError
                                             ? 'border-red-500 focus:border-red-500'
                                             : focusedField === 'email'
                                                 ? 'border-[#4E4456] shadow-lg shadow-[#4E4456]/10'
@@ -251,8 +251,8 @@ export default function LoginPage() {
                                         Forgot password?
                                     </Link>
                                 </div>
-                                <div className={`relative transition-all duration-300 ${focusedField === 'password' ? 'scale-[1.02]' : ''}`}>
-                                    <div className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors duration-300 ${focusedField === 'password' ? 'text-[#4E4456]' : 'text-slate-400'}`}>
+                                <div className={`relative transition-all duration-200 ${focusedField === 'password' ? 'scale-[1.02]' : ''}`}>
+                                    <div className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors duration-200 ${focusedField === 'password' ? 'text-[#4E4456]' : 'text-slate-400'}`}>
                                         <Lock className="h-5 w-5" />
                                     </div>
                                     <Input
@@ -263,7 +263,7 @@ export default function LoginPage() {
                                         onChange={(e) => setPassword(e.target.value)}
                                         onFocus={() => setFocusedField('password')}
                                         onBlur={() => setFocusedField(null)}
-                                        className={`pl-12 pr-12 h-12 rounded-xl border-2 transition-all duration-300 ${focusedField === 'password'
+                                        className={`pl-12 pr-12 h-12 rounded-xl border-2 transition-all duration-200 ${focusedField === 'password'
                                             ? 'border-[#4E4456] shadow-lg shadow-[#4E4456]/10'
                                             : 'border-slate-200 dark:border-slate-600 hover:border-slate-300'
                                             }`}
@@ -283,7 +283,7 @@ export default function LoginPage() {
                             {/* Submit Button */}
                             <Button
                                 type="submit"
-                                className="w-full h-12 bg-gradient-to-r from-[#4E4456] to-[#5f5168] hover:from-[#3A3341] hover:to-[#4E4456] text-white font-semibold rounded-xl shadow-lg shadow-[#4E4456]/25 transition-all duration-300 hover:shadow-xl hover:shadow-[#4E4456]/30 hover:scale-[1.02] active:scale-[0.98]"
+                                className="w-full h-12 bg-gradient-to-r from-[#4E4456] to-[#5f5168] hover:from-[#3A3341] hover:to-[#4E4456] text-white font-semibold rounded-xl shadow-lg shadow-[#4E4456]/25 transition-all duration-200 hover:shadow-xl hover:shadow-[#4E4456]/30 hover:scale-[1.02] active:scale-[0.98]"
                                 disabled={loading}
                             >
                                 {loading ? (
@@ -312,7 +312,7 @@ export default function LoginPage() {
                             <div className="text-center">
                                 <Link
                                     href="/signup"
-                                    className="inline-flex items-center justify-center w-full h-12 border-2 border-[#4E4456]/20 hover:border-[#4E4456] text-[#4E4456] dark:text-[#A8D5E3] dark:border-[#A8D5E3]/20 dark:hover:border-[#A8D5E3] font-semibold rounded-xl transition-all duration-300 hover:bg-[#4E4456]/5 dark:hover:bg-[#A8D5E3]/5"
+                                    className="inline-flex items-center justify-center w-full h-12 border-2 border-[#4E4456]/20 hover:border-[#4E4456] text-[#4E4456] dark:text-[#A8D5E3] dark:border-[#A8D5E3]/20 dark:hover:border-[#A8D5E3] font-semibold rounded-xl transition-all duration-200 hover:bg-[#4E4456]/5 dark:hover:bg-[#A8D5E3]/5"
                                 >
                                     Create an account
                                 </Link>

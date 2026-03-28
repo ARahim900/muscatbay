@@ -27,25 +27,25 @@ const toastConfig: Record<ToastType, { icon: React.ComponentType<{ className?: s
     success: {
         icon: CheckCircle,
         bgClass: "bg-green-50 dark:bg-green-900/20",
-        borderClass: "border-l-green-500",
+        borderClass: "border-s-green-500",
         iconClass: "text-green-500",
     },
     error: {
         icon: AlertCircle,
         bgClass: "bg-red-50 dark:bg-red-900/20",
-        borderClass: "border-l-red-500",
+        borderClass: "border-s-red-500",
         iconClass: "text-red-500",
     },
     warning: {
         icon: AlertTriangle,
         bgClass: "bg-amber-50 dark:bg-amber-900/20",
-        borderClass: "border-l-amber-500",
+        borderClass: "border-s-amber-500",
         iconClass: "text-amber-500",
     },
     info: {
         icon: Info,
         bgClass: "bg-blue-50 dark:bg-blue-900/20",
-        borderClass: "border-l-blue-500",
+        borderClass: "border-s-blue-500",
         iconClass: "text-blue-500",
     },
 };
@@ -65,9 +65,9 @@ function ToastItem({ toast, onRemove }: { toast: Toast; onRemove: () => void }) 
     return (
         <div
             className={`
-        flex items-start gap-3 p-4 rounded-lg border-l-4 shadow-lg
+        flex items-start gap-3 p-4 rounded-lg border-s-4 shadow-lg
         ${config.bgClass} ${config.borderClass}
-        animate-in slide-in-from-right-full duration-300
+        animate-in slide-in-from-right-full duration-200
         max-w-sm w-full
       `}
             role="alert"
@@ -95,7 +95,7 @@ function ToastContainer({ toasts, onRemove }: { toasts: Toast[]; onRemove: (id: 
     if (toasts.length === 0) return null;
 
     return (
-        <div className="fixed bottom-4 right-4 z-[100] flex flex-col gap-2">
+        <div className="fixed bottom-4 end-4 z-[100] flex flex-col gap-2">
             {toasts.map((toast) => (
                 <ToastItem
                     key={toast.id}

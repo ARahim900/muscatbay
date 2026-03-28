@@ -68,7 +68,7 @@ export function StatsGrid({ stats, className }: StatsGridProps) {
                     <>
                         {/* Animated top border line */}
                         <div
-                            className="absolute top-0 left-0 w-full h-[3px] opacity-0 group-hover/stat:opacity-100 transition-opacity duration-300"
+                            className="absolute top-0 left-0 w-full h-[3px] opacity-0 group-hover/stat:opacity-100 transition-opacity duration-200"
                             style={{ backgroundColor: stat.color || iconColor }}
                         />
                         <div className="flex justify-between items-start gap-2">
@@ -80,7 +80,7 @@ export function StatsGrid({ stats, className }: StatsGridProps) {
                                     {stat.value}
                                 </h3>
                             </div>
-                            <div className="p-1.5 sm:p-2 rounded-lg bg-gray-50/80 dark:bg-slate-800/80 group-hover/stat:scale-110 group-hover/stat:-rotate-3 group-hover/stat:shadow-sm transition-all duration-300 ease-out flex-shrink-0">
+                            <div className="p-1.5 sm:p-2 rounded-lg bg-gray-50/80 dark:bg-slate-800/80 group-hover/stat:scale-110 group-hover/stat:-rotate-3 group-hover/stat:shadow-sm transition-all duration-200 ease-out flex-shrink-0">
                                 <stat.icon
                                     className="w-4 h-4 sm:w-5 sm:h-5 group-hover/stat:animate-pulse-glow"
                                     style={{ color: stat.color || iconColor }}
@@ -96,12 +96,12 @@ export function StatsGrid({ stats, className }: StatsGridProps) {
                                         stat.trend === 'down' ? "text-rose-600" :
                                             "text-slate-500"
                                 )}>
-                                    {stat.trend === 'up' && <TrendingUp size={14} className="mr-1" />}
-                                    {stat.trend === 'down' && <TrendingDown size={14} className="mr-1" />}
-                                    {stat.trend === 'neutral' && <Minus size={14} className="mr-1" />}
+                                    {stat.trend === 'up' && <TrendingUp size={14} className="me-1" />}
+                                    {stat.trend === 'down' && <TrendingDown size={14} className="me-1" />}
+                                    {stat.trend === 'neutral' && <Minus size={14} className="me-1" />}
                                     {stat.trendValue}
                                 </span>
-                                <span className="text-slate-400 ml-1.5 text-xs">vs last month</span>
+                                <span className="text-slate-400 ms-1.5 text-xs">vs last month</span>
                             </div>
                         )}
                         {stat.subtitle && !stat.trendValue && (
@@ -110,7 +110,7 @@ export function StatsGrid({ stats, className }: StatsGridProps) {
                     </>
                 );
 
-                const cardClassName = "bg-white dark:bg-slate-900 p-3 sm:p-4 md:p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] hover:shadow-[0_8px_30px_-4px_rgba(6,81,237,0.15)] hover:-translate-y-1 active:scale-[0.98] transition-all duration-300 ease-out group/stat overflow-hidden relative";
+                const cardClassName = "bg-white dark:bg-slate-900 p-3 sm:p-4 md:p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] hover:shadow-[0_8px_30px_-4px_rgba(6,81,237,0.15)] hover:-translate-y-1 active:scale-[0.98] transition-all duration-200 ease-out group/stat overflow-hidden relative";
 
                 return stat.href ? (
                     <Link

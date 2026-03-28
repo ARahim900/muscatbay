@@ -93,7 +93,7 @@ export function BottomNav() {
       <div
         className={`
           fixed bottom-[64px] left-0 right-0 z-[95] md:hidden
-          transition-transform duration-300 ease-out
+          transition-transform duration-200 ease-out
           ${drawerOpen ? 'translate-y-0' : 'translate-y-[calc(100%+64px)]'}
         `}
       >
@@ -130,7 +130,7 @@ export function BottomNav() {
                   <Icon className={`w-5 h-5 flex-shrink-0 ${active ? 'text-[#00D2B3]' : ''}`} />
                   <span className={`text-sm ${active ? 'font-semibold' : 'font-medium'}`}>{item.name}</span>
                   {active && (
-                    <div className="ml-auto w-2 h-2 rounded-full bg-[#00D2B3] shadow-[0_0_8px_rgba(0,210,179,0.6)]" />
+                    <div className="ms-auto w-2 h-2 rounded-full bg-[#00D2B3] shadow-[0_0_8px_rgba(0,210,179,0.6)]" />
                   )}
                 </Link>
               );

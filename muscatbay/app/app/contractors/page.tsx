@@ -217,7 +217,7 @@ export default function ContractorsPage() {
 
     if (loading) {
         return (
-            <div className="space-y-6 sm:space-y-7 md:space-y-8 w-full animate-in fade-in duration-300">
+            <div className="space-y-6 sm:space-y-7 md:space-y-8 w-full animate-in fade-in duration-200">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div className="space-y-2">
                         <Skeleton className="h-9 w-48" />

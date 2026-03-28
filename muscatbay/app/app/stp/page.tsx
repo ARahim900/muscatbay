@@ -596,7 +596,7 @@ export default function STPPage() {
 
     if (loading) {
         return (
-            <div className="space-y-6 sm:space-y-7 md:space-y-8 w-full animate-in fade-in duration-300">
+            <div className="space-y-6 sm:space-y-7 md:space-y-8 w-full animate-in fade-in duration-200">
                 {/* Header skeleton */}
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div className="space-y-2">
@@ -664,7 +664,7 @@ export default function STPPage() {
             />
 
             {activeTab === "dashboard" && (
-                <div className="space-y-6 animate-in fade-in duration-300">
+                <div className="space-y-6 animate-in fade-in duration-200">
                     {/* Date Range Filter Card */}
                     {allMonths.length > 0 && (
                         <Card className="glass-card">
@@ -963,7 +963,7 @@ export default function STPPage() {
             )}
 
             {activeTab === "details" && (
-                <Card className="h-[calc(100vh-12rem)] min-h-[400px] max-h-[800px] flex flex-col animate-in fade-in duration-500">
+                <Card className="h-[calc(100vh-12rem)] min-h-[400px] max-h-[800px] flex flex-col animate-in fade-in duration-200">
                     <CardHeader>
                         <div className="flex items-center gap-4">
                             <Database className="w-6 h-6 text-primary" />
