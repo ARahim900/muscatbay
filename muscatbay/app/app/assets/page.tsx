@@ -66,7 +66,7 @@ export default function AssetsPage() {
                 setAssets(mockData);
                 setTotalCount(mockData.length);
                 setDataSource('mock');
-                setError("Supabase not configured. Using demo data.");
+                setError("Live data unavailable — showing demo data.");
                 setLoading(false);
                 return;
             }
@@ -95,7 +95,7 @@ export default function AssetsPage() {
             }
         } catch (e) {
             console.error("Supabase fetch failed:", e);
-            setError("Connection failed (check extensions/adblock). Using demo data.");
+            setError("Unable to load live data — showing demo data. Try disabling ad blockers if the issue persists.");
             const mockData = await getAssets();
             setAssets(mockData);
             setTotalCount(mockData.length);

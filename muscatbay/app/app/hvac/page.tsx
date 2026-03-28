@@ -47,7 +47,7 @@ export default function GulfExpertPage() {
     setError(null);
 
     if (!isSupabaseConfigured()) {
-      setError("Supabase is not configured. Please check environment variables.");
+      setError("Unable to connect to the database. Please try again later or contact support.");
       setDataSource("none");
       if (!silent) setLoading(false);
       return;
@@ -55,7 +55,7 @@ export default function GulfExpertPage() {
 
     const supabase = getSupabaseClient();
     if (!supabase) {
-      setError("Failed to initialize Supabase client.");
+      setError("Unable to initialize the data connection. Please refresh the page.");
       if (!silent) setLoading(false);
       return;
     }
