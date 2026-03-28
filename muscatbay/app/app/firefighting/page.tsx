@@ -162,11 +162,11 @@ const CONTACTS = [
 // ═══════════════════════════════════════════════════════════════
 
 const STATUS_CONFIG: Record<PPMStatus, { label: string; icon: typeof CheckCircle; bg: string; text: string; dot: string }> = {
-    done: { label: "Done", icon: CheckCircle, bg: "bg-emerald-100 dark:bg-emerald-900/30", text: "text-emerald-700 dark:text-emerald-400", dot: "bg-emerald-500" },
-    in_progress: { label: "In Progress", icon: Clock, bg: "bg-blue-100 dark:bg-blue-900/30", text: "text-blue-700 dark:text-blue-400", dot: "bg-blue-500" },
-    not_started: { label: "Not Started", icon: CircleDot, bg: "bg-slate-100 dark:bg-slate-700", text: "text-slate-500 dark:text-slate-400", dot: "bg-slate-300 dark:bg-slate-500" },
-    fault: { label: "Fault", icon: XCircle, bg: "bg-red-100 dark:bg-red-900/30", text: "text-red-700 dark:text-red-400", dot: "bg-red-500" },
-    no_access: { label: "No Access", icon: AlertTriangle, bg: "bg-amber-100 dark:bg-amber-900/30", text: "text-amber-700 dark:text-amber-400", dot: "bg-amber-500" },
+    done: { label: "Done", icon: CheckCircle, bg: "bg-secondary/10 dark:bg-secondary/15", text: "text-secondary dark:text-secondary", dot: "bg-secondary" },
+    in_progress: { label: "In Progress", icon: Clock, bg: "bg-primary/10 dark:bg-primary/15", text: "text-primary dark:text-slate-300", dot: "bg-primary" },
+    not_started: { label: "Not Started", icon: CircleDot, bg: "bg-muted dark:bg-muted", text: "text-muted-foreground", dot: "bg-slate-300 dark:bg-slate-500" },
+    fault: { label: "Fault", icon: XCircle, bg: "bg-destructive/10 dark:bg-destructive/15", text: "text-destructive dark:text-red-400", dot: "bg-destructive" },
+    no_access: { label: "No Access", icon: AlertTriangle, bg: "bg-amber-100/60 dark:bg-amber-900/20", text: "text-amber-700 dark:text-amber-400", dot: "bg-amber-500" },
 };
 
 const STAGE_STATUS: Record<StageStatus, { label: string; color: string; border: string; bg: string }> = {
@@ -192,15 +192,16 @@ function StatusBadge({ status }: { status: PPMStatus }) {
 }
 
 function SystemTag({ label }: { label: string }) {
+    // Use muted, consistent tones — avoid bright saturated colors
     const colors: Record<string, string> = {
-        FA: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
-        FF: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
-        FE: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
-        "Hose Reel": "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-        "Fire Hydrants": "bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400",
+        FA: "bg-primary/10 text-primary dark:bg-primary/20 dark:text-slate-300",
+        FF: "bg-destructive/10 text-destructive dark:bg-destructive/20 dark:text-red-400",
+        FE: "bg-amber-100/80 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400",
+        "Hose Reel": "bg-secondary/10 text-primary dark:bg-secondary/20 dark:text-secondary",
+        "Fire Hydrants": "bg-secondary/10 text-primary dark:bg-secondary/20 dark:text-secondary",
     };
     return (
-        <span className={cn("px-1.5 py-0.5 rounded text-[9px] font-bold uppercase", colors[label] || "bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-400")}>
+        <span className={cn("px-1.5 py-0.5 rounded text-[9px] font-bold uppercase", colors[label] || "bg-muted text-muted-foreground")}>
             {label}
         </span>
     );
@@ -212,8 +213,8 @@ function ProgressBar({ done, total, faults }: { done: number; total: number; fau
     return (
         <div className="flex items-center gap-3">
             <div className="flex-1 h-2.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden flex">
-                <div className="h-full bg-emerald-500 transition-all duration-200" style={{ width: `${pctDone}%` }} />
-                {faults > 0 && <div className="h-full bg-red-400 transition-all duration-200" style={{ width: `${pctFault}%` }} />}
+                <div className="h-full bg-secondary transition-all duration-200" style={{ width: `${pctDone}%` }} />
+                {faults > 0 && <div className="h-full bg-destructive/70 transition-all duration-200" style={{ width: `${pctFault}%` }} />}
             </div>
             <span className="text-xs font-semibold text-slate-600 dark:text-slate-400 tabular-nums whitespace-nowrap">{done}/{total}</span>
         </div>
@@ -252,11 +253,11 @@ function StageCard({ stage, isExpanded, onToggle, filterStatus }: { stage: Stage
                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{stage.period}</p>
                 </div>
 
-                <div className="hidden sm:flex items-center gap-3 mr-2">
-                    {doneCount > 0 && <span className="flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400 font-semibold"><span className="w-2 h-2 rounded-full bg-emerald-500" />{doneCount}</span>}
-                    {inProgressCount > 0 && <span className="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 font-semibold"><span className="w-2 h-2 rounded-full bg-blue-500" />{inProgressCount}</span>}
-                    {faultCount > 0 && <span className="flex items-center gap-1 text-xs text-red-600 dark:text-red-400 font-semibold"><span className="w-2 h-2 rounded-full bg-red-500" />{faultCount}</span>}
-                    {notStartedCount > 0 && <span className="flex items-center gap-1 text-xs text-slate-400 font-semibold"><span className="w-2 h-2 rounded-full bg-slate-300 dark:bg-slate-500" />{notStartedCount}</span>}
+                <div className="hidden sm:flex items-center gap-3 me-2">
+                    {doneCount > 0 && <span className="flex items-center gap-1 text-xs text-secondary font-semibold"><span className="w-2 h-2 rounded-full bg-secondary" />{doneCount}</span>}
+                    {inProgressCount > 0 && <span className="flex items-center gap-1 text-xs text-primary dark:text-slate-400 font-semibold"><span className="w-2 h-2 rounded-full bg-primary" />{inProgressCount}</span>}
+                    {faultCount > 0 && <span className="flex items-center gap-1 text-xs text-destructive dark:text-red-400 font-semibold"><span className="w-2 h-2 rounded-full bg-destructive" />{faultCount}</span>}
+                    {notStartedCount > 0 && <span className="flex items-center gap-1 text-xs text-muted-foreground font-semibold"><span className="w-2 h-2 rounded-full bg-slate-300 dark:bg-slate-500" />{notStartedCount}</span>}
                 </div>
 
                 <div className="w-32 hidden md:block">
@@ -272,12 +273,12 @@ function StageCard({ stage, isExpanded, onToggle, filterStatus }: { stage: Stage
                     </div>
 
                     <div className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-2 sm:py-2.5 border-b border-slate-100 dark:border-slate-700 flex-wrap">
-                        <span className="text-[10px] text-slate-400 uppercase font-semibold mr-1">Legend:</span>
-                        <span className="text-[10px] text-emerald-600 dark:text-emerald-400 flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Done</span>
-                        <span className="text-[10px] text-blue-600 dark:text-blue-400 flex items-center gap-1"><Clock className="w-3 h-3" /> In Progress</span>
-                        <span className="text-[10px] text-red-600 dark:text-red-400 flex items-center gap-1"><XCircle className="w-3 h-3" /> Fault</span>
+                        <span className="text-[10px] text-slate-400 uppercase font-semibold me-1">Legend:</span>
+                        <span className="text-[10px] text-secondary flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Done</span>
+                        <span className="text-[10px] text-primary dark:text-slate-400 flex items-center gap-1"><Clock className="w-3 h-3" /> In Progress</span>
+                        <span className="text-[10px] text-destructive dark:text-red-400 flex items-center gap-1"><XCircle className="w-3 h-3" /> Fault</span>
                         <span className="text-[10px] text-amber-600 dark:text-amber-400 flex items-center gap-1"><AlertTriangle className="w-3 h-3" /> No Access</span>
-                        <span className="text-[10px] text-slate-400 flex items-center gap-1"><CircleDot className="w-3 h-3" /> Not Started</span>
+                        <span className="text-[10px] text-muted-foreground flex items-center gap-1"><CircleDot className="w-3 h-3" /> Not Started</span>
                     </div>
 
                     <div className="divide-y divide-slate-50 dark:divide-slate-700/50">
@@ -286,7 +287,7 @@ function StageCard({ stage, isExpanded, onToggle, filterStatus }: { stage: Stage
                                 key={b.id}
                                 className={cn(
                                     "flex items-start sm:items-center gap-2 sm:gap-3 px-3 sm:px-5 py-2.5 sm:py-3 hover:bg-slate-50/70 dark:hover:bg-slate-700/30 transition-colors",
-                                    b.status === "fault" && "bg-red-50/40 dark:bg-red-900/10",
+                                    b.status === "fault" && "bg-destructive/5 dark:bg-destructive/10",
                                     b.status === "no_access" && "bg-amber-50/40 dark:bg-amber-900/10"
                                 )}
                             >
@@ -423,11 +424,11 @@ export default function FirefightingPage() {
 
     const getStatusColor = (status: string) => {
         switch (status) {
-            case "Operational": return "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400";
-            case "Needs Attention": return "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400";
-            case "Expired": return "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400";
-            case "Maintenance Due": return "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400";
-            default: return "bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-300";
+            case "Operational": return "bg-secondary/10 text-secondary dark:bg-secondary/15 dark:text-secondary";
+            case "Needs Attention": return "bg-amber-100/60 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400";
+            case "Expired": return "bg-destructive/10 text-destructive dark:bg-destructive/15 dark:text-red-400";
+            case "Maintenance Due": return "bg-amber-100/60 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400";
+            default: return "bg-muted text-muted-foreground";
         }
     };
 
@@ -629,7 +630,7 @@ export default function FirefightingPage() {
                                             <Badge variant="outline" className={cn(getStatusColor(item.status), "border-transparent")}>
                                                 {item.status}
                                             </Badge>
-                                            <Badge className={cn(getPriorityColor(item.priority), "border-transparent ml-2")}>
+                                            <Badge className={cn(getPriorityColor(item.priority), "border-transparent ms-2")}>
                                                 {item.priority}
                                             </Badge>
                                         </div>
@@ -682,7 +683,7 @@ export default function FirefightingPage() {
             {activeTab === 'faults' && (
                 <div className="space-y-6 animate-in fade-in duration-200">
                     {/* PO Blocker Alert */}
-                    <Card className="glass-card border-red-200 dark:border-red-800 bg-red-50/50 dark:bg-red-900/20">
+                    <Card className="glass-card border-destructive/30 dark:border-destructive/20 bg-destructive/5 dark:bg-destructive/10">
                         <CardContent className="p-4">
                             <div className="flex items-start gap-3">
                                 <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
