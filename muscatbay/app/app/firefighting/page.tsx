@@ -170,9 +170,9 @@ const STATUS_CONFIG: Record<PPMStatus, { label: string; icon: typeof CheckCircle
 };
 
 const STAGE_STATUS: Record<StageStatus, { label: string; color: string; border: string; bg: string }> = {
-    completed: { label: "Completed", color: "bg-emerald-500", border: "border-emerald-300 dark:border-emerald-700", bg: "bg-emerald-50 dark:bg-emerald-900/20" },
-    in_progress: { label: "In Progress", color: "bg-blue-500", border: "border-blue-300 dark:border-blue-700", bg: "bg-blue-50 dark:bg-blue-900/20" },
-    upcoming: { label: "Upcoming", color: "bg-slate-300 dark:bg-slate-600", border: "border-slate-200 dark:border-slate-700", bg: "bg-slate-50 dark:bg-slate-800/50" },
+    completed: { label: "Completed", color: "bg-secondary", border: "border-secondary/30 dark:border-secondary/20", bg: "bg-secondary/5 dark:bg-secondary/10" },
+    in_progress: { label: "In Progress", color: "bg-primary", border: "border-primary/30 dark:border-primary/20", bg: "bg-primary/5 dark:bg-primary/10" },
+    upcoming: { label: "Upcoming", color: "bg-slate-400 dark:bg-slate-600", border: "border-slate-200 dark:border-slate-700", bg: "bg-slate-50 dark:bg-slate-800/50" },
 };
 
 // ═══════════════════════════════════════════════════════════════
@@ -418,7 +418,8 @@ export default function FirefightingPage() {
         { key: "not_started", label: "Not Started", count: ppmStats.totalNotStarted },
     ];
 
-    const COLORS = ["#5BA88B", "#E8A838", "#C95D63", "#81D8D0"];
+    // Chart colors matching design system tokens (chart-1 through chart-5)
+    const COLORS = ["#10B981", "#E8A838", "#EF4444", "#00D2B3"];
 
     const getStatusColor = (status: string) => {
         switch (status) {
@@ -432,11 +433,11 @@ export default function FirefightingPage() {
 
     const getPriorityColor = (priority: string) => {
         switch (priority) {
-            case "Critical": return "bg-red-500 text-white";
+            case "Critical": return "bg-destructive text-white";
             case "High": return "bg-amber-500 text-white";
-            case "Medium": return "bg-amber-200 text-amber-800 dark:bg-amber-800/50 dark:text-amber-200";
-            case "Low": return "bg-emerald-500 text-white";
-            default: return "bg-slate-500 text-white";
+            case "Medium": return "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300";
+            case "Low": return "bg-secondary/20 text-secondary dark:text-secondary";
+            default: return "bg-muted text-muted-foreground";
         }
     };
 
@@ -523,43 +524,31 @@ export default function FirefightingPage() {
                                         <XAxis type="number" hide />
                                         <YAxis type="category" dataKey="name" width={100} className="text-xs" tick={{ fill: 'currentColor' }} />
                                         <Tooltip content={<LiquidTooltip />} />
-                                        <Bar dataKey="value" fill="#81D8D0" radius={[0, 4, 4, 0]} barSize={20} />
+                                        <Bar dataKey="value" fill="var(--secondary)" radius={[0, 4, 4, 0]} barSize={20} />
                                     </BarChart>
                                 </ResponsiveContainer>
                             </CardContent>
                         </Card>
                     </div>
 
-                    {/* Quick AMC Summary */}
+                    {/* Quick AMC Summary — matches other section stat patterns */}
                     <Card className="glass-card">
                         <CardHeader className="glass-card-header">
                             <div className="flex items-center justify-between">
                                 <CardTitle className="flex items-center gap-2">
-                                    <Flame className="w-5 h-5 text-red-500" />
+                                    <Flame className="w-5 h-5 text-secondary" />
                                     AMC Quick Status
                                 </CardTitle>
-                                <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">Active</Badge>
+                                <Badge variant="secondary" className="bg-secondary/10 text-secondary border-secondary/20">Active</Badge>
                             </div>
                         </CardHeader>
                         <CardContent>
-                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-                                <div className="p-3 sm:p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 text-center">
-                                    <p className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-slate-100">{ppmStats.totalAll}</p>
-                                    <p className="text-[10px] text-slate-400 uppercase font-semibold mt-1">Total PPM Items</p>
-                                </div>
-                                <div className="p-3 sm:p-4 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 text-center">
-                                    <p className="text-xl sm:text-2xl font-bold text-emerald-700 dark:text-emerald-400">{ppmStats.totalDone}</p>
-                                    <p className="text-[10px] text-emerald-600 dark:text-emerald-500 uppercase font-semibold mt-1">Completed</p>
-                                </div>
-                                <div className="p-3 sm:p-4 rounded-xl bg-red-50 dark:bg-red-900/20 text-center">
-                                    <p className="text-xl sm:text-2xl font-bold text-red-600 dark:text-red-400">{ppmStats.totalFaults}</p>
-                                    <p className="text-[10px] text-red-500 uppercase font-semibold mt-1">Open Faults</p>
-                                </div>
-                                <div className="p-3 sm:p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 text-center">
-                                    <p className="text-xl sm:text-2xl font-bold text-slate-500">{ppmStats.totalNotStarted}</p>
-                                    <p className="text-[10px] text-slate-400 uppercase font-semibold mt-1">Not Started</p>
-                                </div>
-                            </div>
+                            <StatsGrid stats={[
+                                { label: "TOTAL PPM ITEMS", value: ppmStats.totalAll.toString(), icon: ShieldCheck, variant: "primary" as const },
+                                { label: "COMPLETED", value: ppmStats.totalDone.toString(), icon: CheckCircle, variant: "success" as const },
+                                { label: "OPEN FAULTS", value: ppmStats.totalFaults.toString(), icon: AlertTriangle, variant: "danger" as const },
+                                { label: "NOT STARTED", value: ppmStats.totalNotStarted.toString(), icon: CircleDot, variant: "default" as const },
+                            ]} />
                         </CardContent>
                     </Card>
                 </div>
@@ -568,44 +557,25 @@ export default function FirefightingPage() {
             {/* ══════════ PPM TRACKER ══════════ */}
             {activeTab === 'ppm' && (
                 <div className="space-y-6 animate-in fade-in duration-200">
-                    {/* Summary Cards */}
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-                        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-3 sm:p-4 text-center">
-                            <p className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-slate-100">{ppmStats.totalAll}</p>
-                            <p className="text-[10px] text-slate-400 uppercase font-semibold mt-1">Total Items</p>
-                        </div>
-                        <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-xl border border-emerald-200 dark:border-emerald-800 p-3 sm:p-4 text-center">
-                            <p className="text-xl sm:text-2xl font-bold text-emerald-700 dark:text-emerald-400">{ppmStats.totalDone}</p>
-                            <p className="text-[10px] text-emerald-600 uppercase font-semibold mt-1">Done</p>
-                        </div>
-                        <div className="bg-red-50 dark:bg-red-900/20 rounded-xl border border-red-200 dark:border-red-800 p-3 sm:p-4 text-center">
-                            <p className="text-xl sm:text-2xl font-bold text-red-600 dark:text-red-400">{ppmStats.totalFaults}</p>
-                            <p className="text-[10px] text-red-500 uppercase font-semibold mt-1">Faults</p>
-                        </div>
-                        <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 p-3 sm:p-4 text-center">
-                            <p className="text-xl sm:text-2xl font-bold text-slate-500">{ppmStats.totalNotStarted}</p>
-                            <p className="text-[10px] text-slate-400 uppercase font-semibold mt-1">Not Started</p>
-                        </div>
-                    </div>
+                    {/* Summary Stats — same pattern as other sections */}
+                    <StatsGrid stats={[
+                        { label: "TOTAL ITEMS", value: ppmStats.totalAll.toString(), icon: ShieldCheck, variant: "primary" as const },
+                        { label: "COMPLETED", value: ppmStats.totalDone.toString(), icon: CheckCircle, variant: "success" as const },
+                        { label: "OPEN FAULTS", value: ppmStats.totalFaults.toString(), icon: AlertTriangle, variant: "danger" as const },
+                        { label: "NOT STARTED", value: ppmStats.totalNotStarted.toString(), icon: CircleDot, variant: "default" as const },
+                    ]} />
 
-                    {/* Filters */}
-                    <div className="flex items-center gap-2 flex-wrap">
-                        <Filter className="w-4 h-4 text-slate-400" />
-                        {filterOptions.map(f => (
-                            <button
-                                key={f.key}
-                                onClick={() => setFilterStatus(f.key)}
-                                className={cn(
-                                    "px-3 py-1.5 rounded-full text-xs font-semibold transition-all",
-                                    filterStatus === f.key
-                                        ? "bg-primary text-white"
-                                        : "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 hover:border-slate-400 dark:hover:border-slate-500"
-                                )}
-                            >
-                                {f.label} ({f.count})
-                            </button>
-                        ))}
-                    </div>
+                    {/* Filters — using shared TabNavigation pattern */}
+                    <TabNavigation
+                        activeTab={filterStatus}
+                        onTabChange={(key) => setFilterStatus(key)}
+                        variant="secondary"
+                        tabs={filterOptions.map(f => ({
+                            key: f.key,
+                            label: `${f.label} (${f.count})`,
+                            icon: f.key === 'done' ? CheckCircle : f.key === 'fault' ? XCircle : f.key === 'no_access' ? AlertTriangle : f.key === 'in_progress' ? Clock : f.key === 'not_started' ? CircleDot : Filter,
+                        }))}
+                    />
 
                     {/* Stages */}
                     <div className="space-y-4">
@@ -621,12 +591,12 @@ export default function FirefightingPage() {
                     </div>
 
                     {/* Year 2 note */}
-                    <Card className="glass-card border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-900/20">
+                    <Card className="glass-card border-slate-200 dark:border-slate-700">
                         <CardContent className="p-4 flex items-start gap-3">
-                            <Info className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
-                            <div className="text-sm text-blue-700 dark:text-blue-400">
+                            <Info className="w-5 h-5 text-secondary flex-shrink-0 mt-0.5" />
+                            <div className="text-sm text-slate-700 dark:text-slate-300">
                                 <p className="font-semibold">Year 2 stages (Dec 2026, Apr 2027, Aug 2027) not yet added.</p>
-                                <p className="mt-1 text-blue-500 dark:text-blue-500">PPM visits in Apr & Aug 2025 were under the previous AMC and are not tracked here.</p>
+                                <p className="mt-1 text-slate-500 dark:text-slate-400">PPM visits in Apr & Aug 2025 were under the previous AMC and are not tracked here.</p>
                             </div>
                         </CardContent>
                     </Card>
@@ -849,7 +819,7 @@ export default function FirefightingPage() {
                             <div className="divide-y divide-slate-50 dark:divide-slate-700/50">
                                 {CONTACTS.map((c, i) => (
                                     <div key={i} className="flex items-center gap-3 sm:gap-4 px-4 sm:px-5 py-3 sm:py-4 hover:bg-slate-50/70 dark:hover:bg-slate-700/30 transition-colors">
-                                        <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-primary/10 dark:bg-primary/20 flex items-center justify-center text-xs sm:text-sm font-bold text-primary dark:text-slate-200 flex-shrink-0">
+                                        <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-secondary/10 dark:bg-secondary/20 flex items-center justify-center text-xs sm:text-sm font-bold text-primary dark:text-slate-200 flex-shrink-0">
                                             {c.name.split(' ').slice(0, 2).map(n => n[0]).join('')}
                                         </div>
                                         <div className="flex-1 min-w-0">
