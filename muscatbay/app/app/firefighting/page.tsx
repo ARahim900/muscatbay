@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import {
     ShieldCheck, HardHat, AlertTriangle, Wrench, Search, MapPin, Battery, Signal, Plus,
     CheckCircle, XCircle, Clock, CircleDot, ChevronDown, ChevronRight, Phone, Mail,
-    FileText, Users, Info, Filter, Flame, Calendar, Building2, Gauge
+    FileText, Users, Info, Filter, Flame, Calendar, Building2, Gauge, Truck
 } from "lucide-react";
 import { format } from "date-fns";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
@@ -47,7 +47,7 @@ interface Stage {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// PPM DATABASE — Verified against BEC emails as of 22 Feb 2026
+// PPM DATABASE — Verified against BEC emails as of 28 Mar 2026
 // ═══════════════════════════════════════════════════════════════
 
 const PPM_DATABASE: Stage[] = [
@@ -151,7 +151,7 @@ const CONTACTS = [
     { name: "Arun Achuthan", role: "BEC Site Lead / FM&M", phone: "+968 96590516", email: "arunachuthan.fmm@becoman.com" },
     { name: "Nadim Mushir Ahmad", role: "BEC PPM Team Lead", phone: "+968 97725265", email: "nadim.fmm@becoman.com" },
     { name: "Joji C. John", role: "BEC Asst. Manager", phone: "+968 99318348", email: "joji.fmm@becoman.com" },
-    { name: "FA Team (Suneesh.L)", role: "BEC Field Technician", phone: "+968 95624943", email: "fateam.fmm@becoman.com" },
+    { name: "FA Team (Wali Anwar / Suneesh.L)", role: "BEC Field Technicians", phone: "+968 95624943", email: "fateam.fmm@becoman.com" },
     { name: "BEC Office", role: "Emergency / General", phone: "+968 24592028", email: "" },
     { name: "MB Helpdesk", role: "24/7 Operations", phone: "+968 98285725", email: "helpdesk@muscatbay.com" },
     { name: "Amjad Khan", role: "FM Manager (Kalhat)", phone: "+968 98863960", email: "amjad@kalhat.com" },
@@ -782,23 +782,53 @@ export default function FirefightingPage() {
                         <CardHeader className="glass-card-header border-b border-amber-100 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-900/20">
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                                 <CardTitle className="text-sm sm:text-base">Villa 33 — Separate Job (Ref: 215459)</CardTitle>
-                                <Badge className="bg-amber-200 text-amber-800 dark:bg-amber-800/50 dark:text-amber-200 flex items-center gap-1 w-fit">
-                                    <Info className="w-3 h-3" /> UNVERIFIED
+                                <Badge className="bg-blue-200 text-blue-800 dark:bg-blue-800/50 dark:text-blue-200 flex items-center gap-1 w-fit">
+                                    <Clock className="w-3 h-3" /> NEW PR IN PROGRESS
                                 </Badge>
                             </div>
                         </CardHeader>
                         <CardContent className="p-4 sm:p-5 space-y-2 text-sm">
                             <p><span className="text-slate-400 text-xs">Location:</span> <span className="font-medium text-slate-900 dark:text-slate-100">Zone 5 — Villa 33, Muscat Bay Qantab</span></p>
                             <p><span className="text-slate-400 text-xs">Items:</span> <span className="font-medium text-slate-900 dark:text-slate-100">Fire extinguisher, fire blanket, smoke detector</span></p>
-                            <p><span className="text-slate-400 text-xs">Quote:</span> <span className="font-medium text-slate-900 dark:text-slate-100">13 Jul 2025 by BEC FA Team (Suneesh.L)</span></p>
+                            <p><span className="text-slate-400 text-xs">Work Status:</span> <span className="font-medium text-emerald-600 dark:text-emerald-400">Completed (Aug 2025)</span></p>
+                            <p><span className="text-slate-400 text-xs">Original Quote:</span> <span className="font-medium text-slate-900 dark:text-slate-100">13 Jul 2025 by BEC FA Team (Suneesh.L)</span></p>
                             <p><span className="text-slate-400 text-xs">Approved by:</span> <span className="font-medium text-slate-900 dark:text-slate-100">Abdulrahim AlBalushi — 13 Jul 2025</span></p>
-                            <p><span className="text-slate-400 text-xs">PO Status:</span> <span className="font-bold text-red-600 dark:text-red-400">NOT ISSUED</span></p>
-                            <p><span className="text-slate-400 text-xs">Reminders:</span> <span className="font-medium text-slate-900 dark:text-slate-100">5 sent by Arun Achuthan (last: Jan 20, 2026)</span></p>
+                            <p><span className="text-slate-400 text-xs">Updated Quote:</span> <span className="font-medium text-slate-900 dark:text-slate-100">26 Mar 2026 by Nadim M. Ahmad (BEC)</span></p>
+                            <p><span className="text-slate-400 text-xs">PO Status:</span> <span className="font-bold text-amber-600 dark:text-amber-400">Original PR lost — New PR being raised with updated quote</span></p>
+                            <p><span className="text-slate-400 text-xs">Latest Action:</span> <span className="font-medium text-slate-900 dark:text-slate-100">26 Mar 2026 — Rahim instructed Helpdesk to raise new PR; BEC provided updated quote; Amjad confirmed to raise MB PR</span></p>
+                            <p><span className="text-slate-400 text-xs">Reminders:</span> <span className="font-medium text-slate-900 dark:text-slate-100">6+ sent by Arun Achuthan (Dec 2025 – Mar 2026)</span></p>
+                        </CardContent>
+                        <div className="px-5 py-3 bg-blue-50/50 dark:bg-blue-900/20 border-t border-blue-100 dark:border-blue-800">
+                            <p className="text-[11px] text-blue-600 dark:text-blue-400 flex items-center gap-1.5">
+                                <Info className="w-3.5 h-3.5 flex-shrink-0" />
+                                Verified against BEC email thread 26 Mar 2026. Updated quote (215459) received from Nadim; new PR instructed.
+                            </p>
+                        </div>
+                    </Card>
+
+                    {/* Village Square Fire Safety — Separate Repair */}
+                    <Card className="glass-card border-amber-200 dark:border-amber-800">
+                        <CardHeader className="glass-card-header border-b border-amber-100 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-900/20">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                <CardTitle className="text-sm sm:text-base">Village Square — Fire Pump & Alarm Rectification</CardTitle>
+                                <Badge className="bg-amber-200 text-amber-800 dark:bg-amber-800/50 dark:text-amber-200 flex items-center gap-1 w-fit">
+                                    <Info className="w-3 h-3" /> QUOTE SUBMITTED
+                                </Badge>
+                            </div>
+                        </CardHeader>
+                        <CardContent className="p-4 sm:p-5 space-y-2 text-sm">
+                            <p><span className="text-slate-400 text-xs">Location:</span> <span className="font-medium text-slate-900 dark:text-slate-100">Village Square, Muscat Bay</span></p>
+                            <p><span className="text-slate-400 text-xs">Scope — Fire Pump:</span> <span className="font-medium text-slate-900 dark:text-slate-100">Pressure drop (8→6.5 bar in 1 hr), leak repairs, system testing & calibration</span></p>
+                            <p><span className="text-slate-400 text-xs">Scope — Fire Alarm:</span> <span className="font-medium text-slate-900 dark:text-slate-100">Full commissioning (non-operational), BMS/elevator/auto-door integration</span></p>
+                            <p><span className="text-slate-400 text-xs">Quote:</span> <span className="font-medium text-slate-900 dark:text-slate-100">4 Nov 2024 by Arun Achuthan (BEC) — Supply & Replacement of Fire Pump + FA commissioning</span></p>
+                            <p><span className="text-slate-400 text-xs">Requested by:</span> <span className="font-medium text-slate-900 dark:text-slate-100">Abdulrahim AlBalushi — 21 Oct 2024</span></p>
+                            <p><span className="text-slate-400 text-xs">Monitoring:</span> <span className="font-medium text-slate-900 dark:text-slate-100">BEC on-site monitoring conducted Nov 2024; no issues in initial 2-hr observation</span></p>
+                            <p><span className="text-slate-400 text-xs">PO Status:</span> <span className="font-bold text-amber-600 dark:text-amber-400">Pending — awaiting management decision</span></p>
                         </CardContent>
                         <div className="px-5 py-3 bg-amber-50/50 dark:bg-amber-900/20 border-t border-amber-100 dark:border-amber-800">
                             <p className="text-[11px] text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
                                 <Info className="w-3.5 h-3.5 flex-shrink-0" />
-                                Ref 215459 and reminder details sourced from master database document — not yet cross-verified against individual emails.
+                                Verified against BEC email thread Oct–Nov 2024. Originally escalated due to OSCO non-response on project contractor obligations.
                             </p>
                         </div>
                     </Card>
@@ -949,6 +979,85 @@ export default function FirefightingPage() {
                                     <span className="text-sm font-bold text-slate-900 dark:text-slate-100 flex-shrink-0">{limit}</span>
                                 </div>
                             ))}
+                        </CardContent>
+                    </Card>
+
+                    {/* ── Sewage Tanker Discharge Contracts ── */}
+                    <Card className="glass-card">
+                        <CardHeader className="glass-card-header border-b border-slate-100 dark:border-slate-700">
+                            <CardTitle className="flex items-center gap-2">
+                                <Truck className="w-5 h-5 text-secondary" />
+                                Sewage Tanker Discharge Agreements
+                            </CardTitle>
+                            <p className="text-xs text-slate-400 mt-1">
+                                External sewage tankers discharging into Muscat Bay STP Plant
+                            </p>
+                        </CardHeader>
+                        <CardContent className="p-4 sm:p-5 space-y-5">
+                            {/* Rate Structure */}
+                            <div className="p-3 bg-emerald-50 dark:bg-emerald-900/20 border-l-4 border-l-emerald-500 rounded-lg">
+                                <p className="text-xs font-bold text-emerald-800 dark:text-emerald-300 uppercase">Discharge Rate</p>
+                                <p className="text-lg font-bold text-slate-900 dark:text-slate-100 mt-1">
+                                    1 OMR per 1,000 Gallons <span className="text-sm font-normal text-slate-500">(5 OMR per standard 5,000-gal tanker)</span>
+                                </p>
+                                <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">
+                                    Quantity based on each vehicle&apos;s marked tank capacity · Rate set by Abdullah AlNasiri (Sep 2024)
+                                </p>
+                            </div>
+
+                            {/* Company Cards */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                {/* Al Abraj */}
+                                <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-100 dark:border-slate-700/50">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">Al Abraj</h4>
+                                        <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 text-[10px]">Active</Badge>
+                                    </div>
+                                    <div className="space-y-2">
+                                        {[
+                                            ["Contact", "Thomas"],
+                                            ["Email", "abraj202@gmail.com"],
+                                            ["Contract", "Sewage Delivery Agreement 2026"],
+                                            ["Drafted", "Aug 2024 · Reviewed by Shireen AlHabib (General Counsel)"],
+                                            ["Signed/Renewed", "Feb 2026 · Distributed by Siva Kumar"],
+                                            ["Revised", "11 Mar 2026"],
+                                        ].map(([label, value], i) => (
+                                            <div key={i}>
+                                                <p className="text-[10px] uppercase text-slate-400 font-semibold">{label}</p>
+                                                <p className="text-xs text-slate-900 dark:text-slate-100">{value}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Jomon */}
+                                <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-100 dark:border-slate-700/50">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">Jomon&apos;s Company</h4>
+                                        <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 text-[10px]">Active</Badge>
+                                    </div>
+                                    <div className="space-y-2">
+                                        {[
+                                            ["Contact", "Jomon"],
+                                            ["Email", "joemonmaliakkal@gmail.com"],
+                                            ["Contract", "Sewage Delivery Agreement 2026"],
+                                            ["Drafted", "Aug 2024 · Reviewed by Shireen AlHabib (General Counsel)"],
+                                            ["Signed/Renewed", "Feb 2026 · Distributed by Siva Kumar"],
+                                            ["Revised", "11 Mar 2026"],
+                                        ].map(([label, value], i) => (
+                                            <div key={i}>
+                                                <p className="text-[10px] uppercase text-slate-400 font-semibold">{label}</p>
+                                                <p className="text-xs text-slate-900 dark:text-slate-100">{value}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Footer note */}
+                            <p className="text-[10px] text-slate-400 text-center pt-2 border-t border-slate-100 dark:border-slate-700/50">
+                                Agreements managed by Rahim · Legal review by Shireen AlHabib · Rate approved by Abdullah AlNasiri
+                            </p>
                         </CardContent>
                     </Card>
                 </div>

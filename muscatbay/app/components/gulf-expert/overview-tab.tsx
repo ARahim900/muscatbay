@@ -261,15 +261,26 @@ export function OverviewTab({ data }: OverviewTabProps) {
                 <Shield className="h-5 w-5 text-[#4E4456]" />
               </div>
               <div>
-                <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">HVAC AMC</p>
+                <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">HVAC AMC — Gulf Expert</p>
                 <p className="text-lg font-bold text-slate-800 dark:text-slate-100 tabular-nums">OMR 8,557.5</p>
               </div>
             </div>
-            <div className="mt-3 flex items-center gap-2">
-              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
-                Active
-              </span>
-              <span className="text-xs text-slate-400">Annual Contract</span>
+            <div className="mt-3 space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+                  Active
+                </span>
+                <span className="text-xs text-slate-400">3 Jun 2025 → 2 Jun 2026</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                  <Clock className="h-3 w-3 mr-1" />
+                  Renewal In Progress
+                </span>
+              </div>
+              <p className="text-[10px] text-slate-400 leading-relaxed">
+                2-year renewal requested 25 Mar 2026 · AHU/VRF excluded from scope · Quarterly PPM (Chillers B1–B8)
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -281,19 +292,69 @@ export function OverviewTab({ data }: OverviewTabProps) {
                 <Shield className="h-5 w-5 text-[#00D2B3]" />
               </div>
               <div>
-                <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">BMS AMC</p>
+                <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">BMS AMC — Gulf Expert</p>
                 <p className="text-lg font-bold text-slate-800 dark:text-slate-100 tabular-nums">OMR 2,205</p>
               </div>
             </div>
-            <div className="mt-3 flex items-center gap-2">
-              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
-                Active
-              </span>
-              <span className="text-xs text-slate-400">Annual Contract</span>
+            <div className="mt-3 space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+                  Active
+                </span>
+                <span className="text-xs text-slate-400">3 Jun 2025 → 2 Jun 2026</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                  <Clock className="h-3 w-3 mr-1" />
+                  Renewal In Progress
+                </span>
+              </div>
+              <p className="text-[10px] text-slate-400 leading-relaxed">
+                2-year renewal requested 25 Mar 2026 · Johnson Controls BMS · Software backup now in scope
+              </p>
             </div>
           </CardContent>
         </Card>
       </div>
+
+      {/* Pending Items */}
+      <Card className="bg-white dark:bg-slate-900 rounded-xl border border-amber-200 dark:border-amber-800/50 shadow-sm">
+        <CardContent className="p-4">
+          <p className="text-xs font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wide mb-3">Action Items — Verified 28 Mar 2026</p>
+          <div className="space-y-2">
+            {[
+              {
+                item: "HVAC & BMS AMC Renewal 2026–2028",
+                detail: "Nouf requested 2-year agreements (25 Mar). Gulf Expert submitted 1-year drafts (18 Mar) — awaiting revised 2-year versions.",
+                status: "Awaiting Gulf Expert",
+              },
+              {
+                item: "AHU Services Quotation",
+                detail: "Rahim requested AHU quotation. Gulf Expert confirmed working on it (11 Mar 2026). Not yet received.",
+                status: "Pending Quote",
+              },
+              {
+                item: "CIF Building AHU Blower/Bearing Repair",
+                detail: "Work completed Apr 2025 (OMR 446.250). PO stopped Nov 2025 (CIF back-charge to Jumeirah). CFO approved payment 9 Nov. Nouf requested PR revision with valid 2026 proposal (Jan 2026).",
+                status: "PR Revision Needed",
+              },
+            ].map((a, i) => (
+              <div key={i} className="flex gap-3 p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/50">
+                <AlertCircle className="h-4 w-4 text-amber-500 flex-shrink-0 mt-0.5" />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">{a.item}</p>
+                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400">
+                      {a.status}
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">{a.detail}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
