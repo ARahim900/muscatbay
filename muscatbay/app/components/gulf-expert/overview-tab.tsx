@@ -137,7 +137,7 @@ export function OverviewTab({ data }: OverviewTabProps) {
                       fontSize: "12px",
                     }}
                   />
-                  <Bar dataKey="count" fill="#4E4456" radius={[4, 4, 0, 0]} name="Open Findings" />
+                  <Bar dataKey="count" fill="var(--chart-inlet)" radius={[4, 4, 0, 0]} name="Open Findings" />
                 </BarChart>
               </ResponsiveContainer>
             </div>

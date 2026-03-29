@@ -811,8 +811,8 @@ export default function ElectricityPage() {
                                                     <stop offset="95%" stopColor="#E8A838" stopOpacity={0} />
                                                 </linearGradient>
                                             </defs>
-                                            <XAxis dataKey="month" className="text-xs" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#6B7280" }} dy={10} />
-                                            <YAxis className="text-xs" tickFormatter={(v) => `${v / 1000}k`} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#6B7280" }} label={{ value: 'kWh', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: '#6B7280', fontSize: 11 } }} />
+                                            <XAxis dataKey="month" className="text-xs" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "var(--chart-axis)" }} dy={10} />
+                                            <YAxis className="text-xs" tickFormatter={(v) => `${v / 1000}k`} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "var(--chart-axis)" }} label={{ value: 'kWh', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: "var(--chart-axis)", fontSize: 11 } }} />
                                             <Tooltip content={<LiquidTooltip />} cursor={{ stroke: 'rgba(0,0,0,0.1)', strokeWidth: 2 }} />
                                             <Legend iconType="circle" wrapperStyle={{ paddingTop: 10 }} />
                                             <Area type="natural" dataKey="consumption" name="Consumption" stroke="#E8A838" fill="url(#elecGrad)" strokeWidth={3} activeDot={{ r: 6, stroke: '#fff', strokeWidth: 2 }} animationDuration={1500} />
@@ -831,7 +831,7 @@ export default function ElectricityPage() {
                                     <ResponsiveContainer width="100%" height="100%">
                                         <BarChart data={consumptionByType} layout="vertical" margin={{ left: 10 }}>
                                             <XAxis type="number" hide />
-                                            <YAxis type="category" dataKey="type" width={100} className="text-xs" axisLine={false} tickLine={false} tick={{ fill: "#6B7280" }} />
+                                            <YAxis type="category" dataKey="type" width={100} className="text-xs" axisLine={false} tickLine={false} tick={{ fill: "var(--chart-axis)" }} />
                                             <Tooltip content={<LiquidTooltip />} cursor={{ fill: 'rgba(0,0,0,0.04)', radius: 6 }} />
                                             <Bar dataKey="value" radius={[0, 6, 6, 0]} barSize={24} animationDuration={1500}>
                                                 {consumptionByType.map((entry, index) => (
@@ -879,8 +879,8 @@ export default function ElectricityPage() {
                                     {analysisType !== "All" && selectedMeter === "All" && metersOfSelectedType.length <= 10 ? (
                                         <RechartsLineChart data={analysisData.perMeterChartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                                             <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" />
-                                            <XAxis dataKey="month" tick={{ fontSize: 11, fill: "#6B7280" }} axisLine={false} tickLine={false} dy={10} />
-                                            <YAxis tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : `${v}`} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#6B7280" }} />
+                                            <XAxis dataKey="month" tick={{ fontSize: 11, fill: "var(--chart-axis)" }} axisLine={false} tickLine={false} dy={10} />
+                                            <YAxis tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : `${v}`} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "var(--chart-axis)" }} />
                                             <Tooltip
                                                 content={({ active, payload, label }) => {
                                                     if (active && payload && payload.length) {
@@ -926,8 +926,8 @@ export default function ElectricityPage() {
                                                 </linearGradient>
                                             </defs>
                                             <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" />
-                                            <XAxis dataKey="month" tick={{ fontSize: 11, fill: "#6B7280" }} axisLine={false} tickLine={false} dy={10} />
-                                            <YAxis tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : `${v}`} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#6B7280" }} />
+                                            <XAxis dataKey="month" tick={{ fontSize: 11, fill: "var(--chart-axis)" }} axisLine={false} tickLine={false} dy={10} />
+                                            <YAxis tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : `${v}`} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "var(--chart-axis)" }} />
                                             <Tooltip content={<LiquidTooltip />} cursor={{ stroke: 'rgba(0,0,0,0.1)', strokeWidth: 2 }} />
                                             <Legend iconType="circle" wrapperStyle={{ paddingTop: 10 }} />
                                             <Area type="monotone" dataKey="consumption" name="Consumption" stroke="#81D8D0" fill="url(#anlGrad)" strokeWidth={3} activeDot={{ r: 6, stroke: '#fff', strokeWidth: 2 }} animationDuration={1500} />
@@ -959,7 +959,7 @@ export default function ElectricityPage() {
                                                 tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : `${v}`}
                                                 axisLine={false}
                                                 tickLine={false}
-                                                tick={{ fontSize: 11, fill: "#6B7280" }}
+                                                tick={{ fontSize: 11, fill: "var(--chart-axis)" }}
                                             />
                                             <YAxis
                                                 type="category"
@@ -967,7 +967,7 @@ export default function ElectricityPage() {
                                                 width={150}
                                                 axisLine={false}
                                                 tickLine={false}
-                                                tick={{ fontSize: 11, fill: "#6B7280" }}
+                                                tick={{ fontSize: 11, fill: "var(--chart-axis)" }}
                                             />
                                             <Tooltip
                                                 content={({ active, payload }) => {
@@ -1038,7 +1038,7 @@ export default function ElectricityPage() {
                                                     tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : `${v}`}
                                                     axisLine={false}
                                                     tickLine={false}
-                                                    tick={{ fontSize: 11, fill: "#6B7280" }}
+                                                    tick={{ fontSize: 11, fill: "var(--chart-axis)" }}
                                                 />
                                                 <YAxis
                                                     type="category"
@@ -1046,7 +1046,7 @@ export default function ElectricityPage() {
                                                     width={160}
                                                     axisLine={false}
                                                     tickLine={false}
-                                                    tick={{ fontSize: 11, fill: "#6B7280" }}
+                                                    tick={{ fontSize: 11, fill: "var(--chart-axis)" }}
                                                 />
                                                 <ReferenceLine
                                                     x={analysisData.typeAverage}

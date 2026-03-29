@@ -1001,14 +1001,14 @@ function ZoneAnalyticsPanel({ reportData, monthData, selectedDay, month, activeZ
                                     <XAxis
                                         dataKey="day"
                                         axisLine={false} tickLine={false}
-                                        tick={{ fontSize: 11, fill: "#6B7280" }}
+                                        tick={{ fontSize: 11, fill: "var(--chart-axis)" }}
                                         dy={10} interval={4}
                                     />
                                     <YAxis
                                         axisLine={false} tickLine={false}
-                                        tick={{ fontSize: 11, fill: "#6B7280" }}
+                                        tick={{ fontSize: 11, fill: "var(--chart-axis)" }}
                                         tickFormatter={v => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v}
-                                        label={{ value: 'm³', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: '#6B7280', fontSize: 11 } }}
+                                        label={{ value: 'm³', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: "var(--chart-axis)", fontSize: 11 } }}
                                     />
                                     <Tooltip content={<LiquidTooltip />} cursor={{ stroke: 'rgba(0,0,0,0.1)', strokeWidth: 2 }} />
                                     <Legend iconType="circle" />

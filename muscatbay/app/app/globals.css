@@ -110,6 +110,8 @@
   --chart-3: #E8A838;
   --chart-4: #10B981;
   --chart-5: #4E4456;
+  --chart-inlet: #4E4456;
+  --chart-axis: #6B7280;
 
   /* Chart Background Colors */
   --chart-bg-blue: #EFF6FF;
@@ -191,6 +193,11 @@
   --border: rgba(255, 255, 255, 0.1);
   --input: rgba(255, 255, 255, 0.1);
   --ring: #00D2B3;
+
+  /* Chart colors — lighter variants for dark backgrounds */
+  --chart-5: #8B7F94;
+  --chart-inlet: #9B8FA6;
+  --chart-axis: #94A3B8;
 }
 
 @layer base {
@@ -309,6 +316,15 @@
   h6 {
     @apply font-semibold tracking-tight;
     color: var(--primary);
+  }
+
+  .dark h1,
+  .dark h2,
+  .dark h3,
+  .dark h4,
+  .dark h5,
+  .dark h6 {
+    color: #F1F5F9;
   }
 }
 

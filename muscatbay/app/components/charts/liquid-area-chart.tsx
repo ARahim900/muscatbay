@@ -103,17 +103,17 @@ export function LiquidAreaChart({
                         dataKey={index}
                         axisLine={false}
                         tickLine={false}
-                        tick={{ fill: "#6B7280", fontSize: 12 }}
+                        tick={{ fill: "var(--chart-axis)", fontSize: 12 }}
                         dy={10}
                     />
                     <YAxis
                         axisLine={false}
                         tickLine={false}
-                        tick={{ fill: "#6B7280", fontSize: 12 }}
+                        tick={{ fill: "var(--chart-axis)", fontSize: 12 }}
                         tickFormatter={(value) =>
                             value >= 1000 ? `${(value / 1000).toFixed(0)}k` : value
                         }
-                        label={yAxisLabel ? { value: yAxisLabel, angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: '#6B7280', fontSize: 11 } } : undefined}
+                        label={yAxisLabel ? { value: yAxisLabel, angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: "var(--chart-axis)", fontSize: 11 } } : undefined}
                     />
                     <Tooltip content={<CustomTooltip />} cursor={{ stroke: "rgba(0,0,0,0.1)", strokeWidth: 2 }} />
                     {showLegend && <Legend iconType="circle" wrapperStyle={{ paddingTop: 10 }} />}
