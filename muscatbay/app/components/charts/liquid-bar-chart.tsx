@@ -1,5 +1,6 @@
 "use strict";
 
+import { memo } from "react";
 import {
     BarChart,
     Bar,
@@ -55,7 +56,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
     return null;
 };
 
-export function LiquidBarChart({
+export const LiquidBarChart = memo(function LiquidBarChart({
     data,
     categories,
     index,
@@ -67,6 +68,8 @@ export function LiquidBarChart({
     showLegend = true,
     yAxisLabel,
 }: LiquidBarChartProps) {
+    const prefersReducedMotion = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
     // Format value for display - using any to satisfy Recharts LabelFormatter type
     const formatLabel = (value: any): string => {
         if (value === undefined || value === null) return '';
@@ -115,7 +118,7 @@ export function LiquidBarChart({
                             dataKey={cat}
                             fill={colors[i % colors.length]}
                             radius={barRadius}
-                            animationDuration={600}
+                            animationDuration={prefersReducedMotion ? 0 : 600}
                         >
                             {showLabels && (
                                 <LabelList
@@ -135,4 +138,4 @@ export function LiquidBarChart({
             </ResponsiveContainer>
         </div>
     );
-}
+});

@@ -23,7 +23,7 @@ export async function getElectricityMetersFromSupabase(): Promise<MeterReading[]
         try {
             metersResult = await client
                 .from('electricity_meters')
-                .select('*')
+                .select('id, name, account_number, meter_type')
                 .order('name');
         } catch (networkError) {
             // Network error (e.g., Failed to fetch, proxy errors) - silently return empty
@@ -55,7 +55,7 @@ export async function getElectricityMetersFromSupabase(): Promise<MeterReading[]
             try {
                 readingsResult = await client
                     .from('electricity_readings')
-                    .select('*')
+                    .select('id, meter_id, month, consumption')
                     .order('month', { ascending: false })
                     .range(offset, offset + batchSize - 1);
             } catch (networkError) {

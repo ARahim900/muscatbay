@@ -39,11 +39,23 @@ export function AnimateOnScroll({
     const el = containerRef.current;
     if (!el) return;
 
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
     const targets = el.querySelectorAll(selector);
     if (targets.length === 0) return;
 
+    if (prefersReducedMotion) {
+      targets.forEach((target) => {
+        const htmlEl = target as HTMLElement;
+        htmlEl.style.opacity = "1";
+        htmlEl.style.transform = "translateY(0)";
+      });
+      return;
+    }
+
     targets.forEach((target) => {
       const htmlEl = target as HTMLElement;
+      htmlEl.style.willChange = "opacity, transform";
       htmlEl.style.opacity = "0";
       htmlEl.style.transform = `translateY(${y}px)`;
     });
@@ -103,6 +115,15 @@ export function AnimateOnScrollItem({
     const el = ref.current;
     if (!el) return;
 
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    if (prefersReducedMotion) {
+      el.style.opacity = "1";
+      el.style.transform = "translateY(0)";
+      return;
+    }
+
+    el.style.willChange = "opacity, transform";
     el.style.opacity = "0";
     el.style.transform = `translateY(${y}px)`;
 

@@ -40,12 +40,23 @@ export function useScrollAnimation<T extends HTMLElement = HTMLDivElement>(
         const container = containerRef.current;
         if (!container) return;
 
+        const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
         const children = container.querySelectorAll(childSelector);
         if (children.length === 0) return;
 
-        // Set initial hidden state
+        if (prefersReducedMotion) {
+            children.forEach((child) => {
+                const el = child as HTMLElement;
+                el.style.opacity = "1";
+                el.style.transform = "translateY(0)";
+            });
+            return;
+        }
+
         children.forEach((child) => {
             const el = child as HTMLElement;
+            el.style.willChange = "opacity, transform";
             el.style.opacity = "0";
             el.style.transform = `translateY(${y}px)`;
         });
@@ -55,7 +66,6 @@ export function useScrollAnimation<T extends HTMLElement = HTMLDivElement>(
                 entries.forEach((entry) => {
                     if (!entry.isIntersecting) return;
 
-                    // Animate all children with stagger
                     children.forEach((child, i) => {
                         const el = child as HTMLElement;
                         el.style.transition = `opacity ${duration}s ease-out ${i * stagger}s, transform ${duration}s ease-out ${i * stagger}s`;

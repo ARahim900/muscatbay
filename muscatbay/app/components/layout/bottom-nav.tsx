@@ -91,9 +91,11 @@ export function BottomNav() {
 
       {/* Slide-up drawer */}
       <div
+        role="dialog"
+        aria-label="Navigation menu"
         className={`
           fixed bottom-[64px] left-0 right-0 z-[95] md:hidden
-          transition-transform duration-200 ease-out
+          motion-safe:transition-transform motion-safe:duration-200 motion-safe:ease-out
           ${drawerOpen ? 'translate-y-0' : 'translate-y-[calc(100%+64px)]'}
         `}
       >
@@ -103,7 +105,7 @@ export function BottomNav() {
             <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">More</span>
             <button
               onClick={() => setDrawerOpen(false)}
-              className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-400 dark:text-gray-500 transition-colors"
+              className="w-11 h-11 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-400 dark:text-gray-500 transition-colors"
               aria-label="Close menu"
             >
               <X className="w-4 h-4" />
@@ -122,15 +124,15 @@ export function BottomNav() {
                   className={`
                     flex items-center gap-3 px-4 py-3 transition-colors
                     ${active
-                      ? 'bg-[#81D8D0]/10 text-[#00D2B3]'
+                      ? 'bg-secondary/10 text-secondary'
                       : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700/50'
                     }
                   `}
                 >
-                  <Icon className={`w-5 h-5 flex-shrink-0 ${active ? 'text-[#00D2B3]' : ''}`} />
+                  <Icon className={`w-5 h-5 flex-shrink-0 ${active ? 'text-secondary' : ''}`} />
                   <span className={`text-sm ${active ? 'font-semibold' : 'font-medium'}`}>{item.name}</span>
                   {active && (
-                    <div className="ms-auto w-2 h-2 rounded-full bg-[#00D2B3] shadow-[0_0_8px_rgba(0,210,179,0.6)]" />
+                    <div className="ms-auto w-2 h-2 rounded-full bg-secondary shadow-[0_0_8px_rgba(0,210,179,0.6)]" />
                   )}
                 </Link>
               );
@@ -164,7 +166,7 @@ export function BottomNav() {
                 className={`
                   flex flex-col items-center justify-center gap-0.5 flex-1 h-full pt-1.5 pb-1 rounded-lg transition-colors
                   ${active
-                    ? 'text-[#00D2B3]'
+                    ? 'text-secondary'
                     : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300'
                   }
                 `}
@@ -174,7 +176,7 @@ export function BottomNav() {
                   {item.name}
                 </span>
                 {active && (
-                  <div className="w-1 h-1 rounded-full bg-[#00D2B3] -mt-0.5" />
+                  <div className="w-1 h-1 rounded-full bg-secondary -mt-0.5" />
                 )}
               </Link>
             );
@@ -186,7 +188,7 @@ export function BottomNav() {
             className={`
               flex flex-col items-center justify-center gap-0.5 flex-1 h-full pt-1.5 pb-1 rounded-lg transition-colors
               ${drawerOpen || isOverflowActive
-                ? 'text-[#00D2B3]'
+                ? 'text-secondary'
                 : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300'
               }
             `}
@@ -198,7 +200,7 @@ export function BottomNav() {
               More
             </span>
             {isOverflowActive && !drawerOpen && (
-              <div className="w-1 h-1 rounded-full bg-[#00D2B3] -mt-0.5" />
+              <div className="w-1 h-1 rounded-full bg-secondary -mt-0.5" />
             )}
           </button>
         </div>

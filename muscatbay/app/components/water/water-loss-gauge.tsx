@@ -11,6 +11,14 @@ interface WaterLossGaugeProps {
     className?: string;
 }
 
+const GAUGE_COLORS = {
+    critical: '#ef4444',
+    good: '#22c55e',
+    fair: '#84cc16',
+    warning: '#eab308',
+    poor: '#f97316',
+} as const;
+
 export function WaterLossGauge({ score, label, subLabel, size = 200, className }: WaterLossGaugeProps) {
     // Normalize score between 0 and 100
     const normalizedScore = Math.max(0, Math.min(100, score));
@@ -19,20 +27,20 @@ export function WaterLossGauge({ score, label, subLabel, size = 200, className }
     // High score (90+) = Good (Green)
     // Mid score (70-90) = Warning (Yellow/Orange)
     // Low score (<70) = Bad (Red)
-    let color = "#ef4444"; // Red (Bad)
+    let color: string = GAUGE_COLORS.critical;
     let statusText = "Critical Loss";
 
     if (normalizedScore >= 95) {
-        color = "#22c55e"; // Green (Excellent)
+        color = GAUGE_COLORS.good;
         statusText = "Excellent";
     } else if (normalizedScore >= 90) {
-        color = "#84cc16"; // Lime (Good)
+        color = GAUGE_COLORS.fair;
         statusText = "Good";
     } else if (normalizedScore >= 80) {
-        color = "#eab308"; // Yellow (Warning)
+        color = GAUGE_COLORS.warning;
         statusText = "Moderate Loss";
     } else if (normalizedScore >= 70) {
-        color = "#f97316"; // Orange (High Loss)
+        color = GAUGE_COLORS.poor;
         statusText = "High Loss";
     }
 

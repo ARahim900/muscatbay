@@ -55,6 +55,17 @@ import { saveFilterPreferences, loadFilterPreferences } from "@/lib/filter-prefe
 // Dashboard view type
 type DashboardView = 'monthly' | 'daily';
 
+const CHART_COLORS = {
+    loss: '#C95D63',
+    success: '#5BA88B',
+    teal: '#81D8D0',
+    brand: '#4E4456',
+    amber: '#E8A838',
+    gray: '#6B5F73',
+    neutral: '#374151',
+    fallback: '#6B7280',
+} as const;
+
 // Helper functions that work with dynamic data
 function calculateRangeAnalysisFromData(meters: WaterMeter[], startMonth: string, endMonth: string) {
     const startIdx = AVAILABLE_MONTHS.indexOf(startMonth);
@@ -329,16 +340,16 @@ export default function WaterPage() {
     }, [waterMeters, startMonth, endMonth]);
 
     const TYPE_COLORS = {
-        'Main BULK': '#5BA88B', // Success/Green
-        'Retail': '#C95D63', // Danger/Red
-        'Zone Bulk': '#81D8D0', // Secondary/Teal
-        'Residential (Villa)': '#4E4456', // Primary/Plum
-        'IRR_Servies': '#E8A838', // Warning/Amber
-        'D_Building_Bulk': '#81D8D0', // Teal
-        'Residential (Apart)': '#6B5F73', // Primary Light
-        'MB_Common': '#374151', // Neutral
-        'Building': '#E8A838', // Warning
-        'D_Building_Common': '#4E4456' // Primary
+        'Main BULK': CHART_COLORS.success,
+        'Retail': CHART_COLORS.loss,
+        'Zone Bulk': CHART_COLORS.teal,
+        'Residential (Villa)': CHART_COLORS.brand,
+        'IRR_Servies': CHART_COLORS.amber,
+        'D_Building_Bulk': CHART_COLORS.teal,
+        'Residential (Apart)': CHART_COLORS.gray,
+        'MB_Common': CHART_COLORS.neutral,
+        'Building': CHART_COLORS.amber,
+        'D_Building_Common': CHART_COLORS.brand,
     };
 
     // Helper function to calculate trend
@@ -654,21 +665,21 @@ export default function WaterPage() {
                                             <AreaChart data={monthlyTrends} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                                                 <defs>
                                                     <linearGradient id="gradA1" x1="0" y1="0" x2="0" y2="1">
-                                                        <stop offset="5%" stopColor="#4E4456" stopOpacity={0.4} />
-                                                        <stop offset="95%" stopColor="#4E4456" stopOpacity={0} />
+                                                        <stop offset="5%" stopColor={CHART_COLORS.brand} stopOpacity={0.4} />
+                                                        <stop offset="95%" stopColor={CHART_COLORS.brand} stopOpacity={0} />
                                                     </linearGradient>
                                                     <linearGradient id="gradA2" x1="0" y1="0" x2="0" y2="1">
-                                                        <stop offset="5%" stopColor="#81D8D0" stopOpacity={0.4} />
-                                                        <stop offset="95%" stopColor="#81D8D0" stopOpacity={0} />
+                                                        <stop offset="5%" stopColor={CHART_COLORS.teal} stopOpacity={0.4} />
+                                                        <stop offset="95%" stopColor={CHART_COLORS.teal} stopOpacity={0} />
                                                     </linearGradient>
                                                 </defs>
                                                 <XAxis dataKey="month" className="text-xs" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "var(--chart-axis)" }} dy={10} />
                                                 <YAxis className="text-xs" tickFormatter={(v) => `${v / 1000}k`} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "var(--chart-axis)" }} label={{ value: 'm³', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: "var(--chart-axis)", fontSize: 11 } }} />
                                                 <Tooltip content={<LiquidTooltip />} cursor={{ stroke: 'rgba(0,0,0,0.1)', strokeWidth: 2 }} />
                                                 <Legend iconType="circle" />
-                                                <Area type="monotone" name="A1 - Main Source" dataKey="A1" stroke="#4E4456" fill="url(#gradA1)" strokeWidth={3} activeDot={{ r: 6, stroke: '#fff', strokeWidth: 2 }} animationDuration={600} />
-                                                <Area type="monotone" name="A2 - Zone Distribution" dataKey="A2" stroke="#81D8D0" fill="url(#gradA2)" strokeWidth={3} animationDuration={600} />
-                                                <Area type="monotone" name="A3 - Individual" dataKey="A3Individual" stroke="#6B5F73" fill="none" strokeWidth={2} strokeDasharray="5 5" animationDuration={600} />
+                                                <Area type="monotone" name="A1 - Main Source" dataKey="A1" stroke={CHART_COLORS.brand} fill="url(#gradA1)" strokeWidth={3} activeDot={{ r: 6, stroke: '#fff', strokeWidth: 2 }} animationDuration={600} />
+                                                <Area type="monotone" name="A2 - Zone Distribution" dataKey="A2" stroke={CHART_COLORS.teal} fill="url(#gradA2)" strokeWidth={3} animationDuration={600} />
+                                                <Area type="monotone" name="A3 - Individual" dataKey="A3Individual" stroke={CHART_COLORS.gray} fill="none" strokeWidth={2} strokeDasharray="5 5" animationDuration={600} />
                                             </AreaChart>
                                         </ResponsiveContainer>
                                     </div>
@@ -686,17 +697,17 @@ export default function WaterPage() {
                                             <AreaChart data={monthlyTrends} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                                                 <defs>
                                                     <linearGradient id="gradLoss" x1="0" y1="0" x2="0" y2="1">
-                                                        <stop offset="5%" stopColor="#C95D63" stopOpacity={0.2} />
-                                                        <stop offset="95%" stopColor="#C95D63" stopOpacity={0} />
+                                                        <stop offset="5%" stopColor={CHART_COLORS.loss} stopOpacity={0.2} />
+                                                        <stop offset="95%" stopColor={CHART_COLORS.loss} stopOpacity={0} />
                                                     </linearGradient>
                                                 </defs>
                                                 <XAxis dataKey="month" className="text-xs" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "var(--chart-axis)" }} dy={10} />
                                                 <YAxis className="text-xs" tickFormatter={(v) => `${v / 1000}k`} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "var(--chart-axis)" }} label={{ value: 'm³', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: "var(--chart-axis)", fontSize: 11 } }} />
                                                 <Tooltip content={<LiquidTooltip />} cursor={{ stroke: 'rgba(0,0,0,0.1)', strokeWidth: 2 }} />
                                                 <Legend iconType="circle" />
-                                                <Area type="monotone" name="Total Loss" dataKey="totalLoss" stroke="#C95D63" fill="url(#gradLoss)" strokeWidth={2} strokeDasharray="5 5" animationDuration={600} />
-                                                <Line type="monotone" name="Stage 1 Loss" dataKey="stage1Loss" stroke="#E8A838" strokeWidth={2} strokeDasharray="3 3" dot={false} animationDuration={600} />
-                                                <Line type="monotone" name="Stage 2 Loss" dataKey="stage2Loss" stroke="#6B5F73" strokeWidth={2} strokeDasharray="3 3" dot={false} animationDuration={600} />
+                                                <Area type="monotone" name="Total Loss" dataKey="totalLoss" stroke={CHART_COLORS.loss} fill="url(#gradLoss)" strokeWidth={2} strokeDasharray="5 5" animationDuration={600} />
+                                                <Line type="monotone" name="Stage 1 Loss" dataKey="stage1Loss" stroke={CHART_COLORS.amber} strokeWidth={2} strokeDasharray="3 3" dot={false} animationDuration={600} />
+                                                <Line type="monotone" name="Stage 2 Loss" dataKey="stage2Loss" stroke={CHART_COLORS.gray} strokeWidth={2} strokeDasharray="3 3" dot={false} animationDuration={600} />
                                             </AreaChart>
                                         </ResponsiveContainer>
                                     </div>
@@ -726,7 +737,7 @@ export default function WaterPage() {
                                     max={Math.max(zoneAnalysis.bulkMeterReading, zoneAnalysis.individualTotal) * 1.2 || 100}
                                     label="Zone Bulk Meter Total"
                                     sublabel="Total water entering zone"
-                                    color="#81D8D0"
+                                    color={CHART_COLORS.teal}
                                     size={160}
                                     showPercentage={false}
                                     elementId="gauge-1"
@@ -736,7 +747,7 @@ export default function WaterPage() {
                                     max={Math.max(zoneAnalysis.bulkMeterReading, zoneAnalysis.individualTotal) * 1.2 || 100}
                                     label="L3 Individual Total"
                                     sublabel="Sum of all L3 meters in zone"
-                                    color="#4E4456"
+                                    color={CHART_COLORS.brand}
                                     size={160}
                                     showPercentage={false}
                                     elementId="gauge-2"
@@ -746,7 +757,7 @@ export default function WaterPage() {
                                     max={zoneAnalysis.bulkMeterReading || 100}
                                     label="Water Loss Distribution"
                                     sublabel="Leakage, meter loss, etc."
-                                    color={zoneAnalysis.loss > 0 ? '#C95D63' : '#5BA88B'}
+                                    color={zoneAnalysis.loss > 0 ? CHART_COLORS.loss : CHART_COLORS.success}
                                     size={160}
                                     showPercentage={true}
                                     elementId="gauge-3"
@@ -776,21 +787,21 @@ export default function WaterPage() {
                                             })()}>
                                                 <defs>
                                                     <linearGradient id="gradZoneBulk" x1="0" y1="0" x2="0" y2="1">
-                                                        <stop offset="5%" stopColor="#81D8D0" stopOpacity={0.4} />
-                                                        <stop offset="95%" stopColor="#81D8D0" stopOpacity={0} />
+                                                        <stop offset="5%" stopColor={CHART_COLORS.teal} stopOpacity={0.4} />
+                                                        <stop offset="95%" stopColor={CHART_COLORS.teal} stopOpacity={0} />
                                                     </linearGradient>
                                                     <linearGradient id="gradIndividual" x1="0" y1="0" x2="0" y2="1">
-                                                        <stop offset="5%" stopColor="#4E4456" stopOpacity={0.4} />
-                                                        <stop offset="95%" stopColor="#4E4456" stopOpacity={0} />
+                                                        <stop offset="5%" stopColor={CHART_COLORS.brand} stopOpacity={0.4} />
+                                                        <stop offset="95%" stopColor={CHART_COLORS.brand} stopOpacity={0} />
                                                     </linearGradient>
                                                 </defs>
                                                 <XAxis dataKey="month" className="text-xs" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "var(--chart-axis)" }} dy={10} />
                                                 <YAxis className="text-xs" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "var(--chart-axis)" }} label={{ value: 'm³', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: "var(--chart-axis)", fontSize: 11 } }} />
                                                 <Tooltip content={<LiquidTooltip />} cursor={{ stroke: 'rgba(0,0,0,0.1)', strokeWidth: 2 }} />
                                                 <Legend iconType="circle" />
-                                                <Area type="monotone" name="Individual Total" dataKey="Individual Total" stroke="#4E4456" fill="url(#gradIndividual)" strokeWidth={3} activeDot={{ r: 6, stroke: '#fff', strokeWidth: 2 }} animationDuration={600} />
-                                                <Line type="monotone" name="Loss" dataKey="Loss" stroke="#C95D63" strokeWidth={2} dot={false} strokeDasharray="5 5" animationDuration={600} />
-                                                <Area type="monotone" name="Zone Bulk" dataKey="Zone Bulk" stroke="#81D8D0" fill="url(#gradZoneBulk)" strokeWidth={3} animationDuration={600} />
+                                                <Area type="monotone" name="Individual Total" dataKey="Individual Total" stroke={CHART_COLORS.brand} fill="url(#gradIndividual)" strokeWidth={3} activeDot={{ r: 6, stroke: '#fff', strokeWidth: 2 }} animationDuration={600} />
+                                                <Line type="monotone" name="Loss" dataKey="Loss" stroke={CHART_COLORS.loss} strokeWidth={2} dot={false} strokeDasharray="5 5" animationDuration={600} />
+                                                <Area type="monotone" name="Zone Bulk" dataKey="Zone Bulk" stroke={CHART_COLORS.teal} fill="url(#gradZoneBulk)" strokeWidth={3} animationDuration={600} />
                                             </AreaChart>
                                         </ResponsiveContainer>
                                     </div>
@@ -868,7 +879,7 @@ export default function WaterPage() {
                                                 <Tooltip content={<LiquidTooltip />} cursor={{ fill: 'rgba(0,0,0,0.04)', radius: 6 }} />
                                                 <Bar dataKey="total" radius={[0, 6, 6, 0]} barSize={24} animationDuration={600}>
                                                     {consumptionChartData.map((entry, index) => (
-                                                        <Cell key={`cell-${index}`} fill={TYPE_COLORS[entry.type as keyof typeof TYPE_COLORS] || '#6B7280'} />
+                                                        <Cell key={`cell-${index}`} fill={TYPE_COLORS[entry.type as keyof typeof TYPE_COLORS] || CHART_COLORS.fallback} />
                                                     ))}
                                                 </Bar>
                                             </BarChart>

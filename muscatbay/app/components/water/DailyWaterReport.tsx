@@ -27,6 +27,17 @@ import {
     Tooltip, ResponsiveContainer, ReferenceLine, Legend, Line,
 } from "recharts";
 
+// ─── Chart color constants (recharts doesn't support CSS vars) ───────────────
+
+const CHART_COLORS = {
+    loss: '#C95D63',
+    success: '#5BA88B',
+    teal: '#81D8D0',
+    brand: '#4E4456',
+    amber: '#E8A838',
+    gray: '#6B5F73',
+} as const;
+
 // ─── Computed row types ───────────────────────────────────────────────────────
 
 interface ZoneRow {
@@ -228,8 +239,8 @@ function nextSort(current: SortState, key: string): SortState {
 function SortIcon({ active, dir }: { active: boolean; dir: SortDir }) {
     if (!active || !dir) return <ArrowUpDown className="h-3 w-3 opacity-30" />;
     return dir === 'asc'
-        ? <ChevronUp className="h-3.5 w-3.5 text-[#00D2B3]" />
-        : <ChevronDown className="h-3.5 w-3.5 text-[#00D2B3]" />;
+        ? <ChevronUp className="h-3.5 w-3.5 text-secondary" />
+        : <ChevronDown className="h-3.5 w-3.5 text-secondary" />;
 }
 
 function Th({
@@ -261,7 +272,7 @@ function TableSearch({ value, onChange, placeholder }: { value: string; onChange
                 value={value}
                 onChange={e => onChange(e.target.value)}
                 placeholder={placeholder}
-                className="h-9 w-full sm:w-64 pl-9 pr-8 text-[13px] rounded-full border border-slate-200 dark:border-slate-700/80 bg-slate-50/80 dark:bg-slate-800/50 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#00D2B3]/30 focus:border-[#00D2B3]/50 transition-all"
+                className="h-9 w-full sm:w-64 pl-9 pr-8 text-[13px] rounded-full border border-slate-200 dark:border-slate-700/80 bg-slate-50/80 dark:bg-slate-800/50 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-secondary/30 focus:border-secondary/50 transition-all"
             />
             {value && (
                 <button onClick={() => onChange('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 h-4 w-4 rounded-full bg-slate-200 dark:bg-slate-600 flex items-center justify-center text-slate-500 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-500 transition-colors">
@@ -298,7 +309,7 @@ function FilterSelect({ value, onChange, children, icon }: {
                 onChange={e => onChange(e.target.value)}
                 className={cn(
                     "h-9 text-[13px] rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50/80 dark:bg-slate-800/50",
-                    "focus:outline-none focus:ring-2 focus:ring-[#00D2B3]/30 focus:border-[#00D2B3]/50 transition-all appearance-none cursor-pointer pr-8",
+                    "focus:outline-none focus:ring-2 focus:ring-secondary/30 focus:border-secondary/50 transition-all appearance-none cursor-pointer pr-8",
                     icon ? "pl-9" : "pl-3",
                 )}
             >
@@ -335,7 +346,7 @@ function TablePagination({
                         className={cn(
                             "h-8 w-8 rounded-full flex items-center justify-center text-[12px] font-medium transition-all",
                             p === page
-                                ? "bg-[#4E4456] text-white shadow-sm dark:bg-[#00D2B3] dark:text-slate-900"
+                                ? "bg-primary text-white shadow-sm dark:bg-secondary dark:text-slate-900"
                                 : "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800",
                         )}
                     >
@@ -355,7 +366,7 @@ function TablePagination({
                 <select
                     value={rowsPerPage}
                     onChange={e => onRowsPerPageChange(Number(e.target.value))}
-                    className="h-8 rounded-full border border-slate-200 dark:border-slate-700 bg-transparent text-[12px] px-2 focus:outline-none focus:ring-2 focus:ring-[#00D2B3]/30 cursor-pointer"
+                    className="h-8 rounded-full border border-slate-200 dark:border-slate-700 bg-transparent text-[12px] px-2 focus:outline-none focus:ring-2 focus:ring-secondary/30 cursor-pointer"
                 >
                     {[5, 10, 15, 21].map(n => <option key={n} value={n}>{n}</option>)}
                 </select>
@@ -547,7 +558,7 @@ function BuildingBulkTable({ rows }: { rows: BuildingRow[] }) {
                     <span className="inline-flex items-center gap-2">
                         <span className={cn(
                             "flex items-center justify-center h-5 w-5 rounded-md transition-all duration-200",
-                            isExpanded ? "bg-[#4E4456] dark:bg-[#00D2B3]" : "bg-slate-200 dark:bg-slate-700",
+                            isExpanded ? "bg-primary dark:bg-secondary" : "bg-slate-200 dark:bg-slate-700",
                         )}>
                             <ChevronDown className={cn(
                                 "h-3 w-3 transition-transform duration-200",
@@ -583,7 +594,7 @@ function BuildingBulkTable({ rows }: { rows: BuildingRow[] }) {
         const childRow = (
             <tr key={`${row.buildingName}-children`} className="bg-slate-50/40 dark:bg-slate-800/20">
                 <td colSpan={6} className="py-0 px-0">
-                    <div className="border-l-[3px] border-[#00D2B3]/40 dark:border-[#00D2B3]/30 ml-5 sm:ml-7">
+                    <div className="border-l-[3px] border-secondary/40 dark:border-secondary/30 ml-5 sm:ml-7">
                         <table className="w-full">
                             <thead>
                                 <tr className="border-b border-slate-100 dark:border-slate-800/60">
@@ -888,7 +899,7 @@ function ZoneAnalyticsPanel({ reportData, monthData, selectedDay, month, activeZ
 
     // Shared gauge scale (same as Zone Analysis page)
     const gaugeMax = Math.max(l2Value, l3Sum) * 1.2 || 100;
-    const lossColor = diff !== null && diff > 0 ? '#C95D63' : '#5BA88B';
+    const lossColor = diff !== null && diff > 0 ? CHART_COLORS.loss : CHART_COLORS.success;
 
     // 31-day trend for the active zone
     const trendData = useMemo(() => {
@@ -929,7 +940,7 @@ function ZoneAnalyticsPanel({ reportData, monthData, selectedDay, month, activeZ
                 <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
                     <span className="text-mb-secondary font-medium">L2 Bulk</span> = zone entry meter &bull;{" "}
                     <span className="text-mb-primary font-medium">ΣL3 Total</span> = sum of all L3 meters &bull;{" "}
-                    <span style={{ color: '#C95D63' }} className="font-medium">Difference</span> = L2 &minus; ΣL3
+                    <span style={{ color: CHART_COLORS.loss }} className="font-medium">Difference</span> = L2 &minus; ΣL3
                 </p>
             </div>
 
@@ -940,7 +951,7 @@ function ZoneAnalyticsPanel({ reportData, monthData, selectedDay, month, activeZ
                     max={gaugeMax}
                     label="L2 Bulk Meter"
                     sublabel="Total water entering zone"
-                    color="#81D8D0"
+                    color={CHART_COLORS.teal}
                     size={160}
                     showPercentage={false}
                     unit="m³"
@@ -951,7 +962,7 @@ function ZoneAnalyticsPanel({ reportData, monthData, selectedDay, month, activeZ
                     max={gaugeMax}
                     label="ΣL3 Meters Total"
                     sublabel="Recorded by L3 meters"
-                    color="#4E4456"
+                    color={CHART_COLORS.brand}
                     size={160}
                     showPercentage={false}
                     unit="m³"
@@ -990,12 +1001,12 @@ function ZoneAnalyticsPanel({ reportData, monthData, selectedDay, month, activeZ
                                 <AreaChart data={trendData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                                     <defs>
                                         <linearGradient id="gradDailyBulk" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="#81D8D0" stopOpacity={0.4} />
-                                            <stop offset="95%" stopColor="#81D8D0" stopOpacity={0} />
+                                            <stop offset="5%" stopColor={CHART_COLORS.teal} stopOpacity={0.4} />
+                                            <stop offset="95%" stopColor={CHART_COLORS.teal} stopOpacity={0} />
                                         </linearGradient>
                                         <linearGradient id="gradDailyL3" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="#4E4456" stopOpacity={0.4} />
-                                            <stop offset="95%" stopColor="#4E4456" stopOpacity={0} />
+                                            <stop offset="5%" stopColor={CHART_COLORS.brand} stopOpacity={0.4} />
+                                            <stop offset="95%" stopColor={CHART_COLORS.brand} stopOpacity={0} />
                                         </linearGradient>
                                     </defs>
                                     <XAxis
@@ -1015,27 +1026,27 @@ function ZoneAnalyticsPanel({ reportData, monthData, selectedDay, month, activeZ
                                     {currentDayLabel && (
                                         <ReferenceLine
                                             x={currentDayLabel}
-                                            stroke="#4E4456"
+                                            stroke={CHART_COLORS.brand}
                                             strokeDasharray="4 3"
                                             strokeWidth={1.5}
-                                            label={{ value: `Day ${selectedDay}`, position: 'top', fontSize: 10, fill: '#4E4456', fontWeight: 600 }}
+                                            label={{ value: `Day ${selectedDay}`, position: 'top', fontSize: 10, fill: CHART_COLORS.brand, fontWeight: 600 }}
                                         />
                                     )}
                                     <Area
                                         type="monotone" name="ΣL3 Total" dataKey="ΣL3"
-                                        stroke="#4E4456" fill="url(#gradDailyL3)" strokeWidth={3}
+                                        stroke={CHART_COLORS.brand} fill="url(#gradDailyL3)" strokeWidth={3}
                                         activeDot={{ r: 6, stroke: '#fff', strokeWidth: 2 }}
                                         animationDuration={600}
                                     />
                                     <Line
                                         type="monotone" name="Loss" dataKey="Loss"
-                                        stroke="#C95D63" strokeWidth={2}
+                                        stroke={CHART_COLORS.loss} strokeWidth={2}
                                         dot={false} strokeDasharray="5 5"
                                         animationDuration={600}
                                     />
                                     <Area
                                         type="monotone" name="L2 Bulk" dataKey="L2 Bulk"
-                                        stroke="#81D8D0" fill="url(#gradDailyBulk)" strokeWidth={3}
+                                        stroke={CHART_COLORS.teal} fill="url(#gradDailyBulk)" strokeWidth={3}
                                         activeDot={{ r: 6, stroke: '#fff', strokeWidth: 2 }}
                                         animationDuration={600}
                                     />
@@ -1543,10 +1554,10 @@ export function DailyWaterReport() {
                         </div>
 
                         {/* Day selector */}
-                        <div className="flex items-center gap-3 flex-1 min-w-[220px]">
+                        <div className="flex items-center gap-3 flex-1 min-w-0 sm:min-w-[220px]">
                             <Button
                                 variant="outline" size="icon"
-                                className="h-8 w-8 shrink-0"
+                                className="h-10 w-10 shrink-0"
                                 onClick={() => setSelectedDay(d => Math.max(1, d - 1))}
                                 disabled={selectedDay <= 1 || status === 'loading'}
                             >
@@ -1562,7 +1573,7 @@ export function DailyWaterReport() {
                             </div>
                             <Button
                                 variant="outline" size="icon"
-                                className="h-8 w-8 shrink-0"
+                                className="h-10 w-10 shrink-0"
                                 onClick={() => setSelectedDay(d => Math.min(31, d + 1))}
                                 disabled={selectedDay >= 31 || status === 'loading'}
                             >
@@ -1576,7 +1587,7 @@ export function DailyWaterReport() {
                         {/* Manual refresh */}
                         <Button
                             variant="outline" size="icon"
-                            className="h-9 w-9 shrink-0"
+                            className="h-10 w-10 shrink-0"
                             onClick={() => fetchMonth(selectedMonth)}
                             disabled={status === 'loading'}
                             title="Refresh"

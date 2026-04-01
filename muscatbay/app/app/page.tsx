@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useMemo, useCallback } from "react";
+import { useState, useRef, useMemo, useCallback, type KeyboardEvent } from "react";
 import { useRouter } from "next/navigation";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { StatsGrid } from "@/components/shared/stats-grid";
@@ -41,6 +41,20 @@ export default function DashboardPage() {
                                     stat.label.includes('FIRE') ? '/firefighting' : undefined
     })), [stats]);
 
+    const navigateToWater = useCallback(() => router.push('/water'), [router]);
+    const navigateToStp = useCallback(() => router.push('/stp'), [router]);
+
+    const handleCardKeyDown = useCallback((e: KeyboardEvent, path: string) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            router.push(path);
+        }
+    }, [router]);
+
+    const handleFilterClick = useCallback((filter: 'all' | 'critical' | 'warning' | 'info') => {
+        setActivityFilter(filter);
+    }, []);
+
     // Map activity item titles to their section routes
     const getActivityHref = useCallback((title: string): string | undefined => {
         const t = title.toLowerCase();
@@ -79,7 +93,7 @@ export default function DashboardPage() {
                     </div>
                     <button
                         onClick={() => window.location.reload()}
-                        className="px-4 py-2 text-sm bg-[#4E4456] text-white rounded-lg hover:bg-[#3A3341] transition-colors duration-200"
+                        className="px-4 py-2 text-sm bg-primary text-white rounded-lg hover:bg-primary/80 transition-colors duration-200"
                     >
                         Try again
                     </button>
@@ -93,7 +107,7 @@ export default function DashboardPage() {
             <div className="flex items-center justify-between">
                 <PageHeader
                     title={`${new Date().getHours() < 12 ? 'Good morning' : new Date().getHours() < 17 ? 'Good afternoon' : 'Good evening'}`}
-                    description="Overview of all operations and key metrics"
+                    description="Overview of all operations and key metrics across Water, Electricity, and STP"
                 />
                 <div className="flex items-center gap-2">
 
@@ -108,8 +122,11 @@ export default function DashboardPage() {
 
             <AnimateOnScroll className="grid gap-4 sm:gap-5 md:gap-6 grid-cols-1 lg:grid-cols-7">
                 <Card
-                    className="glass-card col-span-1 lg:col-span-4 cursor-pointer group/chart transition-shadow duration-200 hover:shadow-[0_8px_30px_-4px_rgba(6,81,237,0.15)]"
-                    onClick={() => router.push('/water')}
+                    className="glass-card col-span-1 lg:col-span-4 cursor-pointer group/chart transition-shadow duration-200 hover:shadow-[0_8px_30px_-4px_rgba(6,81,237,0.15)] focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none"
+                    onClick={navigateToWater}
+                    onKeyDown={(e) => handleCardKeyDown(e as unknown as KeyboardEvent, '/water')}
+                    role="link"
+                    tabIndex={0}
                 >
                     <CardHeader className="glass-card-header p-4 sm:p-5 md:p-6">
                         <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
@@ -119,6 +136,7 @@ export default function DashboardPage() {
                         </CardTitle>
                         <p className="text-xs sm:text-sm text-muted-foreground">Monthly water production in thousand m³</p>
                     </CardHeader>
+                    <div role="img" aria-label="Water production trend chart showing monthly data in thousand cubic meters">
                     <ChartContainer height="100%" className="h-[200px] sm:h-[250px] md:h-[300px]">
                         <AreaChart data={chartData}>
                             <defs>
@@ -135,11 +153,15 @@ export default function DashboardPage() {
                             <Area type="monotone" dataKey="water" stroke="#81D8D0" fill="url(#colorWater)" name="Water (k m³)" strokeWidth={3} activeDot={{ r: 6, stroke: '#fff', strokeWidth: 2 }} animationDuration={600} />
                         </AreaChart>
                     </ChartContainer>
+                    </div>
                 </Card>
 
                 <Card
-                    className="glass-card col-span-1 lg:col-span-3 cursor-pointer group/chart transition-shadow duration-200 hover:shadow-[0_8px_30px_-4px_rgba(6,81,237,0.15)]"
-                    onClick={() => router.push('/stp')}
+                    className="glass-card col-span-1 lg:col-span-3 cursor-pointer group/chart transition-shadow duration-200 hover:shadow-[0_8px_30px_-4px_rgba(6,81,237,0.15)] focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none"
+                    onClick={navigateToStp}
+                    onKeyDown={(e) => handleCardKeyDown(e as unknown as KeyboardEvent, '/stp')}
+                    role="link"
+                    tabIndex={0}
                 >
                     <CardHeader className="glass-card-header p-4 sm:p-5 md:p-6">
                         <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
@@ -149,6 +171,7 @@ export default function DashboardPage() {
                         </CardTitle>
                         <p className="text-xs sm:text-sm text-muted-foreground">Monthly inlet vs TSE output (k m³)</p>
                     </CardHeader>
+                    <div role="img" aria-label="STP treatment overview bar chart comparing monthly inlet sewage and TSE output">
                     <ChartContainer height="100%" className="h-[200px] sm:h-[250px] md:h-[300px]">
                         <BarChart data={stpChartData}>
                             <CartesianGrid strokeDasharray="3 3" className="stroke-slate-200 dark:stroke-slate-700" opacity={0.5} />
@@ -160,6 +183,7 @@ export default function DashboardPage() {
                             <Bar dataKey="tse" name="TSE Output" fill="#81D8D0" radius={[4, 4, 0, 0]} animationDuration={600} />
                         </BarChart>
                     </ChartContainer>
+                    </div>
                 </Card>
             </AnimateOnScroll>
 
@@ -171,19 +195,20 @@ export default function DashboardPage() {
                             <div>
                                 <CardTitle>Latest Updates</CardTitle>
                                 <p className="text-sm text-muted-foreground">
-                                    Live data from all operational systems
+                                    Recent alerts and status changes across all systems
                                 </p>
                             </div>
                             <div className="flex items-center gap-1 bg-white/50 dark:bg-slate-800/50 p-1 rounded-lg">
                                 {(['all', 'critical', 'warning', 'info'] as const).map(filter => (
                                     <button
                                         key={filter}
-                                        onClick={() => setActivityFilter(filter)}
+                                        onClick={() => handleFilterClick(filter)}
+                                        aria-pressed={activityFilter === filter}
                                         className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors capitalize ${activityFilter === filter
                                             ? filter === 'critical' ? 'bg-mb-danger text-white'
                                                 : filter === 'warning' ? 'bg-mb-warning text-white'
                                                     : filter === 'info' ? 'bg-mb-info text-white'
-                                                        : 'bg-mb-primary text-white'
+                                                        : 'bg-primary text-white'
                                             : 'text-muted-foreground hover:bg-white/50 dark:hover:bg-slate-700/50 dark:text-slate-400'
                                             }`}
                                     >

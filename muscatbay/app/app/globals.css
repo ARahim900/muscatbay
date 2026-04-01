@@ -112,6 +112,12 @@
   --chart-5: #4E4456;
   --chart-inlet: #4E4456;
   --chart-axis: #6B7280;
+  --chart-loss: #C95D63;
+  --chart-success: #5BA88B;
+  --chart-teal: #81D8D0;
+  --chart-brand: #4E4456;
+  --chart-amber: #E8A838;
+  --chart-gray: #6B5F73;
 
   /* Chart Background Colors */
   --chart-bg-blue: #EFF6FF;
@@ -333,7 +339,6 @@
   /* Glass Card - white with subtle border matching example design */
   .glass-card {
     background-color: rgba(255, 255, 255, 0.9);
-    backdrop-filter: blur(12px);
     border-radius: 0.75rem;
     border: 1px solid #e2e8f0;
     /* slate-200 */
@@ -355,7 +360,6 @@
   /* Dark mode glass card */
   .dark .glass-card {
     background-color: rgba(30, 41, 59, 0.9);
-    backdrop-filter: blur(12px);
     border: 1px solid #334155;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2);
   }
@@ -462,10 +466,6 @@
     animation: fadeInUp 0.5s var(--transition-timing) forwards;
   }
 
-  .animate-pulse-glow {
-    animation: pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-  }
-
   .animate-shimmer {
     animation: shimmer 2s linear infinite;
     background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.2) 50%, rgba(255, 255, 255, 0) 100%);
@@ -506,28 +506,12 @@
     }
   }
 
-  /* Respect reduced motion preferences */
   @media (prefers-reduced-motion: reduce) {
-
-    .animate-fade-in-up,
-    .animate-pulse-glow,
-    .animate-shimmer,
-    .animate-in {
-      animation: none !important;
-    }
-  }
-
-  @keyframes pulse-glow {
-
-    0%,
-    100% {
-      opacity: 1;
-      transform: scale(1);
-    }
-
-    50% {
-      opacity: 0.7;
-      transform: scale(1.05);
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
     }
   }
 

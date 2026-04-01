@@ -1,5 +1,6 @@
 "use strict";
 
+import { memo } from "react";
 import {
     AreaChart,
     Area,
@@ -54,7 +55,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
     return null;
 };
 
-export function LiquidAreaChart({
+export const LiquidAreaChart = memo(function LiquidAreaChart({
     data,
     categories,
     index,
@@ -66,6 +67,8 @@ export function LiquidAreaChart({
     showLegend = true,
     yAxisLabel,
 }: LiquidAreaChartProps) {
+    const prefersReducedMotion = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
     // Format value for display - using any to satisfy Recharts LabelFormatter type
     const formatLabel = (value: any): string => {
         if (value === undefined || value === null) return '';
@@ -125,7 +128,7 @@ export function LiquidAreaChart({
                             stroke={colors[i % colors.length]}
                             strokeWidth={3}
                             fill={`url(#${elementId}-gradient-${i})`}
-                            animationDuration={600}
+                            animationDuration={prefersReducedMotion ? 0 : 600}
                             dot={{ r: 4, strokeWidth: 2, fill: "#fff", stroke: colors[i % colors.length] }}
                             activeDot={{ r: 6, strokeWidth: 0 }}
                         >
@@ -147,4 +150,4 @@ export function LiquidAreaChart({
             </ResponsiveContainer>
         </div>
     );
-}
+});

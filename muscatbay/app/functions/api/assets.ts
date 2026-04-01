@@ -32,7 +32,7 @@ export async function getAssetsFromSupabase(
     try {
         let query = client
             .from('Assets_Register_Database')
-            .select('*', { count: 'exact' });
+            .select('Asset_UID, Asset_Tag, Asset_Name, Asset_Description, Discipline, Category, Subcategory, System_Area, Location_Name, Location_Tag, Building, Floor_Area, Zone, Manufacturer_Brand, Model, Country_Of_Origin, Capacity_Size, Quantity, Install_Date, Install_Year, PPM_Frequency, PPM_Interval, Is_Asset_Active, Life_Expectancy_Years, Current_Age_Years, ERL_Years, Condition, Status, Supplier_Vendor, AMC_Contractor, Responsibility_Owner, Notes_Remarks, Tag_Duplicate_Flag, Source_Sheet, Source_Row', { count: 'exact' });
 
         // Apply search filter if provided - using new column names
         if (search) {

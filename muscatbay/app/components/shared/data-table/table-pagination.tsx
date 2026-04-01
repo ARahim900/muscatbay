@@ -44,6 +44,7 @@ export function TablePagination({
                             const val = e.target.value;
                             onPageSizeChange(val === 'All' ? 'All' : parseInt(val));
                         }}
+                        aria-label="Rows per page"
                         className="px-2 py-1.5 text-xs sm:text-sm rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-colors"
                     >
                         {pageSizeOptions.map(size => (
@@ -101,6 +102,7 @@ export function TablePagination({
                                 <button
                                     key={page}
                                     onClick={() => onPageChange(page as number)}
+                                    aria-current={currentPage === page ? "page" : undefined}
                                     className={cn(
                                         "min-w-[32px] h-8 rounded-full text-sm font-medium transition-all duration-200",
                                         currentPage === page

@@ -80,7 +80,7 @@ export function Sidebar() {
         className={`
           fixed top-0 start-0 h-screen z-40 
           flex flex-col
-          bg-[#4e4456] dark:bg-[#1E293B] shadow-xl
+          bg-primary dark:bg-slate-900 shadow-xl
           transition-all duration-200 ease-out
           ${isOpen ? "translate-x-0 rtl:-translate-x-0" : "-translate-x-full rtl:translate-x-full"}
           ${isCollapsed ? "w-[72px]" : "w-[220px]"}
@@ -105,7 +105,7 @@ export function Sidebar() {
               <div className="flex flex-col">
                 <span className="font-semibold text-sm leading-tight tracking-tight">
                   <span className="text-white">MUSCAT</span>
-                  <span style={{ color: '#81D8D0' }}> BAY</span>
+                  <span className="text-secondary"> BAY</span>
                 </span>
                 <span className="text-[10px] text-white/50 font-normal">Operations</span>
               </div>
@@ -113,10 +113,10 @@ export function Sidebar() {
           )}
 
           {isCollapsed && (
-            <Link href="/" className="w-9 h-9 rounded-lg overflow-hidden flex items-center justify-center bg-white/10 hover:bg-white/20 transition-colors">
+            <Link href="/" className="w-11 h-11 rounded-lg overflow-hidden flex items-center justify-center bg-white/10 hover:bg-white/20 transition-colors">
               <span className="text-white font-bold text-xs">
                 <span className="text-white">M</span>
-                <span style={{ color: '#81D8D0' }}>B</span>
+                <span className="text-secondary">B</span>
               </span>
             </Link>
           )}
@@ -125,7 +125,7 @@ export function Sidebar() {
           {!isCollapsed && (
             <button
               onClick={toggleCollapse}
-              className="hidden md:flex w-7 h-7 items-center justify-center rounded-md hover:bg-white/10 text-white/60 hover:text-white transition-all"
+              className="hidden md:flex w-10 h-10 items-center justify-center rounded-md hover:bg-white/10 text-white/60 hover:text-white transition-all"
               aria-label="Collapse sidebar"
             >
               <ChevronLeft className="h-4 w-4" />
@@ -197,7 +197,7 @@ export function Sidebar() {
 
                     {/* Tooltip for collapsed state */}
                     {isCollapsed && (
-                      <div className="absolute start-full ms-3 px-3 py-2 bg-white text-[#4e4456] text-sm rounded-lg opacity-0 invisible group-hover/nav:opacity-100 group-hover/nav:visible transition-all duration-200 whitespace-nowrap z-50 shadow-lg font-medium pointer-events-none">
+                      <div className="absolute start-full ms-3 px-3 py-2 bg-white text-[#4e4456] text-sm rounded-lg opacity-0 invisible group-hover/nav:opacity-100 group-hover/nav:visible group-focus-within/nav:opacity-100 group-focus-within/nav:visible transition-all duration-200 whitespace-nowrap z-50 shadow-lg font-medium pointer-events-none">
                         {item.name}
                         <div className="absolute start-0 top-1/2 -translate-y-1/2 -translate-x-1 rtl:translate-x-1 w-2 h-2 bg-white rotate-45" />
                       </div>
@@ -246,7 +246,7 @@ export function Sidebar() {
 
                 {/* Tooltip for collapsed state */}
                 {isCollapsed && (
-                  <div className="absolute start-full ms-3 px-3 py-2 bg-white text-[#4e4456] text-sm rounded-lg opacity-0 invisible group-hover/nav:opacity-100 group-hover/nav:visible transition-all duration-200 whitespace-nowrap z-50 shadow-lg font-medium pointer-events-none">
+                  <div className="absolute start-full ms-3 px-3 py-2 bg-white text-[#4e4456] text-sm rounded-lg opacity-0 invisible group-hover/nav:opacity-100 group-hover/nav:visible group-focus-within/nav:opacity-100 group-focus-within/nav:visible transition-all duration-200 whitespace-nowrap z-50 shadow-lg font-medium pointer-events-none">
                     {item.name}
                     <div className="absolute start-0 top-1/2 -translate-y-1/2 -translate-x-1 rtl:translate-x-1 w-2 h-2 bg-white rotate-45" />
                   </div>
@@ -272,7 +272,7 @@ export function Sidebar() {
 
             {/* Tooltip for collapsed state */}
             {isCollapsed && (
-              <div className="absolute start-full ms-3 px-3 py-2 bg-white text-[#4e4456] text-sm rounded-lg opacity-0 invisible group-hover/nav:opacity-100 group-hover/nav:visible transition-all duration-200 whitespace-nowrap z-50 shadow-lg font-medium pointer-events-none">
+              <div className="absolute start-full ms-3 px-3 py-2 bg-white text-[#4e4456] text-sm rounded-lg opacity-0 invisible group-hover/nav:opacity-100 group-hover/nav:visible group-focus-within/nav:opacity-100 group-focus-within/nav:visible transition-all duration-200 whitespace-nowrap z-50 shadow-lg font-medium pointer-events-none">
                 Sign Out
                 <div className="absolute start-0 top-1/2 -translate-y-1/2 -translate-x-1 rtl:translate-x-1 w-2 h-2 bg-white rotate-45" />
               </div>

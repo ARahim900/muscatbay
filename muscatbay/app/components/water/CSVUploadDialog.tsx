@@ -210,7 +210,7 @@ export function CSVUploadDialog({ month, year, onUploadComplete }: CSVUploadDial
 
                         {uploadState === 'dragging' && (
                             <div className="space-y-2">
-                                <Upload className="h-10 w-10 mx-auto text-primary animate-bounce" />
+                                <Upload className="h-10 w-10 mx-auto text-primary animate-pulse" />
                                 <p className="text-sm font-medium text-primary">
                                     Drop your file here
                                 </p>

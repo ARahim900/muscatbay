@@ -27,6 +27,14 @@ export function ChartContainer({
         const el = ref.current;
         if (!el) return;
 
+        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        if (prefersReducedMotion) {
+            el.style.opacity = "1";
+            el.style.transform = "none";
+            return;
+        }
+
         el.style.opacity = "0";
         el.style.transform = "translateY(30px)";
 
@@ -58,12 +66,13 @@ export function ChartContainer({
                 height,
                 minHeight,
                 position: 'relative',
+                willChange: 'opacity, transform',
             }}
         >
             <ResponsiveContainer
                 width="100%"
                 height="100%"
-                debounce={100}
+                debounce={50}
             >
                 {children}
             </ResponsiveContainer>

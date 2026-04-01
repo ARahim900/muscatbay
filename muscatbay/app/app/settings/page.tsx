@@ -142,7 +142,7 @@ export default function SettingsPage() {
 
             {/* Profile Completion Indicator */}
             {!isProfileComplete && (
-                <div className="rounded-xl border border-[#81D8D0]/30 dark:border-[#81D8D0]/20 bg-[#81D8D0]/5 dark:bg-[#81D8D0]/10 p-4 sm:p-5">
+                <div className="rounded-xl border border-secondary/30 dark:border-secondary/20 bg-secondary/5 dark:bg-secondary/10 p-4 sm:p-5">
                     <div className="flex items-start sm:items-center justify-between gap-4 flex-col sm:flex-row">
                         <div className="space-y-1">
                             <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
@@ -155,7 +155,7 @@ export default function SettingsPage() {
                         <div className="w-full sm:w-48 flex-shrink-0">
                             <div className="h-2 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
                                 <div
-                                    className="h-full rounded-full bg-[#81D8D0] transition-all duration-500"
+                                    className="h-full rounded-full bg-secondary transition-all duration-500"
                                     style={{ width: `${completionPct}%` }}
                                 />
                             </div>

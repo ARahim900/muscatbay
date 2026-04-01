@@ -188,7 +188,7 @@ export async function getUserProfile(userId: string): Promise<UserProfile | null
 
     const { data, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select('id, email, full_name, username, avatar_url, website, role')
         .eq('id', userId)
         .single();
 

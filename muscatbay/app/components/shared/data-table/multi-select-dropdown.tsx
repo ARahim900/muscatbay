@@ -50,7 +50,11 @@ export function MultiSelectDropdown({
                 <Icon className="w-3.5 h-3.5" />
                 <span>{label}</span>
                 {selected.length > 0 && selected.length < options.length && (
-                    <span className="bg-primary text-white text-xs px-1.5 py-0.5 rounded-full">
+                    <span
+                        className="bg-primary text-white text-xs px-1.5 py-0.5 rounded-full"
+                        aria-label={`${selected.length} filters selected`}
+                        aria-live="polite"
+                    >
                         {selected.length}
                     </span>
                 )}

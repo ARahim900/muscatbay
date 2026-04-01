@@ -32,7 +32,7 @@ export async function getContractorTrackerData(): Promise<ContractorTracker[]> {
 
     const { data, error } = await client
         .from('Contractor_Tracker')
-        .select('*')
+        .select('"Contractor", "Service Provided", "Status", "Contract Type", "Start Date", "End Date", "Contract (OMR)/Month", "Contract Total (OMR)/Year", "Annual Value (OMR)", "Renewal Plan", "Note"')
         .order('Contractor');
 
     if (error) {
@@ -52,7 +52,7 @@ export async function getContractorSummary(): Promise<AmcContractorSummary[]> {
 
     const { data, error } = await client
         .from('amc_contractor_summary')
-        .select('*')
+        .select('id, no, contractor, service_category, contract_ref, contract_type, start_date, end_date, duration, monthly_fee_omr, annual_fee_omr, total_contract_value_omr, status, alert, document_status')
         .order('no');
 
     if (error) {
@@ -67,7 +67,7 @@ export async function getContractorDetails(): Promise<AmcContractorDetails[]> {
 
     const { data, error } = await client
         .from('amc_contractor_details')
-        .select('*')
+        .select('id, contractor, contract_ref, scope_of_work, ppm_frequency, response_time_emergency, response_time_normal, liquidated_damages, performance_bond, payment_terms, warranty_period, key_exclusions, contact_person')
         .order('contractor');
 
     if (error) {
@@ -83,7 +83,7 @@ export async function getContractorExpiry(): Promise<AmcContractorExpiry[]> {
 
     const { data, error } = await client
         .from('amc_contractor_expiry')
-        .select('*')
+        .select('id, contractor, end_date, days_remaining, renewal_action_required_by, priority, renewal_status')
         .order('days_remaining');
 
     if (error) {
@@ -99,7 +99,7 @@ export async function getContractorPricing(): Promise<AmcContractorPricing[]> {
 
     const { data, error } = await client
         .from('amc_contractor_pricing')
-        .select('*')
+        .select('id, contractor, year_1_omr, year_2_omr, year_3_omr, year_4_omr, year_5_omr, total_omr, notes')
         .order('contractor');
 
     if (error) {
@@ -126,7 +126,7 @@ export async function getAmcContracts(): Promise<AmcContract[]> {
 
     const { data, error } = await client
         .from('amc_contracts')
-        .select('*')
+        .select('id, name, company, category, status, start_date')
         .order('name');
 
     if (error) {
@@ -141,13 +141,13 @@ export async function getAmcExpiry(): Promise<AmcExpiry[]> {
 
     const { data, error } = await client
         .from('amc_expiry')
-        .select('*, amc_contracts(name, company)')
+        .select('id, contract_id, expiry_date, notification_sent, amc_contracts(name, company)')
         .order('expiry_date');
 
     if (error) {
         return [];
     }
-    return data || [];
+    return (data as unknown as AmcExpiry[]) || [];
 }
 
 export async function getAmcContacts(): Promise<AmcContact[]> {
@@ -156,13 +156,13 @@ export async function getAmcContacts(): Promise<AmcContact[]> {
 
     const { data, error } = await client
         .from('amc_contacts')
-        .select('*, amc_contracts(name)')
+        .select('id, contract_id, contact_name, role, phone, email, amc_contracts(name)')
         .order('contact_name');
 
     if (error) {
         return [];
     }
-    return data || [];
+    return (data as unknown as AmcContact[]) || [];
 }
 
 export async function getAmcPricing(): Promise<AmcPricing[]> {
@@ -171,11 +171,11 @@ export async function getAmcPricing(): Promise<AmcPricing[]> {
 
     const { data, error } = await client
         .from('amc_pricing')
-        .select('*, amc_contracts(name)')
+        .select('id, contract_id, contract_value, currency, payment_terms, amc_contracts(name)')
         .order('contract_value', { ascending: false });
 
     if (error) {
         return [];
     }
-    return data || [];
+    return (data as unknown as AmcPricing[]) || [];
 }

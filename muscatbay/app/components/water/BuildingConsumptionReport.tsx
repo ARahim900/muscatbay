@@ -145,8 +145,8 @@ function nextSort(current: SortState, key: string): SortState {
 function SortIcon({ active, dir }: { active: boolean; dir: SortDir }) {
     if (!active || !dir) return <ArrowUpDown className="h-3 w-3 opacity-30" />;
     return dir === 'asc'
-        ? <ChevronUp className="h-3.5 w-3.5 text-[#00D2B3]" />
-        : <ChevronDown className="h-3.5 w-3.5 text-[#00D2B3]" />;
+        ? <ChevronUp className="h-3.5 w-3.5 text-secondary" />
+        : <ChevronDown className="h-3.5 w-3.5 text-secondary" />;
 }
 
 function Th({
@@ -274,7 +274,7 @@ function TablePagination({
                         className={cn(
                             "h-8 w-8 rounded-full flex items-center justify-center text-[12px] font-medium transition-all",
                             p === page
-                                ? "bg-[#4E4456] text-white shadow-sm dark:bg-[#00D2B3] dark:text-slate-900"
+                                ? "bg-primary text-white shadow-sm dark:bg-secondary dark:text-slate-900"
                                 : "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800",
                         )}
                     >
@@ -294,7 +294,7 @@ function TablePagination({
                 <select
                     value={rowsPerPage}
                     onChange={e => onRowsPerPageChange(Number(e.target.value))}
-                    className="h-8 rounded-full border border-slate-200 dark:border-slate-700 bg-transparent text-[12px] px-2 focus:outline-none focus:ring-2 focus:ring-[#00D2B3]/30 cursor-pointer"
+                    className="h-8 rounded-full border border-slate-200 dark:border-slate-700 bg-transparent text-[12px] px-2 focus:outline-none focus:ring-2 focus:ring-secondary/30 cursor-pointer"
                 >
                     {[5, 10, 15, 21].map(n => <option key={n} value={n}>{n}</option>)}
                 </select>
@@ -503,7 +503,7 @@ export function BuildingConsumptionReport() {
         return (
             <tr key={`${row.buildingName}-children`} className="bg-slate-50/40 dark:bg-slate-800/20">
                 <td colSpan={9} className="py-0 px-0">
-                    <div className="border-l-[3px] border-[#00D2B3]/40 dark:border-[#00D2B3]/30 ml-5 sm:ml-7">
+                    <div className="border-l-[3px] border-secondary/40 dark:border-secondary/30 ml-5 sm:ml-7">
                         <table className="w-full">
                             <thead>
                                 <tr className="border-b border-slate-100 dark:border-slate-800/60">
@@ -612,10 +612,10 @@ export function BuildingConsumptionReport() {
                         </div>
 
                         {/* Day selector */}
-                        <div className="flex items-center gap-3 flex-1 min-w-[220px]">
+                        <div className="flex items-center gap-3 flex-1 min-w-0 sm:min-w-[220px]">
                             <Button
                                 variant="outline" size="icon"
-                                className="h-8 w-8 shrink-0"
+                                className="h-10 w-10 shrink-0"
                                 onClick={() => setSelectedDay(d => Math.max(1, d - 1))}
                                 disabled={selectedDay <= 1 || status === 'loading'}
                             >
@@ -631,7 +631,7 @@ export function BuildingConsumptionReport() {
                             </div>
                             <Button
                                 variant="outline" size="icon"
-                                className="h-8 w-8 shrink-0"
+                                className="h-10 w-10 shrink-0"
                                 onClick={() => setSelectedDay(d => Math.min(31, d + 1))}
                                 disabled={selectedDay >= 31 || status === 'loading'}
                             >
@@ -645,7 +645,7 @@ export function BuildingConsumptionReport() {
                         {/* Refresh */}
                         <Button
                             variant="outline" size="icon"
-                            className="h-9 w-9 shrink-0"
+                            className="h-10 w-10 shrink-0"
                             onClick={() => fetchMonth(selectedMonth)}
                             disabled={status === 'loading'}
                             title="Refresh"
@@ -765,7 +765,7 @@ export function BuildingConsumptionReport() {
                                         value={search}
                                         onChange={e => setSearch(e.target.value)}
                                         placeholder="Search building or account…"
-                                        className="h-9 w-full sm:w-64 pl-9 pr-8 text-[13px] rounded-full border border-slate-200 dark:border-slate-700/80 bg-slate-50/80 dark:bg-slate-800/50 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#00D2B3]/30 focus:border-[#00D2B3]/50 transition-all"
+                                        className="h-9 w-full sm:w-64 pl-9 pr-8 text-[13px] rounded-full border border-slate-200 dark:border-slate-700/80 bg-slate-50/80 dark:bg-slate-800/50 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-secondary/30 focus:border-secondary/50 transition-all"
                                     />
                                     {search && (
                                         <button onClick={() => setSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 h-4 w-4 rounded-full bg-slate-200 dark:bg-slate-600 flex items-center justify-center text-slate-500 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-500 transition-colors">
@@ -778,7 +778,7 @@ export function BuildingConsumptionReport() {
                                     <select
                                         value={zoneFilter}
                                         onChange={e => setZoneFilter(e.target.value as typeof zoneFilter)}
-                                        className="h-9 text-[13px] rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50/80 dark:bg-slate-800/50 focus:outline-none focus:ring-2 focus:ring-[#00D2B3]/30 focus:border-[#00D2B3]/50 transition-all appearance-none cursor-pointer pr-8 pl-9"
+                                        className="h-9 text-[13px] rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50/80 dark:bg-slate-800/50 focus:outline-none focus:ring-2 focus:ring-secondary/30 focus:border-secondary/50 transition-all appearance-none cursor-pointer pr-8 pl-9"
                                     >
                                         <option value="all">All Zones ({buildingRows.length})</option>
                                         <option value="3A">Zone 3A ({z3ACount})</option>
@@ -831,7 +831,7 @@ export function BuildingConsumptionReport() {
                                                         <span className="inline-flex items-center gap-2">
                                                             <span className={cn(
                                                                 "flex items-center justify-center h-5 w-5 rounded-md transition-all duration-200",
-                                                                isExpanded ? "bg-[#4E4456] dark:bg-[#00D2B3]" : "bg-slate-200 dark:bg-slate-700",
+                                                                isExpanded ? "bg-primary dark:bg-secondary" : "bg-slate-200 dark:bg-slate-700",
                                                             )}>
                                                                 <ChevronDown className={cn(
                                                                     "h-3 w-3 transition-transform duration-200",

@@ -122,7 +122,7 @@ function DualRangeSlider({ min, max, value, onValueChange }: DualRangeSliderProp
         }
     }, [getValueFromPointer, min, max, onValueChange]);
 
-    const thumbClass = "absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-5 h-5 rounded-full border-2 border-[#4E4456] bg-white dark:border-[#81D8D0] dark:bg-slate-900 shadow-md shadow-black/10 dark:shadow-black/30 hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 transition-transform cursor-grab active:cursor-grabbing z-10";
+    const thumbClass = "absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-5 h-5 rounded-full border-2 border-primary bg-white dark:border-secondary dark:bg-slate-900 shadow-md shadow-black/10 dark:shadow-black/30 hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 transition-transform cursor-grab active:cursor-grabbing z-10";
 
     return (
         <div
@@ -134,7 +134,7 @@ function DualRangeSlider({ min, max, value, onValueChange }: DualRangeSliderProp
             <div className="absolute inset-x-0 h-2 rounded-full bg-slate-200 dark:bg-slate-700" />
             {/* Active range */}
             <div
-                className="absolute h-2 rounded-full bg-[#81D8D0]"
+                className="absolute h-2 rounded-full bg-secondary"
                 style={{ left: `${startPct}%`, right: `${100 - endPct}%` }}
             />
             {/* Start thumb */}
@@ -274,20 +274,20 @@ export function DateRangePicker({
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                 {/* Left: Icon + Range Display */}
                 <div className="flex items-start gap-3">
-                    <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-gradient-to-br from-[#81D8D0]/15 to-[#4E4456]/5 dark:from-[#81D8D0]/20 dark:to-[#81D8D0]/5 ring-1 ring-[#81D8D0]/10 dark:ring-[#81D8D0]/15 mt-0.5 shrink-0">
-                        <Calendar className="w-[18px] h-[18px] text-[#4E4456] dark:text-[#81D8D0]" />
+                    <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-gradient-to-br from-secondary/15 to-primary/5 dark:from-secondary/20 dark:to-secondary/5 ring-1 ring-secondary/10 dark:ring-secondary/15 mt-0.5 shrink-0">
+                        <Calendar className="w-[18px] h-[18px] text-primary dark:text-secondary" />
                     </div>
                     <div className="space-y-0.5 min-w-0">
                         <div className="flex items-center gap-2">
                             <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 tracking-tight">Date Range</h3>
-                            <span className="inline-flex items-center px-1.5 py-px text-[10px] font-bold rounded-full bg-[#81D8D0]/10 text-[#4E4456] dark:bg-[#81D8D0]/15 dark:text-[#81D8D0] tabular-nums ring-1 ring-[#81D8D0]/20 dark:ring-[#81D8D0]/20">
+                            <span className="inline-flex items-center px-1.5 py-px text-[10px] font-bold rounded-full bg-secondary/10 text-primary dark:bg-secondary/15 dark:text-secondary tabular-nums ring-1 ring-secondary/20 dark:ring-secondary/20">
                                 {selectedDataMonths} mo
                             </span>
                         </div>
                         <p className="text-[13px] text-slate-500 dark:text-slate-400 leading-tight truncate">
-                            <span className="font-semibold text-[#4E4456] dark:text-[#81D8D0]">{formatMonthWithYear(displayStartMonth)}</span>
+                            <span className="font-semibold text-primary dark:text-secondary">{formatMonthWithYear(displayStartMonth)}</span>
                             <span className="mx-1.5 text-slate-300 dark:text-slate-600">&rarr;</span>
-                            <span className="font-semibold text-[#4E4456] dark:text-[#81D8D0]">{formatMonthWithYear(displayEndMonth)}</span>
+                            <span className="font-semibold text-primary dark:text-secondary">{formatMonthWithYear(displayEndMonth)}</span>
                         </p>
                     </div>
                 </div>
@@ -301,7 +301,7 @@ export function DateRangePicker({
                             className={`
                                 px-2 py-1 text-[11px] font-semibold rounded-md transition-all duration-200
                                 ${activePreset === key
-                                    ? 'bg-[#4E4456]/10 text-[#4E4456] dark:bg-[#81D8D0]/15 dark:text-[#81D8D0] ring-1 ring-[#4E4456]/20 dark:ring-[#81D8D0]/25'
+                                    ? 'bg-primary/10 text-primary dark:bg-secondary/15 dark:text-secondary ring-1 ring-primary/20 dark:ring-secondary/25'
                                     : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50 hover:text-slate-600 dark:hover:text-slate-300'
                                 }
                             `}
@@ -327,7 +327,7 @@ export function DateRangePicker({
                 {/* Dual-Thumb Range Slider — px-3 keeps thumbs away from Card overflow-hidden edges */}
                 <div className="px-3 overflow-visible">
                     {activeTimeline.length < 2 ? (
-                        <div className="h-2 w-full rounded-full bg-[#81D8D0]" />
+                        <div className="h-2 w-full rounded-full bg-secondary" />
                     ) : (
                         <DualRangeSlider
                             value={[activeStartIndex, activeEndIndex]}
@@ -355,14 +355,14 @@ export function DateRangePicker({
                             >
                                 {/* Year badge - only when timeline spans multiple years */}
                                 {isFirstOfYear && uniqueYears > 1 && (
-                                    <span className="absolute -top-5 left-1/2 -translate-x-1/2 text-[9px] font-extrabold text-[#4E4456]/50 dark:text-[#81D8D0]/35 tracking-wider whitespace-nowrap">
+                                    <span className="absolute -top-5 left-1/2 -translate-x-1/2 text-[9px] font-extrabold text-primary/50 dark:text-secondary/35 tracking-wider whitespace-nowrap">
                                         20{yearPart}
                                     </span>
                                 )}
 
                                 {/* Year divider */}
                                 {isYearBoundary && uniqueYears > 1 && (
-                                    <div className="absolute -top-2 -left-0.5 w-px h-[calc(100%+12px)] bg-gradient-to-b from-[#4E4456]/20 to-transparent dark:from-[#81D8D0]/20 dark:to-transparent" />
+                                    <div className="absolute -top-2 -left-0.5 w-px h-[calc(100%+12px)] bg-gradient-to-b from-primary/20 to-transparent dark:from-secondary/20 dark:to-transparent" />
                                 )}
 
                                 {/* Month label */}
@@ -370,9 +370,9 @@ export function DateRangePicker({
                                     className={`
                                         text-[11px] leading-none transition-colors duration-200
                                         ${isEndpoint
-                                            ? 'font-extrabold text-[#4E4456] dark:text-[#81D8D0]'
+                                            ? 'font-extrabold text-primary dark:text-secondary'
                                             : isInRange
-                                                ? 'font-semibold text-[#81D8D0] dark:text-[#81D8D0]/90'
+                                                ? 'font-semibold text-secondary dark:text-secondary/90'
                                                 : 'font-medium text-slate-400 dark:text-slate-500'
                                         }
                                     `}
@@ -385,9 +385,9 @@ export function DateRangePicker({
                                     className={`
                                         mt-1.5 w-1 h-1 rounded-full transition-all duration-200
                                         ${isEndpoint
-                                            ? 'bg-[#4E4456] dark:bg-[#81D8D0] w-1.5 h-1.5'
+                                            ? 'bg-primary dark:bg-secondary w-1.5 h-1.5'
                                             : isInRange
-                                                ? 'bg-[#81D8D0] dark:bg-[#81D8D0]/70'
+                                                ? 'bg-secondary dark:bg-secondary/70'
                                                 : 'bg-slate-300 dark:bg-slate-600'
                                         }
                                     `}
