@@ -666,9 +666,9 @@ export default function WaterPage() {
                                                 <YAxis className="text-xs" tickFormatter={(v) => `${v / 1000}k`} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "var(--chart-axis)" }} label={{ value: 'm³', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: "var(--chart-axis)", fontSize: 11 } }} />
                                                 <Tooltip content={<LiquidTooltip />} cursor={{ stroke: 'rgba(0,0,0,0.1)', strokeWidth: 2 }} />
                                                 <Legend iconType="circle" />
-                                                <Area type="monotone" name="A1 - Main Source" dataKey="A1" stroke="#4E4456" fill="url(#gradA1)" strokeWidth={3} activeDot={{ r: 6, stroke: '#fff', strokeWidth: 2 }} animationDuration={1500} />
-                                                <Area type="monotone" name="A2 - Zone Distribution" dataKey="A2" stroke="#81D8D0" fill="url(#gradA2)" strokeWidth={3} animationDuration={1500} />
-                                                <Area type="monotone" name="A3 - Individual" dataKey="A3Individual" stroke="#6B5F73" fill="none" strokeWidth={2} strokeDasharray="5 5" animationDuration={1500} />
+                                                <Area type="monotone" name="A1 - Main Source" dataKey="A1" stroke="#4E4456" fill="url(#gradA1)" strokeWidth={3} activeDot={{ r: 6, stroke: '#fff', strokeWidth: 2 }} animationDuration={600} />
+                                                <Area type="monotone" name="A2 - Zone Distribution" dataKey="A2" stroke="#81D8D0" fill="url(#gradA2)" strokeWidth={3} animationDuration={600} />
+                                                <Area type="monotone" name="A3 - Individual" dataKey="A3Individual" stroke="#6B5F73" fill="none" strokeWidth={2} strokeDasharray="5 5" animationDuration={600} />
                                             </AreaChart>
                                         </ResponsiveContainer>
                                     </div>
@@ -694,9 +694,9 @@ export default function WaterPage() {
                                                 <YAxis className="text-xs" tickFormatter={(v) => `${v / 1000}k`} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "var(--chart-axis)" }} label={{ value: 'm³', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: "var(--chart-axis)", fontSize: 11 } }} />
                                                 <Tooltip content={<LiquidTooltip />} cursor={{ stroke: 'rgba(0,0,0,0.1)', strokeWidth: 2 }} />
                                                 <Legend iconType="circle" />
-                                                <Area type="monotone" name="Total Loss" dataKey="totalLoss" stroke="#C95D63" fill="url(#gradLoss)" strokeWidth={2} strokeDasharray="5 5" animationDuration={1500} />
-                                                <Line type="monotone" name="Stage 1 Loss" dataKey="stage1Loss" stroke="#E8A838" strokeWidth={2} strokeDasharray="3 3" dot={false} animationDuration={1500} />
-                                                <Line type="monotone" name="Stage 2 Loss" dataKey="stage2Loss" stroke="#6B5F73" strokeWidth={2} strokeDasharray="3 3" dot={false} animationDuration={1500} />
+                                                <Area type="monotone" name="Total Loss" dataKey="totalLoss" stroke="#C95D63" fill="url(#gradLoss)" strokeWidth={2} strokeDasharray="5 5" animationDuration={600} />
+                                                <Line type="monotone" name="Stage 1 Loss" dataKey="stage1Loss" stroke="#E8A838" strokeWidth={2} strokeDasharray="3 3" dot={false} animationDuration={600} />
+                                                <Line type="monotone" name="Stage 2 Loss" dataKey="stage2Loss" stroke="#6B5F73" strokeWidth={2} strokeDasharray="3 3" dot={false} animationDuration={600} />
                                             </AreaChart>
                                         </ResponsiveContainer>
                                     </div>
@@ -788,9 +788,9 @@ export default function WaterPage() {
                                                 <YAxis className="text-xs" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "var(--chart-axis)" }} label={{ value: 'm³', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: "var(--chart-axis)", fontSize: 11 } }} />
                                                 <Tooltip content={<LiquidTooltip />} cursor={{ stroke: 'rgba(0,0,0,0.1)', strokeWidth: 2 }} />
                                                 <Legend iconType="circle" />
-                                                <Area type="monotone" name="Individual Total" dataKey="Individual Total" stroke="#4E4456" fill="url(#gradIndividual)" strokeWidth={3} activeDot={{ r: 6, stroke: '#fff', strokeWidth: 2 }} animationDuration={1500} />
-                                                <Line type="monotone" name="Loss" dataKey="Loss" stroke="#C95D63" strokeWidth={2} dot={false} strokeDasharray="5 5" animationDuration={1500} />
-                                                <Area type="monotone" name="Zone Bulk" dataKey="Zone Bulk" stroke="#81D8D0" fill="url(#gradZoneBulk)" strokeWidth={3} animationDuration={1500} />
+                                                <Area type="monotone" name="Individual Total" dataKey="Individual Total" stroke="#4E4456" fill="url(#gradIndividual)" strokeWidth={3} activeDot={{ r: 6, stroke: '#fff', strokeWidth: 2 }} animationDuration={600} />
+                                                <Line type="monotone" name="Loss" dataKey="Loss" stroke="#C95D63" strokeWidth={2} dot={false} strokeDasharray="5 5" animationDuration={600} />
+                                                <Area type="monotone" name="Zone Bulk" dataKey="Zone Bulk" stroke="#81D8D0" fill="url(#gradZoneBulk)" strokeWidth={3} animationDuration={600} />
                                             </AreaChart>
                                         </ResponsiveContainer>
                                     </div>
@@ -866,7 +866,7 @@ export default function WaterPage() {
                                                 <XAxis type="number" tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "var(--chart-axis)" }} label={{ value: 'm³', position: 'insideBottom', offset: -5, style: { textAnchor: 'middle', fill: "var(--chart-axis)", fontSize: 11 } }} />
                                                 <YAxis type="category" dataKey="type" width={110} className="text-xs" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "var(--chart-axis)" }} />
                                                 <Tooltip content={<LiquidTooltip />} cursor={{ fill: 'rgba(0,0,0,0.04)', radius: 6 }} />
-                                                <Bar dataKey="total" radius={[0, 6, 6, 0]} barSize={24} animationDuration={1500}>
+                                                <Bar dataKey="total" radius={[0, 6, 6, 0]} barSize={24} animationDuration={600}>
                                                     {consumptionChartData.map((entry, index) => (
                                                         <Cell key={`cell-${index}`} fill={TYPE_COLORS[entry.type as keyof typeof TYPE_COLORS] || '#6B7280'} />
                                                     ))}

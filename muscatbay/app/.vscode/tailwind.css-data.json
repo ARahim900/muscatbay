@@ -1,0 +1,65 @@
+{
+  "version": 1.1,
+  "atDirectives": [
+    {
+      "name": "@theme",
+      "description": "Tailwind CSS v4: Define design tokens (colors, spacing, fonts, etc.).",
+      "references": [
+        {
+          "name": "Tailwind CSS Documentation",
+          "url": "https://tailwindcss.com/docs/theme"
+        }
+      ]
+    },
+    {
+      "name": "@apply",
+      "description": "Tailwind CSS: Inline utility classes into custom CSS.",
+      "references": [
+        {
+          "name": "Tailwind CSS Documentation",
+          "url": "https://tailwindcss.com/docs/functions-and-directives#apply"
+        }
+      ]
+    },
+    {
+      "name": "@custom-variant",
+      "description": "Tailwind CSS v4: Register a custom variant for use in utility classes.",
+      "references": [
+        {
+          "name": "Tailwind CSS Documentation",
+          "url": "https://tailwindcss.com/docs/custom-variants"
+        }
+      ]
+    },
+    {
+      "name": "@variant",
+      "description": "Tailwind CSS v4: Apply variants in custom CSS.",
+      "references": [
+        {
+          "name": "Tailwind CSS Documentation",
+          "url": "https://tailwindcss.com/docs/functions-and-directives#variant"
+        }
+      ]
+    },
+    {
+      "name": "@utility",
+      "description": "Tailwind CSS v4: Register a custom utility class.",
+      "references": [
+        {
+          "name": "Tailwind CSS Documentation",
+          "url": "https://tailwindcss.com/docs/adding-custom-styles#custom-utilities"
+        }
+      ]
+    },
+    {
+      "name": "@source",
+      "description": "Tailwind CSS v4: Add additional source paths for class detection.",
+      "references": [
+        {
+          "name": "Tailwind CSS Documentation",
+          "url": "https://tailwindcss.com/docs/detecting-classes-in-source-files"
+        }
+      ]
+    }
+  ]
+}

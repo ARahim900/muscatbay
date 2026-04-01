@@ -132,7 +132,7 @@ export default function DashboardPage() {
                             <YAxis className="text-xs" tick={{ fontSize: 11, fill: "var(--chart-axis)" }} axisLine={false} tickLine={false} label={{ value: 'k m³', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: 'var(--chart-axis)', fontSize: 11 } }} />
                             <Tooltip content={<LiquidTooltip />} cursor={{ stroke: 'rgba(0,0,0,0.1)', strokeWidth: 2 }} />
                             <Legend iconType="circle" wrapperStyle={{ paddingTop: 10 }} />
-                            <Area type="monotone" dataKey="water" stroke="#81D8D0" fill="url(#colorWater)" name="Water (k m³)" strokeWidth={3} activeDot={{ r: 6, stroke: '#fff', strokeWidth: 2 }} animationDuration={1500} />
+                            <Area type="monotone" dataKey="water" stroke="#81D8D0" fill="url(#colorWater)" name="Water (k m³)" strokeWidth={3} activeDot={{ r: 6, stroke: '#fff', strokeWidth: 2 }} animationDuration={600} />
                         </AreaChart>
                     </ChartContainer>
                 </Card>
@@ -156,8 +156,8 @@ export default function DashboardPage() {
                             <YAxis className="text-xs" tick={{ fontSize: 10, fill: "var(--chart-axis)" }} axisLine={false} tickLine={false} />
                             <Tooltip content={<LiquidTooltip />} cursor={{ fill: 'rgba(0,0,0,0.04)', radius: 4 }} />
                             <Legend iconType="circle" />
-                            <Bar dataKey="inlet" name="Inlet" fill="var(--chart-inlet)" radius={[4, 4, 0, 0]} animationDuration={1500} />
-                            <Bar dataKey="tse" name="TSE Output" fill="#81D8D0" radius={[4, 4, 0, 0]} animationDuration={1500} />
+                            <Bar dataKey="inlet" name="Inlet" fill="var(--chart-inlet)" radius={[4, 4, 0, 0]} animationDuration={600} />
+                            <Bar dataKey="tse" name="TSE Output" fill="#81D8D0" radius={[4, 4, 0, 0]} animationDuration={600} />
                         </BarChart>
                     </ChartContainer>
                 </Card>

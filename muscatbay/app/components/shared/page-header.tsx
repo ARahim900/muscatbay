@@ -23,7 +23,6 @@ interface PageHeaderProps {
 export function PageHeader({ title, description, className, showBreadcrumbs = true, action, children }: PageHeaderProps) {
     const headerRef = useScrollAnimation<HTMLDivElement>({
         y: 20,
-        opacity: 0,
         duration: 0.4,
         stagger: 0.1,
     });

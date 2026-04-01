@@ -1,12 +1,7 @@
 "use client";
 
-import { ReactNode, useRef } from "react";
+import { ReactNode, useRef, useEffect } from "react";
 import { ResponsiveContainer } from "recharts";
-import { gsap } from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { useGSAP } from "@gsap/react";
-
-gsap.registerPlugin(ScrollTrigger);
 
 interface ChartContainerProps {
     children: ReactNode;
@@ -18,7 +13,7 @@ interface ChartContainerProps {
 /**
  * A wrapper component that ensures ResponsiveContainer gets proper dimensions
  * using debounce and explicit min-height styling.
- * Includes a subtle GSAP scroll-triggered fade-in animation.
+ * Includes a subtle CSS scroll-triggered fade-in animation.
  */
 export function ChartContainer({
     children,
@@ -28,25 +23,32 @@ export function ChartContainer({
 }: ChartContainerProps) {
     const ref = useRef<HTMLDivElement>(null);
 
-    useGSAP(
-        () => {
-            const el = ref.current;
-            if (!el) return;
+    useEffect(() => {
+        const el = ref.current;
+        if (!el) return;
 
-            gsap.from(el, {
-                y: 30,
-                opacity: 0,
-                duration: 0.5,
-                ease: "power2.out",
-                scrollTrigger: {
-                    trigger: el,
-                    start: "top 85%",
-                    once: true,
-                },
-            });
-        },
-        { scope: ref, dependencies: [] }
-    );
+        el.style.opacity = "0";
+        el.style.transform = "translateY(30px)";
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                entries.forEach((entry) => {
+                    if (!entry.isIntersecting) return;
+
+                    const htmlEl = entry.target as HTMLElement;
+                    htmlEl.style.transition = "opacity 0.5s ease-out, transform 0.5s ease-out";
+                    htmlEl.style.opacity = "1";
+                    htmlEl.style.transform = "translateY(0)";
+
+                    observer.unobserve(entry.target);
+                });
+            },
+            { rootMargin: "0px 0px -15% 0px" }
+        );
+
+        observer.observe(el);
+        return () => observer.disconnect();
+    }, []);
 
     return (
         <div

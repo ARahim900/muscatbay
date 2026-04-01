@@ -125,7 +125,7 @@ export function LiquidAreaChart({
                             stroke={colors[i % colors.length]}
                             strokeWidth={3}
                             fill={`url(#${elementId}-gradient-${i})`}
-                            animationDuration={1500}
+                            animationDuration={600}
                             dot={{ r: 4, strokeWidth: 2, fill: "#fff", stroke: colors[i % colors.length] }}
                             activeDot={{ r: 6, strokeWidth: 0 }}
                         >

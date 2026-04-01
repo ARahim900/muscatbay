@@ -40,7 +40,6 @@ const variantIconColors: Record<StatVariant, string> = {
 export function StatsGrid({ stats, className }: StatsGridProps) {
     const gridRef = useScrollAnimation<HTMLDivElement>({
         y: 30,
-        opacity: 0,
         duration: 0.5,
         stagger: 0.1,
     });

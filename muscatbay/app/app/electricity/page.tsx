@@ -815,7 +815,7 @@ export default function ElectricityPage() {
                                             <YAxis className="text-xs" tickFormatter={(v) => `${v / 1000}k`} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "var(--chart-axis)" }} label={{ value: 'kWh', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: "var(--chart-axis)", fontSize: 11 } }} />
                                             <Tooltip content={<LiquidTooltip />} cursor={{ stroke: 'rgba(0,0,0,0.1)', strokeWidth: 2 }} />
                                             <Legend iconType="circle" wrapperStyle={{ paddingTop: 10 }} />
-                                            <Area type="natural" dataKey="consumption" name="Consumption" stroke="#E8A838" fill="url(#elecGrad)" strokeWidth={3} activeDot={{ r: 6, stroke: '#fff', strokeWidth: 2 }} animationDuration={1500} />
+                                            <Area type="natural" dataKey="consumption" name="Consumption" stroke="#E8A838" fill="url(#elecGrad)" strokeWidth={3} activeDot={{ r: 6, stroke: '#fff', strokeWidth: 2 }} animationDuration={600} />
                                         </AreaChart>
                                     </ResponsiveContainer>
                                 </div>
@@ -833,7 +833,7 @@ export default function ElectricityPage() {
                                             <XAxis type="number" hide />
                                             <YAxis type="category" dataKey="type" width={100} className="text-xs" axisLine={false} tickLine={false} tick={{ fill: "var(--chart-axis)" }} />
                                             <Tooltip content={<LiquidTooltip />} cursor={{ fill: 'rgba(0,0,0,0.04)', radius: 6 }} />
-                                            <Bar dataKey="value" radius={[0, 6, 6, 0]} barSize={24} animationDuration={1500}>
+                                            <Bar dataKey="value" radius={[0, 6, 6, 0]} barSize={24} animationDuration={600}>
                                                 {consumptionByType.map((entry, index) => (
                                                     <Cell key={`c-${index}`} fill={entry.color} />
                                                 ))}
@@ -912,7 +912,7 @@ export default function ElectricityPage() {
                                                     strokeWidth={2.5}
                                                     dot={{ r: 3, strokeWidth: 1, fill: '#fff' }}
                                                     activeDot={{ r: 5, stroke: '#fff', strokeWidth: 2 }}
-                                                    animationDuration={1500}
+                                                    animationDuration={600}
                                                 />
                                             ))}
                                         </RechartsLineChart>
@@ -930,7 +930,7 @@ export default function ElectricityPage() {
                                             <YAxis tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : `${v}`} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "var(--chart-axis)" }} />
                                             <Tooltip content={<LiquidTooltip />} cursor={{ stroke: 'rgba(0,0,0,0.1)', strokeWidth: 2 }} />
                                             <Legend iconType="circle" wrapperStyle={{ paddingTop: 10 }} />
-                                            <Area type="monotone" dataKey="consumption" name="Consumption" stroke="#81D8D0" fill="url(#anlGrad)" strokeWidth={3} activeDot={{ r: 6, stroke: '#fff', strokeWidth: 2 }} animationDuration={1500} />
+                                            <Area type="monotone" dataKey="consumption" name="Consumption" stroke="#81D8D0" fill="url(#anlGrad)" strokeWidth={3} activeDot={{ r: 6, stroke: '#fff', strokeWidth: 2 }} animationDuration={600} />
                                         </AreaChart>
                                     )}
                                 </ResponsiveContainer>
@@ -1001,7 +1001,7 @@ export default function ElectricityPage() {
                                                 dataKey="consumption"
                                                 radius={[0, 8, 8, 0]}
                                                 barSize={28}
-                                                animationDuration={1500}
+                                                animationDuration={600}
                                             >
                                                 {(analysisData.topConsumers || []).map((entry, index) => (
                                                     <Cell key={`cell-${index}`} fill={entry.color} />
@@ -1083,7 +1083,7 @@ export default function ElectricityPage() {
                                                     }}
                                                     cursor={{ fill: 'rgba(0,0,0,0.04)', radius: 6 }}
                                                 />
-                                                <Bar dataKey="consumption" radius={[0, 8, 8, 0]} barSize={24} animationDuration={1500}>
+                                                <Bar dataKey="consumption" radius={[0, 8, 8, 0]} barSize={24} animationDuration={600}>
                                                     {analysisData.comparisonData.map((entry, index) => (
                                                         <Cell key={`comp-${index}`} fill={entry.isAboveAvg ? '#C95D63' : '#5BA88B'} />
                                                     ))}

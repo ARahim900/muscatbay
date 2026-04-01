@@ -100,8 +100,25 @@ export const ZONE_CONFIG: ZoneConfig[] = [
 export const AVAILABLE_MONTHS = [
   'Jan-24', 'Feb-24', 'Mar-24', 'Apr-24', 'May-24', 'Jun-24', 'Jul-24', 'Aug-24', 'Sep-24', 'Oct-24', 'Nov-24', 'Dec-24',
   'Jan-25', 'Feb-25', 'Mar-25', 'Apr-25', 'May-25', 'Jun-25', 'Jul-25', 'Aug-25', 'Sep-25', 'Oct-25', 'Nov-25', 'Dec-25',
-  'Jan-26', 'Feb-26', 'Mar-26'
+  'Jan-26', 'Feb-26', 'Mar-26', 'Apr-26'
 ];
+
+/** Dynamically generates months from Jan 2024 up to the current month. No manual updates needed. */
+const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+export function getDynamicMonths(): string[] {
+  const START_YEAR = 2024;
+  const now = new Date();
+  const endYear = now.getFullYear();
+  const endMonth = now.getMonth(); // 0-indexed
+  const months: string[] = [];
+  for (let y = START_YEAR; y <= endYear; y++) {
+    const lastM = y === endYear ? endMonth : 11;
+    for (let m = 0; m <= lastM; m++) {
+      months.push(`${MONTH_NAMES[m]}-${String(y).slice(2)}`);
+    }
+  }
+  return months;
+}
 
 export const TYPE_CATEGORIES: Record<string, string[]> = {
   Commercial: ['Retail', 'Building'],

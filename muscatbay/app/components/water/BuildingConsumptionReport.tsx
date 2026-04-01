@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
-import { AVAILABLE_MONTHS } from "@/lib/water-data";
+import { getDynamicMonths } from "@/lib/water-data";
 import {
     BUILDING_CONFIG, BUILDING_CHILD_METERS,
     type BuildingConfig, type ChildMeterInfo,
@@ -25,10 +25,19 @@ import { cn } from "@/lib/utils";
 const MONTH_ABBREVS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
 function getDefaultMonth(): string {
+    const months = getDynamicMonths();
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
     const key = `${MONTH_ABBREVS[yesterday.getMonth()]}-${String(yesterday.getFullYear()).slice(2)}`;
-    return AVAILABLE_MONTHS.includes(key) ? key : AVAILABLE_MONTHS[AVAILABLE_MONTHS.length - 1];
+    return months.includes(key) ? key : months[months.length - 1];
+}
+
+function getAvailableYears(): string[] {
+    return [...new Set(getDynamicMonths().map(m => m.split('-')[1]))];
+}
+
+function getMonthsForYear(year: string): string[] {
+    return getDynamicMonths().filter(m => m.endsWith(`-${year}`));
 }
 
 function getDefaultDay(month: string): number {
@@ -569,17 +578,35 @@ export function BuildingConsumptionReport() {
             <Card className="glass-card">
                 <CardContent className="p-4 sm:p-5 md:p-6">
                     <div className="flex flex-wrap items-center gap-4">
-                        {/* Month selector */}
+                        {/* Year + Month selector */}
                         <div className="flex items-center gap-2">
                             <CalendarDays className="h-4 w-4 text-muted-foreground shrink-0" />
+                            <select
+                                value={selectedMonth.split('-')[1]}
+                                onChange={e => {
+                                    const yr = e.target.value;
+                                    const months = getMonthsForYear(yr);
+                                    const currentAbbrev = selectedMonth.split('-')[0];
+                                    const match = months.find(m => m.startsWith(currentAbbrev));
+                                    const next = match ?? months[months.length - 1];
+                                    setSelectedMonth(next);
+                                    setSelectedDay(1);
+                                }}
+                                disabled={status === 'loading'}
+                                className="px-2 py-1.5 text-sm rounded-md border border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
+                            >
+                                {[...getAvailableYears()].reverse().map(yr => (
+                                    <option key={yr} value={yr}>20{yr}</option>
+                                ))}
+                            </select>
                             <select
                                 value={selectedMonth}
                                 onChange={e => { setSelectedMonth(e.target.value); setSelectedDay(1); }}
                                 disabled={status === 'loading'}
                                 className="px-2 py-1.5 text-sm rounded-md border border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
                             >
-                                {[...AVAILABLE_MONTHS].reverse().map(m => (
-                                    <option key={m} value={m}>{m}</option>
+                                {getMonthsForYear(selectedMonth.split('-')[1]).map(m => (
+                                    <option key={m} value={m}>{m.split('-')[0]}</option>
                                 ))}
                             </select>
                         </div>

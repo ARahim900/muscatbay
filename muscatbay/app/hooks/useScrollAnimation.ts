@@ -1,33 +1,23 @@
 "use client";
 
-import { useRef } from "react";
-import { gsap } from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { useGSAP } from "@gsap/react";
-
-// Register plugins once
-gsap.registerPlugin(ScrollTrigger);
+import { useRef, useEffect } from "react";
 
 export interface ScrollAnimationConfig {
     /** Vertical offset to animate from (px). Default: 30 */
     y?: number;
-    /** Starting opacity. Default: 0 */
-    opacity?: number;
     /** Animation duration in seconds. Default: 0.5 */
     duration?: number;
     /** Stagger delay between children in seconds. Default: 0.1 */
     stagger?: number;
-    /** ScrollTrigger start position. Default: 'top 85%' */
-    start?: string;
+    /** IntersectionObserver rootMargin. Default: '0px 0px -15% 0px' */
+    rootMargin?: string;
     /** CSS selector for children to animate. Default: ':scope > *' (direct children) */
     childSelector?: string;
-    /** Easing function. Default: 'power2.out' */
-    ease?: string;
 }
 
 /**
- * Reusable hook that applies a GSAP ScrollTrigger fade-in + slide-up
- * animation to the direct children of a container element.
+ * Reusable hook that applies a CSS fade-in + slide-up animation to
+ * the direct children of a container element when they enter the viewport.
  *
  * Usage:
  *   const containerRef = useScrollAnimation<HTMLDivElement>();
@@ -38,43 +28,50 @@ export function useScrollAnimation<T extends HTMLElement = HTMLDivElement>(
 ) {
     const {
         y = 30,
-        opacity = 0,
         duration = 0.5,
         stagger = 0.1,
-        start = "top 85%",
+        rootMargin = "0px 0px -15% 0px",
         childSelector = ":scope > *",
-        ease = "power2.out",
     } = config;
 
     const containerRef = useRef<T>(null);
 
-    useGSAP(
-        () => {
-            const container = containerRef.current;
-            if (!container) return;
+    useEffect(() => {
+        const container = containerRef.current;
+        if (!container) return;
 
-            const children = container.querySelectorAll(childSelector);
-            if (children.length === 0) return;
+        const children = container.querySelectorAll(childSelector);
+        if (children.length === 0) return;
 
-            gsap.fromTo(
-                children,
-                { y, opacity },
-                {
-                    y: 0,
-                    opacity: 1,
-                    duration,
-                    stagger,
-                    ease,
-                    scrollTrigger: {
-                        trigger: container,
-                        start,
-                        once: true,
-                    },
-                }
-            );
-        },
-        { scope: containerRef, dependencies: [] }
-    );
+        // Set initial hidden state
+        children.forEach((child) => {
+            const el = child as HTMLElement;
+            el.style.opacity = "0";
+            el.style.transform = `translateY(${y}px)`;
+        });
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                entries.forEach((entry) => {
+                    if (!entry.isIntersecting) return;
+
+                    // Animate all children with stagger
+                    children.forEach((child, i) => {
+                        const el = child as HTMLElement;
+                        el.style.transition = `opacity ${duration}s ease-out ${i * stagger}s, transform ${duration}s ease-out ${i * stagger}s`;
+                        el.style.opacity = "1";
+                        el.style.transform = "translateY(0)";
+                    });
+
+                    observer.unobserve(entry.target);
+                });
+            },
+            { rootMargin }
+        );
+
+        observer.observe(container);
+        return () => observer.disconnect();
+    }, [y, duration, stagger, rootMargin, childSelector]);
 
     return containerRef;
 }

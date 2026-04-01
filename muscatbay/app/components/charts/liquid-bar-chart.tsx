@@ -115,7 +115,7 @@ export function LiquidBarChart({
                             dataKey={cat}
                             fill={colors[i % colors.length]}
                             radius={barRadius}
-                            animationDuration={1500}
+                            animationDuration={600}
                         >
                             {showLabels && (
                                 <LabelList
