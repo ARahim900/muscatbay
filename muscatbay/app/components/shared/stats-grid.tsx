@@ -44,14 +44,12 @@ export function StatsGrid({ stats, className }: StatsGridProps) {
         stagger: 0.1,
     });
 
-    // Dynamically choose columns: 4 cards → 2x2 on sm / 4 cols on lg, 3 cards → 3 cols, 6+ → 3 cols (rows of 3), 8 → 4 cols
     const count = stats.length;
     const gridCols =
         count === 3 ? "grid-cols-2 sm:grid-cols-3" :
         count <= 4 ? "grid-cols-2 sm:grid-cols-2 lg:grid-cols-4" :
-        count === 6 ? "grid-cols-2 sm:grid-cols-3" :
-        count === 8 ? "grid-cols-2 sm:grid-cols-2 lg:grid-cols-4" :
-        "grid-cols-2 sm:grid-cols-3";
+        count <= 6 ? "grid-cols-2 sm:grid-cols-3" :
+        "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4";
 
     return (
         <div ref={gridRef} className={cn(
@@ -63,23 +61,23 @@ export function StatsGrid({ stats, className }: StatsGridProps) {
                 const variant = stat.variant || "primary";
                 const iconColor = variantIconColors[variant];
 
+                const isNegativeTrend = stat.trend === 'down';
+
                 const cardContent = (
                     <>
-                        {/* Animated top border line */}
-                        <div
-                            className="absolute top-0 left-0 w-full h-[3px] opacity-0 group-hover/stat:opacity-100 transition-opacity duration-200"
-                            style={{ backgroundColor: stat.color || iconColor }}
-                        />
                         <div className="flex justify-between items-start gap-2">
                             <div className="min-w-0">
                                 <p className="text-slate-500 dark:text-slate-400 text-[10px] sm:text-xs font-medium mb-0.5 sm:mb-1 uppercase tracking-wide truncate">
                                     {stat.label}
                                 </p>
-                                <h3 className="text-base sm:text-lg md:text-xl font-bold text-slate-800 dark:text-slate-100 tabular-nums tracking-tight truncate">
+                                <h3 className={cn(
+                                    "text-base sm:text-lg md:text-xl font-bold tabular-nums tracking-tight truncate",
+                                    isNegativeTrend ? "text-red-500" : "text-slate-800 dark:text-slate-100"
+                                )}>
                                     {stat.value}
                                 </h3>
                             </div>
-                            <div className="p-1.5 sm:p-2 rounded-lg bg-gray-50/80 dark:bg-slate-800/80 will-change-transform group-hover/stat:scale-110 group-hover/stat:shadow-sm transition-all duration-200 ease-out flex-shrink-0">
+                            <div className="p-1.5 sm:p-2 rounded-lg bg-gray-50/80 dark:bg-slate-800/80 flex-shrink-0">
                                 <stat.icon
                                     className="w-4 h-4 sm:w-5 sm:h-5"
                                     style={{ color: stat.color || iconColor }}
@@ -109,18 +107,18 @@ export function StatsGrid({ stats, className }: StatsGridProps) {
                     </>
                 );
 
-                const cardClassName = "bg-white dark:bg-slate-900 p-3 sm:p-4 md:p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-lg hover:-translate-y-1 active:scale-[0.98] transition-all duration-200 ease-out group/stat overflow-hidden relative";
+                const baseCardClassName = "bg-white dark:bg-slate-900 p-3 sm:p-4 md:p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm group/stat overflow-hidden";
 
                 return stat.href ? (
                     <Link
                         key={index}
                         href={stat.href}
-                        className={cn(cardClassName, "block cursor-pointer")}
+                        className={cn(baseCardClassName, "block cursor-pointer hover:shadow-md transition-shadow duration-200")}
                     >
                         {cardContent}
                     </Link>
                 ) : (
-                    <div key={index} className={cardClassName}>
+                    <div key={index} className={baseCardClassName}>
                         {cardContent}
                     </div>
                 );

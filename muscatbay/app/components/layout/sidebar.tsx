@@ -168,19 +168,20 @@ export function Sidebar() {
                     className={`
                       group/nav flex items-center gap-3 py-2.5 px-3 rounded-lg text-left transition-all duration-200 ease-out relative overflow-hidden
                       ${isActive
-                        ? "bg-white/10 backdrop-blur-md text-white shadow-[0_0_15px_rgba(129,216,208,0.2)]"
-                        : "text-white/70 hover:bg-white/10 hover:backdrop-blur-sm hover:text-white"
+                        ? "bg-white/10 text-white shadow-[0_0_15px_rgba(129,216,208,0.2)]"
+                        : "text-white/70 hover:bg-white/10 hover:text-white"
                       }
                       ${isCollapsed ? "justify-center px-2" : ""}
                     `}
                     title={isCollapsed ? item.name : undefined}
+                    aria-describedby={isCollapsed ? `tooltip-${item.id}` : undefined}
                   >
                     {/* Animated Active Indicator */}
-                    <div className={`absolute start-0 top-0 bottom-0 w-1 bg-[#81D8D0] shadow-[0_0_10px_rgba(129,216,208,0.8)] transition-all duration-200 ease-out origin-left ${isActive ? 'scale-x-100 opacity-100' : 'scale-x-0 opacity-0'}`} />
+                    <div className={`absolute start-0 top-0 bottom-0 w-1 bg-secondary shadow-[0_0_10px_rgba(129,216,208,0.8)] transition-all duration-200 ease-out origin-left ${isActive ? 'scale-x-100 opacity-100' : 'scale-x-0 opacity-0'}`} />
                     <Icon
                       className={`
                         w-5 h-5 flex-shrink-0 transition-all duration-200 relative z-10
-                        ${isActive ? "text-[#81D8D0] drop-shadow-[0_0_6px_rgba(129,216,208,0.6)]" : "group-hover/nav:scale-110 group-hover/nav:rotate-3"}
+                        ${isActive ? "text-secondary drop-shadow-[0_0_6px_rgba(129,216,208,0.6)]" : "group-hover/nav:scale-110 group-hover/nav:rotate-3"}
                       `}
                     />
 
@@ -190,14 +191,14 @@ export function Sidebar() {
                           {item.name}
                         </span>
                         {isActive && (
-                          <div className="w-2 h-2 rounded-full bg-[#81D8D0] flex-shrink-0 shadow-[0_0_8px_rgba(129,216,208,0.8)]" />
+                          <div className="w-2 h-2 rounded-full bg-secondary flex-shrink-0 shadow-[0_0_8px_rgba(129,216,208,0.8)]" />
                         )}
                       </>
                     )}
 
                     {/* Tooltip for collapsed state */}
                     {isCollapsed && (
-                      <div className="absolute start-full ms-3 px-3 py-2 bg-white text-[#4e4456] text-sm rounded-lg opacity-0 invisible group-hover/nav:opacity-100 group-hover/nav:visible group-focus-within/nav:opacity-100 group-focus-within/nav:visible transition-all duration-200 whitespace-nowrap z-50 shadow-lg font-medium pointer-events-none">
+                      <div id={`tooltip-${item.id}`} role="tooltip" className="absolute start-full ms-3 px-3 py-2 bg-white text-primary text-sm rounded-lg opacity-0 invisible group-hover/nav:opacity-100 group-hover/nav:visible group-focus-within/nav:opacity-100 group-focus-within/nav:visible transition-all duration-200 whitespace-nowrap z-50 shadow-lg font-medium pointer-events-none">
                         {item.name}
                         <div className="absolute start-0 top-1/2 -translate-y-1/2 -translate-x-1 rtl:translate-x-1 w-2 h-2 bg-white rotate-45" />
                       </div>
@@ -225,19 +226,20 @@ export function Sidebar() {
                 className={`
                   group/nav flex items-center gap-3 py-2.5 px-3 rounded-lg transition-all duration-200 ease-out relative overflow-hidden
                   ${isActive
-                    ? "bg-white/10 backdrop-blur-md text-white shadow-[0_0_15px_rgba(129,216,208,0.2)]"
-                    : "text-white/70 hover:bg-white/10 hover:backdrop-blur-sm hover:text-white"
+                    ? "bg-white/10 text-white shadow-[0_0_15px_rgba(129,216,208,0.2)]"
+                    : "text-white/70 hover:bg-white/10 hover:text-white"
                   }
                   ${isCollapsed ? "justify-center px-2" : ""}
                 `}
                 title={isCollapsed ? item.name : undefined}
+                aria-describedby={isCollapsed ? `tooltip-${item.id}` : undefined}
               >
                 {/* Animated Active Indicator */}
-                <div className={`absolute start-0 top-0 bottom-0 w-1 bg-[#81D8D0] shadow-[0_0_10px_rgba(129,216,208,0.8)] transition-all duration-200 ease-out origin-left ${isActive ? 'scale-x-100 opacity-100' : 'scale-x-0 opacity-0'}`} />
+                <div className={`absolute start-0 top-0 bottom-0 w-1 bg-secondary shadow-[0_0_10px_rgba(129,216,208,0.8)] transition-all duration-200 ease-out origin-left ${isActive ? 'scale-x-100 opacity-100' : 'scale-x-0 opacity-0'}`} />
                 <Icon
                   className={`
                     w-5 h-5 flex-shrink-0 transition-all duration-200 ease-out relative z-10
-                    ${isActive ? "text-[#81D8D0] drop-shadow-[0_0_6px_rgba(129,216,208,0.6)]" : "group-hover/nav:scale-110 group-hover/nav:rotate-3"}
+                    ${isActive ? "text-secondary drop-shadow-[0_0_6px_rgba(129,216,208,0.6)]" : "group-hover/nav:scale-110 group-hover/nav:rotate-3"}
                   `}
                 />
                 {!isCollapsed && (
@@ -246,7 +248,7 @@ export function Sidebar() {
 
                 {/* Tooltip for collapsed state */}
                 {isCollapsed && (
-                  <div className="absolute start-full ms-3 px-3 py-2 bg-white text-[#4e4456] text-sm rounded-lg opacity-0 invisible group-hover/nav:opacity-100 group-hover/nav:visible group-focus-within/nav:opacity-100 group-focus-within/nav:visible transition-all duration-200 whitespace-nowrap z-50 shadow-lg font-medium pointer-events-none">
+                  <div id={`tooltip-${item.id}`} role="tooltip" className="absolute start-full ms-3 px-3 py-2 bg-white text-primary text-sm rounded-lg opacity-0 invisible group-hover/nav:opacity-100 group-hover/nav:visible group-focus-within/nav:opacity-100 group-focus-within/nav:visible transition-all duration-200 whitespace-nowrap z-50 shadow-lg font-medium pointer-events-none">
                     {item.name}
                     <div className="absolute start-0 top-1/2 -translate-y-1/2 -translate-x-1 rtl:translate-x-1 w-2 h-2 bg-white rotate-45" />
                   </div>
@@ -260,10 +262,11 @@ export function Sidebar() {
             onClick={logout}
             className={`
               group/nav w-full flex items-center gap-3 py-2.5 px-3 rounded-lg transition-all duration-200 ease-out relative
-              text-white/70 hover:bg-red-500/20 hover:text-red-300 hover:backdrop-blur-sm
+              text-white/70 hover:bg-red-500/20 hover:text-red-300
               ${isCollapsed ? "justify-center px-2" : ""}
             `}
             title={isCollapsed ? "Sign Out" : undefined}
+            aria-describedby={isCollapsed ? "tooltip-logout" : undefined}
           >
             <LogOut className="w-5 h-5 flex-shrink-0 transition-transform duration-200 group-hover/nav:scale-110" />
             {!isCollapsed && (
@@ -272,7 +275,7 @@ export function Sidebar() {
 
             {/* Tooltip for collapsed state */}
             {isCollapsed && (
-              <div className="absolute start-full ms-3 px-3 py-2 bg-white text-[#4e4456] text-sm rounded-lg opacity-0 invisible group-hover/nav:opacity-100 group-hover/nav:visible group-focus-within/nav:opacity-100 group-focus-within/nav:visible transition-all duration-200 whitespace-nowrap z-50 shadow-lg font-medium pointer-events-none">
+              <div id="tooltip-logout" role="tooltip" className="absolute start-full ms-3 px-3 py-2 bg-white text-primary text-sm rounded-lg opacity-0 invisible group-hover/nav:opacity-100 group-hover/nav:visible group-focus-within/nav:opacity-100 group-focus-within/nav:visible transition-all duration-200 whitespace-nowrap z-50 shadow-lg font-medium pointer-events-none">
                 Sign Out
                 <div className="absolute start-0 top-1/2 -translate-y-1/2 -translate-x-1 rtl:translate-x-1 w-2 h-2 bg-white rotate-45" />
               </div>

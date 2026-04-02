@@ -17,6 +17,8 @@ import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
 import Link from "next/link";
 
+const CHART_COLORS = { teal: '#81D8D0', brand: '#4E4456', amber: '#E8A838' } as const;
+
 export default function DashboardPage() {
     const router = useRouter();
     const { stats, chartData, stpChartData, recentActivity, loading, isLiveData, error } = useDashboardData();
@@ -107,7 +109,7 @@ export default function DashboardPage() {
             <div className="flex items-center justify-between">
                 <PageHeader
                     title={`${new Date().getHours() < 12 ? 'Good morning' : new Date().getHours() < 17 ? 'Good afternoon' : 'Good evening'}`}
-                    description="Overview of all operations and key metrics across Water, Electricity, and STP"
+                    description="Water, Electricity, and STP performance at a glance"
                 />
                 <div className="flex items-center gap-2">
 
@@ -141,8 +143,8 @@ export default function DashboardPage() {
                         <AreaChart data={chartData}>
                             <defs>
                                 <linearGradient id="colorWater" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor="#81D8D0" stopOpacity={0.4} />
-                                    <stop offset="95%" stopColor="#81D8D0" stopOpacity={0} />
+                                    <stop offset="5%" stopColor={CHART_COLORS.teal} stopOpacity={0.4} />
+                                    <stop offset="95%" stopColor={CHART_COLORS.teal} stopOpacity={0} />
                                 </linearGradient>
                             </defs>
                             <CartesianGrid strokeDasharray="3 3" className="stroke-slate-200 dark:stroke-slate-700" opacity={0.5} />
@@ -150,7 +152,7 @@ export default function DashboardPage() {
                             <YAxis className="text-xs" tick={{ fontSize: 11, fill: "var(--chart-axis)" }} axisLine={false} tickLine={false} label={{ value: 'k m³', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: 'var(--chart-axis)', fontSize: 11 } }} />
                             <Tooltip content={<LiquidTooltip />} cursor={{ stroke: 'rgba(0,0,0,0.1)', strokeWidth: 2 }} />
                             <Legend iconType="circle" wrapperStyle={{ paddingTop: 10 }} />
-                            <Area type="monotone" dataKey="water" stroke="#81D8D0" fill="url(#colorWater)" name="Water (k m³)" strokeWidth={3} activeDot={{ r: 6, stroke: '#fff', strokeWidth: 2 }} animationDuration={600} />
+                            <Area type="monotone" dataKey="water" stroke={CHART_COLORS.teal} fill="url(#colorWater)" name="Water (k m³)" strokeWidth={3} activeDot={{ r: 6, stroke: '#fff', strokeWidth: 2 }} animationDuration={600} />
                         </AreaChart>
                     </ChartContainer>
                     </div>
@@ -180,7 +182,7 @@ export default function DashboardPage() {
                             <Tooltip content={<LiquidTooltip />} cursor={{ fill: 'rgba(0,0,0,0.04)', radius: 4 }} />
                             <Legend iconType="circle" />
                             <Bar dataKey="inlet" name="Inlet" fill="var(--chart-inlet)" radius={[4, 4, 0, 0]} animationDuration={600} />
-                            <Bar dataKey="tse" name="TSE Output" fill="#81D8D0" radius={[4, 4, 0, 0]} animationDuration={600} />
+                            <Bar dataKey="tse" name="TSE Output" fill={CHART_COLORS.teal} radius={[4, 4, 0, 0]} animationDuration={600} />
                         </BarChart>
                     </ChartContainer>
                     </div>
@@ -195,7 +197,7 @@ export default function DashboardPage() {
                             <div>
                                 <CardTitle>Latest Updates</CardTitle>
                                 <p className="text-sm text-muted-foreground">
-                                    Recent alerts and status changes across all systems
+                                    Alerts and status changes from Water, Electricity, and STP
                                 </p>
                             </div>
                             <div className="flex items-center gap-1 bg-white/50 dark:bg-slate-800/50 p-1 rounded-lg">
@@ -209,7 +211,7 @@ export default function DashboardPage() {
                                                 : filter === 'warning' ? 'bg-mb-warning text-white'
                                                     : filter === 'info' ? 'bg-mb-info text-white'
                                                         : 'bg-primary text-white'
-                                            : 'text-muted-foreground hover:bg-white/50 dark:hover:bg-slate-700/50 dark:text-slate-400'
+                                            : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
                                             }`}
                                     >
                                         {filter}

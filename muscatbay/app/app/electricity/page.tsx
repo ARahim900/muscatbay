@@ -26,16 +26,18 @@ import { PageStatusBar } from "@/components/shared/page-status-bar";
 const ratePerKWh = ELECTRICITY_RATES.RATE_PER_KWH;
 
 const CHART_COLORS = {
-    loss: '#C95D63',
-    success: '#5BA88B',
-    teal: '#81D8D0',
-    brand: '#4E4456',
-    amber: '#E8A838',
-    gray: '#6B5F73',
+    primary: '#D97706',    // Strong amber (electricity = energy/warmth)
+    secondary: '#FBBF24',  // Golden yellow
+    accent: '#F59E0B',     // Amber
+    success: '#10B981',    // Green for positive
+    loss: '#EF4444',       // Red for loss/alerts
+    brand: '#4E4456',      // Brand purple
+    amber: '#E8A838',      // Amber for warnings
+    gray: '#6B7280',       // Neutral gray
 } as const;
 
 // Color palette for per-meter lines (module-level to avoid recreating on each render)
-const meterColors = [CHART_COLORS.amber, CHART_COLORS.success, CHART_COLORS.teal, CHART_COLORS.loss, CHART_COLORS.gray, '#3b82f6', '#f59e0b', '#10b981', '#8b5cf6', '#06b6d4'];
+const meterColors = [CHART_COLORS.primary, CHART_COLORS.success, CHART_COLORS.secondary, CHART_COLORS.loss, CHART_COLORS.gray, '#3b82f6', '#f59e0b', '#10b981', '#8b5cf6', '#06b6d4'];
 
 export default function ElectricityPage() {
     const [activeTab, setActiveTab] = useState("overview");
@@ -409,7 +411,7 @@ export default function ElectricityPage() {
         return Object.entries(grouped).map(([type, val], i) => ({
             type,
             value: val,
-            color: [CHART_COLORS.amber, CHART_COLORS.success, CHART_COLORS.teal, CHART_COLORS.gray, CHART_COLORS.loss][i % 5]
+            color: [CHART_COLORS.primary, CHART_COLORS.success, CHART_COLORS.secondary, CHART_COLORS.gray, CHART_COLORS.loss][i % 5]
         })).sort((a, b) => b.value - a.value);
     }, [meters, allMonths, startMonth, endMonth]);
 
@@ -601,7 +603,7 @@ export default function ElectricityPage() {
             fullName: meter.name,
             consumption: meter.rangeConsumption,
             cost: meter.rangeCost,
-            color: idx === 0 ? CHART_COLORS.amber : idx === 1 ? '#F59E0B' : idx === 2 ? '#FBBF24' : CHART_COLORS.teal
+            color: idx === 0 ? CHART_COLORS.primary : idx === 1 ? CHART_COLORS.accent : idx === 2 ? CHART_COLORS.secondary : CHART_COLORS.gray
         }));
 
         return {
@@ -816,15 +818,15 @@ export default function ElectricityPage() {
                                         <AreaChart data={filteredMonthlyData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                                             <defs>
                                                 <linearGradient id="elecGrad" x1="0" y1="0" x2="0" y2="1">
-                                                    <stop offset="5%" stopColor={CHART_COLORS.amber} stopOpacity={0.4} />
-                                                    <stop offset="95%" stopColor={CHART_COLORS.amber} stopOpacity={0} />
+                                                    <stop offset="5%" stopColor={CHART_COLORS.primary} stopOpacity={0.4} />
+                                                    <stop offset="95%" stopColor={CHART_COLORS.primary} stopOpacity={0} />
                                                 </linearGradient>
                                             </defs>
                                             <XAxis dataKey="month" className="text-xs" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "var(--chart-axis)" }} dy={10} />
                                             <YAxis className="text-xs" tickFormatter={(v) => `${v / 1000}k`} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "var(--chart-axis)" }} label={{ value: 'kWh', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: "var(--chart-axis)", fontSize: 11 } }} />
                                             <Tooltip content={<LiquidTooltip />} cursor={{ stroke: 'rgba(0,0,0,0.1)', strokeWidth: 2 }} />
                                             <Legend iconType="circle" wrapperStyle={{ paddingTop: 10 }} />
-                                            <Area type="natural" dataKey="consumption" name="Consumption" stroke={CHART_COLORS.amber} fill="url(#elecGrad)" strokeWidth={3} activeDot={{ r: 6, stroke: '#fff', strokeWidth: 2 }} animationDuration={600} />
+                                            <Area type="natural" dataKey="consumption" name="Consumption" stroke={CHART_COLORS.primary} fill="url(#elecGrad)" strokeWidth={3} activeDot={{ r: 6, stroke: '#fff', strokeWidth: 2 }} animationDuration={600} />
                                         </AreaChart>
                                     </ResponsiveContainer>
                                 </div>
@@ -930,8 +932,8 @@ export default function ElectricityPage() {
                                         <AreaChart data={analysisData.chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                                             <defs>
                                                 <linearGradient id="anlGrad" x1="0" y1="0" x2="0" y2="1">
-                                                    <stop offset="5%" stopColor={CHART_COLORS.teal} stopOpacity={0.4} />
-                                                    <stop offset="95%" stopColor={CHART_COLORS.teal} stopOpacity={0} />
+                                                    <stop offset="5%" stopColor={CHART_COLORS.secondary} stopOpacity={0.4} />
+                                                    <stop offset="95%" stopColor={CHART_COLORS.secondary} stopOpacity={0} />
                                                 </linearGradient>
                                             </defs>
                                             <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" />
@@ -939,7 +941,7 @@ export default function ElectricityPage() {
                                             <YAxis tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : `${v}`} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "var(--chart-axis)" }} />
                                             <Tooltip content={<LiquidTooltip />} cursor={{ stroke: 'rgba(0,0,0,0.1)', strokeWidth: 2 }} />
                                             <Legend iconType="circle" wrapperStyle={{ paddingTop: 10 }} />
-                                            <Area type="monotone" dataKey="consumption" name="Consumption" stroke={CHART_COLORS.teal} fill="url(#anlGrad)" strokeWidth={3} activeDot={{ r: 6, stroke: '#fff', strokeWidth: 2 }} animationDuration={600} />
+                                            <Area type="monotone" dataKey="consumption" name="Consumption" stroke={CHART_COLORS.secondary} fill="url(#anlGrad)" strokeWidth={3} activeDot={{ r: 6, stroke: '#fff', strokeWidth: 2 }} animationDuration={600} />
                                         </AreaChart>
                                     )}
                                 </ResponsiveContainer>

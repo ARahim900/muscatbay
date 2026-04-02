@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/components/auth/auth-provider';
@@ -58,6 +58,8 @@ export function BottomNav() {
   const pathname = usePathname();
   const { logout } = useAuth();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const drawerRef = useRef<HTMLDivElement>(null);
+  const moreButtonRef = useRef<HTMLButtonElement>(null);
 
   const isOverflowActive = overflowItems.some(i => isRouteActive(i.href, pathname));
 
@@ -66,17 +68,66 @@ export function BottomNav() {
     setDrawerOpen(false);
   }, [pathname]);
 
-  // Close drawer on Escape
-  const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    if (e.key === 'Escape') setDrawerOpen(false);
-  }, []);
-
+  // Focus trap + Escape handler for drawer
   useEffect(() => {
-    if (drawerOpen) {
-      document.addEventListener('keydown', handleKeyDown);
-      return () => document.removeEventListener('keydown', handleKeyDown);
+    if (!drawerOpen) return;
+
+    const drawerEl = drawerRef.current;
+    if (!drawerEl) return;
+
+    // Find all focusable elements within the drawer
+    const getFocusableElements = (): HTMLElement[] => {
+      const selectors = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+      return Array.from(drawerEl.querySelectorAll<HTMLElement>(selectors));
+    };
+
+    // Set initial focus to the close button
+    const focusable = getFocusableElements();
+    if (focusable.length > 0) {
+      focusable[0].focus();
     }
-  }, [drawerOpen, handleKeyDown]);
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setDrawerOpen(false);
+        return;
+      }
+
+      if (e.key !== 'Tab') return;
+
+      const currentFocusable = getFocusableElements();
+      if (currentFocusable.length === 0) return;
+
+      const firstEl = currentFocusable[0];
+      const lastEl = currentFocusable[currentFocusable.length - 1];
+
+      if (e.shiftKey) {
+        // Shift+Tab: if on first element, wrap to last
+        if (document.activeElement === firstEl) {
+          e.preventDefault();
+          lastEl.focus();
+        }
+      } else {
+        // Tab: if on last element, wrap to first
+        if (document.activeElement === lastEl) {
+          e.preventDefault();
+          firstEl.focus();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [drawerOpen]);
+
+  // Return focus to "More" button when drawer closes
+  const prevDrawerOpen = useRef(false);
+  useEffect(() => {
+    if (prevDrawerOpen.current && !drawerOpen) {
+      moreButtonRef.current?.focus();
+    }
+    prevDrawerOpen.current = drawerOpen;
+  }, [drawerOpen]);
 
   return (
     <>
@@ -91,8 +142,10 @@ export function BottomNav() {
 
       {/* Slide-up drawer */}
       <div
+        ref={drawerRef}
         role="dialog"
         aria-label="Navigation menu"
+        aria-modal="true"
         className={`
           fixed bottom-[64px] left-0 right-0 z-[95] md:hidden
           motion-safe:transition-transform motion-safe:duration-200 motion-safe:ease-out
@@ -154,6 +207,7 @@ export function BottomNav() {
       <nav
         className="fixed bottom-0 left-0 right-0 z-[100] md:hidden h-16 bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-700/80 shadow-[0_-2px_10px_rgba(0,0,0,0.06)] dark:shadow-[0_-2px_10px_rgba(0,0,0,0.3)]"
         aria-label="Mobile navigation"
+        aria-hidden={drawerOpen}
       >
         <div className="flex items-center justify-around h-full px-1">
           {primaryItems.map((item) => {
@@ -184,6 +238,7 @@ export function BottomNav() {
 
           {/* More button */}
           <button
+            ref={moreButtonRef}
             onClick={() => setDrawerOpen(prev => !prev)}
             className={`
               flex flex-col items-center justify-center gap-0.5 flex-1 h-full pt-1.5 pb-1 rounded-lg transition-colors

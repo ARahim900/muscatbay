@@ -6,7 +6,7 @@ import { TooltipProps } from "recharts";
 export const LiquidTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
         return (
-            <div className="glass-card px-4 py-3 border border-white/50 shadow-xl !rounded-xl !bg-white/80 dark:!bg-slate-900/80 backdrop-blur-md">
+            <div className="px-4 py-3 border border-slate-200 dark:border-slate-700 shadow-xl rounded-xl bg-white dark:bg-slate-900">
                 <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">{label}</p>
                 {payload.map((entry: { color: string; name: string; value: number | string }, index: number) => (
                     <div key={index} className="flex items-center gap-2 text-xs mb-1 last:mb-0">

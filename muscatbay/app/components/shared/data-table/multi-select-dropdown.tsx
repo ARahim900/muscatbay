@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useId, useState } from 'react';
 import { Filter, ChevronDown, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -22,6 +22,7 @@ export function MultiSelectDropdown({
     icon: Icon = Filter,
 }: MultiSelectDropdownProps) {
     const [isOpen, setIsOpen] = useState(false);
+    const listboxId = useId();
 
     const toggleOption = (option: string) => {
         if (selected.includes(option)) {
@@ -40,6 +41,9 @@ export function MultiSelectDropdown({
         <div className="relative">
             <button
                 onClick={() => setIsOpen(!isOpen)}
+                aria-haspopup="listbox"
+                aria-expanded={isOpen}
+                aria-controls={isOpen ? listboxId : undefined}
                 className={cn(
                     "flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1.5 sm:py-2 text-xs sm:text-sm rounded-lg border transition-all duration-200",
                     selected.length > 0 && selected.length < options.length
@@ -79,10 +83,18 @@ export function MultiSelectDropdown({
                                 Clear
                             </button>
                         </div>
-                        <div className="max-h-[240px] overflow-y-auto">
+                        <div
+                            id={listboxId}
+                            role="listbox"
+                            aria-label={label}
+                            aria-multiselectable="true"
+                            className="max-h-[240px] overflow-y-auto"
+                        >
                             {options.map(option => (
                                 <label
                                     key={option}
+                                    role="option"
+                                    aria-selected={selected.includes(option)}
                                     className="flex items-center gap-2 px-3 py-1.5 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer"
                                 >
                                     <input

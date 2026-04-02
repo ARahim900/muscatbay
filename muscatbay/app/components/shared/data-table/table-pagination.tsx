@@ -66,6 +66,7 @@ export function TablePagination({
                         disabled={currentPage === 1}
                         className="w-8 h-8 flex items-center justify-center rounded-full border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                         title="First page"
+                        aria-label="First page"
                     >
                         <ChevronsLeft className="w-4 h-4 text-slate-600 dark:text-slate-400" />
                     </button>
@@ -74,6 +75,7 @@ export function TablePagination({
                         disabled={currentPage === 1}
                         className="w-8 h-8 flex items-center justify-center rounded-full border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                         title="Previous page"
+                        aria-label="Previous page"
                     >
                         <ChevronLeft className="w-4 h-4 text-slate-600 dark:text-slate-400" />
                     </button>
@@ -121,6 +123,7 @@ export function TablePagination({
                         disabled={currentPage === totalPages}
                         className="w-8 h-8 flex items-center justify-center rounded-full border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                         title="Next page"
+                        aria-label="Next page"
                     >
                         <ChevronRight className="w-4 h-4 text-slate-600 dark:text-slate-400" />
                     </button>
@@ -129,6 +132,7 @@ export function TablePagination({
                         disabled={currentPage === totalPages}
                         className="w-8 h-8 flex items-center justify-center rounded-full border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                         title="Last page"
+                        aria-label="Last page"
                     >
                         <ChevronsRight className="w-4 h-4 text-slate-600 dark:text-slate-400" />
                     </button>

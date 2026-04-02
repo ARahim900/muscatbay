@@ -42,12 +42,14 @@ import { cn } from "@/lib/utils";
 const { TANKER_FEE, TSE_SAVING_RATE } = STP_RATES;
 
 const CHART_COLORS = {
-    loss: '#C95D63',
-    success: '#5BA88B',
-    teal: '#81D8D0',
-    brand: '#4E4456',
-    amber: '#E8A838',
-    gray: '#6B5F73',
+    primary: '#059669',    // Strong emerald (STP = treatment/nature)
+    secondary: '#34D399',  // Light emerald
+    accent: '#10B981',     // Green
+    success: '#10B981',    // Green for positive
+    loss: '#EF4444',       // Red for loss/alerts
+    brand: '#4E4456',      // Brand purple
+    amber: '#E8A838',      // Amber for warnings
+    gray: '#6B7280',       // Neutral gray
 } as const;
 
 function ChartViewToggle({ value, onChange }: { value: 'daily' | 'monthly'; onChange: (v: 'daily' | 'monthly') => void }) {
@@ -750,8 +752,8 @@ export default function STPPage() {
                                                 <stop offset="95%" stopColor={CHART_COLORS.brand} stopOpacity={0} />
                                             </linearGradient>
                                             <linearGradient id="gradTSE" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor={CHART_COLORS.teal} stopOpacity={0.4} />
-                                                <stop offset="95%" stopColor={CHART_COLORS.teal} stopOpacity={0} />
+                                                <stop offset="5%" stopColor={CHART_COLORS.primary} stopOpacity={0.4} />
+                                                <stop offset="95%" stopColor={CHART_COLORS.primary} stopOpacity={0} />
                                             </linearGradient>
                                         </defs>
                                         <XAxis dataKey="month" className="text-xs" tick={{ fontSize: 11, fill: "var(--chart-axis)" }} axisLine={false} tickLine={false} dy={10} interval={volumeChartView === 'daily' && dailyChartData.length > 15 ? Math.ceil(dailyChartData.length / 12) - 1 : 0} />
@@ -759,7 +761,7 @@ export default function STPPage() {
                                         <Tooltip content={<LiquidTooltip />} cursor={{ stroke: 'rgba(0,0,0,0.1)', strokeWidth: 2 }} />
                                         <Legend iconType="circle" />
                                         <Area type="monotone" dataKey="inlet" name="Sewage Inlet" stroke={CHART_COLORS.brand} fill="url(#gradInlet)" strokeWidth={volumeChartView === 'daily' ? 2 : 3} activeDot={{ r: 6, stroke: '#fff', strokeWidth: 2 }} animationDuration={800} />
-                                        <Area type="monotone" dataKey="tse" name="TSE Output" stroke={CHART_COLORS.teal} fill="url(#gradTSE)" strokeWidth={volumeChartView === 'daily' ? 2 : 3} animationDuration={800} />
+                                        <Area type="monotone" dataKey="tse" name="TSE Output" stroke={CHART_COLORS.primary} fill="url(#gradTSE)" strokeWidth={volumeChartView === 'daily' ? 2 : 3} animationDuration={800} />
                                     </AreaChart>
                                 </ResponsiveContainer>
                             </div>
