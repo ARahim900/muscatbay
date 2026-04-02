@@ -202,8 +202,8 @@ export default function SettingsPage() {
                     )}
 
                     {activeTab === 'profile' && (
-                        <Card className="glass-card">
-                            <CardHeader className="glass-card-header">
+                        <Card className="card-elevated">
+                            <CardHeader className="card-elevated-header">
                                 <CardTitle>Public Profile</CardTitle>
                                 <CardDescription>
                                     This information represents you publicly on the platform.
@@ -302,8 +302,8 @@ export default function SettingsPage() {
                     )}
 
                     {activeTab === 'account' && (
-                        <Card className="glass-card">
-                            <CardHeader className="glass-card-header">
+                        <Card className="card-elevated">
+                            <CardHeader className="card-elevated-header">
                                 <CardTitle>Account Security</CardTitle>
                                 <CardDescription>
                                     Manage your login credentials and security preferences.
@@ -360,8 +360,8 @@ export default function SettingsPage() {
                     )}
 
                     {activeTab === 'notifications' && (
-                        <Card className="glass-card">
-                            <CardHeader className="glass-card-header">
+                        <Card className="card-elevated">
+                            <CardHeader className="card-elevated-header">
                                 <CardTitle>Notifications</CardTitle>
                                 <CardDescription>
                                     Configure how you receive alerts and reports.

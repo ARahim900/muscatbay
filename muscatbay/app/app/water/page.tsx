@@ -545,7 +545,7 @@ export default function WaterPage() {
 
                     {/* Date Range Picker - hidden on database tab */}
                     {monthlyTab !== 'database' && (
-                        <Card className="glass-card">
+                        <Card className="card-elevated">
                             <CardContent className="p-4 sm:p-5 md:p-6">
                                 <div className="flex flex-col gap-4">
                                     {/* Year Selector Row */}
@@ -655,8 +655,8 @@ export default function WaterPage() {
                             <StatsGrid stats={lossStats} />
 
                             {/* A-Values Distribution Chart */}
-                            <Card className="glass-card">
-                                <CardHeader className="glass-card-header p-4 sm:p-5 md:p-6">
+                            <Card className="card-elevated">
+                                <CardHeader className="card-elevated-header p-4 sm:p-5 md:p-6">
                                     <CardTitle className="text-base sm:text-lg">Water System A-Values Distribution</CardTitle>
                                 </CardHeader>
                                 <CardContent className="p-4 sm:p-5 md:p-6 pt-0">
@@ -687,8 +687,8 @@ export default function WaterPage() {
                             </Card>
 
                             {/* Water Loss Analysis Chart */}
-                            <Card className="glass-card">
-                                <CardHeader className="glass-card-header p-4 sm:p-5 md:p-6">
+                            <Card className="card-elevated">
+                                <CardHeader className="card-elevated-header p-4 sm:p-5 md:p-6">
                                     <CardTitle className="text-base sm:text-lg">Water Loss Analysis</CardTitle>
                                 </CardHeader>
                                 <CardContent className="p-4 sm:p-5 md:p-6 pt-0">
@@ -765,8 +765,8 @@ export default function WaterPage() {
                             </div>
 
                             {/* Zone Consumption Trend Chart */}
-                            <Card className="glass-card">
-                                <CardHeader className="glass-card-header p-4 sm:p-5 md:p-6">
+                            <Card className="card-elevated">
+                                <CardHeader className="card-elevated-header p-4 sm:p-5 md:p-6">
                                     <CardTitle className="text-base sm:text-lg">Zone Consumption Trend</CardTitle>
                                     <p className="text-xs sm:text-sm text-slate-500">Monthly comparison of L2 (Bulk) vs L3 totals</p>
                                 </CardHeader>
@@ -809,8 +809,8 @@ export default function WaterPage() {
                             </Card>
 
                             {/* Individual Meters Table */}
-                            <Card className="glass-card">
-                                <CardHeader className="glass-card-header p-4 sm:p-5 md:p-6">
+                            <Card className="card-elevated">
+                                <CardHeader className="card-elevated-header p-4 sm:p-5 md:p-6">
                                     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                                         <div>
                                             <CardTitle className="text-base sm:text-lg">L3 Meters - Zone {ZONE_CONFIG.find(z => z.code === selectedZone)?.name}</CardTitle>
@@ -865,8 +865,8 @@ export default function WaterPage() {
                             ]} />
 
                             {/* Consumption by Type Chart */}
-                            <Card className="glass-card">
-                                <CardHeader className="glass-card-header p-4 sm:p-5 md:p-6">
+                            <Card className="card-elevated">
+                                <CardHeader className="card-elevated-header p-4 sm:p-5 md:p-6">
                                     <CardTitle className="text-base sm:text-lg">Consumption by Type (m³)</CardTitle>
                                     <p className="text-xs sm:text-sm text-slate-500">Aggregated for {startMonth} - {endMonth}</p>
                                 </CardHeader>
@@ -893,7 +893,7 @@ export default function WaterPage() {
                     {/* Database Tab - Airtable Embed */}
                     {monthlyTab === 'database' && (
                         <div className="animate-in fade-in duration-200">
-                            <Card className="glass-card overflow-hidden">
+                            <Card className="card-elevated overflow-hidden">
                                 <CardContent className="p-0">
                                     <iframe
                                         className="airtable-embed w-full"

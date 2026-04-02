@@ -981,8 +981,8 @@ function ZoneAnalyticsPanel({ reportData, monthData, selectedDay, month, activeZ
             </div>
 
             {/* ── Daily trend chart ────────────────────────────────────────── */}
-            <Card className="glass-card">
-                <CardHeader className="glass-card-header p-4 sm:p-5 md:p-6">
+            <Card className="card-elevated">
+                <CardHeader className="card-elevated-header p-4 sm:p-5 md:p-6">
                     <CardTitle className="text-base sm:text-lg">
                         Zone Daily Consumption Trend
                     </CardTitle>
@@ -1185,8 +1185,8 @@ function ZoneL3Table({
     const colCount = 3 + days.length + 1; // Meter, Account, Type, ...days, Total
 
     return (
-        <Card className="glass-card">
-            <CardHeader className="glass-card-header p-4 sm:p-5 md:p-6">
+        <Card className="card-elevated">
+            <CardHeader className="card-elevated-header p-4 sm:p-5 md:p-6">
                 <div>
                     <CardTitle className="text-base sm:text-lg">{zoneRow.zoneName} — L3 Meters</CardTitle>
                     <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
@@ -1355,8 +1355,8 @@ function LoadingState() {
     return (
         <div className="space-y-4">
             {['Zone Bulk vs L3', 'Building Analysis', 'Direct Connections'].map(label => (
-                <Card key={label} className="glass-card">
-                    <CardHeader className="glass-card-header p-4">
+                <Card key={label} className="card-elevated">
+                    <CardHeader className="card-elevated-header p-4">
                         <div className="flex items-center gap-3">
                             <div className="h-9 w-9 rounded-lg bg-slate-200 dark:bg-slate-700 animate-pulse" />
                             <div className="space-y-2 flex-1">
@@ -1516,7 +1516,7 @@ export function DailyWaterReport() {
     // ── Controls bar ──────────────────────────────────────────────────────────
     return (
         <div className="space-y-6 animate-in fade-in duration-200">
-            <Card className="glass-card">
+            <Card className="card-elevated">
                 <CardContent className="p-4 sm:p-5 md:p-6">
                     <div className="flex flex-wrap items-center gap-4">
 
@@ -1637,7 +1637,7 @@ export function DailyWaterReport() {
             {reportData && (
                 <>
                     {/* ── Zone / DC Selector ─────────────────────────────── */}
-                    <Card className="glass-card">
+                    <Card className="card-elevated">
                         <CardContent className="p-4 sm:p-5">
                             <div className="flex flex-wrap items-center gap-2">
                                 <span className="text-sm font-medium text-slate-600 dark:text-slate-400 mr-1">

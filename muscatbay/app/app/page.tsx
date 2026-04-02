@@ -124,13 +124,13 @@ export default function DashboardPage() {
 
             <AnimateOnScroll className="grid gap-4 sm:gap-5 md:gap-6 grid-cols-1 lg:grid-cols-7">
                 <Card
-                    className="glass-card col-span-1 lg:col-span-4 cursor-pointer group/chart transition-shadow duration-200 hover:shadow-[0_8px_30px_-4px_rgba(6,81,237,0.15)] focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none"
+                    className="card-elevated col-span-1 lg:col-span-4 cursor-pointer group/chart transition-shadow duration-200 hover:shadow-[0_8px_30px_-4px_rgba(6,81,237,0.15)] focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none"
                     onClick={navigateToWater}
                     onKeyDown={(e) => handleCardKeyDown(e as unknown as KeyboardEvent, '/water')}
                     role="link"
                     tabIndex={0}
                 >
-                    <CardHeader className="glass-card-header p-4 sm:p-5 md:p-6">
+                    <CardHeader className="card-elevated-header p-4 sm:p-5 md:p-6">
                         <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
                             <Droplets className="h-5 w-5 text-mb-secondary" />
                             Water Production Trend
@@ -159,13 +159,13 @@ export default function DashboardPage() {
                 </Card>
 
                 <Card
-                    className="glass-card col-span-1 lg:col-span-3 cursor-pointer group/chart transition-shadow duration-200 hover:shadow-[0_8px_30px_-4px_rgba(6,81,237,0.15)] focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none"
+                    className="card-elevated col-span-1 lg:col-span-3 cursor-pointer group/chart transition-shadow duration-200 hover:shadow-[0_8px_30px_-4px_rgba(6,81,237,0.15)] focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none"
                     onClick={navigateToStp}
                     onKeyDown={(e) => handleCardKeyDown(e as unknown as KeyboardEvent, '/stp')}
                     role="link"
                     tabIndex={0}
                 >
-                    <CardHeader className="glass-card-header p-4 sm:p-5 md:p-6">
+                    <CardHeader className="card-elevated-header p-4 sm:p-5 md:p-6">
                         <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
                             <Recycle className="h-5 w-5 text-mb-primary" />
                             STP Treatment Overview
@@ -191,8 +191,8 @@ export default function DashboardPage() {
 
             {/* Recent Activity Card */}
             <AnimateOnScroll>
-                <Card className="glass-card">
-                    <CardHeader className="glass-card-header p-4 sm:p-5 md:p-6">
+                <Card className="card-elevated">
+                    <CardHeader className="card-elevated-header p-4 sm:p-5 md:p-6">
                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
                             <div>
                                 <CardTitle>Latest Updates</CardTitle>

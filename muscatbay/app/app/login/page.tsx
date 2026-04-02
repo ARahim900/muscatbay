@@ -69,11 +69,11 @@ export default function LoginPage() {
             {/* Left Panel - Branding */}
             <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
                 {/* Animated Gradient Background */}
-                <div className="absolute inset-0 bg-gradient-to-br from-[#4E4456] via-[#5f5168] to-[#3A3341]">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary/80 to-primary/70">
                     {/* Animated Shapes */}
-                    <div className="absolute top-20 left-20 w-72 h-72 bg-[#A8D5E3]/20 rounded-full blur-3xl animate-pulse" />
-                    <div className="absolute bottom-20 right-20 w-96 h-96 bg-[#A8D5E3]/15 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
-                    <div className="absolute top-1/2 left-1/3 w-64 h-64 bg-white/5 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '2s' }} />
+                    <div className="absolute top-20 left-20 w-72 h-72 bg-secondary/20 rounded-full blur-3xl motion-safe:animate-pulse" />
+                    <div className="absolute bottom-20 right-20 w-96 h-96 bg-secondary/15 rounded-full blur-3xl motion-safe:animate-pulse" style={{ animationDelay: '1s' }} />
+                    <div className="absolute top-1/2 left-1/3 w-64 h-64 bg-white/5 rounded-full blur-2xl motion-safe:animate-pulse" style={{ animationDelay: '2s' }} />
 
                     {/* Diagonal Lines Pattern */}
                     <svg className="absolute inset-0 w-full h-full opacity-10" xmlns="http://www.w3.org/2000/svg">
@@ -101,7 +101,7 @@ export default function LoginPage() {
                         </div>
                         <div>
                             <h1 className="text-2xl font-bold text-white tracking-tight">Muscat Bay</h1>
-                            <p className="text-[#A8D5E3] text-sm font-medium">Operations Dashboard</p>
+                            <p className="text-secondary text-sm font-medium">Operations Dashboard</p>
                         </div>
                     </div>
 
@@ -110,7 +110,7 @@ export default function LoginPage() {
                         <div>
                             <h2 className="text-4xl font-bold text-white leading-tight mb-4">
                                 Smart Operations<br />
-                                <span className="text-[#A8D5E3]">Management</span>
+                                <span className="text-secondary">Management</span>
                             </h2>
                             <p className="text-white/70 text-lg max-w-md">
                                 Monitor, analyze, and optimize your community infrastructure with real-time insights and intelligent reporting.
@@ -120,22 +120,22 @@ export default function LoginPage() {
                         {/* Feature Cards */}
                         <div className="grid grid-cols-2 gap-4 max-w-md">
                             <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/10 hover:bg-white/15 transition-all duration-200 group">
-                                <Droplets className="h-6 w-6 text-[#A8D5E3] mb-2 group-hover:scale-110 transition-transform" />
+                                <Droplets className="h-6 w-6 text-secondary mb-2 transition-colors" />
                                 <h3 className="text-white font-semibold text-sm">Water Systems</h3>
                                 <p className="text-white/60 text-xs mt-1">Real-time monitoring</p>
                             </div>
                             <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/10 hover:bg-white/15 transition-all duration-200 group">
-                                <BarChart3 className="h-6 w-6 text-[#A8D5E3] mb-2 group-hover:scale-110 transition-transform" />
+                                <BarChart3 className="h-6 w-6 text-secondary mb-2 transition-colors" />
                                 <h3 className="text-white font-semibold text-sm">Analytics</h3>
                                 <p className="text-white/60 text-xs mt-1">Data-driven insights</p>
                             </div>
                             <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/10 hover:bg-white/15 transition-all duration-200 group">
-                                <Waves className="h-6 w-6 text-[#A8D5E3] mb-2 group-hover:scale-110 transition-transform" />
+                                <Waves className="h-6 w-6 text-secondary mb-2 transition-colors" />
                                 <h3 className="text-white font-semibold text-sm">STP Plants</h3>
                                 <p className="text-white/60 text-xs mt-1">Treatment tracking</p>
                             </div>
                             <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/10 hover:bg-white/15 transition-all duration-200 group">
-                                <Shield className="h-6 w-6 text-[#A8D5E3] mb-2 group-hover:scale-110 transition-transform" />
+                                <Shield className="h-6 w-6 text-secondary mb-2 transition-colors" />
                                 <h3 className="text-white font-semibold text-sm">Security</h3>
                                 <p className="text-white/60 text-xs mt-1">Enterprise-grade</p>
                             </div>
@@ -166,7 +166,7 @@ export default function LoginPage() {
                     {/* Mobile Logo */}
                     <div className="flex justify-center mb-8 lg:hidden">
                         <div className="flex items-center gap-3">
-                            <div className="relative w-12 h-12 bg-[#4E4456] rounded-xl p-2 shadow-lg">
+                            <div className="relative w-12 h-12 bg-primary rounded-xl p-2 shadow-lg">
                                 <Image
                                     src="/logo.png"
                                     alt="Muscat Bay Logo"
@@ -177,7 +177,7 @@ export default function LoginPage() {
                             </div>
                             <div>
                                 <h1 className="text-xl font-bold text-slate-900 dark:text-white">Muscat Bay</h1>
-                                <p className="text-sm text-[#4E4456] dark:text-[#A8D5E3]">Operations Dashboard</p>
+                                <p className="text-sm text-primary dark:text-secondary">Operations Dashboard</p>
                             </div>
                         </div>
                     </div>
@@ -208,8 +208,8 @@ export default function LoginPage() {
                                 <Label htmlFor="email" className="text-slate-700 dark:text-slate-300 font-medium">
                                     Email Address
                                 </Label>
-                                <div className={`relative transition-all duration-200 ${focusedField === 'email' ? 'scale-[1.02]' : ''}`}>
-                                    <div className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors duration-200 ${focusedField === 'email' ? 'text-[#4E4456]' : 'text-slate-400'}`}>
+                                <div className="relative transition-all duration-200">
+                                    <div className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors duration-200 ${focusedField === 'email' ? 'text-primary' : 'text-slate-400'}`}>
                                         <Mail className="h-5 w-5" />
                                     </div>
                                     <Input
@@ -223,7 +223,7 @@ export default function LoginPage() {
                                         className={`pl-12 h-12 rounded-xl border-2 transition-all duration-200 ${emailError
                                             ? 'border-red-500 focus:border-red-500'
                                             : focusedField === 'email'
-                                                ? 'border-[#4E4456] shadow-lg shadow-[#4E4456]/10'
+                                                ? 'border-primary shadow-lg shadow-primary/10'
                                                 : 'border-slate-200 dark:border-slate-600 hover:border-slate-300'
                                             }`}
                                         required
@@ -246,13 +246,13 @@ export default function LoginPage() {
                                     </Label>
                                     <Link
                                         href="/forgot-password"
-                                        className="text-sm text-[#4E4456] dark:text-[#A8D5E3] hover:underline font-medium transition-colors"
+                                        className="text-sm text-primary dark:text-secondary hover:underline font-medium transition-colors"
                                     >
                                         Forgot password?
                                     </Link>
                                 </div>
-                                <div className={`relative transition-all duration-200 ${focusedField === 'password' ? 'scale-[1.02]' : ''}`}>
-                                    <div className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors duration-200 ${focusedField === 'password' ? 'text-[#4E4456]' : 'text-slate-400'}`}>
+                                <div className="relative transition-all duration-200">
+                                    <div className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors duration-200 ${focusedField === 'password' ? 'text-primary' : 'text-slate-400'}`}>
                                         <Lock className="h-5 w-5" />
                                     </div>
                                     <Input
@@ -264,7 +264,7 @@ export default function LoginPage() {
                                         onFocus={() => setFocusedField('password')}
                                         onBlur={() => setFocusedField(null)}
                                         className={`pl-12 pr-12 h-12 rounded-xl border-2 transition-all duration-200 ${focusedField === 'password'
-                                            ? 'border-[#4E4456] shadow-lg shadow-[#4E4456]/10'
+                                            ? 'border-primary shadow-lg shadow-primary/10'
                                             : 'border-slate-200 dark:border-slate-600 hover:border-slate-300'
                                             }`}
                                         required
@@ -273,7 +273,7 @@ export default function LoginPage() {
                                     <button
                                         type="button"
                                         onClick={() => setShowPassword(!showPassword)}
-                                        className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#4E4456] transition-colors duration-200"
+                                        className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-primary transition-colors duration-200"
                                     >
                                         {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                                     </button>
@@ -283,7 +283,7 @@ export default function LoginPage() {
                             {/* Submit Button */}
                             <Button
                                 type="submit"
-                                className="w-full h-12 bg-gradient-to-r from-[#4E4456] to-[#5f5168] hover:from-[#3A3341] hover:to-[#4E4456] text-white font-semibold rounded-xl shadow-lg shadow-[#4E4456]/25 transition-all duration-200 hover:shadow-xl hover:shadow-[#4E4456]/30 hover:scale-[1.02] active:scale-[0.98]"
+                                className="w-full h-12 bg-primary hover:bg-primary/90 text-white font-semibold rounded-xl shadow-lg shadow-primary/25 transition-all duration-200 hover:shadow-xl"
                                 disabled={loading}
                             >
                                 {loading ? (
@@ -312,7 +312,7 @@ export default function LoginPage() {
                             <div className="text-center">
                                 <Link
                                     href="/signup"
-                                    className="inline-flex items-center justify-center w-full h-12 border-2 border-[#4E4456]/20 hover:border-[#4E4456] text-[#4E4456] dark:text-[#A8D5E3] dark:border-[#A8D5E3]/20 dark:hover:border-[#A8D5E3] font-semibold rounded-xl transition-all duration-200 hover:bg-[#4E4456]/5 dark:hover:bg-[#A8D5E3]/5"
+                                    className="inline-flex items-center justify-center w-full h-12 border-2 border-primary/20 hover:border-primary text-primary dark:text-secondary dark:border-secondary/20 dark:hover:border-secondary font-semibold rounded-xl transition-all duration-200 hover:bg-primary/5 dark:hover:bg-secondary/5"
                                 >
                                     Create an account
                                 </Link>
@@ -324,11 +324,11 @@ export default function LoginPage() {
                     <div className="mt-8 text-center">
                         <p className="text-xs text-slate-400 dark:text-slate-500">
                             By signing in, you agree to our{' '}
-                            <Link href="/terms" className="text-[#4E4456] dark:text-[#A8D5E3] hover:underline">
+                            <Link href="/terms" className="text-primary dark:text-secondary hover:underline">
                                 Terms of Service
                             </Link>{' '}
                             and{' '}
-                            <Link href="/privacy" className="text-[#4E4456] dark:text-[#A8D5E3] hover:underline">
+                            <Link href="/privacy" className="text-primary dark:text-secondary hover:underline">
                                 Privacy Policy
                             </Link>
                         </p>

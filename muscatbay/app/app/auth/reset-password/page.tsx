@@ -88,7 +88,7 @@ export default function ResetPasswordPage() {
     if (success) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-900 dark:to-slate-800 p-4">
-                <Card className="w-full max-w-md glass-card">
+                <Card className="w-full max-w-md card-elevated">
                     <CardContent className="pt-8 pb-8 text-center">
                         <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
                             <CheckCircle2 className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
@@ -142,7 +142,7 @@ export default function ResetPasswordPage() {
                     </div>
                 </div>
 
-                <Card className="glass-card">
+                <Card className="card-elevated">
                     <CardHeader className="space-y-1 pb-4">
                         <CardTitle className="text-2xl font-bold text-center">Set new password</CardTitle>
                         <CardDescription className="text-center">

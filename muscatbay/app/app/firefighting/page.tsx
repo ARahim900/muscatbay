@@ -234,7 +234,7 @@ function StageCard({ stage, isExpanded, onToggle, filterStatus }: { stage: Stage
     const notStartedCount = stage.buildings.filter(b => b.status === "not_started").length;
 
     return (
-        <Card className={cn("glass-card overflow-hidden transition-all duration-200", stageStyle.border, isExpanded && "shadow-md")}>
+        <Card className={cn("card-elevated overflow-hidden transition-all duration-200", stageStyle.border, isExpanded && "shadow-md")}>
             <button
                 onClick={onToggle}
                 className={cn("w-full flex items-center gap-3 sm:gap-4 px-3 sm:px-5 py-3 sm:py-4 transition-colors text-left", stageStyle.bg)}
@@ -494,8 +494,8 @@ export default function FirefightingPage() {
                     <StatsGrid stats={stats} />
 
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-                        <Card className="glass-card">
-                            <CardHeader className="glass-card-header"><CardTitle>System Status Distribution</CardTitle></CardHeader>
+                        <Card className="card-elevated">
+                            <CardHeader className="card-elevated-header"><CardTitle>System Status Distribution</CardTitle></CardHeader>
                             <CardContent className="h-[250px] sm:h-[300px] md:h-80">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <PieChart>
@@ -516,8 +516,8 @@ export default function FirefightingPage() {
                             </CardContent>
                         </Card>
 
-                        <Card className="glass-card">
-                            <CardHeader className="glass-card-header"><CardTitle>Equipment by Type</CardTitle></CardHeader>
+                        <Card className="card-elevated">
+                            <CardHeader className="card-elevated-header"><CardTitle>Equipment by Type</CardTitle></CardHeader>
                             <CardContent className="h-[250px] sm:h-[300px] md:h-80">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <BarChart data={chartData.barData} layout="vertical" margin={{ left: 40, right: 10, top: 10, bottom: 10 }}>
@@ -533,8 +533,8 @@ export default function FirefightingPage() {
                     </div>
 
                     {/* Quick AMC Summary — matches other section stat patterns */}
-                    <Card className="glass-card">
-                        <CardHeader className="glass-card-header">
+                    <Card className="card-elevated">
+                        <CardHeader className="card-elevated-header">
                             <div className="flex items-center justify-between">
                                 <CardTitle className="flex items-center gap-2">
                                     <Flame className="w-5 h-5 text-secondary" />
@@ -592,7 +592,7 @@ export default function FirefightingPage() {
                     </div>
 
                     {/* Year 2 note */}
-                    <Card className="glass-card border-slate-200 dark:border-slate-700">
+                    <Card className="card-elevated border-slate-200 dark:border-slate-700">
                         <CardContent className="p-4 flex items-start gap-3">
                             <Info className="w-5 h-5 text-secondary flex-shrink-0 mt-0.5" />
                             <div className="text-sm text-slate-700 dark:text-slate-300">
@@ -607,7 +607,7 @@ export default function FirefightingPage() {
             {/* ══════════ EQUIPMENT ══════════ */}
             {activeTab === 'equipment' && (
                 <div className="space-y-6 animate-in fade-in duration-200">
-                    <Card className="glass-card">
+                    <Card className="card-elevated">
                         <CardContent className="p-4">
                             <div className="relative">
                                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -623,7 +623,7 @@ export default function FirefightingPage() {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                         {filteredEquipment.map(item => (
-                            <Card key={item.id} className="glass-card hover:shadow-md transition-shadow">
+                            <Card key={item.id} className="card-elevated hover:shadow-md transition-shadow">
                                 <CardContent className="p-0">
                                     <div className="p-5 space-y-4">
                                         <div className="flex justify-between items-start">
@@ -683,7 +683,7 @@ export default function FirefightingPage() {
             {activeTab === 'faults' && (
                 <div className="space-y-6 animate-in fade-in duration-200">
                     {/* PO Blocker Alert */}
-                    <Card className="glass-card border-destructive/30 dark:border-destructive/20 bg-destructive/5 dark:bg-destructive/10">
+                    <Card className="card-elevated border-destructive/30 dark:border-destructive/20 bg-destructive/5 dark:bg-destructive/10">
                         <CardContent className="p-4">
                             <div className="flex items-start gap-3">
                                 <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
@@ -696,8 +696,8 @@ export default function FirefightingPage() {
                     </Card>
 
                     {/* Quotation Reference */}
-                    <Card className="glass-card">
-                        <CardHeader className="glass-card-header border-b border-slate-100 dark:border-slate-700">
+                    <Card className="card-elevated">
+                        <CardHeader className="card-elevated-header border-b border-slate-100 dark:border-slate-700">
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                                 <CardTitle className="text-sm sm:text-base">BEC Rectification Quotation</CardTitle>
                                 <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 w-fit">AWAITING PO</Badge>
@@ -720,8 +720,8 @@ export default function FirefightingPage() {
                     </Card>
 
                     {/* Open Faults List */}
-                    <Card className="glass-card">
-                        <CardHeader className="glass-card-header border-b border-slate-100 dark:border-slate-700">
+                    <Card className="card-elevated">
+                        <CardHeader className="card-elevated-header border-b border-slate-100 dark:border-slate-700">
                             <CardTitle>Open Faults — Stage 1 PPM (Dec 2025)</CardTitle>
                             <p className="text-[11px] text-slate-400 mt-1">Source: Wali Anwar email 16 Feb 2026, confirmed by Arun Achuthan 22 Feb 2026</p>
                         </CardHeader>
@@ -749,8 +749,8 @@ export default function FirefightingPage() {
                     </Card>
 
                     {/* Villa 33 Note */}
-                    <Card className="glass-card border-amber-200 dark:border-amber-800">
-                        <CardHeader className="glass-card-header border-b border-amber-100 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-900/20">
+                    <Card className="card-elevated border-amber-200 dark:border-amber-800">
+                        <CardHeader className="card-elevated-header border-b border-amber-100 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-900/20">
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                                 <CardTitle className="text-sm sm:text-base">Villa 33 — Separate Job (Ref: 215459)</CardTitle>
                                 <Badge className="bg-blue-200 text-blue-800 dark:bg-blue-800/50 dark:text-blue-200 flex items-center gap-1 w-fit">
@@ -778,8 +778,8 @@ export default function FirefightingPage() {
                     </Card>
 
                     {/* Village Square Fire Safety — Separate Repair */}
-                    <Card className="glass-card border-amber-200 dark:border-amber-800">
-                        <CardHeader className="glass-card-header border-b border-amber-100 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-900/20">
+                    <Card className="card-elevated border-amber-200 dark:border-amber-800">
+                        <CardHeader className="card-elevated-header border-b border-amber-100 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-900/20">
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                                 <CardTitle className="text-sm sm:text-base">Village Square — Fire Pump & Alarm Rectification</CardTitle>
                                 <Badge className="bg-amber-200 text-amber-800 dark:bg-amber-800/50 dark:text-amber-200 flex items-center gap-1 w-fit">
@@ -809,8 +809,8 @@ export default function FirefightingPage() {
             {/* ══════════ CONTACTS ══════════ */}
             {activeTab === 'contacts' && (
                 <div className="space-y-6 animate-in fade-in duration-200">
-                    <Card className="glass-card">
-                        <CardHeader className="glass-card-header border-b border-slate-100 dark:border-slate-700">
+                    <Card className="card-elevated">
+                        <CardHeader className="card-elevated-header border-b border-slate-100 dark:border-slate-700">
                             <CardTitle className="flex items-center gap-2">
                                 <Users className="w-5 h-5 text-secondary" />
                                 Quick Contacts — BEC & Muscat Bay
@@ -849,8 +849,8 @@ export default function FirefightingPage() {
             {activeTab === 'contract' && (
                 <div className="space-y-6 animate-in fade-in duration-200">
                     {/* Contract Summary */}
-                    <Card className="glass-card">
-                        <CardHeader className="glass-card-header border-b border-slate-100 dark:border-slate-700">
+                    <Card className="card-elevated">
+                        <CardHeader className="card-elevated-header border-b border-slate-100 dark:border-slate-700">
                             <CardTitle className="flex items-center gap-2">
                                 <FileText className="w-5 h-5 text-secondary" />
                                 Contract Summary
@@ -882,8 +882,8 @@ export default function FirefightingPage() {
                     </Card>
 
                     {/* SLA */}
-                    <Card className="glass-card">
-                        <CardHeader className="glass-card-header border-b border-slate-100 dark:border-slate-700">
+                    <Card className="card-elevated">
+                        <CardHeader className="card-elevated-header border-b border-slate-100 dark:border-slate-700">
                             <CardTitle>Response Time SLA</CardTitle>
                         </CardHeader>
                         <CardContent className="p-4 sm:p-5">
@@ -905,8 +905,8 @@ export default function FirefightingPage() {
                     </Card>
 
                     {/* Equipment Under AMC */}
-                    <Card className="glass-card">
-                        <CardHeader className="glass-card-header border-b border-slate-100 dark:border-slate-700">
+                    <Card className="card-elevated">
+                        <CardHeader className="card-elevated-header border-b border-slate-100 dark:border-slate-700">
                             <CardTitle className="flex items-center gap-2">
                                 <Building2 className="w-5 h-5 text-secondary" />
                                 Equipment Under AMC
@@ -935,8 +935,8 @@ export default function FirefightingPage() {
                     </Card>
 
                     {/* Insurance */}
-                    <Card className="glass-card">
-                        <CardHeader className="glass-card-header border-b border-slate-100 dark:border-slate-700">
+                    <Card className="card-elevated">
+                        <CardHeader className="card-elevated-header border-b border-slate-100 dark:border-slate-700">
                             <CardTitle>Insurance Coverage (Contractual)</CardTitle>
                         </CardHeader>
                         <CardContent className="p-4 sm:p-5 space-y-3">
@@ -954,8 +954,8 @@ export default function FirefightingPage() {
                     </Card>
 
                     {/* ── Sewage Tanker Discharge Contracts ── */}
-                    <Card className="glass-card">
-                        <CardHeader className="glass-card-header border-b border-slate-100 dark:border-slate-700">
+                    <Card className="card-elevated">
+                        <CardHeader className="card-elevated-header border-b border-slate-100 dark:border-slate-700">
                             <CardTitle className="flex items-center gap-2">
                                 <Truck className="w-5 h-5 text-secondary" />
                                 Sewage Tanker Discharge Agreements

@@ -27,6 +27,7 @@ interface LiquidAreaChartProps {
     yAxisLabel?: string; // Y-axis label with units (e.g., "m³", "kWh")
 }
 
+// Default fallback colors for Recharts — inline props require hex values
 const DEFAULT_COLORS = ["#4E4456", "#81D8D0", "#5BA88B"];
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

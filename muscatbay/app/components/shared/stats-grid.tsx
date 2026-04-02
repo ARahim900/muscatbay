@@ -25,16 +25,16 @@ interface StatsGridProps {
     className?: string;
 }
 
-// Map variants to icon colors
+// Inline style colors — Recharts/inline style requires hex, cannot use CSS vars
 const variantIconColors: Record<StatVariant, string> = {
     primary: "#4E4456",      // Brand Primary
-    secondary: "#F59E0B",    // Yellow/Amber
+    secondary: "#F59E0B",    // Amber
     success: "#10B981",      // Green
-    warning: "#F59E0B",      // Yellow
-    danger: "#EF4444",       // Red
+    warning: "#F59E0B",      // Amber (same as secondary)
+    danger: "#EF4444",       // Red / destructive
     info: "#3B82F6",         // Blue
-    water: "#3B82F6",        // Blue
-    default: "#64748b",
+    water: "#3B82F6",        // Blue (same as info)
+    default: "#64748b",      // Slate gray
 };
 
 export function StatsGrid({ stats, className }: StatsGridProps) {

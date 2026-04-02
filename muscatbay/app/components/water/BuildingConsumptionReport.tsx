@@ -309,7 +309,7 @@ function LoadingState() {
     return (
         <div className="space-y-6">
             {Array.from({ length: 2 }).map((_, i) => (
-                <Card key={i} className="glass-card overflow-hidden">
+                <Card key={i} className="card-elevated overflow-hidden">
                     <div className="p-5 flex items-center gap-3">
                         <div className="h-9 w-9 rounded-lg bg-slate-200 dark:bg-slate-700 animate-pulse" />
                         <div className="space-y-2 flex-1">
@@ -575,7 +575,7 @@ export function BuildingConsumptionReport() {
     return (
         <div className="space-y-6 animate-in fade-in duration-200">
             {/* ── Controls bar ──────────────────────────────────────────── */}
-            <Card className="glass-card">
+            <Card className="card-elevated">
                 <CardContent className="p-4 sm:p-5 md:p-6">
                     <div className="flex flex-wrap items-center gap-4">
                         {/* Year + Month selector */}

@@ -83,7 +83,7 @@ export function AnimateOnScroll({
   }, [y, duration, stagger, rootMargin, selector]);
 
   return (
-    <div ref={containerRef} className={cn(className)}>
+    <div ref={containerRef} className={cn(className)} aria-live="polite">
       {children}
     </div>
   );

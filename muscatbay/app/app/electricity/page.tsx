@@ -37,7 +37,18 @@ const CHART_COLORS = {
 } as const;
 
 // Color palette for per-meter lines (module-level to avoid recreating on each render)
-const meterColors = [CHART_COLORS.primary, CHART_COLORS.success, CHART_COLORS.secondary, CHART_COLORS.loss, CHART_COLORS.gray, '#3b82f6', '#f59e0b', '#10b981', '#8b5cf6', '#06b6d4'];
+const meterColors = [
+    CHART_COLORS.primary,   // amber
+    CHART_COLORS.success,   // green
+    CHART_COLORS.secondary, // golden yellow
+    CHART_COLORS.loss,      // red
+    CHART_COLORS.gray,      // neutral
+    '#3b82f6',              // blue — unique, no token
+    '#f59e0b',              // amber variant — unique, no token
+    '#10b981',              // emerald variant — unique, no token
+    '#8b5cf6',              // violet — unique, no token
+    '#06b6d4',              // cyan — unique, no token
+];
 
 export default function ElectricityPage() {
     const [activeTab, setActiveTab] = useState("overview");
@@ -699,7 +710,7 @@ export default function ElectricityPage() {
 
             {/* Unified Date/Filter Control Card — shared by Overview and Analysis tabs */}
             {activeTab !== 'database' && allMonths.length > 0 && (
-                <Card className="glass-card">
+                <Card className="card-elevated">
                     <CardContent className="p-4 sm:p-5 md:p-6">
                         <div className="flex flex-col gap-4">
                             {/* Year Selector Row */}
@@ -864,8 +875,8 @@ export default function ElectricityPage() {
                     <StatsGrid stats={analysisData.stats} />
 
                     {/* Monthly Trend Chart */}
-                    <Card className="glass-card">
-                        <CardHeader className="glass-card-header">
+                    <Card className="card-elevated">
+                        <CardHeader className="card-elevated-header">
                             <div className="flex items-center justify-between">
                                 <CardTitle className="text-lg flex items-center gap-2">
                                     <LineChart className="w-5 h-5 text-amber-500" />
@@ -896,7 +907,7 @@ export default function ElectricityPage() {
                                                 content={({ active, payload, label }) => {
                                                     if (active && payload && payload.length) {
                                                         return (
-                                                            <div className="glass-card px-4 py-3 border border-white/50 shadow-xl !rounded-xl !bg-white/90 dark:!bg-slate-900/90 backdrop-blur-md max-w-[280px]">
+                                                            <div className="card-elevated px-4 py-3 border border-white/50 shadow-xl !rounded-xl !bg-white/90 dark:!bg-slate-900/90 backdrop-blur-md max-w-[280px]">
                                                                 <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">{label}</p>
                                                                 {[...payload].sort((a: any, b: any) => (b.value || 0) - (a.value || 0)).map((entry: any, i: number) => (
                                                                     <div key={i} className="flex items-center gap-2 text-xs mb-0.5">
@@ -952,8 +963,8 @@ export default function ElectricityPage() {
                     {/* Comparison & Top Consumers Charts Row */}
                     <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
                         {/* Top Consumers Bar Chart */}
-                        <Card className="glass-card">
-                            <CardHeader className="glass-card-header">
+                        <Card className="card-elevated">
+                            <CardHeader className="card-elevated-header">
                                 <CardTitle className="text-lg">Top 10 {analysisType === "All" ? "Overall" : analysisType} Consumers</CardTitle>
                             </CardHeader>
                             <CardContent>
@@ -985,7 +996,7 @@ export default function ElectricityPage() {
                                                     if (active && payload && payload.length) {
                                                         const data = payload[0].payload;
                                                         return (
-                                                            <div className="glass-card px-4 py-3 border border-white/50 shadow-xl !rounded-xl !bg-white/90 dark:!bg-slate-900/90 backdrop-blur-md">
+                                                            <div className="card-elevated px-4 py-3 border border-white/50 shadow-xl !rounded-xl !bg-white/90 dark:!bg-slate-900/90 backdrop-blur-md">
                                                                 <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">{data.fullName}</p>
                                                                 <div className="flex items-center gap-2 text-xs mb-1">
                                                                     <div className="w-2 h-2 rounded-full bg-amber-500" />
@@ -1026,8 +1037,8 @@ export default function ElectricityPage() {
 
                         {/* Per-Meter Comparison vs Average (only when a specific type is selected) */}
                         {analysisType !== "All" && analysisData.comparisonData.length > 1 && (
-                            <Card className="glass-card">
-                                <CardHeader className="glass-card-header">
+                            <Card className="card-elevated">
+                                <CardHeader className="card-elevated-header">
                                     <div className="flex items-center justify-between">
                                         <CardTitle className="text-lg">Meter vs Average — {analysisType}</CardTitle>
                                         <Badge variant="outline" className="text-xs font-normal px-2.5 py-1">
@@ -1073,7 +1084,7 @@ export default function ElectricityPage() {
                                                             const diff = data.consumption - analysisData.typeAverage;
                                                             const pct = analysisData.typeAverage > 0 ? ((diff / analysisData.typeAverage) * 100).toFixed(1) : '0';
                                                             return (
-                                                                <div className="glass-card px-4 py-3 border border-white/50 shadow-xl !rounded-xl !bg-white/90 dark:!bg-slate-900/90 backdrop-blur-md">
+                                                                <div className="card-elevated px-4 py-3 border border-white/50 shadow-xl !rounded-xl !bg-white/90 dark:!bg-slate-900/90 backdrop-blur-md">
                                                                     <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">{data.fullName}</p>
                                                                     <div className="flex items-center gap-2 text-xs mb-1">
                                                                         <div className="w-2 h-2 rounded-full" style={{ backgroundColor: data.color }} />
@@ -1108,8 +1119,8 @@ export default function ElectricityPage() {
                     </div>
 
                     {/* Monthly Breakdown Table */}
-                    <Card className="glass-card">
-                        <CardHeader className="glass-card-header">
+                    <Card className="card-elevated">
+                        <CardHeader className="card-elevated-header">
                             <div className="flex justify-between items-center">
                                 <CardTitle className="text-lg">Monthly Breakdown</CardTitle>
                                 <div className="text-xs text-muted-foreground">

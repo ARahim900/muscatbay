@@ -678,7 +678,7 @@ export default function STPPage() {
                 <div className="space-y-6 animate-in fade-in duration-200">
                     {/* Date Range Filter Card */}
                     {allMonths.length > 0 && (
-                        <Card className="glass-card">
+                        <Card className="card-elevated">
                             <CardContent className="p-4 sm:p-5 md:p-6">
                                 <div className="flex flex-col gap-4">
                                     {/* Year Selector Row */}
@@ -728,8 +728,8 @@ export default function STPPage() {
                     <StatsGrid stats={stats} />
 
                     {/* Water Treatment Volumes Chart */}
-                    <Card className="glass-card">
-                        <CardHeader className="glass-card-header">
+                    <Card className="card-elevated">
+                        <CardHeader className="card-elevated-header">
                             <div className="flex items-center justify-between gap-4 flex-wrap">
                                 <div className="space-y-1">
                                     <CardTitle className="text-lg">Water Treatment Volumes (m³)</CardTitle>
@@ -771,8 +771,8 @@ export default function STPPage() {
                     {/* Two Charts Side by Side */}
                     <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2">
                         {/* Economic Impact */}
-                        <Card className="glass-card h-full">
-                            <CardHeader className="glass-card-header">
+                        <Card className="card-elevated h-full">
+                            <CardHeader className="card-elevated-header">
                                 <div className="flex items-center justify-between gap-3 flex-wrap">
                                     <div className="space-y-1">
                                         <CardTitle className="text-lg flex items-center gap-2">
@@ -805,8 +805,8 @@ export default function STPPage() {
                         </Card>
 
                         {/* Tanker Operations */}
-                        <Card className="glass-card h-full">
-                            <CardHeader className="glass-card-header">
+                        <Card className="card-elevated h-full">
+                            <CardHeader className="card-elevated-header">
                                 <div className="flex items-center justify-between gap-3 flex-wrap">
                                     <div className="space-y-1">
                                         <CardTitle className="text-lg flex items-center gap-2">
