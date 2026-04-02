@@ -128,7 +128,7 @@ export default function GulfExpertPage() {
           <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">{error}</p>
           <button
             onClick={() => loadData()}
-            className="px-4 py-2 bg-[#4E4456] text-white rounded-lg hover:bg-[#3A3341] transition-colors text-sm"
+            className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/80 transition-colors text-sm"
           >
             Retry
           </button>

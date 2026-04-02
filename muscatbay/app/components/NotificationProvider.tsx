@@ -86,7 +86,7 @@ function PermissionBanner({
   return (
     <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[101] max-w-md w-[calc(100%-2rem)]">
       <div className="flex items-center gap-3 p-4 rounded-lg bg-slate-800 border border-slate-700 shadow-xl">
-        <Bell className="h-5 w-5 text-[#00d2b3] flex-shrink-0" />
+        <Bell className="h-5 w-5 text-secondary flex-shrink-0" />
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium text-slate-100">
             Enable notifications?
@@ -111,7 +111,7 @@ function PermissionBanner({
               onRequest();
               setDismissed(true);
             }}
-            className="text-xs font-medium bg-[#00d2b3] text-slate-900 rounded-md px-3 py-1.5 hover:bg-[#00b89d] transition-colors"
+            className="text-xs font-medium bg-secondary text-slate-900 rounded-md px-3 py-1.5 hover:bg-secondary/80 transition-colors"
           >
             Enable
           </button>

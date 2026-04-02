@@ -114,7 +114,7 @@ export default function SignUpPage() {
                                     { step: "3", text: "Sign in and start monitoring operations" },
                                 ].map(({ step, text }) => (
                                     <div key={step} className="flex items-start gap-3">
-                                        <span className="flex-shrink-0 w-5 h-5 rounded-full bg-[#81D8D0]/20 text-[#4E4456] dark:text-[#81D8D0] text-xs font-bold flex items-center justify-center">{step}</span>
+                                        <span className="flex-shrink-0 w-5 h-5 rounded-full bg-secondary/20 text-primary dark:text-secondary text-xs font-bold flex items-center justify-center">{step}</span>
                                         <span className="text-sm text-slate-600 dark:text-slate-400">{text}</span>
                                     </div>
                                 ))}

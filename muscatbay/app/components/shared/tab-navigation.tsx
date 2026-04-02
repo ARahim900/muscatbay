@@ -47,17 +47,17 @@ export function TabNavigation({ tabs, activeTab, onTabChange, className, variant
                                 className={cn(
                                     "relative flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-medium whitespace-nowrap",
                                     "transition-all duration-200 ease-out",
-                                    "focus:outline-none focus-visible:ring-2 focus-visible:ring-[#4E4456]/50 focus-visible:ring-offset-1",
+                                    "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-1",
                                     isActive
                                         ? [
                                             "bg-white dark:bg-slate-900",
-                                            "text-[#4E4456] dark:text-slate-100",
+                                            "text-primary dark:text-slate-100",
                                             "shadow-md",
                                             "border border-slate-200/80 dark:border-slate-600/50",
                                         ]
                                         : [
                                             "text-slate-500 dark:text-slate-400",
-                                            "hover:text-[#4E4456] dark:hover:text-slate-200",
+                                            "hover:text-primary dark:hover:text-slate-200",
                                             "hover:bg-white/60 dark:hover:bg-slate-700/50",
                                             "active:scale-[0.98]",
                                         ]
@@ -67,7 +67,7 @@ export function TabNavigation({ tabs, activeTab, onTabChange, className, variant
                                     <tab.icon
                                         className={cn(
                                             "w-4 h-4 transition-colors duration-200",
-                                            isActive ? "text-[#81D8D0]" : "text-slate-400 dark:text-slate-500"
+                                            isActive ? "text-secondary" : "text-slate-400 dark:text-slate-500"
                                         )}
                                     />
                                 )}
@@ -75,7 +75,7 @@ export function TabNavigation({ tabs, activeTab, onTabChange, className, variant
                                 {/* Active indicator bar */}
                                 {isActive && (
                                     <span
-                                        className="absolute bottom-0 left-3 right-3 h-0.5 bg-[#81D8D0] rounded-full"
+                                        className="absolute bottom-0 left-3 right-3 h-0.5 bg-secondary rounded-full"
                                         aria-hidden="true"
                                     />
                                 )}
@@ -95,17 +95,17 @@ export function TabNavigation({ tabs, activeTab, onTabChange, className, variant
                             className={cn(
                                 "relative flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium whitespace-nowrap",
                                 "transition-all duration-200 ease-out",
-                                "focus:outline-none focus-visible:ring-2 focus-visible:ring-[#4E4456]/50 focus-visible:ring-offset-1",
+                                "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-1",
                                 isActive
                                     ? [
-                                        "bg-[#4E4456] dark:bg-[#5a4f62]",
+                                        "bg-primary dark:bg-primary/80",
                                         "text-white",
-                                        "shadow-md shadow-[#4E4456]/20",
+                                        "shadow-md shadow-primary/20",
                                     ]
                                     : [
                                         "text-slate-600 dark:text-slate-400",
                                         "hover:bg-white/70 dark:hover:bg-slate-700/60",
-                                        "hover:text-[#4E4456] dark:hover:text-slate-200",
+                                        "hover:text-primary dark:hover:text-slate-200",
                                         "hover:shadow-sm",
                                         "active:scale-[0.98]",
                                     ]
@@ -115,7 +115,7 @@ export function TabNavigation({ tabs, activeTab, onTabChange, className, variant
                                 <tab.icon
                                     className={cn(
                                         "w-4 h-4 transition-colors duration-200",
-                                        isActive ? "text-[#81D8D0]" : ""
+                                        isActive ? "text-secondary" : ""
                                     )}
                                 />
                             )}

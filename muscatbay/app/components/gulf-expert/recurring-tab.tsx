@@ -28,8 +28,8 @@ export function RecurringTab({ issues }: RecurringTabProps) {
           <CardContent className="p-4 sm:p-5">
             <div className="flex items-start gap-4">
               {/* Occurrence count */}
-              <div className="flex-shrink-0 w-14 h-14 rounded-xl bg-[#4E4456]/10 dark:bg-[#4E4456]/20 flex items-center justify-center">
-                <span className="text-xl font-bold text-[#4E4456] dark:text-[#c4b5d0] tabular-nums">
+              <div className="flex-shrink-0 w-14 h-14 rounded-xl bg-primary/10 dark:bg-primary/20 flex items-center justify-center">
+                <span className="text-xl font-bold text-primary dark:text-slate-300 tabular-nums">
                   {issue.occurrence_count}
                 </span>
               </div>

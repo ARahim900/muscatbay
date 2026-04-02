@@ -80,7 +80,7 @@ export function Navbar() {
     }, [pathname]);
 
     return (
-        <header className="h-16 sm:h-[60px] bg-[#4E4456] px-4 sm:px-6 flex items-center justify-between sticky top-0 z-50 shadow-lg">
+        <header className="h-16 sm:h-[60px] bg-primary px-4 sm:px-6 flex items-center justify-between sticky top-0 z-50 shadow-lg">
             {/* Left Section - Logo + Mobile hamburger */}
             <div className="flex items-center gap-4">
                 {/* Mobile hamburger menu */}
@@ -173,7 +173,7 @@ export function Navbar() {
                 >
                     <Bell className="w-4 h-4 sm:w-5 sm:h-5" />
                     {/* Notification badge */}
-                    <span className="absolute top-1 right-1 sm:top-1.5 sm:right-1.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-[#4E4456] animate-pulse"></span>
+                    <span className="absolute top-1 right-1 sm:top-1.5 sm:right-1.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-primary animate-pulse"></span>
                 </button>
 
                 {/* Profile Section with Dropdown */}
@@ -187,12 +187,12 @@ export function Navbar() {
                         <div className="relative">
                             <Avatar className="w-9 h-9 sm:w-10 sm:h-10 border-2 border-white/20 group-hover:border-white/40 transition-colors duration-200">
                                 <AvatarImage src={profile?.avatar_url || undefined} alt={displayName} />
-                                <AvatarFallback className="bg-[#81D8D0] text-[#4e4456] text-sm font-bold">
+                                <AvatarFallback className="bg-secondary text-primary text-sm font-bold">
                                     {initials}
                                 </AvatarFallback>
                             </Avatar>
                             {/* Online status indicator */}
-                            <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-[#4E4456]"></span>
+                            <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-primary"></span>
                         </div>
 
                         {/* User name - Hidden on mobile */}
@@ -220,7 +220,7 @@ export function Navbar() {
                                 <div className="flex items-center gap-3">
                                     <Avatar className="w-10 h-10">
                                         <AvatarImage src={profile?.avatar_url || undefined} alt={displayName} />
-                                        <AvatarFallback className="bg-[#81D8D0] text-[#4e4456] text-sm font-bold">
+                                        <AvatarFallback className="bg-secondary text-primary text-sm font-bold">
                                             {initials}
                                         </AvatarFallback>
                                     </Avatar>
@@ -240,7 +240,7 @@ export function Navbar() {
                                 <Link
                                     href="/settings"
                                     onClick={() => setIsProfileDropdownOpen(false)}
-                                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 hover:text-[#4E4456] transition-colors duration-200"
+                                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 hover:text-primary transition-colors duration-200"
                                 >
                                     <User className="w-4 h-4 text-slate-400" />
                                     Profile
@@ -248,7 +248,7 @@ export function Navbar() {
                                 <Link
                                     href="/settings"
                                     onClick={() => setIsProfileDropdownOpen(false)}
-                                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 hover:text-[#4E4456] transition-colors duration-200"
+                                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 hover:text-primary transition-colors duration-200"
                                 >
                                     <Settings className="w-4 h-4 text-slate-400" />
                                     Settings
@@ -274,7 +274,7 @@ export function Navbar() {
             {isMobileMenuOpen && (
                 <div
                     ref={mobileMenuRef}
-                    className="absolute top-full left-0 right-0 bg-[#4E4456] border-t border-white/10 shadow-lg lg:hidden animate-in slide-in-from-top-2 duration-200"
+                    className="absolute top-full left-0 right-0 bg-primary border-t border-white/10 shadow-lg lg:hidden animate-in slide-in-from-top-2 duration-200"
                 >
                     <nav className="p-4 space-y-1">
                         {navItems.map((item) => {

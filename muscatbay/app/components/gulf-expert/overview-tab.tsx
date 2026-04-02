@@ -117,7 +117,7 @@ export function OverviewTab({ data }: OverviewTabProps) {
         <Card className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-2">
-              <Building2 className="h-4 w-4 text-[#4E4456]" />
+              <Building2 className="h-4 w-4 text-primary" />
               Open Items by Building
             </CardTitle>
           </CardHeader>
@@ -148,7 +148,7 @@ export function OverviewTab({ data }: OverviewTabProps) {
         <Card className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-2">
-              <ClipboardList className="h-4 w-4 text-[#00D2B3]" />
+              <ClipboardList className="h-4 w-4 text-secondary" />
               Findings by Status
             </CardTitle>
           </CardHeader>
@@ -257,8 +257,8 @@ export function OverviewTab({ data }: OverviewTabProps) {
         <Card className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
           <CardContent className="p-5">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-[#4E4456]/10">
-                <Shield className="h-5 w-5 text-[#4E4456]" />
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Shield className="h-5 w-5 text-primary" />
               </div>
               <div>
                 <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">HVAC AMC — Gulf Expert</p>
@@ -288,8 +288,8 @@ export function OverviewTab({ data }: OverviewTabProps) {
         <Card className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
           <CardContent className="p-5">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-[#00D2B3]/10">
-                <Shield className="h-5 w-5 text-[#00D2B3]" />
+              <div className="p-2 rounded-lg bg-secondary/10">
+                <Shield className="h-5 w-5 text-secondary" />
               </div>
               <div>
                 <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">BMS AMC — Gulf Expert</p>

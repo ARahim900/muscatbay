@@ -92,7 +92,7 @@ export function EquipmentTab({ equipment }: EquipmentTabProps) {
               >
                 <CardContent className="p-4 space-y-2.5">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium bg-[#4E4456]/10 text-[#4E4456] dark:bg-[#4E4456]/20 dark:text-[#c4b5d0]">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium bg-primary/10 text-primary dark:bg-primary/20 dark:text-slate-300">
                       {e.building}
                     </span>
                     <div className="flex items-center gap-1.5">

@@ -13,6 +13,19 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
   ]),
+  {
+    files: ["**/*.tsx", "**/*.ts"],
+    rules: {
+      "no-restricted-syntax": [
+        "warn",
+        {
+          selector: "Literal[value=/\\[#[0-9a-fA-F]{3,8}\\]/]",
+          message:
+            "Avoid arbitrary hex colors in Tailwind classes. Use design tokens (bg-primary, text-secondary, etc.) instead.",
+        },
+      ],
+    },
+  },
 ]);
 
 export default eslintConfig;

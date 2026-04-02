@@ -54,7 +54,7 @@ export function Topbar() {
                 {/* Mobile hamburger - Always visible on mobile */}
                 <button
                     onClick={() => setIsOpen(prev => !prev)}
-                    className="w-10 h-10 flex items-center justify-center rounded-lg bg-[#4e4456] text-white md:hidden hover:bg-[#4e4456]/90 active:scale-95 transition-all duration-200 shadow-md"
+                    className="w-10 h-10 flex items-center justify-center rounded-lg bg-primary text-white md:hidden hover:bg-primary/80 active:scale-95 transition-all duration-200 shadow-md"
                     aria-label="Toggle menu"
                 >
                     <Menu className="w-5 h-5" />
@@ -63,7 +63,7 @@ export function Topbar() {
                 {/* App Title - Mobile first */}
                 <div>
                     <h1 className="text-lg sm:text-xl font-bold leading-tight tracking-tight">
-                        <span className="text-[#4e4456] dark:text-slate-100">MUSCAT </span>
+                        <span className="text-primary dark:text-slate-100">MUSCAT </span>
                         <span style={{ color: '#81D8D0' }}>BAY</span>
                     </h1>
                     <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 hidden sm:block">
@@ -114,16 +114,16 @@ export function Topbar() {
                         id="profile-menu-trigger"
                     >
                         <div className="relative">
-                            <Avatar className="w-9 h-9 sm:w-10 sm:h-10 border-2 border-slate-200 dark:border-slate-700 group-hover:border-[#81D8D0] transition-colors duration-200">
+                            <Avatar className="w-9 h-9 sm:w-10 sm:h-10 border-2 border-slate-200 dark:border-slate-700 group-hover:border-secondary transition-colors duration-200">
                                 <AvatarImage src={profile?.avatar_url || undefined} alt={displayName} />
-                                <AvatarFallback className="bg-[#81D8D0] text-[#4e4456] text-sm font-bold">
+                                <AvatarFallback className="bg-secondary text-primary text-sm font-bold">
                                     {initials}
                                 </AvatarFallback>
                             </Avatar>
                             {/* Online status indicator */}
                             <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-white dark:border-slate-900"></span>
                         </div>
-                        <span className="hidden lg:block text-sm font-medium text-[#4e4456] dark:text-slate-200">
+                        <span className="hidden lg:block text-sm font-medium text-primary dark:text-slate-200">
                             {displayName}
                         </span>
                         <ChevronDown
@@ -141,7 +141,7 @@ export function Topbar() {
                                 <div className="flex items-center gap-3">
                                     <Avatar className="w-10 h-10">
                                         <AvatarImage src={profile?.avatar_url || undefined} alt={displayName} />
-                                        <AvatarFallback className="bg-[#81D8D0] text-[#4e4456] text-sm font-bold">
+                                        <AvatarFallback className="bg-secondary text-primary text-sm font-bold">
                                             {initials}
                                         </AvatarFallback>
                                     </Avatar>
@@ -152,7 +152,7 @@ export function Topbar() {
                                         <span className="text-xs text-slate-500 dark:text-slate-400 truncate">
                                             {user?.email || 'user@muscatbay.com'}
                                         </span>
-                                        <span className="text-[10px] text-[#81D8D0] font-medium mt-0.5">
+                                        <span className="text-[10px] text-secondary font-medium mt-0.5">
                                             {userRole}
                                         </span>
                                     </div>
@@ -164,7 +164,7 @@ export function Topbar() {
                                 <Link
                                     href="/settings"
                                     onClick={() => setIsProfileOpen(false)}
-                                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-[#4e4456] dark:hover:text-white transition-colors duration-200"
+                                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-primary dark:hover:text-white transition-colors duration-200"
                                     id="profile-menu-profile"
                                 >
                                     <User className="w-4 h-4 text-slate-400 dark:text-slate-500" />
@@ -173,7 +173,7 @@ export function Topbar() {
                                 <Link
                                     href="/settings"
                                     onClick={() => setIsProfileOpen(false)}
-                                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-[#4e4456] dark:hover:text-white transition-colors duration-200"
+                                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-primary dark:hover:text-white transition-colors duration-200"
                                     id="profile-menu-settings"
                                 >
                                     <Settings className="w-4 h-4 text-slate-400 dark:text-slate-500" />

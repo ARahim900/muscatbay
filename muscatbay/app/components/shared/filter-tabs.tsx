@@ -40,7 +40,7 @@ export function FilterTabs({ label, options, value, onChange, className }: Filte
                                 isSelected
                                     ? colorStyle
                                         ? `${colorStyle.bg} ${colorStyle.text} shadow-sm`
-                                        : "bg-[#4E4456] text-white shadow-sm"
+                                        : "bg-primary text-white shadow-sm"
                                     : "text-muted-foreground hover:bg-white/70 dark:hover:bg-slate-700/60 hover:text-slate-700 dark:hover:text-slate-200"
                             )}
                         >
