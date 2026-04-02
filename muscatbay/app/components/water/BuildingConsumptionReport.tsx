@@ -217,7 +217,7 @@ function KpiCard({ label, value, sub, variant, icon }: {
     const hex = KPI_COLORS[variant];
 
     return (
-        <div className="bg-white dark:bg-slate-900 p-3 sm:p-4 md:p-5 lg:p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] hover:shadow-[0_8px_30px_-4px_rgba(6,81,237,0.15)] hover:-translate-y-1 active:scale-[0.98] transition-all duration-200 ease-out group/stat overflow-hidden relative">
+        <div className="bg-white dark:bg-slate-900 p-3 sm:p-4 md:p-5 lg:p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition-shadow duration-200 ease-out group/stat overflow-hidden relative">
             {/* Animated top border */}
             <div
                 className="absolute top-0 left-0 w-full h-[3px] opacity-0 group-hover/stat:opacity-100 transition-opacity duration-200"

@@ -54,7 +54,7 @@ export function Topbar() {
                 {/* Mobile hamburger - Always visible on mobile */}
                 <button
                     onClick={() => setIsOpen(prev => !prev)}
-                    className="w-10 h-10 flex items-center justify-center rounded-lg bg-primary text-white md:hidden hover:bg-primary/80 active:scale-95 transition-all duration-200 shadow-md"
+                    className="w-10 h-10 flex items-center justify-center rounded-lg bg-primary text-white md:hidden hover:bg-primary/80 transition-colors duration-200 shadow-md"
                     aria-label="Toggle menu"
                 >
                     <Menu className="w-5 h-5" />
@@ -64,7 +64,7 @@ export function Topbar() {
                 <div>
                     <h1 className="text-lg sm:text-xl font-bold leading-tight tracking-tight">
                         <span className="text-primary dark:text-slate-100">MUSCAT </span>
-                        <span style={{ color: '#81D8D0' }}>BAY</span>
+                        <span className="text-secondary">BAY</span>
                     </h1>
                     <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 hidden sm:block">
                         Resource Management
@@ -77,7 +77,7 @@ export function Topbar() {
                 {/* Theme Toggle */}
                 <button
                     onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                    className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-500 dark:text-slate-400 transition-all duration-200"
+                    className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-500 dark:text-slate-400 transition-colors duration-200"
                     aria-label="Toggle theme"
                 >
                     {theme === "dark" ? (
@@ -89,7 +89,7 @@ export function Topbar() {
 
                 {/* Search Button - Hidden on small mobile */}
                 <button
-                    className="w-9 h-9 sm:w-10 sm:h-10 hidden sm:flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-500 dark:text-slate-400 transition-all duration-200"
+                    className="w-9 h-9 sm:w-10 sm:h-10 hidden sm:flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-500 dark:text-slate-400 transition-colors duration-200"
                     aria-label="Search"
                 >
                     <Search className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -97,7 +97,7 @@ export function Topbar() {
 
                 {/* Notifications Button */}
                 <button
-                    className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg relative text-slate-500 dark:text-slate-400 transition-all duration-200"
+                    className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg relative text-slate-500 dark:text-slate-400 transition-colors duration-200"
                     aria-label="Notifications"
                 >
                     <Bell className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -109,7 +109,7 @@ export function Topbar() {
                 <div className="relative" ref={dropdownRef}>
                     <button
                         onClick={() => setIsProfileOpen(!isProfileOpen)}
-                        className="flex items-center gap-2 ms-1 sm:ms-2 p-1 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-200 group"
+                        className="flex items-center gap-2 ms-1 sm:ms-2 p-1 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors duration-200 group"
                         aria-label="User profile menu"
                         id="profile-menu-trigger"
                     >

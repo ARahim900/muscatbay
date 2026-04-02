@@ -90,7 +90,7 @@ export default function LoginPage() {
                 <div className="relative z-10 flex flex-col justify-between w-full p-12">
                     {/* Logo Section */}
                     <div className="flex items-center gap-4">
-                        <div className="relative w-14 h-14 bg-white/10 backdrop-blur-sm rounded-2xl p-2 border border-white/20 shadow-2xl">
+                        <div className="relative w-14 h-14 bg-white/10 rounded-2xl p-2 border border-white/20 shadow-2xl">
                             <Image
                                 src="/logo.png"
                                 alt="Muscat Bay Logo"
@@ -119,22 +119,22 @@ export default function LoginPage() {
 
                         {/* Feature Cards */}
                         <div className="grid grid-cols-2 gap-4 max-w-md">
-                            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/10 hover:bg-white/15 transition-all duration-200 group">
+                            <div className="bg-white/10 rounded-xl p-4 border border-white/10 hover:bg-white/15 transition-all duration-200 group">
                                 <Droplets className="h-6 w-6 text-secondary mb-2 transition-colors" />
                                 <h3 className="text-white font-semibold text-sm">Water Systems</h3>
                                 <p className="text-white/60 text-xs mt-1">Real-time monitoring</p>
                             </div>
-                            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/10 hover:bg-white/15 transition-all duration-200 group">
+                            <div className="bg-white/10 rounded-xl p-4 border border-white/10 hover:bg-white/15 transition-all duration-200 group">
                                 <BarChart3 className="h-6 w-6 text-secondary mb-2 transition-colors" />
                                 <h3 className="text-white font-semibold text-sm">Analytics</h3>
                                 <p className="text-white/60 text-xs mt-1">Data-driven insights</p>
                             </div>
-                            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/10 hover:bg-white/15 transition-all duration-200 group">
+                            <div className="bg-white/10 rounded-xl p-4 border border-white/10 hover:bg-white/15 transition-all duration-200 group">
                                 <Waves className="h-6 w-6 text-secondary mb-2 transition-colors" />
                                 <h3 className="text-white font-semibold text-sm">STP Plants</h3>
                                 <p className="text-white/60 text-xs mt-1">Treatment tracking</p>
                             </div>
-                            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/10 hover:bg-white/15 transition-all duration-200 group">
+                            <div className="bg-white/10 rounded-xl p-4 border border-white/10 hover:bg-white/15 transition-all duration-200 group">
                                 <Shield className="h-6 w-6 text-secondary mb-2 transition-colors" />
                                 <h3 className="text-white font-semibold text-sm">Security</h3>
                                 <p className="text-white/60 text-xs mt-1">Enterprise-grade</p>
@@ -193,7 +193,7 @@ export default function LoginPage() {
                     </div>
 
                     {/* Login Form Card */}
-                    <div className="bg-white dark:bg-slate-800/50 rounded-2xl shadow-xl border border-slate-200/50 dark:border-slate-700/50 backdrop-blur-sm p-8">
+                    <div className="bg-white dark:bg-slate-800/50 rounded-2xl shadow-xl border border-slate-200/50 dark:border-slate-700/50 p-8">
                         <form onSubmit={handleSubmit} className="space-y-6">
                             {/* Error Message */}
                             {error && (

@@ -47,7 +47,7 @@ export function WaterLossGauge({ score, label, subLabel, size = 200, className }
     const data = [{ name: "score", value: normalizedScore }];
 
     return (
-        <div className={cn("flex flex-col items-center justify-center p-4 rounded-xl backdrop-blur-md bg-card/30 border border-white/10 shadow-xl", className)}>
+        <div className={cn("flex flex-col items-center justify-center p-4 rounded-xl bg-card border border-white/10 shadow-xl", className)}>
             <div className="relative" style={{ width: size, height: size }}>
                 <ResponsiveContainer width="100%" height="100%">
                     <RadialBarChart

@@ -35,7 +35,7 @@ export function TypeFilterPills({ types, selectedType, onTypeChange }: TypeFilte
                         onClick={() => onTypeChange(type)}
                         className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${isSelected
                             ? 'bg-mb-secondary-active text-white shadow-md scale-105'
-                            : `${baseColors} hover:scale-105 hover:shadow-sm`
+                            : `${baseColors} hover:shadow-sm`
                             }`}
                     >
                         {type}

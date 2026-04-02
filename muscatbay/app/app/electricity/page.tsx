@@ -907,7 +907,7 @@ export default function ElectricityPage() {
                                                 content={({ active, payload, label }) => {
                                                     if (active && payload && payload.length) {
                                                         return (
-                                                            <div className="card-elevated px-4 py-3 border border-white/50 shadow-xl !rounded-xl !bg-white/90 dark:!bg-slate-900/90 backdrop-blur-md max-w-[280px]">
+                                                            <div className="card-elevated px-4 py-3 border border-white/50 shadow-xl !rounded-xl !bg-white dark:!bg-slate-900 max-w-[280px]">
                                                                 <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">{label}</p>
                                                                 {[...payload].sort((a: any, b: any) => (b.value || 0) - (a.value || 0)).map((entry: any, i: number) => (
                                                                     <div key={i} className="flex items-center gap-2 text-xs mb-0.5">
@@ -996,7 +996,7 @@ export default function ElectricityPage() {
                                                     if (active && payload && payload.length) {
                                                         const data = payload[0].payload;
                                                         return (
-                                                            <div className="card-elevated px-4 py-3 border border-white/50 shadow-xl !rounded-xl !bg-white/90 dark:!bg-slate-900/90 backdrop-blur-md">
+                                                            <div className="card-elevated px-4 py-3 border border-white/50 shadow-xl !rounded-xl !bg-white dark:!bg-slate-900">
                                                                 <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">{data.fullName}</p>
                                                                 <div className="flex items-center gap-2 text-xs mb-1">
                                                                     <div className="w-2 h-2 rounded-full bg-amber-500" />
@@ -1084,7 +1084,7 @@ export default function ElectricityPage() {
                                                             const diff = data.consumption - analysisData.typeAverage;
                                                             const pct = analysisData.typeAverage > 0 ? ((diff / analysisData.typeAverage) * 100).toFixed(1) : '0';
                                                             return (
-                                                                <div className="card-elevated px-4 py-3 border border-white/50 shadow-xl !rounded-xl !bg-white/90 dark:!bg-slate-900/90 backdrop-blur-md">
+                                                                <div className="card-elevated px-4 py-3 border border-white/50 shadow-xl !rounded-xl !bg-white dark:!bg-slate-900">
                                                                     <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">{data.fullName}</p>
                                                                     <div className="flex items-center gap-2 text-xs mb-1">
                                                                         <div className="w-2 h-2 rounded-full" style={{ backgroundColor: data.color }} />

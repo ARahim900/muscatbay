@@ -86,7 +86,7 @@ export function Navbar() {
                 {/* Mobile hamburger menu */}
                 <button
                     onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                    className="w-10 h-10 flex items-center justify-center rounded-lg bg-white/10 text-white lg:hidden hover:bg-white/20 active:scale-95 transition-all duration-200"
+                    className="w-10 h-10 flex items-center justify-center rounded-lg bg-white/10 text-white lg:hidden hover:bg-white/20 transition-colors duration-200"
                     aria-label="Toggle menu"
                 >
                     <Menu className="w-5 h-5" />
@@ -107,7 +107,7 @@ export function Navbar() {
                     <div className="hidden sm:flex flex-col">
                         <span className="font-semibold text-base leading-tight tracking-tight">
                             <span className="text-white">MUSCAT</span>
-                            <span style={{ color: "#81D8D0" }}> BAY</span>
+                            <span className="text-secondary"> BAY</span>
                         </span>
                         <span className="text-[11px] text-white/60 font-normal hidden md:block">
                             Resource Management
@@ -128,7 +128,7 @@ export function Navbar() {
                                 key={item.name}
                                 href={item.href}
                                 className={`
-                  flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200
+                  flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200
                   ${isActive
                                         ? "bg-white/20 text-white"
                                         : "text-white/70 hover:bg-white/10 hover:text-white"
@@ -148,7 +148,7 @@ export function Navbar() {
                 {/* Theme Toggle */}
                 <button
                     onClick={() => setIsDarkMode(!isDarkMode)}
-                    className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center hover:bg-white/10 rounded-lg text-white/70 hover:text-white transition-all duration-200"
+                    className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center hover:bg-white/10 rounded-lg text-white/70 hover:text-white transition-colors duration-200"
                     aria-label="Toggle theme"
                 >
                     {isDarkMode ? (
@@ -160,7 +160,7 @@ export function Navbar() {
 
                 {/* Search Button - Hidden on small mobile */}
                 <button
-                    className="w-9 h-9 sm:w-10 sm:h-10 hidden sm:flex items-center justify-center hover:bg-white/10 rounded-lg text-white/70 hover:text-white transition-all duration-200"
+                    className="w-9 h-9 sm:w-10 sm:h-10 hidden sm:flex items-center justify-center hover:bg-white/10 rounded-lg text-white/70 hover:text-white transition-colors duration-200"
                     aria-label="Search"
                 >
                     <Search className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -168,7 +168,7 @@ export function Navbar() {
 
                 {/* Notifications Button */}
                 <button
-                    className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center hover:bg-white/10 rounded-lg relative text-white/70 hover:text-white transition-all duration-200"
+                    className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center hover:bg-white/10 rounded-lg relative text-white/70 hover:text-white transition-colors duration-200"
                     aria-label="Notifications"
                 >
                     <Bell className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -180,7 +180,7 @@ export function Navbar() {
                 <div className="relative" ref={dropdownRef}>
                     <button
                         onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
-                        className="flex items-center gap-2 ms-2 p-1.5 rounded-xl hover:bg-white/10 transition-all duration-200 group"
+                        className="flex items-center gap-2 ms-2 p-1.5 rounded-xl hover:bg-white/10 transition-colors duration-200 group"
                         aria-label="User profile menu"
                     >
                         {/* Profile Picture */}
@@ -289,7 +289,7 @@ export function Navbar() {
                                     href={item.href}
                                     onClick={() => setIsMobileMenuOpen(false)}
                                     className={`
-                    flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200
+                    flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors duration-200
                     ${isActive
                                             ? "bg-white/20 text-white"
                                             : "text-white/70 hover:bg-white/10 hover:text-white"

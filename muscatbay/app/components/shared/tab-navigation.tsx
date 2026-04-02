@@ -46,7 +46,7 @@ export function TabNavigation({ tabs, activeTab, onTabChange, className, variant
                                 tabIndex={isActive ? 0 : -1}
                                 className={cn(
                                     "relative flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-medium whitespace-nowrap",
-                                    "transition-all duration-200 ease-out",
+                                    "transition-colors duration-200 ease-out",
                                     "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-1",
                                     isActive
                                         ? [
@@ -59,7 +59,6 @@ export function TabNavigation({ tabs, activeTab, onTabChange, className, variant
                                             "text-slate-500 dark:text-slate-400",
                                             "hover:text-primary dark:hover:text-slate-200",
                                             "hover:bg-white/60 dark:hover:bg-slate-700/50",
-                                            "active:scale-[0.98]",
                                         ]
                                 )}
                             >
@@ -94,7 +93,7 @@ export function TabNavigation({ tabs, activeTab, onTabChange, className, variant
                             tabIndex={isActive ? 0 : -1}
                             className={cn(
                                 "relative flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium whitespace-nowrap",
-                                "transition-all duration-200 ease-out",
+                                "transition-colors duration-200 ease-out",
                                 "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-1",
                                 isActive
                                     ? [
@@ -107,7 +106,6 @@ export function TabNavigation({ tabs, activeTab, onTabChange, className, variant
                                         "hover:bg-white/70 dark:hover:bg-slate-700/60",
                                         "hover:text-primary dark:hover:text-slate-200",
                                         "hover:shadow-sm",
-                                        "active:scale-[0.98]",
                                     ]
                             )}
                         >
