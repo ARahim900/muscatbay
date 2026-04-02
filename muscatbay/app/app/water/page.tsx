@@ -275,17 +275,28 @@ export default function WaterPage() {
 
     const meterCounts = useMemo(() => getMeterCountsByLevelFromData(waterMeters), [waterMeters]);
 
-    // Get unique types for filter
-    const uniqueTypes = useMemo(() => {
-        const types = new Set(waterMeters.map(m => m.type));
-        return ['All', ...Array.from(types)];
+    // Applicable meters for consumption view:
+    // Exclude IRR_Servies meters where parentMeter is 'N/A' (non-applicable meters like Outlet/TSE)
+    const applicableMeters = useMemo(() => {
+        return waterMeters.filter(m => {
+            if (m.type === 'IRR_Servies' && (m.parentMeter === 'N/A' || !m.parentMeter)) {
+                return false;
+            }
+            return true;
+        });
     }, [waterMeters]);
 
-    // Filter meters by type
+    // Get unique types for filter (from applicable meters)
+    const uniqueTypes = useMemo(() => {
+        const types = new Set(applicableMeters.map(m => m.type));
+        return ['All', ...Array.from(types)];
+    }, [applicableMeters]);
+
+    // Filter meters by type (from applicable meters)
     const filteredMeters = useMemo(() => {
-        if (selectedType === 'All') return waterMeters;
-        return waterMeters.filter(m => m.type === selectedType);
-    }, [waterMeters, selectedType]);
+        if (selectedType === 'All') return applicableMeters;
+        return applicableMeters.filter(m => m.type === selectedType);
+    }, [applicableMeters, selectedType]);
 
     // Calculate total consumption for filtered data
     const totalConsumption = useMemo(() => {
@@ -322,14 +333,14 @@ export default function WaterPage() {
         setEndMonth(AVAILABLE_MONTHS[AVAILABLE_MONTHS.length - 1]);
     };
 
-    // Consumption by type chart data
+    // Consumption by type chart data (uses applicable meters — excludes non-applicable IRR_Servies)
     const consumptionChartData = useMemo(() => {
         const typeConsumption: Record<string, number> = {};
         const startIdx = AVAILABLE_MONTHS.indexOf(startMonth);
         const endIdx = AVAILABLE_MONTHS.indexOf(endMonth);
         const months = AVAILABLE_MONTHS.slice(startIdx, endIdx + 1);
 
-        waterMeters.forEach(meter => {
+        applicableMeters.forEach(meter => {
             const total = months.reduce((sum, m) => sum + getConsumption(meter, m), 0);
             typeConsumption[meter.type] = (typeConsumption[meter.type] || 0) + total;
         });
@@ -337,7 +348,7 @@ export default function WaterPage() {
         return Object.entries(typeConsumption)
             .map(([type, total]) => ({ type, total }))
             .sort((a, b) => b.total - a.total);
-    }, [waterMeters, startMonth, endMonth]);
+    }, [applicableMeters, startMonth, endMonth]);
 
     const TYPE_COLORS = {
         'Main BULK': CHART_COLORS.success,
