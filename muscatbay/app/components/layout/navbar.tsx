@@ -148,7 +148,7 @@ export function Navbar() {
                 {/* Theme Toggle */}
                 <button
                     onClick={() => setIsDarkMode(!isDarkMode)}
-                    className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center hover:bg-white/10 rounded-lg text-white/70 hover:text-white transition-colors duration-200"
+                    className="w-11 h-11 flex items-center justify-center hover:bg-white/10 rounded-lg text-white/70 hover:text-white transition-colors duration-200"
                     aria-label="Toggle theme"
                 >
                     {isDarkMode ? (
@@ -160,7 +160,7 @@ export function Navbar() {
 
                 {/* Search Button - Hidden on small mobile */}
                 <button
-                    className="w-9 h-9 sm:w-10 sm:h-10 hidden sm:flex items-center justify-center hover:bg-white/10 rounded-lg text-white/70 hover:text-white transition-colors duration-200"
+                    className="w-11 h-11 hidden sm:flex items-center justify-center hover:bg-white/10 rounded-lg text-white/70 hover:text-white transition-colors duration-200"
                     aria-label="Search"
                 >
                     <Search className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -168,12 +168,12 @@ export function Navbar() {
 
                 {/* Notifications Button */}
                 <button
-                    className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center hover:bg-white/10 rounded-lg relative text-white/70 hover:text-white transition-colors duration-200"
+                    className="w-11 h-11 flex items-center justify-center hover:bg-white/10 rounded-lg relative text-white/70 hover:text-white transition-colors duration-200"
                     aria-label="Notifications"
                 >
                     <Bell className="w-4 h-4 sm:w-5 sm:h-5" />
                     {/* Notification badge */}
-                    <span className="absolute top-1 right-1 sm:top-1.5 sm:right-1.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-primary animate-pulse"></span>
+                    <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-primary animate-pulse"></span>
                 </button>
 
                 {/* Profile Section with Dropdown */}
@@ -185,7 +185,7 @@ export function Navbar() {
                     >
                         {/* Profile Picture */}
                         <div className="relative">
-                            <Avatar className="w-9 h-9 sm:w-10 sm:h-10 border-2 border-white/20 group-hover:border-white/40 transition-colors duration-200">
+                            <Avatar className="w-10 h-10 border-2 border-white/20 group-hover:border-white/40 transition-colors duration-200">
                                 <AvatarImage src={profile?.avatar_url || undefined} alt={displayName} />
                                 <AvatarFallback className="bg-secondary text-primary text-sm font-bold">
                                     {initials}

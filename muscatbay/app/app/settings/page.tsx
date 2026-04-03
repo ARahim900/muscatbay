@@ -80,7 +80,7 @@ export default function SettingsPage() {
             if (avatarFile) {
                 try {
                     avatarUrl = await uploadAvatar(user.id, avatarFile)
-                } catch (uploadErr: any) {
+                } catch (uploadErr: unknown) {
                     console.error("Avatar upload error:", uploadErr)
                     // Continue without avatar update if upload fails
                 }
@@ -103,9 +103,9 @@ export default function SettingsPage() {
 
             // Clear success message after 3 seconds
             setTimeout(() => setSuccess(false), 3000)
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error("Profile update error:", err)
-            setError(err.message || "Failed to update profile")
+            setError(err instanceof Error ? err.message : "Failed to update profile")
         } finally {
             setUpdating(false)
         }
@@ -328,7 +328,7 @@ export default function SettingsPage() {
                                 <Separator />
 
                                 <div className="space-y-4">
-                                    <h3 className="text-sm font-medium">Active Sessions</h3>
+                                    <h2 className="text-sm font-medium">Active Sessions</h2>
                                     <div className="flex items-center justify-between p-4 border rounded-lg bg-white/50 dark:bg-slate-900 border-mb-primary/10">
                                         <div className="flex items-center gap-3">
                                             <div className="p-2 bg-white dark:bg-slate-800 rounded-full border shadow-sm">

@@ -6,7 +6,7 @@
 /**
  * Escape CSV field values properly
  */
-function escapeCSVField(value: any): string {
+function escapeCSVField(value: unknown): string {
     if (value === null || value === undefined) {
         return '';
     }

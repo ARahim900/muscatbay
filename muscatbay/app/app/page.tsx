@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useRef, useMemo, useCallback, type KeyboardEvent } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useMemo, useCallback } from "react";
+import dynamic from "next/dynamic";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { StatsGrid } from "@/components/shared/stats-grid";
 import { LoadingSpinner } from "@/components/shared/loading-spinner";
@@ -9,18 +9,21 @@ import { PageHeader } from "@/components/shared/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Activity, Droplets, Zap, AlertTriangle, ArrowUpRight, Boxes, Recycle, TrendingUp, Wifi, WifiOff } from "lucide-react";
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar, Legend } from "recharts";
-import { LiquidTooltip } from "../components/charts/liquid-tooltip";
-import { ChartContainer } from "../components/charts/chart-container";
 import { AnimateOnScroll } from "@/components/shared/scroll-animation";
-import { Button } from "@/components/ui/button";
-import { Download } from "lucide-react";
 import Link from "next/link";
 
-const CHART_COLORS = { teal: '#81D8D0', brand: '#4E4456', amber: '#E8A838' } as const;
+// Lazy-load charts — Recharts (~180 kB) deferred until after header + stats render
+const DashboardCharts = dynamic(() => import("@/components/charts/dashboard-charts"), {
+    loading: () => (
+        <div className="grid gap-4 sm:gap-5 md:gap-6 grid-cols-1 lg:grid-cols-7">
+            <div className="card-elevated col-span-1 lg:col-span-4 h-[300px] animate-pulse rounded-xl bg-slate-200/50 dark:bg-slate-800/50" />
+            <div className="card-elevated col-span-1 lg:col-span-3 h-[300px] animate-pulse rounded-xl bg-slate-200/50 dark:bg-slate-800/50" />
+        </div>
+    ),
+    ssr: false,
+});
 
 export default function DashboardPage() {
-    const router = useRouter();
     const { stats, chartData, stpChartData, recentActivity, loading, isLiveData, error } = useDashboardData();
     const [activityFilter, setActivityFilter] = useState<'all' | 'critical' | 'warning' | 'info'>('all');
 
@@ -42,16 +45,6 @@ export default function DashboardPage() {
                                 stat.label.includes('PEST') ? '/pest-control' :
                                     stat.label.includes('FIRE') ? '/firefighting' : undefined
     })), [stats]);
-
-    const navigateToWater = useCallback(() => router.push('/water'), [router]);
-    const navigateToStp = useCallback(() => router.push('/stp'), [router]);
-
-    const handleCardKeyDown = useCallback((e: KeyboardEvent, path: string) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            router.push(path);
-        }
-    }, [router]);
 
     const handleFilterClick = useCallback((filter: 'all' | 'critical' | 'warning' | 'info') => {
         setActivityFilter(filter);
@@ -122,72 +115,7 @@ export default function DashboardPage() {
 
             <StatsGrid stats={statsWithIcons} />
 
-            <AnimateOnScroll className="grid gap-4 sm:gap-5 md:gap-6 grid-cols-1 lg:grid-cols-7">
-                <Card
-                    className="card-elevated col-span-1 lg:col-span-4 cursor-pointer group/chart transition-shadow duration-200 hover:shadow-[0_8px_30px_-4px_rgba(6,81,237,0.15)] focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none"
-                    onClick={navigateToWater}
-                    onKeyDown={(e) => handleCardKeyDown(e as unknown as KeyboardEvent, '/water')}
-                    role="link"
-                    tabIndex={0}
-                >
-                    <CardHeader className="card-elevated-header p-4 sm:p-5 md:p-6">
-                        <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-                            <Droplets className="h-5 w-5 text-mb-secondary" />
-                            Water Production Trend
-                            <ArrowUpRight className="h-4 w-4 ml-auto text-muted-foreground opacity-0 group-hover/chart:opacity-100 transition-opacity" />
-                        </CardTitle>
-                        <p className="text-xs sm:text-sm text-muted-foreground">Monthly water production in thousand m³</p>
-                    </CardHeader>
-                    <div role="img" aria-label="Water production trend chart showing monthly data in thousand cubic meters">
-                    <ChartContainer height="100%" className="h-[200px] sm:h-[250px] md:h-[300px]">
-                        <AreaChart data={chartData}>
-                            <defs>
-                                <linearGradient id="colorWater" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor={CHART_COLORS.teal} stopOpacity={0.4} />
-                                    <stop offset="95%" stopColor={CHART_COLORS.teal} stopOpacity={0} />
-                                </linearGradient>
-                            </defs>
-                            <CartesianGrid strokeDasharray="3 3" className="stroke-slate-200 dark:stroke-slate-700" opacity={0.5} />
-                            <XAxis dataKey="month" className="text-xs" tick={{ fontSize: 11, fill: "var(--chart-axis)" }} axisLine={false} tickLine={false} dy={10} />
-                            <YAxis className="text-xs" tick={{ fontSize: 11, fill: "var(--chart-axis)" }} axisLine={false} tickLine={false} label={{ value: 'k m³', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: 'var(--chart-axis)', fontSize: 11 } }} />
-                            <Tooltip content={<LiquidTooltip />} cursor={{ stroke: 'rgba(0,0,0,0.1)', strokeWidth: 2 }} />
-                            <Legend iconType="circle" wrapperStyle={{ paddingTop: 10 }} />
-                            <Area type="monotone" dataKey="water" stroke={CHART_COLORS.teal} fill="url(#colorWater)" name="Water (k m³)" strokeWidth={3} activeDot={{ r: 6, stroke: '#fff', strokeWidth: 2 }} animationDuration={600} />
-                        </AreaChart>
-                    </ChartContainer>
-                    </div>
-                </Card>
-
-                <Card
-                    className="card-elevated col-span-1 lg:col-span-3 cursor-pointer group/chart transition-shadow duration-200 hover:shadow-[0_8px_30px_-4px_rgba(6,81,237,0.15)] focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none"
-                    onClick={navigateToStp}
-                    onKeyDown={(e) => handleCardKeyDown(e as unknown as KeyboardEvent, '/stp')}
-                    role="link"
-                    tabIndex={0}
-                >
-                    <CardHeader className="card-elevated-header p-4 sm:p-5 md:p-6">
-                        <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-                            <Recycle className="h-5 w-5 text-mb-primary" />
-                            STP Treatment Overview
-                            <ArrowUpRight className="h-4 w-4 ml-auto text-muted-foreground opacity-0 group-hover/chart:opacity-100 transition-opacity" />
-                        </CardTitle>
-                        <p className="text-xs sm:text-sm text-muted-foreground">Monthly inlet vs TSE output (k m³)</p>
-                    </CardHeader>
-                    <div role="img" aria-label="STP treatment overview bar chart comparing monthly inlet sewage and TSE output">
-                    <ChartContainer height="100%" className="h-[200px] sm:h-[250px] md:h-[300px]">
-                        <BarChart data={stpChartData}>
-                            <CartesianGrid strokeDasharray="3 3" className="stroke-slate-200 dark:stroke-slate-700" opacity={0.5} />
-                            <XAxis dataKey="month" className="text-xs" tick={{ fontSize: 10, fill: "var(--chart-axis)" }} axisLine={false} tickLine={false} dy={10} />
-                            <YAxis className="text-xs" tick={{ fontSize: 10, fill: "var(--chart-axis)" }} axisLine={false} tickLine={false} />
-                            <Tooltip content={<LiquidTooltip />} cursor={{ fill: 'rgba(0,0,0,0.04)', radius: 4 }} />
-                            <Legend iconType="circle" />
-                            <Bar dataKey="inlet" name="Inlet" fill="var(--chart-inlet)" radius={[4, 4, 0, 0]} animationDuration={600} />
-                            <Bar dataKey="tse" name="TSE Output" fill={CHART_COLORS.teal} radius={[4, 4, 0, 0]} animationDuration={600} />
-                        </BarChart>
-                    </ChartContainer>
-                    </div>
-                </Card>
-            </AnimateOnScroll>
+            <DashboardCharts chartData={chartData} stpChartData={stpChartData} />
 
             {/* Recent Activity Card */}
             <AnimateOnScroll>

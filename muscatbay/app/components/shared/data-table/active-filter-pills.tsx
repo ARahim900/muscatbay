@@ -24,7 +24,7 @@ export function ActiveFilterPills({ pills }: ActiveFilterPillsProps) {
                     className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs ${pill.colorClass || 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'}`}
                 >
                     {pill.label}
-                    <button onClick={pill.onRemove} className="hover:opacity-70 transition-opacity">
+                    <button onClick={pill.onRemove} className="min-w-[44px] min-h-[44px] -m-2.5 flex items-center justify-center hover:opacity-70 transition-opacity" aria-label={`Remove ${pill.label} filter`}>
                         <X className="w-3 h-3" />
                     </button>
                 </span>

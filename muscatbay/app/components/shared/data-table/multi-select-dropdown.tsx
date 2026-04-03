@@ -69,16 +69,16 @@ export function MultiSelectDropdown({
                 <>
                     <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
                     <div className="absolute top-full left-0 sm:left-0 right-0 sm:right-auto mt-1 z-50 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg min-w-[180px] max-w-[calc(100vw-2rem)] py-1">
-                        <div className="flex items-center justify-between px-3 py-1.5 border-b border-slate-100 dark:border-slate-700">
+                        <div className="flex items-center justify-between px-1 py-1 border-b border-slate-100 dark:border-slate-700">
                             <button
                                 onClick={selectAll}
-                                className="text-xs text-primary hover:underline"
+                                className="text-xs text-primary hover:underline min-h-[44px] px-2 flex items-center"
                             >
                                 Select All
                             </button>
                             <button
                                 onClick={clearAll}
-                                className="text-xs text-slate-500 hover:underline"
+                                className="text-xs text-slate-500 hover:underline min-h-[44px] px-2 flex items-center"
                             >
                                 Clear
                             </button>
@@ -95,7 +95,7 @@ export function MultiSelectDropdown({
                                     key={option}
                                     role="option"
                                     aria-selected={selected.includes(option)}
-                                    className="flex items-center gap-2 px-3 py-1.5 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer"
+                                    className="flex items-center gap-2 px-3 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer min-h-[44px]"
                                 >
                                     <input
                                         type="checkbox"

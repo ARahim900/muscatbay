@@ -509,7 +509,6 @@ export function isUsingLiveData(): boolean {
  */
 export function setWaterMetersData(meters: WaterMeter[]): void {
   dynamicWaterMeters = meters;
-  console.log(`[Water] Set ${meters.length} meters from Supabase`);
 }
 
 /**

@@ -16,7 +16,7 @@ import {
 } from "recharts";
 
 interface LiquidBarChartProps {
-    data: any[];
+    data: Record<string, string | number | null | undefined>[];
     categories: string[];
     index: string;
     colors?: string[]; // Hex codes
@@ -30,8 +30,13 @@ interface LiquidBarChartProps {
 
 const DEFAULT_COLORS = ["#4E4456", "#81D8D0", "#5BA88B"];
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const CustomTooltip = ({ active, payload, label }: any) => {
+interface ChartTooltipProps {
+    active?: boolean;
+    payload?: Array<{ color: string; name: string; value: number }>;
+    label?: string;
+}
+
+const CustomTooltip = ({ active, payload, label }: ChartTooltipProps) => {
     if (active && payload && payload.length) {
         return (
             <div className="px-4 py-3 border border-slate-200 dark:border-slate-700 shadow-xl rounded-xl bg-white dark:bg-slate-900">
@@ -70,8 +75,7 @@ export const LiquidBarChart = memo(function LiquidBarChart({
 }: LiquidBarChartProps) {
     const prefersReducedMotion = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    // Format value for display - using any to satisfy Recharts LabelFormatter type
-    const formatLabel = (value: any): string => {
+    const formatLabel = (value: string | number | boolean | null | undefined): string => {
         if (value === undefined || value === null) return '';
         const numValue = typeof value === 'string' ? parseFloat(value) : Number(value);
         if (isNaN(numValue)) return String(value);

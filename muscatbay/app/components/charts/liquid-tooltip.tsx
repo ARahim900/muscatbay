@@ -1,14 +1,17 @@
 "use strict";
 
-import { TooltipProps } from "recharts";
+interface LiquidTooltipProps {
+    active?: boolean;
+    payload?: Array<{ color: string; name: string; value: number | string }>;
+    label?: string;
+}
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const LiquidTooltip = ({ active, payload, label }: any) => {
+export const LiquidTooltip = ({ active, payload, label }: LiquidTooltipProps) => {
     if (active && payload && payload.length) {
         return (
             <div className="px-4 py-3 border border-slate-200 dark:border-slate-700 shadow-xl rounded-xl bg-white dark:bg-slate-900">
                 <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">{label}</p>
-                {payload.map((entry: { color: string; name: string; value: number | string }, index: number) => (
+                {payload.map((entry, index: number) => (
                     <div key={index} className="flex items-center gap-2 text-xs mb-1 last:mb-0">
                         <div
                             className="w-2 h-2 rounded-full"

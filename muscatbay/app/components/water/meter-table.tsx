@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, type KeyboardEvent } from 'react';
 import { ChevronLeft, ChevronRight, Search, ArrowUpDown } from 'lucide-react';
 import { WaterMeter, getConsumption } from '@/lib/water-data';
 
@@ -84,6 +84,22 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
 
     const displayMonths = months.slice(-4); // Show last 4 months
 
+    const handleSortKeyDown = (e: KeyboardEvent<HTMLTableCellElement>, field: string) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            handleSort(field);
+        }
+    };
+
+    const sortHeaderProps = (field: string) => ({
+        tabIndex: 0 as const,
+        'aria-sort': (sortField === field
+            ? (sortDirection === 'asc' ? 'ascending' : 'descending')
+            : undefined) as 'ascending' | 'descending' | undefined,
+        onClick: () => handleSort(field),
+        onKeyDown: (e: KeyboardEvent<HTMLTableCellElement>) => handleSortKeyDown(e, field),
+    });
+
     return (
         <div className="space-y-4">
             {/* Search */}
@@ -103,31 +119,69 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                 </span>
             </div>
 
-            {/* Table */}
-            <div className="overflow-x-auto rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900 shadow-sm">
+            {/* Mobile card view */}
+            <div className="md:hidden space-y-3">
+                {paginatedMeters.map((meter) => {
+                    const levelColors = LEVEL_COLORS[meter.level] || LEVEL_COLORS['N/A'];
+                    return (
+                        <div key={meter.accountNumber} className="rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900 p-4 shadow-sm space-y-3">
+                            <div className="flex items-center justify-between gap-2">
+                                <div className="min-w-0">
+                                    <p className="text-sm font-medium text-slate-800 dark:text-slate-200 truncate">{meter.label}</p>
+                                    <p className="text-xs text-slate-400 font-mono">{meter.accountNumber}</p>
+                                </div>
+                                <span className={`shrink-0 px-2.5 py-0.5 rounded-md text-xs font-bold ${levelColors.bg} ${levelColors.text}`}>
+                                    {meter.level}
+                                </span>
+                            </div>
+                            <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
+                                <span>{meter.zone}</span>
+                                <span className="text-slate-300 dark:text-slate-600">|</span>
+                                <span>{meter.type}</span>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2 pt-1 border-t border-slate-100 dark:border-slate-800">
+                                {displayMonths.map(m => {
+                                    const val = getConsumption(meter, m);
+                                    return (
+                                        <div key={m} className="text-xs space-y-0.5">
+                                            <span className="text-slate-400">{m}</span>
+                                            <p className="font-mono font-medium text-slate-700 dark:text-slate-300">
+                                                {val > 0 ? val.toLocaleString('en-US') : '-'}
+                                            </p>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+
+            {/* Desktop table */}
+            <div className="hidden md:block overflow-x-auto rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900 shadow-sm">
                 <table className="w-full text-sm">
                     <thead>
                         <tr className="bg-slate-50/70 dark:bg-slate-800/50">
-                            <th className="text-left py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" onClick={() => handleSort('label')}>
+                            <th className="text-left py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" {...sortHeaderProps('label')}>
                                 <div className="flex items-center gap-1.5">Meter Label <ArrowUpDown className="w-3 h-3" /></div>
                             </th>
-                            <th className="text-left py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" onClick={() => handleSort('account')}>
+                            <th className="text-left py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" {...sortHeaderProps('account')}>
                                 <div className="flex items-center gap-1.5">Account # <ArrowUpDown className="w-3 h-3" /></div>
                             </th>
-                            <th className="text-center py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" onClick={() => handleSort('level')}>
+                            <th className="text-center py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" {...sortHeaderProps('level')}>
                                 <div className="flex items-center justify-center gap-1.5">Level <ArrowUpDown className="w-3 h-3" /></div>
                             </th>
-                            <th className="text-left py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" onClick={() => handleSort('zone')}>
+                            <th className="text-left py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" {...sortHeaderProps('zone')}>
                                 <div className="flex items-center gap-1.5">Zone <ArrowUpDown className="w-3 h-3" /></div>
                             </th>
-                            <th className="text-left py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" onClick={() => handleSort('parentMeter')}>
+                            <th className="text-left py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" {...sortHeaderProps('parentMeter')}>
                                 <div className="flex items-center gap-1.5">Parent Meter <ArrowUpDown className="w-3 h-3" /></div>
                             </th>
-                            <th className="text-left py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" onClick={() => handleSort('type')}>
+                            <th className="text-left py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" {...sortHeaderProps('type')}>
                                 <div className="flex items-center gap-1.5">Type <ArrowUpDown className="w-3 h-3" /></div>
                             </th>
                             {displayMonths.map(m => (
-                                <th key={m} className="text-right py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" onClick={() => handleSort(m)}>
+                                <th key={m} className="text-right py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" {...sortHeaderProps(m)}>
                                     <div className="flex items-center justify-end gap-1.5">{m} <ArrowUpDown className="w-3 h-3" /></div>
                                 </th>
                             ))}
@@ -172,7 +226,8 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                     <button
                         onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                         disabled={currentPage === 1}
-                        className="w-8 h-8 flex items-center justify-center rounded-full border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                        aria-label="Previous page"
+                        className="w-11 h-11 flex items-center justify-center rounded-full border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         <ChevronLeft className="w-4 h-4" />
                     </button>
@@ -199,7 +254,8 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                     <button
                         onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                         disabled={currentPage === totalPages}
-                        className="w-8 h-8 flex items-center justify-center rounded-full border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                        aria-label="Next page"
+                        className="w-11 h-11 flex items-center justify-center rounded-full border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         <ChevronRight className="w-4 h-4" />
                     </button>

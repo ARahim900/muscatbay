@@ -27,15 +27,15 @@ import {
     Tooltip, ResponsiveContainer, ReferenceLine, Legend, Line,
 } from "recharts";
 
-// ─── Chart color constants (recharts doesn't support CSS vars) ───────────────
+// ─── Chart color constants (CSS variable-backed) ────────────────────────────
 
 const CHART_COLORS = {
-    loss: '#C95D63',
-    success: '#5BA88B',
-    teal: '#81D8D0',
-    brand: '#4E4456',
-    amber: '#E8A838',
-    gray: '#6B5F73',
+    loss: 'var(--chart-loss)',
+    success: 'var(--chart-success)',
+    teal: 'var(--chart-teal)',
+    brand: 'var(--chart-brand)',
+    amber: 'var(--chart-amber)',
+    gray: 'var(--chart-gray)',
 } as const;
 
 // ─── Computed row types ───────────────────────────────────────────────────────
@@ -1198,7 +1198,7 @@ function ZoneL3Table({
                 {/* Zone summary KPI cards */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                     {/* L2 Bulk */}
-                    <div className="bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] hover:shadow-[0_8px_30px_-4px_rgba(6,81,237,0.15)] hover:-translate-y-1 transition-all duration-200 ease-out group/stat overflow-hidden relative">
+                    <div className="bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] dark:shadow-[0_2px_10px_-3px_rgba(0,0,0,0.3)] hover:shadow-[0_8px_30px_-4px_rgba(6,81,237,0.15)] dark:hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.4)] hover:-translate-y-1 transition-all duration-200 ease-out group/stat overflow-hidden relative">
                         <div className="absolute top-0 left-0 w-full h-[3px] bg-teal-500 opacity-0 group-hover/stat:opacity-100 transition-opacity duration-200" />
                         <div className="flex justify-between items-start gap-2">
                             <div className="min-w-0">
@@ -1211,7 +1211,7 @@ function ZoneL3Table({
                         </div>
                     </div>
                     {/* ΣL3 */}
-                    <div className="bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] hover:shadow-[0_8px_30px_-4px_rgba(6,81,237,0.15)] hover:-translate-y-1 transition-all duration-200 ease-out group/stat overflow-hidden relative">
+                    <div className="bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] dark:shadow-[0_2px_10px_-3px_rgba(0,0,0,0.3)] hover:shadow-[0_8px_30px_-4px_rgba(6,81,237,0.15)] dark:hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.4)] hover:-translate-y-1 transition-all duration-200 ease-out group/stat overflow-hidden relative">
                         <div className="absolute top-0 left-0 w-full h-[3px] bg-violet-500 opacity-0 group-hover/stat:opacity-100 transition-opacity duration-200" />
                         <div className="flex justify-between items-start gap-2">
                             <div className="min-w-0">
@@ -1224,7 +1224,7 @@ function ZoneL3Table({
                         </div>
                     </div>
                     {/* Difference */}
-                    <div className="bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] hover:shadow-[0_8px_30px_-4px_rgba(6,81,237,0.15)] hover:-translate-y-1 transition-all duration-200 ease-out group/stat overflow-hidden relative">
+                    <div className="bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] dark:shadow-[0_2px_10px_-3px_rgba(0,0,0,0.3)] hover:shadow-[0_8px_30px_-4px_rgba(6,81,237,0.15)] dark:hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.4)] hover:-translate-y-1 transition-all duration-200 ease-out group/stat overflow-hidden relative">
                         <div className={cn(
                             "absolute top-0 left-0 w-full h-[3px] opacity-0 group-hover/stat:opacity-100 transition-opacity duration-200",
                             Math.abs(diffGrandTotal) > 20 ? "bg-red-500" : "bg-emerald-500",

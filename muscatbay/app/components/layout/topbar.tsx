@@ -25,7 +25,7 @@ export function Topbar() {
         setMounted(true);
     }, []);
 
-    // Close dropdown when clicking outside
+    // Close dropdown when clicking outside or pressing Escape
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -33,9 +33,22 @@ export function Topbar() {
             }
         }
 
+        function handleEscapeKey(event: KeyboardEvent) {
+            if (event.key === 'Escape' && isProfileOpen) {
+                setIsProfileOpen(false);
+                // Return focus to the trigger button
+                const trigger = document.getElementById('profile-menu-trigger');
+                trigger?.focus();
+            }
+        }
+
         document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, []);
+        document.addEventListener("keydown", handleEscapeKey);
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+            document.removeEventListener("keydown", handleEscapeKey);
+        };
+    }, [isProfileOpen]);
 
     if (!mounted) {
         return (
@@ -77,7 +90,7 @@ export function Topbar() {
                 {/* Theme Toggle */}
                 <button
                     onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                    className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-500 dark:text-slate-400 transition-colors duration-200"
+                    className="w-11 h-11 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-500 dark:text-slate-400 transition-colors duration-200"
                     aria-label="Toggle theme"
                 >
                     {theme === "dark" ? (
@@ -89,7 +102,7 @@ export function Topbar() {
 
                 {/* Search Button - Hidden on small mobile */}
                 <button
-                    className="w-9 h-9 sm:w-10 sm:h-10 hidden sm:flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-500 dark:text-slate-400 transition-colors duration-200"
+                    className="w-11 h-11 hidden sm:flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-500 dark:text-slate-400 transition-colors duration-200"
                     aria-label="Search"
                 >
                     <Search className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -97,12 +110,12 @@ export function Topbar() {
 
                 {/* Notifications Button */}
                 <button
-                    className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg relative text-slate-500 dark:text-slate-400 transition-colors duration-200"
+                    className="w-11 h-11 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg relative text-slate-500 dark:text-slate-400 transition-colors duration-200"
                     aria-label="Notifications"
                 >
                     <Bell className="w-4 h-4 sm:w-5 sm:h-5" />
                     {/* Notification badge */}
-                    <span className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-slate-900"></span>
+                    <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-slate-900"></span>
                 </button>
 
                 {/* User Profile with Dropdown */}
@@ -111,10 +124,13 @@ export function Topbar() {
                         onClick={() => setIsProfileOpen(!isProfileOpen)}
                         className="flex items-center gap-2 ms-1 sm:ms-2 p-1 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors duration-200 group"
                         aria-label="User profile menu"
+                        aria-expanded={isProfileOpen}
+                        aria-haspopup="menu"
+                        aria-controls="profile-dropdown-menu"
                         id="profile-menu-trigger"
                     >
                         <div className="relative">
-                            <Avatar className="w-9 h-9 sm:w-10 sm:h-10 border-2 border-slate-200 dark:border-slate-700 group-hover:border-secondary transition-colors duration-200">
+                            <Avatar className="w-10 h-10 border-2 border-slate-200 dark:border-slate-700 group-hover:border-secondary transition-colors duration-200">
                                 <AvatarImage src={profile?.avatar_url || undefined} alt={displayName} />
                                 <AvatarFallback className="bg-secondary text-primary text-sm font-bold">
                                     {initials}
@@ -135,6 +151,8 @@ export function Topbar() {
                     {isProfileOpen && (
                         <div className="absolute right-0 mt-2 w-[calc(100vw-2rem)] sm:w-60 max-w-60 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 py-1 z-50 animate-in fade-in slide-in-from-top-2 duration-200"
                             id="profile-dropdown-menu"
+                            role="menu"
+                            aria-labelledby="profile-menu-trigger"
                         >
                             {/* User Info Header */}
                             <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-700">

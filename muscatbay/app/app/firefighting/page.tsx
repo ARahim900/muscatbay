@@ -420,7 +420,7 @@ export default function FirefightingPage() {
     ];
 
     // Chart colors matching design system tokens (chart-1 through chart-5)
-    const COLORS = ["#10B981", "#E8A838", "#EF4444", "#00D2B3"];
+    const COLORS = ["var(--chart-success)", "var(--chart-amber)", "var(--chart-loss)", "var(--chart-2)"];
 
     const getStatusColor = (status: string) => {
         switch (status) {

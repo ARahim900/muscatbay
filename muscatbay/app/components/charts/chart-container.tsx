@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, useRef, useEffect } from "react";
+import { ReactNode, useRef, useEffect, useState } from "react";
 import { ResponsiveContainer } from "recharts";
 
 interface ChartContainerProps {
@@ -11,8 +11,9 @@ interface ChartContainerProps {
 }
 
 /**
- * A wrapper component that ensures ResponsiveContainer gets proper dimensions
- * using debounce and explicit min-height styling.
+ * A wrapper component that ensures ResponsiveContainer gets proper dimensions.
+ * Defers chart mount by one frame so CSS layout is applied before Recharts
+ * measures the container — prevents the "width(-1) height(-1)" warning.
  * Includes a subtle CSS scroll-triggered fade-in animation.
  */
 export function ChartContainer({
@@ -22,6 +23,13 @@ export function ChartContainer({
     minHeight = 200,
 }: ChartContainerProps) {
     const ref = useRef<HTMLDivElement>(null);
+    const [layoutReady, setLayoutReady] = useState(false);
+
+    useEffect(() => {
+        // Defer ResponsiveContainer render until CSS layout is applied
+        const id = requestAnimationFrame(() => setLayoutReady(true));
+        return () => cancelAnimationFrame(id);
+    }, []);
 
     useEffect(() => {
         const el = ref.current;
@@ -58,24 +66,34 @@ export function ChartContainer({
         return () => observer.disconnect();
     }, []);
 
+    // When a className provides height (e.g. h-[200px]), avoid setting
+    // height in inline style — the inline value wins over the class and
+    // "100%" of a parent without explicit height resolves to 0.
+    const hasClassHeight = /\bh-\[/.test(className);
+    const inlineStyle: React.CSSProperties = {
+        minHeight,
+        position: 'relative',
+        willChange: 'opacity, transform',
+    };
+    if (!hasClassHeight) {
+        inlineStyle.height = height;
+    }
+
     return (
         <div
             ref={ref}
             className={`w-full ${className}`}
-            style={{
-                height,
-                minHeight,
-                position: 'relative',
-                willChange: 'opacity, transform',
-            }}
+            style={inlineStyle}
         >
-            <ResponsiveContainer
-                width="100%"
-                height="100%"
-                debounce={50}
-            >
-                {children}
-            </ResponsiveContainer>
+            {layoutReady && (
+                <ResponsiveContainer
+                    width="100%"
+                    height="100%"
+                    debounce={50}
+                >
+                    {children}
+                </ResponsiveContainer>
+            )}
         </div>
     );
 }

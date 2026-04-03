@@ -1,5 +1,7 @@
-import { useCallback, useEffect, useState, useMemo } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
 import { format } from "date-fns";
+import type { LucideIcon } from "lucide-react";
+import type { STPOperation, MeterReading } from "@/lib/mock-data";
 import { getWaterSystemData, getElectricityMeters, getSTPOperations, getContractors, getAssets } from "@/lib/mock-data";
 import {
     getSTPOperationsFromSupabase,
@@ -16,7 +18,7 @@ export interface DashboardStats {
     label: string;
     value: string;
     subtitle: string;
-    icon: any;
+    icon: LucideIcon | null;
     variant: "water" | "warning" | "success" | "primary";
     trend?: 'up' | 'down' | 'neutral';
     trendValue?: string;
@@ -88,8 +90,8 @@ export function useDashboardData() {
             // Fetch water mock data as fallback
             const waterMock = await getWaterSystemData();
 
-            let stpData: any[] = [];
-            let elecData: any[] = [];
+            let stpData: STPOperation[] = [];
+            let elecData: MeterReading[] = [];
             let contractorsCount = 0;
             let assetsCount = 0;
             let waterMeters: WaterMeter[] = [];
@@ -398,8 +400,17 @@ export function useDashboardData() {
         return () => clearInterval(id);
     }, []);
 
-    // Real-time subscriptions — refresh dashboard when data changes
-    const triggerRefresh = () => setRefreshCount(n => n + 1);
+    // Debounced refresh — multiple realtime events within 500ms trigger only one reload
+    const refreshTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const triggerRefresh = useCallback(() => {
+        if (refreshTimeoutRef.current) clearTimeout(refreshTimeoutRef.current);
+        refreshTimeoutRef.current = setTimeout(() => {
+            setRefreshCount(n => n + 1);
+        }, 500);
+    }, []);
+    useEffect(() => () => {
+        if (refreshTimeoutRef.current) clearTimeout(refreshTimeoutRef.current);
+    }, []);
 
     useSupabaseRealtime({ table: 'stp_operations', channelName: 'dashboard-stp-rt', onChanged: triggerRefresh });
     useSupabaseRealtime({ table: 'Water System', channelName: 'dashboard-water-rt', onChanged: triggerRefresh });
@@ -407,10 +418,8 @@ export function useDashboardData() {
     useSupabaseRealtime({ table: 'Contractor_Tracker', channelName: 'dashboard-contractors-rt', onChanged: triggerRefresh });
     useSupabaseRealtime({ table: 'assets_register', channelName: 'dashboard-assets-rt', onChanged: triggerRefresh });
 
-    const memoizedStats = useMemo(() => stats, [stats]);
-
     return {
-        stats: memoizedStats,
+        stats,
         chartData,
         stpChartData,
         recentActivity,

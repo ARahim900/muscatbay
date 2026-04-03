@@ -21,6 +21,24 @@ const config: Config = {
                     warning: '#F59E0B', // Electricity
                     success: '#10B981', // STP
                 },
+                // Muscat Bay semantic status tokens (CSS-variable-backed)
+                'mb': {
+                    'primary': 'var(--mb-primary)',
+                    'primary-hover': 'var(--mb-primary-hover)',
+                    'secondary': 'var(--mb-secondary)',
+                    'secondary-foreground': 'var(--mb-secondary-foreground)',
+                    'secondary-light': 'var(--mb-secondary-light)',
+                    'success': 'var(--mb-success)',
+                    'success-hover': 'var(--mb-success-hover)',
+                    'success-light': 'var(--mb-success-light)',
+                    'danger': 'var(--mb-danger)',
+                    'danger-hover': 'var(--mb-danger-hover)',
+                    'danger-light': 'var(--mb-danger-light)',
+                    'warning': 'var(--mb-warning)',
+                    'warning-light': 'var(--mb-warning-light)',
+                    'info': 'var(--mb-info)',
+                    'info-light': 'var(--mb-info-light)',
+                },
                 primary: {
                     DEFAULT: '#4E4456', // Brand Purple-Gray
                     foreground: '#FFFFFF',

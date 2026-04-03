@@ -197,7 +197,7 @@ export default function LoginPage() {
                         <form onSubmit={handleSubmit} className="space-y-6">
                             {/* Error Message */}
                             {error && (
-                                <div className="p-4 text-sm text-red-600 bg-red-50 dark:bg-red-900/20 dark:text-red-400 rounded-xl border border-red-200 dark:border-red-800 flex items-center gap-3 animate-in slide-in-from-top duration-200">
+                                <div role="alert" aria-live="assertive" className="p-4 text-sm text-red-600 bg-red-50 dark:bg-red-900/20 dark:text-red-400 rounded-xl border border-red-200 dark:border-red-800 flex items-center gap-3 animate-in slide-in-from-top duration-200">
                                     <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
                                     {error}
                                 </div>
@@ -273,6 +273,7 @@ export default function LoginPage() {
                                     <button
                                         type="button"
                                         onClick={() => setShowPassword(!showPassword)}
+                                        aria-label={showPassword ? "Hide password" : "Show password"}
                                         className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-primary transition-colors duration-200"
                                     >
                                         {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}

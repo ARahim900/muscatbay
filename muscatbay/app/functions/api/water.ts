@@ -38,10 +38,11 @@ function logNegativeValues(records: SupabaseWaterMeter[]): void {
         for (const month of monthColumns) {
             const value = record[month];
             if (value !== null && value < 0) {
+                const [m, y] = month.split('_');
                 negativeMeters.push({
                     label: record.label,
                     account: record.account_number,
-                    month: month.replace('_', '-').replace('25', '-25').replace('26', '-26'),
+                    month: `${m}-${y}`,
                     value
                 });
             }

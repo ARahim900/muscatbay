@@ -57,14 +57,14 @@ import { saveFilterPreferences, loadFilterPreferences } from "@/lib/filter-prefe
 type DashboardView = 'monthly' | 'daily';
 
 const CHART_COLORS = {
-    primary: '#2563EB',    // Strong blue (water domain)
-    secondary: '#60A5FA',  // Light blue
-    accent: '#0EA5E9',     // Sky blue (water feel)
-    success: '#10B981',    // Green for positive
-    loss: '#EF4444',       // Red for loss/alerts
-    brand: '#4E4456',      // Brand purple
-    amber: '#E8A838',      // Amber for warnings
-    gray: '#6B7280',       // Neutral gray
+    primary: 'var(--chart-water-primary)',
+    secondary: 'var(--chart-water-secondary)',
+    accent: 'var(--chart-water-accent)',
+    success: 'var(--chart-success)',
+    loss: 'var(--chart-loss)',
+    brand: 'var(--chart-brand)',
+    amber: 'var(--chart-amber)',
+    gray: 'var(--chart-gray)',
 } as const;
 
 // Helper functions that work with dynamic data
@@ -175,16 +175,13 @@ export default function WaterPage() {
                     setWaterMeters(supabaseData);
                     setDataSource('supabase');
                     setLastUpdated(new Date());
-                    if (!silent) console.log(`Water data loaded from Supabase: ${supabaseData.length} meters`);
                 } else if (!silent) {
                     setWaterMeters(MOCK_WATER_METERS);
                     setDataSource('mock');
-                    console.log('No Supabase data, using mock data');
                 }
             } else if (!silent) {
                 setWaterMeters(MOCK_WATER_METERS);
                 setDataSource('mock');
-                console.log('Supabase not configured, using mock data');
             }
         } catch (error) {
             if (!silent) {

@@ -43,7 +43,6 @@ export function getSupabaseClient(): SupabaseClient | null {
         return null;
     }
     if (!supabaseClient) {
-        console.log('🔌 Initializing Supabase client with URL:', supabaseUrl?.split('.')[0] + '...');
         supabaseClient = createBrowserClient(supabaseUrl, supabaseAnonKey, {
             // Global fetch options for better performance
             global: {

@@ -42,14 +42,14 @@ import { cn } from "@/lib/utils";
 const { TANKER_FEE, TSE_SAVING_RATE } = STP_RATES;
 
 const CHART_COLORS = {
-    primary: '#059669',    // Strong emerald (STP = treatment/nature)
-    secondary: '#34D399',  // Light emerald
-    accent: '#10B981',     // Green
-    success: '#10B981',    // Green for positive
-    loss: '#EF4444',       // Red for loss/alerts
-    brand: '#4E4456',      // Brand purple
-    amber: '#E8A838',      // Amber for warnings
-    gray: '#6B7280',       // Neutral gray
+    primary: 'var(--chart-stp-primary)',
+    secondary: 'var(--chart-stp-secondary)',
+    accent: 'var(--chart-stp-accent)',
+    success: 'var(--chart-success)',
+    loss: 'var(--chart-loss)',
+    brand: 'var(--chart-brand)',
+    amber: 'var(--chart-amber)',
+    gray: 'var(--chart-gray)',
 } as const;
 
 function ChartViewToggle({ value, onChange }: { value: 'daily' | 'monthly'; onChange: (v: 'daily' | 'monthly') => void }) {
@@ -893,8 +893,53 @@ export default function STPPage() {
                             </div>
                         </div>
 
-                        {/* Table */}
-                        <div className="overflow-x-auto rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900 shadow-sm">
+                        {/* Mobile card view */}
+                        <div className="md:hidden space-y-3">
+                            {paginatedDailyOperations.map((op) => {
+                                const efficiency = op.inlet_sewage > 0 ? (op.tse_for_irrigation / op.inlet_sewage) * 100 : 0;
+                                const income = op.tanker_trips * TANKER_FEE;
+                                const savings = op.tse_for_irrigation * TSE_SAVING_RATE;
+                                const totalImpact = income + savings;
+                                const efficiencyColor = efficiency >= 95 ? "text-emerald-600 dark:text-emerald-400" : efficiency >= 90 ? "text-amber-600 dark:text-amber-400" : "text-red-600 dark:text-red-400";
+
+                                return (
+                                    <div key={op.id} className="rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900 p-4 shadow-sm space-y-3">
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-sm font-medium text-slate-700 dark:text-slate-200">{format(new Date(op.date), "dd/MM/yyyy")}</span>
+                                            <span className={`text-sm font-mono font-semibold ${efficiencyColor}`}>{efficiency.toFixed(1)}%</span>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-2 text-xs">
+                                            <div className="space-y-0.5">
+                                                <span className="text-slate-400">Inlet</span>
+                                                <p className="font-mono font-medium text-primary">{op.inlet_sewage.toLocaleString()} m³</p>
+                                            </div>
+                                            <div className="space-y-0.5">
+                                                <span className="text-slate-400">TSE Output</span>
+                                                <p className="font-mono font-medium text-blue-600 dark:text-blue-400">{op.tse_for_irrigation.toLocaleString()} m³</p>
+                                            </div>
+                                            <div className="space-y-0.5">
+                                                <span className="text-slate-400">Tanker Trips</span>
+                                                <p className="font-mono font-medium text-amber-600 dark:text-amber-400">{op.tanker_trips}</p>
+                                            </div>
+                                            <div className="space-y-0.5">
+                                                <span className="text-slate-400">Total Impact</span>
+                                                <p className="font-mono font-semibold text-emerald-600 dark:text-emerald-400">{totalImpact.toFixed(2)} OMR</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                            {dailyOperations.length === 0 && (
+                                <div className="py-12 text-center text-slate-500 dark:text-slate-400">
+                                    <Droplets className="w-7 h-7 mx-auto text-slate-300 dark:text-slate-600 mb-2" />
+                                    <p className="text-sm font-medium">No STP data for this month</p>
+                                    <p className="text-xs text-slate-400">Select a different month to view operations data.</p>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Desktop table */}
+                        <div className="hidden md:block overflow-x-auto rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900 shadow-sm">
                             <table className="w-full text-sm border-collapse">
                                 <thead>
                                     <tr className="bg-slate-50/70 dark:bg-slate-800/50">

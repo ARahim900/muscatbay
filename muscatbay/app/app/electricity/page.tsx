@@ -26,28 +26,28 @@ import { PageStatusBar } from "@/components/shared/page-status-bar";
 const ratePerKWh = ELECTRICITY_RATES.RATE_PER_KWH;
 
 const CHART_COLORS = {
-    primary: '#D97706',    // Strong amber (electricity = energy/warmth)
-    secondary: '#FBBF24',  // Golden yellow
-    accent: '#F59E0B',     // Amber
-    success: '#10B981',    // Green for positive
-    loss: '#EF4444',       // Red for loss/alerts
-    brand: '#4E4456',      // Brand purple
-    amber: '#E8A838',      // Amber for warnings
-    gray: '#6B7280',       // Neutral gray
+    primary: 'var(--chart-elec-primary)',
+    secondary: 'var(--chart-elec-secondary)',
+    accent: 'var(--chart-elec-accent)',
+    success: 'var(--chart-success)',
+    loss: 'var(--chart-loss)',
+    brand: 'var(--chart-brand)',
+    amber: 'var(--chart-amber)',
+    gray: 'var(--chart-gray)',
 } as const;
 
 // Color palette for per-meter lines (module-level to avoid recreating on each render)
 const meterColors = [
-    CHART_COLORS.primary,   // amber
-    CHART_COLORS.success,   // green
-    CHART_COLORS.secondary, // golden yellow
-    CHART_COLORS.loss,      // red
-    CHART_COLORS.gray,      // neutral
-    '#3b82f6',              // blue — unique, no token
-    '#f59e0b',              // amber variant — unique, no token
-    '#10b981',              // emerald variant — unique, no token
-    '#8b5cf6',              // violet — unique, no token
-    '#06b6d4',              // cyan — unique, no token
+    CHART_COLORS.primary,
+    CHART_COLORS.success,
+    CHART_COLORS.secondary,
+    CHART_COLORS.loss,
+    CHART_COLORS.gray,
+    'var(--chart-1)',        // blue
+    'var(--chart-3)',        // amber variant
+    'var(--chart-4)',        // emerald variant
+    '#8b5cf6',              // violet — extended palette
+    '#06b6d4',              // cyan — extended palette
 ];
 
 export default function ElectricityPage() {
@@ -96,10 +96,11 @@ export default function ElectricityPage() {
             } else if (!silent) {
                 throw new Error("Supabase returned empty data");
             }
-        } catch (e: any) {
+        } catch (e: unknown) {
             if (!silent) {
-                console.error("Supabase load error:", e);
-                setDebugError(e.message || "Unknown error");
+                const message = e instanceof Error ? e.message : "Unknown error";
+                console.warn("Supabase load error:", message);
+                setDebugError(message);
                 try {
                     const mockData = await getElectricityMeters();
                     setMeters(mockData);
@@ -909,7 +910,7 @@ export default function ElectricityPage() {
                                                         return (
                                                             <div className="card-elevated px-4 py-3 border border-white/50 shadow-xl !rounded-xl !bg-white dark:!bg-slate-900 max-w-[280px]">
                                                                 <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">{label}</p>
-                                                                {[...payload].sort((a: any, b: any) => (b.value || 0) - (a.value || 0)).map((entry: any, i: number) => (
+                                                                {[...payload].sort((a, b) => (Number(b.value) || 0) - (Number(a.value) || 0)).map((entry, i: number) => (
                                                                     <div key={i} className="flex items-center gap-2 text-xs mb-0.5">
                                                                         <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: entry.color }} />
                                                                         <span className="text-slate-500 dark:text-slate-400 truncate">{entry.name}:</span>
