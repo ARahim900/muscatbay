@@ -394,19 +394,13 @@ export function useDashboardData() {
         loadDashboardData();
     }, [refreshCount, loadDashboardData]);
 
-    // Auto-refresh every 5 minutes
-    useEffect(() => {
-        const id = setInterval(() => setRefreshCount(n => n + 1), 5 * 60 * 1000);
-        return () => clearInterval(id);
-    }, []);
-
-    // Debounced refresh — multiple realtime events within 500ms trigger only one reload
+    // Debounced refresh — multiple realtime events within 2500ms trigger only one reload
     const refreshTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const triggerRefresh = useCallback(() => {
         if (refreshTimeoutRef.current) clearTimeout(refreshTimeoutRef.current);
         refreshTimeoutRef.current = setTimeout(() => {
             setRefreshCount(n => n + 1);
-        }, 500);
+        }, 2500);
     }, []);
     useEffect(() => () => {
         if (refreshTimeoutRef.current) clearTimeout(refreshTimeoutRef.current);

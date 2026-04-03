@@ -42,47 +42,25 @@ export async function getElectricityMetersFromSupabase(): Promise<MeterReading[]
             return [];
         }
 
-        // Fetch readings with limit for performance (2 batches max for dashboard)
-        let allReadings: ElectricityReading[] = [];
-        let offset = 0;
-        const batchSize = 1000;
-        const maxBatches = 5; // Limit to 5000 records to accommodate reading growth over coming years
-        let currentBatch = 0;
-        let hasMore = true;
-
-        while (hasMore && currentBatch < maxBatches) {
-            let readingsResult;
-            try {
-                readingsResult = await client
-                    .from('electricity_readings')
-                    .select('id, meter_id, month, consumption')
-                    .order('month', { ascending: false })
-                    .range(offset, offset + batchSize - 1);
-            } catch (networkError) {
-                // Network error - break out of loop and use what we have
-                console.warn('Network error fetching electricity readings batch - using partial data');
-                break;
-            }
-
-            const { data: batchReadings, error: readingsError } = readingsResult;
-
-            if (readingsError) {
-                console.warn('Error fetching electricity readings:', readingsError.message);
-                break;
-            }
-
-            if (batchReadings && batchReadings.length > 0) {
-                allReadings = [...allReadings, ...batchReadings];
-                offset += batchSize;
-                currentBatch++;
-                // If we got fewer than batchSize, we've reached the end
-                hasMore = batchReadings.length === batchSize;
-            } else {
-                hasMore = false;
-            }
+        // Fetch all readings in a single query (limit 5000 to accommodate growth)
+        let readingsResult;
+        try {
+            readingsResult = await client
+                .from('electricity_readings')
+                .select('id, meter_id, month, consumption')
+                .order('month', { ascending: false })
+                .limit(5000);
+        } catch (networkError) {
+            console.warn('Network error fetching electricity readings - using fallback data');
+            return [];
         }
 
-        const readings = allReadings;
+        const { data: readings, error: readingsError } = readingsResult;
+
+        if (readingsError) {
+            console.warn('Error fetching electricity readings:', readingsError.message);
+            return [];
+        }
 
         // Group readings by meter_id
         const readingsByMeter: Record<string, Record<string, number>> = {};

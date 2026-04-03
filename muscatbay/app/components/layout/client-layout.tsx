@@ -36,7 +36,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
         <Topbar />
 
         {/* Layout shell with mobile-first responsive padding */}
-        <div className="layout-shell w-full pt-6 pb-4 sm:pt-7 sm:pb-5 md:pt-8 md:pb-6 lg:pt-10 lg:pb-8">
+        <div className="layout-shell w-full pt-4 pb-3 sm:pt-6 sm:pb-4 md:pt-8 md:pb-6">
           {children}
         </div>
       </main>

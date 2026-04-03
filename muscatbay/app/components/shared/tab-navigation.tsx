@@ -23,7 +23,7 @@ export function TabNavigation({ tabs, activeTab, onTabChange, className, variant
             {/* Visual container wrapper */}
             <nav
                 className={cn(
-                    "inline-flex items-center gap-1.5 sm:gap-3 p-1 sm:p-1.5 rounded-xl overflow-x-auto scrollbar-hide max-w-full",
+                    "inline-flex items-center gap-1.5 sm:gap-3 p-1 sm:p-1.5 rounded-xl overflow-x-auto max-w-full",
                     "bg-slate-100/80 dark:bg-slate-800/60",
                     "border border-slate-200/60 dark:border-slate-700/50",
                     "shadow-sm"
@@ -45,7 +45,7 @@ export function TabNavigation({ tabs, activeTab, onTabChange, className, variant
                                 aria-controls={`panel-${tab.key}`}
                                 tabIndex={isActive ? 0 : -1}
                                 className={cn(
-                                    "relative flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-medium whitespace-nowrap",
+                                    "relative flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2.5 sm:py-3 rounded-lg text-xs sm:text-sm font-medium whitespace-nowrap",
                                     "transition-colors duration-200 ease-out",
                                     "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-1",
                                     isActive
@@ -92,7 +92,7 @@ export function TabNavigation({ tabs, activeTab, onTabChange, className, variant
                             aria-controls={`panel-${tab.key}`}
                             tabIndex={isActive ? 0 : -1}
                             className={cn(
-                                "relative flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium whitespace-nowrap",
+                                "relative flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2.5 sm:py-3 rounded-lg text-xs sm:text-sm font-medium whitespace-nowrap",
                                 "transition-colors duration-200 ease-out",
                                 "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-1",
                                 isActive

@@ -86,7 +86,7 @@ export function Navbar() {
                 {/* Mobile hamburger menu */}
                 <button
                     onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                    className="w-10 h-10 flex items-center justify-center rounded-lg bg-white/10 text-white lg:hidden hover:bg-white/20 transition-colors duration-200"
+                    className="w-10 h-10 flex items-center justify-center rounded-lg bg-white/10 text-white lg:hidden hover:bg-white/20 transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:outline-none"
                     aria-label="Toggle menu"
                 >
                     <Menu className="w-5 h-5" />
@@ -148,7 +148,7 @@ export function Navbar() {
                 {/* Theme Toggle */}
                 <button
                     onClick={() => setIsDarkMode(!isDarkMode)}
-                    className="w-11 h-11 flex items-center justify-center hover:bg-white/10 rounded-lg text-white/70 hover:text-white transition-colors duration-200"
+                    className="w-11 h-11 flex items-center justify-center hover:bg-white/10 rounded-lg text-white/70 hover:text-white transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:outline-none"
                     aria-label="Toggle theme"
                 >
                     {isDarkMode ? (

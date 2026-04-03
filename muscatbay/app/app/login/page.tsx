@@ -67,27 +67,10 @@ export default function LoginPage() {
     return (
         <div className="min-h-screen flex">
             {/* Left Panel - Branding */}
-            <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
-                {/* Animated Gradient Background */}
-                <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary/80 to-primary/70">
-                    {/* Animated Shapes */}
-                    <div className="absolute top-20 left-20 w-72 h-72 bg-secondary/20 rounded-full blur-3xl motion-safe:animate-pulse" />
-                    <div className="absolute bottom-20 right-20 w-96 h-96 bg-secondary/15 rounded-full blur-3xl motion-safe:animate-pulse" style={{ animationDelay: '1s' }} />
-                    <div className="absolute top-1/2 left-1/3 w-64 h-64 bg-white/5 rounded-full blur-2xl motion-safe:animate-pulse" style={{ animationDelay: '2s' }} />
-
-                    {/* Diagonal Lines Pattern */}
-                    <svg className="absolute inset-0 w-full h-full opacity-10" xmlns="http://www.w3.org/2000/svg">
-                        <defs>
-                            <pattern id="diagonalLines" patternUnits="userSpaceOnUse" width="40" height="40" patternTransform="rotate(45)">
-                                <line x1="0" y="0" x2="0" y2="40" stroke="white" strokeWidth="1" />
-                            </pattern>
-                        </defs>
-                        <rect width="100%" height="100%" fill="url(#diagonalLines)" />
-                    </svg>
-                </div>
+            <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-primary">
 
                 {/* Content */}
-                <div className="relative z-10 flex flex-col justify-between w-full p-12">
+                <div className="flex flex-col justify-between w-full p-12">
                     {/* Logo Section */}
                     <div className="flex items-center gap-4">
                         <div className="relative w-14 h-14 bg-white/10 rounded-2xl p-2 border border-white/20 shadow-2xl">
@@ -142,26 +125,15 @@ export default function LoginPage() {
                         </div>
                     </div>
 
-                    {/* Bottom Stats */}
-                    <div className="flex gap-8">
-                        <div>
-                            <p className="text-3xl font-bold text-white">350+</p>
-                            <p className="text-white/60 text-sm">Active Meters</p>
-                        </div>
-                        <div>
-                            <p className="text-3xl font-bold text-white">24/7</p>
-                            <p className="text-white/60 text-sm">Monitoring</p>
-                        </div>
-                        <div>
-                            <p className="text-3xl font-bold text-white">99.9%</p>
-                            <p className="text-white/60 text-sm">Uptime</p>
-                        </div>
+                    {/* Footer */}
+                    <div className="text-white/40 text-sm">
+                        &copy; 2026 Muscat Bay
                     </div>
                 </div>
             </div>
 
             {/* Right Panel - Login Form */}
-            <div className="w-full lg:w-1/2 flex items-center justify-center bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 p-6 lg:p-12">
+            <div className="w-full lg:w-1/2 flex items-center justify-center bg-background p-6 lg:p-12">
                 <div className="w-full max-w-md">
                     {/* Mobile Logo */}
                     <div className="flex justify-center mb-8 lg:hidden">
@@ -197,7 +169,7 @@ export default function LoginPage() {
                         <form onSubmit={handleSubmit} className="space-y-6">
                             {/* Error Message */}
                             {error && (
-                                <div role="alert" aria-live="assertive" className="p-4 text-sm text-red-600 bg-red-50 dark:bg-red-900/20 dark:text-red-400 rounded-xl border border-red-200 dark:border-red-800 flex items-center gap-3 animate-in slide-in-from-top duration-200">
+                                <div id="password-error" role="alert" aria-live="assertive" className="p-4 text-sm text-red-600 bg-red-50 dark:bg-red-900/20 dark:text-red-400 rounded-xl border border-red-200 dark:border-red-800 flex items-center gap-3 animate-in slide-in-from-top duration-200">
                                     <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
                                     {error}
                                 </div>
@@ -220,6 +192,8 @@ export default function LoginPage() {
                                         onChange={(e) => handleEmailChange(e.target.value)}
                                         onFocus={() => setFocusedField('email')}
                                         onBlur={() => setFocusedField(null)}
+                                        aria-describedby={emailError ? "email-error" : undefined}
+                                        aria-invalid={emailError ? true : undefined}
                                         className={`pl-12 h-12 rounded-xl border-2 transition-all duration-200 ${emailError
                                             ? 'border-red-500 focus:border-red-500'
                                             : focusedField === 'email'
@@ -231,7 +205,7 @@ export default function LoginPage() {
                                     />
                                 </div>
                                 {emailError && (
-                                    <p className="text-xs text-red-500 flex items-center gap-1 animate-in slide-in-from-top duration-200">
+                                    <p id="email-error" className="text-xs text-red-500 flex items-center gap-1 animate-in slide-in-from-top duration-200">
                                         <span className="w-1 h-1 bg-red-500 rounded-full" />
                                         {emailError}
                                     </p>
@@ -263,6 +237,8 @@ export default function LoginPage() {
                                         onChange={(e) => setPassword(e.target.value)}
                                         onFocus={() => setFocusedField('password')}
                                         onBlur={() => setFocusedField(null)}
+                                        aria-describedby={error ? "password-error" : undefined}
+                                        aria-invalid={error ? true : undefined}
                                         className={`pl-12 pr-12 h-12 rounded-xl border-2 transition-all duration-200 ${focusedField === 'password'
                                             ? 'border-primary shadow-lg shadow-primary/10'
                                             : 'border-slate-200 dark:border-slate-600 hover:border-slate-300'

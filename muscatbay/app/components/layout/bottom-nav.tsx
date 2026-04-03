@@ -158,7 +158,7 @@ export function BottomNav() {
             <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">More</span>
             <button
               onClick={() => setDrawerOpen(false)}
-              className="w-11 h-11 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-400 dark:text-gray-500 transition-colors"
+              className="w-11 h-11 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-400 dark:text-gray-500 transition-colors focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:outline-none"
               aria-label="Close menu"
             >
               <X className="w-4 h-4" />
@@ -175,7 +175,7 @@ export function BottomNav() {
                   key={item.id}
                   href={item.href}
                   className={`
-                    flex items-center gap-3 px-4 py-3 transition-colors
+                    flex items-center gap-3 px-4 py-3 transition-colors focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:outline-none
                     ${active
                       ? 'bg-secondary/10 text-secondary'
                       : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700/50'
@@ -194,7 +194,7 @@ export function BottomNav() {
             {/* Sign Out */}
             <button
               onClick={() => { setDrawerOpen(false); logout(); }}
-              className="w-full flex items-center gap-3 px-4 py-3 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+              className="w-full flex items-center gap-3 px-4 py-3 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:outline-none"
             >
               <LogOut className="w-5 h-5 flex-shrink-0" />
               <span className="text-sm font-medium">Sign Out</span>
@@ -218,7 +218,7 @@ export function BottomNav() {
                 key={item.id}
                 href={item.href}
                 className={`
-                  flex flex-col items-center justify-center gap-0.5 flex-1 h-full pt-1.5 pb-1 rounded-lg transition-colors
+                  flex flex-col items-center justify-center gap-0.5 flex-1 h-full pt-1.5 pb-1 rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:outline-none
                   ${active
                     ? 'text-secondary'
                     : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300'
@@ -241,7 +241,7 @@ export function BottomNav() {
             ref={moreButtonRef}
             onClick={() => setDrawerOpen(prev => !prev)}
             className={`
-              flex flex-col items-center justify-center gap-0.5 flex-1 h-full pt-1.5 pb-1 rounded-lg transition-colors
+              flex flex-col items-center justify-center gap-0.5 flex-1 h-full pt-1.5 pb-1 rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:outline-none
               ${drawerOpen || isOverflowActive
                 ? 'text-secondary'
                 : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300'

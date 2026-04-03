@@ -90,7 +90,7 @@ export function Topbar() {
                 {/* Theme Toggle */}
                 <button
                     onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                    className="w-11 h-11 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-500 dark:text-slate-400 transition-colors duration-200"
+                    className="w-11 h-11 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-500 dark:text-slate-400 transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:outline-none"
                     aria-label="Toggle theme"
                 >
                     {theme === "dark" ? (
@@ -102,7 +102,7 @@ export function Topbar() {
 
                 {/* Search Button - Hidden on small mobile */}
                 <button
-                    className="w-11 h-11 hidden sm:flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-500 dark:text-slate-400 transition-colors duration-200"
+                    className="w-11 h-11 hidden sm:flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-500 dark:text-slate-400 transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:outline-none"
                     aria-label="Search"
                 >
                     <Search className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -110,7 +110,7 @@ export function Topbar() {
 
                 {/* Notifications Button */}
                 <button
-                    className="w-11 h-11 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg relative text-slate-500 dark:text-slate-400 transition-colors duration-200"
+                    className="w-11 h-11 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg relative text-slate-500 dark:text-slate-400 transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:outline-none"
                     aria-label="Notifications"
                 >
                     <Bell className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -149,7 +149,7 @@ export function Topbar() {
 
                     {/* Profile Dropdown */}
                     {isProfileOpen && (
-                        <div className="absolute right-0 mt-2 w-[calc(100vw-2rem)] sm:w-60 max-w-60 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 py-1 z-50 animate-in fade-in slide-in-from-top-2 duration-200"
+                        <div className="absolute right-0 mt-2 w-60 max-w-[calc(100vw-2rem)] bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 py-1 z-50 animate-in fade-in slide-in-from-top-2 duration-200"
                             id="profile-dropdown-menu"
                             role="menu"
                             aria-labelledby="profile-menu-trigger"

@@ -346,7 +346,7 @@ function TablePagination({
                         className={cn(
                             "h-8 w-8 rounded-full flex items-center justify-center text-[12px] font-medium transition-all",
                             p === page
-                                ? "bg-primary text-white shadow-sm dark:bg-secondary dark:text-slate-900"
+                                ? "bg-primary text-white shadow-sm dark:bg-secondary dark:text-white"
                                 : "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800",
                         )}
                     >
@@ -562,7 +562,7 @@ function BuildingBulkTable({ rows }: { rows: BuildingRow[] }) {
                         )}>
                             <ChevronDown className={cn(
                                 "h-3 w-3 transition-transform duration-200",
-                                isExpanded ? "rotate-0 text-white dark:text-slate-900" : "-rotate-90 text-slate-500 dark:text-slate-400",
+                                isExpanded ? "rotate-0 text-white dark:text-slate-100" : "-rotate-90 text-slate-500 dark:text-slate-400",
                             )} />
                         </span>
                         {row.buildingName}

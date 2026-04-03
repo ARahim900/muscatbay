@@ -109,6 +109,7 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                     <input
                         type="text"
                         placeholder="Search meters..."
+                        aria-label="Search meters"
                         value={searchTerm}
                         onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
                         className="pl-10 pr-4 py-2 w-full rounded-full border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40 shadow-sm transition-shadow"
@@ -227,7 +228,7 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                         onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                         disabled={currentPage === 1}
                         aria-label="Previous page"
-                        className="w-11 h-11 flex items-center justify-center rounded-full border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-11 h-11 flex items-center justify-center rounded-full border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:outline-none"
                     >
                         <ChevronLeft className="w-4 h-4" />
                     </button>
@@ -242,7 +243,7 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                             <button
                                 key={page}
                                 onClick={() => setCurrentPage(page)}
-                                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors ${currentPage === page
+                                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:outline-none ${currentPage === page
                                     ? 'bg-primary text-white'
                                     : 'border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300'
                                     }`}
@@ -255,7 +256,7 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                         onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                         disabled={currentPage === totalPages}
                         aria-label="Next page"
-                        className="w-11 h-11 flex items-center justify-center rounded-full border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-11 h-11 flex items-center justify-center rounded-full border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:outline-none"
                     >
                         <ChevronRight className="w-4 h-4" />
                     </button>

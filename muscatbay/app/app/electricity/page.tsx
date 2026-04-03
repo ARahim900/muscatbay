@@ -729,7 +729,7 @@ export default function ElectricityPage() {
                                                     setEndMonth(allMonths[allMonths.length - 1]);
                                                 }
                                             }}
-                                            className={`rounded-full px-4 ${selectedYear === "" ? "bg-amber-500 hover:bg-amber-600 text-white" : "border-slate-200 dark:border-slate-700"}`}
+                                            className={`rounded-full px-4 ${selectedYear === "" ? "bg-secondary text-white" : "border-slate-200 dark:border-slate-700"}`}
                                         >
                                             All
                                         </Button>
@@ -746,7 +746,7 @@ export default function ElectricityPage() {
                                                         setEndMonth(yearMonths[yearMonths.length - 1]);
                                                     }
                                                 }}
-                                                className={`rounded-full px-4 ${selectedYear === year ? "bg-amber-500 hover:bg-amber-600 text-white" : "border-slate-200 dark:border-slate-700"}`}
+                                                className={`rounded-full px-4 ${selectedYear === year ? "bg-secondary text-white" : "border-slate-200 dark:border-slate-700"}`}
                                             >
                                                 {year}
                                             </Button>

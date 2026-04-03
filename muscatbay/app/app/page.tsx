@@ -98,7 +98,7 @@ export default function DashboardPage() {
     }
 
     return (
-        <div className="space-y-6 sm:space-y-7 md:space-y-8 w-full">
+        <div className="space-y-6 md:space-y-8 w-full">
             <div className="flex items-center justify-between">
                 <PageHeader
                     title={`${new Date().getHours() < 12 ? 'Good morning' : new Date().getHours() < 17 ? 'Good afternoon' : 'Good evening'}`}
@@ -122,12 +122,7 @@ export default function DashboardPage() {
                 <Card className="card-elevated">
                     <CardHeader className="card-elevated-header p-4 sm:p-5 md:p-6">
                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
-                            <div>
-                                <CardTitle>Latest Updates</CardTitle>
-                                <p className="text-sm text-muted-foreground">
-                                    Alerts and status changes from Water, Electricity, and STP
-                                </p>
-                            </div>
+                            <CardTitle>Latest Updates</CardTitle>
                             <div className="flex items-center gap-1 bg-white/50 dark:bg-slate-800/50 p-1 rounded-lg">
                                 {(['all', 'critical', 'warning', 'info'] as const).map(filter => (
                                     <button

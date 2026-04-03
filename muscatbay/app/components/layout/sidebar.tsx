@@ -125,7 +125,7 @@ export function Sidebar() {
           {!isCollapsed && (
             <button
               onClick={toggleCollapse}
-              className="hidden md:flex w-10 h-10 items-center justify-center rounded-md hover:bg-white/10 text-white/60 hover:text-white transition-all"
+              className="hidden md:flex w-10 h-10 items-center justify-center rounded-md hover:bg-white/10 text-white/60 hover:text-white transition-all focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:outline-none"
               aria-label="Collapse sidebar"
             >
               <ChevronLeft className="h-4 w-4" />
@@ -137,7 +137,7 @@ export function Sidebar() {
         {isCollapsed && (
           <button
             onClick={toggleCollapse}
-            className="hidden md:flex w-full items-center justify-center py-3 hover:bg-white/10 text-white/60 hover:text-white transition-colors border-b border-white/10"
+            className="hidden md:flex w-full items-center justify-center py-3 hover:bg-white/10 text-white/60 hover:text-white transition-colors border-b border-white/10 focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:outline-none"
             aria-label="Expand sidebar"
           >
             <ChevronRight className="h-4 w-4" />
@@ -198,7 +198,7 @@ export function Sidebar() {
 
                     {/* Tooltip for collapsed state */}
                     {isCollapsed && (
-                      <div id={`tooltip-${item.id}`} role="tooltip" className="absolute start-full ms-3 px-3 py-2 bg-white text-primary text-sm rounded-lg opacity-0 invisible group-hover/nav:opacity-100 group-hover/nav:visible group-focus-within/nav:opacity-100 group-focus-within/nav:visible transition-all duration-200 whitespace-nowrap z-50 shadow-lg font-medium pointer-events-none">
+                      <div id={`tooltip-${item.id}`} role="tooltip" className="absolute start-full ms-3 px-3 py-2 bg-white text-primary text-sm rounded-lg opacity-0 invisible group-hover/nav:opacity-100 group-hover/nav:visible group-focus-within/nav:opacity-100 group-focus-within/nav:visible transition-all duration-200 whitespace-nowrap z-50 shadow-lg font-medium pointer-events-none max-w-[calc(100vw-5rem)] overflow-hidden text-ellipsis">
                         {item.name}
                         <div className="absolute start-0 top-1/2 -translate-y-1/2 -translate-x-1 rtl:translate-x-1 w-2 h-2 bg-white rotate-45" />
                       </div>
@@ -248,7 +248,7 @@ export function Sidebar() {
 
                 {/* Tooltip for collapsed state */}
                 {isCollapsed && (
-                  <div id={`tooltip-${item.id}`} role="tooltip" className="absolute start-full ms-3 px-3 py-2 bg-white text-primary text-sm rounded-lg opacity-0 invisible group-hover/nav:opacity-100 group-hover/nav:visible group-focus-within/nav:opacity-100 group-focus-within/nav:visible transition-all duration-200 whitespace-nowrap z-50 shadow-lg font-medium pointer-events-none">
+                  <div id={`tooltip-${item.id}`} role="tooltip" className="absolute start-full ms-3 px-3 py-2 bg-white text-primary text-sm rounded-lg opacity-0 invisible group-hover/nav:opacity-100 group-hover/nav:visible group-focus-within/nav:opacity-100 group-focus-within/nav:visible transition-all duration-200 whitespace-nowrap z-50 shadow-lg font-medium pointer-events-none max-w-[calc(100vw-5rem)] overflow-hidden text-ellipsis">
                     {item.name}
                     <div className="absolute start-0 top-1/2 -translate-y-1/2 -translate-x-1 rtl:translate-x-1 w-2 h-2 bg-white rotate-45" />
                   </div>
@@ -275,7 +275,7 @@ export function Sidebar() {
 
             {/* Tooltip for collapsed state */}
             {isCollapsed && (
-              <div id="tooltip-logout" role="tooltip" className="absolute start-full ms-3 px-3 py-2 bg-white text-primary text-sm rounded-lg opacity-0 invisible group-hover/nav:opacity-100 group-hover/nav:visible group-focus-within/nav:opacity-100 group-focus-within/nav:visible transition-all duration-200 whitespace-nowrap z-50 shadow-lg font-medium pointer-events-none">
+              <div id="tooltip-logout" role="tooltip" className="absolute start-full ms-3 px-3 py-2 bg-white text-primary text-sm rounded-lg opacity-0 invisible group-hover/nav:opacity-100 group-hover/nav:visible group-focus-within/nav:opacity-100 group-focus-within/nav:visible transition-all duration-200 whitespace-nowrap z-50 shadow-lg font-medium pointer-events-none max-w-[calc(100vw-5rem)] overflow-hidden text-ellipsis">
                 Sign Out
                 <div className="absolute start-0 top-1/2 -translate-y-1/2 -translate-x-1 rtl:translate-x-1 w-2 h-2 bg-white rotate-45" />
               </div>

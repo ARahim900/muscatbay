@@ -699,7 +699,7 @@ export default function STPPage() {
                                                                 setEndMonth(yearMonths[yearMonths.length - 1]);
                                                             }
                                                         }}
-                                                        className={`rounded-full px-4 ${selectedYear === year ? "bg-amber-500 hover:bg-amber-600 text-white" : "border-slate-200 dark:border-slate-700"}`}
+                                                        className={`rounded-full px-4 ${selectedYear === year ? "bg-secondary text-white" : "border-slate-200 dark:border-slate-700"}`}
                                                     >
                                                         {year}
                                                     </Button>

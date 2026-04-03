@@ -67,28 +67,72 @@ const CHART_COLORS = {
     gray: 'var(--chart-gray)',
 } as const;
 
-// Helper functions that work with dynamic data
-function calculateRangeAnalysisFromData(meters: WaterMeter[], startMonth: string, endMonth: string) {
+// Pre-computed level caches to avoid repeated .filter() calls
+interface LevelCaches {
+    l1: WaterMeter[];
+    l2: WaterMeter[];
+    l3: WaterMeter[];
+    l4: WaterMeter[];
+    dc: WaterMeter[];
+    l3NonBuildings: WaterMeter[];
+    /** L3 meters grouped by zone code */
+    l3ByZone: Record<string, WaterMeter[]>;
+    /** Meters indexed by account number */
+    byAccount: Record<string, WaterMeter>;
+    /** Count per level */
+    counts: { level: string; count: number }[];
+}
+
+function buildLevelCaches(meters: WaterMeter[]): LevelCaches {
+    const l1: WaterMeter[] = [];
+    const l2: WaterMeter[] = [];
+    const l3: WaterMeter[] = [];
+    const l4: WaterMeter[] = [];
+    const dc: WaterMeter[] = [];
+    const l3ByZone: Record<string, WaterMeter[]> = {};
+    const byAccount: Record<string, WaterMeter> = {};
+
+    for (const m of meters) {
+        byAccount[m.accountNumber] = m;
+        switch (m.level) {
+            case 'L1': l1.push(m); break;
+            case 'L2': l2.push(m); break;
+            case 'L3':
+                l3.push(m);
+                (l3ByZone[m.zone] ??= []).push(m);
+                break;
+            case 'L4': l4.push(m); break;
+            case 'DC': dc.push(m); break;
+        }
+    }
+
+    const l3NonBuildings = l3.filter(m => !m.type.includes('Building_Bulk'));
+    const counts = [
+        { level: 'L1', count: l1.length },
+        { level: 'L2', count: l2.length },
+        { level: 'L3', count: l3.length },
+        { level: 'L4', count: l4.length },
+        { level: 'DC', count: dc.length },
+    ];
+
+    return { l1, l2, l3, l4, dc, l3NonBuildings, l3ByZone, byAccount, counts };
+}
+
+// Helper functions that work with pre-computed caches
+function calculateRangeAnalysisFromData(caches: LevelCaches, startMonth: string, endMonth: string) {
     const startIdx = AVAILABLE_MONTHS.indexOf(startMonth);
     const endIdx = AVAILABLE_MONTHS.indexOf(endMonth);
     if (startIdx === -1 || endIdx === -1 || startIdx > endIdx) return { A1: 0, A2: 0, A3Bulk: 0, A3Individual: 0, stage1Loss: 0, stage2Loss: 0, totalLoss: 0, efficiency: 0, lossPercentage: 0 };
 
     const months = AVAILABLE_MONTHS.slice(startIdx, endIdx + 1);
 
-    const l1Meters = meters.filter(m => m.level === 'L1');
-    const l2Meters = meters.filter(m => m.level === 'L2');
-    const l3Meters = meters.filter(m => m.level === 'L3');
-    const l4Meters = meters.filter(m => m.level === 'L4');
-    const dcMeters = meters.filter(m => m.level === 'DC');
-
     const sumConsumption = (meterList: WaterMeter[]) =>
         meterList.reduce((sum, m) => sum + months.reduce((s, month) => s + getConsumption(m, month), 0), 0);
 
-    const A1 = sumConsumption(l1Meters);
-    const A2 = sumConsumption(l2Meters) + sumConsumption(dcMeters);
-    const l3NonBuildings = l3Meters.filter(m => !m.type.includes('Building_Bulk'));
-    const A3Individual = sumConsumption(l3NonBuildings) + sumConsumption(l4Meters) + sumConsumption(dcMeters);
-    const A3Bulk = sumConsumption(l3Meters) + sumConsumption(dcMeters);
+    const A1 = sumConsumption(caches.l1);
+    const A2 = sumConsumption(caches.l2) + sumConsumption(caches.dc);
+    const A3Individual = sumConsumption(caches.l3NonBuildings) + sumConsumption(caches.l4) + sumConsumption(caches.dc);
+    const A3Bulk = sumConsumption(caches.l3) + sumConsumption(caches.dc);
 
     const stage1Loss = A1 - A2;
     const stage2Loss = A2 - A3Individual;
@@ -99,22 +143,15 @@ function calculateRangeAnalysisFromData(meters: WaterMeter[], startMonth: string
     return { A1, A2, A3Bulk, A3Individual, stage1Loss, stage2Loss, totalLoss, efficiency, lossPercentage };
 }
 
-function getMonthlyTrendsFromData(meters: WaterMeter[], startMonth: string, endMonth: string) {
+function getMonthlyTrendsFromData(caches: LevelCaches, startMonth: string, endMonth: string) {
     const startIdx = AVAILABLE_MONTHS.indexOf(startMonth);
     const endIdx = AVAILABLE_MONTHS.indexOf(endMonth);
     if (startIdx === -1 || endIdx === -1) return [];
 
     return AVAILABLE_MONTHS.slice(startIdx, endIdx + 1).map(month => {
-        const l1Meters = meters.filter(m => m.level === 'L1');
-        const l2Meters = meters.filter(m => m.level === 'L2');
-        const l3Meters = meters.filter(m => m.level === 'L3');
-        const l4Meters = meters.filter(m => m.level === 'L4');
-        const dcMeters = meters.filter(m => m.level === 'DC');
-
-        const A1 = l1Meters.reduce((sum, m) => sum + getConsumption(m, month), 0);
-        const A2 = l2Meters.reduce((sum, m) => sum + getConsumption(m, month), 0) + dcMeters.reduce((sum, m) => sum + getConsumption(m, month), 0);
-        const l3NonBuildings = l3Meters.filter(m => !m.type.includes('Building_Bulk'));
-        const A3Individual = l3NonBuildings.reduce((sum, m) => sum + getConsumption(m, month), 0) + l4Meters.reduce((sum, m) => sum + getConsumption(m, month), 0) + dcMeters.reduce((sum, m) => sum + getConsumption(m, month), 0);
+        const A1 = caches.l1.reduce((sum, m) => sum + getConsumption(m, month), 0);
+        const A2 = caches.l2.reduce((sum, m) => sum + getConsumption(m, month), 0) + caches.dc.reduce((sum, m) => sum + getConsumption(m, month), 0);
+        const A3Individual = caches.l3NonBuildings.reduce((sum, m) => sum + getConsumption(m, month), 0) + caches.l4.reduce((sum, m) => sum + getConsumption(m, month), 0) + caches.dc.reduce((sum, m) => sum + getConsumption(m, month), 0);
 
         const stage1Loss = A1 - A2;
         const stage2Loss = A2 - A3Individual;
@@ -124,28 +161,24 @@ function getMonthlyTrendsFromData(meters: WaterMeter[], startMonth: string, endM
     });
 }
 
-function calculateZoneAnalysisFromData(meters: WaterMeter[], zone: string, month: string) {
+function calculateZoneAnalysisFromData(caches: LevelCaches, zone: string, month: string) {
     const config = ZONE_CONFIG.find(z => z.code === zone);
     if (!config) return { zone, zoneName: zone, bulkMeterReading: 0, individualTotal: 0, loss: 0, lossPercentage: 0, efficiency: 0, meterCount: 0 };
 
-    const bulkMeter = meters.find(m => m.accountNumber === config.bulkMeterAccount);
+    const bulkMeter = caches.byAccount[config.bulkMeterAccount];
     const bulkMeterReading = bulkMeter ? getConsumption(bulkMeter, month) : 0;
-    const l3Meters = meters.filter(m => m.zone === zone && m.level === 'L3');
-    const individualTotal = l3Meters.reduce((sum, m) => sum + getConsumption(m, month), 0);
+    const zoneL3 = caches.l3ByZone[zone] || [];
+    const individualTotal = zoneL3.reduce((sum, m) => sum + getConsumption(m, month), 0);
 
     const loss = bulkMeterReading - individualTotal;
     const lossPercentage = bulkMeterReading > 0 ? Math.round((loss / bulkMeterReading) * 1000) / 10 : 0;
     const efficiency = bulkMeterReading > 0 ? Math.round((individualTotal / bulkMeterReading) * 1000) / 10 : 0;
 
-    return { zone, zoneName: config.name, bulkMeterReading, individualTotal, loss, lossPercentage, efficiency, meterCount: l3Meters.length };
+    return { zone, zoneName: config.name, bulkMeterReading, individualTotal, loss, lossPercentage, efficiency, meterCount: zoneL3.length };
 }
 
-function getAllZonesAnalysisFromData(meters: WaterMeter[], month: string) {
-    return ZONE_CONFIG.map(config => calculateZoneAnalysisFromData(meters, config.code, month));
-}
-
-function getMeterCountsByLevelFromData(meters: WaterMeter[]) {
-    return ['L1', 'L2', 'L3', 'L4', 'DC'].map(level => ({ level, count: meters.filter(m => m.level === level).length }));
+function getAllZonesAnalysisFromData(caches: LevelCaches, month: string) {
+    return ZONE_CONFIG.map(config => calculateZoneAnalysisFromData(caches, config.code, month));
 }
 
 export default function WaterPage() {
@@ -259,20 +292,23 @@ export default function WaterPage() {
         });
     }, [selectedYear]);
 
-    // Calculate analysis data using the loaded meters
+    // Pre-compute level caches once when waterMeters changes — eliminates O(n) filter calls per helper
+    const levelCaches = useMemo(() => buildLevelCaches(waterMeters), [waterMeters]);
+
+    // Calculate analysis data using pre-computed caches
     const rangeAnalysis = useMemo(() =>
-        calculateRangeAnalysisFromData(waterMeters, startMonth, endMonth), [waterMeters, startMonth, endMonth]);
+        calculateRangeAnalysisFromData(levelCaches, startMonth, endMonth), [levelCaches, startMonth, endMonth]);
 
     const monthlyTrends = useMemo(() =>
-        getMonthlyTrendsFromData(waterMeters, startMonth, endMonth), [waterMeters, startMonth, endMonth]);
+        getMonthlyTrendsFromData(levelCaches, startMonth, endMonth), [levelCaches, startMonth, endMonth]);
 
     const zoneAnalysis = useMemo(() =>
-        calculateZoneAnalysisFromData(waterMeters, selectedZone, endMonth), [waterMeters, selectedZone, endMonth]);
+        calculateZoneAnalysisFromData(levelCaches, selectedZone, endMonth), [levelCaches, selectedZone, endMonth]);
 
     const allZones = useMemo(() =>
-        getAllZonesAnalysisFromData(waterMeters, endMonth), [waterMeters, endMonth]);
+        getAllZonesAnalysisFromData(levelCaches, endMonth), [levelCaches, endMonth]);
 
-    const meterCounts = useMemo(() => getMeterCountsByLevelFromData(waterMeters), [waterMeters]);
+    const meterCounts = useMemo(() => levelCaches.counts, [levelCaches]);
 
     // Applicable meters for consumption view:
     // Exclude IRR_Servies meters where parentMeter is 'N/A' (non-applicable meters like Outlet/TSE)
@@ -297,29 +333,36 @@ export default function WaterPage() {
         return applicableMeters.filter(m => m.type === selectedType);
     }, [applicableMeters, selectedType]);
 
-    // Calculate total consumption for filtered data
-    const totalConsumption = useMemo(() => {
+    // Single-pass: compute per-meter total consumption for applicable meters in range
+    const meterTotalsMap = useMemo(() => {
         const startIdx = AVAILABLE_MONTHS.indexOf(startMonth);
         const endIdx = AVAILABLE_MONTHS.indexOf(endMonth);
         const months = AVAILABLE_MONTHS.slice(startIdx, endIdx + 1);
-        return filteredMeters.reduce((total, meter) => {
-            return total + months.reduce((sum, m) => sum + getConsumption(meter, m), 0);
-        }, 0);
-    }, [filteredMeters, startMonth, endMonth]);
+        const map = new Map<string, number>();
+        for (const meter of applicableMeters) {
+            let total = 0;
+            for (const m of months) total += getConsumption(meter, m);
+            map.set(meter.accountNumber, total);
+        }
+        return map;
+    }, [applicableMeters, startMonth, endMonth]);
 
-    // Find highest consumer
+    // Calculate total consumption for filtered data (uses pre-computed totals)
+    const totalConsumption = useMemo(() => {
+        let sum = 0;
+        for (const meter of filteredMeters) sum += meterTotalsMap.get(meter.accountNumber) || 0;
+        return sum;
+    }, [filteredMeters, meterTotalsMap]);
+
+    // Find highest consumer (uses pre-computed totals)
     const highestConsumer = useMemo(() => {
         let max = { meter: filteredMeters[0] ?? waterMeters[0], total: 0 };
-        const startIdx = AVAILABLE_MONTHS.indexOf(startMonth);
-        const endIdx = AVAILABLE_MONTHS.indexOf(endMonth);
-        const months = AVAILABLE_MONTHS.slice(startIdx, endIdx + 1);
-
-        filteredMeters.forEach(meter => {
-            const total = months.reduce((sum, m) => sum + getConsumption(meter, m), 0);
+        for (const meter of filteredMeters) {
+            const total = meterTotalsMap.get(meter.accountNumber) || 0;
             if (total > max.total) max = { meter, total };
-        });
+        }
         return max;
-    }, [filteredMeters, waterMeters, startMonth, endMonth]);
+    }, [filteredMeters, waterMeters, meterTotalsMap]);
 
     const handleRangeChange = (start: string, end: string) => {
         setStartMonth(start);
@@ -332,22 +375,17 @@ export default function WaterPage() {
         setEndMonth(AVAILABLE_MONTHS[AVAILABLE_MONTHS.length - 1]);
     };
 
-    // Consumption by type chart data (uses applicable meters — excludes non-applicable IRR_Servies)
+    // Consumption by type chart data (uses pre-computed totals)
     const consumptionChartData = useMemo(() => {
         const typeConsumption: Record<string, number> = {};
-        const startIdx = AVAILABLE_MONTHS.indexOf(startMonth);
-        const endIdx = AVAILABLE_MONTHS.indexOf(endMonth);
-        const months = AVAILABLE_MONTHS.slice(startIdx, endIdx + 1);
-
-        applicableMeters.forEach(meter => {
-            const total = months.reduce((sum, m) => sum + getConsumption(meter, m), 0);
+        for (const meter of applicableMeters) {
+            const total = meterTotalsMap.get(meter.accountNumber) || 0;
             typeConsumption[meter.type] = (typeConsumption[meter.type] || 0) + total;
-        });
-
+        }
         return Object.entries(typeConsumption)
             .map(([type, total]) => ({ type, total }))
             .sort((a, b) => b.total - a.total);
-    }, [applicableMeters, startMonth, endMonth]);
+    }, [applicableMeters, meterTotalsMap]);
 
     const TYPE_COLORS = {
         'Main BULK': CHART_COLORS.success,
@@ -379,23 +417,20 @@ export default function WaterPage() {
         });
     }, [activeDetailType, applicableMeters, startMonth, endMonth]);
 
-    // Top consumers within selected type
+    // Top consumers within selected type (uses pre-computed totals)
     const typeTopConsumers = useMemo(() => {
         if (!activeDetailType) return [];
-        const startIdx = AVAILABLE_MONTHS.indexOf(startMonth);
-        const endIdx = AVAILABLE_MONTHS.indexOf(endMonth);
-        const months = AVAILABLE_MONTHS.slice(startIdx, endIdx + 1);
 
         return applicableMeters
             .filter(m => m.type === activeDetailType)
             .map(m => ({
                 label: m.label,
                 zone: m.zone,
-                total: Math.round(months.reduce((sum, month) => sum + getConsumption(m, month), 0) * 10) / 10,
+                total: Math.round((meterTotalsMap.get(m.accountNumber) || 0) * 10) / 10,
             }))
             .sort((a, b) => b.total - a.total)
             .slice(0, 10);
-    }, [activeDetailType, applicableMeters, startMonth, endMonth]);
+    }, [activeDetailType, applicableMeters, meterTotalsMap]);
 
     // Type-specific stats
     const typeDetailStats = useMemo(() => {
@@ -424,16 +459,16 @@ export default function WaterPage() {
 
     // Calculate current end month analysis for trend comparison (single month values)
     const endMonthAnalysis = useMemo(() => {
-        return calculateRangeAnalysisFromData(waterMeters, endMonth, endMonth);
-    }, [waterMeters, endMonth]);
+        return calculateRangeAnalysisFromData(levelCaches, endMonth, endMonth);
+    }, [levelCaches, endMonth]);
 
     // Calculate previous month analysis for trend comparison
     const prevMonthAnalysis = useMemo(() => {
         const endIdx = AVAILABLE_MONTHS.indexOf(endMonth);
         if (endIdx <= 0) return null;
         const prevMonth = AVAILABLE_MONTHS[endIdx - 1];
-        return calculateRangeAnalysisFromData(waterMeters, prevMonth, prevMonth);
-    }, [waterMeters, endMonth]);
+        return calculateRangeAnalysisFromData(levelCaches, prevMonth, prevMonth);
+    }, [levelCaches, endMonth]);
 
     // Generate stats for Overview using StatsGrid format with trends
     // Trends compare endMonth vs prevMonth (not cumulative range vs single month)
@@ -625,7 +660,7 @@ export default function WaterPage() {
                                                                 setEndMonth(yearMonths[yearMonths.length - 1]);
                                                             }
                                                         }}
-                                                        className={`rounded-full px-4 ${selectedYear === year ? "bg-amber-500 hover:bg-amber-600 text-white" : "border-slate-200 dark:border-slate-700"}`}
+                                                        className={`rounded-full px-4 ${selectedYear === year ? "bg-secondary text-white" : "border-slate-200 dark:border-slate-700"}`}
                                                     >
                                                         {year}
                                                     </Button>
@@ -839,7 +874,7 @@ export default function WaterPage() {
                                             <AreaChart data={(() => {
                                                 // Calculate zone-specific monthly trends filtered by selected year
                                                 return filteredMonthsByYear.map(month => {
-                                                    const analysis = calculateZoneAnalysisFromData(waterMeters, selectedZone, month);
+                                                    const analysis = calculateZoneAnalysisFromData(levelCaches, selectedZone, month);
                                                     return {
                                                         month,
                                                         'Zone Bulk': analysis.bulkMeterReading,

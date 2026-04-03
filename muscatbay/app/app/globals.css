@@ -53,6 +53,8 @@
   --color-mb-secondary: var(--mb-secondary);
   --color-mb-secondary-foreground: var(--mb-secondary-foreground);
   --color-mb-secondary-light: var(--mb-secondary-light);
+  --color-mb-secondary-active: var(--mb-secondary-active);
+  --color-mb-primary-light: var(--mb-primary-light);
   --color-mb-success: var(--mb-success);
   --color-mb-success-hover: var(--mb-success-hover);
   --color-mb-success-light: var(--mb-success-light);
@@ -78,6 +80,8 @@
   --mb-secondary: #A8D5E3;
   --mb-secondary-foreground: #FFFFFF;
   --mb-secondary-light: #CCFBF1;
+  --mb-secondary-active: #00b89d;
+  --mb-primary-light: #6b5f75;
 
   /* Muscat Bay Status Colors */
   --mb-success: #10B981;
@@ -219,6 +223,8 @@
   --mb-secondary: #A8D5E3;
   --mb-secondary-foreground: #1F2937;
   --mb-secondary-light: rgba(0, 210, 179, 0.1);
+  --mb-secondary-active: #00c9a7;
+  --mb-primary-light: #8b7f94;
 
   /* Dark mode status colors — slightly brighter for readability */
   --mb-success: #10B981;

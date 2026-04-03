@@ -110,7 +110,7 @@ function ColumnVisibilityDropdown({
             {isOpen && (
                 <>
                     <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
-                    <div className="absolute top-full right-0 mt-1 z-50 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg w-[280px] py-1">
+                    <div className="absolute top-full right-0 mt-1 z-50 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg w-[220px] sm:w-[280px] py-1">
                         <div className="flex items-center gap-2 px-3 py-2 border-b border-slate-100 dark:border-slate-700">
                             <button onClick={showAll} className="text-xs px-2 py-1 rounded bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600">
                                 All ({months.length})
@@ -122,7 +122,7 @@ function ColumnVisibilityDropdown({
                                 Last 6
                             </button>
                         </div>
-                        <div className="max-h-[300px] overflow-y-auto grid grid-cols-3 gap-1 p-2">
+                        <div className="max-h-[300px] overflow-y-auto grid grid-cols-2 sm:grid-cols-3 gap-1 p-2">
                             {months.map(month => (
                                 <label
                                     key={month}
@@ -276,14 +276,16 @@ export function WaterDatabaseTable({ meters, months }: WaterDatabaseTableProps) 
     }, []);
 
     // Sort handler
-    const handleSort = (field: string) => {
-        if (sortField === field) {
-            setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
-        } else {
-            setSortField(field);
+    const handleSort = useCallback((field: string) => {
+        setSortField(prev => {
+            if (prev === field) {
+                setSortDirection(d => d === 'asc' ? 'desc' : 'asc');
+                return prev;
+            }
             setSortDirection('asc');
-        }
-    };
+            return field;
+        });
+    }, []);
 
     // CSV Export
     const handleExportCSV = () => {
@@ -338,10 +340,10 @@ export function WaterDatabaseTable({ meters, months }: WaterDatabaseTableProps) 
                     zoneColor
                 )}
             >
-                <td className="py-3.5 px-5 font-medium text-slate-800 dark:text-slate-200 whitespace-nowrap sticky left-0 bg-inherit z-10">
+                <td className="py-3.5 px-5 font-medium text-slate-800 dark:text-slate-200 whitespace-nowrap sticky left-0 bg-inherit z-10 w-[140px] sm:w-[180px] md:w-[200px]">
                     {meter.label}
                 </td>
-                <td className="py-3.5 px-5 text-slate-600 dark:text-slate-400 font-mono text-xs sticky left-[200px] bg-inherit z-10">
+                <td className="py-3.5 px-5 text-slate-600 dark:text-slate-400 font-mono text-xs sticky left-[140px] sm:left-[180px] md:left-[200px] bg-inherit z-10">
                     {meter.accountNumber}
                 </td>
                 <td className="py-3.5 px-5 text-center">
@@ -375,7 +377,7 @@ export function WaterDatabaseTable({ meters, months }: WaterDatabaseTableProps) 
             {/* Toolbar */}
             <TableToolbar>
                 {/* Search */}
-                <div className="relative flex-1 min-w-[200px] max-w-md">
+                <div className="relative flex-1 min-w-0 sm:min-w-[200px] max-w-md">
                     <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                     <input
                         type="text"
@@ -500,16 +502,16 @@ export function WaterDatabaseTable({ meters, months }: WaterDatabaseTableProps) 
             {/* Table */}
             <div className="overflow-x-auto rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900 shadow-sm">
                 <table className="w-full text-sm border-collapse">
-                    <thead>
-                        <tr className="bg-slate-50/70 dark:bg-slate-800/50">
+                    <thead className="sticky top-0 z-30">
+                        <tr className="bg-slate-50 dark:bg-slate-800">
                             <th
-                                className="text-left py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors sticky left-0 bg-slate-50/70 dark:bg-slate-800/50 z-20 min-w-[200px]"
+                                className="text-left py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors sticky left-0 bg-slate-50 dark:bg-slate-800 z-20 w-[140px] sm:w-[180px] md:w-[200px]"
                                 onClick={() => handleSort('label')}
                             >
                                 <div className="flex items-center gap-1.5">Label <SortIcon field="label" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
                             </th>
                             <th
-                                className="text-left py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors sticky left-[200px] bg-slate-50/70 dark:bg-slate-800/50 z-20 min-w-[100px]"
+                                className="text-left py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors sticky left-[140px] sm:left-[180px] md:left-[200px] bg-slate-50 dark:bg-slate-800 z-20 min-w-[100px]"
                                 onClick={() => handleSort('account')}
                             >
                                 <div className="flex items-center gap-1.5">Account # <SortIcon field="account" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
