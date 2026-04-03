@@ -169,7 +169,7 @@ export function Sidebar() {
                       group/nav flex items-center gap-3 py-2.5 px-3 rounded-lg text-left transition-all duration-200 ease-out relative overflow-hidden
                       ${isActive
                         ? "bg-white/10 text-white shadow-[0_0_15px_rgba(129,216,208,0.2)]"
-                        : "text-white/70 hover:bg-white/10 hover:text-white"
+                        : "text-white/90 hover:bg-white/10 hover:text-white"
                       }
                       ${isCollapsed ? "justify-center px-2" : ""}
                     `}
@@ -227,7 +227,7 @@ export function Sidebar() {
                   group/nav flex items-center gap-3 py-2.5 px-3 rounded-lg transition-all duration-200 ease-out relative overflow-hidden
                   ${isActive
                     ? "bg-white/10 text-white shadow-[0_0_15px_rgba(129,216,208,0.2)]"
-                    : "text-white/70 hover:bg-white/10 hover:text-white"
+                    : "text-white/90 hover:bg-white/10 hover:text-white"
                   }
                   ${isCollapsed ? "justify-center px-2" : ""}
                 `}
@@ -262,7 +262,7 @@ export function Sidebar() {
             onClick={logout}
             className={`
               group/nav w-full flex items-center gap-3 py-2.5 px-3 rounded-lg transition-all duration-200 ease-out relative
-              text-white/70 hover:bg-red-500/20 hover:text-red-300
+              text-white/90 hover:bg-red-500/20 hover:text-red-300
               ${isCollapsed ? "justify-center px-2" : ""}
             `}
             title={isCollapsed ? "Sign Out" : undefined}

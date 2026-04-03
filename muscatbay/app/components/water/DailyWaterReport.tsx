@@ -1253,7 +1253,7 @@ function ZoneL3Table({
                 <TableSearch value={search} onChange={setSearch} placeholder="Search meter or account..." />
 
                 {/* Horizontally scrollable table */}
-                <div className="overflow-x-auto -mx-4 sm:-mx-5 md:-mx-6 border-t border-slate-100 dark:border-slate-800">
+                <div className="relative overflow-x-auto -mx-4 sm:-mx-5 md:-mx-6 border-t border-slate-100 dark:border-slate-800">
                     <table className="w-full border-collapse" style={{ minWidth: `${420 + days.length * 72}px` }}>
                         <thead>
                             <tr className="border-b border-slate-100 dark:border-slate-800">
@@ -1332,6 +1332,7 @@ function ZoneL3Table({
                             </tr>
                         </tbody>
                     </table>
+                    <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-card to-transparent sm:hidden" />
                 </div>
 
                 {filtered.length > rowsPerPage && (
@@ -1655,7 +1656,7 @@ export function DailyWaterReport() {
                                             className={cn(
                                                 "px-3 py-1.5 rounded-full text-sm font-medium transition-all border",
                                                 isActive
-                                                    ? "bg-primary text-white border-primary shadow-sm"
+                                                    ? "bg-primary text-white border-primary shadow-sm dark:bg-secondary dark:text-white dark:border-secondary"
                                                     : "bg-white text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700"
                                             )}
                                         >
@@ -1669,7 +1670,7 @@ export function DailyWaterReport() {
                                     className={cn(
                                         "px-3 py-1.5 rounded-full text-sm font-medium transition-all border inline-flex items-center gap-1.5",
                                         activeView === 'dc'
-                                            ? "bg-amber-500 text-white border-amber-500 shadow-sm"
+                                            ? "bg-mb-warning text-white border-mb-warning shadow-sm"
                                             : "bg-white text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700"
                                     )}
                                 >

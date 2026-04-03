@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, type KeyboardEvent } from 'react';
+import React, { useState, useMemo, useCallback, type KeyboardEvent } from 'react';
 import { ChevronLeft, ChevronRight, Search, ArrowUpDown } from 'lucide-react';
 import { WaterMeter, getConsumption } from '@/lib/water-data';
 
@@ -73,14 +73,16 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
     const startIndex = (currentPage - 1) * pageSize;
     const paginatedMeters = filteredMeters.slice(startIndex, startIndex + pageSize);
 
-    const handleSort = (field: string) => {
-        if (sortField === field) {
-            setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
-        } else {
-            setSortField(field);
-            setSortDirection('asc');
-        }
-    };
+    const handleSort = useCallback((field: string) => {
+        setSortField(prev => {
+            if (prev === field) {
+                setSortDirection(d => d === 'asc' ? 'desc' : 'asc');
+            } else {
+                setSortDirection('asc');
+            }
+            return prev === field ? prev : field;
+        });
+    }, []);
 
     const displayMonths = months.slice(-4); // Show last 4 months
 
@@ -115,7 +117,7 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                         className="pl-10 pr-4 py-2 w-full rounded-full border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40 shadow-sm transition-shadow"
                     />
                 </div>
-                <span className="text-sm text-slate-500 dark:text-slate-400">
+                <span className="text-sm text-slate-500 dark:text-slate-300">
                     Showing {startIndex + 1} to {Math.min(startIndex + pageSize, filteredMeters.length)} of {filteredMeters.length} entries
                 </span>
             </div>
@@ -135,7 +137,7 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                                     {meter.level}
                                 </span>
                             </div>
-                            <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
+                            <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-300">
                                 <span>{meter.zone}</span>
                                 <span className="text-slate-300 dark:text-slate-600">|</span>
                                 <span>{meter.type}</span>
@@ -163,26 +165,26 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                 <table className="w-full text-sm">
                     <thead>
                         <tr className="bg-slate-50/70 dark:bg-slate-800/50">
-                            <th className="text-left py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" {...sortHeaderProps('label')}>
+                            <th className="text-left py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" {...sortHeaderProps('label')}>
                                 <div className="flex items-center gap-1.5">Meter Label <ArrowUpDown className="w-3 h-3" /></div>
                             </th>
-                            <th className="text-left py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" {...sortHeaderProps('account')}>
+                            <th className="text-left py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" {...sortHeaderProps('account')}>
                                 <div className="flex items-center gap-1.5">Account # <ArrowUpDown className="w-3 h-3" /></div>
                             </th>
-                            <th className="text-center py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" {...sortHeaderProps('level')}>
+                            <th className="text-center py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" {...sortHeaderProps('level')}>
                                 <div className="flex items-center justify-center gap-1.5">Level <ArrowUpDown className="w-3 h-3" /></div>
                             </th>
-                            <th className="text-left py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" {...sortHeaderProps('zone')}>
+                            <th className="text-left py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" {...sortHeaderProps('zone')}>
                                 <div className="flex items-center gap-1.5">Zone <ArrowUpDown className="w-3 h-3" /></div>
                             </th>
-                            <th className="text-left py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" {...sortHeaderProps('parentMeter')}>
+                            <th className="text-left py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" {...sortHeaderProps('parentMeter')}>
                                 <div className="flex items-center gap-1.5">Parent Meter <ArrowUpDown className="w-3 h-3" /></div>
                             </th>
-                            <th className="text-left py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" {...sortHeaderProps('type')}>
+                            <th className="text-left py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" {...sortHeaderProps('type')}>
                                 <div className="flex items-center gap-1.5">Type <ArrowUpDown className="w-3 h-3" /></div>
                             </th>
                             {displayMonths.map(m => (
-                                <th key={m} className="text-right py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" {...sortHeaderProps(m)}>
+                                <th key={m} className="text-right py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" {...sortHeaderProps(m)}>
                                     <div className="flex items-center justify-end gap-1.5">{m} <ArrowUpDown className="w-3 h-3" /></div>
                                 </th>
                             ))}
@@ -194,15 +196,15 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                             return (
                                 <tr key={meter.accountNumber} className="border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors">
                                     <td className="py-3.5 px-5 font-medium text-slate-800 dark:text-slate-200">{meter.label}</td>
-                                    <td className="py-3.5 px-5 text-slate-600 dark:text-slate-400 font-mono text-xs">{meter.accountNumber}</td>
+                                    <td className="py-3.5 px-5 text-slate-600 dark:text-slate-300 font-mono text-xs">{meter.accountNumber}</td>
                                     <td className="py-3.5 px-5 text-center">
                                         <span className={`px-2.5 py-0.5 rounded-md text-xs font-bold ${levelColors.bg} ${levelColors.text}`}>
                                             {meter.level}
                                         </span>
                                     </td>
-                                    <td className="py-3.5 px-5 text-slate-600 dark:text-slate-400 text-xs">{meter.zone}</td>
-                                    <td className="py-3.5 px-5 text-slate-600 dark:text-slate-400 text-xs max-w-[200px] truncate">{meter.parentMeter}</td>
-                                    <td className="py-3.5 px-5 text-slate-600 dark:text-slate-400 text-xs">{meter.type}</td>
+                                    <td className="py-3.5 px-5 text-slate-600 dark:text-slate-300 text-xs">{meter.zone}</td>
+                                    <td className="py-3.5 px-5 text-slate-600 dark:text-slate-300 text-xs max-w-[200px] truncate">{meter.parentMeter}</td>
+                                    <td className="py-3.5 px-5 text-slate-600 dark:text-slate-300 text-xs">{meter.type}</td>
                                     {displayMonths.map(m => {
                                         const val = getConsumption(meter, m);
                                         return (
@@ -220,7 +222,7 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
 
             {/* Pagination */}
             <div className="flex items-center justify-between">
-                <div className="text-sm text-slate-500 dark:text-slate-400">
+                <div className="text-sm text-slate-500 dark:text-slate-300">
                     Page {currentPage} of {totalPages}
                 </div>
                 <div className="flex items-center gap-2">

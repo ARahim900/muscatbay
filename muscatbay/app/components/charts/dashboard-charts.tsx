@@ -30,7 +30,7 @@ interface DashboardChartsProps {
 function DashboardChartsInner({ chartData, stpChartData }: DashboardChartsProps) {
     return (
         <AnimateOnScroll className="grid gap-4 sm:gap-5 md:gap-6 grid-cols-1 lg:grid-cols-7">
-            <Link href="/water" className="col-span-1 lg:col-span-4 group/chart">
+            <Link href="/water" aria-label="View water production details" className="col-span-1 lg:col-span-4 group/chart">
                 <Card
                     className="card-elevated cursor-pointer transition-shadow duration-200 hover:shadow-[0_8px_30px_-4px_rgba(6,81,237,0.15)] dark:hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.4)] focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none"
                 >
@@ -63,7 +63,7 @@ function DashboardChartsInner({ chartData, stpChartData }: DashboardChartsProps)
                 </Card>
             </Link>
 
-            <Link href="/stp" className="col-span-1 lg:col-span-3 group/chart">
+            <Link href="/stp" aria-label="View STP treatment details" className="col-span-1 lg:col-span-3 group/chart">
                 <Card
                     className="card-elevated cursor-pointer transition-shadow duration-200 hover:shadow-[0_8px_30px_-4px_rgba(6,81,237,0.15)] dark:hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.4)] focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none"
                 >

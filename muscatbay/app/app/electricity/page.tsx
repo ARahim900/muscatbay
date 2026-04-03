@@ -277,15 +277,17 @@ export default function ElectricityPage() {
     const dbStartIndex = (dbCurrentPage - 1) * dbEffectivePageSize;
     const dbPaginatedMeters = dbFilteredMeters.slice(dbStartIndex, dbStartIndex + dbEffectivePageSize);
 
-    const handleDbSort = (field: string) => {
-        if (dbSortField === field) {
-            setDbSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
-        } else {
-            setDbSortField(field);
-            setDbSortDirection('asc');
-        }
+    const handleDbSort = useCallback((field: string) => {
+        setDbSortField(prev => {
+            if (prev === field) {
+                setDbSortDirection(d => d === 'asc' ? 'desc' : 'asc');
+            } else {
+                setDbSortDirection('asc');
+            }
+            return prev === field ? prev : field;
+        });
         setDbCurrentPage(1);
-    };
+    }, []);
 
     const handleDbExportCSV = () => {
         const data = dbFilteredMeters.map(m => ({
@@ -1000,16 +1002,16 @@ export default function ElectricityPage() {
                                                             <div className="card-elevated px-4 py-3 border border-white/50 shadow-xl !rounded-xl !bg-white dark:!bg-slate-900">
                                                                 <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">{data.fullName}</p>
                                                                 <div className="flex items-center gap-2 text-xs mb-1">
-                                                                    <div className="w-2 h-2 rounded-full bg-amber-500" />
+                                                                    <div className="w-2 h-2 rounded-full bg-mb-warning" />
                                                                     <span className="text-slate-500 dark:text-slate-400">Consumption:</span>
                                                                     <span className="font-mono font-medium text-slate-700 dark:text-slate-200">
                                                                         {data.consumption.toLocaleString()} kWh
                                                                     </span>
                                                                 </div>
                                                                 <div className="flex items-center gap-2 text-xs">
-                                                                    <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                                                                    <div className="w-2 h-2 rounded-full bg-mb-success" />
                                                                     <span className="text-slate-500 dark:text-slate-400">Cost:</span>
-                                                                    <span className="font-mono font-medium text-emerald-600 dark:text-emerald-400">
+                                                                    <span className="font-mono font-medium text-mb-success">
                                                                         {data.cost.toLocaleString('en-US', { minimumFractionDigits: 2 })} OMR
                                                                     </span>
                                                                 </div>
@@ -1093,7 +1095,7 @@ export default function ElectricityPage() {
                                                                         <span className="font-mono font-medium">{data.consumption.toLocaleString()} kWh</span>
                                                                     </div>
                                                                     <div className="flex items-center gap-2 text-xs">
-                                                                        <div className="w-2 h-2 rounded-full bg-amber-500" />
+                                                                        <div className="w-2 h-2 rounded-full bg-mb-warning" />
                                                                         <span className="text-slate-500">vs Avg:</span>
                                                                         <span className={`font-mono font-medium ${diff > 0 ? 'text-red-500' : 'text-emerald-500'}`}>
                                                                             {diff > 0 ? '+' : ''}{pct}%

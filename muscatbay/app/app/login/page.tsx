@@ -95,7 +95,7 @@ export default function LoginPage() {
                                 Smart Operations<br />
                                 <span className="text-secondary">Management</span>
                             </h2>
-                            <p className="text-white/70 text-lg max-w-md">
+                            <p className="text-white/90 text-lg max-w-md">
                                 Monitor, analyze, and optimize your community infrastructure with real-time insights and intelligent reporting.
                             </p>
                         </div>
@@ -105,22 +105,22 @@ export default function LoginPage() {
                             <div className="bg-white/10 rounded-xl p-4 border border-white/10 hover:bg-white/15 transition-all duration-200 group">
                                 <Droplets className="h-6 w-6 text-secondary mb-2 transition-colors" />
                                 <h3 className="text-white font-semibold text-sm">Water Systems</h3>
-                                <p className="text-white/60 text-xs mt-1">Real-time monitoring</p>
+                                <p className="text-white/85 text-xs mt-1">Real-time monitoring</p>
                             </div>
                             <div className="bg-white/10 rounded-xl p-4 border border-white/10 hover:bg-white/15 transition-all duration-200 group">
                                 <BarChart3 className="h-6 w-6 text-secondary mb-2 transition-colors" />
                                 <h3 className="text-white font-semibold text-sm">Analytics</h3>
-                                <p className="text-white/60 text-xs mt-1">Data-driven insights</p>
+                                <p className="text-white/85 text-xs mt-1">Data-driven insights</p>
                             </div>
                             <div className="bg-white/10 rounded-xl p-4 border border-white/10 hover:bg-white/15 transition-all duration-200 group">
                                 <Waves className="h-6 w-6 text-secondary mb-2 transition-colors" />
                                 <h3 className="text-white font-semibold text-sm">STP Plants</h3>
-                                <p className="text-white/60 text-xs mt-1">Treatment tracking</p>
+                                <p className="text-white/85 text-xs mt-1">Treatment tracking</p>
                             </div>
                             <div className="bg-white/10 rounded-xl p-4 border border-white/10 hover:bg-white/15 transition-all duration-200 group">
                                 <Shield className="h-6 w-6 text-secondary mb-2 transition-colors" />
                                 <h3 className="text-white font-semibold text-sm">Security</h3>
-                                <p className="text-white/60 text-xs mt-1">Enterprise-grade</p>
+                                <p className="text-white/85 text-xs mt-1">Enterprise-grade</p>
                             </div>
                         </div>
                     </div>
@@ -159,7 +159,7 @@ export default function LoginPage() {
                         <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">
                             Welcome back
                         </h2>
-                        <p className="text-slate-500 dark:text-slate-400">
+                        <p className="text-slate-500 dark:text-slate-300">
                             Sign in to access your dashboard and manage operations
                         </p>
                     </div>
@@ -299,7 +299,7 @@ export default function LoginPage() {
 
                     {/* Footer */}
                     <div className="mt-8 text-center">
-                        <p className="text-xs text-slate-400 dark:text-slate-500">
+                        <p className="text-xs text-slate-400 dark:text-slate-400">
                             By signing in, you agree to our{' '}
                             <Link href="/terms" className="text-primary dark:text-secondary hover:underline">
                                 Terms of Service
@@ -309,7 +309,7 @@ export default function LoginPage() {
                                 Privacy Policy
                             </Link>
                         </p>
-                        <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">
+                        <p className="text-xs text-slate-400 dark:text-slate-400 mt-2">
                             © 2026 Muscat Bay. All rights reserved.
                         </p>
                     </div>

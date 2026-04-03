@@ -67,7 +67,7 @@ export function StatsGrid({ stats, className }: StatsGridProps) {
                     <>
                         <div className="flex justify-between items-start gap-2">
                             <div className="min-w-0">
-                                <p className="text-slate-500 dark:text-slate-400 text-[10px] sm:text-xs font-medium mb-0.5 sm:mb-1 uppercase tracking-wide truncate">
+                                <p className="text-slate-500 dark:text-slate-300 text-[10px] sm:text-xs font-medium mb-0.5 sm:mb-1 uppercase tracking-wide truncate">
                                     {stat.label}
                                 </p>
                                 <h3 className={cn(

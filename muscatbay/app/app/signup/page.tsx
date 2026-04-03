@@ -144,7 +144,7 @@ export default function SignUpPage() {
                         </div>
                         <div>
                             <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Muscat Bay</h1>
-                            <p className="text-sm text-slate-500 dark:text-slate-400">Operations Dashboard</p>
+                            <p className="text-sm text-slate-500 dark:text-slate-300">Operations Dashboard</p>
                         </div>
                     </div>
                 </div>
@@ -174,6 +174,8 @@ export default function SignUpPage() {
                                         placeholder="John Doe"
                                         value={fullName}
                                         onChange={(e) => handleNameChange(e.target.value)}
+                                        aria-describedby={nameError ? "name-error" : undefined}
+                                        aria-invalid={nameError ? true : undefined}
                                         className={`pl-10 ${nameError ? 'border-red-500' : ''}`}
                                         required
                                         autoComplete="name"
@@ -181,7 +183,7 @@ export default function SignUpPage() {
                                     />
                                 </div>
                                 {nameError && (
-                                    <p className="text-xs text-red-500">{nameError}</p>
+                                    <p id="name-error" className="text-xs text-red-500">{nameError}</p>
                                 )}
                             </div>
 
@@ -195,13 +197,15 @@ export default function SignUpPage() {
                                         placeholder="name@muscatbay.com"
                                         value={email}
                                         onChange={(e) => handleEmailChange(e.target.value)}
+                                        aria-describedby={emailError ? "email-error" : undefined}
+                                        aria-invalid={emailError ? true : undefined}
                                         className={`pl-10 ${emailError ? 'border-red-500' : ''}`}
                                         required
                                         autoComplete="email"
                                     />
                                 </div>
                                 {emailError && (
-                                    <p className="text-xs text-red-500">{emailError}</p>
+                                    <p id="email-error" className="text-xs text-red-500">{emailError}</p>
                                 )}
                             </div>
 
@@ -222,6 +226,7 @@ export default function SignUpPage() {
                                     <button
                                         type="button"
                                         onClick={() => setShowPassword(!showPassword)}
+                                        aria-label={showPassword ? "Hide password" : "Show password"}
                                         className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                                     >
                                         {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -252,13 +257,15 @@ export default function SignUpPage() {
                                         placeholder="Confirm your password"
                                         value={confirmPassword}
                                         onChange={(e) => setConfirmPassword(e.target.value)}
+                                        aria-describedby={confirmPassword.length > 0 && password !== confirmPassword ? "confirm-password-error" : undefined}
+                                        aria-invalid={confirmPassword.length > 0 && password !== confirmPassword ? true : undefined}
                                         className="pl-10"
                                         required
                                         autoComplete="new-password"
                                     />
                                 </div>
                                 {confirmPassword.length > 0 && password !== confirmPassword && (
-                                    <p className="text-xs text-red-500">Passwords do not match</p>
+                                    <p id="confirm-password-error" className="text-xs text-red-500">Passwords do not match</p>
                                 )}
                             </div>
                         </CardContent>
@@ -279,7 +286,7 @@ export default function SignUpPage() {
                                 )}
                             </Button>
 
-                            <p className="text-sm text-center text-slate-500 dark:text-slate-400">
+                            <p className="text-sm text-center text-slate-500 dark:text-slate-300">
                                 Already have an account?{" "}
                                 <Link href="/login" className="text-[var(--mb-primary)] hover:underline font-medium">
                                     Sign in
@@ -310,7 +317,7 @@ export default function SignUpPage() {
                     </form>
                 </Card>
 
-                <p className="text-center text-xs text-slate-500 dark:text-slate-400 mt-6">
+                <p className="text-center text-xs text-slate-500 dark:text-slate-300 mt-6">
                     By creating an account, you agree to our Terms of Service and Privacy Policy.
                 </p>
             </div>

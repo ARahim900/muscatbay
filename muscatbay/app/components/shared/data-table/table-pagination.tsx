@@ -45,7 +45,7 @@ export function TablePagination({
                             onPageSizeChange(val === 'All' ? 'All' : parseInt(val));
                         }}
                         aria-label="Rows per page"
-                        className="px-2 py-1.5 text-xs sm:text-sm rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-colors"
+                        className="px-2 py-2 text-xs sm:text-sm rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-colors"
                     >
                         {pageSizeOptions.map(size => (
                             <option key={size} value={size}>{size}</option>

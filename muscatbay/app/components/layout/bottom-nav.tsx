@@ -158,7 +158,7 @@ export function BottomNav() {
             <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">More</span>
             <button
               onClick={() => setDrawerOpen(false)}
-              className="w-11 h-11 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-400 dark:text-gray-500 transition-colors focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:outline-none"
+              className="w-11 h-11 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-400 dark:text-gray-400 transition-colors focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:outline-none"
               aria-label="Close menu"
             >
               <X className="w-4 h-4" />
@@ -221,7 +221,7 @@ export function BottomNav() {
                   flex flex-col items-center justify-center gap-0.5 flex-1 h-full pt-1.5 pb-1 rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:outline-none
                   ${active
                     ? 'text-secondary'
-                    : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300'
+                    : 'text-gray-400 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
                   }
                 `}
               >
@@ -244,7 +244,7 @@ export function BottomNav() {
               flex flex-col items-center justify-center gap-0.5 flex-1 h-full pt-1.5 pb-1 rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:outline-none
               ${drawerOpen || isOverflowActive
                 ? 'text-secondary'
-                : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300'
+                : 'text-gray-400 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
               }
             `}
             aria-label="More navigation items"

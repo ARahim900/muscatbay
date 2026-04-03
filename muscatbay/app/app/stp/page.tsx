@@ -900,7 +900,7 @@ export default function STPPage() {
                                 const income = op.tanker_trips * TANKER_FEE;
                                 const savings = op.tse_for_irrigation * TSE_SAVING_RATE;
                                 const totalImpact = income + savings;
-                                const efficiencyColor = efficiency >= 95 ? "text-emerald-600 dark:text-emerald-400" : efficiency >= 90 ? "text-amber-600 dark:text-amber-400" : "text-red-600 dark:text-red-400";
+                                const efficiencyColor = efficiency >= 95 ? "text-mb-success" : efficiency >= 90 ? "text-mb-warning" : "text-mb-danger";
 
                                 return (
                                     <div key={op.id} className="rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900 p-4 shadow-sm space-y-3">
@@ -919,11 +919,11 @@ export default function STPPage() {
                                             </div>
                                             <div className="space-y-0.5">
                                                 <span className="text-slate-400">Tanker Trips</span>
-                                                <p className="font-mono font-medium text-amber-600 dark:text-amber-400">{op.tanker_trips}</p>
+                                                <p className="font-mono font-medium text-mb-warning">{op.tanker_trips}</p>
                                             </div>
                                             <div className="space-y-0.5">
                                                 <span className="text-slate-400">Total Impact</span>
-                                                <p className="font-mono font-semibold text-emerald-600 dark:text-emerald-400">{totalImpact.toFixed(2)} OMR</p>
+                                                <p className="font-mono font-semibold text-mb-success">{totalImpact.toFixed(2)} OMR</p>
                                             </div>
                                         </div>
                                     </div>
@@ -975,7 +975,7 @@ export default function STPPage() {
                                         const income = op.tanker_trips * TANKER_FEE;
                                         const savings = op.tse_for_irrigation * TSE_SAVING_RATE;
                                         const totalImpact = income + savings;
-                                        const efficiencyColor = efficiency >= 95 ? "text-emerald-600 dark:text-emerald-400" : efficiency >= 90 ? "text-amber-600 dark:text-amber-400" : "text-red-600 dark:text-red-400";
+                                        const efficiencyColor = efficiency >= 95 ? "text-mb-success" : efficiency >= 90 ? "text-mb-warning" : "text-mb-danger";
 
                                         return (
                                             <tr key={op.id} className="border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors">
@@ -983,10 +983,10 @@ export default function STPPage() {
                                                 <td className="py-3.5 px-5 text-right font-mono text-xs text-primary font-medium">{op.inlet_sewage.toLocaleString()}</td>
                                                 <td className="py-3.5 px-5 text-right font-mono text-xs text-blue-600 dark:text-blue-400 font-medium">{op.tse_for_irrigation.toLocaleString()}</td>
                                                 <td className={`py-3.5 px-5 text-right font-mono text-xs font-medium ${efficiencyColor}`}>{efficiency.toFixed(1)}%</td>
-                                                <td className="py-3.5 px-5 text-right font-mono text-xs text-amber-600 dark:text-amber-400">{op.tanker_trips}</td>
-                                                <td className="py-3.5 px-5 text-right font-mono text-xs text-emerald-600 dark:text-emerald-400">{income.toFixed(2)}</td>
+                                                <td className="py-3.5 px-5 text-right font-mono text-xs text-mb-warning">{op.tanker_trips}</td>
+                                                <td className="py-3.5 px-5 text-right font-mono text-xs text-mb-success">{income.toFixed(2)}</td>
                                                 <td className="py-3.5 px-5 text-right font-mono text-xs text-primary">{savings.toFixed(2)}</td>
-                                                <td className="py-3.5 px-5 text-right font-mono text-xs font-semibold text-emerald-600 dark:text-emerald-400">{totalImpact.toFixed(2)}</td>
+                                                <td className="py-3.5 px-5 text-right font-mono text-xs font-semibold text-mb-success">{totalImpact.toFixed(2)}</td>
                                             </tr>
                                         );
                                     })}

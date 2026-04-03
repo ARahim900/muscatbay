@@ -67,7 +67,8 @@ export async function getWaterMetersFromSupabase(): Promise<WaterMeter[]> {
     try {
         const { data, error } = await client
             .from('Water System')
-            .select('*'); // Dynamic month columns — must use SELECT * as new months are added over time
+            .select('*') // Dynamic month columns — must use SELECT * as new months are added over time
+            .limit(5000);
 
         if (error) {
             console.error('Error fetching water meters:', error.message);

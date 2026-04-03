@@ -184,15 +184,17 @@ export default function ContractorsPage() {
     const startIndex = (currentPage - 1) * effectivePageSize;
     const paginatedContractors = filteredContractors.slice(startIndex, startIndex + effectivePageSize);
 
-    const handleSort = (field: string) => {
-        if (sortField === field) {
-            setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
-        } else {
-            setSortField(field);
-            setSortDirection('asc');
-        }
+    const handleSort = useCallback((field: string) => {
+        setSortField(prev => {
+            if (prev === field) {
+                setSortDirection(d => d === 'asc' ? 'desc' : 'asc');
+            } else {
+                setSortDirection('asc');
+            }
+            return prev === field ? prev : field;
+        });
         setCurrentPage(1);
-    };
+    }, []);
 
     const handleExportCSV = () => {
         exportToCSV(

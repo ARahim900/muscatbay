@@ -109,7 +109,7 @@ export function Navbar() {
                             <span className="text-white">MUSCAT</span>
                             <span className="text-secondary"> BAY</span>
                         </span>
-                        <span className="text-[11px] text-white/60 font-normal hidden md:block">
+                        <span className="text-[11px] text-white/85 font-normal hidden md:block">
                             Resource Management
                         </span>
                     </div>
@@ -131,7 +131,7 @@ export function Navbar() {
                   flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200
                   ${isActive
                                         ? "bg-white/20 text-white"
-                                        : "text-white/70 hover:bg-white/10 hover:text-white"
+                                        : "text-white/90 hover:bg-white/10 hover:text-white"
                                     }
                 `}
                             >
@@ -148,7 +148,7 @@ export function Navbar() {
                 {/* Theme Toggle */}
                 <button
                     onClick={() => setIsDarkMode(!isDarkMode)}
-                    className="w-11 h-11 flex items-center justify-center hover:bg-white/10 rounded-lg text-white/70 hover:text-white transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:outline-none"
+                    className="w-11 h-11 flex items-center justify-center hover:bg-white/10 rounded-lg text-white/90 hover:text-white transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:outline-none"
                     aria-label="Toggle theme"
                 >
                     {isDarkMode ? (
@@ -160,7 +160,7 @@ export function Navbar() {
 
                 {/* Search Button - Hidden on small mobile */}
                 <button
-                    className="w-11 h-11 hidden sm:flex items-center justify-center hover:bg-white/10 rounded-lg text-white/70 hover:text-white transition-colors duration-200"
+                    className="w-11 h-11 hidden sm:flex items-center justify-center hover:bg-white/10 rounded-lg text-white/90 hover:text-white transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:outline-none"
                     aria-label="Search"
                 >
                     <Search className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -168,7 +168,7 @@ export function Navbar() {
 
                 {/* Notifications Button */}
                 <button
-                    className="w-11 h-11 flex items-center justify-center hover:bg-white/10 rounded-lg relative text-white/70 hover:text-white transition-colors duration-200"
+                    className="w-11 h-11 flex items-center justify-center hover:bg-white/10 rounded-lg relative text-white/90 hover:text-white transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:outline-none"
                     aria-label="Notifications"
                 >
                     <Bell className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -180,8 +180,9 @@ export function Navbar() {
                 <div className="relative" ref={dropdownRef}>
                     <button
                         onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
-                        className="flex items-center gap-2 ms-2 p-1.5 rounded-xl hover:bg-white/10 transition-colors duration-200 group"
+                        className="flex items-center gap-2 ms-2 p-1.5 rounded-xl hover:bg-white/10 transition-colors duration-200 group focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:outline-none"
                         aria-label="User profile menu"
+                        aria-controls="navbar-profile-menu"
                     >
                         {/* Profile Picture */}
                         <div className="relative">
@@ -200,7 +201,7 @@ export function Navbar() {
                             <span className="text-sm font-medium text-white leading-tight">
                                 {displayName}
                             </span>
-                            <span className="text-xs text-white/60 leading-tight">
+                            <span className="text-xs text-white/85 leading-tight">
                                 {userRole}
                             </span>
                         </div>
@@ -214,7 +215,7 @@ export function Navbar() {
 
                     {/* Profile Dropdown Menu */}
                     {isProfileDropdownOpen && (
-                        <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-slate-200 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                        <div id="navbar-profile-menu" className="absolute right-0 mt-2 w-56 max-w-[calc(100vw-2rem)] bg-white rounded-xl shadow-xl border border-slate-200 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
                             {/* User Info Header */}
                             <div className="px-4 py-3 border-b border-slate-100">
                                 <div className="flex items-center gap-3">
@@ -292,7 +293,7 @@ export function Navbar() {
                     flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors duration-200
                     ${isActive
                                             ? "bg-white/20 text-white"
-                                            : "text-white/70 hover:bg-white/10 hover:text-white"
+                                            : "text-white/90 hover:bg-white/10 hover:text-white"
                                         }
                   `}
                                 >

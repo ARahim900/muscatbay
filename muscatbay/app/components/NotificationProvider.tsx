@@ -111,7 +111,7 @@ function PermissionBanner({
               onRequest();
               setDismissed(true);
             }}
-            className="text-xs font-medium bg-secondary text-slate-900 rounded-md px-3 py-1.5 hover:bg-secondary/80 transition-colors"
+            className="text-xs font-medium bg-secondary text-slate-900 dark:text-white rounded-md px-3 py-1.5 hover:bg-secondary/80 transition-colors"
           >
             Enable
           </button>
