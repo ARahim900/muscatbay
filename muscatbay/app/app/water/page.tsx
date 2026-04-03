@@ -20,7 +20,7 @@ import {
 import {
     AreaChart, Area, XAxis, YAxis, Tooltip,
     ResponsiveContainer, Legend, BarChart, Bar, Cell, Line, CartesianGrid,
-    PieChart, Pie
+
 } from "recharts";
 
 // Water data imports
@@ -413,28 +413,6 @@ export default function WaterPage() {
 
         return { meterCount, totalForType, avgPerMeter, maxConsumer, minConsumer, pctOfTotal };
     }, [activeDetailType, typeTopConsumers, applicableMeters, consumptionChartData]);
-
-    // Zone distribution for selected type
-    const typeZoneDistribution = useMemo(() => {
-        if (!activeDetailType) return [];
-        const startIdx = AVAILABLE_MONTHS.indexOf(startMonth);
-        const endIdx = AVAILABLE_MONTHS.indexOf(endMonth);
-        const months = AVAILABLE_MONTHS.slice(startIdx, endIdx + 1);
-        const metersOfType = applicableMeters.filter(m => m.type === activeDetailType);
-
-        const zoneMap: Record<string, number> = {};
-        metersOfType.forEach(m => {
-            const total = months.reduce((sum, month) => sum + getConsumption(m, month), 0);
-            const zoneName = ZONE_CONFIG.find(z => z.code === m.zone)?.name || m.zone;
-            zoneMap[zoneName] = (zoneMap[zoneName] || 0) + total;
-        });
-
-        const ZONE_COLORS = [CHART_COLORS.primary, CHART_COLORS.success, CHART_COLORS.amber, CHART_COLORS.brand, CHART_COLORS.loss, CHART_COLORS.secondary, CHART_COLORS.accent, CHART_COLORS.gray];
-        return Object.entries(zoneMap)
-            .map(([zone, value], i) => ({ zone, value: Math.round(value), fill: ZONE_COLORS[i % ZONE_COLORS.length] }))
-            .filter(d => d.value > 0)
-            .sort((a, b) => b.value - a.value);
-    }, [activeDetailType, applicableMeters, startMonth, endMonth]);
 
     // Helper function to calculate trend
     const calcTrend = (current: number, previous: number): { trend: 'up' | 'down' | 'neutral'; trendValue: string } => {
@@ -919,46 +897,17 @@ export default function WaterPage() {
 
                     {/* Consumption by Type Tab */}
                     {monthlyTab === 'consumption' && (
-                        <div className="space-y-6">
-                            {/* Summary Stats */}
-                            <StatsGrid stats={[
-                                {
-                                    label: "TOTAL CONSUMPTION",
-                                    value: `${totalConsumption.toLocaleString('en-US')} m³`,
-                                    subtitle: "Selected range",
-                                    icon: Droplets,
-                                    variant: "success"
-                                },
-                                {
-                                    label: "METER COUNT",
-                                    value: filteredMeters.length.toString(),
-                                    subtitle: `Type: ${selectedType}`,
-                                    icon: Gauge,
-                                    variant: "water"
-                                },
-                                {
-                                    label: "HIGHEST CONSUMER",
-                                    value: highestConsumer.meter.label,
-                                    subtitle: `${highestConsumer.total.toLocaleString('en-US')} m³`,
-                                    icon: TrendingUp,
-                                    variant: "primary"
-                                },
-                                {
-                                    label: "ACTIVE TYPES",
-                                    value: (uniqueTypes.length - 1).toString(),
-                                    subtitle: "Across range",
-                                    icon: Database,
-                                    variant: "warning"
-                                }
-                            ]} />
+                        <div className="space-y-5">
 
-                            {/* Consumption by Type Chart — clickable bars */}
+                            {/* ── Main Chart ── */}
                             <Card className="card-elevated">
                                 <CardHeader className="card-elevated-header p-4 sm:p-5 md:p-6">
                                     <div className="flex items-center justify-between flex-wrap gap-2">
                                         <div>
                                             <CardTitle className="text-base sm:text-lg">Consumption by Type (m³)</CardTitle>
-                                            <p className="text-xs sm:text-sm text-slate-500">Aggregated for {startMonth} – {endMonth} · Click a bar to explore</p>
+                                            <p className="text-xs text-slate-500 mt-0.5">
+                                                {startMonth} – {endMonth} · <span className="font-medium text-slate-600 dark:text-slate-300">{totalConsumption.toLocaleString('en-US')} m³</span> total · {filteredMeters.length} meters
+                                            </p>
                                         </div>
                                         {activeDetailType && (
                                             <Button
@@ -973,7 +922,7 @@ export default function WaterPage() {
                                     </div>
                                 </CardHeader>
                                 <CardContent className="p-4 sm:p-5 md:p-6 pt-0">
-                                    <div className="h-[300px] sm:h-[350px] md:h-[400px] w-full">
+                                    <div className="h-[280px] sm:h-[320px] md:h-[360px] w-full">
                                         <ResponsiveContainer width="100%" height="100%">
                                             <BarChart
                                                 data={consumptionChartData}
@@ -1010,185 +959,86 @@ export default function WaterPage() {
                                             </BarChart>
                                         </ResponsiveContainer>
                                     </div>
+                                    {!activeDetailType && (
+                                        <p className="text-[11px] text-slate-400 text-center mt-2">Click any bar to see detailed breakdown</p>
+                                    )}
                                 </CardContent>
                             </Card>
 
-                            {/* ── Type Detail Panel (appears when a type is selected) ── */}
+                            {/* ── Type Detail Panel ── */}
                             {activeDetailType && typeDetailStats && (
-                                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
+                                <div className="space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-300">
 
-                                    {/* Detail header */}
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: TYPE_COLORS[activeDetailType as keyof typeof TYPE_COLORS] || CHART_COLORS.gray }} />
-                                        <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100">{activeDetailType}</h3>
-                                        <Badge variant="outline" className="text-xs">{typeDetailStats.meterCount} meters</Badge>
+                                    {/* Inline summary strip */}
+                                    <div className="flex items-center gap-3 px-1 flex-wrap">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: TYPE_COLORS[activeDetailType as keyof typeof TYPE_COLORS] || CHART_COLORS.gray }} />
+                                            <span className="text-sm font-semibold text-slate-800 dark:text-slate-100">{activeDetailType}</span>
+                                        </div>
+                                        <span className="text-xs text-slate-400">|</span>
+                                        <span className="text-xs text-slate-500 dark:text-slate-400">
+                                            <span className="font-medium text-slate-700 dark:text-slate-200">{typeDetailStats.totalForType.toLocaleString('en-US', { maximumFractionDigits: 0 })} m³</span>
+                                            {' '}({typeDetailStats.pctOfTotal.toFixed(1)}% of total)
+                                        </span>
+                                        <span className="text-xs text-slate-400">|</span>
+                                        <span className="text-xs text-slate-500 dark:text-slate-400">{typeDetailStats.meterCount} meters · avg {typeDetailStats.avgPerMeter.toLocaleString('en-US', { maximumFractionDigits: 0 })} m³ each</span>
                                     </div>
 
-                                    {/* Type-specific KPIs */}
-                                    <StatsGrid stats={[
-                                        {
-                                            label: "TYPE TOTAL",
-                                            value: `${typeDetailStats.totalForType.toLocaleString('en-US', { maximumFractionDigits: 0 })} m³`,
-                                            subtitle: `${typeDetailStats.pctOfTotal.toFixed(1)}% of all consumption`,
-                                            icon: Droplets,
-                                            variant: "water"
-                                        },
-                                        {
-                                            label: "AVG PER METER",
-                                            value: `${typeDetailStats.avgPerMeter.toLocaleString('en-US', { maximumFractionDigits: 0 })} m³`,
-                                            subtitle: `Across ${typeDetailStats.meterCount} meters`,
-                                            icon: Gauge,
-                                            variant: "success"
-                                        },
-                                        {
-                                            label: "HIGHEST METER",
-                                            value: typeDetailStats.maxConsumer.label,
-                                            subtitle: `${typeDetailStats.maxConsumer.total.toLocaleString('en-US')} m³`,
-                                            icon: TrendingUp,
-                                            variant: "primary"
-                                        },
-                                        {
-                                            label: "LOWEST METER",
-                                            value: typeDetailStats.minConsumer.label,
-                                            subtitle: `${typeDetailStats.minConsumer.total.toLocaleString('en-US')} m³`,
-                                            icon: TrendingDown,
-                                            variant: "warning"
-                                        }
-                                    ]} />
-
-                                    {/* Row: Monthly Trend + Zone Distribution */}
-                                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                                        {/* Monthly Trend */}
-                                        <Card className="card-elevated lg:col-span-2">
-                                            <CardHeader className="card-elevated-header p-4 sm:p-5 md:p-6">
-                                                <CardTitle className="text-sm sm:text-base">Monthly Trend — {activeDetailType}</CardTitle>
-                                                <p className="text-xs text-slate-500">{startMonth} – {endMonth}</p>
-                                            </CardHeader>
-                                            <CardContent className="p-4 sm:p-5 md:p-6 pt-0">
-                                                <div className="h-[250px] sm:h-[280px] w-full">
-                                                    <ResponsiveContainer width="100%" height="100%">
-                                                        <AreaChart data={typeTrendData} margin={{ left: 10, right: 10, top: 5, bottom: 5 }}>
-                                                            <defs>
-                                                                <linearGradient id="typeGradient" x1="0" y1="0" x2="0" y2="1">
-                                                                    <stop offset="5%" stopColor={TYPE_COLORS[activeDetailType as keyof typeof TYPE_COLORS] || CHART_COLORS.primary} stopOpacity={0.3} />
-                                                                    <stop offset="95%" stopColor={TYPE_COLORS[activeDetailType as keyof typeof TYPE_COLORS] || CHART_COLORS.primary} stopOpacity={0} />
-                                                                </linearGradient>
-                                                            </defs>
-                                                            <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid, rgba(148,163,184,0.15))" />
-                                                            <XAxis dataKey="month" tick={{ fontSize: 10, fill: "var(--chart-axis)" }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
-                                                            <YAxis tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v} tick={{ fontSize: 10, fill: "var(--chart-axis)" }} axisLine={false} tickLine={false} />
-                                                            <Tooltip content={<LiquidTooltip />} />
-                                                            <Area
-                                                                type="monotone"
-                                                                dataKey="consumption"
-                                                                stroke={TYPE_COLORS[activeDetailType as keyof typeof TYPE_COLORS] || CHART_COLORS.primary}
-                                                                strokeWidth={2}
-                                                                fill="url(#typeGradient)"
-                                                                animationDuration={600}
-                                                            />
-                                                        </AreaChart>
-                                                    </ResponsiveContainer>
-                                                </div>
-                                            </CardContent>
-                                        </Card>
-
-                                        {/* Zone Distribution Donut */}
-                                        <Card className="card-elevated">
-                                            <CardHeader className="card-elevated-header p-4 sm:p-5 md:p-6">
-                                                <CardTitle className="text-sm sm:text-base">Zone Distribution</CardTitle>
-                                                <p className="text-xs text-slate-500">{typeZoneDistribution.length} zones</p>
-                                            </CardHeader>
-                                            <CardContent className="p-4 sm:p-5 md:p-6 pt-0">
-                                                {typeZoneDistribution.length > 0 ? (
-                                                    <div className="flex flex-col items-center gap-3">
-                                                        <div className="h-[180px] w-full">
-                                                            <ResponsiveContainer width="100%" height="100%">
-                                                                <PieChart>
-                                                                    <Pie
-                                                                        data={typeZoneDistribution}
-                                                                        dataKey="value"
-                                                                        nameKey="zone"
-                                                                        cx="50%"
-                                                                        cy="50%"
-                                                                        innerRadius={45}
-                                                                        outerRadius={75}
-                                                                        paddingAngle={2}
-                                                                        animationDuration={600}
-                                                                    >
-                                                                        {typeZoneDistribution.map((entry, i) => (
-                                                                            <Cell key={i} fill={entry.fill} />
-                                                                        ))}
-                                                                    </Pie>
-                                                                    <Tooltip content={<LiquidTooltip />} />
-                                                                </PieChart>
-                                                            </ResponsiveContainer>
-                                                        </div>
-                                                        {/* Legend */}
-                                                        <div className="flex flex-wrap gap-x-3 gap-y-1 justify-center">
-                                                            {typeZoneDistribution.slice(0, 6).map(d => (
-                                                                <div key={d.zone} className="flex items-center gap-1.5 text-[10px] text-slate-500 dark:text-slate-400">
-                                                                    <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: d.fill }} />
-                                                                    <span className="truncate max-w-[80px]">{d.zone}</span>
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-                                                ) : (
-                                                    <p className="text-xs text-slate-400 text-center py-8">No zone data</p>
-                                                )}
-                                            </CardContent>
-                                        </Card>
-                                    </div>
-
-                                    {/* Top Consumers Bar Chart */}
+                                    {/* Monthly Trend — full width */}
                                     <Card className="card-elevated">
-                                        <CardHeader className="card-elevated-header p-4 sm:p-5 md:p-6">
-                                            <CardTitle className="text-sm sm:text-base">Top Consumers — {activeDetailType}</CardTitle>
-                                            <p className="text-xs text-slate-500">Top {typeTopConsumers.length} meters by total consumption</p>
+                                        <CardHeader className="card-elevated-header p-4 sm:p-5 md:p-6 pb-2">
+                                            <CardTitle className="text-sm sm:text-base">Monthly Trend</CardTitle>
                                         </CardHeader>
                                         <CardContent className="p-4 sm:p-5 md:p-6 pt-0">
-                                            <div className="h-[300px] sm:h-[350px] w-full">
+                                            <div className="h-[220px] sm:h-[260px] w-full">
                                                 <ResponsiveContainer width="100%" height="100%">
-                                                    <BarChart data={typeTopConsumers} layout="vertical" margin={{ left: 100 }}>
-                                                        <XAxis type="number" tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(1)}k` : String(v)} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "var(--chart-axis)" }} />
-                                                        <YAxis type="category" dataKey="label" width={90} axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "var(--chart-axis)" }} />
-                                                        <Tooltip content={<LiquidTooltip />} cursor={{ fill: 'rgba(0,0,0,0.04)', radius: 6 }} />
-                                                        <Bar dataKey="total" radius={[0, 6, 6, 0]} barSize={20} animationDuration={600}>
-                                                            {typeTopConsumers.map((_, i) => (
-                                                                <Cell
-                                                                    key={`tc-${i}`}
-                                                                    fill={TYPE_COLORS[activeDetailType as keyof typeof TYPE_COLORS] || CHART_COLORS.primary}
-                                                                    fillOpacity={1 - (i * 0.06)}
-                                                                />
-                                                            ))}
-                                                        </Bar>
-                                                    </BarChart>
+                                                    <AreaChart data={typeTrendData} margin={{ left: 10, right: 10, top: 5, bottom: 5 }}>
+                                                        <defs>
+                                                            <linearGradient id="typeGradient" x1="0" y1="0" x2="0" y2="1">
+                                                                <stop offset="5%" stopColor={TYPE_COLORS[activeDetailType as keyof typeof TYPE_COLORS] || CHART_COLORS.primary} stopOpacity={0.3} />
+                                                                <stop offset="95%" stopColor={TYPE_COLORS[activeDetailType as keyof typeof TYPE_COLORS] || CHART_COLORS.primary} stopOpacity={0} />
+                                                            </linearGradient>
+                                                        </defs>
+                                                        <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid, rgba(148,163,184,0.15))" />
+                                                        <XAxis dataKey="month" tick={{ fontSize: 10, fill: "var(--chart-axis)" }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
+                                                        <YAxis tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v} tick={{ fontSize: 10, fill: "var(--chart-axis)" }} axisLine={false} tickLine={false} />
+                                                        <Tooltip content={<LiquidTooltip />} />
+                                                        <Area
+                                                            type="monotone"
+                                                            dataKey="consumption"
+                                                            stroke={TYPE_COLORS[activeDetailType as keyof typeof TYPE_COLORS] || CHART_COLORS.primary}
+                                                            strokeWidth={2}
+                                                            fill="url(#typeGradient)"
+                                                            animationDuration={600}
+                                                        />
+                                                    </AreaChart>
                                                 </ResponsiveContainer>
                                             </div>
                                         </CardContent>
                                     </Card>
 
-                                    {/* Meter Details Table */}
+                                    {/* Top Meters Table */}
                                     <Card className="card-elevated">
-                                        <CardHeader className="card-elevated-header p-4 sm:p-5 md:p-6">
-                                            <CardTitle className="text-sm sm:text-base">Meter Breakdown</CardTitle>
-                                            <p className="text-xs text-slate-500">{activeDetailType} meters sorted by consumption</p>
+                                        <CardHeader className="card-elevated-header p-4 sm:p-5 md:p-6 pb-2">
+                                            <CardTitle className="text-sm sm:text-base">Top Meters</CardTitle>
                                         </CardHeader>
                                         <CardContent className="p-0">
                                             <div className="overflow-x-auto">
                                                 <Table>
                                                     <TableHeader>
                                                         <TableRow>
-                                                            <TableHead className="text-xs pl-4 sm:pl-6">Meter</TableHead>
+                                                            <TableHead className="text-xs pl-4 sm:pl-6 w-8">#</TableHead>
+                                                            <TableHead className="text-xs">Meter</TableHead>
                                                             <TableHead className="text-xs">Zone</TableHead>
                                                             <TableHead className="text-xs text-right pr-4 sm:pr-6">Consumption (m³)</TableHead>
-                                                            <TableHead className="text-xs text-right pr-4 sm:pr-6 hidden sm:table-cell">% of Type</TableHead>
+                                                            <TableHead className="text-xs text-right pr-4 sm:pr-6 hidden sm:table-cell w-36">Share</TableHead>
                                                         </TableRow>
                                                     </TableHeader>
                                                     <TableBody>
-                                                        {typeTopConsumers.map((meter) => (
+                                                        {typeTopConsumers.map((meter, idx) => (
                                                             <TableRow key={meter.label}>
-                                                                <TableCell className="text-xs font-medium pl-4 sm:pl-6">{meter.label}</TableCell>
+                                                                <TableCell className="text-xs text-slate-400 pl-4 sm:pl-6 font-mono">{idx + 1}</TableCell>
+                                                                <TableCell className="text-xs font-medium">{meter.label}</TableCell>
                                                                 <TableCell className="text-xs text-slate-500">
                                                                     {ZONE_CONFIG.find(z => z.code === meter.zone)?.name || meter.zone}
                                                                 </TableCell>
@@ -1199,7 +1049,7 @@ export default function WaterPage() {
                                                                     <div className="flex items-center justify-end gap-2">
                                                                         <div className="w-16 h-1.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
                                                                             <div
-                                                                                className="h-full rounded-full"
+                                                                                className="h-full rounded-full transition-all"
                                                                                 style={{
                                                                                     width: `${typeDetailStats.totalForType > 0 ? Math.max((meter.total / typeDetailStats.totalForType) * 100, 2) : 0}%`,
                                                                                     backgroundColor: TYPE_COLORS[activeDetailType as keyof typeof TYPE_COLORS] || CHART_COLORS.primary
