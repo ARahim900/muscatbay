@@ -56,6 +56,8 @@ export {
     transformAsset,
     // Contractor
     type ContractorTracker,
+    type ContractorContract,
+    type ContractorYearlyCost,
     type AmcContractorSummary,
     type AmcContractorDetails,
     type AmcContractorExpiry,
@@ -95,6 +97,8 @@ export {
     // Assets
     getAssetsFromSupabase,
     // Contractors
+    getContractorContracts,
+    getContractorYearlyCosts,
     getContractorTrackerData,
     getContractorSummary,
     getContractorDetails,

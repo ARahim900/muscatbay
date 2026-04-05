@@ -15,9 +15,55 @@ import {
     AmcExpiry,
     AmcContact,
     AmcPricing,
+    ContractorContract,
+    ContractorYearlyCost,
     transformContractor
 } from '@/entities/contractor';
 import type { Contractor } from '@/lib/mock-data';
+
+// =============================================================================
+// CONTRACTOR CONTRACTS API (contractor_contracts + contractor_yearly_costs)
+// =============================================================================
+
+/**
+ * Fetch all contracts from contractor_contracts table
+ */
+export async function getContractorContracts(): Promise<ContractorContract[]> {
+    const client = getSupabaseClient();
+    if (!client) return [];
+
+    const { data, error } = await client
+        .from('contractor_contracts')
+        .select('id, contractor, contract_ref, service, flow, status, contract_years, annual_value_omr, total_value_omr, rate_note, note, created_at')
+        .order('flow')
+        .order('contractor');
+
+    if (error) {
+        console.error('Error fetching contractor_contracts:', error.message);
+        return [];
+    }
+    return (data as ContractorContract[]) || [];
+}
+
+/**
+ * Fetch all yearly cost breakdowns from contractor_yearly_costs table
+ */
+export async function getContractorYearlyCosts(): Promise<ContractorYearlyCost[]> {
+    const client = getSupabaseClient();
+    if (!client) return [];
+
+    const { data, error } = await client
+        .from('contractor_yearly_costs')
+        .select('id, contractor, contract_year, year_label, amount_omr, created_at')
+        .order('contract_year')
+        .order('contractor');
+
+    if (error) {
+        console.error('Error fetching contractor_yearly_costs:', error.message);
+        return [];
+    }
+    return (data as ContractorYearlyCost[]) || [];
+}
 
 // =============================================================================
 // NEW CONTRACTOR TRACKER API
