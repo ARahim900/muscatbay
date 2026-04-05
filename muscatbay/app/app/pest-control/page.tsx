@@ -5,7 +5,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { Bug } from "lucide-react";
 
 export default function PestControlPage() {
-    const embedUrl = "https://aitable.ai/embed/shrCvd8kL1KLz6p09zcrv";
+    const embedUrl = "https://aitable.ai/share/shrRV9Fp15zCH50ZFTWtb";
 
     return (
         <div className="space-y-6 sm:space-y-7 md:space-y-8 w-full">
