@@ -142,6 +142,8 @@ export interface SupabaseWaterMeter {
     jan_26: number | null;
     feb_26: number | null;
     mar_26: number | null;
+    apr_26: number | null;
+    [key: string]: unknown; // allows future month columns (may_26, jun_26, etc.)
     created_at?: string;
     updated_at?: string;
 }
@@ -156,38 +158,25 @@ function sanitizeConsumption(value: number | null): number | null {
 }
 
 /**
- * Transform Supabase water meter to match the app's WaterMeter interface
+ * Transform Supabase water meter to match the app's WaterMeter interface.
+ * Automatically detects all month columns (format: mmm_yy) from the DB row,
+ * so no code change is needed when new month columns are added to Supabase.
  */
 export function transformWaterMeter(dbMeter: SupabaseWaterMeter): WaterMeter {
-    const consumption: Record<string, number | null> = {
-        'Jan-24': sanitizeConsumption(dbMeter.jan_24),
-        'Feb-24': sanitizeConsumption(dbMeter.feb_24),
-        'Mar-24': sanitizeConsumption(dbMeter.mar_24),
-        'Apr-24': sanitizeConsumption(dbMeter.apr_24),
-        'May-24': sanitizeConsumption(dbMeter.may_24),
-        'Jun-24': sanitizeConsumption(dbMeter.jun_24),
-        'Jul-24': sanitizeConsumption(dbMeter.jul_24),
-        'Aug-24': sanitizeConsumption(dbMeter.aug_24),
-        'Sep-24': sanitizeConsumption(dbMeter.sep_24),
-        'Oct-24': sanitizeConsumption(dbMeter.oct_24),
-        'Nov-24': sanitizeConsumption(dbMeter.nov_24),
-        'Dec-24': sanitizeConsumption(dbMeter.dec_24),
-        'Jan-25': sanitizeConsumption(dbMeter.jan_25),
-        'Feb-25': sanitizeConsumption(dbMeter.feb_25),
-        'Mar-25': sanitizeConsumption(dbMeter.mar_25),
-        'Apr-25': sanitizeConsumption(dbMeter.apr_25),
-        'May-25': sanitizeConsumption(dbMeter.may_25),
-        'Jun-25': sanitizeConsumption(dbMeter.jun_25),
-        'Jul-25': sanitizeConsumption(dbMeter.jul_25),
-        'Aug-25': sanitizeConsumption(dbMeter.aug_25),
-        'Sep-25': sanitizeConsumption(dbMeter.sep_25),
-        'Oct-25': sanitizeConsumption(dbMeter.oct_25),
-        'Nov-25': sanitizeConsumption(dbMeter.nov_25),
-        'Dec-25': sanitizeConsumption(dbMeter.dec_25),
-        'Jan-26': sanitizeConsumption(dbMeter.jan_26),
-        'Feb-26': sanitizeConsumption(dbMeter.feb_26),
-        'Mar-26': sanitizeConsumption(dbMeter.mar_26),
-    };
+    const consumption: Record<string, number | null> = {};
+    const monthRegex = /^(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)_(\d{2})$/i;
+
+    for (const key of Object.keys(dbMeter)) {
+        const match = key.match(monthRegex);
+        if (match) {
+            const monthName = match[1].charAt(0).toUpperCase() + match[1].slice(1).toLowerCase();
+            const year = match[2];
+            const label = `${monthName}-${year}`;
+            const rawVal = dbMeter[key];
+            const numVal = typeof rawVal === 'number' ? rawVal : null;
+            consumption[label] = sanitizeConsumption(numVal);
+        }
+    }
 
     return {
         id: dbMeter.id,
