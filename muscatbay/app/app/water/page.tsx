@@ -333,11 +333,17 @@ export default function WaterPage() {
     // Muscat Bay Community: specific meters billed to the community
     const MUSCAT_BAY_COMMUNITY = 'Muscat Bay Community';
     const COMMUNITY_ACCOUNTS = new Set([
+        // D_Building_Common (21)
         '4300126','4300135','4300136','4300137','4300138','4300139','4300140','4300141',
         '4300142','4300143','4300144','4300145','4300201','4300202','4300203','4300204',
-        '4300205','4300206','4300207','4300208','4300209','4300294','4300296','4300297',
-        '4300299','4300308','4300309','4300310','4300320','4300321','4300323','4300326',
-        '4300336','4300337','4300338','4300340','4300341',
+        '4300205','4300206','4300207','4300208','4300209',
+        // IRR_Servies (7)
+        '4300294','4300308','4300320','4300321','4300323','4300326','4300341',
+        // MB_Common (8)
+        '4300295','4300296','4300297','4300299','4300309','4300336','4300337','4300338',
+        // Un-Sold (15)
+        '4300083','4300093','4300095','4300151','4300159','4300160','4300167','4300173',
+        '4300188','4300191','4300192','4300193','4300194','4300195','4300237',
     ]);
 
     // Applicable meters for consumption view:
@@ -430,6 +436,7 @@ export default function WaterPage() {
         'Building': CHART_COLORS.amber,
         [MUSCAT_BAY_COMMUNITY]: '#00d2b3',
         'D_Building_Common': CHART_COLORS.brand,
+        'Un-Sold': '#f97316',
     };
 
     // ── Type Detail Data (for interactive drill-down) ─────────────────────
@@ -465,8 +472,7 @@ export default function WaterPage() {
                 zone: m.zone,
                 total: Math.round((meterTotalsMap.get(m.accountNumber) || 0) * 10) / 10,
             }))
-            .sort((a, b) => b.total - a.total)
-            .slice(0, 10);
+            .sort((a, b) => b.total - a.total);
     }, [activeDetailType, applicableMeters, meterTotalsMap]);
 
     // Type-specific stats
@@ -1034,7 +1040,7 @@ export default function WaterPage() {
                                     {/* Top Meters Table */}
                                     <Card className="card-elevated">
                                         <CardHeader className="card-elevated-header p-4 sm:p-5 md:p-6 pb-2">
-                                            <CardTitle className="text-sm sm:text-base">Top Meters</CardTitle>
+                                            <CardTitle className="text-sm sm:text-base">Representing Meters</CardTitle>
                                         </CardHeader>
                                         <CardContent className="p-0">
                                             <div className="overflow-x-auto">
