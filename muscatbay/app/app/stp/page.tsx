@@ -321,18 +321,7 @@ export default function STPPage() {
         }
     }, [operations, selectedMonth]);
 
-    // Helper function to calculate trend
-    const calcTrend = (current: number, previous: number): { trend: 'up' | 'down' | 'neutral'; trendValue: string } => {
-        if (previous === 0) return { trend: 'neutral', trendValue: '0%' };
-        const change = ((current - previous) / previous) * 100;
-        if (Math.abs(change) < 0.5) return { trend: 'neutral', trendValue: '0%' };
-        return {
-            trend: change > 0 ? 'up' : 'down',
-            trendValue: `${Math.abs(change).toFixed(1)}%`
-        };
-    };
-
-    // Calculate statistics from filtered operations with trends
+    // Calculate statistics from filtered operations
     const stats = useMemo(() => {
         const totalInlet = operations.reduce((sum, op) => sum + op.inlet_sewage, 0);
         const totalTSE = operations.reduce((sum, op) => sum + op.tse_for_irrigation, 0);
@@ -343,41 +332,6 @@ export default function STPPage() {
         const treatmentEfficiency = totalInlet > 0 ? (totalTSE / totalInlet) * 100 : 0;
         const dailyAverageInlet = operations.length > 0 ? totalInlet / operations.length : 0;
 
-        // Calculate previous period data for trends
-        const startIdx = allMonths.indexOf(startMonth);
-        const endIdx = allMonths.indexOf(endMonth);
-        const rangeLength = endIdx >= startIdx ? endIdx - startIdx + 1 : 1;
-        const prevEndIdx = startIdx > 0 ? startIdx - 1 : -1;
-        const prevStartIdx = prevEndIdx >= 0 ? Math.max(0, prevEndIdx - rangeLength + 1) : -1;
-
-        let prevInlet = 0, prevTSE = 0, prevTrips = 0, prevOperationsCount = 0;
-        if (prevStartIdx >= 0 && prevEndIdx >= 0 && allMonths.length > 0) {
-            const prevRangeMonths = allMonths.slice(prevStartIdx, prevEndIdx + 1);
-            const prevOps = allOperations.filter(op => {
-                const opMonth = format(new Date(op.date), "MMM-yy");
-                return prevRangeMonths.includes(opMonth);
-            });
-            prevInlet = prevOps.reduce((sum, op) => sum + op.inlet_sewage, 0);
-            prevTSE = prevOps.reduce((sum, op) => sum + op.tse_for_irrigation, 0);
-            prevTrips = prevOps.reduce((sum, op) => sum + op.tanker_trips, 0);
-            prevOperationsCount = prevOps.length;
-        }
-
-        const prevIncome = prevTrips * TANKER_FEE;
-        const prevSavings = prevTSE * TSE_SAVING_RATE;
-        const prevEconomicImpact = prevIncome + prevSavings;
-        const prevEfficiency = prevInlet > 0 ? (prevTSE / prevInlet) * 100 : 0;
-        const prevDailyAvg = prevOperationsCount > 0 ? prevInlet / prevOperationsCount : 0;
-
-        const inletTrend = calcTrend(totalInlet, prevInlet);
-        const tseTrend = calcTrend(totalTSE, prevTSE);
-        const tripsTrend = calcTrend(totalTrips, prevTrips);
-        const incomeTrend = calcTrend(generatedIncome, prevIncome);
-        const savingsTrend = calcTrend(waterSavings, prevSavings);
-        const economicTrend = calcTrend(totalEconomicImpact, prevEconomicImpact);
-        const efficiencyTrend = calcTrend(treatmentEfficiency, prevEfficiency);
-        const dailyAvgTrend = calcTrend(dailyAverageInlet, prevDailyAvg);
-
         return [
             {
                 label: "Inlet Sewage",
@@ -385,8 +339,6 @@ export default function STPPage() {
                 subtitle: `Range: ${selectedDateRange.start} - ${selectedDateRange.end}`,
                 icon: Droplets,
                 variant: "primary" as const,
-                trend: inletTrend.trend,
-                trendValue: inletTrend.trendValue
             },
             {
                 label: "TSE for Irrigation",
@@ -394,8 +346,6 @@ export default function STPPage() {
                 subtitle: "Recycled Water Output",
                 icon: Recycle,
                 variant: "secondary" as const,
-                trend: tseTrend.trend,
-                trendValue: tseTrend.trendValue
             },
             {
                 label: "Tanker Trips",
@@ -403,8 +353,6 @@ export default function STPPage() {
                 subtitle: `at ${TANKER_FEE} OMR / trip`,
                 icon: Truck,
                 variant: "warning" as const,
-                trend: tripsTrend.trend,
-                trendValue: tripsTrend.trendValue
             },
             {
                 label: "Generated Income",
@@ -412,8 +360,6 @@ export default function STPPage() {
                 subtitle: "from discharge fees",
                 icon: DollarSign,
                 variant: "success" as const,
-                trend: incomeTrend.trend,
-                trendValue: incomeTrend.trendValue
             },
             {
                 label: "Water Savings",
@@ -421,8 +367,6 @@ export default function STPPage() {
                 subtitle: `${TSE_SAVING_RATE} OMR per m³`,
                 icon: PiggyBank,
                 variant: "primary" as const,
-                trend: savingsTrend.trend,
-                trendValue: savingsTrend.trendValue
             },
             {
                 label: "Total Economic Impact",
@@ -430,8 +374,6 @@ export default function STPPage() {
                 subtitle: "Income + Savings",
                 icon: TrendingUp,
                 variant: "success" as const,
-                trend: economicTrend.trend,
-                trendValue: economicTrend.trendValue
             },
             {
                 label: "Treatment Efficiency",
@@ -439,8 +381,6 @@ export default function STPPage() {
                 subtitle: "TSE Output to Inlet Ratio",
                 icon: Gauge,
                 variant: "secondary" as const,
-                trend: efficiencyTrend.trend,
-                trendValue: efficiencyTrend.trendValue
             },
             {
                 label: "Daily Average Inlet",
@@ -448,11 +388,9 @@ export default function STPPage() {
                 subtitle: "Average Daily Input",
                 icon: Activity,
                 variant: "primary" as const,
-                trend: dailyAvgTrend.trend,
-                trendValue: dailyAvgTrend.trendValue
             }
         ];
-    }, [operations, selectedDateRange, allMonths, allOperations, startMonth, endMonth]);
+    }, [operations, selectedDateRange]);
 
     // Monthly chart data from filtered operations (sorted chronologically)
     const monthlyChartData = useMemo(() => {
