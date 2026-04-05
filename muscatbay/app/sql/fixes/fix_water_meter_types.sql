@@ -47,3 +47,21 @@ WHERE account_number = '4300295';  -- Sales Center Common Building
 UPDATE "Water System"
 SET type = 'MB_Common'
 WHERE account_number = '4300337';  -- Cabinet FM (CONTRACTORS OFFICE)
+
+-- ──────────────────────────────────────────────────────────────
+-- 5. Irrigation Controller UP (TSE): set to N/A
+-- ──────────────────────────────────────────────────────────────
+UPDATE "Water System"
+SET label = 'Irrigation- Controller UP (TSE)',
+    level = 'N/A',
+    zone = 'N/A',
+    type = 'N/A'
+WHERE account_number = '4300340';
+
+-- Also update Daily Water Consumption table if it exists
+UPDATE "Daily Water Consumption"
+SET label = 'Irrigation- Controller UP (TSE)',
+    level = 'N/A',
+    zone = 'N/A',
+    type = 'N/A'
+WHERE account_number = '4300340';
