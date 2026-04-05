@@ -57,14 +57,14 @@ import { saveFilterPreferences, loadFilterPreferences } from "@/lib/filter-prefe
 type DashboardView = 'monthly' | 'daily';
 
 const CHART_COLORS = {
-    primary: '#00A896',   // Deep teal — matches brand accent (#00D2B3) family
-    secondary: '#5BB8C8', // Mid teal
-    accent: '#00D2B3',    // Brand accent teal
-    success: '#5BA88B',
-    loss: '#C95D63',
-    brand: '#4E4456',     // Brand primary plum
-    amber: '#E8A838',
-    gray: '#6B5F73',
+    primary: '#6B9AC4',   // Elegant Blue — water systems
+    secondary: '#A4C5BB', // Brand Teal
+    accent: '#A4C5BB',    // Brand Teal
+    success: '#84B59F',   // Elegant Green
+    loss: '#D67A7A',      // Elegant Red
+    brand: '#4D445D',     // Brand Dark — L3 Individual
+    amber: '#E8C064',     // Elegant Yellow
+    gray: '#9B86A8',      // Elegant Purple
 } as const;
 
 // Pre-computed level caches to avoid repeated .filter() calls

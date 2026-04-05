@@ -75,58 +75,58 @@
   /* Muscat Bay Design System Variables */
 
   /* Muscat Bay Brand Colors (for auth pages and legacy usage) */
-  --mb-primary: #4E4456;
+  --mb-primary: #4D445D;
   --mb-primary-hover: #3A3341;
-  --mb-secondary: #A8D5E3;
+  --mb-secondary: #A4C5BB;
   --mb-secondary-foreground: #FFFFFF;
-  --mb-secondary-light: #CCFBF1;
-  --mb-secondary-active: #00b89d;
-  --mb-primary-light: #6b5f75;
+  --mb-secondary-light: #E8F1EF;
+  --mb-secondary-active: #8AAFA5;
+  --mb-primary-light: #6B5F73;
 
-  /* Muscat Bay Status Colors */
-  --mb-success: #10B981;
-  --mb-success-hover: #059669;
-  --mb-success-light: #ECFDF5;
-  --mb-danger: #EF4444;
-  --mb-danger-hover: #DC2626;
-  --mb-danger-light: #FEF2F2;
-  --mb-warning: #F59E0B;
-  --mb-warning-light: #FFFBEB;
-  --mb-info: #3B82F6;
-  --mb-info-light: #EFF6FF;
+  /* Muscat Bay Status Colors — Elegant Palette */
+  --mb-success: #84B59F;
+  --mb-success-hover: #6B9A87;
+  --mb-success-light: #E8F1EF;
+  --mb-danger: #D67A7A;
+  --mb-danger-hover: #C06070;
+  --mb-danger-light: #F5EAEA;
+  --mb-warning: #E8C064;
+  --mb-warning-light: #FBF4E3;
+  --mb-info: #6B9AC4;
+  --mb-info-light: #EAF0F7;
 
   /* Backgrounds */
-  --background: #F9FAFB;
+  --background: #F7F8F9;
   /* Main Content Area */
   --foreground: #0A0A0A;
   /* Primary Text */
 
-  /* Cards - slightly darker than background for subtle contrast */
-  --card: #EFF0F3;
+  /* Cards */
+  --card: #FFFFFF;
   --card-foreground: #0A0A0A;
 
-  /* Component surfaces - for subtle layering */
-  --component: #ECEDF0;
+  /* Component surfaces */
+  --component: #F0F2F4;
   --component-foreground: #0A0A0A;
 
-  /* Primary Brand (Purple-Gray) */
-  --primary: #4E4456;
+  /* Primary Brand (Brand Dark) */
+  --primary: #4D445D;
   --primary-foreground: #FFFFFF;
 
-  /* Secondary (Teal/Cyan) */
-  --secondary: #00D2B3;
+  /* Secondary (Brand Teal) */
+  --secondary: #A4C5BB;
   --secondary-foreground: #FFFFFF;
 
   /* Muted / Neutral */
   --muted: #F3F4F6;
-  --muted-foreground: #454545;
+  --muted-foreground: #6B7280;
 
   /* Accents */
-  --accent: #00D2B3;
+  --accent: #A4C5BB;
   --accent-foreground: #FFFFFF;
 
   /* Destructive */
-  --destructive: #EF4444;
+  --destructive: #D67A7A;
   --destructive-foreground: #FFFFFF;
 
   /* Borders & Inputs */
@@ -135,35 +135,35 @@
   --popover-foreground: #0A0A0A;
 
   --border: #E5E7EB;
-  --border-light: #E5E5E5;
+  --border-light: #E5E7EB;
   --input: #E5E7EB;
-  --ring: #00D2B3;
+  --ring: #A4C5BB;
 
-  /* Chart Colors */
-  --chart-1: #3B7ED2;
-  --chart-2: #00D2B3;
-  --chart-3: #E8A838;
-  --chart-4: #10B981;
-  --chart-5: #4E4456;
-  --chart-inlet: #4E4456;
+  /* Chart Colors — Muscat Bay Elegant Palette */
+  --chart-1: #6B9AC4;
+  --chart-2: #A4C5BB;
+  --chart-3: #E8C064;
+  --chart-4: #84B59F;
+  --chart-5: #4D445D;
+  --chart-inlet: #4D445D;
   --chart-axis: #6B7280;
-  --chart-loss: #C95D63;
-  --chart-success: #5BA88B;
-  --chart-teal: #81D8D0;
-  --chart-brand: #4E4456;
-  --chart-amber: #E8A838;
-  --chart-gray: #6B5F73;
+  --chart-loss: #D67A7A;
+  --chart-success: #84B59F;
+  --chart-teal: #A4C5BB;
+  --chart-brand: #4D445D;
+  --chart-amber: #E8C064;
+  --chart-gray: #9B86A8;
 
   /* Domain-specific chart colors */
-  --chart-water-primary: #0098A6;
-  --chart-water-secondary: #5BB8C8;
-  --chart-water-accent: #00D2B3;
-  --chart-elec-primary: #D97706;
-  --chart-elec-secondary: #FBBF24;
-  --chart-elec-accent: #F59E0B;
-  --chart-stp-primary: #059669;
-  --chart-stp-secondary: #34D399;
-  --chart-stp-accent: #10B981;
+  --chart-water-primary: #6B9AC4;
+  --chart-water-secondary: #A4C5BB;
+  --chart-water-accent: #A4C5BB;
+  --chart-elec-primary: #E8C064;
+  --chart-elec-secondary: #DF9A5B;
+  --chart-elec-accent: #E8C064;
+  --chart-stp-primary: #84B59F;
+  --chart-stp-secondary: #A4C5BB;
+  --chart-stp-accent: #84B59F;
 
   /* Chart Background Colors */
   --chart-bg-blue: #EFF6FF;
@@ -181,12 +181,12 @@
   --header-height: 60.5px;
 
   /* Sidebar Colors */
-  --sidebar: #4E4456;
+  --sidebar: #4D445D;
   --sidebar-foreground: #E4E4E7;
   --sidebar-foreground-active: #FFFFFF;
   --sidebar-primary: #FFFFFF;
-  --sidebar-primary-foreground: #4E4456;
-  --sidebar-accent: rgba(255, 255, 255, 0.1);
+  --sidebar-primary-foreground: #4D445D;
+  --sidebar-accent: rgba(164, 197, 187, 0.15);
   --sidebar-accent-foreground: #FFFFFF;
   --sidebar-border: rgba(255, 255, 255, 0.1);
 
@@ -222,21 +222,21 @@
   --mb-primary-hover: #4E4456;
   --mb-secondary: #A8D5E3;
   --mb-secondary-foreground: #1F2937;
-  --mb-secondary-light: rgba(0, 210, 179, 0.1);
-  --mb-secondary-active: #00c9a7;
+  --mb-secondary-light: rgba(164, 197, 187, 0.12);
+  --mb-secondary-active: #8AAFA5;
   --mb-primary-light: #8b7f94;
 
-  /* Dark mode status colors — slightly brighter for readability */
-  --mb-success: #10B981;
-  --mb-success-hover: #34D399;
-  --mb-success-light: rgba(16, 185, 129, 0.1);
-  --mb-danger: #EF4444;
-  --mb-danger-hover: #F87171;
-  --mb-danger-light: rgba(239, 68, 68, 0.1);
-  --mb-warning: #F59E0B;
-  --mb-warning-light: rgba(245, 158, 11, 0.1);
-  --mb-info: #60A5FA;
-  --mb-info-light: rgba(59, 130, 246, 0.1);
+  /* Dark mode status colors — elegant palette, slightly lighter for dark bg readability */
+  --mb-success: #84B59F;
+  --mb-success-hover: #9DCAB6;
+  --mb-success-light: rgba(132, 181, 159, 0.12);
+  --mb-danger: #D67A7A;
+  --mb-danger-hover: #E09090;
+  --mb-danger-light: rgba(214, 122, 122, 0.12);
+  --mb-warning: #E8C064;
+  --mb-warning-light: rgba(232, 192, 100, 0.12);
+  --mb-info: #6B9AC4;
+  --mb-info-light: rgba(107, 154, 196, 0.12);
 
   --background: #0f172a;
   /* slate-950/deep navy */
@@ -247,20 +247,20 @@
   --card-foreground: #F1F5F9;
   --component: #1E293B;
   --component-foreground: #F1F5F9;
-  --primary: #4E4456;
+  --primary: #4D445D;
   --primary-foreground: #FFFFFF;
-  --secondary: #00D2B3;
+  --secondary: #A4C5BB;
   --secondary-foreground: #1F2937;
   --muted: #374151;
   --muted-foreground: #9CA3AF;
-  --accent: #00D2B3;
+  --accent: #A4C5BB;
   --accent-foreground: #1F2937;
-  --destructive: #EF4444;
+  --destructive: #D67A7A;
   --popover: #1E293B;
   --popover-foreground: #F1F5F9;
   --border: rgba(255, 255, 255, 0.1);
   --input: rgba(255, 255, 255, 0.1);
-  --ring: #00D2B3;
+  --ring: #A4C5BB;
 
   /* Chart colors — lighter variants for dark backgrounds */
   --chart-5: #8B7F94;
