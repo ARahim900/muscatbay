@@ -446,38 +446,8 @@ export default function WaterPage() {
         return { meterCount, totalForType, avgPerMeter, maxConsumer, minConsumer, pctOfTotal };
     }, [activeDetailType, typeTopConsumers, applicableMeters, consumptionChartData]);
 
-    // Helper function to calculate trend
-    const calcTrend = (current: number, previous: number): { trend: 'up' | 'down' | 'neutral'; trendValue: string } => {
-        if (previous === 0) return { trend: 'neutral', trendValue: '0%' };
-        const change = ((current - previous) / previous) * 100;
-        if (Math.abs(change) < 0.5) return { trend: 'neutral', trendValue: '0%' };
-        return {
-            trend: change > 0 ? 'up' : 'down',
-            trendValue: `${Math.abs(change).toFixed(1)}%`
-        };
-    };
-
-    // Calculate current end month analysis for trend comparison (single month values)
-    const endMonthAnalysis = useMemo(() => {
-        return calculateRangeAnalysisFromData(levelCaches, endMonth, endMonth);
-    }, [levelCaches, endMonth]);
-
-    // Calculate previous month analysis for trend comparison
-    const prevMonthAnalysis = useMemo(() => {
-        const endIdx = AVAILABLE_MONTHS.indexOf(endMonth);
-        if (endIdx <= 0) return null;
-        const prevMonth = AVAILABLE_MONTHS[endIdx - 1];
-        return calculateRangeAnalysisFromData(levelCaches, prevMonth, prevMonth);
-    }, [levelCaches, endMonth]);
-
-    // Generate stats for Overview using StatsGrid format with trends
-    // Trends compare endMonth vs prevMonth (not cumulative range vs single month)
+    // Generate stats for Overview using StatsGrid format
     const overviewStats = useMemo(() => {
-        const a1Trend = prevMonthAnalysis ? calcTrend(endMonthAnalysis.A1, prevMonthAnalysis.A1) : { trend: 'neutral' as const, trendValue: '—' };
-        const a2Trend = prevMonthAnalysis ? calcTrend(endMonthAnalysis.A2, prevMonthAnalysis.A2) : { trend: 'neutral' as const, trendValue: '—' };
-        const a3Trend = prevMonthAnalysis ? calcTrend(endMonthAnalysis.A3Individual, prevMonthAnalysis.A3Individual) : { trend: 'neutral' as const, trendValue: '—' };
-        const effTrend = prevMonthAnalysis ? calcTrend(endMonthAnalysis.efficiency, prevMonthAnalysis.efficiency) : { trend: 'neutral' as const, trendValue: '—' };
-
         return [
             {
                 label: "A1 - MAIN SOURCE",
@@ -485,8 +455,6 @@ export default function WaterPage() {
                 subtitle: "L1 (Main source input)",
                 icon: Droplets,
                 variant: "default" as const,
-                trend: a1Trend.trend,
-                trendValue: a1Trend.trendValue
             },
             {
                 label: "A2 - ZONE DISTRIBUTION",
@@ -494,8 +462,6 @@ export default function WaterPage() {
                 subtitle: "L2 Bulks + DC",
                 icon: ChevronsRight,
                 variant: "secondary" as const,
-                trend: a2Trend.trend,
-                trendValue: a2Trend.trendValue
             },
             {
                 label: "A3 - INDIVIDUAL",
@@ -503,8 +469,6 @@ export default function WaterPage() {
                 subtitle: "Villas + Apts + DC",
                 icon: Users,
                 variant: "primary" as const,
-                trend: a3Trend.trend,
-                trendValue: a3Trend.trendValue
             },
             {
                 label: "SYSTEM EFFICIENCY",
@@ -512,18 +476,11 @@ export default function WaterPage() {
                 subtitle: "A3 / A1 Ratio",
                 icon: ArrowRightLeft,
                 variant: "success" as const,
-                trend: effTrend.trend,
-                trendValue: effTrend.trendValue
             }
         ];
-    }, [rangeAnalysis, endMonthAnalysis, prevMonthAnalysis]);
+    }, [rangeAnalysis]);
 
-    // Loss trends also compare endMonth vs prevMonth
     const lossStats = useMemo(() => {
-        const s1LossTrend = prevMonthAnalysis ? calcTrend(endMonthAnalysis.stage1Loss, prevMonthAnalysis.stage1Loss) : { trend: 'neutral' as const, trendValue: '—' };
-        const s2LossTrend = prevMonthAnalysis ? calcTrend(endMonthAnalysis.stage2Loss, prevMonthAnalysis.stage2Loss) : { trend: 'neutral' as const, trendValue: '—' };
-        const totalLossTrend = prevMonthAnalysis ? calcTrend(endMonthAnalysis.totalLoss, prevMonthAnalysis.totalLoss) : { trend: 'neutral' as const, trendValue: '—' };
-
         return [
             {
                 label: "STAGE 1 LOSS",
@@ -531,8 +488,6 @@ export default function WaterPage() {
                 subtitle: `Loss Rate: ${rangeAnalysis.A1 > 0 ? ((rangeAnalysis.stage1Loss / rangeAnalysis.A1) * 100).toFixed(1) : 0}%`,
                 icon: Minus,
                 variant: "danger" as const,
-                trend: s1LossTrend.trend,
-                trendValue: s1LossTrend.trendValue
             },
             {
                 label: "STAGE 2 LOSS",
@@ -540,8 +495,6 @@ export default function WaterPage() {
                 subtitle: `Loss Rate: ${rangeAnalysis.A2 > 0 ? ((rangeAnalysis.stage2Loss / rangeAnalysis.A2) * 100).toFixed(1) : 0}%`,
                 icon: Minus,
                 variant: "warning" as const,
-                trend: s2LossTrend.trend,
-                trendValue: s2LossTrend.trendValue
             },
             {
                 label: "TOTAL SYSTEM LOSS",
@@ -549,8 +502,6 @@ export default function WaterPage() {
                 subtitle: `Loss Rate: ${rangeAnalysis.lossPercentage}%`,
                 icon: AlertTriangle,
                 variant: "danger" as const,
-                trend: totalLossTrend.trend,
-                trendValue: totalLossTrend.trendValue
             },
             {
                 label: "HIGHEST CONSUMER",
@@ -558,11 +509,9 @@ export default function WaterPage() {
                 subtitle: `${highestConsumer.total.toLocaleString('en-US')} m³`,
                 icon: TrendingUp,
                 variant: "warning" as const,
-                trend: 'neutral' as const,
-                trendValue: '—'
             }
         ];
-    }, [rangeAnalysis, endMonthAnalysis, highestConsumer, prevMonthAnalysis]);
+    }, [rangeAnalysis, highestConsumer]);
 
     if (isLoading) {
         return (
