@@ -330,6 +330,10 @@ export default function WaterPage() {
 
     const meterCounts = useMemo(() => levelCaches.counts, [levelCaches]);
 
+    // Muscat Bay Community: composite type grouping meters billed to the community
+    const MUSCAT_BAY_COMMUNITY = 'Muscat Bay Community';
+    const COMMUNITY_TYPES = ['MB_Common', 'IRR_Servies', 'D_Building_Common', 'Retail'];
+
     // Applicable meters for consumption view:
     // Exclude IRR_Servies meters where parentMeter is 'N/A' (non-applicable meters like Outlet/TSE)
     const applicableMeters = useMemo(() => {
@@ -341,15 +345,16 @@ export default function WaterPage() {
         });
     }, [waterMeters]);
 
-    // Get unique types for filter (from applicable meters)
+    // Get unique types for filter (from applicable meters) + composite "Muscat Bay Community"
     const uniqueTypes = useMemo(() => {
         const types = new Set(applicableMeters.map(m => m.type));
-        return ['All', ...Array.from(types)];
+        return ['All', MUSCAT_BAY_COMMUNITY, ...Array.from(types)];
     }, [applicableMeters]);
 
     // Filter meters by type (from applicable meters)
     const filteredMeters = useMemo(() => {
         if (selectedType === 'All') return applicableMeters;
+        if (selectedType === MUSCAT_BAY_COMMUNITY) return applicableMeters.filter(m => COMMUNITY_TYPES.includes(m.type));
         return applicableMeters.filter(m => m.type === selectedType);
     }, [applicableMeters, selectedType]);
 
@@ -407,7 +412,7 @@ export default function WaterPage() {
             .sort((a, b) => b.total - a.total);
     }, [applicableMeters, meterTotalsMap]);
 
-    const TYPE_COLORS = {
+    const TYPE_COLORS: Record<string, string> = {
         'Main BULK': CHART_COLORS.success,
         'Retail': CHART_COLORS.loss,
         'Zone Bulk': CHART_COLORS.primary,
@@ -417,6 +422,7 @@ export default function WaterPage() {
         'Residential (Apart)': CHART_COLORS.gray,
         'MB_Common': CHART_COLORS.gray,
         'Building': CHART_COLORS.amber,
+        [MUSCAT_BAY_COMMUNITY]: '#00d2b3',
         'D_Building_Common': CHART_COLORS.brand,
     };
 
@@ -429,7 +435,9 @@ export default function WaterPage() {
         const startIdx = AVAILABLE_MONTHS.indexOf(startMonth);
         const endIdx = AVAILABLE_MONTHS.indexOf(endMonth);
         const months = AVAILABLE_MONTHS.slice(startIdx, endIdx + 1);
-        const metersOfType = applicableMeters.filter(m => m.type === activeDetailType);
+        const metersOfType = activeDetailType === MUSCAT_BAY_COMMUNITY
+            ? applicableMeters.filter(m => COMMUNITY_TYPES.includes(m.type))
+            : applicableMeters.filter(m => m.type === activeDetailType);
 
         return months.map(month => {
             const total = metersOfType.reduce((sum, m) => sum + getConsumption(m, month), 0);
@@ -441,8 +449,11 @@ export default function WaterPage() {
     const typeTopConsumers = useMemo(() => {
         if (!activeDetailType) return [];
 
-        return applicableMeters
-            .filter(m => m.type === activeDetailType)
+        const metersOfType = activeDetailType === MUSCAT_BAY_COMMUNITY
+            ? applicableMeters.filter(m => COMMUNITY_TYPES.includes(m.type))
+            : applicableMeters.filter(m => m.type === activeDetailType);
+
+        return metersOfType
             .map(m => ({
                 label: m.label,
                 zone: m.zone,
@@ -455,7 +466,9 @@ export default function WaterPage() {
     // Type-specific stats
     const typeDetailStats = useMemo(() => {
         if (!activeDetailType || typeTopConsumers.length === 0) return null;
-        const meterCount = applicableMeters.filter(m => m.type === activeDetailType).length;
+        const meterCount = activeDetailType === MUSCAT_BAY_COMMUNITY
+            ? applicableMeters.filter(m => COMMUNITY_TYPES.includes(m.type)).length
+            : applicableMeters.filter(m => m.type === activeDetailType).length;
         const totalForType = typeTopConsumers.reduce((s, m) => s + m.total, 0);
         const avgPerMeter = meterCount > 0 ? totalForType / meterCount : 0;
         const maxConsumer = typeTopConsumers[0];
