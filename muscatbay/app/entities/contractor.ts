@@ -7,7 +7,7 @@
 import type { Contractor } from '@/lib/mock-data';
 
 /**
- * New unified schema for Contractor_Tracker table
+ * New unified schema for Contractor_Tracker table (legacy)
  */
 export interface ContractorTracker {
     Contractor: string | null;
@@ -21,6 +21,32 @@ export interface ContractorTracker {
     "Annual Value (OMR)": number | null;
     "Renewal Plan": string | null;
     Note: string | null;
+}
+
+// =============================================================================
+// CONTRACTOR CONTRACTS (New Schema — 14 active contracts)
+// =============================================================================
+
+export interface ContractorContract {
+    id: number;
+    contractor: string;
+    contract_ref: string | null;
+    service: string | null;
+    flow: 'Expense' | 'Revenue';
+    status: string;
+    contract_years: number | null;
+    annual_value_omr: number | null;
+    total_value_omr: number | null;
+    rate_note: string | null;
+    note: string | null;
+}
+
+export interface ContractorYearlyCost {
+    id: number;
+    contractor: string;
+    contract_year: number;
+    year_label: string;
+    amount_omr: number | null;
 }
 
 // =============================================================================

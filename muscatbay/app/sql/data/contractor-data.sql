@@ -1,11 +1,24 @@
 -- SQL Script to insert Contractor_Tracker data into Supabase
 -- Run this in Supabase SQL Editor
--- NOTE: This script INSERTS data without deleting existing rows
+-- SAFE: Uses ON CONFLICT to prevent duplicate rows on re-run
 
 -- First, disable RLS if needed
 ALTER TABLE "Contractor_Tracker" DISABLE ROW LEVEL SECURITY;
 
--- Insert all contractor data (will add to existing rows)
+-- Add a unique constraint if it doesn't exist (prevents future duplicates)
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conname = 'contractor_tracker_unique_entry'
+    ) THEN
+        ALTER TABLE "Contractor_Tracker"
+        ADD CONSTRAINT contractor_tracker_unique_entry
+        UNIQUE ("Contractor", "Service Provided");
+    END IF;
+END $$;
+
+-- Insert all contractor data (skips existing rows via ON CONFLICT)
 INSERT INTO "Contractor_Tracker" (
     "Contractor",
     "Service Provided",
@@ -47,7 +60,8 @@ INSERT INTO "Contractor_Tracker" (
 ('Muscat Electricity LLC', 'Sales AC Controls Maintenance', 'Expired', 'Contract', '8/15/2021', '8/14/2023', NULL, '8,100 OMR', 8100, NULL, NULL),
 -- Retaining
 ('Oman Water Treatment Company (CWAN)', 'Comprehensive STP Operation and Maintenance', 'Retaining', 'Contract', '1/8/2024', '1/7/2028', NULL, NULL, NULL, NULL, NULL),
-('Mr Plus', 'Master Bay Maintenance', 'Expired', 'NC', NULL, NULL, NULL, NULL, NULL, 'Details to be confirmed/uploaded', NULL);
+('Mr Plus', 'Master Bay Maintenance', 'Expired', 'NC', NULL, NULL, NULL, NULL, NULL, 'Details to be confirmed/uploaded', NULL)
+ON CONFLICT ON CONSTRAINT contractor_tracker_unique_entry DO NOTHING;
 
 -- Verify the insert
 SELECT COUNT(*) as total_rows FROM "Contractor_Tracker";
