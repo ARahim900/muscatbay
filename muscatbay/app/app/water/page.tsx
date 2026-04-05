@@ -177,6 +177,26 @@ function calculateZoneAnalysisFromData(caches: LevelCaches, zone: string, month:
     return { zone, zoneName: config.name, bulkMeterReading, individualTotal, loss, lossPercentage, efficiency, meterCount: zoneL3.length };
 }
 
+function calculateZoneRangeAnalysisFromData(caches: LevelCaches, zone: string, startMonth: string, endMonth: string) {
+    const config = ZONE_CONFIG.find(z => z.code === zone);
+    if (!config) return { zone, zoneName: zone, bulkMeterReading: 0, individualTotal: 0, loss: 0, lossPercentage: 0, efficiency: 0, meterCount: 0 };
+
+    const si = AVAILABLE_MONTHS.indexOf(startMonth);
+    const ei = AVAILABLE_MONTHS.indexOf(endMonth);
+    const months = AVAILABLE_MONTHS.slice(si < 0 ? 0 : si, ei < 0 ? undefined : ei + 1);
+
+    const bulkMeter = caches.byAccount[config.bulkMeterAccount];
+    const bulkMeterReading = bulkMeter ? months.reduce((sum, m) => sum + getConsumption(bulkMeter, m), 0) : 0;
+    const zoneL3 = caches.l3ByZone[zone] || [];
+    const individualTotal = zoneL3.reduce((sum, meter) => sum + months.reduce((s, m) => s + getConsumption(meter, m), 0), 0);
+
+    const loss = bulkMeterReading - individualTotal;
+    const lossPercentage = bulkMeterReading > 0 ? Math.round((loss / bulkMeterReading) * 1000) / 10 : 0;
+    const efficiency = bulkMeterReading > 0 ? Math.round((individualTotal / bulkMeterReading) * 1000) / 10 : 0;
+
+    return { zone, zoneName: config.name, bulkMeterReading, individualTotal, loss, lossPercentage, efficiency, meterCount: zoneL3.length };
+}
+
 function getAllZonesAnalysisFromData(caches: LevelCaches, month: string) {
     return ZONE_CONFIG.map(config => calculateZoneAnalysisFromData(caches, config.code, month));
 }
@@ -303,7 +323,7 @@ export default function WaterPage() {
         getMonthlyTrendsFromData(levelCaches, startMonth, endMonth), [levelCaches, startMonth, endMonth]);
 
     const zoneAnalysis = useMemo(() =>
-        calculateZoneAnalysisFromData(levelCaches, selectedZone, endMonth), [levelCaches, selectedZone, endMonth]);
+        calculateZoneRangeAnalysisFromData(levelCaches, selectedZone, startMonth, endMonth), [levelCaches, selectedZone, startMonth, endMonth]);
 
     const allZones = useMemo(() =>
         getAllZonesAnalysisFromData(levelCaches, endMonth), [levelCaches, endMonth]);
@@ -859,7 +879,10 @@ export default function WaterPage() {
                                 <CardContent className="p-4 sm:p-5 md:p-6 pt-0">
                                     <MeterTable
                                         meters={waterMeters.filter(m => m.zone === selectedZone && m.level === 'L3')}
-                                        months={AVAILABLE_MONTHS}
+                                        months={AVAILABLE_MONTHS.slice(
+                                            Math.max(0, AVAILABLE_MONTHS.indexOf(startMonth)),
+                                            AVAILABLE_MONTHS.indexOf(endMonth) + 1
+                                        )}
                                         pageSize={10}
                                     />
                                 </CardContent>
