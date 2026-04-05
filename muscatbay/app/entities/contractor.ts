@@ -39,6 +39,7 @@ export interface ContractorContract {
     total_value_omr: number | null;
     rate_note: string | null;
     note: string | null;
+    created_at?: string;
 }
 
 export interface ContractorYearlyCost {
@@ -47,6 +48,7 @@ export interface ContractorYearlyCost {
     contract_year: number;
     year_label: string;
     amount_omr: number | null;
+    created_at?: string;
 }
 
 // =============================================================================
@@ -152,34 +154,6 @@ export interface AmcPricing {
     currency: string;
     payment_terms: string | null;
     amc_contracts?: AmcContract;
-}
-
-// =============================================================================
-// NEW CONTRACT SCHEMA (contractor_contracts + contractor_yearly_costs)
-// =============================================================================
-
-export interface ContractorContract {
-    id: number;
-    contractor: string;
-    contract_ref: string | null;
-    service: string | null;
-    flow: 'Expense' | 'Revenue';
-    status: string;
-    contract_years: number | null;
-    annual_value_omr: number | null;
-    total_value_omr: number | null;
-    rate_note: string | null;
-    note: string | null;
-    created_at?: string;
-}
-
-export interface ContractorYearlyCost {
-    id: number;
-    contractor: string;
-    contract_year: number;
-    year_label: string;
-    amount_omr: number | null;
-    created_at?: string;
 }
 
 // =============================================================================
