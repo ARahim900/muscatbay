@@ -57,15 +57,32 @@ import { saveFilterPreferences, loadFilterPreferences } from "@/lib/filter-prefe
 type DashboardView = 'monthly' | 'daily';
 
 const CHART_COLORS = {
-    primary: '#6B9AC4',   // Elegant Blue — water systems
-    secondary: '#A4C5BB', // Brand Teal
-    accent: '#A4C5BB',    // Brand Teal
-    success: '#84B59F',   // Elegant Green
-    loss: '#D67A7A',      // Elegant Red
-    brand: '#4D445D',     // Brand Dark — L3 Individual
-    amber: '#E8C064',     // Elegant Yellow
-    gray: '#9B86A8',      // Elegant Purple
+    primary: 'var(--chart-water-primary, #6B9AC4)',
+    secondary: 'var(--chart-water-secondary, #A4C5BB)',
+    accent: 'var(--chart-water-accent, #A4C5BB)',
+    success: 'var(--chart-success, #84B59F)',
+    loss: 'var(--chart-loss, #D67A7A)',
+    brand: 'var(--chart-brand, #4D445D)',
+    amber: 'var(--chart-amber, #E8C064)',
+    gray: 'var(--chart-gray, #9B86A8)',
 } as const;
+
+// Static type-to-color mapping (outside component to avoid re-creation per render)
+const TYPE_COLORS: Record<string, string> = {
+    'Main BULK': CHART_COLORS.success,
+    'Retail': CHART_COLORS.loss,
+    'Zone Bulk': CHART_COLORS.primary,
+    'Residential (Villa)': CHART_COLORS.brand,
+    'IRR_Servies': CHART_COLORS.amber,
+    'D_Building_Bulk': CHART_COLORS.secondary,
+    'Residential (Apart)': CHART_COLORS.gray,
+    'MB_Common': CHART_COLORS.gray,
+    'Building': CHART_COLORS.amber,
+    'Muscat Bay Community': '#00d2b3',
+    'D_Building_Common': CHART_COLORS.brand,
+    'Un-Sold': '#f97316',
+    'N/A': CHART_COLORS.gray,
+};
 
 // Pre-computed level caches to avoid repeated .filter() calls
 interface LevelCaches {
@@ -424,21 +441,6 @@ export default function WaterPage() {
             .sort((a, b) => b.total - a.total);
     }, [applicableMeters, meterTotalsMap]);
 
-    const TYPE_COLORS: Record<string, string> = {
-        'Main BULK': CHART_COLORS.success,
-        'Retail': CHART_COLORS.loss,
-        'Zone Bulk': CHART_COLORS.primary,
-        'Residential (Villa)': CHART_COLORS.brand,
-        'IRR_Servies': CHART_COLORS.amber,
-        'D_Building_Bulk': CHART_COLORS.secondary,
-        'Residential (Apart)': CHART_COLORS.gray,
-        'MB_Common': CHART_COLORS.gray,
-        'Building': CHART_COLORS.amber,
-        [MUSCAT_BAY_COMMUNITY]: '#00d2b3',
-        'D_Building_Common': CHART_COLORS.brand,
-        'Un-Sold': '#f97316',
-    };
-
     // ── Type Detail Data (for interactive drill-down) ─────────────────────
     const activeDetailType = selectedChartType || (selectedType !== 'All' ? selectedType : null);
 
@@ -490,6 +492,22 @@ export default function WaterPage() {
 
         return { meterCount, totalForType, avgPerMeter, maxConsumer, minConsumer, pctOfTotal };
     }, [activeDetailType, typeTopConsumers, applicableMeters, consumptionChartData]);
+
+    // Zone consumption trend data (memoized to avoid IIFE recalculation in JSX)
+    const zoneConsumptionTrend = useMemo(() => {
+        const si = AVAILABLE_MONTHS.indexOf(startMonth);
+        const ei = AVAILABLE_MONTHS.indexOf(endMonth);
+        const rangeMonths = AVAILABLE_MONTHS.slice(si < 0 ? 0 : si, ei < 0 ? undefined : ei + 1);
+        return rangeMonths.map(month => {
+            const analysis = calculateZoneAnalysisFromData(levelCaches, selectedZone, month);
+            return {
+                month,
+                'Zone Bulk': analysis.bulkMeterReading,
+                'Individual Total': analysis.individualTotal,
+                'Loss': Math.abs(analysis.loss)
+            };
+        });
+    }, [levelCaches, selectedZone, startMonth, endMonth]);
 
     // Generate stats for Overview using StatsGrid format
     const overviewStats = useMemo(() => {
@@ -560,7 +578,7 @@ export default function WaterPage() {
 
     if (isLoading) {
         return (
-            <div className="space-y-6 sm:space-y-7 md:space-y-8 w-full animate-in fade-in duration-200">
+            <div className="space-y-6 sm:space-y-7 md:space-y-8 w-full animate-in fade-in duration-200" role="status" aria-busy="true" aria-label="Loading water system data">
                 {/* Header skeleton */}
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div className="space-y-2">
@@ -646,6 +664,8 @@ export default function WaterPage() {
                                                         key={year}
                                                         variant={selectedYear === year ? "default" : "outline"}
                                                         size="sm"
+                                                        aria-label={`Filter by year ${year}`}
+                                                        aria-pressed={selectedYear === year}
                                                         onClick={() => {
                                                             setSelectedYear(year);
                                                             const yearMonths = AVAILABLE_MONTHS.filter(m => '20' + m.split('-')[1] === year);
@@ -654,7 +674,7 @@ export default function WaterPage() {
                                                                 setEndMonth(yearMonths[yearMonths.length - 1]);
                                                             }
                                                         }}
-                                                        className={`rounded-full px-4 ${selectedYear === year ? "bg-secondary text-white" : "border-slate-200 dark:border-slate-700"}`}
+                                                        className={`rounded-full px-4 min-h-[44px] sm:min-h-0 ${selectedYear === year ? "bg-secondary text-white" : "border-slate-200 dark:border-slate-700"}`}
                                                     >
                                                         {year}
                                                     </Button>
@@ -672,7 +692,8 @@ export default function WaterPage() {
                                                         setSelectedType(val);
                                                         setSelectedChartType(val === 'All' ? null : val);
                                                     }}
-                                                    className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 text-sm font-medium text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                                                    aria-label="Filter by meter type"
+                                                    className="px-2.5 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 text-sm font-medium text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
                                                 >
                                                     {uniqueTypes.map((t) => (
                                                         <option key={t} value={t}>{t}</option>
@@ -707,8 +728,10 @@ export default function WaterPage() {
                                                     key={z.code}
                                                     variant={selectedZone === z.code ? "default" : "outline"}
                                                     size="sm"
+                                                    aria-label={`Select ${z.name} zone`}
+                                                    aria-pressed={selectedZone === z.code}
                                                     onClick={() => setSelectedZone(z.code)}
-                                                    className={`rounded-full px-3 text-xs h-7 ${selectedZone === z.code ? "bg-secondary text-white border-secondary" : "border-slate-200 dark:border-slate-700"}`}
+                                                    className={`rounded-full px-3 text-xs min-h-[44px] sm:min-h-0 h-auto sm:h-7 ${selectedZone === z.code ? "bg-secondary text-white border-secondary" : "border-slate-200 dark:border-slate-700"}`}
                                                 >
                                                     {z.name}
                                                 </Button>
@@ -716,8 +739,9 @@ export default function WaterPage() {
                                             <Button
                                                 variant="ghost"
                                                 size="sm"
+                                                aria-label="Reset zone selection"
                                                 onClick={() => setSelectedZone(ZONE_CONFIG[0].code)}
-                                                className="text-xs text-slate-400 hover:text-red-500 dark:hover:text-red-400 h-7 ml-1"
+                                                className="text-xs text-slate-400 hover:text-red-500 dark:hover:text-red-400 min-h-[44px] sm:min-h-0 h-auto sm:h-7 ml-1"
                                             >
                                                 Reset
                                             </Button>
@@ -757,9 +781,9 @@ export default function WaterPage() {
                                                 <YAxis className="text-xs" tickFormatter={(v) => `${v / 1000}k`} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "var(--chart-axis)" }} label={{ value: 'm³', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: "var(--chart-axis)", fontSize: 11 } }} />
                                                 <Tooltip content={<LiquidTooltip />} cursor={{ stroke: 'rgba(0,0,0,0.1)', strokeWidth: 2 }} />
                                                 <Legend iconType="circle" />
-                                                <Area type="monotone" name="A1 - Main Source" dataKey="A1" stroke={CHART_COLORS.brand} fill="url(#gradA1)" strokeWidth={3} activeDot={{ r: 6, stroke: '#fff', strokeWidth: 2 }} animationDuration={600} />
-                                                <Area type="monotone" name="A2 - Zone Distribution" dataKey="A2" stroke={CHART_COLORS.primary} fill="url(#gradA2)" strokeWidth={3} animationDuration={600} />
-                                                <Area type="monotone" name="A3 - Individual" dataKey="A3Individual" stroke={CHART_COLORS.gray} fill="none" strokeWidth={2} strokeDasharray="5 5" animationDuration={600} />
+                                                <Area type="monotone" name="A1 - Main Source" dataKey="A1" stroke={CHART_COLORS.brand} fill="url(#gradA1)" strokeWidth={3} activeDot={{ r: 6, stroke: '#fff', strokeWidth: 2 }} animationDuration={600} animationEasing="ease-out" />
+                                                <Area type="monotone" name="A2 - Zone Distribution" dataKey="A2" stroke={CHART_COLORS.primary} fill="url(#gradA2)" strokeWidth={3} animationDuration={600} animationEasing="ease-out" />
+                                                <Area type="monotone" name="A3 - Individual" dataKey="A3Individual" stroke={CHART_COLORS.gray} fill="none" strokeWidth={2} strokeDasharray="5 5" animationDuration={600} animationEasing="ease-out" />
                                             </AreaChart>
                                         </ResponsiveContainer>
                                     </div>
@@ -785,9 +809,9 @@ export default function WaterPage() {
                                                 <YAxis className="text-xs" tickFormatter={(v) => `${v / 1000}k`} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "var(--chart-axis)" }} label={{ value: 'm³', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: "var(--chart-axis)", fontSize: 11 } }} />
                                                 <Tooltip content={<LiquidTooltip />} cursor={{ stroke: 'rgba(0,0,0,0.1)', strokeWidth: 2 }} />
                                                 <Legend iconType="circle" />
-                                                <Area type="monotone" name="Total Loss" dataKey="totalLoss" stroke={CHART_COLORS.loss} fill="url(#gradLoss)" strokeWidth={2} strokeDasharray="5 5" animationDuration={600} />
-                                                <Line type="monotone" name="Stage 1 Loss" dataKey="stage1Loss" stroke={CHART_COLORS.amber} strokeWidth={2} strokeDasharray="3 3" dot={false} animationDuration={600} />
-                                                <Line type="monotone" name="Stage 2 Loss" dataKey="stage2Loss" stroke={CHART_COLORS.gray} strokeWidth={2} strokeDasharray="3 3" dot={false} animationDuration={600} />
+                                                <Area type="monotone" name="Total Loss" dataKey="totalLoss" stroke={CHART_COLORS.loss} fill="url(#gradLoss)" strokeWidth={2} strokeDasharray="5 5" animationDuration={600} animationEasing="ease-out" />
+                                                <Line type="monotone" name="Stage 1 Loss" dataKey="stage1Loss" stroke={CHART_COLORS.amber} strokeWidth={2} strokeDasharray="3 3" dot={false} animationDuration={600} animationEasing="ease-out" />
+                                                <Line type="monotone" name="Stage 2 Loss" dataKey="stage2Loss" stroke={CHART_COLORS.gray} strokeWidth={2} strokeDasharray="3 3" dot={false} animationDuration={600} animationEasing="ease-out" />
                                             </AreaChart>
                                         </ResponsiveContainer>
                                     </div>
@@ -853,21 +877,7 @@ export default function WaterPage() {
                                 <CardContent className="p-4 sm:p-5 md:p-6 pt-0">
                                     <div className="h-[200px] sm:h-[250px] md:h-[300px] w-full">
                                         <ResponsiveContainer width="100%" height="100%">
-                                            <AreaChart data={(() => {
-                                                // Calculate zone-specific monthly trends for the selected range
-                                                const si = AVAILABLE_MONTHS.indexOf(startMonth);
-                                                const ei = AVAILABLE_MONTHS.indexOf(endMonth);
-                                                const rangeMonths = AVAILABLE_MONTHS.slice(si < 0 ? 0 : si, ei < 0 ? undefined : ei + 1);
-                                                return rangeMonths.map(month => {
-                                                    const analysis = calculateZoneAnalysisFromData(levelCaches, selectedZone, month);
-                                                    return {
-                                                        month,
-                                                        'Zone Bulk': analysis.bulkMeterReading,
-                                                        'Individual Total': analysis.individualTotal,
-                                                        'Loss': Math.abs(analysis.loss)
-                                                    };
-                                                });
-                                            })()}>
+                                            <AreaChart data={zoneConsumptionTrend}>
                                                 <defs>
                                                     <linearGradient id="gradZoneBulk" x1="0" y1="0" x2="0" y2="1">
                                                         <stop offset="5%" stopColor={CHART_COLORS.primary} stopOpacity={0.4} />
@@ -882,9 +892,9 @@ export default function WaterPage() {
                                                 <YAxis className="text-xs" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "var(--chart-axis)" }} label={{ value: 'm³', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: "var(--chart-axis)", fontSize: 11 } }} />
                                                 <Tooltip content={<LiquidTooltip />} cursor={{ stroke: 'rgba(0,0,0,0.1)', strokeWidth: 2 }} />
                                                 <Legend iconType="circle" />
-                                                <Area type="monotone" name="Individual Total" dataKey="Individual Total" stroke={CHART_COLORS.brand} fill="url(#gradIndividual)" strokeWidth={3} activeDot={{ r: 6, stroke: '#fff', strokeWidth: 2 }} animationDuration={600} />
-                                                <Line type="monotone" name="Loss" dataKey="Loss" stroke={CHART_COLORS.loss} strokeWidth={2} dot={false} strokeDasharray="5 5" animationDuration={600} />
-                                                <Area type="monotone" name="Zone Bulk" dataKey="Zone Bulk" stroke={CHART_COLORS.primary} fill="url(#gradZoneBulk)" strokeWidth={3} animationDuration={600} />
+                                                <Area type="monotone" name="Individual Total" dataKey="Individual Total" stroke={CHART_COLORS.brand} fill="url(#gradIndividual)" strokeWidth={3} activeDot={{ r: 6, stroke: '#fff', strokeWidth: 2 }} animationDuration={600} animationEasing="ease-out" />
+                                                <Line type="monotone" name="Loss" dataKey="Loss" stroke={CHART_COLORS.loss} strokeWidth={2} dot={false} strokeDasharray="5 5" animationDuration={600} animationEasing="ease-out" />
+                                                <Area type="monotone" name="Zone Bulk" dataKey="Zone Bulk" stroke={CHART_COLORS.primary} fill="url(#gradZoneBulk)" strokeWidth={3} animationDuration={600} animationEasing="ease-out" />
                                             </AreaChart>
                                         </ResponsiveContainer>
                                     </div>
@@ -947,7 +957,7 @@ export default function WaterPage() {
                                             <BarChart
                                                 data={consumptionChartData}
                                                 layout="vertical"
-                                                margin={{ left: 120 }}
+                                                margin={{ left: 90 }}
                                                 onClick={(state) => {
                                                     if (state?.activeLabel) {
                                                         const clickedType = state.activeLabel as string;
@@ -963,15 +973,15 @@ export default function WaterPage() {
                                                 style={{ cursor: 'pointer' }}
                                             >
                                                 <XAxis type="number" tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "var(--chart-axis)" }} label={{ value: 'm³', position: 'insideBottom', offset: -5, style: { textAnchor: 'middle', fill: "var(--chart-axis)", fontSize: 11 } }} />
-                                                <YAxis type="category" dataKey="type" width={110} className="text-xs" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "var(--chart-axis)" }} />
+                                                <YAxis type="category" dataKey="type" width={85} className="text-xs" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "var(--chart-axis)" }} />
                                                 <Tooltip content={<LiquidTooltip />} cursor={{ fill: 'rgba(0,0,0,0.04)', radius: 6 }} />
-                                                <Bar dataKey="total" radius={[0, 6, 6, 0]} barSize={24} animationDuration={600}>
+                                                <Bar dataKey="total" radius={[0, 6, 6, 0]} barSize={24} animationDuration={600} animationEasing="ease-out">
                                                     {consumptionChartData.map((entry, index) => (
                                                         <Cell
                                                             key={`cell-${index}`}
-                                                            fill={TYPE_COLORS[entry.type as keyof typeof TYPE_COLORS] || CHART_COLORS.gray}
+                                                            fill={TYPE_COLORS[entry.type] || CHART_COLORS.gray}
                                                             fillOpacity={activeDetailType && activeDetailType !== entry.type ? 0.25 : 1}
-                                                            stroke={activeDetailType === entry.type ? (TYPE_COLORS[entry.type as keyof typeof TYPE_COLORS] || CHART_COLORS.gray) : 'none'}
+                                                            stroke={activeDetailType === entry.type ? (TYPE_COLORS[entry.type] || CHART_COLORS.gray) : 'none'}
                                                             strokeWidth={activeDetailType === entry.type ? 2 : 0}
                                                         />
                                                     ))}
@@ -992,7 +1002,7 @@ export default function WaterPage() {
                                     {/* Inline summary strip */}
                                     <div className="flex items-center gap-3 px-1 flex-wrap">
                                         <div className="flex items-center gap-2">
-                                            <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: TYPE_COLORS[activeDetailType as keyof typeof TYPE_COLORS] || CHART_COLORS.gray }} />
+                                            <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: TYPE_COLORS[activeDetailType] || CHART_COLORS.gray }} />
                                             <span className="text-sm font-semibold text-slate-800 dark:text-slate-100">{activeDetailType}</span>
                                         </div>
                                         <span className="text-xs text-slate-400">|</span>
@@ -1015,8 +1025,8 @@ export default function WaterPage() {
                                                     <AreaChart data={typeTrendData} margin={{ left: 10, right: 10, top: 5, bottom: 5 }}>
                                                         <defs>
                                                             <linearGradient id="typeGradient" x1="0" y1="0" x2="0" y2="1">
-                                                                <stop offset="5%" stopColor={TYPE_COLORS[activeDetailType as keyof typeof TYPE_COLORS] || CHART_COLORS.primary} stopOpacity={0.3} />
-                                                                <stop offset="95%" stopColor={TYPE_COLORS[activeDetailType as keyof typeof TYPE_COLORS] || CHART_COLORS.primary} stopOpacity={0} />
+                                                                <stop offset="5%" stopColor={TYPE_COLORS[activeDetailType] || CHART_COLORS.primary} stopOpacity={0.3} />
+                                                                <stop offset="95%" stopColor={TYPE_COLORS[activeDetailType] || CHART_COLORS.primary} stopOpacity={0} />
                                                             </linearGradient>
                                                         </defs>
                                                         <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid, rgba(148,163,184,0.15))" />
@@ -1026,10 +1036,10 @@ export default function WaterPage() {
                                                         <Area
                                                             type="monotone"
                                                             dataKey="consumption"
-                                                            stroke={TYPE_COLORS[activeDetailType as keyof typeof TYPE_COLORS] || CHART_COLORS.primary}
+                                                            stroke={TYPE_COLORS[activeDetailType] || CHART_COLORS.primary}
                                                             strokeWidth={2}
                                                             fill="url(#typeGradient)"
-                                                            animationDuration={600}
+                                                            animationDuration={600} animationEasing="ease-out"
                                                         />
                                                     </AreaChart>
                                                 </ResponsiveContainer>
@@ -1047,11 +1057,11 @@ export default function WaterPage() {
                                                 <Table>
                                                     <TableHeader>
                                                         <TableRow>
-                                                            <TableHead className="text-xs pl-4 sm:pl-6 w-8">#</TableHead>
-                                                            <TableHead className="text-xs">Meter</TableHead>
-                                                            <TableHead className="text-xs">Zone</TableHead>
-                                                            <TableHead className="text-xs text-right pr-4 sm:pr-6">Consumption (m³)</TableHead>
-                                                            <TableHead className="text-xs text-right pr-4 sm:pr-6 hidden sm:table-cell w-36">Share</TableHead>
+                                                            <TableHead scope="col" className="text-xs pl-4 sm:pl-6 w-8">#</TableHead>
+                                                            <TableHead scope="col" className="text-xs">Meter</TableHead>
+                                                            <TableHead scope="col" className="text-xs">Zone</TableHead>
+                                                            <TableHead scope="col" className="text-xs text-right pr-4 sm:pr-6">Consumption (m³)</TableHead>
+                                                            <TableHead scope="col" className="text-xs text-right pr-4 sm:pr-6 hidden sm:table-cell w-36">Share</TableHead>
                                                         </TableRow>
                                                     </TableHeader>
                                                     <TableBody>
@@ -1067,12 +1077,13 @@ export default function WaterPage() {
                                                                 </TableCell>
                                                                 <TableCell className="text-xs text-right pr-4 sm:pr-6 hidden sm:table-cell">
                                                                     <div className="flex items-center justify-end gap-2">
-                                                                        <div className="w-16 h-1.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                                                                        <div className="w-16 h-1.5 rounded-full bg-slate-100 dark:bg-slate-700/50 overflow-hidden">
                                                                             <div
                                                                                 className="h-full rounded-full transition-all"
                                                                                 style={{
                                                                                     width: `${typeDetailStats.totalForType > 0 ? Math.max((meter.total / typeDetailStats.totalForType) * 100, 2) : 0}%`,
-                                                                                    backgroundColor: TYPE_COLORS[activeDetailType as keyof typeof TYPE_COLORS] || CHART_COLORS.primary
+                                                                                    backgroundColor: TYPE_COLORS[activeDetailType] || CHART_COLORS.primary,
+                                                                                    opacity: 0.85
                                                                                 }}
                                                                             />
                                                                         </div>
