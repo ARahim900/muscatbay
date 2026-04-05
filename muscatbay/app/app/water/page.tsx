@@ -668,43 +668,7 @@ export default function WaterPage() {
                                             </div>
                                         </div>
 
-                                        {/* Zone tab: Month + Zone selectors inline */}
-                                        {monthlyTab === 'zone' ? (
-                                            <div className="flex items-center gap-3 flex-wrap">
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Month:</span>
-                                                    <select
-                                                        value={endMonth}
-                                                        onChange={(e) => setEndMonth(e.target.value)}
-                                                        className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 text-sm font-medium text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
-                                                    >
-                                                        {filteredMonthsByYear.map((m) => (
-                                                            <option key={m} value={m}>{m}</option>
-                                                        ))}
-                                                    </select>
-                                                </div>
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Zone:</span>
-                                                    <select
-                                                        value={selectedZone}
-                                                        onChange={(e) => setSelectedZone(e.target.value)}
-                                                        className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 text-sm font-medium text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
-                                                    >
-                                                        {ZONE_CONFIG.map((z) => (
-                                                            <option key={z.code} value={z.code}>{z.name}</option>
-                                                        ))}
-                                                    </select>
-                                                </div>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    onClick={() => { setEndMonth(filteredMonthsByYear[filteredMonthsByYear.length - 1] || 'Jan-26'); setSelectedZone('Zone_01_(FM)'); }}
-                                                    className="text-xs text-slate-400 hover:text-red-500 dark:hover:text-red-400"
-                                                >
-                                                    Reset
-                                                </Button>
-                                            </div>
-                                        ) : monthlyTab === 'consumption' ? (
+                                        {monthlyTab === 'consumption' ? (
                                             <div className="flex items-center gap-2 flex-wrap">
                                                 <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Type:</span>
                                                 <select
@@ -731,15 +695,39 @@ export default function WaterPage() {
                                         )}
                                     </div>
 
-                                    {/* Date Range Picker - hidden on zone tab */}
-                                    {monthlyTab !== 'zone' && (
-                                        <DateRangePicker
-                                            startMonth={startMonth}
-                                            endMonth={endMonth}
-                                            availableMonths={filteredMonthsByYear}
-                                            onRangeChange={handleRangeChange}
-                                            onReset={handleResetRange}
-                                        />
+                                    {/* Date Range Picker - shown for all tabs */}
+                                    <DateRangePicker
+                                        startMonth={startMonth}
+                                        endMonth={endMonth}
+                                        availableMonths={filteredMonthsByYear}
+                                        onRangeChange={handleRangeChange}
+                                        onReset={handleResetRange}
+                                    />
+
+                                    {/* Zone selector - only shown on zone tab */}
+                                    {monthlyTab === 'zone' && (
+                                        <div className="flex items-center gap-2 flex-wrap pt-1 border-t border-slate-100 dark:border-slate-800">
+                                            <span className="text-sm font-medium text-slate-600 dark:text-slate-400 shrink-0">Zone:</span>
+                                            {ZONE_CONFIG.map((z) => (
+                                                <Button
+                                                    key={z.code}
+                                                    variant={selectedZone === z.code ? "default" : "outline"}
+                                                    size="sm"
+                                                    onClick={() => setSelectedZone(z.code)}
+                                                    className={`rounded-full px-3 text-xs h-7 ${selectedZone === z.code ? "bg-secondary text-white border-secondary" : "border-slate-200 dark:border-slate-700"}`}
+                                                >
+                                                    {z.name}
+                                                </Button>
+                                            ))}
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => setSelectedZone(ZONE_CONFIG[0].code)}
+                                                className="text-xs text-slate-400 hover:text-red-500 dark:hover:text-red-400 h-7 ml-1"
+                                            >
+                                                Reset
+                                            </Button>
+                                        </div>
                                     )}
                                 </div>
                             </CardContent>
@@ -820,7 +808,7 @@ export default function WaterPage() {
                             {/* Zone Heading */}
                             <div>
                                 <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">
-                                    {ZONE_CONFIG.find(z => z.code === selectedZone)?.name} Analysis for {endMonth}
+                                    {ZONE_CONFIG.find(z => z.code === selectedZone)?.name} — {startMonth === endMonth ? endMonth : `${startMonth} – ${endMonth}`}
                                 </h2>
                                 <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
                                     <span className="text-mb-secondary font-medium">Zone Bulk</span> = L2 only •
@@ -872,8 +860,11 @@ export default function WaterPage() {
                                     <div className="h-[200px] sm:h-[250px] md:h-[300px] w-full">
                                         <ResponsiveContainer width="100%" height="100%">
                                             <AreaChart data={(() => {
-                                                // Calculate zone-specific monthly trends filtered by selected year
-                                                return filteredMonthsByYear.map(month => {
+                                                // Calculate zone-specific monthly trends for the selected range
+                                                const si = AVAILABLE_MONTHS.indexOf(startMonth);
+                                                const ei = AVAILABLE_MONTHS.indexOf(endMonth);
+                                                const rangeMonths = AVAILABLE_MONTHS.slice(si < 0 ? 0 : si, ei < 0 ? undefined : ei + 1);
+                                                return rangeMonths.map(month => {
                                                     const analysis = calculateZoneAnalysisFromData(levelCaches, selectedZone, month);
                                                     return {
                                                         month,
