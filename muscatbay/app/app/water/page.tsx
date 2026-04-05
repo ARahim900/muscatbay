@@ -330,9 +330,15 @@ export default function WaterPage() {
 
     const meterCounts = useMemo(() => levelCaches.counts, [levelCaches]);
 
-    // Muscat Bay Community: composite type grouping meters billed to the community
+    // Muscat Bay Community: specific meters billed to the community
     const MUSCAT_BAY_COMMUNITY = 'Muscat Bay Community';
-    const COMMUNITY_TYPES = ['MB_Common', 'IRR_Servies', 'D_Building_Common', 'Retail'];
+    const COMMUNITY_ACCOUNTS = new Set([
+        '4300126','4300135','4300136','4300137','4300138','4300139','4300140','4300141',
+        '4300142','4300143','4300144','4300145','4300201','4300202','4300203','4300204',
+        '4300205','4300206','4300207','4300208','4300209','4300294','4300296','4300297',
+        '4300299','4300308','4300309','4300310','4300320','4300321','4300323','4300326',
+        '4300336','4300337','4300338','4300340','4300341',
+    ]);
 
     // Applicable meters for consumption view:
     // Exclude IRR_Servies meters where parentMeter is 'N/A' (non-applicable meters like Outlet/TSE)
@@ -354,7 +360,7 @@ export default function WaterPage() {
     // Filter meters by type (from applicable meters)
     const filteredMeters = useMemo(() => {
         if (selectedType === 'All') return applicableMeters;
-        if (selectedType === MUSCAT_BAY_COMMUNITY) return applicableMeters.filter(m => COMMUNITY_TYPES.includes(m.type));
+        if (selectedType === MUSCAT_BAY_COMMUNITY) return applicableMeters.filter(m => COMMUNITY_ACCOUNTS.has(m.accountNumber));
         return applicableMeters.filter(m => m.type === selectedType);
     }, [applicableMeters, selectedType]);
 
@@ -436,7 +442,7 @@ export default function WaterPage() {
         const endIdx = AVAILABLE_MONTHS.indexOf(endMonth);
         const months = AVAILABLE_MONTHS.slice(startIdx, endIdx + 1);
         const metersOfType = activeDetailType === MUSCAT_BAY_COMMUNITY
-            ? applicableMeters.filter(m => COMMUNITY_TYPES.includes(m.type))
+            ? applicableMeters.filter(m => COMMUNITY_ACCOUNTS.has(m.accountNumber))
             : applicableMeters.filter(m => m.type === activeDetailType);
 
         return months.map(month => {
@@ -450,7 +456,7 @@ export default function WaterPage() {
         if (!activeDetailType) return [];
 
         const metersOfType = activeDetailType === MUSCAT_BAY_COMMUNITY
-            ? applicableMeters.filter(m => COMMUNITY_TYPES.includes(m.type))
+            ? applicableMeters.filter(m => COMMUNITY_ACCOUNTS.has(m.accountNumber))
             : applicableMeters.filter(m => m.type === activeDetailType);
 
         return metersOfType
@@ -467,7 +473,7 @@ export default function WaterPage() {
     const typeDetailStats = useMemo(() => {
         if (!activeDetailType || typeTopConsumers.length === 0) return null;
         const meterCount = activeDetailType === MUSCAT_BAY_COMMUNITY
-            ? applicableMeters.filter(m => COMMUNITY_TYPES.includes(m.type)).length
+            ? applicableMeters.filter(m => COMMUNITY_ACCOUNTS.has(m.accountNumber)).length
             : applicableMeters.filter(m => m.type === activeDetailType).length;
         const totalForType = typeTopConsumers.reduce((s, m) => s + m.total, 0);
         const avgPerMeter = meterCount > 0 ? totalForType / meterCount : 0;
