@@ -155,9 +155,9 @@
   --chart-gray: #6B5F73;
 
   /* Domain-specific chart colors */
-  --chart-water-primary: #2563EB;
-  --chart-water-secondary: #60A5FA;
-  --chart-water-accent: #0EA5E9;
+  --chart-water-primary: #0098A6;
+  --chart-water-secondary: #5BB8C8;
+  --chart-water-accent: #00D2B3;
   --chart-elec-primary: #D97706;
   --chart-elec-secondary: #FBBF24;
   --chart-elec-accent: #F59E0B;
