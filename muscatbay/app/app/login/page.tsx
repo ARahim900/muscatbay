@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import React, { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { signIn } from "@/lib/auth";
@@ -12,7 +12,16 @@ import { Label } from "@/components/ui/label";
 import { Loader2, Mail, Lock, Eye, EyeOff, Waves, Shield, BarChart3, Droplets } from "lucide-react";
 
 export default function LoginPage() {
+    return (
+        <React.Suspense fallback={null}>
+            <LoginContent />
+        </React.Suspense>
+    );
+}
+
+function LoginContent() {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
@@ -20,6 +29,14 @@ export default function LoginPage() {
     const [error, setError] = useState<string | null>(null);
     const [emailError, setEmailError] = useState<string | null>(null);
     const [focusedField, setFocusedField] = useState<string | null>(null);
+
+    // Pick up error messages from auth callback redirects (?error=...)
+    useEffect(() => {
+        const errorParam = searchParams.get('error');
+        if (errorParam) {
+            setError(errorParam);
+        }
+    }, [searchParams]);
 
     const handleEmailChange = (value: string) => {
         setEmail(value);
