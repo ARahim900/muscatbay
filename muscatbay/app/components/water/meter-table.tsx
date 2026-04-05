@@ -84,7 +84,7 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
         });
     }, []);
 
-    const displayMonths = months.slice(-4); // Show last 4 months
+    const displayMonths = months; // Show all available months
 
     const handleSortKeyDown = (e: KeyboardEvent<HTMLTableCellElement>, field: string) => {
         if (e.key === 'Enter' || e.key === ' ') {

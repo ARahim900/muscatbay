@@ -871,14 +871,14 @@ export default function WaterPage() {
                                 <CardHeader className="card-elevated-header p-4 sm:p-5 md:p-6">
                                     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                                         <div>
-                                            <CardTitle className="text-base sm:text-lg">L3 Meters - Zone {ZONE_CONFIG.find(z => z.code === selectedZone)?.name}</CardTitle>
-                                            <p className="text-xs sm:text-sm text-slate-500">All L3 meters in this zone</p>
+                                            <CardTitle className="text-base sm:text-lg">Zone Meters - {ZONE_CONFIG.find(z => z.code === selectedZone)?.name}</CardTitle>
+                                            <p className="text-xs sm:text-sm text-slate-500">Zone bulk and individual meters</p>
                                         </div>
                                     </div>
                                 </CardHeader>
                                 <CardContent className="p-4 sm:p-5 md:p-6 pt-0">
                                     <MeterTable
-                                        meters={waterMeters.filter(m => m.zone === selectedZone && m.level === 'L3')}
+                                        meters={waterMeters.filter(m => m.zone === selectedZone && (m.level === 'L2' || m.level === 'L3'))}
                                         months={AVAILABLE_MONTHS.slice(
                                             Math.max(0, AVAILABLE_MONTHS.indexOf(startMonth)),
                                             AVAILABLE_MONTHS.indexOf(endMonth) + 1
