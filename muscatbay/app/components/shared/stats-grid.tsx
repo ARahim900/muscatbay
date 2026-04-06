@@ -18,6 +18,12 @@ interface StatItem {
     trend?: 'up' | 'down' | 'neutral';
     trendValue?: string;
     href?: string;
+    /**
+     * Invert the good/bad meaning of the trend direction.
+     * Use true for savings metrics (electricity, water) where DOWN = good (green).
+     * Default false = standard logic where UP = good (green), DOWN = bad (red).
+     */
+    invertTrend?: boolean;
 }
 
 interface StatsGridProps {
@@ -61,7 +67,18 @@ export function StatsGrid({ stats, className }: StatsGridProps) {
                 const variant = stat.variant || "primary";
                 const iconColor = variantIconColors[variant];
 
-                const isNegativeTrend = stat.trend === 'down';
+                // Resolve whether the current trend direction is "good" or "bad".
+                // invertTrend=true  → down is good (savings: energy, water, cost)
+                // invertTrend=false → up is good  (output: STP treated water, income)
+                const isGoodTrend = stat.trend === 'neutral' ? false :
+                    stat.invertTrend
+                        ? stat.trend === 'down'
+                        : stat.trend === 'up';
+
+                const isBadTrend = stat.trend === 'neutral' ? false :
+                    stat.invertTrend
+                        ? stat.trend === 'up'
+                        : stat.trend === 'down';
 
                 const cardContent = (
                     <>
@@ -70,10 +87,8 @@ export function StatsGrid({ stats, className }: StatsGridProps) {
                                 <p className="text-slate-500 dark:text-slate-300 text-[10px] sm:text-xs font-medium mb-0.5 sm:mb-1 uppercase tracking-wide truncate">
                                     {stat.label}
                                 </p>
-                                <h3 className={cn(
-                                    "text-base sm:text-lg md:text-xl font-bold tabular-nums tracking-tight truncate",
-                                    isNegativeTrend ? "text-red-500" : "text-slate-800 dark:text-slate-100"
-                                )}>
+                                {/* Big value: always neutral — never colored red/green */}
+                                <h3 className="text-base sm:text-lg md:text-xl font-bold tabular-nums tracking-tight truncate text-slate-800 dark:text-slate-100">
                                     {stat.value}
                                 </h3>
                             </div>
@@ -84,23 +99,25 @@ export function StatsGrid({ stats, className }: StatsGridProps) {
                                 />
                             </div>
                         </div>
-                        {/* Trend indicator */}
+
+                        {/* Trend indicator — small text below, colored green/red */}
                         {stat.trend && stat.trendValue && (
                             <div className="mt-2 sm:mt-3 flex items-center text-xs sm:text-sm">
                                 <span className={cn(
                                     "flex items-center font-medium",
-                                    stat.trend === 'up' ? "text-emerald-600" :
-                                        stat.trend === 'down' ? "text-rose-600" :
-                                            "text-slate-500"
+                                    isGoodTrend  ? "text-emerald-600 dark:text-emerald-400" :
+                                    isBadTrend   ? "text-rose-600 dark:text-rose-400" :
+                                                   "text-slate-500"
                                 )}>
-                                    {stat.trend === 'up' && <TrendingUp size={14} className="me-1" />}
-                                    {stat.trend === 'down' && <TrendingDown size={14} className="me-1" />}
-                                    {stat.trend === 'neutral' && <Minus size={14} className="me-1" />}
+                                    {stat.trend === 'up'      && <TrendingUp  size={14} className="me-1" />}
+                                    {stat.trend === 'down'    && <TrendingDown size={14} className="me-1" />}
+                                    {stat.trend === 'neutral' && <Minus        size={14} className="me-1" />}
                                     {stat.trendValue}
                                 </span>
                                 <span className="text-slate-400 ms-1.5 text-xs">vs last month</span>
                             </div>
                         )}
+
                         {stat.subtitle && !stat.trendValue && (
                             <p className="text-[10px] sm:text-xs text-slate-400 mt-1.5 sm:mt-2 truncate">{stat.subtitle}</p>
                         )}

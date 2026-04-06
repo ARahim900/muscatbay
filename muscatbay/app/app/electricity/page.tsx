@@ -361,7 +361,8 @@ export default function ElectricityPage() {
                 icon: Zap,
                 variant: "warning" as const,
                 trend: consumptionTrend.trend,
-                trendValue: consumptionTrend.trendValue
+                trendValue: consumptionTrend.trendValue,
+                invertTrend: true,  // Less consumption = saving = green ✓
             },
             {
                 label: "TOTAL COST",
@@ -370,7 +371,8 @@ export default function ElectricityPage() {
                 icon: DollarSign,
                 variant: "success" as const,
                 trend: costTrend.trend,
-                trendValue: costTrend.trendValue
+                trendValue: costTrend.trendValue,
+                invertTrend: true,  // Lower cost = saving = green ✓
             },
             {
                 label: "METER COUNT",
