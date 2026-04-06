@@ -174,21 +174,30 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
         return null;
     }
 
-    // Use getSession() instead of getUser() on the client side.
-    // getUser() makes a network round-trip and competes for the same auth-token
-    // lock that the Next.js middleware holds while refreshing the session,
-    // causing "lock was released because another request stole it" errors.
-    // The middleware (middleware.ts) already validates the token server-side on
-    // every request; the browser client only needs to read the local cache.
-    const { data: { session }, error } = await supabase.auth.getSession();
-    if (error || !session?.user) return null;
-
-    const user = session.user;
-    return {
-        id: user.id,
-        email: user.email || '',
-        user_metadata: user.user_metadata as AuthUser['user_metadata'],
-    };
+    try {
+        // getUser() validates the token with the Supabase server. It can
+        // occasionally fail with "lock released because another request stole it"
+        // when the Next.js middleware is simultaneously refreshing the session.
+        // In that case we fall back to getSession() which reads the locally
+        // stored (already-validated) session without a network round-trip.
+        const { data: { user }, error } = await supabase.auth.getUser();
+        if (error || !user) return null;
+        return {
+            id: user.id,
+            email: user.email || '',
+            user_metadata: user.user_metadata as AuthUser['user_metadata'],
+        };
+    } catch {
+        // Lock was stolen by the middleware — fall back to cached session.
+        // The middleware already validated the token server-side, so this is safe.
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.user) return null;
+        return {
+            id: session.user.id,
+            email: session.user.email || '',
+            user_metadata: session.user.user_metadata as AuthUser['user_metadata'],
+        };
+    }
 }
 
 // Get user profile from profiles table
