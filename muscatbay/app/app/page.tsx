@@ -4,7 +4,6 @@ import { useState, useMemo, useCallback } from "react";
 import dynamic from "next/dynamic";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { StatsGrid } from "@/components/shared/stats-grid";
-import { LoadingSpinner } from "@/components/shared/loading-spinner";
 import { PageHeader } from "@/components/shared/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -66,10 +65,30 @@ export default function DashboardPage() {
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center min-h-[400px]">
-                <div className="text-center space-y-3">
-                    <LoadingSpinner />
-                    <p className="text-sm text-slate-500 dark:text-slate-400">Loading your operations dashboard...</p>
+            <div className="space-y-6 md:space-y-8 w-full">
+                <div className="flex items-center justify-between">
+                    <div className="space-y-2">
+                        <div className="h-7 w-48 bg-slate-200 dark:bg-slate-700 rounded-lg animate-pulse" />
+                        <div className="h-4 w-72 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
+                    </div>
+                </div>
+                <div className="grid gap-3 sm:gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
+                    {Array.from({ length: 6 }).map((_, i) => (
+                        <div key={i} className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 sm:p-5 animate-pulse">
+                            <div className="flex justify-between items-start gap-2">
+                                <div className="space-y-2 flex-1">
+                                    <div className="h-3 w-20 bg-slate-200 dark:bg-slate-700 rounded" />
+                                    <div className="h-6 w-28 bg-slate-200 dark:bg-slate-700 rounded" />
+                                </div>
+                                <div className="w-9 h-9 bg-slate-200 dark:bg-slate-700 rounded-lg flex-shrink-0" />
+                            </div>
+                            <div className="mt-3 h-3 w-24 bg-slate-200 dark:bg-slate-700 rounded" />
+                        </div>
+                    ))}
+                </div>
+                <div className="grid gap-4 sm:gap-5 md:gap-6 grid-cols-1 lg:grid-cols-7">
+                    <div className="col-span-1 lg:col-span-4 h-[300px] animate-pulse rounded-xl bg-slate-200/50 dark:bg-slate-800/50" />
+                    <div className="col-span-1 lg:col-span-3 h-[300px] animate-pulse rounded-xl bg-slate-200/50 dark:bg-slate-800/50" />
                 </div>
             </div>
         );
@@ -129,7 +148,7 @@ export default function DashboardPage() {
                                         key={filter}
                                         onClick={() => handleFilterClick(filter)}
                                         aria-pressed={activityFilter === filter}
-                                        className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors capitalize ${activityFilter === filter
+                                        className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors capitalize focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/60 ${activityFilter === filter
                                             ? filter === 'critical' ? 'bg-mb-danger text-white'
                                                 : filter === 'warning' ? 'bg-mb-warning text-white'
                                                     : filter === 'info' ? 'bg-mb-info text-white'
@@ -144,6 +163,7 @@ export default function DashboardPage() {
                         </div>
                     </CardHeader>
                     <CardContent className="p-4 sm:p-5 md:p-6 pt-0">
+                        <div aria-live="polite" aria-atomic="false">
                         <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                             {recentActivity
                                 .filter(item => activityFilter === 'all' || item.type === activityFilter)
@@ -167,7 +187,7 @@ export default function DashboardPage() {
                                         </>
                                     );
 
-                                    const itemClassName = "flex items-center gap-3 p-3 rounded-lg bg-white/30 dark:bg-slate-800/50 border border-mb-primary/5 dark:border-slate-700 hover:bg-white/50 dark:hover:bg-slate-700 transition-colors group/activity";
+                                    const itemClassName = "flex items-center gap-3 p-3 rounded-lg bg-white/30 dark:bg-slate-800/50 border border-mb-primary/5 dark:border-slate-700 hover:bg-white/50 dark:hover:bg-slate-700 transition-colors group/activity hover:-translate-y-0.5 transition-transform duration-150";
 
                                     return activityHref ? (
                                         <Link key={i} href={activityHref} className={itemClassName}>
@@ -179,6 +199,19 @@ export default function DashboardPage() {
                                         </div>
                                     );
                                 })}
+                            {recentActivity.filter(item => activityFilter === 'all' || item.type === activityFilter).length === 0 && (
+                                <div className="col-span-full flex flex-col items-center gap-2 py-8 text-center">
+                                    <Activity className="w-8 h-8 text-slate-300 dark:text-slate-600" />
+                                    <p className="text-sm text-slate-500 dark:text-slate-400">No records for the selected period.</p>
+                                    <button
+                                        onClick={() => setActivityFilter('all')}
+                                        className="text-xs text-secondary hover:underline font-medium"
+                                    >
+                                        Clear filters
+                                    </button>
+                                </div>
+                            )}
+                        </div>
                         </div>
                     </CardContent>
                 </Card>

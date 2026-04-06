@@ -36,6 +36,8 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         <link rel="manifest" href="/manifest.json" />
+        <link rel="preconnect" href="https://utnlgeuqajmwibqmdmgt.supabase.co" />
+        <link rel="preconnect" href="https://utnlgeuqajmwibqmdmgt.supabase.co" crossOrigin="anonymous" />
       </head>
       <body className={`${inter.className} ${inter.variable}`} suppressHydrationWarning>
         <RegisterSW />

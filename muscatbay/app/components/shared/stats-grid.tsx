@@ -24,6 +24,9 @@ interface StatItem {
      * Default false = standard logic where UP = good (green), DOWN = bad (red).
      */
     invertTrend?: boolean;
+    status?: 'normal' | 'warning' | 'danger' | 'stale' | 'missing';
+    lastUpdated?: string;
+    dataQuality?: 'incomplete' | 'stale' | 'estimated' | 'under-review' | 'anomaly';
 }
 
 interface StatsGridProps {
@@ -114,23 +117,37 @@ export function StatsGrid({ stats, className }: StatsGridProps) {
                                     {stat.trend === 'neutral' && <Minus        size={14} className="me-1" />}
                                     {stat.trendValue}
                                 </span>
-                                <span className="text-slate-400 ms-1.5 text-xs">vs last month</span>
+                                <span className="text-slate-500 dark:text-slate-400 ms-1.5 text-xs">vs last month</span>
                             </div>
                         )}
 
                         {stat.subtitle && !stat.trendValue && (
-                            <p className="text-[10px] sm:text-xs text-slate-400 mt-1.5 sm:mt-2 truncate">{stat.subtitle}</p>
+                            <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 mt-1.5 sm:mt-2 truncate">{stat.subtitle}</p>
+                        )}
+
+                        {stat.status && (
+                            <div className="mt-2 flex items-center gap-1.5 text-xs">
+                                <span
+                                    className="inline-block w-1.5 h-1.5 rounded-full flex-shrink-0"
+                                    style={{ backgroundColor: stat.status === 'normal' ? 'var(--status-normal)' : stat.status === 'warning' ? 'var(--status-warning)' : stat.status === 'danger' ? 'var(--status-danger)' : stat.status === 'stale' ? 'var(--status-stale)' : 'var(--status-missing)' }}
+                                />
+                                <span className="text-slate-500 dark:text-slate-400 capitalize font-medium">{stat.status}</span>
+                            </div>
+                        )}
+                        {stat.lastUpdated && (
+                            <p className="mt-1 text-[10px] text-slate-400 dark:text-slate-500 tabular-nums">Updated {stat.lastUpdated}</p>
                         )}
                     </>
                 );
 
-                const baseCardClassName = "bg-white dark:bg-slate-900 p-3 sm:p-4 md:p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm group/stat overflow-hidden";
+                const baseCardClassName = "bg-white dark:bg-slate-900 p-3 sm:p-4 md:p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm group/stat overflow-hidden hover:-translate-y-1 hover:shadow-md transition-all duration-200";
 
                 return stat.href ? (
                     <Link
                         key={index}
                         href={stat.href}
-                        className={cn(baseCardClassName, "block cursor-pointer hover:shadow-md transition-shadow duration-200")}
+                        aria-label={`${stat.label}: ${stat.value}. ${stat.trend === 'up' ? 'Up' : stat.trend === 'down' ? 'Down' : 'No change'} ${stat.trendValue || ''} compared to last period. Click to view details.`}
+                        className={cn(baseCardClassName, "block cursor-pointer")}
                     >
                         {cardContent}
                     </Link>

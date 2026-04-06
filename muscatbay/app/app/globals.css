@@ -95,6 +95,14 @@
   --mb-info: #6B9AC4;
   --mb-info-light: #EAF0F7;
 
+  /* ── Status colour tokens (WCAG-compliant) ── */
+  --status-normal:  #22c55e;
+  --status-warning: #f59e0b;
+  --status-danger:  #ef4444;
+  --status-info:    #3b82f6;
+  --status-missing: #94a3b8;
+  --status-stale:   #f97316;
+
   /* Backgrounds */
   --background: #F7F8F9;
   /* Main Content Area */
@@ -400,6 +408,24 @@
 
 @layer components {
 
+  /* Header blur — @supports fallback for browsers without backdrop-filter */
+  .header-blur {
+    background-color: rgba(255, 255, 255, 0.95);
+    @supports (backdrop-filter: blur(12px)) {
+      background-color: rgba(255, 255, 255, 0.90);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+  }
+  .dark .header-blur {
+    background-color: rgba(15, 23, 42, 0.95);
+    @supports (backdrop-filter: blur(12px)) {
+      background-color: rgba(15, 23, 42, 0.88);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+  }
+
   /* Elevated Card - white with subtle border matching example design */
   .card-elevated {
     background-color: rgba(255, 255, 255, 0.9);
@@ -623,5 +649,65 @@
       width: 4px;
       height: 4px;
     }
+  }
+
+  /* ── Accessibility: visually hidden (screen-reader only) ── */
+  .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
+
+  /* ── Tabular numerics utility ── */
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ── Notification dot pulse animation ── */
+  @keyframes pulse-dot {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+    50%       { box-shadow: 0 0 0 4px rgba(239, 68, 68, 0); }
+  }
+  .animate-pulse-dot {
+    animation: pulse-dot 2s infinite;
+  }
+
+  /* ── CSS-only tooltip for icon-only buttons ── */
+  [data-tooltip] {
+    position: relative;
+  }
+  [data-tooltip]::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(15, 23, 42, 0.85);
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 500;
+    line-height: 1;
+    white-space: nowrap;
+    padding: 4px 8px;
+    border-radius: 6px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    z-index: 999;
+  }
+  [data-tooltip]:hover::after,
+  [data-tooltip]:focus-visible::after {
+    opacity: 1;
+  }
+
+  /* ── Mobile bottom-nav safe area ── */
+  .bottom-nav-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 }

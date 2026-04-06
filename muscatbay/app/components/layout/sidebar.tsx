@@ -147,7 +147,7 @@ export function Sidebar() {
         {/* Main Navigation */}
         <nav className="flex-1 px-3 py-4 overflow-y-auto">
           <ul className="space-y-1">
-            {navigationItems.map((item) => {
+            {navigationItems.map((item, index) => {
               const Icon = item.icon;
               // Check if a more-specific sibling nav item matches the current path
               const hasMoreSpecificMatch = navigationItems.some(
@@ -160,13 +160,19 @@ export function Sidebar() {
                 ? pathname === '/'
                 : pathname?.startsWith(item.href) && !hasMoreSpecificMatch;
 
+              const needsSeparator = index === 4; // Contractors is the first secondary item
               return (
-                <li key={item.id}>
+                <React.Fragment key={item.id}>
+                  {needsSeparator && (
+                    <li role="separator" aria-hidden="true" className="my-2 mx-0 border-t border-white/10 opacity-60" />
+                  )}
+                  <li>
                   <Link
                     href={item.href}
                     onClick={handleItemClick}
+                    aria-current={isActive ? "page" : undefined}
                     className={`
-                      group/nav flex items-center gap-3 py-2.5 px-3 rounded-lg text-left transition-all duration-200 ease-out relative overflow-hidden
+                      group/nav flex items-center gap-3 py-2.5 px-3 rounded-lg text-left transition-all duration-200 ease-out relative overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/60 focus-visible:ring-inset
                       ${isActive
                         ? "bg-white/10 text-white shadow-[0_0_15px_rgba(129,216,208,0.2)]"
                         : "text-white/90 hover:bg-white/10 hover:text-white"
@@ -204,7 +210,8 @@ export function Sidebar() {
                       </div>
                     )}
                   </Link>
-                </li>
+                  </li>
+                </React.Fragment>
               );
             })}
           </ul>
@@ -223,6 +230,7 @@ export function Sidebar() {
                 key={item.id}
                 href={item.href}
                 onClick={handleItemClick}
+                aria-current={isActive ? "page" : undefined}
                 className={`
                   group/nav flex items-center gap-3 py-2.5 px-3 rounded-lg transition-all duration-200 ease-out relative overflow-hidden
                   ${isActive

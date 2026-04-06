@@ -52,7 +52,7 @@ export function Topbar() {
 
     if (!mounted) {
         return (
-            <header className="h-16 sm:h-[60.5px] bg-white dark:bg-slate-900 px-4 sm:px-6 flex items-center justify-between sticky top-0 z-20 border-b border-slate-200 dark:border-slate-800 shadow-sm">
+            <header className="h-16 sm:h-[60.5px] header-blur px-4 sm:px-6 flex items-center justify-between sticky top-0 z-20 border-b border-slate-200 dark:border-slate-800 shadow-sm">
                 <div className="flex items-center gap-3">
                     {/* Skeleton or simple loading state if needed, or just return null to avoid flash */}
                 </div>
@@ -61,7 +61,7 @@ export function Topbar() {
     }
 
     return (
-        <header className="h-16 sm:h-[60.5px] bg-white dark:bg-slate-900 px-4 sm:px-6 flex items-center justify-between sticky top-0 z-20 border-b border-slate-200 dark:border-slate-800 shadow-sm">
+        <header className="h-16 sm:h-[60.5px] header-blur px-4 sm:px-6 flex items-center justify-between sticky top-0 z-20 border-b border-slate-200 dark:border-slate-800 shadow-sm">
             {/* Left Section - Mobile hamburger + Title */}
             <div className="flex items-center gap-3">
                 {/* Mobile hamburger - Always visible on mobile */}
@@ -92,6 +92,7 @@ export function Topbar() {
                     onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
                     className="w-11 h-11 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-500 dark:text-slate-400 transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:outline-none"
                     aria-label="Toggle theme"
+                    data-tooltip="Toggle theme"
                 >
                     {theme === "dark" ? (
                         <Moon className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -103,7 +104,8 @@ export function Topbar() {
                 {/* Search Button - Hidden on small mobile */}
                 <button
                     className="w-11 h-11 hidden sm:flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-500 dark:text-slate-400 transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:outline-none"
-                    aria-label="Search"
+                    aria-label="Search assets, meters, contractors, or records"
+                    data-tooltip="Search"
                 >
                     <Search className="w-4 h-4 sm:w-5 sm:h-5" />
                 </button>
@@ -111,11 +113,12 @@ export function Topbar() {
                 {/* Notifications Button */}
                 <button
                     className="w-11 h-11 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg relative text-slate-500 dark:text-slate-400 transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:outline-none"
-                    aria-label="Notifications"
+                    aria-label="View notifications"
+                    data-tooltip="Notifications"
                 >
                     <Bell className="w-4 h-4 sm:w-5 sm:h-5" />
                     {/* Notification badge */}
-                    <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-slate-900"></span>
+                    <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-slate-900 animate-pulse-dot"></span>
                 </button>
 
                 {/* User Profile with Dropdown */}
