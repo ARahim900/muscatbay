@@ -22,6 +22,8 @@ export interface DashboardStats {
     variant: "water" | "warning" | "success" | "primary";
     trend?: 'up' | 'down' | 'neutral';
     trendValue?: string;
+    /** true = down is good (savings: water, electricity). false/omit = up is good (STP output, income). */
+    invertTrend?: boolean;
 }
 
 export interface ChartData {
@@ -254,7 +256,8 @@ export function useDashboardData() {
                     icon: null,
                     variant: "water" as const,
                     trend: waterTrend.trend,
-                    trendValue: waterTrend.trendValue
+                    trendValue: waterTrend.trendValue,
+                    invertTrend: true,   // Less water drawn = conservation = green ✓
                 },
                 {
                     label: "ELECTRICITY USAGE",
@@ -263,7 +266,8 @@ export function useDashboardData() {
                     icon: null,
                     variant: "warning" as const,
                     trend: elecTrend.trend,
-                    trendValue: elecTrend.trendValue
+                    trendValue: elecTrend.trendValue,
+                    invertTrend: true,   // Less electricity = saving = green ✓
                 },
                 {
                     label: "STP INLET FLOW",
@@ -272,7 +276,8 @@ export function useDashboardData() {
                     icon: null,
                     variant: "success" as const,
                     trend: stpInletTrend.trend,
-                    trendValue: stpInletTrend.trendValue
+                    trendValue: stpInletTrend.trendValue,
+                    // default: more inlet = system processing more = green ✓
                 },
                 {
                     label: "TSE OUTPUT",
@@ -281,7 +286,8 @@ export function useDashboardData() {
                     icon: null,
                     variant: "primary" as const,
                     trend: stpTseTrend.trend,
-                    trendValue: stpTseTrend.trendValue
+                    trendValue: stpTseTrend.trendValue,
+                    // default: more TSE = more irrigation savings = green ✓
                 },
                 {
                     label: "STP ECONOMIC IMPACT",
@@ -290,7 +296,8 @@ export function useDashboardData() {
                     icon: null,
                     variant: "success" as const,
                     trend: stpEconomicTrend.trend,
-                    trendValue: stpEconomicTrend.trendValue
+                    trendValue: stpEconomicTrend.trendValue,
+                    // default: more economic impact = better = green ✓
                 },
                 {
                     label: "TOTAL ASSETS",
