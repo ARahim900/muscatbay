@@ -47,14 +47,17 @@ export function getSupabaseClient(): SupabaseClient | null {
             // Global fetch options for better performance
             global: {
                 fetch: (url, options = {}) => {
-                    // Add 10 second timeout to all requests
-                    const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 10000);
+                    // Build a combined signal: respect Supabase's own internal signal
+                    // AND add a 30-second hard timeout.
+                    // We must NOT replace Supabase's signal — dropping it causes
+                    // "signal is aborted without reason" AbortErrors when Supabase
+                    // internally cancels auth requests (e.g. lock refresh conflicts).
+                    const timeoutSignal = AbortSignal.timeout(30_000);
+                    const signal = options.signal
+                        ? AbortSignal.any([options.signal, timeoutSignal])
+                        : timeoutSignal;
 
-                    return fetch(url, {
-                        ...options,
-                        signal: controller.signal,
-                    }).finally(() => clearTimeout(timeoutId));
+                    return fetch(url, { ...options, signal });
                 },
             },
             // Database configuration
