@@ -1148,20 +1148,20 @@ export default function ElectricityPage() {
                                     <tbody>
                                         {analysisData.tableData.map((meter) => (
                                             <tr key={meter.id} className="border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-primary/5 dark:hover:bg-slate-800/40 transition-colors even:bg-slate-50/40 dark:even:bg-slate-800/20">
-                                                <td className="py-3 px-4 font-medium text-slate-800 dark:text-slate-200 sticky left-0 bg-white dark:bg-slate-900 z-10">{meter.name}</td>
-                                                <td className="py-3 px-4 text-slate-500 dark:text-slate-400 font-mono text-xs">{meter.account_number}</td>
+                                                <td className="py-4 px-5 font-medium text-slate-800 dark:text-slate-200 sticky left-0 bg-white dark:bg-slate-900 z-10">{meter.name}</td>
+                                                <td className="py-4 px-5 text-slate-500 dark:text-slate-400 font-mono text-sm">{meter.account_number}</td>
                                                 {analysisData.selectedMonths.map(month => {
                                                     const val = meter.monthlyReadings?.[month] || 0;
                                                     return (
-                                                        <td key={month} className="py-3 px-3 text-right font-mono text-xs text-slate-700 dark:text-slate-300">
+                                                        <td key={month} className="py-4 px-3 text-right font-mono text-sm text-slate-700 dark:text-slate-300">
                                                             {val > 0 ? val.toLocaleString('en-US', { maximumFractionDigits: 1 }) : <span className="text-slate-300 dark:text-slate-600">—</span>}
                                                         </td>
                                                     );
                                                 })}
-                                                <td className="py-3 px-4 text-right font-mono text-xs font-semibold text-slate-800 dark:text-slate-200 border-l border-slate-100 dark:border-slate-800">
+                                                <td className="py-4 px-5 text-right font-mono text-sm font-semibold text-slate-800 dark:text-slate-200 border-l border-slate-100 dark:border-slate-800">
                                                     {meter.rangeConsumption.toLocaleString('en-US', { maximumFractionDigits: 1 })}
                                                 </td>
-                                                <td className="py-3 px-4 text-right font-mono text-xs font-medium text-mb-success dark:text-mb-success-hover">
+                                                <td className="py-4 px-5 text-right font-mono text-sm font-medium text-mb-success dark:text-mb-success-hover">
                                                     {meter.rangeCost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                                 </td>
                                             </tr>
@@ -1169,20 +1169,20 @@ export default function ElectricityPage() {
                                         {/* Totals row */}
                                         {analysisData.tableData.length > 1 && (
                                             <tr className="bg-slate-50/80 dark:bg-slate-800/60 font-semibold">
-                                                <td className="py-3 px-4 text-slate-700 dark:text-slate-200 sticky left-0 bg-slate-50/80 dark:bg-slate-800/60 z-10">Total</td>
-                                                <td className="py-3 px-4"></td>
+                                                <td className="py-4 px-5 text-slate-700 dark:text-slate-200 sticky left-0 bg-slate-50/80 dark:bg-slate-800/60 z-10">Total</td>
+                                                <td className="py-4 px-5"></td>
                                                 {analysisData.selectedMonths.map(month => {
                                                     const monthTotal = analysisData.tableData.reduce((sum, m) => sum + (m.monthlyReadings?.[month] || 0), 0);
                                                     return (
-                                                        <td key={`total-${month}`} className="py-3 px-3 text-right font-mono text-xs text-slate-800 dark:text-slate-200">
+                                                        <td key={`total-${month}`} className="py-4 px-3 text-right font-mono text-sm text-slate-800 dark:text-slate-200">
                                                             {monthTotal > 0 ? monthTotal.toLocaleString('en-US', { maximumFractionDigits: 0 }) : '—'}
                                                         </td>
                                                     );
                                                 })}
-                                                <td className="py-3 px-4 text-right font-mono text-xs text-slate-800 dark:text-slate-200 border-l border-slate-200 dark:border-slate-700">
+                                                <td className="py-4 px-5 text-right font-mono text-sm text-slate-800 dark:text-slate-200 border-l border-slate-200 dark:border-slate-700">
                                                     {analysisData.tableData.reduce((s, m) => s + m.rangeConsumption, 0).toLocaleString('en-US', { maximumFractionDigits: 0 })}
                                                 </td>
-                                                <td className="py-3 px-4 text-right font-mono text-xs text-mb-success dark:text-mb-success-hover">
+                                                <td className="py-4 px-5 text-right font-mono text-sm text-mb-success dark:text-mb-success-hover">
                                                     {analysisData.tableData.reduce((s, m) => s + m.rangeCost, 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                                 </td>
                                             </tr>

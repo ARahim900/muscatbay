@@ -559,21 +559,21 @@ export default function ContractorsPage() {
                             <tbody>
                                 {paginatedContracts.map(c => (
                                     <tr key={c.id} className="border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-primary/5 dark:hover:bg-slate-800/40 transition-colors even:bg-slate-50/40 dark:even:bg-slate-800/20">
-                                        <td className="py-3 px-4 text-xs text-slate-400">{c.id}</td>
-                                        <td className="py-3 px-4 font-medium text-slate-800 dark:text-slate-200">
+                                        <td className="py-4 px-5 text-sm text-slate-500">{c.id}</td>
+                                        <td className="py-4 px-5 font-medium text-slate-800 dark:text-slate-200">
                                             {c.contractor}
-                                            {c.note && <p className="text-[11px] text-slate-400 mt-0.5 max-w-[200px] truncate" title={c.note}>{c.note}</p>}
+                                            {c.note && <p className="text-xs text-slate-400 mt-0.5 max-w-[200px] truncate" title={c.note}>{c.note}</p>}
                                         </td>
-                                        <td className="py-3 px-4 text-xs text-slate-500 dark:text-slate-400 hidden lg:table-cell font-mono">{c.contract_ref || '-'}</td>
-                                        <td className="py-3 px-4 text-xs text-slate-600 dark:text-slate-400">{c.service || '-'}</td>
-                                        <td className="py-3 px-4">
+                                        <td className="py-4 px-5 text-sm text-slate-500 dark:text-slate-400 hidden lg:table-cell font-mono">{c.contract_ref || '-'}</td>
+                                        <td className="py-4 px-5 text-sm text-slate-600 dark:text-slate-400">{c.service || '-'}</td>
+                                        <td className="py-4 px-5">
                                             <StatusBadge label={c.flow} color={getFlowDotColor(c.flow)} />
                                         </td>
-                                        <td className="py-3 px-4 text-center text-xs text-slate-600 dark:text-slate-300">{c.contract_years ?? '-'}</td>
-                                        <td className="py-3 px-4 text-right font-mono text-xs text-slate-700 dark:text-slate-300">
+                                        <td className="py-4 px-5 text-center text-sm text-slate-600 dark:text-slate-300">{c.contract_years ?? '-'}</td>
+                                        <td className="py-4 px-5 text-right font-mono text-sm text-slate-700 dark:text-slate-300">
                                             {c.annual_value_omr ? fmtOMR(c.annual_value_omr) : <span className="text-slate-400 italic">{c.rate_note || 'Variable'}</span>}
                                         </td>
-                                        <td className="py-3 px-4 text-right font-mono text-xs font-semibold text-primary">
+                                        <td className="py-4 px-5 text-right font-mono text-sm font-semibold text-primary">
                                             {c.total_value_omr ? fmtOMR(c.total_value_omr) : <span className="text-slate-400 italic font-normal">Variable</span>}
                                         </td>
                                     </tr>
@@ -652,7 +652,7 @@ export default function ContractorsPage() {
                                         <tr className="bg-[#4E4456] dark:bg-[#3a3245]">
                                             <th className="text-left py-4 px-4 font-semibold uppercase tracking-wide text-sm text-white border-b-2 border-[#3a3245] sticky left-0 bg-[#4E4456] dark:bg-[#3a3245] z-10">Year</th>
                                             {matrix.contractors.map(cn => (
-                                                <th key={cn} className="text-right py-4 px-3 font-semibold uppercase tracking-wide text-[11px] text-white border-b-2 border-[#3a3245]" title={cn}>
+                                                <th key={cn} className="text-right py-4 px-3 font-semibold uppercase tracking-wide text-xs text-white border-b-2 border-[#3a3245]" title={cn}>
                                                     {shortName(cn)}
                                                 </th>
                                             ))}
@@ -662,14 +662,14 @@ export default function ContractorsPage() {
                                     <tbody>
                                         {matrix.rows.map(row => (
                                             <tr key={row.year} className="border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-primary/5 dark:hover:bg-slate-800/40 transition-colors even:bg-slate-50/40 dark:even:bg-slate-800/20">
-                                                <td className="py-3 px-4 font-medium text-slate-700 dark:text-slate-300 sticky left-0 bg-white dark:bg-slate-900 z-10">
+                                                <td className="py-4 px-4 font-medium text-slate-700 dark:text-slate-300 sticky left-0 bg-white dark:bg-slate-900 z-10">
                                                     <span className="text-xs text-slate-400 mr-1.5">Y{row.year}</span>
                                                     {row.label}
                                                 </td>
                                                 {matrix.contractors.map(cn => {
                                                     const val = row.costs[cn];
                                                     return (
-                                                        <td key={cn} className="py-3 px-3 text-right font-mono text-xs">
+                                                        <td key={cn} className="py-4 px-3 text-right font-mono text-sm">
                                                             {val != null ? (
                                                                 <span className="text-slate-700 dark:text-slate-300">{fmtOMR(val)}</span>
                                                             ) : (
@@ -678,20 +678,20 @@ export default function ContractorsPage() {
                                                         </td>
                                                     );
                                                 })}
-                                                <td className="py-3 px-4 text-right font-mono text-xs font-bold text-primary bg-slate-50/40 dark:bg-slate-800/20">
+                                                <td className="py-4 px-4 text-right font-mono text-sm font-bold text-primary bg-slate-50/40 dark:bg-slate-800/20">
                                                     {fmtOMR(row.total)}
                                                 </td>
                                             </tr>
                                         ))}
                                         {/* Totals row */}
                                         <tr className="bg-slate-50/80 dark:bg-slate-800/50 font-semibold border-t-2 border-slate-300 dark:border-slate-600">
-                                            <td className="py-3 px-4 text-slate-700 dark:text-slate-200 sticky left-0 bg-slate-50/80 dark:bg-slate-800/50 z-10">Contract Total</td>
+                                            <td className="py-4 px-4 text-slate-700 dark:text-slate-200 sticky left-0 bg-slate-50/80 dark:bg-slate-800/50 z-10">Contract Total</td>
                                             {matrix.contractors.map(cn => (
-                                                <td key={cn} className="py-3 px-3 text-right font-mono text-xs text-slate-700 dark:text-slate-300">
+                                                <td key={cn} className="py-4 px-3 text-right font-mono text-sm text-slate-700 dark:text-slate-300">
                                                     {fmtOMR(matrix.contractorTotals[cn])}
                                                 </td>
                                             ))}
-                                            <td className="py-3 px-4 text-right font-mono text-sm font-bold text-primary bg-slate-100/60 dark:bg-slate-700/30">
+                                            <td className="py-4 px-4 text-right font-mono text-sm font-bold text-primary bg-slate-100/60 dark:bg-slate-700/30">
                                                 {fmtOMR(matrix.grandTotal)}
                                             </td>
                                         </tr>

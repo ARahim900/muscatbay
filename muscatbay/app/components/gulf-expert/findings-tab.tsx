@@ -219,23 +219,23 @@ export function FindingsTab({ findings }: FindingsTabProps) {
           <tbody>
             {paginated.map((f, i) => (
               <tr key={f.id || i} className="border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-primary/5 dark:hover:bg-slate-800/40 transition-colors even:bg-slate-50/40 dark:even:bg-slate-800/20">
-                <td className="py-3 px-4 font-medium text-slate-800 dark:text-slate-200 whitespace-nowrap">
+                <td className="py-4 px-5 font-medium text-slate-800 dark:text-slate-200 whitespace-nowrap">
                   {f.finding_code}
                   {f.is_recurring && <span className="ml-1 text-amber-500" title="Recurring issue">↻</span>}
                 </td>
-                <td className="py-3 px-4 text-slate-600 dark:text-slate-400 text-sm">{f.building}</td>
-                <td className="py-3 px-4 text-slate-600 dark:text-slate-400 text-sm max-w-[150px] truncate" title={f.equipment_label}>{f.equipment_label}</td>
-                <td className="py-3 px-4 text-slate-600 dark:text-slate-400 text-sm">{f.fiscal_year}</td>
-                <td className="py-3 px-4 text-slate-600 dark:text-slate-400 text-sm">{f.ppm_visit}</td>
-                <td className="py-3 px-4 text-slate-600 dark:text-slate-400 text-sm max-w-[200px] truncate" title={f.description}>{f.description}</td>
-                <td className="py-3 px-4 text-slate-600 dark:text-slate-400 text-sm text-center">{f.quantity}</td>
-                <td className="py-3 px-4">
+                <td className="py-4 px-5 text-slate-600 dark:text-slate-400 text-sm">{f.building}</td>
+                <td className="py-4 px-5 text-slate-600 dark:text-slate-400 text-sm max-w-[150px] truncate" title={f.equipment_label}>{f.equipment_label}</td>
+                <td className="py-4 px-5 text-slate-600 dark:text-slate-400 text-sm">{f.fiscal_year}</td>
+                <td className="py-4 px-5 text-slate-600 dark:text-slate-400 text-sm">{f.ppm_visit}</td>
+                <td className="py-4 px-5 text-slate-600 dark:text-slate-400 text-sm max-w-[200px] truncate" title={f.description}>{f.description}</td>
+                <td className="py-4 px-5 text-slate-600 dark:text-slate-400 text-sm text-center">{f.quantity}</td>
+                <td className="py-4 px-5">
                   <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${getPriorityColor(f.priority)}`}>{f.priority}</span>
                 </td>
-                <td className="py-3 px-4">
+                <td className="py-4 px-5">
                   <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${getStatusColor(f.status)}`}>{f.status}</span>
                 </td>
-                <td className="py-3 px-4 text-sm text-blue-600 dark:text-blue-400">{f.quotation_ref || "—"}</td>
+                <td className="py-4 px-5 text-sm text-blue-600 dark:text-blue-400">{f.quotation_ref || "—"}</td>
               </tr>
             ))}
             {filtered.length === 0 && (

@@ -224,7 +224,7 @@ function NullBadge() {
 // ─── Modern table primitives ─────────────────────────────────────────────────
 // Uses raw HTML table elements styled inline to avoid shadcn's double-border wrapper.
 
-const thBase = "h-11 px-4 text-left align-middle font-semibold text-[11px] uppercase tracking-wider text-slate-400 dark:text-slate-500 whitespace-nowrap";
+const thBase = "h-14 px-5 text-left align-middle font-semibold text-sm uppercase tracking-wider text-slate-500 dark:text-slate-400 whitespace-nowrap";
 const tdBase = "px-5 py-4 align-middle text-sm text-slate-700 dark:text-slate-300";
 
 type SortDir = 'asc' | 'desc' | null;
@@ -436,7 +436,7 @@ function ZoneBulkTable({ rows }: { rows: ZoneRow[] }) {
             <div className="overflow-x-auto">
                 <table className="w-full border-collapse">
                     <thead>
-                        <tr className="border-t border-b border-slate-100 dark:border-slate-800">
+                        <tr className="border-t border-b border-slate-200 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-800/50">
                             <Th sortKey="zone" sort={sort} onSort={setSort} className="min-w-[130px]">Zone</Th>
                             <th className={cn(thBase, "text-center")}>L2 Account</th>
                             <Th sortKey="l2" sort={sort} onSort={setSort} className="text-right">L2 (m³)</Th>
@@ -447,7 +447,7 @@ function ZoneBulkTable({ rows }: { rows: ZoneRow[] }) {
                     </thead>
                     <tbody>
                         {filtered.map(row => (
-                            <tr key={row.zoneName} className="border-b border-slate-50 dark:border-slate-800/60 hover:bg-slate-50/70 dark:hover:bg-slate-800/30 transition-colors">
+                            <tr key={row.zoneName} className="border-b border-slate-50 dark:border-slate-800/60 hover:bg-slate-50/70 dark:hover:bg-slate-800/30 transition-colors even:bg-slate-50/40 dark:even:bg-slate-800/20">
                                 <td className={cn(tdBase, "font-semibold")}>{row.zoneName}</td>
                                 <td className={cn(tdBase, "text-center font-mono text-[11px] text-slate-400 dark:text-slate-500")}>{row.l2Account}</td>
                                 <td className={cn(tdBase, "text-right tabular-nums font-medium")}>
@@ -549,7 +549,7 @@ function BuildingBulkTable({ rows }: { rows: BuildingRow[] }) {
             <tr
                 key={row.buildingName}
                 className={cn(
-                    "border-b border-slate-50 dark:border-slate-800/60 cursor-pointer select-none transition-colors hover:bg-slate-50/70 dark:hover:bg-slate-800/30",
+                    "border-b border-slate-50 dark:border-slate-800/60 cursor-pointer select-none transition-colors hover:bg-slate-50/70 dark:hover:bg-slate-800/30 even:bg-slate-50/40 dark:even:bg-slate-800/20",
                     isExpanded && "bg-violet-50/30 dark:bg-violet-900/10",
                 )}
                 onClick={() => toggleBuilding(row.buildingName)}
@@ -700,7 +700,7 @@ function BuildingBulkTable({ rows }: { rows: BuildingRow[] }) {
             <div className="overflow-x-auto">
                 <table className="w-full border-collapse">
                     <thead>
-                        <tr className="border-t border-b border-slate-100 dark:border-slate-800">
+                        <tr className="border-t border-b border-slate-200 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-800/50">
                             <Th sortKey="building" sort={sort} onSort={setSort} className="min-w-[140px]">Building</Th>
                             <th className={cn(thBase)}>Bulk Account</th>
                             <th className={cn(thBase, "text-center")}>Zone</th>
@@ -813,7 +813,7 @@ function DCMetersTable({ rows }: { rows: DCRow[] }) {
             <div className="overflow-x-auto">
                 <table className="w-full border-collapse">
                     <thead>
-                        <tr className="border-t border-b border-slate-100 dark:border-slate-800">
+                        <tr className="border-t border-b border-slate-200 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-800/50">
                             <Th sortKey="name" sort={sort} onSort={setSort} className="min-w-[180px]">Meter Name</Th>
                             <Th sortKey="account" sort={sort} onSort={setSort}>Account</Th>
                             <Th sortKey="status" sort={sort} onSort={setSort} className="text-center min-w-[80px]">Status</Th>
@@ -831,7 +831,7 @@ function DCMetersTable({ rows }: { rows: DCRow[] }) {
                             sorted.map(row => {
                                 const status = getStatus(row);
                                 return (
-                                    <tr key={row.account} className="border-b border-slate-50 dark:border-slate-800/60 hover:bg-slate-50/70 dark:hover:bg-slate-800/30 transition-colors">
+                                    <tr key={row.account} className="border-b border-slate-50 dark:border-slate-800/60 hover:bg-slate-50/70 dark:hover:bg-slate-800/30 transition-colors even:bg-slate-50/40 dark:even:bg-slate-800/20">
                                         <td className={cn(tdBase, "font-semibold")}>
                                             <span className="inline-flex items-center gap-2">
                                                 {row.meterName}
@@ -1282,7 +1282,7 @@ function ZoneL3Table({
                             ) : paginated.map(meter => (
                                 <tr
                                     key={meter.account}
-                                    className="border-b border-slate-50 dark:border-slate-800/60 transition-colors hover:bg-slate-50/70 dark:hover:bg-slate-800/30"
+                                    className="border-b border-slate-50 dark:border-slate-800/60 transition-colors hover:bg-slate-50/70 dark:hover:bg-slate-800/30 even:bg-slate-50/40 dark:even:bg-slate-800/20"
                                 >
                                     <td className={cn(tdBase, "font-semibold sticky left-0 z-10 bg-white dark:bg-slate-900")}>
                                         <span className="inline-flex items-center gap-2">
