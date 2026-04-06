@@ -174,9 +174,16 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
         return null;
     }
 
-    const { data: { user }, error } = await supabase.auth.getUser();
-    if (error || !user) return null;
+    // Use getSession() instead of getUser() on the client side.
+    // getUser() makes a network round-trip and competes for the same auth-token
+    // lock that the Next.js middleware holds while refreshing the session,
+    // causing "lock was released because another request stole it" errors.
+    // The middleware (middleware.ts) already validates the token server-side on
+    // every request; the browser client only needs to read the local cache.
+    const { data: { session }, error } = await supabase.auth.getSession();
+    if (error || !session?.user) return null;
 
+    const user = session.user;
     return {
         id: user.id,
         email: user.email || '',
