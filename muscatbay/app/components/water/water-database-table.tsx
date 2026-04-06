@@ -103,7 +103,7 @@ function ColumnVisibilityDropdown({
             >
                 <Columns className="w-3.5 h-3.5" />
                 <span>Columns</span>
-                <span className="text-xs text-slate-500">({visibleMonths.length}/{months.length})</span>
+                <span className="text-sm text-slate-500">({visibleMonths.length}/{months.length})</span>
                 <ChevronDown className={cn("w-3.5 h-3.5 transition-transform", isOpen && "rotate-180")} />
             </button>
 
@@ -112,13 +112,13 @@ function ColumnVisibilityDropdown({
                     <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
                     <div className="absolute top-full right-0 mt-1 z-50 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg w-[220px] sm:w-[280px] py-1">
                         <div className="flex items-center gap-2 px-3 py-2 border-b border-slate-100 dark:border-slate-700">
-                            <button onClick={showAll} className="text-xs px-2 py-1 rounded bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600">
+                            <button onClick={showAll} className="text-sm px-2 py-1 rounded bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600">
                                 All ({months.length})
                             </button>
-                            <button onClick={showLast12} className="text-xs px-2 py-1 rounded bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600">
+                            <button onClick={showLast12} className="text-sm px-2 py-1 rounded bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600">
                                 Last 12
                             </button>
-                            <button onClick={showLast6} className="text-xs px-2 py-1 rounded bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600">
+                            <button onClick={showLast6} className="text-sm px-2 py-1 rounded bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600">
                                 Last 6
                             </button>
                         </div>
@@ -127,7 +127,7 @@ function ColumnVisibilityDropdown({
                                 <label
                                     key={month}
                                     className={cn(
-                                        "flex items-center gap-1.5 px-2 py-1 rounded text-xs cursor-pointer transition-colors",
+                                        "flex items-center gap-1.5 px-2 py-1 rounded text-sm cursor-pointer transition-colors",
                                         visibleMonths.includes(month)
                                             ? "bg-primary/10 text-primary"
                                             : "text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700/50"
@@ -335,35 +335,35 @@ export function WaterDatabaseTable({ meters, months }: WaterDatabaseTableProps) 
             <tr
                 key={meter.accountNumber}
                 className={cn(
-                    "border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors",
+                    "border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-primary/5 dark:hover:bg-slate-800/40 transition-colors even:bg-slate-50/40 dark:even:bg-slate-800/20",
                     "border-l-4",
                     zoneColor
                 )}
             >
-                <td className="py-3.5 px-5 font-medium text-slate-800 dark:text-slate-200 whitespace-nowrap sticky left-0 bg-inherit z-10 w-[140px] sm:w-[180px] md:w-[200px]">
+                <td className="py-4 px-5 font-medium text-slate-800 dark:text-slate-200 whitespace-nowrap sticky left-0 bg-inherit z-10 w-[140px] sm:w-[180px] md:w-[200px]">
                     {meter.label}
                 </td>
-                <td className="py-3.5 px-5 text-slate-600 dark:text-slate-400 font-mono text-xs sticky left-[140px] sm:left-[180px] md:left-[200px] bg-inherit z-10">
+                <td className="py-4 px-5 text-slate-600 dark:text-slate-400 font-mono text-sm sticky left-[140px] sm:left-[180px] md:left-[200px] bg-inherit z-10">
                     {meter.accountNumber}
                 </td>
-                <td className="py-3.5 px-5 text-center">
-                    <span className={cn("px-2.5 py-0.5 rounded-md text-xs font-medium", levelStyle)}>
+                <td className="py-4 px-5 text-center">
+                    <span className={cn("px-2.5 py-0.5 rounded-md text-sm font-medium", levelStyle)}>
                         {meter.level}
                     </span>
                 </td>
-                <td className="py-3.5 px-5 text-slate-600 dark:text-slate-400 text-xs">
+                <td className="py-4 px-5 text-slate-600 dark:text-slate-400 text-sm">
                     {ZONE_NAMES[meter.zone] || meter.zone}
                 </td>
-                <td className="py-3.5 px-5 text-slate-500 dark:text-slate-500 text-xs max-w-[150px] truncate">
+                <td className="py-4 px-5 text-slate-500 dark:text-slate-500 text-sm max-w-[150px] truncate">
                     {meter.parentMeter || '—'}
                 </td>
-                <td className="py-3.5 px-5 text-slate-600 dark:text-slate-400 text-xs">
+                <td className="py-4 px-5 text-slate-600 dark:text-slate-400 text-sm">
                     {meter.type}
                 </td>
                 {visibleMonths.map(month => {
                     const val = getConsumption(meter, month);
                     return (
-                        <td key={month} className="py-3.5 px-5 text-right font-mono text-xs text-slate-700 dark:text-slate-300">
+                        <td key={month} className="py-4 px-5 text-right font-mono text-sm text-slate-700 dark:text-slate-300">
                             {val > 0 ? val.toLocaleString('en-US') : <span className="text-slate-300 dark:text-slate-600">—</span>}
                         </td>
                     );
@@ -465,7 +465,7 @@ export function WaterDatabaseTable({ meters, months }: WaterDatabaseTableProps) 
             {hasActiveFilters && (
                 <div className="flex flex-wrap items-center gap-2 px-1">
                     {searchTerm && (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-sm bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
                             Search: "{searchTerm}"
                             <button onClick={() => setSearchTerm('')} className="hover:text-slate-900">
                                 <X className="w-3 h-3" />
@@ -473,7 +473,7 @@ export function WaterDatabaseTable({ meters, months }: WaterDatabaseTableProps) 
                         </span>
                     )}
                     {selectedLevels.length < ALL_LEVELS.length && (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-sm bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300">
                             Levels: {selectedLevels.join(', ')}
                             <button onClick={() => setSelectedLevels([...ALL_LEVELS])} className="hover:text-blue-900">
                                 <X className="w-3 h-3" />
@@ -481,7 +481,7 @@ export function WaterDatabaseTable({ meters, months }: WaterDatabaseTableProps) 
                         </span>
                     )}
                     {selectedZones.length < ALL_ZONES.length && (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-sm bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300">
                             {selectedZones.length} zone{selectedZones.length !== 1 ? 's' : ''}
                             <button onClick={() => setSelectedZones([...ALL_ZONES])} className="hover:text-emerald-900">
                                 <X className="w-3 h-3" />
@@ -489,7 +489,7 @@ export function WaterDatabaseTable({ meters, months }: WaterDatabaseTableProps) 
                         </span>
                     )}
                     {selectedTypes.length > 0 && selectedTypes.length < allTypes.length && (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-sm bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300">
                             {selectedTypes.length} type{selectedTypes.length !== 1 ? 's' : ''}
                             <button onClick={() => setSelectedTypes([...allTypes])} className="hover:text-purple-900">
                                 <X className="w-3 h-3" />
@@ -503,39 +503,39 @@ export function WaterDatabaseTable({ meters, months }: WaterDatabaseTableProps) 
             <div className="overflow-x-auto rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900 shadow-sm">
                 <table className="w-full text-sm border-collapse">
                     <thead className="sticky top-0 z-30">
-                        <tr className="bg-slate-50 dark:bg-slate-800">
+                        <tr className="bg-[#4E4456] dark:bg-[#3a3245]">
                             <th
-                                className="text-left py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors sticky left-0 bg-slate-50 dark:bg-slate-800 z-20 w-[140px] sm:w-[180px] md:w-[200px]"
+                                className="text-left py-4 px-5 font-semibold uppercase tracking-wide text-sm text-white border-b-2 border-[#3a3245] cursor-pointer hover:bg-[#5a4a6b] dark:hover:bg-[#2d2838] transition-colors sticky left-0 bg-[#4E4456] dark:bg-[#3a3245] z-20 w-[140px] sm:w-[180px] md:w-[200px]"
                                 onClick={() => handleSort('label')}
                             >
                                 <div className="flex items-center gap-1.5">Label <SortIcon field="label" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
                             </th>
                             <th
-                                className="text-left py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors sticky left-[140px] sm:left-[180px] md:left-[200px] bg-slate-50 dark:bg-slate-800 z-20 min-w-[100px]"
+                                className="text-left py-4 px-5 font-semibold uppercase tracking-wide text-sm text-white border-b-2 border-[#3a3245] cursor-pointer hover:bg-[#5a4a6b] dark:hover:bg-[#2d2838] transition-colors sticky left-[140px] sm:left-[180px] md:left-[200px] bg-[#4E4456] dark:bg-[#3a3245] z-20 min-w-[100px]"
                                 onClick={() => handleSort('account')}
                             >
                                 <div className="flex items-center gap-1.5">Account # <SortIcon field="account" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
                             </th>
                             <th
-                                className="text-center py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors min-w-[70px]"
+                                className="text-center py-4 px-5 font-semibold uppercase tracking-wide text-sm text-white border-b-2 border-[#3a3245] cursor-pointer hover:bg-[#5a4a6b] dark:hover:bg-[#2d2838] transition-colors min-w-[70px]"
                                 onClick={() => handleSort('level')}
                             >
                                 <div className="flex items-center justify-center gap-1.5">Level <SortIcon field="level" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
                             </th>
                             <th
-                                className="text-left py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors min-w-[100px]"
+                                className="text-left py-4 px-5 font-semibold uppercase tracking-wide text-sm text-white border-b-2 border-[#3a3245] cursor-pointer hover:bg-[#5a4a6b] dark:hover:bg-[#2d2838] transition-colors min-w-[100px]"
                                 onClick={() => handleSort('zone')}
                             >
                                 <div className="flex items-center gap-1.5">Zone <SortIcon field="zone" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
                             </th>
                             <th
-                                className="text-left py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors min-w-[150px]"
+                                className="text-left py-4 px-5 font-semibold uppercase tracking-wide text-sm text-white border-b-2 border-[#3a3245] cursor-pointer hover:bg-[#5a4a6b] dark:hover:bg-[#2d2838] transition-colors min-w-[150px]"
                                 onClick={() => handleSort('parentMeter')}
                             >
                                 <div className="flex items-center gap-1.5">Parent <SortIcon field="parentMeter" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
                             </th>
                             <th
-                                className="text-left py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors min-w-[120px]"
+                                className="text-left py-4 px-5 font-semibold uppercase tracking-wide text-sm text-white border-b-2 border-[#3a3245] cursor-pointer hover:bg-[#5a4a6b] dark:hover:bg-[#2d2838] transition-colors min-w-[120px]"
                                 onClick={() => handleSort('type')}
                             >
                                 <div className="flex items-center gap-1.5">Type <SortIcon field="type" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
@@ -543,7 +543,7 @@ export function WaterDatabaseTable({ meters, months }: WaterDatabaseTableProps) 
                             {visibleMonths.map(month => (
                                 <th
                                     key={month}
-                                    className="text-right py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors min-w-[80px] whitespace-nowrap"
+                                    className="text-right py-4 px-5 font-semibold uppercase tracking-wide text-sm text-white border-b-2 border-[#3a3245] cursor-pointer hover:bg-[#5a4a6b] dark:hover:bg-[#2d2838] transition-colors min-w-[80px] whitespace-nowrap"
                                     onClick={() => handleSort(month)}
                                 >
                                     <div className="flex items-center justify-end gap-1.5">{month} <SortIcon field={month} currentSortField={sortField} currentSortDirection={sortDirection} /></div>
@@ -563,7 +563,7 @@ export function WaterDatabaseTable({ meters, months }: WaterDatabaseTableProps) 
                                                 <span className="font-semibold text-slate-700 dark:text-slate-300">
                                                     {ZONE_NAMES[group.zone] || group.zone}
                                                 </span>
-                                                <span className="px-2 py-0.5 rounded-full text-xs bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400">
+                                                <span className="px-2 py-0.5 rounded-full text-sm bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400">
                                                     {group.meters.length} meter{group.meters.length !== 1 ? 's' : ''}
                                                 </span>
                                             </div>

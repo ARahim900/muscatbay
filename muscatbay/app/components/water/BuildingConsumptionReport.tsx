@@ -131,7 +131,7 @@ function processBuildingData(readings: Record<string, number | null>): BuildingR
 // ─── Styled primitives ──────────────────────────────────────────────────────
 
 const thBase = "h-11 px-4 text-left align-middle font-semibold text-[11px] uppercase tracking-wider text-slate-400 dark:text-slate-500 whitespace-nowrap";
-const tdBase = "px-4 py-3 align-middle text-[13px] text-slate-700 dark:text-slate-300";
+const tdBase = "px-5 py-4 align-middle text-sm text-slate-700 dark:text-slate-300";
 
 type SortDir = 'asc' | 'desc' | null;
 interface SortState { key: string; dir: SortDir }

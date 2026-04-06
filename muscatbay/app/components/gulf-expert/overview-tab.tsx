@@ -209,13 +209,13 @@ export function OverviewTab({ data }: OverviewTabProps) {
         <CardContent>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead>
+              <thead className="bg-[#4E4456] dark:bg-[#3a3245]">
                 <tr className="border-b border-slate-200 dark:border-slate-700">
-                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-500 dark:text-slate-400">System</th>
-                  <th className="text-center py-2 px-3 text-xs font-medium text-slate-500 dark:text-slate-400">Q1 (PPM1)</th>
-                  <th className="text-center py-2 px-3 text-xs font-medium text-slate-500 dark:text-slate-400">Q2 (PPM2)</th>
-                  <th className="text-center py-2 px-3 text-xs font-medium text-slate-500 dark:text-slate-400">Q3 (PPM3)</th>
-                  <th className="text-center py-2 px-3 text-xs font-medium text-slate-500 dark:text-slate-400">Q4 (PPM4)</th>
+                  <th className="text-left py-4 px-4 font-semibold uppercase tracking-wide text-sm text-white">System</th>
+                  <th className="text-center py-4 px-4 font-semibold uppercase tracking-wide text-sm text-white">Q1 (PPM1)</th>
+                  <th className="text-center py-4 px-4 font-semibold uppercase tracking-wide text-sm text-white">Q2 (PPM2)</th>
+                  <th className="text-center py-4 px-4 font-semibold uppercase tracking-wide text-sm text-white">Q3 (PPM3)</th>
+                  <th className="text-center py-4 px-4 font-semibold uppercase tracking-wide text-sm text-white">Q4 (PPM4)</th>
                 </tr>
               </thead>
               <tbody>
@@ -224,11 +224,11 @@ export function OverviewTab({ data }: OverviewTabProps) {
                     key={system}
                     className={sIdx === 0 ? "border-b border-slate-100 dark:border-slate-800" : ""}
                   >
-                    <td className="py-3 px-3 font-medium text-slate-700 dark:text-slate-300 uppercase">
+                    <td className="py-4 px-4 font-medium text-slate-700 dark:text-slate-300 uppercase">
                       {system}
                     </td>
                     {ppmSchedule[system].map((q, i) => (
-                      <td key={i} className="py-3 px-3 text-center">
+                      <td key={i} className="py-4 px-4 text-center">
                         <span
                           className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${
                             q.status === "Completed"

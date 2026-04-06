@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils"
 
 function Table({ className, ...props }: React.ComponentProps<"table">) {
   return (
-    <div data-slot="table-container" className="relative w-full overflow-x-auto rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900 shadow-sm">
+    <div data-slot="table-container" className="relative w-full overflow-x-auto rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900 shadow-md">
       <table
         data-slot="table"
         className={cn("w-full caption-bottom text-sm border-collapse", className)}
@@ -20,7 +20,7 @@ function TableHeader({ className, ...props }: React.ComponentProps<"thead">) {
   return (
     <thead
       data-slot="table-header"
-      className={cn("bg-slate-50/70 dark:bg-slate-800/50", className)}
+      className={cn("bg-[#4E4456] dark:bg-[#3a3245] sticky top-0 z-10", className)}
       {...props}
     />
   )
@@ -51,10 +51,10 @@ function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
     <tr
       data-slot="table-row"
       className={cn(
-        "border-b border-slate-100/80 dark:border-slate-800/80 transition-[background-color,transform] duration-200",
-        "hover:bg-slate-50/60 dark:hover:bg-slate-800/30",
-        "active:bg-slate-100/60 dark:active:bg-slate-800/50",
-        "data-[state=selected]:bg-primary/5",
+        "border-b border-slate-100/80 dark:border-slate-800/80 transition-[background-color] duration-150",
+        "even:bg-slate-50/50 dark:even:bg-slate-800/20",
+        "hover:bg-primary/5 dark:hover:bg-slate-800/40",
+        "data-[state=selected]:bg-primary/8",
         className
       )}
       {...props}
@@ -67,8 +67,9 @@ function TableHead({ className, ...props }: React.ComponentProps<"th">) {
     <th
       data-slot="table-head"
       className={cn(
-        "h-10 sm:h-12 px-3 sm:px-5 text-start align-middle font-medium text-slate-500 dark:text-slate-400 text-[12px] sm:text-[13px] whitespace-nowrap",
-        "border-b border-slate-200/80 dark:border-slate-700/80",
+        "h-13 sm:h-14 px-4 sm:px-6 py-4 text-start align-middle font-semibold text-white text-xs sm:text-sm uppercase tracking-wide whitespace-nowrap",
+        "border-b-2 border-[#3a3245] dark:border-[#2d2838]",
+        "hover:bg-[#3a3245]/80 dark:hover:bg-[#2d2838] transition-colors",
         "[&:has([role=checkbox])]:pr-0",
         className
       )}
@@ -82,7 +83,7 @@ function TableCell({ className, ...props }: React.ComponentProps<"td">) {
     <td
       data-slot="table-cell"
       className={cn(
-        "px-3 sm:px-5 py-2.5 sm:py-3.5 align-middle text-slate-700 dark:text-slate-300 text-xs sm:text-sm",
+        "px-4 sm:px-6 py-4 align-middle text-slate-700 dark:text-slate-300 text-sm",
         "[&:has([role=checkbox])]:pr-0",
         className
       )}

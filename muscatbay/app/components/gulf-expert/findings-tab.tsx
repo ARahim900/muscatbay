@@ -201,11 +201,11 @@ export function FindingsTab({ findings }: FindingsTabProps) {
       <div className="hidden md:block overflow-x-auto rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900 shadow-sm">
         <table className="w-full text-sm border-collapse">
           <thead>
-            <tr className="bg-slate-50/70 dark:bg-slate-800/50">
+            <tr className="bg-[#4E4456] dark:bg-[#3a3245]">
               {columns.map((col) => (
                 <th
                   key={col.field}
-                  className="text-left py-3 px-4 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors"
+                  className="text-left py-4 px-4 font-semibold uppercase tracking-wide text-sm text-white border-b-2 border-[#3a3245] cursor-pointer hover:bg-[#5a4a6b] dark:hover:bg-[#2d2838] transition-colors"
                   onClick={() => handleSort(col.field)}
                 >
                   <div className="flex items-center gap-1.5">
@@ -218,24 +218,24 @@ export function FindingsTab({ findings }: FindingsTabProps) {
           </thead>
           <tbody>
             {paginated.map((f, i) => (
-              <tr key={f.id || i} className="border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors">
+              <tr key={f.id || i} className="border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-primary/5 dark:hover:bg-slate-800/40 transition-colors even:bg-slate-50/40 dark:even:bg-slate-800/20">
                 <td className="py-3 px-4 font-medium text-slate-800 dark:text-slate-200 whitespace-nowrap">
                   {f.finding_code}
                   {f.is_recurring && <span className="ml-1 text-amber-500" title="Recurring issue">↻</span>}
                 </td>
-                <td className="py-3 px-4 text-slate-600 dark:text-slate-400 text-xs">{f.building}</td>
-                <td className="py-3 px-4 text-slate-600 dark:text-slate-400 text-xs max-w-[150px] truncate" title={f.equipment_label}>{f.equipment_label}</td>
-                <td className="py-3 px-4 text-slate-600 dark:text-slate-400 text-xs">{f.fiscal_year}</td>
-                <td className="py-3 px-4 text-slate-600 dark:text-slate-400 text-xs">{f.ppm_visit}</td>
-                <td className="py-3 px-4 text-slate-600 dark:text-slate-400 text-xs max-w-[200px] truncate" title={f.description}>{f.description}</td>
-                <td className="py-3 px-4 text-slate-600 dark:text-slate-400 text-xs text-center">{f.quantity}</td>
+                <td className="py-3 px-4 text-slate-600 dark:text-slate-400 text-sm">{f.building}</td>
+                <td className="py-3 px-4 text-slate-600 dark:text-slate-400 text-sm max-w-[150px] truncate" title={f.equipment_label}>{f.equipment_label}</td>
+                <td className="py-3 px-4 text-slate-600 dark:text-slate-400 text-sm">{f.fiscal_year}</td>
+                <td className="py-3 px-4 text-slate-600 dark:text-slate-400 text-sm">{f.ppm_visit}</td>
+                <td className="py-3 px-4 text-slate-600 dark:text-slate-400 text-sm max-w-[200px] truncate" title={f.description}>{f.description}</td>
+                <td className="py-3 px-4 text-slate-600 dark:text-slate-400 text-sm text-center">{f.quantity}</td>
                 <td className="py-3 px-4">
                   <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${getPriorityColor(f.priority)}`}>{f.priority}</span>
                 </td>
                 <td className="py-3 px-4">
                   <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${getStatusColor(f.status)}`}>{f.status}</span>
                 </td>
-                <td className="py-3 px-4 text-xs text-blue-600 dark:text-blue-400">{f.quotation_ref || "—"}</td>
+                <td className="py-3 px-4 text-sm text-blue-600 dark:text-blue-400">{f.quotation_ref || "—"}</td>
               </tr>
             ))}
             {filtered.length === 0 && (
