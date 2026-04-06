@@ -559,18 +559,18 @@ export default function ContractorsPage() {
                             <tbody>
                                 {paginatedContracts.map(c => (
                                     <tr key={c.id} className="border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-primary/5 dark:hover:bg-slate-800/40 transition-colors even:bg-slate-50/40 dark:even:bg-slate-800/20">
-                                        <td className="py-4 px-5 text-sm text-slate-500">{c.id}</td>
-                                        <td className="py-4 px-5 font-medium text-slate-800 dark:text-slate-200">
+                                        <td className="py-4 px-5 font-semibold text-sm text-slate-500">{c.id}</td>
+                                        <td className="py-4 px-5 font-semibold text-slate-800 dark:text-slate-200">
                                             {c.contractor}
                                             {c.note && <p className="text-xs text-slate-400 mt-0.5 max-w-[200px] truncate" title={c.note}>{c.note}</p>}
                                         </td>
-                                        <td className="py-4 px-5 text-sm text-slate-500 dark:text-slate-400 hidden lg:table-cell font-mono">{c.contract_ref || '-'}</td>
-                                        <td className="py-4 px-5 text-sm text-slate-600 dark:text-slate-400">{c.service || '-'}</td>
+                                        <td className="py-4 px-5 font-semibold text-sm text-slate-500 dark:text-slate-400 hidden lg:table-cell font-mono">{c.contract_ref || '-'}</td>
+                                        <td className="py-4 px-5 font-semibold text-sm text-slate-600 dark:text-slate-400">{c.service || '-'}</td>
                                         <td className="py-4 px-5">
                                             <StatusBadge label={c.flow} color={getFlowDotColor(c.flow)} />
                                         </td>
-                                        <td className="py-4 px-5 text-center text-sm text-slate-600 dark:text-slate-300">{c.contract_years ?? '-'}</td>
-                                        <td className="py-4 px-5 text-right font-mono text-sm text-slate-700 dark:text-slate-300">
+                                        <td className="py-4 px-5 font-semibold text-center text-sm text-slate-600 dark:text-slate-300">{c.contract_years ?? '-'}</td>
+                                        <td className="py-4 px-5 font-semibold text-right font-mono text-sm text-slate-700 dark:text-slate-300">
                                             {c.annual_value_omr ? fmtOMR(c.annual_value_omr) : <span className="text-slate-400 italic">{c.rate_note || 'Variable'}</span>}
                                         </td>
                                         <td className="py-4 px-5 text-right font-mono text-sm font-semibold text-primary">
@@ -662,14 +662,14 @@ export default function ContractorsPage() {
                                     <tbody>
                                         {matrix.rows.map(row => (
                                             <tr key={row.year} className="border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-primary/5 dark:hover:bg-slate-800/40 transition-colors even:bg-slate-50/40 dark:even:bg-slate-800/20">
-                                                <td className="py-4 px-4 font-medium text-slate-700 dark:text-slate-300 sticky left-0 bg-white dark:bg-slate-900 z-10">
+                                                <td className="py-4 px-4 font-semibold text-slate-700 dark:text-slate-300 sticky left-0 bg-white dark:bg-slate-900 z-10">
                                                     <span className="text-xs text-slate-400 mr-1.5">Y{row.year}</span>
                                                     {row.label}
                                                 </td>
                                                 {matrix.contractors.map(cn => {
                                                     const val = row.costs[cn];
                                                     return (
-                                                        <td key={cn} className="py-4 px-3 text-right font-mono text-sm">
+                                                        <td key={cn} className="py-4 px-3 text-right font-mono font-semibold text-sm">
                                                             {val != null ? (
                                                                 <span className="text-slate-700 dark:text-slate-300">{fmtOMR(val)}</span>
                                                             ) : (
@@ -819,21 +819,21 @@ export default function ContractorsPage() {
                             <tbody>
                                 {paginatedTracker.map(c => (
                                     <tr key={`${c.Contractor ?? ''}--${c["Service Provided"] ?? ''}`} className="border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-primary/5 dark:hover:bg-slate-800/40 transition-colors even:bg-slate-50/40 dark:even:bg-slate-800/20">
-                                        <td className="py-4 px-5 font-medium text-slate-800 dark:text-slate-200">{c.Contractor || '-'}</td>
-                                        <td className="py-4 px-5 text-sm text-slate-600 dark:text-slate-400">{c["Service Provided"] || '-'}</td>
+                                        <td className="py-4 px-5 font-semibold text-slate-800 dark:text-slate-200">{c.Contractor || '-'}</td>
+                                        <td className="py-4 px-5 font-semibold text-sm text-slate-600 dark:text-slate-400">{c["Service Provided"] || '-'}</td>
                                         <td className="py-4 px-5"><StatusBadge label={c.Status || 'N/A'} color={getStatusDotColor(c.Status)} /></td>
-                                        <td className="py-4 px-5 text-sm text-slate-500">{c["Contract Type"] || '-'}</td>
-                                        <td className="py-4 px-5 text-sm text-slate-500 hidden lg:table-cell">
+                                        <td className="py-4 px-5 font-semibold text-sm text-slate-500">{c["Contract Type"] || '-'}</td>
+                                        <td className="py-4 px-5 font-semibold text-sm text-slate-500 hidden lg:table-cell">
                                             {c["Start Date"] ? <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{c["Start Date"]}</span> : '-'}
                                         </td>
-                                        <td className="py-4 px-5 text-sm text-slate-500 hidden lg:table-cell">
+                                        <td className="py-4 px-5 font-semibold text-sm text-slate-500 hidden lg:table-cell">
                                             {c["End Date"] ? <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{c["End Date"]}</span> : '-'}
                                         </td>
                                         <td className="py-4 px-5 text-right font-mono text-sm font-semibold text-primary">{c["Annual Value (OMR)"]?.toLocaleString() || '-'}</td>
-                                        <td className="py-4 px-5 text-sm text-slate-600 dark:text-slate-400 hidden xl:table-cell">
+                                        <td className="py-4 px-5 font-semibold text-sm text-slate-600 dark:text-slate-400 hidden xl:table-cell">
                                             {c["Renewal Plan"] ? <span className="flex items-center gap-1"><RefreshCw className="h-3 w-3 text-blue-500" />{c["Renewal Plan"]}</span> : '-'}
                                         </td>
-                                        <td className="py-4 px-5 text-sm text-slate-500 max-w-[200px] truncate hidden xl:table-cell" title={c.Note || ''}>{c.Note || '-'}</td>
+                                        <td className="py-4 px-5 font-semibold text-sm text-slate-500 max-w-[200px] truncate hidden xl:table-cell" title={c.Note || ''}>{c.Note || '-'}</td>
                                     </tr>
                                 ))}
                                 {filteredTracker.length === 0 && (

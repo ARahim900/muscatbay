@@ -917,13 +917,13 @@ export default function STPPage() {
 
                                         return (
                                             <tr key={op.id} className="border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-primary/5 dark:hover:bg-slate-800/40 transition-colors even:bg-slate-50/40 dark:even:bg-slate-800/20">
-                                                <td className="py-4 px-5 text-slate-600 dark:text-slate-400">{format(new Date(op.date), "dd/MM/yyyy")}</td>
-                                                <td className="py-4 px-5 text-right font-mono text-sm text-primary font-medium">{op.inlet_sewage.toLocaleString()}</td>
-                                                <td className="py-4 px-5 text-right font-mono text-sm text-blue-600 dark:text-blue-400 font-medium">{op.tse_for_irrigation.toLocaleString()}</td>
-                                                <td className={`py-4 px-5 text-right font-mono text-sm font-medium ${efficiencyColor}`}>{efficiency.toFixed(1)}%</td>
-                                                <td className="py-4 px-5 text-right font-mono text-sm text-mb-warning">{op.tanker_trips}</td>
-                                                <td className="py-4 px-5 text-right font-mono text-sm text-mb-success">{income.toFixed(2)}</td>
-                                                <td className="py-4 px-5 text-right font-mono text-sm text-primary">{savings.toFixed(2)}</td>
+                                                <td className="py-4 px-5 font-semibold text-slate-600 dark:text-slate-400">{format(new Date(op.date), "dd/MM/yyyy")}</td>
+                                                <td className="py-4 px-5 text-right font-mono text-sm text-primary font-semibold">{op.inlet_sewage.toLocaleString()}</td>
+                                                <td className="py-4 px-5 text-right font-mono text-sm text-blue-600 dark:text-blue-400 font-semibold">{op.tse_for_irrigation.toLocaleString()}</td>
+                                                <td className={`py-4 px-5 text-right font-mono text-sm font-semibold ${efficiencyColor}`}>{efficiency.toFixed(1)}%</td>
+                                                <td className="py-4 px-5 text-right font-mono text-sm font-semibold text-mb-warning">{op.tanker_trips}</td>
+                                                <td className="py-4 px-5 text-right font-mono text-sm font-semibold text-mb-success">{income.toFixed(2)}</td>
+                                                <td className="py-4 px-5 text-right font-mono text-sm font-semibold text-primary">{savings.toFixed(2)}</td>
                                                 <td className="py-4 px-5 text-right font-mono text-sm font-semibold text-mb-success">{totalImpact.toFixed(2)}</td>
                                             </tr>
                                         );

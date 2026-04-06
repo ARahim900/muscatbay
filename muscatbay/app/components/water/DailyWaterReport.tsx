@@ -225,7 +225,7 @@ function NullBadge() {
 // Uses raw HTML table elements styled inline to avoid shadcn's double-border wrapper.
 
 const thBase = "h-14 px-5 text-left align-middle font-semibold text-sm uppercase tracking-wider text-slate-500 dark:text-slate-400 whitespace-nowrap";
-const tdBase = "px-5 py-4 align-middle text-sm text-slate-700 dark:text-slate-300";
+const tdBase = "px-5 py-4 align-middle text-sm font-semibold text-slate-700 dark:text-slate-300";
 
 type SortDir = 'asc' | 'desc' | null;
 interface SortState { key: string; dir: SortDir }

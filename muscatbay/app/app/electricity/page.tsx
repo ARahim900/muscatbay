@@ -1148,12 +1148,12 @@ export default function ElectricityPage() {
                                     <tbody>
                                         {analysisData.tableData.map((meter) => (
                                             <tr key={meter.id} className="border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-primary/5 dark:hover:bg-slate-800/40 transition-colors even:bg-slate-50/40 dark:even:bg-slate-800/20">
-                                                <td className="py-4 px-5 font-medium text-slate-800 dark:text-slate-200 sticky left-0 bg-white dark:bg-slate-900 z-10">{meter.name}</td>
-                                                <td className="py-4 px-5 text-slate-500 dark:text-slate-400 font-mono text-sm">{meter.account_number}</td>
+                                                <td className="py-4 px-5 font-semibold text-slate-800 dark:text-slate-200 sticky left-0 bg-white dark:bg-slate-900 z-10">{meter.name}</td>
+                                                <td className="py-4 px-5 font-semibold text-slate-500 dark:text-slate-400 font-mono text-sm">{meter.account_number}</td>
                                                 {analysisData.selectedMonths.map(month => {
                                                     const val = meter.monthlyReadings?.[month] || 0;
                                                     return (
-                                                        <td key={month} className="py-4 px-3 text-right font-mono text-sm text-slate-700 dark:text-slate-300">
+                                                        <td key={month} className="py-4 px-3 text-right font-mono font-semibold text-sm text-slate-700 dark:text-slate-300">
                                                             {val > 0 ? val.toLocaleString('en-US', { maximumFractionDigits: 1 }) : <span className="text-slate-300 dark:text-slate-600">—</span>}
                                                         </td>
                                                     );
@@ -1161,7 +1161,7 @@ export default function ElectricityPage() {
                                                 <td className="py-4 px-5 text-right font-mono text-sm font-semibold text-slate-800 dark:text-slate-200 border-l border-slate-100 dark:border-slate-800">
                                                     {meter.rangeConsumption.toLocaleString('en-US', { maximumFractionDigits: 1 })}
                                                 </td>
-                                                <td className="py-4 px-5 text-right font-mono text-sm font-medium text-mb-success dark:text-mb-success-hover">
+                                                <td className="py-4 px-5 text-right font-mono text-sm font-semibold text-mb-success dark:text-mb-success-hover">
                                                     {meter.rangeCost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                                 </td>
                                             </tr>
@@ -1320,8 +1320,8 @@ export default function ElectricityPage() {
                                         const sum = Object.values(meter.readings).reduce((a, b) => a + b, 0);
                                         return (
                                             <tr key={meter.id} className="border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-primary/5 dark:hover:bg-slate-800/40 transition-colors even:bg-slate-50/40 dark:even:bg-slate-800/20">
-                                                <td className="py-4 px-5 font-medium text-slate-800 dark:text-slate-200 sticky left-0 bg-white dark:bg-slate-900 z-10">{meter.name}</td>
-                                                <td className="py-4 px-5 text-slate-600 dark:text-slate-400 font-mono text-sm">{meter.account_number}</td>
+                                                <td className="py-4 px-5 font-semibold text-slate-800 dark:text-slate-200 sticky left-0 bg-white dark:bg-slate-900 z-10">{meter.name}</td>
+                                                <td className="py-4 px-5 font-semibold text-slate-600 dark:text-slate-400 font-mono text-sm">{meter.account_number}</td>
                                                 <td className="py-4 px-5">
                                                     <StatusBadge label={meter.type} color="blue" />
                                                 </td>
@@ -1329,7 +1329,7 @@ export default function ElectricityPage() {
                                                     const val = meter.readings[month] || 0;
                                                     const anomaly = getAnomalyClass(val, meter);
                                                     return (
-                                                        <td key={month} className={`py-4 px-5 text-right font-mono text-sm ${anomaly || 'text-slate-700 dark:text-slate-300'}`}>
+                                                        <td key={month} className={`py-4 px-5 text-right font-mono font-semibold text-sm ${anomaly || 'text-slate-700 dark:text-slate-300'}`}>
                                                             {val > 0 ? val.toLocaleString('en-US', { maximumFractionDigits: 1 }) : <span className="text-slate-300 dark:text-slate-600">—</span>}
                                                         </td>
                                                     );
