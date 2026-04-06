@@ -84,6 +84,14 @@ const TYPE_COLORS: Record<string, string> = {
     'N/A': CHART_COLORS.gray,
 };
 
+// Helper: compute trend direction and formatted % change between two values
+const calcTrend = (current: number, previous: number): { trend: 'up' | 'down' | 'neutral'; trendValue: string } => {
+    if (previous === 0) return { trend: 'neutral', trendValue: '—' };
+    const change = ((current - previous) / previous) * 100;
+    if (Math.abs(change) < 0.5) return { trend: 'neutral', trendValue: '~0%' };
+    return { trend: change > 0 ? 'up' : 'down', trendValue: `${Math.abs(change).toFixed(1)}%` };
+};
+
 // Pre-computed level caches to avoid repeated .filter() calls
 interface LevelCaches {
     l1: WaterMeter[];
@@ -336,6 +344,21 @@ export default function WaterPage() {
     const rangeAnalysis = useMemo(() =>
         calculateRangeAnalysisFromData(levelCaches, startMonth, endMonth), [levelCaches, startMonth, endMonth]);
 
+    // Calculate previous period analysis for trend comparison
+    const prevAnalysis = useMemo(() => {
+        const startIdx = AVAILABLE_MONTHS.indexOf(startMonth);
+        const endIdx = AVAILABLE_MONTHS.indexOf(endMonth);
+        if (startIdx <= 0 || endIdx < 0) return null;
+        const rangeLen = endIdx - startIdx;
+        const prevEndIdx = startIdx - 1;
+        const prevStartIdx = Math.max(0, prevEndIdx - rangeLen);
+        return calculateRangeAnalysisFromData(
+            levelCaches,
+            AVAILABLE_MONTHS[prevStartIdx],
+            AVAILABLE_MONTHS[prevEndIdx]
+        );
+    }, [levelCaches, startMonth, endMonth]);
+
     const monthlyTrends = useMemo(() =>
         getMonthlyTrendsFromData(levelCaches, startMonth, endMonth), [levelCaches, startMonth, endMonth]);
 
@@ -511,6 +534,11 @@ export default function WaterPage() {
 
     // Generate stats for Overview using StatsGrid format
     const overviewStats = useMemo(() => {
+        const a1Trend = prevAnalysis ? calcTrend(rangeAnalysis.A1, prevAnalysis.A1) : null;
+        const a2Trend = prevAnalysis ? calcTrend(rangeAnalysis.A2, prevAnalysis.A2) : null;
+        const a3Trend = prevAnalysis ? calcTrend(rangeAnalysis.A3Individual, prevAnalysis.A3Individual) : null;
+        const effTrend = prevAnalysis ? calcTrend(rangeAnalysis.efficiency, prevAnalysis.efficiency) : null;
+
         return [
             {
                 label: "A1 - MAIN SOURCE",
@@ -518,6 +546,8 @@ export default function WaterPage() {
                 subtitle: "L1 (Main source input)",
                 icon: Droplets,
                 variant: "default" as const,
+                ...(a1Trend && { trend: a1Trend.trend, trendValue: a1Trend.trendValue }),
+                invertTrend: true,
             },
             {
                 label: "A2 - ZONE DISTRIBUTION",
@@ -525,6 +555,8 @@ export default function WaterPage() {
                 subtitle: "L2 Bulks + DC",
                 icon: ChevronsRight,
                 variant: "secondary" as const,
+                ...(a2Trend && { trend: a2Trend.trend, trendValue: a2Trend.trendValue }),
+                invertTrend: true,
             },
             {
                 label: "A3 - INDIVIDUAL",
@@ -532,6 +564,8 @@ export default function WaterPage() {
                 subtitle: "Villas + Apts + DC",
                 icon: Users,
                 variant: "primary" as const,
+                ...(a3Trend && { trend: a3Trend.trend, trendValue: a3Trend.trendValue }),
+                invertTrend: true,
             },
             {
                 label: "SYSTEM EFFICIENCY",
@@ -539,11 +573,16 @@ export default function WaterPage() {
                 subtitle: "A3 / A1 Ratio",
                 icon: ArrowRightLeft,
                 variant: "success" as const,
+                ...(effTrend && { trend: effTrend.trend, trendValue: effTrend.trendValue }),
             }
         ];
-    }, [rangeAnalysis]);
+    }, [rangeAnalysis, prevAnalysis]);
 
     const lossStats = useMemo(() => {
+        const s1Trend = prevAnalysis ? calcTrend(rangeAnalysis.stage1Loss, prevAnalysis.stage1Loss) : null;
+        const s2Trend = prevAnalysis ? calcTrend(rangeAnalysis.stage2Loss, prevAnalysis.stage2Loss) : null;
+        const totalLossTrend = prevAnalysis ? calcTrend(rangeAnalysis.totalLoss, prevAnalysis.totalLoss) : null;
+
         return [
             {
                 label: "STAGE 1 LOSS",
@@ -551,6 +590,8 @@ export default function WaterPage() {
                 subtitle: `Loss Rate: ${rangeAnalysis.A1 > 0 ? ((rangeAnalysis.stage1Loss / rangeAnalysis.A1) * 100).toFixed(1) : 0}%`,
                 icon: Minus,
                 variant: "danger" as const,
+                ...(s1Trend && { trend: s1Trend.trend, trendValue: s1Trend.trendValue }),
+                invertTrend: true,
             },
             {
                 label: "STAGE 2 LOSS",
@@ -558,6 +599,8 @@ export default function WaterPage() {
                 subtitle: `Loss Rate: ${rangeAnalysis.A2 > 0 ? ((rangeAnalysis.stage2Loss / rangeAnalysis.A2) * 100).toFixed(1) : 0}%`,
                 icon: Minus,
                 variant: "warning" as const,
+                ...(s2Trend && { trend: s2Trend.trend, trendValue: s2Trend.trendValue }),
+                invertTrend: true,
             },
             {
                 label: "TOTAL SYSTEM LOSS",
@@ -565,6 +608,8 @@ export default function WaterPage() {
                 subtitle: `Loss Rate: ${rangeAnalysis.lossPercentage}%`,
                 icon: AlertTriangle,
                 variant: "danger" as const,
+                ...(totalLossTrend && { trend: totalLossTrend.trend, trendValue: totalLossTrend.trendValue }),
+                invertTrend: true,
             },
             {
                 label: "HIGHEST CONSUMER",
@@ -574,7 +619,7 @@ export default function WaterPage() {
                 variant: "warning" as const,
             }
         ];
-    }, [rangeAnalysis, highestConsumer]);
+    }, [rangeAnalysis, prevAnalysis, highestConsumer]);
 
     if (isLoading) {
         return (
