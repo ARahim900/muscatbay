@@ -570,6 +570,25 @@ export default function ElectricityPage() {
             ? filteredMeters[0]?.name || selectedMeter
             : null;
 
+        // Calculate previous period for trend comparison
+        const startIdxInAll = allMonths.indexOf(selectedMonths[0]);
+        const endIdxInAll = allMonths.indexOf(selectedMonths[selectedMonths.length - 1]);
+        const prevEndIdx = startIdxInAll > 0 ? startIdxInAll - 1 : -1;
+        const prevStartIdx = prevEndIdx >= 0 ? Math.max(0, prevEndIdx - (endIdxInAll - startIdxInAll)) : -1;
+
+        let prevConsumption = 0;
+        if (prevStartIdx >= 0 && prevEndIdx >= 0) {
+            const prevMonths = allMonths.slice(prevStartIdx, prevEndIdx + 1);
+            prevConsumption = filteredMeters.reduce((sum, meter) => {
+                return sum + prevMonths.reduce((mSum, month) => mSum + (meter.readings[month] || 0), 0);
+            }, 0);
+        }
+        const prevCost = prevConsumption * ratePerKWh;
+        const hasPrev = prevStartIdx >= 0 && prevEndIdx >= 0;
+
+        const consumptionTrend = hasPrev ? calcTrend(totalConsumption, prevConsumption) : { trend: 'neutral' as const, trendValue: '—' };
+        const costTrend = hasPrev ? calcTrend(totalCost, prevCost) : { trend: 'neutral' as const, trendValue: '—' };
+
         // Stats Cards Data
         const stats = [
             {
@@ -578,8 +597,9 @@ export default function ElectricityPage() {
                 subtitle: selectedMeterName || "in selected period",
                 icon: Zap,
                 variant: "primary" as const,
-                trend: 'neutral' as const,
-                trendValue: '—'
+                trend: consumptionTrend.trend,
+                trendValue: consumptionTrend.trendValue,
+                invertTrend: true,  // Less consumption = saving = green ✓
             },
             {
                 label: "TOTAL COST",
@@ -587,8 +607,9 @@ export default function ElectricityPage() {
                 subtitle: `at ${ratePerKWh} OMR/kWh`,
                 icon: DollarSign,
                 variant: "success" as const,
-                trend: 'neutral' as const,
-                trendValue: '—'
+                trend: costTrend.trend,
+                trendValue: costTrend.trendValue,
+                invertTrend: true,  // Lower cost = saving = green ✓
             },
             {
                 label: "METER COUNT",
