@@ -879,30 +879,30 @@ export default function STPPage() {
                         {/* Desktop table */}
                         <div className="hidden md:block overflow-x-auto rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900 shadow-sm">
                             <table className="w-full text-sm border-collapse">
-                                <thead>
-                                    <tr className="bg-slate-50/70 dark:bg-slate-800/50">
-                                        <th className="text-left py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" onClick={() => handleLogSort('date')}>
+                                <thead className="sticky top-0 z-10 bg-slate-100/60 dark:bg-slate-800/70">
+                                    <tr>
+                                        <th className="text-left py-4 px-5 font-semibold text-sm text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-200/60 dark:hover:bg-slate-700/60 transition-colors" onClick={() => handleLogSort('date')}>
                                             <div className="flex items-center gap-1.5">Date <SortIcon field="date" currentSortField={logSortField} currentSortDirection={logSortDirection} /></div>
                                         </th>
-                                        <th className="text-right py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" onClick={() => handleLogSort('inlet')}>
+                                        <th className="text-right py-4 px-5 font-semibold text-sm text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-200/60 dark:hover:bg-slate-700/60 transition-colors" onClick={() => handleLogSort('inlet')}>
                                             <div className="flex items-center justify-end gap-1.5">Inlet (m³) <SortIcon field="inlet" currentSortField={logSortField} currentSortDirection={logSortDirection} /></div>
                                         </th>
-                                        <th className="text-right py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" onClick={() => handleLogSort('tse')}>
+                                        <th className="text-right py-4 px-5 font-semibold text-sm text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-200/60 dark:hover:bg-slate-700/60 transition-colors" onClick={() => handleLogSort('tse')}>
                                             <div className="flex items-center justify-end gap-1.5">TSE Output (m³) <SortIcon field="tse" currentSortField={logSortField} currentSortDirection={logSortDirection} /></div>
                                         </th>
-                                        <th className="text-right py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" onClick={() => handleLogSort('efficiency')}>
+                                        <th className="text-right py-4 px-5 font-semibold text-sm text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-200/60 dark:hover:bg-slate-700/60 transition-colors" onClick={() => handleLogSort('efficiency')}>
                                             <div className="flex items-center justify-end gap-1.5">Efficiency % <SortIcon field="efficiency" currentSortField={logSortField} currentSortDirection={logSortDirection} /></div>
                                         </th>
-                                        <th className="text-right py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" onClick={() => handleLogSort('trips')}>
+                                        <th className="text-right py-4 px-5 font-semibold text-sm text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-200/60 dark:hover:bg-slate-700/60 transition-colors" onClick={() => handleLogSort('trips')}>
                                             <div className="flex items-center justify-end gap-1.5">Tanker Trips <SortIcon field="trips" currentSortField={logSortField} currentSortDirection={logSortDirection} /></div>
                                         </th>
-                                        <th className="text-right py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" onClick={() => handleLogSort('income')}>
+                                        <th className="text-right py-4 px-5 font-semibold text-sm text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-200/60 dark:hover:bg-slate-700/60 transition-colors" onClick={() => handleLogSort('income')}>
                                             <div className="flex items-center justify-end gap-1.5">Income (OMR) <SortIcon field="income" currentSortField={logSortField} currentSortDirection={logSortDirection} /></div>
                                         </th>
-                                        <th className="text-right py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" onClick={() => handleLogSort('savings')}>
+                                        <th className="text-right py-4 px-5 font-semibold text-sm text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-200/60 dark:hover:bg-slate-700/60 transition-colors" onClick={() => handleLogSort('savings')}>
                                             <div className="flex items-center justify-end gap-1.5">Savings (OMR) <SortIcon field="savings" currentSortField={logSortField} currentSortDirection={logSortDirection} /></div>
                                         </th>
-                                        <th className="text-right py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" onClick={() => handleLogSort('total')}>
+                                        <th className="text-right py-4 px-5 font-semibold text-sm text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-200/60 dark:hover:bg-slate-700/60 transition-colors" onClick={() => handleLogSort('total')}>
                                             <div className="flex items-center justify-end gap-1.5">Total Impact (OMR) <SortIcon field="total" currentSortField={logSortField} currentSortDirection={logSortDirection} /></div>
                                         </th>
                                     </tr>
@@ -916,15 +916,15 @@ export default function STPPage() {
                                         const efficiencyColor = efficiency >= 95 ? "text-mb-success" : efficiency >= 90 ? "text-mb-warning" : "text-mb-danger";
 
                                         return (
-                                            <tr key={op.id} className="border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors">
-                                                <td className="py-3.5 px-5 text-slate-600 dark:text-slate-400">{format(new Date(op.date), "dd/MM/yyyy")}</td>
-                                                <td className="py-3.5 px-5 text-right font-mono text-xs text-primary font-medium">{op.inlet_sewage.toLocaleString()}</td>
-                                                <td className="py-3.5 px-5 text-right font-mono text-xs text-blue-600 dark:text-blue-400 font-medium">{op.tse_for_irrigation.toLocaleString()}</td>
-                                                <td className={`py-3.5 px-5 text-right font-mono text-xs font-medium ${efficiencyColor}`}>{efficiency.toFixed(1)}%</td>
-                                                <td className="py-3.5 px-5 text-right font-mono text-xs text-mb-warning">{op.tanker_trips}</td>
-                                                <td className="py-3.5 px-5 text-right font-mono text-xs text-mb-success">{income.toFixed(2)}</td>
-                                                <td className="py-3.5 px-5 text-right font-mono text-xs text-primary">{savings.toFixed(2)}</td>
-                                                <td className="py-3.5 px-5 text-right font-mono text-xs font-semibold text-mb-success">{totalImpact.toFixed(2)}</td>
+                                            <tr key={op.id} className="border-b border-slate-100/80 dark:border-slate-800/80 odd:bg-white dark:odd:bg-transparent even:bg-slate-50/50 dark:even:bg-slate-800/20 hover:bg-primary/5 dark:hover:bg-primary/10 transition-colors">
+                                                <td className="py-4 px-5 text-sm text-slate-600 dark:text-slate-400">{format(new Date(op.date), "dd/MM/yyyy")}</td>
+                                                <td className="py-4 px-5 text-right font-mono text-sm text-primary font-medium">{op.inlet_sewage.toLocaleString()}</td>
+                                                <td className="py-4 px-5 text-right font-mono text-sm text-blue-600 dark:text-blue-400 font-medium">{op.tse_for_irrigation.toLocaleString()}</td>
+                                                <td className={`py-4 px-5 text-right font-mono text-sm font-medium ${efficiencyColor}`}>{efficiency.toFixed(1)}%</td>
+                                                <td className="py-4 px-5 text-right font-mono text-sm text-mb-warning">{op.tanker_trips}</td>
+                                                <td className="py-4 px-5 text-right font-mono text-sm text-mb-success">{income.toFixed(2)}</td>
+                                                <td className="py-4 px-5 text-right font-mono text-sm text-primary">{savings.toFixed(2)}</td>
+                                                <td className="py-4 px-5 text-right font-mono text-sm font-semibold text-mb-success">{totalImpact.toFixed(2)}</td>
                                             </tr>
                                         );
                                     })}

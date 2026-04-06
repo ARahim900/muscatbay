@@ -532,48 +532,48 @@ export default function ContractorsPage() {
                     {/* Desktop Table */}
                     <div className="hidden md:block overflow-x-auto rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900 shadow-sm">
                         <table className="w-full text-sm border-collapse">
-                            <thead>
-                                <tr className="bg-slate-50/70 dark:bg-slate-800/50">
-                                    <th className="text-left py-3 px-4 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 w-8">#</th>
-                                    <th className="text-left py-3 px-4 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" onClick={() => handleSort('contractor')}>
+                            <thead className="sticky top-0 z-10 bg-slate-100/60 dark:bg-slate-800/70">
+                                <tr>
+                                    <th className="text-left py-4 px-4 font-semibold text-sm text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700 w-8">#</th>
+                                    <th className="text-left py-4 px-4 font-semibold text-sm text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-200/60 dark:hover:bg-slate-700/60 transition-colors" onClick={() => handleSort('contractor')}>
                                         <div className="flex items-center gap-1.5">Contractor <SortIcon field="contractor" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
                                     </th>
-                                    <th className="text-left py-3 px-4 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 hidden lg:table-cell">Contract Ref</th>
-                                    <th className="text-left py-3 px-4 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" onClick={() => handleSort('service')}>
+                                    <th className="text-left py-4 px-4 font-semibold text-sm text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700 hidden lg:table-cell">Contract Ref</th>
+                                    <th className="text-left py-4 px-4 font-semibold text-sm text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-200/60 dark:hover:bg-slate-700/60 transition-colors" onClick={() => handleSort('service')}>
                                         <div className="flex items-center gap-1.5">Service <SortIcon field="service" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
                                     </th>
-                                    <th className="text-left py-3 px-4 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" onClick={() => handleSort('flow')}>
+                                    <th className="text-left py-4 px-4 font-semibold text-sm text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-200/60 dark:hover:bg-slate-700/60 transition-colors" onClick={() => handleSort('flow')}>
                                         <div className="flex items-center gap-1.5">Flow <SortIcon field="flow" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
                                     </th>
-                                    <th className="text-center py-3 px-4 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" onClick={() => handleSort('years')}>
+                                    <th className="text-center py-4 px-4 font-semibold text-sm text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-200/60 dark:hover:bg-slate-700/60 transition-colors" onClick={() => handleSort('years')}>
                                         <div className="flex items-center justify-center gap-1.5">Years <SortIcon field="years" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
                                     </th>
-                                    <th className="text-right py-3 px-4 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" onClick={() => handleSort('annual')}>
+                                    <th className="text-right py-4 px-4 font-semibold text-sm text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-200/60 dark:hover:bg-slate-700/60 transition-colors" onClick={() => handleSort('annual')}>
                                         <div className="flex items-center justify-end gap-1.5">Annual (OMR) <SortIcon field="annual" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
                                     </th>
-                                    <th className="text-right py-3 px-4 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" onClick={() => handleSort('total')}>
+                                    <th className="text-right py-4 px-4 font-semibold text-sm text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-200/60 dark:hover:bg-slate-700/60 transition-colors" onClick={() => handleSort('total')}>
                                         <div className="flex items-center justify-end gap-1.5">Total (OMR) <SortIcon field="total" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
                                     </th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {paginatedContracts.map(c => (
-                                    <tr key={c.id} className="border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors">
-                                        <td className="py-3 px-4 text-xs text-slate-400">{c.id}</td>
-                                        <td className="py-3 px-4 font-medium text-slate-800 dark:text-slate-200">
+                                    <tr key={c.id} className="border-b border-slate-100/80 dark:border-slate-800/80 odd:bg-white dark:odd:bg-transparent even:bg-slate-50/50 dark:even:bg-slate-800/20 hover:bg-primary/5 dark:hover:bg-primary/10 transition-colors">
+                                        <td className="py-4 px-4 text-sm text-slate-400">{c.id}</td>
+                                        <td className="py-4 px-4 font-medium text-sm text-slate-800 dark:text-slate-200">
                                             {c.contractor}
                                             {c.note && <p className="text-[11px] text-slate-400 mt-0.5 max-w-[200px] truncate" title={c.note}>{c.note}</p>}
                                         </td>
-                                        <td className="py-3 px-4 text-xs text-slate-500 dark:text-slate-400 hidden lg:table-cell font-mono">{c.contract_ref || '-'}</td>
-                                        <td className="py-3 px-4 text-xs text-slate-600 dark:text-slate-400">{c.service || '-'}</td>
-                                        <td className="py-3 px-4">
+                                        <td className="py-4 px-4 text-sm text-slate-500 dark:text-slate-400 hidden lg:table-cell font-mono">{c.contract_ref || '-'}</td>
+                                        <td className="py-4 px-4 text-sm text-slate-600 dark:text-slate-400">{c.service || '-'}</td>
+                                        <td className="py-4 px-4">
                                             <StatusBadge label={c.flow} color={getFlowDotColor(c.flow)} />
                                         </td>
-                                        <td className="py-3 px-4 text-center text-xs text-slate-600 dark:text-slate-300">{c.contract_years ?? '-'}</td>
-                                        <td className="py-3 px-4 text-right font-mono text-xs text-slate-700 dark:text-slate-300">
+                                        <td className="py-4 px-4 text-center text-sm text-slate-600 dark:text-slate-300">{c.contract_years ?? '-'}</td>
+                                        <td className="py-4 px-4 text-right font-mono text-sm text-slate-700 dark:text-slate-300">
                                             {c.annual_value_omr ? fmtOMR(c.annual_value_omr) : <span className="text-slate-400 italic">{c.rate_note || 'Variable'}</span>}
                                         </td>
-                                        <td className="py-3 px-4 text-right font-mono text-xs font-semibold text-primary">
+                                        <td className="py-4 px-4 text-right font-mono text-sm font-semibold text-primary">
                                             {c.total_value_omr ? fmtOMR(c.total_value_omr) : <span className="text-slate-400 italic font-normal">Variable</span>}
                                         </td>
                                     </tr>
@@ -648,28 +648,28 @@ export default function ContractorsPage() {
                             {/* Desktop: matrix table */}
                             <div className="hidden md:block overflow-x-auto rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900 shadow-sm">
                                 <table className="w-full text-sm border-collapse whitespace-nowrap">
-                                    <thead>
-                                        <tr className="bg-slate-50/70 dark:bg-slate-800/50">
-                                            <th className="text-left py-3 px-4 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 sticky left-0 bg-slate-50/70 dark:bg-slate-800/50 z-10">Year</th>
+                                    <thead className="sticky top-0 z-10 bg-slate-100/60 dark:bg-slate-800/70">
+                                        <tr>
+                                            <th className="text-left py-4 px-4 font-semibold text-sm text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700 sticky left-0 bg-slate-100/60 dark:bg-slate-800/70 z-20">Year</th>
                                             {matrix.contractors.map(cn => (
-                                                <th key={cn} className="text-right py-3 px-3 font-medium text-[11px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700" title={cn}>
+                                                <th key={cn} className="text-right py-4 px-3 font-semibold text-xs text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700" title={cn}>
                                                     {shortName(cn)}
                                                 </th>
                                             ))}
-                                            <th className="text-right py-3 px-4 font-semibold text-[13px] text-slate-700 dark:text-slate-200 border-b border-slate-200 dark:border-slate-700 bg-slate-100/60 dark:bg-slate-700/30">Year Total</th>
+                                            <th className="text-right py-4 px-4 font-semibold text-sm text-slate-700 dark:text-slate-200 border-b border-slate-200 dark:border-slate-700 bg-slate-200/40 dark:bg-slate-700/40">Year Total</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {matrix.rows.map(row => (
-                                            <tr key={row.year} className="border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors">
-                                                <td className="py-3 px-4 font-medium text-slate-700 dark:text-slate-300 sticky left-0 bg-white dark:bg-slate-900 z-10">
+                                            <tr key={row.year} className="border-b border-slate-100/80 dark:border-slate-800/80 odd:bg-white dark:odd:bg-transparent even:bg-slate-50/50 dark:even:bg-slate-800/20 hover:bg-primary/5 dark:hover:bg-primary/10 transition-colors">
+                                                <td className="py-4 px-4 font-medium text-sm text-slate-700 dark:text-slate-300 sticky left-0 bg-inherit z-10">
                                                     <span className="text-xs text-slate-400 mr-1.5">Y{row.year}</span>
                                                     {row.label}
                                                 </td>
                                                 {matrix.contractors.map(cn => {
                                                     const val = row.costs[cn];
                                                     return (
-                                                        <td key={cn} className="py-3 px-3 text-right font-mono text-xs">
+                                                        <td key={cn} className="py-4 px-3 text-right font-mono text-sm">
                                                             {val != null ? (
                                                                 <span className="text-slate-700 dark:text-slate-300">{fmtOMR(val)}</span>
                                                             ) : (
@@ -678,20 +678,20 @@ export default function ContractorsPage() {
                                                         </td>
                                                     );
                                                 })}
-                                                <td className="py-3 px-4 text-right font-mono text-xs font-bold text-primary bg-slate-50/40 dark:bg-slate-800/20">
+                                                <td className="py-4 px-4 text-right font-mono text-sm font-bold text-primary bg-slate-50/40 dark:bg-slate-800/20">
                                                     {fmtOMR(row.total)}
                                                 </td>
                                             </tr>
                                         ))}
                                         {/* Totals row */}
-                                        <tr className="bg-slate-50/80 dark:bg-slate-800/50 font-semibold border-t-2 border-slate-300 dark:border-slate-600">
-                                            <td className="py-3 px-4 text-slate-700 dark:text-slate-200 sticky left-0 bg-slate-50/80 dark:bg-slate-800/50 z-10">Contract Total</td>
+                                        <tr className="bg-slate-100/60 dark:bg-slate-800/50 font-semibold border-t-2 border-slate-300 dark:border-slate-600">
+                                            <td className="py-4 px-4 text-sm text-slate-700 dark:text-slate-200 sticky left-0 bg-slate-100/60 dark:bg-slate-800/50 z-10">Contract Total</td>
                                             {matrix.contractors.map(cn => (
-                                                <td key={cn} className="py-3 px-3 text-right font-mono text-xs text-slate-700 dark:text-slate-300">
+                                                <td key={cn} className="py-4 px-3 text-right font-mono text-sm text-slate-700 dark:text-slate-300">
                                                     {fmtOMR(matrix.contractorTotals[cn])}
                                                 </td>
                                             ))}
-                                            <td className="py-3 px-4 text-right font-mono text-sm font-bold text-primary bg-slate-100/60 dark:bg-slate-700/30">
+                                            <td className="py-4 px-4 text-right font-mono text-sm font-bold text-primary bg-slate-200/40 dark:bg-slate-700/40">
                                                 {fmtOMR(matrix.grandTotal)}
                                             </td>
                                         </tr>
@@ -795,45 +795,45 @@ export default function ContractorsPage() {
                     {/* Desktop Table */}
                     <div className="hidden md:block overflow-x-auto rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900 shadow-sm">
                         <table className="w-full text-sm border-collapse">
-                            <thead>
-                                <tr className="bg-slate-50/70 dark:bg-slate-800/50">
-                                    <th className="text-left py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" onClick={() => handleTrackerSort('contractor')}>
+                            <thead className="sticky top-0 z-10 bg-slate-100/60 dark:bg-slate-800/70">
+                                <tr>
+                                    <th className="text-left py-4 px-5 font-semibold text-sm text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-200/60 dark:hover:bg-slate-700/60 transition-colors" onClick={() => handleTrackerSort('contractor')}>
                                         <div className="flex items-center gap-1.5">Contractor <SortIcon field="contractor" currentSortField={trackerSortField} currentSortDirection={trackerSortDir} /></div>
                                     </th>
-                                    <th className="text-left py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" onClick={() => handleTrackerSort('service')}>
+                                    <th className="text-left py-4 px-5 font-semibold text-sm text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-200/60 dark:hover:bg-slate-700/60 transition-colors" onClick={() => handleTrackerSort('service')}>
                                         <div className="flex items-center gap-1.5">Service <SortIcon field="service" currentSortField={trackerSortField} currentSortDirection={trackerSortDir} /></div>
                                     </th>
-                                    <th className="text-left py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" onClick={() => handleTrackerSort('status')}>
+                                    <th className="text-left py-4 px-5 font-semibold text-sm text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-200/60 dark:hover:bg-slate-700/60 transition-colors" onClick={() => handleTrackerSort('status')}>
                                         <div className="flex items-center gap-1.5">Status <SortIcon field="status" currentSortField={trackerSortField} currentSortDirection={trackerSortDir} /></div>
                                     </th>
-                                    <th className="text-left py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">Type</th>
-                                    <th className="text-left py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 hidden lg:table-cell">Start</th>
-                                    <th className="text-left py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 hidden lg:table-cell">End</th>
-                                    <th className="text-right py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" onClick={() => handleTrackerSort('annual')}>
+                                    <th className="text-left py-4 px-5 font-semibold text-sm text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700">Type</th>
+                                    <th className="text-left py-4 px-5 font-semibold text-sm text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700 hidden lg:table-cell">Start</th>
+                                    <th className="text-left py-4 px-5 font-semibold text-sm text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700 hidden lg:table-cell">End</th>
+                                    <th className="text-right py-4 px-5 font-semibold text-sm text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-200/60 dark:hover:bg-slate-700/60 transition-colors" onClick={() => handleTrackerSort('annual')}>
                                         <div className="flex items-center justify-end gap-1.5">Annual <SortIcon field="annual" currentSortField={trackerSortField} currentSortDirection={trackerSortDir} /></div>
                                     </th>
-                                    <th className="text-left py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 hidden xl:table-cell">Renewal</th>
-                                    <th className="text-left py-3 px-5 font-medium text-[13px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 hidden xl:table-cell">Note</th>
+                                    <th className="text-left py-4 px-5 font-semibold text-sm text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700 hidden xl:table-cell">Renewal</th>
+                                    <th className="text-left py-4 px-5 font-semibold text-sm text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700 hidden xl:table-cell">Note</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {paginatedTracker.map(c => (
-                                    <tr key={`${c.Contractor ?? ''}--${c["Service Provided"] ?? ''}`} className="border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors">
-                                        <td className="py-3.5 px-5 font-medium text-slate-800 dark:text-slate-200">{c.Contractor || '-'}</td>
-                                        <td className="py-3.5 px-5 text-xs text-slate-600 dark:text-slate-400">{c["Service Provided"] || '-'}</td>
-                                        <td className="py-3.5 px-5"><StatusBadge label={c.Status || 'N/A'} color={getStatusDotColor(c.Status)} /></td>
-                                        <td className="py-3.5 px-5 text-xs text-slate-500">{c["Contract Type"] || '-'}</td>
-                                        <td className="py-3.5 px-5 text-xs text-slate-500 hidden lg:table-cell">
+                                    <tr key={`${c.Contractor ?? ''}--${c["Service Provided"] ?? ''}`} className="border-b border-slate-100/80 dark:border-slate-800/80 odd:bg-white dark:odd:bg-transparent even:bg-slate-50/50 dark:even:bg-slate-800/20 hover:bg-primary/5 dark:hover:bg-primary/10 transition-colors">
+                                        <td className="py-4 px-5 font-medium text-sm text-slate-800 dark:text-slate-200">{c.Contractor || '-'}</td>
+                                        <td className="py-4 px-5 text-sm text-slate-600 dark:text-slate-400">{c["Service Provided"] || '-'}</td>
+                                        <td className="py-4 px-5"><StatusBadge label={c.Status || 'N/A'} color={getStatusDotColor(c.Status)} /></td>
+                                        <td className="py-4 px-5 text-sm text-slate-500">{c["Contract Type"] || '-'}</td>
+                                        <td className="py-4 px-5 text-sm text-slate-500 hidden lg:table-cell">
                                             {c["Start Date"] ? <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{c["Start Date"]}</span> : '-'}
                                         </td>
-                                        <td className="py-3.5 px-5 text-xs text-slate-500 hidden lg:table-cell">
+                                        <td className="py-4 px-5 text-sm text-slate-500 hidden lg:table-cell">
                                             {c["End Date"] ? <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{c["End Date"]}</span> : '-'}
                                         </td>
-                                        <td className="py-3.5 px-5 text-right font-mono text-xs font-semibold text-primary">{c["Annual Value (OMR)"]?.toLocaleString() || '-'}</td>
-                                        <td className="py-3.5 px-5 text-xs text-slate-600 dark:text-slate-400 hidden xl:table-cell">
+                                        <td className="py-4 px-5 text-right font-mono text-sm font-semibold text-primary">{c["Annual Value (OMR)"]?.toLocaleString() || '-'}</td>
+                                        <td className="py-4 px-5 text-sm text-slate-600 dark:text-slate-400 hidden xl:table-cell">
                                             {c["Renewal Plan"] ? <span className="flex items-center gap-1"><RefreshCw className="h-3 w-3 text-blue-500" />{c["Renewal Plan"]}</span> : '-'}
                                         </td>
-                                        <td className="py-3.5 px-5 text-xs text-slate-500 max-w-[200px] truncate hidden xl:table-cell" title={c.Note || ''}>{c.Note || '-'}</td>
+                                        <td className="py-4 px-5 text-sm text-slate-500 max-w-[200px] truncate hidden xl:table-cell" title={c.Note || ''}>{c.Note || '-'}</td>
                                     </tr>
                                 ))}
                                 {filteredTracker.length === 0 && (

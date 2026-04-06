@@ -130,8 +130,8 @@ function processBuildingData(readings: Record<string, number | null>): BuildingR
 
 // ─── Styled primitives ──────────────────────────────────────────────────────
 
-const thBase = "h-11 px-4 text-left align-middle font-semibold text-[11px] uppercase tracking-wider text-slate-400 dark:text-slate-500 whitespace-nowrap";
-const tdBase = "px-4 py-3 align-middle text-[13px] text-slate-700 dark:text-slate-300";
+const thBase = "h-12 px-4 text-left align-middle font-semibold text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 whitespace-nowrap";
+const tdBase = "px-4 py-3.5 align-middle text-sm text-slate-700 dark:text-slate-300";
 
 type SortDir = 'asc' | 'desc' | null;
 interface SortState { key: string; dir: SortDir }
@@ -792,8 +792,8 @@ export function BuildingConsumptionReport() {
                         {/* Table */}
                         <div className="overflow-x-auto">
                             <table className="w-full border-collapse">
-                                <thead>
-                                    <tr className="border-t border-b border-slate-100 dark:border-slate-800">
+                                <thead className="sticky top-0 z-10 bg-slate-100/60 dark:bg-slate-800/70">
+                                    <tr className="border-t border-b border-slate-200 dark:border-slate-700">
                                         <Th sortKey="building" sort={sort} onSort={setSort} className="min-w-[130px]">Building</Th>
                                         <th className={cn(thBase)}>Bulk Acct</th>
                                         <th className={cn(thBase, "text-center")}>Zone</th>
@@ -808,7 +808,7 @@ export function BuildingConsumptionReport() {
                                 <tbody>
                                     {paginatedRows.length === 0 ? (
                                         <tr>
-                                            <td colSpan={9} className="text-center py-10 text-[13px] text-slate-400 dark:text-slate-500">
+                                            <td colSpan={9} className="text-center py-10 text-sm text-slate-400 dark:text-slate-500">
                                                 No buildings found
                                             </td>
                                         </tr>
@@ -822,7 +822,7 @@ export function BuildingConsumptionReport() {
                                                 <tr
                                                     key={row.buildingName}
                                                     className={cn(
-                                                        "border-b border-slate-50 dark:border-slate-800/60 cursor-pointer select-none transition-colors hover:bg-slate-50/70 dark:hover:bg-slate-800/30",
+                                                        "border-b border-slate-100/80 dark:border-slate-800/80 cursor-pointer select-none transition-colors hover:bg-primary/5 dark:hover:bg-primary/10",
                                                         isExpanded && "bg-violet-50/30 dark:bg-violet-900/10",
                                                     )}
                                                     onClick={() => toggleBuilding(row.buildingName)}
