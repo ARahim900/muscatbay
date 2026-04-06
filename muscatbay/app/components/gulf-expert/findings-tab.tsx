@@ -198,14 +198,14 @@ export function FindingsTab({ findings }: FindingsTabProps) {
       </div>
 
       {/* Desktop Table */}
-      <div className="hidden md:block overflow-x-auto rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900 shadow-sm">
+      <div className="hidden md:block overflow-x-auto rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900 shadow-[0_1px_3px_rgba(0,0,0,0.06),0_4px_16px_-4px_rgba(0,0,0,0.1)] dark:shadow-[0_1px_3px_rgba(0,0,0,0.2),0_4px_16px_-4px_rgba(0,0,0,0.3)]">
         <table className="w-full text-sm border-collapse">
           <thead>
-            <tr className="bg-[#4E4456] dark:bg-[#3a3245]">
+            <tr className="bg-slate-50 dark:bg-slate-800/80">
               {columns.map((col) => (
                 <th
                   key={col.field}
-                  className="text-left py-4 px-4 font-semibold uppercase tracking-wide text-sm text-white border-b-2 border-[#3a3245] cursor-pointer hover:bg-[#5a4a6b] dark:hover:bg-[#2d2838] transition-colors"
+                  className="text-left py-4 px-4 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors"
                   onClick={() => handleSort(col.field)}
                 >
                   <div className="flex items-center gap-1.5">
@@ -218,7 +218,7 @@ export function FindingsTab({ findings }: FindingsTabProps) {
           </thead>
           <tbody>
             {paginated.map((f, i) => (
-              <tr key={f.id || i} className="border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-primary/5 dark:hover:bg-slate-800/40 transition-colors even:bg-slate-50/40 dark:even:bg-slate-800/20">
+              <tr key={f.id || i} className="border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-[#00d2b3]/5 dark:hover:bg-slate-700/40 transition-colors even:bg-slate-50/40 dark:even:bg-slate-800/20">
                 <td className="py-4 px-5 font-semibold text-slate-800 dark:text-slate-200 whitespace-nowrap">
                   {f.finding_code}
                   {f.is_recurring && <span className="ml-1 text-amber-500" title="Recurring issue">↻</span>}

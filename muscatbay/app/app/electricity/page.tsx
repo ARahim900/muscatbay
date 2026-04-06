@@ -1135,19 +1135,19 @@ export default function ElectricityPage() {
                             <div className="overflow-auto max-h-[calc(100vh-20rem)] sm:max-h-[600px] rounded-xl border border-slate-200/80 dark:border-slate-700/80">
                                 <table className="w-full text-sm border-collapse">
                                     <thead>
-                                        <tr className="bg-[#4E4456] dark:bg-[#3a3245]">
-                                            <th className="text-left py-4 px-4 font-semibold uppercase tracking-wide text-sm text-white border-b-2 border-[#3a3245] sticky left-0 bg-[#4E4456] dark:bg-[#3a3245] z-20 min-w-[180px]">Name</th>
-                                            <th className="text-left py-4 px-4 font-semibold uppercase tracking-wide text-sm text-white border-b-2 border-[#3a3245] min-w-[100px]">Account #</th>
+                                        <tr className="bg-slate-50 dark:bg-slate-800/80">
+                                            <th className="text-left py-4 px-4 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 sticky left-0 bg-slate-50 dark:bg-slate-800/80 z-20 min-w-[180px]">Name</th>
+                                            <th className="text-left py-4 px-4 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 min-w-[100px]">Account #</th>
                                             {analysisData.selectedMonths.map(month => (
-                                                <th key={month} className="text-right py-4 px-3 font-semibold uppercase tracking-wide text-xs sm:text-sm text-white border-b-2 border-[#3a3245] min-w-[75px] whitespace-nowrap">{month}</th>
+                                                <th key={month} className="text-right py-4 px-3 font-semibold uppercase tracking-wide text-xs sm:text-sm text-slate-600 dark:text-slate-300 border-b-2 border-slate-200 dark:border-slate-700 min-w-[75px] whitespace-nowrap">{month}</th>
                                             ))}
-                                            <th className="text-right py-4 px-4 font-semibold uppercase tracking-wide text-sm text-white border-b-2 border-[#3a3245] border-l border-slate-200 dark:border-slate-700 min-w-[90px]">Total (kWh)</th>
-                                            <th className="text-right py-4 px-4 font-semibold uppercase tracking-wide text-sm text-white border-b-2 border-[#3a3245] min-w-[90px]">Cost (OMR)</th>
+                                            <th className="text-right py-4 px-4 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 border-l border-slate-200 dark:border-slate-700 min-w-[90px]">Total (kWh)</th>
+                                            <th className="text-right py-4 px-4 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 min-w-[90px]">Cost (OMR)</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {analysisData.tableData.map((meter) => (
-                                            <tr key={meter.id} className="border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-primary/5 dark:hover:bg-slate-800/40 transition-colors even:bg-slate-50/40 dark:even:bg-slate-800/20">
+                                            <tr key={meter.id} className="border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-[#00d2b3]/5 dark:hover:bg-slate-700/40 transition-colors even:bg-slate-50/40 dark:even:bg-slate-800/20">
                                                 <td className="py-4 px-5 font-semibold text-slate-800 dark:text-slate-200 sticky left-0 bg-white dark:bg-slate-900 z-10">{meter.name}</td>
                                                 <td className="py-4 px-5 font-semibold text-slate-500 dark:text-slate-400 font-mono text-sm">{meter.account_number}</td>
                                                 {analysisData.selectedMonths.map(month => {
@@ -1294,32 +1294,32 @@ export default function ElectricityPage() {
                         ]} />
 
                         {/* Table */}
-                        <div className="overflow-x-auto rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900 shadow-sm">
+                        <div className="overflow-x-auto rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900 shadow-[0_1px_3px_rgba(0,0,0,0.06),0_4px_16px_-4px_rgba(0,0,0,0.1)] dark:shadow-[0_1px_3px_rgba(0,0,0,0.2),0_4px_16px_-4px_rgba(0,0,0,0.3)]">
                             <table className="w-full text-sm border-collapse">
                                 <thead>
-                                    <tr className="bg-[#4E4456] dark:bg-[#3a3245]">
-                                        <th className="text-left py-4 px-5 font-semibold uppercase tracking-wide text-sm text-white border-b-2 border-[#3a3245] cursor-pointer hover:bg-[#5a4a6b] dark:hover:bg-[#2d2838] transition-colors sticky left-0 bg-[#4E4456] dark:bg-[#3a3245] z-20 min-w-[200px]" onClick={() => handleDbSort('label')}>
+                                    <tr className="bg-slate-50 dark:bg-slate-800/80">
+                                        <th className="text-left py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors sticky left-0 bg-slate-50 dark:bg-slate-800/80 z-20 min-w-[200px]" onClick={() => handleDbSort('label')}>
                                             <div className="flex items-center gap-1.5">Name <SortIcon field="label" currentSortField={dbSortField} currentSortDirection={dbSortDirection} /></div>
                                         </th>
-                                        <th className="text-left py-4 px-5 font-semibold uppercase tracking-wide text-sm text-white border-b-2 border-[#3a3245] cursor-pointer hover:bg-[#5a4a6b] dark:hover:bg-[#2d2838] transition-colors" onClick={() => handleDbSort('account')}>
+                                        <th className="text-left py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors" onClick={() => handleDbSort('account')}>
                                             <div className="flex items-center gap-1.5">Account # <SortIcon field="account" currentSortField={dbSortField} currentSortDirection={dbSortDirection} /></div>
                                         </th>
-                                        <th className="text-left py-4 px-5 font-semibold uppercase tracking-wide text-sm text-white border-b-2 border-[#3a3245] cursor-pointer hover:bg-[#5a4a6b] dark:hover:bg-[#2d2838] transition-colors" onClick={() => handleDbSort('type')}>
+                                        <th className="text-left py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors" onClick={() => handleDbSort('type')}>
                                             <div className="flex items-center gap-1.5">Type <SortIcon field="type" currentSortField={dbSortField} currentSortDirection={dbSortDirection} /></div>
                                         </th>
                                         {displayMonths.map(month => (
-                                            <th key={month} className="text-right py-4 px-5 font-semibold uppercase tracking-wide text-sm text-white border-b-2 border-[#3a3245] cursor-pointer hover:bg-[#5a4a6b] dark:hover:bg-[#2d2838] transition-colors min-w-[90px] whitespace-nowrap" onClick={() => handleDbSort(month)}>
+                                            <th key={month} className="text-right py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors min-w-[90px] whitespace-nowrap" onClick={() => handleDbSort(month)}>
                                                 <div className="flex items-center justify-end gap-1.5">{month} <SortIcon field={month} currentSortField={dbSortField} currentSortDirection={dbSortDirection} /></div>
                                             </th>
                                         ))}
-                                        <th className="text-right py-4 px-5 font-semibold uppercase tracking-wide text-sm text-white border-b-2 border-[#3a3245] border-l border-slate-200 dark:border-slate-700 min-w-[100px]">Total (kWh)</th>
+                                        <th className="text-right py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 border-l border-slate-200 dark:border-slate-700 min-w-[100px]">Total (kWh)</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {dbPaginatedMeters.map((meter) => {
                                         const sum = Object.values(meter.readings).reduce((a, b) => a + b, 0);
                                         return (
-                                            <tr key={meter.id} className="border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-primary/5 dark:hover:bg-slate-800/40 transition-colors even:bg-slate-50/40 dark:even:bg-slate-800/20">
+                                            <tr key={meter.id} className="border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-[#00d2b3]/5 dark:hover:bg-slate-700/40 transition-colors even:bg-slate-50/40 dark:even:bg-slate-800/20">
                                                 <td className="py-4 px-5 font-semibold text-slate-800 dark:text-slate-200 sticky left-0 bg-white dark:bg-slate-900 z-10">{meter.name}</td>
                                                 <td className="py-4 px-5 font-semibold text-slate-600 dark:text-slate-400 font-mono text-sm">{meter.account_number}</td>
                                                 <td className="py-4 px-5">

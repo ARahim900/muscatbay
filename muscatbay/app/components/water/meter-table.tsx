@@ -161,30 +161,30 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
             </div>
 
             {/* Desktop table */}
-            <div className="hidden md:block overflow-x-auto rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900 shadow-sm">
+            <div className="hidden md:block overflow-x-auto rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900 shadow-[0_1px_3px_rgba(0,0,0,0.06),0_4px_16px_-4px_rgba(0,0,0,0.1)] dark:shadow-[0_1px_3px_rgba(0,0,0,0.2),0_4px_16px_-4px_rgba(0,0,0,0.3)]">
                 <table className="w-full text-sm">
                     <thead>
-                        <tr className="bg-[#4E4456] dark:bg-[#3a3245]">
-                            <th className="text-left py-4 px-5 font-semibold uppercase tracking-wide text-sm text-white border-b-2 border-[#3a3245] cursor-pointer hover:bg-[#5a4a6b] dark:hover:bg-[#2d2838] transition-colors" {...sortHeaderProps('label')}>
+                        <tr className="bg-slate-50 dark:bg-slate-800/80">
+                            <th className="text-left py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors" {...sortHeaderProps('label')}>
                                 <div className="flex items-center gap-1.5">Meter Label <ArrowUpDown className="w-3 h-3" /></div>
                             </th>
-                            <th className="text-left py-4 px-5 font-semibold uppercase tracking-wide text-sm text-white border-b-2 border-[#3a3245] cursor-pointer hover:bg-[#5a4a6b] dark:hover:bg-[#2d2838] transition-colors" {...sortHeaderProps('account')}>
+                            <th className="text-left py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors" {...sortHeaderProps('account')}>
                                 <div className="flex items-center gap-1.5">Account # <ArrowUpDown className="w-3 h-3" /></div>
                             </th>
-                            <th className="text-center py-4 px-5 font-semibold uppercase tracking-wide text-sm text-white border-b-2 border-[#3a3245] cursor-pointer hover:bg-[#5a4a6b] dark:hover:bg-[#2d2838] transition-colors" {...sortHeaderProps('level')}>
+                            <th className="text-center py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors" {...sortHeaderProps('level')}>
                                 <div className="flex items-center justify-center gap-1.5">Level <ArrowUpDown className="w-3 h-3" /></div>
                             </th>
-                            <th className="text-left py-4 px-5 font-semibold uppercase tracking-wide text-sm text-white border-b-2 border-[#3a3245] cursor-pointer hover:bg-[#5a4a6b] dark:hover:bg-[#2d2838] transition-colors" {...sortHeaderProps('zone')}>
+                            <th className="text-left py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors" {...sortHeaderProps('zone')}>
                                 <div className="flex items-center gap-1.5">Zone <ArrowUpDown className="w-3 h-3" /></div>
                             </th>
-                            <th className="text-left py-4 px-5 font-semibold uppercase tracking-wide text-sm text-white border-b-2 border-[#3a3245] cursor-pointer hover:bg-[#5a4a6b] dark:hover:bg-[#2d2838] transition-colors" {...sortHeaderProps('parentMeter')}>
+                            <th className="text-left py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors" {...sortHeaderProps('parentMeter')}>
                                 <div className="flex items-center gap-1.5">Parent Meter <ArrowUpDown className="w-3 h-3" /></div>
                             </th>
-                            <th className="text-left py-4 px-5 font-semibold uppercase tracking-wide text-sm text-white border-b-2 border-[#3a3245] cursor-pointer hover:bg-[#5a4a6b] dark:hover:bg-[#2d2838] transition-colors" {...sortHeaderProps('type')}>
+                            <th className="text-left py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors" {...sortHeaderProps('type')}>
                                 <div className="flex items-center gap-1.5">Type <ArrowUpDown className="w-3 h-3" /></div>
                             </th>
                             {displayMonths.map(m => (
-                                <th key={m} className="text-right py-4 px-5 font-semibold uppercase tracking-wide text-sm text-white border-b-2 border-[#3a3245] cursor-pointer hover:bg-[#5a4a6b] dark:hover:bg-[#2d2838] transition-colors" {...sortHeaderProps(m)}>
+                                <th key={m} className="text-right py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors" {...sortHeaderProps(m)}>
                                     <div className="flex items-center justify-end gap-1.5">{m} <ArrowUpDown className="w-3 h-3" /></div>
                                 </th>
                             ))}
@@ -194,7 +194,7 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                         {paginatedMeters.map((meter) => {
                             const levelColors = LEVEL_COLORS[meter.level] || LEVEL_COLORS['N/A'];
                             return (
-                                <tr key={meter.accountNumber} className="border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-primary/5 dark:hover:bg-slate-800/40 transition-colors even:bg-slate-50/40 dark:even:bg-slate-800/20">
+                                <tr key={meter.accountNumber} className="border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-[#00d2b3]/5 dark:hover:bg-slate-700/40 transition-colors even:bg-slate-50/40 dark:even:bg-slate-800/20">
                                     <td className="py-4 px-5 font-medium text-slate-800 dark:text-slate-200">{meter.label}</td>
                                     <td className="py-4 px-5 text-slate-600 dark:text-slate-300 font-mono text-sm">{meter.accountNumber}</td>
                                     <td className="py-4 px-5 text-center">

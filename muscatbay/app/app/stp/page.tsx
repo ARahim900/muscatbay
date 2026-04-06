@@ -877,32 +877,32 @@ export default function STPPage() {
                         </div>
 
                         {/* Desktop table */}
-                        <div className="hidden md:block overflow-x-auto rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900 shadow-sm">
+                        <div className="hidden md:block overflow-x-auto rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900 shadow-[0_1px_3px_rgba(0,0,0,0.06),0_4px_16px_-4px_rgba(0,0,0,0.1)] dark:shadow-[0_1px_3px_rgba(0,0,0,0.2),0_4px_16px_-4px_rgba(0,0,0,0.3)]">
                             <table className="w-full text-sm border-collapse">
                                 <thead>
-                                    <tr className="bg-[#4E4456] dark:bg-[#3a3245]">
-                                        <th className="text-left py-4 px-5 font-semibold uppercase tracking-wide text-sm text-white border-b-2 border-[#3a3245] cursor-pointer hover:bg-[#5a4a6b] dark:hover:bg-[#2d2838] transition-colors" onClick={() => handleLogSort('date')}>
+                                    <tr className="bg-slate-50 dark:bg-slate-800/80">
+                                        <th className="text-left py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors" onClick={() => handleLogSort('date')}>
                                             <div className="flex items-center gap-1.5">Date <SortIcon field="date" currentSortField={logSortField} currentSortDirection={logSortDirection} /></div>
                                         </th>
-                                        <th className="text-right py-4 px-5 font-semibold uppercase tracking-wide text-sm text-white border-b-2 border-[#3a3245] cursor-pointer hover:bg-[#5a4a6b] dark:hover:bg-[#2d2838] transition-colors" onClick={() => handleLogSort('inlet')}>
+                                        <th className="text-right py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors" onClick={() => handleLogSort('inlet')}>
                                             <div className="flex items-center justify-end gap-1.5">Inlet (m³) <SortIcon field="inlet" currentSortField={logSortField} currentSortDirection={logSortDirection} /></div>
                                         </th>
-                                        <th className="text-right py-4 px-5 font-semibold uppercase tracking-wide text-sm text-white border-b-2 border-[#3a3245] cursor-pointer hover:bg-[#5a4a6b] dark:hover:bg-[#2d2838] transition-colors" onClick={() => handleLogSort('tse')}>
+                                        <th className="text-right py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors" onClick={() => handleLogSort('tse')}>
                                             <div className="flex items-center justify-end gap-1.5">TSE Output (m³) <SortIcon field="tse" currentSortField={logSortField} currentSortDirection={logSortDirection} /></div>
                                         </th>
-                                        <th className="text-right py-4 px-5 font-semibold uppercase tracking-wide text-sm text-white border-b-2 border-[#3a3245] cursor-pointer hover:bg-[#5a4a6b] dark:hover:bg-[#2d2838] transition-colors" onClick={() => handleLogSort('efficiency')}>
+                                        <th className="text-right py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors" onClick={() => handleLogSort('efficiency')}>
                                             <div className="flex items-center justify-end gap-1.5">Efficiency % <SortIcon field="efficiency" currentSortField={logSortField} currentSortDirection={logSortDirection} /></div>
                                         </th>
-                                        <th className="text-right py-4 px-5 font-semibold uppercase tracking-wide text-sm text-white border-b-2 border-[#3a3245] cursor-pointer hover:bg-[#5a4a6b] dark:hover:bg-[#2d2838] transition-colors" onClick={() => handleLogSort('trips')}>
+                                        <th className="text-right py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors" onClick={() => handleLogSort('trips')}>
                                             <div className="flex items-center justify-end gap-1.5">Tanker Trips <SortIcon field="trips" currentSortField={logSortField} currentSortDirection={logSortDirection} /></div>
                                         </th>
-                                        <th className="text-right py-4 px-5 font-semibold uppercase tracking-wide text-sm text-white border-b-2 border-[#3a3245] cursor-pointer hover:bg-[#5a4a6b] dark:hover:bg-[#2d2838] transition-colors" onClick={() => handleLogSort('income')}>
+                                        <th className="text-right py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors" onClick={() => handleLogSort('income')}>
                                             <div className="flex items-center justify-end gap-1.5">Income (OMR) <SortIcon field="income" currentSortField={logSortField} currentSortDirection={logSortDirection} /></div>
                                         </th>
-                                        <th className="text-right py-4 px-5 font-semibold uppercase tracking-wide text-sm text-white border-b-2 border-[#3a3245] cursor-pointer hover:bg-[#5a4a6b] dark:hover:bg-[#2d2838] transition-colors" onClick={() => handleLogSort('savings')}>
+                                        <th className="text-right py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors" onClick={() => handleLogSort('savings')}>
                                             <div className="flex items-center justify-end gap-1.5">Savings (OMR) <SortIcon field="savings" currentSortField={logSortField} currentSortDirection={logSortDirection} /></div>
                                         </th>
-                                        <th className="text-right py-4 px-5 font-semibold uppercase tracking-wide text-sm text-white border-b-2 border-[#3a3245] cursor-pointer hover:bg-[#5a4a6b] dark:hover:bg-[#2d2838] transition-colors" onClick={() => handleLogSort('total')}>
+                                        <th className="text-right py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors" onClick={() => handleLogSort('total')}>
                                             <div className="flex items-center justify-end gap-1.5">Total Impact (OMR) <SortIcon field="total" currentSortField={logSortField} currentSortDirection={logSortDirection} /></div>
                                         </th>
                                     </tr>
@@ -916,7 +916,7 @@ export default function STPPage() {
                                         const efficiencyColor = efficiency >= 95 ? "text-mb-success" : efficiency >= 90 ? "text-mb-warning" : "text-mb-danger";
 
                                         return (
-                                            <tr key={op.id} className="border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-primary/5 dark:hover:bg-slate-800/40 transition-colors even:bg-slate-50/40 dark:even:bg-slate-800/20">
+                                            <tr key={op.id} className="border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-[#00d2b3]/5 dark:hover:bg-slate-700/40 transition-colors even:bg-slate-50/40 dark:even:bg-slate-800/20">
                                                 <td className="py-4 px-5 font-semibold text-slate-600 dark:text-slate-400">{format(new Date(op.date), "dd/MM/yyyy")}</td>
                                                 <td className="py-4 px-5 text-right font-mono text-sm text-primary font-semibold">{op.inlet_sewage.toLocaleString()}</td>
                                                 <td className="py-4 px-5 text-right font-mono text-sm text-blue-600 dark:text-blue-400 font-semibold">{op.tse_for_irrigation.toLocaleString()}</td>

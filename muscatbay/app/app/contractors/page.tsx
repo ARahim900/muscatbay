@@ -530,35 +530,35 @@ export default function ContractorsPage() {
                     </div>
 
                     {/* Desktop Table */}
-                    <div className="hidden md:block overflow-x-auto rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900 shadow-sm">
+                    <div className="hidden md:block overflow-x-auto rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900 shadow-[0_1px_3px_rgba(0,0,0,0.06),0_4px_16px_-4px_rgba(0,0,0,0.1)] dark:shadow-[0_1px_3px_rgba(0,0,0,0.2),0_4px_16px_-4px_rgba(0,0,0,0.3)]">
                         <table className="w-full text-sm border-collapse">
                             <thead>
-                                <tr className="bg-[#4E4456] dark:bg-[#3a3245]">
-                                    <th className="text-left py-4 px-4 font-semibold uppercase tracking-wide text-sm text-white border-b-2 border-[#3a3245] w-8">#</th>
-                                    <th className="text-left py-4 px-4 font-semibold uppercase tracking-wide text-sm text-white border-b-2 border-[#3a3245] cursor-pointer hover:bg-[#5a4a6b] dark:hover:bg-[#2d2838] transition-colors" onClick={() => handleSort('contractor')}>
+                                <tr className="bg-slate-50 dark:bg-slate-800/80">
+                                    <th className="text-left py-4 px-4 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 w-8">#</th>
+                                    <th className="text-left py-4 px-4 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors" onClick={() => handleSort('contractor')}>
                                         <div className="flex items-center gap-1.5">Contractor <SortIcon field="contractor" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
                                     </th>
-                                    <th className="text-left py-4 px-4 font-semibold uppercase tracking-wide text-sm text-white border-b-2 border-[#3a3245] hidden lg:table-cell">Contract Ref</th>
-                                    <th className="text-left py-4 px-4 font-semibold uppercase tracking-wide text-sm text-white border-b-2 border-[#3a3245] cursor-pointer hover:bg-[#5a4a6b] dark:hover:bg-[#2d2838] transition-colors" onClick={() => handleSort('service')}>
+                                    <th className="text-left py-4 px-4 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 hidden lg:table-cell">Contract Ref</th>
+                                    <th className="text-left py-4 px-4 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors" onClick={() => handleSort('service')}>
                                         <div className="flex items-center gap-1.5">Service <SortIcon field="service" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
                                     </th>
-                                    <th className="text-left py-4 px-4 font-semibold uppercase tracking-wide text-sm text-white border-b-2 border-[#3a3245] cursor-pointer hover:bg-[#5a4a6b] dark:hover:bg-[#2d2838] transition-colors" onClick={() => handleSort('flow')}>
+                                    <th className="text-left py-4 px-4 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors" onClick={() => handleSort('flow')}>
                                         <div className="flex items-center gap-1.5">Flow <SortIcon field="flow" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
                                     </th>
-                                    <th className="text-center py-4 px-4 font-semibold uppercase tracking-wide text-sm text-white border-b-2 border-[#3a3245] cursor-pointer hover:bg-[#5a4a6b] dark:hover:bg-[#2d2838] transition-colors" onClick={() => handleSort('years')}>
+                                    <th className="text-center py-4 px-4 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors" onClick={() => handleSort('years')}>
                                         <div className="flex items-center justify-center gap-1.5">Years <SortIcon field="years" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
                                     </th>
-                                    <th className="text-right py-4 px-4 font-semibold uppercase tracking-wide text-sm text-white border-b-2 border-[#3a3245] cursor-pointer hover:bg-[#5a4a6b] dark:hover:bg-[#2d2838] transition-colors" onClick={() => handleSort('annual')}>
+                                    <th className="text-right py-4 px-4 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors" onClick={() => handleSort('annual')}>
                                         <div className="flex items-center justify-end gap-1.5">Annual (OMR) <SortIcon field="annual" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
                                     </th>
-                                    <th className="text-right py-4 px-4 font-semibold uppercase tracking-wide text-sm text-white border-b-2 border-[#3a3245] cursor-pointer hover:bg-[#5a4a6b] dark:hover:bg-[#2d2838] transition-colors" onClick={() => handleSort('total')}>
+                                    <th className="text-right py-4 px-4 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors" onClick={() => handleSort('total')}>
                                         <div className="flex items-center justify-end gap-1.5">Total (OMR) <SortIcon field="total" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
                                     </th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {paginatedContracts.map(c => (
-                                    <tr key={c.id} className="border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-primary/5 dark:hover:bg-slate-800/40 transition-colors even:bg-slate-50/40 dark:even:bg-slate-800/20">
+                                    <tr key={c.id} className="border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-[#00d2b3]/5 dark:hover:bg-slate-700/40 transition-colors even:bg-slate-50/40 dark:even:bg-slate-800/20">
                                         <td className="py-4 px-5 font-semibold text-sm text-slate-500">{c.id}</td>
                                         <td className="py-4 px-5 font-semibold text-slate-800 dark:text-slate-200">
                                             {c.contractor}
@@ -646,22 +646,22 @@ export default function ContractorsPage() {
                             </div>
 
                             {/* Desktop: matrix table */}
-                            <div className="hidden md:block overflow-x-auto rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900 shadow-sm">
+                            <div className="hidden md:block overflow-x-auto rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900 shadow-[0_1px_3px_rgba(0,0,0,0.06),0_4px_16px_-4px_rgba(0,0,0,0.1)] dark:shadow-[0_1px_3px_rgba(0,0,0,0.2),0_4px_16px_-4px_rgba(0,0,0,0.3)]">
                                 <table className="w-full text-sm border-collapse whitespace-nowrap">
                                     <thead>
-                                        <tr className="bg-[#4E4456] dark:bg-[#3a3245]">
-                                            <th className="text-left py-4 px-4 font-semibold uppercase tracking-wide text-sm text-white border-b-2 border-[#3a3245] sticky left-0 bg-[#4E4456] dark:bg-[#3a3245] z-10">Year</th>
+                                        <tr className="bg-slate-50 dark:bg-slate-800/80">
+                                            <th className="text-left py-4 px-4 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 sticky left-0 bg-slate-50 dark:bg-slate-800/80 z-10">Year</th>
                                             {matrix.contractors.map(cn => (
-                                                <th key={cn} className="text-right py-4 px-3 font-semibold uppercase tracking-wide text-xs text-white border-b-2 border-[#3a3245]" title={cn}>
+                                                <th key={cn} className="text-right py-4 px-3 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700" title={cn}>
                                                     {shortName(cn)}
                                                 </th>
                                             ))}
-                                            <th className="text-right py-4 px-4 font-semibold text-sm text-slate-700 dark:text-slate-200 border-b-2 border-[#3a3245] bg-slate-100/60 dark:bg-slate-700/30">Year Total</th>
+                                            <th className="text-right py-4 px-4 font-semibold text-sm text-slate-700 dark:text-slate-200 border-b-2 border-slate-200 dark:border-slate-700 bg-slate-100/60 dark:bg-slate-700/30">Year Total</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {matrix.rows.map(row => (
-                                            <tr key={row.year} className="border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-primary/5 dark:hover:bg-slate-800/40 transition-colors even:bg-slate-50/40 dark:even:bg-slate-800/20">
+                                            <tr key={row.year} className="border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-[#00d2b3]/5 dark:hover:bg-slate-700/40 transition-colors even:bg-slate-50/40 dark:even:bg-slate-800/20">
                                                 <td className="py-4 px-4 font-semibold text-slate-700 dark:text-slate-300 sticky left-0 bg-white dark:bg-slate-900 z-10">
                                                     <span className="text-xs text-slate-400 mr-1.5">Y{row.year}</span>
                                                     {row.label}
@@ -793,32 +793,32 @@ export default function ContractorsPage() {
                     </div>
 
                     {/* Desktop Table */}
-                    <div className="hidden md:block overflow-x-auto rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900 shadow-sm">
+                    <div className="hidden md:block overflow-x-auto rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900 shadow-[0_1px_3px_rgba(0,0,0,0.06),0_4px_16px_-4px_rgba(0,0,0,0.1)] dark:shadow-[0_1px_3px_rgba(0,0,0,0.2),0_4px_16px_-4px_rgba(0,0,0,0.3)]">
                         <table className="w-full text-sm border-collapse">
                             <thead>
-                                <tr className="bg-[#4E4456] dark:bg-[#3a3245]">
-                                    <th className="text-left py-4 px-5 font-semibold uppercase tracking-wide text-sm text-white border-b-2 border-[#3a3245] cursor-pointer hover:bg-[#5a4a6b] dark:hover:bg-[#2d2838] transition-colors" onClick={() => handleTrackerSort('contractor')}>
+                                <tr className="bg-slate-50 dark:bg-slate-800/80">
+                                    <th className="text-left py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors" onClick={() => handleTrackerSort('contractor')}>
                                         <div className="flex items-center gap-1.5">Contractor <SortIcon field="contractor" currentSortField={trackerSortField} currentSortDirection={trackerSortDir} /></div>
                                     </th>
-                                    <th className="text-left py-4 px-5 font-semibold uppercase tracking-wide text-sm text-white border-b-2 border-[#3a3245] cursor-pointer hover:bg-[#5a4a6b] dark:hover:bg-[#2d2838] transition-colors" onClick={() => handleTrackerSort('service')}>
+                                    <th className="text-left py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors" onClick={() => handleTrackerSort('service')}>
                                         <div className="flex items-center gap-1.5">Service <SortIcon field="service" currentSortField={trackerSortField} currentSortDirection={trackerSortDir} /></div>
                                     </th>
-                                    <th className="text-left py-4 px-5 font-semibold uppercase tracking-wide text-sm text-white border-b-2 border-[#3a3245] cursor-pointer hover:bg-[#5a4a6b] dark:hover:bg-[#2d2838] transition-colors" onClick={() => handleTrackerSort('status')}>
+                                    <th className="text-left py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors" onClick={() => handleTrackerSort('status')}>
                                         <div className="flex items-center gap-1.5">Status <SortIcon field="status" currentSortField={trackerSortField} currentSortDirection={trackerSortDir} /></div>
                                     </th>
-                                    <th className="text-left py-4 px-5 font-semibold uppercase tracking-wide text-sm text-white border-b-2 border-[#3a3245]">Type</th>
-                                    <th className="text-left py-4 px-5 font-semibold uppercase tracking-wide text-sm text-white border-b-2 border-[#3a3245] hidden lg:table-cell">Start</th>
-                                    <th className="text-left py-4 px-5 font-semibold uppercase tracking-wide text-sm text-white border-b-2 border-[#3a3245] hidden lg:table-cell">End</th>
-                                    <th className="text-right py-4 px-5 font-semibold uppercase tracking-wide text-sm text-white border-b-2 border-[#3a3245] cursor-pointer hover:bg-[#5a4a6b] dark:hover:bg-[#2d2838] transition-colors" onClick={() => handleTrackerSort('annual')}>
+                                    <th className="text-left py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700">Type</th>
+                                    <th className="text-left py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 hidden lg:table-cell">Start</th>
+                                    <th className="text-left py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 hidden lg:table-cell">End</th>
+                                    <th className="text-right py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors" onClick={() => handleTrackerSort('annual')}>
                                         <div className="flex items-center justify-end gap-1.5">Annual <SortIcon field="annual" currentSortField={trackerSortField} currentSortDirection={trackerSortDir} /></div>
                                     </th>
-                                    <th className="text-left py-4 px-5 font-semibold uppercase tracking-wide text-sm text-white border-b-2 border-[#3a3245] hidden xl:table-cell">Renewal</th>
-                                    <th className="text-left py-4 px-5 font-semibold uppercase tracking-wide text-sm text-white border-b-2 border-[#3a3245] hidden xl:table-cell">Note</th>
+                                    <th className="text-left py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 hidden xl:table-cell">Renewal</th>
+                                    <th className="text-left py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 hidden xl:table-cell">Note</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {paginatedTracker.map(c => (
-                                    <tr key={`${c.Contractor ?? ''}--${c["Service Provided"] ?? ''}`} className="border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-primary/5 dark:hover:bg-slate-800/40 transition-colors even:bg-slate-50/40 dark:even:bg-slate-800/20">
+                                    <tr key={`${c.Contractor ?? ''}--${c["Service Provided"] ?? ''}`} className="border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-[#00d2b3]/5 dark:hover:bg-slate-700/40 transition-colors even:bg-slate-50/40 dark:even:bg-slate-800/20">
                                         <td className="py-4 px-5 font-semibold text-slate-800 dark:text-slate-200">{c.Contractor || '-'}</td>
                                         <td className="py-4 px-5 font-semibold text-sm text-slate-600 dark:text-slate-400">{c["Service Provided"] || '-'}</td>
                                         <td className="py-4 px-5"><StatusBadge label={c.Status || 'N/A'} color={getStatusDotColor(c.Status)} /></td>

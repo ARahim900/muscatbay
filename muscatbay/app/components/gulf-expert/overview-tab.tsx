@@ -209,7 +209,7 @@ export function OverviewTab({ data }: OverviewTabProps) {
         <CardContent>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-[#4E4456] dark:bg-[#3a3245]">
+              <thead className="bg-slate-50 dark:bg-slate-800/80">
                 <tr className="border-b border-slate-200 dark:border-slate-700">
                   <th className="text-left py-4 px-4 font-semibold uppercase tracking-wide text-sm text-white">System</th>
                   <th className="text-center py-4 px-4 font-semibold uppercase tracking-wide text-sm text-white">Q1 (PPM1)</th>
