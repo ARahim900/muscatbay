@@ -38,32 +38,17 @@ CREATE TABLE IF NOT EXISTS amc_pricing (
     payment_terms TEXT
 );
 
--- Enable Row Level Security (RLS) - allow all for now (public read/write)
+-- Enable Row Level Security (RLS)
 ALTER TABLE amc_contracts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE amc_expiry ENABLE ROW LEVEL SECURITY;
 ALTER TABLE amc_contacts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE amc_pricing ENABLE ROW LEVEL SECURITY;
 
--- Create policies to allow anonymous access (for development)
-CREATE POLICY "Allow anonymous read access" ON amc_contracts FOR SELECT USING (true);
-CREATE POLICY "Allow anonymous insert access" ON amc_contracts FOR INSERT WITH CHECK (true);
-CREATE POLICY "Allow anonymous update access" ON amc_contracts FOR UPDATE USING (true);
-CREATE POLICY "Allow anonymous delete access" ON amc_contracts FOR DELETE USING (true);
-
-CREATE POLICY "Allow anonymous read access" ON amc_expiry FOR SELECT USING (true);
-CREATE POLICY "Allow anonymous insert access" ON amc_expiry FOR INSERT WITH CHECK (true);
-CREATE POLICY "Allow anonymous update access" ON amc_expiry FOR UPDATE USING (true);
-CREATE POLICY "Allow anonymous delete access" ON amc_expiry FOR DELETE USING (true);
-
-CREATE POLICY "Allow anonymous read access" ON amc_contacts FOR SELECT USING (true);
-CREATE POLICY "Allow anonymous insert access" ON amc_contacts FOR INSERT WITH CHECK (true);
-CREATE POLICY "Allow anonymous update access" ON amc_contacts FOR UPDATE USING (true);
-CREATE POLICY "Allow anonymous delete access" ON amc_contacts FOR DELETE USING (true);
-
-CREATE POLICY "Allow anonymous read access" ON amc_pricing FOR SELECT USING (true);
-CREATE POLICY "Allow anonymous insert access" ON amc_pricing FOR INSERT WITH CHECK (true);
-CREATE POLICY "Allow anonymous update access" ON amc_pricing FOR UPDATE USING (true);
-CREATE POLICY "Allow anonymous delete access" ON amc_pricing FOR DELETE USING (true);
+-- RLS Policies (authenticated read only)
+CREATE POLICY "Allow authenticated read access" ON amc_contracts FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Allow authenticated read access" ON amc_expiry FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Allow authenticated read access" ON amc_contacts FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Allow authenticated read access" ON amc_pricing FOR SELECT TO authenticated USING (true);
 
 -- Insert sample data
 INSERT INTO amc_contracts (name, company, category, status, start_date) VALUES

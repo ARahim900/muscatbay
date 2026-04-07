@@ -86,9 +86,6 @@ export async function signUp(email: string, password: string, fullName?: string)
     const sanitizedEmail = email.trim().toLowerCase();
     const sanitizedName = fullName ? sanitizeInput(fullName) : '';
 
-    // Use NEXT_PUBLIC_SITE_URL for production, fallback to window.location.origin
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
-
     const { data, error } = await supabase.auth.signUp({
         email: sanitizedEmail,
         password,
@@ -96,17 +93,10 @@ export async function signUp(email: string, password: string, fullName?: string)
             data: {
                 full_name: sanitizedName,
             },
-            emailRedirectTo: `${siteUrl}/auth/callback`,
         },
     });
 
     if (error) throw error;
-
-    // Detect already-registered email: Supabase returns a fake user with empty identities
-    // when email confirmation is enabled and the email already exists
-    if (data?.user?.identities && data.user.identities.length === 0) {
-        throw new Error('An account with this email may already exist. Please try signing in or resetting your password.');
-    }
 
     return data;
 }

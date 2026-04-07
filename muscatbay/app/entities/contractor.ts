@@ -21,6 +21,7 @@ export interface ContractorTracker {
     "Annual Value (OMR)": number | null;
     "Renewal Plan": string | null;
     Note: string | null;
+    contract_pdf_url?: string | null;
 }
 
 // =============================================================================
@@ -39,7 +40,9 @@ export interface ContractorContract {
     total_value_omr: number | null;
     rate_note: string | null;
     note: string | null;
+    contract_pdf_url?: string | null;
     created_at?: string;
+    updated_at?: string;
 }
 
 export interface ContractorYearlyCost {
@@ -49,6 +52,7 @@ export interface ContractorYearlyCost {
     year_label: string;
     amount_omr: number | null;
     created_at?: string;
+    updated_at?: string;
 }
 
 // =============================================================================

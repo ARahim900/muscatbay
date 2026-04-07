@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @fileoverview Water System Data Module - Muscat Bay
  * 
  * This module contains the complete water meter database for Muscat Bay,
@@ -18,8 +18,8 @@
  * 
  * ## Zone Configuration
  * 
- * Zones include: Zone FM, Zone 3A, Zone 3B, Zone 5, Zone 8, Village Square,
- * and Sales Center. Each zone has a bulk meter account for loss calculation.
+ * Zones include: Zone FM, Zone 3A, Zone 3B, Zone 5, Zone 8, and Village Square.
+ * Each zone has a bulk meter account for loss calculation.
  * 
  * ## Analysis Functions
  * 
@@ -94,7 +94,6 @@ export const ZONE_CONFIG: ZoneConfig[] = [
   { code: 'Zone_05', name: 'Zone 5', bulkMeterAccount: '4300345', hasBuildings: false },
   { code: 'Zone_08', name: 'Zone 8', bulkMeterAccount: '4300342', hasBuildings: false },
   { code: 'Zone_VS', name: 'Village Square', bulkMeterAccount: '4300335', hasBuildings: false },
-  { code: 'Zone_SC', name: 'Sales Center', bulkMeterAccount: '4300295', hasBuildings: false },
 ];
 
 /** Dynamically generates months from Jan 2024 up to the current month. No manual updates needed. */
@@ -425,7 +424,7 @@ export const WATER_METERS: WaterMeter[] = [
   { label: 'Z8-21', accountNumber: '4300292', level: 'L3', zone: 'Zone_08', parentMeter: 'BULK ZONE 8', type: 'Residential (Villa)', consumption: c([188, 173, 172, 320, 254, 344, 233, 243, 200, 119, 167, 101, 99, 53.3, 284, 254, 154, 115, 60, 60, 63, 62, 84, 30, 47.4, 51.7, 45.8]) },
   { label: 'Z8-22', accountNumber: '4300293', level: 'L3', zone: 'Zone_08', parentMeter: 'BULK ZONE 8', type: 'Residential (Villa)', consumption: c([262, 168, 174, 366, 388, 418, 271, 343, 330, 138, 213, 177, 225, 147, 327, 451, 387, 254, 105, 55, 48, 31, 35, 38, 15.6, 13.5, 15]) },
   { label: 'Irrigation Tank 04 - (Z08)', accountNumber: '4300294', level: 'DC', zone: 'Direct Connection', parentMeter: 'Main Bulk (NAMA)', type: 'IRR_Servies', consumption: c([764, 509, 440, 970, 1165, 1475, 782, 559, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, null]) },
-  { label: 'Sales Center Common Building', accountNumber: '4300295', level: 'DC', zone: 'Zone_SC', parentMeter: 'Main Bulk (NAMA)', type: 'MB_Common', consumption: c([45, 46, 37, 35, 61, 32, 36, 28, 25, 41, 54, 62, 74.5, 62.9, 44.1, 65.5, 63.1, 54.9, 59, 61, 87, 78, 78, 21, 152, 159, 163]) },
+  { label: 'Sales Center Common Building', accountNumber: '4300295', level: 'DC', zone: 'Direct Connection', parentMeter: 'Main Bulk (NAMA)', type: 'Retail', consumption: c([45, 46, 37, 35, 61, 32, 36, 28, 25, 41, 54, 62, 74.5, 62.9, 44.1, 65.5, 63.1, 54.9, 59, 61, 87, 78, 78, 21, 152, 159, 163]) },
   { label: 'Building FM', accountNumber: '4300296', level: 'L3', zone: 'Zone_01_(FM)', parentMeter: 'ZONE FM ( BULK ZONE FM )', type: 'MB_Common', consumption: c([34, 43, 22, 18, 27, 22, 32, 37, 34, 45, 30, 38, 35.6, 36.8, 51.6, 40, 40.8, 31.7, 44, 40, 38, 39, 44, 41, 29.7, 25.1, 18.1]) },
   { label: 'Building (Security)', accountNumber: '4300297', level: 'DC', zone: 'Direct Connection', parentMeter: 'Main Bulk (NAMA)', type: 'MB_Common', consumption: c([33, 31, 30, 32, 9, 4, 4, 4, 5, 6, 10, 17, 17.1, 15.8, 15.1, 15.9, 15.9, 13.4, 18, 16, 17, 20, 25, 27, 27.3, 26.2, 25.6]) },
   { label: 'Building Taxi', accountNumber: '4300298', level: 'L3', zone: 'Zone_01_(FM)', parentMeter: 'ZONE FM ( BULK ZONE FM )', type: 'Retail', consumption: c([11, 9, 10, 10, 13, 10, 8, 13, 12, 17, 11, 13, 11.1, 15.1, 13, 14.5, 13.3, 13.6, 13, 17, 17, 17, 15, 20, 15.1, 16.7, 11.3]) },
@@ -458,7 +457,7 @@ export const WATER_METERS: WaterMeter[] = [
   { label: 'Building Nursery Building', accountNumber: '4300325', level: 'L3', zone: 'Zone_01_(FM)', parentMeter: 'ZONE FM ( BULK ZONE FM )', type: 'Retail', consumption: c([7, 6, 5, 5, 6, 4, 5, 6, 6, 8, 5, 5, 4, 4, 4, 0, 6, 4, 2, 2, 7, 5, 5, 3, 4.07, 2.25, 1.05]) },
   { label: 'Irrigation Tank - VS PO Water', accountNumber: '4300326', level: 'L3', zone: 'Zone_VS', parentMeter: 'Village Square (Zone Bulk)', type: 'IRR_Servies', consumption: c([0, 0, 0, 2, 0, 157, 116, 71, 100, 0, 1, 0, 0.02, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.03, 0.05, 0.07]) },
   { label: 'Coffee 1 (GF Shop No.591)', accountNumber: '4300327', level: 'L3', zone: 'Zone_VS', parentMeter: 'Village Square (Zone Bulk)', type: 'Retail', consumption: c([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.53, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.03, 0.01, 0.01]) },
-  { label: 'Sale Centre Caffe & Bar (GF Shop No.592 A)', accountNumber: '4300328', level: 'L3', zone: 'Zone_SC', parentMeter: 'Sale Centre (Zone Bulk)', type: 'Retail', consumption: c([0, 0, 0, 0, 0, 0, 0, 6, 0, 0, 0, 0, 0.4, 1.39, 3.03, 5.04, 12, 5.09, 20, 33, 28, 43, 40, 60, 52.8, 35.3, 35.4]) },
+  { label: 'Sale Centre Caffe & Bar (GF Shop No.592 A)', accountNumber: '4300328', level: 'L3', zone: 'Zone_VS', parentMeter: 'Village Square (Zone Bulk)', type: 'Retail', consumption: c([0, 0, 0, 0, 0, 0, 0, 6, 0, 0, 0, 0, 0.4, 1.39, 3.03, 5.04, 12, 5.09, 20, 33, 28, 43, 40, 60, 52.8, 35.3, 35.4]) },
   { label: 'Coffee 2 (GF Shop No.594 A)', accountNumber: '4300329', level: 'L3', zone: 'Zone_VS', parentMeter: 'Village Square (Zone Bulk)', type: 'Retail', consumption: c([0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 1, 3, 2.65, 2.81, 4.28, 4.94, 5.19, 3.76, 9, 5, 16, 10, 11, 14, 7.28, 5.1, 14.7]) },
   { label: 'Supermarket (FF Shop No.591)', accountNumber: '4300330', level: 'L3', zone: 'Zone_VS', parentMeter: 'Village Square (Zone Bulk)', type: 'Retail', consumption: c([0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0.21, 0.19, 0.18]) },
   { label: 'Pharmacy (FF Shop No.591 A)', accountNumber: '4300331', level: 'L3', zone: 'Zone_VS', parentMeter: 'Village Square (Zone Bulk)', type: 'Retail', consumption: c([0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0.23, 0.01, 0, 0.02, 0, 0.01, 0, 0, 0, 0, 0, 0, 0, 0, 0.01]) },

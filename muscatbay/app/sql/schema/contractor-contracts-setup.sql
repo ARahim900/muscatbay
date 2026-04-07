@@ -19,9 +19,12 @@ CREATE TABLE IF NOT EXISTS contractor_contracts (
     rate_note     TEXT,                              -- e.g. 'OMR 5.000 per load'
     note          TEXT,
     created_at    TIMESTAMPTZ DEFAULT NOW(),
+    updated_at    TIMESTAMPTZ DEFAULT NOW(),
 
     CONSTRAINT contractor_contracts_unique
-        UNIQUE (contractor, contract_ref)
+        UNIQUE (contractor, contract_ref),
+    CONSTRAINT contractor_contracts_flow_check
+        CHECK (flow IN ('Expense', 'Revenue'))
 );
 
 -- ──────────────────────────────────────────────────────────────
@@ -34,10 +37,32 @@ CREATE TABLE IF NOT EXISTS contractor_yearly_costs (
     year_label      TEXT NOT NULL,         -- '2024/2025', '2025/2026' …
     amount_omr      NUMERIC(12,2),
     created_at      TIMESTAMPTZ DEFAULT NOW(),
+    updated_at      TIMESTAMPTZ DEFAULT NOW(),
 
     CONSTRAINT yearly_costs_unique
         UNIQUE (contractor, contract_year)
 );
+
+-- ──────────────────────────────────────────────────────────────
+-- Trigger: auto-update updated_at on row modification
+-- ──────────────────────────────────────────────────────────────
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_contractor_contracts_updated_at
+    BEFORE UPDATE ON contractor_contracts
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER trigger_contractor_yearly_costs_updated_at
+    BEFORE UPDATE ON contractor_yearly_costs
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
 
 -- ──────────────────────────────────────────────────────────────
 -- Indexes

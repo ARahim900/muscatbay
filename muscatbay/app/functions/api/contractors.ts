@@ -34,7 +34,7 @@ export async function getContractorContracts(): Promise<ContractorContract[]> {
 
     const { data, error } = await client
         .from('contractor_contracts')
-        .select('id, contractor, contract_ref, service, flow, status, contract_years, annual_value_omr, total_value_omr, rate_note, note, created_at')
+        .select('id, contractor, contract_ref, service, flow, status, contract_years, annual_value_omr, total_value_omr, rate_note, note, contract_pdf_url, created_at')
         .order('flow')
         .order('contractor');
 
@@ -65,6 +65,25 @@ export async function getContractorYearlyCosts(): Promise<ContractorYearlyCost[]
     return (data as ContractorYearlyCost[]) || [];
 }
 
+/**
+ * Update the contract_pdf_url for a contractor contract
+ */
+export async function updateContractPdfUrl(id: number, pdfUrl: string | null): Promise<boolean> {
+    const client = getSupabaseClient();
+    if (!client) return false;
+
+    const { error } = await client
+        .from('contractor_contracts')
+        .update({ contract_pdf_url: pdfUrl })
+        .eq('id', id);
+
+    if (error) {
+        console.error('Error updating contract_pdf_url:', error.message);
+        return false;
+    }
+    return true;
+}
+
 // =============================================================================
 // NEW CONTRACTOR TRACKER API
 // =============================================================================
@@ -80,7 +99,7 @@ export async function getContractorTrackerData(): Promise<ContractorTracker[]> {
 
     const { data, error } = await client
         .from('Contractor_Tracker')
-        .select('"Contractor", "Service Provided", "Status", "Contract Type", "Start Date", "End Date", "Contract (OMR)/Month", "Contract Total (OMR)/Year", "Annual Value (OMR)", "Renewal Plan", "Note"')
+        .select('"Contractor", "Service Provided", "Status", "Contract Type", "Start Date", "End Date", "Contract (OMR)/Month", "Contract Total (OMR)/Year", "Annual Value (OMR)", "Renewal Plan", "Note", contract_pdf_url')
         .order('Contractor');
 
     if (error) {
@@ -114,6 +133,7 @@ export async function getContractorSummary(): Promise<AmcContractorSummary[]> {
         .order('no');
 
     if (error) {
+        console.error('Error fetching amc_contractor_summary:', error.message);
         return [];
     }
     return data || [];
@@ -161,6 +181,7 @@ export async function getContractorPricing(): Promise<AmcContractorPricing[]> {
         .order('contractor');
 
     if (error) {
+        console.error('Error fetching amc_contractor_pricing:', error.message);
         return [];
     }
     return data || [];
@@ -188,6 +209,7 @@ export async function getAmcContracts(): Promise<AmcContract[]> {
         .order('name');
 
     if (error) {
+        console.error('Error fetching amc_contracts:', error.message);
         return [];
     }
     return data || [];
@@ -203,6 +225,7 @@ export async function getAmcExpiry(): Promise<AmcExpiry[]> {
         .order('expiry_date');
 
     if (error) {
+        console.error('Error fetching amc_expiry:', error.message);
         return [];
     }
     return (data as unknown as AmcExpiry[]) || [];
@@ -218,6 +241,7 @@ export async function getAmcContacts(): Promise<AmcContact[]> {
         .order('contact_name');
 
     if (error) {
+        console.error('Error fetching amc_contacts:', error.message);
         return [];
     }
     return (data as unknown as AmcContact[]) || [];
@@ -233,6 +257,7 @@ export async function getAmcPricing(): Promise<AmcPricing[]> {
         .order('contract_value', { ascending: false });
 
     if (error) {
+        console.error('Error fetching amc_pricing:', error.message);
         return [];
     }
     return (data as unknown as AmcPricing[]) || [];

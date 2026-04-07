@@ -92,12 +92,7 @@ export const ZONE_BULK_CONFIG: ZoneBulkConfig[] = [
     {
         zoneName: 'Village Square',
         l2Account: '4300335',
-        l3Accounts: ['4300326', '4300327', '4300329', '4300330', '4300331', '4300332', '4300333'],
-    },
-    {
-        zoneName: 'Sales Center',
-        l2Account: '4300295',
-        l3Accounts: ['4300328'],
+        l3Accounts: ['4300326', '4300327', '4300328', '4300329', '4300330', '4300331', '4300332', '4300333'],
     },
 ];
 
@@ -233,6 +228,7 @@ export const DC_METERS: DCMeterConfig[] = [
     { meterName: 'Irrigation Controller DOWN', account: '4300341', isIrr: true  },
     { meterName: 'Al Adrak Camp',              account: '4300348', isIrr: false },
     { meterName: 'Al Adrak Accommodation',     account: '4300349', isIrr: false },
+    { meterName: 'Sales Center',              account: '4300295', isIrr: false },
 ];
 
 // ─── NULL-as-zero accounts ────────────────────────────────────────────────────

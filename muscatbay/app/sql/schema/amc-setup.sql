@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS amc_pricing (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     contract_id UUID REFERENCES amc_contracts(id) ON DELETE CASCADE,
     contract_value NUMERIC(12, 2) DEFAULT 0,
-    currency TEXT DEFAULT 'AED',
+    currency TEXT DEFAULT 'OMR',
     payment_terms TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -51,18 +51,22 @@ ALTER TABLE amc_expiry ENABLE ROW LEVEL SECURITY;
 ALTER TABLE amc_contacts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE amc_pricing ENABLE ROW LEVEL SECURITY;
 
--- 6. Create Public Read Policies
+-- 6. RLS Policies (authenticated read only)
 DROP POLICY IF EXISTS "Allow public read access on amc_contracts" ON amc_contracts;
-CREATE POLICY "Allow public read access on amc_contracts" ON amc_contracts FOR SELECT USING (true);
+CREATE POLICY "Allow authenticated read on amc_contracts"
+    ON amc_contracts FOR SELECT TO authenticated USING (true);
 
 DROP POLICY IF EXISTS "Allow public read access on amc_expiry" ON amc_expiry;
-CREATE POLICY "Allow public read access on amc_expiry" ON amc_expiry FOR SELECT USING (true);
+CREATE POLICY "Allow authenticated read on amc_expiry"
+    ON amc_expiry FOR SELECT TO authenticated USING (true);
 
 DROP POLICY IF EXISTS "Allow public read access on amc_contacts" ON amc_contacts;
-CREATE POLICY "Allow public read access on amc_contacts" ON amc_contacts FOR SELECT USING (true);
+CREATE POLICY "Allow authenticated read on amc_contacts"
+    ON amc_contacts FOR SELECT TO authenticated USING (true);
 
 DROP POLICY IF EXISTS "Allow public read access on amc_pricing" ON amc_pricing;
-CREATE POLICY "Allow public read access on amc_pricing" ON amc_pricing FOR SELECT USING (true);
+CREATE POLICY "Allow authenticated read on amc_pricing"
+    ON amc_pricing FOR SELECT TO authenticated USING (true);
 
 -- 7. Insert Sample Data
 WITH new_contract AS (

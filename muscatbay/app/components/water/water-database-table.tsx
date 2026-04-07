@@ -23,7 +23,6 @@ const ZONE_COLORS: Record<string, string> = {
     'Zone_05': 'border-l-purple-400',
     'Zone_08': 'border-l-pink-400',
     'Zone_VS': 'border-l-amber-400',
-    'Zone_SC': 'border-l-cyan-400',
     'DC': 'border-l-orange-400',
     'Main': 'border-l-slate-400',
     'N/A': 'border-l-slate-300',
@@ -36,7 +35,6 @@ const ZONE_BG_COLORS: Record<string, string> = {
     'Zone_05': 'bg-purple-50 dark:bg-purple-950/30',
     'Zone_08': 'bg-pink-50 dark:bg-pink-950/30',
     'Zone_VS': 'bg-amber-50 dark:bg-amber-950/30',
-    'Zone_SC': 'bg-cyan-50 dark:bg-cyan-950/30',
     'DC': 'bg-orange-50 dark:bg-orange-950/30',
     'Main': 'bg-slate-50 dark:bg-slate-900/50',
     'N/A': 'bg-slate-50 dark:bg-slate-900/30',
@@ -55,7 +53,7 @@ const LEVEL_STYLES: Record<string, string> = {
 const ALL_LEVELS = ['L1', 'L2', 'L3', 'L4', 'DC'];
 
 // All unique zones from ZONE_CONFIG plus extras
-const ALL_ZONES = ['Zone_01_(FM)', 'Zone_03_(A)', 'Zone_03_(B)', 'Zone_05', 'Zone_08', 'Zone_VS', 'Zone_SC', 'DC', 'Main', 'N/A'];
+const ALL_ZONES = ['Zone_01_(FM)', 'Zone_03_(A)', 'Zone_03_(B)', 'Zone_05', 'Zone_08', 'Zone_VS', 'DC', 'Main', 'N/A'];
 
 // Friendly zone names
 const ZONE_NAMES: Record<string, string> = {
@@ -65,7 +63,6 @@ const ZONE_NAMES: Record<string, string> = {
     'Zone_05': 'Zone 5',
     'Zone_08': 'Zone 8',
     'Zone_VS': 'Village Square',
-    'Zone_SC': 'Sales Center',
     'DC': 'Direct Connection',
     'Main': 'Main',
     'N/A': 'N/A',

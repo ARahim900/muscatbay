@@ -100,6 +100,7 @@ export {
     getContractorContracts,
     getContractorYearlyCosts,
     getContractorTrackerData,
+    updateContractPdfUrl,
     getContractorSummary,
     getContractorDetails,
     getContractorExpiry,

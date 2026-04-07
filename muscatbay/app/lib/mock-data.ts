@@ -163,8 +163,7 @@ export const WATER_SYSTEM_DATA: WaterSystemData = {
         { zone: "Zone_03_(B)", average: 3020, status: "Active", Jul25: 3243, Aug25: 2886, Sep25: 2950, Oct25: 3050 },
         { zone: "Zone_05", average: 3941, status: "Active", Jul25: 3497, Aug25: 3968, Sep25: 4050, Oct25: 4150 },
         { zone: "Zone_01_(FM)", average: 1892, status: "Active", Jul25: 1974, Aug25: 2305, Sep25: 2400, Oct25: 2500 },
-        { zone: "Zone_VS", average: 30, status: "Low", Jul25: 60, Aug25: 77, Sep25: 80, Oct25: 85 },
-        { zone: "Zone_SC", average: 61, status: "Critical", Jul25: 60, Aug25: 61, Sep25: 65, Oct25: 70 }
+        { zone: "Zone_VS", average: 30, status: "Low", Jul25: 60, Aug25: 77, Sep25: 80, Oct25: 85 }
     ],
     consumptionByType: [
         { type: "Commercial (Retail)", total: 173673, percentage: 52.4, color: "#3b82f6" },

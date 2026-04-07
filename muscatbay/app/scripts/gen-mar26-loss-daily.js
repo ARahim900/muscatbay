@@ -42,8 +42,6 @@ const ZONE_MAP = {
     'Zone 08': 'Zone 08',
     'Zone_VS': 'Village Square',
     'Village Square': 'Village Square',
-    'Zone_SC': 'Sales Center',
-    'Sales Center': 'Sales Center',
 };
 
 function resolveZone(raw) { return ZONE_MAP[raw] || raw; }

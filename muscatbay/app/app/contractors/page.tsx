@@ -5,6 +5,7 @@ import {
     getContractorTrackerData,
     getContractorContracts,
     getContractorYearlyCosts,
+    updateContractPdfUrl,
     isSupabaseConfigured,
     type ContractorTracker,
     type ContractorContract,
@@ -17,8 +18,12 @@ import { StatsGrid } from "@/components/shared/stats-grid";
 import { TabNavigation } from "@/components/shared/tab-navigation";
 import {
     Search, Plus, Users, DollarSign, Download, Calendar,
-    Building2, FileText, RefreshCw, X, TrendingUp, ArrowRightLeft, BarChart3, List
+    Building2, FileText, RefreshCw, X, TrendingUp, ArrowRightLeft, BarChart3, List,
+    ExternalLink, FileWarning, Link, Save, Pencil, Check, Loader2
 } from "lucide-react";
+import {
+    Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter
+} from "@/components/ui/dialog";
 import { exportToCSV, getDateForFilename } from "@/lib/export-utils";
 import {
     MultiSelectDropdown, SortIcon, TablePagination, ActiveFilterPills,
@@ -106,6 +111,44 @@ export default function ContractorsPage() {
     const [trackerSortDir, setTrackerSortDir] = useState<'asc' | 'desc'>('asc');
     const [trackerPage, setTrackerPage] = useState(1);
     const [trackerPageSize, setTrackerPageSize] = useState<PageSizeOption>(25);
+
+    // PDF modal
+    const [pdfModal, setPdfModal] = useState<{
+        isOpen: boolean;
+        contractId: number | null;
+        contractorName: string;
+        contractRef: string;
+        pdfUrl: string | null | undefined;
+    }>({ isOpen: false, contractId: null, contractorName: '', contractRef: '', pdfUrl: null });
+    const [pdfLinkInput, setPdfLinkInput] = useState('');
+    const [pdfLinkSaving, setPdfLinkSaving] = useState(false);
+    const [pdfLinkEditing, setPdfLinkEditing] = useState(false);
+
+    const openPdfModal = useCallback((id: number | null, name: string, ref: string, url: string | null | undefined) => {
+        setPdfModal({ isOpen: true, contractId: id, contractorName: name, contractRef: ref, pdfUrl: url });
+        setPdfLinkInput(url || '');
+        setPdfLinkEditing(!url);
+    }, []);
+
+    const closePdfModal = useCallback(() => {
+        setPdfModal(prev => ({ ...prev, isOpen: false }));
+        setPdfLinkEditing(false);
+    }, []);
+
+    const savePdfLink = useCallback(async () => {
+        if (!pdfModal.contractId) return;
+        setPdfLinkSaving(true);
+        const url = pdfLinkInput.trim() || null;
+        const ok = await updateContractPdfUrl(pdfModal.contractId, url);
+        if (ok) {
+            setPdfModal(prev => ({ ...prev, pdfUrl: url }));
+            setContracts(prev => prev.map(c =>
+                c.id === pdfModal.contractId ? { ...c, contract_pdf_url: url } : c
+            ));
+            setPdfLinkEditing(false);
+        }
+        setPdfLinkSaving(false);
+    }, [pdfModal.contractId, pdfLinkInput]);
 
     const flowsInitRef = useRef(false);
     const statusInitRef = useRef(false);
@@ -518,6 +561,12 @@ export default function ContractorsPage() {
                                     <div><span className="text-slate-400">Total:</span> <span className="font-mono font-semibold text-primary">{c.total_value_omr ? fmtOMR(c.total_value_omr) : 'Variable'}</span></div>
                                 </div>
                                 {c.note && <p className="text-xs text-slate-500 line-clamp-2">{c.note}</p>}
+                                <button
+                                    onClick={() => openPdfModal(c.id, c.contractor, c.contract_ref || '', c.contract_pdf_url)}
+                                    className={`text-xs flex items-center gap-1 mt-2 ${c.contract_pdf_url ? 'text-[#00D2B3]' : 'text-slate-400'}`}
+                                >
+                                    {c.contract_pdf_url ? <><FileText className="w-3 h-3" /> View Contract PDF</> : <><Link className="w-3 h-3" /> Add PDF Link</>}
+                                </button>
                             </div>
                         ))}
                         {filteredContracts.length === 0 && (
@@ -554,6 +603,7 @@ export default function ContractorsPage() {
                                     <th className="text-right py-4 px-4 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors" onClick={() => handleSort('total')}>
                                         <div className="flex items-center justify-end gap-1.5">Total (OMR) <SortIcon field="total" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
                                     </th>
+                                    <th className="text-center py-4 px-3 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 w-16">Doc</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -576,10 +626,23 @@ export default function ContractorsPage() {
                                         <td className="py-4 px-5 text-right font-mono text-sm font-semibold text-primary">
                                             {c.total_value_omr ? fmtOMR(c.total_value_omr) : <span className="text-slate-400 italic font-normal">Variable</span>}
                                         </td>
+                                        <td className="py-4 px-3 text-center">
+                                            <button
+                                                onClick={() => openPdfModal(c.id, c.contractor, c.contract_ref || '', c.contract_pdf_url)}
+                                                title={c.contract_pdf_url ? "View Contract PDF" : "Add PDF link"}
+                                                className={`p-1.5 rounded-md transition-colors ${
+                                                    c.contract_pdf_url
+                                                        ? 'text-[#00D2B3] hover:bg-[#00D2B3]/10'
+                                                        : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/60'
+                                                }`}
+                                            >
+                                                {c.contract_pdf_url ? <FileText className="w-4 h-4" /> : <Link className="w-4 h-4" />}
+                                            </button>
+                                        </td>
                                     </tr>
                                 ))}
                                 {filteredContracts.length === 0 && (
-                                    <tr><td colSpan={8}>
+                                    <tr><td colSpan={9}>
                                         <EmptyState variant={hasContractFilters ? "filter-empty" : "no-data"}
                                             title={hasContractFilters ? "No contracts match" : "No contracts yet"}
                                             description="Contracts will appear once added." />
@@ -780,6 +843,14 @@ export default function ContractorsPage() {
                                     {c["Renewal Plan"] && (
                                         <span className="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400"><RefreshCw className="h-3 w-3" />{c["Renewal Plan"]}</span>
                                     )}
+                                    {c.contract_pdf_url && (
+                                        <button
+                                            onClick={() => openPdfModal(null, c.Contractor || '', c["Service Provided"] || '', c.contract_pdf_url)}
+                                            className="text-xs text-[#00D2B3] flex items-center gap-1 mt-2"
+                                        >
+                                            <FileText className="w-3 h-3" /> View Contract PDF
+                                        </button>
+                                    )}
                                 </div>
                             );
                         })}
@@ -812,6 +883,7 @@ export default function ContractorsPage() {
                                     <th className="text-right py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors" onClick={() => handleTrackerSort('annual')}>
                                         <div className="flex items-center justify-end gap-1.5">Annual <SortIcon field="annual" currentSortField={trackerSortField} currentSortDirection={trackerSortDir} /></div>
                                     </th>
+                                    <th className="text-center py-4 px-3 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 w-16">Doc</th>
                                     <th className="text-left py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 hidden xl:table-cell">Renewal</th>
                                     <th className="text-left py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 hidden xl:table-cell">Note</th>
                                 </tr>
@@ -830,6 +902,20 @@ export default function ContractorsPage() {
                                             {c["End Date"] ? <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{c["End Date"]}</span> : '-'}
                                         </td>
                                         <td className="py-4 px-5 text-right font-mono text-sm font-semibold text-primary">{c["Annual Value (OMR)"]?.toLocaleString() || '-'}</td>
+                                        <td className="py-4 px-3 text-center">
+                                            <button
+                                                onClick={() => openPdfModal(null, c.Contractor || '', c["Service Provided"] || '', c.contract_pdf_url)}
+                                                title={c.contract_pdf_url ? "View Contract PDF" : "No PDF uploaded"}
+                                                className={`p-1.5 rounded-md transition-colors ${
+                                                    c.contract_pdf_url
+                                                        ? 'text-[#00D2B3] hover:bg-[#00D2B3]/10'
+                                                        : 'text-slate-300 dark:text-slate-600 cursor-not-allowed'
+                                                }`}
+                                                disabled={!c.contract_pdf_url}
+                                            >
+                                                <FileText className="w-4 h-4" />
+                                            </button>
+                                        </td>
                                         <td className="py-4 px-5 font-semibold text-sm text-slate-600 dark:text-slate-400 hidden xl:table-cell">
                                             {c["Renewal Plan"] ? <span className="flex items-center gap-1"><RefreshCw className="h-3 w-3 text-blue-500" />{c["Renewal Plan"]}</span> : '-'}
                                         </td>
@@ -837,7 +923,7 @@ export default function ContractorsPage() {
                                     </tr>
                                 ))}
                                 {filteredTracker.length === 0 && (
-                                    <tr><td colSpan={9}>
+                                    <tr><td colSpan={10}>
                                         <EmptyState variant={hasTrackerFilters ? "filter-empty" : "no-data"}
                                             title={hasTrackerFilters ? "No entries match" : "No tracker data"}
                                             description="Adjust filters or add data." />
@@ -854,6 +940,103 @@ export default function ContractorsPage() {
                     )}
                 </div>
             )}
+
+            {/* ═══════════════════ CONTRACT PDF MODAL ═══════════════════ */}
+            <Dialog open={pdfModal.isOpen} onOpenChange={(open) => { if (!open) closePdfModal(); }}>
+                <DialogContent className="sm:max-w-3xl max-h-[90vh]">
+                    <DialogHeader>
+                        <DialogTitle className="text-base text-slate-800 dark:text-slate-200">
+                            {pdfModal.contractorName}
+                        </DialogTitle>
+                        <DialogDescription>
+                            {pdfModal.contractRef && (
+                                <span className="font-mono text-xs">{pdfModal.contractRef}</span>
+                            )}
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    {/* PDF link editor */}
+                    {pdfLinkEditing && pdfModal.contractId && (
+                        <div className="flex flex-col gap-3 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
+                            <label className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                                <Link className="w-4 h-4" />
+                                {pdfModal.pdfUrl ? 'Edit PDF Link' : 'Paste Google Drive PDF Link'}
+                            </label>
+                            <input
+                                type="url"
+                                value={pdfLinkInput}
+                                onChange={(e) => setPdfLinkInput(e.target.value)}
+                                placeholder="https://drive.google.com/file/d/.../view?usp=sharing"
+                                className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#00D2B3]/50 focus:border-[#00D2B3]"
+                            />
+                            <p className="text-xs text-slate-400">Right-click PDF in Drive &rarr; Share &rarr; Copy link (set to &quot;Anyone with the link&quot;)</p>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={savePdfLink}
+                                    disabled={pdfLinkSaving || !pdfLinkInput.trim()}
+                                    className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg bg-[#00D2B3] text-white hover:bg-[#00D2B3]/90 transition-colors disabled:opacity-50"
+                                >
+                                    {pdfLinkSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                                    {pdfLinkSaving ? 'Saving...' : 'Save Link'}
+                                </button>
+                                {pdfModal.pdfUrl && (
+                                    <button
+                                        onClick={() => setPdfLinkEditing(false)}
+                                        className="px-4 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors"
+                                    >
+                                        Cancel
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* PDF viewer */}
+                    {pdfModal.pdfUrl && !pdfLinkEditing ? (() => {
+                        const previewUrl = pdfModal.pdfUrl.includes('drive.google.com')
+                            ? pdfModal.pdfUrl.replace(/\/view(\?.*)?$/, '/preview')
+                            : pdfModal.pdfUrl;
+                        return (
+                        <div className="flex flex-col gap-3">
+                            <iframe
+                                src={previewUrl}
+                                className="w-full h-[65vh] rounded-lg border border-slate-200 dark:border-slate-700"
+                                title="Contract PDF"
+                                allow="autoplay"
+                            />
+                        </div>
+                        );
+                    })() : !pdfLinkEditing && (
+                        <div className="flex flex-col items-center justify-center py-16 text-slate-400 dark:text-slate-500">
+                            <FileWarning className="w-12 h-12 mb-3" />
+                            <p className="text-sm font-medium">No contract document linked yet</p>
+                        </div>
+                    )}
+
+                    <DialogFooter className="gap-2">
+                        {pdfModal.pdfUrl && !pdfLinkEditing && pdfModal.contractId && (
+                            <button
+                                onClick={() => setPdfLinkEditing(true)}
+                                className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors"
+                            >
+                                <Pencil className="w-4 h-4" />
+                                Edit Link
+                            </button>
+                        )}
+                        {pdfModal.pdfUrl && !pdfLinkEditing && (
+                            <a
+                                href={pdfModal.pdfUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg bg-[#00D2B3] text-white hover:bg-[#00D2B3]/90 transition-colors"
+                            >
+                                <ExternalLink className="w-4 h-4" />
+                                Open in Drive
+                            </a>
+                        )}
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

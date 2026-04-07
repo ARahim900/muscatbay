@@ -97,22 +97,26 @@ ALTER TABLE amc_contractor_expiry ENABLE ROW LEVEL SECURITY;
 ALTER TABLE amc_contractor_pricing ENABLE ROW LEVEL SECURITY;
 
 -- ================================================
--- CREATE PUBLIC READ POLICIES
+-- RLS POLICIES (authenticated read only)
 -- ================================================
 DROP POLICY IF EXISTS "Allow public read on amc_contractor_summary" ON amc_contractor_summary;
-CREATE POLICY "Allow public read on amc_contractor_summary" ON amc_contractor_summary FOR SELECT USING (true);
+CREATE POLICY "Allow authenticated read on amc_contractor_summary"
+    ON amc_contractor_summary FOR SELECT TO authenticated USING (true);
 
 DROP POLICY IF EXISTS "Allow public read on amc_contractor_details" ON amc_contractor_details;
-CREATE POLICY "Allow public read on amc_contractor_details" ON amc_contractor_details FOR SELECT USING (true);
+CREATE POLICY "Allow authenticated read on amc_contractor_details"
+    ON amc_contractor_details FOR SELECT TO authenticated USING (true);
 
 DROP POLICY IF EXISTS "Allow public read on amc_contractor_expiry" ON amc_contractor_expiry;
-CREATE POLICY "Allow public read on amc_contractor_expiry" ON amc_contractor_expiry FOR SELECT USING (true);
+CREATE POLICY "Allow authenticated read on amc_contractor_expiry"
+    ON amc_contractor_expiry FOR SELECT TO authenticated USING (true);
 
 DROP POLICY IF EXISTS "Allow public read on amc_contractor_pricing" ON amc_contractor_pricing;
-CREATE POLICY "Allow public read on amc_contractor_pricing" ON amc_contractor_pricing FOR SELECT USING (true);
+CREATE POLICY "Allow authenticated read on amc_contractor_pricing"
+    ON amc_contractor_pricing FOR SELECT TO authenticated USING (true);
 
 -- ================================================
--- INSERT DATA: AMC_Contractor_Summary (12 records)
+-- INSERT DATA: AMC_Contractor_Summary (14 records)
 -- ================================================
 INSERT INTO amc_contractor_summary (no, contractor, service_category, contract_ref, contract_type, start_date, end_date, duration, monthly_fee_omr, annual_fee_omr, total_contract_value_omr, status, alert, document_status) VALUES
 (1, 'KONE Assarain LLC', 'Elevator Maintenance', '0042356335', 'AMC', '01-Jan-2026', '31-Dec-2027', '2 Years', '962.50', '11,550.00', '23,100.00', 'Active', '✅ Active', '✅ Complete'),
@@ -126,10 +130,12 @@ INSERT INTO amc_contractor_summary (no, contractor, service_category, contract_r
 (9, 'National Marine Services', 'Diving Services', 'PO Based', 'PO', '06-Nov-2024', '05-Nov-2026', '2 Years', '4,757.76', '57,093.12', '114,186.24', 'Active', '✅ Active', '⚠️ Missing'),
 (10, 'Muscat Electronics', 'Daikin AC (Sale Center)', 'PO Based', 'PO', '03-Jun-2025', '02-Jun-2026', '1 Year', '871.82', '10,461.84', '10,461.84', 'Active', '⚠️ Expiring Soon', '⚠️ Missing'),
 (11, 'Iron Mountain / ARAMEX', 'Offsite Record Storage', 'Schedule Based', 'Contract', '01-Jan-2025', '31-Dec-2025', '1 Year', '0.00', '0.00', '0.00', 'Active', '⚠️ Expiring Soon', '⚠️ Missing'),
-(12, 'Al Khalili', 'CCTV Contract', 'AK-2025-CCTV', 'AMC', '01-Sep-2025', '31-Aug-2030', '5 Years', '1,166.31', '13,995.66', '69,978.30', 'Active', '✅ Active', '⚠️ Missing');
+(12, 'Al Khalili', 'CCTV Contract', 'AK-2025-CCTV', 'AMC', '01-Sep-2025', '31-Aug-2030', '5 Years', '1,166.31', '13,995.66', '69,978.30', 'Active', '✅ Active', '✅ Complete'),
+(13, 'Abraj Al Wattaya Trading', 'Sewage Tanker Discharging (STP)', 'SBJ-CO-RE-004-26', 'Revenue', '01-Dec-2025', '30-Nov-2026', '1 Year', 'Per Load (OMR 5)', 'Variable', 'Variable', 'Active', '✅ Active', '✅ Complete'),
+(14, 'Al Zawahar Trading', 'Sewage Tanker Discharging (STP)', 'SBJ-CO-RE-005-26', 'Revenue', '01-Dec-2025', '30-Nov-2026', '1 Year', 'Per Load (OMR 5)', 'Variable', 'Variable', 'Active', '✅ Active', '✅ Complete');
 
 -- ================================================
--- INSERT DATA: AMC_Contractor_Details (12 records)
+-- INSERT DATA: AMC_Contractor_Details (14 records)
 -- ================================================
 INSERT INTO amc_contractor_details (contractor, contract_ref, scope_of_work, ppm_frequency, response_time_emergency, response_time_normal, liquidated_damages, performance_bond, payment_terms, warranty_period, key_exclusions, contact_person) VALUES
 ('KONE Assarain LLC', '0042356335', 'Comprehensive lift maintenance for 22 elevators including Village Square', 'Quarterly PPM visits', 'N/A', 'N/A', 'As per base contract', 'N/A', 'Quarterly in advance, 45 days net', 'As per base contract', 'N/A', 'Said Al Mahruqy'),
@@ -143,10 +149,12 @@ INSERT INTO amc_contractor_details (contractor, contract_ref, scope_of_work, ppm
 ('National Marine', 'PO Based', 'Professional diving services for marine infrastructure', 'As required', 'N/A', 'N/A', 'N/A', 'N/A', 'Per PO terms', 'N/A', 'N/A', 'N/A'),
 ('Muscat Electronics', 'PO Based', 'Daikin AC maintenance at Sales Center', 'Quarterly service', 'N/A', 'N/A', 'N/A', 'N/A', 'Per PO terms', 'N/A', 'N/A', 'N/A'),
 ('Iron Mountain', 'Schedule Based', 'Offsite document storage and retrieval', 'As per schedule', 'N/A', 'N/A', 'N/A', 'N/A', 'Per rate schedule', 'N/A', 'N/A', 'N/A'),
-('Al Khalili', 'AK-2025-CCTV', 'CCTV and gate barrier system maintenance', 'As per contract', 'N/A', 'N/A', 'N/A', 'N/A', 'As per contract', 'N/A', 'N/A', 'Hamed AlAlawi (internal)');
+('Al Khalili', 'AK-2025-CCTV', 'CCTV and gate barrier system maintenance', 'As per contract', 'N/A', 'N/A', 'N/A', 'N/A', 'As per contract', 'N/A', 'N/A', 'Hamed AlAlawi (internal)'),
+('Abraj Al Wattaya Trading', 'SBJ-CO-RE-004-26', 'Sewage tanker discharging at STP facility', 'Per load basis', 'N/A', 'N/A', 'N/A', 'N/A', 'Per load (OMR 5.000)', 'N/A', 'N/A', 'N/A'),
+('Al Zawahar Trading', 'SBJ-CO-RE-005-26', 'Sewage tanker discharging at STP facility', 'Per load basis', 'N/A', 'N/A', 'N/A', 'N/A', 'Per load (OMR 5.000)', 'N/A', 'N/A', 'N/A');
 
 -- ================================================
--- INSERT DATA: AMC_Contractor_Expiry (12 records)
+-- INSERT DATA: AMC_Contractor_Expiry (14 records)
 -- ================================================
 INSERT INTO amc_contractor_expiry (contractor, end_date, days_remaining, renewal_action_required_by, priority, renewal_status) VALUES
 ('Iron Mountain / ARAMEX', '31-Dec-2025', 15, '01-Oct-2025', '🔴 HIGH', 'Action Required'),
@@ -160,7 +168,9 @@ INSERT INTO amc_contractor_expiry (contractor, end_date, days_remaining, renewal
 ('OWATCO', '25-Jan-2029', 1136, '01-Nov-2028', '🟢 LOW', 'Not Started'),
 ('Al Khalili', '31-Aug-2030', 1720, '01-Jun-2030', '🟢 LOW', 'Not Started'),
 ('Kalhat', '06-May-2030', 1603, '01-Feb-2030', '🟢 LOW', 'Not Started'),
-('Tadoom', '23-Sep-2032', 2473, '01-Jun-2032', '🟢 LOW', 'Not Started');
+('Tadoom', '23-Sep-2032', 2473, '01-Jun-2032', '🟢 LOW', 'Not Started'),
+('Abraj Al Wattaya Trading', '30-Nov-2026', 603, '01-Sep-2026', '🟢 LOW', 'Not Started'),
+('Al Zawahar Trading', '30-Nov-2026', 603, '01-Sep-2026', '🟢 LOW', 'Not Started');
 
 -- ================================================
 -- INSERT DATA: AMC_Contractor_Pricing (10 records)

@@ -550,7 +550,6 @@ const ZONE_CODE_TO_DISPLAY: Record<string, string> = {
     'zone_05': 'Zone 5',
     'zone_08': 'Zone 08',
     'zone_vs': 'Village Square',
-    'zone_sc': 'Sales Center',
 };
 
 /**
