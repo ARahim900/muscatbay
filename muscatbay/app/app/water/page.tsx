@@ -187,6 +187,18 @@ function getMonthlyTrendsFromData(caches: LevelCaches, startMonth: string, endMo
 }
 
 function calculateZoneAnalysisFromData(caches: LevelCaches, zone: string, month: string) {
+    // Direct Connection: L1 vs (L2+DC) analysis
+    if (zone === 'Direct_Connection') {
+        const l1Total = caches.l1.reduce((sum, m) => sum + getConsumption(m, month), 0);
+        const l2Total = caches.l2.reduce((sum, m) => sum + getConsumption(m, month), 0);
+        const dcTotal = caches.dc.reduce((sum, m) => sum + getConsumption(m, month), 0);
+        const distributed = l2Total + dcTotal;
+        const loss = l1Total - distributed;
+        const lossPercentage = l1Total > 0 ? Math.round((loss / l1Total) * 1000) / 10 : 0;
+        const efficiency = l1Total > 0 ? Math.round((distributed / l1Total) * 1000) / 10 : 0;
+        return { zone, zoneName: 'Direct Connection', bulkMeterReading: l1Total, individualTotal: distributed, loss, lossPercentage, efficiency, meterCount: caches.l2.length + caches.dc.length };
+    }
+
     const config = ZONE_CONFIG.find(z => z.code === zone);
     if (!config) return { zone, zoneName: zone, bulkMeterReading: 0, individualTotal: 0, loss: 0, lossPercentage: 0, efficiency: 0, meterCount: 0 };
 
@@ -203,12 +215,24 @@ function calculateZoneAnalysisFromData(caches: LevelCaches, zone: string, month:
 }
 
 function calculateZoneRangeAnalysisFromData(caches: LevelCaches, zone: string, startMonth: string, endMonth: string) {
-    const config = ZONE_CONFIG.find(z => z.code === zone);
-    if (!config) return { zone, zoneName: zone, bulkMeterReading: 0, individualTotal: 0, loss: 0, lossPercentage: 0, efficiency: 0, meterCount: 0 };
-
     const si = AVAILABLE_MONTHS.indexOf(startMonth);
     const ei = AVAILABLE_MONTHS.indexOf(endMonth);
     const months = AVAILABLE_MONTHS.slice(si < 0 ? 0 : si, ei < 0 ? undefined : ei + 1);
+
+    // Direct Connection: L1 vs (L2+DC) analysis
+    if (zone === 'Direct_Connection') {
+        const l1Total = caches.l1.reduce((sum, m) => sum + months.reduce((s, mo) => s + getConsumption(m, mo), 0), 0);
+        const l2Total = caches.l2.reduce((sum, m) => sum + months.reduce((s, mo) => s + getConsumption(m, mo), 0), 0);
+        const dcTotal = caches.dc.reduce((sum, m) => sum + months.reduce((s, mo) => s + getConsumption(m, mo), 0), 0);
+        const distributed = l2Total + dcTotal;
+        const loss = l1Total - distributed;
+        const lossPercentage = l1Total > 0 ? Math.round((loss / l1Total) * 1000) / 10 : 0;
+        const efficiency = l1Total > 0 ? Math.round((distributed / l1Total) * 1000) / 10 : 0;
+        return { zone, zoneName: 'Direct Connection', bulkMeterReading: l1Total, individualTotal: distributed, loss, lossPercentage, efficiency, meterCount: caches.l2.length + caches.dc.length };
+    }
+
+    const config = ZONE_CONFIG.find(z => z.code === zone);
+    if (!config) return { zone, zoneName: zone, bulkMeterReading: 0, individualTotal: 0, loss: 0, lossPercentage: 0, efficiency: 0, meterCount: 0 };
 
     const bulkMeter = caches.byAccount[config.bulkMeterAccount];
     const bulkMeterReading = bulkMeter ? months.reduce((sum, m) => sum + getConsumption(bulkMeter, m), 0) : 0;
@@ -517,6 +541,7 @@ export default function WaterPage() {
     }, [activeDetailType, typeTopConsumers, applicableMeters, consumptionChartData]);
 
     // Zone consumption trend data (memoized to avoid IIFE recalculation in JSX)
+    const isDC = selectedZone === 'Direct_Connection';
     const zoneConsumptionTrend = useMemo(() => {
         const si = AVAILABLE_MONTHS.indexOf(startMonth);
         const ei = AVAILABLE_MONTHS.indexOf(endMonth);
@@ -768,6 +793,17 @@ export default function WaterPage() {
                                     {monthlyTab === 'zone' && (
                                         <div className="flex items-center gap-2 flex-wrap pt-1 border-t border-slate-100 dark:border-slate-800">
                                             <span className="text-sm font-medium text-slate-600 dark:text-slate-400 shrink-0">Zone:</span>
+                                            <Button
+                                                key="Direct_Connection"
+                                                variant={selectedZone === 'Direct_Connection' ? "default" : "outline"}
+                                                size="sm"
+                                                aria-label="Select Direct Connection"
+                                                aria-pressed={selectedZone === 'Direct_Connection'}
+                                                onClick={() => setSelectedZone('Direct_Connection')}
+                                                className={`rounded-full px-3 text-xs min-h-[44px] sm:min-h-0 h-auto sm:h-7 ${selectedZone === 'Direct_Connection' ? "bg-secondary text-white border-secondary" : "border-slate-200 dark:border-slate-700"}`}
+                                            >
+                                                Direct Connection
+                                            </Button>
                                             {ZONE_CONFIG.map((z) => (
                                                 <Button
                                                     key={z.code}
@@ -871,12 +907,22 @@ export default function WaterPage() {
                             {/* Zone Heading */}
                             <div>
                                 <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">
-                                    {ZONE_CONFIG.find(z => z.code === selectedZone)?.name} — {startMonth === endMonth ? endMonth : `${startMonth} – ${endMonth}`}
+                                    {selectedZone === 'Direct_Connection' ? 'Direct Connection' : ZONE_CONFIG.find(z => z.code === selectedZone)?.name} — {startMonth === endMonth ? endMonth : `${startMonth} – ${endMonth}`}
                                 </h2>
                                 <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                                    <span className="text-mb-secondary font-medium">Zone Bulk</span> = L2 only •
-                                    <span className="text-mb-primary font-medium"> L3 Total</span> = Sum of all L3 meters in zone •
-                                    <span className="text-mb-danger font-medium"> Difference</span> = L2 − L3
+                                    {selectedZone === 'Direct_Connection' ? (
+                                        <>
+                                            <span className="text-mb-secondary font-medium">Main Bulk (L1)</span> = Total NAMA input •
+                                            <span className="text-mb-primary font-medium"> L2 + DC Total</span> = All zone bulks + direct connections •
+                                            <span className="text-mb-danger font-medium"> Difference</span> = L1 − (L2 + DC)
+                                        </>
+                                    ) : (
+                                        <>
+                                            <span className="text-mb-secondary font-medium">Zone Bulk</span> = L2 only •
+                                            <span className="text-mb-primary font-medium"> L3 Total</span> = Sum of all L3 meters in zone •
+                                            <span className="text-mb-danger font-medium"> Difference</span> = L2 − L3
+                                        </>
+                                    )}
                                 </p>
                             </div>
 
@@ -884,8 +930,8 @@ export default function WaterPage() {
                                 <LiquidProgressRing
                                     value={zoneAnalysis.bulkMeterReading}
                                     max={Math.max(zoneAnalysis.bulkMeterReading, zoneAnalysis.individualTotal) * 1.2 || 100}
-                                    label="Zone Bulk Meter Total"
-                                    sublabel="Total water entering zone"
+                                    label={selectedZone === 'Direct_Connection' ? 'Main Bulk (L1)' : 'Zone Bulk Meter Total'}
+                                    sublabel={selectedZone === 'Direct_Connection' ? 'Total NAMA input' : 'Total water entering zone'}
                                     color={CHART_COLORS.primary}
                                     size={160}
                                     showPercentage={false}
@@ -894,8 +940,8 @@ export default function WaterPage() {
                                 <LiquidProgressRing
                                     value={zoneAnalysis.individualTotal}
                                     max={Math.max(zoneAnalysis.bulkMeterReading, zoneAnalysis.individualTotal) * 1.2 || 100}
-                                    label="L3 Individual Total"
-                                    sublabel="Sum of all L3 meters in zone"
+                                    label={selectedZone === 'Direct_Connection' ? 'L2 + DC Total' : 'L3 Individual Total'}
+                                    sublabel={selectedZone === 'Direct_Connection' ? 'Sum of all zone bulks + DC meters' : 'Sum of all L3 meters in zone'}
                                     color={CHART_COLORS.brand}
                                     size={160}
                                     showPercentage={false}
@@ -904,8 +950,8 @@ export default function WaterPage() {
                                 <LiquidProgressRing
                                     value={Math.abs(zoneAnalysis.loss)}
                                     max={zoneAnalysis.bulkMeterReading || 100}
-                                    label="Water Loss Distribution"
-                                    sublabel="Leakage, meter loss, etc."
+                                    label={selectedZone === 'Direct_Connection' ? 'Stage 1 Loss' : 'Water Loss Distribution'}
+                                    sublabel={selectedZone === 'Direct_Connection' ? 'L1 − (L2 + DC)' : 'Leakage, meter loss, etc.'}
                                     color={zoneAnalysis.loss > 0 ? CHART_COLORS.loss : CHART_COLORS.success}
                                     size={160}
                                     showPercentage={true}
@@ -916,8 +962,8 @@ export default function WaterPage() {
                             {/* Zone Consumption Trend Chart */}
                             <Card className="card-elevated">
                                 <CardHeader className="card-elevated-header p-4 sm:p-5 md:p-6">
-                                    <CardTitle className="text-base sm:text-lg">Zone Consumption Trend</CardTitle>
-                                    <p className="text-xs sm:text-sm text-slate-500">Monthly comparison of L2 (Bulk) vs L3 totals</p>
+                                    <CardTitle className="text-base sm:text-lg">{isDC ? 'Main Bulk vs Distribution Trend' : 'Zone Consumption Trend'}</CardTitle>
+                                    <p className="text-xs sm:text-sm text-slate-500">{isDC ? 'Monthly comparison of L1 (Main Bulk) vs L2 + DC totals' : 'Monthly comparison of L2 (Bulk) vs L3 totals'}</p>
                                 </CardHeader>
                                 <CardContent className="p-4 sm:p-5 md:p-6 pt-0">
                                     <div className="h-[200px] sm:h-[250px] md:h-[300px] w-full">
@@ -951,14 +997,17 @@ export default function WaterPage() {
                                 <CardHeader className="card-elevated-header p-4 sm:p-5 md:p-6">
                                     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                                         <div>
-                                            <CardTitle className="text-base sm:text-lg">Zone Meters - {ZONE_CONFIG.find(z => z.code === selectedZone)?.name}</CardTitle>
-                                            <p className="text-xs sm:text-sm text-slate-500">Zone bulk and individual meters</p>
+                                            <CardTitle className="text-base sm:text-lg">{isDC ? 'Main Bulk, Zone Bulks & DC Meters' : `Zone Meters - ${ZONE_CONFIG.find(z => z.code === selectedZone)?.name}`}</CardTitle>
+                                            <p className="text-xs sm:text-sm text-slate-500">{isDC ? 'L1 main source, L2 zone bulk meters, and direct connections' : 'Zone bulk and individual meters'}</p>
                                         </div>
                                     </div>
                                 </CardHeader>
                                 <CardContent className="p-4 sm:p-5 md:p-6 pt-0">
                                     <MeterTable
-                                        meters={waterMeters.filter(m => m.zone === selectedZone && (m.level === 'L2' || m.level === 'L3'))}
+                                        meters={isDC
+                                            ? waterMeters.filter(m => m.level === 'L1' || m.level === 'L2' || m.level === 'DC')
+                                            : waterMeters.filter(m => m.zone === selectedZone && (m.level === 'L2' || m.level === 'L3'))
+                                        }
                                         months={AVAILABLE_MONTHS.slice(
                                             Math.max(0, AVAILABLE_MONTHS.indexOf(startMonth)),
                                             AVAILABLE_MONTHS.indexOf(endMonth) + 1

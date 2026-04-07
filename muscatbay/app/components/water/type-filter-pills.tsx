@@ -11,15 +11,17 @@ interface TypeFilterPillsProps {
 const TYPE_COLORS: Record<string, string> = {
     'All': 'bg-mb-secondary-active text-white',
     'Residential (Apart)': 'bg-mb-primary-light/20 text-mb-primary dark:text-mb-primary-light',
-    'D Building Bulk': 'bg-mb-secondary-light/20 text-mb-secondary-foreground dark:text-mb-secondary-foreground',
+    'D_Building_Bulk': 'bg-mb-secondary-light/20 text-mb-secondary-foreground dark:text-mb-secondary-foreground',
     'Zone Bulk': 'bg-mb-info-light/20 text-mb-info dark:text-mb-info',
     'Residential (Villa)': 'bg-mb-success-light/20 text-mb-success dark:text-mb-success-hover',
-    'IRR Services': 'bg-mb-warning-light/20 text-mb-warning dark:text-mb-warning',
+    'IRR_Servies': 'bg-mb-warning-light/20 text-mb-warning dark:text-mb-warning',
     'Retail': 'bg-mb-warning-light/30 text-mb-warning dark:text-mb-warning',
     'Main BULK': 'bg-mb-success-light/30 text-mb-success dark:text-mb-success-hover',
-    'MB Common': 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300',
+    'MB_Common': 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300',
     'Building': 'bg-mb-danger-light/20 text-mb-danger dark:text-mb-danger-hover',
-    'D Building Common': 'bg-mb-danger-light/30 text-mb-danger dark:text-mb-danger-hover',
+    'D_Building_Common': 'bg-mb-danger-light/30 text-mb-danger dark:text-mb-danger-hover',
+    'Unsold': 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400',
+    'Un-Sold': 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400',
 };
 
 export function TypeFilterPills({ types, selectedType, onTypeChange }: TypeFilterPillsProps) {
