@@ -44,6 +44,7 @@ import { LiquidTooltip } from "../../components/charts/liquid-tooltip";
 import { MeterTable } from "@/components/water/meter-table";
 import { DailyWaterReport } from "@/components/water/DailyWaterReport";
 import { BuildingConsumptionReport } from "@/components/water/BuildingConsumptionReport";
+import { WaterHierarchyReport } from "@/components/water/WaterHierarchyReport";
 import { PageHeader } from "@/components/shared/page-header";
 import { TabNavigation } from "@/components/shared/tab-navigation";
 import { StatsGrid } from "@/components/shared/stats-grid";
@@ -1228,11 +1229,13 @@ export default function WaterPage() {
                         tabs={[
                             { key: 'report', label: 'Daily Report', icon: CalendarDays },
                             { key: 'buildings', label: 'Building Consumption', icon: Building2 },
+                            { key: 'hierarchy', label: 'Water Hierarchy', icon: Layers },
                         ]}
                     />
 
                     {dailyTab === 'report' && <DailyWaterReport />}
                     {dailyTab === 'buildings' && <BuildingConsumptionReport />}
+                    {dailyTab === 'hierarchy' && <WaterHierarchyReport />}
                 </div>
             )}
         </div>
