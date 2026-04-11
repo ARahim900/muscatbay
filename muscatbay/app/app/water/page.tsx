@@ -14,7 +14,7 @@ import {
     Droplets, ChevronsRight, Users, AlertTriangle, ArrowRightLeft,
     BarChart3, TestTube2, Database, Minus, TrendingUp,
     Gauge, Calendar, Activity, Loader2, CalendarDays,
-    Building2, Home, Layers, AlertCircle, MapPin,
+    Home, Layers, AlertCircle, MapPin,
     TrendingDown, ChevronDown, ChevronRight, Download
 } from "lucide-react";
 import {
@@ -254,7 +254,6 @@ function getAllZonesAnalysisFromData(caches: LevelCaches, month: string) {
 export default function WaterPage() {
     const [dashboardView, setDashboardView] = useState<DashboardView>('monthly');
     const [monthlyTab, setMonthlyTab] = useState("overview"); // Changed to string for TabNavigation compatibility
-    const [dailyTab, setDailyTab] = useState("report");
     const [startMonth, setStartMonth] = useState('Jan-24');
     const [endMonth, setEndMonth] = useState('Jan-26');
     const [selectedZone, setSelectedZone] = useState('Zone_01_(FM)');

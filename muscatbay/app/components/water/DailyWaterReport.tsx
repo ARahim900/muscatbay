@@ -8,16 +8,15 @@ import { getDynamicMonths } from "@/lib/water-data";
 import {
     ZONE_BULK_CONFIG, BUILDING_CONFIG, DC_METERS, NULL_AS_ZERO_ACCOUNTS,
     BUILDING_CHILD_METERS,
-    type ZoneBulkConfig, type BuildingConfig, type DCMeterConfig,
-    type ChildMeterInfo,
+    type ZoneBulkConfig,
 } from "@/lib/water-accounts";
 import { getSupabaseClient } from "@/lib/supabase";
 import type { SupabaseDailyWaterConsumption } from "@/entities/water";
 import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
 import {
-    AlertTriangle, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, CalendarDays,
+    ChevronLeft, ChevronRight, ChevronDown, ChevronUp, CalendarDays,
     Droplets, Building2, Zap, Activity, Search, ArrowUpDown,
-    Clock, Loader2, RefreshCw, WifiOff, Radio, Home, Users, Filter,
+    Clock, Loader2, RefreshCw, WifiOff, Radio, Home,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LiquidProgressRing } from "@/components/charts/liquid-progress-ring";
@@ -36,6 +35,19 @@ const CHART_COLORS = {
     brand: 'var(--chart-brand)',
     amber: 'var(--chart-amber)',
     gray: 'var(--chart-gray)',
+} as const;
+
+// ─── Unified brand palette (Muscat Bay) ──────────────────────────────────────
+// Applied to the Zone → L3 hierarchy view for visual consistency with the
+// monthly dashboard and other sections of the app.
+
+const PALETTE = {
+    primary: '#4E4456', // dark purple — brand primary (bulk headers, emphasis)
+    neutral: '#C6D8D3', // light sage — subtle row fills / nested backgrounds
+    mint:    '#A4DCC6', // mint green — OK / in-balance / sum totals
+    blue:    '#337FCA', // blue       — informational / secondary rollups
+    amber:   '#F4C741', // amber      — mid-magnitude difference warnings
+    red:     '#E05050', // red        — high-loss / out-of-tolerance
 } as const;
 
 // ─── Computed row types ───────────────────────────────────────────────────────
@@ -180,44 +192,49 @@ function diffCell(diff: number | null): string {
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-function SectionHeader({
-    icon, title, subtitle, color = 'teal',
+// ─── Unified KPI tile for the Zone hierarchy view ────────────────────────────
+// Mirrors the `StatsGrid` card design used across the rest of the app: white
+// elevated surface, color-matched hairline accent bar, soft icon chip, tabular
+// numerals. Color is driven by the Muscat Bay brand palette.
+
+function HierarchyStatCard({
+    label, value, icon, color, valueColor,
 }: {
+    label: string;
+    value: string;
     icon: React.ReactNode;
-    title: string;
-    subtitle?: string;
-    color?: 'teal' | 'violet' | 'amber' | 'emerald';
+    color: string;
+    valueColor?: string;
 }) {
-    const bg = {
-        teal: 'bg-gradient-to-br from-teal-100 to-teal-50 dark:from-teal-900/30 dark:to-teal-800/10',
-        violet: 'bg-gradient-to-br from-violet-100 to-violet-50 dark:from-violet-900/30 dark:to-violet-800/10',
-        amber: 'bg-gradient-to-br from-amber-100 to-amber-50 dark:from-amber-900/30 dark:to-amber-800/10',
-        emerald: 'bg-gradient-to-br from-emerald-100 to-emerald-50 dark:from-emerald-900/30 dark:to-emerald-800/10',
-    }[color];
-    const text = {
-        teal: 'text-teal-600 dark:text-teal-400',
-        violet: 'text-violet-600 dark:text-violet-400',
-        amber: 'text-amber-600 dark:text-amber-400',
-        emerald: 'text-emerald-600 dark:text-emerald-400',
-    }[color];
     return (
-        <div className="flex items-center gap-3">
-            <div className={cn("p-2.5 rounded-xl shadow-sm", bg)}>
-                <div className={cn("h-5 w-5", text)}>{icon}</div>
-            </div>
-            <div>
-                <h3 className="text-[15px] sm:text-[17px] font-semibold tracking-tight text-slate-800 dark:text-slate-100">{title}</h3>
-                {subtitle && <p className="text-[12px] text-slate-400 dark:text-slate-500 mt-0.5">{subtitle}</p>}
+        <div
+            className="relative overflow-hidden bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-[0_2px_10px_-3px_rgba(15,23,42,0.08)] dark:shadow-[0_2px_10px_-3px_rgba(0,0,0,0.4)] hover:shadow-[0_8px_30px_-4px_rgba(15,23,42,0.12)] dark:hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.5)] hover:-translate-y-0.5 transition-all duration-200 ease-out group/stat"
+        >
+            <div
+                className="absolute top-0 left-0 right-0 h-[3px]"
+                style={{ backgroundColor: color }}
+                aria-hidden="true"
+            />
+            <div className="flex justify-between items-start gap-2">
+                <div className="min-w-0">
+                    <p className="text-slate-500 dark:text-slate-400 text-[10px] sm:text-xs font-medium mb-1 uppercase tracking-wide">
+                        {label}
+                    </p>
+                    <h3
+                        className="text-lg sm:text-xl md:text-2xl font-bold tabular-nums tracking-tight text-slate-800 dark:text-slate-100"
+                        style={valueColor ? { color: valueColor } : undefined}
+                    >
+                        {value}
+                    </h3>
+                </div>
+                <div
+                    className="p-2 sm:p-3 rounded-lg group-hover/stat:scale-110 group-hover/stat:-rotate-3 transition-all duration-200 ease-out flex-shrink-0"
+                    style={{ backgroundColor: `${color}1A`, color }}
+                >
+                    {icon}
+                </div>
             </div>
         </div>
-    );
-}
-
-function NullBadge() {
-    return (
-        <span className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-400 font-medium text-xs">
-            <AlertTriangle className="h-3 w-3" /> NULL
-        </span>
     );
 }
 
@@ -298,28 +315,6 @@ function StatusChip({ label, color }: { label: string; color: 'success' | 'dange
     );
 }
 
-function FilterSelect({ value, onChange, children, icon }: {
-    value: string; onChange: (v: string) => void; children: React.ReactNode; icon?: React.ReactNode;
-}) {
-    return (
-        <div className="relative">
-            {icon && <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">{icon}</span>}
-            <select
-                value={value}
-                onChange={e => onChange(e.target.value)}
-                className={cn(
-                    "h-9 text-[13px] rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50/80 dark:bg-slate-800/50",
-                    "focus:outline-none focus:ring-2 focus:ring-secondary/30 focus:border-secondary/50 transition-all appearance-none cursor-pointer pr-8",
-                    icon ? "pl-9" : "pl-3",
-                )}
-            >
-                {children}
-            </select>
-            <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
-        </div>
-    );
-}
-
 function TablePagination({
     page, totalPages, totalItems, onPageChange, rowsPerPage, onRowsPerPageChange,
 }: {
@@ -374,503 +369,6 @@ function TablePagination({
         </div>
     );
 }
-
-// TABLE 1 ─────────────────────────────────────────────────────────────────────
-
-function ZoneBulkTable({ rows }: { rows: ZoneRow[] }) {
-    const [sort, setSort] = useState<SortState>({ key: '', dir: null });
-    const [statusFilter, setStatusFilter] = useState<'all' | 'normal' | 'high_loss' | 'null'>('all');
-
-    const filtered = useMemo(() => {
-        let result = [...rows];
-        if (statusFilter === 'normal') result = result.filter(r => !r.isHighLoss && !r.isNullL2);
-        else if (statusFilter === 'high_loss') result = result.filter(r => r.isHighLoss);
-        else if (statusFilter === 'null') result = result.filter(r => r.isNullL2);
-        if (sort.dir && sort.key) {
-            result.sort((a, b) => {
-                let va: number | string, vb: number | string;
-                if (sort.key === 'zone') { va = a.zoneName; vb = b.zoneName; }
-                else if (sort.key === 'l2') { va = a.l2Value ?? -1; vb = b.l2Value ?? -1; }
-                else if (sort.key === 'l3') { va = a.l3Sum; vb = b.l3Sum; }
-                else { va = a.diff ?? 0; vb = b.diff ?? 0; }
-                const cmp = va < vb ? -1 : va > vb ? 1 : 0;
-                return sort.dir === 'desc' ? -cmp : cmp;
-            });
-        }
-        return result;
-    }, [rows, sort, statusFilter]);
-
-    const l2Total = r2(rows.reduce((s, r) => s + (r.l2Value ?? 0), 0));
-    const l3Total = r2(rows.reduce((s, r) => s + r.l3Sum, 0));
-    const diffTotal = r2(l2Total - l3Total);
-    const normalCount = rows.filter(r => !r.isHighLoss && !r.isNullL2).length;
-    const lossCount = rows.filter(r => r.isHighLoss).length;
-
-    return (
-        <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
-            {/* ── Toolbar ─────────────────────────────────── */}
-            <div className="p-5 sm:p-6 space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                    <SectionHeader
-                        icon={<Droplets className="h-5 w-5" />}
-                        title="Zone Bulk (L2) vs Sum of L3 Meters"
-                        subtitle="L2 bulk meter reading vs sum of all L3 meters per zone"
-                        color="teal"
-                    />
-                    <FilterSelect
-                        value={statusFilter}
-                        onChange={v => setStatusFilter(v as typeof statusFilter)}
-                        icon={<Filter className="h-3.5 w-3.5" />}
-                    >
-                        <option value="all">All Status</option>
-                        <option value="normal">Normal ({normalCount})</option>
-                        <option value="high_loss">High Loss ({lossCount})</option>
-                        <option value="null">NULL L2</option>
-                    </FilterSelect>
-                </div>
-                <span className="text-[12px] text-slate-400 dark:text-slate-500">
-                    {filtered.length} of {rows.length} zones
-                </span>
-            </div>
-            {/* ── Table ───────────────────────────────────── */}
-            <div className="overflow-x-auto">
-                <table className="w-full border-collapse">
-                    <thead>
-                        <tr className="border-t border-b border-slate-200 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-800/50">
-                            <Th sortKey="zone" sort={sort} onSort={setSort} className="min-w-[130px]">Zone</Th>
-                            <th className={cn(thBase, "text-center")}>L2 Account</th>
-                            <Th sortKey="l2" sort={sort} onSort={setSort} className="text-right">L2 (m³)</Th>
-                            <Th sortKey="l3" sort={sort} onSort={setSort} className="text-right">ΣL3 (m³)</Th>
-                            <Th sortKey="diff" sort={sort} onSort={setSort} className="text-right">Diff</Th>
-                            <th className={cn(thBase, "text-center min-w-[100px]")}>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {filtered.map(row => (
-                            <tr key={row.zoneName} className="border-b border-slate-50 dark:border-slate-800/60 hover:bg-slate-50/70 dark:hover:bg-slate-800/30 transition-colors even:bg-slate-50/40 dark:even:bg-slate-800/20">
-                                <td className={cn(tdBase, "font-semibold")}>{row.zoneName}</td>
-                                <td className={cn(tdBase, "text-center font-mono text-[11px] text-slate-400 dark:text-slate-500")}>{row.l2Account}</td>
-                                <td className={cn(tdBase, "text-right tabular-nums font-medium")}>
-                                    {row.isNullL2 ? <NullBadge /> : n(row.l2Value)}
-                                </td>
-                                <td className={cn(tdBase, "text-right tabular-nums")}>{n(row.l3Sum)}</td>
-                                <td className={cn(
-                                    tdBase, "text-right tabular-nums font-semibold",
-                                    row.isHighLoss && "text-red-600 dark:text-red-400",
-                                    !row.isHighLoss && !row.isNullL2 && "text-emerald-600 dark:text-emerald-400",
-                                )}>
-                                    {row.diff !== null ? diffCell(row.diff) : '—'}
-                                </td>
-                                <td className={cn(tdBase, "text-center")}>
-                                    {row.isNullL2 && <StatusChip label="NULL L2" color="warning" />}
-                                    {row.isHighLoss && <StatusChip label="High Loss" color="danger" />}
-                                    {!row.isNullL2 && !row.isHighLoss && <StatusChip label="Normal" color="success" />}
-                                </td>
-                            </tr>
-                        ))}
-                        {/* Totals */}
-                        <tr className="border-t-2 border-slate-200 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-800/20">
-                            <td className={cn(tdBase, "font-bold")} colSpan={2}>Total</td>
-                            <td className={cn(tdBase, "text-right tabular-nums font-bold")}>{n(l2Total)}</td>
-                            <td className={cn(tdBase, "text-right tabular-nums font-bold")}>{n(l3Total)}</td>
-                            <td className={cn(tdBase, "text-right tabular-nums font-bold", Math.abs(diffTotal) > 20 && "text-red-600 dark:text-red-400")}>
-                                {diffCell(diffTotal)}
-                            </td>
-                            <td className={tdBase} />
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    );
-}
-
-// TABLE 2 ─────────────────────────────────────────────────────────────────────
-
-function BuildingBulkTable({ rows }: { rows: BuildingRow[] }) {
-    const [expandedBuildings, setExpandedBuildings] = useState<Set<string>>(new Set());
-    const [search, setSearch] = useState('');
-    const [zoneFilter, setZoneFilter] = useState<'all' | '3A' | '3B'>('all');
-    const [sort, setSort] = useState<SortState>({ key: '', dir: null });
-    const [page, setPage] = useState(1);
-    const [rowsPerPage, setRowsPerPage] = useState(10);
-
-    const toggleBuilding = (name: string) => {
-        setExpandedBuildings(prev => {
-            const next = new Set(prev);
-            if (next.has(name)) next.delete(name);
-            else next.add(name);
-            return next;
-        });
-    };
-
-    const expandAll = () => setExpandedBuildings(new Set(filtered.map(r => r.buildingName)));
-    const collapseAll = () => setExpandedBuildings(new Set());
-
-    // Filter + sort
-    const filtered = useMemo(() => {
-        let result = [...rows];
-        if (zoneFilter !== 'all') result = result.filter(r => r.zone === zoneFilter);
-        if (search) {
-            const q = search.toLowerCase();
-            result = result.filter(r =>
-                r.buildingName.toLowerCase().includes(q) || r.bulkAccount.includes(q),
-            );
-        }
-        if (sort.dir && sort.key) {
-            result.sort((a, b) => {
-                let va: number | string, vb: number | string;
-                if (sort.key === 'building') { va = a.buildingName; vb = b.buildingName; }
-                else if (sort.key === 'l3') { va = a.l3Bulk ?? -1; vb = b.l3Bulk ?? -1; }
-                else if (sort.key === 'l4') { va = a.l4Sum; vb = b.l4Sum; }
-                else { va = a.diff ?? 0; vb = b.diff ?? 0; }
-                const cmp = va < vb ? -1 : va > vb ? 1 : 0;
-                return sort.dir === 'desc' ? -cmp : cmp;
-            });
-        }
-        return result;
-    }, [rows, search, zoneFilter, sort]);
-
-    // Reset page on filter change
-    useEffect(() => { setPage(1); }, [search, zoneFilter, sort]);
-
-    const totalPages = Math.max(1, Math.ceil(filtered.length / rowsPerPage));
-    const paginatedRows = filtered.slice((page - 1) * rowsPerPage, page * rowsPerPage);
-
-    const z3ACount = rows.filter(r => r.zone === '3A').length;
-    const z3BCount = rows.filter(r => r.zone === '3B').length;
-
-    function renderBuildingRow(row: BuildingRow) {
-        const isExpanded = expandedBuildings.has(row.buildingName);
-        const childCount = row.childMeters.length;
-        const aptCount = row.childMeters.filter(c => c.type === 'Apartment').length;
-
-        const mainRow = (
-            <tr
-                key={row.buildingName}
-                className={cn(
-                    "border-b border-slate-50 dark:border-slate-800/60 cursor-pointer select-none transition-colors hover:bg-slate-50/70 dark:hover:bg-slate-800/30 even:bg-slate-50/40 dark:even:bg-slate-800/20",
-                    isExpanded && "bg-violet-50/30 dark:bg-violet-900/10",
-                )}
-                onClick={() => toggleBuilding(row.buildingName)}
-            >
-                <td className={cn(tdBase, "font-semibold")}>
-                    <span className="inline-flex items-center gap-2">
-                        <span className={cn(
-                            "flex items-center justify-center h-5 w-5 rounded-md transition-all duration-200",
-                            isExpanded ? "bg-primary dark:bg-secondary" : "bg-slate-200 dark:bg-slate-700",
-                        )}>
-                            <ChevronDown className={cn(
-                                "h-3 w-3 transition-transform duration-200",
-                                isExpanded ? "rotate-0 text-white dark:text-slate-100" : "-rotate-90 text-slate-500 dark:text-slate-400",
-                            )} />
-                        </span>
-                        {row.buildingName}
-                        <span className="text-[10px] font-normal text-slate-400 dark:text-slate-500">
-                            {aptCount} apt{aptCount !== 1 ? 's' : ''}
-                        </span>
-                    </span>
-                </td>
-                <td className={cn(tdBase, "font-mono text-[11px] text-slate-400 dark:text-slate-500")}>{row.bulkAccount}</td>
-                <td className={cn(tdBase, "text-center")}>
-                    <StatusChip label={`Zone ${row.zone}`} color={row.zone === '3A' ? 'primary' : 'default'} />
-                </td>
-                <td className={cn(tdBase, "text-right tabular-nums font-medium")}>
-                    {row.l3Bulk === null ? <NullBadge /> : n(row.l3Bulk)}
-                </td>
-                <td className={cn(tdBase, "text-right tabular-nums")}>{n(row.l4Sum)}</td>
-                <td className={cn(tdBase, "text-right")}>
-                    {row.diff !== null ? (
-                        row.hasNonZeroDiff
-                            ? <StatusChip label={diffCell(row.diff)} color="warning" />
-                            : <StatusChip label={diffCell(row.diff)} color="success" />
-                    ) : '—'}
-                </td>
-            </tr>
-        );
-
-        if (!isExpanded) return [mainRow];
-
-        const childRow = (
-            <tr key={`${row.buildingName}-children`} className="bg-slate-50/40 dark:bg-slate-800/20">
-                <td colSpan={6} className="py-0 px-0">
-                    <div className="border-l-[3px] border-secondary/40 dark:border-secondary/30 ml-5 sm:ml-7">
-                        <table className="w-full">
-                            <thead>
-                                <tr className="border-b border-slate-100 dark:border-slate-800/60">
-                                    <th className="text-left py-2 px-4 text-[10px] uppercase tracking-wider font-semibold text-slate-400 dark:text-slate-500 w-[40%]">Meter</th>
-                                    <th className="text-left py-2 px-4 text-[10px] uppercase tracking-wider font-semibold text-slate-400 dark:text-slate-500">Account</th>
-                                    <th className="text-center py-2 px-4 text-[10px] uppercase tracking-wider font-semibold text-slate-400 dark:text-slate-500">Type</th>
-                                    <th className="text-right py-2 px-4 text-[10px] uppercase tracking-wider font-semibold text-slate-400 dark:text-slate-500">Reading (m³)</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {row.childMeters.map(cm => {
-                                    const val = cm.value !== null ? r2(cm.value) : null;
-                                    return (
-                                        <tr
-                                            key={cm.account}
-                                            className={cn(
-                                                "border-b border-slate-50 dark:border-slate-800/40 transition-colors hover:bg-white/60 dark:hover:bg-slate-800/30",
-                                                cm.type === 'Common' && "bg-indigo-50/30 dark:bg-indigo-900/5",
-                                            )}
-                                        >
-                                            <td className="py-2 px-4 text-[12px] font-medium text-slate-700 dark:text-slate-300">
-                                                <span className="inline-flex items-center gap-1.5">
-                                                    {cm.type === 'Common'
-                                                        ? <Users className="h-3 w-3 text-indigo-500 shrink-0" />
-                                                        : <Home className="h-3 w-3 text-slate-400 shrink-0" />
-                                                    }
-                                                    {cm.label}
-                                                </span>
-                                            </td>
-                                            <td className="py-2 px-4 font-mono text-[11px] text-slate-400 dark:text-slate-500">{cm.account}</td>
-                                            <td className="py-2 px-4 text-center">
-                                                <StatusChip label={cm.type} color={cm.type === 'Common' ? 'primary' : 'default'} />
-                                            </td>
-                                            <td className="py-2 px-4 text-right font-mono text-[12px] font-medium tabular-nums text-slate-700 dark:text-slate-300">
-                                                {val === null ? '—' : val === 0 ? <span className="text-slate-400">0.00</span> : n(val)}
-                                            </td>
-                                        </tr>
-                                    );
-                                })}
-                                <tr className="border-t-2 border-slate-200/80 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-800/20">
-                                    <td className="py-2 px-4 text-[12px] font-bold text-slate-600 dark:text-slate-300" colSpan={3}>
-                                        Sum of {childCount} meters
-                                    </td>
-                                    <td className="py-2 px-4 text-right font-mono text-[12px] font-bold tabular-nums">{n(row.l4Sum)}</td>
-                                </tr>
-                                <tr className={cn(
-                                    "border-t border-dashed border-slate-200 dark:border-slate-700",
-                                    row.hasNonZeroDiff ? "bg-amber-50/50 dark:bg-amber-900/5" : "bg-emerald-50/30 dark:bg-emerald-900/5",
-                                )}>
-                                    <td className="py-2 px-4 text-[12px] font-bold" colSpan={3}>
-                                        Bulk ({n(row.l3Bulk)}) − Sum ({n(row.l4Sum)}) = Difference
-                                    </td>
-                                    <td className={cn("py-2 px-4 text-right font-mono text-[12px] font-bold tabular-nums",
-                                        row.hasNonZeroDiff ? "text-amber-600 dark:text-amber-400" : "text-emerald-600 dark:text-emerald-400",
-                                    )}>
-                                        {row.diff !== null ? diffCell(row.diff) : '—'}
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </td>
-            </tr>
-        );
-
-        return [mainRow, childRow];
-    }
-
-    return (
-        <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
-            {/* ── Toolbar ─────────────────────────────────── */}
-            <div className="p-5 sm:p-6 space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                    <SectionHeader
-                        icon={<Building2 className="h-5 w-5" />}
-                        title="Building Bulk (L3) vs Apartments (L4)"
-                        subtitle="Click a building to expand apartment details"
-                        color="violet"
-                    />
-                    <div className="flex items-center gap-1.5">
-                        <button onClick={expandAll} className="h-8 px-3 text-[11px] font-medium rounded-full border border-slate-200 dark:border-slate-700 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
-                            Expand All
-                        </button>
-                        <button onClick={collapseAll} className="h-8 px-3 text-[11px] font-medium rounded-full border border-slate-200 dark:border-slate-700 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
-                            Collapse All
-                        </button>
-                    </div>
-                </div>
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                    <TableSearch value={search} onChange={setSearch} placeholder="Search building..." />
-                    <FilterSelect
-                        value={zoneFilter}
-                        onChange={v => setZoneFilter(v as typeof zoneFilter)}
-                        icon={<Filter className="h-3.5 w-3.5" />}
-                    >
-                        <option value="all">All Zones ({rows.length})</option>
-                        <option value="3A">Zone 3A ({z3ACount})</option>
-                        <option value="3B">Zone 3B ({z3BCount})</option>
-                    </FilterSelect>
-                </div>
-            </div>
-            {/* ── Table ───────────────────────────────────── */}
-            <div className="overflow-x-auto">
-                <table className="w-full border-collapse">
-                    <thead>
-                        <tr className="border-t border-b border-slate-200 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-800/50">
-                            <Th sortKey="building" sort={sort} onSort={setSort} className="min-w-[140px]">Building</Th>
-                            <th className={cn(thBase)}>Bulk Account</th>
-                            <th className={cn(thBase, "text-center")}>Zone</th>
-                            <Th sortKey="l3" sort={sort} onSort={setSort} className="text-right">L3 Bulk (m³)</Th>
-                            <Th sortKey="l4" sort={sort} onSort={setSort} className="text-right">ΣL4 (m³)</Th>
-                            <Th sortKey="diff" sort={sort} onSort={setSort} className="text-right">Diff</Th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {paginatedRows.length === 0 ? (
-                            <tr>
-                                <td colSpan={6} className="text-center py-10 text-[13px] text-slate-400 dark:text-slate-500">
-                                    No buildings found
-                                </td>
-                            </tr>
-                        ) : (
-                            paginatedRows.flatMap(row => renderBuildingRow(row))
-                        )}
-                    </tbody>
-                </table>
-            </div>
-            {/* ── Pagination ──────────────────────────────── */}
-            <div className="px-5 sm:px-6 pb-4">
-                <TablePagination
-                    page={page}
-                    totalPages={totalPages}
-                    totalItems={filtered.length}
-                    onPageChange={setPage}
-                    rowsPerPage={rowsPerPage}
-                    onRowsPerPageChange={n => { setRowsPerPage(n); setPage(1); }}
-                />
-            </div>
-        </div>
-    );
-}
-
-// TABLE 3 ─────────────────────────────────────────────────────────────────────
-
-function DCMetersTable({ rows }: { rows: DCRow[] }) {
-    const [search, setSearch] = useState('');
-    const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'no-data' | 'idle'>('all');
-    const [sort, setSort] = useState<SortState>({ key: '', dir: null });
-
-    const total = r2(rows.reduce((s, r) => s + (r.displayValue ?? 0), 0));
-
-    // Derive status for each row
-    function getStatus(row: DCRow): 'active' | 'no-data' | 'idle' {
-        if (row.rawValue !== null) return 'active';
-        if (row.isIrr || NULL_AS_ZERO_ACCOUNTS.has(row.account)) return 'idle';
-        return 'no-data';
-    }
-
-    // Filter
-    const filtered = rows.filter(row => {
-        if (search) {
-            const q = search.toLowerCase();
-            if (!row.meterName.toLowerCase().includes(q) && !row.account.includes(q)) return false;
-        }
-        if (statusFilter !== 'all' && getStatus(row) !== statusFilter) return false;
-        return true;
-    });
-
-    // Sort
-    const sorted = [...filtered].sort((a, b) => {
-        if (!sort.dir) return 0;
-        const mul = sort.dir === 'asc' ? 1 : -1;
-        switch (sort.key) {
-            case 'name': return mul * a.meterName.localeCompare(b.meterName);
-            case 'account': return mul * a.account.localeCompare(b.account);
-            case 'status': return mul * getStatus(a).localeCompare(getStatus(b));
-            case 'reading': return mul * ((a.displayValue ?? 0) - (b.displayValue ?? 0));
-            default: return 0;
-        }
-    });
-
-    const activeCount = rows.filter(r => r.rawValue !== null).length;
-    const noDataCount = rows.filter(r => r.isNullFlag).length;
-    const idleCount = rows.length - activeCount - noDataCount;
-
-    return (
-        <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
-            {/* ── Toolbar ──────────────────────────────────── */}
-            <div className="p-5 sm:p-6 space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                    <SectionHeader
-                        icon={<Zap className="h-5 w-5" />}
-                        title="Direct Connections (DC)"
-                        subtitle="Hotels, irrigation, facilities — connected directly to the L1 main supply"
-                        color="amber"
-                    />
-                    <span className="text-[12px] text-slate-400 dark:text-slate-500 whitespace-nowrap tabular-nums">
-                        {sorted.length} of {rows.length} meters
-                    </span>
-                </div>
-                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                    <TableSearch value={search} onChange={setSearch} placeholder="Search meter name or account…" />
-                    <FilterSelect
-                        value={statusFilter}
-                        onChange={v => setStatusFilter(v as typeof statusFilter)}
-                        icon={<Filter className="h-3.5 w-3.5" />}
-                    >
-                        <option value="all">All Status</option>
-                        <option value="active">Active ({activeCount})</option>
-                        <option value="no-data">No Data ({noDataCount})</option>
-                        <option value="idle">Idle ({idleCount})</option>
-                    </FilterSelect>
-                </div>
-            </div>
-            {/* ── Table ────────────────────────────────────── */}
-            <div className="overflow-x-auto">
-                <table className="w-full border-collapse">
-                    <thead>
-                        <tr className="border-t border-b border-slate-200 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-800/50">
-                            <Th sortKey="name" sort={sort} onSort={setSort} className="min-w-[180px]">Meter Name</Th>
-                            <Th sortKey="account" sort={sort} onSort={setSort}>Account</Th>
-                            <Th sortKey="status" sort={sort} onSort={setSort} className="text-center min-w-[80px]">Status</Th>
-                            <Th sortKey="reading" sort={sort} onSort={setSort} className="text-right min-w-[110px]">Reading (m³)</Th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {sorted.length === 0 ? (
-                            <tr>
-                                <td colSpan={4} className="text-center py-10 text-[13px] text-slate-400 dark:text-slate-500">
-                                    No meters found
-                                </td>
-                            </tr>
-                        ) : (
-                            sorted.map(row => {
-                                const status = getStatus(row);
-                                return (
-                                    <tr key={row.account} className="border-b border-slate-50 dark:border-slate-800/60 hover:bg-slate-50/70 dark:hover:bg-slate-800/30 transition-colors even:bg-slate-50/40 dark:even:bg-slate-800/20">
-                                        <td className={cn(tdBase, "font-semibold")}>
-                                            <span className="inline-flex items-center gap-2">
-                                                {row.meterName}
-                                                {row.isIrr && <StatusChip label="IRR" color="primary" />}
-                                            </span>
-                                        </td>
-                                        <td className={cn(tdBase, "font-mono text-[11px] text-slate-400 dark:text-slate-500")}>{row.account}</td>
-                                        <td className={cn(tdBase, "text-center")}>
-                                            {status === 'active' && <StatusChip label="Active" color="success" />}
-                                            {status === 'idle' && <StatusChip label="Idle" color="default" />}
-                                            {status === 'no-data' && <StatusChip label="No Data" color="warning" />}
-                                        </td>
-                                        <td className={cn(tdBase, "text-right tabular-nums font-medium")}>
-                                            {row.isNullFlag ? (
-                                                <span className="text-amber-500 dark:text-amber-400 text-xs">—</span>
-                                            ) : row.rawValue === null ? (
-                                                <span className="text-slate-400 dark:text-slate-500">0.00</span>
-                                            ) : (
-                                                n(row.displayValue)
-                                            )}
-                                        </td>
-                                    </tr>
-                                );
-                            })
-                        )}
-                        {/* Totals */}
-                        <tr className="border-t-2 border-slate-200 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-800/20">
-                            <td className={cn(tdBase, "font-bold")} colSpan={3}>Total DC</td>
-                            <td className={cn(tdBase, "text-right tabular-nums font-bold")}>
-                                {n(total)}
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    );
-}
-
 
 // ─── Zone Analytics Panel ─────────────────────────────────────────────────────
 
@@ -1077,6 +575,16 @@ function ZoneL3Table({
     const [sort, setSort] = useState<SortState>({ key: '', dir: null });
     const [page, setPage] = useState(1);
     const [rowsPerPage, setRowsPerPage] = useState(15);
+    // Track which L3-building rows are currently expanded to reveal their L4 children
+    const [expandedBuildings, setExpandedBuildings] = useState<Set<string>>(new Set());
+    const toggleBuilding = useCallback((bulkAccount: string) => {
+        setExpandedBuildings(prev => {
+            const next = new Set(prev);
+            if (next.has(bulkAccount)) next.delete(bulkAccount);
+            else next.add(bulkAccount);
+            return next;
+        });
+    }, []);
 
     // Build account map for quick lookups
     const accountMap = useMemo(() => {
@@ -1158,6 +666,91 @@ function ZoneL3Table({
     const l2GrandTotal = r2(l2DayTotals.reduce<number>((s, v) => s + (v ?? 0), 0));
     const diffGrandTotal = r2(l2GrandTotal - grandTotal);
 
+    // Per-day difference: L2 bulk minus ΣL3 for each reporting day
+    const diffByDay = useMemo(
+        () => days.map((_, i) => r2((l2DayTotals[i] ?? 0) - dayTotals[i])),
+        [days, l2DayTotals, dayTotals],
+    );
+
+    // ── Per-building L4 drill-down data ───────────────────────────────────────
+    // For every L3 meter in this zone that is itself a building bulk, compute
+    // the day-by-day readings for each of its L4 children, the ΣL4 totals,
+    // and the building-level difference (L3 bulk − ΣL4). Memoised off `days`
+    // and the account map so it recomputes only when the reporting window or
+    // data changes.
+    interface BuildingChildReading {
+        account: string;
+        label: string;
+        type: 'Apartment' | 'Common';
+        dailyValues: (number | null)[];
+        total: number;
+    }
+    interface BuildingL4Detail {
+        buildingName: string;
+        bulkDailyValues: (number | null)[];
+        bulkTotal: number;
+        children: BuildingChildReading[];
+        childDayTotals: number[];
+        childGrandTotal: number;
+        diffDayTotals: number[];
+        diffGrandTotal: number;
+    }
+    const buildingL4Data = useMemo<Map<string, BuildingL4Detail>>(() => {
+        const map = new Map<string, BuildingL4Detail>();
+        for (const b of BUILDING_CONFIG) {
+            if (!zoneConfig.l3Accounts.includes(b.bulkAccount)) continue;
+
+            const bulkRow = accountMap.get(b.bulkAccount);
+            const bulkDailyValues: (number | null)[] = days.map(d => {
+                if (!bulkRow) return null;
+                const v = bulkRow[`day_${d}` as keyof SupabaseDailyWaterConsumption];
+                return v != null ? r2(Number(v)) : null;
+            });
+            const bulkTotal = r2(bulkDailyValues.reduce<number>((s, v) => s + (v ?? 0), 0));
+
+            const info = BUILDING_CHILD_METERS[b.buildingName] ?? [];
+            const children: BuildingChildReading[] = b.l4Accounts.map(acc => {
+                const meta = info.find(c => c.account === acc);
+                const row = accountMap.get(acc);
+                const dailyValues: (number | null)[] = days.map(d => {
+                    if (!row) return null;
+                    const v = row[`day_${d}` as keyof SupabaseDailyWaterConsumption];
+                    return v != null ? r2(Number(v)) : null;
+                });
+                const total = r2(dailyValues.reduce<number>((s, v) => s + (v ?? 0), 0));
+                return {
+                    account: acc,
+                    label: meta?.label ?? acc,
+                    type: meta?.type ?? 'Apartment',
+                    dailyValues,
+                    total,
+                };
+            });
+
+            const childDayTotals = days.map((_, i) =>
+                r2(children.reduce((s, c) => s + (c.dailyValues[i] ?? 0), 0)),
+            );
+            const childGrandTotal = r2(childDayTotals.reduce((s, v) => s + v, 0));
+
+            const diffDayTotals = days.map((_, i) =>
+                r2((bulkDailyValues[i] ?? 0) - childDayTotals[i]),
+            );
+            const diffGrandTotal = r2(bulkTotal - childGrandTotal);
+
+            map.set(b.bulkAccount, {
+                buildingName: b.buildingName,
+                bulkDailyValues,
+                bulkTotal,
+                children,
+                childDayTotals,
+                childGrandTotal,
+                diffDayTotals,
+                diffGrandTotal,
+            });
+        }
+        return map;
+    }, [zoneConfig, accountMap, days]);
+
     // Filter & sort
     const filtered = useMemo(() => {
         let result = [...l3Meters];
@@ -1195,56 +788,729 @@ function ZoneL3Table({
                 </div>
             </CardHeader>
             <CardContent className="p-4 sm:p-5 md:p-6 pt-0 space-y-4">
-                {/* Zone summary KPI cards */}
+                {/* Zone summary KPI cards — unified brand palette */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-                    {/* L2 Bulk */}
+                    {/* L2 Bulk — primary purple */}
+                    <HierarchyStatCard
+                        label="L2 Bulk (m³)"
+                        value={n(l2GrandTotal)}
+                        icon={<Droplets className="w-4 h-4 sm:w-5 sm:h-5" />}
+                        color={PALETTE.primary}
+                    />
+                    {/* ΣL3 — info blue */}
+                    <HierarchyStatCard
+                        label="Σ Individuals (m³)"
+                        value={n(grandTotal)}
+                        icon={<Activity className="w-4 h-4 sm:w-5 sm:h-5" />}
+                        color={PALETTE.blue}
+                    />
+                    {/* Difference — mint (ok) / red (high loss) */}
+                    <HierarchyStatCard
+                        label="Difference"
+                        value={diffCell(diffGrandTotal)}
+                        icon={<ArrowUpDown className="w-4 h-4 sm:w-5 sm:h-5" />}
+                        color={Math.abs(diffGrandTotal) > 20 ? PALETTE.red : PALETTE.mint}
+                        valueColor={Math.abs(diffGrandTotal) > 20 ? PALETTE.red : undefined}
+                    />
+                </div>
+
+                <TableSearch value={search} onChange={setSearch} placeholder="Search meter or account..." />
+
+                {/* Horizontally scrollable table */}
+                <div className="relative overflow-x-auto -mx-4 sm:-mx-5 md:-mx-6 border-t border-slate-100 dark:border-slate-800">
+                    <table className="w-full border-collapse" style={{ minWidth: `${420 + days.length * 72}px` }}>
+                        <thead>
+                            <tr className="border-b border-slate-100 dark:border-slate-800">
+                                <Th
+                                    sortKey="label" sort={sort} onSort={setSort}
+                                    className="sticky left-0 z-10 bg-white dark:bg-slate-900 min-w-[150px]"
+                                >Meter</Th>
+                                <Th sortKey="account" sort={sort} onSort={setSort} className="min-w-[100px]">Account</Th>
+                                <th className={cn(thBase, "text-center min-w-[90px]")}>Type</th>
+                                {days.map(d => (
+                                    <th key={d} className={cn(thBase, "text-right min-w-[64px] px-2")}>D{d}</th>
+                                ))}
+                                <Th
+                                    sortKey="total" sort={sort} onSort={setSort}
+                                    className="text-right min-w-[80px] bg-slate-50/80 dark:bg-slate-800/40"
+                                >Total</Th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {/* ── L2 Bulk summary row (top) ──────────────────────
+                               Always visible, unaffected by pagination/search.  */}
+                            <tr
+                                className="border-b-2"
+                                style={{
+                                    backgroundColor: `${PALETTE.primary}14`,
+                                    borderBottomColor: `${PALETTE.primary}40`,
+                                }}
+                            >
+                                <td
+                                    className={cn(tdBase, "font-bold sticky left-0 z-10")}
+                                    style={{
+                                        backgroundColor: `${PALETTE.primary}14`,
+                                        color: PALETTE.primary,
+                                        boxShadow: `inset 4px 0 0 ${PALETTE.primary}`,
+                                    }}
+                                >
+                                    <span className="inline-flex items-center gap-2">
+                                        <Droplets className="h-3.5 w-3.5 shrink-0" />
+                                        {zoneRow.zoneName} Bulk (L2)
+                                    </span>
+                                </td>
+                                <td className={cn(tdBase, "font-mono text-[11px]")} style={{ color: `${PALETTE.primary}AA` }}>
+                                    {zoneConfig.l2Account}
+                                </td>
+                                <td className={cn(tdBase, "text-center")}>
+                                    <StatusChip label="L2 BULK" color="primary" />
+                                </td>
+                                {l2DayTotals.map((val, i) => (
+                                    <td
+                                        key={i}
+                                        className={cn(tdBase, "text-right tabular-nums px-2 text-[12px] font-bold")}
+                                        style={{ color: PALETTE.primary }}
+                                    >
+                                        {val === null ? (
+                                            <span className="text-slate-300 dark:text-slate-600">—</span>
+                                        ) : (
+                                            n(val)
+                                        )}
+                                    </td>
+                                ))}
+                                <td
+                                    className={cn(tdBase, "text-right tabular-nums font-bold")}
+                                    style={{
+                                        backgroundColor: `${PALETTE.primary}20`,
+                                        color: PALETTE.primary,
+                                    }}
+                                >
+                                    {n(l2GrandTotal)}
+                                </td>
+                            </tr>
+
+                            {/* ── Individual L3 meter rows (paginated/filtered) ── */}
+                            {paginated.length === 0 ? (
+                                <tr>
+                                    <td colSpan={colCount} className="text-center py-10 text-[13px] text-slate-400 dark:text-slate-500">
+                                        No meters found
+                                    </td>
+                                </tr>
+                            ) : paginated.flatMap(meter => {
+                                const detail = meter.building ? buildingL4Data.get(meter.account) : null;
+                                const isExpanded = !!detail && expandedBuildings.has(meter.account);
+                                const rows: React.ReactNode[] = [];
+
+                                // ── The L3 meter row itself ───────────────────────
+                                rows.push(
+                                    <tr
+                                        key={meter.account}
+                                        className={cn(
+                                            "border-b border-slate-50 dark:border-slate-800/60 transition-colors hover:bg-slate-50/70 dark:hover:bg-slate-800/30",
+                                            !isExpanded && "even:bg-slate-50/40 dark:even:bg-slate-800/20",
+                                        )}
+                                    >
+                                        <td className={cn(tdBase, "font-semibold sticky left-0 z-10 bg-white dark:bg-slate-900")}>
+                                            <span className="inline-flex items-center gap-2">
+                                                {detail ? (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => toggleBuilding(meter.account)}
+                                                        aria-expanded={isExpanded}
+                                                        aria-label={`${isExpanded ? 'Collapse' : 'Expand'} ${detail.buildingName} L4 meters`}
+                                                        className="inline-flex items-center gap-1 rounded-md px-1.5 py-1 -ml-1 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                                                        style={{ color: PALETTE.primary }}
+                                                    >
+                                                        {isExpanded
+                                                            ? <ChevronDown className="h-3.5 w-3.5 shrink-0" />
+                                                            : <ChevronRight className="h-3.5 w-3.5 shrink-0" />}
+                                                        <Building2 className="h-3.5 w-3.5 shrink-0" />
+                                                        <span className="font-semibold">{detail.buildingName}</span>
+                                                    </button>
+                                                ) : meter.building ? (
+                                                    <>
+                                                        <Building2 className="h-3.5 w-3.5 shrink-0" style={{ color: PALETTE.primary }} />
+                                                        {meter.building.buildingName}
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Home className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                                                        {meter.account}
+                                                        {meter.isNullAsZero && <StatusChip label="IRR" color="primary" />}
+                                                    </>
+                                                )}
+                                            </span>
+                                        </td>
+                                        <td className={cn(tdBase, "font-mono text-[11px] text-slate-400 dark:text-slate-500")}>{meter.account}</td>
+                                        <td className={cn(tdBase, "text-center")}>
+                                            <StatusChip label={meter.building ? "Building" : "Individual"} color={meter.building ? "primary" : "default"} />
+                                        </td>
+                                        {meter.dailyValues.map((val, i) => (
+                                            <td key={i} className={cn(tdBase, "text-right tabular-nums px-2 text-[12px]")}>
+                                                {val === null ? (
+                                                    <span className="text-slate-300 dark:text-slate-600">—</span>
+                                                ) : val === 0 ? (
+                                                    <span className="text-slate-400">0.00</span>
+                                                ) : (
+                                                    n(val)
+                                                )}
+                                            </td>
+                                        ))}
+                                        <td className={cn(tdBase, "text-right tabular-nums font-semibold bg-slate-50/80 dark:bg-slate-800/40")}>
+                                            {n(meter.total)}
+                                        </td>
+                                    </tr>,
+                                );
+
+                                // ── Expanded: child L4 meters + ΣL4 + diff ───────
+                                if (detail && isExpanded) {
+                                    // L4 child rows
+                                    detail.children.forEach((child, idx) => {
+                                        rows.push(
+                                            <tr
+                                                key={`${meter.account}-child-${child.account}`}
+                                                className="border-b border-slate-50 dark:border-slate-800/60"
+                                                style={{ backgroundColor: `${PALETTE.neutral}26` }}
+                                            >
+                                                <td
+                                                    className={cn(tdBase, "pl-10 font-normal sticky left-0 z-10 text-[13px]")}
+                                                    style={{
+                                                        backgroundColor: `${PALETTE.neutral}26`,
+                                                        boxShadow: `inset 4px 0 0 ${PALETTE.primary}30`,
+                                                    }}
+                                                >
+                                                    <span className="inline-flex items-center gap-2 text-slate-600 dark:text-slate-300">
+                                                        {idx === detail.children.length - 1
+                                                            ? <span className="inline-block w-2 h-2 rounded-full" style={{ backgroundColor: PALETTE.primary }} />
+                                                            : <span className="inline-block w-2 h-2 rounded-full bg-slate-300 dark:bg-slate-600" />}
+                                                        {child.label}
+                                                    </span>
+                                                </td>
+                                                <td className={cn(tdBase, "font-mono text-[11px] text-slate-400 dark:text-slate-500")}>{child.account}</td>
+                                                <td className={cn(tdBase, "text-center")}>
+                                                    <StatusChip
+                                                        label={child.type === 'Common' ? 'Common' : 'Apartment'}
+                                                        color={child.type === 'Common' ? 'primary' : 'default'}
+                                                    />
+                                                </td>
+                                                {child.dailyValues.map((val, i) => (
+                                                    <td key={i} className={cn(tdBase, "text-right tabular-nums px-2 text-[12px] font-normal")}>
+                                                        {val === null ? (
+                                                            <span className="text-slate-300 dark:text-slate-600">—</span>
+                                                        ) : val === 0 ? (
+                                                            <span className="text-slate-400">0.00</span>
+                                                        ) : (
+                                                            n(val)
+                                                        )}
+                                                    </td>
+                                                ))}
+                                                <td className={cn(tdBase, "text-right tabular-nums font-semibold bg-slate-50/80 dark:bg-slate-800/40")}>
+                                                    {n(child.total)}
+                                                </td>
+                                            </tr>,
+                                        );
+                                    });
+
+                                    // ΣL4 sub-footer — sum of apartments
+                                    rows.push(
+                                        <tr
+                                            key={`${meter.account}-l4sum`}
+                                            style={{ backgroundColor: `${PALETTE.blue}12` }}
+                                        >
+                                            <td
+                                                className={cn(tdBase, "pl-10 font-bold sticky left-0 z-10 text-[12px]")}
+                                                style={{
+                                                    backgroundColor: `${PALETTE.blue}12`,
+                                                    color: PALETTE.blue,
+                                                    boxShadow: `inset 4px 0 0 ${PALETTE.blue}`,
+                                                }}
+                                                colSpan={3}
+                                            >
+                                                Σ Individuals — {detail.children.length} meters
+                                            </td>
+                                            {detail.childDayTotals.map((t, i) => (
+                                                <td
+                                                    key={i}
+                                                    className={cn(tdBase, "text-right tabular-nums font-bold px-2 text-[12px]")}
+                                                    style={{ color: PALETTE.blue }}
+                                                >
+                                                    {n(t)}
+                                                </td>
+                                            ))}
+                                            <td
+                                                className={cn(tdBase, "text-right tabular-nums font-bold")}
+                                                style={{ backgroundColor: `${PALETTE.blue}20`, color: PALETTE.blue }}
+                                            >
+                                                {n(detail.childGrandTotal)}
+                                            </td>
+                                        </tr>,
+                                    );
+
+                                    // Difference sub-footer — bulk − sum
+                                    const isHighBuildingDiff = Math.abs(detail.diffGrandTotal) > 5;
+                                    const diffTint = isHighBuildingDiff ? PALETTE.red : PALETTE.mint;
+                                    rows.push(
+                                        <tr
+                                            key={`${meter.account}-l4diff`}
+                                            className="border-b-2"
+                                            style={{
+                                                backgroundColor: `${diffTint}14`,
+                                                borderBottomColor: `${diffTint}40`,
+                                            }}
+                                        >
+                                            <td
+                                                className={cn(tdBase, "pl-10 font-bold sticky left-0 z-10 text-[12px]")}
+                                                style={{
+                                                    backgroundColor: `${diffTint}14`,
+                                                    color: diffTint,
+                                                    boxShadow: `inset 4px 0 0 ${diffTint}`,
+                                                }}
+                                                colSpan={3}
+                                            >
+                                                Difference (Bulk − Σ)
+                                            </td>
+                                            {detail.diffDayTotals.map((t, i) => (
+                                                <td
+                                                    key={i}
+                                                    className={cn(tdBase, "text-right tabular-nums font-bold px-2 text-[12px]")}
+                                                    style={{ color: diffTint }}
+                                                >
+                                                    {diffCell(t)}
+                                                </td>
+                                            ))}
+                                            <td
+                                                className={cn(tdBase, "text-right tabular-nums font-bold")}
+                                                style={{ backgroundColor: `${diffTint}20`, color: diffTint }}
+                                            >
+                                                {diffCell(detail.diffGrandTotal)}
+                                            </td>
+                                        </tr>,
+                                    );
+                                }
+
+                                return rows;
+                            })}
+
+                            {/* ── Σ Individuals footer row (zone level) ──────── */}
+                            <tr
+                                className="border-t-2"
+                                style={{
+                                    backgroundColor: `${PALETTE.blue}12`,
+                                    borderTopColor: `${PALETTE.blue}40`,
+                                }}
+                            >
+                                <td
+                                    className={cn(tdBase, "font-bold sticky left-0 z-10")}
+                                    colSpan={3}
+                                    style={{
+                                        backgroundColor: `${PALETTE.blue}12`,
+                                        color: PALETTE.blue,
+                                        boxShadow: `inset 4px 0 0 ${PALETTE.blue}`,
+                                    }}
+                                >
+                                    Σ Individuals — {l3Meters.length} meters
+                                </td>
+                                {dayTotals.map((t, i) => (
+                                    <td
+                                        key={i}
+                                        className={cn(tdBase, "text-right tabular-nums font-bold px-2 text-[12px]")}
+                                        style={{ color: PALETTE.blue }}
+                                    >
+                                        {n(t)}
+                                    </td>
+                                ))}
+                                <td
+                                    className={cn(tdBase, "text-right tabular-nums font-bold")}
+                                    style={{ backgroundColor: `${PALETTE.blue}20`, color: PALETTE.blue }}
+                                >
+                                    {n(grandTotal)}
+                                </td>
+                            </tr>
+
+                            {/* ── Difference footer row (zone level) ─────────── */}
+                            {(() => {
+                                const isHighZoneDiff = Math.abs(diffGrandTotal) > 20;
+                                const diffTint = isHighZoneDiff ? PALETTE.red : PALETTE.mint;
+                                return (
+                                    <tr
+                                        className="border-t"
+                                        style={{
+                                            backgroundColor: `${diffTint}14`,
+                                            borderTopColor: `${diffTint}40`,
+                                        }}
+                                    >
+                                        <td
+                                            className={cn(tdBase, "font-bold sticky left-0 z-10")}
+                                            colSpan={3}
+                                            style={{
+                                                backgroundColor: `${diffTint}14`,
+                                                color: diffTint,
+                                                boxShadow: `inset 4px 0 0 ${diffTint}`,
+                                            }}
+                                        >
+                                            Difference (L2 − Σ Individuals)
+                                        </td>
+                                        {diffByDay.map((t, i) => (
+                                            <td
+                                                key={i}
+                                                className={cn(tdBase, "text-right tabular-nums font-bold px-2 text-[12px]")}
+                                                style={{ color: diffTint }}
+                                            >
+                                                {diffCell(t)}
+                                            </td>
+                                        ))}
+                                        <td
+                                            className={cn(tdBase, "text-right tabular-nums font-bold")}
+                                            style={{ backgroundColor: `${diffTint}20`, color: diffTint }}
+                                        >
+                                            {diffCell(diffGrandTotal)}
+                                        </td>
+                                    </tr>
+                                );
+                            })()}
+                        </tbody>
+                    </table>
+                    <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-card to-transparent sm:hidden" />
+                </div>
+
+                {filtered.length > rowsPerPage && (
+                    <TablePagination
+                        page={page}
+                        totalPages={totalPages}
+                        totalItems={filtered.length}
+                        onPageChange={setPage}
+                        rowsPerPage={rowsPerPage}
+                        onRowsPerPageChange={rpp => { setRowsPerPage(rpp); setPage(1); }}
+                    />
+                )}
+            </CardContent>
+        </Card>
+    );
+}
+
+// ─── DC Analytics Panel (mirrors ZoneAnalyticsPanel) ─────────────────────────
+
+interface DCAnalyticsPanelProps {
+    reportData: ReportData;
+    monthData: SupabaseDailyWaterConsumption[];
+    selectedDay: number;
+    month: string;
+}
+
+function DCAnalyticsPanel({ reportData, monthData, selectedDay, month }: DCAnalyticsPanelProps) {
+    // O(1) lookup map keyed by account_number
+    const accountMap = useMemo(() => {
+        const map = new Map<string, SupabaseDailyWaterConsumption>();
+        for (const row of monthData) map.set(row.account_number, row);
+        return map;
+    }, [monthData]);
+
+    // Daily DC total = sum of all DC meters for the selected day
+    const dailyDcTotal = r2(reportData.dcRows.reduce((s, r) => s + (r.displayValue ?? 0), 0));
+
+    // 31-day DC trend + monthly aggregates
+    const { trendData, monthlyTotal } = useMemo(() => {
+        const results: { day: string; dayNum: number; 'DC Total': number }[] = [];
+        let mTotal = 0;
+        for (let day = 1; day <= 31; day++) {
+            const dayCol = `day_${day}` as keyof SupabaseDailyWaterConsumption;
+            let dayTotal = 0;
+            let hasAny = false;
+            for (const dc of DC_METERS) {
+                const row = accountMap.get(dc.account);
+                const v = row?.[dayCol];
+                if (v != null) {
+                    dayTotal += Number(v);
+                    hasAny = true;
+                }
+            }
+            if (!hasAny) continue;
+            mTotal += dayTotal;
+            results.push({
+                day: `D${String(day).padStart(2, '0')}`,
+                dayNum: day,
+                'DC Total': r2(dayTotal),
+            });
+        }
+        return { trendData: results, monthlyTotal: r2(mTotal) };
+    }, [accountMap]);
+
+    // Active meters (reporting on selected day)
+    const activeMeters = reportData.dcRows.filter(r => r.rawValue !== null).length;
+    const totalMeters = reportData.dcRows.length;
+
+    // Gauge scales
+    const maxDaily = Math.max(...trendData.map(d => d['DC Total']), dailyDcTotal);
+    const dailyGaugeMax = maxDaily * 1.2 || 100;
+    const monthlyGaugeMax = monthlyTotal * 1.2 || 100;
+
+    const currentDayLabel = trendData.find(d => d.dayNum === selectedDay)?.day;
+
+    return (
+        <div className="space-y-6">
+
+            {/* ── DC heading ─────────────────────────────────────────────── */}
+            <div>
+                <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">
+                    Direct Connection Analysis — Day {selectedDay}, {month}
+                </h2>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                    <span className="text-mb-secondary font-medium">DC Daily Total</span> = sum of all DC meters today &bull;{" "}
+                    <span className="text-mb-primary font-medium">Monthly Total</span> = month-to-date DC consumption &bull;{" "}
+                    <span style={{ color: CHART_COLORS.success }} className="font-medium">Active Meters</span> = meters reporting today
+                </p>
+            </div>
+
+            {/* ── 3 Gauge rings ────────────────────────────────────────────── */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 md:gap-6">
+                <LiquidProgressRing
+                    value={dailyDcTotal}
+                    max={dailyGaugeMax}
+                    label="DC Daily Total"
+                    sublabel="Sum of DC meters today"
+                    color={CHART_COLORS.teal}
+                    size={160}
+                    showPercentage={false}
+                    unit="m³"
+                    elementId="daily-dc-gauge-1"
+                />
+                <LiquidProgressRing
+                    value={monthlyTotal}
+                    max={monthlyGaugeMax}
+                    label="Monthly DC Total"
+                    sublabel="Month-to-date consumption"
+                    color={CHART_COLORS.brand}
+                    size={160}
+                    showPercentage={false}
+                    unit="m³"
+                    elementId="daily-dc-gauge-2"
+                />
+                <LiquidProgressRing
+                    value={activeMeters}
+                    max={totalMeters || 1}
+                    label="Active DC Meters"
+                    sublabel={`${activeMeters} of ${totalMeters} reporting`}
+                    color={CHART_COLORS.success}
+                    size={160}
+                    showPercentage={true}
+                    elementId="daily-dc-gauge-3"
+                />
+            </div>
+
+            {/* ── Daily trend chart ────────────────────────────────────────── */}
+            <Card className="card-elevated">
+                <CardHeader className="card-elevated-header p-4 sm:p-5 md:p-6">
+                    <CardTitle className="text-base sm:text-lg">
+                        Direct Connection Daily Consumption Trend
+                    </CardTitle>
+                    <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+                        Day-by-day DC total across all {totalMeters} meters — {month}
+                    </p>
+                </CardHeader>
+                <CardContent className="p-4 sm:p-5 md:p-6 pt-0">
+                    {trendData.length === 0 ? (
+                        <div className="flex items-center justify-center h-48 text-sm text-slate-400 dark:text-slate-500">
+                            No trend data available for direct connections
+                        </div>
+                    ) : (
+                        <div className="h-[200px] sm:h-[250px] md:h-[300px] w-full">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <AreaChart data={trendData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                                    <defs>
+                                        <linearGradient id="gradDailyDC" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor={CHART_COLORS.teal} stopOpacity={0.4} />
+                                            <stop offset="95%" stopColor={CHART_COLORS.teal} stopOpacity={0} />
+                                        </linearGradient>
+                                    </defs>
+                                    <XAxis
+                                        dataKey="day"
+                                        axisLine={false} tickLine={false}
+                                        tick={{ fontSize: 11, fill: "var(--chart-axis)" }}
+                                        dy={10} interval={4}
+                                    />
+                                    <YAxis
+                                        axisLine={false} tickLine={false}
+                                        tick={{ fontSize: 11, fill: "var(--chart-axis)" }}
+                                        tickFormatter={v => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v}
+                                        label={{ value: 'm³', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: "var(--chart-axis)", fontSize: 11 } }}
+                                    />
+                                    <Tooltip content={<LiquidTooltip />} cursor={{ stroke: 'rgba(0,0,0,0.1)', strokeWidth: 2 }} />
+                                    <Legend iconType="circle" />
+                                    {currentDayLabel && (
+                                        <ReferenceLine
+                                            x={currentDayLabel}
+                                            stroke={CHART_COLORS.brand}
+                                            strokeDasharray="4 3"
+                                            strokeWidth={1.5}
+                                            label={{ value: `Day ${selectedDay}`, position: 'top', fontSize: 10, fill: CHART_COLORS.brand, fontWeight: 600 }}
+                                        />
+                                    )}
+                                    <Area
+                                        type="monotone" name="DC Total" dataKey="DC Total"
+                                        stroke={CHART_COLORS.teal} fill="url(#gradDailyDC)" strokeWidth={3}
+                                        activeDot={{ r: 6, stroke: '#fff', strokeWidth: 2 }}
+                                        animationDuration={600}
+                                    />
+                                </AreaChart>
+                            </ResponsiveContainer>
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
+        </div>
+    );
+}
+
+// ─── DC Daily Meters Table (mirrors ZoneL3Table) ─────────────────────────────
+
+function DCDailyTable({ monthData }: { monthData: SupabaseDailyWaterConsumption[] }) {
+    const [search, setSearch] = useState('');
+    const [sort, setSort] = useState<SortState>({ key: '', dir: null });
+    const [page, setPage] = useState(1);
+    const [rowsPerPage, setRowsPerPage] = useState(15);
+
+    // Build account map for quick lookups
+    const accountMap = useMemo(() => {
+        const map = new Map<string, SupabaseDailyWaterConsumption>();
+        for (const row of monthData) map.set(row.account_number, row);
+        return map;
+    }, [monthData]);
+
+    // Determine latest day with data for any DC account
+    const latestDay = useMemo(() => {
+        let maxDay = 0;
+        for (const dc of DC_METERS) {
+            const row = accountMap.get(dc.account);
+            if (!row) continue;
+            for (let d = 31; d >= 1; d--) {
+                if (d <= maxDay) break;
+                const val = row[`day_${d}` as keyof SupabaseDailyWaterConsumption];
+                if (val != null) { maxDay = d; break; }
+            }
+        }
+        return Math.max(maxDay, 1);
+    }, [accountMap]);
+
+    const days = useMemo(() => Array.from({ length: latestDay }, (_, i) => i + 1), [latestDay]);
+
+    // Build DC meter list with all daily readings.
+    // `rawValues` preserves the pre-normalization null so "active today" logic
+    // can distinguish a real 0 reading from an IRR/null-as-zero placeholder.
+    const dcMeters = useMemo(() => {
+        return DC_METERS.map(dc => {
+            const dbRow = accountMap.get(dc.account);
+            const isNullAsZero = dc.isIrr || NULL_AS_ZERO_ACCOUNTS.has(dc.account);
+
+            const dailyValues: (number | null)[] = [];
+            const rawValues: (number | null)[] = [];
+            let total = 0;
+            for (let d = 1; d <= latestDay; d++) {
+                const raw = dbRow ? (dbRow[`day_${d}` as keyof SupabaseDailyWaterConsumption] as number | null) : null;
+                rawValues.push(raw != null ? Number(raw) : null);
+                const val = raw != null ? r2(Number(raw)) : isNullAsZero ? 0 : null;
+                dailyValues.push(val);
+                total += val ?? 0;
+            }
+
+            return {
+                account: dc.account,
+                label: dc.meterName,
+                isIrr: dc.isIrr,
+                isNullAsZero,
+                dailyValues,
+                rawValues,
+                total: r2(total),
+            };
+        });
+    }, [accountMap, latestDay]);
+
+    // Per-day ΣDC totals for footer
+    const dayTotals = useMemo(() => {
+        return days.map((_, i) => r2(dcMeters.reduce((sum, m) => sum + (m.dailyValues[i] ?? 0), 0)));
+    }, [days, dcMeters]);
+    const grandTotal = r2(dayTotals.reduce((s, v) => s + v, 0));
+
+    // Active meters today (latest day) — measured from rawValues so IRR
+    // meters that were normalized null→0 aren't mistakenly counted as active.
+    const activeMeters = dcMeters.filter(m => m.rawValues[latestDay - 1] !== null).length;
+
+    // Filter & sort
+    const filtered = useMemo(() => {
+        let result = [...dcMeters];
+        if (search) {
+            const q = search.toLowerCase();
+            result = result.filter(m => m.label.toLowerCase().includes(q) || m.account.includes(q));
+        }
+        if (sort.dir && sort.key) {
+            result.sort((a, b) => {
+                let va: number | string, vb: number | string;
+                if (sort.key === 'label') { va = a.label; vb = b.label; }
+                else if (sort.key === 'total') { va = a.total; vb = b.total; }
+                else { va = a.account; vb = b.account; }
+                const cmp = va < vb ? -1 : va > vb ? 1 : 0;
+                return sort.dir === 'desc' ? -cmp : cmp;
+            });
+        }
+        return result;
+    }, [dcMeters, search, sort]);
+
+    useEffect(() => { setPage(1); }, [search, sort]);
+
+    const totalPages = Math.max(1, Math.ceil(filtered.length / rowsPerPage));
+    const paginated = filtered.slice((page - 1) * rowsPerPage, page * rowsPerPage);
+    const colCount = 3 + days.length + 1; // Meter, Account, Type, ...days, Total
+
+    return (
+        <Card className="card-elevated">
+            <CardHeader className="card-elevated-header p-4 sm:p-5 md:p-6">
+                <div>
+                    <CardTitle className="text-base sm:text-lg">Direct Connection — Meters</CardTitle>
+                    <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+                        {dcMeters.length} meters — Day 1 to Day {latestDay}
+                    </p>
+                </div>
+            </CardHeader>
+            <CardContent className="p-4 sm:p-5 md:p-6 pt-0 space-y-4">
+                {/* DC summary KPI cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+                    {/* Monthly Total */}
                     <div className="bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] dark:shadow-[0_2px_10px_-3px_rgba(0,0,0,0.3)] hover:shadow-[0_8px_30px_-4px_rgba(6,81,237,0.15)] dark:hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.4)] hover:-translate-y-1 transition-all duration-200 ease-out group/stat overflow-hidden relative">
                         <div className="absolute top-0 left-0 w-full h-[3px] bg-teal-500 opacity-0 group-hover/stat:opacity-100 transition-opacity duration-200" />
                         <div className="flex justify-between items-start gap-2">
                             <div className="min-w-0">
-                                <p className="text-slate-500 dark:text-slate-400 text-[10px] sm:text-xs font-medium mb-1 uppercase tracking-wide">L2 Bulk (m³)</p>
-                                <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-slate-800 dark:text-slate-100 tabular-nums tracking-tight">{n(l2GrandTotal)}</h3>
+                                <p className="text-slate-500 dark:text-slate-400 text-[10px] sm:text-xs font-medium mb-1 uppercase tracking-wide">Monthly DC Total (m³)</p>
+                                <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-slate-800 dark:text-slate-100 tabular-nums tracking-tight">{n(grandTotal)}</h3>
                             </div>
                             <div className="p-2 sm:p-3 rounded-lg bg-teal-50 dark:bg-teal-900/20 group-hover/stat:scale-110 group-hover/stat:-rotate-3 transition-all duration-200 ease-out flex-shrink-0">
                                 <Droplets className="w-4 h-4 sm:w-5 sm:h-5 text-teal-500" />
                             </div>
                         </div>
                     </div>
-                    {/* ΣL3 */}
+                    {/* Total Meters */}
                     <div className="bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] dark:shadow-[0_2px_10px_-3px_rgba(0,0,0,0.3)] hover:shadow-[0_8px_30px_-4px_rgba(6,81,237,0.15)] dark:hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.4)] hover:-translate-y-1 transition-all duration-200 ease-out group/stat overflow-hidden relative">
                         <div className="absolute top-0 left-0 w-full h-[3px] bg-violet-500 opacity-0 group-hover/stat:opacity-100 transition-opacity duration-200" />
                         <div className="flex justify-between items-start gap-2">
                             <div className="min-w-0">
-                                <p className="text-slate-500 dark:text-slate-400 text-[10px] sm:text-xs font-medium mb-1 uppercase tracking-wide">ΣL3 (m³)</p>
-                                <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-slate-800 dark:text-slate-100 tabular-nums tracking-tight">{n(grandTotal)}</h3>
+                                <p className="text-slate-500 dark:text-slate-400 text-[10px] sm:text-xs font-medium mb-1 uppercase tracking-wide">DC Meters</p>
+                                <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-slate-800 dark:text-slate-100 tabular-nums tracking-tight">{dcMeters.length}</h3>
                             </div>
                             <div className="p-2 sm:p-3 rounded-lg bg-violet-50 dark:bg-violet-900/20 group-hover/stat:scale-110 group-hover/stat:-rotate-3 transition-all duration-200 ease-out flex-shrink-0">
                                 <Activity className="w-4 h-4 sm:w-5 sm:h-5 text-violet-500" />
                             </div>
                         </div>
                     </div>
-                    {/* Difference */}
+                    {/* Active Meters (latest day) */}
                     <div className="bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] dark:shadow-[0_2px_10px_-3px_rgba(0,0,0,0.3)] hover:shadow-[0_8px_30px_-4px_rgba(6,81,237,0.15)] dark:hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.4)] hover:-translate-y-1 transition-all duration-200 ease-out group/stat overflow-hidden relative">
-                        <div className={cn(
-                            "absolute top-0 left-0 w-full h-[3px] opacity-0 group-hover/stat:opacity-100 transition-opacity duration-200",
-                            Math.abs(diffGrandTotal) > 20 ? "bg-red-500" : "bg-emerald-500",
-                        )} />
+                        <div className="absolute top-0 left-0 w-full h-[3px] bg-emerald-500 opacity-0 group-hover/stat:opacity-100 transition-opacity duration-200" />
                         <div className="flex justify-between items-start gap-2">
                             <div className="min-w-0">
-                                <p className="text-slate-500 dark:text-slate-400 text-[10px] sm:text-xs font-medium mb-1 uppercase tracking-wide">Difference</p>
-                                <h3 className={cn(
-                                    "text-lg sm:text-xl md:text-2xl font-bold tabular-nums tracking-tight",
-                                    Math.abs(diffGrandTotal) > 20 ? "text-red-600 dark:text-red-400" : "text-emerald-600 dark:text-emerald-400",
-                                )}>{diffCell(diffGrandTotal)}</h3>
+                                <p className="text-slate-500 dark:text-slate-400 text-[10px] sm:text-xs font-medium mb-1 uppercase tracking-wide">Active (Day {latestDay})</p>
+                                <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-emerald-600 dark:text-emerald-400 tabular-nums tracking-tight">
+                                    {activeMeters}<span className="text-slate-400 dark:text-slate-500 text-base font-semibold"> / {dcMeters.length}</span>
+                                </h3>
                             </div>
-                            <div className={cn(
-                                "p-2 sm:p-3 rounded-lg group-hover/stat:scale-110 group-hover/stat:-rotate-3 transition-all duration-200 ease-out flex-shrink-0",
-                                Math.abs(diffGrandTotal) > 20 ? "bg-red-50 dark:bg-red-900/20" : "bg-emerald-50 dark:bg-emerald-900/20",
-                            )}>
-                                <ArrowUpDown className={cn(
-                                    "w-4 h-4 sm:w-5 sm:h-5",
-                                    Math.abs(diffGrandTotal) > 20 ? "text-red-500" : "text-emerald-500",
-                                )} />
+                            <div className="p-2 sm:p-3 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 group-hover/stat:scale-110 group-hover/stat:-rotate-3 transition-all duration-200 ease-out flex-shrink-0">
+                                <Zap className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-500" />
                             </div>
                         </div>
                     </div>
@@ -1259,7 +1525,7 @@ function ZoneL3Table({
                             <tr className="border-b border-slate-100 dark:border-slate-800">
                                 <Th
                                     sortKey="label" sort={sort} onSort={setSort}
-                                    className="sticky left-0 z-10 bg-white dark:bg-slate-900 min-w-[150px]"
+                                    className="sticky left-0 z-10 bg-white dark:bg-slate-900 min-w-[180px]"
                                 >Meter</Th>
                                 <Th sortKey="account" sort={sort} onSort={setSort} className="min-w-[100px]">Account</Th>
                                 <th className={cn(thBase, "text-center min-w-[90px]")}>Type</th>
@@ -1286,23 +1552,17 @@ function ZoneL3Table({
                                 >
                                     <td className={cn(tdBase, "font-semibold sticky left-0 z-10 bg-white dark:bg-slate-900")}>
                                         <span className="inline-flex items-center gap-2">
-                                            {meter.building ? (
-                                                <>
-                                                    <Building2 className="h-3.5 w-3.5 text-violet-500 shrink-0" />
-                                                    {meter.building.buildingName}
-                                                </>
+                                            {meter.isIrr ? (
+                                                <Droplets className="h-3.5 w-3.5 text-teal-500 shrink-0" />
                                             ) : (
-                                                <>
-                                                    <Home className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                                                    {meter.account}
-                                                    {meter.isNullAsZero && <StatusChip label="IRR" color="primary" />}
-                                                </>
+                                                <Zap className="h-3.5 w-3.5 text-amber-500 shrink-0" />
                                             )}
+                                            {meter.label}
                                         </span>
                                     </td>
                                     <td className={cn(tdBase, "font-mono text-[11px] text-slate-400 dark:text-slate-500")}>{meter.account}</td>
                                     <td className={cn(tdBase, "text-center")}>
-                                        <StatusChip label={meter.building ? "Building" : "Individual"} color={meter.building ? "primary" : "default"} />
+                                        <StatusChip label={meter.isIrr ? "Irrigation" : "Service"} color={meter.isIrr ? "primary" : "default"} />
                                     </td>
                                     {meter.dailyValues.map((val, i) => (
                                         <td key={i} className={cn(tdBase, "text-right tabular-nums px-2 text-[12px]")}>
@@ -1320,10 +1580,10 @@ function ZoneL3Table({
                                     </td>
                                 </tr>
                             ))}
-                            {/* ΣL3 Footer */}
+                            {/* ΣDC Footer */}
                             <tr className="border-t-2 border-slate-200 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-800/20">
                                 <td className={cn(tdBase, "font-bold sticky left-0 z-10 bg-slate-50/60 dark:bg-slate-800/20")} colSpan={3}>
-                                    ΣL3 Total ({l3Meters.length} meters)
+                                    ΣDC Total ({dcMeters.length} meters)
                                 </td>
                                 {dayTotals.map((t, i) => (
                                     <td key={i} className={cn(tdBase, "text-right tabular-nums font-bold px-2 text-[12px]")}>{n(t)}</td>
@@ -1430,15 +1690,34 @@ function getMonthsForYear(year: string): string[] {
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export function DailyWaterReport() {
-    const defaultMonth = getDefaultMonth();
-    const [selectedMonth, setSelectedMonth] = useState(defaultMonth);
-    const [selectedDay, setSelectedDay] = useState(() => getDefaultDay(defaultMonth));
+    // Safe initial state (matches SSR output — last available month, day 1).
+    // The real default ("yesterday" from the client's local clock) is applied
+    // in a client-only useEffect below, to avoid SSR timezone drift where the
+    // server's UTC clock could produce a different "yesterday" than the user's.
+    const initialMonths = getDynamicMonths();
+    const [selectedMonth, setSelectedMonth] = useState<string>(
+        initialMonths[initialMonths.length - 1],
+    );
+    const [selectedDay, setSelectedDay] = useState<number>(1);
+    const [defaultsApplied, setDefaultsApplied] = useState(false);
     const [status, setStatus] = useState<ReportStatus>('loading');
     const [monthData, setMonthData] = useState<SupabaseDailyWaterConsumption[]>([]);
     const [reportData, setReportData] = useState<ReportData | null>(null);
     const [errorMsg, setErrorMsg] = useState('');
     const [lastFetched, setLastFetched] = useState<Date | null>(null);
     const [activeView, setActiveView] = useState<string>(ZONE_BULK_CONFIG[0].zoneName);
+
+    // ── Apply "yesterday" defaults on client mount ────────────────────────────
+    // Runs once on the client so `new Date()` reflects the user's local time,
+    // not the server's UTC time. Guaranteed to land on (today − 1 day).
+    useEffect(() => {
+        const m = getDefaultMonth();
+        setSelectedMonth(m);
+        setSelectedDay(getDefaultDay(m));
+        setDefaultsApplied(true);
+        // Intentionally empty deps — run exactly once on mount.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     // ── Build report from cached month rows for any day (no network call) ──────
     const computeReport = useCallback((rows: SupabaseDailyWaterConsumption[], day: number) => {
@@ -1500,11 +1779,15 @@ export function DailyWaterReport() {
         setSelectedDay(v[0]);
     }, []); // setSelectedDay is a stable useState dispatcher — no deps needed
 
-    // ── Auto-fetch when month changes (includes initial mount) ────────────────
+    // ── Auto-fetch when month changes ─────────────────────────────────────────
+    // Guarded by `defaultsApplied` so we only fetch once the client-side
+    // "yesterday" default has been applied — avoiding a wasted fetch for the
+    // SSR placeholder month.
     useEffect(() => {
+        if (!defaultsApplied) return;
         setReportData(null);
         fetchMonth(selectedMonth);
-    }, [selectedMonth, fetchMonth]);
+    }, [selectedMonth, fetchMonth, defaultsApplied]);
 
     // ── Supabase real-time subscription ───────────────────────────────────────
     const { isLive } = useSupabaseRealtime({
@@ -1645,10 +1928,7 @@ export function DailyWaterReport() {
                                     Select Zone
                                 </span>
                                 {ZONE_BULK_CONFIG.map(z => {
-                                    const zr = reportData.zoneRows.find(r => r.zoneName === z.zoneName);
                                     const isActive = z.zoneName === activeView;
-                                    const hasHighLoss = zr?.isHighLoss;
-                                    const hasNullL2 = zr?.isNullL2;
                                     return (
                                         <button
                                             key={z.zoneName}
@@ -1664,18 +1944,16 @@ export function DailyWaterReport() {
                                         </button>
                                     );
                                 })}
-                                <div className="w-px h-6 bg-slate-200 dark:bg-slate-700 mx-1" />
                                 <button
                                     onClick={() => setActiveView('dc')}
                                     className={cn(
-                                        "px-3 py-1.5 rounded-full text-sm font-medium transition-all border inline-flex items-center gap-1.5",
+                                        "px-3 py-1.5 rounded-full text-sm font-medium transition-all border",
                                         activeView === 'dc'
-                                            ? "bg-mb-warning text-white border-mb-warning shadow-sm"
+                                            ? "bg-primary text-white border-primary shadow-sm dark:bg-secondary dark:text-white dark:border-secondary"
                                             : "bg-white text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700"
                                     )}
                                 >
-                                    <Zap className="h-3.5 w-3.5" />
-                                    Direct Connections
+                                    Direct Connection
                                 </button>
                             </div>
                         </CardContent>
@@ -1683,7 +1961,15 @@ export function DailyWaterReport() {
 
                     {/* ── Content based on selection ─────────────────────── */}
                     {activeView === 'dc' ? (
-                        <DCMetersTable rows={reportData.dcRows} />
+                        <>
+                            <DCAnalyticsPanel
+                                reportData={reportData}
+                                monthData={monthData}
+                                selectedDay={selectedDay}
+                                month={selectedMonth}
+                            />
+                            <DCDailyTable monthData={monthData} />
+                        </>
                     ) : (
                         <>
                             <ZoneAnalyticsPanel
