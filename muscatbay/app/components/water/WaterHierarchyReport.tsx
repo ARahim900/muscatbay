@@ -241,7 +241,8 @@ function KpiCard({
     label, value, unit, subtitle, icon, tone,
 }: {
     label: string;
-    value: number;
+    /** Numeric value to show, or `null` for an "unavailable" state. */
+    value: number | null;
     unit: string;
     subtitle: string;
     icon: React.ReactNode;
@@ -280,12 +281,25 @@ function KpiCard({
                     <div className={t.text}>{icon}</div>
                 </div>
                 <div className="flex items-baseline gap-1.5">
-                    <span className={cn("text-2xl sm:text-3xl font-bold tabular-nums", t.text)}>
-                        {value.toLocaleString(undefined, {
-                            maximumFractionDigits: unit === '%' ? 1 : 0,
-                        })}
-                    </span>
-                    <span className="text-xs text-slate-400 dark:text-slate-500 font-medium">{unit}</span>
+                    {value === null ? (
+                        <span
+                            className={cn(
+                                "text-2xl sm:text-3xl font-bold tabular-nums text-slate-400 dark:text-slate-500",
+                            )}
+                            aria-label="unavailable"
+                        >
+                            —
+                        </span>
+                    ) : (
+                        <>
+                            <span className={cn("text-2xl sm:text-3xl font-bold tabular-nums", t.text)}>
+                                {value.toLocaleString(undefined, {
+                                    maximumFractionDigits: unit === '%' ? 1 : 0,
+                                })}
+                            </span>
+                            <span className="text-xs text-slate-400 dark:text-slate-500 font-medium">{unit}</span>
+                        </>
+                    )}
                 </div>
                 <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1">{subtitle}</p>
             </CardContent>
@@ -348,15 +362,19 @@ export function WaterHierarchyReport() {
                 .eq('month', month);
             if (error) throw new Error(error.message);
             if (!data || data.length === 0) {
-                if (!silent) {
-                    setErrorMsg(`No data found for ${month}. This month may not have been loaded yet.`);
-                    setStatus('error');
-                }
+                // Always reconcile — if the month's data was deleted, a silent
+                // refresh should clear stale rows and surface the empty state.
+                setRows([]);
+                setErrorMsg(`No data found for ${month}. This month may not have been loaded yet.`);
+                setStatus('error');
                 return;
             }
+            // Success reconciliation applies to both manual and silent refreshes
+            // so a recovering realtime update can flip the UI out of an error state.
             setRows(data as SupabaseDailyWaterConsumption[]);
             setLastFetched(new Date());
-            if (!silent) setStatus('success');
+            setErrorMsg('');
+            setStatus('success');
         } catch (err) {
             if (!silent) {
                 setErrorMsg(err instanceof Error ? err.message : String(err));
@@ -581,17 +599,17 @@ export function WaterHierarchyReport() {
                     />
                     <KpiCard
                         label="NETWORK LOSS"
-                        value={kpis.hasL1 ? kpis.loss : 0}
+                        value={kpis.hasL1 ? kpis.loss : null}
                         unit="m³"
-                        subtitle="L1 − (L2 + DC)"
+                        subtitle={kpis.hasL1 ? 'L1 − (L2 + DC)' : 'Unavailable — L1 not reported'}
                         icon={<TrendingDown className="h-5 w-5" />}
                         tone="amber"
                     />
                     <KpiCard
                         label="NETWORK EFFICIENCY"
-                        value={kpis.hasL1 ? kpis.efficiency : 100}
+                        value={kpis.hasL1 ? kpis.efficiency : null}
                         unit="%"
-                        subtitle="Distribution efficiency ratio"
+                        subtitle={kpis.hasL1 ? 'Distribution efficiency ratio' : 'Unavailable — L1 not reported'}
                         icon={<Activity className="h-5 w-5" />}
                         tone="emerald"
                     />
