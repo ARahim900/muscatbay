@@ -63,7 +63,7 @@ describe('Asset Transformation', () => {
             AMC_Contractor: null,
             Responsibility_Owner: null,
             Tag_Duplicate_Flag: false,
-        } as unknown as any;
+        } as unknown as Parameters<typeof transformAsset>[0];
 
         const result = transformAsset(dbAsset);
 
@@ -115,7 +115,7 @@ describe('Asset Transformation', () => {
             AMC_Contractor: null,
             Responsibility_Owner: null,
             Tag_Duplicate_Flag: null,
-        } as unknown as any;
+        } as unknown as Parameters<typeof transformAsset>[0];
 
         const result = transformAsset(minimalAsset);
 

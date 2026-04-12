@@ -21,7 +21,7 @@ function escapeCSVField(value: unknown): string {
 /**
  * Convert an array of objects to CSV string
  */
-export function objectsToCSV<T extends Record<string, any>>(
+export function objectsToCSV<T extends Record<string, unknown>>(
     data: T[],
     columns?: { key: keyof T; header: string }[]
 ): string {
@@ -65,7 +65,7 @@ export function downloadFile(content: string, filename: string, mimeType: string
 /**
  * Export data to CSV file and trigger download
  */
-export function exportToCSV<T extends Record<string, any>>(
+export function exportToCSV<T extends Record<string, unknown>>(
     data: T[],
     filename: string,
     columns?: { key: keyof T; header: string }[]

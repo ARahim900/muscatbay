@@ -74,9 +74,13 @@ function PermissionBanner({
   const [dismissed, setDismissed] = useState(false);
   const [mounted, setMounted] = useState(false);
 
+  // Hydration-safe mount: defers localStorage read until after hydration to
+  // avoid SSR/CSR mismatch.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
     const wasDismissed = localStorage.getItem("notif-banner-dismissed");
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (wasDismissed) setDismissed(true);
   }, []);
 
@@ -144,16 +148,14 @@ function PermissionBanner({
  */
 export function NotificationProvider({ children }: { children: ReactNode }) {
   const hook = useNotifications();
-  const [unreadCount, setUnreadCount] = useState(0);
 
-  // Track unread count based on new notifications arriving
-  useEffect(() => {
-    setUnreadCount(hook.notifications.length);
-  }, [hook.notifications.length]);
+  // Unread count is derived directly from notifications rather than stored
+  // in state + an effect — avoids the cascading render React 19 warns about
+  // and removes a transient out-of-sync window between props and state.
+  const unreadCount = hook.notifications.length;
 
   const clearAll = useCallback(() => {
     hook.clearAll();
-    setUnreadCount(0);
   }, [hook]);
 
   const contextValue: NotificationContextValue = {

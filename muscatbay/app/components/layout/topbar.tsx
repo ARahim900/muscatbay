@@ -21,7 +21,10 @@ export function Topbar() {
     const initials = displayName.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2);
     const userRole = profile?.role === 'admin' ? 'Administrator' : 'User';
 
+    // Hydration-safe mount flag: prevents SSR/CSR markup mismatch for
+    // theme-dependent icons. Cannot be derived at render time.
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setMounted(true);
     }, []);
 

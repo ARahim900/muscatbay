@@ -35,15 +35,19 @@ interface DualRangeSliderProps {
 function DualRangeSlider({ min, max, value, onValueChange }: DualRangeSliderProps) {
     const trackRef = useRef<HTMLDivElement>(null);
     const draggingRef = useRef<'start' | 'end' | null>(null);
-    // Refs to always read the latest props inside window event listeners
+    // Refs to always read the latest props inside window event listeners.
+    // Updated in a layout effect (not during render) so concurrent rendering
+    // cannot observe inconsistent values.
     const valueRef = useRef(value);
-    valueRef.current = value;
     const onValueChangeRef = useRef(onValueChange);
-    onValueChangeRef.current = onValueChange;
     const minRef = useRef(min);
-    minRef.current = min;
     const maxRef = useRef(max);
-    maxRef.current = max;
+    useEffect(() => {
+        valueRef.current = value;
+        onValueChangeRef.current = onValueChange;
+        minRef.current = min;
+        maxRef.current = max;
+    }, [value, onValueChange, min, max]);
     // Prevent the click event that fires after pointerup from jumping a thumb
     const justDraggedRef = useRef(false);
 
@@ -176,7 +180,9 @@ export function DateRangePicker({
 }: DateRangePickerProps) {
     const [activePreset, setActivePreset] = React.useState<PresetKey>(null);
     const onRangeChangeRef = useRef(onRangeChange);
-    onRangeChangeRef.current = onRangeChange;
+    useEffect(() => {
+        onRangeChangeRef.current = onRangeChange;
+    }, [onRangeChange]);
 
     // Cap the visible timeline to the last MAX_VISIBLE_MONTHS months
     const activeTimeline = useMemo(() => {

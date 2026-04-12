@@ -167,14 +167,14 @@ export default function SettingsPage() {
             <div className="flex flex-col lg:flex-row gap-8">
                 {/* Sidebar Navigation */}
                 <aside className="lg:w-64 space-y-1">
-                    {[
+                    {([
                         { id: 'profile', label: 'Profile', icon: User },
                         { id: 'account', label: 'Account', icon: Shield },
                         { id: 'notifications', label: 'Notifications', icon: Bell },
-                    ].map((item) => (
+                    ] as const).map((item) => (
                         <button
                             key={item.id}
-                            onClick={() => setActiveTab(item.id as any)}
+                            onClick={() => setActiveTab(item.id)}
                             className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-lg transition-colors ${activeTab === item.id
                                 ? "bg-sidebar text-white shadow-md"
                                 : "text-muted-foreground hover:bg-sidebar/10 hover:text-sidebar"

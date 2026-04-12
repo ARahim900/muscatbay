@@ -689,7 +689,7 @@ export default function FirefightingPage() {
                                 <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
                                 <div>
                                     <p className="font-bold text-red-800 dark:text-red-400 text-sm">PO Not Yet Issued by Muscat Bay</p>
-                                    <p className="text-xs text-red-600 dark:text-red-500 mt-1">Arun Achuthan confirmed on 22 Feb 2026: "We are awaiting the PO to proceed with the work."</p>
+                                    <p className="text-xs text-red-600 dark:text-red-500 mt-1">Arun Achuthan confirmed on 22 Feb 2026: &ldquo;We are awaiting the PO to proceed with the work.&rdquo;</p>
                                 </div>
                             </div>
                         </CardContent>

@@ -63,8 +63,11 @@ export function BottomNav() {
 
   const isOverflowActive = overflowItems.some(i => isRouteActive(i.href, pathname));
 
-  // Close drawer on route change
+  // Close drawer on route change — canonical "close overlay on navigation"
+  // pattern. Cannot be derived from pathname at render time because it must
+  // override user-opened state.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setDrawerOpen(false);
   }, [pathname]);
 

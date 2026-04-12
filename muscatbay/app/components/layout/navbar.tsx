@@ -74,8 +74,11 @@ export function Navbar() {
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-    // Close mobile menu on route change
+    // Close mobile menu on route change — canonical "close overlay on
+    // navigation" pattern. Cannot be derived from pathname at render time
+    // because it must override user-opened state.
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setIsMobileMenuOpen(false);
     }, [pathname]);
 

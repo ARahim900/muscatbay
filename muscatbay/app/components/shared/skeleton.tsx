@@ -103,7 +103,11 @@ export function TableBodySkeleton({ rows = 5, columns = 4 }: { rows?: number; co
     );
 }
 
-// Skeleton for charts
+// Skeleton for charts — fixed bar heights so the skeleton is deterministic
+// across renders (Math.random during render causes the skeleton to flicker
+// and is flagged by react-hooks/purity).
+const CHART_SKELETON_BAR_HEIGHTS = [55, 72, 40, 85, 63, 48, 78, 35];
+
 export function ChartSkeleton({ height = "h-[300px]" }: { height?: string }) {
     return (
         <div className={cn("rounded-xl border border-slate-200/60 dark:border-slate-700/50 bg-white dark:bg-slate-800/50 p-6", height)}>
@@ -111,11 +115,11 @@ export function ChartSkeleton({ height = "h-[300px]" }: { height?: string }) {
                 <Skeleton className="h-5 w-48 mb-2" />
                 <Skeleton className="h-3 w-32 mb-6" />
                 <div className="flex-1 flex items-end gap-2">
-                    {Array.from({ length: 8 }).map((_, i) => (
+                    {CHART_SKELETON_BAR_HEIGHTS.map((barHeight, i) => (
                         <Skeleton
                             key={i}
                             className="flex-1"
-                            style={{ height: `${30 + Math.random() * 60}%` }}
+                            style={{ height: `${barHeight}%` }}
                         />
                     ))}
                 </div>

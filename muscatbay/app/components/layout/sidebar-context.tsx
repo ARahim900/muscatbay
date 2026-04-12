@@ -18,11 +18,16 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
 
-  // Initialize from localStorage on mount
+  // Initialize from localStorage on mount — hydration-safe pattern: we MUST
+  // defer localStorage reads until after hydration to avoid SSR/CSR markup
+  // mismatch. The new react-hooks/set-state-in-effect rule flags this but
+  // there is no render-time alternative for browser-only state.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsMounted(true);
     const savedCollapsed = localStorage.getItem('sidebarCollapsed');
     if (savedCollapsed) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsCollapsed(JSON.parse(savedCollapsed));
     }
   }, []);

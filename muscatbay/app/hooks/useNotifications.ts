@@ -114,11 +114,15 @@ export function useNotifications(
   const [permission, setPermission] = useState<PushPermission>("default");
 
   // ── Check browser notification support & current permission ──────────
+  // Hydration-safe: the Notification API is browser-only, must read
+  // permission after mount to avoid SSR/CSR mismatch.
   useEffect(() => {
     if (typeof window === "undefined" || !("Notification" in window)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPermission("unsupported");
       return;
     }
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPermission(Notification.permission as PushPermission);
   }, []);
 
@@ -241,12 +245,18 @@ export function useNotifications(
   }, []);
 
   // ── Supabase realtime watchers ───────────────────────────────────────
-  // Stable refs so the effect doesn't re-run when identity changes
+  // Stable refs so the effect doesn't re-run when identity changes.
+  // Refs are updated inside effects (not during render) so concurrent
+  // rendering cannot observe an inconsistent value.
   const notifyRef = useRef(notify);
-  notifyRef.current = notify;
+  useEffect(() => {
+    notifyRef.current = notify;
+  }, [notify]);
 
   const alertsRef = useRef(realtimeAlerts);
-  alertsRef.current = realtimeAlerts;
+  useEffect(() => {
+    alertsRef.current = realtimeAlerts;
+  }, [realtimeAlerts]);
 
   const alertsKey = realtimeAlerts
     .map((a) => `${a.table}:${a.channelName}:${a.filter ?? ""}`)

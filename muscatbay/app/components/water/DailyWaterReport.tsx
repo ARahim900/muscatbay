@@ -771,6 +771,7 @@ function ZoneL3Table({
         return result;
     }, [l3Meters, search, sort]);
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reset pagination to page 1 when search/sort change; storing page in state is needed because users can also change it via pagination controls.
     useEffect(() => { setPage(1); }, [search, sort]);
 
     const totalPages = Math.max(1, Math.ceil(filtered.length / rowsPerPage));
@@ -1454,6 +1455,7 @@ function DCDailyTable({ monthData }: { monthData: SupabaseDailyWaterConsumption[
         return result;
     }, [dcMeters, search, sort]);
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reset pagination to page 1 when search/sort change; storing page in state is needed because users can also change it via pagination controls.
     useEffect(() => { setPage(1); }, [search, sort]);
 
     const totalPages = Math.max(1, Math.ceil(filtered.length / rowsPerPage));

@@ -43,7 +43,7 @@ muscatbay/app/
 ├── functions/api/    # API utility functions (data fetching)
 ├── hooks/            # Custom hooks: useDashboardData, useSTPData, useScrollAnimation, useSupabaseRealtime
 ├── lib/              # Core utilities: auth, supabase, utils (cn), validation, config, water-data, export-utils, filter-preferences
-├── middleware.ts     # Supabase auth session refresh
+├── proxy.ts          # Supabase auth session refresh (Next.js 16 proxy convention)
 ├── scripts/          # Seed data & utility scripts
 ├── sql/              # Database schemas, migrations, fixes
 └── public/           # Static assets, PWA icons, manifest
@@ -72,7 +72,7 @@ muscatbay/app/
 - **Supabase** for database, auth, and realtime
 - `@supabase/ssr` v0.9 for server-side auth (getAll/setAll cookie API)
 - `createBrowserClient` in `functions/supabase-client.ts` (client-side)
-- `createServerClient` in `middleware.ts` (server-side session refresh)
+- `createServerClient` in `proxy.ts` (server-side session refresh; Next.js 16 renamed `middleware` → `proxy`)
 - Server actions in `actions/` directory
 - API functions in `functions/api/`
 

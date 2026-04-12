@@ -489,7 +489,7 @@ export default function ElectricityPage() {
         const selectedMonths = monthsToUse.slice(startIdx, (endIdx >= 0 ? endIdx : monthsToUse.length - 1) + 1);
 
         // Filter Meters by Type
-        let typeFilteredMeters = analysisType === "All"
+        const typeFilteredMeters = analysisType === "All"
             ? meters
             : meters.filter(m => m.type === analysisType);
 
@@ -540,7 +540,7 @@ export default function ElectricityPage() {
 
         // Per-meter chart data for multi-line chart (type aggregate view with ≤10 meters)
         const perMeterChartData = selectedMonths.map(month => {
-            const point: Record<string, any> = { month };
+            const point: Record<string, string | number> = { month };
             typeFilteredMeters.forEach(meter => {
                 point[meter.name] = meter.readings[month] || 0;
             });

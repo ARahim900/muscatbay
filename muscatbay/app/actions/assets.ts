@@ -21,12 +21,12 @@ export async function fetchAssetsAction(
             data: result.data,
             count: result.count
         };
-    } catch (err: any) {
+    } catch (err) {
         console.error('Server Action Error:', err);
         return {
             data: [],
             count: 0,
-            error: err.message || 'Server-side fetch failed'
+            error: err instanceof Error ? err.message : 'Server-side fetch failed'
         };
     }
 }

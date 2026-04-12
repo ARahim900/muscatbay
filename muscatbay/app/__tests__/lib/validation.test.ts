@@ -75,7 +75,7 @@ describe('Password Validation', () => {
     it('should return correct password requirements', () => {
         const requirements = getPasswordRequirements('Test123!');
         expect(requirements.length).toBe(5);
-        expect(requirements.every((r: any) => r.met)).toBe(true);
+        expect(requirements.every((r: { met: boolean }) => r.met)).toBe(true);
     });
 
     it('should identify missing password requirements', () => {

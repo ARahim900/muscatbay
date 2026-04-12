@@ -472,7 +472,7 @@ export function WaterDatabaseTable({ meters, months }: WaterDatabaseTableProps) 
                 <div className="flex flex-wrap items-center gap-2 px-1">
                     {searchTerm && (
                         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-sm bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
-                            Search: "{searchTerm}"
+                            Search: &ldquo;{searchTerm}&rdquo;
                             <button onClick={() => setSearchTerm('')} className="hover:text-slate-900">
                                 <X className="w-3 h-3" />
                             </button>

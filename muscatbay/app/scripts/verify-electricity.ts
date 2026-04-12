@@ -82,7 +82,8 @@ async function main() {
     console.log(`Found ${meters?.length || 0} meters in database\n`);
 
     // Fetch all readings (paginate to avoid 1000-row default limit)
-    let allReadings: any[] = [];
+    type ReadingRow = { meter_id: string; month: string; consumption: number };
+    let allReadings: ReadingRow[] = [];
     let page = 0;
     const pageSize = 1000;
     while (true) {
@@ -103,8 +104,14 @@ async function main() {
     console.log(`Found ${readings.length} readings in database\n`);
 
     // Build lookup: meter_id -> meter
-    const meterMap = new Map<string, any>();
-    const nameToMeter = new Map<string, any>();
+    type MeterRow = {
+        id: string;
+        name: string;
+        meter_type: string;
+        account_number: string | null;
+    };
+    const meterMap = new Map<string, MeterRow>();
+    const nameToMeter = new Map<string, MeterRow>();
     for (const m of meters!) {
         meterMap.set(m.id, m);
         nameToMeter.set(m.name, m);

@@ -46,12 +46,16 @@ export function Providers({ children }: { children: ReactNode }) {
         applyTheme(resolved);
     }, [applyTheme]);
 
-    // Sync theme from localStorage on mount
+    // Sync theme from localStorage on mount — hydration-safe: localStorage
+    // and window.matchMedia are browser-only, must run after mount to avoid
+    // SSR/CSR theme mismatch.
     useEffect(() => {
         const stored = (localStorage.getItem(STORAGE_KEY) as Theme) || "system";
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setThemeState(stored);
         const resolved = stored === "system" ? getSystemTheme() : stored;
         applyTheme(resolved);
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setMounted(true);
     }, [applyTheme]);
 

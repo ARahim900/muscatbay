@@ -26,6 +26,23 @@ const eslintConfig = defineConfig([
       ],
     },
   },
+  // Standalone Node.js utility scripts (seed/upload/verify).
+  // These are CommonJS scripts executed via `node scripts/*.js`, not bundled
+  // with the Next.js app. `require()` is legitimate here, and unused locals
+  // in one-off data scripts are not worth flagging as errors.
+  {
+    files: ["scripts/**/*.js", "scripts/**/*.cjs"],
+    rules: {
+      "@typescript-eslint/no-require-imports": "off",
+      "@typescript-eslint/no-unused-vars": "off",
+    },
+  },
+  {
+    files: ["scripts/**/*.ts"],
+    rules: {
+      "@typescript-eslint/no-unused-vars": "warn",
+    },
+  },
 ]);
 
 export default eslintConfig;

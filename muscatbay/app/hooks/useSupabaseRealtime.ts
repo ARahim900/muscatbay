@@ -54,18 +54,27 @@ export function useSupabaseRealtime({
     const [isLive, setIsLive] = useState(false);
 
     // Keep a stable reference to the callback to avoid re-subscribing
-    // every time the caller's callback identity changes.
+    // every time the caller's callback identity changes. The ref is
+    // updated in an effect (not during render) so concurrent rendering
+    // cannot observe an inconsistent value.
     const onChangedRef = useRef(onChanged);
-    onChangedRef.current = onChanged;
+    useEffect(() => {
+        onChangedRef.current = onChanged;
+    }, [onChanged]);
 
+    // isLive is external-world state (Supabase subscription status), not
+    // derivable from props alone; guard clauses must reset it when
+    // prerequisites change.
     useEffect(() => {
         if (!enabled) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setIsLive(false);
             return;
         }
 
         const client = getSupabaseClient();
         if (!client) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setIsLive(false);
             return;
         }

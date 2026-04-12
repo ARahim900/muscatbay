@@ -36,10 +36,11 @@ async function verifyData() {
 
 
     // Group by month
-    const counts = (data || []).reduce((acc: Record<string, number>, curr: any) => {
+    type ReadingRow = { month: string; consumption: number };
+    const counts = ((data ?? []) as ReadingRow[]).reduce<Record<string, number>>((acc, curr) => {
         acc[curr.month] = (acc[curr.month] || 0) + 1;
         return acc;
-    }, {} as Record<string, number>);
+    }, {});
 
     console.log('Counts per month:', counts);
 }
