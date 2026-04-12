@@ -43,7 +43,6 @@ import { WaterLossGauge } from "@/components/water/water-loss-gauge";
 import { LiquidTooltip } from "../../components/charts/liquid-tooltip";
 import { MeterTable } from "@/components/water/meter-table";
 import { DailyWaterReport } from "@/components/water/DailyWaterReport";
-import { WaterHierarchyReport } from "@/components/water/WaterHierarchyReport";
 import { PageHeader } from "@/components/shared/page-header";
 import { TabNavigation } from "@/components/shared/tab-navigation";
 import { StatsGrid } from "@/components/shared/stats-grid";
@@ -253,7 +252,6 @@ function getAllZonesAnalysisFromData(caches: LevelCaches, month: string) {
 export default function WaterPage() {
     const [dashboardView, setDashboardView] = useState<DashboardView>('monthly');
     const [monthlyTab, setMonthlyTab] = useState("overview"); // Changed to string for TabNavigation compatibility
-    const [dailyTab, setDailyTab] = useState("report");
     const [startMonth, setStartMonth] = useState('Jan-24');
     const [endMonth, setEndMonth] = useState('Jan-26');
     const [selectedZone, setSelectedZone] = useState('Zone_01_(FM)');
@@ -1222,17 +1220,7 @@ export default function WaterPage() {
             {/* Daily Dashboard View */}
             {dashboardView === 'daily' && (
                 <div className="space-y-6 animate-in fade-in duration-200">
-                    <TabNavigation
-                        activeTab={dailyTab}
-                        onTabChange={setDailyTab}
-                        tabs={[
-                            { key: 'report', label: 'Daily Report', icon: CalendarDays },
-                            { key: 'hierarchy', label: 'Water Hierarchy', icon: Layers },
-                        ]}
-                    />
-
-                    {dailyTab === 'report' && <DailyWaterReport />}
-                    {dailyTab === 'hierarchy' && <WaterHierarchyReport />}
+                    <DailyWaterReport />
                 </div>
             )}
         </div>
