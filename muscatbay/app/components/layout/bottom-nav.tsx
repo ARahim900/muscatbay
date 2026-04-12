@@ -146,11 +146,13 @@ export function BottomNav() {
         role="dialog"
         aria-label="Navigation menu"
         aria-modal="true"
-        className={`
-          fixed bottom-[64px] left-0 right-0 z-[95] md:hidden
-          motion-safe:transition-transform motion-safe:duration-200 motion-safe:ease-out
-          ${drawerOpen ? 'translate-y-0' : 'translate-y-[calc(100%+64px)]'}
-        `}
+        style={{
+          bottom: 'calc(64px + env(safe-area-inset-bottom, 0px))',
+          transform: drawerOpen
+            ? 'translateY(0)'
+            : 'translateY(calc(100% + 64px + env(safe-area-inset-bottom, 0px)))',
+        }}
+        className="fixed left-0 right-0 z-[95] md:hidden motion-safe:transition-transform motion-safe:duration-200 motion-safe:ease-out"
       >
         <div className="mx-3 mb-2 rounded-2xl bg-white dark:bg-slate-800 shadow-2xl border border-gray-200 dark:border-slate-700 overflow-hidden">
           {/* Drawer header */}
@@ -205,11 +207,11 @@ export function BottomNav() {
 
       {/* Bottom navigation bar */}
       <nav
-        className="fixed bottom-0 left-0 right-0 z-[100] md:hidden h-16 bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-700/80 shadow-[0_-4px_16px_rgba(0,0,0,0.07)] dark:shadow-[0_-2px_10px_rgba(0,0,0,0.3)] bottom-nav-safe"
+        className="fixed bottom-0 left-0 right-0 z-[100] md:hidden bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-700/80 shadow-[0_-4px_16px_rgba(0,0,0,0.07)] dark:shadow-[0_-2px_10px_rgba(0,0,0,0.3)] bottom-nav-safe"
         aria-label="Mobile navigation"
         aria-hidden={drawerOpen}
       >
-        <div className="flex items-center justify-around h-full px-1">
+        <div className="flex items-center justify-around h-16 px-1">
           {primaryItems.map((item) => {
             const Icon = item.icon;
             const active = isRouteActive(item.href, pathname);
