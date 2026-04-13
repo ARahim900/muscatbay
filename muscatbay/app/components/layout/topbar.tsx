@@ -3,9 +3,10 @@
 import { useSidebar } from "./sidebar-context";
 import { useAuth } from "@/components/auth/auth-provider";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Menu, Search, Bell, Sun, Moon, User, Settings, LogOut, ChevronDown } from "lucide-react";
+import { Menu, Sun, Moon, Settings, LogOut, ChevronDown } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useTheme } from "@/components/providers";
 
 export function Topbar() {
@@ -56,10 +57,10 @@ export function Topbar() {
     // Shared header shell — solid brand purple (#4E4456 via --primary token)
     // in both light & dark modes. Fixed to the viewport so it spans the full
     // site width (edge-to-edge, above the sidebar) and stays visible on
-    // scroll. z-50 keeps it above the sidebar (z-40). Prominent shadow
-    // separates it from the body content below.
+    // scroll. z-50 keeps it above the sidebar (z-40). A subtle 1px seam
+    // under the navbar defines the layer without a heavy drop shadow.
     const headerClassName =
-        "h-16 fixed top-0 inset-x-0 z-50 bg-primary px-4 sm:px-6 flex items-center justify-between border-b border-white/10 shadow-[0_4px_20px_rgba(0,0,0,0.12)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.5)]";
+        "h-[76px] fixed top-0 inset-x-0 z-50 bg-primary px-4 sm:px-6 flex items-center justify-between border-b border-white/10 shadow-[0_1px_0_rgba(0,0,0,0.18)] dark:shadow-[0_1px_0_rgba(0,0,0,0.55)]";
 
     if (!mounted) {
         return (
@@ -73,27 +74,39 @@ export function Topbar() {
 
     return (
         <header className={headerClassName}>
-            {/* Left Section - Mobile hamburger + Title */}
+            {/* Left Section - Mobile hamburger + Logo + Title */}
             <div className="flex items-center gap-3">
                 {/* Mobile hamburger - Always visible on mobile */}
                 <button
                     onClick={() => setIsOpen(prev => !prev)}
-                    className="w-10 h-10 flex items-center justify-center rounded-lg bg-white/10 text-white md:hidden hover:bg-white/20 transition-colors duration-200"
+                    className="w-10 h-10 flex items-center justify-center rounded-lg bg-white/10 text-white md:hidden hover:bg-white/20 transition-colors duration-150"
                     aria-label="Toggle menu"
                 >
                     <Menu className="w-5 h-5" />
                 </button>
 
-                {/* App Title - Mobile first */}
-                <div>
-                    <h1 className="text-lg sm:text-xl font-bold leading-tight tracking-tight">
-                        <span className="text-white">MUSCAT </span>
-                        <span className="text-secondary">BAY</span>
-                    </h1>
-                    <p className="text-xs sm:text-sm text-white/60 hidden sm:block">
-                        Resource Management
-                    </p>
-                </div>
+                {/* Brand lockup — logo + title */}
+                <Link href="/" className="flex items-center gap-3 group" aria-label="Muscat Bay home">
+                    <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center bg-white/10 ring-1 ring-white/15 shadow-[0_4px_14px_rgba(0,0,0,0.25)] group-hover:bg-white/20 group-hover:ring-secondary/40 transition-colors duration-150">
+                        <Image
+                            src="/mb-logo.png"
+                            alt="Muscat Bay"
+                            width={36}
+                            height={36}
+                            className="object-contain"
+                            priority
+                        />
+                    </div>
+                    <div className="leading-tight">
+                        <h1 className="text-lg sm:text-xl font-bold tracking-tight">
+                            <span className="text-white">MUSCAT </span>
+                            <span className="text-secondary">BAY</span>
+                        </h1>
+                        <p className="text-[11px] sm:text-xs uppercase tracking-[0.14em] text-white/60 hidden sm:block">
+                            Resource Management
+                        </p>
+                    </div>
+                </Link>
             </div>
 
             {/* Right Section - Action Buttons */}
@@ -101,75 +114,50 @@ export function Topbar() {
                 {/* Theme Toggle */}
                 <button
                     onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                    className="w-11 h-11 flex items-center justify-center hover:bg-white/10 rounded-lg text-white/80 hover:text-white transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:outline-none"
+                    className="w-10 h-10 flex items-center justify-center hover:bg-white/10 rounded-lg text-white/80 hover:text-white transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:outline-none"
                     aria-label="Toggle theme"
                     data-tooltip="Toggle theme"
                 >
                     {theme === "dark" ? (
-                        <Moon className="w-4 h-4 sm:w-5 sm:h-5" />
+                        <Moon className="w-[22px] h-[22px]" />
                     ) : (
-                        <Sun className="w-4 h-4 sm:w-5 sm:h-5" />
+                        <Sun className="w-[22px] h-[22px]" />
                     )}
-                </button>
-
-                {/* Search Button - Hidden on small mobile */}
-                <button
-                    className="w-11 h-11 hidden sm:flex items-center justify-center hover:bg-white/10 rounded-lg text-white/80 hover:text-white transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:outline-none"
-                    aria-label="Search assets, meters, contractors, or records"
-                    data-tooltip="Search"
-                >
-                    <Search className="w-4 h-4 sm:w-5 sm:h-5" />
-                </button>
-
-                {/* Notifications Button */}
-                <button
-                    className="w-11 h-11 flex items-center justify-center hover:bg-white/10 rounded-lg relative text-white/80 hover:text-white transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:outline-none"
-                    aria-label="View notifications"
-                    data-tooltip="Notifications"
-                >
-                    <Bell className="w-4 h-4 sm:w-5 sm:h-5" />
-                    {/* Notification badge — border matches navbar bg so it reads as a ring */}
-                    <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-primary animate-pulse-dot"></span>
                 </button>
 
                 {/* User Profile with Dropdown */}
                 <div className="relative" ref={dropdownRef}>
                     <button
                         onClick={() => setIsProfileOpen(!isProfileOpen)}
-                        className="flex items-center gap-2 ms-1 sm:ms-2 p-1 rounded-xl hover:bg-white/10 transition-colors duration-200 group"
+                        className="flex items-center gap-2 ms-1 sm:ms-2 p-1 lg:ps-1 lg:pe-3 rounded-full ring-1 ring-transparent hover:bg-white/10 hover:ring-white/20 focus-visible:ring-secondary/50 focus-visible:outline-none transition-colors duration-150 group"
                         aria-label="User profile menu"
                         aria-expanded={isProfileOpen}
-                        aria-haspopup="menu"
+                        aria-haspopup="true"
                         aria-controls="profile-dropdown-menu"
                         id="profile-menu-trigger"
                     >
-                        <div className="relative">
-                            <Avatar className="w-10 h-10 border-2 border-white/20 group-hover:border-secondary transition-colors duration-200">
-                                <AvatarImage src={profile?.avatar_url || undefined} alt={displayName} />
-                                <AvatarFallback className="bg-secondary text-primary text-sm font-bold">
-                                    {initials}
-                                </AvatarFallback>
-                            </Avatar>
-                            {/* Online status indicator — border matches navbar bg */}
-                            <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-primary"></span>
-                        </div>
+                        <Avatar className="w-10 h-10 border-2 border-white/20 group-hover:border-secondary transition-colors duration-150">
+                            <AvatarImage src={profile?.avatar_url || undefined} alt={displayName} />
+                            <AvatarFallback className="bg-secondary text-primary text-sm font-bold">
+                                {initials}
+                            </AvatarFallback>
+                        </Avatar>
                         <span className="hidden lg:block text-sm font-medium text-white">
                             {displayName}
                         </span>
                         <ChevronDown
-                            className={`w-3.5 h-3.5 text-white/60 hidden sm:block transition-transform duration-200 ${isProfileOpen ? "rotate-180" : ""}`}
+                            className={`w-3.5 h-3.5 text-white/60 hidden sm:block transition-transform duration-150 ${isProfileOpen ? "rotate-180" : ""}`}
                         />
                     </button>
 
                     {/* Profile Dropdown */}
                     {isProfileOpen && (
-                        <div className="absolute right-0 mt-2 w-60 max-w-[calc(100vw-2rem)] bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 py-1 z-50 animate-in fade-in slide-in-from-top-2 duration-200"
+                        <div className="absolute end-0 mt-2 w-60 max-w-[calc(100vw-2rem)] bg-popover text-popover-foreground rounded-xl shadow-xl border border-border py-1 z-50 animate-in fade-in slide-in-from-top-2 duration-200"
                             id="profile-dropdown-menu"
-                            role="menu"
                             aria-labelledby="profile-menu-trigger"
                         >
                             {/* User Info Header */}
-                            <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-700">
+                            <div className="px-4 py-3 border-b border-border">
                                 <div className="flex items-center gap-3">
                                     <Avatar className="w-10 h-10">
                                         <AvatarImage src={profile?.avatar_url || undefined} alt={displayName} />
@@ -178,12 +166,14 @@ export function Topbar() {
                                         </AvatarFallback>
                                     </Avatar>
                                     <div className="flex flex-col min-w-0">
-                                        <span className="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate">
+                                        <span className="text-sm font-semibold truncate">
                                             {displayName}
                                         </span>
-                                        <span className="text-xs text-slate-500 dark:text-slate-400 truncate">
-                                            {user?.email || 'user@muscatbay.com'}
-                                        </span>
+                                        {user?.email && (
+                                            <span className="text-xs text-muted-foreground truncate">
+                                                {user.email}
+                                            </span>
+                                        )}
                                         <span className="text-[10px] text-secondary font-medium mt-0.5">
                                             {userRole}
                                         </span>
@@ -196,24 +186,15 @@ export function Topbar() {
                                 <Link
                                     href="/settings"
                                     onClick={() => setIsProfileOpen(false)}
-                                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-primary dark:hover:text-white transition-colors duration-200"
-                                    id="profile-menu-profile"
-                                >
-                                    <User className="w-4 h-4 text-slate-400 dark:text-slate-500" />
-                                    Profile
-                                </Link>
-                                <Link
-                                    href="/settings"
-                                    onClick={() => setIsProfileOpen(false)}
-                                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-primary dark:hover:text-white transition-colors duration-200"
+                                    className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-muted transition-colors duration-150"
                                     id="profile-menu-settings"
                                 >
-                                    <Settings className="w-4 h-4 text-slate-400 dark:text-slate-500" />
+                                    <Settings className="w-4 h-4 text-muted-foreground" />
                                     Settings
                                 </Link>
 
                                 {/* Divider */}
-                                <div className="my-1 border-t border-slate-100 dark:border-slate-700" />
+                                <div className="my-1 border-t border-border" />
 
                                 {/* Sign Out */}
                                 <button
@@ -221,7 +202,7 @@ export function Topbar() {
                                         logout();
                                         setIsProfileOpen(false);
                                     }}
-                                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors duration-200"
+                                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-destructive hover:bg-destructive/10 transition-colors duration-150"
                                     id="profile-menu-signout"
                                 >
                                     <LogOut className="w-4 h-4" />

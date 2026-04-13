@@ -26,14 +26,14 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
       {/* Sidebar - hidden on mobile, visible on md+ */}
       <Sidebar />
 
-      {/* Main Content Area — `pt-16` clears the fixed 64px topbar.
+      {/* Main Content Area — `pt-[76px]` clears the fixed 76px topbar.
           Horizontal margin adapts to sidebar state on md+. */}
       <main
         id="main-content"
         className={`
           flex-1 min-w-0 transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]
           min-h-[100dvh] bg-gray-50 dark:bg-[var(--background)]
-          ms-0 pt-16 pb-[calc(4rem+env(safe-area-inset-bottom,0px))] md:pb-0
+          ms-0 pt-[76px] pb-[calc(4rem+env(safe-area-inset-bottom,0px))] md:pb-0
           ${isCollapsed ? "md:ms-[72px]" : "md:ms-[220px]"}
         `}
       >

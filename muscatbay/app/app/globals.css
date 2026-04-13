@@ -40,6 +40,8 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
 
+  --color-destructive: var(--destructive);
+
   /* Sidebar colors for Tailwind v4 */
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
@@ -188,8 +190,9 @@
   --sidebar-width-expanded: 208px;
   --header-height: 60.5px;
 
-  /* Sidebar Colors */
-  --sidebar: #4D445D;
+  /* Sidebar Colors — slightly darker than --primary (#4E4456) so the sidebar
+     reads as a distinct zone from the topbar without a harsh contrast jump. */
+  --sidebar: #423846;
   --sidebar-foreground: #E4E4E7;
   --sidebar-foreground-active: #FFFFFF;
   --sidebar-primary: #FFFFFF;
@@ -260,6 +263,8 @@
   --component-foreground: #F1F5F9;
   --primary: #4E4456;
   --primary-foreground: #FFFFFF;
+  /* Sidebar slightly darker than --primary in dark mode too */
+  --sidebar: #3B3240;
   --secondary: #A4C5BB;
   --secondary-foreground: #1F2937;
   --muted: #22202A;
