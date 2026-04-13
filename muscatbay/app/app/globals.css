@@ -246,25 +246,28 @@
   --mb-info: #6B9AC4;
   --mb-info-light: rgba(107, 154, 196, 0.12);
 
-  --background: #0f172a;
-  /* slate-950/deep navy */
+  /* Dark surfaces — warm near-black family, harmonized with #4E4456 brand.
+   * Shifted from slate (blue-family) to neutral near-black with a whisper of
+   * the brand purple's hue so cards + page bg feel premium rather than navy. */
+  --background: #0A090C;
+  /* near-black, ~1% warm tint */
   --foreground: #F1F5F9;
   /* slate-100 */
-  --card: #1E293B;
-  /* slate-800 */
+  --card: #16141B;
+  /* lifted near-black surface */
   --card-foreground: #F1F5F9;
-  --component: #1E293B;
+  --component: #16141B;
   --component-foreground: #F1F5F9;
   --primary: #4E4456;
   --primary-foreground: #FFFFFF;
   --secondary: #A4C5BB;
   --secondary-foreground: #1F2937;
-  --muted: #374151;
+  --muted: #22202A;
   --muted-foreground: #9CA3AF;
   --accent: #A4C5BB;
   --accent-foreground: #1F2937;
   --destructive: #D67A7A;
-  --popover: #1E293B;
+  --popover: #16141B;
   --popover-foreground: #F1F5F9;
   --border: rgba(255, 255, 255, 0.1);
   --input: rgba(255, 255, 255, 0.1);
@@ -278,7 +281,13 @@
 
 @layer base {
   :root {
-    @apply dark:bg-slate-950 dark:text-slate-100;
+    @apply dark:text-slate-100;
+  }
+  /* Dark page bg — sourced from --background token so changing it in one
+   * place retunes every dark-mode surface that reads the token. */
+  .dark,
+  .dark body {
+    background-color: var(--background);
   }
 
   * {

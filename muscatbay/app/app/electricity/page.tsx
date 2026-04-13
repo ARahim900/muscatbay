@@ -788,7 +788,7 @@ export default function ElectricityPage() {
                                             <select
                                                 value={analysisType}
                                                 onChange={(e) => setAnalysisType(e.target.value)}
-                                                className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 text-sm font-medium text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                                                className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 text-sm font-medium text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-secondary/40"
                                             >
                                                 <option value="All">All ({meters.length})</option>
                                                 {meterTypes.map((t) => (
@@ -799,13 +799,13 @@ export default function ElectricityPage() {
 
                                         {/* Meter selector (appears when a specific type is selected) */}
                                         {analysisType !== "All" && metersOfSelectedType.length > 0 && (
-                                            <div className="flex items-center gap-2 px-2.5 py-1 rounded-lg bg-amber-50/60 dark:bg-amber-900/20 border border-amber-200/60 dark:border-amber-800/40">
-                                                <Filter className="w-3.5 h-3.5 text-amber-500" />
-                                                <span className="text-xs font-medium text-amber-700 dark:text-amber-400">Meter:</span>
+                                            <div className="flex items-center gap-2 px-2.5 py-1 rounded-lg bg-secondary/10 border border-secondary/30">
+                                                <Filter className="w-3.5 h-3.5 text-secondary" />
+                                                <span className="text-xs font-medium text-secondary">Meter:</span>
                                                 <select
                                                     value={selectedMeter}
                                                     onChange={(e) => setSelectedMeter(e.target.value)}
-                                                    className="px-2.5 py-1.5 rounded-lg border border-amber-300 dark:border-amber-600 bg-white dark:bg-slate-800 text-sm font-medium text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500/30 max-w-[280px]"
+                                                    className="px-2.5 py-1.5 rounded-lg border border-secondary/40 bg-white dark:bg-slate-800 text-sm font-medium text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-secondary/40 max-w-[280px]"
                                                 >
                                                     <option value="All">All {analysisType} ({metersOfSelectedType.length})</option>
                                                     {metersOfSelectedType.map((m) => (

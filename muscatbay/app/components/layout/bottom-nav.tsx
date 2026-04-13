@@ -226,7 +226,7 @@ export function BottomNav() {
                   flex flex-col items-center justify-center gap-0.5 flex-1 h-full pt-1.5 pb-1 rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:outline-none
                   ${active
                     ? 'text-secondary'
-                    : 'text-gray-400 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
+                    : 'text-primary/70 dark:text-slate-400 hover:text-primary dark:hover:text-slate-200'
                   }
                 `}
               >
@@ -249,7 +249,7 @@ export function BottomNav() {
               flex flex-col items-center justify-center gap-0.5 flex-1 h-full pt-1.5 pb-1 rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:outline-none
               ${drawerOpen || isOverflowActive
                 ? 'text-secondary'
-                : 'text-gray-400 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
+                : 'text-primary/70 dark:text-slate-400 hover:text-primary dark:hover:text-slate-200'
               }
             `}
             aria-label="More navigation items"
