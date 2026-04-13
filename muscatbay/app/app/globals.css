@@ -117,8 +117,8 @@
   --component: #F0F2F4;
   --component-foreground: #0A0A0A;
 
-  /* Primary Brand (Brand Dark) */
-  --primary: #4D445D;
+  /* Primary Brand (Brand Dark) — matches CLAUDE.md spec #4E4456 */
+  --primary: #4E4456;
   --primary-foreground: #FFFFFF;
 
   /* Secondary (Brand Teal) */
@@ -255,7 +255,7 @@
   --card-foreground: #F1F5F9;
   --component: #1E293B;
   --component-foreground: #F1F5F9;
-  --primary: #4D445D;
+  --primary: #4E4456;
   --primary-foreground: #FFFFFF;
   --secondary: #A4C5BB;
   --secondary-foreground: #1F2937;

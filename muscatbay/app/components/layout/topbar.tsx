@@ -53,9 +53,16 @@ export function Topbar() {
         };
     }, [isProfileOpen]);
 
+    // Shared header shell — solid brand purple (#4E4456 via --primary token)
+    // in both light & dark modes, matching the "Fixed Header" spec. Uses
+    // `shadow-md` + hairline white/10 divider so it separates cleanly from a
+    // light or dark body.
+    const headerClassName =
+        "h-16 sm:h-[60.5px] bg-primary px-4 sm:px-6 flex items-center justify-between sticky top-0 z-20 border-b border-white/10 shadow-md";
+
     if (!mounted) {
         return (
-            <header className="h-16 sm:h-[60.5px] header-blur px-4 sm:px-6 flex items-center justify-between sticky top-0 z-20 border-b border-slate-200 dark:border-slate-800 shadow-sm">
+            <header className={headerClassName}>
                 <div className="flex items-center gap-3">
                     {/* Skeleton or simple loading state if needed, or just return null to avoid flash */}
                 </div>
@@ -64,13 +71,13 @@ export function Topbar() {
     }
 
     return (
-        <header className="h-16 sm:h-[60.5px] header-blur px-4 sm:px-6 flex items-center justify-between sticky top-0 z-20 border-b border-slate-200 dark:border-slate-800 shadow-sm">
+        <header className={headerClassName}>
             {/* Left Section - Mobile hamburger + Title */}
             <div className="flex items-center gap-3">
                 {/* Mobile hamburger - Always visible on mobile */}
                 <button
                     onClick={() => setIsOpen(prev => !prev)}
-                    className="w-10 h-10 flex items-center justify-center rounded-lg bg-primary text-white md:hidden hover:bg-primary/80 transition-colors duration-200 shadow-md"
+                    className="w-10 h-10 flex items-center justify-center rounded-lg bg-white/10 text-white md:hidden hover:bg-white/20 transition-colors duration-200"
                     aria-label="Toggle menu"
                 >
                     <Menu className="w-5 h-5" />
@@ -79,10 +86,10 @@ export function Topbar() {
                 {/* App Title - Mobile first */}
                 <div>
                     <h1 className="text-lg sm:text-xl font-bold leading-tight tracking-tight">
-                        <span className="text-primary dark:text-slate-100">MUSCAT </span>
+                        <span className="text-white">MUSCAT </span>
                         <span className="text-secondary">BAY</span>
                     </h1>
-                    <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 hidden sm:block">
+                    <p className="text-xs sm:text-sm text-white/60 hidden sm:block">
                         Resource Management
                     </p>
                 </div>
@@ -93,7 +100,7 @@ export function Topbar() {
                 {/* Theme Toggle */}
                 <button
                     onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                    className="w-11 h-11 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-500 dark:text-slate-400 transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:outline-none"
+                    className="w-11 h-11 flex items-center justify-center hover:bg-white/10 rounded-lg text-white/80 hover:text-white transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:outline-none"
                     aria-label="Toggle theme"
                     data-tooltip="Toggle theme"
                 >
@@ -106,7 +113,7 @@ export function Topbar() {
 
                 {/* Search Button - Hidden on small mobile */}
                 <button
-                    className="w-11 h-11 hidden sm:flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-500 dark:text-slate-400 transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:outline-none"
+                    className="w-11 h-11 hidden sm:flex items-center justify-center hover:bg-white/10 rounded-lg text-white/80 hover:text-white transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:outline-none"
                     aria-label="Search assets, meters, contractors, or records"
                     data-tooltip="Search"
                 >
@@ -115,20 +122,20 @@ export function Topbar() {
 
                 {/* Notifications Button */}
                 <button
-                    className="w-11 h-11 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg relative text-slate-500 dark:text-slate-400 transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:outline-none"
+                    className="w-11 h-11 flex items-center justify-center hover:bg-white/10 rounded-lg relative text-white/80 hover:text-white transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:outline-none"
                     aria-label="View notifications"
                     data-tooltip="Notifications"
                 >
                     <Bell className="w-4 h-4 sm:w-5 sm:h-5" />
-                    {/* Notification badge */}
-                    <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-slate-900 animate-pulse-dot"></span>
+                    {/* Notification badge — border matches navbar bg so it reads as a ring */}
+                    <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-primary animate-pulse-dot"></span>
                 </button>
 
                 {/* User Profile with Dropdown */}
                 <div className="relative" ref={dropdownRef}>
                     <button
                         onClick={() => setIsProfileOpen(!isProfileOpen)}
-                        className="flex items-center gap-2 ms-1 sm:ms-2 p-1 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors duration-200 group"
+                        className="flex items-center gap-2 ms-1 sm:ms-2 p-1 rounded-xl hover:bg-white/10 transition-colors duration-200 group"
                         aria-label="User profile menu"
                         aria-expanded={isProfileOpen}
                         aria-haspopup="menu"
@@ -136,20 +143,20 @@ export function Topbar() {
                         id="profile-menu-trigger"
                     >
                         <div className="relative">
-                            <Avatar className="w-10 h-10 border-2 border-slate-200 dark:border-slate-700 group-hover:border-secondary transition-colors duration-200">
+                            <Avatar className="w-10 h-10 border-2 border-white/20 group-hover:border-secondary transition-colors duration-200">
                                 <AvatarImage src={profile?.avatar_url || undefined} alt={displayName} />
                                 <AvatarFallback className="bg-secondary text-primary text-sm font-bold">
                                     {initials}
                                 </AvatarFallback>
                             </Avatar>
-                            {/* Online status indicator */}
-                            <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-white dark:border-slate-900"></span>
+                            {/* Online status indicator — border matches navbar bg */}
+                            <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-primary"></span>
                         </div>
-                        <span className="hidden lg:block text-sm font-medium text-primary dark:text-slate-200">
+                        <span className="hidden lg:block text-sm font-medium text-white">
                             {displayName}
                         </span>
                         <ChevronDown
-                            className={`w-3.5 h-3.5 text-slate-400 hidden sm:block transition-transform duration-200 ${isProfileOpen ? "rotate-180" : ""}`}
+                            className={`w-3.5 h-3.5 text-white/60 hidden sm:block transition-transform duration-200 ${isProfileOpen ? "rotate-180" : ""}`}
                         />
                     </button>
 
