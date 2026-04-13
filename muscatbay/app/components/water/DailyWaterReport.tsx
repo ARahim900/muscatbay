@@ -1804,52 +1804,106 @@ export function DailyWaterReport() {
         <div className="space-y-6 animate-in fade-in duration-200">
             <Card className="card-elevated">
                 <CardContent className="p-4 sm:p-5 md:p-6">
-                    <div className="flex flex-wrap items-center gap-4">
+                    {/*
+                     * Mobile layout: two stacked rows
+                     *   row 1 → year/month + refresh + live badge
+                     *   row 2 → full-width day slider (with chevrons + label)
+                     * sm+ layout: single inline row (via `sm:contents` + `sm:order-*`)
+                     *   year/month → slider (flex-1) → refresh → live badge
+                     */}
+                    <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
 
-                        {/* Year + Month selector */}
-                        <div className="flex items-center gap-2">
-                            <CalendarDays className="h-4 w-4 text-muted-foreground shrink-0" />
-                            <select
-                                value={selectedMonth.split('-')[1]}
-                                onChange={e => {
-                                    const yr = e.target.value;
-                                    const months = getMonthsForYear(yr);
-                                    const currentAbbrev = selectedMonth.split('-')[0];
-                                    const match = months.find(m => m.startsWith(currentAbbrev));
-                                    const next = match ?? months[months.length - 1];
-                                    setSelectedMonth(next);
-                                    setSelectedDay(getDefaultDay(next));
-                                }}
-                                disabled={status === 'loading'}
-                                className="px-2 py-1.5 text-sm rounded-md border border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
-                            >
-                                {[...getAvailableYears()].reverse().map(yr => (
-                                    <option key={yr} value={yr}>20{yr}</option>
-                                ))}
-                            </select>
-                            <select
-                                value={selectedMonth}
-                                onChange={e => { const m = e.target.value; setSelectedMonth(m); setSelectedDay(getDefaultDay(m)); }}
-                                disabled={status === 'loading'}
-                                className="px-2 py-1.5 text-sm rounded-md border border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
-                            >
-                                {getMonthsForYear(selectedMonth.split('-')[1]).map(m => (
-                                    <option key={m} value={m}>{m.split('-')[0]}</option>
-                                ))}
-                            </select>
+                        {/* Mobile top-row group (dissolves on sm+) */}
+                        <div className="flex flex-wrap items-center gap-2 sm:contents">
+
+                            {/* Year + Month selector */}
+                            <div className="flex items-center gap-2 sm:order-1">
+                                <CalendarDays className="h-4 w-4 text-muted-foreground shrink-0" />
+                                <select
+                                    value={selectedMonth.split('-')[1]}
+                                    onChange={e => {
+                                        const yr = e.target.value;
+                                        const months = getMonthsForYear(yr);
+                                        const currentAbbrev = selectedMonth.split('-')[0];
+                                        const match = months.find(m => m.startsWith(currentAbbrev));
+                                        const next = match ?? months[months.length - 1];
+                                        setSelectedMonth(next);
+                                        setSelectedDay(getDefaultDay(next));
+                                    }}
+                                    disabled={status === 'loading'}
+                                    className="px-2 py-1.5 text-sm rounded-md border border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
+                                >
+                                    {[...getAvailableYears()].reverse().map(yr => (
+                                        <option key={yr} value={yr}>20{yr}</option>
+                                    ))}
+                                </select>
+                                <select
+                                    value={selectedMonth}
+                                    onChange={e => { const m = e.target.value; setSelectedMonth(m); setSelectedDay(getDefaultDay(m)); }}
+                                    disabled={status === 'loading'}
+                                    className="px-2 py-1.5 text-sm rounded-md border border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
+                                >
+                                    {getMonthsForYear(selectedMonth.split('-')[1]).map(m => (
+                                        <option key={m} value={m}>{m.split('-')[0]}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {/* Refresh + live badge — right-aligned on mobile, after slider on sm+ */}
+                            <div className="flex items-center gap-2 flex-wrap ml-auto sm:ml-0 sm:order-3">
+                                <Button
+                                    variant="outline" size="icon"
+                                    className="h-10 w-10 shrink-0"
+                                    onClick={() => fetchMonth(selectedMonth)}
+                                    disabled={status === 'loading'}
+                                    title="Refresh"
+                                >
+                                    {status === 'loading'
+                                        ? <Loader2 className="h-4 w-4 animate-spin" />
+                                        : <RefreshCw className="h-4 w-4" />
+                                    }
+                                </Button>
+
+                                {/* Real-time status */}
+                                <span className={cn(
+                                    "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold transition-colors",
+                                    isLive
+                                        ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                                        : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400"
+                                )}>
+                                    <Radio className={cn("h-3 w-3", isLive && "animate-pulse")} />
+                                    {isLive ? "Live" : "Offline"}
+                                </span>
+
+                                {/* Loading indicator */}
+                                {status === 'loading' && (
+                                    <span className="flex items-center gap-1 text-xs text-teal-600 dark:text-teal-400">
+                                        <Loader2 className="h-3 w-3 animate-spin" /> Loading…
+                                    </span>
+                                )}
+
+                                {/* Last fetched time */}
+                                {lastFetched && status !== 'loading' && (
+                                    <span className="flex items-center gap-1 text-[11px] text-slate-400 dark:text-slate-500">
+                                        <Clock className="h-3 w-3" />
+                                        Updated {lastFetched.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                                    </span>
+                                )}
+                            </div>
                         </div>
 
-                        {/* Day selector */}
-                        <div className="flex items-center gap-3 flex-1 min-w-0 sm:min-w-[220px]">
+                        {/* Day selector — own row on mobile (w-full), flex-1 inline on sm+ */}
+                        <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto sm:flex-1 sm:min-w-[220px] sm:order-2 pt-1 sm:pt-0 border-t border-slate-200/60 dark:border-slate-700/60 sm:border-t-0">
                             <Button
                                 variant="outline" size="icon"
                                 className="h-10 w-10 shrink-0"
                                 onClick={() => setSelectedDay(d => Math.max(1, d - 1))}
                                 disabled={selectedDay <= 1 || status === 'loading'}
+                                aria-label="Previous day"
                             >
                                 <ChevronLeft className="h-4 w-4" />
                             </Button>
-                            <div className="flex-1 max-w-[200px]">
+                            <div className="flex-1 min-w-0 sm:max-w-[200px]">
                                 <Slider
                                     value={[selectedDay]}
                                     onValueChange={handleSliderChange}
@@ -1862,55 +1916,13 @@ export function DailyWaterReport() {
                                 className="h-10 w-10 shrink-0"
                                 onClick={() => setSelectedDay(d => Math.min(31, d + 1))}
                                 disabled={selectedDay >= 31 || status === 'loading'}
+                                aria-label="Next day"
                             >
                                 <ChevronRight className="h-4 w-4" />
                             </Button>
-                            <span className="text-base font-bold text-primary min-w-[56px] tabular-nums">
+                            <span className="text-base font-bold text-primary min-w-[56px] tabular-nums text-right">
                                 Day {selectedDay}
                             </span>
-                        </div>
-
-                        {/* Manual refresh */}
-                        <Button
-                            variant="outline" size="icon"
-                            className="h-10 w-10 shrink-0"
-                            onClick={() => fetchMonth(selectedMonth)}
-                            disabled={status === 'loading'}
-                            title="Refresh"
-                        >
-                            {status === 'loading'
-                                ? <Loader2 className="h-4 w-4 animate-spin" />
-                                : <RefreshCw className="h-4 w-4" />
-                            }
-                        </Button>
-
-                        {/* Live badge + last fetched */}
-                        <div className="flex items-center gap-2 flex-wrap">
-                            {/* Real-time status */}
-                            <span className={cn(
-                                "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold transition-colors",
-                                isLive
-                                    ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-                                    : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400"
-                            )}>
-                                <Radio className={cn("h-3 w-3", isLive && "animate-pulse")} />
-                                {isLive ? "Live" : "Offline"}
-                            </span>
-
-                            {/* Loading indicator */}
-                            {status === 'loading' && (
-                                <span className="flex items-center gap-1 text-xs text-teal-600 dark:text-teal-400">
-                                    <Loader2 className="h-3 w-3 animate-spin" /> Loading…
-                                </span>
-                            )}
-
-                            {/* Last fetched time */}
-                            {lastFetched && status !== 'loading' && (
-                                <span className="flex items-center gap-1 text-[11px] text-slate-400 dark:text-slate-500">
-                                    <Clock className="h-3 w-3" />
-                                    Updated {lastFetched.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-                                </span>
-                            )}
                         </div>
                     </div>
                 </CardContent>
@@ -1925,38 +1937,45 @@ export function DailyWaterReport() {
                     {/* ── Zone / DC Selector ─────────────────────────────── */}
                     <Card className="card-elevated">
                         <CardContent className="p-4 sm:p-5">
-                            <div className="flex flex-wrap items-center gap-2">
-                                <span className="text-sm font-medium text-slate-600 dark:text-slate-400 mr-1">
+                            {/*
+                             * Mobile: label on its own line, 2-col grid of equal-width chips
+                             *         with generous tap targets.
+                             * sm+   : label inline with wrap-flex pills (matches original).
+                             */}
+                            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-2">
+                                <span className="text-sm font-medium text-slate-600 dark:text-slate-400 sm:mr-1">
                                     Select Zone
                                 </span>
-                                {ZONE_BULK_CONFIG.map(z => {
-                                    const isActive = z.zoneName === activeView;
-                                    return (
-                                        <button
-                                            key={z.zoneName}
-                                            onClick={() => setActiveView(z.zoneName)}
-                                            className={cn(
-                                                "px-3 py-1.5 rounded-full text-sm font-medium transition-all border",
-                                                isActive
-                                                    ? "bg-primary text-white border-primary shadow-sm dark:bg-secondary dark:text-white dark:border-secondary"
-                                                    : "bg-white text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700"
-                                            )}
-                                        >
-                                            {z.zoneName}
-                                        </button>
-                                    );
-                                })}
-                                <button
-                                    onClick={() => setActiveView('dc')}
-                                    className={cn(
-                                        "px-3 py-1.5 rounded-full text-sm font-medium transition-all border",
-                                        activeView === 'dc'
-                                            ? "bg-primary text-white border-primary shadow-sm dark:bg-secondary dark:text-white dark:border-secondary"
-                                            : "bg-white text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700"
-                                    )}
-                                >
-                                    Direct Connection
-                                </button>
+                                <div className="grid grid-cols-2 gap-2 sm:contents">
+                                    {ZONE_BULK_CONFIG.map(z => {
+                                        const isActive = z.zoneName === activeView;
+                                        return (
+                                            <button
+                                                key={z.zoneName}
+                                                onClick={() => setActiveView(z.zoneName)}
+                                                className={cn(
+                                                    "w-full sm:w-auto px-4 py-2.5 sm:px-3 sm:py-1.5 rounded-full text-sm font-medium transition-all border text-center whitespace-nowrap",
+                                                    isActive
+                                                        ? "bg-primary text-white border-primary shadow-sm dark:bg-secondary dark:text-white dark:border-secondary"
+                                                        : "bg-white text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700"
+                                                )}
+                                            >
+                                                {z.zoneName}
+                                            </button>
+                                        );
+                                    })}
+                                    <button
+                                        onClick={() => setActiveView('dc')}
+                                        className={cn(
+                                            "w-full sm:w-auto col-span-2 sm:col-span-1 px-4 py-2.5 sm:px-3 sm:py-1.5 rounded-full text-sm font-medium transition-all border text-center whitespace-nowrap",
+                                            activeView === 'dc'
+                                                ? "bg-primary text-white border-primary shadow-sm dark:bg-secondary dark:text-white dark:border-secondary"
+                                                : "bg-white text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700"
+                                        )}
+                                    >
+                                        Direct Connection
+                                    </button>
+                                </div>
                             </div>
                         </CardContent>
                     </Card>
