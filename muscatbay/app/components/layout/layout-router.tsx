@@ -5,7 +5,9 @@ import { ToastProvider } from "@/components/ui/toast-provider";
 import { AuthProvider } from "@/components/auth/auth-provider";
 import { ClientLayout } from "@/components/layout/client-layout";
 
-const AUTH_PAGES = ["/login", "/signup", "/forgot-password", "/auth"];
+// Routes that render without AuthProvider + sidebar:
+// auth flows (login/signup/etc.) and public legal pages (privacy/terms).
+const AUTH_PAGES = ["/login", "/signup", "/forgot-password", "/auth", "/privacy", "/terms"];
 
 export function LayoutRouter({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();

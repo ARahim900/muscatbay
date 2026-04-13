@@ -1,4 +1,10 @@
-const CACHE_NAME = "muscatbay-v3";
+// Bump this version to force every client to flush stale caches on their
+// next visit. The `activate` handler below deletes any cache whose name
+// doesn't match CACHE_NAME, so bumping invalidates everything older.
+// Last bumped 2026-04-13: unstick users stranded on caches containing the
+// pre-51188c5 bundle whose HMR/proxy flood tripped Supabase's auth rate
+// limiter and showed "this page couldn't load" in the browser shell.
+const CACHE_NAME = "muscatbay-v4";
 const STATIC_ASSETS = [
   "/",
   "/manifest.json",
