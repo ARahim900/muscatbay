@@ -1,16 +1,14 @@
 "use client";
 
-import { useSidebar } from "./sidebar-context";
 import { useAuth } from "@/components/auth/auth-provider";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Menu, Sun, Moon, Settings, LogOut, ChevronDown } from "lucide-react";
+import { Sun, Moon, Settings, LogOut, ChevronDown } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useTheme } from "@/components/providers";
 
 export function Topbar() {
-    const { setIsOpen } = useSidebar();
     const { setTheme, theme } = useTheme();
     const [mounted, setMounted] = useState(false);
     const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -74,17 +72,9 @@ export function Topbar() {
 
     return (
         <header className={headerClassName}>
-            {/* Left Section - Mobile hamburger + Logo + Title */}
+            {/* Left Section - Logo + Title. No mobile hamburger:
+                mobile uses the BottomNav, so the sidebar is desktop-only. */}
             <div className="flex items-center gap-3">
-                {/* Mobile hamburger - Always visible on mobile */}
-                <button
-                    onClick={() => setIsOpen(prev => !prev)}
-                    className="w-10 h-10 flex items-center justify-center rounded-lg bg-white/10 text-white md:hidden hover:bg-white/20 transition-colors duration-150"
-                    aria-label="Toggle menu"
-                >
-                    <Menu className="w-5 h-5" />
-                </button>
-
                 {/* Brand lockup — logo + title */}
                 <Link href="/" className="flex items-center gap-3 group" aria-label="Muscat Bay home">
                     <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center bg-white/10 ring-1 ring-white/15 shadow-[0_4px_14px_rgba(0,0,0,0.25)] group-hover:bg-white/20 group-hover:ring-secondary/40 transition-colors duration-150">

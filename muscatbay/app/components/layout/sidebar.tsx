@@ -119,7 +119,7 @@ export function Sidebar() {
           <div className="hidden md:flex items-center justify-center px-2 h-8 border-b border-white/10">
             <button
               onClick={toggleCollapse}
-              className="w-9 h-9 flex items-center justify-center rounded-md hover:bg-white/10 text-white/60 hover:text-white transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:outline-none"
+              className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-white/10 text-white/60 hover:text-white transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:outline-none"
               aria-label="Expand sidebar"
             >
               <ChevronRight className="h-4 w-4" />
@@ -128,7 +128,7 @@ export function Sidebar() {
         )}
 
         {/* Main Navigation */}
-        <nav className="flex-1 px-3 pt-0 pb-4 overflow-y-auto" aria-label="Primary">
+        <nav className="flex-1 px-3 pt-2 pb-4 overflow-y-auto" aria-label="Primary">
           {navGroups.map((group, groupIdx) => {
             const isOverview = group.id === "overview";
             const inlineCollapseToggle = isOverview && !isCollapsed;
