@@ -75,10 +75,11 @@ export function Sidebar() {
         />
       )}
 
-      {/* Sidebar Container */}
+      {/* Sidebar Container — sits below the fixed topbar (top-16 = 64px) so
+          the brand-purple topbar spans edge-to-edge above it. */}
       <aside
         className={`
-          fixed top-0 start-0 h-screen z-40 
+          fixed top-16 start-0 h-[calc(100dvh-4rem)] z-40
           flex flex-col
           bg-primary dark:bg-slate-900 shadow-xl
           transition-all duration-200 ease-out

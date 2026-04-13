@@ -20,21 +20,23 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
         Skip to main content
       </a>
 
+      {/* Fixed full-width topbar — spans edge-to-edge above the sidebar */}
+      <Topbar />
+
       {/* Sidebar - hidden on mobile, visible on md+ */}
       <Sidebar />
 
-      {/* Main Content Area - Responsive margins that adapt to sidebar state */}
+      {/* Main Content Area — `pt-16` clears the fixed 64px topbar.
+          Horizontal margin adapts to sidebar state on md+. */}
       <main
         id="main-content"
         className={`
           flex-1 min-w-0 transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]
           min-h-[100dvh] bg-gray-50 dark:bg-[var(--background)]
-          ms-0 pb-[calc(4rem+env(safe-area-inset-bottom,0px))] md:pb-0
+          ms-0 pt-16 pb-[calc(4rem+env(safe-area-inset-bottom,0px))] md:pb-0
           ${isCollapsed ? "md:ms-[72px]" : "md:ms-[220px]"}
         `}
       >
-        <Topbar />
-
         {/* Layout shell with mobile-first responsive padding */}
         <div className="layout-shell w-full pt-4 pb-3 sm:pt-6 sm:pb-4 md:pt-8 md:pb-6">
           {children}

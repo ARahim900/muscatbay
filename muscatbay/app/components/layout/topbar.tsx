@@ -54,11 +54,12 @@ export function Topbar() {
     }, [isProfileOpen]);
 
     // Shared header shell — solid brand purple (#4E4456 via --primary token)
-    // in both light & dark modes, matching the "Fixed Header" spec. Uses
-    // `shadow-md` + hairline white/10 divider so it separates cleanly from a
-    // light or dark body.
+    // in both light & dark modes. Fixed to the viewport so it spans the full
+    // site width (edge-to-edge, above the sidebar) and stays visible on
+    // scroll. z-50 keeps it above the sidebar (z-40). Prominent shadow
+    // separates it from the body content below.
     const headerClassName =
-        "h-16 sm:h-[60.5px] bg-primary px-4 sm:px-6 flex items-center justify-between sticky top-0 z-20 border-b border-white/10 shadow-md";
+        "h-16 fixed top-0 inset-x-0 z-50 bg-primary px-4 sm:px-6 flex items-center justify-between border-b border-white/10 shadow-[0_4px_20px_rgba(0,0,0,0.12)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.5)]";
 
     if (!mounted) {
         return (
