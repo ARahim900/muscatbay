@@ -27,14 +27,20 @@ function LoginContent() {
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [successMessage, setSuccessMessage] = useState<string | null>(null);
     const [emailError, setEmailError] = useState<string | null>(null);
     const [focusedField, setFocusedField] = useState<string | null>(null);
 
-    // Pick up error messages from auth callback redirects (?error=...)
+    // Pick up error/success messages from redirects (?error=... or ?message=...)
+    // — e.g. reset-password routes back here with a success message.
     useEffect(() => {
         const errorParam = searchParams.get('error');
         if (errorParam) {
             setError(errorParam);
+        }
+        const messageParam = searchParams.get('message');
+        if (messageParam) {
+            setSuccessMessage(messageParam);
         }
     }, [searchParams]);
 
@@ -184,6 +190,14 @@ function LoginContent() {
                     {/* Login Form Card */}
                     <div className="bg-white dark:bg-slate-800/50 rounded-2xl shadow-xl border border-slate-200/50 dark:border-slate-700/50 p-8">
                         <form onSubmit={handleSubmit} className="space-y-6">
+                            {/* Success Message (e.g. after password reset) */}
+                            {successMessage && !error && (
+                                <div role="status" aria-live="polite" className="p-4 text-sm text-emerald-700 bg-emerald-50 dark:bg-emerald-900/20 dark:text-emerald-300 rounded-xl border border-emerald-200 dark:border-emerald-800 flex items-center gap-3 animate-in slide-in-from-top duration-200">
+                                    <div className="w-2 h-2 bg-emerald-500 rounded-full" />
+                                    {successMessage}
+                                </div>
+                            )}
+
                             {/* Error Message */}
                             {error && (
                                 <div id="password-error" role="alert" aria-live="assertive" className="p-4 text-sm text-red-600 bg-red-50 dark:bg-red-900/20 dark:text-red-400 rounded-xl border border-red-200 dark:border-red-800 flex items-center gap-3 animate-in slide-in-from-top duration-200">

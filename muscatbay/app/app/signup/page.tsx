@@ -9,7 +9,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Mail, Lock, Eye, EyeOff, User } from "lucide-react";
+import { Loader2, Mail, Lock, Eye, EyeOff, User, CheckCircle2 } from "lucide-react";
+
+type SignUpStatus =
+    | { kind: "form" }
+    | { kind: "check-email"; email: string }; // confirmation required, email sent
 
 export default function SignUpPage() {
     const router = useRouter();
@@ -22,6 +26,7 @@ export default function SignUpPage() {
     const [error, setError] = useState<string | null>(null);
     const [emailError, setEmailError] = useState<string | null>(null);
     const [nameError, setNameError] = useState<string | null>(null);
+    const [status, setStatus] = useState<SignUpStatus>({ kind: "form" });
 
     // Use enhanced password requirements from validation library
     const passwordRequirements = getPasswordRequirements(password);
@@ -77,9 +82,32 @@ export default function SignUpPage() {
         setLoading(true);
 
         try {
-            await signUp(email, password, fullName);
+            const data = await signUp(email, password, fullName);
             resetRateLimit('signup');
-            // No email confirmation — user is signed in immediately, redirect to dashboard
+
+            // Supabase signUp response shape:
+            //  - new user + confirmation off: { user, session }       → logged in
+            //  - new user + confirmation on:  { user (identities:[*]), session: null } → email sent
+            //  - existing user:               { user (identities:[]), session: null }  → already registered
+            const sUser = data?.user;
+            const identities = sUser?.identities ?? [];
+            const session = data?.session;
+
+            if (sUser && identities.length === 0) {
+                // Supabase returned a shadow user — this email is already registered.
+                // Don't reveal too much (prevents enumeration); point the user at login.
+                setError("An account with this email may already exist. Try signing in, or reset your password.");
+                return;
+            }
+
+            if (!session) {
+                // Email confirmation is enabled — tell the user to check their inbox
+                // instead of silently bouncing them through the protected-route redirect.
+                setStatus({ kind: "check-email", email: email.trim().toLowerCase() });
+                return;
+            }
+
+            // Session present — user is logged in, redirect to dashboard
             router.push("/");
             router.refresh();
             return;
@@ -91,6 +119,41 @@ export default function SignUpPage() {
             setLoading(false);
         }
     };
+
+    // ── "Check your email" success state (email confirmation required) ──
+    if (status.kind === "check-email") {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-background p-4">
+                <Card className="w-full max-w-md card-elevated">
+                    <CardContent className="pt-8 pb-8 text-center">
+                        <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <CheckCircle2 className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
+                        </div>
+                        <h2 className="text-2xl font-bold mb-2">Check your email</h2>
+                        <p className="text-slate-500 dark:text-slate-400 mb-6">
+                            We&apos;ve sent a confirmation link to{" "}
+                            <strong className="text-slate-700 dark:text-slate-200">{status.email}</strong>.
+                            Click the link in the email to activate your account, then sign in.
+                        </p>
+                        <div className="space-y-3">
+                            <Link href="/login" className="block">
+                                <Button className="w-full bg-[var(--mb-primary)] hover:bg-[var(--mb-primary-hover)] text-white">
+                                    Go to Login
+                                </Button>
+                            </Link>
+                            <button
+                                type="button"
+                                onClick={() => setStatus({ kind: "form" })}
+                                className="text-sm text-slate-400 dark:text-slate-500 hover:text-[var(--mb-primary)] dark:hover:text-secondary transition-colors"
+                            >
+                                Use a different email
+                            </button>
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-background p-4">

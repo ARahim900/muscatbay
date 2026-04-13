@@ -38,13 +38,19 @@ export async function proxy(request: NextRequest) {
 export const config = {
     matcher: [
         /*
-         * Match all request paths except for the ones starting with:
-         * - _next/static (static files)
-         * - _next/image (image optimization files)
-         * - favicon.ico (favicon file)
-         * - public (public files)
-         * - api (API routes, if handled separately)
+         * Match all request paths except:
+         * - _next/*     — ALL Next.js internals (HMR chunks, data, static, image)
+         * - api/*       — API routes handle their own auth
+         * - favicon.ico — icon
+         * - static asset extensions (images, fonts, manifests, etc.)
+         *
+         * Why the stricter exclude list: in dev mode the browser fires many
+         * HMR/chunk/data requests per page load. If every one hits the
+         * proxy, `supabase.auth.getUser()` runs per-request and quickly
+         * trips Supabase's auth rate limit (HTTP 429 / "Request rate limit
+         * reached"), which used to collapse the page on load. Auth only
+         * needs refreshing for actual navigations and RSC requests.
          */
-        '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+        '/((?!_next|api|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|avif|woff2?|ttf|otf|txt|xml|json)$).*)',
     ],
 }

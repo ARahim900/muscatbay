@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { resetPassword } from "@/lib/auth";
+import { checkRateLimit, recordRateLimitAttempt, resetRateLimit, validateEmail } from "@/lib/validation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,12 +19,32 @@ export default function ForgotPasswordPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError(null);
+
+        // Client-side rate limit: 3 attempts per minute, 10-minute lockout.
+        // Same pattern as signup; server-side resetPassword() already swallows
+        // errors to prevent email enumeration, but this reduces network spam.
+        const rateLimit = checkRateLimit('forgot-password', 3, 60000, 600000);
+        if (!rateLimit.isAllowed) {
+            setError(`Too many reset attempts. Please try again in ${Math.ceil((rateLimit.waitSeconds || 600) / 60)} minutes.`);
+            return;
+        }
+
+        // Cheap client-side format check — a malformed email wastes a request
+        // and also triggers the rate limiter for nothing.
+        const emailValidation = validateEmail(email);
+        if (!emailValidation.isValid) {
+            setError(emailValidation.error || "Please enter a valid email address");
+            return;
+        }
+
         setLoading(true);
 
         try {
             await resetPassword(email);
+            resetRateLimit('forgot-password');
             setSuccess(true);
         } catch (err: unknown) {
+            recordRateLimitAttempt('forgot-password');
             console.error("Reset password error:", err);
             setError(err instanceof Error ? err.message : "Failed to send reset email. Please try again.");
         } finally {
