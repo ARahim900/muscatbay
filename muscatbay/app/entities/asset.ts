@@ -4,7 +4,26 @@
  * @module entities/asset
  */
 
-import type { Asset } from '@/lib/mock-data';
+/**
+ * Application-level Asset interface used across the app.
+ * Defined here as the single source of truth.
+ */
+export interface Asset {
+    id: string;
+    name: string;
+    type: string;
+    location: string;
+    status: 'Active' | 'Working' | 'Under Maintenance' | 'Decommissioned' | 'In Storage' | 'TO VERIFY';
+    purchaseDate: string;
+    value: number;
+    serialNumber: string;
+    lastService: string;
+    manufacturer: string;
+    installYear: number | null;
+    discipline: string;
+    subcategory: string;
+    condition: string;
+}
 
 /**
  * Asset type matching the Assets_Register_Database table schema in Supabase
@@ -54,13 +73,20 @@ export function transformAsset(dbAsset: SupabaseAsset): Asset {
     // Determine status - map Is_Asset_Active and Status fields
     let status: Asset['status'] = 'Active';
     if (dbAsset.Status) {
-        const statusLower = dbAsset.Status.toLowerCase();
-        if (statusLower.includes('maintenance')) {
-            status = 'Under Maintenance';
-        } else if (statusLower.includes('decommission') || statusLower.includes('inactive')) {
-            status = 'Decommissioned';
-        } else if (statusLower.includes('storage')) {
-            status = 'In Storage';
+        const statusUpper = dbAsset.Status.toUpperCase().trim();
+        if (statusUpper === 'WORKING') {
+            status = 'Active';
+        } else if (statusUpper === 'TO VERIFY') {
+            status = 'TO VERIFY';
+        } else {
+            const statusLower = dbAsset.Status.toLowerCase();
+            if (statusLower.includes('maintenance')) {
+                status = 'Under Maintenance';
+            } else if (statusLower.includes('decommission') || statusLower.includes('inactive')) {
+                status = 'Decommissioned';
+            } else if (statusLower.includes('storage')) {
+                status = 'In Storage';
+            }
         }
     } else if (dbAsset.Is_Asset_Active === 'N') {
         status = 'Decommissioned';
@@ -76,5 +102,10 @@ export function transformAsset(dbAsset: SupabaseAsset): Asset {
         value: 0,
         serialNumber: dbAsset.Asset_Tag || '',
         lastService: '',
+        manufacturer: dbAsset.Manufacturer_Brand || '',
+        installYear: dbAsset.Install_Year ?? null,
+        discipline: dbAsset.Discipline || '',
+        subcategory: dbAsset.Subcategory || '',
+        condition: dbAsset.Condition || '',
     };
 }

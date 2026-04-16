@@ -1,7 +1,7 @@
 'use server'
 
 import { getAssetsFromSupabase } from '@/functions/api/assets';
-import { Asset } from '@/lib/mock-data';
+import type { Asset } from '@/entities/asset';
 
 /**
  * Server Action to fetch assets
@@ -13,10 +13,11 @@ export async function fetchAssetsAction(
     search: string = '',
     sortField: string = 'Asset_Name',
     sortDirection: 'asc' | 'desc' = 'asc',
-    statusFilter?: string[]
+    statusFilter?: string[],
+    disciplineFilter?: string[]
 ): Promise<{ data: Asset[], count: number, error?: string }> {
     try {
-        const result = await getAssetsFromSupabase(page, pageSize, search, sortField, sortDirection, statusFilter);
+        const result = await getAssetsFromSupabase(page, pageSize, search, sortField, sortDirection, statusFilter, disciplineFilter);
         return {
             data: result.data,
             count: result.count

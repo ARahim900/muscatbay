@@ -1,14 +1,15 @@
 "use client";
 
 import { useEffect, useState, useMemo, useCallback } from "react";
-import { getAssets, Asset } from "@/lib/mock-data";
+import { getAssets } from "@/lib/mock-data";
+import type { Asset } from "@/entities/asset";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import { fetchAssetsAction } from "@/actions/assets";
 import { StatsGrid } from "@/components/shared/stats-grid";
 import { StatsGridSkeleton, TableBodySkeleton, Skeleton } from "@/components/shared/skeleton";
 import { EmptyState } from "@/components/shared/empty-state";
 import { PageHeader } from "@/components/shared/page-header";
-import { Boxes, MapPin, DollarSign, Wrench, Search, Plus, AlertCircle, Download, X } from "lucide-react";
+import { Boxes, MapPin, Wrench, Search, Plus, AlertCircle, Download, X, Layers, ClipboardCheck } from "lucide-react";
 import { format } from "date-fns";
 import { MultiSelectDropdown, SortIcon, TablePagination, ActiveFilterPills, TableToolbar, StatusBadge, type PageSizeOption } from "@/components/shared/data-table";
 import { exportToCSV, getDateForFilename } from "@/lib/export-utils";
@@ -20,17 +21,33 @@ const SORT_FIELD_MAP: Record<string, string> = {
     name: 'Asset_Name',
     serial: 'Asset_Tag',
     category: 'Discipline',
+    manufacturer: 'Manufacturer_Brand',
+    installYear: 'Install_Year',
     location: 'Location_Name',
     status: 'Status',
+    discipline: 'Discipline',
 };
 
-const STATUS_OPTIONS = ['Active', 'Under Maintenance', 'Decommissioned', 'In Storage'];
+const STATUS_OPTIONS = ['Working', 'Active', 'Under Maintenance', 'Decommissioned', 'In Storage', 'TO VERIFY'];
+
+const DISCIPLINE_OPTIONS = [
+    'STP Equipment',
+    'Electrical',
+    'Mechanical & Plumbing',
+    'HVAC',
+    'Civil',
+    'Painting',
+    'Village Square Assets',
+    'Lifts & Transport',
+    'Hotel Assets (JMB)',
+];
 
 export default function AssetsPage() {
     const [assets, setAssets] = useState<Asset[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
     const [selectedStatuses, setSelectedStatuses] = useState<string[]>([...STATUS_OPTIONS]);
+    const [selectedDisciplines, setSelectedDisciplines] = useState<string[]>([...DISCIPLINE_OPTIONS]);
     const [dataSource, setDataSource] = useState<'supabase' | 'mock'>('mock');
     const [error, setError] = useState<string | null>(null);
     const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
@@ -59,6 +76,7 @@ export default function AssetsPage() {
         const effectivePageSize = pageSize === 'All' ? 9999 : pageSize;
         const supabaseSort = SORT_FIELD_MAP[sortField] || 'Asset_Name';
         const statusFilterForServer = selectedStatuses.length < STATUS_OPTIONS.length ? selectedStatuses : undefined;
+        const disciplineFilterForServer = selectedDisciplines.length < DISCIPLINE_OPTIONS.length ? selectedDisciplines : undefined;
 
         try {
             if (!isSupabaseConfigured()) {
@@ -77,7 +95,8 @@ export default function AssetsPage() {
                 debouncedSearch,
                 supabaseSort,
                 sortDirection,
-                statusFilterForServer
+                statusFilterForServer,
+                disciplineFilterForServer
             );
 
             if (fetchError) {
@@ -103,14 +122,14 @@ export default function AssetsPage() {
         } finally {
             setLoading(false);
         }
-    }, [currentPage, pageSize, debouncedSearch, sortField, sortDirection, selectedStatuses]);
+    }, [currentPage, pageSize, debouncedSearch, sortField, sortDirection, selectedStatuses, selectedDisciplines]);
 
-    // Reload when page, size, search, sort, or status changes
+    // Reload when page, size, search, sort, status, or discipline changes
     useEffect(() => {
         loadData();
     }, [loadData]);
 
-    // ── Supabase real-time subscription for Assets_Register_Database table ─
+    // Supabase real-time subscription for Assets_Register_Database table
     const { isLive } = useSupabaseRealtime({
         table: 'Assets_Register_Database',
         channelName: 'assets-register-rt',
@@ -137,6 +156,10 @@ export default function AssetsPage() {
             result = result.filter(item => selectedStatuses.includes(item.status));
         }
 
+        if (selectedDisciplines.length < DISCIPLINE_OPTIONS.length) {
+            result = result.filter(item => selectedDisciplines.includes(item.discipline));
+        }
+
         // Client-side sort for mock data
         if (sortField) {
             result.sort((a, b) => {
@@ -147,6 +170,8 @@ export default function AssetsPage() {
                     case 'name': aVal = a.name; bVal = b.name; break;
                     case 'serial': aVal = a.serialNumber; bVal = b.serialNumber; break;
                     case 'category': aVal = a.type; bVal = b.type; break;
+                    case 'manufacturer': aVal = a.manufacturer; bVal = b.manufacturer; break;
+                    case 'installYear': aVal = a.installYear ?? 0; bVal = b.installYear ?? 0; break;
                     case 'location': aVal = a.location; bVal = b.location; break;
                     case 'status': aVal = a.status; bVal = b.status; break;
                     case 'value': aVal = a.value; bVal = b.value; break;
@@ -160,7 +185,7 @@ export default function AssetsPage() {
         }
 
         return result;
-    }, [assets, search, selectedStatuses, sortField, sortDirection, dataSource]);
+    }, [assets, search, selectedStatuses, selectedDisciplines, sortField, sortDirection, dataSource]);
 
     const effectivePageSize = pageSize === 'All' ? totalCount : (pageSize as number);
     const totalPages = Math.ceil(totalCount / (effectivePageSize || 1));
@@ -182,9 +207,13 @@ export default function AssetsPage() {
         const data = filteredAssets.map(a => ({
             'Asset Name': a.name,
             'Serial Number': a.serialNumber,
+            'Discipline': a.discipline,
             'Category': a.type,
+            'Manufacturer': a.manufacturer || '-',
+            'Install Year': a.installYear ?? '-',
             'Location': a.location,
             'Status': a.status,
+            'Condition': a.condition || '-',
             'Last Service': a.lastService && !isNaN(new Date(a.lastService).getTime())
                 ? format(new Date(a.lastService), "MMM d, yyyy") : '-',
             'Value (OMR)': a.value,
@@ -192,18 +221,19 @@ export default function AssetsPage() {
         exportToCSV(data, `assets-${getDateForFilename()}`);
     };
 
-    const hasActiveFilters = search || selectedStatuses.length < STATUS_OPTIONS.length;
+    const hasActiveFilters = search || selectedStatuses.length < STATUS_OPTIONS.length || selectedDisciplines.length < DISCIPLINE_OPTIONS.length;
 
     const clearFilters = () => {
         setSearch('');
         setSelectedStatuses([...STATUS_OPTIONS]);
+        setSelectedDisciplines([...DISCIPLINE_OPTIONS]);
         setCurrentPage(1);
     };
 
     const stats = useMemo(() => {
-        const totalValue = assets.reduce((sum, a) => sum + a.value, 0);
-        const activeCount = assets.filter(a => a.status === 'Active').length;
-        const maintenanceCount = assets.filter(a => a.status === 'Under Maintenance').length;
+        const uniqueDisciplines = new Set(assets.map(a => a.discipline).filter(Boolean));
+        const activeCount = assets.filter(a => a.status === 'Active' || a.status === 'Working').length;
+        const verifyCount = assets.filter(a => a.status === 'TO VERIFY').length;
         const totalItems = totalCount > 0 ? totalCount : assets.length;
 
         return [
@@ -215,10 +245,10 @@ export default function AssetsPage() {
                 variant: "water" as const
             },
             {
-                label: "TOTAL VALUE",
-                value: totalValue > 0 ? `OMR ${totalValue.toLocaleString('en-US')}` : 'N/A',
-                subtitle: dataSource === 'supabase' && totalValue === 0 ? "Not in database" : "On this page",
-                icon: DollarSign,
+                label: "DISCIPLINES",
+                value: uniqueDisciplines.size.toString(),
+                subtitle: "On this page",
+                icon: Layers,
                 variant: "success" as const
             },
             {
@@ -229,34 +259,42 @@ export default function AssetsPage() {
                 variant: "success" as const
             },
             {
-                label: "IN MAINTENANCE",
-                value: maintenanceCount.toString(),
+                label: "NEEDS VERIFICATION",
+                value: verifyCount.toString(),
                 subtitle: "On this page",
-                icon: Wrench,
+                icon: ClipboardCheck,
                 variant: "warning" as const
             }
         ];
     }, [assets, totalCount, dataSource]);
 
-    const getStatusDotColor = (status: string): 'green' | 'orange' | 'red' | 'slate' => {
+    const getStatusDotColor = (status: string): 'green' | 'orange' | 'red' | 'slate' | 'amber' => {
         switch (status) {
-            case 'Active': return 'green';
+            case 'Active':
+            case 'Working':
+                return 'green';
             case 'Under Maintenance': return 'orange';
             case 'Decommissioned': return 'red';
             case 'In Storage': return 'slate';
+            case 'TO VERIFY': return 'amber';
             default: return 'slate';
         }
     };
 
     const getStatusBorderClass = (status: string): string => {
         switch (status) {
-            case 'Active': return 'border-s-emerald-500';
+            case 'Active':
+            case 'Working':
+                return 'border-s-emerald-500';
             case 'Under Maintenance': return 'border-s-amber-500';
             case 'Decommissioned': return 'border-s-red-400';
             case 'In Storage': return 'border-s-slate-400';
+            case 'TO VERIFY': return 'border-s-yellow-500';
             default: return 'border-s-slate-300';
         }
     };
+
+    const totalColumns = 9; // name, serial, category, manufacturer, install year, location, status, last service, value
 
     return (
         <div className="space-y-6 sm:space-y-7 md:space-y-8 w-full">
@@ -297,6 +335,14 @@ export default function AssetsPage() {
                         onChange={(s) => { setSelectedStatuses(s); setCurrentPage(1); }}
                     />
 
+                    <MultiSelectDropdown
+                        label="Discipline"
+                        options={DISCIPLINE_OPTIONS}
+                        selected={selectedDisciplines}
+                        onChange={(s) => { setSelectedDisciplines(s); setCurrentPage(1); }}
+                        icon={Layers}
+                    />
+
                     {hasActiveFilters && (
                         <button
                             onClick={clearFilters}
@@ -333,6 +379,12 @@ export default function AssetsPage() {
                         colorClass: 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300',
                         onRemove: () => { setSelectedStatuses([...STATUS_OPTIONS]); setCurrentPage(1); }
                     }] : []),
+                    ...(selectedDisciplines.length < DISCIPLINE_OPTIONS.length ? [{
+                        key: 'disciplines',
+                        label: `${selectedDisciplines.length} discipline${selectedDisciplines.length !== 1 ? 's' : ''}`,
+                        colorClass: 'bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300',
+                        onRemove: () => { setSelectedDisciplines([...DISCIPLINE_OPTIONS]); setCurrentPage(1); }
+                    }] : []),
                 ]} />
 
                 {/* Mobile Card View */}
@@ -356,16 +408,24 @@ export default function AssetsPage() {
                     ) : filteredAssets.length === 0 ? (
                         <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700">
                             <EmptyState
-                                variant={search || selectedStatuses.length < STATUS_OPTIONS.length ? "filter-empty" : "no-data"}
+                                variant={search || selectedStatuses.length < STATUS_OPTIONS.length || selectedDisciplines.length < DISCIPLINE_OPTIONS.length ? "filter-empty" : "no-data"}
                                 title={search ? "No assets match your search" : "No assets found"}
-                                description={search || selectedStatuses.length < STATUS_OPTIONS.length
+                                description={search || selectedStatuses.length < STATUS_OPTIONS.length || selectedDisciplines.length < DISCIPLINE_OPTIONS.length
                                     ? "Try adjusting your search or filters to see more results."
                                     : "Assets will appear here once they are added to the system."}
                             />
                         </div>
                     ) : (
-                        filteredAssets.map((asset, idx) => (
+                        filteredAssets.map((asset) => (
                             <div key={asset.id} className={`rounded-xl border border-slate-200 dark:border-slate-700 border-s-4 ${getStatusBorderClass(asset.status)} bg-white dark:bg-slate-900 p-4 space-y-3`}>
+                                {/* Discipline badge */}
+                                {asset.discipline && (
+                                    <div>
+                                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wider bg-primary/10 text-primary dark:bg-primary/20 dark:text-slate-300 ring-1 ring-primary/20">
+                                            {asset.discipline}
+                                        </span>
+                                    </div>
+                                )}
                                 <div className="flex items-start justify-between gap-2">
                                     <div className="min-w-0">
                                         <p className="font-semibold text-sm text-slate-800 dark:text-slate-200 truncate">{asset.name}</p>
@@ -382,12 +442,20 @@ export default function AssetsPage() {
                                         <MapPin className="w-3 h-3" />
                                         {asset.location}
                                     </span>
+                                    {asset.manufacturer && (
+                                        <span className="flex items-center gap-1">
+                                            <Wrench className="w-3 h-3" />
+                                            {asset.manufacturer}
+                                        </span>
+                                    )}
                                 </div>
                                 <div className="flex items-center justify-between text-xs pt-2 border-t border-slate-100 dark:border-slate-800">
                                     <span className="text-slate-400">
-                                        Service: {asset.lastService && !isNaN(new Date(asset.lastService).getTime())
-                                            ? format(new Date(asset.lastService), "MMM d, yyyy")
-                                            : '-'}
+                                        {asset.installYear ? `Installed: ${asset.installYear}` : (
+                                            asset.lastService && !isNaN(new Date(asset.lastService).getTime())
+                                                ? `Service: ${format(new Date(asset.lastService), "MMM d, yyyy")}`
+                                                : ''
+                                        )}
                                     </span>
                                     <span className="font-mono font-semibold text-primary">
                                         {asset.value > 0 ? `${asset.value.toLocaleString('en-US')} OMR` : '-'}
@@ -412,13 +480,19 @@ export default function AssetsPage() {
                                 <th className="text-left py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors" onClick={() => handleSort('category')}>
                                     <div className="flex items-center gap-1.5">Category <SortIcon field="category" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
                                 </th>
+                                <th className="text-left py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors hidden xl:table-cell" onClick={() => handleSort('manufacturer')}>
+                                    <div className="flex items-center gap-1.5">Manufacturer <SortIcon field="manufacturer" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
+                                </th>
+                                <th className="text-left py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors hidden xl:table-cell" onClick={() => handleSort('installYear')}>
+                                    <div className="flex items-center gap-1.5">Install Year <SortIcon field="installYear" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
+                                </th>
                                 <th className="text-left py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors" onClick={() => handleSort('location')}>
                                     <div className="flex items-center gap-1.5">Location <SortIcon field="location" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
                                 </th>
                                 <th className="text-left py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors" onClick={() => handleSort('status')}>
                                     <div className="flex items-center gap-1.5">Status <SortIcon field="status" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
                                 </th>
-                                <th className="text-left py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 hidden xl:table-cell">Last Service</th>
+                                <th className="text-left py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 hidden 2xl:table-cell">Last Service</th>
                                 <th className="text-right py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors" onClick={() => handleSort('value')}>
                                     <div className="flex items-center justify-end gap-1.5">Value (OMR) <SortIcon field="value" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
                                 </th>
@@ -426,10 +500,10 @@ export default function AssetsPage() {
                         </thead>
                         <tbody>
                             {loading ? (
-                                <TableBodySkeleton columns={7} rows={10} />
+                                <TableBodySkeleton columns={totalColumns} rows={10} />
                             ) : filteredAssets.length === 0 ? (
                                 <tr>
-                                    <td colSpan={7}>
+                                    <td colSpan={totalColumns}>
                                         <EmptyState
                                             variant={search ? "filter-empty" : "no-data"}
                                             title={search ? "No assets match your search" : "No assets found"}
@@ -438,16 +512,22 @@ export default function AssetsPage() {
                                     </td>
                                 </tr>
                             ) : (
-                                filteredAssets.map((asset, idx) => (
+                                filteredAssets.map((asset) => (
                                     <tr key={asset.id} className="border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-[#00d2b3]/5 dark:hover:bg-slate-700/40 transition-colors even:bg-slate-50/40 dark:even:bg-slate-800/20">
                                         <td className="py-4 px-5 font-medium text-slate-800 dark:text-slate-200">{asset.name}</td>
                                         <td className="py-4 px-5 font-mono text-sm text-slate-500 dark:text-slate-400 hidden lg:table-cell">{asset.serialNumber}</td>
                                         <td className="py-4 px-5 text-slate-600 dark:text-slate-400 text-sm">{asset.type}</td>
+                                        <td className="py-4 px-5 text-slate-600 dark:text-slate-400 text-sm hidden xl:table-cell">
+                                            {asset.manufacturer || <span className="text-slate-300 dark:text-slate-600">-</span>}
+                                        </td>
+                                        <td className="py-4 px-5 text-slate-600 dark:text-slate-400 text-sm hidden xl:table-cell">
+                                            {asset.installYear ?? <span className="text-slate-300 dark:text-slate-600">-</span>}
+                                        </td>
                                         <td className="py-4 px-5 text-slate-600 dark:text-slate-400 text-sm">{asset.location}</td>
                                         <td className="py-4 px-5">
                                             <StatusBadge label={asset.status} color={getStatusDotColor(asset.status)} />
                                         </td>
-                                        <td className="py-4 px-5 text-sm text-slate-500 dark:text-slate-400 hidden xl:table-cell">
+                                        <td className="py-4 px-5 text-sm text-slate-500 dark:text-slate-400 hidden 2xl:table-cell">
                                             {asset.lastService && !isNaN(new Date(asset.lastService).getTime())
                                                 ? format(new Date(asset.lastService), "MMM d, yyyy")
                                                 : <span className="text-slate-300 dark:text-slate-600">-</span>}

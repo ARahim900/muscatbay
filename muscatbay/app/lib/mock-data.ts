@@ -129,17 +129,8 @@ export interface FireQuotationItem {
     cost_omr: number;
 }
 
-export interface Asset {
-    id: string;
-    name: string;
-    type: string;
-    location: string;
-    status: "Active" | "Under Maintenance" | "Decommissioned" | "In Storage";
-    purchaseDate: string;
-    value: number;
-    serialNumber: string;
-    lastService: string;
-}
+// Re-export Asset from the canonical entity definition
+export type { Asset } from '@/entities/asset';
 
 // --- Mock Data ---
 
@@ -403,11 +394,11 @@ export const FIRE_QUOTE_ITEMS: FireQuotationItem[] = [
 
 // Assets Data
 export const ASSETS_DATA: Asset[] = [
-    { id: "a1", name: "Main Pump A", type: "Mechanical", location: "Pump Room", status: "Active", purchaseDate: "2023-01-15", value: 15000, serialNumber: "PUMP-001-A", lastService: "2025-08-01" },
-    { id: "a2", name: "Main Pump B", type: "Mechanical", location: "Pump Room", status: "Under Maintenance", purchaseDate: "2023-01-15", value: 15000, serialNumber: "PUMP-001-B", lastService: "2025-09-15" },
-    { id: "a3", name: "Generator 500kVA", type: "Electrical", location: "Power Plant", status: "Active", purchaseDate: "2024-05-20", value: 45000, serialNumber: "GEN-500-X", lastService: "2025-09-01" },
-    { id: "a4", name: "Golf Cart 04", type: "Vehicle", location: "Club House", status: "In Storage", purchaseDate: "2024-02-10", value: 3500, serialNumber: "GC-04", lastService: "2025-06-20" },
-    { id: "a5", name: "Irrigation Controller", type: "Electronics", location: "Zone A", status: "Active", purchaseDate: "2023-11-05", value: 1200, serialNumber: "IC-ZA-01", lastService: "2025-07-10" },
+    { id: "a1", name: "Main Pump A", type: "Mechanical & Plumbing", location: "Pump Room", status: "Active", purchaseDate: "2023-01-15", value: 15000, serialNumber: "PUMP-001-A", lastService: "2025-08-01", manufacturer: "Grundfos", installYear: 2023, discipline: "Mechanical & Plumbing", subcategory: "Pumps", condition: "Good" },
+    { id: "a2", name: "Main Pump B", type: "Mechanical & Plumbing", location: "Pump Room", status: "Under Maintenance", purchaseDate: "2023-01-15", value: 15000, serialNumber: "PUMP-001-B", lastService: "2025-09-15", manufacturer: "Grundfos", installYear: 2023, discipline: "Mechanical & Plumbing", subcategory: "Pumps", condition: "Fair" },
+    { id: "a3", name: "Generator 500kVA", type: "Electrical", location: "Power Plant", status: "Active", purchaseDate: "2024-05-20", value: 45000, serialNumber: "GEN-500-X", lastService: "2025-09-01", manufacturer: "Caterpillar", installYear: 2024, discipline: "Electrical", subcategory: "Generators", condition: "Good" },
+    { id: "a4", name: "Golf Cart 04", type: "Lifts & Transport", location: "Club House", status: "In Storage", purchaseDate: "2024-02-10", value: 3500, serialNumber: "GC-04", lastService: "2025-06-20", manufacturer: "Club Car", installYear: 2024, discipline: "Lifts & Transport", subcategory: "Vehicles", condition: "Good" },
+    { id: "a5", name: "Irrigation Controller", type: "Electrical", location: "Zone A", status: "Active", purchaseDate: "2023-11-05", value: 1200, serialNumber: "IC-ZA-01", lastService: "2025-07-10", manufacturer: "Hunter", installYear: 2023, discipline: "Electrical", subcategory: "Controllers", condition: "Good" },
 ];
 
 // --- API Simulation Functions ---

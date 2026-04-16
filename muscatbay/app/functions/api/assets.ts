@@ -5,8 +5,7 @@
  */
 
 import { getSupabaseClient } from '../supabase-client';
-import { SupabaseAsset, transformAsset } from '@/entities/asset';
-import type { Asset } from '@/lib/mock-data';
+import { type Asset, type SupabaseAsset, transformAsset } from '@/entities/asset';
 
 /**
  * Fetch assets from Supabase with pagination and search
@@ -18,7 +17,8 @@ export async function getAssetsFromSupabase(
     search: string = '',
     sortField: string = 'Asset_Name',
     sortDirection: 'asc' | 'desc' = 'asc',
-    statusFilter?: string[]
+    statusFilter?: string[],
+    disciplineFilter?: string[]
 ): Promise<{ data: Asset[], count: number }> {
     const client = getSupabaseClient();
 
@@ -41,7 +41,17 @@ export async function getAssetsFromSupabase(
 
         // Apply status filter
         if (statusFilter && statusFilter.length > 0) {
-            query = query.in('Status', statusFilter);
+            // Map "Active" back to "Working" for Supabase query since the DB uses "Working"
+            const dbStatuses = statusFilter.map(s => {
+                if (s === 'Active') return 'Working';
+                return s;
+            });
+            query = query.in('Status', dbStatuses);
+        }
+
+        // Apply discipline filter
+        if (disciplineFilter && disciplineFilter.length > 0) {
+            query = query.in('Discipline', disciplineFilter);
         }
 
         const { data, error, count } = await query
