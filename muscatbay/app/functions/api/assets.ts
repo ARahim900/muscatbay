@@ -73,3 +73,89 @@ export async function getAssetsFromSupabase(
     }
 }
 
+/**
+ * Fetch operations-level summary metrics from Supabase.
+ * These are global metrics (not page-limited) for management dashboards.
+ */
+export async function getAssetSummaryFromSupabase(): Promise<{
+    total: number;
+    activeFlagged: number;
+    workingStatus: number;
+    toVerify: number;
+    criticalLifecycle: number;
+    disciplines: number;
+}> {
+    const client = getSupabaseClient();
+    if (!client) {
+        return { total: 0, activeFlagged: 0, workingStatus: 0, toVerify: 0, criticalLifecycle: 0, disciplines: 0 };
+    }
+
+    const [totalRes, activeRes, workingRes, verifyRes, criticalRes, disciplineRes] = await Promise.all([
+        client.from('Assets_Register_Database').select('Asset_UID', { count: 'exact', head: true }),
+        client
+            .from('Assets_Register_Database')
+            .select('Asset_UID', { count: 'exact', head: true })
+            .eq('Is_Asset_Active', 'Y'),
+        client
+            .from('Assets_Register_Database')
+            .select('Asset_UID', { count: 'exact', head: true })
+            .in('Status', ['Working', 'Active']),
+        client
+            .from('Assets_Register_Database')
+            .select('Asset_UID', { count: 'exact', head: true })
+            .eq('Status', 'TO VERIFY'),
+        client
+            .from('Assets_Register_Database')
+            .select('Asset_UID', { count: 'exact', head: true })
+            .or('ERL_Years.lte.2,Status.eq.TO VERIFY,Status.eq.Decommissioned'),
+        client.from('Assets_Register_Database').select('Discipline').range(0, 999),
+    ]);
+
+    if (totalRes.error || activeRes.error || workingRes.error || verifyRes.error || criticalRes.error || disciplineRes.error) {
+        throw new Error(
+            totalRes.error?.message ||
+                activeRes.error?.message ||
+                workingRes.error?.message ||
+                verifyRes.error?.message ||
+                criticalRes.error?.message ||
+                disciplineRes.error?.message ||
+                'Failed to fetch asset summary'
+        );
+    }
+
+    const disciplineRows = [...(disciplineRes.data || [])];
+    if ((disciplineRes.data || []).length === 1000) {
+        let start = 1000;
+        const pageSize = 1000;
+        // Read all rows so the discipline KPI reflects the full portfolio.
+        while (true) {
+            const { data, error } = await client
+                .from('Assets_Register_Database')
+                .select('Discipline')
+                .range(start, start + pageSize - 1);
+            if (error) {
+                throw new Error(error.message);
+            }
+            if (!data || data.length === 0) {
+                break;
+            }
+            disciplineRows.push(...data);
+            if (data.length < pageSize) {
+                break;
+            }
+            start += pageSize;
+        }
+    }
+
+    const uniqueDisciplines = new Set(disciplineRows.map((d) => d.Discipline).filter(Boolean));
+
+    return {
+        total: totalRes.count || 0,
+        activeFlagged: activeRes.count || 0,
+        workingStatus: workingRes.count || 0,
+        toVerify: verifyRes.count || 0,
+        criticalLifecycle: criticalRes.count || 0,
+        disciplines: uniqueDisciplines.size,
+    };
+}
+

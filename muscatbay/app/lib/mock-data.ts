@@ -130,6 +130,7 @@ export interface FireQuotationItem {
 }
 
 // Re-export Asset from the canonical entity definition
+import type { Asset } from '@/entities/asset';
 export type { Asset } from '@/entities/asset';
 
 // --- Mock Data ---

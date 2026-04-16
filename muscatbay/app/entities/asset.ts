@@ -12,6 +12,8 @@ export interface Asset {
     id: string;
     name: string;
     type: string;
+    category?: string;
+    systemArea?: string;
     location: string;
     status: 'Active' | 'Working' | 'Under Maintenance' | 'Decommissioned' | 'In Storage' | 'TO VERIFY';
     purchaseDate: string;
@@ -19,10 +21,22 @@ export interface Asset {
     serialNumber: string;
     lastService: string;
     manufacturer: string;
+    model?: string;
+    countryOfOrigin?: string;
+    capacitySize?: string;
+    quantity?: number | null;
+    ppmFrequency?: string;
     installYear: number | null;
     discipline: string;
     subcategory: string;
     condition: string;
+    responsibilityOwner?: string;
+    lifeExpectancyYears?: number | null;
+    currentAgeYears?: number | null;
+    erlYears?: number | null;
+    lifecycleRisk?: 'Normal' | 'Watch' | 'Critical';
+    isAssetActive?: boolean;
+    notes?: string;
 }
 
 /**
@@ -75,7 +89,7 @@ export function transformAsset(dbAsset: SupabaseAsset): Asset {
     if (dbAsset.Status) {
         const statusUpper = dbAsset.Status.toUpperCase().trim();
         if (statusUpper === 'WORKING') {
-            status = 'Active';
+            status = 'Working';
         } else if (statusUpper === 'TO VERIFY') {
             status = 'TO VERIFY';
         } else {
@@ -92,10 +106,22 @@ export function transformAsset(dbAsset: SupabaseAsset): Asset {
         status = 'Decommissioned';
     }
 
+    const erlYears = dbAsset.ERL_Years ?? null;
+    const lifeExpectancyYears = dbAsset.Life_Expectancy_Years ?? null;
+    const currentAgeYears = dbAsset.Current_Age_Years ?? null;
+    let lifecycleRisk: Asset['lifecycleRisk'] = 'Normal';
+    if ((erlYears !== null && erlYears <= 2) || status === 'TO VERIFY' || status === 'Decommissioned') {
+        lifecycleRisk = 'Critical';
+    } else if (erlYears !== null && erlYears <= 5) {
+        lifecycleRisk = 'Watch';
+    }
+
     return {
         id: dbAsset.Asset_UID || String(Math.random()),
         name: dbAsset.Asset_Name || 'Unknown Asset',
-        type: dbAsset.Discipline || dbAsset.Category || 'General',
+        type: dbAsset.Category || dbAsset.Discipline || 'General',
+        category: dbAsset.Category || '',
+        systemArea: dbAsset.System_Area || '',
         location: dbAsset.Location_Name || dbAsset.Building || dbAsset.Zone || 'Unknown Location',
         status: status,
         purchaseDate: dbAsset.Install_Date || '',
@@ -103,9 +129,21 @@ export function transformAsset(dbAsset: SupabaseAsset): Asset {
         serialNumber: dbAsset.Asset_Tag || '',
         lastService: '',
         manufacturer: dbAsset.Manufacturer_Brand || '',
+        model: dbAsset.Model || '',
+        countryOfOrigin: dbAsset.Country_Of_Origin || '',
+        capacitySize: dbAsset.Capacity_Size || '',
+        quantity: dbAsset.Quantity ?? null,
+        ppmFrequency: dbAsset.PPM_Frequency || '',
         installYear: dbAsset.Install_Year ?? null,
         discipline: dbAsset.Discipline || '',
         subcategory: dbAsset.Subcategory || '',
         condition: dbAsset.Condition || '',
+        responsibilityOwner: dbAsset.Responsibility_Owner || '',
+        lifeExpectancyYears,
+        currentAgeYears,
+        erlYears,
+        lifecycleRisk,
+        isAssetActive: (dbAsset.Is_Asset_Active || '').toUpperCase() !== 'N',
+        notes: dbAsset.Notes_Remarks || '',
     };
 }

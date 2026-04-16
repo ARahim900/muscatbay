@@ -4,12 +4,12 @@ import { useEffect, useState, useMemo, useCallback } from "react";
 import { getAssets } from "@/lib/mock-data";
 import type { Asset } from "@/entities/asset";
 import { isSupabaseConfigured } from "@/lib/supabase";
-import { fetchAssetsAction } from "@/actions/assets";
+import { fetchAssetsAction, fetchAssetSummaryAction } from "@/actions/assets";
 import { StatsGrid } from "@/components/shared/stats-grid";
 import { StatsGridSkeleton, TableBodySkeleton, Skeleton } from "@/components/shared/skeleton";
 import { EmptyState } from "@/components/shared/empty-state";
 import { PageHeader } from "@/components/shared/page-header";
-import { Boxes, MapPin, Wrench, Search, Plus, AlertCircle, Download, X, Layers, ClipboardCheck } from "lucide-react";
+import { Boxes, MapPin, Wrench, Search, Plus, Download, X, Layers, ClipboardCheck, ShieldAlert } from "lucide-react";
 import { format } from "date-fns";
 import { MultiSelectDropdown, SortIcon, TablePagination, ActiveFilterPills, TableToolbar, StatusBadge, type PageSizeOption } from "@/components/shared/data-table";
 import { exportToCSV, getDateForFilename } from "@/lib/export-utils";
@@ -20,12 +20,13 @@ import { PageStatusBar } from "@/components/shared/page-status-bar";
 const SORT_FIELD_MAP: Record<string, string> = {
     name: 'Asset_Name',
     serial: 'Asset_Tag',
-    category: 'Discipline',
+    category: 'Category',
     manufacturer: 'Manufacturer_Brand',
     installYear: 'Install_Year',
     location: 'Location_Name',
     status: 'Status',
     discipline: 'Discipline',
+    risk: 'ERL_Years',
 };
 
 const STATUS_OPTIONS = ['Working', 'Active', 'Under Maintenance', 'Decommissioned', 'In Storage', 'TO VERIFY'];
@@ -43,6 +44,21 @@ const DISCIPLINE_OPTIONS = [
 ];
 
 export default function AssetsPage() {
+    const [summary, setSummary] = useState<{
+        total: number;
+        activeFlagged: number;
+        workingStatus: number;
+        toVerify: number;
+        criticalLifecycle: number;
+        disciplines: number;
+    }>({
+        total: 0,
+        activeFlagged: 0,
+        workingStatus: 0,
+        toVerify: 0,
+        criticalLifecycle: 0,
+        disciplines: 0,
+    });
     const [assets, setAssets] = useState<Asset[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
@@ -108,6 +124,10 @@ export default function AssetsPage() {
                 setTotalCount(count);
                 setDataSource('supabase');
                 setLastUpdated(new Date());
+                const summaryRes = await fetchAssetSummaryAction();
+                if (!summaryRes.error) {
+                    setSummary(summaryRes);
+                }
             } else {
                 setAssets([]);
                 setTotalCount(0);
@@ -231,10 +251,18 @@ export default function AssetsPage() {
     };
 
     const stats = useMemo(() => {
-        const uniqueDisciplines = new Set(assets.map(a => a.discipline).filter(Boolean));
+        const uniqueDisciplines = new Set(assets.map(a => a.discipline).filter(Boolean)).size;
         const activeCount = assets.filter(a => a.status === 'Active' || a.status === 'Working').length;
         const verifyCount = assets.filter(a => a.status === 'TO VERIFY').length;
-        const totalItems = totalCount > 0 ? totalCount : assets.length;
+        const criticalCount = assets.filter(a => a.lifecycleRisk === 'Critical').length;
+        const totalItems = dataSource === 'supabase' ? (summary.total || totalCount) : (totalCount > 0 ? totalCount : assets.length);
+        const disciplineCount = dataSource === 'supabase' ? summary.disciplines : uniqueDisciplines;
+        const activeByFlagCount = dataSource === 'supabase'
+            ? summary.activeFlagged
+            : assets.filter(a => a.isAssetActive !== false).length;
+        const workingCount = dataSource === 'supabase' ? summary.workingStatus : activeCount;
+        const needsVerifyCount = dataSource === 'supabase' ? summary.toVerify : verifyCount;
+        const criticalLifecycleCount = dataSource === 'supabase' ? summary.criticalLifecycle : criticalCount;
 
         return [
             {
@@ -246,27 +274,41 @@ export default function AssetsPage() {
             },
             {
                 label: "DISCIPLINES",
-                value: uniqueDisciplines.size.toString(),
-                subtitle: "On this page",
+                value: disciplineCount.toString(),
+                subtitle: dataSource === 'supabase' ? "Portfolio-wide" : "In current dataset",
                 icon: Layers,
                 variant: "success" as const
             },
             {
                 label: "ACTIVE ASSETS",
-                value: activeCount.toString(),
-                subtitle: "On this page",
+                value: activeByFlagCount.toString(),
+                subtitle: dataSource === 'supabase' ? "Is_Asset_Active = Y" : "On this page",
                 icon: MapPin,
                 variant: "success" as const
             },
             {
-                label: "NEEDS VERIFICATION",
-                value: verifyCount.toString(),
-                subtitle: "On this page",
+                label: "WORKING STATUS",
+                value: workingCount.toString(),
+                subtitle: "Status = Working/Active",
                 icon: ClipboardCheck,
+                variant: "water" as const
+            },
+            {
+                label: "NEEDS VERIFICATION",
+                value: needsVerifyCount.toString(),
+                subtitle: "TO VERIFY status",
+                icon: ShieldAlert,
                 variant: "warning" as const
+            },
+            {
+                label: "CRITICAL LIFECYCLE RISK",
+                value: criticalLifecycleCount.toString(),
+                subtitle: "ERL <= 2y or flagged status",
+                icon: ShieldAlert,
+                variant: "danger" as const
             }
         ];
-    }, [assets, totalCount, dataSource]);
+    }, [assets, totalCount, dataSource, summary]);
 
     const getStatusDotColor = (status: string): 'green' | 'orange' | 'red' | 'slate' | 'amber' => {
         switch (status) {
@@ -294,14 +336,14 @@ export default function AssetsPage() {
         }
     };
 
-    const totalColumns = 9; // name, serial, category, manufacturer, install year, location, status, last service, value
+    const totalColumns = 10;
 
     return (
         <div className="space-y-6 sm:space-y-7 md:space-y-8 w-full">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <PageHeader
                     title="Assets Management"
-                    description="Track and manage all company assets and equipment"
+                    description="Operations-standard asset register with lifecycle, compliance, and portfolio controls"
                     action={{ label: "Register Asset", icon: Plus }}
                 />
                 <PageStatusBar
@@ -477,6 +519,9 @@ export default function AssetsPage() {
                                 <th className="text-left py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors hidden lg:table-cell" onClick={() => handleSort('serial')}>
                                     <div className="flex items-center gap-1.5">Serial # <SortIcon field="serial" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
                                 </th>
+                                <th className="text-left py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors" onClick={() => handleSort('discipline')}>
+                                    <div className="flex items-center gap-1.5">Discipline <SortIcon field="discipline" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
+                                </th>
                                 <th className="text-left py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors" onClick={() => handleSort('category')}>
                                     <div className="flex items-center gap-1.5">Category <SortIcon field="category" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
                                 </th>
@@ -492,7 +537,9 @@ export default function AssetsPage() {
                                 <th className="text-left py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors" onClick={() => handleSort('status')}>
                                     <div className="flex items-center gap-1.5">Status <SortIcon field="status" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
                                 </th>
-                                <th className="text-left py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 hidden 2xl:table-cell">Last Service</th>
+                                <th className="text-left py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors hidden 2xl:table-cell" onClick={() => handleSort('risk')}>
+                                    <div className="flex items-center gap-1.5">Lifecycle Risk <SortIcon field="risk" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
+                                </th>
                                 <th className="text-right py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors" onClick={() => handleSort('value')}>
                                     <div className="flex items-center justify-end gap-1.5">Value (OMR) <SortIcon field="value" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
                                 </th>
@@ -516,6 +563,7 @@ export default function AssetsPage() {
                                     <tr key={asset.id} className="border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-[#00d2b3]/5 dark:hover:bg-slate-700/40 transition-colors even:bg-slate-50/40 dark:even:bg-slate-800/20">
                                         <td className="py-4 px-5 font-medium text-slate-800 dark:text-slate-200">{asset.name}</td>
                                         <td className="py-4 px-5 font-mono text-sm text-slate-500 dark:text-slate-400 hidden lg:table-cell">{asset.serialNumber}</td>
+                                        <td className="py-4 px-5 text-slate-600 dark:text-slate-400 text-sm">{asset.discipline || '-'}</td>
                                         <td className="py-4 px-5 text-slate-600 dark:text-slate-400 text-sm">{asset.type}</td>
                                         <td className="py-4 px-5 text-slate-600 dark:text-slate-400 text-sm hidden xl:table-cell">
                                             {asset.manufacturer || <span className="text-slate-300 dark:text-slate-600">-</span>}
@@ -527,10 +575,11 @@ export default function AssetsPage() {
                                         <td className="py-4 px-5">
                                             <StatusBadge label={asset.status} color={getStatusDotColor(asset.status)} />
                                         </td>
-                                        <td className="py-4 px-5 text-sm text-slate-500 dark:text-slate-400 hidden 2xl:table-cell">
-                                            {asset.lastService && !isNaN(new Date(asset.lastService).getTime())
-                                                ? format(new Date(asset.lastService), "MMM d, yyyy")
-                                                : <span className="text-slate-300 dark:text-slate-600">-</span>}
+                                        <td className="py-4 px-5 text-sm hidden 2xl:table-cell">
+                                            <StatusBadge
+                                                label={asset.lifecycleRisk || 'Normal'}
+                                                color={asset.lifecycleRisk === 'Critical' ? 'red' : asset.lifecycleRisk === 'Watch' ? 'amber' : 'green'}
+                                            />
                                         </td>
                                         <td className="py-4 px-5 text-right font-mono text-sm text-slate-700 dark:text-slate-300">{asset.value.toLocaleString('en-US')}</td>
                                     </tr>

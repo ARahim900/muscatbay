@@ -1,6 +1,6 @@
 'use server'
 
-import { getAssetsFromSupabase } from '@/functions/api/assets';
+import { getAssetsFromSupabase, getAssetSummaryFromSupabase } from '@/functions/api/assets';
 import type { Asset } from '@/entities/asset';
 
 /**
@@ -28,6 +28,32 @@ export async function fetchAssetsAction(
             data: [],
             count: 0,
             error: err instanceof Error ? err.message : 'Server-side fetch failed'
+        };
+    }
+}
+
+export async function fetchAssetSummaryAction(): Promise<{
+    total: number;
+    activeFlagged: number;
+    workingStatus: number;
+    toVerify: number;
+    criticalLifecycle: number;
+    disciplines: number;
+    error?: string;
+}> {
+    try {
+        const summary = await getAssetSummaryFromSupabase();
+        return summary;
+    } catch (err) {
+        console.error('Asset Summary Action Error:', err);
+        return {
+            total: 0,
+            activeFlagged: 0,
+            workingStatus: 0,
+            toVerify: 0,
+            criticalLifecycle: 0,
+            disciplines: 0,
+            error: err instanceof Error ? err.message : 'Server-side summary fetch failed',
         };
     }
 }
