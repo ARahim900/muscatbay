@@ -118,3 +118,57 @@ app/
 - **Animations**: GSAP 3.14
 - **Dates**: date-fns 4.1
 - **Testing**: Vitest 4, Testing Library
+
+## Dark Mode Theme
+
+The dark theme uses a **warm near-black palette** that harmonizes with the `#4E4456` brand purple — no slate/navy surfaces. All tokens live in `app/globals.css` under the `.dark` block.
+
+### Brand & Semantic Tokens (dark)
+
+| Role | Token | Hex |
+|---|---|---|
+| Background (page) | `--background` | `#0A090C` |
+| Card / popover / component surface | `--card`, `--popover`, `--component` | `#16141B` |
+| Foreground (text) | `--foreground` | `#F1F5F9` |
+| Muted surface | `--muted` | `#22202A` |
+| Muted text | `--muted-foreground` | `#9CA3AF` |
+| Primary (brand purple) | `--primary` | `#4E4456` |
+| Sidebar (darker than primary) | `--sidebar` | `#3B3240` |
+| Secondary / accent (teal) | `--secondary`, `--accent` | `#A4C5BB` |
+| Destructive | `--destructive` | `#D67A7A` |
+| Border / input | `--border`, `--input` | `rgba(255,255,255,0.1)` |
+| Focus ring | `--ring` | `#A4C5BB` |
+
+### Near-Black Surface Scale
+
+Used for elevation and hover layers, unlayered in `globals.css` so they always win over Tailwind utilities:
+
+| Level | Hex | Purpose |
+|---|---|---|
+| `slate-950` → | `#0A090C` | Page background |
+| `slate-900` → | `#16141B` | Card / base surface |
+| `slate-800` → | `#1E1C26` | Elevated surface |
+| `slate-700` → | `#2A2733` | Hover / highlight |
+
+Borders for `slate-700/800/900` are remapped to white-tinted hairlines (`rgba(255,255,255,0.05–0.16)`).
+
+### Status Tokens (dark)
+
+- Success `--mb-success` `#84B59F` · hover `#9DCAB6`
+- Warning `--mb-warning` `#E8C064`
+- Danger `--mb-danger` `#D67A7A` · hover `#E09090`
+- Info `--mb-info` `#6B9AC4`
+- Each has a `…-light` variant at ~12% alpha for tinted backgrounds.
+
+### Rules
+
+1. **Never hardcode dark surface hex values** — always use the token (`bg-card`, `bg-background`, `bg-muted`) or the legacy `dark:bg-slate-{700..950}` classes, which are remapped centrally.
+2. **No `dark:bg-slate-*` additions outside the remap block** — if you need a new shade, add it to the remap section in `globals.css`, don't invent one-off hex values in components.
+3. **Borders in dark mode use white-alpha**, not solid colors. Prefer `border-border` or the remapped `dark:border-slate-*` classes.
+4. **Headings** auto-color: `--primary` in light, `--foreground` in dark (handled in the base layer).
+5. **Sidebar must stay darker than `--primary`** so it reads as a distinct zone under the topbar.
+6. **Charts** use the teal/amber/green/purple palette via `--chart-*` tokens — don't import Recharts' defaults.
+7. **Focus ring** is always the teal `--ring` (`#A4C5BB`) for WCAG contrast against near-black.
+8. **To retune the entire dark shell**, change the 4 base hex values in the "Dark Surface Remap" block in `globals.css` — every surface retracks automatically.
+
+See [`DESIGN_SYSTEM.md`](./DESIGN_SYSTEM.md) for the full light-mode spec, component patterns, and typography scale.
