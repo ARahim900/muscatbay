@@ -1,13 +1,3 @@
-/**
- * @fileoverview Asset Entity
- * Database model and transform function for Assets_Register_Database table
- * @module entities/asset
- */
-
-/**
- * Application-level Asset interface used across the app.
- * Defined here as the single source of truth.
- */
 export interface Asset {
     id: string;
     name: string;
@@ -39,9 +29,6 @@ export interface Asset {
     notes?: string;
 }
 
-/**
- * Asset type matching the Assets_Register_Database table schema in Supabase
- */
 export interface SupabaseAsset {
     Asset_UID: string | null;
     Asset_Tag: string | null;
@@ -62,7 +49,7 @@ export interface SupabaseAsset {
     Capacity_Size: string | null;
     Quantity: number | null;
     Install_Date: string | null;
-    Install_Year: number | null;
+    Install_Year: number | string | null;
     PPM_Frequency: string | null;
     PPM_Interval: string | null;
     Is_Asset_Active: string | null;
@@ -80,35 +67,68 @@ export interface SupabaseAsset {
     Source_Row: number | null;
 }
 
-/**
- * Transform Supabase asset to match the app's Asset interface
- */
+/** Expand abbreviated PPM frequency codes into human-readable labels. */
+function normalizePpmFrequency(raw: string | null | undefined): string {
+    if (!raw) return '';
+    const upper = raw.trim().toUpperCase();
+    switch (upper) {
+        case 'Q':
+        case 'QUARTERLY':   return 'Quarterly';
+        case 'HY':
+        case 'SEMI-ANNUAL': return 'Semi-Annual';
+        case '4M':          return 'Every 4 Months';
+        case 'MONTHLY':     return 'Monthly';
+        case 'ANNUAL':      return 'Annual';
+        case 'OC':          return 'On Condition';
+        case 'WEEKLY':      return 'Weekly';
+        case '2':           return '2× / Year';
+        case '4':           return '4× / Year';
+        default:            return raw.trim();
+    }
+}
+
+/** Transform Supabase asset row into the app-level Asset interface. */
 export function transformAsset(dbAsset: SupabaseAsset): Asset {
-    // Determine status - map Is_Asset_Active and Status fields
+    const CURRENT_YEAR = new Date().getFullYear();
+
+    // ── Is_Asset_Active — normalise 'Y' and 'Yes' both to true ──
+    const isActiveStr = (dbAsset.Is_Asset_Active || '').toUpperCase().trim();
+    const isActiveFlag = isActiveStr === 'Y' || isActiveStr === 'YES';
+
+    // ── Status ───────────────────────────────────────────────────
     let status: Asset['status'] = 'Active';
     if (dbAsset.Status) {
-        const statusUpper = dbAsset.Status.toUpperCase().trim();
-        if (statusUpper === 'WORKING') {
-            status = 'Working';
-        } else if (statusUpper === 'TO VERIFY') {
-            status = 'TO VERIFY';
-        } else {
-            const statusLower = dbAsset.Status.toLowerCase();
-            if (statusLower.includes('maintenance')) {
-                status = 'Under Maintenance';
-            } else if (statusLower.includes('decommission') || statusLower.includes('inactive')) {
-                status = 'Decommissioned';
-            } else if (statusLower.includes('storage')) {
-                status = 'In Storage';
-            }
-        }
-    } else if (dbAsset.Is_Asset_Active === 'N') {
+        const upper = dbAsset.Status.toUpperCase().trim();
+        const lower = dbAsset.Status.toLowerCase();
+        if (upper === 'WORKING')          status = 'Working';
+        else if (upper === 'TO VERIFY')   status = 'TO VERIFY';
+        else if (upper === 'ACTIVE')      status = 'Active';
+        else if (lower.includes('maintenance'))              status = 'Under Maintenance';
+        else if (lower.includes('decommission') || lower.includes('inactive')) status = 'Decommissioned';
+        else if (lower.includes('storage'))                  status = 'In Storage';
+    } else if (!isActiveFlag) {
         status = 'Decommissioned';
     }
 
-    const erlYears = dbAsset.ERL_Years ?? null;
-    const lifeExpectancyYears = dbAsset.Life_Expectancy_Years ?? null;
-    const currentAgeYears = dbAsset.Current_Age_Years ?? null;
+    // ── Install year (stored as int OR string in the DB) ─────────
+    const installYear = dbAsset.Install_Year !== null && dbAsset.Install_Year !== undefined
+        ? Number(dbAsset.Install_Year) || null
+        : null;
+
+    // ── Current age: use DB value if present, otherwise derive from Install_Year ──
+    const computedAge = installYear ? CURRENT_YEAR - installYear : null;
+    const currentAgeYears: number | null = dbAsset.Current_Age_Years ?? computedAge;
+
+    const lifeExpectancyYears: number | null = dbAsset.Life_Expectancy_Years ?? null;
+
+    // ── ERL: use DB value if present, otherwise compute Life − Age ──
+    const erlYears: number | null = dbAsset.ERL_Years !== null && dbAsset.ERL_Years !== undefined
+        ? dbAsset.ERL_Years
+        : (lifeExpectancyYears !== null && currentAgeYears !== null
+            ? Math.max(0, lifeExpectancyYears - currentAgeYears)
+            : null);
+
+    // ── Lifecycle risk ────────────────────────────────────────────
     let lifecycleRisk: Asset['lifecycleRisk'] = 'Normal';
     if ((erlYears !== null && erlYears <= 2) || status === 'TO VERIFY' || status === 'Decommissioned') {
         lifecycleRisk = 'Critical';
@@ -116,14 +136,22 @@ export function transformAsset(dbAsset: SupabaseAsset): Asset {
         lifecycleRisk = 'Watch';
     }
 
+    // ── Location: prefer Location_Name, then Zone, then System_Area ──
+    const location =
+        dbAsset.Location_Name ||
+        dbAsset.Zone ||
+        dbAsset.System_Area ||
+        dbAsset.Building ||
+        'Unspecified';
+
     return {
         id: dbAsset.Asset_UID || String(Math.random()),
         name: dbAsset.Asset_Name || 'Unknown Asset',
         type: dbAsset.Category || dbAsset.Discipline || 'General',
         category: dbAsset.Category || '',
         systemArea: dbAsset.System_Area || '',
-        location: dbAsset.Location_Name || dbAsset.Building || dbAsset.Zone || 'Unknown Location',
-        status: status,
+        location,
+        status,
         purchaseDate: dbAsset.Install_Date || '',
         value: 0,
         serialNumber: dbAsset.Asset_Tag || '',
@@ -133,8 +161,8 @@ export function transformAsset(dbAsset: SupabaseAsset): Asset {
         countryOfOrigin: dbAsset.Country_Of_Origin || '',
         capacitySize: dbAsset.Capacity_Size || '',
         quantity: dbAsset.Quantity ?? null,
-        ppmFrequency: dbAsset.PPM_Frequency || '',
-        installYear: dbAsset.Install_Year ?? null,
+        ppmFrequency: normalizePpmFrequency(dbAsset.PPM_Frequency),
+        installYear,
         discipline: dbAsset.Discipline || '',
         subcategory: dbAsset.Subcategory || '',
         condition: dbAsset.Condition || '',
@@ -143,7 +171,7 @@ export function transformAsset(dbAsset: SupabaseAsset): Asset {
         currentAgeYears,
         erlYears,
         lifecycleRisk,
-        isAssetActive: (dbAsset.Is_Asset_Active || '').toUpperCase() !== 'N',
+        isAssetActive: isActiveFlag,
         notes: dbAsset.Notes_Remarks || '',
     };
 }

@@ -39,14 +39,9 @@ export async function getAssetsFromSupabase(
             query = query.or(`Asset_Name.ilike.%${search}%,Location_Name.ilike.%${search}%,Asset_Tag.ilike.%${search}%,Category.ilike.%${search}%,Discipline.ilike.%${search}%`);
         }
 
-        // Apply status filter
+        // Apply status filter — pass status values as-is; DB stores 'Working', 'Active', 'TO VERIFY', etc.
         if (statusFilter && statusFilter.length > 0) {
-            // Map "Active" back to "Working" for Supabase query since the DB uses "Working"
-            const dbStatuses = statusFilter.map(s => {
-                if (s === 'Active') return 'Working';
-                return s;
-            });
-            query = query.in('Status', dbStatuses);
+            query = query.in('Status', statusFilter);
         }
 
         // Apply discipline filter
@@ -95,7 +90,7 @@ export async function getAssetSummaryFromSupabase(): Promise<{
         client
             .from('Assets_Register_Database')
             .select('Asset_UID', { count: 'exact', head: true })
-            .eq('Is_Asset_Active', 'Y'),
+            .in('Is_Asset_Active', ['Y', 'Yes']),
         client
             .from('Assets_Register_Database')
             .select('Asset_UID', { count: 'exact', head: true })
