@@ -6,27 +6,45 @@ import type { Asset } from "@/entities/asset";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import { fetchAssetsAction, fetchAssetSummaryAction } from "@/actions/assets";
 import { StatsGrid } from "@/components/shared/stats-grid";
-import { StatsGridSkeleton, TableBodySkeleton, Skeleton } from "@/components/shared/skeleton";
+import { TableBodySkeleton, Skeleton } from "@/components/shared/skeleton";
 import { EmptyState } from "@/components/shared/empty-state";
 import { PageHeader } from "@/components/shared/page-header";
-import { Boxes, MapPin, Wrench, Search, Plus, Download, X, Layers, ClipboardCheck, ShieldAlert } from "lucide-react";
+import { TabNavigation } from "@/components/shared/tab-navigation";
+import {
+    Boxes, MapPin, Wrench, Search, Plus, Download, X, Layers,
+    ClipboardCheck, ShieldAlert, LayoutDashboard, ClipboardList,
+    Calendar, Clock,
+} from "lucide-react";
 import { format } from "date-fns";
-import { MultiSelectDropdown, SortIcon, TablePagination, ActiveFilterPills, TableToolbar, StatusBadge, type PageSizeOption } from "@/components/shared/data-table";
+import {
+    MultiSelectDropdown, SortIcon, TablePagination,
+    ActiveFilterPills, TableToolbar, StatusBadge, type PageSizeOption,
+} from "@/components/shared/data-table";
 import { exportToCSV, getDateForFilename } from "@/lib/export-utils";
 import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
 import { PageStatusBar } from "@/components/shared/page-status-bar";
 
-// Mapping from UI sort field to Supabase column
+type ActiveTab = 'overview' | 'details';
+
+const TABS = [
+    { key: 'overview', label: 'Assets Overview', icon: LayoutDashboard },
+    { key: 'details', label: 'Details / Lifecycle', icon: ClipboardList },
+];
+
 const SORT_FIELD_MAP: Record<string, string> = {
     name: 'Asset_Name',
     serial: 'Asset_Tag',
     category: 'Category',
-    manufacturer: 'Manufacturer_Brand',
-    installYear: 'Install_Year',
+    discipline: 'Discipline',
     location: 'Location_Name',
     status: 'Status',
-    discipline: 'Discipline',
     risk: 'ERL_Years',
+    systemArea: 'System_Area',
+    installDate: 'Install_Date',
+    lifeExpect: 'Life_Expectancy_Years',
+    erlYears: 'ERL_Years',
+    condition: 'Condition',
+    ppmFreq: 'PPM_Frequency',
 };
 
 const STATUS_OPTIONS = ['Working', 'Active', 'Under Maintenance', 'Decommissioned', 'In Storage', 'TO VERIFY'];
@@ -43,7 +61,21 @@ const DISCIPLINE_OPTIONS = [
     'Hotel Assets (JMB)',
 ];
 
+function formatDate(dateStr: string | null | undefined): string {
+    if (!dateStr) return '-';
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    return format(d, 'MMM d, yyyy');
+}
+
+function formatYears(years: number | null | undefined): string {
+    if (years === null || years === undefined) return '-';
+    return `${years}y`;
+}
+
 export default function AssetsPage() {
+    const [activeTab, setActiveTab] = useState<ActiveTab>('overview');
+
     const [summary, setSummary] = useState<{
         total: number;
         activeFlagged: number;
@@ -51,14 +83,8 @@ export default function AssetsPage() {
         toVerify: number;
         criticalLifecycle: number;
         disciplines: number;
-    }>({
-        total: 0,
-        activeFlagged: 0,
-        workingStatus: 0,
-        toVerify: 0,
-        criticalLifecycle: 0,
-        disciplines: 0,
-    });
+    }>({ total: 0, activeFlagged: 0, workingStatus: 0, toVerify: 0, criticalLifecycle: 0, disciplines: 0 });
+
     const [assets, setAssets] = useState<Asset[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
@@ -68,31 +94,32 @@ export default function AssetsPage() {
     const [error, setError] = useState<string | null>(null);
     const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
-    // Sorting state
     const [sortField, setSortField] = useState<string>('name');
     const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
-    // Pagination State
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState<PageSizeOption>(25);
     const [totalCount, setTotalCount] = useState(0);
 
-    // Debounce search
     const [debouncedSearch, setDebouncedSearch] = useState("");
     useEffect(() => {
-        const timer = setTimeout(() => {
-            setDebouncedSearch(search);
-            setCurrentPage(1);
-        }, 500);
+        const timer = setTimeout(() => { setDebouncedSearch(search); setCurrentPage(1); }, 500);
         return () => clearTimeout(timer);
     }, [search]);
+
+    const handleTabChange = useCallback((key: string) => {
+        setActiveTab(key as ActiveTab);
+        setSortField('name');
+        setSortDirection('asc');
+        setCurrentPage(1);
+    }, []);
 
     const loadData = useCallback(async () => {
         setLoading(true);
         const effectivePageSize = pageSize === 'All' ? 9999 : pageSize;
         const supabaseSort = SORT_FIELD_MAP[sortField] || 'Asset_Name';
-        const statusFilterForServer = selectedStatuses.length < STATUS_OPTIONS.length ? selectedStatuses : undefined;
-        const disciplineFilterForServer = selectedDisciplines.length < DISCIPLINE_OPTIONS.length ? selectedDisciplines : undefined;
+        const statusFilter = selectedStatuses.length < STATUS_OPTIONS.length ? selectedStatuses : undefined;
+        const disciplineFilter = selectedDisciplines.length < DISCIPLINE_OPTIONS.length ? selectedDisciplines : undefined;
 
         try {
             if (!isSupabaseConfigured()) {
@@ -106,18 +133,11 @@ export default function AssetsPage() {
             }
 
             const { data, count, error: fetchError } = await fetchAssetsAction(
-                currentPage,
-                effectivePageSize,
-                debouncedSearch,
-                supabaseSort,
-                sortDirection,
-                statusFilterForServer,
-                disciplineFilterForServer
+                currentPage, effectivePageSize, debouncedSearch,
+                supabaseSort, sortDirection, statusFilter, disciplineFilter,
             );
 
-            if (fetchError) {
-                throw new Error(fetchError);
-            }
+            if (fetchError) throw new Error(fetchError);
 
             if (data) {
                 setAssets(data);
@@ -125,9 +145,7 @@ export default function AssetsPage() {
                 setDataSource('supabase');
                 setLastUpdated(new Date());
                 const summaryRes = await fetchAssetSummaryAction();
-                if (!summaryRes.error) {
-                    setSummary(summaryRes);
-                }
+                if (!summaryRes.error) setSummary(summaryRes);
             } else {
                 setAssets([]);
                 setTotalCount(0);
@@ -144,12 +162,8 @@ export default function AssetsPage() {
         }
     }, [currentPage, pageSize, debouncedSearch, sortField, sortDirection, selectedStatuses, selectedDisciplines]);
 
-    // Reload when page, size, search, sort, status, or discipline changes
-    useEffect(() => {
-        loadData();
-    }, [loadData]);
+    useEffect(() => { loadData(); }, [loadData]);
 
-    // Supabase real-time subscription for Assets_Register_Database table
     const { isLive } = useSupabaseRealtime({
         table: 'Assets_Register_Database',
         channelName: 'assets-register-rt',
@@ -157,53 +171,53 @@ export default function AssetsPage() {
         enabled: dataSource === 'supabase',
     });
 
-    // Client-side filtering for mock data only
     const filteredAssets = useMemo(() => {
-        if (dataSource === 'supabase') return assets; // Already filtered server-side
+        if (dataSource === 'supabase') return assets;
 
         let result = [...assets];
-
         if (search) {
             const term = search.toLowerCase();
-            result = result.filter(item =>
-                item.name.toLowerCase().includes(term) ||
-                item.location.toLowerCase().includes(term) ||
-                item.serialNumber.toLowerCase().includes(term)
+            result = result.filter(a =>
+                a.name.toLowerCase().includes(term) ||
+                a.location.toLowerCase().includes(term) ||
+                a.serialNumber.toLowerCase().includes(term),
             );
         }
+        if (selectedStatuses.length < STATUS_OPTIONS.length)
+            result = result.filter(a => selectedStatuses.includes(a.status));
+        if (selectedDisciplines.length < DISCIPLINE_OPTIONS.length)
+            result = result.filter(a => selectedDisciplines.includes(a.discipline));
 
-        if (selectedStatuses.length < STATUS_OPTIONS.length) {
-            result = result.filter(item => selectedStatuses.includes(item.status));
-        }
-
-        if (selectedDisciplines.length < DISCIPLINE_OPTIONS.length) {
-            result = result.filter(item => selectedDisciplines.includes(item.discipline));
-        }
-
-        // Client-side sort for mock data
         if (sortField) {
             result.sort((a, b) => {
                 let aVal: string | number = '';
                 let bVal: string | number = '';
-
                 switch (sortField) {
-                    case 'name': aVal = a.name; bVal = b.name; break;
-                    case 'serial': aVal = a.serialNumber; bVal = b.serialNumber; break;
-                    case 'category': aVal = a.type; bVal = b.type; break;
-                    case 'manufacturer': aVal = a.manufacturer; bVal = b.manufacturer; break;
-                    case 'installYear': aVal = a.installYear ?? 0; bVal = b.installYear ?? 0; break;
-                    case 'location': aVal = a.location; bVal = b.location; break;
-                    case 'status': aVal = a.status; bVal = b.status; break;
-                    case 'value': aVal = a.value; bVal = b.value; break;
+                    case 'name':        aVal = a.name;                      bVal = b.name;                      break;
+                    case 'serial':      aVal = a.serialNumber;              bVal = b.serialNumber;              break;
+                    case 'category':    aVal = a.type;                      bVal = b.type;                      break;
+                    case 'discipline':  aVal = a.discipline;                bVal = b.discipline;                break;
+                    case 'location':    aVal = a.location;                  bVal = b.location;                  break;
+                    case 'status':      aVal = a.status;                    bVal = b.status;                    break;
+                    case 'value':       aVal = a.value;                     bVal = b.value;                     break;
+                    case 'systemArea':  aVal = a.systemArea ?? '';          bVal = b.systemArea ?? '';          break;
+                    case 'installDate': aVal = a.purchaseDate ?? '';        bVal = b.purchaseDate ?? '';        break;
+                    case 'lifeExpect':  aVal = a.lifeExpectancyYears ?? 0; bVal = b.lifeExpectancyYears ?? 0; break;
+                    case 'erlYears':    aVal = a.erlYears ?? 0;             bVal = b.erlYears ?? 0;             break;
+                    case 'condition':   aVal = a.condition;                 bVal = b.condition;                 break;
+                    case 'ppmFreq':     aVal = a.ppmFrequency ?? '';        bVal = b.ppmFrequency ?? '';        break;
+                    case 'risk': {
+                        const order = { Critical: 0, Watch: 1, Normal: 2 };
+                        aVal = order[a.lifecycleRisk ?? 'Normal'];
+                        bVal = order[b.lifecycleRisk ?? 'Normal'];
+                        break;
+                    }
                 }
-
-                if (typeof aVal === 'string') {
+                if (typeof aVal === 'string')
                     return sortDirection === 'asc' ? aVal.localeCompare(bVal as string) : (bVal as string).localeCompare(aVal);
-                }
                 return sortDirection === 'asc' ? (aVal as number) - (bVal as number) : (bVal as number) - (aVal as number);
             });
         }
-
         return result;
     }, [assets, search, selectedStatuses, selectedDisciplines, sortField, sortDirection, dataSource]);
 
@@ -213,32 +227,38 @@ export default function AssetsPage() {
 
     const handleSort = useCallback((field: string) => {
         setSortField(prev => {
-            if (prev === field) {
-                setSortDirection(d => d === 'asc' ? 'desc' : 'asc');
-            } else {
-                setSortDirection('asc');
-            }
+            if (prev === field) setSortDirection(d => d === 'asc' ? 'desc' : 'asc');
+            else setSortDirection('asc');
             return prev === field ? prev : field;
         });
         setCurrentPage(1);
     }, []);
 
     const handleExportCSV = () => {
-        const data = filteredAssets.map(a => ({
-            'Asset Name': a.name,
-            'Serial Number': a.serialNumber,
-            'Discipline': a.discipline,
-            'Category': a.type,
-            'Manufacturer': a.manufacturer || '-',
-            'Install Year': a.installYear ?? '-',
-            'Location': a.location,
-            'Status': a.status,
-            'Condition': a.condition || '-',
-            'Last Service': a.lastService && !isNaN(new Date(a.lastService).getTime())
-                ? format(new Date(a.lastService), "MMM d, yyyy") : '-',
-            'Value (OMR)': a.value,
-        }));
-        exportToCSV(data, `assets-${getDateForFilename()}`);
+        const rows = filteredAssets.map(a => {
+            if (activeTab === 'details') {
+                return {
+                    'Asset ID': a.serialNumber,
+                    'Asset Name': a.name,
+                    'System / Area': a.systemArea || '-',
+                    'Install Date': a.purchaseDate || '-',
+                    'Expected Life (yrs)': a.lifeExpectancyYears ?? '-',
+                    'Remaining Life (yrs)': a.erlYears ?? '-',
+                    'Condition': a.condition || '-',
+                    'Lifecycle Risk': a.lifecycleRisk || 'Normal',
+                    'PM Frequency': a.ppmFrequency || '-',
+                };
+            }
+            return {
+                'Asset Name': a.name,
+                'Discipline': a.discipline,
+                'Category': a.type,
+                'Location': a.location,
+                'Status': a.status,
+                'Value (OMR)': a.value > 0 ? a.value : '-',
+            };
+        });
+        exportToCSV(rows, `assets-${activeTab}-${getDateForFilename()}`);
     };
 
     const hasActiveFilters = search || selectedStatuses.length < STATUS_OPTIONS.length || selectedDisciplines.length < DISCIPLINE_OPTIONS.length;
@@ -257,64 +277,24 @@ export default function AssetsPage() {
         const criticalCount = assets.filter(a => a.lifecycleRisk === 'Critical').length;
         const totalItems = dataSource === 'supabase' ? (summary.total || totalCount) : (totalCount > 0 ? totalCount : assets.length);
         const disciplineCount = dataSource === 'supabase' ? summary.disciplines : uniqueDisciplines;
-        const activeByFlagCount = dataSource === 'supabase'
-            ? summary.activeFlagged
-            : assets.filter(a => a.isAssetActive !== false).length;
+        const activeByFlagCount = dataSource === 'supabase' ? summary.activeFlagged : assets.filter(a => a.isAssetActive !== false).length;
         const workingCount = dataSource === 'supabase' ? summary.workingStatus : activeCount;
         const needsVerifyCount = dataSource === 'supabase' ? summary.toVerify : verifyCount;
         const criticalLifecycleCount = dataSource === 'supabase' ? summary.criticalLifecycle : criticalCount;
 
         return [
-            {
-                label: "TOTAL ASSETS",
-                value: totalItems.toString(),
-                subtitle: dataSource === 'supabase' ? "Across all pages" : "All Items",
-                icon: Boxes,
-                variant: "water" as const
-            },
-            {
-                label: "DISCIPLINES",
-                value: disciplineCount.toString(),
-                subtitle: dataSource === 'supabase' ? "Portfolio-wide" : "In current dataset",
-                icon: Layers,
-                variant: "success" as const
-            },
-            {
-                label: "ACTIVE ASSETS",
-                value: activeByFlagCount.toString(),
-                subtitle: dataSource === 'supabase' ? "Is_Asset_Active = Y" : "On this page",
-                icon: MapPin,
-                variant: "success" as const
-            },
-            {
-                label: "WORKING STATUS",
-                value: workingCount.toString(),
-                subtitle: "Status = Working/Active",
-                icon: ClipboardCheck,
-                variant: "water" as const
-            },
-            {
-                label: "NEEDS VERIFICATION",
-                value: needsVerifyCount.toString(),
-                subtitle: "TO VERIFY status",
-                icon: ShieldAlert,
-                variant: "warning" as const
-            },
-            {
-                label: "CRITICAL LIFECYCLE RISK",
-                value: criticalLifecycleCount.toString(),
-                subtitle: "ERL <= 2y or flagged status",
-                icon: ShieldAlert,
-                variant: "danger" as const
-            }
+            { label: "TOTAL ASSETS", value: totalItems.toString(), subtitle: dataSource === 'supabase' ? "Across all pages" : "All items", icon: Boxes, variant: "water" as const },
+            { label: "DISCIPLINES", value: disciplineCount.toString(), subtitle: dataSource === 'supabase' ? "Portfolio-wide" : "In dataset", icon: Layers, variant: "success" as const },
+            { label: "ACTIVE ASSETS", value: activeByFlagCount.toString(), subtitle: "Is_Asset_Active = Y", icon: MapPin, variant: "success" as const },
+            { label: "WORKING STATUS", value: workingCount.toString(), subtitle: "Status = Working/Active", icon: ClipboardCheck, variant: "water" as const },
+            { label: "NEEDS VERIFICATION", value: needsVerifyCount.toString(), subtitle: "TO VERIFY status", icon: ShieldAlert, variant: "warning" as const },
+            { label: "CRITICAL LIFECYCLE RISK", value: criticalLifecycleCount.toString(), subtitle: "ERL ≤ 2y or flagged", icon: ShieldAlert, variant: "danger" as const },
         ];
     }, [assets, totalCount, dataSource, summary]);
 
     const getStatusDotColor = (status: string): 'green' | 'orange' | 'red' | 'slate' | 'amber' => {
         switch (status) {
-            case 'Active':
-            case 'Working':
-                return 'green';
+            case 'Active': case 'Working': return 'green';
             case 'Under Maintenance': return 'orange';
             case 'Decommissioned': return 'red';
             case 'In Storage': return 'slate';
@@ -325,9 +305,7 @@ export default function AssetsPage() {
 
     const getStatusBorderClass = (status: string): string => {
         switch (status) {
-            case 'Active':
-            case 'Working':
-                return 'border-s-emerald-500';
+            case 'Active': case 'Working': return 'border-s-emerald-500';
             case 'Under Maintenance': return 'border-s-amber-500';
             case 'Decommissioned': return 'border-s-red-400';
             case 'In Storage': return 'border-s-slate-400';
@@ -336,8 +314,13 @@ export default function AssetsPage() {
         }
     };
 
-    const totalColumns = 10;
+    const getRiskColor = (risk: string | undefined): 'red' | 'amber' | 'green' => {
+        if (risk === 'Critical') return 'red';
+        if (risk === 'Watch') return 'amber';
+        return 'green';
+    };
 
+    // ── Shared header ──────────────────────────────────────────────────────────
     return (
         <div className="space-y-6 sm:space-y-7 md:space-y-8 w-full">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -354,8 +337,17 @@ export default function AssetsPage() {
                 />
             </div>
 
-            <StatsGrid stats={stats} />
+            {/* Tab navigation */}
+            <TabNavigation
+                tabs={TABS}
+                activeTab={activeTab}
+                onTabChange={handleTabChange}
+            />
 
+            {/* KPIs — Overview only */}
+            {activeTab === 'overview' && <StatsGrid stats={stats} />}
+
+            {/* Shared table section */}
             <div className="space-y-4">
                 {/* Toolbar */}
                 <TableToolbar>
@@ -376,7 +368,6 @@ export default function AssetsPage() {
                         selected={selectedStatuses}
                         onChange={(s) => { setSelectedStatuses(s); setCurrentPage(1); }}
                     />
-
                     <MultiSelectDropdown
                         label="Discipline"
                         options={DISCIPLINE_OPTIONS}
@@ -408,188 +399,278 @@ export default function AssetsPage() {
                     </div>
                 </TableToolbar>
 
-                {/* Active Filter Pills */}
                 <ActiveFilterPills pills={[
-                    ...(search ? [{
-                        key: 'search',
-                        label: `Search: "${search}"`,
-                        onRemove: () => { setSearch(''); setCurrentPage(1); }
-                    }] : []),
+                    ...(search ? [{ key: 'search', label: `Search: "${search}"`, onRemove: () => { setSearch(''); setCurrentPage(1); } }] : []),
                     ...(selectedStatuses.length < STATUS_OPTIONS.length ? [{
                         key: 'statuses',
                         label: `${selectedStatuses.length} status${selectedStatuses.length !== 1 ? 'es' : ''}`,
                         colorClass: 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300',
-                        onRemove: () => { setSelectedStatuses([...STATUS_OPTIONS]); setCurrentPage(1); }
+                        onRemove: () => { setSelectedStatuses([...STATUS_OPTIONS]); setCurrentPage(1); },
                     }] : []),
                     ...(selectedDisciplines.length < DISCIPLINE_OPTIONS.length ? [{
                         key: 'disciplines',
                         label: `${selectedDisciplines.length} discipline${selectedDisciplines.length !== 1 ? 's' : ''}`,
                         colorClass: 'bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300',
-                        onRemove: () => { setSelectedDisciplines([...DISCIPLINE_OPTIONS]); setCurrentPage(1); }
+                        onRemove: () => { setSelectedDisciplines([...DISCIPLINE_OPTIONS]); setCurrentPage(1); },
                     }] : []),
                 ]} />
 
-                {/* Mobile Card View */}
-                <div className="md:hidden space-y-3">
-                    {loading ? (
-                        <div className="space-y-3">
-                            {Array.from({ length: 6 }).map((_, i) => (
-                                <div key={i} className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 space-y-3 animate-pulse">
-                                    <div className="flex justify-between">
-                                        <Skeleton className="h-5 w-40" />
-                                        <Skeleton className="h-5 w-20" />
+                {/* ── Overview tab ─────────────────────────────────────────────── */}
+                {activeTab === 'overview' && (
+                    <>
+                        {/* Mobile cards — Overview */}
+                        <div className="md:hidden space-y-3">
+                            {loading ? (
+                                <div className="space-y-3">
+                                    {Array.from({ length: 6 }).map((_, i) => (
+                                        <div key={i} className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 space-y-3 animate-pulse">
+                                            <div className="flex justify-between">
+                                                <Skeleton className="h-5 w-40" />
+                                                <Skeleton className="h-5 w-20" />
+                                            </div>
+                                            <Skeleton className="h-4 w-32" />
+                                            <div className="grid grid-cols-2 gap-2">
+                                                <Skeleton className="h-4 w-full" />
+                                                <Skeleton className="h-4 w-full" />
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : filteredAssets.length === 0 ? (
+                                <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700">
+                                    <EmptyState variant={hasActiveFilters ? "filter-empty" : "no-data"} title="No assets found" description="Try adjusting your filters." />
+                                </div>
+                            ) : filteredAssets.map((asset) => (
+                                <div key={asset.id} className={`rounded-xl border border-slate-200 dark:border-slate-700 border-s-4 ${getStatusBorderClass(asset.status)} bg-white dark:bg-slate-900 p-4 space-y-3`}>
+                                    {asset.discipline && (
+                                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wider bg-primary/10 text-primary dark:bg-primary/20 dark:text-slate-300 ring-1 ring-primary/20">
+                                            {asset.discipline}
+                                        </span>
+                                    )}
+                                    <div className="flex items-start justify-between gap-2">
+                                        <div className="min-w-0">
+                                            <p className="font-semibold text-sm text-slate-800 dark:text-slate-200 truncate">{asset.name}</p>
+                                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{asset.type}</p>
+                                        </div>
+                                        <StatusBadge label={asset.status} color={getStatusDotColor(asset.status)} />
                                     </div>
-                                    <Skeleton className="h-4 w-32" />
-                                    <div className="grid grid-cols-2 gap-2">
-                                        <Skeleton className="h-4 w-full" />
-                                        <Skeleton className="h-4 w-full" />
+                                    <div className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
+                                        <MapPin className="w-3 h-3" />
+                                        {asset.location}
+                                    </div>
+                                    <div className="flex items-center justify-end text-xs pt-2 border-t border-slate-100 dark:border-slate-800">
+                                        <span className="font-mono font-semibold text-primary">
+                                            {asset.value > 0 ? `${asset.value.toLocaleString('en-US')} OMR` : '-'}
+                                        </span>
                                     </div>
                                 </div>
                             ))}
                         </div>
-                    ) : filteredAssets.length === 0 ? (
-                        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700">
-                            <EmptyState
-                                variant={search || selectedStatuses.length < STATUS_OPTIONS.length || selectedDisciplines.length < DISCIPLINE_OPTIONS.length ? "filter-empty" : "no-data"}
-                                title={search ? "No assets match your search" : "No assets found"}
-                                description={search || selectedStatuses.length < STATUS_OPTIONS.length || selectedDisciplines.length < DISCIPLINE_OPTIONS.length
-                                    ? "Try adjusting your search or filters to see more results."
-                                    : "Assets will appear here once they are added to the system."}
-                            />
+
+                        {/* Desktop table — Overview (lean columns) */}
+                        <div className="hidden md:block overflow-x-auto rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900 shadow-[0_1px_3px_rgba(0,0,0,0.06),0_4px_16px_-4px_rgba(0,0,0,0.1)] dark:shadow-[0_1px_3px_rgba(0,0,0,0.2),0_4px_16px_-4px_rgba(0,0,0,0.3)]">
+                            <table className="w-full text-sm border-collapse">
+                                <thead>
+                                    <tr className="bg-slate-50 dark:bg-slate-800/80">
+                                        {[
+                                            { label: 'Asset Name', field: 'name' },
+                                            { label: 'Discipline', field: 'discipline' },
+                                            { label: 'Category', field: 'category' },
+                                            { label: 'Location', field: 'location' },
+                                            { label: 'Status', field: 'status' },
+                                        ].map(col => (
+                                            <th
+                                                key={col.field}
+                                                className="text-left py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors"
+                                                onClick={() => handleSort(col.field)}
+                                            >
+                                                <div className="flex items-center gap-1.5">
+                                                    {col.label}
+                                                    <SortIcon field={col.field} currentSortField={sortField} currentSortDirection={sortDirection} />
+                                                </div>
+                                            </th>
+                                        ))}
+                                        <th
+                                            className="text-right py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors"
+                                            onClick={() => handleSort('value')}
+                                        >
+                                            <div className="flex items-center justify-end gap-1.5">
+                                                Value (OMR)
+                                                <SortIcon field="value" currentSortField={sortField} currentSortDirection={sortDirection} />
+                                            </div>
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {loading ? (
+                                        <TableBodySkeleton columns={6} rows={10} />
+                                    ) : filteredAssets.length === 0 ? (
+                                        <tr>
+                                            <td colSpan={6}>
+                                                <EmptyState variant={hasActiveFilters ? "filter-empty" : "no-data"} title="No assets found" description="Try adjusting your filters." />
+                                            </td>
+                                        </tr>
+                                    ) : filteredAssets.map((asset) => (
+                                        <tr key={asset.id} className="border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-[#00d2b3]/5 dark:hover:bg-slate-700/40 transition-colors even:bg-slate-50/40 dark:even:bg-slate-800/20">
+                                            <td className="py-4 px-5 font-medium text-slate-800 dark:text-slate-200">{asset.name}</td>
+                                            <td className="py-4 px-5 text-slate-600 dark:text-slate-400 text-sm">{asset.discipline || '-'}</td>
+                                            <td className="py-4 px-5 text-slate-600 dark:text-slate-400 text-sm">{asset.type || '-'}</td>
+                                            <td className="py-4 px-5 text-slate-600 dark:text-slate-400 text-sm">{asset.location}</td>
+                                            <td className="py-4 px-5">
+                                                <StatusBadge label={asset.status} color={getStatusDotColor(asset.status)} />
+                                            </td>
+                                            <td className="py-4 px-5 text-right font-mono text-sm text-slate-700 dark:text-slate-300">
+                                                {asset.value > 0 ? asset.value.toLocaleString('en-US') : '-'}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
                         </div>
-                    ) : (
-                        filteredAssets.map((asset) => (
-                            <div key={asset.id} className={`rounded-xl border border-slate-200 dark:border-slate-700 border-s-4 ${getStatusBorderClass(asset.status)} bg-white dark:bg-slate-900 p-4 space-y-3`}>
-                                {/* Discipline badge */}
-                                {asset.discipline && (
-                                    <div>
-                                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wider bg-primary/10 text-primary dark:bg-primary/20 dark:text-slate-300 ring-1 ring-primary/20">
-                                            {asset.discipline}
-                                        </span>
-                                    </div>
-                                )}
-                                <div className="flex items-start justify-between gap-2">
-                                    <div className="min-w-0">
-                                        <p className="font-semibold text-sm text-slate-800 dark:text-slate-200 truncate">{asset.name}</p>
-                                        <p className="text-xs text-slate-400 font-mono mt-0.5">{asset.serialNumber}</p>
-                                    </div>
-                                    <StatusBadge label={asset.status} color={getStatusDotColor(asset.status)} />
+                    </>
+                )}
+
+                {/* ── Details / Lifecycle tab ──────────────────────────────────── */}
+                {activeTab === 'details' && (
+                    <>
+                        {/* Mobile cards — Details */}
+                        <div className="md:hidden space-y-3">
+                            {loading ? (
+                                <div className="space-y-3">
+                                    {Array.from({ length: 6 }).map((_, i) => (
+                                        <div key={i} className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 space-y-3 animate-pulse">
+                                            <Skeleton className="h-4 w-28" />
+                                            <Skeleton className="h-5 w-48" />
+                                            <div className="grid grid-cols-2 gap-2">
+                                                {Array.from({ length: 4 }).map((_, j) => <Skeleton key={j} className="h-4 w-full" />)}
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
-                                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
-                                    <span className="flex items-center gap-1">
-                                        <Boxes className="w-3 h-3" />
-                                        {asset.type}
-                                    </span>
-                                    <span className="flex items-center gap-1">
-                                        <MapPin className="w-3 h-3" />
-                                        {asset.location}
-                                    </span>
-                                    {asset.manufacturer && (
+                            ) : filteredAssets.length === 0 ? (
+                                <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700">
+                                    <EmptyState variant={hasActiveFilters ? "filter-empty" : "no-data"} title="No assets found" description="Try adjusting your filters." />
+                                </div>
+                            ) : filteredAssets.map((asset) => (
+                                <div key={asset.id} className={`rounded-xl border border-slate-200 dark:border-slate-700 border-s-4 ${getRiskColor(asset.lifecycleRisk) === 'red' ? 'border-s-red-500' : getRiskColor(asset.lifecycleRisk) === 'amber' ? 'border-s-amber-500' : 'border-s-emerald-500'} bg-white dark:bg-slate-900 p-4 space-y-3`}>
+                                    <div className="flex items-center justify-between gap-2">
+                                        <span className="font-mono text-[11px] text-slate-400 dark:text-slate-500">{asset.serialNumber || '-'}</span>
+                                        <StatusBadge label={asset.lifecycleRisk || 'Normal'} color={getRiskColor(asset.lifecycleRisk)} />
+                                    </div>
+                                    <p className="font-semibold text-sm text-slate-800 dark:text-slate-200 leading-tight">{asset.name}</p>
+                                    <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs text-slate-500 dark:text-slate-400">
+                                        {asset.systemArea && (
+                                            <span className="col-span-2 flex items-center gap-1">
+                                                <Wrench className="w-3 h-3 shrink-0" />
+                                                {asset.systemArea}
+                                            </span>
+                                        )}
                                         <span className="flex items-center gap-1">
-                                            <Wrench className="w-3 h-3" />
-                                            {asset.manufacturer}
+                                            <Calendar className="w-3 h-3 shrink-0" />
+                                            {formatDate(asset.purchaseDate)}
                                         </span>
+                                        <span className="flex items-center gap-1">
+                                            <Clock className="w-3 h-3 shrink-0" />
+                                            ERL: {formatYears(asset.erlYears)}
+                                        </span>
+                                        {asset.lifeExpectancyYears !== null && (
+                                            <span>Exp. Life: {formatYears(asset.lifeExpectancyYears)}</span>
+                                        )}
+                                        {asset.condition && <span>Cond: {asset.condition}</span>}
+                                    </div>
+                                    {asset.ppmFrequency && (
+                                        <div className="text-xs text-slate-500 dark:text-slate-400 pt-2 border-t border-slate-100 dark:border-slate-800">
+                                            PM Plan: <span className="font-medium text-slate-700 dark:text-slate-300">{asset.ppmFrequency}</span>
+                                        </div>
                                     )}
                                 </div>
-                                <div className="flex items-center justify-between text-xs pt-2 border-t border-slate-100 dark:border-slate-800">
-                                    <span className="text-slate-400">
-                                        {asset.installYear ? `Installed: ${asset.installYear}` : (
-                                            asset.lastService && !isNaN(new Date(asset.lastService).getTime())
-                                                ? `Service: ${format(new Date(asset.lastService), "MMM d, yyyy")}`
-                                                : ''
-                                        )}
-                                    </span>
-                                    <span className="font-mono font-semibold text-primary">
-                                        {asset.value > 0 ? `${asset.value.toLocaleString('en-US')} OMR` : '-'}
-                                    </span>
-                                </div>
-                            </div>
-                        ))
-                    )}
-                </div>
+                            ))}
+                        </div>
 
-                {/* Desktop Table View */}
-                <div className="hidden md:block overflow-x-auto rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900 shadow-[0_1px_3px_rgba(0,0,0,0.06),0_4px_16px_-4px_rgba(0,0,0,0.1)] dark:shadow-[0_1px_3px_rgba(0,0,0,0.2),0_4px_16px_-4px_rgba(0,0,0,0.3)]">
-                    <table className="w-full text-sm border-collapse">
-                        <thead>
-                            <tr className="bg-slate-50 dark:bg-slate-800/80">
-                                <th className="text-left py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors" onClick={() => handleSort('name')}>
-                                    <div className="flex items-center gap-1.5">Asset Name <SortIcon field="name" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
-                                </th>
-                                <th className="text-left py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors hidden lg:table-cell" onClick={() => handleSort('serial')}>
-                                    <div className="flex items-center gap-1.5">Serial # <SortIcon field="serial" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
-                                </th>
-                                <th className="text-left py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors" onClick={() => handleSort('discipline')}>
-                                    <div className="flex items-center gap-1.5">Discipline <SortIcon field="discipline" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
-                                </th>
-                                <th className="text-left py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors" onClick={() => handleSort('category')}>
-                                    <div className="flex items-center gap-1.5">Category <SortIcon field="category" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
-                                </th>
-                                <th className="text-left py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors hidden xl:table-cell" onClick={() => handleSort('manufacturer')}>
-                                    <div className="flex items-center gap-1.5">Manufacturer <SortIcon field="manufacturer" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
-                                </th>
-                                <th className="text-left py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors hidden xl:table-cell" onClick={() => handleSort('installYear')}>
-                                    <div className="flex items-center gap-1.5">Install Year <SortIcon field="installYear" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
-                                </th>
-                                <th className="text-left py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors" onClick={() => handleSort('location')}>
-                                    <div className="flex items-center gap-1.5">Location <SortIcon field="location" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
-                                </th>
-                                <th className="text-left py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors" onClick={() => handleSort('status')}>
-                                    <div className="flex items-center gap-1.5">Status <SortIcon field="status" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
-                                </th>
-                                <th className="text-left py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors hidden 2xl:table-cell" onClick={() => handleSort('risk')}>
-                                    <div className="flex items-center gap-1.5">Lifecycle Risk <SortIcon field="risk" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
-                                </th>
-                                <th className="text-right py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors" onClick={() => handleSort('value')}>
-                                    <div className="flex items-center justify-end gap-1.5">Value (OMR) <SortIcon field="value" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {loading ? (
-                                <TableBodySkeleton columns={totalColumns} rows={10} />
-                            ) : filteredAssets.length === 0 ? (
-                                <tr>
-                                    <td colSpan={totalColumns}>
-                                        <EmptyState
-                                            variant={search ? "filter-empty" : "no-data"}
-                                            title={search ? "No assets match your search" : "No assets found"}
-                                            description={search ? "Try a different search term." : "Assets will appear here once added."}
-                                        />
-                                    </td>
-                                </tr>
-                            ) : (
-                                filteredAssets.map((asset) => (
-                                    <tr key={asset.id} className="border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-[#00d2b3]/5 dark:hover:bg-slate-700/40 transition-colors even:bg-slate-50/40 dark:even:bg-slate-800/20">
-                                        <td className="py-4 px-5 font-medium text-slate-800 dark:text-slate-200">{asset.name}</td>
-                                        <td className="py-4 px-5 font-mono text-sm text-slate-500 dark:text-slate-400 hidden lg:table-cell">{asset.serialNumber}</td>
-                                        <td className="py-4 px-5 text-slate-600 dark:text-slate-400 text-sm">{asset.discipline || '-'}</td>
-                                        <td className="py-4 px-5 text-slate-600 dark:text-slate-400 text-sm">{asset.type}</td>
-                                        <td className="py-4 px-5 text-slate-600 dark:text-slate-400 text-sm hidden xl:table-cell">
-                                            {asset.manufacturer || <span className="text-slate-300 dark:text-slate-600">-</span>}
-                                        </td>
-                                        <td className="py-4 px-5 text-slate-600 dark:text-slate-400 text-sm hidden xl:table-cell">
-                                            {asset.installYear ?? <span className="text-slate-300 dark:text-slate-600">-</span>}
-                                        </td>
-                                        <td className="py-4 px-5 text-slate-600 dark:text-slate-400 text-sm">{asset.location}</td>
-                                        <td className="py-4 px-5">
-                                            <StatusBadge label={asset.status} color={getStatusDotColor(asset.status)} />
-                                        </td>
-                                        <td className="py-4 px-5 text-sm hidden 2xl:table-cell">
-                                            <StatusBadge
-                                                label={asset.lifecycleRisk || 'Normal'}
-                                                color={asset.lifecycleRisk === 'Critical' ? 'red' : asset.lifecycleRisk === 'Watch' ? 'amber' : 'green'}
-                                            />
-                                        </td>
-                                        <td className="py-4 px-5 text-right font-mono text-sm text-slate-700 dark:text-slate-300">{asset.value.toLocaleString('en-US')}</td>
+                        {/* Desktop table — Details (lifecycle columns) */}
+                        <div className="hidden md:block overflow-x-auto rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900 shadow-[0_1px_3px_rgba(0,0,0,0.06),0_4px_16px_-4px_rgba(0,0,0,0.1)] dark:shadow-[0_1px_3px_rgba(0,0,0,0.2),0_4px_16px_-4px_rgba(0,0,0,0.3)]">
+                            <table className="w-full text-sm border-collapse">
+                                <thead>
+                                    <tr className="bg-slate-50 dark:bg-slate-800/80">
+                                        {[
+                                            { label: 'Asset ID', field: 'serial' },
+                                            { label: 'Asset Name', field: 'name' },
+                                            { label: 'System / Area', field: 'systemArea' },
+                                            { label: 'Install Date', field: 'installDate' },
+                                            { label: 'Exp. Life', field: 'lifeExpect' },
+                                            { label: 'Rem. Life (ERL)', field: 'erlYears' },
+                                            { label: 'Condition', field: 'condition' },
+                                            { label: 'Risk', field: 'risk' },
+                                            { label: 'PM Frequency', field: 'ppmFreq' },
+                                        ].map(col => (
+                                            <th
+                                                key={col.field}
+                                                className="text-left py-4 px-4 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors whitespace-nowrap"
+                                                onClick={() => handleSort(col.field)}
+                                            >
+                                                <div className="flex items-center gap-1.5">
+                                                    {col.label}
+                                                    <SortIcon field={col.field} currentSortField={sortField} currentSortDirection={sortDirection} />
+                                                </div>
+                                            </th>
+                                        ))}
                                     </tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
-                </div>
+                                </thead>
+                                <tbody>
+                                    {loading ? (
+                                        <TableBodySkeleton columns={9} rows={10} />
+                                    ) : filteredAssets.length === 0 ? (
+                                        <tr>
+                                            <td colSpan={9}>
+                                                <EmptyState variant={hasActiveFilters ? "filter-empty" : "no-data"} title="No assets found" description="Try adjusting your filters." />
+                                            </td>
+                                        </tr>
+                                    ) : filteredAssets.map((asset) => (
+                                        <tr key={asset.id} className="border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-[#00d2b3]/5 dark:hover:bg-slate-700/40 transition-colors even:bg-slate-50/40 dark:even:bg-slate-800/20">
+                                            <td className="py-3.5 px-4 font-mono text-xs text-slate-500 dark:text-slate-400">{asset.serialNumber || '-'}</td>
+                                            <td className="py-3.5 px-4 font-medium text-slate-800 dark:text-slate-200 max-w-[220px]">
+                                                <span className="line-clamp-2 leading-tight">{asset.name}</span>
+                                            </td>
+                                            <td className="py-3.5 px-4 text-slate-600 dark:text-slate-400 text-sm">
+                                                {asset.systemArea || <span className="text-slate-300 dark:text-slate-600">-</span>}
+                                            </td>
+                                            <td className="py-3.5 px-4 text-slate-600 dark:text-slate-400 text-sm whitespace-nowrap">
+                                                {formatDate(asset.purchaseDate)}
+                                            </td>
+                                            <td className="py-3.5 px-4 text-center text-slate-600 dark:text-slate-400 text-sm font-mono">
+                                                {formatYears(asset.lifeExpectancyYears)}
+                                            </td>
+                                            <td className="py-3.5 px-4 text-center font-mono text-sm font-semibold">
+                                                <span className={
+                                                    asset.erlYears === null || asset.erlYears === undefined ? 'text-slate-400' :
+                                                    asset.erlYears <= 2 ? 'text-red-500 dark:text-red-400' :
+                                                    asset.erlYears <= 5 ? 'text-amber-500 dark:text-amber-400' :
+                                                    'text-emerald-600 dark:text-emerald-400'
+                                                }>
+                                                    {formatYears(asset.erlYears)}
+                                                </span>
+                                            </td>
+                                            <td className="py-3.5 px-4 text-slate-600 dark:text-slate-400 text-sm">
+                                                {asset.condition || <span className="text-slate-300 dark:text-slate-600">-</span>}
+                                            </td>
+                                            <td className="py-3.5 px-4">
+                                                <StatusBadge
+                                                    label={asset.lifecycleRisk || 'Normal'}
+                                                    color={getRiskColor(asset.lifecycleRisk)}
+                                                />
+                                            </td>
+                                            <td className="py-3.5 px-4 text-slate-600 dark:text-slate-400 text-sm">
+                                                {asset.ppmFrequency || <span className="text-slate-300 dark:text-slate-600">-</span>}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </>
+                )}
 
-                {/* Pagination */}
+                {/* Shared pagination */}
                 {totalCount > 0 && (
                     <TablePagination
                         currentPage={currentPage}
