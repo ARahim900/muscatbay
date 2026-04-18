@@ -54,7 +54,7 @@ export function CircularGauge({
         if (val >= 1000) {
             return `${(val / 1000).toFixed(1)}k`;
         }
-        return val.toLocaleString('en-US');
+        return val.toLocaleString('en-US', { maximumFractionDigits: 1 });
     };
 
     return (

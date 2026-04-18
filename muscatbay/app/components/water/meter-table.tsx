@@ -149,7 +149,7 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                                         <div key={m} className="text-xs space-y-0.5">
                                             <span className="text-slate-400">{m}</span>
                                             <p className="font-mono font-medium text-slate-700 dark:text-slate-300">
-                                                {val > 0 ? val.toLocaleString('en-US') : '-'}
+                                                {val > 0 ? val.toLocaleString('en-US', { maximumFractionDigits: 1 }) : '-'}
                                             </p>
                                         </div>
                                     );
@@ -209,7 +209,7 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                                         const val = getConsumption(meter, m);
                                         return (
                                             <td key={m} className="py-4 px-5 text-right font-medium text-slate-700 dark:text-slate-300">
-                                                {val > 0 ? val.toLocaleString('en-US') : '-'}
+                                                {val > 0 ? val.toLocaleString('en-US', { maximumFractionDigits: 1 }) : '-'}
                                             </td>
                                         );
                                     })}

@@ -42,7 +42,7 @@ export default function FireQuotesPage() {
         return [
             {
                 label: "GRAND TOTAL",
-                value: `OMR ${grandTotal.toLocaleString('en-US')}`,
+                value: `OMR ${grandTotal.toLocaleString('en-US', { maximumFractionDigits: 1 })}`,
                 subtitle: "All Quotations",
                 icon: FileText,
                 color: "text-emerald-500",
@@ -50,7 +50,7 @@ export default function FireQuotesPage() {
             },
             {
                 label: "CRITICAL REPAIRS",
-                value: `OMR ${criticalCost.toLocaleString('en-US')}`,
+                value: `OMR ${criticalCost.toLocaleString('en-US', { maximumFractionDigits: 1 })}`,
                 subtitle: "Urgent Maintenance",
                 icon: AlertTriangle,
                 color: "text-red-500",
@@ -129,7 +129,7 @@ export default function FireQuotesPage() {
                             </div>
                             <div className="text-right">
                                 <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
-                                    OMR {quote.total_omr.toLocaleString('en-US')}
+                                    OMR {quote.total_omr.toLocaleString('en-US', { maximumFractionDigits: 1 })}
                                 </div>
                                 <div className="text-xs text-muted-foreground">Incl. VAT: OMR {quote.vat_omr}</div>
                             </div>
@@ -159,7 +159,7 @@ export default function FireQuotesPage() {
                                                 </span>
                                             </TableCell>
                                             <TableCell className="text-right font-mono">
-                                                {item.cost_omr.toLocaleString('en-US')}
+                                                {item.cost_omr.toLocaleString('en-US', { maximumFractionDigits: 1 })}
                                             </TableCell>
                                         </TableRow>
                                     ))}

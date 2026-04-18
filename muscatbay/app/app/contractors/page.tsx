@@ -367,7 +367,7 @@ export default function ContractorsPage() {
     // ── Format helpers ───────────────────────────────────────────────────────
     const fmtOMR = (v: number | null | undefined): string => {
         if (v == null) return '-';
-        return v.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        return v.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
     };
 
     const shortName = (name: string): string => {
@@ -439,8 +439,8 @@ export default function ContractorsPage() {
         },
         {
             label: "TOTAL CONTRACT VALUE",
-            value: `${totalContractValue.toLocaleString()} OMR`,
-            subtitle: `Year 1 expense: ${currentYearExpense.toLocaleString()} OMR`,
+            value: `${totalContractValue.toLocaleString('en-US', { maximumFractionDigits: 1 })} OMR`,
+            subtitle: `Year 1 expense: ${currentYearExpense.toLocaleString('en-US', { maximumFractionDigits: 1 })} OMR`,
             icon: DollarSign,
             variant: "warning" as const,
         },
@@ -830,7 +830,7 @@ export default function ContractorsPage() {
                                         <div><span className="text-slate-400">Start:</span> <span className="text-slate-600 dark:text-slate-300">{c["Start Date"] || '-'}</span></div>
                                         <div><span className="text-slate-400">End:</span> <span className="text-slate-600 dark:text-slate-300">{c["End Date"] || '-'}</span></div>
                                         <div><span className="text-slate-400">Monthly:</span> <span className="font-mono text-slate-700 dark:text-slate-300">{c["Contract (OMR)/Month"] || '-'}</span></div>
-                                        <div><span className="text-slate-400">Annual:</span> <span className="font-mono font-semibold text-primary">{c["Annual Value (OMR)"]?.toLocaleString() || '-'}</span></div>
+                                        <div><span className="text-slate-400">Annual:</span> <span className="font-mono font-semibold text-primary">{c["Annual Value (OMR)"]?.toLocaleString('en-US', { maximumFractionDigits: 1 }) || '-'}</span></div>
                                     </div>
                                     {c["Renewal Plan"] && (
                                         <span className="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400"><RefreshCw className="h-3 w-3" />{c["Renewal Plan"]}</span>
@@ -893,7 +893,7 @@ export default function ContractorsPage() {
                                         <td className="py-4 px-5 font-semibold text-sm text-slate-500 hidden lg:table-cell">
                                             {c["End Date"] ? <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{c["End Date"]}</span> : '-'}
                                         </td>
-                                        <td className="py-4 px-5 text-right font-mono text-sm font-semibold text-primary">{c["Annual Value (OMR)"]?.toLocaleString() || '-'}</td>
+                                        <td className="py-4 px-5 text-right font-mono text-sm font-semibold text-primary">{c["Annual Value (OMR)"]?.toLocaleString('en-US', { maximumFractionDigits: 1 }) || '-'}</td>
                                         <td className="py-4 px-3 text-center">
                                             <button
                                                 onClick={() => openPdfModal(null, c.Contractor || '', c["Service Provided"] || '', c.contract_pdf_url)}

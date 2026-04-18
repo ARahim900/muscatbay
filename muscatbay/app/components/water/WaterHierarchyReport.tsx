@@ -730,7 +730,7 @@ export function WaterHierarchyReport() {
                                                                 : "text-slate-600 dark:text-slate-300",
                                                         )}
                                                     >
-                                                        {v === null ? '—' : fmt(v, v < 10 ? 2 : 0)}
+                                                        {v === null ? '—' : fmt(v, v < 10 ? 1 : 0)}
                                                     </td>
                                                 ))}
                                                 <td className={cn(

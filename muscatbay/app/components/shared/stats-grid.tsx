@@ -90,7 +90,7 @@ export function StatsGrid({ stats, className }: StatsGridProps) {
                                     {stat.label}
                                 </p>
                                 {/* Big value: always neutral — never colored red/green */}
-                                <h3 className="text-base sm:text-lg md:text-xl font-bold tabular-nums tracking-tight truncate text-slate-800 dark:text-slate-100">
+                                <h3 className="text-xl sm:text-2xl font-bold tabular-nums tracking-tight truncate text-slate-800 dark:text-slate-100 leading-none">
                                     {stat.value}
                                 </h3>
                             </div>
@@ -107,9 +107,9 @@ export function StatsGrid({ stats, className }: StatsGridProps) {
                             <div className="mt-2 sm:mt-3 flex items-center text-xs sm:text-sm">
                                 <span className={cn(
                                     "flex items-center font-medium",
-                                    isGoodTrend  ? "text-emerald-600 dark:text-emerald-400" :
-                                    isBadTrend   ? "text-rose-600 dark:text-rose-400" :
-                                                   "text-slate-500"
+                                    isGoodTrend  ? "text-[var(--status-normal)]" :
+                                    isBadTrend   ? "text-[var(--status-danger)]" :
+                                                   "text-slate-500 dark:text-slate-400"
                                 )}>
                                     {stat.trend === 'up'      && <TrendingUp  size={14} className="me-1" />}
                                     {stat.trend === 'down'    && <TrendingDown size={14} className="me-1" />}

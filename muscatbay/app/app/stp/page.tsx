@@ -180,7 +180,7 @@ export default function STPPage() {
 
         // Alert if inlet sewage exceeds 4800 m³ (high end of normal range)
         if (latest.inlet_sewage > 4800) {
-            const msg = `Inlet sewage is ${latest.inlet_sewage.toLocaleString()} m³ — exceeds 4,800 m³ threshold`;
+            const msg = `Inlet sewage is ${latest.inlet_sewage.toLocaleString('en-US', { maximumFractionDigits: 1 })} m³ — exceeds 4,800 m³ threshold`;
             toastRef.current.warning("STP Alert: High Inlet", msg);
             pushRef.current.warning("STP Alert: High Inlet", msg);
         }
@@ -380,7 +380,7 @@ export default function STPPage() {
         return [
             {
                 label: "Inlet Sewage",
-                value: `${totalInlet.toLocaleString('en-US')} m³`,
+                value: `${totalInlet.toLocaleString('en-US', { maximumFractionDigits: 1 })} m³`,
                 subtitle: `Range: ${selectedDateRange.start} - ${selectedDateRange.end}`,
                 icon: Droplets,
                 variant: "primary" as const,
@@ -388,7 +388,7 @@ export default function STPPage() {
             },
             {
                 label: "TSE for Irrigation",
-                value: `${totalTSE.toLocaleString('en-US')} m³`,
+                value: `${totalTSE.toLocaleString('en-US', { maximumFractionDigits: 1 })} m³`,
                 subtitle: "Recycled Water Output",
                 icon: Recycle,
                 variant: "secondary" as const,
@@ -396,7 +396,7 @@ export default function STPPage() {
             },
             {
                 label: "Tanker Trips",
-                value: `${totalTrips.toLocaleString('en-US')}`,
+                value: `${totalTrips.toLocaleString('en-US', { maximumFractionDigits: 1 })}`,
                 subtitle: `at ${TANKER_FEE} OMR / trip`,
                 icon: Truck,
                 variant: "warning" as const,
@@ -404,7 +404,7 @@ export default function STPPage() {
             },
             {
                 label: "Generated Income",
-                value: `${generatedIncome.toLocaleString('en-US', { minimumFractionDigits: 2 })} OMR`,
+                value: `${generatedIncome.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} OMR`,
                 subtitle: "from discharge fees",
                 icon: DollarSign,
                 variant: "success" as const,
@@ -412,7 +412,7 @@ export default function STPPage() {
             },
             {
                 label: "Water Savings",
-                value: `${waterSavings.toLocaleString('en-US', { minimumFractionDigits: 2 })} OMR`,
+                value: `${waterSavings.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} OMR`,
                 subtitle: `${TSE_SAVING_RATE} OMR per m³`,
                 icon: PiggyBank,
                 variant: "primary" as const,
@@ -420,7 +420,7 @@ export default function STPPage() {
             },
             {
                 label: "Total Economic Impact",
-                value: `${totalEconomicImpact.toLocaleString('en-US', { minimumFractionDigits: 2 })} OMR`,
+                value: `${totalEconomicImpact.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} OMR`,
                 subtitle: "Income + Savings",
                 icon: TrendingUp,
                 variant: "success" as const,
@@ -436,7 +436,7 @@ export default function STPPage() {
             },
             {
                 label: "Daily Average Inlet",
-                value: `${Math.round(dailyAverageInlet).toLocaleString('en-US')} m³`,
+                value: `${Math.round(dailyAverageInlet).toLocaleString('en-US', { maximumFractionDigits: 1 })} m³`,
                 subtitle: "Average Daily Input",
                 icon: Activity,
                 variant: "primary" as const,
@@ -573,9 +573,9 @@ export default function STPPage() {
                 'TSE Output (m³)': op.tse_for_irrigation,
                 'Efficiency %': Number(efficiency.toFixed(1)),
                 'Tanker Trips': op.tanker_trips,
-                'Income (OMR)': Number(income.toFixed(2)),
-                'Savings (OMR)': Number(savings.toFixed(2)),
-                'Total Impact (OMR)': Number((income + savings).toFixed(2)),
+                'Income (OMR)': Number(income.toFixed(1)),
+                'Savings (OMR)': Number(savings.toFixed(1)),
+                'Total Impact (OMR)': Number((income + savings).toFixed(1)),
             };
         });
         exportToCSV(data, `stp-daily-ops-${selectedMonth}-${getDateForFilename()}`);
@@ -904,11 +904,11 @@ export default function STPPage() {
                                         <div className="grid grid-cols-2 gap-2 text-xs">
                                             <div className="space-y-0.5">
                                                 <span className="text-slate-400">Inlet</span>
-                                                <p className="font-mono font-medium text-primary">{op.inlet_sewage.toLocaleString()} m³</p>
+                                                <p className="font-mono font-medium text-primary">{op.inlet_sewage.toLocaleString('en-US', { maximumFractionDigits: 1 })} m³</p>
                                             </div>
                                             <div className="space-y-0.5">
                                                 <span className="text-slate-400">TSE Output</span>
-                                                <p className="font-mono font-medium text-blue-600 dark:text-blue-400">{op.tse_for_irrigation.toLocaleString()} m³</p>
+                                                <p className="font-mono font-medium text-blue-600 dark:text-blue-400">{op.tse_for_irrigation.toLocaleString('en-US', { maximumFractionDigits: 1 })} m³</p>
                                             </div>
                                             <div className="space-y-0.5">
                                                 <span className="text-slate-400">Tanker Trips</span>
@@ -916,7 +916,7 @@ export default function STPPage() {
                                             </div>
                                             <div className="space-y-0.5">
                                                 <span className="text-slate-400">Total Impact</span>
-                                                <p className="font-mono font-semibold text-mb-success">{totalImpact.toFixed(2)} OMR</p>
+                                                <p className="font-mono font-semibold text-mb-success">{totalImpact.toFixed(1)} OMR</p>
                                             </div>
                                         </div>
                                     </div>
@@ -973,13 +973,13 @@ export default function STPPage() {
                                         return (
                                             <tr key={op.id} className="border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-[#00d2b3]/5 dark:hover:bg-slate-700/40 transition-colors even:bg-slate-50/40 dark:even:bg-slate-800/20">
                                                 <td className="py-4 px-5 font-semibold text-slate-600 dark:text-slate-400">{format(new Date(op.date), "dd/MM/yyyy")}</td>
-                                                <td className="py-4 px-5 text-right font-mono text-sm text-primary font-semibold">{op.inlet_sewage.toLocaleString()}</td>
-                                                <td className="py-4 px-5 text-right font-mono text-sm text-blue-600 dark:text-blue-400 font-semibold">{op.tse_for_irrigation.toLocaleString()}</td>
+                                                <td className="py-4 px-5 text-right font-mono text-sm text-primary font-semibold">{op.inlet_sewage.toLocaleString('en-US', { maximumFractionDigits: 1 })}</td>
+                                                <td className="py-4 px-5 text-right font-mono text-sm text-blue-600 dark:text-blue-400 font-semibold">{op.tse_for_irrigation.toLocaleString('en-US', { maximumFractionDigits: 1 })}</td>
                                                 <td className={`py-4 px-5 text-right font-mono text-sm font-semibold ${efficiencyColor}`}>{efficiency.toFixed(1)}%</td>
                                                 <td className="py-4 px-5 text-right font-mono text-sm font-semibold text-mb-warning">{op.tanker_trips}</td>
-                                                <td className="py-4 px-5 text-right font-mono text-sm font-semibold text-mb-success">{income.toFixed(2)}</td>
-                                                <td className="py-4 px-5 text-right font-mono text-sm font-semibold text-primary">{savings.toFixed(2)}</td>
-                                                <td className="py-4 px-5 text-right font-mono text-sm font-semibold text-mb-success">{totalImpact.toFixed(2)}</td>
+                                                <td className="py-4 px-5 text-right font-mono text-sm font-semibold text-mb-success">{income.toFixed(1)}</td>
+                                                <td className="py-4 px-5 text-right font-mono text-sm font-semibold text-primary">{savings.toFixed(1)}</td>
+                                                <td className="py-4 px-5 text-right font-mono text-sm font-semibold text-mb-success">{totalImpact.toFixed(1)}</td>
                                             </tr>
                                         );
                                     })}

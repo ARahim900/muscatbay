@@ -24,7 +24,7 @@ export const LiquidTooltip = ({ active, payload, label }: LiquidTooltipProps) =>
                             {typeof entry.value === 'number'
                                 ? entry.value >= 1000
                                     ? `${(entry.value / 1000).toFixed(1)}k`
-                                    : entry.value.toLocaleString()
+                                    : entry.value.toLocaleString('en-US', { maximumFractionDigits: 1 })
                                 : entry.value}
                         </span>
                     </div>

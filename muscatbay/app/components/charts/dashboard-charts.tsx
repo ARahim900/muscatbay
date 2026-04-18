@@ -4,7 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Droplets, ArrowUpRight, Recycle } from "lucide-react";
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar, Legend } from "recharts";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar, Legend, ReferenceLine } from "recharts";
 import { LiquidTooltip } from "./liquid-tooltip";
 import { ChartContainer } from "./chart-container";
 import { AnimateOnScroll } from "@/components/shared/scroll-animation";
@@ -27,7 +27,13 @@ interface DashboardChartsProps {
     stpChartData: ChartData[];
 }
 
+const REFERENCE_LINE_LABEL = { position: 'insideTopRight' as const, fontSize: 10, fill: 'var(--chart-axis)', dy: -4 };
+
 function DashboardChartsInner({ chartData, stpChartData }: DashboardChartsProps) {
+    const waterAvg = chartData.length > 0
+        ? chartData.reduce((sum, d) => sum + ((d.water as number) || 0), 0) / chartData.length
+        : 0;
+
     return (
         <AnimateOnScroll className="grid gap-4 sm:gap-5 md:gap-6 grid-cols-1 lg:grid-cols-7">
             <Link href="/water" aria-label="View water production details" className="col-span-1 lg:col-span-4 group/chart">
@@ -56,7 +62,10 @@ function DashboardChartsInner({ chartData, stpChartData }: DashboardChartsProps)
                                 <YAxis className="text-xs" tick={AXIS_TICK} axisLine={false} tickLine={false} label={Y_AXIS_LABEL} />
                                 <Tooltip content={<LiquidTooltip />} cursor={AREA_CURSOR} />
                                 <Legend iconType="circle" wrapperStyle={LEGEND_STYLE} />
-                                <Area type="monotone" dataKey="water" stroke={CHART_COLORS.teal} fill="url(#colorWater)" name="Water (k m³)" strokeWidth={3} activeDot={WATER_ACTIVE_DOT} animationDuration={600} />
+                                <Area type="monotone" dataKey="water" stroke={CHART_COLORS.teal} fill="url(#colorWater)" name="Water (k m³)" strokeWidth={3} activeDot={WATER_ACTIVE_DOT} animationDuration={200} />
+                                {waterAvg > 0 && (
+                                    <ReferenceLine y={waterAvg} stroke="var(--status-warning)" strokeDasharray="5 3" strokeWidth={1.5} label={{ ...REFERENCE_LINE_LABEL, value: `Avg ${waterAvg.toFixed(1)}k` }} />
+                                )}
                             </AreaChart>
                         </ChartContainer>
                     </div>
@@ -83,8 +92,8 @@ function DashboardChartsInner({ chartData, stpChartData }: DashboardChartsProps)
                                 <YAxis className="text-xs" tick={AXIS_TICK_SM} axisLine={false} tickLine={false} />
                                 <Tooltip content={<LiquidTooltip />} cursor={BAR_CURSOR} />
                                 <Legend iconType="circle" />
-                                <Bar dataKey="inlet" name="Inlet" fill="var(--chart-inlet)" radius={BAR_RADIUS} animationDuration={600} />
-                                <Bar dataKey="tse" name="TSE Output" fill={CHART_COLORS.teal} radius={BAR_RADIUS} animationDuration={600} />
+                                <Bar dataKey="inlet" name="Inlet" fill="var(--chart-inlet)" radius={BAR_RADIUS} animationDuration={200} />
+                                <Bar dataKey="tse" name="TSE Output" fill={CHART_COLORS.teal} radius={BAR_RADIUS} animationDuration={200} />
                             </BarChart>
                         </ChartContainer>
                     </div>

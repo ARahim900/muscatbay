@@ -370,7 +370,7 @@ export function WaterDatabaseTable({ meters, months }: WaterDatabaseTableProps) 
                     const val = getConsumption(meter, month);
                     return (
                         <td key={month} className="py-4 px-5 text-right font-mono text-sm text-slate-700 dark:text-slate-300">
-                            {val > 0 ? val.toLocaleString('en-US') : <span className="text-slate-300 dark:text-slate-600">—</span>}
+                            {val > 0 ? val.toLocaleString('en-US', { maximumFractionDigits: 1 }) : <span className="text-slate-300 dark:text-slate-600">—</span>}
                         </td>
                     );
                 })}

@@ -366,7 +366,7 @@ export default function ElectricityPage() {
             },
             {
                 label: "TOTAL COST",
-                value: `${totalCost.toLocaleString('en-US')} OMR`,
+                value: `${totalCost.toLocaleString('en-US', { maximumFractionDigits: 1 })} OMR`,
                 subtitle: `@ ${ratePerKWh} OMR/kWh`,
                 icon: DollarSign,
                 variant: "success" as const,
@@ -386,7 +386,7 @@ export default function ElectricityPage() {
             {
                 label: "HIGHEST CONSUMER",
                 value: highest.name,
-                subtitle: `${Math.round(highest.val).toLocaleString('en-US')} kWh`,
+                subtitle: `${Math.round(highest.val).toLocaleString('en-US', { maximumFractionDigits: 1 })} kWh`,
                 icon: TrendingUp,
                 variant: "danger" as const,
                 trend: 'neutral' as const,
@@ -593,7 +593,7 @@ export default function ElectricityPage() {
         const stats = [
             {
                 label: "TOTAL CONSUMPTION",
-                value: `${(totalConsumption / 1000).toFixed(2)} MWh`,
+                value: `${(totalConsumption / 1000).toFixed(1)} MWh`,
                 subtitle: selectedMeterName || "in selected period",
                 icon: Zap,
                 variant: "primary" as const,
@@ -603,7 +603,7 @@ export default function ElectricityPage() {
             },
             {
                 label: "TOTAL COST",
-                value: `${totalCost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} OMR`,
+                value: `${totalCost.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} OMR`,
                 subtitle: `at ${ratePerKWh} OMR/kWh`,
                 icon: DollarSign,
                 variant: "success" as const,
@@ -944,7 +944,7 @@ export default function ElectricityPage() {
                                                                         <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: entry.color }} />
                                                                         <span className="text-slate-500 dark:text-slate-400 truncate">{entry.name}:</span>
                                                                         <span className="font-mono font-medium text-slate-700 dark:text-slate-200 ml-auto">
-                                                                            {(entry.value || 0).toLocaleString()} kWh
+                                                                            {(entry.value || 0).toLocaleString('en-US', { maximumFractionDigits: 1 })} kWh
                                                                         </span>
                                                                     </div>
                                                                 ))}
@@ -1032,14 +1032,14 @@ export default function ElectricityPage() {
                                                                     <div className="w-2 h-2 rounded-full bg-mb-warning" />
                                                                     <span className="text-slate-500 dark:text-slate-400">Consumption:</span>
                                                                     <span className="font-mono font-medium text-slate-700 dark:text-slate-200">
-                                                                        {data.consumption.toLocaleString()} kWh
+                                                                        {data.consumption.toLocaleString('en-US', { maximumFractionDigits: 1 })} kWh
                                                                     </span>
                                                                 </div>
                                                                 <div className="flex items-center gap-2 text-xs">
                                                                     <div className="w-2 h-2 rounded-full bg-mb-success" />
                                                                     <span className="text-slate-500 dark:text-slate-400">Cost:</span>
                                                                     <span className="font-mono font-medium text-mb-success">
-                                                                        {data.cost.toLocaleString('en-US', { minimumFractionDigits: 2 })} OMR
+                                                                        {data.cost.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} OMR
                                                                     </span>
                                                                 </div>
                                                             </div>
@@ -1119,7 +1119,7 @@ export default function ElectricityPage() {
                                                                     <div className="flex items-center gap-2 text-xs mb-1">
                                                                         <div className="w-2 h-2 rounded-full" style={{ backgroundColor: data.color }} />
                                                                         <span className="text-slate-500">Total:</span>
-                                                                        <span className="font-mono font-medium">{data.consumption.toLocaleString()} kWh</span>
+                                                                        <span className="font-mono font-medium">{data.consumption.toLocaleString('en-US', { maximumFractionDigits: 1 })} kWh</span>
                                                                     </div>
                                                                     <div className="flex items-center gap-2 text-xs">
                                                                         <div className="w-2 h-2 rounded-full bg-mb-warning" />
@@ -1189,7 +1189,7 @@ export default function ElectricityPage() {
                                                     {meter.rangeConsumption.toLocaleString('en-US', { maximumFractionDigits: 1 })}
                                                 </td>
                                                 <td className="py-4 px-5 text-right font-mono text-sm font-semibold text-mb-success dark:text-mb-success-hover">
-                                                    {meter.rangeCost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                    {meter.rangeCost.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
                                                 </td>
                                             </tr>
                                         ))}
@@ -1210,7 +1210,7 @@ export default function ElectricityPage() {
                                                     {analysisData.tableData.reduce((s, m) => s + m.rangeConsumption, 0).toLocaleString('en-US', { maximumFractionDigits: 0 })}
                                                 </td>
                                                 <td className="py-4 px-5 text-right font-mono text-sm text-mb-success dark:text-mb-success-hover">
-                                                    {analysisData.tableData.reduce((s, m) => s + m.rangeCost, 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                    {analysisData.tableData.reduce((s, m) => s + m.rangeCost, 0).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
                                                 </td>
                                             </tr>
                                         )}

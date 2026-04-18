@@ -609,7 +609,7 @@ export default function WaterPage() {
         return [
             {
                 label: "STAGE 1 LOSS",
-                value: `${rangeAnalysis.stage1Loss.toLocaleString('en-US')} m³`,
+                value: `${rangeAnalysis.stage1Loss.toLocaleString('en-US', { maximumFractionDigits: 1 })} m³`,
                 subtitle: `Loss Rate: ${rangeAnalysis.A1 > 0 ? ((rangeAnalysis.stage1Loss / rangeAnalysis.A1) * 100).toFixed(1) : 0}%`,
                 icon: Minus,
                 variant: "danger" as const,
@@ -618,7 +618,7 @@ export default function WaterPage() {
             },
             {
                 label: "STAGE 2 LOSS",
-                value: `${rangeAnalysis.stage2Loss.toLocaleString('en-US')} m³`,
+                value: `${rangeAnalysis.stage2Loss.toLocaleString('en-US', { maximumFractionDigits: 1 })} m³`,
                 subtitle: `Loss Rate: ${rangeAnalysis.A2 > 0 ? ((rangeAnalysis.stage2Loss / rangeAnalysis.A2) * 100).toFixed(1) : 0}%`,
                 icon: Minus,
                 variant: "warning" as const,
@@ -627,7 +627,7 @@ export default function WaterPage() {
             },
             {
                 label: "TOTAL SYSTEM LOSS",
-                value: `${rangeAnalysis.totalLoss.toLocaleString('en-US')} m³`,
+                value: `${rangeAnalysis.totalLoss.toLocaleString('en-US', { maximumFractionDigits: 1 })} m³`,
                 subtitle: `Loss Rate: ${rangeAnalysis.lossPercentage}%`,
                 icon: AlertTriangle,
                 variant: "danger" as const,
@@ -637,7 +637,7 @@ export default function WaterPage() {
             {
                 label: "HIGHEST CONSUMER",
                 value: highestConsumer.meter.label,
-                subtitle: `${highestConsumer.total.toLocaleString('en-US')} m³`,
+                subtitle: `${highestConsumer.total.toLocaleString('en-US', { maximumFractionDigits: 1 })} m³`,
                 icon: TrendingUp,
                 variant: "warning" as const,
             }
@@ -1028,7 +1028,7 @@ export default function WaterPage() {
                                         <div>
                                             <CardTitle className="text-base sm:text-lg">Consumption by Type (m³)</CardTitle>
                                             <p className="text-xs text-slate-500 mt-0.5">
-                                                {startMonth} – {endMonth} · <span className="font-medium text-slate-600 dark:text-slate-300">{totalConsumption.toLocaleString('en-US')} m³</span> total · {filteredMeters.length} meters
+                                                {startMonth} – {endMonth} · <span className="font-medium text-slate-600 dark:text-slate-300">{totalConsumption.toLocaleString('en-US', { maximumFractionDigits: 1 })} m³</span> total · {filteredMeters.length} meters
                                             </p>
                                         </div>
                                         {activeDetailType && (
@@ -1165,7 +1165,7 @@ export default function WaterPage() {
                                                                     {ZONE_CONFIG.find(z => z.code === meter.zone)?.name || meter.zone}
                                                                 </TableCell>
                                                                 <TableCell className="text-xs text-right font-mono pr-4 sm:pr-6">
-                                                                    {meter.total.toLocaleString('en-US')}
+                                                                    {meter.total.toLocaleString('en-US', { maximumFractionDigits: 1 })}
                                                                 </TableCell>
                                                                 <TableCell className="text-xs text-right pr-4 sm:pr-6 hidden sm:table-cell">
                                                                     <div className="flex items-center justify-end gap-2">

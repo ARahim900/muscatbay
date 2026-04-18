@@ -51,7 +51,7 @@ const CustomTooltip = ({ active, payload, label }: ChartTooltipProps) => {
                             {entry.name}:
                         </span>
                         <span className="font-mono font-medium text-slate-700 dark:text-slate-200">
-                            {Number(entry.value).toLocaleString()}
+                            {Number(entry.value).toLocaleString('en-US', { maximumFractionDigits: 1 })}
                         </span>
                     </div>
                 ))}
@@ -81,7 +81,7 @@ export const LiquidBarChart = memo(function LiquidBarChart({
         if (isNaN(numValue)) return String(value);
         if (numValue >= 1000000) return `${(numValue / 1000000).toFixed(1)}M`;
         if (numValue >= 1000) return `${(numValue / 1000).toFixed(1)}k`;
-        return numValue.toLocaleString();
+        return numValue.toLocaleString('en-US', { maximumFractionDigits: 1 });
     };
 
     return (
