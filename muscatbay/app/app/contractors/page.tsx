@@ -335,14 +335,6 @@ export default function ContractorsPage() {
         return 'blue';
     };
 
-    const getStatusBorderClass = (status: string | null): string => {
-        const s = status?.toLowerCase() || '';
-        if (s.includes('active')) return 'border-s-emerald-500';
-        if (s.includes('expired')) return 'border-s-red-400';
-        if (s.includes('retain')) return 'border-s-amber-500';
-        return 'border-s-blue-400';
-    };
-
     const handleExportContracts = () => {
         exportToCSV(
             filteredContracts.map(c => ({
@@ -401,7 +393,7 @@ export default function ContractorsPage() {
     // ── Loading skeleton ─────────────────────────────────────────────────────
     if (loading) {
         return (
-            <div className="space-y-6 sm:space-y-7 md:space-y-8 w-full animate-in fade-in duration-200">
+            <div className="space-y-6 sm:space-y-7 md:space-y-8 w-full motion-safe:animate-in fade-in duration-200">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div className="space-y-2">
                         <Skeleton className="h-9 w-48" />
@@ -546,7 +538,7 @@ export default function ContractorsPage() {
                     {/* Mobile Cards */}
                     <div className="md:hidden space-y-3">
                         {paginatedContracts.map(c => (
-                            <div key={c.id} className={`rounded-xl border border-slate-200 dark:border-slate-700 border-s-4 ${c.flow === 'Revenue' ? 'border-s-emerald-500' : 'border-s-blue-500'} bg-white dark:bg-slate-900 p-4 space-y-3`}>
+                            <div key={c.id} className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 space-y-3">
                                 <div className="flex items-start justify-between gap-2">
                                     <div className="min-w-0">
                                         <p className="font-semibold text-sm text-slate-800 dark:text-slate-200 truncate">{c.contractor}</p>
@@ -826,7 +818,7 @@ export default function ContractorsPage() {
                         {paginatedTracker.map(c => {
                             const rowKey = `${c.Contractor ?? 'unknown'}--${c["Service Provided"] ?? ''}`;
                             return (
-                                <div key={`m-${rowKey}`} className={`rounded-xl border border-slate-200 dark:border-slate-700 border-s-4 ${getStatusBorderClass(c.Status)} bg-white dark:bg-slate-900 p-4 space-y-3`}>
+                                <div key={`m-${rowKey}`} className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 space-y-3">
                                     <div className="flex items-start justify-between gap-2">
                                         <div className="min-w-0">
                                             <p className="font-semibold text-sm text-slate-800 dark:text-slate-200 truncate">{c.Contractor || '-'}</p>

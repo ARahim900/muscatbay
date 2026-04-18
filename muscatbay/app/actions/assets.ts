@@ -39,6 +39,7 @@ export async function fetchAssetSummaryAction(): Promise<{
     toVerify: number;
     criticalLifecycle: number;
     disciplines: number;
+    boqCoverage: number;
     error?: string;
 }> {
     try {
@@ -53,6 +54,7 @@ export async function fetchAssetSummaryAction(): Promise<{
             toVerify: 0,
             criticalLifecycle: 0,
             disciplines: 0,
+            boqCoverage: 0,
             error: err instanceof Error ? err.message : 'Server-side summary fetch failed',
         };
     }

@@ -152,7 +152,7 @@ export default function ResetPasswordPage() {
                     <form onSubmit={handleSubmit}>
                         <CardContent className="space-y-4">
                             {error && (
-                                <div className="p-3 text-sm text-red-600 bg-red-50 dark:bg-red-900/20 dark:text-red-400 rounded-lg border border-red-200 dark:border-red-800">
+                                <div role="alert" className="p-3 text-sm text-red-600 bg-red-50 dark:bg-red-900/20 dark:text-red-400 rounded-lg border border-red-200 dark:border-red-800">
                                     {error}
                                 </div>
                             )}
@@ -173,6 +173,7 @@ export default function ResetPasswordPage() {
                                     />
                                     <button
                                         type="button"
+                                        aria-label={showPassword ? "Hide password" : "Show password"}
                                         onClick={() => setShowPassword(!showPassword)}
                                         className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                                     >

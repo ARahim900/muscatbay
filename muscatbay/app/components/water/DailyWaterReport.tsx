@@ -1621,16 +1621,16 @@ function LoadingState() {
                 <Card key={label} className="card-elevated">
                     <CardHeader className="card-elevated-header p-4">
                         <div className="flex items-center gap-3">
-                            <div className="h-9 w-9 rounded-lg bg-slate-200 dark:bg-slate-700 animate-pulse" />
+                            <div className="h-9 w-9 rounded-lg bg-slate-200 dark:bg-slate-700 motion-safe:animate-pulse" />
                             <div className="space-y-2 flex-1">
-                                <div className="h-4 w-48 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
-                                <div className="h-3 w-72 bg-slate-100 dark:bg-slate-800 rounded animate-pulse" />
+                                <div className="h-4 w-48 bg-slate-200 dark:bg-slate-700 rounded motion-safe:animate-pulse" />
+                                <div className="h-3 w-72 bg-slate-100 dark:bg-slate-800 rounded motion-safe:animate-pulse" />
                             </div>
                         </div>
                     </CardHeader>
                     <CardContent className="p-4 space-y-3">
                         {Array.from({ length: 5 }).map((_, i) => (
-                            <div key={i} className="h-9 w-full rounded bg-slate-100 dark:bg-slate-800 animate-pulse" />
+                            <div key={i} className="h-9 w-full rounded bg-slate-100 dark:bg-slate-800 motion-safe:animate-pulse" />
                         ))}
                     </CardContent>
                 </Card>
@@ -1801,7 +1801,7 @@ export function DailyWaterReport() {
 
     // ── Controls bar ──────────────────────────────────────────────────────────
     return (
-        <div className="space-y-6 animate-in fade-in duration-200">
+        <div className="space-y-6 motion-safe:animate-in fade-in duration-200">
             <Card className="card-elevated">
                 <CardContent className="p-4 sm:p-5 md:p-6">
                     {/*
@@ -1871,7 +1871,7 @@ export function DailyWaterReport() {
                                         ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
                                         : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400"
                                 )}>
-                                    <Radio className={cn("h-3 w-3", isLive && "animate-pulse")} />
+                                    <Radio className={cn("h-3 w-3", isLive && "motion-safe:animate-pulse")} />
                                     {isLive ? "Live" : "Offline"}
                                 </span>
 

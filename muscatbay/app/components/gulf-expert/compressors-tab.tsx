@@ -42,7 +42,7 @@ export function CompressorsTab({ compressors }: CompressorsTabProps) {
     <div className="space-y-6">
       {hasB5Critical && (
         <div className="flex items-center gap-3 p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
-          <AlertTriangle className="h-5 w-5 text-red-500 flex-shrink-0 animate-pulse" />
+          <AlertTriangle className="h-5 w-5 text-red-500 flex-shrink-0 motion-safe:animate-pulse" />
           <div>
             <p className="text-sm font-semibold text-red-700 dark:text-red-400">
               Critical Alert — Building B5
@@ -108,7 +108,7 @@ export function CompressorsTab({ compressors }: CompressorsTabProps) {
                                     isOk
                                       ? "bg-emerald-500"
                                       : isFault
-                                      ? "bg-red-500 animate-pulse"
+                                      ? "bg-red-500 motion-safe:animate-pulse"
                                       : "bg-slate-300 dark:bg-slate-600"
                                   }`}
                                 />

@@ -142,7 +142,7 @@ export function Topbar() {
 
                     {/* Profile Dropdown */}
                     {isProfileOpen && (
-                        <div className="absolute end-0 mt-2 w-60 max-w-[calc(100vw-2rem)] bg-popover text-popover-foreground rounded-xl shadow-xl border border-border py-1 z-50 animate-in fade-in slide-in-from-top-2 duration-200"
+                        <div className="absolute end-0 mt-2 w-60 max-w-[calc(100vw-2rem)] bg-popover text-popover-foreground rounded-xl shadow-xl border border-border py-1 z-50 motion-safe:animate-in fade-in slide-in-from-top-2 duration-200"
                             id="profile-dropdown-menu"
                             aria-labelledby="profile-menu-trigger"
                         >

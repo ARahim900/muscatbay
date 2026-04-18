@@ -34,16 +34,15 @@ interface StatsGridProps {
     className?: string;
 }
 
-// Inline style colors — Recharts/inline style requires hex, cannot use CSS vars
-const variantIconColors: Record<StatVariant, string> = {
-    primary: "#4E4456",      // Brand Primary
-    secondary: "#F59E0B",    // Amber
-    success: "#10B981",      // Green
-    warning: "#F59E0B",      // Amber (same as secondary)
-    danger: "#EF4444",       // Red / destructive
-    info: "#3B82F6",         // Blue
-    water: "#3B82F6",        // Blue (same as info)
-    default: "#64748b",      // Slate gray
+const variantIconClass: Record<StatVariant, string> = {
+    primary: "text-primary",
+    secondary: "text-amber-500",
+    success: "text-emerald-500",
+    warning: "text-amber-500",
+    danger: "text-destructive",
+    info: "text-blue-500",
+    water: "text-blue-500",
+    default: "text-slate-500",
 };
 
 export function StatsGrid({ stats, className }: StatsGridProps) {
@@ -68,7 +67,7 @@ export function StatsGrid({ stats, className }: StatsGridProps) {
         )}>
             {stats.map((stat, index) => {
                 const variant = stat.variant || "primary";
-                const iconColor = variantIconColors[variant];
+                const iconClass = variantIconClass[variant];
 
                 // Resolve whether the current trend direction is "good" or "bad".
                 // invertTrend=true  → down is good (savings: energy, water, cost)
@@ -97,8 +96,8 @@ export function StatsGrid({ stats, className }: StatsGridProps) {
                             </div>
                             <div className="p-1.5 sm:p-2 rounded-lg bg-gray-50/80 dark:bg-slate-800/80 flex-shrink-0">
                                 <stat.icon
-                                    className="w-4 h-4 sm:w-5 sm:h-5"
-                                    style={{ color: stat.color || iconColor }}
+                                    className={cn("w-4 h-4 sm:w-5 sm:h-5", !stat.color && iconClass)}
+                                    style={stat.color ? { color: stat.color } : undefined}
                                 />
                             </div>
                         </div>

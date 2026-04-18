@@ -32,7 +32,7 @@ export async function getAssetsFromSupabase(
     try {
         let query = client
             .from('Assets_Register_Database')
-            .select('Asset_UID, Asset_Tag, Asset_Name, Asset_Description, Discipline, Category, Subcategory, System_Area, Location_Name, Location_Tag, Building, Floor_Area, Zone, Manufacturer_Brand, Model, Country_Of_Origin, Capacity_Size, Quantity, Install_Date, Install_Year, PPM_Frequency, PPM_Interval, Is_Asset_Active, Life_Expectancy_Years, Current_Age_Years, ERL_Years, Condition, Status, Supplier_Vendor, AMC_Contractor, Responsibility_Owner, Notes_Remarks, Tag_Duplicate_Flag, Source_Sheet, Source_Row', { count: 'exact' });
+            .select('Asset_UID, Asset_Tag, Asset_Name, Asset_Description, Discipline, Category, Subcategory, System_Area, Location_Name, Location_Tag, Building, Floor_Area, Zone, Manufacturer_Brand, Model, Country_Of_Origin, Capacity_Size, Quantity, Install_Date, Install_Year, PPM_Frequency, PPM_Interval, Is_Asset_Active, Life_Expectancy_Years, Current_Age_Years, ERL_Years, Condition, Status, Supplier_Vendor, AMC_Contractor, Responsibility_Owner, Notes_Remarks, Tag_Duplicate_Flag, Source_Sheet, Source_Row, BOQ_Project_Ref, BOQ_Category_Design_Life, BOQ_Unit_Cost_OMR, Current_Replacement_Cost_OMR', { count: 'exact' });
 
         // Apply search filter if provided - using new column names
         if (search) {
@@ -79,13 +79,14 @@ export async function getAssetSummaryFromSupabase(): Promise<{
     toVerify: number;
     criticalLifecycle: number;
     disciplines: number;
+    boqCoverage: number;
 }> {
     const client = getSupabaseClient();
     if (!client) {
-        return { total: 0, activeFlagged: 0, workingStatus: 0, toVerify: 0, criticalLifecycle: 0, disciplines: 0 };
+        return { total: 0, activeFlagged: 0, workingStatus: 0, toVerify: 0, criticalLifecycle: 0, disciplines: 0, boqCoverage: 0 };
     }
 
-    const [totalRes, activeRes, workingRes, verifyRes, criticalRes, disciplineRes] = await Promise.all([
+    const [totalRes, activeRes, workingRes, verifyRes, criticalRes, disciplineRes, boqRes] = await Promise.all([
         client.from('Assets_Register_Database').select('Asset_UID', { count: 'exact', head: true }),
         client
             .from('Assets_Register_Database')
@@ -104,9 +105,13 @@ export async function getAssetSummaryFromSupabase(): Promise<{
             .select('Asset_UID', { count: 'exact', head: true })
             .or('ERL_Years.lte.2,Status.eq.TO VERIFY,Status.eq.Decommissioned'),
         client.from('Assets_Register_Database').select('Discipline').range(0, 999),
+        client
+            .from('Assets_Register_Database')
+            .select('Asset_UID', { count: 'exact', head: true })
+            .not('BOQ_Project_Ref', 'is', null),
     ]);
 
-    if (totalRes.error || activeRes.error || workingRes.error || verifyRes.error || criticalRes.error || disciplineRes.error) {
+    if (totalRes.error || activeRes.error || workingRes.error || verifyRes.error || criticalRes.error || disciplineRes.error || boqRes.error) {
         throw new Error(
             totalRes.error?.message ||
                 activeRes.error?.message ||
@@ -114,6 +119,7 @@ export async function getAssetSummaryFromSupabase(): Promise<{
                 verifyRes.error?.message ||
                 criticalRes.error?.message ||
                 disciplineRes.error?.message ||
+                boqRes.error?.message ||
                 'Failed to fetch asset summary'
         );
     }
@@ -151,6 +157,7 @@ export async function getAssetSummaryFromSupabase(): Promise<{
         toVerify: verifyRes.count || 0,
         criticalLifecycle: criticalRes.count || 0,
         disciplines: uniqueDisciplines.size,
+        boqCoverage: boqRes.count || 0,
     };
 }
 

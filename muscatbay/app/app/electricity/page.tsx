@@ -46,8 +46,8 @@ const meterColors = [
     'var(--chart-1)',        // blue
     'var(--chart-3)',        // amber variant
     'var(--chart-4)',        // emerald variant
-    '#8b5cf6',              // violet — extended palette
-    '#06b6d4',              // cyan — extended palette
+    'var(--chart-5)',        // violet — extended palette
+    'var(--chart-teal)',     // cyan — extended palette
 ];
 
 export default function ElectricityPage() {
@@ -667,7 +667,7 @@ export default function ElectricityPage() {
 
     if (loading) {
         return (
-            <div className="space-y-6 sm:space-y-7 md:space-y-8 w-full animate-in fade-in duration-200">
+            <div className="space-y-6 sm:space-y-7 md:space-y-8 w-full motion-safe:animate-in motion-safe:fade-in duration-200">
                 {/* Header skeleton */}
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div className="space-y-2">
@@ -747,6 +747,8 @@ export default function ElectricityPage() {
                                         <Button
                                             variant={selectedYear === "" ? "default" : "outline"}
                                             size="sm"
+                                            aria-label="Filter by all years"
+                                            aria-pressed={selectedYear === ""}
                                             onClick={() => {
                                                 setSelectedYear("");
                                                 if (allMonths.length > 0) {
@@ -763,6 +765,8 @@ export default function ElectricityPage() {
                                                 key={year}
                                                 variant={selectedYear === year ? "default" : "outline"}
                                                 size="sm"
+                                                aria-label={`Filter by year ${year}`}
+                                                aria-pressed={selectedYear === year}
                                                 onClick={() => {
                                                     setSelectedYear(year);
                                                     const yearMonths = allMonths.filter(m => '20' + m.split('-')[1] === year);
@@ -840,7 +844,7 @@ export default function ElectricityPage() {
             )}
 
             {activeTab === 'overview' && (
-                <div className="space-y-6 animate-in fade-in duration-200">
+                <div className="space-y-6 motion-safe:animate-in motion-safe:fade-in duration-200">
 
                     <StatsGrid stats={stats} />
 
@@ -896,7 +900,7 @@ export default function ElectricityPage() {
             )}
 
             {activeTab === 'analysis' && (
-                <div className="space-y-6 animate-in fade-in duration-200">
+                <div className="space-y-6 motion-safe:animate-in motion-safe:fade-in duration-200">
                     {/* Filtered Stats Grid */}
                     <StatsGrid stats={analysisData.stats} />
 
@@ -1170,7 +1174,7 @@ export default function ElectricityPage() {
                                     </thead>
                                     <tbody>
                                         {analysisData.tableData.map((meter) => (
-                                            <tr key={meter.id} className="border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-[#00d2b3]/5 dark:hover:bg-slate-700/40 transition-colors even:bg-slate-50/40 dark:even:bg-slate-800/20">
+                                            <tr key={meter.id} className="border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-secondary/5 dark:hover:bg-slate-700/40 transition-colors even:bg-slate-50/40 dark:even:bg-slate-800/20">
                                                 <td className="py-4 px-5 font-semibold text-slate-800 dark:text-slate-200 sticky left-0 bg-white dark:bg-slate-900 z-10">{meter.name}</td>
                                                 <td className="py-4 px-5 font-semibold text-slate-500 dark:text-slate-400 font-mono text-sm">{meter.account_number}</td>
                                                 {analysisData.selectedMonths.map(month => {
@@ -1237,13 +1241,14 @@ export default function ElectricityPage() {
                 };
 
                 return (
-                    <div className="space-y-4 animate-in fade-in duration-200">
+                    <div className="space-y-4 motion-safe:animate-in motion-safe:fade-in duration-200">
                         {/* Toolbar */}
                         <TableToolbar>
                             <div className="relative flex-1 min-w-[200px] max-w-md">
                                 <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                                 <input
                                     type="text"
+                                    aria-label="Search meters"
                                     placeholder="Search meters..."
                                     value={dbSearchTerm}
                                     onChange={(e) => { setDbSearchTerm(e.target.value); setDbCurrentPage(1); }}
@@ -1342,7 +1347,7 @@ export default function ElectricityPage() {
                                     {dbPaginatedMeters.map((meter) => {
                                         const sum = Object.values(meter.readings).reduce((a, b) => a + b, 0);
                                         return (
-                                            <tr key={meter.id} className="border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-[#00d2b3]/5 dark:hover:bg-slate-700/40 transition-colors even:bg-slate-50/40 dark:even:bg-slate-800/20">
+                                            <tr key={meter.id} className="border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-secondary/5 dark:hover:bg-slate-700/40 transition-colors even:bg-slate-50/40 dark:even:bg-slate-800/20">
                                                 <td className="py-4 px-5 font-semibold text-slate-800 dark:text-slate-200 sticky left-0 bg-white dark:bg-slate-900 z-10">{meter.name}</td>
                                                 <td className="py-4 px-5 font-semibold text-slate-600 dark:text-slate-400 font-mono text-sm">{meter.account_number}</td>
                                                 <td className="py-4 px-5">

@@ -13,7 +13,7 @@ import { TabNavigation } from "@/components/shared/tab-navigation";
 import {
     Boxes, MapPin, Wrench, Search, Plus, Download, X, Layers,
     ClipboardCheck, ShieldAlert, LayoutDashboard, ClipboardList,
-    Calendar, Clock,
+    Calendar, Clock, FileText,
 } from "lucide-react";
 import { format } from "date-fns";
 import {
@@ -40,11 +40,14 @@ const SORT_FIELD_MAP: Record<string, string> = {
     status: 'Status',
     risk: 'ERL_Years',
     systemArea: 'System_Area',
+    installYear: 'Install_Year',
     installDate: 'Install_Date',
     lifeExpect: 'Life_Expectancy_Years',
     erlYears: 'ERL_Years',
     condition: 'Condition',
     ppmFreq: 'PPM_Frequency',
+    boqDesignLife: 'BOQ_Category_Design_Life',
+    boqRef: 'BOQ_Project_Ref',
 };
 
 const STATUS_OPTIONS = ['Working', 'Active', 'Under Maintenance', 'Decommissioned', 'In Storage', 'TO VERIFY'];
@@ -83,7 +86,8 @@ export default function AssetsPage() {
         toVerify: number;
         criticalLifecycle: number;
         disciplines: number;
-    }>({ total: 0, activeFlagged: 0, workingStatus: 0, toVerify: 0, criticalLifecycle: 0, disciplines: 0 });
+        boqCoverage: number;
+    }>({ total: 0, activeFlagged: 0, workingStatus: 0, toVerify: 0, criticalLifecycle: 0, disciplines: 0, boqCoverage: 0 });
 
     const [assets, setAssets] = useState<Asset[]>([]);
     const [loading, setLoading] = useState(true);
@@ -116,7 +120,7 @@ export default function AssetsPage() {
 
     const loadData = useCallback(async () => {
         setLoading(true);
-        const effectivePageSize = pageSize === 'All' ? 9999 : pageSize;
+        const effectivePageSize = pageSize === 'All' ? 500 : pageSize;
         const supabaseSort = SORT_FIELD_MAP[sortField] || 'Asset_Name';
         const statusFilter = selectedStatuses.length < STATUS_OPTIONS.length ? selectedStatuses : undefined;
         const disciplineFilter = selectedDisciplines.length < DISCIPLINE_OPTIONS.length ? selectedDisciplines : undefined;
@@ -132,10 +136,13 @@ export default function AssetsPage() {
                 return;
             }
 
-            const { data, count, error: fetchError } = await fetchAssetsAction(
-                currentPage, effectivePageSize, debouncedSearch,
-                supabaseSort, sortDirection, statusFilter, disciplineFilter,
-            );
+            const [{ data, count, error: fetchError }, summaryRes] = await Promise.all([
+                fetchAssetsAction(
+                    currentPage, effectivePageSize, debouncedSearch,
+                    supabaseSort, sortDirection, statusFilter, disciplineFilter,
+                ),
+                fetchAssetSummaryAction(),
+            ]);
 
             if (fetchError) throw new Error(fetchError);
 
@@ -144,7 +151,6 @@ export default function AssetsPage() {
                 setTotalCount(count);
                 setDataSource('supabase');
                 setLastUpdated(new Date());
-                const summaryRes = await fetchAssetSummaryAction();
                 if (!summaryRes.error) setSummary(summaryRes);
             } else {
                 setAssets([]);
@@ -193,19 +199,22 @@ export default function AssetsPage() {
                 let aVal: string | number = '';
                 let bVal: string | number = '';
                 switch (sortField) {
-                    case 'name':        aVal = a.name;                      bVal = b.name;                      break;
-                    case 'serial':      aVal = a.serialNumber;              bVal = b.serialNumber;              break;
-                    case 'category':    aVal = a.type;                      bVal = b.type;                      break;
-                    case 'discipline':  aVal = a.discipline;                bVal = b.discipline;                break;
-                    case 'location':    aVal = a.location;                  bVal = b.location;                  break;
-                    case 'status':      aVal = a.status;                    bVal = b.status;                    break;
-                    case 'value':       aVal = a.value;                     bVal = b.value;                     break;
-                    case 'systemArea':  aVal = a.systemArea ?? '';          bVal = b.systemArea ?? '';          break;
-                    case 'installDate': aVal = a.purchaseDate ?? '';        bVal = b.purchaseDate ?? '';        break;
-                    case 'lifeExpect':  aVal = a.lifeExpectancyYears ?? 0; bVal = b.lifeExpectancyYears ?? 0; break;
-                    case 'erlYears':    aVal = a.erlYears ?? 0;             bVal = b.erlYears ?? 0;             break;
-                    case 'condition':   aVal = a.condition;                 bVal = b.condition;                 break;
-                    case 'ppmFreq':     aVal = a.ppmFrequency ?? '';        bVal = b.ppmFrequency ?? '';        break;
+                    case 'name':          aVal = a.name;                      bVal = b.name;                      break;
+                    case 'serial':        aVal = a.serialNumber;              bVal = b.serialNumber;              break;
+                    case 'category':      aVal = a.type;                      bVal = b.type;                      break;
+                    case 'discipline':    aVal = a.discipline;                bVal = b.discipline;                break;
+                    case 'location':      aVal = a.location;                  bVal = b.location;                  break;
+                    case 'status':        aVal = a.status;                    bVal = b.status;                    break;
+                    case 'value':         aVal = a.value;                     bVal = b.value;                     break;
+                    case 'systemArea':    aVal = a.systemArea ?? '';          bVal = b.systemArea ?? '';          break;
+                    case 'installYear':   aVal = a.installYear ?? 0;          bVal = b.installYear ?? 0;          break;
+                    case 'installDate':   aVal = a.purchaseDate ?? '';        bVal = b.purchaseDate ?? '';        break;
+                    case 'lifeExpect':    aVal = a.lifeExpectancyYears ?? 0; bVal = b.lifeExpectancyYears ?? 0; break;
+                    case 'erlYears':      aVal = a.erlYears ?? 0;             bVal = b.erlYears ?? 0;             break;
+                    case 'condition':     aVal = a.condition;                 bVal = b.condition;                 break;
+                    case 'ppmFreq':       aVal = a.ppmFrequency ?? '';        bVal = b.ppmFrequency ?? '';        break;
+                    case 'boqDesignLife': aVal = a.boqDesignLife ?? 0;        bVal = b.boqDesignLife ?? 0;        break;
+                    case 'boqRef':        aVal = a.boqProjectRef ?? '';       bVal = b.boqProjectRef ?? '';       break;
                     case 'risk': {
                         const order = { Critical: 0, Watch: 1, Normal: 2 };
                         aVal = order[a.lifecycleRisk ?? 'Normal'];
@@ -241,12 +250,13 @@ export default function AssetsPage() {
                     'Asset ID': a.serialNumber,
                     'Asset Name': a.name,
                     'System / Area': a.systemArea || '-',
-                    'Install Date': a.purchaseDate || '-',
+                    'Install Year': a.installYear ?? '-',
                     'Expected Life (yrs)': a.lifeExpectancyYears ?? '-',
+                    'BOQ Design Life (yrs)': a.boqDesignLife ?? '-',
                     'Remaining Life (yrs)': a.erlYears ?? '-',
-                    'Condition': a.condition || '-',
                     'Lifecycle Risk': a.lifecycleRisk || 'Normal',
                     'PM Frequency': a.ppmFrequency || '-',
+                    'BOQ Reference': a.boqProjectRef || '-',
                 };
             }
             return {
@@ -282,11 +292,14 @@ export default function AssetsPage() {
         const needsVerifyCount = dataSource === 'supabase' ? summary.toVerify : verifyCount;
         const criticalLifecycleCount = dataSource === 'supabase' ? summary.criticalLifecycle : criticalCount;
 
+        const boqCount = dataSource === 'supabase' ? summary.boqCoverage : assets.filter(a => a.boqProjectRef).length;
+
         return [
             { label: "TOTAL ASSETS", value: totalItems.toString(), subtitle: dataSource === 'supabase' ? "Across all pages" : "All items", icon: Boxes, variant: "water" as const },
             { label: "DISCIPLINES", value: disciplineCount.toString(), subtitle: dataSource === 'supabase' ? "Portfolio-wide" : "In dataset", icon: Layers, variant: "success" as const },
             { label: "ACTIVE ASSETS", value: activeByFlagCount.toString(), subtitle: "Is_Asset_Active = Y", icon: MapPin, variant: "success" as const },
             { label: "WORKING STATUS", value: workingCount.toString(), subtitle: "Status = Working/Active", icon: ClipboardCheck, variant: "water" as const },
+            { label: "RESERVE FUND LINKED", value: boqCount.toString(), subtitle: "Assets with BOQ reference", icon: FileText, variant: "success" as const },
             { label: "NEEDS VERIFICATION", value: needsVerifyCount.toString(), subtitle: "TO VERIFY status", icon: ShieldAlert, variant: "warning" as const },
             { label: "CRITICAL LIFECYCLE RISK", value: criticalLifecycleCount.toString(), subtitle: "ERL ≤ 2y or flagged", icon: ShieldAlert, variant: "danger" as const },
         ];
@@ -300,17 +313,6 @@ export default function AssetsPage() {
             case 'In Storage': return 'slate';
             case 'TO VERIFY': return 'amber';
             default: return 'slate';
-        }
-    };
-
-    const getStatusBorderClass = (status: string): string => {
-        switch (status) {
-            case 'Active': case 'Working': return 'border-s-emerald-500';
-            case 'Under Maintenance': return 'border-s-amber-500';
-            case 'Decommissioned': return 'border-s-red-400';
-            case 'In Storage': return 'border-s-slate-400';
-            case 'TO VERIFY': return 'border-s-yellow-500';
-            default: return 'border-s-slate-300';
         }
     };
 
@@ -355,6 +357,7 @@ export default function AssetsPage() {
                         <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                         <input
                             type="text"
+                            aria-label="Search assets"
                             placeholder="Search by name, location or serial..."
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
@@ -379,7 +382,8 @@ export default function AssetsPage() {
                     {hasActiveFilters && (
                         <button
                             onClick={clearFilters}
-                            className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors"
+                            aria-label="Clear all filters"
+                            className="flex items-center gap-1.5 px-3 py-2.5 min-h-[44px] text-sm rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors"
                         >
                             <X className="w-3.5 h-3.5" />
                             Clear
@@ -388,7 +392,8 @@ export default function AssetsPage() {
 
                     <button
                         onClick={handleExportCSV}
-                        className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors ml-auto"
+                        aria-label="Export to CSV"
+                        className="flex items-center gap-2 px-3 py-2.5 min-h-[44px] text-sm rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors ml-auto"
                     >
                         <Download className="w-3.5 h-3.5" />
                         <span className="hidden sm:inline">Export CSV</span>
@@ -404,13 +409,13 @@ export default function AssetsPage() {
                     ...(selectedStatuses.length < STATUS_OPTIONS.length ? [{
                         key: 'statuses',
                         label: `${selectedStatuses.length} status${selectedStatuses.length !== 1 ? 'es' : ''}`,
-                        colorClass: 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300',
+                        colorClass: 'bg-secondary/20 text-slate-700 dark:bg-secondary/10 dark:text-secondary',
                         onRemove: () => { setSelectedStatuses([...STATUS_OPTIONS]); setCurrentPage(1); },
                     }] : []),
                     ...(selectedDisciplines.length < DISCIPLINE_OPTIONS.length ? [{
                         key: 'disciplines',
                         label: `${selectedDisciplines.length} discipline${selectedDisciplines.length !== 1 ? 's' : ''}`,
-                        colorClass: 'bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300',
+                        colorClass: 'bg-primary/10 text-primary dark:bg-primary/20 dark:text-slate-300',
                         onRemove: () => { setSelectedDisciplines([...DISCIPLINE_OPTIONS]); setCurrentPage(1); },
                     }] : []),
                 ]} />
@@ -421,9 +426,9 @@ export default function AssetsPage() {
                         {/* Mobile cards — Overview */}
                         <div className="md:hidden space-y-3">
                             {loading ? (
-                                <div className="space-y-3">
+                                <div role="status" aria-live="polite" aria-label="Loading assets" className="space-y-3">
                                     {Array.from({ length: 6 }).map((_, i) => (
-                                        <div key={i} className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 space-y-3 animate-pulse">
+                                        <div key={i} className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 space-y-3 motion-safe:animate-pulse">
                                             <div className="flex justify-between">
                                                 <Skeleton className="h-5 w-40" />
                                                 <Skeleton className="h-5 w-20" />
@@ -441,7 +446,7 @@ export default function AssetsPage() {
                                     <EmptyState variant={hasActiveFilters ? "filter-empty" : "no-data"} title="No assets found" description="Try adjusting your filters." />
                                 </div>
                             ) : filteredAssets.map((asset) => (
-                                <div key={asset.id} className={`rounded-xl border border-slate-200 dark:border-slate-700 border-s-4 ${getStatusBorderClass(asset.status)} bg-white dark:bg-slate-900 p-4 space-y-3`}>
+                                <div key={asset.id} className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 space-y-3">
                                     {asset.discipline && (
                                         <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wider bg-primary/10 text-primary dark:bg-primary/20 dark:text-slate-300 ring-1 ring-primary/20">
                                             {asset.discipline}
@@ -482,6 +487,7 @@ export default function AssetsPage() {
                                             <th
                                                 key={col.field}
                                                 className="text-left py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors"
+                                                aria-sort={sortField === col.field ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
                                                 onClick={() => handleSort(col.field)}
                                             >
                                                 <div className="flex items-center gap-1.5">
@@ -492,6 +498,7 @@ export default function AssetsPage() {
                                         ))}
                                         <th
                                             className="text-right py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors"
+                                            aria-sort={sortField === 'value' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
                                             onClick={() => handleSort('value')}
                                         >
                                             <div className="flex items-center justify-end gap-1.5">
@@ -501,7 +508,7 @@ export default function AssetsPage() {
                                         </th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody aria-busy={loading}>
                                     {loading ? (
                                         <TableBodySkeleton columns={6} rows={10} />
                                     ) : filteredAssets.length === 0 ? (
@@ -511,7 +518,7 @@ export default function AssetsPage() {
                                             </td>
                                         </tr>
                                     ) : filteredAssets.map((asset) => (
-                                        <tr key={asset.id} className="border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-[#00d2b3]/5 dark:hover:bg-slate-700/40 transition-colors even:bg-slate-50/40 dark:even:bg-slate-800/20">
+                                        <tr key={asset.id} className="border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-secondary/5 dark:hover:bg-slate-700/40 transition-colors even:bg-slate-50/40 dark:even:bg-slate-800/20">
                                             <td className="py-4 px-5 font-medium text-slate-800 dark:text-slate-200">{asset.name}</td>
                                             <td className="py-4 px-5 text-slate-600 dark:text-slate-400 text-sm">{asset.discipline || '-'}</td>
                                             <td className="py-4 px-5 text-slate-600 dark:text-slate-400 text-sm">{asset.type || '-'}</td>
@@ -536,9 +543,9 @@ export default function AssetsPage() {
                         {/* Mobile cards — Details */}
                         <div className="md:hidden space-y-3">
                             {loading ? (
-                                <div className="space-y-3">
+                                <div role="status" aria-live="polite" aria-label="Loading assets" className="space-y-3">
                                     {Array.from({ length: 6 }).map((_, i) => (
-                                        <div key={i} className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 space-y-3 animate-pulse">
+                                        <div key={i} className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 space-y-3 motion-safe:animate-pulse">
                                             <Skeleton className="h-4 w-28" />
                                             <Skeleton className="h-5 w-48" />
                                             <div className="grid grid-cols-2 gap-2">
@@ -552,7 +559,7 @@ export default function AssetsPage() {
                                     <EmptyState variant={hasActiveFilters ? "filter-empty" : "no-data"} title="No assets found" description="Try adjusting your filters." />
                                 </div>
                             ) : filteredAssets.map((asset) => (
-                                <div key={asset.id} className={`rounded-xl border border-slate-200 dark:border-slate-700 border-s-4 ${getRiskColor(asset.lifecycleRisk) === 'red' ? 'border-s-red-500' : getRiskColor(asset.lifecycleRisk) === 'amber' ? 'border-s-amber-500' : 'border-s-emerald-500'} bg-white dark:bg-slate-900 p-4 space-y-3`}>
+                                <div key={asset.id} className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 space-y-3">
                                     <div className="flex items-center justify-between gap-2">
                                         <span className="font-mono text-[11px] text-slate-400 dark:text-slate-500">{asset.serialNumber || '-'}</span>
                                         <StatusBadge label={asset.lifecycleRisk || 'Normal'} color={getRiskColor(asset.lifecycleRisk)} />
@@ -567,7 +574,7 @@ export default function AssetsPage() {
                                         )}
                                         <span className="flex items-center gap-1">
                                             <Calendar className="w-3 h-3 shrink-0" />
-                                            {formatDate(asset.purchaseDate)}
+                                            {asset.installYear ?? formatDate(asset.purchaseDate)}
                                         </span>
                                         <span className="flex items-center gap-1">
                                             <Clock className="w-3 h-3 shrink-0" />
@@ -576,18 +583,28 @@ export default function AssetsPage() {
                                         {asset.lifeExpectancyYears !== null && (
                                             <span>Exp. Life: {formatYears(asset.lifeExpectancyYears)}</span>
                                         )}
-                                        {asset.condition && <span>Cond: {asset.condition}</span>}
+                                        {asset.boqDesignLife !== null && asset.boqDesignLife !== undefined && (
+                                            <span>BOQ Life: {formatYears(asset.boqDesignLife)}</span>
+                                        )}
                                     </div>
-                                    {asset.ppmFrequency && (
-                                        <div className="text-xs text-slate-500 dark:text-slate-400 pt-2 border-t border-slate-100 dark:border-slate-800">
-                                            PM Plan: <span className="font-medium text-slate-700 dark:text-slate-300">{asset.ppmFrequency}</span>
-                                        </div>
-                                    )}
+                                    <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-1">
+                                        {asset.ppmFrequency && (
+                                            <div className="text-xs text-slate-500 dark:text-slate-400">
+                                                PM Plan: <span className="font-medium text-slate-700 dark:text-slate-300">{asset.ppmFrequency}</span>
+                                            </div>
+                                        )}
+                                        {asset.boqProjectRef && (
+                                            <div className="text-xs text-slate-500 dark:text-slate-400 flex items-start gap-1">
+                                                <FileText className="w-3 h-3 shrink-0 mt-0.5" />
+                                                <span className="truncate" title={asset.boqProjectRef}>{asset.boqProjectRef}</span>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             ))}
                         </div>
 
-                        {/* Desktop table — Details (lifecycle columns) */}
+                        {/* Desktop table — Details / Lifecycle */}
                         <div className="hidden md:block overflow-x-auto rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900 shadow-[0_1px_3px_rgba(0,0,0,0.06),0_4px_16px_-4px_rgba(0,0,0,0.1)] dark:shadow-[0_1px_3px_rgba(0,0,0,0.2),0_4px_16px_-4px_rgba(0,0,0,0.3)]">
                             <table className="w-full text-sm border-collapse">
                                 <thead>
@@ -596,16 +613,18 @@ export default function AssetsPage() {
                                             { label: 'Asset ID', field: 'serial' },
                                             { label: 'Asset Name', field: 'name' },
                                             { label: 'System / Area', field: 'systemArea' },
-                                            { label: 'Install Date', field: 'installDate' },
+                                            { label: 'Install Yr', field: 'installYear' },
                                             { label: 'Exp. Life', field: 'lifeExpect' },
+                                            { label: 'BOQ Life', field: 'boqDesignLife' },
                                             { label: 'Rem. Life (ERL)', field: 'erlYears' },
-                                            { label: 'Condition', field: 'condition' },
-                                            { label: 'Risk', field: 'risk' },
-                                            { label: 'PM Frequency', field: 'ppmFreq' },
+                                            { label: 'Criticality', field: 'risk' },
+                                            { label: 'PM Plan', field: 'ppmFreq' },
+                                            { label: 'BOQ Reference', field: 'boqRef' },
                                         ].map(col => (
                                             <th
                                                 key={col.field}
                                                 className="text-left py-4 px-4 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors whitespace-nowrap"
+                                                aria-sort={sortField === col.field ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
                                                 onClick={() => handleSort(col.field)}
                                             >
                                                 <div className="flex items-center gap-1.5">
@@ -616,42 +635,44 @@ export default function AssetsPage() {
                                         ))}
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody aria-busy={loading}>
                                     {loading ? (
-                                        <TableBodySkeleton columns={9} rows={10} />
+                                        <TableBodySkeleton columns={10} rows={10} />
                                     ) : filteredAssets.length === 0 ? (
                                         <tr>
-                                            <td colSpan={9}>
+                                            <td colSpan={10}>
                                                 <EmptyState variant={hasActiveFilters ? "filter-empty" : "no-data"} title="No assets found" description="Try adjusting your filters." />
                                             </td>
                                         </tr>
                                     ) : filteredAssets.map((asset) => (
-                                        <tr key={asset.id} className="border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-[#00d2b3]/5 dark:hover:bg-slate-700/40 transition-colors even:bg-slate-50/40 dark:even:bg-slate-800/20">
-                                            <td className="py-3.5 px-4 font-mono text-xs text-slate-500 dark:text-slate-400">{asset.serialNumber || '-'}</td>
-                                            <td className="py-3.5 px-4 font-medium text-slate-800 dark:text-slate-200 max-w-[220px]">
+                                        <tr key={asset.id} className="border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-secondary/5 dark:hover:bg-slate-700/40 transition-colors even:bg-slate-50/40 dark:even:bg-slate-800/20">
+                                            <td className="py-3.5 px-4 font-mono text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                                                {asset.serialNumber || '-'}
+                                            </td>
+                                            <td className="py-3.5 px-4 font-medium text-slate-800 dark:text-slate-200 max-w-[200px]">
                                                 <span className="line-clamp-2 leading-tight">{asset.name}</span>
                                             </td>
                                             <td className="py-3.5 px-4 text-slate-600 dark:text-slate-400 text-sm">
                                                 {asset.systemArea || <span className="text-slate-300 dark:text-slate-600">-</span>}
                                             </td>
-                                            <td className="py-3.5 px-4 text-slate-600 dark:text-slate-400 text-sm whitespace-nowrap">
-                                                {formatDate(asset.purchaseDate)}
+                                            <td className="py-3.5 px-4 text-center text-slate-600 dark:text-slate-400 text-sm font-mono">
+                                                {asset.installYear ?? '-'}
                                             </td>
                                             <td className="py-3.5 px-4 text-center text-slate-600 dark:text-slate-400 text-sm font-mono">
                                                 {formatYears(asset.lifeExpectancyYears)}
                                             </td>
+                                            <td className="py-3.5 px-4 text-center text-slate-600 dark:text-slate-400 text-sm font-mono">
+                                                {formatYears(asset.boqDesignLife)}
+                                            </td>
                                             <td className="py-3.5 px-4 text-center font-mono text-sm font-semibold">
                                                 <span className={
                                                     asset.erlYears === null || asset.erlYears === undefined ? 'text-slate-400' :
-                                                    asset.erlYears <= 2 ? 'text-red-500 dark:text-red-400' :
+                                                    asset.erlYears <= 2 ? 'text-destructive' :
                                                     asset.erlYears <= 5 ? 'text-amber-500 dark:text-amber-400' :
-                                                    'text-emerald-600 dark:text-emerald-400'
+                                                    'text-secondary'
                                                 }>
                                                     {formatYears(asset.erlYears)}
                                                 </span>
-                                            </td>
-                                            <td className="py-3.5 px-4 text-slate-600 dark:text-slate-400 text-sm">
-                                                {asset.condition || <span className="text-slate-300 dark:text-slate-600">-</span>}
                                             </td>
                                             <td className="py-3.5 px-4">
                                                 <StatusBadge
@@ -659,8 +680,14 @@ export default function AssetsPage() {
                                                     color={getRiskColor(asset.lifecycleRisk)}
                                                 />
                                             </td>
-                                            <td className="py-3.5 px-4 text-slate-600 dark:text-slate-400 text-sm">
+                                            <td className="py-3.5 px-4 text-slate-600 dark:text-slate-400 text-sm whitespace-nowrap">
                                                 {asset.ppmFrequency || <span className="text-slate-300 dark:text-slate-600">-</span>}
+                                            </td>
+                                            <td className="py-3.5 px-4 text-slate-500 dark:text-slate-500 text-xs max-w-[200px]">
+                                                {asset.boqProjectRef
+                                                    ? <span className="truncate block" title={asset.boqProjectRef}>{asset.boqProjectRef}</span>
+                                                    : <span className="text-slate-300 dark:text-slate-600">-</span>
+                                                }
                                             </td>
                                         </tr>
                                     ))}

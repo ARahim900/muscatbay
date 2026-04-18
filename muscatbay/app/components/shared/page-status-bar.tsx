@@ -53,7 +53,7 @@ export function PageStatusBar({
                                 : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400"
                         )}
                     >
-                        <Radio className={cn("h-3 w-3", isLive && "animate-pulse")} />
+                        <Radio className={cn("h-3 w-3", isLive && "motion-safe:animate-pulse")} />
                         {isLive ? "Live" : "Offline"}
                     </span>
                 )}

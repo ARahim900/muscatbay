@@ -476,7 +476,7 @@ export function WaterHierarchyReport() {
     const colSpan = nDays + 4; // name, acct, label, …days, total
 
     return (
-        <div className="space-y-6 animate-in fade-in duration-200">
+        <div className="space-y-6 motion-safe:animate-in fade-in duration-200">
             {/* ── Controls ─────────────────────────────────────────────────── */}
             <Card className="card-elevated">
                 <CardContent className="p-4 sm:p-5 md:p-6">
@@ -564,7 +564,7 @@ export function WaterHierarchyReport() {
                                     ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
                                     : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400",
                             )}>
-                                <Radio className={cn("h-3 w-3", isLive && "animate-pulse")} />
+                                <Radio className={cn("h-3 w-3", isLive && "motion-safe:animate-pulse")} />
                                 {isLive ? "Live" : "Offline"}
                             </span>
                             {lastFetched && status !== 'loading' && (

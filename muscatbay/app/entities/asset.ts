@@ -27,6 +27,11 @@ export interface Asset {
     lifecycleRisk?: 'Normal' | 'Watch' | 'Critical';
     isAssetActive?: boolean;
     notes?: string;
+    // Reserve Fund / BOQ enrichment fields
+    boqProjectRef?: string | null;
+    boqDesignLife?: number | null;
+    boqUnitCost?: number | null;
+    replacementCost?: number | null;
 }
 
 export interface SupabaseAsset {
@@ -65,6 +70,10 @@ export interface SupabaseAsset {
     Tag_Duplicate_Flag: boolean | null;
     Source_Sheet: string | null;
     Source_Row: number | null;
+    BOQ_Project_Ref: string | null;
+    BOQ_Category_Design_Life: number | null;
+    BOQ_Unit_Cost_OMR: number | null;
+    Current_Replacement_Cost_OMR: number | null;
 }
 
 /** Expand abbreviated PPM frequency codes into human-readable labels. */
@@ -153,7 +162,7 @@ export function transformAsset(dbAsset: SupabaseAsset): Asset {
         location,
         status,
         purchaseDate: dbAsset.Install_Date || '',
-        value: 0,
+        value: dbAsset.Current_Replacement_Cost_OMR ?? dbAsset.BOQ_Unit_Cost_OMR ?? 0,
         serialNumber: dbAsset.Asset_Tag || '',
         lastService: '',
         manufacturer: dbAsset.Manufacturer_Brand || '',
@@ -173,5 +182,9 @@ export function transformAsset(dbAsset: SupabaseAsset): Asset {
         lifecycleRisk,
         isAssetActive: isActiveFlag,
         notes: dbAsset.Notes_Remarks || '',
+        boqProjectRef: dbAsset.BOQ_Project_Ref || null,
+        boqDesignLife: dbAsset.BOQ_Category_Design_Life ?? null,
+        boqUnitCost: dbAsset.BOQ_Unit_Cost_OMR ?? null,
+        replacementCost: dbAsset.Current_Replacement_Cost_OMR ?? null,
     };
 }

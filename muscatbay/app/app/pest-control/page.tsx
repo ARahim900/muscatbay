@@ -14,7 +14,7 @@ export default function PestControlPage() {
                 description="Monitor and manage pest control operations"
             />
 
-            <Card className="card-elevated h-[calc(100vh-12rem)] min-h-[600px] flex flex-col animate-in fade-in duration-200">
+            <Card className="card-elevated h-[calc(100vh-12rem)] min-h-[600px] flex flex-col motion-safe:animate-in fade-in duration-200">
                 <CardHeader className="card-elevated-header">
                     <div className="flex items-center gap-4">
                         <Bug className="w-6 h-6 text-mb-primary" />

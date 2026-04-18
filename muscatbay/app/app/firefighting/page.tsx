@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { getFireSafetyEquipment, FireSafetyEquipment } from "@/lib/mock-data";
 import { StatsGrid } from "@/components/shared/stats-grid";
 import { TabNavigation } from "@/components/shared/tab-navigation";
@@ -343,19 +343,18 @@ export default function FirefightingPage() {
     const [expandedStage, setExpandedStage] = useState<number | null>(1);
     const [filterStatus, setFilterStatus] = useState("all");
 
-    useEffect(() => {
-        async function loadData() {
-            try {
-                const result = await getFireSafetyEquipment();
-                setEquipment(result);
-            } catch (e) {
-                // console.error("Failed to load firefighting data", e);
-            } finally {
-                setLoading(false);
-            }
+    const loadData = useCallback(async () => {
+        try {
+            const result = await getFireSafetyEquipment();
+            setEquipment(result);
+        } catch {
+            // silent fallback
+        } finally {
+            setLoading(false);
         }
-        loadData();
     }, []);
+
+    useEffect(() => { loadData(); }, [loadData]);
 
     const handleTabChange = (key: string) => {
         if (key === 'quotes') {
@@ -444,7 +443,7 @@ export default function FirefightingPage() {
 
     if (loading) {
         return (
-            <div className="space-y-6 sm:space-y-7 md:space-y-8 w-full animate-in fade-in duration-200">
+            <div className="space-y-6 sm:space-y-7 md:space-y-8 w-full motion-safe:animate-in motion-safe:fade-in duration-200">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div className="space-y-2">
                         <Skeleton className="h-9 w-64" />
@@ -490,7 +489,7 @@ export default function FirefightingPage() {
 
             {/* ══════════ DASHBOARD ══════════ */}
             {activeTab === 'dashboard' && (
-                <div className="space-y-6 animate-in fade-in duration-200">
+                <div className="space-y-6 motion-safe:animate-in motion-safe:fade-in duration-200">
                     <StatsGrid stats={stats} />
 
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
@@ -557,7 +556,7 @@ export default function FirefightingPage() {
 
             {/* ══════════ PPM TRACKER ══════════ */}
             {activeTab === 'ppm' && (
-                <div className="space-y-6 animate-in fade-in duration-200">
+                <div className="space-y-6 motion-safe:animate-in motion-safe:fade-in duration-200">
                     {/* Summary Stats — same pattern as other sections */}
                     <StatsGrid stats={[
                         { label: "TOTAL ITEMS", value: ppmStats.totalAll.toString(), icon: ShieldCheck, variant: "primary" as const },
@@ -606,7 +605,7 @@ export default function FirefightingPage() {
 
             {/* ══════════ EQUIPMENT ══════════ */}
             {activeTab === 'equipment' && (
-                <div className="space-y-6 animate-in fade-in duration-200">
+                <div className="space-y-6 motion-safe:animate-in motion-safe:fade-in duration-200">
                     <Card className="card-elevated">
                         <CardContent className="p-4">
                             <div className="relative">
@@ -681,7 +680,7 @@ export default function FirefightingPage() {
 
             {/* ══════════ FAULTS ══════════ */}
             {activeTab === 'faults' && (
-                <div className="space-y-6 animate-in fade-in duration-200">
+                <div className="space-y-6 motion-safe:animate-in motion-safe:fade-in duration-200">
                     {/* PO Blocker Alert */}
                     <Card className="card-elevated border-destructive/30 dark:border-destructive/20 bg-destructive/5 dark:bg-destructive/10">
                         <CardContent className="p-4">
@@ -808,7 +807,7 @@ export default function FirefightingPage() {
 
             {/* ══════════ CONTACTS ══════════ */}
             {activeTab === 'contacts' && (
-                <div className="space-y-6 animate-in fade-in duration-200">
+                <div className="space-y-6 motion-safe:animate-in motion-safe:fade-in duration-200">
                     <Card className="card-elevated">
                         <CardHeader className="card-elevated-header border-b border-slate-100 dark:border-slate-700">
                             <CardTitle className="flex items-center gap-2">
@@ -847,7 +846,7 @@ export default function FirefightingPage() {
 
             {/* ══════════ CONTRACT INFO ══════════ */}
             {activeTab === 'contract' && (
-                <div className="space-y-6 animate-in fade-in duration-200">
+                <div className="space-y-6 motion-safe:animate-in motion-safe:fade-in duration-200">
                     {/* Contract Summary */}
                     <Card className="card-elevated">
                         <CardHeader className="card-elevated-header border-b border-slate-100 dark:border-slate-700">

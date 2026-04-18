@@ -15,8 +15,8 @@ import Link from "next/link";
 const DashboardCharts = dynamic(() => import("@/components/charts/dashboard-charts"), {
     loading: () => (
         <div className="grid gap-4 sm:gap-5 md:gap-6 grid-cols-1 lg:grid-cols-7">
-            <div className="card-elevated col-span-1 lg:col-span-4 h-[300px] animate-pulse rounded-xl bg-slate-200/50 dark:bg-slate-800/50" />
-            <div className="card-elevated col-span-1 lg:col-span-3 h-[300px] animate-pulse rounded-xl bg-slate-200/50 dark:bg-slate-800/50" />
+            <div className="card-elevated col-span-1 lg:col-span-4 h-[300px] motion-safe:animate-pulse rounded-xl bg-slate-200/50 dark:bg-slate-800/50" />
+            <div className="card-elevated col-span-1 lg:col-span-3 h-[300px] motion-safe:animate-pulse rounded-xl bg-slate-200/50 dark:bg-slate-800/50" />
         </div>
     ),
     ssr: false,
@@ -68,13 +68,13 @@ export default function DashboardPage() {
             <div className="space-y-6 md:space-y-8 w-full">
                 <div className="flex items-center justify-between">
                     <div className="space-y-2">
-                        <div className="h-7 w-48 bg-slate-200 dark:bg-slate-700 rounded-lg animate-pulse" />
-                        <div className="h-4 w-72 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
+                        <div className="h-7 w-48 bg-slate-200 dark:bg-slate-700 rounded-lg motion-safe:animate-pulse" />
+                        <div className="h-4 w-72 bg-slate-200 dark:bg-slate-700 rounded motion-safe:animate-pulse" />
                     </div>
                 </div>
                 <div className="grid gap-3 sm:gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
                     {Array.from({ length: 6 }).map((_, i) => (
-                        <div key={i} className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 sm:p-5 animate-pulse">
+                        <div key={i} className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 sm:p-5 motion-safe:animate-pulse">
                             <div className="flex justify-between items-start gap-2">
                                 <div className="space-y-2 flex-1">
                                     <div className="h-3 w-20 bg-slate-200 dark:bg-slate-700 rounded" />
@@ -87,8 +87,8 @@ export default function DashboardPage() {
                     ))}
                 </div>
                 <div className="grid gap-4 sm:gap-5 md:gap-6 grid-cols-1 lg:grid-cols-7">
-                    <div className="col-span-1 lg:col-span-4 h-[300px] animate-pulse rounded-xl bg-slate-200/50 dark:bg-slate-800/50" />
-                    <div className="col-span-1 lg:col-span-3 h-[300px] animate-pulse rounded-xl bg-slate-200/50 dark:bg-slate-800/50" />
+                    <div className="col-span-1 lg:col-span-4 h-[300px] motion-safe:animate-pulse rounded-xl bg-slate-200/50 dark:bg-slate-800/50" />
+                    <div className="col-span-1 lg:col-span-3 h-[300px] motion-safe:animate-pulse rounded-xl bg-slate-200/50 dark:bg-slate-800/50" />
                 </div>
             </div>
         );
@@ -148,7 +148,7 @@ export default function DashboardPage() {
                                         key={filter}
                                         onClick={() => handleFilterClick(filter)}
                                         aria-pressed={activityFilter === filter}
-                                        className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors capitalize focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/60 ${activityFilter === filter
+                                        className={`px-3 py-2.5 min-h-[44px] text-xs font-medium rounded-md transition-colors capitalize focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/60 ${activityFilter === filter
                                             ? filter === 'critical' ? 'bg-mb-danger text-white'
                                                 : filter === 'warning' ? 'bg-mb-warning text-white'
                                                     : filter === 'info' ? 'bg-mb-info text-white'

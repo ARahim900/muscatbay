@@ -11,7 +11,7 @@ export function Skeleton({ className, style }: SkeletonProps) {
     return (
         <div
             className={cn(
-                "animate-pulse rounded-md bg-slate-200/80 dark:bg-slate-700/50",
+                "motion-safe:animate-pulse rounded-md bg-slate-200/80 dark:bg-slate-700/50",
                 className
             )}
             style={style}
@@ -131,7 +131,7 @@ export function ChartSkeleton({ height = "h-[300px]" }: { height?: string }) {
 // Full page loading skeleton
 export function PageSkeleton() {
     return (
-        <div className="space-y-6 animate-in fade-in duration-200">
+        <div className="space-y-6 motion-safe:animate-in fade-in duration-200">
             {/* Breadcrumb skeleton */}
             <div className="flex items-center gap-2">
                 <Skeleton className="h-4 w-20" />

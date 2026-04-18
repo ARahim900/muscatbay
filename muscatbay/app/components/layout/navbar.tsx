@@ -176,7 +176,7 @@ export function Navbar() {
                 >
                     <Bell className="w-4 h-4 sm:w-5 sm:h-5" />
                     {/* Notification badge */}
-                    <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-primary animate-pulse"></span>
+                    <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-primary motion-safe:animate-pulse"></span>
                 </button>
 
                 {/* Profile Section with Dropdown */}
@@ -218,7 +218,7 @@ export function Navbar() {
 
                     {/* Profile Dropdown Menu */}
                     {isProfileDropdownOpen && (
-                        <div id="navbar-profile-menu" className="absolute right-0 mt-2 w-56 max-w-[calc(100vw-2rem)] bg-white rounded-xl shadow-xl border border-slate-200 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                        <div id="navbar-profile-menu" className="absolute right-0 mt-2 w-56 max-w-[calc(100vw-2rem)] bg-white rounded-xl shadow-xl border border-slate-200 py-2 z-50 motion-safe:animate-in fade-in slide-in-from-top-2 duration-200">
                             {/* User Info Header */}
                             <div className="px-4 py-3 border-b border-slate-100">
                                 <div className="flex items-center gap-3">
@@ -278,7 +278,7 @@ export function Navbar() {
             {isMobileMenuOpen && (
                 <div
                     ref={mobileMenuRef}
-                    className="absolute top-full left-0 right-0 bg-primary border-t border-white/10 shadow-lg lg:hidden animate-in slide-in-from-top-2 duration-200"
+                    className="absolute top-full left-0 right-0 bg-primary border-t border-white/10 shadow-lg lg:hidden motion-safe:animate-in slide-in-from-top-2 duration-200"
                 >
                     <nav className="p-4 space-y-1">
                         {navItems.map((item) => {

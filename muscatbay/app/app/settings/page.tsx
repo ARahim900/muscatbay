@@ -175,6 +175,7 @@ export default function SettingsPage() {
                         <button
                             key={item.id}
                             onClick={() => setActiveTab(item.id)}
+                            aria-current={activeTab === item.id ? "page" : undefined}
                             className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-lg transition-colors ${activeTab === item.id
                                 ? "bg-sidebar text-white shadow-md"
                                 : "text-muted-foreground hover:bg-sidebar/10 hover:text-sidebar"
@@ -373,7 +374,7 @@ export default function SettingsPage() {
                                         <Label className="text-base">Email Alerts</Label>
                                         <p className="text-sm text-muted-foreground">Receive daily summary reports via email.</p>
                                     </div>
-                                    <div className="h-6 w-11 rounded-full bg-slate-200 dark:bg-slate-700 relative cursor-pointer">
+                                    <div role="switch" aria-checked={false} aria-label="Email Alerts" className="h-6 w-11 rounded-full bg-slate-200 dark:bg-slate-700 relative cursor-pointer">
                                         <div className="absolute top-1 left-1 h-4 w-4 rounded-full bg-white shadow-sm transition-transform" />
                                     </div>
                                 </div>
@@ -383,7 +384,7 @@ export default function SettingsPage() {
                                         <Label className="text-base">Critical Alarms</Label>
                                         <p className="text-sm text-muted-foreground">Immediate notifications for critical system failures (SMS).</p>
                                     </div>
-                                    <div className="h-6 w-11 rounded-full bg-sidebar relative cursor-pointer">
+                                    <div role="switch" aria-checked={true} aria-label="Critical Alarms" className="h-6 w-11 rounded-full bg-sidebar relative cursor-pointer">
                                         <div className="absolute top-1 right-1 h-4 w-4 rounded-full bg-white shadow-sm transition-transform" />
                                     </div>
                                 </div>
