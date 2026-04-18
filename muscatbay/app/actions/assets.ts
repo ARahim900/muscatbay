@@ -1,6 +1,7 @@
 'use server'
 
 import { getAssetsFromSupabase, getAssetSummaryFromSupabase } from '@/functions/api/assets';
+import { getSupabaseServerClient } from '@/lib/supabase-server';
 import type { Asset } from '@/entities/asset';
 
 /**
@@ -11,13 +12,14 @@ export async function fetchAssetsAction(
     page: number = 1,
     pageSize: number = 50,
     search: string = '',
-    sortField: string = 'Asset_Name',
+    sortField: string = 'asset_name',
     sortDirection: 'asc' | 'desc' = 'asc',
     statusFilter?: string[],
     disciplineFilter?: string[]
 ): Promise<{ data: Asset[], count: number, error?: string }> {
     try {
-        const result = await getAssetsFromSupabase(page, pageSize, search, sortField, sortDirection, statusFilter, disciplineFilter);
+        const supabase = await getSupabaseServerClient();
+        const result = await getAssetsFromSupabase(page, pageSize, search, sortField, sortDirection, statusFilter, disciplineFilter, supabase);
         return {
             data: result.data,
             count: result.count
@@ -43,7 +45,8 @@ export async function fetchAssetSummaryAction(): Promise<{
     error?: string;
 }> {
     try {
-        const summary = await getAssetSummaryFromSupabase();
+        const supabase = await getSupabaseServerClient();
+        const summary = await getAssetSummaryFromSupabase(supabase);
         return summary;
     } catch (err) {
         console.error('Asset Summary Action Error:', err);

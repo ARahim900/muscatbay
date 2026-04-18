@@ -3,80 +3,111 @@ export interface Asset {
     name: string;
     type: string;
     category?: string;
+    subcategory?: string;
     systemArea?: string;
+    zone?: string;
+    buildingArea?: string;
+    floorLevel?: string;
     location: string;
     status: 'Active' | 'Working' | 'Under Maintenance' | 'Decommissioned' | 'In Storage' | 'TO VERIFY';
     purchaseDate: string;
     value: number;
     serialNumber: string;
+    assetTag?: string;
     lastService: string;
     manufacturer: string;
     model?: string;
     countryOfOrigin?: string;
-    capacitySize?: string;
+    powerCapacity?: string;
+    serialNo?: string;
     quantity?: number | null;
     ppmFrequency?: string;
+    ppmIntervalMonths?: number | null;
+    maintenanceRequirements?: string;
+    lastPpmDate?: string;
+    nextPpmDate?: string;
     installYear: number | null;
     discipline: string;
-    subcategory: string;
     condition: string;
     responsibilityOwner?: string;
     lifeExpectancyYears?: number | null;
     currentAgeYears?: number | null;
     erlYears?: number | null;
+    pctLifeUsed?: number | null;
+    warrantyExpiryDate?: string;
+    registrationAuthority?: string;
+    criticalityLevel?: 'High' | 'Medium' | 'Low';
     lifecycleRisk?: 'Normal' | 'Watch' | 'Critical';
     isAssetActive?: boolean;
+    amcContractor?: string;
+    amcNotes?: string;
     notes?: string;
-    // Reserve Fund / BOQ enrichment fields
     boqProjectRef?: string | null;
     boqDesignLife?: number | null;
     boqUnitCost?: number | null;
     replacementCost?: number | null;
+    dataSource?: string;
 }
 
 export interface SupabaseAsset {
-    Asset_UID: string | null;
-    Asset_Tag: string | null;
-    Asset_Name: string | null;
-    Asset_Description: string | null;
-    Discipline: string | null;
-    Category: string | null;
-    Subcategory: string | null;
-    System_Area: string | null;
-    Location_Name: string | null;
-    Location_Tag: string | null;
-    Building: string | null;
-    Floor_Area: string | null;
-    Zone: string | null;
-    Manufacturer_Brand: string | null;
-    Model: string | null;
-    Country_Of_Origin: string | null;
-    Capacity_Size: string | null;
-    Quantity: number | null;
-    Install_Date: string | null;
-    Install_Year: number | string | null;
-    PPM_Frequency: string | null;
-    PPM_Interval: string | null;
-    Is_Asset_Active: string | null;
-    Life_Expectancy_Years: number | null;
-    Current_Age_Years: number | null;
-    ERL_Years: number | null;
-    Condition: string | null;
-    Status: string | null;
-    Supplier_Vendor: string | null;
-    AMC_Contractor: string | null;
-    Responsibility_Owner: string | null;
-    Notes_Remarks: string | null;
-    Tag_Duplicate_Flag: boolean | null;
-    Source_Sheet: string | null;
-    Source_Row: number | null;
-    BOQ_Project_Ref: string | null;
-    BOQ_Category_Design_Life: number | null;
-    BOQ_Unit_Cost_OMR: number | null;
-    Current_Replacement_Cost_OMR: number | null;
+    asset_uid: string | null;
+    asset_tag: string | null;
+    legacy_tag: string | null;
+    asset_name: string | null;
+    asset_description: string | null;
+    discipline: string | null;
+    category: string | null;
+    subcategory: string | null;
+    system_area: string | null;
+    zone: string | null;
+    sub_zone: string | null;
+    building_area: string | null;
+    floor_level: string | null;
+    room_role: string | null;
+    manufacturer: string | null;
+    model: string | null;
+    country_of_origin: string | null;
+    serial_number: string | null;
+    power_capacity: string | null;
+    quantity: number | null;
+    manufacturing_date: string | null;
+    install_year: number | null;
+    install_date: string | null;
+    commissioning_date: string | null;
+    warranty_expiry_date: string | null;
+    registration_date: string | null;
+    registration_authority: string | null;
+    life_expectancy_years: number | null;
+    current_age_years: number | null;
+    erl_years: number | null;
+    pct_life_used: number | null;
+    criticality: string | null;
+    condition: string | null;
+    status: string | null;
+    is_asset_active: boolean | null;
+    ppm_frequency: string | null;
+    ppm_interval_months: number | null;
+    maintenance_requirements: string | null;
+    last_ppm_date: string | null;
+    next_ppm_date: string | null;
+    last_inspection_date: string | null;
+    next_inspection_date: string | null;
+    amc_contractor: string | null;
+    amc_notes: string | null;
+    supplier_vendor: string | null;
+    responsibility_owner: string | null;
+    original_unit_cost_omr: number | null;
+    current_replacement_cost_omr: number | null;
+    boq_project_ref: string | null;
+    boq_category_design_life: string | number | null;
+    oam_reference: string | null;
+    notes_remarks: string | null;
+    tag_duplicate_flag: boolean | null;
+    data_source: string | null;
+    record_created: string | null;
+    last_updated: string | null;
 }
 
-/** Expand abbreviated PPM frequency codes into human-readable labels. */
 function normalizePpmFrequency(raw: string | null | undefined): string {
     if (!raw) return '';
     const upper = raw.trim().toUpperCase();
@@ -96,95 +127,101 @@ function normalizePpmFrequency(raw: string | null | undefined): string {
     }
 }
 
-/** Transform Supabase asset row into the app-level Asset interface. */
-export function transformAsset(dbAsset: SupabaseAsset): Asset {
+export function transformAsset(db: SupabaseAsset): Asset {
     const CURRENT_YEAR = new Date().getFullYear();
 
-    // ── Is_Asset_Active — normalise 'Y' and 'Yes' both to true ──
-    const isActiveStr = (dbAsset.Is_Asset_Active || '').toUpperCase().trim();
-    const isActiveFlag = isActiveStr === 'Y' || isActiveStr === 'YES';
+    const isActiveFlag = db.is_asset_active === true;
 
-    // ── Status ───────────────────────────────────────────────────
-    let status: Asset['status'] = 'Active';
-    if (dbAsset.Status) {
-        const upper = dbAsset.Status.toUpperCase().trim();
-        const lower = dbAsset.Status.toLowerCase();
-        if (upper === 'WORKING')          status = 'Working';
-        else if (upper === 'TO VERIFY')   status = 'TO VERIFY';
-        else if (upper === 'ACTIVE')      status = 'Active';
-        else if (lower.includes('maintenance'))              status = 'Under Maintenance';
+    let status: Asset['status'] = 'Working';
+    if (db.status) {
+        const upper = db.status.toUpperCase().trim();
+        const lower = db.status.toLowerCase();
+        if (upper === 'WORKING')            status = 'Working';
+        else if (upper === 'ACTIVE')        status = 'Active';
+        else if (upper === 'TO VERIFY')     status = 'TO VERIFY';
+        else if (lower.includes('maintenance'))                   status = 'Under Maintenance';
         else if (lower.includes('decommission') || lower.includes('inactive')) status = 'Decommissioned';
-        else if (lower.includes('storage'))                  status = 'In Storage';
+        else if (lower.includes('storage'))                       status = 'In Storage';
     } else if (!isActiveFlag) {
         status = 'Decommissioned';
     }
 
-    // ── Install year (stored as int OR string in the DB) ─────────
-    const installYear = dbAsset.Install_Year !== null && dbAsset.Install_Year !== undefined
-        ? Number(dbAsset.Install_Year) || null
-        : null;
-
-    // ── Current age: use DB value if present, otherwise derive from Install_Year ──
+    const installYear = db.install_year ?? null;
     const computedAge = installYear ? CURRENT_YEAR - installYear : null;
-    const currentAgeYears: number | null = dbAsset.Current_Age_Years ?? computedAge;
-
-    const lifeExpectancyYears: number | null = dbAsset.Life_Expectancy_Years ?? null;
-
-    // ── ERL: use DB value if present, otherwise compute Life − Age ──
-    const erlYears: number | null = dbAsset.ERL_Years !== null && dbAsset.ERL_Years !== undefined
-        ? dbAsset.ERL_Years
+    const currentAgeYears = db.current_age_years ?? computedAge;
+    const lifeExpectancyYears = db.life_expectancy_years ?? null;
+    const erlYears = db.erl_years !== null && db.erl_years !== undefined
+        ? db.erl_years
         : (lifeExpectancyYears !== null && currentAgeYears !== null
             ? Math.max(0, lifeExpectancyYears - currentAgeYears)
             : null);
 
-    // ── Lifecycle risk ────────────────────────────────────────────
+    // Map criticality (High/Medium/Low) → lifecycleRisk (Normal/Watch/Critical)
+    const criticalityLevel = (db.criticality as Asset['criticalityLevel']) || undefined;
     let lifecycleRisk: Asset['lifecycleRisk'] = 'Normal';
-    if ((erlYears !== null && erlYears <= 2) || status === 'TO VERIFY' || status === 'Decommissioned') {
+    if (criticalityLevel === 'High' || (erlYears !== null && erlYears <= 2) || status === 'TO VERIFY') {
         lifecycleRisk = 'Critical';
-    } else if (erlYears !== null && erlYears <= 5) {
+    } else if (criticalityLevel === 'Medium' || (erlYears !== null && erlYears <= 5)) {
         lifecycleRisk = 'Watch';
     }
 
-    // ── Location: prefer Location_Name, then Zone, then System_Area ──
     const location =
-        dbAsset.Location_Name ||
-        dbAsset.Zone ||
-        dbAsset.System_Area ||
-        dbAsset.Building ||
+        db.building_area ||
+        db.zone ||
+        db.system_area ||
+        db.sub_zone ||
         'Unspecified';
 
     return {
-        id: dbAsset.Asset_UID || String(Math.random()),
-        name: dbAsset.Asset_Name || 'Unknown Asset',
-        type: dbAsset.Category || dbAsset.Discipline || 'General',
-        category: dbAsset.Category || '',
-        systemArea: dbAsset.System_Area || '',
+        id: db.asset_uid || String(Math.random()),
+        name: db.asset_name || 'Unknown Asset',
+        type: db.category || db.discipline || 'General',
+        category: db.category || '',
+        subcategory: db.subcategory || '',
+        systemArea: db.system_area || '',
+        zone: db.zone || '',
+        buildingArea: db.building_area || '',
+        floorLevel: db.floor_level || '',
         location,
         status,
-        purchaseDate: dbAsset.Install_Date || '',
-        value: dbAsset.Current_Replacement_Cost_OMR ?? dbAsset.BOQ_Unit_Cost_OMR ?? 0,
-        serialNumber: dbAsset.Asset_Tag || '',
-        lastService: '',
-        manufacturer: dbAsset.Manufacturer_Brand || '',
-        model: dbAsset.Model || '',
-        countryOfOrigin: dbAsset.Country_Of_Origin || '',
-        capacitySize: dbAsset.Capacity_Size || '',
-        quantity: dbAsset.Quantity ?? null,
-        ppmFrequency: normalizePpmFrequency(dbAsset.PPM_Frequency),
+        purchaseDate: db.install_date || '',
+        value: db.current_replacement_cost_omr ?? db.original_unit_cost_omr ?? 0,
+        serialNumber: db.asset_tag || '',
+        assetTag: db.asset_tag || '',
+        lastService: db.last_ppm_date || '',
+        manufacturer: db.manufacturer || '',
+        model: db.model || '',
+        countryOfOrigin: db.country_of_origin || '',
+        powerCapacity: db.power_capacity || '',
+        serialNo: db.serial_number || '',
+        quantity: db.quantity ?? null,
+        ppmFrequency: normalizePpmFrequency(db.ppm_frequency),
+        ppmIntervalMonths: db.ppm_interval_months ?? null,
+        maintenanceRequirements: db.maintenance_requirements || '',
+        lastPpmDate: db.last_ppm_date || '',
+        nextPpmDate: db.next_ppm_date || '',
         installYear,
-        discipline: dbAsset.Discipline || '',
-        subcategory: dbAsset.Subcategory || '',
-        condition: dbAsset.Condition || '',
-        responsibilityOwner: dbAsset.Responsibility_Owner || '',
+        discipline: db.discipline || '',
+        condition: db.condition || '',
+        responsibilityOwner: db.responsibility_owner || '',
         lifeExpectancyYears,
         currentAgeYears,
         erlYears,
+        pctLifeUsed: db.pct_life_used ?? null,
+        warrantyExpiryDate: db.warranty_expiry_date || '',
+        registrationAuthority: db.registration_authority || '',
+        criticalityLevel,
         lifecycleRisk,
         isAssetActive: isActiveFlag,
-        notes: dbAsset.Notes_Remarks || '',
-        boqProjectRef: dbAsset.BOQ_Project_Ref || null,
-        boqDesignLife: dbAsset.BOQ_Category_Design_Life ?? null,
-        boqUnitCost: dbAsset.BOQ_Unit_Cost_OMR ?? null,
-        replacementCost: dbAsset.Current_Replacement_Cost_OMR ?? null,
+        amcContractor: db.amc_contractor || '',
+        amcNotes: db.amc_notes || '',
+        notes: db.notes_remarks || '',
+        boqProjectRef: db.boq_project_ref || null,
+        boqDesignLife: db.boq_category_design_life !== null && db.boq_category_design_life !== undefined
+            ? Number(db.boq_category_design_life) || null
+            : null,
+        boqUnitCost: db.original_unit_cost_omr ?? null,
+        replacementCost: db.current_replacement_cost_omr ?? null,
+        dataSource: db.data_source || '',
     };
 }
