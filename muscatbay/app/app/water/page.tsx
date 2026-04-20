@@ -1008,7 +1008,11 @@ export default function WaterPage() {
                                     <MeterTable
                                         meters={isDC
                                             ? waterMeters.filter(m => m.level === 'L1' || m.level === 'L2' || m.level === 'DC')
-                                            : waterMeters.filter(m => m.zone === selectedZone && (m.level === 'L2' || m.level === 'L3'))
+                                            // L2+L3 for the zone + all L4 meters (MeterTable matches them to buildings via BUILDING_CONFIG)
+                                            : [
+                                                ...waterMeters.filter(m => m.zone === selectedZone && (m.level === 'L2' || m.level === 'L3')),
+                                                ...waterMeters.filter(m => m.level === 'L4'),
+                                              ]
                                         }
                                         months={AVAILABLE_MONTHS.slice(
                                             Math.max(0, AVAILABLE_MONTHS.indexOf(startMonth)),

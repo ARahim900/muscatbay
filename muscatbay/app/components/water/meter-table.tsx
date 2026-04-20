@@ -1,11 +1,32 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from 'react';
+/**
+ * Monthly Zone Analysis Table
+ *
+ * Hierarchy:
+ *   L2 Bulk row  — zone entry meter (purple, pinned top)
+ *   L3 rows      — individual meters at zone level
+ *                  · Villas / non-building meters  → plain row
+ *                  · Building bulk meters (D-44…)  → expandable row
+ *                      ↳ L4 child rows (apartments + common, indented)
+ *                      ↳ ΣL4 subtotal row
+ *                      ↳ Building diff row  (L3 bulk − ΣL4)
+ *   ΣL3 footer   — sum of all L3 meters (blue)
+ *   Loss row     — L2 − ΣL3, per month + grand total, with status chip
+ *
+ * DC zone (L1 is present):
+ *   L1 row (super-bulk) / individual = L2 zone bulks + DC meters / no expand
+ *
+ * N/A meters are excluded upstream (page.tsx level filter); nothing extra needed here.
+ */
+
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import {
     Search, ArrowUpDown, ChevronUp, ChevronDown,
-    Droplets, Activity, Home, Building2, TrendingDown,
+    Droplets, Activity, Home, Building2, TrendingDown, ChevronRight,
 } from 'lucide-react';
 import { WaterMeter, getConsumption } from '@/lib/water-data';
+import { BUILDING_CONFIG, BUILDING_CHILD_METERS } from '@/lib/water-accounts';
 import { cn } from '@/lib/utils';
 
 // ─── Props ────────────────────────────────────────────────────────────────────
@@ -20,15 +41,15 @@ interface MeterTableProps {
 
 const thBase =
     'h-14 px-5 text-left align-middle font-semibold text-sm uppercase tracking-wider text-slate-500 dark:text-slate-400 whitespace-nowrap';
-const tdBase = 'px-5 py-4 align-middle text-sm font-semibold text-slate-700 dark:text-slate-300';
+const tdBase =
+    'px-5 py-4 align-middle text-sm font-semibold text-slate-700 dark:text-slate-300';
 
-// Brand palette — matches DailyWaterReport exactly
 const PALETTE = {
-    primary: '#4E4456', // dark purple  — L2 bulk / zone header
-    blue:    '#337FCA', // blue         — ΣL3 total row
-    mint:    '#A4DCC6', // mint green   — good / in-balance
-    amber:   '#F4C741', // amber        — moderate loss warning
-    red:     '#E05050', // red          — high loss
+    primary: '#4E4456', // dark purple — L2 bulk / zone header
+    blue:    '#337FCA', // blue        — ΣL3 total row
+    mint:    '#A4DCC6', // mint green  — good / in-balance
+    amber:   '#F4C741', // amber       — moderate loss
+    red:     '#E05050', // red         — high loss
 } as const;
 
 // ─── Sort state ───────────────────────────────────────────────────────────────
@@ -54,11 +75,8 @@ function SortIcon({ active, dir }: { active: boolean; dir: SortDir }) {
 function Th({
     children, sortKey, sort, onSort, className,
 }: {
-    children: React.ReactNode;
-    sortKey?: string;
-    sort?: SortState;
-    onSort?: (s: SortState) => void;
-    className?: string;
+    children: React.ReactNode; sortKey?: string; sort?: SortState;
+    onSort?: (s: SortState) => void; className?: string;
 }) {
     const sortable = sortKey && sort && onSort;
     return (
@@ -95,7 +113,6 @@ function StatusChip({ label, color }: { label: string; color: ChipColor }) {
     );
 }
 
-// KPI summary card — mirrors HierarchyStatCard from DailyWaterReport
 function SummaryCard({
     label, value, icon, color, valueColor,
 }: {
@@ -142,7 +159,8 @@ function diffLabel(diff: number | null): string {
     return (diff > 0 ? '+' : '−') + f;
 }
 
-function lossColor(pct: number): ChipColor {
+function lossChipColor(pct: number): ChipColor {
+    if (pct < 0) return 'info';    // surplus (over-metered)
     if (pct < 10) return 'success';
     if (pct < 20) return 'warning';
     return 'danger';
@@ -162,29 +180,100 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
     const [sort, setSort] = useState<SortState>({ key: '', dir: null });
     const [page, setPage] = useState(1);
     const [rowsPerPage, setRowsPerPage] = useState(pageSize);
+    const [expandedBuildings, setExpandedBuildings] = useState<Set<string>>(new Set());
 
-    // Classify meters into bulk (L1 or L2) vs individual (L2+DC or L3+L4)
-    const { bulkMeters, individualMeters, bulkLabel, indivLabel } = useMemo(() => {
-        const hasL1 = meters.some(m => m.level === 'L1');
-        if (hasL1) {
-            // DC zone: L1 is the super-bulk; L2 + DC are individual distribution meters
+    const toggleBuilding = useCallback((account: string) => {
+        setExpandedBuildings(prev => {
+            const next = new Set(prev);
+            if (next.has(account)) next.delete(account); else next.add(account);
+            return next;
+        });
+    }, []);
+
+    // ── Classify meters by level ──────────────────────────────────────────────
+    const { bulkMeters, l3Meters, l4Meters, isDC, bulkLabel, indivLabel } = useMemo(() => {
+        const l1 = meters.filter(m => m.level === 'L1');
+        const l2 = meters.filter(m => m.level === 'L2');
+        const l3 = meters.filter(m => m.level === 'L3');
+        const l4 = meters.filter(m => m.level === 'L4');
+        const dc = meters.filter(m => m.level === 'DC');
+
+        if (l1.length > 0) {
+            // DC zone view: L1 = main bulk, L2+DC = distribution
             return {
-                bulkMeters:      meters.filter(m => m.level === 'L1'),
-                individualMeters: meters.filter(m => m.level === 'L2' || m.level === 'DC'),
-                bulkLabel:       'Main Bulk (L1)',
-                indivLabel:      'Distribution (L2 + DC)',
+                bulkMeters: l1,
+                l3Meters: [...l2, ...dc],
+                l4Meters: [],
+                isDC: true,
+                bulkLabel: 'Main Bulk (L1)',
+                indivLabel: 'Distribution — L2 Zone Bulks + DC',
             };
         }
-        // Regular zone: L2 is the zone bulk; L3/L4 are individual consumers
+
+        // Regular zone view: L2 = zone bulk, L3 = individuals (villas + building bulks)
         return {
-            bulkMeters:      meters.filter(m => m.level === 'L2'),
-            individualMeters: meters.filter(m => m.level === 'L3' || m.level === 'L4'),
-            bulkLabel:       'Zone Bulk (L2)',
-            indivLabel:      'Individual Meters (L3)',
+            bulkMeters: l2,
+            l3Meters: l3,
+            l4Meters: l4,
+            isDC: false,
+            bulkLabel: 'Zone Bulk (L2)',
+            indivLabel: 'L3 Individuals — Villas + Building Bulks',
         };
     }, [meters]);
 
-    // Per-meter total across all selected months
+    // ── Building data: for each L3 building bulk, get L4 children + stats ────
+    const buildingDataMap = useMemo(() => {
+        if (isDC) return new Map<string, BuildingData>();
+
+        const l4ByAccount = new Map(l4Meters.map(m => [m.accountNumber, m]));
+        const map = new Map<string, BuildingData>();
+
+        for (const bCfg of BUILDING_CONFIG) {
+            // Only include buildings whose L3 bulk meter is present in this zone's data
+            const bulkMeter = l3Meters.find(m => m.accountNumber === bCfg.bulkAccount);
+            if (!bulkMeter) continue;
+
+            const bulkMonthly = months.map(mo => getConsumption(bulkMeter, mo));
+            const bulkTotal = r2(bulkMonthly.reduce((s, v) => s + v, 0));
+
+            const childInfo = BUILDING_CHILD_METERS[bCfg.buildingName] ?? [];
+            const children: ChildRow[] = bCfg.l4Accounts.map(acc => {
+                const info = childInfo.find(c => c.account === acc);
+                const meter = l4ByAccount.get(acc) ?? null;
+                const monthlyValues = months.map(mo => (meter ? getConsumption(meter, mo) : 0));
+                return {
+                    account: acc,
+                    label: info?.label ?? acc,
+                    type: info?.type ?? 'Apartment',
+                    meter,
+                    monthlyValues,
+                    total: r2(monthlyValues.reduce((s, v) => s + v, 0)),
+                };
+            });
+
+            const childMonthly = months.map((_, i) =>
+                r2(children.reduce((s, c) => s + (c.monthlyValues[i] ?? 0), 0)),
+            );
+            const childTotal = r2(childMonthly.reduce((s, v) => s + v, 0));
+            const diff = r2(bulkTotal - childTotal);
+            const diffPct = bulkTotal > 0 ? r2((diff / bulkTotal) * 100) : 0;
+
+            map.set(bCfg.bulkAccount, {
+                buildingName: bCfg.buildingName,
+                children,
+                bulkMonthly,
+                bulkTotal,
+                childMonthly,
+                childTotal,
+                diff,
+                diffPct,
+            });
+        }
+
+        return map;
+    }, [isDC, l3Meters, l4Meters, months]);
+
+    // ── Zone-level aggregates ─────────────────────────────────────────────────
     const meterTotals = useMemo(() => {
         const map = new Map<string, number>();
         for (const m of meters) {
@@ -193,34 +282,31 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
         return map;
     }, [meters, months]);
 
-    // Bulk per-month aggregates
     const bulkMonthly = useMemo(
         () => months.map(mo => r2(bulkMeters.reduce((s, m) => s + getConsumption(m, mo), 0))),
         [bulkMeters, months],
     );
     const bulkTotal = r2(bulkMonthly.reduce((s, v) => s + v, 0));
 
-    // Individual per-month aggregates
+    // ΣL3 = sum of ALL L3 meters (includes building bulk accounts — NOT L4)
     const indivMonthly = useMemo(
-        () => months.map(mo => r2(individualMeters.reduce((s, m) => s + getConsumption(m, mo), 0))),
-        [individualMeters, months],
+        () => months.map(mo => r2(l3Meters.reduce((s, m) => s + getConsumption(m, mo), 0))),
+        [l3Meters, months],
     );
     const indivTotal = r2(indivMonthly.reduce((s, v) => s + v, 0));
 
-    // Per-month diff and grand diff
     const diffMonthly = bulkMonthly.map((b, i) => r2(b - indivMonthly[i]));
-    const diffTotal   = r2(bulkTotal - indivTotal);
-    const lossPct     = bulkTotal > 0 ? r2((diffTotal / bulkTotal) * 100) : 0;
+    const diffTotal = r2(bulkTotal - indivTotal);
+    const lossPct = bulkTotal > 0 ? r2((diffTotal / bulkTotal) * 100) : 0;
 
-    // Filter + sort individual meters
+    // ── Filter + sort L3 meters ───────────────────────────────────────────────
     const filtered = useMemo(() => {
-        let rows = [...individualMeters];
+        let rows = [...l3Meters];
         if (search) {
             const q = search.toLowerCase();
             rows = rows.filter(m =>
                 m.label.toLowerCase().includes(q) ||
-                m.accountNumber.toLowerCase().includes(q) ||
-                m.zone.toLowerCase().includes(q),
+                m.accountNumber.toLowerCase().includes(q),
             );
         }
         if (sort.dir && sort.key) {
@@ -230,121 +316,22 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                     case 'label':   va = a.label; vb = b.label; break;
                     case 'account': va = a.accountNumber; vb = b.accountNumber; break;
                     case 'total':   va = meterTotals.get(a.accountNumber) ?? 0; vb = meterTotals.get(b.accountNumber) ?? 0; break;
-                    default:        va = months.includes(sort.key) ? getConsumption(a, sort.key) : 0;
-                                    vb = months.includes(sort.key) ? getConsumption(b, sort.key) : 0;
+                    default:
+                        va = months.includes(sort.key) ? getConsumption(a, sort.key) : 0;
+                        vb = months.includes(sort.key) ? getConsumption(b, sort.key) : 0;
                 }
                 const cmp = typeof va === 'string' ? va.localeCompare(vb as string) : (va as number) - (vb as number);
                 return sort.dir === 'desc' ? -cmp : cmp;
             });
         }
         return rows;
-    }, [individualMeters, search, sort, meterTotals, months]);
+    }, [l3Meters, search, sort, meterTotals, months]);
 
-    // Reset to page 1 when filter/sort changes
     useEffect(() => { setPage(1); }, [search, sort]);
 
     const totalPages = Math.max(1, Math.ceil(filtered.length / rowsPerPage));
-    const paginated  = filtered.slice((page - 1) * rowsPerPage, page * rowsPerPage);
-
-    const colSpan = 3 + months.length + 1; // Meter + Account + Level + months + Total
-
-    // ── Mobile card view ─────────────────────────────────────────────────────
-    const MobileCards = () => (
-        <div className="md:hidden space-y-3 mt-4">
-            {/* Bulk row card */}
-            {bulkMeters.map(bulk => {
-                const bTotal = meterTotals.get(bulk.accountNumber) ?? 0;
-                return (
-                    <div key={bulk.accountNumber} className="rounded-xl border-2 p-4 shadow-sm space-y-2"
-                        style={{ borderColor: `${PALETTE.primary}40`, backgroundColor: `${PALETTE.primary}0D` }}>
-                        <div className="flex items-center justify-between">
-                            <span className="text-sm font-bold" style={{ color: PALETTE.primary }}>
-                                <Droplets className="inline h-3.5 w-3.5 mr-1" />{bulk.label || bulk.accountNumber}
-                            </span>
-                            <StatusChip label="L2 BULK" color="primary" />
-                        </div>
-                        <p className="font-mono text-[11px] text-slate-400">{bulk.accountNumber}</p>
-                        <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
-                            {months.map(mo => {
-                                const v = getConsumption(bulk, mo);
-                                return (
-                                    <div key={mo} className="text-xs space-y-0.5">
-                                        <span className="text-slate-400">{mo}</span>
-                                        <p className="font-mono font-bold" style={{ color: PALETTE.primary }}>{v > 0 ? fmt(v) : '—'}</p>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                        <div className="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-slate-800">
-                            <span className="text-xs text-slate-500">Monthly Total</span>
-                            <span className="font-mono font-bold text-sm" style={{ color: PALETTE.primary }}>{fmt(bTotal)} m³</span>
-                        </div>
-                    </div>
-                );
-            })}
-
-            {/* Individual meter cards (paginated) */}
-            {paginated.map(meter => {
-                const total = meterTotals.get(meter.accountNumber) ?? 0;
-                const isBuilding = meter.level === 'L3' && meter.type.toLowerCase().includes('building');
-                return (
-                    <div key={meter.accountNumber} className="rounded-xl border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-slate-900 p-4 shadow-sm space-y-2">
-                        <div className="flex items-center justify-between gap-2">
-                            <div className="min-w-0">
-                                <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 truncate flex items-center gap-1.5">
-                                    {isBuilding ? <Building2 className="h-3.5 w-3.5 text-slate-400 shrink-0" /> : <Home className="h-3.5 w-3.5 text-slate-400 shrink-0" />}
-                                    {meter.label || meter.accountNumber}
-                                </p>
-                                <p className="text-[11px] text-slate-400 font-mono">{meter.accountNumber}</p>
-                            </div>
-                            <StatusChip label={meter.level} color="default" />
-                        </div>
-                        <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
-                            {months.map(mo => {
-                                const v = getConsumption(meter, mo);
-                                return (
-                                    <div key={mo} className="text-xs space-y-0.5">
-                                        <span className="text-slate-400">{mo}</span>
-                                        <p className="font-mono font-medium text-slate-700 dark:text-slate-300">{v > 0 ? fmt(v) : '—'}</p>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                        <div className="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-slate-800">
-                            <span className="text-xs text-slate-500">Total</span>
-                            <span className="font-mono font-bold text-sm">{fmt(total)} m³</span>
-                        </div>
-                    </div>
-                );
-            })}
-
-            {/* ΣL3 + Loss summary card */}
-            {individualMeters.length > 0 && (
-                <div className="rounded-xl border-2 p-4 space-y-3"
-                    style={{ borderColor: diffTotal > 0 ? `${PALETTE.red}40` : `${PALETTE.mint}60`, backgroundColor: diffTotal > 0 ? `${PALETTE.red}08` : `${PALETTE.mint}14` }}>
-                    <p className="text-sm font-bold text-slate-700 dark:text-slate-200">Monthly Summary</p>
-                    <div className="grid grid-cols-3 gap-2 text-center">
-                        <div>
-                            <p className="text-[10px] text-slate-400 uppercase tracking-wide">{bulkLabel}</p>
-                            <p className="font-mono font-bold text-sm mt-0.5" style={{ color: PALETTE.primary }}>{fmt(bulkTotal)}</p>
-                        </div>
-                        <div>
-                            <p className="text-[10px] text-slate-400 uppercase tracking-wide">Σ Individuals</p>
-                            <p className="font-mono font-bold text-sm mt-0.5" style={{ color: PALETTE.blue }}>{fmt(indivTotal)}</p>
-                        </div>
-                        <div>
-                            <p className="text-[10px] text-slate-400 uppercase tracking-wide">Loss / Diff</p>
-                            <p className="font-mono font-bold text-sm mt-0.5" style={{ color: diffTotal > 0 ? PALETTE.red : '#10b981' }}>{diffLabel(diffTotal)}</p>
-                        </div>
-                    </div>
-                    <div className="flex items-center justify-between">
-                        <StatusChip label={`${lossPct.toFixed(1)}% loss`} color={lossColor(lossPct)} />
-                        <StatusChip label={lossLabel(lossPct)} color={lossColor(lossPct)} />
-                    </div>
-                </div>
-            )}
-        </div>
-    );
+    const paginated = filtered.slice((page - 1) * rowsPerPage, page * rowsPerPage);
+    const colSpan = 3 + months.length + 1;
 
     return (
         <div className="space-y-4">
@@ -393,29 +380,147 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                     )}
                 </div>
                 <span className="text-[12px] text-slate-400 dark:text-slate-500 tabular-nums">
-                    {filtered.length} meter{filtered.length !== 1 ? 's' : ''}
+                    {filtered.length} L3 meter{filtered.length !== 1 ? 's' : ''}
+                    {!isDC && buildingDataMap.size > 0 && ` · ${buildingDataMap.size} building${buildingDataMap.size !== 1 ? 's' : ''} expandable`}
                 </span>
             </div>
 
-            {/* ── Mobile view ───────────────────────────────────────────────── */}
-            <MobileCards />
+            {/* ── Mobile summary cards ──────────────────────────────────────── */}
+            <div className="md:hidden space-y-3">
+                {bulkMeters.map(bulk => (
+                    <div key={bulk.accountNumber} className="rounded-xl border-2 p-4 shadow-sm space-y-2"
+                        style={{ borderColor: `${PALETTE.primary}40`, backgroundColor: `${PALETTE.primary}0D` }}>
+                        <div className="flex items-center justify-between">
+                            <span className="text-sm font-bold" style={{ color: PALETTE.primary }}>
+                                <Droplets className="inline h-3.5 w-3.5 mr-1" />{bulk.label || bulk.accountNumber}
+                            </span>
+                            <StatusChip label={bulk.level === 'L1' ? 'L1' : 'L2 BULK'} color="primary" />
+                        </div>
+                        <p className="font-mono text-[11px] text-slate-400">{bulk.accountNumber}</p>
+                        <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                            {months.map(mo => {
+                                const v = getConsumption(bulk, mo);
+                                return (
+                                    <div key={mo} className="text-xs space-y-0.5">
+                                        <span className="text-slate-400">{mo}</span>
+                                        <p className="font-mono font-bold" style={{ color: PALETTE.primary }}>{v > 0 ? fmt(v) : '—'}</p>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                        <div className="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-slate-800">
+                            <span className="text-xs text-slate-500">Monthly Total</span>
+                            <span className="font-mono font-bold text-sm" style={{ color: PALETTE.primary }}>{fmt(meterTotals.get(bulk.accountNumber) ?? 0)} m³</span>
+                        </div>
+                    </div>
+                ))}
+                {paginated.map(meter => {
+                    const total = meterTotals.get(meter.accountNumber) ?? 0;
+                    const bData = buildingDataMap.get(meter.accountNumber);
+                    const isExpanded = expandedBuildings.has(meter.accountNumber);
+                    return (
+                        <div key={meter.accountNumber} className="rounded-xl border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-slate-900 p-4 shadow-sm space-y-2">
+                            <div className="flex items-center justify-between gap-2">
+                                <div className="min-w-0 flex items-center gap-2">
+                                    {bData
+                                        ? <Building2 className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                                        : <Home className="h-3.5 w-3.5 text-slate-400 shrink-0" />}
+                                    <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 truncate">{meter.label || meter.accountNumber}</p>
+                                </div>
+                                <div className="flex items-center gap-2 shrink-0">
+                                    <StatusChip label={meter.level} color="default" />
+                                    {bData && (
+                                        <button
+                                            onClick={() => toggleBuilding(meter.accountNumber)}
+                                            className="text-xs font-medium text-secondary underline"
+                                        >
+                                            {isExpanded ? 'Collapse' : 'Expand'}
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                            <p className="text-[11px] text-slate-400 font-mono">{meter.accountNumber}</p>
+                            <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                                {months.map(mo => {
+                                    const v = getConsumption(meter, mo);
+                                    return (
+                                        <div key={mo} className="text-xs space-y-0.5">
+                                            <span className="text-slate-400">{mo}</span>
+                                            <p className="font-mono font-medium text-slate-700 dark:text-slate-300">{v > 0 ? fmt(v) : '—'}</p>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                            <div className="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-slate-800">
+                                <span className="text-xs text-slate-500">Total</span>
+                                <span className="font-mono font-bold text-sm">{fmt(total)} m³</span>
+                            </div>
+                            {bData && isExpanded && (
+                                <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-2">
+                                    <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Child Meters ({bData.buildingName})</p>
+                                    {bData.children.map(c => (
+                                        <div key={c.account} className="flex items-center justify-between text-xs px-2 py-1 rounded-lg bg-slate-50 dark:bg-slate-800">
+                                            <span className="text-slate-600 dark:text-slate-300 truncate">{c.label}</span>
+                                            <div className="flex items-center gap-2 shrink-0 ml-2">
+                                                <StatusChip label={c.type} color={c.type === 'Common' ? 'info' : 'default'} />
+                                                <span className="font-mono font-medium">{fmt(c.total)}</span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                    <div className="flex items-center justify-between text-xs px-2 py-1 rounded-lg font-semibold"
+                                        style={{ backgroundColor: bData.diff > 0 ? `${PALETTE.red}10` : `${PALETTE.mint}20`, color: bData.diff > 0 ? PALETTE.red : '#10b981' }}>
+                                        <span>Building Diff (L3 − ΣL4)</span>
+                                        <div className="flex items-center gap-2">
+                                            <StatusChip label={`${Math.abs(bData.diffPct).toFixed(1)}%`} color={lossChipColor(bData.diffPct)} />
+                                            <span className="font-mono">{diffLabel(bData.diff)}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    );
+                })}
+                {/* Zone summary footer card */}
+                {l3Meters.length > 0 && (
+                    <div className="rounded-xl border-2 p-4 space-y-3"
+                        style={{ borderColor: diffTotal > 0 ? `${PALETTE.red}40` : `${PALETTE.mint}60`, backgroundColor: diffTotal > 0 ? `${PALETTE.red}08` : `${PALETTE.mint}14` }}>
+                        <p className="text-sm font-bold text-slate-700 dark:text-slate-200">Zone Monthly Summary</p>
+                        <div className="grid grid-cols-3 gap-2 text-center">
+                            <div>
+                                <p className="text-[10px] text-slate-400 uppercase tracking-wide">L2 Bulk</p>
+                                <p className="font-mono font-bold text-sm mt-0.5" style={{ color: PALETTE.primary }}>{fmt(bulkTotal)}</p>
+                            </div>
+                            <div>
+                                <p className="text-[10px] text-slate-400 uppercase tracking-wide">ΣL3</p>
+                                <p className="font-mono font-bold text-sm mt-0.5" style={{ color: PALETTE.blue }}>{fmt(indivTotal)}</p>
+                            </div>
+                            <div>
+                                <p className="text-[10px] text-slate-400 uppercase tracking-wide">Diff</p>
+                                <p className="font-mono font-bold text-sm mt-0.5" style={{ color: diffTotal > 0 ? PALETTE.red : '#10b981' }}>{diffLabel(diffTotal)}</p>
+                            </div>
+                        </div>
+                        <div className="flex items-center justify-between">
+                            <StatusChip label={`${lossPct.toFixed(1)}% zone loss`} color={lossChipColor(lossPct)} />
+                            <StatusChip label={lossLabel(lossPct)} color={lossChipColor(lossPct)} />
+                        </div>
+                    </div>
+                )}
+            </div>
 
             {/* ── Desktop table ─────────────────────────────────────────────── */}
             <div className="hidden md:block relative overflow-x-auto -mx-4 sm:-mx-5 md:-mx-6 border-t border-slate-100 dark:border-slate-800">
                 <table
                     className="w-full border-collapse"
-                    style={{ minWidth: `${320 + months.length * 100}px` }}
+                    style={{ minWidth: `${340 + months.length * 100}px` }}
                 >
                     <thead>
                         <tr className="border-b border-slate-100 dark:border-slate-800">
                             <Th sortKey="label" sort={sort} onSort={setSort}
-                                className="sticky left-0 z-10 bg-white dark:bg-slate-900 min-w-[180px]">
+                                className="sticky left-0 z-10 bg-white dark:bg-slate-900 min-w-[200px]">
                                 Meter
                             </Th>
-                            <Th sortKey="account" sort={sort} onSort={setSort} className="min-w-[110px]">
-                                Account
-                            </Th>
-                            <th className={cn(thBase, 'text-center min-w-[80px]')}>Level</th>
+                            <Th sortKey="account" sort={sort} onSort={setSort} className="min-w-[110px]">Account</Th>
+                            <th className={cn(thBase, 'text-center min-w-[90px]')}>Level</th>
                             {months.map(mo => (
                                 <Th key={mo} sortKey={mo} sort={sort} onSort={setSort} className="text-right min-w-[96px]">
                                     {mo}
@@ -429,33 +534,22 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                     </thead>
 
                     <tbody>
-                        {/* ── Bulk header rows (L2 or L1) ───────────────────── */}
+                        {/* ── L2 / L1 Bulk row ──────────────────────────────── */}
                         {bulkMeters.map(bulk => {
                             const bTotal = meterTotals.get(bulk.accountNumber) ?? 0;
                             return (
-                                <tr
-                                    key={bulk.accountNumber}
-                                    className="border-b-2"
-                                    style={{
-                                        backgroundColor: `${PALETTE.primary}14`,
-                                        borderBottomColor: `${PALETTE.primary}40`,
-                                    }}
-                                >
+                                <tr key={bulk.accountNumber} className="border-b-2"
+                                    style={{ backgroundColor: `${PALETTE.primary}14`, borderBottomColor: `${PALETTE.primary}40` }}>
                                     <td
                                         className={cn(tdBase, 'font-bold sticky left-0 z-10')}
-                                        style={{
-                                            backgroundColor: `${PALETTE.primary}14`,
-                                            color: PALETTE.primary,
-                                            boxShadow: `inset 4px 0 0 ${PALETTE.primary}`,
-                                        }}
+                                        style={{ backgroundColor: `${PALETTE.primary}14`, color: PALETTE.primary, boxShadow: `inset 4px 0 0 ${PALETTE.primary}` }}
                                     >
                                         <span className="inline-flex items-center gap-2">
                                             <Droplets className="h-3.5 w-3.5 shrink-0" />
                                             {bulk.label || bulk.accountNumber}
                                         </span>
                                     </td>
-                                    <td className={cn(tdBase, 'font-mono text-[11px]')}
-                                        style={{ color: `${PALETTE.primary}AA` }}>
+                                    <td className={cn(tdBase, 'font-mono text-[11px]')} style={{ color: `${PALETTE.primary}AA` }}>
                                         {bulk.accountNumber}
                                     </td>
                                     <td className={cn(tdBase, 'text-center')}>
@@ -466,9 +560,7 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                                         return (
                                             <td key={mo} className={cn(tdBase, 'text-right tabular-nums text-[12px] font-bold')}
                                                 style={{ color: PALETTE.primary }}>
-                                                {v > 0
-                                                    ? fmt(v)
-                                                    : <span className="text-slate-300 dark:text-slate-600">—</span>}
+                                                {v > 0 ? fmt(v) : <span className="text-slate-300 dark:text-slate-600">—</span>}
                                             </td>
                                         );
                                     })}
@@ -480,79 +572,202 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                             );
                         })}
 
-                        {/* ── Individual meter rows (paginated / filtered) ───── */}
+                        {/* ── L3 individual rows + building expand ──────────── */}
                         {paginated.length === 0 ? (
                             <tr>
                                 <td colSpan={colSpan} className="text-center py-10 text-[13px] text-slate-400 dark:text-slate-500">
                                     No meters found
                                 </td>
                             </tr>
-                        ) : paginated.map((meter, idx) => {
+                        ) : paginated.flatMap((meter, idx) => {
                             const total = meterTotals.get(meter.accountNumber) ?? 0;
-                            const isBuilding = meter.type?.toLowerCase().includes('building');
-                            return (
+                            const bData = buildingDataMap.get(meter.accountNumber);
+                            const isExpanded = expandedBuildings.has(meter.accountNumber);
+                            const rows: React.ReactNode[] = [];
+
+                            // L3 meter row
+                            rows.push(
                                 <tr
                                     key={meter.accountNumber}
                                     className={cn(
                                         'border-b border-slate-50 dark:border-slate-800/60 transition-colors hover:bg-slate-50/70 dark:hover:bg-slate-800/30',
-                                        idx % 2 !== 0 && 'bg-slate-50/40 dark:bg-slate-800/20',
+                                        !isExpanded && idx % 2 !== 0 && 'bg-slate-50/40 dark:bg-slate-800/20',
                                     )}
                                 >
                                     <td className={cn(tdBase, 'font-semibold sticky left-0 z-10 bg-white dark:bg-slate-900')}>
                                         <span className="inline-flex items-center gap-2">
-                                            {isBuilding
-                                                ? <Building2 className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                                                : <Home className="h-3.5 w-3.5 text-slate-400 shrink-0" />}
-                                            {meter.label || meter.accountNumber}
+                                            {bData ? (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => toggleBuilding(meter.accountNumber)}
+                                                    aria-expanded={isExpanded}
+                                                    aria-label={`${isExpanded ? 'Collapse' : 'Expand'} ${bData.buildingName}`}
+                                                    className="inline-flex items-center gap-1 rounded-md px-1 py-0.5 -ml-1 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                                                    style={{ color: PALETTE.primary }}
+                                                >
+                                                    {isExpanded
+                                                        ? <ChevronDown className="h-3.5 w-3.5 shrink-0" />
+                                                        : <ChevronRight className="h-3.5 w-3.5 shrink-0" />}
+                                                    <Building2 className="h-3.5 w-3.5 shrink-0" />
+                                                    <span className="font-bold">{bData.buildingName}</span>
+                                                </button>
+                                            ) : (
+                                                <>
+                                                    <Home className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                                                    {meter.label || meter.accountNumber}
+                                                </>
+                                            )}
                                         </span>
                                     </td>
                                     <td className={cn(tdBase, 'font-mono text-[11px] text-slate-400 dark:text-slate-500')}>
                                         {meter.accountNumber}
                                     </td>
                                     <td className={cn(tdBase, 'text-center')}>
-                                        <StatusChip
-                                            label={meter.level}
-                                            color={meter.level === 'DC' ? 'warning' : 'default'}
-                                        />
+                                        {bData
+                                            ? <StatusChip label="Building Bulk" color="primary" />
+                                            : <StatusChip label={meter.level} color="default" />}
                                     </td>
                                     {months.map(mo => {
                                         const v = getConsumption(meter, mo);
                                         return (
                                             <td key={mo} className={cn(tdBase, 'text-right tabular-nums text-[12px]')}>
-                                                {v > 0
-                                                    ? fmt(v)
-                                                    : <span className="text-slate-300 dark:text-slate-600">—</span>}
+                                                {v > 0 ? fmt(v) : <span className="text-slate-300 dark:text-slate-600">—</span>}
                                             </td>
                                         );
                                     })}
                                     <td className={cn(tdBase, 'text-right tabular-nums font-bold bg-slate-50/80 dark:bg-slate-800/40')}>
                                         {fmt(total)}
                                     </td>
-                                </tr>
+                                </tr>,
                             );
+
+                            // Building expand rows
+                            if (bData && isExpanded) {
+                                // Sort: apartments first, common last
+                                const sortedChildren = [...bData.children].sort((a, b) => {
+                                    if (a.type === 'Common' && b.type !== 'Common') return 1;
+                                    if (a.type !== 'Common' && b.type === 'Common') return -1;
+                                    return 0;
+                                });
+
+                                // Child meter rows (L4)
+                                sortedChildren.forEach(child => {
+                                    rows.push(
+                                        <tr key={`${meter.accountNumber}-${child.account}`}
+                                            style={{ backgroundColor: `${PALETTE.primary}06` }}>
+                                            <td
+                                                className={cn(tdBase, 'sticky left-0 z-10 pl-12 font-medium text-slate-500 dark:text-slate-400')}
+                                                style={{ backgroundColor: `${PALETTE.primary}06` }}
+                                            >
+                                                <span className="inline-flex items-center gap-2">
+                                                    {/* Tree connector */}
+                                                    <span className="shrink-0 w-4 h-4 border-b-2 border-l-2 border-slate-200 dark:border-slate-700 rounded-bl" aria-hidden="true" />
+                                                    {child.label}
+                                                </span>
+                                            </td>
+                                            <td className={cn(tdBase, 'font-mono text-[11px] text-slate-400')}>
+                                                {child.account}
+                                            </td>
+                                            <td className={cn(tdBase, 'text-center')}>
+                                                <StatusChip label={child.type} color={child.type === 'Common' ? 'info' : 'default'} />
+                                            </td>
+                                            {child.monthlyValues.map((v, i) => (
+                                                <td key={i} className={cn(tdBase, 'text-right tabular-nums text-[12px] text-slate-500 dark:text-slate-400')}>
+                                                    {v > 0 ? fmt(v) : <span className="text-slate-300 dark:text-slate-600">—</span>}
+                                                </td>
+                                            ))}
+                                            <td className={cn(tdBase, 'text-right tabular-nums text-slate-500 dark:text-slate-400')}>
+                                                {fmt(child.total)}
+                                            </td>
+                                        </tr>,
+                                    );
+                                });
+
+                                // ΣL4 subtotal row
+                                rows.push(
+                                    <tr key={`${meter.accountNumber}-sigma`}
+                                        style={{ backgroundColor: `${PALETTE.blue}0A` }}>
+                                        <td
+                                            className={cn(tdBase, 'sticky left-0 z-10 pl-12 font-bold')}
+                                            style={{ backgroundColor: `${PALETTE.blue}0A`, color: PALETTE.blue, boxShadow: `inset 3px 0 0 ${PALETTE.blue}` }}
+                                        >
+                                            <span className="inline-flex items-center gap-1.5">
+                                                <Activity className="h-3 w-3 shrink-0" />
+                                                Σ Child Meters ({bData.children.length})
+                                            </span>
+                                        </td>
+                                        <td className={cn(tdBase, 'text-slate-400 text-[11px]')} colSpan={2} />
+                                        {bData.childMonthly.map((v, i) => (
+                                            <td key={i} className={cn(tdBase, 'text-right tabular-nums text-[12px] font-bold')}
+                                                style={{ color: PALETTE.blue }}>
+                                                {fmt(v)}
+                                            </td>
+                                        ))}
+                                        <td className={cn(tdBase, 'text-right tabular-nums font-bold')}
+                                            style={{ color: PALETTE.blue, backgroundColor: `${PALETTE.blue}14` }}>
+                                            {fmt(bData.childTotal)}
+                                        </td>
+                                    </tr>,
+                                );
+
+                                // Building diff row (L3 bulk − ΣL4)
+                                rows.push(
+                                    <tr key={`${meter.accountNumber}-diff`}
+                                        style={{ backgroundColor: bData.diff > 0 ? `${PALETTE.red}07` : `${PALETTE.mint}12` }}>
+                                        <td
+                                            className={cn(tdBase, 'sticky left-0 z-10 pl-12 font-bold')}
+                                            style={{
+                                                backgroundColor: bData.diff > 0 ? `${PALETTE.red}07` : `${PALETTE.mint}12`,
+                                                color: bData.diff > 0 ? PALETTE.red : '#10b981',
+                                                boxShadow: `inset 3px 0 0 ${bData.diff > 0 ? PALETTE.red : PALETTE.mint}`,
+                                            }}
+                                        >
+                                            <span className="inline-flex items-center gap-1.5">
+                                                Building Diff (L3 − ΣL4)
+                                                <StatusChip label={`${Math.abs(bData.diffPct).toFixed(1)}%`} color={lossChipColor(bData.diffPct)} />
+                                            </span>
+                                        </td>
+                                        <td className={cn(tdBase)} colSpan={2}>
+                                            <StatusChip label={lossLabel(bData.diffPct)} color={lossChipColor(bData.diffPct)} />
+                                        </td>
+                                        {bData.bulkMonthly.map((bulkV, i) => {
+                                            const d = r2(bulkV - (bData.childMonthly[i] ?? 0));
+                                            return (
+                                                <td key={i} className={cn(tdBase, 'text-right tabular-nums text-[12px] font-semibold')}
+                                                    style={{ color: d > 0 ? PALETTE.red : d < 0 ? '#10b981' : '#64748b' }}>
+                                                    {diffLabel(d)}
+                                                </td>
+                                            );
+                                        })}
+                                        <td className={cn(tdBase, 'text-right tabular-nums font-bold')}
+                                            style={{
+                                                backgroundColor: bData.diff > 0 ? `${PALETTE.red}14` : `${PALETTE.mint}25`,
+                                                color: bData.diff > 0 ? PALETTE.red : '#10b981',
+                                            }}>
+                                            {diffLabel(bData.diff)}
+                                        </td>
+                                    </tr>,
+                                );
+                            }
+
+                            return rows;
                         })}
 
-                        {/* ── ΣL3 / ΣDistribution footer ────────────────────── */}
-                        {individualMeters.length > 0 && (
-                            <tr
-                                className="border-t-2 border-slate-200 dark:border-slate-700"
-                                style={{ backgroundColor: `${PALETTE.blue}0E` }}
-                            >
+                        {/* ── ΣL3 footer row ───────────────────────────────── */}
+                        {l3Meters.length > 0 && (
+                            <tr className="border-t-2 border-slate-200 dark:border-slate-700"
+                                style={{ backgroundColor: `${PALETTE.blue}0E` }}>
                                 <td
                                     className={cn(tdBase, 'font-bold sticky left-0 z-10')}
-                                    style={{
-                                        backgroundColor: `${PALETTE.blue}0E`,
-                                        color: PALETTE.blue,
-                                        boxShadow: `inset 4px 0 0 ${PALETTE.blue}`,
-                                    }}
+                                    style={{ backgroundColor: `${PALETTE.blue}0E`, color: PALETTE.blue, boxShadow: `inset 4px 0 0 ${PALETTE.blue}` }}
                                 >
                                     <span className="inline-flex items-center gap-2">
                                         <Activity className="h-3.5 w-3.5 shrink-0" />
-                                        Σ Individuals Total
+                                        ΣL3 Total — Villas + Building Bulks
                                     </span>
                                 </td>
                                 <td className={cn(tdBase, 'text-slate-400 text-[11px]')} colSpan={2}>
-                                    {individualMeters.length} meters
+                                    {l3Meters.length} meters
                                 </td>
                                 {indivMonthly.map((v, i) => (
                                     <td key={i} className={cn(tdBase, 'text-right tabular-nums text-[12px] font-bold')}
@@ -567,11 +782,9 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                             </tr>
                         )}
 
-                        {/* ── Diff / Loss row ───────────────────────────────── */}
-                        {bulkMeters.length > 0 && individualMeters.length > 0 && (
-                            <tr style={{
-                                backgroundColor: diffTotal > 0 ? `${PALETTE.red}08` : `${PALETTE.mint}18`,
-                            }}>
+                        {/* ── Zone Loss / Diff row (L2 − ΣL3) ─────────────── */}
+                        {bulkMeters.length > 0 && l3Meters.length > 0 && (
+                            <tr style={{ backgroundColor: diffTotal > 0 ? `${PALETTE.red}08` : `${PALETTE.mint}18` }}>
                                 <td
                                     className={cn(tdBase, 'font-bold sticky left-0 z-10')}
                                     style={{
@@ -581,12 +794,12 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                                     }}
                                 >
                                     <span className="inline-flex items-center gap-2">
-                                        Diff (Bulk − Σ Individuals)
-                                        <StatusChip label={`${lossPct.toFixed(1)}%`} color={lossColor(lossPct)} />
+                                        Zone Diff (L2 − ΣL3)
+                                        <StatusChip label={`${lossPct.toFixed(1)}%`} color={lossChipColor(lossPct)} />
                                     </span>
                                 </td>
                                 <td className={cn(tdBase)} colSpan={2}>
-                                    <StatusChip label={lossLabel(lossPct)} color={lossColor(lossPct)} />
+                                    <StatusChip label={lossLabel(lossPct)} color={lossChipColor(lossPct)} />
                                 </td>
                                 {diffMonthly.map((v, i) => (
                                     <td key={i} className={cn(tdBase, 'text-right tabular-nums text-[12px] font-semibold')}
@@ -618,9 +831,7 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                             className="h-8 px-3 text-[12px] font-medium rounded-full border border-slate-200 dark:border-slate-700 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                             disabled={page <= 1}
                             onClick={() => setPage(p => p - 1)}
-                        >
-                            Prev
-                        </button>
+                        >Prev</button>
                         {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
                             let p = i + 1;
                             if (totalPages > 5) {
@@ -629,16 +840,11 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                                 else p = page - 2 + i;
                             }
                             return (
-                                <button
-                                    key={p}
-                                    onClick={() => setPage(p)}
+                                <button key={p} onClick={() => setPage(p)}
                                     className={cn(
                                         'h-8 w-8 rounded-full flex items-center justify-center text-[12px] font-medium transition-all',
-                                        p === page
-                                            ? 'bg-primary text-white shadow-sm dark:bg-secondary dark:text-white'
-                                            : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800',
-                                    )}
-                                >
+                                        p === page ? 'bg-primary text-white shadow-sm dark:bg-secondary' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800',
+                                    )}>
                                     {p}
                                 </button>
                             );
@@ -647,9 +853,7 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                             className="h-8 px-3 text-[12px] font-medium rounded-full border border-slate-200 dark:border-slate-700 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                             disabled={page >= totalPages}
                             onClick={() => setPage(p => p + 1)}
-                        >
-                            Next
-                        </button>
+                        >Next</button>
                     </div>
                     <label className="flex items-center gap-1.5 text-[12px] text-slate-400 dark:text-slate-500">
                         Rows
@@ -665,4 +869,26 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
             )}
         </div>
     );
+}
+
+// ─── Local types ──────────────────────────────────────────────────────────────
+
+interface ChildRow {
+    account: string;
+    label: string;
+    type: 'Apartment' | 'Common';
+    meter: WaterMeter | null;
+    monthlyValues: number[];
+    total: number;
+}
+
+interface BuildingData {
+    buildingName: string;
+    children: ChildRow[];
+    bulkMonthly: number[];
+    bulkTotal: number;
+    childMonthly: number[];
+    childTotal: number;
+    diff: number;
+    diffPct: number;
 }
