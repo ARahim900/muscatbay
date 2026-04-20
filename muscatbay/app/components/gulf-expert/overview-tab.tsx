@@ -13,7 +13,7 @@ import {
 } from "recharts";
 import type { GulfExpertData } from "./types";
 
-const CHART_COLORS = ["#4E4456", "#00D2B3", "#F59E0B", "#EF4444", "#3B82F6", "#10B981"];
+const CHART_COLORS = ["#4E4456", "#4DBFBF", "#F59E0B", "#EF4444", "#3B82F6", "#10B981"];
 
 const STATUS_COLORS: Record<string, string> = {
   Open: "#EF4444",

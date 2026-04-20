@@ -134,10 +134,10 @@ The dark theme uses a **warm near-black palette** that harmonizes with the `#4E4
 | Muted text | `--muted-foreground` | `#9CA3AF` |
 | Primary (brand purple) | `--primary` | `#4E4456` |
 | Sidebar (darker than primary) | `--sidebar` | `#3B3240` |
-| Secondary / accent (teal) | `--secondary`, `--accent` | `#A4C5BB` |
+| Secondary / accent (teal) | `--secondary`, `--accent` | `#4DBFBF` |
 | Destructive | `--destructive` | `#D67A7A` |
 | Border / input | `--border`, `--input` | `rgba(255,255,255,0.1)` |
-| Focus ring | `--ring` | `#A4C5BB` |
+| Focus ring | `--ring` | `#4DBFBF` |
 
 ### Near-Black Surface Scale
 
@@ -168,7 +168,7 @@ Borders for `slate-700/800/900` are remapped to white-tinted hairlines (`rgba(25
 4. **Headings** auto-color: `--primary` in light, `--foreground` in dark (handled in the base layer).
 5. **Sidebar must stay darker than `--primary`** so it reads as a distinct zone under the topbar.
 6. **Charts** use the teal/amber/green/purple palette via `--chart-*` tokens — don't import Recharts' defaults.
-7. **Focus ring** is always the teal `--ring` (`#A4C5BB`) for WCAG contrast against near-black.
+7. **Focus ring** is always the teal `--ring` (`#4DBFBF`) for WCAG contrast against near-black.
 8. **To retune the entire dark shell**, change the 4 base hex values in the "Dark Surface Remap" block in `globals.css` — every surface retracks automatically.
 
 See [`DESIGN_SYSTEM.md`](./DESIGN_SYSTEM.md) for the full light-mode spec, component patterns, and typography scale.

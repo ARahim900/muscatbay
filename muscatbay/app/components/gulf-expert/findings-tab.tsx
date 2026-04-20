@@ -218,7 +218,7 @@ export function FindingsTab({ findings }: FindingsTabProps) {
           </thead>
           <tbody>
             {paginated.map((f, i) => (
-              <tr key={f.id || i} className="border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-[#00d2b3]/5 dark:hover:bg-slate-700/40 transition-colors even:bg-slate-50/40 dark:even:bg-slate-800/20">
+              <tr key={f.id || i} className="border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-[#4dbfbf]/5 dark:hover:bg-slate-700/40 transition-colors even:bg-slate-50/40 dark:even:bg-slate-800/20">
                 <td className="py-4 px-5 font-semibold text-slate-800 dark:text-slate-200 whitespace-nowrap">
                   {f.finding_code}
                   {f.is_recurring && <span className="ml-1 text-amber-500" title="Recurring issue">↻</span>}

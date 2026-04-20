@@ -11,7 +11,7 @@
 | Color Name | Hex | RGB | Usage |
 |------------|-----|-----|-------|
 | **Primary (Purple-Gray)** | `#4E4456` | `rgb(78, 68, 86)` | Header, sidebar, branding, main theme |
-| **Secondary (Teal)** | `#00D2B3` | `rgb(0, 210, 179)` | CTAs, active states, highlights |
+| **Secondary (Teal)** | `#4DBFBF` | `rgb(77, 191, 191)` | CTAs, active states, highlights |
 
 ### Backgrounds
 
@@ -161,7 +161,7 @@ font-family: ui-sans-serif, system-ui, sans-serif,
 | Variant | Background | Text |
 |---------|------------|------|
 | Primary | `#4E4456` | White |
-| Secondary | `#00D2B3` | White |
+| Secondary | `#4DBFBF` | White |
 | Destructive | `#EF4444` | White |
 | Ghost | Transparent | Inherit |
 
@@ -177,7 +177,7 @@ font-family: ui-sans-serif, system-ui, sans-serif,
 - **Background**: `#4E4456`
 - **Text**: White (`#FFFFFF`)
 - **Border**: `rgba(255, 255, 255, 0.1)`
-- **Active Item**: Secondary teal (`#00D2B3`)
+- **Active Item**: Secondary teal (`#4DBFBF`)
 
 ### Icons
 
@@ -192,7 +192,7 @@ font-family: ui-sans-serif, system-ui, sans-serif,
 ```css
 :root {
   --primary: #4E4456;
-  --secondary: #00D2B3;
+  --secondary: #4DBFBF;
   --background: #F9FAFB;
   --card: #FFFFFF;
   --border: #E5E7EB;

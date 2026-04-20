@@ -332,7 +332,7 @@ export function WaterDatabaseTable({ meters, months }: WaterDatabaseTableProps) 
             <tr
                 key={meter.accountNumber}
                 className={cn(
-                    "border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-[#00d2b3]/5 dark:hover:bg-slate-700/40 transition-colors even:bg-slate-50/40 dark:even:bg-slate-800/20",
+                    "border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-[#4dbfbf]/5 dark:hover:bg-slate-700/40 transition-colors even:bg-slate-50/40 dark:even:bg-slate-800/20",
                     "border-l-4",
                     zoneColor
                 )}
