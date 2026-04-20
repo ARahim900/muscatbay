@@ -257,8 +257,8 @@ export default function SignUpPage() {
                                 {/* Password requirements */}
                                 {password.length > 0 && (
                                     <div className="space-y-1 mt-2">
-                                        {passwordRequirements.map((req, index) => (
-                                            <div key={index} className="flex items-center gap-2 text-xs">
+                                        {passwordRequirements.map((req) => (
+                                            <div key={req.label} className="flex items-center gap-2 text-xs">
                                                 <div className={`w-1.5 h-1.5 rounded-full ${req.met ? "bg-emerald-500" : "bg-slate-300"}`} />
                                                 <span className={req.met ? "text-emerald-600" : "text-slate-500"}>
                                                     {req.label}

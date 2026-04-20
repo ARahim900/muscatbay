@@ -187,14 +187,14 @@ export default function DashboardPage() {
                                         </>
                                     );
 
-                                    const itemClassName = "flex items-center gap-3 p-3 rounded-lg bg-white/30 dark:bg-slate-800/50 border border-mb-primary/5 dark:border-slate-700 hover:bg-white/50 dark:hover:bg-slate-700 transition-colors group/activity hover:-translate-y-0.5 transition-transform duration-150";
+                                    const itemClassName = "flex items-center gap-3 p-3 rounded-lg bg-white/30 dark:bg-slate-800/50 border border-mb-primary/5 dark:border-slate-700 hover:bg-white/50 dark:hover:bg-slate-700 group/activity hover:-translate-y-0.5 transition-[background-color,border-color,transform] duration-150 ease-out";
 
                                     return activityHref ? (
-                                        <Link key={i} href={activityHref} className={itemClassName}>
+                                        <Link key={item.title} href={activityHref} className={itemClassName}>
                                             {content}
                                         </Link>
                                     ) : (
-                                        <div key={i} className={itemClassName}>
+                                        <div key={item.title} className={itemClassName}>
                                             {content}
                                         </div>
                                     );

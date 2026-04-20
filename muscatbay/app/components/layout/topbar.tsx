@@ -28,17 +28,31 @@ export function Topbar() {
                 setIsProfileOpen(false);
             }
         }
-        function handleEscapeKey(event: KeyboardEvent) {
+        function handleKeyDown(event: KeyboardEvent) {
             if (event.key === 'Escape' && isProfileOpen) {
                 setIsProfileOpen(false);
                 document.getElementById('profile-menu-trigger')?.focus();
+                return;
+            }
+            if (!isProfileOpen) return;
+            if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+                event.preventDefault();
+                const menu = document.getElementById('profile-dropdown-menu');
+                if (!menu) return;
+                const items = Array.from(menu.querySelectorAll<HTMLElement>('[role="menuitem"]'));
+                if (!items.length) return;
+                const currentIdx = items.indexOf(document.activeElement as HTMLElement);
+                const nextIdx = event.key === 'ArrowDown'
+                    ? (currentIdx + 1) % items.length
+                    : (currentIdx - 1 + items.length) % items.length;
+                items[nextIdx]?.focus();
             }
         }
         document.addEventListener("mousedown", handleClickOutside);
-        document.addEventListener("keydown", handleEscapeKey);
+        document.addEventListener("keydown", handleKeyDown);
         return () => {
             document.removeEventListener("mousedown", handleClickOutside);
-            document.removeEventListener("keydown", handleEscapeKey);
+            document.removeEventListener("keydown", handleKeyDown);
         };
     }, [isProfileOpen]);
 
@@ -49,8 +63,9 @@ export function Topbar() {
                 {/* Theme Toggle */}
                 <button
                     onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                    className="w-9 h-9 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-white/[0.06] rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:outline-none"
-                    aria-label="Toggle theme"
+                    className="w-11 h-11 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-white/[0.06] rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:outline-none"
+                    aria-label={mounted ? `Switch to ${theme === "dark" ? "light" : "dark"} mode` : "Toggle theme"}
+                    aria-pressed={mounted ? theme === "dark" : undefined}
                 >
                     {mounted && (theme === "dark"
                         ? <Moon className="w-[17px] h-[17px]" />
@@ -61,7 +76,7 @@ export function Topbar() {
                 {/* Settings */}
                 <Link
                     href="/settings"
-                    className="w-9 h-9 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-white/[0.06] rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:outline-none"
+                    className="w-11 h-11 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-white/[0.06] rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:outline-none"
                     aria-label="Settings"
                 >
                     <Settings className="w-[17px] h-[17px]" />
@@ -74,10 +89,20 @@ export function Topbar() {
                 <div className="relative" ref={dropdownRef}>
                     <button
                         onClick={() => setIsProfileOpen(!isProfileOpen)}
+                        onKeyDown={(e) => {
+                            if (e.key === 'ArrowDown' && !isProfileOpen) {
+                                e.preventDefault();
+                                setIsProfileOpen(true);
+                                setTimeout(() => {
+                                    const first = document.querySelector<HTMLElement>('#profile-dropdown-menu [role="menuitem"]');
+                                    first?.focus();
+                                }, 10);
+                            }
+                        }}
                         className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:outline-none"
                         aria-label="User profile menu"
                         aria-expanded={isProfileOpen}
-                        aria-haspopup="true"
+                        aria-haspopup="menu"
                         aria-controls="profile-dropdown-menu"
                         id="profile-menu-trigger"
                     >
@@ -96,6 +121,7 @@ export function Topbar() {
                     {/* Profile Dropdown */}
                     {isProfileOpen && (
                         <div
+                            role="menu"
                             className="absolute end-0 mt-2 w-60 max-w-[calc(100vw-2rem)] bg-popover text-popover-foreground rounded-xl shadow-xl border border-border py-1 z-50 motion-safe:animate-in fade-in slide-in-from-top-2 duration-200"
                             id="profile-dropdown-menu"
                             aria-labelledby="profile-menu-trigger"
@@ -120,6 +146,7 @@ export function Topbar() {
                             <div className="py-1">
                                 <Link
                                     href="/settings"
+                                    role="menuitem"
                                     onClick={() => setIsProfileOpen(false)}
                                     className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-muted transition-colors duration-150"
                                 >
@@ -128,6 +155,7 @@ export function Topbar() {
                                 </Link>
                                 <div className="my-1 border-t border-border" />
                                 <button
+                                    role="menuitem"
                                     onClick={() => { logout(); setIsProfileOpen(false); }}
                                     className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-destructive hover:bg-destructive/10 transition-colors duration-150"
                                 >

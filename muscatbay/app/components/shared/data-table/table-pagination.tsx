@@ -106,7 +106,7 @@ export function TablePagination({
                                     onClick={() => onPageChange(page as number)}
                                     aria-current={currentPage === page ? "page" : undefined}
                                     className={cn(
-                                        "min-w-11 h-11 rounded-full text-sm font-medium transition-all duration-200",
+                                        "min-w-11 h-11 rounded-full text-sm font-medium transition-colors duration-200",
                                         currentPage === page
                                             ? "bg-primary text-white shadow-sm"
                                             : "border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400"

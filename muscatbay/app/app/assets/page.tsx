@@ -359,9 +359,6 @@ export default function AssetsPage() {
             {/* Tabs */}
             <TabNavigation tabs={TABS} activeTab={activeTab} onTabChange={handleTabChange} />
 
-            {/* KPI strip — overview only */}
-            {activeTab === 'overview' && <StatsGrid stats={stats} />}
-
             <div className="space-y-4">
                 {/* Toolbar */}
                 <TableToolbar>
@@ -400,6 +397,8 @@ export default function AssetsPage() {
 
                 {/* ── TAB: OVERVIEW ─────────────────────────────────────────────────────── */}
                 {activeTab === 'overview' && (
+                    <div id="panel-overview" role="tabpanel" aria-labelledby="tab-overview" tabIndex={0} className="space-y-4">
+                    <StatsGrid stats={stats} />
                     <div className="overflow-x-auto rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900 shadow-sm">
                         {/* Mobile cards */}
                         <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
@@ -453,11 +452,12 @@ export default function AssetsPage() {
                             </tbody>
                         </table>
                     </div>
+                    </div>
                 )}
 
                 {/* ── TAB: LIFECYCLE ────────────────────────────────────────────────────── */}
                 {activeTab === 'lifecycle' && (
-                    <div className="overflow-x-auto rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900 shadow-sm">
+                    <div id="panel-lifecycle" role="tabpanel" aria-labelledby="tab-lifecycle" tabIndex={0} className="overflow-x-auto rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900 shadow-sm">
                         <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
                             {loading ? <div className="p-4 space-y-3">{Array.from({length:6}).map((_,i)=><Skeleton key={i} className="h-20 w-full"/>)}</div>
                             : rows.length === 0 ? <EmptyState variant={hasActiveFilters?"filter-empty":"no-data"} title="No assets" description="Adjust filters." />
@@ -514,7 +514,7 @@ export default function AssetsPage() {
 
                 {/* ── TAB: MAINTENANCE ─────────────────────────────────────────────────── */}
                 {activeTab === 'maintenance' && (
-                    <div className="overflow-x-auto rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900 shadow-sm">
+                    <div id="panel-maintenance" role="tabpanel" aria-labelledby="tab-maintenance" tabIndex={0} className="overflow-x-auto rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900 shadow-sm">
                         <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
                             {loading ? <div className="p-4 space-y-3">{Array.from({length:6}).map((_,i)=><Skeleton key={i} className="h-20 w-full"/>)}</div>
                             : rows.length === 0 ? <EmptyState variant={hasActiveFilters?"filter-empty":"no-data"} title="No assets" description="Adjust filters." />
@@ -569,7 +569,7 @@ export default function AssetsPage() {
 
                 {/* ── TAB: TECHNICAL ───────────────────────────────────────────────────── */}
                 {activeTab === 'technical' && (
-                    <div className="overflow-x-auto rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900 shadow-sm">
+                    <div id="panel-technical" role="tabpanel" aria-labelledby="tab-technical" tabIndex={0} className="overflow-x-auto rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900 shadow-sm">
                         <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
                             {loading ? <div className="p-4 space-y-3">{Array.from({length:6}).map((_,i)=><Skeleton key={i} className="h-20 w-full"/>)}</div>
                             : rows.length === 0 ? <EmptyState variant={hasActiveFilters?"filter-empty":"no-data"} title="No assets" description="Adjust filters." />
@@ -625,7 +625,7 @@ export default function AssetsPage() {
 
                 {/* ── TAB: FINANCIAL ───────────────────────────────────────────────────── */}
                 {activeTab === 'financial' && (
-                    <div className="overflow-x-auto rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900 shadow-sm">
+                    <div id="panel-financial" role="tabpanel" aria-labelledby="tab-financial" tabIndex={0} className="overflow-x-auto rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900 shadow-sm">
                         <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
                             {loading ? <div className="p-4 space-y-3">{Array.from({length:6}).map((_,i)=><Skeleton key={i} className="h-20 w-full"/>)}</div>
                             : rows.length === 0 ? <EmptyState variant={hasActiveFilters?"filter-empty":"no-data"} title="No assets" description="Adjust filters." />

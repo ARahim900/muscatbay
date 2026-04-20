@@ -70,6 +70,7 @@ export function AnimateOnScroll({
             htmlEl.style.transition = `opacity ${duration}s ease-out ${i * stagger}s, transform ${duration}s ease-out ${i * stagger}s`;
             htmlEl.style.opacity = "1";
             htmlEl.style.transform = "translateY(0)";
+            setTimeout(() => { htmlEl.style.willChange = 'auto'; }, (duration + i * stagger) * 1000);
           });
 
           observer.unobserve(entry.target);
@@ -83,7 +84,7 @@ export function AnimateOnScroll({
   }, [y, duration, stagger, rootMargin, selector]);
 
   return (
-    <div ref={containerRef} className={cn(className)} aria-live="polite">
+    <div ref={containerRef} className={cn(className)}>
       {children}
     </div>
   );
@@ -136,6 +137,7 @@ export function AnimateOnScrollItem({
           htmlEl.style.transition = `opacity ${duration}s ease-out, transform ${duration}s ease-out`;
           htmlEl.style.opacity = "1";
           htmlEl.style.transform = "translateY(0)";
+          setTimeout(() => { htmlEl.style.willChange = 'auto'; }, duration * 1000);
 
           observer.unobserve(entry.target);
         });

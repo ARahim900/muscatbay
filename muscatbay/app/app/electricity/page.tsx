@@ -844,7 +844,7 @@ export default function ElectricityPage() {
             )}
 
             {activeTab === 'overview' && (
-                <div className="space-y-6 motion-safe:animate-in motion-safe:fade-in duration-200">
+                <div id="panel-overview" role="tabpanel" aria-labelledby="tab-overview" tabIndex={0} className="space-y-6 motion-safe:animate-in motion-safe:fade-in duration-200">
 
                     <StatsGrid stats={stats} />
 
@@ -854,7 +854,7 @@ export default function ElectricityPage() {
                                 <CardTitle>Monthly Consumption Trend</CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <div className="h-[220px] sm:h-[260px] md:h-[300px]">
+                                <div role="img" aria-label="Monthly electricity consumption trend: area chart showing kilowatt-hour usage over selected date range" className="h-[220px] sm:h-[260px] md:h-[300px]">
                                     <ResponsiveContainer width="100%" height="100%">
                                         <AreaChart data={filteredMonthlyData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                                             <defs>
@@ -879,7 +879,7 @@ export default function ElectricityPage() {
                                 <CardTitle>Consumption by Type</CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <div className="h-[220px] sm:h-[260px] md:h-[300px]">
+                                <div role="img" aria-label="Electricity consumption by type: horizontal bar chart breaking down kilowatt-hour usage across meter categories" className="h-[220px] sm:h-[260px] md:h-[300px]">
                                     <ResponsiveContainer width="100%" height="100%">
                                         <BarChart data={consumptionByType} layout="vertical" margin={{ left: 10 }}>
                                             <XAxis type="number" hide />
@@ -900,7 +900,7 @@ export default function ElectricityPage() {
             )}
 
             {activeTab === 'analysis' && (
-                <div className="space-y-6 motion-safe:animate-in motion-safe:fade-in duration-200">
+                <div id="panel-analysis" role="tabpanel" aria-labelledby="tab-analysis" tabIndex={0} className="space-y-6 motion-safe:animate-in motion-safe:fade-in duration-200">
                     {/* Filtered Stats Grid */}
                     <StatsGrid stats={analysisData.stats} />
 
@@ -925,7 +925,7 @@ export default function ElectricityPage() {
                             </div>
                         </CardHeader>
                         <CardContent>
-                            <div className="h-[280px] sm:h-[340px] md:h-[380px]">
+                            <div role="img" aria-label={`Electricity consumption trend for ${analysisType === 'All' ? 'all meter types' : analysisType}: chart showing kilowatt-hour usage over time per meter or aggregate`} className="h-[280px] sm:h-[340px] md:h-[380px]">
                                 <ResponsiveContainer width="100%" height="100%">
                                     {/* Multi-line chart for type aggregate with ≤10 meters */}
                                     {analysisType !== "All" && selectedMeter === "All" && metersOfSelectedType.length <= 10 ? (
@@ -939,8 +939,8 @@ export default function ElectricityPage() {
                                                         return (
                                                             <div className="card-elevated px-4 py-3 border border-white/50 shadow-xl !rounded-xl !bg-white dark:!bg-slate-900 max-w-[280px]">
                                                                 <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">{label}</p>
-                                                                {[...payload].sort((a, b) => (Number(b.value) || 0) - (Number(a.value) || 0)).map((entry, i: number) => (
-                                                                    <div key={i} className="flex items-center gap-2 text-xs mb-0.5">
+                                                                {[...payload].sort((a, b) => (Number(b.value) || 0) - (Number(a.value) || 0)).map((entry) => (
+                                                                    <div key={entry.name} className="flex items-center gap-2 text-xs mb-0.5">
                                                                         <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: entry.color }} />
                                                                         <span className="text-slate-500 dark:text-slate-400 truncate">{entry.name}:</span>
                                                                         <span className="font-mono font-medium text-slate-700 dark:text-slate-200 ml-auto">
@@ -998,7 +998,7 @@ export default function ElectricityPage() {
                                 <CardTitle className="text-lg">Top 10 {analysisType === "All" ? "Overall" : analysisType} Consumers</CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <div className="h-[300px] sm:h-[350px] md:h-[400px]">
+                                <div role="img" aria-label={`Top 10 electricity consumers bar chart for ${analysisType === 'All' ? 'all types' : analysisType}, ranked by kilowatt-hour consumption`} className="h-[300px] sm:h-[350px] md:h-[400px]">
                                     <ResponsiveContainer width="100%" height="100%">
                                         <BarChart
                                             data={analysisData.topConsumers}
@@ -1077,7 +1077,7 @@ export default function ElectricityPage() {
                                     </div>
                                 </CardHeader>
                                 <CardContent>
-                                    <div className="h-[300px] sm:h-[350px] md:h-[400px]">
+                                    <div role="img" aria-label={`Meter vs type average bar chart for ${analysisType}: comparing each meter's consumption against the group average`} className="h-[300px] sm:h-[350px] md:h-[400px]">
                                         <ResponsiveContainer width="100%" height="100%">
                                             <BarChart
                                                 data={analysisData.comparisonData}
@@ -1241,7 +1241,7 @@ export default function ElectricityPage() {
                 };
 
                 return (
-                    <div className="space-y-4 motion-safe:animate-in motion-safe:fade-in duration-200">
+                    <div id="panel-database" role="tabpanel" aria-labelledby="tab-database" tabIndex={0} className="space-y-4 motion-safe:animate-in motion-safe:fade-in duration-200">
                         {/* Toolbar */}
                         <TableToolbar>
                             <div className="relative flex-1 min-w-[200px] max-w-md">

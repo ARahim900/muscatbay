@@ -555,7 +555,7 @@ export default function ContractorsPage() {
                                 {c.note && <p className="text-xs text-slate-500 line-clamp-2">{c.note}</p>}
                                 <button
                                     onClick={() => openPdfModal(c.id, c.contractor, c.contract_ref || '', c.contract_pdf_url)}
-                                    className={`text-xs flex items-center gap-1 mt-2 ${c.contract_pdf_url ? 'text-[#00D2B3]' : 'text-slate-400'}`}
+                                    className={`text-xs flex items-center gap-1 mt-2 ${c.contract_pdf_url ? 'text-secondary' : 'text-slate-400'}`}
                                 >
                                     {c.contract_pdf_url ? <><FileText className="w-3 h-3" /> View Contract PDF</> : <><Link className="w-3 h-3" /> Add PDF Link</>}
                                 </button>
@@ -600,7 +600,7 @@ export default function ContractorsPage() {
                             </thead>
                             <tbody>
                                 {paginatedContracts.map(c => (
-                                    <tr key={c.id} className="border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-[#00d2b3]/5 dark:hover:bg-slate-700/40 transition-colors even:bg-slate-50/40 dark:even:bg-slate-800/20">
+                                    <tr key={c.id} className="border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-secondary/5 dark:hover:bg-slate-700/40 transition-colors even:bg-slate-50/40 dark:even:bg-slate-800/20">
                                         <td className="py-4 px-5 font-semibold text-sm text-slate-500">{c.id}</td>
                                         <td className="py-4 px-5 font-semibold text-slate-800 dark:text-slate-200">
                                             {c.contractor}
@@ -624,7 +624,7 @@ export default function ContractorsPage() {
                                                 title={c.contract_pdf_url ? "View Contract PDF" : "Add PDF link"}
                                                 className={`p-1.5 rounded-md transition-colors ${
                                                     c.contract_pdf_url
-                                                        ? 'text-[#00D2B3] hover:bg-[#00D2B3]/10'
+                                                        ? 'text-secondary hover:bg-secondary/10'
                                                         : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/60'
                                                 }`}
                                             >
@@ -716,7 +716,7 @@ export default function ContractorsPage() {
                                     </thead>
                                     <tbody>
                                         {matrix.rows.map(row => (
-                                            <tr key={row.year} className="border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-[#00d2b3]/5 dark:hover:bg-slate-700/40 transition-colors even:bg-slate-50/40 dark:even:bg-slate-800/20">
+                                            <tr key={row.year} className="border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-secondary/5 dark:hover:bg-slate-700/40 transition-colors even:bg-slate-50/40 dark:even:bg-slate-800/20">
                                                 <td className="py-4 px-4 font-semibold text-slate-700 dark:text-slate-300 sticky left-0 bg-white dark:bg-slate-900 z-10">
                                                     <span className="text-xs text-slate-400 mr-1.5">Y{row.year}</span>
                                                     {row.label}
@@ -838,7 +838,7 @@ export default function ContractorsPage() {
                                     {c.contract_pdf_url && (
                                         <button
                                             onClick={() => openPdfModal(null, c.Contractor || '', c["Service Provided"] || '', c.contract_pdf_url)}
-                                            className="text-xs text-[#00D2B3] flex items-center gap-1 mt-2"
+                                            className="text-xs text-secondary flex items-center gap-1 mt-2"
                                         >
                                             <FileText className="w-3 h-3" /> View Contract PDF
                                         </button>
@@ -882,7 +882,7 @@ export default function ContractorsPage() {
                             </thead>
                             <tbody>
                                 {paginatedTracker.map(c => (
-                                    <tr key={`${c.Contractor ?? ''}--${c["Service Provided"] ?? ''}`} className="border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-[#00d2b3]/5 dark:hover:bg-slate-700/40 transition-colors even:bg-slate-50/40 dark:even:bg-slate-800/20">
+                                    <tr key={`${c.Contractor ?? ''}--${c["Service Provided"] ?? ''}`} className="border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-secondary/5 dark:hover:bg-slate-700/40 transition-colors even:bg-slate-50/40 dark:even:bg-slate-800/20">
                                         <td className="py-4 px-5 font-semibold text-slate-800 dark:text-slate-200">{c.Contractor || '-'}</td>
                                         <td className="py-4 px-5 font-semibold text-sm text-slate-600 dark:text-slate-400">{c["Service Provided"] || '-'}</td>
                                         <td className="py-4 px-5"><StatusBadge label={c.Status || 'N/A'} color={getStatusDotColor(c.Status)} /></td>
@@ -900,7 +900,7 @@ export default function ContractorsPage() {
                                                 title={c.contract_pdf_url ? "View Contract PDF" : "No PDF uploaded"}
                                                 className={`p-1.5 rounded-md transition-colors ${
                                                     c.contract_pdf_url
-                                                        ? 'text-[#00D2B3] hover:bg-[#00D2B3]/10'
+                                                        ? 'text-secondary hover:bg-secondary/10'
                                                         : 'text-slate-300 dark:text-slate-600 cursor-not-allowed'
                                                 }`}
                                                 disabled={!c.contract_pdf_url}
@@ -959,14 +959,14 @@ export default function ContractorsPage() {
                                 value={pdfLinkInput}
                                 onChange={(e) => setPdfLinkInput(e.target.value)}
                                 placeholder="https://drive.google.com/file/d/.../view?usp=sharing"
-                                className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#00D2B3]/50 focus:border-[#00D2B3]"
+                                className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary"
                             />
                             <p className="text-xs text-slate-400">Right-click PDF in Drive &rarr; Share &rarr; Copy link (set to &quot;Anyone with the link&quot;)</p>
                             <div className="flex gap-2">
                                 <button
                                     onClick={savePdfLink}
                                     disabled={pdfLinkSaving || !pdfLinkInput.trim()}
-                                    className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg bg-[#00D2B3] text-white hover:bg-[#00D2B3]/90 transition-colors disabled:opacity-50"
+                                    className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg bg-secondary text-white hover:bg-secondary/90 transition-colors disabled:opacity-50"
                                 >
                                     {pdfLinkSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
                                     {pdfLinkSaving ? 'Saving...' : 'Save Link'}
@@ -1020,7 +1020,7 @@ export default function ContractorsPage() {
                                 href={pdfModal.pdfUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg bg-[#00D2B3] text-white hover:bg-[#00D2B3]/90 transition-colors"
+                                className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg bg-secondary text-white hover:bg-secondary/90 transition-colors"
                             >
                                 <ExternalLink className="w-4 h-4" />
                                 Open in Drive

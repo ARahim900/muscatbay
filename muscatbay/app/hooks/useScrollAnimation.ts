@@ -71,6 +71,7 @@ export function useScrollAnimation<T extends HTMLElement = HTMLDivElement>(
                         el.style.transition = `opacity ${duration}s ease-out ${i * stagger}s, transform ${duration}s ease-out ${i * stagger}s`;
                         el.style.opacity = "1";
                         el.style.transform = "translateY(0)";
+                        setTimeout(() => { el.style.willChange = 'auto'; }, (duration + i * stagger) * 1000);
                     });
 
                     observer.unobserve(entry.target);

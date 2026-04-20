@@ -36,7 +36,7 @@ export function FilterTabs({ label, options, value, onChange, className }: Filte
                             key={option.value}
                             onClick={() => onChange(option.value)}
                             className={cn(
-                                "px-3 py-2.5 sm:py-1.5 text-xs font-medium rounded-md transition-all duration-200 focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:outline-none",
+                                "px-3 py-2.5 sm:py-1.5 text-xs font-medium rounded-md transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:outline-none",
                                 isSelected
                                     ? colorStyle
                                         ? `${colorStyle.bg} ${colorStyle.text} shadow-sm`

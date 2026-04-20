@@ -139,11 +139,11 @@ export function StatsGrid({ stats, className }: StatsGridProps) {
                     </>
                 );
 
-                const baseCardClassName = "bg-white dark:bg-slate-900 p-3 sm:p-4 md:p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm group/stat overflow-hidden hover:-translate-y-1 hover:shadow-md transition-all duration-200";
+                const baseCardClassName = "bg-white dark:bg-slate-900 p-3 sm:p-4 md:p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm group/stat overflow-hidden hover:shadow-md transition-[box-shadow] duration-200";
 
                 return stat.href ? (
                     <Link
-                        key={index}
+                        key={stat.label}
                         href={stat.href}
                         aria-label={`${stat.label}: ${stat.value}. ${stat.trend === 'up' ? 'Up' : stat.trend === 'down' ? 'Down' : 'No change'} ${stat.trendValue || ''} compared to last period. Click to view details.`}
                         className={cn(baseCardClassName, "block cursor-pointer")}
@@ -151,7 +151,7 @@ export function StatsGrid({ stats, className }: StatsGridProps) {
                         {cardContent}
                     </Link>
                 ) : (
-                    <div key={index} className={baseCardClassName}>
+                    <div key={stat.label} className={baseCardClassName}>
                         {cardContent}
                     </div>
                 );

@@ -43,6 +43,7 @@ export function ChartContainer({
             return;
         }
 
+        el.style.willChange = 'opacity, transform';
         el.style.opacity = "0";
         el.style.transform = "translateY(30px)";
 
@@ -55,6 +56,7 @@ export function ChartContainer({
                     htmlEl.style.transition = "opacity 0.5s ease-out, transform 0.5s ease-out";
                     htmlEl.style.opacity = "1";
                     htmlEl.style.transform = "translateY(0)";
+                    setTimeout(() => { htmlEl.style.willChange = 'auto'; }, 500);
 
                     observer.unobserve(entry.target);
                 });
@@ -73,7 +75,6 @@ export function ChartContainer({
     const inlineStyle: React.CSSProperties = {
         minHeight,
         position: 'relative',
-        willChange: 'opacity, transform',
     };
     if (!hasClassHeight) {
         inlineStyle.height = height;

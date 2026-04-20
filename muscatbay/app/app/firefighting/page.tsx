@@ -307,12 +307,12 @@ function StageCard({ stage, isExpanded, onToggle, filterStatus }: { stage: Stage
                                         </p>
                                     )}
                                     <div className="flex gap-1 mt-1 sm:hidden flex-wrap">
-                                        {b.systems.map((s, i) => <SystemTag key={i} label={s} />)}
+                                        {b.systems.map((s) => <SystemTag key={s} label={s} />)}
                                         {b.date !== "TBD" && <span className="text-[10px] text-slate-400 tabular-nums">{b.date}</span>}
                                     </div>
                                 </div>
                                 <div className="hidden sm:flex gap-1 flex-shrink-0">
-                                    {b.systems.map((s, i) => <SystemTag key={i} label={s} />)}
+                                    {b.systems.map((s) => <SystemTag key={s} label={s} />)}
                                 </div>
                                 <span className="text-[11px] text-slate-400 hidden sm:block w-24 text-right flex-shrink-0 tabular-nums">{b.date}</span>
                                 <div className="hidden sm:block flex-shrink-0">
@@ -709,8 +709,8 @@ export default function FirefightingPage() {
                                 ["Date", "13 Jan 2026"],
                                 ["Covers", "Spares replacement for 4 faults found during Stage 1 PPM"],
                                 ["PO Status", "Not issued"],
-                            ].map(([label, value], i) => (
-                                <div key={i} className="flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-3 text-sm">
+                            ].map(([label, value]) => (
+                                <div key={label} className="flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-3 text-sm">
                                     <span className="text-slate-400 text-xs sm:w-28 flex-shrink-0">{label}</span>
                                     <span className={cn("font-medium", label === "PO Status" ? "text-red-600 dark:text-red-400 font-bold" : "text-slate-900 dark:text-slate-100")}>{value}</span>
                                 </div>
@@ -726,8 +726,8 @@ export default function FirefightingPage() {
                         </CardHeader>
                         <CardContent className="p-0">
                             <div className="divide-y divide-slate-50 dark:divide-slate-700/50">
-                                {OPEN_FAULTS.map((f, i) => (
-                                    <div key={i} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 px-4 sm:px-5 py-3 sm:py-4">
+                                {OPEN_FAULTS.map((f) => (
+                                    <div key={`${f.equipment}-${f.location}`} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 px-4 sm:px-5 py-3 sm:py-4">
                                         <div className="flex items-center gap-3 flex-1 min-w-0">
                                             <span className="w-8 h-8 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center flex-shrink-0">
                                                 <XCircle className="w-4 h-4 text-red-600 dark:text-red-400" />
@@ -817,8 +817,8 @@ export default function FirefightingPage() {
                         </CardHeader>
                         <CardContent className="p-0">
                             <div className="divide-y divide-slate-50 dark:divide-slate-700/50">
-                                {CONTACTS.map((c, i) => (
-                                    <div key={i} className="flex items-center gap-3 sm:gap-4 px-4 sm:px-5 py-3 sm:py-4 hover:bg-slate-50/70 dark:hover:bg-slate-700/30 transition-colors">
+                                {CONTACTS.map((c) => (
+                                    <div key={c.name} className="flex items-center gap-3 sm:gap-4 px-4 sm:px-5 py-3 sm:py-4 hover:bg-slate-50/70 dark:hover:bg-slate-700/30 transition-colors">
                                         <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-secondary/10 dark:bg-secondary/20 flex items-center justify-center text-xs sm:text-sm font-bold text-primary dark:text-slate-200 flex-shrink-0">
                                             {c.name.split(' ').slice(0, 2).map(n => n[0]).join('')}
                                         </div>
@@ -870,8 +870,8 @@ export default function FirefightingPage() {
                                     ["Termination", "3 months written notice by either party"],
                                     ["Signed by MB", "Nouf AlHajri — Asst. Commercial Manager"],
                                     ["Signed by BEC", "Sujith Kumar Rao — Authorized Signatory"],
-                                ].map(([label, value], i) => (
-                                    <div key={i} className="py-2 border-b border-slate-50 dark:border-slate-700/50">
+                                ].map(([label, value]) => (
+                                    <div key={label} className="py-2 border-b border-slate-50 dark:border-slate-700/50">
                                         <p className="text-[10px] uppercase text-slate-400 font-semibold">{label}</p>
                                         <p className="text-sm text-slate-900 dark:text-slate-100 font-medium">{value}</p>
                                     </div>
@@ -892,8 +892,8 @@ export default function FirefightingPage() {
                                     { p: "P2 Urgent", time: "8 Hours", desc: "Minor leak, panel malfunction, abnormal pump noise", color: "border-l-amber-500 bg-amber-50 dark:bg-amber-900/20" },
                                     { p: "P3 Normal", time: "24 Hours", desc: "Extinguisher refilling, general maintenance", color: "border-l-blue-500 bg-blue-50 dark:bg-blue-900/20" },
                                     { p: "P4 PPM", time: "Per schedule", desc: "Scheduled preventive maintenance", color: "border-l-slate-400 bg-slate-50 dark:bg-slate-800/50" },
-                                ].map((s, i) => (
-                                    <div key={i} className={cn("border-l-4 rounded-lg px-4 py-3", s.color)}>
+                                ].map((s) => (
+                                    <div key={s.p} className={cn("border-l-4 rounded-lg px-4 py-3", s.color)}>
                                         <p className="text-xs font-bold text-slate-800 dark:text-slate-200">{s.p}</p>
                                         <p className="text-xl font-bold text-slate-900 dark:text-slate-100 mt-1">{s.time}</p>
                                         <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">{s.desc}</p>
@@ -922,8 +922,8 @@ export default function FirefightingPage() {
                                     { label: "Diesel Pumps", value: "2", sub: "500 GPM + 50 GPM" },
                                     { label: "Jockey Pump", value: "1", sub: "13.5 kW NAFFCO" },
                                     { label: "Total Pump Make", value: "NAFFCO", sub: "All 5 pumps" },
-                                ].map((eq, i) => (
-                                    <div key={i} className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg text-center">
+                                ].map((eq) => (
+                                    <div key={eq.label} className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg text-center">
                                         <p className="text-xl font-bold text-slate-900 dark:text-slate-100">{eq.value}</p>
                                         <p className="text-[10px] text-slate-600 dark:text-slate-400 font-semibold uppercase">{eq.label}</p>
                                         <p className="text-[9px] text-slate-400">{eq.sub}</p>
@@ -943,8 +943,8 @@ export default function FirefightingPage() {
                                 ["Owner's property (contractor negligence)", "RO 100,000"],
                                 ["Third-party property liability", "RO 250,000"],
                                 ["Workmen's compensation", "Covered under open policy"],
-                            ].map(([coverage, limit], i) => (
-                                <div key={i} className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-0.5 sm:gap-4 py-2 border-b border-slate-50 dark:border-slate-700/50 last:border-0">
+                            ].map(([coverage, limit]) => (
+                                <div key={coverage} className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-0.5 sm:gap-4 py-2 border-b border-slate-50 dark:border-slate-700/50 last:border-0">
                                     <span className="text-sm text-slate-600 dark:text-slate-400">{coverage}</span>
                                     <span className="text-sm font-bold text-slate-900 dark:text-slate-100 flex-shrink-0">{limit}</span>
                                 </div>
@@ -991,8 +991,8 @@ export default function FirefightingPage() {
                                             ["Drafted", "Aug 2024 · Reviewed by Shireen AlHabib (General Counsel)"],
                                             ["Signed/Renewed", "Feb 2026 · Distributed by Siva Kumar"],
                                             ["Revised", "11 Mar 2026"],
-                                        ].map(([label, value], i) => (
-                                            <div key={i}>
+                                        ].map(([label, value]) => (
+                                            <div key={label}>
                                                 <p className="text-[10px] uppercase text-slate-400 font-semibold">{label}</p>
                                                 <p className="text-xs text-slate-900 dark:text-slate-100">{value}</p>
                                             </div>
@@ -1014,8 +1014,8 @@ export default function FirefightingPage() {
                                             ["Drafted", "Aug 2024 · Reviewed by Shireen AlHabib (General Counsel)"],
                                             ["Signed/Renewed", "Feb 2026 · Distributed by Siva Kumar"],
                                             ["Revised", "11 Mar 2026"],
-                                        ].map(([label, value], i) => (
-                                            <div key={i}>
+                                        ].map(([label, value]) => (
+                                            <div key={label}>
                                                 <p className="text-[10px] uppercase text-slate-400 font-semibold">{label}</p>
                                                 <p className="text-xs text-slate-900 dark:text-slate-100">{value}</p>
                                             </div>

@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { LucideIcon } from "lucide-react";
+import { useCallback, useRef } from "react";
 
 interface TabItem {
     key: string;
@@ -18,6 +19,28 @@ interface TabNavigationProps {
 }
 
 export function TabNavigation({ tabs, activeTab, onTabChange, className, variant = "primary" }: TabNavigationProps) {
+    const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
+
+    // ARIA tabs keyboard pattern: Arrow keys move focus and activate tabs
+    const handleKeyDown = useCallback((e: React.KeyboardEvent, currentIndex: number) => {
+        let nextIndex: number | null = null;
+        if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+            nextIndex = (currentIndex + 1) % tabs.length;
+        } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+            nextIndex = (currentIndex - 1 + tabs.length) % tabs.length;
+        } else if (e.key === 'Home') {
+            nextIndex = 0;
+        } else if (e.key === 'End') {
+            nextIndex = tabs.length - 1;
+        }
+
+        if (nextIndex !== null) {
+            e.preventDefault();
+            onTabChange(tabs[nextIndex].key);
+            tabRefs.current[nextIndex]?.focus();
+        }
+    }, [tabs, onTabChange]);
+
     return (
         <div className={cn("w-full max-w-full", className)}>
             {/* Visual container wrapper */}
@@ -31,7 +54,7 @@ export function TabNavigation({ tabs, activeTab, onTabChange, className, variant
                 role="tablist"
                 aria-label="Navigation tabs"
             >
-                {tabs.map((tab) => {
+                {tabs.map((tab, index) => {
                     const isActive = activeTab === tab.key;
 
                     if (variant === "secondary") {
@@ -39,13 +62,16 @@ export function TabNavigation({ tabs, activeTab, onTabChange, className, variant
                         return (
                             <button
                                 key={tab.key}
+                                id={`tab-${tab.key}`}
+                                ref={(el) => { tabRefs.current[index] = el; }}
                                 onClick={() => onTabChange(tab.key)}
+                                onKeyDown={(e) => handleKeyDown(e, index)}
                                 role="tab"
                                 aria-selected={isActive}
                                 aria-controls={`panel-${tab.key}`}
                                 tabIndex={isActive ? 0 : -1}
                                 className={cn(
-                                    "relative flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2.5 sm:py-3 rounded-lg text-xs sm:text-sm font-medium whitespace-nowrap",
+                                    "relative flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2.5 sm:py-3 min-h-[44px] sm:min-h-0 rounded-lg text-xs sm:text-sm font-medium whitespace-nowrap",
                                     "transition-colors duration-200 ease-out",
                                     "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-1",
                                     isActive
@@ -86,13 +112,16 @@ export function TabNavigation({ tabs, activeTab, onTabChange, className, variant
                     return (
                         <button
                             key={tab.key}
+                            id={`tab-${tab.key}`}
+                            ref={(el) => { tabRefs.current[index] = el; }}
                             onClick={() => onTabChange(tab.key)}
+                            onKeyDown={(e) => handleKeyDown(e, index)}
                             role="tab"
                             aria-selected={isActive}
                             aria-controls={`panel-${tab.key}`}
                             tabIndex={isActive ? 0 : -1}
                             className={cn(
-                                "relative flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2.5 sm:py-3 rounded-lg text-xs sm:text-sm font-medium whitespace-nowrap",
+                                "relative flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2.5 sm:py-3 min-h-[44px] sm:min-h-0 rounded-lg text-xs sm:text-sm font-medium whitespace-nowrap",
                                 "transition-colors duration-200 ease-out",
                                 "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-1",
                                 isActive

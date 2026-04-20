@@ -77,9 +77,9 @@ const TYPE_COLORS: Record<string, string> = {
     'Residential (Apart)': CHART_COLORS.gray,
     'MB_Common': CHART_COLORS.gray,
     'Building': CHART_COLORS.amber,
-    'Muscat Bay Community': '#00d2b3',
+    'Muscat Bay Community': 'var(--secondary)',
     'D_Building_Common': CHART_COLORS.brand,
-    'Un-Sold': '#f97316',
+    'Un-Sold': 'var(--status-stale)',
     'N/A': CHART_COLORS.gray,
 };
 
@@ -704,7 +704,7 @@ export default function WaterPage() {
 
             {/* Monthly Dashboard View */}
             {dashboardView === 'monthly' && (
-                <div className="space-y-6 motion-safe:animate-in motion-safe:fade-in duration-200">
+                <div id="panel-monthly" role="tabpanel" aria-labelledby="tab-monthly" tabIndex={0} className="space-y-6 motion-safe:animate-in motion-safe:fade-in duration-200">
 
                     <TabNavigation
                         activeTab={monthlyTab}
@@ -833,7 +833,7 @@ export default function WaterPage() {
 
                     {/* Overview Tab */}
                     {monthlyTab === 'overview' && (
-                        <div className="space-y-6">
+                        <div id="panel-overview" role="tabpanel" aria-labelledby="tab-overview" tabIndex={0} className="space-y-6">
                             <StatsGrid stats={overviewStats} />
                             <StatsGrid stats={lossStats} />
 
@@ -843,7 +843,7 @@ export default function WaterPage() {
                                     <CardTitle className="text-base sm:text-lg">Water System A-Values Distribution</CardTitle>
                                 </CardHeader>
                                 <CardContent className="p-4 sm:p-5 md:p-6 pt-0">
-                                    <div className="h-[250px] sm:h-[300px] md:h-[350px] w-full">
+                                    <div role="img" aria-label="Water System A-Values Distribution: area chart showing monthly trends for A1 main source input, A2 zone distribution, and A3 individual consumption" className="h-[250px] sm:h-[300px] md:h-[350px] w-full">
                                         <ResponsiveContainer width="100%" height="100%">
                                             <AreaChart data={monthlyTrends} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                                                 <defs>
@@ -875,7 +875,7 @@ export default function WaterPage() {
                                     <CardTitle className="text-base sm:text-lg">Water Loss Analysis</CardTitle>
                                 </CardHeader>
                                 <CardContent className="p-4 sm:p-5 md:p-6 pt-0">
-                                    <div className="h-[200px] sm:h-[250px] md:h-[300px] w-full">
+                                    <div role="img" aria-label="Water Loss Analysis: area chart showing total system loss, stage 1 loss (L1−L2), and stage 2 loss (L2−L3) trends over time in cubic meters" className="h-[200px] sm:h-[250px] md:h-[300px] w-full">
                                         <ResponsiveContainer width="100%" height="100%">
                                             <AreaChart data={monthlyTrends} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                                                 <defs>
@@ -901,7 +901,7 @@ export default function WaterPage() {
 
                     {/* Zone Analysis Tab */}
                     {monthlyTab === 'zone' && (
-                        <div className="space-y-6">
+                        <div id="panel-zone" role="tabpanel" aria-labelledby="tab-zone" tabIndex={0} className="space-y-6">
                             {/* Zone Heading */}
                             <div>
                                 <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">
@@ -964,7 +964,7 @@ export default function WaterPage() {
                                     <p className="text-xs sm:text-sm text-slate-500">{isDC ? 'Monthly comparison of L1 (Main Bulk) vs L2 + DC totals' : 'Monthly comparison of L2 (Bulk) vs L3 totals'}</p>
                                 </CardHeader>
                                 <CardContent className="p-4 sm:p-5 md:p-6 pt-0">
-                                    <div className="h-[200px] sm:h-[250px] md:h-[300px] w-full">
+                                    <div role="img" aria-label={isDC ? 'Main Bulk vs Distribution Trend: area chart comparing L1 main bulk input against L2 zone bulk plus direct connections' : 'Zone Consumption Trend: area chart comparing zone bulk meter readings against individual L3 meter totals and loss'} className="h-[200px] sm:h-[250px] md:h-[300px] w-full">
                                         <ResponsiveContainer width="100%" height="100%">
                                             <AreaChart data={zoneConsumptionTrend}>
                                                 <defs>
@@ -1019,7 +1019,7 @@ export default function WaterPage() {
 
                     {/* Consumption by Type Tab */}
                     {monthlyTab === 'consumption' && (
-                        <div className="space-y-5">
+                        <div id="panel-consumption" role="tabpanel" aria-labelledby="tab-consumption" tabIndex={0} className="space-y-5">
 
                             {/* ── Main Chart ── */}
                             <Card className="card-elevated">
@@ -1044,7 +1044,7 @@ export default function WaterPage() {
                                     </div>
                                 </CardHeader>
                                 <CardContent className="p-4 sm:p-5 md:p-6 pt-0">
-                                    <div className="h-[280px] sm:h-[320px] md:h-[360px] w-full">
+                                    <div role="img" aria-label="Consumption by Type: horizontal bar chart ranking meter types by total water usage in cubic meters" className="h-[280px] sm:h-[320px] md:h-[360px] w-full">
                                         <ResponsiveContainer width="100%" height="100%">
                                             <BarChart
                                                 data={consumptionChartData}
@@ -1112,7 +1112,7 @@ export default function WaterPage() {
                                             <CardTitle className="text-sm sm:text-base">Monthly Trend</CardTitle>
                                         </CardHeader>
                                         <CardContent className="p-4 sm:p-5 md:p-6 pt-0">
-                                            <div className="h-[220px] sm:h-[260px] w-full">
+                                            <div role="img" aria-label={`Monthly consumption trend for ${activeDetailType || 'selected meter type'}: area chart showing cubic meter usage per month`} className="h-[220px] sm:h-[260px] w-full">
                                                 <ResponsiveContainer width="100%" height="100%">
                                                     <AreaChart data={typeTrendData} margin={{ left: 10, right: 10, top: 5, bottom: 5 }}>
                                                         <defs>
@@ -1198,7 +1198,7 @@ export default function WaterPage() {
 
                     {/* Database Tab - Airtable Embed */}
                     {monthlyTab === 'database' && (
-                        <div className="motion-safe:animate-in motion-safe:fade-in duration-200">
+                        <div id="panel-database" role="tabpanel" aria-labelledby="tab-database" tabIndex={0} className="motion-safe:animate-in motion-safe:fade-in duration-200">
                             <Card className="card-elevated overflow-hidden">
                                 <CardContent className="p-0">
                                     <iframe
@@ -1219,7 +1219,7 @@ export default function WaterPage() {
 
             {/* Daily Dashboard View */}
             {dashboardView === 'daily' && (
-                <div className="space-y-6 motion-safe:animate-in motion-safe:fade-in duration-200">
+                <div id="panel-daily" role="tabpanel" aria-labelledby="tab-daily" tabIndex={0} className="space-y-6 motion-safe:animate-in motion-safe:fade-in duration-200">
                     <DailyWaterReport />
                 </div>
             )}

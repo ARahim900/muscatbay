@@ -23,7 +23,7 @@ export function RecurringTab({ issues }: RecurringTabProps) {
       {issues.map((issue) => (
         <Card
           key={issue.id}
-          className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
+          className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-[transform,box-shadow] duration-200"
         >
           <CardContent className="p-4 sm:p-5">
             <div className="flex items-start gap-4">

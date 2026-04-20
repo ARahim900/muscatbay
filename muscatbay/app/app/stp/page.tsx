@@ -666,7 +666,7 @@ export default function STPPage() {
             />
 
             {activeTab === "dashboard" && (
-                <div className="space-y-6 motion-safe:animate-in motion-safe:fade-in duration-200">
+                <div id="panel-dashboard" role="tabpanel" aria-labelledby="tab-dashboard" tabIndex={0} className="space-y-6 motion-safe:animate-in motion-safe:fade-in duration-200">
                     {/* Date Range Filter Card */}
                     {allMonths.length > 0 && (
                         <Card className="card-elevated">
@@ -736,7 +736,7 @@ export default function STPPage() {
                             </div>
                         </CardHeader>
                         <CardContent>
-                            <div className="h-[350px]">
+                            <div role="img" aria-label="Water treatment volumes area chart showing sewage inlet versus TSE reuse output in cubic meters over the selected period" className="h-[350px]">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <AreaChart data={volumeChartView === 'daily' ? dailyChartData : monthlyChartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                                         <defs>
@@ -782,7 +782,7 @@ export default function STPPage() {
                                 </div>
                             </CardHeader>
                             <CardContent>
-                                <div className="h-[280px]">
+                                <div role="img" aria-label="Economic impact bar chart showing income and savings from TSE reuse in Omani Rials over the selected period" className="h-[280px]">
                                     <ResponsiveContainer width="100%" height="100%">
                                         <BarChart data={economicChartView === 'daily' ? dailyChartData : monthlyChartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                                             <XAxis dataKey="month" className="text-xs" tick={{ fontSize: 10, fill: "var(--chart-axis)" }} axisLine={false} tickLine={false} dy={10} interval={economicChartView === 'daily' && dailyChartData.length > 15 ? Math.ceil(dailyChartData.length / 12) - 1 : 0} />
@@ -816,7 +816,7 @@ export default function STPPage() {
                                 </div>
                             </CardHeader>
                             <CardContent>
-                                <div className="h-[280px]">
+                                <div role="img" aria-label="Tanker operations line chart showing number of tanker trips over the selected period" className="h-[280px]">
                                     <ResponsiveContainer width="100%" height="100%">
                                         <LineChart data={tankerChartView === 'daily' ? dailyChartData : monthlyChartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                                             <XAxis dataKey="month" className="text-xs" tick={{ fontSize: 10, fill: "var(--chart-axis)" }} axisLine={false} tickLine={false} dy={10} interval={tankerChartView === 'daily' && dailyChartData.length > 15 ? Math.ceil(dailyChartData.length / 12) - 1 : 0} />
@@ -971,7 +971,7 @@ export default function STPPage() {
                                         const efficiencyColor = efficiency >= 95 ? "text-mb-success" : efficiency >= 90 ? "text-mb-warning" : "text-mb-danger";
 
                                         return (
-                                            <tr key={op.id} className="border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-[#00d2b3]/5 dark:hover:bg-slate-700/40 transition-colors even:bg-slate-50/40 dark:even:bg-slate-800/20">
+                                            <tr key={op.id} className="border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-secondary/5 dark:hover:bg-slate-700/40 transition-colors even:bg-slate-50/40 dark:even:bg-slate-800/20">
                                                 <td className="py-4 px-5 font-semibold text-slate-600 dark:text-slate-400">{format(new Date(op.date), "dd/MM/yyyy")}</td>
                                                 <td className="py-4 px-5 text-right font-mono text-sm text-primary font-semibold">{op.inlet_sewage.toLocaleString('en-US', { maximumFractionDigits: 1 })}</td>
                                                 <td className="py-4 px-5 text-right font-mono text-sm text-blue-600 dark:text-blue-400 font-semibold">{op.tse_for_irrigation.toLocaleString('en-US', { maximumFractionDigits: 1 })}</td>
@@ -1016,6 +1016,7 @@ export default function STPPage() {
             )}
 
             {activeTab === "details" && (
+                <div id="panel-details" role="tabpanel" aria-labelledby="tab-details" tabIndex={0}>
                 <Card className="h-[calc(100vh-12rem)] min-h-[400px] max-h-[800px] flex flex-col motion-safe:animate-in motion-safe:fade-in duration-200">
                     <CardHeader>
                         <div className="flex items-center gap-4">
@@ -1038,6 +1039,7 @@ export default function STPPage() {
                         />
                     </CardContent>
                 </Card>
+                </div>
             )}
         </div>
     );

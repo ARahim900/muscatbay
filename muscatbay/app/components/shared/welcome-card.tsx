@@ -56,7 +56,7 @@ export function WelcomeCard({ userName, className }: WelcomeCardProps) {
                         <Link
                             key={feature.href}
                             href={feature.href}
-                            className="group flex flex-col gap-3 p-4 rounded-xl border border-slate-100 dark:border-slate-800 hover:border-slate-200 dark:hover:border-slate-700 hover:shadow-sm transition-all duration-200"
+                            className="group flex flex-col gap-3 p-4 rounded-xl border border-slate-100 dark:border-slate-800 hover:border-slate-200 dark:hover:border-slate-700 hover:shadow-sm transition-[border-color,box-shadow] duration-200"
                         >
                             <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center", feature.bgColor)}>
                                 <Icon className={cn("w-5 h-5", feature.color)} />
@@ -64,7 +64,7 @@ export function WelcomeCard({ userName, className }: WelcomeCardProps) {
                             <div>
                                 <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-1">
                                     {feature.label}
-                                    <ArrowRight className="w-3 h-3 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200" />
+                                    <ArrowRight className="w-3 h-3 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-[transform,opacity] duration-200" />
                                 </p>
                                 <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5 line-clamp-1">
                                     {feature.description}

@@ -84,7 +84,7 @@ export function EquipmentTab({ equipment }: EquipmentTabProps) {
             return (
               <Card
                 key={e.id}
-                className={`bg-white dark:bg-slate-900 rounded-xl shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 ${
+                className={`bg-white dark:bg-slate-900 rounded-xl shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-[transform,box-shadow] duration-200 ${
                   isNotOp
                     ? "border-2 border-red-300 dark:border-red-700"
                     : "border border-slate-200 dark:border-slate-800"

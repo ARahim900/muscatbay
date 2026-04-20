@@ -51,7 +51,7 @@ export function ZoneTabs({ zones, selectedZone, onZoneChange }: ZoneTabsProps) {
                         tabIndex={isSelected ? 0 : -1}
                         onClick={() => onZoneChange(zone.code)}
                         onKeyDown={(e) => handleKeyDown(e, index)}
-                        className={`px-3 sm:px-4 py-2.5 sm:py-2 rounded-lg text-sm font-medium transition-all duration-200 focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:outline-none ${isSelected
+                        className={`px-3 sm:px-4 py-2.5 sm:py-2 rounded-lg text-sm font-medium transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:outline-none ${isSelected
                                 ? 'bg-secondary text-white shadow-md'
                                 : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
                             }`}

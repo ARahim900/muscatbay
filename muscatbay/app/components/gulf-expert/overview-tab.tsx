@@ -338,8 +338,8 @@ export function OverviewTab({ data }: OverviewTabProps) {
                 detail: "Work completed Apr 2025 (OMR 446.250). PO stopped Nov 2025 (CIF back-charge to Jumeirah). CFO approved payment 9 Nov. Nouf requested PR revision with valid 2026 proposal (Jan 2026).",
                 status: "PR Revision Needed",
               },
-            ].map((a, i) => (
-              <div key={i} className="flex gap-3 p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/50">
+            ].map((a) => (
+              <div key={a.item} className="flex gap-3 p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/50">
                 <AlertCircle className="h-4 w-4 text-amber-500 flex-shrink-0 mt-0.5" />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
