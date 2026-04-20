@@ -2,16 +2,18 @@
 
 import { cn } from '@/lib/utils';
 
+export type BadgeColor = 'green' | 'red' | 'orange' | 'blue' | 'purple' | 'slate' | 'amber' | 'cyan' | 'emerald' | 'sage';
+
 interface StatusBadgeProps {
     label: string;
-    color?: 'green' | 'red' | 'orange' | 'blue' | 'purple' | 'slate' | 'amber' | 'cyan' | 'emerald' | 'sage';
+    color?: BadgeColor;
     className?: string;
 }
 
 // Colors sourced from --badge-* tokens in globals.css.
 // Opacity modifiers (e.g. /20) vary per mode so explicit dark: variants are kept;
 // the *-fg variables flip automatically via the .dark block in globals.css.
-const DOT_COLORS: Record<string, string> = {
+export const DOT_COLORS: Record<string, string> = {
     green:   'bg-badge-green',
     emerald: 'bg-badge-green',
     red:     'bg-badge-red',

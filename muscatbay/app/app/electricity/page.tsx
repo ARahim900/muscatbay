@@ -10,8 +10,9 @@ import { StatsGridSkeleton, ChartSkeleton, Skeleton } from "@/components/shared/
 import { PageHeader } from "@/components/shared/page-header";
 import { DateRangePicker } from "@/components/water/date-range-picker";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { Zap, DollarSign, MapPin, TrendingUp, BarChart3, Database, Search, Download, X, Filter, LineChart } from "lucide-react";
-import { MultiSelectDropdown, SortIcon, TablePagination, ActiveFilterPills, TableToolbar, StatusBadge, type PageSizeOption } from "@/components/shared/data-table";
+import { MultiSelectDropdown, SortIcon, TablePagination, ActiveFilterPills, TableToolbar, StatusBadge, type BadgeColor, type PageSizeOption } from "@/components/shared/data-table";
 import { exportToCSV, getDateForFilename } from "@/lib/export-utils";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar, Cell, Legend, ReferenceLine, LineChart as RechartsLineChart, Line } from "recharts";
 import { LiquidTooltip } from "@/components/charts/liquid-tooltip";
@@ -57,6 +58,16 @@ export default function ElectricityPage() {
     const [dataSource, setDataSource] = useState<"supabase" | "mock">("mock");
     const [debugError, setDebugError] = useState<string | null>(null);
     const [readingsCount, setReadingsCount] = useState<number>(0);
+    const getMeterTypeColor = (type: string): BadgeColor => {
+        const t = type.toLowerCase();
+        if (t.includes('main') || t.includes('incomer') || t.includes('bulk')) return 'blue';
+        if (t.includes('common') || t.includes('shared') || t.includes('service')) return 'cyan';
+        if (t.includes('sub')) return 'purple';
+        if (t.includes('emergency') || t.includes('fire')) return 'red';
+        if (t.includes('feeder') || t.includes('distribution')) return 'amber';
+        return 'slate';
+    };
+
     const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
     const [analysisType, setAnalysisType] = useState<string>("All");
     const [selectedMeter, setSelectedMeter] = useState<string>("All");
@@ -1161,63 +1172,62 @@ export default function ElectricityPage() {
                             </div>
                         </CardHeader>
                         <CardContent>
-                            <div className="overflow-auto max-h-[calc(100vh-20rem)] sm:max-h-[600px] rounded-xl border border-slate-200/80 dark:border-slate-700/80">
-                                <table className="w-full text-sm border-collapse">
-                                    <thead>
-                                        <tr className="bg-slate-50 dark:bg-slate-800/80">
-                                            <th className="text-left py-4 px-4 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 sticky left-0 bg-slate-50 dark:bg-slate-800/80 z-20 min-w-[180px]">Name</th>
-                                            <th className="text-left py-4 px-4 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 min-w-[100px]">Account #</th>
+                            <div className="overflow-auto max-h-[calc(100vh-20rem)] sm:max-h-[600px] rounded-xl">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead className="sticky left-0 bg-slate-50 dark:bg-slate-800/80 z-20 min-w-[180px]">Name</TableHead>
+                                            <TableHead className="min-w-[100px]">Account #</TableHead>
                                             {analysisData.selectedMonths.map(month => (
-                                                <th key={month} className="text-right py-4 px-3 font-semibold uppercase tracking-wide text-xs sm:text-sm text-slate-600 dark:text-slate-300 border-b-2 border-slate-200 dark:border-slate-700 min-w-[75px] whitespace-nowrap">{month}</th>
+                                                <TableHead key={month} className="text-right min-w-[75px]">{month}</TableHead>
                                             ))}
-                                            <th className="text-right py-4 px-4 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 border-l border-slate-200 dark:border-slate-700 min-w-[90px]">Total (kWh)</th>
-                                            <th className="text-right py-4 px-4 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 min-w-[90px]">Cost (OMR)</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
+                                            <TableHead className="text-right border-l border-slate-200 dark:border-slate-700 min-w-[90px]">Total (kWh)</TableHead>
+                                            <TableHead className="text-right min-w-[90px]">Cost (OMR)</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
                                         {analysisData.tableData.map((meter) => (
-                                            <tr key={meter.id} className="border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-secondary/5 dark:hover:bg-slate-700/40 transition-colors even:bg-slate-50/40 dark:even:bg-slate-800/20">
-                                                <td className="py-4 px-5 font-semibold text-slate-800 dark:text-slate-200 sticky left-0 bg-white dark:bg-slate-900 z-10">{meter.name}</td>
-                                                <td className="py-4 px-5 font-semibold text-slate-500 dark:text-slate-400 font-mono text-sm">{meter.account_number}</td>
+                                            <TableRow key={meter.id}>
+                                                <TableCell className="text-slate-800 dark:text-slate-200 sticky left-0 bg-white dark:bg-slate-900 z-10">{meter.name}</TableCell>
+                                                <TableCell className="text-slate-500 dark:text-slate-400 font-mono">{meter.account_number}</TableCell>
                                                 {analysisData.selectedMonths.map(month => {
                                                     const val = meter.monthlyReadings?.[month] || 0;
                                                     return (
-                                                        <td key={month} className="py-4 px-3 text-right font-mono font-semibold text-sm text-slate-700 dark:text-slate-300">
+                                                        <TableCell key={month} className="text-right font-mono">
                                                             {val > 0 ? val.toLocaleString('en-US', { maximumFractionDigits: 1 }) : <span className="text-slate-300 dark:text-slate-600">—</span>}
-                                                        </td>
+                                                        </TableCell>
                                                     );
                                                 })}
-                                                <td className="py-4 px-5 text-right font-mono text-sm font-semibold text-slate-800 dark:text-slate-200 border-l border-slate-100 dark:border-slate-800">
+                                                <TableCell className="text-right font-mono text-slate-800 dark:text-slate-200 border-l border-slate-100 dark:border-slate-800">
                                                     {meter.rangeConsumption.toLocaleString('en-US', { maximumFractionDigits: 1 })}
-                                                </td>
-                                                <td className="py-4 px-5 text-right font-mono text-sm font-semibold text-mb-success dark:text-mb-success-hover">
+                                                </TableCell>
+                                                <TableCell className="text-right font-mono text-mb-success dark:text-mb-success-hover">
                                                     {meter.rangeCost.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
-                                                </td>
-                                            </tr>
+                                                </TableCell>
+                                            </TableRow>
                                         ))}
-                                        {/* Totals row */}
                                         {analysisData.tableData.length > 1 && (
-                                            <tr className="bg-slate-50/80 dark:bg-slate-800/60 font-semibold">
-                                                <td className="py-4 px-5 text-slate-700 dark:text-slate-200 sticky left-0 bg-slate-50/80 dark:bg-slate-800/60 z-10">Total</td>
-                                                <td className="py-4 px-5"></td>
+                                            <TableRow className="bg-slate-50/80 dark:bg-slate-800/60">
+                                                <TableCell className="text-slate-800 dark:text-slate-200 sticky left-0 bg-slate-50/80 dark:bg-slate-800/60 z-10">Total</TableCell>
+                                                <TableCell />
                                                 {analysisData.selectedMonths.map(month => {
                                                     const monthTotal = analysisData.tableData.reduce((sum, m) => sum + (m.monthlyReadings?.[month] || 0), 0);
                                                     return (
-                                                        <td key={`total-${month}`} className="py-4 px-3 text-right font-mono text-sm text-slate-800 dark:text-slate-200">
+                                                        <TableCell key={`total-${month}`} className="text-right font-mono text-slate-800 dark:text-slate-200">
                                                             {monthTotal > 0 ? monthTotal.toLocaleString('en-US', { maximumFractionDigits: 0 }) : '—'}
-                                                        </td>
+                                                        </TableCell>
                                                     );
                                                 })}
-                                                <td className="py-4 px-5 text-right font-mono text-sm text-slate-800 dark:text-slate-200 border-l border-slate-200 dark:border-slate-700">
+                                                <TableCell className="text-right font-mono text-slate-800 dark:text-slate-200 border-l border-slate-200 dark:border-slate-700">
                                                     {analysisData.tableData.reduce((s, m) => s + m.rangeConsumption, 0).toLocaleString('en-US', { maximumFractionDigits: 0 })}
-                                                </td>
-                                                <td className="py-4 px-5 text-right font-mono text-sm text-mb-success dark:text-mb-success-hover">
+                                                </TableCell>
+                                                <TableCell className="text-right font-mono text-mb-success dark:text-mb-success-hover">
                                                     {analysisData.tableData.reduce((s, m) => s + m.rangeCost, 0).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
-                                                </td>
-                                            </tr>
+                                                </TableCell>
+                                            </TableRow>
                                         )}
-                                    </tbody>
-                                </table>
+                                    </TableBody>
+                                </Table>
                             </div>
                         </CardContent>
                     </Card>
@@ -1263,6 +1273,7 @@ export default function ElectricityPage() {
                                 options={allMeterTypes}
                                 selected={dbSelectedTypes}
                                 onChange={(s) => { setDbSelectedTypes(s); setDbCurrentPage(1); }}
+                                getOptionColor={getMeterTypeColor}
                             />
 
                             {dbHasActiveFilters && (
@@ -1324,60 +1335,58 @@ export default function ElectricityPage() {
                         ]} />
 
                         {/* Table */}
-                        <div className="overflow-x-auto rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900 shadow-[0_1px_3px_rgba(0,0,0,0.06),0_4px_16px_-4px_rgba(0,0,0,0.1)] dark:shadow-[0_1px_3px_rgba(0,0,0,0.2),0_4px_16px_-4px_rgba(0,0,0,0.3)]">
-                            <table className="w-full text-sm border-collapse">
-                                <thead>
-                                    <tr className="bg-slate-50 dark:bg-slate-800/80">
-                                        <th className="text-left py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors sticky left-0 bg-slate-50 dark:bg-slate-800/80 z-20 min-w-[200px]" onClick={() => handleDbSort('label')}>
-                                            <div className="flex items-center gap-1.5">Name <SortIcon field="label" currentSortField={dbSortField} currentSortDirection={dbSortDirection} /></div>
-                                        </th>
-                                        <th className="text-left py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors" onClick={() => handleDbSort('account')}>
-                                            <div className="flex items-center gap-1.5">Account # <SortIcon field="account" currentSortField={dbSortField} currentSortDirection={dbSortDirection} /></div>
-                                        </th>
-                                        <th className="text-left py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors" onClick={() => handleDbSort('type')}>
-                                            <div className="flex items-center gap-1.5">Type <SortIcon field="type" currentSortField={dbSortField} currentSortDirection={dbSortDirection} /></div>
-                                        </th>
-                                        {displayMonths.map(month => (
-                                            <th key={month} className="text-right py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors min-w-[90px] whitespace-nowrap" onClick={() => handleDbSort(month)}>
-                                                <div className="flex items-center justify-end gap-1.5">{month} <SortIcon field={month} currentSortField={dbSortField} currentSortDirection={dbSortDirection} /></div>
-                                            </th>
-                                        ))}
-                                        <th className="text-right py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 border-l border-slate-200 dark:border-slate-700 min-w-[100px]">Total (kWh)</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {dbPaginatedMeters.map((meter) => {
-                                        const sum = Object.values(meter.readings).reduce((a, b) => a + b, 0);
-                                        return (
-                                            <tr key={meter.id} className="border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-secondary/5 dark:hover:bg-slate-700/40 transition-colors even:bg-slate-50/40 dark:even:bg-slate-800/20">
-                                                <td className="py-4 px-5 font-semibold text-slate-800 dark:text-slate-200 sticky left-0 bg-white dark:bg-slate-900 z-10">{meter.name}</td>
-                                                <td className="py-4 px-5 font-semibold text-slate-600 dark:text-slate-400 font-mono text-sm">{meter.account_number}</td>
-                                                <td className="py-4 px-5">
-                                                    <StatusBadge label={meter.type} color="blue" />
-                                                </td>
-                                                {displayMonths.map(month => {
-                                                    const val = meter.readings[month] || 0;
-                                                    const anomaly = getAnomalyClass(val, meter);
-                                                    return (
-                                                        <td key={month} className={`py-4 px-5 text-right font-mono font-semibold text-sm ${anomaly || 'text-slate-700 dark:text-slate-300'}`}>
-                                                            {val > 0 ? val.toLocaleString('en-US', { maximumFractionDigits: 1 }) : <span className="text-slate-300 dark:text-slate-600">—</span>}
-                                                        </td>
-                                                    );
-                                                })}
-                                                <td className="py-4 px-5 text-right font-mono text-sm font-semibold text-slate-800 dark:text-slate-200 border-l border-slate-100 dark:border-slate-800">{sum.toLocaleString('en-US', { maximumFractionDigits: 1 })}</td>
-                                            </tr>
-                                        );
-                                    })}
-                                    {dbFilteredMeters.length === 0 && (
-                                        <tr>
-                                            <td colSpan={4 + displayMonths.length} className="py-12 text-center text-slate-500 dark:text-slate-400">
-                                                No meters found matching your filters.
-                                            </td>
-                                        </tr>
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead className="cursor-pointer sticky left-0 bg-slate-50 dark:bg-slate-800/80 z-20 min-w-[200px]" onClick={() => handleDbSort('label')}>
+                                        <div className="flex items-center gap-1.5">Name <SortIcon field="label" currentSortField={dbSortField} currentSortDirection={dbSortDirection} /></div>
+                                    </TableHead>
+                                    <TableHead className="cursor-pointer" onClick={() => handleDbSort('account')}>
+                                        <div className="flex items-center gap-1.5">Account # <SortIcon field="account" currentSortField={dbSortField} currentSortDirection={dbSortDirection} /></div>
+                                    </TableHead>
+                                    <TableHead className="cursor-pointer" onClick={() => handleDbSort('type')}>
+                                        <div className="flex items-center gap-1.5">Type <SortIcon field="type" currentSortField={dbSortField} currentSortDirection={dbSortDirection} /></div>
+                                    </TableHead>
+                                    {displayMonths.map(month => (
+                                        <TableHead key={month} className="text-right cursor-pointer min-w-[90px]" onClick={() => handleDbSort(month)}>
+                                            <div className="flex items-center justify-end gap-1.5">{month} <SortIcon field={month} currentSortField={dbSortField} currentSortDirection={dbSortDirection} /></div>
+                                        </TableHead>
+                                    ))}
+                                    <TableHead className="text-right border-l border-slate-200 dark:border-slate-700 min-w-[100px]">Total (kWh)</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {dbPaginatedMeters.map((meter) => {
+                                    const sum = Object.values(meter.readings).reduce((a, b) => a + b, 0);
+                                    return (
+                                        <TableRow key={meter.id}>
+                                            <TableCell className="text-slate-800 dark:text-slate-200 sticky left-0 bg-white dark:bg-slate-900 z-10">{meter.name}</TableCell>
+                                            <TableCell className="text-slate-600 dark:text-slate-400 font-mono">{meter.account_number}</TableCell>
+                                            <TableCell>
+                                                <StatusBadge label={meter.type} color={getMeterTypeColor(meter.type)} />
+                                            </TableCell>
+                                            {displayMonths.map(month => {
+                                                const val = meter.readings[month] || 0;
+                                                const anomaly = getAnomalyClass(val, meter);
+                                                return (
+                                                    <TableCell key={month} className={`text-right font-mono ${anomaly || ''}`}>
+                                                        {val > 0 ? val.toLocaleString('en-US', { maximumFractionDigits: 1 }) : <span className="text-slate-300 dark:text-slate-600">—</span>}
+                                                    </TableCell>
+                                                );
+                                            })}
+                                            <TableCell className="text-right font-mono text-slate-800 dark:text-slate-200 border-l border-slate-100 dark:border-slate-800">{sum.toLocaleString('en-US', { maximumFractionDigits: 1 })}</TableCell>
+                                        </TableRow>
+                                    );
+                                })}
+                                {dbFilteredMeters.length === 0 && (
+                                    <TableRow>
+                                        <TableCell colSpan={4 + displayMonths.length} className="py-12 text-center text-slate-500 dark:text-slate-400">
+                                            No meters found matching your filters.
+                                        </TableCell>
+                                    </TableRow>
+                                )}
+                            </TableBody>
+                        </Table>
 
                         {/* Pagination */}
                         {dbFilteredMeters.length > 0 && (

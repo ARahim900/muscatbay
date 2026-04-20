@@ -24,6 +24,7 @@ import {
 import {
     Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter
 } from "@/components/ui/dialog";
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { exportToCSV, getDateForFilename } from "@/lib/export-utils";
 import {
     MultiSelectDropdown, SortIcon, TablePagination, ActiveFilterPills,
@@ -502,6 +503,7 @@ export default function ContractorsPage() {
                             options={uniqueFlows}
                             selected={selectedFlows}
                             onChange={(s) => { setSelectedFlows(s); setCurrentPage(1); }}
+                            getOptionColor={getFlowDotColor}
                         />
 
                         {hasContractFilters && (
@@ -571,54 +573,54 @@ export default function ContractorsPage() {
                     </div>
 
                     {/* Desktop Table */}
-                    <div className="hidden md:block overflow-x-auto rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900 shadow-[0_1px_3px_rgba(0,0,0,0.06),0_4px_16px_-4px_rgba(0,0,0,0.1)] dark:shadow-[0_1px_3px_rgba(0,0,0,0.2),0_4px_16px_-4px_rgba(0,0,0,0.3)]">
-                        <table className="w-full text-sm border-collapse">
-                            <thead>
-                                <tr className="bg-slate-50 dark:bg-slate-800/80">
-                                    <th className="text-left py-4 px-4 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 w-8">#</th>
-                                    <th className="text-left py-4 px-4 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors" onClick={() => handleSort('contractor')}>
+                    <div className="hidden md:block">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead className="w-8">#</TableHead>
+                                    <TableHead className="cursor-pointer" onClick={() => handleSort('contractor')}>
                                         <div className="flex items-center gap-1.5">Contractor <SortIcon field="contractor" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
-                                    </th>
-                                    <th className="text-left py-4 px-4 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 hidden lg:table-cell">Contract Ref</th>
-                                    <th className="text-left py-4 px-4 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors" onClick={() => handleSort('service')}>
+                                    </TableHead>
+                                    <TableHead className="hidden lg:table-cell">Contract Ref</TableHead>
+                                    <TableHead className="cursor-pointer" onClick={() => handleSort('service')}>
                                         <div className="flex items-center gap-1.5">Service <SortIcon field="service" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
-                                    </th>
-                                    <th className="text-left py-4 px-4 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors" onClick={() => handleSort('flow')}>
+                                    </TableHead>
+                                    <TableHead className="cursor-pointer" onClick={() => handleSort('flow')}>
                                         <div className="flex items-center gap-1.5">Flow <SortIcon field="flow" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
-                                    </th>
-                                    <th className="text-center py-4 px-4 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors" onClick={() => handleSort('years')}>
+                                    </TableHead>
+                                    <TableHead className="text-center cursor-pointer" onClick={() => handleSort('years')}>
                                         <div className="flex items-center justify-center gap-1.5">Years <SortIcon field="years" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
-                                    </th>
-                                    <th className="text-right py-4 px-4 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors" onClick={() => handleSort('annual')}>
+                                    </TableHead>
+                                    <TableHead className="text-right cursor-pointer" onClick={() => handleSort('annual')}>
                                         <div className="flex items-center justify-end gap-1.5">Annual (OMR) <SortIcon field="annual" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
-                                    </th>
-                                    <th className="text-right py-4 px-4 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors" onClick={() => handleSort('total')}>
+                                    </TableHead>
+                                    <TableHead className="text-right cursor-pointer" onClick={() => handleSort('total')}>
                                         <div className="flex items-center justify-end gap-1.5">Total (OMR) <SortIcon field="total" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
-                                    </th>
-                                    <th className="text-center py-4 px-3 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 w-16">Doc</th>
-                                </tr>
-                            </thead>
-                            <tbody>
+                                    </TableHead>
+                                    <TableHead className="text-center w-16">Doc</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
                                 {paginatedContracts.map(c => (
-                                    <tr key={c.id} className="border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-secondary/5 dark:hover:bg-slate-700/40 transition-colors even:bg-slate-50/40 dark:even:bg-slate-800/20">
-                                        <td className="py-4 px-5 font-semibold text-sm text-slate-500">{c.id}</td>
-                                        <td className="py-4 px-5 font-semibold text-slate-800 dark:text-slate-200">
+                                    <TableRow key={c.id}>
+                                        <TableCell className="text-slate-500">{c.id}</TableCell>
+                                        <TableCell className="text-slate-800 dark:text-slate-200">
                                             {c.contractor}
                                             {c.note && <p className="text-xs text-slate-400 mt-0.5 max-w-[200px] truncate" title={c.note}>{c.note}</p>}
-                                        </td>
-                                        <td className="py-4 px-5 font-semibold text-sm text-slate-500 dark:text-slate-400 hidden lg:table-cell font-mono">{c.contract_ref || '-'}</td>
-                                        <td className="py-4 px-5 font-semibold text-sm text-slate-600 dark:text-slate-400">{c.service || '-'}</td>
-                                        <td className="py-4 px-5">
+                                        </TableCell>
+                                        <TableCell className="text-slate-500 dark:text-slate-400 hidden lg:table-cell font-mono">{c.contract_ref || '-'}</TableCell>
+                                        <TableCell className="text-slate-600 dark:text-slate-400">{c.service || '-'}</TableCell>
+                                        <TableCell>
                                             <StatusBadge label={c.flow} color={getFlowDotColor(c.flow)} />
-                                        </td>
-                                        <td className="py-4 px-5 font-semibold text-center text-sm text-slate-600 dark:text-slate-300">{c.contract_years ?? '-'}</td>
-                                        <td className="py-4 px-5 font-semibold text-right font-mono text-sm text-slate-700 dark:text-slate-300">
+                                        </TableCell>
+                                        <TableCell className="text-center text-slate-600 dark:text-slate-300">{c.contract_years ?? '-'}</TableCell>
+                                        <TableCell className="text-right font-mono">
                                             {c.annual_value_omr ? fmtOMR(c.annual_value_omr) : <span className="text-slate-400 italic">{c.rate_note || 'Variable'}</span>}
-                                        </td>
-                                        <td className="py-4 px-5 text-right font-mono text-sm font-semibold text-primary">
+                                        </TableCell>
+                                        <TableCell className="text-right font-mono text-primary">
                                             {c.total_value_omr ? fmtOMR(c.total_value_omr) : <span className="text-slate-400 italic font-normal">Variable</span>}
-                                        </td>
-                                        <td className="py-4 px-3 text-center">
+                                        </TableCell>
+                                        <TableCell className="text-center px-3">
                                             <button
                                                 onClick={() => openPdfModal(c.id, c.contractor, c.contract_ref || '', c.contract_pdf_url)}
                                                 title={c.contract_pdf_url ? "View Contract PDF" : "Add PDF link"}
@@ -630,18 +632,20 @@ export default function ContractorsPage() {
                                             >
                                                 {c.contract_pdf_url ? <FileText className="w-4 h-4" /> : <Link className="w-4 h-4" />}
                                             </button>
-                                        </td>
-                                    </tr>
+                                        </TableCell>
+                                    </TableRow>
                                 ))}
                                 {filteredContracts.length === 0 && (
-                                    <tr><td colSpan={9}>
-                                        <EmptyState variant={hasContractFilters ? "filter-empty" : "no-data"}
-                                            title={hasContractFilters ? "No contracts match" : "No contracts yet"}
-                                            description="Contracts will appear once added." />
-                                    </td></tr>
+                                    <TableRow>
+                                        <TableCell colSpan={9}>
+                                            <EmptyState variant={hasContractFilters ? "filter-empty" : "no-data"}
+                                                title={hasContractFilters ? "No contracts match" : "No contracts yet"}
+                                                description="Contracts will appear once added." />
+                                        </TableCell>
+                                    </TableRow>
                                 )}
-                            </tbody>
-                        </table>
+                            </TableBody>
+                        </Table>
                     </div>
 
                     {filteredContracts.length > 0 && (
@@ -782,7 +786,8 @@ export default function ContractorsPage() {
                                 className="pl-10 pr-4 py-2 w-full rounded-lg border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40 shadow-sm transition-shadow" />
                         </div>
                         <MultiSelectDropdown label="Status" options={uniqueStatuses} selected={selectedStatuses}
-                            onChange={(s) => { setSelectedStatuses(s); setTrackerPage(1); }} />
+                            onChange={(s) => { setSelectedStatuses(s); setTrackerPage(1); }}
+                            getOptionColor={getStatusDotColor} />
                         <MultiSelectDropdown label="Type" options={uniqueContractTypes} selected={selectedTypes}
                             onChange={(s) => { setSelectedTypes(s); setTrackerPage(1); }} />
                         {hasTrackerFilters && (
@@ -856,45 +861,45 @@ export default function ContractorsPage() {
                     </div>
 
                     {/* Desktop Table */}
-                    <div className="hidden md:block overflow-x-auto rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900 shadow-[0_1px_3px_rgba(0,0,0,0.06),0_4px_16px_-4px_rgba(0,0,0,0.1)] dark:shadow-[0_1px_3px_rgba(0,0,0,0.2),0_4px_16px_-4px_rgba(0,0,0,0.3)]">
-                        <table className="w-full text-sm border-collapse">
-                            <thead>
-                                <tr className="bg-slate-50 dark:bg-slate-800/80">
-                                    <th className="text-left py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors" onClick={() => handleTrackerSort('contractor')}>
+                    <div className="hidden md:block">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead className="cursor-pointer" onClick={() => handleTrackerSort('contractor')}>
                                         <div className="flex items-center gap-1.5">Contractor <SortIcon field="contractor" currentSortField={trackerSortField} currentSortDirection={trackerSortDir} /></div>
-                                    </th>
-                                    <th className="text-left py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors" onClick={() => handleTrackerSort('service')}>
+                                    </TableHead>
+                                    <TableHead className="cursor-pointer" onClick={() => handleTrackerSort('service')}>
                                         <div className="flex items-center gap-1.5">Service <SortIcon field="service" currentSortField={trackerSortField} currentSortDirection={trackerSortDir} /></div>
-                                    </th>
-                                    <th className="text-left py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors" onClick={() => handleTrackerSort('status')}>
+                                    </TableHead>
+                                    <TableHead className="cursor-pointer" onClick={() => handleTrackerSort('status')}>
                                         <div className="flex items-center gap-1.5">Status <SortIcon field="status" currentSortField={trackerSortField} currentSortDirection={trackerSortDir} /></div>
-                                    </th>
-                                    <th className="text-left py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700">Type</th>
-                                    <th className="text-left py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 hidden lg:table-cell">Start</th>
-                                    <th className="text-left py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 hidden lg:table-cell">End</th>
-                                    <th className="text-right py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors" onClick={() => handleTrackerSort('annual')}>
+                                    </TableHead>
+                                    <TableHead>Type</TableHead>
+                                    <TableHead className="hidden lg:table-cell">Start</TableHead>
+                                    <TableHead className="hidden lg:table-cell">End</TableHead>
+                                    <TableHead className="text-right cursor-pointer" onClick={() => handleTrackerSort('annual')}>
                                         <div className="flex items-center justify-end gap-1.5">Annual <SortIcon field="annual" currentSortField={trackerSortField} currentSortDirection={trackerSortDir} /></div>
-                                    </th>
-                                    <th className="text-center py-4 px-3 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 w-16">Doc</th>
-                                    <th className="text-left py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 hidden xl:table-cell">Renewal</th>
-                                    <th className="text-left py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 hidden xl:table-cell">Note</th>
-                                </tr>
-                            </thead>
-                            <tbody>
+                                    </TableHead>
+                                    <TableHead className="text-center w-16">Doc</TableHead>
+                                    <TableHead className="hidden xl:table-cell">Renewal</TableHead>
+                                    <TableHead className="hidden xl:table-cell">Note</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
                                 {paginatedTracker.map(c => (
-                                    <tr key={`${c.Contractor ?? ''}--${c["Service Provided"] ?? ''}`} className="border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-secondary/5 dark:hover:bg-slate-700/40 transition-colors even:bg-slate-50/40 dark:even:bg-slate-800/20">
-                                        <td className="py-4 px-5 font-semibold text-slate-800 dark:text-slate-200">{c.Contractor || '-'}</td>
-                                        <td className="py-4 px-5 font-semibold text-sm text-slate-600 dark:text-slate-400">{c["Service Provided"] || '-'}</td>
-                                        <td className="py-4 px-5"><StatusBadge label={c.Status || 'N/A'} color={getStatusDotColor(c.Status)} /></td>
-                                        <td className="py-4 px-5 font-semibold text-sm text-slate-500">{c["Contract Type"] || '-'}</td>
-                                        <td className="py-4 px-5 font-semibold text-sm text-slate-500 hidden lg:table-cell">
+                                    <TableRow key={`${c.Contractor ?? ''}--${c["Service Provided"] ?? ''}`}>
+                                        <TableCell className="text-slate-800 dark:text-slate-200">{c.Contractor || '-'}</TableCell>
+                                        <TableCell className="text-slate-600 dark:text-slate-400">{c["Service Provided"] || '-'}</TableCell>
+                                        <TableCell><StatusBadge label={c.Status || 'N/A'} color={getStatusDotColor(c.Status)} /></TableCell>
+                                        <TableCell className="text-slate-500">{c["Contract Type"] || '-'}</TableCell>
+                                        <TableCell className="text-slate-500 hidden lg:table-cell">
                                             {c["Start Date"] ? <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{c["Start Date"]}</span> : '-'}
-                                        </td>
-                                        <td className="py-4 px-5 font-semibold text-sm text-slate-500 hidden lg:table-cell">
+                                        </TableCell>
+                                        <TableCell className="text-slate-500 hidden lg:table-cell">
                                             {c["End Date"] ? <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{c["End Date"]}</span> : '-'}
-                                        </td>
-                                        <td className="py-4 px-5 text-right font-mono text-sm font-semibold text-primary">{c["Annual Value (OMR)"]?.toLocaleString('en-US', { maximumFractionDigits: 1 }) || '-'}</td>
-                                        <td className="py-4 px-3 text-center">
+                                        </TableCell>
+                                        <TableCell className="text-right font-mono text-primary">{c["Annual Value (OMR)"]?.toLocaleString('en-US', { maximumFractionDigits: 1 }) || '-'}</TableCell>
+                                        <TableCell className="text-center px-3">
                                             <button
                                                 onClick={() => openPdfModal(null, c.Contractor || '', c["Service Provided"] || '', c.contract_pdf_url)}
                                                 title={c.contract_pdf_url ? "View Contract PDF" : "No PDF uploaded"}
@@ -907,22 +912,24 @@ export default function ContractorsPage() {
                                             >
                                                 <FileText className="w-4 h-4" />
                                             </button>
-                                        </td>
-                                        <td className="py-4 px-5 font-semibold text-sm text-slate-600 dark:text-slate-400 hidden xl:table-cell">
+                                        </TableCell>
+                                        <TableCell className="text-slate-600 dark:text-slate-400 hidden xl:table-cell">
                                             {c["Renewal Plan"] ? <span className="flex items-center gap-1"><RefreshCw className="h-3 w-3 text-blue-500" />{c["Renewal Plan"]}</span> : '-'}
-                                        </td>
-                                        <td className="py-4 px-5 font-semibold text-sm text-slate-500 max-w-[200px] truncate hidden xl:table-cell" title={c.Note || ''}>{c.Note || '-'}</td>
-                                    </tr>
+                                        </TableCell>
+                                        <TableCell className="text-slate-500 max-w-[200px] truncate hidden xl:table-cell" title={c.Note || ''}>{c.Note || '-'}</TableCell>
+                                    </TableRow>
                                 ))}
                                 {filteredTracker.length === 0 && (
-                                    <tr><td colSpan={10}>
-                                        <EmptyState variant={hasTrackerFilters ? "filter-empty" : "no-data"}
-                                            title={hasTrackerFilters ? "No entries match" : "No tracker data"}
-                                            description="Adjust filters or add data." />
-                                    </td></tr>
+                                    <TableRow>
+                                        <TableCell colSpan={10}>
+                                            <EmptyState variant={hasTrackerFilters ? "filter-empty" : "no-data"}
+                                                title={hasTrackerFilters ? "No entries match" : "No tracker data"}
+                                                description="Adjust filters or add data." />
+                                        </TableCell>
+                                    </TableRow>
                                 )}
-                            </tbody>
-                        </table>
+                            </TableBody>
+                        </Table>
                     </div>
 
                     {filteredTracker.length > 0 && (

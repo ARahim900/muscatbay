@@ -25,7 +25,8 @@ import {
     Search,
     Download,
 } from "lucide-react";
-import { SortIcon, TablePagination, type PageSizeOption } from "@/components/shared/data-table";
+import { SortIcon, TablePagination, TableToolbar, StatusBadge, type BadgeColor, type PageSizeOption } from "@/components/shared/data-table";
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { exportToCSV, getDateForFilename } from "@/lib/export-utils";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, BarChart, Bar, LineChart, Line, Legend } from "recharts";
 import { LiquidTooltip } from "../../components/charts/liquid-tooltip";
@@ -845,7 +846,7 @@ export default function STPPage() {
                     {/* Daily Operations Log */}
                     <div className="space-y-4">
                         {/* Toolbar */}
-                        <div className="flex flex-wrap items-center gap-3 px-5 py-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm">
+                        <TableToolbar className="flex-wrap">
                             <div>
                                 <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200">Daily Operations Log</h3>
                                 <p className="text-sm text-slate-500 dark:text-slate-400">Detailed daily STP operation records</p>
@@ -886,7 +887,7 @@ export default function STPPage() {
                             <div className="text-sm text-slate-500 dark:text-slate-400 whitespace-nowrap">
                                 <span className="font-semibold text-slate-700 dark:text-slate-300">{dailyOperations.length}</span> records
                             </div>
-                        </div>
+                        </TableToolbar>
 
                         {/* Mobile card view */}
                         <div className="md:hidden space-y-3">
@@ -895,13 +896,13 @@ export default function STPPage() {
                                 const income = op.tanker_trips * TANKER_FEE;
                                 const savings = op.tse_for_irrigation * TSE_SAVING_RATE;
                                 const totalImpact = income + savings;
-                                const efficiencyColor = efficiency >= 95 ? "text-mb-success" : efficiency >= 90 ? "text-mb-warning" : "text-mb-danger";
+                                const efficiencyBadgeColor: BadgeColor = efficiency >= 95 ? 'green' : efficiency >= 90 ? 'amber' : 'red';
 
                                 return (
                                     <div key={op.id} className="rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900 p-4 shadow-sm space-y-3">
                                         <div className="flex items-center justify-between">
                                             <span className="text-sm font-medium text-slate-700 dark:text-slate-200">{format(new Date(op.date), "dd/MM/yyyy")}</span>
-                                            <span className={`text-sm font-mono font-semibold ${efficiencyColor}`}>{efficiency.toFixed(1)}%</span>
+                                            <StatusBadge label={`${efficiency.toFixed(1)}%`} color={efficiencyBadgeColor} />
                                         </div>
                                         <div className="grid grid-cols-2 gap-2 text-xs">
                                             <div className="space-y-0.5">
@@ -934,70 +935,74 @@ export default function STPPage() {
                         </div>
 
                         {/* Desktop table */}
-                        <div className="hidden md:block overflow-x-auto rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900 shadow-[0_1px_3px_rgba(0,0,0,0.06),0_4px_16px_-4px_rgba(0,0,0,0.1)] dark:shadow-[0_1px_3px_rgba(0,0,0,0.2),0_4px_16px_-4px_rgba(0,0,0,0.3)]">
-                            <table className="w-full text-sm border-collapse">
-                                <thead>
-                                    <tr className="bg-slate-50 dark:bg-slate-800/80">
-                                        <th className="text-left py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors" onClick={() => handleLogSort('date')}>
+                        <div className="hidden md:block">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead className="cursor-pointer" onClick={() => handleLogSort('date')}>
                                             <div className="flex items-center gap-1.5">Date <SortIcon field="date" currentSortField={logSortField} currentSortDirection={logSortDirection} /></div>
-                                        </th>
-                                        <th className="text-right py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors" onClick={() => handleLogSort('inlet')}>
+                                        </TableHead>
+                                        <TableHead className="text-right cursor-pointer" onClick={() => handleLogSort('inlet')}>
                                             <div className="flex items-center justify-end gap-1.5">Inlet (m³) <SortIcon field="inlet" currentSortField={logSortField} currentSortDirection={logSortDirection} /></div>
-                                        </th>
-                                        <th className="text-right py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors" onClick={() => handleLogSort('tse')}>
+                                        </TableHead>
+                                        <TableHead className="text-right cursor-pointer" onClick={() => handleLogSort('tse')}>
                                             <div className="flex items-center justify-end gap-1.5">TSE Output (m³) <SortIcon field="tse" currentSortField={logSortField} currentSortDirection={logSortDirection} /></div>
-                                        </th>
-                                        <th className="text-right py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors" onClick={() => handleLogSort('efficiency')}>
+                                        </TableHead>
+                                        <TableHead className="text-right cursor-pointer" onClick={() => handleLogSort('efficiency')}>
                                             <div className="flex items-center justify-end gap-1.5">Efficiency % <SortIcon field="efficiency" currentSortField={logSortField} currentSortDirection={logSortDirection} /></div>
-                                        </th>
-                                        <th className="text-right py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors" onClick={() => handleLogSort('trips')}>
+                                        </TableHead>
+                                        <TableHead className="text-right cursor-pointer" onClick={() => handleLogSort('trips')}>
                                             <div className="flex items-center justify-end gap-1.5">Tanker Trips <SortIcon field="trips" currentSortField={logSortField} currentSortDirection={logSortDirection} /></div>
-                                        </th>
-                                        <th className="text-right py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors" onClick={() => handleLogSort('income')}>
+                                        </TableHead>
+                                        <TableHead className="text-right cursor-pointer" onClick={() => handleLogSort('income')}>
                                             <div className="flex items-center justify-end gap-1.5">Income (OMR) <SortIcon field="income" currentSortField={logSortField} currentSortDirection={logSortDirection} /></div>
-                                        </th>
-                                        <th className="text-right py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors" onClick={() => handleLogSort('savings')}>
+                                        </TableHead>
+                                        <TableHead className="text-right cursor-pointer" onClick={() => handleLogSort('savings')}>
                                             <div className="flex items-center justify-end gap-1.5">Savings (OMR) <SortIcon field="savings" currentSortField={logSortField} currentSortDirection={logSortDirection} /></div>
-                                        </th>
-                                        <th className="text-right py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors" onClick={() => handleLogSort('total')}>
+                                        </TableHead>
+                                        <TableHead className="text-right cursor-pointer" onClick={() => handleLogSort('total')}>
                                             <div className="flex items-center justify-end gap-1.5">Total Impact (OMR) <SortIcon field="total" currentSortField={logSortField} currentSortDirection={logSortDirection} /></div>
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {paginatedDailyOperations.map((op, idx) => {
+                                        </TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {paginatedDailyOperations.map((op) => {
                                         const efficiency = op.inlet_sewage > 0 ? (op.tse_for_irrigation / op.inlet_sewage) * 100 : 0;
                                         const income = op.tanker_trips * TANKER_FEE;
                                         const savings = op.tse_for_irrigation * TSE_SAVING_RATE;
                                         const totalImpact = income + savings;
-                                        const efficiencyColor = efficiency >= 95 ? "text-mb-success" : efficiency >= 90 ? "text-mb-warning" : "text-mb-danger";
+                                        const efficiencyBadgeColor: BadgeColor = efficiency >= 95 ? 'green' : efficiency >= 90 ? 'amber' : 'red';
 
                                         return (
-                                            <tr key={op.id} className="border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-secondary/5 dark:hover:bg-slate-700/40 transition-colors even:bg-slate-50/40 dark:even:bg-slate-800/20">
-                                                <td className="py-4 px-5 font-semibold text-slate-600 dark:text-slate-400">{format(new Date(op.date), "dd/MM/yyyy")}</td>
-                                                <td className="py-4 px-5 text-right font-mono text-sm text-primary font-semibold">{op.inlet_sewage.toLocaleString('en-US', { maximumFractionDigits: 1 })}</td>
-                                                <td className="py-4 px-5 text-right font-mono text-sm text-blue-600 dark:text-blue-400 font-semibold">{op.tse_for_irrigation.toLocaleString('en-US', { maximumFractionDigits: 1 })}</td>
-                                                <td className={`py-4 px-5 text-right font-mono text-sm font-semibold ${efficiencyColor}`}>{efficiency.toFixed(1)}%</td>
-                                                <td className="py-4 px-5 text-right font-mono text-sm font-semibold text-mb-warning">{op.tanker_trips}</td>
-                                                <td className="py-4 px-5 text-right font-mono text-sm font-semibold text-mb-success">{income.toFixed(1)}</td>
-                                                <td className="py-4 px-5 text-right font-mono text-sm font-semibold text-primary">{savings.toFixed(1)}</td>
-                                                <td className="py-4 px-5 text-right font-mono text-sm font-semibold text-mb-success">{totalImpact.toFixed(1)}</td>
-                                            </tr>
+                                            <TableRow key={op.id}>
+                                                <TableCell className="font-semibold">{format(new Date(op.date), "dd/MM/yyyy")}</TableCell>
+                                                <TableCell className="text-right font-mono text-primary">{op.inlet_sewage.toLocaleString('en-US', { maximumFractionDigits: 1 })}</TableCell>
+                                                <TableCell className="text-right font-mono text-blue-600 dark:text-blue-400">{op.tse_for_irrigation.toLocaleString('en-US', { maximumFractionDigits: 1 })}</TableCell>
+                                                <TableCell className="text-right">
+                                                    <div className="flex justify-end">
+                                                        <StatusBadge label={`${efficiency.toFixed(1)}%`} color={efficiencyBadgeColor} />
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell className="text-right font-mono text-amber-600 dark:text-amber-400">{op.tanker_trips}</TableCell>
+                                                <TableCell className="text-right font-mono text-emerald-600 dark:text-emerald-400">{income.toFixed(1)}</TableCell>
+                                                <TableCell className="text-right font-mono text-primary">{savings.toFixed(1)}</TableCell>
+                                                <TableCell className="text-right font-mono text-emerald-600 dark:text-emerald-400">{totalImpact.toFixed(1)}</TableCell>
+                                            </TableRow>
                                         );
                                     })}
                                     {dailyOperations.length === 0 && (
-                                        <tr>
-                                            <td colSpan={8} className="py-12 text-center text-slate-500 dark:text-slate-400">
-                                                <div className="flex flex-col items-center gap-2">
+                                        <TableRow>
+                                            <TableCell colSpan={8} className="py-12 text-center">
+                                                <div className="flex flex-col items-center gap-2 text-slate-500 dark:text-slate-400">
                                                     <Droplets className="w-7 h-7 text-slate-300 dark:text-slate-600" />
                                                     <p className="text-sm font-medium">No STP data for this month</p>
                                                     <p className="text-xs text-slate-400">Select a different month to view operations data.</p>
                                                 </div>
-                                            </td>
-                                        </tr>
+                                            </TableCell>
+                                        </TableRow>
                                     )}
-                                </tbody>
-                            </table>
+                                </TableBody>
+                            </Table>
                         </div>
 
                         {/* Pagination */}
