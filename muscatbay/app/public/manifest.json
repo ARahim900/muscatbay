@@ -1,10 +1,13 @@
 {
+  "id": "/",
   "name": "Muscat Bay",
   "short_name": "MuscatBay",
   "description": "Operations Dashboard for Muscat Bay",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
+  "display_override": ["standalone", "minimal-ui"],
+  "background_color": "#0f172a",
   "theme_color": "#0f172a",
   "icons": [
     {
