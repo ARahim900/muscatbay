@@ -250,22 +250,22 @@ function KpiCard({
 }) {
     const tones: Record<KpiTone, { bg: string; text: string; border: string }> = {
         primary: {
-            bg: 'from-primary/15 to-primary/5 dark:from-primary/25 dark:to-primary/5',
+            bg: 'bg-primary/8 dark:bg-primary/20',
             text: 'text-primary dark:text-primary-foreground',
             border: 'border-primary/20',
         },
         blue: {
-            bg: 'from-blue-50 to-blue-100/40 dark:from-blue-950/30 dark:to-blue-900/10',
+            bg: 'bg-blue-50 dark:bg-blue-950/30',
             text: 'text-blue-600 dark:text-blue-400',
             border: 'border-blue-100 dark:border-blue-900/30',
         },
         amber: {
-            bg: 'from-amber-50 to-amber-100/40 dark:from-amber-950/30 dark:to-amber-900/10',
+            bg: 'bg-amber-50 dark:bg-amber-950/30',
             text: 'text-amber-600 dark:text-amber-400',
             border: 'border-amber-100 dark:border-amber-900/30',
         },
         emerald: {
-            bg: 'from-emerald-50 to-emerald-100/40 dark:from-emerald-950/30 dark:to-emerald-900/10',
+            bg: 'bg-emerald-50 dark:bg-emerald-950/30',
             text: 'text-emerald-600 dark:text-emerald-400',
             border: 'border-emerald-100 dark:border-emerald-900/30',
         },
@@ -273,7 +273,7 @@ function KpiCard({
     const t = tones[tone];
     return (
         <Card className={cn("card-elevated border", t.border)}>
-            <CardContent className={cn("p-4 bg-gradient-to-br rounded-lg", t.bg)}>
+            <CardContent className={cn("p-4 rounded-lg", t.bg)}>
                 <div className="flex items-start justify-between mb-2">
                     <span className="text-[10px] font-bold tracking-wider uppercase text-slate-500 dark:text-slate-400">
                         {label}
@@ -485,6 +485,7 @@ export function WaterHierarchyReport() {
                         <div className="flex items-center gap-2">
                             <CalendarDays className="h-4 w-4 text-muted-foreground shrink-0" />
                             <select
+                                aria-label="Year"
                                 value={selectedMonth.split('-')[1]}
                                 onChange={e => {
                                     const yr = e.target.value;
@@ -501,6 +502,7 @@ export function WaterHierarchyReport() {
                                 ))}
                             </select>
                             <select
+                                aria-label="Month"
                                 value={selectedMonth}
                                 onChange={e => setSelectedMonth(e.target.value)}
                                 disabled={status === 'loading'}
@@ -517,6 +519,7 @@ export function WaterHierarchyReport() {
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                             <input
                                 type="text"
+                                aria-label="Search meters by name, account number, or zone"
                                 value={search}
                                 onChange={e => setSearch(e.target.value)}
                                 placeholder="Search meter name, account, zone…"

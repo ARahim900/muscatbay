@@ -1820,6 +1820,7 @@ export function DailyWaterReport() {
                             <div className="flex items-center gap-2 sm:order-1">
                                 <CalendarDays className="h-4 w-4 text-muted-foreground shrink-0" />
                                 <select
+                                    aria-label="Year"
                                     value={selectedMonth.split('-')[1]}
                                     onChange={e => {
                                         const yr = e.target.value;
@@ -1838,6 +1839,7 @@ export function DailyWaterReport() {
                                     ))}
                                 </select>
                                 <select
+                                    aria-label="Month"
                                     value={selectedMonth}
                                     onChange={e => { const m = e.target.value; setSelectedMonth(m); setSelectedDay(getDefaultDay(m)); }}
                                     disabled={status === 'loading'}

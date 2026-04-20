@@ -2,59 +2,59 @@
 
 import { cn } from '@/lib/utils';
 
-// Muscat Bay color palette
-// #4E4456 brand purple | #C6D8D3 sage | #A4DCC6 mint | #337FCA blue | #F4C741 amber | #E05050 coral
-
 interface StatusBadgeProps {
     label: string;
     color?: 'green' | 'red' | 'orange' | 'blue' | 'purple' | 'slate' | 'amber' | 'cyan' | 'emerald' | 'sage';
     className?: string;
 }
 
+// Colors sourced from --badge-* tokens in globals.css.
+// Opacity modifiers (e.g. /20) vary per mode so explicit dark: variants are kept;
+// the *-fg variables flip automatically via the .dark block in globals.css.
 const DOT_COLORS: Record<string, string> = {
-    green:   'bg-[#A4DCC6]',
-    emerald: 'bg-[#A4DCC6]',
-    red:     'bg-[#E05050]',
-    orange:  'bg-[#F4C741]',
-    amber:   'bg-[#F4C741]',
-    blue:    'bg-[#337FCA]',
-    purple:  'bg-[#4E4456]',
+    green:   'bg-badge-green',
+    emerald: 'bg-badge-green',
+    red:     'bg-badge-red',
+    orange:  'bg-badge-amber',
+    amber:   'bg-badge-amber',
+    blue:    'bg-badge-blue',
+    purple:  'bg-primary',
     slate:   'bg-slate-400',
-    cyan:    'bg-[#C6D8D3]',
-    sage:    'bg-[#C6D8D3]',
+    cyan:    'bg-badge-sage',
+    sage:    'bg-badge-sage',
 };
 
 const BG_COLORS: Record<string, string> = {
     green:
-        'bg-[#A4DCC6]/20 text-[#0d5c38] ring-1 ring-[#A4DCC6]/50 ' +
-        'dark:bg-[#A4DCC6]/15 dark:text-[#A4DCC6] dark:ring-[#A4DCC6]/30',
+        'bg-badge-green/20 text-badge-green-fg ring-1 ring-badge-green/50 ' +
+        'dark:bg-badge-green/15 dark:ring-badge-green/30',
     emerald:
-        'bg-[#A4DCC6]/20 text-[#0d5c38] ring-1 ring-[#A4DCC6]/50 ' +
-        'dark:bg-[#A4DCC6]/15 dark:text-[#A4DCC6] dark:ring-[#A4DCC6]/30',
+        'bg-badge-green/20 text-badge-green-fg ring-1 ring-badge-green/50 ' +
+        'dark:bg-badge-green/15 dark:ring-badge-green/30',
     red:
-        'bg-[#E05050]/12 text-[#8a1515] ring-1 ring-[#E05050]/35 ' +
-        'dark:bg-[#E05050]/20 dark:text-[#E05050] dark:ring-[#E05050]/35',
+        'bg-badge-red/12 text-badge-red-fg ring-1 ring-badge-red/35 ' +
+        'dark:bg-badge-red/20 dark:ring-badge-red/35',
     orange:
-        'bg-[#F4C741]/18 text-[#7a5200] ring-1 ring-[#F4C741]/45 ' +
-        'dark:bg-[#F4C741]/15 dark:text-[#F4C741] dark:ring-[#F4C741]/35',
+        'bg-badge-amber/18 text-badge-amber-fg ring-1 ring-badge-amber/45 ' +
+        'dark:bg-badge-amber/15 dark:ring-badge-amber/35',
     amber:
-        'bg-[#F4C741]/18 text-[#7a5200] ring-1 ring-[#F4C741]/45 ' +
-        'dark:bg-[#F4C741]/15 dark:text-[#F4C741] dark:ring-[#F4C741]/35',
+        'bg-badge-amber/18 text-badge-amber-fg ring-1 ring-badge-amber/45 ' +
+        'dark:bg-badge-amber/15 dark:ring-badge-amber/35',
     blue:
-        'bg-[#337FCA]/12 text-[#1a4fa8] ring-1 ring-[#337FCA]/30 ' +
-        'dark:bg-[#337FCA]/20 dark:text-[#337FCA] dark:ring-[#337FCA]/35',
+        'bg-badge-blue/12 text-badge-blue-fg ring-1 ring-badge-blue/30 ' +
+        'dark:bg-badge-blue/20 dark:ring-badge-blue/35',
     purple:
-        'bg-[#4E4456]/10 text-[#4E4456] ring-1 ring-[#4E4456]/25 ' +
-        'dark:bg-[#4E4456]/30 dark:text-[#c6bece] dark:ring-[#4E4456]/40',
+        'bg-primary/10 text-badge-purple-fg ring-1 ring-primary/25 ' +
+        'dark:bg-primary/30 dark:ring-primary/40',
     slate:
         'bg-slate-100 text-slate-600 ring-1 ring-slate-200/80 ' +
         'dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700/60',
     cyan:
-        'bg-[#C6D8D3]/30 text-[#2d5048] ring-1 ring-[#C6D8D3]/60 ' +
-        'dark:bg-[#C6D8D3]/10 dark:text-[#C6D8D3] dark:ring-[#C6D8D3]/25',
+        'bg-badge-sage/30 text-badge-sage-fg ring-1 ring-badge-sage/60 ' +
+        'dark:bg-badge-sage/10 dark:ring-badge-sage/25',
     sage:
-        'bg-[#C6D8D3]/30 text-[#2d5048] ring-1 ring-[#C6D8D3]/60 ' +
-        'dark:bg-[#C6D8D3]/10 dark:text-[#C6D8D3] dark:ring-[#C6D8D3]/25',
+        'bg-badge-sage/30 text-badge-sage-fg ring-1 ring-badge-sage/60 ' +
+        'dark:bg-badge-sage/10 dark:ring-badge-sage/25',
 };
 
 export function StatusBadge({ label, color = 'slate', className }: StatusBadgeProps) {

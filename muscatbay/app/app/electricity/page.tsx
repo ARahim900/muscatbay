@@ -792,6 +792,7 @@ export default function ElectricityPage() {
                                             <select
                                                 value={analysisType}
                                                 onChange={(e) => setAnalysisType(e.target.value)}
+                                                aria-label="Filter by meter type"
                                                 className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 text-sm font-medium text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-secondary/40"
                                             >
                                                 <option value="All">All ({meters.length})</option>
@@ -809,6 +810,7 @@ export default function ElectricityPage() {
                                                 <select
                                                     value={selectedMeter}
                                                     onChange={(e) => setSelectedMeter(e.target.value)}
+                                                    aria-label={`Select individual ${analysisType} meter`}
                                                     className="px-2.5 py-1.5 rounded-lg border border-secondary/40 bg-white dark:bg-slate-800 text-sm font-medium text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-secondary/40 max-w-[280px]"
                                                 >
                                                     <option value="All">All {analysisType} ({metersOfSelectedType.length})</option>

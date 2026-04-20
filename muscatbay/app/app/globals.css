@@ -109,6 +109,19 @@
   --color-module-hvac:        var(--module-hvac);
   --color-module-pest:        var(--module-pest);
   --color-module-fire:        var(--module-fire);
+
+  /* Badge palette — single source of truth for StatusBadge and level-hierarchy badges */
+  --color-badge-green:     var(--badge-green);
+  --color-badge-green-fg:  var(--badge-green-fg);
+  --color-badge-red:       var(--badge-red);
+  --color-badge-red-fg:    var(--badge-red-fg);
+  --color-badge-amber:     var(--badge-amber);
+  --color-badge-amber-fg:  var(--badge-amber-fg);
+  --color-badge-blue:      var(--badge-blue);
+  --color-badge-blue-fg:   var(--badge-blue-fg);
+  --color-badge-sage:      var(--badge-sage);
+  --color-badge-sage-fg:   var(--badge-sage-fg);
+  --color-badge-purple-fg: var(--badge-purple-fg);
 }
 
 :root {
@@ -161,6 +174,19 @@
   --module-hvac:        #E8C064;
   --module-pest:        #84B59F;
   --module-fire:        #D67A7A;
+
+  /* ── Badge color palette — StatusBadge + level-hierarchy badges ── */
+  --badge-green:     #A4DCC6;
+  --badge-green-fg:  #0d5c38;
+  --badge-red:       #E05050;
+  --badge-red-fg:    #8a1515;
+  --badge-amber:     #F4C741;
+  --badge-amber-fg:  #7a5200;
+  --badge-blue:      #337FCA;
+  --badge-blue-fg:   #1a4fa8;
+  --badge-sage:      #C6D8D3;
+  --badge-sage-fg:   #2d5048;
+  --badge-purple-fg: #4E4456;
 
   /* Backgrounds */
   --background: #F7F8F9;
@@ -339,6 +365,14 @@
   --chart-5: #8B7F94;
   --chart-inlet: #9B8FA6;
   --chart-axis: #94A3B8;
+
+  /* Badge fg colors flip to the badge color itself for readability on dark surfaces */
+  --badge-green-fg:  #A4DCC6;
+  --badge-red-fg:    #E05050;
+  --badge-amber-fg:  #F4C741;
+  --badge-blue-fg:   #337FCA;
+  --badge-sage-fg:   #C6D8D3;
+  --badge-purple-fg: #c6bece;
 }
 
 @layer base {

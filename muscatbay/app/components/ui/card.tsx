@@ -5,13 +5,23 @@ import { cn } from "@/lib/utils"
 function Card({
   className,
   size = "default",
+  interactive = false,
   ...props
-}: React.ComponentProps<"div"> & { size?: "default" | "sm" }) {
+}: React.ComponentProps<"div"> & { size?: "default" | "sm"; interactive?: boolean }) {
   return (
     <div
       data-slot="card"
       data-size={size}
-      className={cn("bg-white dark:bg-[var(--card)] rounded-xl border border-slate-200 dark:border-white/10 shadow-sm hover:shadow-md hover:bg-slate-50/50 dark:hover:bg-white/5 hover:-translate-y-0.5 active:scale-[0.995] transition-[background-color,box-shadow,transform] duration-200 ease-out text-card-foreground dark:text-slate-100 gap-6 overflow-hidden py-6 text-sm has-[>img:first-child]:pt-0 data-[size=sm]:gap-4 data-[size=sm]:py-4 *:[img:first-child]:rounded-t-2xl *:[img:last-child]:rounded-b-2xl group/card flex flex-col", className)}
+      className={cn(
+        "bg-white dark:bg-[var(--card)] rounded-xl border border-slate-200 dark:border-white/10 shadow-sm",
+        "hover:shadow-md hover:bg-slate-50/50 dark:hover:bg-white/5",
+        "transition-[background-color,box-shadow,transform] duration-200 ease-out",
+        "text-card-foreground dark:text-slate-100 gap-6 overflow-hidden py-6 text-sm",
+        "has-[>img:first-child]:pt-0 data-[size=sm]:gap-4 data-[size=sm]:py-4",
+        "*:[img:first-child]:rounded-t-2xl *:[img:last-child]:rounded-b-2xl group/card flex flex-col",
+        interactive && "motion-safe:hover:-translate-y-0.5 motion-safe:active:scale-[0.995] cursor-pointer",
+        className,
+      )}
       {...props}
     />
   )
@@ -32,7 +42,7 @@ function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
 
 function CardTitle({
   className,
-  as: Comp = "h3",
+  as: Comp = "h2",
   ...props
 }: React.ComponentProps<"div"> & { as?: "h2" | "h3" | "h4" | "div" }) {
   return (

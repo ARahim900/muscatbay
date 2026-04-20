@@ -12,16 +12,7 @@ import {
   CartesianGrid, Tooltip, PieChart, Pie, Cell, Legend,
 } from "recharts";
 import type { GulfExpertData } from "./types";
-
-const CHART_COLORS = ["#4E4456", "#4DBFBF", "#F59E0B", "#EF4444", "#3B82F6", "#10B981"];
-
-const STATUS_COLORS: Record<string, string> = {
-  Open: "#EF4444",
-  Closed: "#10B981",
-  "Awaiting LPO": "#F59E0B",
-  Quoted: "#3B82F6",
-  "In Progress": "#8B5CF6",
-};
+import { CHART_PALETTE, STATUS_CHART_COLORS } from "@/lib/tokens";
 
 interface OverviewTabProps {
   data: GulfExpertData;
@@ -171,7 +162,7 @@ export function OverviewTab({ data }: OverviewTabProps) {
                     {findingsByStatus.map((entry, index) => (
                       <Cell
                         key={`cell-${index}`}
-                        fill={STATUS_COLORS[entry.status] || CHART_COLORS[index % CHART_COLORS.length]}
+                        fill={STATUS_CHART_COLORS[entry.status] || CHART_PALETTE[index % CHART_PALETTE.length]}
                       />
                     ))}
                   </Pie>

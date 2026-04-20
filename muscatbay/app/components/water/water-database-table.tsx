@@ -40,13 +40,13 @@ const ZONE_BG_COLORS: Record<string, string> = {
     'N/A': 'bg-slate-50 dark:bg-slate-900/30',
 };
 
-// Level badge colors — Muscat Bay palette (#A4DCC6 mint | #337FCA blue | #4E4456 purple | #E05050 coral | #F4C741 amber)
+// Level badge colors — sourced from --badge-* tokens in globals.css
 const LEVEL_STYLES: Record<string, string> = {
-    'L1': 'bg-[#A4DCC6]/25 text-[#0d5c38] ring-1 ring-[#A4DCC6]/50 dark:bg-[#A4DCC6]/15 dark:text-[#A4DCC6] dark:ring-[#A4DCC6]/30',
-    'L2': 'bg-[#337FCA]/15 text-[#1a4fa8] ring-1 ring-[#337FCA]/35 dark:bg-[#337FCA]/20 dark:text-[#337FCA] dark:ring-[#337FCA]/35',
-    'L3': 'bg-[#4E4456]/10 text-[#4E4456] ring-1 ring-[#4E4456]/25 dark:bg-[#4E4456]/35 dark:text-[#c6bece] dark:ring-[#4E4456]/40',
-    'L4': 'bg-[#E05050]/12 text-[#8a1515] ring-1 ring-[#E05050]/35 dark:bg-[#E05050]/20 dark:text-[#E05050] dark:ring-[#E05050]/35',
-    'DC': 'bg-[#F4C741]/20 text-[#7a5200] ring-1 ring-[#F4C741]/45 dark:bg-[#F4C741]/15 dark:text-[#F4C741] dark:ring-[#F4C741]/35',
+    'L1': 'bg-badge-green/25 text-badge-green-fg ring-1 ring-badge-green/50 dark:bg-badge-green/15 dark:ring-badge-green/30',
+    'L2': 'bg-badge-blue/15 text-badge-blue-fg ring-1 ring-badge-blue/35 dark:bg-badge-blue/20 dark:ring-badge-blue/35',
+    'L3': 'bg-primary/10 text-badge-purple-fg ring-1 ring-primary/25 dark:bg-primary/35 dark:ring-primary/40',
+    'L4': 'bg-badge-red/12 text-badge-red-fg ring-1 ring-badge-red/35 dark:bg-badge-red/20 dark:ring-badge-red/35',
+    'DC': 'bg-badge-amber/20 text-badge-amber-fg ring-1 ring-badge-amber/45 dark:bg-badge-amber/15 dark:ring-badge-amber/35',
 };
 
 // All unique levels
@@ -332,7 +332,7 @@ export function WaterDatabaseTable({ meters, months }: WaterDatabaseTableProps) 
             <tr
                 key={meter.accountNumber}
                 className={cn(
-                    "border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-[#4dbfbf]/5 dark:hover:bg-slate-700/40 transition-colors even:bg-slate-50/40 dark:even:bg-slate-800/20",
+                    "border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-secondary/5 dark:hover:bg-slate-700/40 transition-colors even:bg-slate-50/40 dark:even:bg-slate-800/20",
                     "border-l-4",
                     zoneColor
                 )}
@@ -349,7 +349,7 @@ export function WaterDatabaseTable({ meters, months }: WaterDatabaseTableProps) 
                     </span>
                 </td>
                 <td className="py-4 px-5">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-[#C6D8D3]/25 text-[#2d5048] ring-1 ring-[#C6D8D3]/55 dark:bg-[#C6D8D3]/10 dark:text-[#C6D8D3] dark:ring-[#C6D8D3]/20 whitespace-nowrap">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-badge-sage/25 text-badge-sage-fg ring-1 ring-badge-sage/55 dark:bg-badge-sage/10 dark:ring-badge-sage/20 whitespace-nowrap">
                         {ZONE_NAMES[meter.zone] || meter.zone}
                     </span>
                 </td>
@@ -360,8 +360,8 @@ export function WaterDatabaseTable({ meters, months }: WaterDatabaseTableProps) 
                     <span className={cn(
                         "inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap",
                         meter.type === 'Supply'
-                            ? 'bg-[#337FCA]/12 text-[#1a4fa8] ring-1 ring-[#337FCA]/30 dark:bg-[#337FCA]/20 dark:text-[#337FCA] dark:ring-[#337FCA]/30'
-                            : 'bg-[#4E4456]/10 text-[#4E4456] ring-1 ring-[#4E4456]/20 dark:bg-[#4E4456]/30 dark:text-[#c6bece] dark:ring-[#4E4456]/35'
+                            ? 'bg-badge-blue/12 text-badge-blue-fg ring-1 ring-badge-blue/30 dark:bg-badge-blue/20 dark:ring-badge-blue/30'
+                            : 'bg-primary/10 text-badge-purple-fg ring-1 ring-primary/20 dark:bg-primary/30 dark:ring-primary/35'
                     )}>
                         {meter.type}
                     </span>
@@ -387,6 +387,7 @@ export function WaterDatabaseTable({ meters, months }: WaterDatabaseTableProps) 
                     <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                     <input
                         type="text"
+                        aria-label="Search meters by name, account number, or zone"
                         placeholder="Search meters..."
                         value={searchTerm}
                         onChange={(e) => { setSearchTerm(e.target.value); handleFilterChange(); }}

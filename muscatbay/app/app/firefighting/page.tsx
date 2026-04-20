@@ -828,12 +828,12 @@ export default function FirefightingPage() {
                                         </div>
                                         <div className="flex items-center gap-2 flex-shrink-0">
                                             {c.email && (
-                                                <a href={`mailto:${c.email}`} className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors">
-                                                    <Mail className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-600 dark:text-blue-400" />
+                                                <a href={`mailto:${c.email}`} aria-label={`Email ${c.name}`} className="w-11 h-11 md:w-9 md:h-9 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors">
+                                                    <Mail className="w-4 h-4 text-blue-600 dark:text-blue-400" aria-hidden="true" />
                                                 </a>
                                             )}
-                                            <a href={`tel:${c.phone.replace(/\s/g, '')}`} className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors">
-                                                <Phone className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-600 dark:text-emerald-400" />
+                                            <a href={`tel:${c.phone.replace(/\s/g, '')}`} aria-label={`Call ${c.name} at ${c.phone}`} className="w-11 h-11 md:w-9 md:h-9 rounded-full bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors">
+                                                <Phone className="w-4 h-4 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
                                             </a>
                                         </div>
                                     </div>

@@ -280,7 +280,7 @@ export function DateRangePicker({
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                 {/* Left: Icon + Range Display */}
                 <div className="flex items-start gap-3">
-                    <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-gradient-to-br from-secondary/15 to-primary/5 dark:from-secondary/20 dark:to-secondary/5 ring-1 ring-secondary/10 dark:ring-secondary/15 mt-0.5 shrink-0">
+                    <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-secondary/10 dark:bg-secondary/15 mt-0.5 shrink-0">
                         <Calendar className="w-[18px] h-[18px] text-primary dark:text-secondary" />
                     </div>
                     <div className="space-y-0.5 min-w-0">
