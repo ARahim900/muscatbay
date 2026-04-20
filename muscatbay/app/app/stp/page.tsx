@@ -269,12 +269,14 @@ export default function STPPage() {
             const latestMonth = allMonths[allMonths.length - 1];
 
             if (!startValid || !endValid) {
-                // If saved prefs are invalid, reset to full range
                 setStartMonth(allMonths[0]);
+                setEndMonth(latestMonth);
+            } else if (!selectedYear && endMonth !== latestMonth) {
+                // No year filter active — auto-extend to newest data when new months arrive
                 setEndMonth(latestMonth);
             }
         }
-    }, [allMonths, startMonth, endMonth]);
+    }, [allMonths, startMonth, endMonth, selectedYear]);
 
     // Calculate filtered operations based on start/end month selection
     const operations = useMemo(() => {

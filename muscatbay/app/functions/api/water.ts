@@ -29,14 +29,16 @@ function logNegativeValues(records: SupabaseWaterMeter[]): void {
         'jul_24', 'aug_24', 'sep_24', 'oct_24', 'nov_24', 'dec_24',
         'jan_25', 'feb_25', 'mar_25', 'apr_25', 'may_25', 'jun_25',
         'jul_25', 'aug_25', 'sep_25', 'oct_25', 'nov_25', 'dec_25',
-        'jan_26', 'feb_26', 'mar_26'
+        'jan_26', 'feb_26', 'mar_26', 'apr_26', 'may_26', 'jun_26',
+        'jul_26', 'aug_26', 'sep_26', 'oct_26', 'nov_26', 'dec_26',
     ] as const;
 
     const negativeMeters: { label: string; account: string; month: string; value: number }[] = [];
 
     for (const record of records) {
         for (const month of monthColumns) {
-            const value = record[month];
+            const rawVal = record[month];
+            const value = typeof rawVal === 'number' ? rawVal : null;
             if (value !== null && value < 0) {
                 const [m, y] = month.split('_');
                 negativeMeters.push({

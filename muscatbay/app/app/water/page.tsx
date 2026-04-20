@@ -253,7 +253,7 @@ export default function WaterPage() {
     const [dashboardView, setDashboardView] = useState<DashboardView>('monthly');
     const [monthlyTab, setMonthlyTab] = useState("overview"); // Changed to string for TabNavigation compatibility
     const [startMonth, setStartMonth] = useState('Jan-24');
-    const [endMonth, setEndMonth] = useState('Jan-26');
+    const [endMonth, setEndMonth] = useState(AVAILABLE_MONTHS[AVAILABLE_MONTHS.length - 1]);
     const [selectedZone, setSelectedZone] = useState('Zone_01_(FM)');
     const [selectedType, setSelectedType] = useState('All');
     const [selectedChartType, setSelectedChartType] = useState<string | null>(null);
@@ -320,10 +320,14 @@ export default function WaterPage() {
             if (savedPrefs.dashboardView) setDashboardView(savedPrefs.dashboardView);
             if (savedPrefs.monthlyTab) setMonthlyTab(savedPrefs.monthlyTab);
             if (savedPrefs.startMonth) setStartMonth(savedPrefs.startMonth);
-            if (savedPrefs.endMonth) setEndMonth(savedPrefs.endMonth);
             if (savedPrefs.selectedZone) setSelectedZone(savedPrefs.selectedZone);
             if (savedPrefs.selectedType) setSelectedType(savedPrefs.selectedType);
-            if (savedPrefs.selectedYear) setSelectedYear(savedPrefs.selectedYear);
+            if (savedPrefs.selectedYear) {
+                setSelectedYear(savedPrefs.selectedYear);
+                // Only restore the saved end month when a year filter is active (user scoped to a year)
+                if (savedPrefs.endMonth) setEndMonth(savedPrefs.endMonth);
+            }
+            // Without a year filter, always default to the latest available month
         }
     }, [fetchWaterData]);
 
