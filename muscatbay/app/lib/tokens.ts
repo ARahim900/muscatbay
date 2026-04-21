@@ -9,7 +9,7 @@
 /** Categorical chart palette (ordered by visual contrast) */
 export const CHART_PALETTE = [
   '#4E4456', // brand purple  → --primary / --chart-5
-  '#4DBFBF', // teal          → --secondary / --chart-2
+  '#A1D1D5', // teal          → --secondary / --chart-2
   '#E8C064', // amber         → --mb-warning / --chart-3
   '#D67A7A', // coral         → --mb-danger / --chart-loss
   '#6B9AC4', // blue          → --mb-info / --chart-1

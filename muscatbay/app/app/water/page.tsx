@@ -57,8 +57,8 @@ type DashboardView = 'monthly' | 'daily';
 
 const CHART_COLORS = {
     primary: 'var(--chart-water-primary, #6B9AC4)',
-    secondary: 'var(--chart-water-secondary, #4DBFBF)',
-    accent: 'var(--chart-water-accent, #4DBFBF)',
+    secondary: 'var(--chart-water-secondary, #A1D1D5)',
+    accent: 'var(--chart-water-accent, #A1D1D5)',
     success: 'var(--chart-success, #84B59F)',
     loss: 'var(--chart-loss, #D67A7A)',
     brand: 'var(--chart-brand, #4D445D)',

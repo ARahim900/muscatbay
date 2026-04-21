@@ -130,7 +130,7 @@
   /* Muscat Bay Brand Colors (for auth pages and legacy usage) */
   --mb-primary: #4D445D;
   --mb-primary-hover: #3A3341;
-  --mb-secondary: #4DBFBF;
+  --mb-secondary: #A1D1D5;
   --mb-secondary-foreground: #FFFFFF;
   --mb-secondary-light: #E8F1EF;
   --mb-secondary-active: #8AAFA5;
@@ -207,7 +207,7 @@
   --primary-foreground: #FFFFFF;
 
   /* Secondary (Brand Teal) */
-  --secondary: #4DBFBF;
+  --secondary: #A1D1D5;
   --secondary-foreground: #FFFFFF;
 
   /* Muted / Neutral */
@@ -215,7 +215,7 @@
   --muted-foreground: #6B7280;
 
   /* Accents */
-  --accent: #4DBFBF;
+  --accent: #A1D1D5;
   --accent-foreground: #FFFFFF;
 
   /* Destructive */
@@ -230,11 +230,11 @@
   --border: #E5E7EB;
   --border-light: #E5E7EB;
   --input: #E5E7EB;
-  --ring: #4DBFBF;
+  --ring: #A1D1D5;
 
   /* Chart Colors — Muscat Bay Elegant Palette */
   --chart-1: #6B9AC4;
-  --chart-2: #4DBFBF;
+  --chart-2: #A1D1D5;
   --chart-3: #E8C064;
   --chart-4: #84B59F;
   --chart-5: #4D445D;
@@ -242,20 +242,20 @@
   --chart-axis: #6B7280;
   --chart-loss: #D67A7A;
   --chart-success: #84B59F;
-  --chart-teal: #4DBFBF;
+  --chart-teal: #A1D1D5;
   --chart-brand: #4D445D;
   --chart-amber: #E8C064;
   --chart-gray: #9B86A8;
 
   /* Domain-specific chart colors */
   --chart-water-primary: #6B9AC4;
-  --chart-water-secondary: #4DBFBF;
-  --chart-water-accent: #4DBFBF;
+  --chart-water-secondary: #A1D1D5;
+  --chart-water-accent: #A1D1D5;
   --chart-elec-primary: #E8C064;
   --chart-elec-secondary: #DF9A5B;
   --chart-elec-accent: #E8C064;
   --chart-stp-primary: #84B59F;
-  --chart-stp-secondary: #4DBFBF;
+  --chart-stp-secondary: #A1D1D5;
   --chart-stp-accent: #84B59F;
 
   /* Chart Background Colors */
@@ -314,7 +314,7 @@
   /* Dark mode mappings */
   --mb-primary: #5f5168;
   --mb-primary-hover: #4E4456;
-  --mb-secondary: #4DBFBF;
+  --mb-secondary: #A1D1D5;
   --mb-secondary-foreground: #1F2937;
   --mb-secondary-light: rgba(77, 191, 191, 0.12);
   --mb-secondary-active: #8AAFA5;
@@ -348,18 +348,18 @@
   --primary-foreground: #FFFFFF;
   /* Sidebar slightly darker than --primary in dark mode too */
   --sidebar: #3B3240;
-  --secondary: #4DBFBF;
+  --secondary: #A1D1D5;
   --secondary-foreground: #1F2937;
   --muted: #22202A;
   --muted-foreground: #9CA3AF;
-  --accent: #4DBFBF;
+  --accent: #A1D1D5;
   --accent-foreground: #1F2937;
   --destructive: #D67A7A;
   --popover: #16141B;
   --popover-foreground: #F1F5F9;
   --border: rgba(255, 255, 255, 0.1);
   --input: rgba(255, 255, 255, 0.1);
-  --ring: #4DBFBF;
+  --ring: #A1D1D5;
 
   /* Chart colors — lighter variants for dark backgrounds */
   --chart-5: #8B7F94;
