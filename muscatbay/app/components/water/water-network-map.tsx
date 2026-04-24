@@ -1008,6 +1008,23 @@ export default function WaterNetworkMap() {
 
             try {
                 Cesium.Ion.defaultAccessToken = CESIUM_ION_TOKEN;
+
+                // Resolve the base imagery layer independently so a Cesium Ion
+                // auth failure does NOT prevent the Viewer from initialising.
+                // Google 3D tiles (loaded below) hide the globe entirely when
+                // available, so this layer only matters as a last-resort fallback.
+                let imageryProvider: unknown;
+                try {
+                    imageryProvider = await Cesium.IonImageryProvider.fromAssetId(2);
+                } catch {
+                    // Ion unavailable (invalid token, rate limit, network) —
+                    // use free OSM tiles so the globe still renders.
+                    imageryProvider = new Cesium.UrlTemplateImageryProvider({
+                        url:    'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                        credit: 'Map tiles by OpenStreetMap contributors',
+                    });
+                }
+
                 const viewer = new Cesium.Viewer(containerRef.current!, {
                     baseLayerPicker:      false,
                     geocoder:             false,
@@ -1019,7 +1036,7 @@ export default function WaterNetworkMap() {
                     fullscreenButton:     false,
                     infoBox:              false,
                     selectionIndicator:   false,
-                    imageryProvider:      await Cesium.IonImageryProvider.fromAssetId(2),
+                    imageryProvider,
                 });
 
                 try { viewer.terrainProvider = await Cesium.createWorldTerrainAsync(); } catch {}
