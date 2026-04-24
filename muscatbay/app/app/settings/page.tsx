@@ -197,7 +197,7 @@ export default function SettingsPage() {
                         </div>
                     )}
                     {error && (
-                        <div className="p-3 text-sm text-mb-danger bg-mb-danger/10 rounded-lg border border-mb-danger/20">
+                        <div role="alert" className="p-3 text-sm text-[var(--mb-danger-text)] bg-mb-danger/10 rounded-lg border border-mb-danger/20">
                             {error}
                         </div>
                     )}
@@ -231,7 +231,7 @@ export default function SettingsPage() {
                                                 <Button variant="ghost" size="sm" onClick={() => {
                                                     setAvatarPreview(null)
                                                     setAvatarFile(null)
-                                                }} className="text-mb-danger hover:text-mb-danger-hover hover:bg-mb-danger/10">
+                                                }} className="text-[var(--mb-danger-text)] hover:bg-mb-danger/10">
                                                     Remove
                                                 </Button>
                                             )}

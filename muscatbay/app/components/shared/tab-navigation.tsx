@@ -43,8 +43,9 @@ export function TabNavigation({ tabs, activeTab, onTabChange, className, variant
 
     return (
         <div className={cn("w-full max-w-full", className)}>
-            {/* Visual container wrapper */}
-            <nav
+            {/* role="tablist" must be on a div, not nav — nav's landmark role
+                would be overridden by tablist, removing it from AT navigation */}
+            <div
                 className={cn(
                     "inline-flex items-center gap-1.5 sm:gap-3 p-1 sm:p-1.5 rounded-xl overflow-x-auto max-w-full",
                     "bg-slate-100/80 dark:bg-slate-800/60",
@@ -71,7 +72,7 @@ export function TabNavigation({ tabs, activeTab, onTabChange, className, variant
                                 aria-controls={`panel-${tab.key}`}
                                 tabIndex={isActive ? 0 : -1}
                                 className={cn(
-                                    "relative flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2.5 sm:py-3 min-h-[44px] sm:min-h-0 rounded-lg text-xs sm:text-sm font-medium whitespace-nowrap",
+                                    "relative flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2.5 sm:py-3 min-h-[44px] lg:min-h-0 rounded-lg text-xs sm:text-sm font-medium whitespace-nowrap",
                                     "transition-colors duration-200 ease-out",
                                     "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-1",
                                     isActive
@@ -121,7 +122,7 @@ export function TabNavigation({ tabs, activeTab, onTabChange, className, variant
                             aria-controls={`panel-${tab.key}`}
                             tabIndex={isActive ? 0 : -1}
                             className={cn(
-                                "relative flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2.5 sm:py-3 min-h-[44px] sm:min-h-0 rounded-lg text-xs sm:text-sm font-medium whitespace-nowrap",
+                                "relative flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2.5 sm:py-3 min-h-[44px] lg:min-h-0 rounded-lg text-xs sm:text-sm font-medium whitespace-nowrap",
                                 "transition-colors duration-200 ease-out",
                                 "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-1",
                                 isActive
@@ -150,7 +151,7 @@ export function TabNavigation({ tabs, activeTab, onTabChange, className, variant
                         </button>
                     );
                 })}
-            </nav>
+            </div>
         </div>
     );
 }

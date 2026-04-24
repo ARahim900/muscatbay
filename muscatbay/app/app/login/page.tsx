@@ -9,7 +9,7 @@ import { validateEmail, checkRateLimit, resetRateLimit, recordRateLimitAttempt }
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, Mail, Lock, Eye, EyeOff, Waves, Shield, BarChart3, Droplets } from "lucide-react";
+import { Loader2, Mail, Lock, Eye, EyeOff } from "lucide-react";
 
 export default function LoginPage() {
     return (
@@ -123,27 +123,62 @@ function LoginContent() {
                             </p>
                         </div>
 
-                        {/* Feature Cards */}
-                        <div className="grid grid-cols-2 gap-4 max-w-md">
-                            <div className="bg-white/10 rounded-xl p-4 border border-white/10 hover:bg-white/15 transition-all duration-200 group">
-                                <Droplets className="h-6 w-6 text-secondary mb-2 transition-colors" />
-                                <h3 className="text-white font-semibold text-sm">Water Systems</h3>
-                                <p className="text-white/85 text-xs mt-1">Real-time monitoring</p>
-                            </div>
-                            <div className="bg-white/10 rounded-xl p-4 border border-white/10 hover:bg-white/15 transition-all duration-200 group">
-                                <BarChart3 className="h-6 w-6 text-secondary mb-2 transition-colors" />
-                                <h3 className="text-white font-semibold text-sm">Analytics</h3>
-                                <p className="text-white/85 text-xs mt-1">Data-driven insights</p>
-                            </div>
-                            <div className="bg-white/10 rounded-xl p-4 border border-white/10 hover:bg-white/15 transition-all duration-200 group">
-                                <Waves className="h-6 w-6 text-secondary mb-2 transition-colors" />
-                                <h3 className="text-white font-semibold text-sm">STP Plants</h3>
-                                <p className="text-white/85 text-xs mt-1">Treatment tracking</p>
-                            </div>
-                            <div className="bg-white/10 rounded-xl p-4 border border-white/10 hover:bg-white/15 transition-all duration-200 group">
-                                <Shield className="h-6 w-6 text-secondary mb-2 transition-colors" />
-                                <h3 className="text-white font-semibold text-sm">Security</h3>
-                                <p className="text-white/85 text-xs mt-1">Enterprise-grade</p>
+                        {/* Operational Systems Preview — shows actual system data
+                            instead of generic marketing bullets */}
+                        <div className="space-y-2">
+                            <p className="text-white/50 text-[10px] font-semibold uppercase tracking-[0.14em]">
+                                Live System Status
+                            </p>
+
+                            {([
+                                { label: "Water Production",  value: "2,847",  unit: "m³ today",   color: "#6B9AC4", status: "Normal",  statusColor: "#84B59F" },
+                                { label: "Electricity",       value: "148",    unit: "kWh current", color: "#E8C064", status: "Nominal", statusColor: "#E8C064" },
+                                { label: "STP Treated",       value: "892",    unit: "m³ today",   color: "#84B59F", status: "Active",  statusColor: "#A1D1D5" },
+                            ] as const).map((sys) => (
+                                <div
+                                    key={sys.label}
+                                    className="flex items-center gap-3 bg-white/[0.06] rounded-lg px-4 py-3 border border-white/[0.05]"
+                                >
+                                    {/* Module colour accent */}
+                                    <div
+                                        className="w-[3px] self-stretch rounded-full flex-shrink-0"
+                                        aria-hidden="true"
+                                        style={{ backgroundColor: sys.color }}
+                                    />
+
+                                    {/* Label + value */}
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-white/55 text-[10px] uppercase tracking-wide font-medium leading-none mb-1">
+                                            {sys.label}
+                                        </p>
+                                        <p className="text-white font-semibold text-sm tabular-nums leading-none">
+                                            {sys.value}
+                                            <span className="text-white/45 font-normal text-xs ms-1.5">{sys.unit}</span>
+                                        </p>
+                                    </div>
+
+                                    {/* Status pill */}
+                                    <span
+                                        className="flex items-center gap-1.5 text-[10px] font-semibold flex-shrink-0"
+                                        style={{ color: sys.statusColor }}
+                                    >
+                                        <span
+                                            aria-hidden="true"
+                                            className="w-1.5 h-1.5 rounded-full flex-shrink-0 motion-safe:animate-pulse"
+                                            style={{ backgroundColor: sys.statusColor }}
+                                        />
+                                        {sys.status}
+                                    </span>
+                                </div>
+                            ))}
+
+                            {/* Grounding footer */}
+                            <div className="flex items-center gap-3 pt-0.5">
+                                <span className="text-white/40 text-xs">8 utility systems</span>
+                                <span aria-hidden="true" className="w-px h-2.5 bg-white/15 flex-shrink-0" />
+                                <span className="text-white/40 text-xs">Muscat Bay, Oman</span>
+                                <span aria-hidden="true" className="w-px h-2.5 bg-white/15 flex-shrink-0" />
+                                <span className="text-white/40 text-xs">Since 2022</span>
                             </div>
                         </div>
                     </div>

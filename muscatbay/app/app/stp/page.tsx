@@ -772,7 +772,7 @@ export default function STPPage() {
                                 <div className="flex items-center justify-between gap-3 flex-wrap">
                                     <div className="space-y-1">
                                         <CardTitle className="text-lg flex items-center gap-2">
-                                            <DollarSign className="h-5 w-5 text-mb-success" />
+                                            <DollarSign className="h-5 w-5 text-[var(--mb-success-text)]" />
                                             Economic Impact (OMR)
                                         </CardTitle>
                                         <p className="text-sm text-muted-foreground">
@@ -806,7 +806,7 @@ export default function STPPage() {
                                 <div className="flex items-center justify-between gap-3 flex-wrap">
                                     <div className="space-y-1">
                                         <CardTitle className="text-lg flex items-center gap-2">
-                                            <Truck className="h-5 w-5 text-mb-warning" />
+                                            <Truck className="h-5 w-5 text-[var(--mb-warning-text)]" />
                                             Tanker Operations
                                         </CardTitle>
                                         <p className="text-sm text-muted-foreground">
@@ -915,11 +915,11 @@ export default function STPPage() {
                                             </div>
                                             <div className="space-y-0.5">
                                                 <span className="text-slate-400">Tanker Trips</span>
-                                                <p className="font-mono font-medium text-mb-warning">{op.tanker_trips}</p>
+                                                <p className="font-mono font-medium text-[var(--mb-warning-text)]">{op.tanker_trips}</p>
                                             </div>
                                             <div className="space-y-0.5">
                                                 <span className="text-slate-400">Total Impact</span>
-                                                <p className="font-mono font-semibold text-mb-success">{totalImpact.toFixed(1)} OMR</p>
+                                                <p className="font-mono font-semibold text-[var(--mb-success-text)]">{totalImpact.toFixed(1)} OMR</p>
                                             </div>
                                         </div>
                                     </div>

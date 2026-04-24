@@ -97,9 +97,9 @@ export default function DashboardPage() {
     if (error) {
         return (
             <div className="flex items-center justify-center min-h-[400px]">
-                <div className="text-center space-y-4">
+                <div role="alert" className="text-center space-y-4">
                     <div className="w-14 h-14 mx-auto rounded-2xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center">
-                        <AlertTriangle className="w-7 h-7 text-red-500" />
+                        <AlertTriangle className="w-7 h-7 text-red-500" aria-hidden="true" />
                     </div>
                     <div className="space-y-1">
                         <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">Unable to load dashboard</p>
@@ -149,9 +149,9 @@ export default function DashboardPage() {
                                         onClick={() => handleFilterClick(filter)}
                                         aria-pressed={activityFilter === filter}
                                         className={`px-3 py-2.5 min-h-[44px] text-xs font-medium rounded-md transition-colors capitalize focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/60 ${activityFilter === filter
-                                            ? filter === 'critical' ? 'bg-mb-danger text-white'
-                                                : filter === 'warning' ? 'bg-mb-warning text-white'
-                                                    : filter === 'info' ? 'bg-mb-info text-white'
+                                            ? filter === 'critical' ? 'bg-mb-danger text-gray-900'
+                                                : filter === 'warning' ? 'bg-mb-warning text-gray-900'
+                                                    : filter === 'info' ? 'bg-mb-info text-gray-900'
                                                         : 'bg-primary text-white'
                                             : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
                                             }`}
@@ -171,9 +171,9 @@ export default function DashboardPage() {
                                     const activityHref = getActivityHref(item.title);
                                     const content = (
                                         <>
-                                            <div className={`shrink-0 rounded-full p-2 ${item.type === 'critical' ? 'bg-mb-danger/20 text-mb-danger' :
-                                                item.type === 'warning' ? 'bg-mb-warning/20 text-mb-warning' :
-                                                    'bg-mb-info/20 text-mb-info'
+                                            <div className={`shrink-0 rounded-full p-2 ${item.type === 'critical' ? 'bg-mb-danger/20 text-[var(--mb-danger-text)]' :
+                                                item.type === 'warning' ? 'bg-mb-warning/20 text-[var(--mb-warning-text)]' :
+                                                    'bg-mb-info/20 text-[var(--mb-info-text)]'
                                                 }`}>
                                                 {item.type === 'critical' ? <AlertTriangle className="h-4 w-4" /> : <ArrowUpRight className="h-4 w-4" />}
                                             </div>
@@ -187,7 +187,7 @@ export default function DashboardPage() {
                                         </>
                                     );
 
-                                    const itemClassName = "flex items-center gap-3 p-3 rounded-lg bg-white/30 dark:bg-slate-800/50 border border-mb-primary/5 dark:border-slate-700 hover:bg-white/50 dark:hover:bg-slate-700 group/activity hover:-translate-y-0.5 transition-[background-color,border-color,transform] duration-150 ease-out";
+                                    const itemClassName = "flex items-center gap-3 p-3 rounded-lg bg-white/30 dark:bg-slate-800/50 border border-mb-primary/5 dark:border-slate-700 hover:bg-white/50 dark:hover:bg-slate-700 group/activity motion-safe:hover:-translate-y-0.5 transition-[background-color,border-color,transform] duration-150 ease-out";
 
                                     return activityHref ? (
                                         <Link key={item.title} href={activityHref} className={itemClassName}>

@@ -208,11 +208,13 @@ export function BottomNav() {
         </div>
       </div>
 
-      {/* Bottom navigation bar */}
+      {/* Bottom navigation bar — inert+aria-hidden when the More drawer is
+          open so keyboard users cannot tab into it while the dialog is modal */}
       <nav
         className="fixed bottom-0 left-0 right-0 z-[100] md:hidden bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-700/80 shadow-[0_-4px_16px_rgba(0,0,0,0.07)] dark:shadow-[0_-2px_10px_rgba(0,0,0,0.3)] bottom-nav-safe"
         aria-label="Mobile navigation"
-        aria-hidden={drawerOpen}
+        aria-hidden={drawerOpen || undefined}
+        inert={drawerOpen}
       >
         <div className="flex items-center justify-around h-16 px-1">
           {primaryItems.map((item) => {

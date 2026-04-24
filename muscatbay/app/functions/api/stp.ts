@@ -18,10 +18,9 @@ export async function getSTPOperationsFromSupabase(): Promise<STPOperation[]> {
     }
 
     try {
-        // Fetch all records ordered by date descending
         const { data, error } = await client
             .from('stp_operations')
-            .select('*')
+            .select('id, date, inlet_sewage, tse_for_irrigation, tanker_trips, generated_income, water_savings, total_impact, monthly_volume_input, monthly_volume_output, monthly_income, monthly_savings, original_id')
             .order('date', { ascending: false })
             .limit(1500);
 

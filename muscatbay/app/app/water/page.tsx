@@ -746,7 +746,7 @@ export default function WaterPage() {
                                                                 setEndMonth(yearMonths[yearMonths.length - 1]);
                                                             }
                                                         }}
-                                                        className={`rounded-full px-4 min-h-[44px] sm:min-h-0 ${selectedYear === year ? "bg-secondary text-white" : "border-slate-200 dark:border-slate-700"}`}
+                                                        className={`rounded-full px-4 min-h-[44px] lg:min-h-0 ${selectedYear === year ? "bg-secondary text-white" : "border-slate-200 dark:border-slate-700"}`}
                                                     >
                                                         {year}
                                                     </Button>
@@ -765,7 +765,7 @@ export default function WaterPage() {
                                                         setSelectedChartType(val === 'All' ? null : val);
                                                     }}
                                                     aria-label="Filter by meter type"
-                                                    className="px-2.5 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 text-sm font-medium text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                                                    className="px-2.5 py-2 sm:py-1.5 min-h-[44px] lg:min-h-0 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 text-sm font-medium text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
                                                 >
                                                     {uniqueTypes.map((t) => (
                                                         <option key={t} value={t}>{t}</option>
@@ -802,7 +802,7 @@ export default function WaterPage() {
                                                 aria-label="Select Direct Connection"
                                                 aria-pressed={selectedZone === 'Direct_Connection'}
                                                 onClick={() => setSelectedZone('Direct_Connection')}
-                                                className={`rounded-full px-3 text-xs min-h-[44px] sm:min-h-0 h-auto sm:h-7 ${selectedZone === 'Direct_Connection' ? "bg-secondary text-white border-secondary" : "border-slate-200 dark:border-slate-700"}`}
+                                                className={`rounded-full px-3 text-xs min-h-[44px] lg:min-h-0 h-auto lg:h-7 ${selectedZone === 'Direct_Connection' ? "bg-secondary text-white border-secondary" : "border-slate-200 dark:border-slate-700"}`}
                                             >
                                                 Direct Connection
                                             </Button>
@@ -814,7 +814,7 @@ export default function WaterPage() {
                                                     aria-label={`Select ${z.name} zone`}
                                                     aria-pressed={selectedZone === z.code}
                                                     onClick={() => setSelectedZone(z.code)}
-                                                    className={`rounded-full px-3 text-xs min-h-[44px] sm:min-h-0 h-auto sm:h-7 ${selectedZone === z.code ? "bg-secondary text-white border-secondary" : "border-slate-200 dark:border-slate-700"}`}
+                                                    className={`rounded-full px-3 text-xs min-h-[44px] lg:min-h-0 h-auto lg:h-7 ${selectedZone === z.code ? "bg-secondary text-white border-secondary" : "border-slate-200 dark:border-slate-700"}`}
                                                 >
                                                     {z.name}
                                                 </Button>
@@ -824,7 +824,7 @@ export default function WaterPage() {
                                                 size="sm"
                                                 aria-label="Reset zone selection"
                                                 onClick={() => setSelectedZone(ZONE_CONFIG[0].code)}
-                                                className="text-xs text-slate-400 hover:text-red-500 dark:hover:text-red-400 min-h-[44px] sm:min-h-0 h-auto sm:h-7 ml-1"
+                                                className="text-xs text-slate-400 hover:text-red-500 dark:hover:text-red-400 min-h-[44px] lg:min-h-0 h-auto lg:h-7 ml-1"
                                             >
                                                 Reset
                                             </Button>
@@ -916,13 +916,13 @@ export default function WaterPage() {
                                         <>
                                             <span className="text-mb-secondary font-medium">Main Bulk (L1)</span> = Total NAMA input •
                                             <span className="text-mb-primary font-medium"> L2 + DC Total</span> = All zone bulks + direct connections •
-                                            <span className="text-mb-danger font-medium"> Difference</span> = L1 − (L2 + DC)
+                                            <span className="text-[var(--mb-danger-text)] font-medium"> Difference</span> = L1 − (L2 + DC)
                                         </>
                                     ) : (
                                         <>
                                             <span className="text-mb-secondary font-medium">Zone Bulk</span> = L2 only •
                                             <span className="text-mb-primary font-medium"> L3 Total</span> = Sum of all L3 meters in zone •
-                                            <span className="text-mb-danger font-medium"> Difference</span> = L2 − L3
+                                            <span className="text-[var(--mb-danger-text)] font-medium"> Difference</span> = L2 − L3
                                         </>
                                     )}
                                 </p>

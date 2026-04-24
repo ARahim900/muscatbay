@@ -19,6 +19,7 @@ import {
   ChevronLeft,
   Waves,
   Wrench,
+  Map,
 } from 'lucide-react';
 
 interface NavigationItem {
@@ -48,6 +49,7 @@ const navGroups: NavGroup[] = [
     label: "Utilities",
     items: [
       { id: "water", name: "Water", icon: Droplets, href: "/water" },
+      { id: "water-network", name: "Water Network", icon: Map, href: "/water-network" },
       { id: "electricity", name: "Electricity", icon: Zap, href: "/electricity" },
       { id: "stp", name: "STP Plant", icon: Waves, href: "/stp" },
     ],

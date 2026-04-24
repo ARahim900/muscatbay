@@ -208,7 +208,7 @@ function HierarchyStatCard({
 }) {
     return (
         <div
-            className="relative overflow-hidden bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-[0_2px_10px_-3px_rgba(15,23,42,0.08)] dark:shadow-[0_2px_10px_-3px_rgba(0,0,0,0.4)] hover:shadow-[0_8px_30px_-4px_rgba(15,23,42,0.12)] dark:hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.5)] hover:-translate-y-0.5 transition-all duration-200 ease-out group/stat"
+            className="relative overflow-hidden bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-[0_2px_10px_-3px_rgba(15,23,42,0.08)] dark:shadow-[0_2px_10px_-3px_rgba(0,0,0,0.4)] hover:shadow-[0_8px_30px_-4px_rgba(15,23,42,0.12)] dark:hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.5)] motion-safe:hover:-translate-y-0.5 transition-[box-shadow,transform] duration-200 ease-out group/stat"
         >
             <div
                 className="absolute top-0 left-0 right-0 h-[3px]"
@@ -228,7 +228,7 @@ function HierarchyStatCard({
                     </h3>
                 </div>
                 <div
-                    className="p-2 sm:p-3 rounded-lg group-hover/stat:scale-110 group-hover/stat:-rotate-3 transition-all duration-200 ease-out flex-shrink-0"
+                    className="p-2 sm:p-3 rounded-lg motion-safe:group-hover/stat:scale-110 motion-safe:group-hover/stat:-rotate-3 transition-transform duration-200 ease-out flex-shrink-0"
                     style={{ backgroundColor: `${color}1A`, color }}
                 >
                     {icon}
@@ -1476,33 +1476,33 @@ function DCDailyTable({ monthData }: { monthData: SupabaseDailyWaterConsumption[
                 {/* DC summary KPI cards */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                     {/* Monthly Total */}
-                    <div className="bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] dark:shadow-[0_2px_10px_-3px_rgba(0,0,0,0.3)] hover:shadow-[0_8px_30px_-4px_rgba(6,81,237,0.15)] dark:hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.4)] hover:-translate-y-1 transition-all duration-200 ease-out group/stat overflow-hidden relative">
+                    <div className="bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] dark:shadow-[0_2px_10px_-3px_rgba(0,0,0,0.3)] hover:shadow-[0_8px_30px_-4px_rgba(6,81,237,0.15)] dark:hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.4)] motion-safe:hover:-translate-y-1 transition-[box-shadow,transform] duration-200 ease-out group/stat overflow-hidden relative">
                         <div className="absolute top-0 left-0 w-full h-[3px] bg-teal-500 opacity-0 group-hover/stat:opacity-100 transition-opacity duration-200" />
                         <div className="flex justify-between items-start gap-2">
                             <div className="min-w-0">
                                 <p className="text-slate-500 dark:text-slate-400 text-[10px] sm:text-xs font-medium mb-1 uppercase tracking-wide">Monthly DC Total (m³)</p>
                                 <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-slate-800 dark:text-slate-100 tabular-nums tracking-tight">{n(grandTotal)}</h3>
                             </div>
-                            <div className="p-2 sm:p-3 rounded-lg bg-teal-50 dark:bg-teal-900/20 group-hover/stat:scale-110 group-hover/stat:-rotate-3 transition-all duration-200 ease-out flex-shrink-0">
+                            <div className="p-2 sm:p-3 rounded-lg bg-teal-50 dark:bg-teal-900/20 motion-safe:group-hover/stat:scale-110 motion-safe:group-hover/stat:-rotate-3 transition-transform duration-200 ease-out flex-shrink-0">
                                 <Droplets className="w-4 h-4 sm:w-5 sm:h-5 text-teal-500" />
                             </div>
                         </div>
                     </div>
                     {/* Total Meters */}
-                    <div className="bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] dark:shadow-[0_2px_10px_-3px_rgba(0,0,0,0.3)] hover:shadow-[0_8px_30px_-4px_rgba(6,81,237,0.15)] dark:hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.4)] hover:-translate-y-1 transition-all duration-200 ease-out group/stat overflow-hidden relative">
+                    <div className="bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] dark:shadow-[0_2px_10px_-3px_rgba(0,0,0,0.3)] hover:shadow-[0_8px_30px_-4px_rgba(6,81,237,0.15)] dark:hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.4)] motion-safe:hover:-translate-y-1 transition-[box-shadow,transform] duration-200 ease-out group/stat overflow-hidden relative">
                         <div className="absolute top-0 left-0 w-full h-[3px] bg-violet-500 opacity-0 group-hover/stat:opacity-100 transition-opacity duration-200" />
                         <div className="flex justify-between items-start gap-2">
                             <div className="min-w-0">
                                 <p className="text-slate-500 dark:text-slate-400 text-[10px] sm:text-xs font-medium mb-1 uppercase tracking-wide">DC Meters</p>
                                 <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-slate-800 dark:text-slate-100 tabular-nums tracking-tight">{dcMeters.length}</h3>
                             </div>
-                            <div className="p-2 sm:p-3 rounded-lg bg-violet-50 dark:bg-violet-900/20 group-hover/stat:scale-110 group-hover/stat:-rotate-3 transition-all duration-200 ease-out flex-shrink-0">
+                            <div className="p-2 sm:p-3 rounded-lg bg-violet-50 dark:bg-violet-900/20 motion-safe:group-hover/stat:scale-110 motion-safe:group-hover/stat:-rotate-3 transition-transform duration-200 ease-out flex-shrink-0">
                                 <Activity className="w-4 h-4 sm:w-5 sm:h-5 text-violet-500" />
                             </div>
                         </div>
                     </div>
                     {/* Active Meters (latest day) */}
-                    <div className="bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] dark:shadow-[0_2px_10px_-3px_rgba(0,0,0,0.3)] hover:shadow-[0_8px_30px_-4px_rgba(6,81,237,0.15)] dark:hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.4)] hover:-translate-y-1 transition-all duration-200 ease-out group/stat overflow-hidden relative">
+                    <div className="bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] dark:shadow-[0_2px_10px_-3px_rgba(0,0,0,0.3)] hover:shadow-[0_8px_30px_-4px_rgba(6,81,237,0.15)] dark:hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.4)] motion-safe:hover:-translate-y-1 transition-[box-shadow,transform] duration-200 ease-out group/stat overflow-hidden relative">
                         <div className="absolute top-0 left-0 w-full h-[3px] bg-emerald-500 opacity-0 group-hover/stat:opacity-100 transition-opacity duration-200" />
                         <div className="flex justify-between items-start gap-2">
                             <div className="min-w-0">
@@ -1511,7 +1511,7 @@ function DCDailyTable({ monthData }: { monthData: SupabaseDailyWaterConsumption[
                                     {activeMeters}<span className="text-slate-400 dark:text-slate-500 text-base font-semibold"> / {dcMeters.length}</span>
                                 </h3>
                             </div>
-                            <div className="p-2 sm:p-3 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 group-hover/stat:scale-110 group-hover/stat:-rotate-3 transition-all duration-200 ease-out flex-shrink-0">
+                            <div className="p-2 sm:p-3 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 motion-safe:group-hover/stat:scale-110 motion-safe:group-hover/stat:-rotate-3 transition-transform duration-200 ease-out flex-shrink-0">
                                 <Zap className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-500" />
                             </div>
                         </div>

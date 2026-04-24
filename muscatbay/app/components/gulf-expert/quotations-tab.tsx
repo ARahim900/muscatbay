@@ -43,7 +43,7 @@ export function QuotationsTab({ quotations }: QuotationsTabProps) {
       {quotations.map((q) => (
         <Card
           key={q.id}
-          className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-[transform,box-shadow] duration-200"
+          className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md motion-safe:hover:-translate-y-0.5 transition-[transform,box-shadow] duration-200"
         >
           <CardContent className="p-5 space-y-3">
             <div className="flex items-start justify-between gap-2">

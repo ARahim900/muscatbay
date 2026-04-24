@@ -120,7 +120,7 @@ function SummaryCard({
     color: string; valueColor?: string;
 }) {
     return (
-        <div className="relative overflow-hidden bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-[0_2px_10px_-3px_rgba(15,23,42,0.08)] dark:shadow-[0_2px_10px_-3px_rgba(0,0,0,0.4)] hover:-translate-y-0.5 transition-all duration-200 ease-out group/stat">
+        <div className="relative overflow-hidden bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-[0_2px_10px_-3px_rgba(15,23,42,0.08)] dark:shadow-[0_2px_10px_-3px_rgba(0,0,0,0.4)] motion-safe:hover:-translate-y-0.5 transition-[transform] duration-200 ease-out group/stat">
             <div className="absolute top-0 left-0 right-0 h-[3px]" style={{ backgroundColor: color }} aria-hidden="true" />
             <div className="flex justify-between items-start gap-2">
                 <div className="min-w-0">
@@ -133,7 +133,7 @@ function SummaryCard({
                     </h3>
                 </div>
                 <div
-                    className="p-2 sm:p-3 rounded-lg group-hover/stat:scale-110 group-hover/stat:-rotate-3 transition-all duration-200 ease-out flex-shrink-0"
+                    className="p-2 sm:p-3 rounded-lg motion-safe:group-hover/stat:scale-110 motion-safe:group-hover/stat:-rotate-3 transition-transform duration-200 ease-out flex-shrink-0"
                     style={{ backgroundColor: `${color}1A`, color }}
                 >
                     {icon}

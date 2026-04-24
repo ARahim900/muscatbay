@@ -35,8 +35,8 @@ export function PageStatusBar({
                 className={cn(
                     "flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium",
                     isConnected
-                        ? "bg-mb-success-light text-mb-success dark:bg-mb-success-light/20 dark:text-mb-success-hover"
-                        : "bg-mb-warning-light text-mb-warning dark:bg-mb-warning-light/20 dark:text-mb-warning"
+                        ? "bg-mb-success-light text-[var(--mb-success-text)] dark:bg-mb-success-light/20"
+                        : "bg-mb-warning-light text-[var(--mb-warning-text)] dark:bg-mb-warning-light/20"
                 )}
             >
                 {isConnected ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
@@ -69,7 +69,7 @@ export function PageStatusBar({
                 )}
             </div>
             {error && (
-                <span className="text-mb-warning flex items-center gap-1 text-xs">
+                <span role="alert" className="text-[var(--mb-warning-text)] flex items-center gap-1 text-xs">
                     {error}
                 </span>
             )}

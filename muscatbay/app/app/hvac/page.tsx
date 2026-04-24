@@ -120,8 +120,8 @@ export default function GulfExpertPage() {
           title="HVAC System"
           description="Preventive maintenance tracker for HVAC & BMS systems"
         />
-        <div className="bg-white dark:bg-slate-900 rounded-xl border border-red-200 dark:border-red-800 p-8 text-center">
-          <AlertTriangle className="h-12 w-12 text-red-400 mx-auto mb-4" />
+        <div role="alert" className="bg-white dark:bg-slate-900 rounded-xl border border-red-200 dark:border-red-800 p-8 text-center">
+          <AlertTriangle className="h-12 w-12 text-red-400 mx-auto mb-4" aria-hidden="true" />
           <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-2">
             Failed to Load Data
           </h3>

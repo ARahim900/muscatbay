@@ -88,13 +88,17 @@
   --color-mb-success: var(--mb-success);
   --color-mb-success-hover: var(--mb-success-hover);
   --color-mb-success-light: var(--mb-success-light);
+  --color-mb-success-text: var(--mb-success-text);
   --color-mb-danger: var(--mb-danger);
   --color-mb-danger-hover: var(--mb-danger-hover);
   --color-mb-danger-light: var(--mb-danger-light);
+  --color-mb-danger-text: var(--mb-danger-text);
   --color-mb-warning: var(--mb-warning);
   --color-mb-warning-light: var(--mb-warning-light);
+  --color-mb-warning-text: var(--mb-warning-text);
   --color-mb-info: var(--mb-info);
   --color-mb-info-light: var(--mb-info-light);
+  --color-mb-info-text: var(--mb-info-text);
 
   --radius-sm: 0.375rem;
   --radius-md: 0.5rem;
@@ -147,6 +151,16 @@
   --mb-warning-light: #FBF4E3;
   --mb-info: #6B9AC4;
   --mb-info-light: #EAF0F7;
+
+  /* ── Status foreground text tokens ──
+   * Use for TEXT on tinted status backgrounds in light mode.
+   * These automatically flip to light colors in .dark for use on dark surfaces.
+   * DO NOT use --mb-danger/warning/info/success directly as text colors —
+   * they are background tints and will fail WCAG AA contrast on light surfaces. */
+  --mb-danger-text:  #7f1d1d;   /* red-900:    8–10:1 on danger-light bg    */
+  --mb-warning-text: #78350f;   /* amber-900:  8:1+  on warning-light bg    */
+  --mb-info-text:    #1e3a5f;   /* navy:       10:1+ on info-light bg       */
+  --mb-success-text: #064e3b;   /* emerald-900: 8:1+ on success-light bg   */
 
   /* ── Status colour tokens — single source of truth for all data indicators ──
    * Use these (not --mb-*) for status dots, badges, trend arrows, and alerts. */
@@ -331,6 +345,12 @@
   --mb-warning-light: rgba(232, 192, 100, 0.12);
   --mb-info: #6B9AC4;
   --mb-info-light: rgba(107, 154, 196, 0.12);
+
+  /* Status text tokens flip to light colors on dark backgrounds */
+  --mb-danger-text:  #fecaca;   /* red-200   */
+  --mb-warning-text: #fde68a;   /* amber-200 */
+  --mb-info-text:    #bfdbfe;   /* blue-200  */
+  --mb-success-text: #a7f3d0;   /* emerald-200 */
 
   /* Dark surfaces — warm near-black family, harmonized with #4E4456 brand.
    * Shifted from slate (blue-family) to neutral near-black with a whisper of
@@ -536,11 +556,12 @@
     background-color: rgba(255, 255, 255, 0.9);
     border-radius: 0.75rem;
     border: 1px solid var(--border);
-    /* slate-200 */
     box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-    /* shadow-sm */
-    transition: all 0.2s ease-out;
-    will-change: transform, box-shadow;
+    /* Only box-shadow changes on hover — transition-all watches every property
+       and forces the browser to check for changes every frame. will-change is
+       also removed: box-shadow is paint-only (not composited) so layer promotion
+       costs memory without helping. */
+    transition: box-shadow 0.2s ease-out;
   }
 
   .card-elevated:hover {
@@ -647,9 +668,16 @@
     background-color: var(--chart-bg-pink);
   }
 
-  /* Design System Transitions */
+  /* Design System Transitions — explicit property list avoids the cost of
+     watching every CSS property that `transition: all` incurs. */
   .transition-design {
-    transition: all var(--transition-duration) var(--transition-timing);
+    transition:
+      color var(--transition-duration) var(--transition-timing),
+      background-color var(--transition-duration) var(--transition-timing),
+      border-color var(--transition-duration) var(--transition-timing),
+      box-shadow var(--transition-duration) var(--transition-timing),
+      opacity var(--transition-duration) var(--transition-timing),
+      transform var(--transition-duration) var(--transition-timing);
   }
 
   .transition-colors-design {

@@ -115,7 +115,7 @@ export function Topbar() {
                         <span className="hidden lg:block text-sm font-medium text-slate-700 dark:text-slate-200 max-w-[140px] truncate">
                             {displayName}
                         </span>
-                        <ChevronDown className={`w-3.5 h-3.5 text-slate-400 hidden sm:block transition-transform duration-150 ${isProfileOpen ? "rotate-180" : ""}`} />
+                        <ChevronDown className={`w-3.5 h-3.5 text-muted-foreground hidden sm:block transition-transform duration-150 ${isProfileOpen ? "rotate-180" : ""}`} />
                     </button>
 
                     {/* Profile Dropdown */}

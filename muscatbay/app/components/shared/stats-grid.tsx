@@ -42,7 +42,7 @@ const variantIconClass: Record<StatVariant, string> = {
     danger: "text-destructive",
     info: "text-blue-500",
     water: "text-blue-500",
-    default: "text-slate-500",
+    default: "text-muted-foreground",
 };
 
 export function StatsGrid({ stats, className }: StatsGridProps) {
@@ -127,6 +127,7 @@ export function StatsGrid({ stats, className }: StatsGridProps) {
                         {stat.status && (
                             <div className="mt-2 flex items-center gap-1.5 text-xs">
                                 <span
+                                    aria-hidden="true"
                                     className="inline-block w-1.5 h-1.5 rounded-full flex-shrink-0"
                                     style={{ backgroundColor: stat.status === 'normal' ? 'var(--status-normal)' : stat.status === 'warning' ? 'var(--status-warning)' : stat.status === 'danger' ? 'var(--status-danger)' : stat.status === 'stale' ? 'var(--status-stale)' : 'var(--status-missing)' }}
                                 />
