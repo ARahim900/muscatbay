@@ -1017,23 +1017,20 @@ export default function WaterNetworkMap() {
             if (!Cesium) { setMapError('Cesium runtime unavailable — refresh the page'); return; }
 
             try {
+                // Ion token is only set so Cesium doesn't log a missing-token warning.
+                // We make NO Ion requests: imagery = OSM (free, no auth), tiles = Google
+                // Maps API (direct URL). This is intentional — all Ion-based requests
+                // were the source of "Request has failed. Status Code: 404" errors because
+                // deferred tile fetches fired outside the try-catch scope.
                 Cesium.Ion.defaultAccessToken = CESIUM_ION_TOKEN;
 
-                // Resolve the base imagery layer independently so a Cesium Ion
-                // auth failure does NOT prevent the Viewer from initialising.
-                // Google 3D tiles (loaded below) hide the globe entirely when
-                // available, so this layer only matters as a last-resort fallback.
-                let imageryProvider: unknown;
-                try {
-                    imageryProvider = await Cesium.IonImageryProvider.fromAssetId(2);
-                } catch {
-                    // Ion unavailable (invalid token, rate limit, network) —
-                    // use free OSM tiles so the globe still renders.
-                    imageryProvider = new Cesium.UrlTemplateImageryProvider({
-                        url:    'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                        credit: 'Map tiles by OpenStreetMap contributors',
-                    });
-                }
+                // OSM tiles are free, globally reliable, and need no Ion auth.
+                // Google 3D tiles (loaded below) override and hide this globe
+                // entirely when they succeed, so OSM is only the fallback view.
+                const imageryProvider = new Cesium.UrlTemplateImageryProvider({
+                    url:    'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    credit: 'Map tiles by OpenStreetMap contributors',
+                });
 
                 const viewer = new Cesium.Viewer(containerRef.current!, {
                     baseLayerPicker:      false,
@@ -1167,7 +1164,12 @@ export default function WaterNetworkMap() {
                 console.error('[water-network] init failed:', err);
                 setMapError(String(err));
             }
-        })();
+        })().catch(err => {
+            // Safety net: catches any rejection that escapes the inner try-catch
+            // (e.g. late async throws from Cesium internals after the try block exits).
+            console.error('[water-network] unhandled async error:', err);
+            setMapError(String(err));
+        });
 
         return () => {
             cancelled = true;
