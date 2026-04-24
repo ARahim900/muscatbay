@@ -34,10 +34,14 @@ const config: Config = {
                     'danger': 'var(--mb-danger)',
                     'danger-hover': 'var(--mb-danger-hover)',
                     'danger-light': 'var(--mb-danger-light)',
+                    'danger-text': 'var(--mb-danger-text)',
                     'warning': 'var(--mb-warning)',
                     'warning-light': 'var(--mb-warning-light)',
+                    'warning-text': 'var(--mb-warning-text)',
                     'info': 'var(--mb-info)',
                     'info-light': 'var(--mb-info-light)',
+                    'info-text': 'var(--mb-info-text)',
+                    'success-text': 'var(--mb-success-text)',
                 },
                 primary: {
                     DEFAULT: '#4E4456', // Brand Purple-Gray

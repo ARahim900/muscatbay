@@ -75,12 +75,12 @@ export class ErrorBoundary extends Component<Props, State> {
             // Default error UI
             return (
                 <div className="min-h-[400px] flex items-center justify-center p-6">
-                    <Card className="max-w-lg w-full border-red-200 dark:border-red-900/50">
+                    <Card className="max-w-lg w-full border-mb-danger/30">
                         <CardHeader className="text-center">
-                            <div className="mx-auto mb-4 p-3 rounded-full bg-red-100 dark:bg-red-900/30 w-fit">
-                                <AlertTriangle className="h-8 w-8 text-red-500" />
+                            <div className="mx-auto mb-4 p-3 rounded-full bg-mb-danger-light w-fit">
+                                <AlertTriangle className="h-8 w-8 text-destructive" />
                             </div>
-                            <CardTitle className="text-xl text-red-600 dark:text-red-400">
+                            <CardTitle className="text-xl text-destructive">
                                 Something went wrong
                             </CardTitle>
                         </CardHeader>
@@ -91,8 +91,8 @@ export class ErrorBoundary extends Component<Props, State> {
 
                             {/* Error message */}
                             {this.state.error && (
-                                <div className="p-3 rounded-md bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
-                                    <p className="text-sm font-mono text-red-700 dark:text-red-300 break-all">
+                                <div className="p-3 rounded-md bg-mb-danger-light border border-mb-danger/20">
+                                    <p className="text-sm font-mono text-mb-danger-text break-all">
                                         {this.state.error.message || "Unknown error"}
                                     </p>
                                 </div>

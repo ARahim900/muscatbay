@@ -577,27 +577,27 @@ export default function ContractorsPage() {
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead className="w-8">#</TableHead>
-                                    <TableHead className="cursor-pointer" onClick={() => handleSort('contractor')}>
+                                    <TableHead scope="col" className="w-8">#</TableHead>
+                                    <TableHead scope="col" className="cursor-pointer" onClick={() => handleSort('contractor')}>
                                         <div className="flex items-center gap-1.5">Contractor <SortIcon field="contractor" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
                                     </TableHead>
-                                    <TableHead className="hidden lg:table-cell">Contract Ref</TableHead>
-                                    <TableHead className="cursor-pointer" onClick={() => handleSort('service')}>
+                                    <TableHead scope="col" className="hidden lg:table-cell">Contract Ref</TableHead>
+                                    <TableHead scope="col" className="cursor-pointer" onClick={() => handleSort('service')}>
                                         <div className="flex items-center gap-1.5">Service <SortIcon field="service" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
                                     </TableHead>
-                                    <TableHead className="cursor-pointer" onClick={() => handleSort('flow')}>
+                                    <TableHead scope="col" className="cursor-pointer" onClick={() => handleSort('flow')}>
                                         <div className="flex items-center gap-1.5">Flow <SortIcon field="flow" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
                                     </TableHead>
-                                    <TableHead className="text-center cursor-pointer" onClick={() => handleSort('years')}>
+                                    <TableHead scope="col" className="text-center cursor-pointer" onClick={() => handleSort('years')}>
                                         <div className="flex items-center justify-center gap-1.5">Years <SortIcon field="years" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
                                     </TableHead>
-                                    <TableHead className="text-right cursor-pointer" onClick={() => handleSort('annual')}>
+                                    <TableHead scope="col" className="text-right cursor-pointer" onClick={() => handleSort('annual')}>
                                         <div className="flex items-center justify-end gap-1.5">Annual (OMR) <SortIcon field="annual" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
                                     </TableHead>
-                                    <TableHead className="text-right cursor-pointer" onClick={() => handleSort('total')}>
+                                    <TableHead scope="col" className="text-right cursor-pointer" onClick={() => handleSort('total')}>
                                         <div className="flex items-center justify-end gap-1.5">Total (OMR) <SortIcon field="total" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
                                     </TableHead>
-                                    <TableHead className="text-center w-16">Doc</TableHead>
+                                    <TableHead scope="col" className="text-center w-16">Doc</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -709,13 +709,13 @@ export default function ContractorsPage() {
                                 <table className="w-full text-sm border-collapse whitespace-nowrap">
                                     <thead>
                                         <tr className="bg-slate-50 dark:bg-slate-800/80">
-                                            <th className="text-left py-4 px-4 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 sticky left-0 bg-slate-50 dark:bg-slate-800/80 z-10">Year</th>
+                                            <th scope="col" className="text-left py-4 px-4 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 sticky left-0 bg-slate-50 dark:bg-slate-800/80 z-10">Year</th>
                                             {matrix.contractors.map(cn => (
-                                                <th key={cn} className="text-right py-4 px-3 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700" title={cn}>
+                                                <th key={cn} scope="col" className="text-right py-4 px-3 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700" title={cn}>
                                                     {shortName(cn)}
                                                 </th>
                                             ))}
-                                            <th className="text-right py-4 px-4 font-semibold text-sm text-slate-700 dark:text-slate-200 border-b-2 border-slate-200 dark:border-slate-700 bg-slate-100/60 dark:bg-slate-700/30">Year Total</th>
+                                            <th scope="col" className="text-right py-4 px-4 font-semibold text-sm text-slate-700 dark:text-slate-200 border-b-2 border-slate-200 dark:border-slate-700 bg-slate-100/60 dark:bg-slate-700/30">Year Total</th>
                                         </tr>
                                     </thead>
                                     <tbody>

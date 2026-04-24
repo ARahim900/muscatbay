@@ -45,41 +45,41 @@ export default function FireQuotesPage() {
                 value: `OMR ${grandTotal.toLocaleString('en-US', { maximumFractionDigits: 1 })}`,
                 subtitle: "All Quotations",
                 icon: FileText,
-                color: "text-emerald-500",
-                bgColor: "bg-emerald-50 dark:bg-emerald-900/20"
+                color: "text-mb-success",
+                bgColor: "bg-mb-success-light"
             },
             {
                 label: "CRITICAL REPAIRS",
                 value: `OMR ${criticalCost.toLocaleString('en-US', { maximumFractionDigits: 1 })}`,
                 subtitle: "Urgent Maintenance",
                 icon: AlertTriangle,
-                color: "text-red-500",
-                bgColor: "bg-red-50 dark:bg-red-900/20"
+                color: "text-mb-danger",
+                bgColor: "bg-mb-danger-light"
             },
             {
                 label: "APPROVED QUOTES",
                 value: approvedCount.toString(),
                 subtitle: "Ready to proceed",
                 icon: CheckCircle2,
-                color: "text-green-500",
-                bgColor: "bg-green-50 dark:bg-green-900/20"
+                color: "text-mb-success",
+                bgColor: "bg-mb-success-light"
             },
             {
                 label: "PENDING APPROVAL",
                 value: pendingCount.toString(),
                 subtitle: "Awaiting Action",
                 icon: FileText,
-                color: "text-yellow-500",
-                bgColor: "bg-yellow-50 dark:bg-yellow-900/20"
+                color: "text-mb-warning",
+                bgColor: "bg-mb-warning-light"
             }
         ];
     }, [data]);
 
     const getStatusBadge = (status: string) => {
         switch (status) {
-            case 'approved': return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300';
-            case 'pending_approval': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300';
-            case 'rejected': return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300';
+            case 'approved': return 'bg-mb-success-light text-mb-success-text';
+            case 'pending_approval': return 'bg-mb-warning-light text-mb-warning-text';
+            case 'rejected': return 'bg-mb-danger-light text-mb-danger-text';
             default: return 'bg-slate-100 text-slate-800';
         }
     };
@@ -128,7 +128,7 @@ export default function FireQuotesPage() {
                                 </div>
                             </div>
                             <div className="text-right">
-                                <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+                                <div className="text-2xl font-bold text-mb-success-text">
                                     OMR {quote.total_omr.toLocaleString('en-US', { maximumFractionDigits: 1 })}
                                 </div>
                                 <div className="text-xs text-muted-foreground">Incl. VAT: OMR {quote.vat_omr}</div>

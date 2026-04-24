@@ -183,9 +183,9 @@ export function CSVUploadDialog({ month, year, onUploadComplete }: CSVUploadDial
                             "relative border-2 border-dashed rounded-lg p-8 text-center transition-all duration-200 cursor-pointer",
                             uploadState === 'idle' && "border-slate-300 dark:border-slate-600 hover:border-primary hover:bg-primary/5",
                             uploadState === 'dragging' && "border-primary bg-primary/10",
-                            uploadState === 'uploading' && "border-amber-400 bg-amber-50 dark:bg-amber-900/20 cursor-wait",
-                            uploadState === 'success' && "border-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 cursor-default",
-                            uploadState === 'error' && "border-red-400 bg-red-50 dark:bg-red-900/20"
+                            uploadState === 'uploading' && "border-mb-warning bg-mb-warning-light cursor-wait",
+                            uploadState === 'success' && "border-mb-success bg-mb-success-light cursor-default",
+                            uploadState === 'error' && "border-mb-danger bg-mb-danger-light"
                         )}
                     >
                         <input
@@ -219,11 +219,11 @@ export function CSVUploadDialog({ month, year, onUploadComplete }: CSVUploadDial
 
                         {uploadState === 'uploading' && (
                             <div className="space-y-2">
-                                <Loader2 className="h-10 w-10 mx-auto text-amber-500 animate-spin" />
-                                <p className="text-sm font-medium text-amber-700 dark:text-amber-400">
+                                <Loader2 className="h-10 w-10 mx-auto text-mb-warning animate-spin" />
+                                <p className="text-sm font-medium text-mb-warning-text">
                                     Processing {selectedFile?.name}...
                                 </p>
-                                <p className="text-xs text-amber-600 dark:text-amber-500">
+                                <p className="text-xs text-mb-warning-text/70">
                                     Parsing, filtering, and importing data
                                 </p>
                             </div>
@@ -231,8 +231,8 @@ export function CSVUploadDialog({ month, year, onUploadComplete }: CSVUploadDial
 
                         {uploadState === 'success' && result && (
                             <div className="space-y-2">
-                                <CheckCircle2 className="h-10 w-10 mx-auto text-emerald-500" />
-                                <p className="text-sm font-medium text-emerald-700 dark:text-emerald-400">
+                                <CheckCircle2 className="h-10 w-10 mx-auto text-mb-success" />
+                                <p className="text-sm font-medium text-mb-success-text">
                                     Import Successful!
                                 </p>
                             </div>
@@ -240,8 +240,8 @@ export function CSVUploadDialog({ month, year, onUploadComplete }: CSVUploadDial
 
                         {uploadState === 'error' && (
                             <div className="space-y-2">
-                                <XCircle className="h-10 w-10 mx-auto text-red-500" />
-                                <p className="text-sm font-medium text-red-700 dark:text-red-400">
+                                <XCircle className="h-10 w-10 mx-auto text-destructive" />
+                                <p className="text-sm font-medium text-mb-danger-text">
                                     Import Failed
                                 </p>
                                 <p className="text-xs text-slate-500">
@@ -256,13 +256,13 @@ export function CSVUploadDialog({ month, year, onUploadComplete }: CSVUploadDial
                         <div className={cn(
                             "rounded-lg p-4 space-y-3",
                             result.success
-                                ? "bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800"
-                                : "bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800"
+                                ? "bg-mb-success-light border border-mb-success/20"
+                                : "bg-mb-danger-light border border-mb-danger/20"
                         )}>
                             {/* Stats */}
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="text-center">
-                                    <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+                                    <p className="text-2xl font-bold text-mb-success-text">
                                         {result.imported}
                                     </p>
                                     <p className="text-xs text-slate-600 dark:text-slate-400">
@@ -270,7 +270,7 @@ export function CSVUploadDialog({ month, year, onUploadComplete }: CSVUploadDial
                                     </p>
                                 </div>
                                 <div className="text-center">
-                                    <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">
+                                    <p className="text-2xl font-bold text-mb-warning-text">
                                         {result.skipped}
                                     </p>
                                     <p className="text-xs text-slate-600 dark:text-slate-400">
@@ -282,11 +282,11 @@ export function CSVUploadDialog({ month, year, onUploadComplete }: CSVUploadDial
                             {/* Errors */}
                             {result.errors.length > 0 && (
                                 <div className="space-y-1">
-                                    <p className="text-xs font-medium text-red-700 dark:text-red-400 flex items-center gap-1">
+                                    <p className="text-xs font-medium text-mb-danger-text flex items-center gap-1">
                                         <AlertTriangle className="h-3 w-3" />
                                         Issues:
                                     </p>
-                                    <ul className="text-xs text-red-600 dark:text-red-400 space-y-0.5 max-h-20 overflow-y-auto">
+                                    <ul className="text-xs text-mb-danger-text space-y-0.5 max-h-20 overflow-y-auto">
                                         {result.errors.map((error, idx) => (
                                             <li key={idx} className="truncate">• {error}</li>
                                         ))}
@@ -302,7 +302,7 @@ export function CSVUploadDialog({ month, year, onUploadComplete }: CSVUploadDial
                             )}
 
                             {result.success && (
-                                <p className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                                <p className="text-xs text-mb-success-text flex items-center gap-1">
                                     <CheckCircle2 className="h-3 w-3" />
                                     Dashboard will refresh automatically
                                 </p>

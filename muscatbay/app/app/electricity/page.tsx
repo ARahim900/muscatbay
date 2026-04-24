@@ -822,7 +822,7 @@ export default function ElectricityPage() {
                                                     value={selectedMeter}
                                                     onChange={(e) => setSelectedMeter(e.target.value)}
                                                     aria-label={`Select individual ${analysisType} meter`}
-                                                    className="px-2.5 py-1.5 rounded-lg border border-secondary/40 bg-white dark:bg-slate-800 text-sm font-medium text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-secondary/40 max-w-[280px]"
+                                                    className="px-2.5 py-1.5 rounded-lg border border-secondary/40 bg-white dark:bg-slate-800 text-sm font-medium text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-secondary/40 w-full max-w-full sm:max-w-[280px]"
                                                 >
                                                     <option value="All">All {analysisType} ({metersOfSelectedType.length})</option>
                                                     {metersOfSelectedType.map((m) => (
@@ -896,7 +896,7 @@ export default function ElectricityPage() {
                                     <ResponsiveContainer width="100%" height="100%">
                                         <BarChart data={consumptionByType} layout="vertical" margin={{ left: 10 }}>
                                             <XAxis type="number" hide />
-                                            <YAxis type="category" dataKey="type" width={100} className="text-xs" axisLine={false} tickLine={false} tick={{ fill: "var(--chart-axis)" }} />
+                                            <YAxis type="category" dataKey="type" width={80} className="text-xs" axisLine={false} tickLine={false} tick={{ fill: "var(--chart-axis)" }} />
                                             <Tooltip content={<LiquidTooltip />} cursor={{ fill: 'rgba(0,0,0,0.04)', radius: 6 }} />
                                             <Bar dataKey="value" radius={[0, 6, 6, 0]} barSize={24} animationDuration={600}>
                                                 {consumptionByType.map((entry, index) => (

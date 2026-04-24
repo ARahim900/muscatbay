@@ -8,6 +8,8 @@ import { Breadcrumbs } from "./breadcrumbs";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import { usePathname } from "next/navigation";
 
+const HEADER_ANIM_CONFIG = { y: 20, duration: 0.4, stagger: 0.1 } as const;
+
 interface PageHeaderProps {
     title: string;
     description?: string;
@@ -36,11 +38,7 @@ const MODULE_ACCENTS: [string, string][] = [
 ];
 
 export function PageHeader({ title, description, className, showBreadcrumbs = true, moduleColor, action, children }: PageHeaderProps) {
-    const headerRef = useScrollAnimation<HTMLDivElement>({
-        y: 20,
-        duration: 0.4,
-        stagger: 0.1,
-    });
+    const headerRef = useScrollAnimation<HTMLDivElement>(HEADER_ANIM_CONFIG);
 
     const pathname = usePathname();
 

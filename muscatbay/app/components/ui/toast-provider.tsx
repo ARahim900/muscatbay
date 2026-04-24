@@ -26,27 +26,27 @@ const ToastContext = createContext<ToastContextValue | undefined>(undefined);
 const toastConfig: Record<ToastType, { icon: React.ComponentType<{ className?: string }>; bgClass: string; borderClass: string; iconClass: string }> = {
     success: {
         icon: CheckCircle,
-        bgClass: "bg-green-50 dark:bg-green-900/20",
-        borderClass: "border-s-green-500",
-        iconClass: "text-green-500",
+        bgClass: "bg-mb-success-light",
+        borderClass: "border-s-mb-success",
+        iconClass: "text-mb-success",
     },
     error: {
         icon: AlertCircle,
-        bgClass: "bg-red-50 dark:bg-red-900/20",
-        borderClass: "border-s-red-500",
-        iconClass: "text-red-500",
+        bgClass: "bg-mb-danger-light",
+        borderClass: "border-s-mb-danger",
+        iconClass: "text-destructive",
     },
     warning: {
         icon: AlertTriangle,
-        bgClass: "bg-amber-50 dark:bg-amber-900/20",
-        borderClass: "border-s-amber-500",
-        iconClass: "text-amber-500",
+        bgClass: "bg-mb-warning-light",
+        borderClass: "border-s-mb-warning",
+        iconClass: "text-mb-warning",
     },
     info: {
         icon: Info,
-        bgClass: "bg-blue-50 dark:bg-blue-900/20",
-        borderClass: "border-s-blue-500",
-        iconClass: "text-blue-500",
+        bgClass: "bg-mb-info-light",
+        borderClass: "border-s-mb-info",
+        iconClass: "text-mb-info",
     },
 };
 

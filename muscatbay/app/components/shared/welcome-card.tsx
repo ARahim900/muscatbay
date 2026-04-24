@@ -64,7 +64,7 @@ export function WelcomeCard({ userName, className }: WelcomeCardProps) {
                             <div>
                                 <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-1">
                                     {feature.label}
-                                    <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 motion-safe:-translate-x-1 motion-safe:group-hover:translate-x-0 transition-[transform,opacity] duration-200" />
+                                    <ArrowRight className="w-3 h-3 opacity-40 group-hover:opacity-100 motion-safe:-translate-x-1 motion-safe:group-hover:translate-x-0 transition-[transform,opacity] duration-200" />
                                 </p>
                                 <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5 line-clamp-1">
                                     {feature.description}

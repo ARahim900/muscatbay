@@ -99,12 +99,12 @@ function Th({
 type ChipColor = 'success' | 'danger' | 'warning' | 'default' | 'primary' | 'info';
 function StatusChip({ label, color }: { label: string; color: ChipColor }) {
     const styles: Record<ChipColor, string> = {
-        success: 'bg-emerald-50 text-emerald-600 ring-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-400 dark:ring-emerald-500/20',
-        danger:  'bg-red-50 text-red-600 ring-red-500/20 dark:bg-red-500/10 dark:text-red-400 dark:ring-red-500/20',
-        warning: 'bg-amber-50 text-amber-600 ring-amber-500/20 dark:bg-amber-500/10 dark:text-amber-400 dark:ring-amber-500/20',
+        success: 'bg-mb-success-light text-mb-success-text ring-mb-success/20',
+        danger:  'bg-mb-danger-light text-mb-danger-text ring-mb-danger/20',
+        warning: 'bg-mb-warning-light text-mb-warning-text ring-mb-warning/20',
         default: 'bg-slate-100 text-slate-500 ring-slate-500/10 dark:bg-slate-500/10 dark:text-slate-400 dark:ring-slate-500/20',
         primary: 'bg-violet-50 text-violet-600 ring-violet-500/20 dark:bg-violet-500/10 dark:text-violet-400 dark:ring-violet-500/20',
-        info:    'bg-blue-50 text-blue-600 ring-blue-500/20 dark:bg-blue-500/10 dark:text-blue-400 dark:ring-blue-500/20',
+        info:    'bg-mb-info-light text-mb-info-text ring-mb-info/20',
     };
     return (
         <span className={cn('inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium ring-1 ring-inset', styles[color])}>

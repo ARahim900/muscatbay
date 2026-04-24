@@ -227,16 +227,16 @@ function LoginContent() {
                         <form onSubmit={handleSubmit} className="space-y-6">
                             {/* Success Message (e.g. after password reset) */}
                             {successMessage && !error && (
-                                <div role="status" aria-live="polite" className="p-4 text-sm text-emerald-700 bg-emerald-50 dark:bg-emerald-900/20 dark:text-emerald-300 rounded-xl border border-emerald-200 dark:border-emerald-800 flex items-center gap-3 animate-in slide-in-from-top duration-200">
-                                    <div className="w-2 h-2 bg-emerald-500 rounded-full" />
+                                <div role="status" aria-live="polite" className="p-4 text-sm text-mb-success-text bg-mb-success-light rounded-xl border border-mb-success/20 flex items-center gap-3 animate-in slide-in-from-top duration-200">
+                                    <div className="w-2 h-2 bg-mb-success rounded-full" />
                                     {successMessage}
                                 </div>
                             )}
 
                             {/* Error Message */}
                             {error && (
-                                <div id="password-error" role="alert" aria-live="assertive" className="p-4 text-sm text-red-600 bg-red-50 dark:bg-red-900/20 dark:text-red-400 rounded-xl border border-red-200 dark:border-red-800 flex items-center gap-3 animate-in slide-in-from-top duration-200">
-                                    <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+                                <div id="password-error" role="alert" aria-live="assertive" className="p-4 text-sm text-mb-danger-text bg-mb-danger-light rounded-xl border border-mb-danger/20 flex items-center gap-3 animate-in slide-in-from-top duration-200">
+                                    <div className="w-2 h-2 bg-mb-danger rounded-full animate-pulse" />
                                     {error}
                                 </div>
                             )}
@@ -261,7 +261,7 @@ function LoginContent() {
                                         aria-describedby={emailError ? "email-error" : undefined}
                                         aria-invalid={emailError ? true : undefined}
                                         className={`pl-12 h-12 rounded-xl border-2 transition-all duration-200 ${emailError
-                                            ? 'border-red-500 focus:border-red-500'
+                                            ? 'border-destructive focus:border-destructive'
                                             : focusedField === 'email'
                                                 ? 'border-primary shadow-lg shadow-primary/10'
                                                 : 'border-slate-200 dark:border-slate-600 hover:border-slate-300'
@@ -271,8 +271,8 @@ function LoginContent() {
                                     />
                                 </div>
                                 {emailError && (
-                                    <p id="email-error" className="text-xs text-red-500 flex items-center gap-1 animate-in slide-in-from-top duration-200">
-                                        <span className="w-1 h-1 bg-red-500 rounded-full" />
+                                    <p id="email-error" className="text-xs text-destructive flex items-center gap-1 animate-in slide-in-from-top duration-200">
+                                        <span className="w-1 h-1 bg-destructive rounded-full" />
                                         {emailError}
                                     </p>
                                 )}

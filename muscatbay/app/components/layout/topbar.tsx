@@ -67,10 +67,12 @@ export function Topbar() {
                     aria-label={mounted ? `Switch to ${theme === "dark" ? "light" : "dark"} mode` : "Toggle theme"}
                     aria-pressed={mounted ? theme === "dark" : undefined}
                 >
-                    {mounted && (theme === "dark"
-                        ? <Moon className="w-[17px] h-[17px]" />
-                        : <Sun className="w-[17px] h-[17px]" />
-                    )}
+                    {mounted
+                        ? (theme === "dark"
+                            ? <Moon className="w-[17px] h-[17px]" />
+                            : <Sun className="w-[17px] h-[17px]" />)
+                        : <Sun className="w-[17px] h-[17px] opacity-0" aria-hidden="true" />
+                    }
                 </button>
 
                 {/* Settings */}

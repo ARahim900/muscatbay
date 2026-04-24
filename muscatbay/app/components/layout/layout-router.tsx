@@ -9,30 +9,14 @@ import { ClientLayout } from "@/components/layout/client-layout";
 // auth flows (login/signup/etc.) and public legal pages (privacy/terms).
 const AUTH_PAGES = ["/login", "/signup", "/forgot-password", "/auth", "/privacy", "/terms"];
 
-// Routes that render at full viewport — auth stays, but no app chrome
-// (no topbar/sidebar/padding). For immersive full-screen tools like the
-// 3D water-network map that need the entire window.
-const FULLSCREEN_PAGES = ["/water-network"];
-
 export function LayoutRouter({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isAuthPage    = AUTH_PAGES.some(page => pathname?.startsWith(page));
-  const isFullscreen  = FULLSCREEN_PAGES.some(page => pathname?.startsWith(page));
+  const isAuthPage = AUTH_PAGES.some(page => pathname?.startsWith(page));
 
   if (isAuthPage) {
     return (
       <ToastProvider>
         {children}
-      </ToastProvider>
-    );
-  }
-
-  if (isFullscreen) {
-    return (
-      <ToastProvider>
-        <AuthProvider>
-          {children}
-        </AuthProvider>
       </ToastProvider>
     );
   }

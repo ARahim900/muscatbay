@@ -187,10 +187,10 @@ export function BottomNav() {
                     }
                   `}
                 >
-                  <Icon className={`w-5 h-5 flex-shrink-0 ${active ? 'text-secondary' : ''}`} />
+                  <Icon className="w-5 h-5 flex-shrink-0" />
                   <span className={`text-sm ${active ? 'font-semibold' : 'font-medium'}`}>{item.name}</span>
                   {active && (
-                    <div className="ms-auto w-2 h-2 rounded-full bg-secondary shadow-[0_0_8px_rgba(0,210,179,0.6)]" />
+                    <div className="ms-auto w-2 h-2 rounded-full bg-secondary" />
                   )}
                 </Link>
               );
@@ -232,7 +232,7 @@ export function BottomNav() {
                   }
                 `}
               >
-                <Icon className={`w-5 h-5 ${active ? 'drop-shadow-[0_0_6px_rgba(0,210,179,0.5)]' : ''}`} />
+                <Icon className="w-5 h-5" />
                 <span className={`text-[10px] leading-tight ${active ? 'font-semibold' : 'font-medium'}`}>
                   {item.name}
                 </span>
@@ -257,7 +257,7 @@ export function BottomNav() {
             aria-label="More navigation items"
             aria-expanded={drawerOpen}
           >
-            <MoreHorizontal className={`w-5 h-5 ${drawerOpen || isOverflowActive ? 'drop-shadow-[0_0_6px_rgba(0,210,179,0.5)]' : ''}`} />
+            <MoreHorizontal className="w-5 h-5" />
             <span className={`text-[10px] leading-tight ${drawerOpen || isOverflowActive ? 'font-semibold' : 'font-medium'}`}>
               More
             </span>

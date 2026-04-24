@@ -34,6 +34,8 @@ interface StatsGridProps {
     className?: string;
 }
 
+const SCROLL_ANIMATION_CONFIG = { y: 30, duration: 0.5, stagger: 0.1 } as const;
+
 const variantIconClass: Record<StatVariant, string> = {
     primary: "text-primary",
     secondary: "text-amber-500",
@@ -46,11 +48,7 @@ const variantIconClass: Record<StatVariant, string> = {
 };
 
 export function StatsGrid({ stats, className }: StatsGridProps) {
-    const gridRef = useScrollAnimation<HTMLDivElement>({
-        y: 30,
-        duration: 0.5,
-        stagger: 0.1,
-    });
+    const gridRef = useScrollAnimation<HTMLDivElement>(SCROLL_ANIMATION_CONFIG);
 
     const count = stats.length;
     const gridCols =

@@ -19,7 +19,6 @@ import {
   ChevronLeft,
   Waves,
   Wrench,
-  Map,
 } from 'lucide-react';
 
 interface NavigationItem {
@@ -49,8 +48,7 @@ const navGroups: NavGroup[] = [
     label: "Utilities",
     items: [
       { id: "water", name: "Water", icon: Droplets, href: "/water" },
-      { id: "water-network", name: "Water Network", icon: Map, href: "/water-network" },
-      { id: "electricity", name: "Electricity", icon: Zap, href: "/electricity" },
+{ id: "electricity", name: "Electricity", icon: Zap, href: "/electricity" },
       { id: "stp", name: "STP Plant", icon: Waves, href: "/stp" },
     ],
   },
@@ -193,7 +191,7 @@ export function Sidebar() {
                       >
                         <span
                           aria-hidden="true"
-                          className={`absolute start-0 top-1.5 bottom-1.5 w-[3px] rounded-e-full bg-secondary shadow-[0_0_10px_rgba(0,210,179,0.55)] transition-opacity duration-150 ease-out ${isActive ? 'opacity-100' : 'opacity-0'}`}
+                          className={`absolute start-0 top-1.5 bottom-1.5 w-[3px] rounded-e-full bg-secondary transition-opacity duration-150 ease-out ${isActive ? 'opacity-100' : 'opacity-0'}`}
                         />
                         <Icon className={`w-5 h-5 flex-shrink-0 transition-colors duration-150 relative z-10 ${isActive ? "text-secondary" : "text-white/80 group-hover/nav:text-white"}`} />
                         {!isCollapsed && (
@@ -242,7 +240,7 @@ export function Sidebar() {
                 {/* Left accent bar */}
                 <span
                   aria-hidden="true"
-                  className={`absolute start-0 top-1.5 bottom-1.5 w-[3px] rounded-e-full bg-secondary shadow-[0_0_10px_rgba(0,210,179,0.55)] transition-opacity duration-150 ease-out ${isActive ? 'opacity-100' : 'opacity-0'}`}
+                  className={`absolute start-0 top-1.5 bottom-1.5 w-[3px] rounded-e-full bg-secondary transition-opacity duration-150 ease-out ${isActive ? 'opacity-100' : 'opacity-0'}`}
                 />
                 <Icon
                   className={`

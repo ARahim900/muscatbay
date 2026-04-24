@@ -126,8 +126,8 @@ export default function SignUpPage() {
             <div className="min-h-screen flex items-center justify-center bg-background p-4">
                 <Card className="w-full max-w-md card-elevated">
                     <CardContent className="pt-8 pb-8 text-center">
-                        <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <CheckCircle2 className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
+                        <div className="w-16 h-16 bg-mb-success-light rounded-full flex items-center justify-center mx-auto mb-4">
+                            <CheckCircle2 className="w-8 h-8 text-mb-success-text" />
                         </div>
                         <h2 className="text-2xl font-bold mb-2">Check your email</h2>
                         <p className="text-slate-500 dark:text-slate-400 mb-6">
@@ -181,7 +181,7 @@ export default function SignUpPage() {
                     <form onSubmit={handleSubmit}>
                         <CardContent className="space-y-4">
                             {error && (
-                                <div className="p-3 text-sm text-red-600 bg-red-50 dark:bg-red-900/20 dark:text-red-400 rounded-lg border border-red-200 dark:border-red-800">
+                                <div className="p-3 text-sm text-mb-danger-text bg-mb-danger-light rounded-lg border border-mb-danger/20">
                                     {error}
                                 </div>
                             )}
@@ -205,7 +205,7 @@ export default function SignUpPage() {
                                     />
                                 </div>
                                 {nameError && (
-                                    <p id="name-error" className="text-xs text-red-500">{nameError}</p>
+                                    <p id="name-error" className="text-xs text-destructive">{nameError}</p>
                                 )}
                             </div>
 
@@ -227,7 +227,7 @@ export default function SignUpPage() {
                                     />
                                 </div>
                                 {emailError && (
-                                    <p id="email-error" className="text-xs text-red-500">{emailError}</p>
+                                    <p id="email-error" className="text-xs text-destructive">{emailError}</p>
                                 )}
                             </div>
 
@@ -259,8 +259,8 @@ export default function SignUpPage() {
                                     <div className="space-y-1 mt-2">
                                         {passwordRequirements.map((req) => (
                                             <div key={req.label} className="flex items-center gap-2 text-xs">
-                                                <div className={`w-1.5 h-1.5 rounded-full ${req.met ? "bg-emerald-500" : "bg-slate-300"}`} />
-                                                <span className={req.met ? "text-emerald-600" : "text-slate-500"}>
+                                                <div className={`w-1.5 h-1.5 rounded-full ${req.met ? "bg-mb-success" : "bg-slate-300"}`} />
+                                                <span className={req.met ? "text-mb-success-text" : "text-slate-500"}>
                                                     {req.label}
                                                 </span>
                                             </div>
@@ -287,7 +287,7 @@ export default function SignUpPage() {
                                     />
                                 </div>
                                 {confirmPassword.length > 0 && password !== confirmPassword && (
-                                    <p id="confirm-password-error" className="text-xs text-red-500">Passwords do not match</p>
+                                    <p id="confirm-password-error" className="text-xs text-destructive">Passwords do not match</p>
                                 )}
                             </div>
                         </CardContent>

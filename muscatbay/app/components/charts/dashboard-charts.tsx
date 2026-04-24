@@ -45,7 +45,7 @@ function DashboardChartsInner({ chartData, stpChartData }: DashboardChartsProps)
                         <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
                             <Droplets className="h-5 w-5 text-mb-secondary" />
                             Water Production Trend
-                            <ArrowUpRight className="h-4 w-4 ml-auto text-muted-foreground opacity-0 group-hover/chart:opacity-100 transition-opacity" />
+                            <ArrowUpRight className="h-4 w-4 ml-auto text-muted-foreground opacity-40 group-hover/chart:opacity-100 transition-opacity" />
                         </CardTitle>
                         <p className="text-xs sm:text-sm text-muted-foreground">Monthly water production in thousand m³</p>
                     </CardHeader>
@@ -82,7 +82,7 @@ function DashboardChartsInner({ chartData, stpChartData }: DashboardChartsProps)
                         <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
                             <Recycle className="h-5 w-5 text-mb-primary" />
                             STP Treatment Overview
-                            <ArrowUpRight className="h-4 w-4 ml-auto text-muted-foreground opacity-0 group-hover/chart:opacity-100 transition-opacity" />
+                            <ArrowUpRight className="h-4 w-4 ml-auto text-muted-foreground opacity-40 group-hover/chart:opacity-100 transition-opacity" />
                         </CardTitle>
                         <p className="text-xs sm:text-sm text-muted-foreground">Monthly inlet vs TSE output (k m³)</p>
                     </CardHeader>

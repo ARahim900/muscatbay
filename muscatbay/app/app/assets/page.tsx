@@ -88,9 +88,9 @@ function fmtOMR(n: number | null | undefined): string {
 function CritBadge({ level }: { level?: string }) {
     if (!level) return <span className="text-slate-300 dark:text-slate-600">-</span>;
     const colors: Record<string, string> = {
-        High:   'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400',
-        Medium: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400',
-        Low:    'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400',
+        High:   'bg-mb-danger-light text-mb-danger-text',
+        Medium: 'bg-mb-warning-light text-mb-warning-text',
+        Low:    'bg-mb-success-light text-mb-success-text',
     };
     return (
         <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold ${colors[level] || 'bg-slate-100 text-slate-600'}`}>
@@ -322,6 +322,7 @@ export default function AssetsPage() {
     // ── Shared column header helper ────────────────────────────────────────────
     const Th = ({ label, field, right }: { label: string; field?: string; right?: boolean }) => (
         <th
+            scope="col"
             className={`py-3.5 px-4 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 whitespace-nowrap ${field ? 'cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60' : ''} ${right ? 'text-right' : 'text-left'}`}
             aria-sort={field && sortField === field ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
             onClick={field ? () => handleSort(field) : undefined}

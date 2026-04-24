@@ -1057,7 +1057,7 @@ export default function WaterPage() {
                                             <BarChart
                                                 data={consumptionChartData}
                                                 layout="vertical"
-                                                margin={{ left: 90 }}
+                                                margin={{ top: 5, right: 10, bottom: 25, left: 5 }}
                                                 onClick={(state) => {
                                                     if (state?.activeLabel) {
                                                         const clickedType = state.activeLabel as string;
@@ -1073,7 +1073,7 @@ export default function WaterPage() {
                                                 style={{ cursor: 'pointer' }}
                                             >
                                                 <XAxis type="number" tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "var(--chart-axis)" }} label={{ value: 'm³', position: 'insideBottom', offset: -5, style: { textAnchor: 'middle', fill: "var(--chart-axis)", fontSize: 11 } }} />
-                                                <YAxis type="category" dataKey="type" width={85} className="text-xs" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "var(--chart-axis)" }} />
+                                                <YAxis type="category" dataKey="type" width={55} className="text-xs" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "var(--chart-axis)" }} />
                                                 <Tooltip content={<LiquidTooltip />} cursor={{ fill: 'rgba(0,0,0,0.04)', radius: 6 }} />
                                                 <Bar dataKey="total" radius={[0, 6, 6, 0]} barSize={24} animationDuration={600} animationEasing="ease-out">
                                                     {consumptionChartData.map((entry, index) => (

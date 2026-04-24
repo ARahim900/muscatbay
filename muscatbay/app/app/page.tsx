@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useRef } from "react";
 import dynamic from "next/dynamic";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { StatsGrid } from "@/components/shared/stats-grid";
@@ -22,9 +22,16 @@ const DashboardCharts = dynamic(() => import("@/components/charts/dashboard-char
     ssr: false,
 });
 
+function getGreeting() {
+    const h = new Date().getHours();
+    return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+}
+
 export default function DashboardPage() {
     const { stats, chartData, stpChartData, recentActivity, loading, isLiveData, error } = useDashboardData();
     const [activityFilter, setActivityFilter] = useState<'all' | 'critical' | 'warning' | 'info'>('all');
+    // Computed once on first render — greeting changes every few hours, not on every state update
+    const greeting = useRef(getGreeting()).current;
 
     // Add icons and navigation hrefs to stats (memoized to avoid recalc on every render)
     const statsWithIcons = useMemo(() => stats.map(stat => ({
@@ -98,8 +105,8 @@ export default function DashboardPage() {
         return (
             <div className="flex items-center justify-center min-h-[400px]">
                 <div role="alert" className="text-center space-y-4">
-                    <div className="w-14 h-14 mx-auto rounded-2xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center">
-                        <AlertTriangle className="w-7 h-7 text-red-500" aria-hidden="true" />
+                    <div className="w-14 h-14 mx-auto rounded-2xl bg-mb-danger-light flex items-center justify-center">
+                        <AlertTriangle className="w-7 h-7 text-destructive" aria-hidden="true" />
                     </div>
                     <div className="space-y-1">
                         <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">Unable to load dashboard</p>
@@ -107,7 +114,7 @@ export default function DashboardPage() {
                     </div>
                     <button
                         onClick={() => window.location.reload()}
-                        className="px-4 py-2 text-sm bg-primary text-white rounded-lg hover:bg-primary/80 transition-colors duration-200"
+                        className="px-4 py-2 text-sm bg-primary text-white rounded-lg hover:bg-primary/80 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
                     >
                         Try again
                     </button>
@@ -120,7 +127,7 @@ export default function DashboardPage() {
         <div className="space-y-6 md:space-y-8 w-full">
             <div className="flex items-center justify-between">
                 <PageHeader
-                    title={`${new Date().getHours() < 12 ? 'Good morning' : new Date().getHours() < 17 ? 'Good afternoon' : 'Good evening'}`}
+                    title={greeting}
                     description="Water, Electricity, and STP performance at a glance"
                 />
                 <div className="flex items-center gap-2">
@@ -142,18 +149,18 @@ export default function DashboardPage() {
                     <CardHeader className="card-elevated-header p-4 sm:p-5 md:p-6">
                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
                             <CardTitle>Latest Updates</CardTitle>
-                            <div className="flex items-center gap-1 bg-white/50 dark:bg-slate-800/50 p-1 rounded-lg">
+                            <div role="group" aria-label="Filter updates by type" className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-lg">
                                 {(['all', 'critical', 'warning', 'info'] as const).map(filter => (
                                     <button
                                         key={filter}
                                         onClick={() => handleFilterClick(filter)}
                                         aria-pressed={activityFilter === filter}
                                         className={`px-3 py-2.5 min-h-[44px] text-xs font-medium rounded-md transition-colors capitalize focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/60 ${activityFilter === filter
-                                            ? filter === 'critical' ? 'bg-mb-danger text-gray-900'
-                                                : filter === 'warning' ? 'bg-mb-warning text-gray-900'
-                                                    : filter === 'info' ? 'bg-mb-info text-gray-900'
+                                            ? filter === 'critical' ? 'bg-destructive text-white'
+                                                : filter === 'warning' ? 'bg-mb-warning text-white'
+                                                    : filter === 'info' ? 'bg-mb-info text-white'
                                                         : 'bg-primary text-white'
-                                            : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
+                                            : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
                                             }`}
                                     >
                                         {filter}
@@ -182,15 +189,20 @@ export default function DashboardPage() {
                                                 <p className="text-xs text-muted-foreground truncate">{item.description}</p>
                                             </div>
                                             {activityHref && (
-                                                <ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover/activity:opacity-100 transition-opacity flex-shrink-0" />
+                                                <ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground opacity-40 group-hover/activity:opacity-100 transition-opacity flex-shrink-0" />
                                             )}
                                         </>
                                     );
 
-                                    const itemClassName = "flex items-center gap-3 p-3 rounded-lg bg-white/30 dark:bg-slate-800/50 border border-mb-primary/5 dark:border-slate-700 hover:bg-white/50 dark:hover:bg-slate-700 group/activity motion-safe:hover:-translate-y-0.5 transition-[background-color,border-color,transform] duration-150 ease-out";
+                                    const itemClassName = "flex items-center gap-3 p-3 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-white dark:hover:bg-slate-700/80 group/activity motion-safe:hover:-translate-y-0.5 transition-[background-color,border-color,transform] duration-150 ease-out";
 
                                     return activityHref ? (
-                                        <Link key={item.title} href={activityHref} className={itemClassName}>
+                                        <Link
+                                            key={item.title}
+                                            href={activityHref}
+                                            className={itemClassName}
+                                            aria-label={`${item.title}: ${item.description}`}
+                                        >
                                             {content}
                                         </Link>
                                     ) : (
@@ -205,7 +217,7 @@ export default function DashboardPage() {
                                     <p className="text-sm text-slate-500 dark:text-slate-400">No records for the selected period.</p>
                                     <button
                                         onClick={() => setActivityFilter('all')}
-                                        className="text-xs text-secondary hover:underline font-medium"
+                                        className="text-xs text-secondary hover:underline font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/60 rounded"
                                     >
                                         Clear filters
                                     </button>

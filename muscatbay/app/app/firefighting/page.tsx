@@ -165,8 +165,8 @@ const STATUS_CONFIG: Record<PPMStatus, { label: string; icon: typeof CheckCircle
     done: { label: "Done", icon: CheckCircle, bg: "bg-secondary/10 dark:bg-secondary/15", text: "text-secondary dark:text-secondary", dot: "bg-secondary" },
     in_progress: { label: "In Progress", icon: Clock, bg: "bg-primary/10 dark:bg-primary/15", text: "text-primary dark:text-slate-300", dot: "bg-primary" },
     not_started: { label: "Not Started", icon: CircleDot, bg: "bg-muted dark:bg-muted", text: "text-muted-foreground", dot: "bg-slate-300 dark:bg-slate-500" },
-    fault: { label: "Fault", icon: XCircle, bg: "bg-destructive/10 dark:bg-destructive/15", text: "text-destructive dark:text-red-400", dot: "bg-destructive" },
-    no_access: { label: "No Access", icon: AlertTriangle, bg: "bg-amber-100/60 dark:bg-amber-900/20", text: "text-amber-700 dark:text-amber-400", dot: "bg-amber-500" },
+    fault: { label: "Fault", icon: XCircle, bg: "bg-destructive/10 dark:bg-destructive/15", text: "text-destructive", dot: "bg-destructive" },
+    no_access: { label: "No Access", icon: AlertTriangle, bg: "bg-mb-warning-light", text: "text-mb-warning-text", dot: "bg-mb-warning" },
 };
 
 const STAGE_STATUS: Record<StageStatus, { label: string; color: string; border: string; bg: string }> = {
@@ -195,8 +195,8 @@ function SystemTag({ label }: { label: string }) {
     // Use muted, consistent tones — avoid bright saturated colors
     const colors: Record<string, string> = {
         FA: "bg-primary/10 text-primary dark:bg-primary/20 dark:text-slate-300",
-        FF: "bg-destructive/10 text-destructive dark:bg-destructive/20 dark:text-red-400",
-        FE: "bg-amber-100/80 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400",
+        FF: "bg-destructive/10 text-destructive dark:bg-destructive/20",
+        FE: "bg-mb-warning-light text-mb-warning-text",
         "Hose Reel": "bg-secondary/10 text-primary dark:bg-secondary/20 dark:text-secondary",
         "Fire Hydrants": "bg-secondary/10 text-primary dark:bg-secondary/20 dark:text-secondary",
     };
@@ -256,7 +256,7 @@ function StageCard({ stage, isExpanded, onToggle, filterStatus }: { stage: Stage
                 <div className="hidden sm:flex items-center gap-3 me-2">
                     {doneCount > 0 && <span className="flex items-center gap-1 text-xs text-secondary font-semibold"><span className="w-2 h-2 rounded-full bg-secondary" />{doneCount}</span>}
                     {inProgressCount > 0 && <span className="flex items-center gap-1 text-xs text-primary dark:text-slate-400 font-semibold"><span className="w-2 h-2 rounded-full bg-primary" />{inProgressCount}</span>}
-                    {faultCount > 0 && <span className="flex items-center gap-1 text-xs text-destructive dark:text-red-400 font-semibold"><span className="w-2 h-2 rounded-full bg-destructive" />{faultCount}</span>}
+                    {faultCount > 0 && <span className="flex items-center gap-1 text-xs text-destructive font-semibold"><span className="w-2 h-2 rounded-full bg-destructive" />{faultCount}</span>}
                     {notStartedCount > 0 && <span className="flex items-center gap-1 text-xs text-muted-foreground font-semibold"><span className="w-2 h-2 rounded-full bg-slate-300 dark:bg-slate-500" />{notStartedCount}</span>}
                 </div>
 
@@ -276,8 +276,8 @@ function StageCard({ stage, isExpanded, onToggle, filterStatus }: { stage: Stage
                         <span className="text-[10px] text-slate-400 uppercase font-semibold me-1">Legend:</span>
                         <span className="text-[10px] text-secondary flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Done</span>
                         <span className="text-[10px] text-primary dark:text-slate-400 flex items-center gap-1"><Clock className="w-3 h-3" /> In Progress</span>
-                        <span className="text-[10px] text-destructive dark:text-red-400 flex items-center gap-1"><XCircle className="w-3 h-3" /> Fault</span>
-                        <span className="text-[10px] text-amber-600 dark:text-amber-400 flex items-center gap-1"><AlertTriangle className="w-3 h-3" /> No Access</span>
+                        <span className="text-[10px] text-destructive flex items-center gap-1"><XCircle className="w-3 h-3" /> Fault</span>
+                        <span className="text-[10px] text-mb-warning-text flex items-center gap-1"><AlertTriangle className="w-3 h-3" /> No Access</span>
                         <span className="text-[10px] text-muted-foreground flex items-center gap-1"><CircleDot className="w-3 h-3" /> Not Started</span>
                     </div>
 
@@ -288,13 +288,13 @@ function StageCard({ stage, isExpanded, onToggle, filterStatus }: { stage: Stage
                                 className={cn(
                                     "flex items-start sm:items-center gap-2 sm:gap-3 px-3 sm:px-5 py-2.5 sm:py-3 hover:bg-slate-50/70 dark:hover:bg-slate-700/30 transition-colors",
                                     b.status === "fault" && "bg-destructive/5 dark:bg-destructive/10",
-                                    b.status === "no_access" && "bg-amber-50/40 dark:bg-amber-900/10"
+                                    b.status === "no_access" && "bg-mb-warning-light/40"
                                 )}
                             >
                                 <span className={cn("w-2.5 h-2.5 rounded-full flex-shrink-0 mt-1.5 sm:mt-0", STATUS_CONFIG[b.status]?.dot)} />
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2 flex-wrap">
-                                        <p className={cn("text-sm font-medium", (b.status === "fault" || b.status === "no_access") ? "text-red-800 dark:text-red-400" : "text-slate-900 dark:text-slate-100")}>
+                                        <p className={cn("text-sm font-medium", b.status === "fault" ? "text-destructive" : b.status === "no_access" ? "text-mb-warning-text" : "text-slate-900 dark:text-slate-100")}>
                                             {b.area}
                                         </p>
                                         <div className="sm:hidden flex-shrink-0">
@@ -302,7 +302,7 @@ function StageCard({ stage, isExpanded, onToggle, filterStatus }: { stage: Stage
                                         </div>
                                     </div>
                                     {b.notes && (
-                                        <p className={cn("text-[11px] mt-0.5", (b.status === "fault" || b.status === "no_access") ? "text-red-500 dark:text-red-400 font-medium" : "text-slate-400")}>
+                                        <p className={cn("text-[11px] mt-0.5", b.status === "fault" ? "text-destructive font-medium" : b.status === "no_access" ? "text-mb-warning-text font-medium" : "text-slate-400")}>
                                             {b.notes}
                                         </p>
                                     )}
@@ -424,9 +424,9 @@ export default function FirefightingPage() {
     const getStatusColor = (status: string) => {
         switch (status) {
             case "Operational": return "bg-secondary/10 text-secondary dark:bg-secondary/15 dark:text-secondary";
-            case "Needs Attention": return "bg-amber-100/60 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400";
-            case "Expired": return "bg-destructive/10 text-destructive dark:bg-destructive/15 dark:text-red-400";
-            case "Maintenance Due": return "bg-amber-100/60 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400";
+            case "Needs Attention": return "bg-mb-warning-light text-mb-warning-text";
+            case "Expired": return "bg-destructive/10 text-destructive dark:bg-destructive/15";
+            case "Maintenance Due": return "bg-mb-warning-light text-mb-warning-text";
             default: return "bg-muted text-muted-foreground";
         }
     };
@@ -434,8 +434,8 @@ export default function FirefightingPage() {
     const getPriorityColor = (priority: string) => {
         switch (priority) {
             case "Critical": return "bg-destructive text-white";
-            case "High": return "bg-amber-500 text-white";
-            case "Medium": return "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300";
+            case "High": return "bg-mb-warning text-white";
+            case "Medium": return "bg-mb-warning-light text-mb-warning-text";
             case "Low": return "bg-secondary/20 text-secondary dark:text-secondary";
             default: return "bg-muted text-muted-foreground";
         }
@@ -519,7 +519,7 @@ export default function FirefightingPage() {
                             <CardHeader className="card-elevated-header"><CardTitle>Equipment by Type</CardTitle></CardHeader>
                             <CardContent className="h-[250px] sm:h-[300px] md:h-80">
                                 <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={chartData.barData} layout="vertical" margin={{ left: 40, right: 10, top: 10, bottom: 10 }}>
+                                    <BarChart data={chartData.barData} layout="vertical" margin={{ left: 5, right: 10, top: 10, bottom: 10 }}>
                                         <CartesianGrid strokeDasharray="3 3" horizontal={false} strokeOpacity={0.1} />
                                         <XAxis type="number" hide />
                                         <YAxis type="category" dataKey="name" width={100} className="text-xs" tick={{ fill: 'currentColor' }} />
@@ -685,10 +685,10 @@ export default function FirefightingPage() {
                     <Card className="card-elevated border-destructive/30 dark:border-destructive/20 bg-destructive/5 dark:bg-destructive/10">
                         <CardContent className="p-4">
                             <div className="flex items-start gap-3">
-                                <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+                                <AlertTriangle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
                                 <div>
-                                    <p className="font-bold text-red-800 dark:text-red-400 text-sm">PO Not Yet Issued by Muscat Bay</p>
-                                    <p className="text-xs text-red-600 dark:text-red-500 mt-1">Arun Achuthan confirmed on 22 Feb 2026: &ldquo;We are awaiting the PO to proceed with the work.&rdquo;</p>
+                                    <p className="font-bold text-destructive text-sm">PO Not Yet Issued by Muscat Bay</p>
+                                    <p className="text-xs text-destructive/80 mt-1">Arun Achuthan confirmed on 22 Feb 2026: &ldquo;We are awaiting the PO to proceed with the work.&rdquo;</p>
                                 </div>
                             </div>
                         </CardContent>
@@ -699,7 +699,7 @@ export default function FirefightingPage() {
                         <CardHeader className="card-elevated-header border-b border-slate-100 dark:border-slate-700">
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                                 <CardTitle className="text-sm sm:text-base">BEC Rectification Quotation</CardTitle>
-                                <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 w-fit">AWAITING PO</Badge>
+                                <Badge className="bg-mb-warning-light text-mb-warning-text w-fit">AWAITING PO</Badge>
                             </div>
                         </CardHeader>
                         <CardContent className="p-4 sm:p-5 space-y-3">
@@ -712,7 +712,7 @@ export default function FirefightingPage() {
                             ].map(([label, value]) => (
                                 <div key={label} className="flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-3 text-sm">
                                     <span className="text-slate-400 text-xs sm:w-28 flex-shrink-0">{label}</span>
-                                    <span className={cn("font-medium", label === "PO Status" ? "text-red-600 dark:text-red-400 font-bold" : "text-slate-900 dark:text-slate-100")}>{value}</span>
+                                    <span className={cn("font-medium", label === "PO Status" ? "text-destructive font-bold" : "text-slate-900 dark:text-slate-100")}>{value}</span>
                                 </div>
                             ))}
                         </CardContent>
@@ -729,8 +729,8 @@ export default function FirefightingPage() {
                                 {OPEN_FAULTS.map((f) => (
                                     <div key={`${f.equipment}-${f.location}`} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 px-4 sm:px-5 py-3 sm:py-4">
                                         <div className="flex items-center gap-3 flex-1 min-w-0">
-                                            <span className="w-8 h-8 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center flex-shrink-0">
-                                                <XCircle className="w-4 h-4 text-red-600 dark:text-red-400" />
+                                            <span className="w-8 h-8 rounded-full bg-mb-danger-light flex items-center justify-center flex-shrink-0">
+                                                <XCircle className="w-4 h-4 text-destructive" />
                                             </span>
                                             <div className="flex-1 min-w-0">
                                                 <p className="text-sm font-medium text-slate-900 dark:text-slate-100">{f.equipment}</p>
@@ -738,8 +738,8 @@ export default function FirefightingPage() {
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-2 pl-11 sm:pl-0">
-                                            <span className="text-xs text-red-600 dark:text-red-400 font-medium">{f.fault}</span>
-                                            <Badge className="bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 text-[10px]">OPEN</Badge>
+                                            <span className="text-xs text-destructive font-medium">{f.fault}</span>
+                                            <Badge className="bg-mb-danger-light text-mb-danger-text text-[10px]">OPEN</Badge>
                                         </div>
                                     </div>
                                 ))}
@@ -748,8 +748,8 @@ export default function FirefightingPage() {
                     </Card>
 
                     {/* Villa 33 Note */}
-                    <Card className="card-elevated border-amber-200 dark:border-amber-800">
-                        <CardHeader className="card-elevated-header border-b border-amber-100 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-900/20">
+                    <Card className="card-elevated border-mb-warning/30">
+                        <CardHeader className="card-elevated-header border-b border-mb-warning/20 bg-mb-warning-light">
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                                 <CardTitle className="text-sm sm:text-base">Villa 33 — Separate Job (Ref: 215459)</CardTitle>
                                 <Badge className="bg-blue-200 text-blue-800 dark:bg-blue-800/50 dark:text-blue-200 flex items-center gap-1 w-fit">
@@ -760,16 +760,16 @@ export default function FirefightingPage() {
                         <CardContent className="p-4 sm:p-5 space-y-2 text-sm">
                             <p><span className="text-slate-400 text-xs">Location:</span> <span className="font-medium text-slate-900 dark:text-slate-100">Zone 5 — Villa 33, Muscat Bay Qantab</span></p>
                             <p><span className="text-slate-400 text-xs">Items:</span> <span className="font-medium text-slate-900 dark:text-slate-100">Fire extinguisher, fire blanket, smoke detector</span></p>
-                            <p><span className="text-slate-400 text-xs">Work Status:</span> <span className="font-medium text-emerald-600 dark:text-emerald-400">Completed (Aug 2025)</span></p>
+                            <p><span className="text-slate-400 text-xs">Work Status:</span> <span className="font-medium text-mb-success-text">Completed (Aug 2025)</span></p>
                             <p><span className="text-slate-400 text-xs">Original Quote:</span> <span className="font-medium text-slate-900 dark:text-slate-100">13 Jul 2025 by BEC FA Team (Suneesh.L)</span></p>
                             <p><span className="text-slate-400 text-xs">Approved by:</span> <span className="font-medium text-slate-900 dark:text-slate-100">Abdulrahim AlBalushi — 13 Jul 2025</span></p>
                             <p><span className="text-slate-400 text-xs">Updated Quote:</span> <span className="font-medium text-slate-900 dark:text-slate-100">26 Mar 2026 by Nadim M. Ahmad (BEC)</span></p>
-                            <p><span className="text-slate-400 text-xs">PO Status:</span> <span className="font-bold text-amber-600 dark:text-amber-400">Original PR lost — New PR being raised with updated quote</span></p>
+                            <p><span className="text-slate-400 text-xs">PO Status:</span> <span className="font-bold text-mb-warning-text">Original PR lost — New PR being raised with updated quote</span></p>
                             <p><span className="text-slate-400 text-xs">Latest Action:</span> <span className="font-medium text-slate-900 dark:text-slate-100">26 Mar 2026 — Rahim instructed Helpdesk to raise new PR; BEC provided updated quote; Amjad confirmed to raise MB PR</span></p>
                             <p><span className="text-slate-400 text-xs">Reminders:</span> <span className="font-medium text-slate-900 dark:text-slate-100">6+ sent by Arun Achuthan (Dec 2025 – Mar 2026)</span></p>
                         </CardContent>
-                        <div className="px-5 py-3 bg-blue-50/50 dark:bg-blue-900/20 border-t border-blue-100 dark:border-blue-800">
-                            <p className="text-[11px] text-blue-600 dark:text-blue-400 flex items-center gap-1.5">
+                        <div className="px-5 py-3 bg-mb-info-light border-t border-mb-info/20">
+                            <p className="text-[11px] text-mb-info-text flex items-center gap-1.5">
                                 <Info className="w-3.5 h-3.5 flex-shrink-0" />
                                 Verified against BEC email thread 26 Mar 2026. Updated quote (215459) received from Nadim; new PR instructed.
                             </p>
@@ -777,11 +777,11 @@ export default function FirefightingPage() {
                     </Card>
 
                     {/* Village Square Fire Safety — Separate Repair */}
-                    <Card className="card-elevated border-amber-200 dark:border-amber-800">
-                        <CardHeader className="card-elevated-header border-b border-amber-100 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-900/20">
+                    <Card className="card-elevated border-mb-warning/30">
+                        <CardHeader className="card-elevated-header border-b border-mb-warning/20 bg-mb-warning-light">
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                                 <CardTitle className="text-sm sm:text-base">Village Square — Fire Pump & Alarm Rectification</CardTitle>
-                                <Badge className="bg-amber-200 text-amber-800 dark:bg-amber-800/50 dark:text-amber-200 flex items-center gap-1 w-fit">
+                                <Badge className="bg-mb-warning-light text-mb-warning-text flex items-center gap-1 w-fit">
                                     <Info className="w-3 h-3" /> QUOTE SUBMITTED
                                 </Badge>
                             </div>
@@ -793,10 +793,10 @@ export default function FirefightingPage() {
                             <p><span className="text-slate-400 text-xs">Quote:</span> <span className="font-medium text-slate-900 dark:text-slate-100">4 Nov 2024 by Arun Achuthan (BEC) — Supply & Replacement of Fire Pump + FA commissioning</span></p>
                             <p><span className="text-slate-400 text-xs">Requested by:</span> <span className="font-medium text-slate-900 dark:text-slate-100">Abdulrahim AlBalushi — 21 Oct 2024</span></p>
                             <p><span className="text-slate-400 text-xs">Monitoring:</span> <span className="font-medium text-slate-900 dark:text-slate-100">BEC on-site monitoring conducted Nov 2024; no issues in initial 2-hr observation</span></p>
-                            <p><span className="text-slate-400 text-xs">PO Status:</span> <span className="font-bold text-amber-600 dark:text-amber-400">Pending — awaiting management decision</span></p>
+                            <p><span className="text-slate-400 text-xs">PO Status:</span> <span className="font-bold text-mb-warning-text">Pending — awaiting management decision</span></p>
                         </CardContent>
-                        <div className="px-5 py-3 bg-amber-50/50 dark:bg-amber-900/20 border-t border-amber-100 dark:border-amber-800">
-                            <p className="text-[11px] text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+                        <div className="px-5 py-3 bg-mb-warning-light border-t border-mb-warning/20">
+                            <p className="text-[11px] text-mb-warning-text flex items-center gap-1.5">
                                 <Info className="w-3.5 h-3.5 flex-shrink-0" />
                                 Verified against BEC email thread Oct–Nov 2024. Originally escalated due to OSCO non-response on project contractor obligations.
                             </p>
@@ -888,13 +888,16 @@ export default function FirefightingPage() {
                         <CardContent className="p-4 sm:p-5">
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                                 {[
-                                    { p: "P1 Emergency", time: "3 Hours", desc: "Continuous alarm, pump failure, major leak", color: "border-l-red-500 bg-red-50 dark:bg-red-900/20" },
-                                    { p: "P2 Urgent", time: "8 Hours", desc: "Minor leak, panel malfunction, abnormal pump noise", color: "border-l-amber-500 bg-amber-50 dark:bg-amber-900/20" },
-                                    { p: "P3 Normal", time: "24 Hours", desc: "Extinguisher refilling, general maintenance", color: "border-l-blue-500 bg-blue-50 dark:bg-blue-900/20" },
-                                    { p: "P4 PPM", time: "Per schedule", desc: "Scheduled preventive maintenance", color: "border-l-slate-400 bg-slate-50 dark:bg-slate-800/50" },
+                                    { p: "P1 Emergency", time: "3 Hours", desc: "Continuous alarm, pump failure, major leak", bg: "bg-mb-danger-light", dot: "bg-destructive" },
+                                    { p: "P2 Urgent", time: "8 Hours", desc: "Minor leak, panel malfunction, abnormal pump noise", bg: "bg-mb-warning-light", dot: "bg-mb-warning" },
+                                    { p: "P3 Normal", time: "24 Hours", desc: "Extinguisher refilling, general maintenance", bg: "bg-mb-info-light", dot: "bg-mb-info" },
+                                    { p: "P4 PPM", time: "Per schedule", desc: "Scheduled preventive maintenance", bg: "bg-slate-50 dark:bg-slate-800/50", dot: "bg-slate-400 dark:bg-slate-500" },
                                 ].map((s) => (
-                                    <div key={s.p} className={cn("border-l-4 rounded-lg px-4 py-3", s.color)}>
-                                        <p className="text-xs font-bold text-slate-800 dark:text-slate-200">{s.p}</p>
+                                    <div key={s.p} className={cn("rounded-lg px-4 py-3", s.bg)}>
+                                        <p className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                                            <span className={cn("w-2 h-2 rounded-full flex-shrink-0", s.dot)} />
+                                            {s.p}
+                                        </p>
                                         <p className="text-xl font-bold text-slate-900 dark:text-slate-100 mt-1">{s.time}</p>
                                         <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">{s.desc}</p>
                                     </div>
@@ -965,8 +968,8 @@ export default function FirefightingPage() {
                         </CardHeader>
                         <CardContent className="p-4 sm:p-5 space-y-5">
                             {/* Rate Structure */}
-                            <div className="p-3 bg-emerald-50 dark:bg-emerald-900/20 border-l-4 border-l-emerald-500 rounded-lg">
-                                <p className="text-xs font-bold text-emerald-800 dark:text-emerald-300 uppercase">Discharge Rate</p>
+                            <div className="p-3 bg-mb-success-light rounded-lg">
+                                <p className="text-xs font-bold text-mb-success-text uppercase">Discharge Rate</p>
                                 <p className="text-lg font-bold text-slate-900 dark:text-slate-100 mt-1">
                                     1 OMR per 1,000 Gallons <span className="text-sm font-normal text-slate-500">(5 OMR per standard 5,000-gal tanker)</span>
                                 </p>
@@ -981,7 +984,7 @@ export default function FirefightingPage() {
                                 <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-100 dark:border-slate-700/50">
                                     <div className="flex items-center justify-between mb-3">
                                         <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">Al Abraj</h4>
-                                        <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 text-[10px]">Active</Badge>
+                                        <Badge className="bg-mb-success-light text-mb-success-text text-[10px]">Active</Badge>
                                     </div>
                                     <div className="space-y-2">
                                         {[
@@ -1004,7 +1007,7 @@ export default function FirefightingPage() {
                                 <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-100 dark:border-slate-700/50">
                                     <div className="flex items-center justify-between mb-3">
                                         <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">Jomon&apos;s Company</h4>
-                                        <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 text-[10px]">Active</Badge>
+                                        <Badge className="bg-mb-success-light text-mb-success-text text-[10px]">Active</Badge>
                                     </div>
                                     <div className="space-y-2">
                                         {[

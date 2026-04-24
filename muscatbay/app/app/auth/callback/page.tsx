@@ -305,7 +305,7 @@ function AuthCallbackContent() {
                             <div
                                 role="alert"
                                 aria-live="assertive"
-                                className="p-4 text-sm text-red-600 bg-red-50 dark:bg-red-900/20 dark:text-red-400 rounded-xl border border-red-200 dark:border-red-800 flex items-center gap-3 motion-safe:animate-in motion-safe:slide-in-from-top-2 duration-200"
+                                className="p-4 text-sm text-mb-danger-text bg-mb-danger-light rounded-xl border border-mb-danger/20 flex items-center gap-3 motion-safe:animate-in motion-safe:slide-in-from-top-2 duration-200"
                             >
                                 <AlertCircle className="h-5 w-5 shrink-0" />
                                 <span>{error}</span>
