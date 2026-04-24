@@ -53,8 +53,10 @@ import {
 const CESIUM_ION_TOKEN = process.env.NEXT_PUBLIC_CESIUM_ION_TOKEN
     || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJkMWVjMmNkNC0xODFhLTRlMzYtOWU5Mi01YTQwODBjNmVlNWQiLCJpZCI6NDIxMzk5LCJpYXQiOjE3NzY4NjUyNTR9.apuRZjGpIGP9jXSZaa6tZnt9W49zpxocQZkTvlMq1PU';
 
-const GOOGLE_MAPS_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY
-    || 'AIzaSyDQpVNC9Ghz-tnlSd18Xp_CK_RP4NsufXI';
+// Set NEXT_PUBLIC_GOOGLE_MAPS_KEY in Vercel/env to enable Google Photorealistic
+// 3D Tiles. Key must have "Map Tiles API" enabled in Google Cloud Console with
+// billing active. Without it the map falls back to Bing satellite.
+const GOOGLE_MAPS_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY ?? '';
 
 const LOSS_WARN_PCT  = 10;
 const LOSS_ALERT_PCT = 20;
@@ -407,7 +409,8 @@ export default function WaterNetworkMap() {
     const [editingId,   setEditingId]     = useState<string | null>(null);   // edit mode target
     const [pendingCoords, setPendingCoords] = useState<{ lat: number; lon: number; height: number } | null>(null);
     const [analytics, setAnalytics]       = useState<SystemAnalytics>({ zones: [], sysBulk: 0, sysDist: 0, sysLoss: 0, sysPct: 0 });
-    const [mapError,  setMapError]        = useState<string | null>(null);
+    const [mapError,   setMapError]       = useState<string | null>(null);   // fatal — map not usable
+    const [mapWarning, setMapWarning]     = useState<string | null>(null);   // soft — map works, feature degraded
     // Reactive snapshot of every meter for render-time reads. The ref below
     // stays authoritative for Cesium-callback lookups (synchronous access).
     const [metersList, setMetersList]     = useState<MeterRuntime[]>([]);
@@ -480,6 +483,13 @@ export default function WaterNetworkMap() {
 
     // ─────────────────────────────────────────────────────────────────────
     // Counter refresh
+    // Auto-dismiss soft warnings after 7 s — map is still functional
+    useEffect(() => {
+        if (!mapWarning) return;
+        const t = setTimeout(() => setMapWarning(null), 7000);
+        return () => clearTimeout(t);
+    }, [mapWarning]);
+
     // ─────────────────────────────────────────────────────────────────────
     const refreshCounts = useCallback(() => {
         const all = Array.from(metersMapRef.current.values());
@@ -1055,7 +1065,7 @@ export default function WaterNetworkMap() {
                     viewer.scene.backgroundColor    = Cesium.Color.BLACK;
                 } catch (err) {
                     console.warn('[water-network] Google 3D tiles failed:', err);
-                    setMapError('Google 3D tiles unavailable — showing Bing satellite fallback');
+                    setMapWarning('Google 3D tiles unavailable — displaying Bing satellite. Set NEXT_PUBLIC_GOOGLE_MAPS_KEY to enable photorealistic view.');
                 }
 
                 if (cancelled) { viewer.destroy(); return; }
@@ -1416,9 +1426,21 @@ export default function WaterNetworkMap() {
                             Loading 3D map…
                         </div>
                     )}
+                    {/* Fatal error — map not usable */}
                     {mapError && (
                         <div className="absolute top-0 left-0 right-0 bg-red-700 text-white text-xs px-4 py-2 text-center">
                             ⚠ {mapError}
+                        </div>
+                    )}
+                    {/* Soft warning — map works, feature degraded; auto-dismisses after 7 s */}
+                    {mapWarning && !mapError && (
+                        <div className="absolute bottom-16 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-amber-600/90 text-white text-xs px-4 py-2 rounded-lg shadow-lg max-w-[90vw] text-center">
+                            ⚠ {mapWarning}
+                            <button
+                                onClick={() => setMapWarning(null)}
+                                className="ms-1 opacity-70 hover:opacity-100 font-bold leading-none"
+                                aria-label="Dismiss warning"
+                            >✕</button>
                         </div>
                     )}
 
