@@ -437,26 +437,56 @@ export default function WaterNetworkMap() {
     useEffect(() => { zonesVisibleRef.current = zonesOn; }, [zonesOn]);
 
     // ─────────────────────────────────────────────────────────────────────
-    // Load Cesium from CDN (replaces next/script — more reliable in Next 16)
-    // Handles HMR re-mounts, dedupes script tag, proper error surfacing.
+    // Load Cesium from CDN with automatic fallback.
+    // Primary: cesium.com/downloads (official). Fallback: unpkg (npm mirror).
+    // This handles ad-blockers, corporate firewalls, and CDN blips that block
+    // the primary source while leaving the npm mirror reachable.
     // ─────────────────────────────────────────────────────────────────────
     useEffect(() => {
-        // Already available (captured by lazy state initialiser) — nothing to do
+        // Already available (HMR re-mount or second Strict Mode render)
         if ((window as { Cesium?: unknown }).Cesium) return;
 
-        const CESIUM_JS_URL  = 'https://cesium.com/downloads/cesiumjs/releases/1.116/Build/Cesium/Cesium.js';
-        const CESIUM_CSS_URL = 'https://cesium.com/downloads/cesiumjs/releases/1.116/Build/Cesium/Widgets/widgets.css';
+        const VER = '1.116';
+        const SOURCES = {
+            primary: {
+                js:  `https://cesium.com/downloads/cesiumjs/releases/${VER}/Build/Cesium/Cesium.js`,
+                css: `https://cesium.com/downloads/cesiumjs/releases/${VER}/Build/Cesium/Widgets/widgets.css`,
+            },
+            fallback: {
+                js:  `https://unpkg.com/cesium@${VER}.0/Build/Cesium/Cesium.js`,
+                css: `https://unpkg.com/cesium@${VER}.0/Build/Cesium/Widgets/widgets.css`,
+            },
+        };
 
-        // Inject CSS once
-        if (!document.getElementById('cesium-cdn-css')) {
-            const css  = document.createElement('link');
+        const injectCss = (href: string) => {
+            if (document.getElementById('cesium-cdn-css')) return;
+            const css = document.createElement('link');
             css.id    = 'cesium-cdn-css';
             css.rel   = 'stylesheet';
-            css.href  = CESIUM_CSS_URL;
+            css.href  = href;
             document.head.appendChild(css);
-        }
+        };
 
-        // Reuse an in-flight script tag if one already exists
+        const onSuccess = () => {
+            if ((window as { Cesium?: unknown }).Cesium) {
+                setCesiumReady(true);
+            } else {
+                setMapError('Cesium script loaded but window.Cesium is not set — possible CSP or ad-blocker issue');
+            }
+        };
+
+        const tryLoad = (src: string, cssSrc: string, onFail: () => void) => {
+            injectCss(cssSrc);
+            const script   = document.createElement('script');
+            script.id      = 'cesium-cdn-js';
+            script.src     = src;
+            script.async   = true;
+            script.onload  = onSuccess;
+            script.onerror = onFail;
+            document.head.appendChild(script);
+        };
+
+        // Reuse an in-flight script tag if one already exists (Strict Mode double-invoke)
         const existing = document.getElementById('cesium-cdn-js') as HTMLScriptElement | null;
         if (existing) {
             const poll = window.setInterval(() => {
@@ -465,20 +495,24 @@ export default function WaterNetworkMap() {
                     setCesiumReady(true);
                 }
             }, 100);
-            window.setTimeout(() => window.clearInterval(poll), 10_000);
+            window.setTimeout(() => window.clearInterval(poll), 15_000);
             return () => window.clearInterval(poll);
         }
 
-        const script   = document.createElement('script');
-        script.id      = 'cesium-cdn-js';
-        script.src     = CESIUM_JS_URL;
-        script.async   = true;
-        script.onload  = () => {
-            if ((window as { Cesium?: unknown }).Cesium) setCesiumReady(true);
-            else setMapError('Cesium downloaded but window.Cesium was not set — possible CSP or ad-blocker issue');
-        };
-        script.onerror = () => setMapError('Failed to download Cesium from CDN — check the browser Network tab');
-        document.head.appendChild(script);
+        // Try primary CDN; on failure silently retry with fallback CDN
+        tryLoad(
+            SOURCES.primary.js,
+            SOURCES.primary.css,
+            () => {
+                // Primary failed — remove the failed tag so tryLoad can create a new one
+                document.getElementById('cesium-cdn-js')?.remove();
+                tryLoad(
+                    SOURCES.fallback.js,
+                    SOURCES.fallback.css,
+                    () => setMapError('Unable to load Cesium from cesium.com or unpkg. Check your network connection or try disabling ad-blockers.'),
+                );
+            },
+        );
     }, []);
 
     // ─────────────────────────────────────────────────────────────────────
