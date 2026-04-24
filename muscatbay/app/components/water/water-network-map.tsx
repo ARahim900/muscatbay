@@ -1049,7 +1049,17 @@ export default function WaterNetworkMap() {
                     imageryProvider,
                 });
 
-                try { viewer.terrainProvider = await Cesium.createWorldTerrainAsync(); } catch {}
+                // Swallow Cesium render-loop errors (tile 404s, network blips) so
+                // they never reach the outer catch and set a blocking mapError.
+                viewer.scene.renderError.addEventListener((_scene: unknown, err: unknown) => {
+                    console.warn('[water-network] Cesium render error (suppressed):', err);
+                });
+
+                // createWorldTerrainAsync() is intentionally omitted:
+                // • Google 3D tiles (loaded below) include elevation and hide the globe
+                // • Without 3D tiles, a flat OSM globe is shown — no terrain needed
+                // • The terrain Ion request (Asset ID 1) can 404 post-init outside
+                //   the try-catch, crashing the map with "Request has failed. 404"
 
                 try {
                     const tiles = await Cesium.Cesium3DTileset.fromUrl(
