@@ -16,6 +16,34 @@ const dmSans = DM_Sans({
 export const metadata = {
   title: "Muscat Bay Operations",
   description: "Operations Dashboard for Muscat Bay",
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icon.png", type: "image/png", sizes: "32x32" },
+    ],
+    apple: { url: "/apple-icon.png", sizes: "180x180", type: "image/png" },
+    shortcut: "/favicon.ico",
+  },
+  openGraph: {
+    title: "Muscat Bay Operations",
+    description: "Operations Dashboard for Muscat Bay",
+    siteName: "Muscat Bay Operations",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Muscat Bay Operations",
+      },
+    ],
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Muscat Bay Operations",
+    description: "Operations Dashboard for Muscat Bay",
+    images: ["/og-image.png"],
+  },
 };
 
 export const viewport = {
