@@ -1,9 +1,9 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, useState, ReactNode } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { getCurrentUser, getUserProfile, onAuthStateChange, signOut, AuthUser, UserProfile } from "@/lib/auth";
-import { Loader2 } from "lucide-react";
+import { SplashScreen } from "@/components/ui/splash-screen";
 
 interface AuthContextType {
     user: AuthUser | null;
@@ -52,6 +52,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const [user, setUser] = useState<AuthUser | null>(null);
     const [profile, setProfile] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState(true);
+    const [splashVisible, setSplashVisible] = useState(true);
+    const [splashExiting, setSplashExiting] = useState(false);
+    const splashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const router = useRouter();
     const pathname = usePathname();
 
@@ -142,29 +145,25 @@ export function AuthProvider({ children }: AuthProviderProps) {
         }
     }, [user, loading, pathname, isPublicRoute, router]);
 
-    // Show loading state
-    if (loading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900">
-                <div className="flex flex-col items-center gap-4">
-                    <Loader2 className="h-8 w-8 animate-spin text-[var(--mb-primary)]" />
-                    <p className="text-sm text-slate-500">Loading...</p>
-                </div>
-            </div>
-        );
-    }
+    // Trigger splash exit once auth resolves, then unmount it after animation
+    useEffect(() => {
+        if (!loading && splashVisible) {
+            setSplashExiting(true);
+            splashTimer.current = setTimeout(() => {
+                setSplashVisible(false);
+                setSplashExiting(false);
+                splashTimer.current = null;
+            }, 650);
+        }
+        return () => {
+            if (splashTimer.current) clearTimeout(splashTimer.current);
+        };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [loading]);
 
-    // Don't render protected content if not authenticated (skip in DEV_MODE)
-    if (!user && !isPublicRoute && !isDevMode()) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900">
-                <div className="flex flex-col items-center gap-4">
-                    <Loader2 className="h-8 w-8 animate-spin text-[var(--mb-primary)]" />
-                    <p className="text-sm text-slate-500">Redirecting to login...</p>
-                </div>
-            </div>
-        );
-    }
+    // Only show app content once auth resolves and the user is allowed
+    const canShowContent =
+        !loading && (!!user || isPublicRoute || isDevMode());
 
     return (
         <AuthContext.Provider
@@ -178,7 +177,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
                 refreshProfile,
             }}
         >
-            {children}
+            {canShowContent ? children : null}
+            {splashVisible && <SplashScreen exiting={splashExiting} />}
         </AuthContext.Provider>
     );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useCallback, useEffect, useState, useMemo, type ReactNode } from "react";
+import { LoadingOverlay } from "@/components/ui/loading-overlay";
 
 type Theme = "light" | "dark" | "system";
 
@@ -89,6 +90,7 @@ export function Providers({ children }: { children: ReactNode }) {
     return (
         <ThemeContext.Provider value={value}>
             {children}
+            <LoadingOverlay />
         </ThemeContext.Provider>
     );
 }

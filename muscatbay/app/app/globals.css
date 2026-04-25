@@ -752,8 +752,9 @@
     *, *::before, *::after {
       animation-duration: 0.01ms !important;
       animation-iteration-count: 1 !important;
-      transition-duration: 0.01ms !important;
       scroll-behavior: auto !important;
+      /* Transitions are preserved so sidebar collapse, tooltips, and tab
+         switches remain smooth. Components opt out via motion-reduce:transition-none. */
     }
   }
 
@@ -930,4 +931,101 @@
 
 /* ═══════════════════════════════════════════════════════════════════════
  * End Dark Surface Remap
+ * ═══════════════════════════════════════════════════════════════════════ */
+
+/* ═══════════════════════════════════════════════════════════════════════
+ * Muscat Bay — Splash Screen & Loading Overlay Keyframes
+ * ═══════════════════════════════════════════════════════════════════════ */
+
+/* Logo entrance: spring-scale up from 80% */
+@keyframes mb-logo-enter {
+  from { opacity: 0; transform: scale(0.8); }
+  to   { opacity: 1; transform: scale(1);   }
+}
+
+/* Logo idle pulse: gentle breathe */
+@keyframes mb-logo-pulse {
+  0%, 100% { transform: scale(1);    }
+  50%       { transform: scale(1.06); }
+}
+
+/* Expanding ring: grows outward and fades */
+@keyframes mb-ring-pulse {
+  0%   { transform: scale(0.88); opacity: 0.7; }
+  100% { transform: scale(1.45); opacity: 0;   }
+}
+
+/* Shimmer sweep: travels left-to-right across the bar */
+@keyframes mb-shimmer {
+  0%   { transform: translateX(-200%); }
+  100% { transform: translateX(500%);  }
+}
+
+/* Overlay: fade text/elements up */
+@keyframes mb-fade-up {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+
+/* Splash enter/exit */
+@keyframes mb-splash-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes mb-splash-out {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+/* Overlay backdrop enter/exit */
+@keyframes mb-overlay-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes mb-overlay-out {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+/* Overlay card enter/exit */
+@keyframes mb-card-in {
+  from { opacity: 0; transform: scale(0.9);  }
+  to   { opacity: 1; transform: scale(1);    }
+}
+@keyframes mb-card-out {
+  from { opacity: 1; transform: scale(1);    }
+  to   { opacity: 0; transform: scale(0.92); }
+}
+
+/* 360° spinner for loading arc */
+@keyframes mb-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Utility classes used by Splash & Overlay components ── */
+.mb-pulse {
+  animation: mb-logo-pulse 2.8s ease-in-out infinite;
+}
+.mb-ring-anim {
+  animation: mb-ring-pulse 2.2s ease-out infinite;
+}
+.mb-shimmer {
+  animation: mb-shimmer 1.9s linear infinite;
+}
+.mb-spin {
+  animation: mb-spin 0.85s linear infinite;
+}
+
+/* Respect reduced-motion: kill decorative loops, keep functional fades */
+@media (prefers-reduced-motion: reduce) {
+  .mb-pulse,
+  .mb-ring-anim,
+  .mb-shimmer,
+  .mb-spin {
+    animation: none !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+ * End Splash & Loading Keyframes
  * ═══════════════════════════════════════════════════════════════════════ */
