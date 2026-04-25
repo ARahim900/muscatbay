@@ -1,6 +1,7 @@
-"use strict";
+"use client";
 
 import React from 'react';
+import { CHART_PALETTE } from "@/lib/tokens";
 
 interface LiquidProgressRingProps {
     value: number;
@@ -22,7 +23,7 @@ export function LiquidProgressRing({
     max = 100,
     size = 120,
     strokeWidth = 10,
-    color = "#81D8D0",
+    color = CHART_PALETTE[1],
     label,
     sublabel,
     showPercentage = true,
@@ -133,7 +134,7 @@ export function LiquidProgressRing({
                     {statusBadge && (
                         <span
                             className="inline-block mt-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold text-white"
-                            style={{ backgroundColor: statusColor || '#6B7280' }}
+                            style={{ backgroundColor: statusColor || 'var(--chart-axis)' }}
                         >
                             {statusBadge}
                         </span>

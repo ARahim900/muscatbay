@@ -1,6 +1,7 @@
-"use strict";
+"use client";
 
 import { memo } from "react";
+import { CHART_PALETTE } from "@/lib/tokens";
 import {
     BarChart,
     Bar,
@@ -28,7 +29,7 @@ interface LiquidBarChartProps {
     yAxisLabel?: string; // Y-axis label with units (e.g., "m³", "kWh")
 }
 
-const DEFAULT_COLORS = ["#4E4456", "#81D8D0", "#5BA88B"];
+const DEFAULT_COLORS = [CHART_PALETTE[0], CHART_PALETTE[1], CHART_PALETTE[5]];
 
 interface ChartTooltipProps {
     active?: boolean;
@@ -130,7 +131,7 @@ export const LiquidBarChart = memo(function LiquidBarChart({
                                     position="top"
                                     formatter={formatLabel}
                                     style={{
-                                        fill: "#374151",
+                                        fill: "var(--chart-axis)",
                                         fontSize: 10,
                                         fontWeight: 600,
                                     }}

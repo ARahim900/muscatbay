@@ -1,4 +1,4 @@
-"use strict";
+"use client";
 
 interface LiquidTooltipProps {
     active?: boolean;

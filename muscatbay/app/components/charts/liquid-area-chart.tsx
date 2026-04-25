@@ -1,6 +1,7 @@
-"use strict";
+"use client";
 
 import { memo } from "react";
+import { CHART_PALETTE } from "@/lib/tokens";
 import {
     AreaChart,
     Area,
@@ -27,8 +28,8 @@ interface LiquidAreaChartProps {
     yAxisLabel?: string; // Y-axis label with units (e.g., "m³", "kWh")
 }
 
-// Default fallback colors for Recharts — inline props require hex values
-const DEFAULT_COLORS = ["#4E4456", "#81D8D0", "#5BA88B"];
+// Default fallback colors — reference CHART_PALETTE so they stay in sync with the token system
+const DEFAULT_COLORS = [CHART_PALETTE[0], CHART_PALETTE[1], CHART_PALETTE[5]];
 
 interface ChartTooltipProps {
     active?: boolean;
