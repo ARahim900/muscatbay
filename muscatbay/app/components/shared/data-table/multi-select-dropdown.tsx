@@ -93,7 +93,7 @@ export function MultiSelectDropdown({
 
             {isOpen && (
                 <>
-                    <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
+                    <div role="presentation" aria-hidden="true" className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
                     <div className="absolute top-full left-0 sm:left-0 right-0 sm:right-auto mt-1.5 z-50 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl min-w-[200px] max-w-[calc(100vw-2rem)] overflow-hidden">
                         <div className="flex items-center justify-between px-3 py-2 border-b border-slate-100 dark:border-slate-700/70">
                             <button

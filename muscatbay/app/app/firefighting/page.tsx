@@ -244,7 +244,7 @@ function StageCard({ stage, isExpanded, onToggle, filterStatus }: { stage: Stage
                 </div>
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="font-bold text-slate-900 dark:text-slate-100">{stage.name}</h3>
+                        <h2 className="font-bold text-slate-900 dark:text-slate-100 text-base">{stage.name}</h2>
                         <span className={cn("px-2 py-0.5 rounded-full text-[10px] font-bold uppercase text-white", stageStyle.color)}>
                             {stageStyle.label}
                         </span>
@@ -635,10 +635,10 @@ export default function FirefightingPage() {
                                         </div>
 
                                         <div>
-                                            <h3 className="font-semibold text-lg flex items-center gap-2 text-primary dark:text-slate-100">
+                                            <h2 className="font-semibold text-lg flex items-center gap-2 text-primary dark:text-slate-100">
                                                 <HardHat className="w-4 h-4 text-muted-foreground" />
                                                 {item.name}
-                                            </h3>
+                                            </h2>
                                             <p className="text-sm text-muted-foreground mt-1">
                                                 {item.location} • {item.type}
                                             </p>

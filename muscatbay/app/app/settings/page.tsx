@@ -26,6 +26,8 @@ export default function SettingsPage() {
     const [avatarFile, setAvatarFile] = useState<File | null>(null)
     const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
     const [activeTab, setActiveTab] = useState<'profile' | 'account' | 'notifications'>('profile')
+    const [emailAlertsEnabled, setEmailAlertsEnabled] = useState(false)
+    const [criticalAlarmsEnabled, setCriticalAlarmsEnabled] = useState(true)
 
     // Initialize form data from profile
     useEffect(() => {
@@ -374,9 +376,16 @@ export default function SettingsPage() {
                                         <Label className="text-base">Email Alerts</Label>
                                         <p className="text-sm text-muted-foreground">Receive daily summary reports via email.</p>
                                     </div>
-                                    <div role="switch" aria-checked={false} aria-label="Email Alerts" className="h-6 w-11 rounded-full bg-slate-200 dark:bg-slate-700 relative cursor-pointer">
-                                        <div className="absolute top-1 left-1 h-4 w-4 rounded-full bg-white shadow-sm transition-transform" />
-                                    </div>
+                                    <button
+                                        role="switch"
+                                        tabIndex={0}
+                                        aria-checked={emailAlertsEnabled}
+                                        aria-label="Email Alerts"
+                                        onClick={() => setEmailAlertsEnabled(v => !v)}
+                                        className={`h-6 w-11 rounded-full relative cursor-pointer transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 ${emailAlertsEnabled ? 'bg-sidebar' : 'bg-slate-200 dark:bg-slate-700'}`}
+                                    >
+                                        <div className={`absolute top-1 left-1 h-4 w-4 rounded-full bg-white shadow-sm transition-transform duration-200 ${emailAlertsEnabled ? 'translate-x-5' : 'translate-x-0'}`} />
+                                    </button>
                                 </div>
                                 <Separator />
                                 <div className="flex items-center justify-between space-x-2">
@@ -384,9 +393,16 @@ export default function SettingsPage() {
                                         <Label className="text-base">Critical Alarms</Label>
                                         <p className="text-sm text-muted-foreground">Immediate notifications for critical system failures (SMS).</p>
                                     </div>
-                                    <div role="switch" aria-checked={true} aria-label="Critical Alarms" className="h-6 w-11 rounded-full bg-sidebar relative cursor-pointer">
-                                        <div className="absolute top-1 right-1 h-4 w-4 rounded-full bg-white shadow-sm transition-transform" />
-                                    </div>
+                                    <button
+                                        role="switch"
+                                        tabIndex={0}
+                                        aria-checked={criticalAlarmsEnabled}
+                                        aria-label="Critical Alarms"
+                                        onClick={() => setCriticalAlarmsEnabled(v => !v)}
+                                        className={`h-6 w-11 rounded-full relative cursor-pointer transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 ${criticalAlarmsEnabled ? 'bg-sidebar' : 'bg-slate-200 dark:bg-slate-700'}`}
+                                    >
+                                        <div className={`absolute top-1 left-1 h-4 w-4 rounded-full bg-white shadow-sm transition-transform duration-200 ${criticalAlarmsEnabled ? 'translate-x-5' : 'translate-x-0'}`} />
+                                    </button>
                                 </div>
                             </CardContent>
                             <CardFooter className="flex justify-between border-t border-sidebar/10 px-6 py-4 bg-sidebar/5">

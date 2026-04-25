@@ -30,9 +30,11 @@ interface DualRangeSliderProps {
     max: number;
     value: [number, number];
     onValueChange: (value: [number, number]) => void;
+    startLabel?: string;
+    endLabel?: string;
 }
 
-function DualRangeSlider({ min, max, value, onValueChange }: DualRangeSliderProps) {
+function DualRangeSlider({ min, max, value, onValueChange, startLabel, endLabel }: DualRangeSliderProps) {
     const trackRef = useRef<HTMLDivElement>(null);
     const draggingRef = useRef<'start' | 'end' | null>(null);
     // Refs to always read the latest props inside window event listeners.
@@ -145,10 +147,11 @@ function DualRangeSlider({ min, max, value, onValueChange }: DualRangeSliderProp
             <div
                 role="slider"
                 tabIndex={0}
-                aria-label="Range start"
+                aria-label="Start month"
                 aria-valuemin={min}
                 aria-valuemax={max}
                 aria-valuenow={value[0]}
+                aria-valuetext={startLabel}
                 className={thumbClass}
                 style={{ left: `${startPct}%` }}
                 onPointerDown={e => handlePointerDown(e, 'start')}
@@ -157,10 +160,11 @@ function DualRangeSlider({ min, max, value, onValueChange }: DualRangeSliderProp
             <div
                 role="slider"
                 tabIndex={0}
-                aria-label="Range end"
+                aria-label="End month"
                 aria-valuemin={min}
                 aria-valuemax={max}
                 aria-valuenow={value[1]}
+                aria-valuetext={endLabel}
                 className={thumbClass}
                 style={{ left: `${endPct}%` }}
                 onPointerDown={e => handlePointerDown(e, 'end')}
@@ -340,6 +344,8 @@ export function DateRangePicker({
                             onValueChange={handleSliderChange}
                             max={activeTimeline.length - 1}
                             min={0}
+                            startLabel={formatMonthWithYear(displayStartMonth)}
+                            endLabel={formatMonthWithYear(displayEndMonth)}
                         />
                     )}
                 </div>

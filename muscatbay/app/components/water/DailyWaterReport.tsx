@@ -19,6 +19,7 @@ import {
     Clock, Loader2, RefreshCw, WifiOff, Radio, Home,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { CHART_PALETTE } from "@/lib/tokens";
 import { LiquidProgressRing } from "@/components/charts/liquid-progress-ring";
 import { LiquidTooltip } from "@/components/charts/liquid-tooltip";
 import {
@@ -42,12 +43,12 @@ const CHART_COLORS = {
 // monthly dashboard and other sections of the app.
 
 const PALETTE = {
-    primary: '#4E4456', // dark purple — brand primary (bulk headers, emphasis)
-    neutral: '#C6D8D3', // light sage — subtle row fills / nested backgrounds
-    mint:    '#A4DCC6', // mint green — OK / in-balance / sum totals
-    blue:    '#337FCA', // blue       — informational / secondary rollups
-    amber:   '#F4C741', // amber      — mid-magnitude difference warnings
-    red:     '#E05050', // red        — high-loss / out-of-tolerance
+    primary: CHART_PALETTE[0], // brand purple  — bulk headers, emphasis
+    neutral: CHART_PALETTE[1], // teal-gray     — subtle row fills
+    mint:    CHART_PALETTE[5], // sage green    — OK / in-balance / sum totals
+    blue:    CHART_PALETTE[4], // soft blue     — informational / secondary rollups
+    amber:   CHART_PALETTE[2], // amber         — mid-magnitude difference warnings
+    red:     CHART_PALETTE[3], // coral         — high-loss / out-of-tolerance
 } as const;
 
 // ─── Computed row types ───────────────────────────────────────────────────────
@@ -533,7 +534,7 @@ function ZoneAnalyticsPanel({ reportData, monthData, selectedDay, month, activeZ
                                     <Area
                                         type="monotone" name="ΣL3 Total" dataKey="ΣL3"
                                         stroke={CHART_COLORS.brand} fill="url(#gradDailyL3)" strokeWidth={3}
-                                        activeDot={{ r: 6, stroke: '#fff', strokeWidth: 2 }}
+                                        activeDot={{ r: 6, stroke: 'var(--card)', strokeWidth: 2 }}
                                         animationDuration={600}
                                     />
                                     <Line
@@ -545,7 +546,7 @@ function ZoneAnalyticsPanel({ reportData, monthData, selectedDay, month, activeZ
                                     <Area
                                         type="monotone" name="L2 Bulk" dataKey="L2 Bulk"
                                         stroke={CHART_COLORS.teal} fill="url(#gradDailyBulk)" strokeWidth={3}
-                                        activeDot={{ r: 6, stroke: '#fff', strokeWidth: 2 }}
+                                        activeDot={{ r: 6, stroke: 'var(--card)', strokeWidth: 2 }}
                                         animationDuration={600}
                                     />
                                 </AreaChart>
@@ -1349,7 +1350,7 @@ function DCAnalyticsPanel({ reportData, monthData, selectedDay, month }: DCAnaly
                                     <Area
                                         type="monotone" name="DC Total" dataKey="DC Total"
                                         stroke={CHART_COLORS.teal} fill="url(#gradDailyDC)" strokeWidth={3}
-                                        activeDot={{ r: 6, stroke: '#fff', strokeWidth: 2 }}
+                                        activeDot={{ r: 6, stroke: 'var(--card)', strokeWidth: 2 }}
                                         animationDuration={600}
                                     />
                                 </AreaChart>

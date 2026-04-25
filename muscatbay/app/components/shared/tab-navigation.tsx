@@ -16,9 +16,10 @@ interface TabNavigationProps {
     onTabChange: (key: string) => void;
     className?: string;
     variant?: "primary" | "secondary";
+    ariaLabel?: string;
 }
 
-export function TabNavigation({ tabs, activeTab, onTabChange, className, variant = "primary" }: TabNavigationProps) {
+export function TabNavigation({ tabs, activeTab, onTabChange, className, variant = "primary", ariaLabel = "Navigation tabs" }: TabNavigationProps) {
     const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
     // ARIA tabs keyboard pattern: Arrow keys move focus and activate tabs
@@ -53,7 +54,7 @@ export function TabNavigation({ tabs, activeTab, onTabChange, className, variant
                     "shadow-sm"
                 )}
                 role="tablist"
-                aria-label="Navigation tabs"
+                aria-label={ariaLabel}
             >
                 {tabs.map((tab, index) => {
                     const isActive = activeTab === tab.key;

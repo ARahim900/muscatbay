@@ -42,7 +42,11 @@ import { LiquidProgressRing } from "../../components/charts/liquid-progress-ring
 import { WaterLossGauge } from "@/components/water/water-loss-gauge";
 import { LiquidTooltip } from "../../components/charts/liquid-tooltip";
 import { MeterTable } from "@/components/water/meter-table";
-import { DailyWaterReport } from "@/components/water/DailyWaterReport";
+import dynamic from "next/dynamic";
+const DailyWaterReport = dynamic(
+    () => import("@/components/water/DailyWaterReport").then(m => ({ default: m.DailyWaterReport })),
+    { loading: () => <Skeleton className="h-96 w-full rounded-xl" />, ssr: false }
+);
 import { PageHeader } from "@/components/shared/page-header";
 import { TabNavigation } from "@/components/shared/tab-navigation";
 import { StatsGrid } from "@/components/shared/stats-grid";
@@ -864,7 +868,7 @@ export default function WaterPage() {
                                                 <YAxis className="text-xs" tickFormatter={(v) => `${v / 1000}k`} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "var(--chart-axis)" }} label={{ value: 'm³', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: "var(--chart-axis)", fontSize: 11 } }} />
                                                 <Tooltip content={<LiquidTooltip />} cursor={{ stroke: 'rgba(0,0,0,0.1)', strokeWidth: 2 }} />
                                                 <Legend iconType="circle" />
-                                                <Area type="monotone" name="A1 - Main Source" dataKey="A1" stroke={CHART_COLORS.brand} fill="url(#gradA1)" strokeWidth={3} activeDot={{ r: 6, stroke: '#fff', strokeWidth: 2 }} animationDuration={600} animationEasing="ease-out" />
+                                                <Area type="monotone" name="A1 - Main Source" dataKey="A1" stroke={CHART_COLORS.brand} fill="url(#gradA1)" strokeWidth={3} activeDot={{ r: 6, stroke: 'var(--card)', strokeWidth: 2 }} animationDuration={600} animationEasing="ease-out" />
                                                 <Area type="monotone" name="A2 - Zone Distribution" dataKey="A2" stroke={CHART_COLORS.primary} fill="url(#gradA2)" strokeWidth={3} animationDuration={600} animationEasing="ease-out" />
                                                 <Area type="monotone" name="A3 - Individual" dataKey="A3Individual" stroke={CHART_COLORS.gray} fill="none" strokeWidth={2} strokeDasharray="5 5" animationDuration={600} animationEasing="ease-out" />
                                             </AreaChart>
@@ -985,7 +989,7 @@ export default function WaterPage() {
                                                 <YAxis className="text-xs" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "var(--chart-axis)" }} label={{ value: 'm³', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: "var(--chart-axis)", fontSize: 11 } }} />
                                                 <Tooltip content={<LiquidTooltip />} cursor={{ stroke: 'rgba(0,0,0,0.1)', strokeWidth: 2 }} />
                                                 <Legend iconType="circle" />
-                                                <Area type="monotone" name="Individual Total" dataKey="Individual Total" stroke={CHART_COLORS.brand} fill="url(#gradIndividual)" strokeWidth={3} activeDot={{ r: 6, stroke: '#fff', strokeWidth: 2 }} animationDuration={600} animationEasing="ease-out" />
+                                                <Area type="monotone" name="Individual Total" dataKey="Individual Total" stroke={CHART_COLORS.brand} fill="url(#gradIndividual)" strokeWidth={3} activeDot={{ r: 6, stroke: 'var(--card)', strokeWidth: 2 }} animationDuration={600} animationEasing="ease-out" />
                                                 <Line type="monotone" name="Loss" dataKey="Loss" stroke={CHART_COLORS.loss} strokeWidth={2} dot={false} strokeDasharray="5 5" animationDuration={600} animationEasing="ease-out" />
                                                 <Area type="monotone" name="Zone Bulk" dataKey="Zone Bulk" stroke={CHART_COLORS.primary} fill="url(#gradZoneBulk)" strokeWidth={3} animationDuration={600} animationEasing="ease-out" />
                                             </AreaChart>

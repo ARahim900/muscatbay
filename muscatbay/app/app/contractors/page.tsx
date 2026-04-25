@@ -661,7 +661,7 @@ export default function ContractorsPage() {
                 <div className="space-y-4">
                     <div className="flex items-center justify-between">
                         <div>
-                            <h3 className="text-base font-semibold text-slate-800 dark:text-slate-200">Year-by-Year Expense Breakdown</h3>
+                            <h2 className="text-base font-semibold text-slate-800 dark:text-slate-200">Year-by-Year Expense Breakdown</h2>
                             <p className="text-xs text-slate-500 mt-1">All values in OMR. Blank cells indicate no cost in that year.</p>
                         </div>
                         <button onClick={handleExportYearly}

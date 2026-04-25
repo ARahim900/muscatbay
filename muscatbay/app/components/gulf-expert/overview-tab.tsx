@@ -117,14 +117,14 @@ export function OverviewTab({ data }: OverviewTabProps) {
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={openByBuilding} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.2)" />
-                  <XAxis dataKey="building" tick={{ fontSize: 11, fill: "#94a3b8" }} />
-                  <YAxis tick={{ fontSize: 11, fill: "#94a3b8" }} allowDecimals={false} />
+                  <XAxis dataKey="building" tick={{ fontSize: 11, fill: "var(--chart-axis)" }} />
+                  <YAxis tick={{ fontSize: 11, fill: "var(--chart-axis)" }} allowDecimals={false} />
                   <Tooltip
                     contentStyle={{
-                      backgroundColor: "#1e293b",
-                      border: "1px solid rgba(255,255,255,0.1)",
+                      backgroundColor: "var(--card)",
+                      border: "1px solid var(--border)",
                       borderRadius: "8px",
-                      color: "#f1f5f9",
+                      color: "var(--foreground)",
                       fontSize: "12px",
                     }}
                   />
@@ -157,7 +157,7 @@ export function OverviewTab({ data }: OverviewTabProps) {
                     dataKey="count"
                     nameKey="status"
                     label={(props) => `${props.name}: ${props.value}`}
-                    labelLine={{ stroke: "#94a3b8", strokeWidth: 1 }}
+                    labelLine={{ stroke: "var(--chart-axis)", strokeWidth: 1 }}
                   >
                     {findingsByStatus.map((entry, index) => (
                       <Cell
@@ -168,10 +168,10 @@ export function OverviewTab({ data }: OverviewTabProps) {
                   </Pie>
                   <Tooltip
                     contentStyle={{
-                      backgroundColor: "#1e293b",
-                      border: "1px solid rgba(255,255,255,0.1)",
+                      backgroundColor: "var(--card)",
+                      border: "1px solid var(--border)",
                       borderRadius: "8px",
-                      color: "#f1f5f9",
+                      color: "var(--foreground)",
                       fontSize: "12px",
                     }}
                   />

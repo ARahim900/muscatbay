@@ -880,7 +880,7 @@ export default function ElectricityPage() {
                                             <YAxis className="text-xs" tickFormatter={(v) => `${v / 1000}k`} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "var(--chart-axis)" }} label={{ value: 'kWh', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: "var(--chart-axis)", fontSize: 11 } }} />
                                             <Tooltip content={<LiquidTooltip />} cursor={{ stroke: 'rgba(0,0,0,0.1)', strokeWidth: 2 }} />
                                             <Legend iconType="circle" wrapperStyle={{ paddingTop: 10 }} />
-                                            <Area type="natural" dataKey="consumption" name="Consumption" stroke={CHART_COLORS.primary} fill="url(#elecGrad)" strokeWidth={3} activeDot={{ r: 6, stroke: '#fff', strokeWidth: 2 }} animationDuration={600} />
+                                            <Area type="natural" dataKey="consumption" name="Consumption" stroke={CHART_COLORS.primary} fill="url(#elecGrad)" strokeWidth={3} activeDot={{ r: 6, stroke: 'var(--card)', strokeWidth: 2 }} animationDuration={600} />
                                         </AreaChart>
                                     </ResponsiveContainer>
                                 </div>
@@ -975,8 +975,8 @@ export default function ElectricityPage() {
                                                     dataKey={meter.name}
                                                     stroke={meterColors[idx % meterColors.length]}
                                                     strokeWidth={2.5}
-                                                    dot={{ r: 3, strokeWidth: 1, fill: '#fff' }}
-                                                    activeDot={{ r: 5, stroke: '#fff', strokeWidth: 2 }}
+                                                    dot={{ r: 3, strokeWidth: 1, fill: 'var(--card)' }}
+                                                    activeDot={{ r: 5, stroke: 'var(--card)', strokeWidth: 2 }}
                                                     animationDuration={600}
                                                 />
                                             ))}
@@ -995,7 +995,7 @@ export default function ElectricityPage() {
                                             <YAxis tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : `${v}`} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "var(--chart-axis)" }} />
                                             <Tooltip content={<LiquidTooltip />} cursor={{ stroke: 'rgba(0,0,0,0.1)', strokeWidth: 2 }} />
                                             <Legend iconType="circle" wrapperStyle={{ paddingTop: 10 }} />
-                                            <Area type="monotone" dataKey="consumption" name="Consumption" stroke={CHART_COLORS.secondary} fill="url(#anlGrad)" strokeWidth={3} activeDot={{ r: 6, stroke: '#fff', strokeWidth: 2 }} animationDuration={600} />
+                                            <Area type="monotone" dataKey="consumption" name="Consumption" stroke={CHART_COLORS.secondary} fill="url(#anlGrad)" strokeWidth={3} activeDot={{ r: 6, stroke: 'var(--card)', strokeWidth: 2 }} animationDuration={600} />
                                         </AreaChart>
                                     )}
                                 </ResponsiveContainer>

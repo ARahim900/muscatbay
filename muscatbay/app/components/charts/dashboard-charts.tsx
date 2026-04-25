@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useMemo } from "react";
 import Link from "next/link";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Droplets, ArrowUpRight, Recycle } from "lucide-react";
@@ -18,7 +18,7 @@ const AXIS_TICK_SM = { fontSize: 10, fill: "var(--chart-axis)" } as const;
 const Y_AXIS_LABEL = { value: 'k m³', angle: -90, position: 'insideLeft' as const, style: { textAnchor: 'middle' as const, fill: 'var(--chart-axis)', fontSize: 11 } };
 const AREA_CURSOR = { stroke: 'rgba(0,0,0,0.1)', strokeWidth: 2 } as const;
 const BAR_CURSOR = { fill: 'rgba(0,0,0,0.04)', radius: 4 } as const;
-const WATER_ACTIVE_DOT = { r: 6, stroke: '#fff', strokeWidth: 2 } as const;
+const WATER_ACTIVE_DOT = { r: 6, stroke: 'var(--card)', strokeWidth: 2 } as const;
 const LEGEND_STYLE = { paddingTop: 10 } as const;
 const BAR_RADIUS: [number, number, number, number] = [4, 4, 0, 0];
 
@@ -30,9 +30,12 @@ interface DashboardChartsProps {
 const REFERENCE_LINE_LABEL = { position: 'insideTopRight' as const, fontSize: 10, fill: 'var(--chart-axis)', dy: -4 };
 
 function DashboardChartsInner({ chartData, stpChartData }: DashboardChartsProps) {
-    const waterAvg = chartData.length > 0
-        ? chartData.reduce((sum, d) => sum + ((d.water as number) || 0), 0) / chartData.length
-        : 0;
+    const waterAvg = useMemo(() =>
+        chartData.length > 0
+            ? chartData.reduce((sum, d) => sum + ((d.water as number) || 0), 0) / chartData.length
+            : 0,
+        [chartData]
+    );
 
     return (
         <AnimateOnScroll className="grid gap-4 sm:gap-5 md:gap-6 grid-cols-1 lg:grid-cols-7">

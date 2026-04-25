@@ -756,7 +756,7 @@ export default function STPPage() {
                                         <YAxis className="text-xs" tick={{ fontSize: 11, fill: "var(--chart-axis)" }} tickFormatter={(v: number) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v)} axisLine={false} tickLine={false} label={{ value: 'm³', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: "var(--chart-axis)", fontSize: 11 } }} />
                                         <Tooltip content={<LiquidTooltip />} cursor={{ stroke: 'rgba(0,0,0,0.1)', strokeWidth: 2 }} />
                                         <Legend iconType="circle" />
-                                        <Area type="monotone" dataKey="inlet" name="Sewage Inlet" stroke={CHART_COLORS.brand} fill="url(#gradInlet)" strokeWidth={volumeChartView === 'daily' ? 2 : 3} activeDot={{ r: 6, stroke: '#fff', strokeWidth: 2 }} animationDuration={800} />
+                                        <Area type="monotone" dataKey="inlet" name="Sewage Inlet" stroke={CHART_COLORS.brand} fill="url(#gradInlet)" strokeWidth={volumeChartView === 'daily' ? 2 : 3} activeDot={{ r: 6, stroke: 'var(--card)', strokeWidth: 2 }} animationDuration={800} />
                                         <Area type="monotone" dataKey="tse" name="TSE Output" stroke={CHART_COLORS.primary} fill="url(#gradTSE)" strokeWidth={volumeChartView === 'daily' ? 2 : 3} animationDuration={800} />
                                     </AreaChart>
                                 </ResponsiveContainer>
@@ -832,8 +832,8 @@ export default function STPPage() {
                                                 name="Tanker Trips"
                                                 stroke={CHART_COLORS.amber}
                                                 strokeWidth={tankerChartView === 'daily' ? 2 : 3}
-                                                dot={tankerChartView === 'daily' && dailyChartData.length > 30 ? false : { r: 5, fill: CHART_COLORS.amber, strokeWidth: 2, stroke: "#fff" }}
-                                                activeDot={{ r: 7, strokeWidth: 2, stroke: "#fff" }}
+                                                dot={tankerChartView === 'daily' && dailyChartData.length > 30 ? false : { r: 5, fill: CHART_COLORS.amber, strokeWidth: 2, stroke: 'var(--card)' }}
+                                                activeDot={{ r: 7, strokeWidth: 2, stroke: 'var(--card)' }}
                                                 animationDuration={800}
                                             />
                                         </LineChart>
@@ -848,7 +848,7 @@ export default function STPPage() {
                         {/* Toolbar */}
                         <TableToolbar className="flex-wrap">
                             <div>
-                                <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200">Daily Operations Log</h3>
+                                <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-200">Daily Operations Log</h2>
                                 <p className="text-sm text-slate-500 dark:text-slate-400">Detailed daily STP operation records</p>
                             </div>
 

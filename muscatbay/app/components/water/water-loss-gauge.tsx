@@ -12,11 +12,11 @@ interface WaterLossGaugeProps {
 }
 
 const GAUGE_COLORS = {
-    critical: '#ef4444',
-    good: '#22c55e',
-    fair: '#84cc16',
-    warning: '#eab308',
-    poor: '#f97316',
+    critical: 'var(--chart-loss)',
+    good:     'var(--chart-success)',
+    fair:     'var(--chart-teal)',
+    warning:  'var(--chart-amber)',
+    poor:     'var(--chart-amber)',
 } as const;
 
 export function WaterLossGauge({ score, label, subLabel, size = 200, className }: WaterLossGaugeProps) {

@@ -28,6 +28,7 @@ import {
 import { WaterMeter, getConsumption } from '@/lib/water-data';
 import { BUILDING_CONFIG, BUILDING_CHILD_METERS } from '@/lib/water-accounts';
 import { cn } from '@/lib/utils';
+import { CHART_PALETTE } from '@/lib/tokens';
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -45,11 +46,11 @@ const tdBase =
     'px-5 py-4 align-middle text-sm font-semibold text-slate-700 dark:text-slate-300';
 
 const PALETTE = {
-    primary: '#4E4456', // dark purple — L2 bulk / zone header
-    blue:    '#337FCA', // blue        — ΣL3 total row
-    mint:    '#A4DCC6', // mint green  — good / in-balance
-    amber:   '#F4C741', // amber       — moderate loss
-    red:     '#E05050', // red         — high loss
+    primary: CHART_PALETTE[0], // brand purple  — L2 bulk / zone header
+    blue:    CHART_PALETTE[4], // soft blue     — ΣL3 total row
+    mint:    CHART_PALETTE[5], // sage green    — good / in-balance
+    amber:   CHART_PALETTE[2], // amber         — moderate loss
+    red:     CHART_PALETTE[3], // coral         — high loss
 } as const;
 
 // ─── Sort state ───────────────────────────────────────────────────────────────
@@ -468,7 +469,7 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                                         </div>
                                     ))}
                                     <div className="flex items-center justify-between text-xs px-2 py-1 rounded-lg font-semibold"
-                                        style={{ backgroundColor: bData.diff > 0 ? `${PALETTE.red}10` : `${PALETTE.mint}20`, color: bData.diff > 0 ? PALETTE.red : '#10b981' }}>
+                                        style={{ backgroundColor: bData.diff > 0 ? `${PALETTE.red}10` : `${PALETTE.mint}20`, color: bData.diff > 0 ? PALETTE.red : PALETTE.mint }}>
                                         <span>Building Diff (L3 − ΣL4)</span>
                                         <div className="flex items-center gap-2">
                                             <StatusChip label={`${Math.abs(bData.diffPct).toFixed(1)}%`} color={lossChipColor(bData.diffPct)} />
@@ -496,7 +497,7 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                             </div>
                             <div>
                                 <p className="text-[10px] text-slate-400 uppercase tracking-wide">Diff</p>
-                                <p className="font-mono font-bold text-sm mt-0.5" style={{ color: diffTotal > 0 ? PALETTE.red : '#10b981' }}>{diffLabel(diffTotal)}</p>
+                                <p className="font-mono font-bold text-sm mt-0.5" style={{ color: diffTotal > 0 ? PALETTE.red : PALETTE.mint }}>{diffLabel(diffTotal)}</p>
                             </div>
                         </div>
                         <div className="flex items-center justify-between">
@@ -718,7 +719,7 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                                             className={cn(tdBase, 'sticky left-0 z-10 pl-12 font-bold')}
                                             style={{
                                                 backgroundColor: bData.diff > 0 ? `${PALETTE.red}07` : `${PALETTE.mint}12`,
-                                                color: bData.diff > 0 ? PALETTE.red : '#10b981',
+                                                color: bData.diff > 0 ? PALETTE.red : PALETTE.mint,
                                                 boxShadow: `inset 3px 0 0 ${bData.diff > 0 ? PALETTE.red : PALETTE.mint}`,
                                             }}
                                         >
@@ -734,7 +735,7 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                                             const d = r2(bulkV - (bData.childMonthly[i] ?? 0));
                                             return (
                                                 <td key={i} className={cn(tdBase, 'text-right tabular-nums text-[12px] font-semibold')}
-                                                    style={{ color: d > 0 ? PALETTE.red : d < 0 ? '#10b981' : '#64748b' }}>
+                                                    style={{ color: d > 0 ? PALETTE.red : d < 0 ? PALETTE.mint : 'var(--chart-axis)' }}>
                                                     {diffLabel(d)}
                                                 </td>
                                             );
@@ -742,7 +743,7 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                                         <td className={cn(tdBase, 'text-right tabular-nums font-bold')}
                                             style={{
                                                 backgroundColor: bData.diff > 0 ? `${PALETTE.red}14` : `${PALETTE.mint}25`,
-                                                color: bData.diff > 0 ? PALETTE.red : '#10b981',
+                                                color: bData.diff > 0 ? PALETTE.red : PALETTE.mint,
                                             }}>
                                             {diffLabel(bData.diff)}
                                         </td>
@@ -789,7 +790,7 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                                     className={cn(tdBase, 'font-bold sticky left-0 z-10')}
                                     style={{
                                         backgroundColor: diffTotal > 0 ? `${PALETTE.red}08` : `${PALETTE.mint}18`,
-                                        color: diffTotal > 0 ? PALETTE.red : '#10b981',
+                                        color: diffTotal > 0 ? PALETTE.red : PALETTE.mint,
                                         boxShadow: `inset 4px 0 0 ${diffTotal > 0 ? PALETTE.red : PALETTE.mint}`,
                                     }}
                                 >
@@ -803,14 +804,14 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                                 </td>
                                 {diffMonthly.map((v, i) => (
                                     <td key={i} className={cn(tdBase, 'text-right tabular-nums text-[12px] font-semibold')}
-                                        style={{ color: v > 0 ? PALETTE.red : v < 0 ? '#10b981' : '#64748b' }}>
+                                        style={{ color: v > 0 ? PALETTE.red : v < 0 ? PALETTE.mint : 'var(--chart-axis)' }}>
                                         {diffLabel(v)}
                                     </td>
                                 ))}
                                 <td className={cn(tdBase, 'text-right tabular-nums font-bold')}
                                     style={{
                                         backgroundColor: diffTotal > 0 ? `${PALETTE.red}18` : `${PALETTE.mint}30`,
-                                        color: diffTotal > 0 ? PALETTE.red : '#10b981',
+                                        color: diffTotal > 0 ? PALETTE.red : PALETTE.mint,
                                     }}>
                                     {diffLabel(diffTotal)}
                                 </td>
