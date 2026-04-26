@@ -24,8 +24,9 @@ import {
 interface NavigationItem {
   id: string;
   name: string;
-  icon: React.ComponentType<{ className?: string }>;
+  icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
   href: string;
+  color?: string;
 }
 
 interface NavGroup {
@@ -40,27 +41,27 @@ const navGroups: NavGroup[] = [
   {
     id: "overview",
     items: [
-      { id: "dashboard", name: "Dashboard", icon: LayoutDashboard, href: "/" },
+      { id: "dashboard", name: "Dashboard", icon: LayoutDashboard, href: "/", color: "var(--mb-secondary)" },
     ],
   },
   {
     id: "utilities",
     label: "Utilities",
     items: [
-      { id: "water", name: "Water", icon: Droplets, href: "/water" },
-{ id: "electricity", name: "Electricity", icon: Zap, href: "/electricity" },
-      { id: "stp", name: "STP Plant", icon: Waves, href: "/stp" },
+      { id: "water",       name: "Water",       icon: Droplets, href: "/water",       color: "var(--module-water)" },
+      { id: "electricity", name: "Electricity", icon: Zap,      href: "/electricity", color: "var(--module-electricity)" },
+      { id: "stp",         name: "STP Plant",   icon: Waves,    href: "/stp",         color: "var(--module-stp)" },
     ],
   },
   {
     id: "operations",
     label: "Operations",
     items: [
-      { id: "contractors", name: "Contractors", icon: Users, href: "/contractors" },
-      { id: "hvac-system", name: "HVAC System", icon: Wrench, href: "/hvac" },
-      { id: "assets", name: "Assets", icon: Package, href: "/assets" },
-      { id: "pest-control", name: "Pest Control", icon: Bug, href: "/pest-control" },
-      { id: "fire-safety", name: "Fire Safety", icon: Flame, href: "/firefighting" },
+      { id: "contractors", name: "Contractors", icon: Users,   href: "/contractors",  color: "var(--module-contractors)" },
+      { id: "hvac-system", name: "HVAC System", icon: Wrench,  href: "/hvac",         color: "var(--module-hvac)" },
+      { id: "assets",      name: "Assets",      icon: Package, href: "/assets",        color: "var(--module-assets)" },
+      { id: "pest-control",name: "Pest Control",icon: Bug,     href: "/pest-control", color: "var(--module-pest)" },
+      { id: "fire-safety", name: "Fire Safety", icon: Flame,   href: "/firefighting", color: "var(--module-fire)" },
     ],
   },
 ];
@@ -191,9 +192,13 @@ export function Sidebar() {
                       >
                         <span
                           aria-hidden="true"
-                          className={`absolute start-0 top-1.5 bottom-1.5 w-[3px] rounded-e-full bg-secondary transition-opacity duration-150 ease-out ${isActive ? 'opacity-100' : 'opacity-0'}`}
+                          className={`absolute start-0 top-1.5 bottom-1.5 w-[3px] rounded-e-full transition-opacity duration-150 ease-out ${isActive ? 'opacity-100' : 'opacity-0'}`}
+                          style={{ backgroundColor: item.color || 'var(--secondary)' }}
                         />
-                        <Icon className={`w-5 h-5 flex-shrink-0 transition-colors duration-150 relative z-10 ${isActive ? "text-secondary" : "text-white/80 group-hover/nav:text-white"}`} />
+                        <Icon
+                          className={`w-5 h-5 flex-shrink-0 transition-colors duration-150 relative z-10 ${!isActive ? "text-white/80 group-hover/nav:text-white" : ""}`}
+                          style={isActive ? { color: item.color || 'var(--secondary)' } : undefined}
+                        />
                         {!isCollapsed && (
                           <span className={`text-sm truncate flex-1 ${isActive ? "font-semibold" : "font-medium"}`}>
                             {item.name}

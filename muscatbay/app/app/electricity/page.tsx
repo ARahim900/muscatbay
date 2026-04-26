@@ -859,7 +859,7 @@ export default function ElectricityPage() {
             {activeTab === 'overview' && (
                 <div id="panel-overview" role="tabpanel" aria-labelledby="tab-overview" tabIndex={0} className="space-y-6 motion-safe:animate-in motion-safe:fade-in duration-200">
 
-                    <StatsGrid stats={stats} />
+                    <StatsGrid stats={stats} moduleColor="var(--module-electricity)" />
 
                     <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-5">
                         <Card className="lg:col-span-3">
@@ -915,7 +915,7 @@ export default function ElectricityPage() {
             {activeTab === 'analysis' && (
                 <div id="panel-analysis" role="tabpanel" aria-labelledby="tab-analysis" tabIndex={0} className="space-y-6 motion-safe:animate-in motion-safe:fade-in duration-200">
                     {/* Filtered Stats Grid */}
-                    <StatsGrid stats={analysisData.stats} />
+                    <StatsGrid stats={analysisData.stats} moduleColor="var(--module-electricity)" />
 
                     {/* Monthly Trend Chart */}
                     <Card className="card-elevated">

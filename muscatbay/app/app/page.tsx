@@ -49,7 +49,23 @@ export default function DashboardPage() {
                         stat.label.includes('CONTRACTOR') ? '/contractors' :
                             stat.label.includes('HVAC') ? '/hvac' :
                                 stat.label.includes('PEST') ? '/pest-control' :
-                                    stat.label.includes('FIRE') ? '/firefighting' : undefined
+                                    stat.label.includes('FIRE') ? '/firefighting' : undefined,
+        color: stat.label.includes('WATER') ? 'var(--module-water)' :
+            stat.label.includes('ELECTRICITY') ? 'var(--module-electricity)' :
+                stat.label.includes('STP') || stat.label.includes('TSE') || stat.label.includes('ECONOMIC') ? 'var(--module-stp)' :
+                    stat.label.includes('ASSETS') ? 'var(--module-assets)' :
+                        stat.label.includes('CONTRACTOR') ? 'var(--module-contractors)' :
+                            stat.label.includes('HVAC') ? 'var(--module-hvac)' :
+                                stat.label.includes('PEST') ? 'var(--module-pest)' :
+                                    stat.label.includes('FIRE') ? 'var(--module-fire)' : undefined,
+        bgColor: stat.label.includes('WATER') ? 'color-mix(in srgb, var(--module-water) 14%, transparent)' :
+            stat.label.includes('ELECTRICITY') ? 'color-mix(in srgb, var(--module-electricity) 14%, transparent)' :
+                stat.label.includes('STP') || stat.label.includes('TSE') || stat.label.includes('ECONOMIC') ? 'color-mix(in srgb, var(--module-stp) 14%, transparent)' :
+                    stat.label.includes('ASSETS') ? 'color-mix(in srgb, var(--module-assets) 14%, transparent)' :
+                        stat.label.includes('CONTRACTOR') ? 'color-mix(in srgb, var(--module-contractors) 14%, transparent)' :
+                            stat.label.includes('HVAC') ? 'color-mix(in srgb, var(--module-hvac) 14%, transparent)' :
+                                stat.label.includes('PEST') ? 'color-mix(in srgb, var(--module-pest) 14%, transparent)' :
+                                    stat.label.includes('FIRE') ? 'color-mix(in srgb, var(--module-fire) 14%, transparent)' : undefined,
     })), [stats]);
 
     const handleFilterClick = useCallback((filter: 'all' | 'critical' | 'warning' | 'info') => {

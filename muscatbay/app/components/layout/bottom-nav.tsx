@@ -25,22 +25,23 @@ interface NavItem {
   name: string;
   icon: React.ComponentType<{ className?: string }>;
   href: string;
+  color?: string;
 }
 
 const primaryItems: NavItem[] = [
-  { id: "dashboard", name: "Dashboard", icon: LayoutDashboard, href: "/" },
-  { id: "water", name: "Water", icon: Droplets, href: "/water" },
-  { id: "electricity", name: "Electricity", icon: Zap, href: "/electricity" },
-  { id: "stp", name: "STP Plant", icon: Waves, href: "/stp" },
-  { id: "fire-safety", name: "Fire Safety", icon: Flame, href: "/firefighting" },
+  { id: "dashboard",  name: "Dashboard", icon: LayoutDashboard, href: "/",            color: "var(--mb-secondary)" },
+  { id: "water",      name: "Water",     icon: Droplets,        href: "/water",       color: "var(--module-water)" },
+  { id: "electricity",name: "Electricity",icon: Zap,            href: "/electricity", color: "var(--module-electricity)" },
+  { id: "stp",        name: "STP Plant", icon: Waves,           href: "/stp",         color: "var(--module-stp)" },
+  { id: "fire-safety",name: "Fire Safety",icon: Flame,          href: "/firefighting",color: "var(--module-fire)" },
 ];
 
 const overflowItems: NavItem[] = [
-  { id: "contractors", name: "Contractors", icon: Users, href: "/contractors" },
-  { id: "hvac-system", name: "HVAC System", icon: Wrench, href: "/hvac" },
-  { id: "assets", name: "Assets", icon: Package, href: "/assets" },
-  { id: "pest-control", name: "Pest Control", icon: Bug, href: "/pest-control" },
-  { id: "settings", name: "Settings", icon: Settings, href: "/settings" },
+  { id: "contractors", name: "Contractors", icon: Users,   href: "/contractors",  color: "var(--module-contractors)" },
+  { id: "hvac-system", name: "HVAC System", icon: Wrench,  href: "/hvac",         color: "var(--module-hvac)" },
+  { id: "assets",      name: "Assets",      icon: Package, href: "/assets",        color: "var(--module-assets)" },
+  { id: "pest-control",name: "Pest Control",icon: Bug,     href: "/pest-control", color: "var(--module-pest)" },
+  { id: "settings",    name: "Settings",    icon: Settings, href: "/settings" },
 ];
 
 const allNavItems = [...primaryItems, ...overflowItems];
@@ -175,22 +176,21 @@ export function BottomNav() {
             {overflowItems.map((item) => {
               const Icon = item.icon;
               const active = isRouteActive(item.href, pathname);
+              const activeColor = item.color || 'var(--secondary)';
               return (
                 <Link
                   key={item.id}
                   href={item.href}
                   className={`
                     flex items-center gap-3 px-4 py-3 transition-colors focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:outline-none
-                    ${active
-                      ? 'bg-secondary/10 text-secondary'
-                      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700/50'
-                    }
+                    ${!active ? 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700/50' : ''}
                   `}
+                  style={active ? { color: activeColor, backgroundColor: `color-mix(in srgb, ${activeColor} 10%, transparent)` } : undefined}
                 >
                   <Icon className="w-5 h-5 flex-shrink-0" />
                   <span className={`text-sm ${active ? 'font-semibold' : 'font-medium'}`}>{item.name}</span>
                   {active && (
-                    <div className="ms-auto w-2 h-2 rounded-full bg-secondary" />
+                    <div className="ms-auto w-2 h-2 rounded-full" style={{ backgroundColor: activeColor }} />
                   )}
                 </Link>
               );
@@ -220,24 +220,23 @@ export function BottomNav() {
           {primaryItems.map((item) => {
             const Icon = item.icon;
             const active = isRouteActive(item.href, pathname);
+            const activeColor = item.color || 'var(--secondary)';
             return (
               <Link
                 key={item.id}
                 href={item.href}
                 className={`
                   flex flex-col items-center justify-center gap-0.5 flex-1 h-full pt-1.5 pb-1 rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:outline-none
-                  ${active
-                    ? 'text-secondary'
-                    : 'text-primary/70 dark:text-slate-400 hover:text-primary dark:hover:text-slate-200'
-                  }
+                  ${!active ? 'text-primary/70 dark:text-slate-400 hover:text-primary dark:hover:text-slate-200' : ''}
                 `}
+                style={active ? { color: activeColor } : undefined}
               >
                 <Icon className="w-5 h-5" />
                 <span className={`text-[10px] leading-tight ${active ? 'font-semibold' : 'font-medium'}`}>
                   {item.name}
                 </span>
                 {active && (
-                  <div className="w-1 h-1 rounded-full bg-secondary -mt-0.5" />
+                  <div className="w-1 h-1 rounded-full -mt-0.5" style={{ backgroundColor: activeColor }} />
                 )}
               </Link>
             );

@@ -470,7 +470,7 @@ export default function ContractorsPage() {
             </div>
 
             {/* Stats */}
-            <StatsGrid stats={stats} />
+            <StatsGrid stats={stats} moduleColor="var(--module-contractors)" />
 
             {/* Tabs */}
             <TabNavigation

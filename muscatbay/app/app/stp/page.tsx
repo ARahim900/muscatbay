@@ -721,7 +721,7 @@ export default function STPPage() {
                     )}
 
                     {/* Unified Stats Grid */}
-                    <StatsGrid stats={stats} />
+                    <StatsGrid stats={stats} moduleColor="var(--module-stp)" />
 
                     {/* Water Treatment Volumes Chart */}
                     <Card className="card-elevated">

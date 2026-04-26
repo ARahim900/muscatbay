@@ -842,7 +842,7 @@ export default function WaterPage() {
                     {/* Overview Tab */}
                     {monthlyTab === 'overview' && (
                         <div id="panel-overview" role="tabpanel" aria-labelledby="tab-overview" tabIndex={0} className="space-y-6">
-                            <StatsGrid stats={overviewStats} />
+                            <StatsGrid stats={overviewStats} moduleColor="var(--module-water)" />
                             <StatsGrid stats={lossStats} />
 
                             {/* A-Values Distribution Chart */}
