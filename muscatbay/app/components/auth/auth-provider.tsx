@@ -82,6 +82,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
         let mounted = true;
 
         const initAuth = async () => {
+            // Safety net: if Supabase hangs (paused project, silent network drop),
+            // force loading=false after 8 s so the splash never blocks forever.
+            const safetyTimer = setTimeout(() => {
+                if (mounted) setLoading(false);
+            }, 8000);
+
             try {
                 const currentUser = await getCurrentUser();
 
@@ -96,6 +102,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
             } catch (error) {
                 console.error("Auth init error:", error);
             } finally {
+                clearTimeout(safetyTimer);
                 if (mounted) {
                     setLoading(false);
                 }
