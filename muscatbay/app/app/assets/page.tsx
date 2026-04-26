@@ -358,7 +358,7 @@ export default function AssetsPage() {
             </div>
 
             {/* Tabs */}
-            <TabNavigation tabs={TABS} activeTab={activeTab} onTabChange={handleTabChange} />
+            <TabNavigation tabs={TABS} activeTab={activeTab} onTabChange={handleTabChange} moduleColor="var(--module-assets)" />
 
             <div className="space-y-4">
                 {/* Toolbar */}

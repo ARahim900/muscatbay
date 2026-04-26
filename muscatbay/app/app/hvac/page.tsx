@@ -152,7 +152,7 @@ export default function GulfExpertPage() {
         />
       </div>
 
-      <TabNavigation tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
+      <TabNavigation tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} moduleColor="var(--module-hvac)" />
 
       {activeTab === "overview" && <OverviewTab data={data} />}
       {activeTab === "compressors" && <CompressorsTab compressors={data.compressors} />}

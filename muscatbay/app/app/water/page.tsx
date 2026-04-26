@@ -712,6 +712,7 @@ export default function WaterPage() {
                 activeTab={dashboardView}
                 onTabChange={(key) => setDashboardView(key as 'monthly' | 'daily')}
                 variant="secondary"
+                moduleColor="var(--module-water)"
                 tabs={[
                     { key: 'monthly', label: 'Monthly', icon: BarChart3 },
                     { key: 'daily', label: 'Daily', icon: CalendarDays },
@@ -725,6 +726,7 @@ export default function WaterPage() {
                     <TabNavigation
                         activeTab={monthlyTab}
                         onTabChange={setMonthlyTab}
+                        moduleColor="var(--module-water)"
                         tabs={[
                             { key: 'overview', label: 'Overview', icon: BarChart3 },
                             { key: 'zone', label: 'Zone Analysis', icon: TestTube2 },
@@ -758,7 +760,8 @@ export default function WaterPage() {
                                                                 setEndMonth(yearMonths[yearMonths.length - 1]);
                                                             }
                                                         }}
-                                                        className={`rounded-full px-4 min-h-[44px] lg:min-h-0 ${selectedYear === year ? "bg-secondary text-white" : "border-slate-200 dark:border-slate-700"}`}
+                                                        className={`rounded-full px-4 min-h-[44px] lg:min-h-0 ${selectedYear === year ? "text-white border-0" : "border-slate-200 dark:border-slate-700"}`}
+                                                        style={selectedYear === year ? { backgroundColor: 'var(--module-water)' } : undefined}
                                                     >
                                                         {year}
                                                     </Button>
@@ -801,6 +804,7 @@ export default function WaterPage() {
                                         availableMonths={filteredMonthsByYear}
                                         onRangeChange={handleRangeChange}
                                         onReset={handleResetRange}
+                                        accentColor="var(--module-water)"
                                     />
 
                                     {/* Zone selector - only shown on zone tab */}

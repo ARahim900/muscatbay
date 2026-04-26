@@ -738,6 +738,7 @@ export default function ElectricityPage() {
             <TabNavigation
                 activeTab={activeTab}
                 onTabChange={setActiveTab}
+                moduleColor="var(--module-electricity)"
                 tabs={[
                     { key: "overview", label: "Overview", icon: BarChart3 },
                     { key: "analysis", label: "Analysis by Type", icon: TrendingUp },
@@ -767,7 +768,8 @@ export default function ElectricityPage() {
                                                     setEndMonth(allMonths[allMonths.length - 1]);
                                                 }
                                             }}
-                                            className={`rounded-full px-4 ${selectedYear === "" ? "bg-secondary text-white" : "border-slate-200 dark:border-slate-700"}`}
+                                            className={`rounded-full px-4 ${selectedYear === "" ? "text-white border-0" : "border-slate-200 dark:border-slate-700"}`}
+                                            style={selectedYear === "" ? { backgroundColor: 'var(--module-electricity)' } : undefined}
                                         >
                                             All
                                         </Button>
@@ -786,7 +788,8 @@ export default function ElectricityPage() {
                                                         setEndMonth(yearMonths[yearMonths.length - 1]);
                                                     }
                                                 }}
-                                                className={`rounded-full px-4 ${selectedYear === year ? "bg-secondary text-white" : "border-slate-200 dark:border-slate-700"}`}
+                                                className={`rounded-full px-4 ${selectedYear === year ? "text-white border-0" : "border-slate-200 dark:border-slate-700"}`}
+                                                style={selectedYear === year ? { backgroundColor: 'var(--module-electricity)' } : undefined}
                                             >
                                                 {year}
                                             </Button>
@@ -850,6 +853,7 @@ export default function ElectricityPage() {
                                 availableMonths={allMonths}
                                 onRangeChange={handleRangeChange}
                                 onReset={handleResetRange}
+                                accentColor="var(--module-electricity)"
                             />
                         </div>
                     </CardContent>
