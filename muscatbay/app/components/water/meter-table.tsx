@@ -46,8 +46,8 @@ const tdBase =
     'px-5 py-4 align-middle text-sm font-semibold text-slate-700 dark:text-slate-300';
 
 const PALETTE = {
-    primary: CHART_PALETTE[0], // brand purple  — L2 bulk / zone header
-    blue:    CHART_PALETTE[4], // soft blue     — ΣL3 total row
+    primary: '#1DA1F2',        // Twitter Blue  — L2 bulk / zone header
+    blue:    '#7DD3FC',        // Sky Blue      — ΣL3 total row
     mint:    CHART_PALETTE[5], // sage green    — good / in-balance
     amber:   CHART_PALETTE[2], // amber         — moderate loss
     red:     CHART_PALETTE[3], // coral         — high loss

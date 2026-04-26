@@ -60,31 +60,33 @@ import { saveFilterPreferences, loadFilterPreferences } from "@/lib/filter-prefe
 type DashboardView = 'monthly' | 'daily';
 
 const CHART_COLORS = {
-    primary: 'var(--chart-water-primary, #6B9AC4)',
-    secondary: 'var(--chart-water-secondary, #A1D1D5)',
-    accent: 'var(--chart-water-accent, #A1D1D5)',
-    success: 'var(--chart-success, #84B59F)',
-    loss: 'var(--chart-loss, #D67A7A)',
-    brand: 'var(--chart-brand, #4D445D)',
-    amber: 'var(--chart-amber, #E8C064)',
-    gray: 'var(--chart-gray, #9B86A8)',
+    bulk:      '#1DA1F2',                               // Twitter Blue — bulk supply / distribution
+    individual:'#7DD3FC',                               // Sky Blue — individual end consumption
+    primary:   'var(--chart-water-primary, #1DA1F2)',   // Twitter Blue (bulk)
+    secondary: 'var(--chart-water-secondary, #7DD3FC)', // Sky Blue (individual)
+    accent:    'var(--chart-water-accent, #7DD3FC)',
+    success:   'var(--chart-success, #84B59F)',          // sage green — semantic "good"
+    loss:      'var(--chart-loss, #D67A7A)',             // coral red — losses (unchanged)
+    brand:     'var(--chart-brand, #4D445D)',            // kept for non-water usage
+    amber:     'var(--chart-amber, #E8C064)',            // stage loss breakdown lines
+    gray:      'var(--chart-gray, #9B86A8)',             // N/A / unknown meters
 } as const;
 
 // Static type-to-color mapping (outside component to avoid re-creation per render)
 const TYPE_COLORS: Record<string, string> = {
-    'Main BULK': CHART_COLORS.success,
-    'Retail': CHART_COLORS.loss,
-    'Zone Bulk': CHART_COLORS.primary,
-    'Residential (Villa)': CHART_COLORS.brand,
-    'IRR_Servies': CHART_COLORS.amber,
-    'D_Building_Bulk': CHART_COLORS.secondary,
-    'Residential (Apart)': CHART_COLORS.gray,
-    'MB_Common': CHART_COLORS.gray,
-    'Building': CHART_COLORS.amber,
-    'Muscat Bay Community': 'var(--secondary)',
-    'D_Building_Common': CHART_COLORS.brand,
-    'Un-Sold': 'var(--status-stale)',
-    'N/A': CHART_COLORS.gray,
+    'Main BULK':            CHART_COLORS.bulk,        // Twitter Blue — L1 main source
+    'Zone Bulk':            CHART_COLORS.bulk,        // Twitter Blue — L2 zone distribution
+    'D_Building_Bulk':      CHART_COLORS.bulk,        // Twitter Blue — L3 building-level bulk
+    'Retail':               CHART_COLORS.individual,  // Sky Blue — retail consumer
+    'Residential (Villa)':  CHART_COLORS.individual,  // Sky Blue
+    'Residential (Apart)':  CHART_COLORS.individual,  // Sky Blue
+    'Building':             CHART_COLORS.individual,  // Sky Blue
+    'D_Building_Common':    CHART_COLORS.individual,  // Sky Blue
+    'MB_Common':            CHART_COLORS.individual,  // Sky Blue
+    'IRR_Servies':          CHART_COLORS.individual,  // Sky Blue — irrigation (end use)
+    'Muscat Bay Community': CHART_COLORS.individual,  // Sky Blue
+    'Un-Sold':              'var(--status-stale)',     // orange — unallocated
+    'N/A':                  CHART_COLORS.gray,        // gray
 };
 
 // Helper: compute trend direction and formatted % change between two values
@@ -577,6 +579,8 @@ export default function WaterPage() {
                 subtitle: "L1 (Main source input)",
                 icon: Droplets,
                 variant: "default" as const,
+                color: CHART_COLORS.bulk,
+                bgColor: 'rgba(29,161,242,0.12)',
                 ...(a1Trend && { trend: a1Trend.trend, trendValue: a1Trend.trendValue }),
                 invertTrend: true,
             },
@@ -586,6 +590,8 @@ export default function WaterPage() {
                 subtitle: "L2 Bulks + DC",
                 icon: ChevronsRight,
                 variant: "secondary" as const,
+                color: CHART_COLORS.bulk,
+                bgColor: 'rgba(29,161,242,0.12)',
                 ...(a2Trend && { trend: a2Trend.trend, trendValue: a2Trend.trendValue }),
                 invertTrend: true,
             },
@@ -595,6 +601,8 @@ export default function WaterPage() {
                 subtitle: "Villas + Apts + DC",
                 icon: Users,
                 variant: "primary" as const,
+                color: CHART_COLORS.individual,
+                bgColor: 'rgba(125,211,252,0.12)',
                 ...(a3Trend && { trend: a3Trend.trend, trendValue: a3Trend.trendValue }),
                 invertTrend: true,
             },
@@ -856,21 +864,21 @@ export default function WaterPage() {
                                             <AreaChart data={monthlyTrends} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                                                 <defs>
                                                     <linearGradient id="gradA1" x1="0" y1="0" x2="0" y2="1">
-                                                        <stop offset="5%" stopColor={CHART_COLORS.brand} stopOpacity={0.4} />
-                                                        <stop offset="95%" stopColor={CHART_COLORS.brand} stopOpacity={0} />
+                                                        <stop offset="5%" stopColor={CHART_COLORS.bulk} stopOpacity={0.4} />
+                                                        <stop offset="95%" stopColor={CHART_COLORS.bulk} stopOpacity={0} />
                                                     </linearGradient>
                                                     <linearGradient id="gradA2" x1="0" y1="0" x2="0" y2="1">
-                                                        <stop offset="5%" stopColor={CHART_COLORS.primary} stopOpacity={0.4} />
-                                                        <stop offset="95%" stopColor={CHART_COLORS.primary} stopOpacity={0} />
+                                                        <stop offset="5%" stopColor={CHART_COLORS.bulk} stopOpacity={0.25} />
+                                                        <stop offset="95%" stopColor={CHART_COLORS.bulk} stopOpacity={0} />
                                                     </linearGradient>
                                                 </defs>
                                                 <XAxis dataKey="month" className="text-xs" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "var(--chart-axis)" }} dy={10} />
                                                 <YAxis className="text-xs" tickFormatter={(v) => `${v / 1000}k`} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "var(--chart-axis)" }} label={{ value: 'm³', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: "var(--chart-axis)", fontSize: 11 } }} />
                                                 <Tooltip content={<LiquidTooltip />} cursor={{ stroke: 'rgba(0,0,0,0.1)', strokeWidth: 2 }} />
                                                 <Legend iconType="circle" />
-                                                <Area type="monotone" name="A1 - Main Source" dataKey="A1" stroke={CHART_COLORS.brand} fill="url(#gradA1)" strokeWidth={3} activeDot={{ r: 6, stroke: 'var(--card)', strokeWidth: 2 }} animationDuration={600} animationEasing="ease-out" />
-                                                <Area type="monotone" name="A2 - Zone Distribution" dataKey="A2" stroke={CHART_COLORS.primary} fill="url(#gradA2)" strokeWidth={3} animationDuration={600} animationEasing="ease-out" />
-                                                <Area type="monotone" name="A3 - Individual" dataKey="A3Individual" stroke={CHART_COLORS.gray} fill="none" strokeWidth={2} strokeDasharray="5 5" animationDuration={600} animationEasing="ease-out" />
+                                                <Area type="monotone" name="A1 - Main Source" dataKey="A1" stroke={CHART_COLORS.bulk} fill="url(#gradA1)" strokeWidth={3} activeDot={{ r: 6, stroke: 'var(--card)', strokeWidth: 2 }} animationDuration={600} animationEasing="ease-out" />
+                                                <Area type="monotone" name="A2 - Zone Distribution" dataKey="A2" stroke={CHART_COLORS.bulk} fill="url(#gradA2)" strokeWidth={2} strokeDasharray="6 3" animationDuration={600} animationEasing="ease-out" />
+                                                <Area type="monotone" name="A3 - Individual" dataKey="A3Individual" stroke={CHART_COLORS.individual} fill="none" strokeWidth={2} strokeDasharray="5 5" animationDuration={600} animationEasing="ease-out" />
                                             </AreaChart>
                                         </ResponsiveContainer>
                                     </div>
@@ -948,7 +956,7 @@ export default function WaterPage() {
                                     max={Math.max(zoneAnalysis.bulkMeterReading, zoneAnalysis.individualTotal) * 1.2 || 100}
                                     label={selectedZone === 'Direct_Connection' ? 'L2 + DC Total' : 'L3 Individual Total'}
                                     sublabel={selectedZone === 'Direct_Connection' ? 'Sum of all zone bulks + DC meters' : 'Sum of all L3 meters in zone'}
-                                    color={CHART_COLORS.brand}
+                                    color={CHART_COLORS.individual}
                                     size={160}
                                     showPercentage={false}
                                     elementId="gauge-2"
@@ -981,15 +989,15 @@ export default function WaterPage() {
                                                         <stop offset="95%" stopColor={CHART_COLORS.primary} stopOpacity={0} />
                                                     </linearGradient>
                                                     <linearGradient id="gradIndividual" x1="0" y1="0" x2="0" y2="1">
-                                                        <stop offset="5%" stopColor={CHART_COLORS.brand} stopOpacity={0.4} />
-                                                        <stop offset="95%" stopColor={CHART_COLORS.brand} stopOpacity={0} />
+                                                        <stop offset="5%" stopColor={CHART_COLORS.individual} stopOpacity={0.4} />
+                                                        <stop offset="95%" stopColor={CHART_COLORS.individual} stopOpacity={0} />
                                                     </linearGradient>
                                                 </defs>
                                                 <XAxis dataKey="month" className="text-xs" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "var(--chart-axis)" }} dy={10} />
                                                 <YAxis className="text-xs" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "var(--chart-axis)" }} label={{ value: 'm³', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: "var(--chart-axis)", fontSize: 11 } }} />
                                                 <Tooltip content={<LiquidTooltip />} cursor={{ stroke: 'rgba(0,0,0,0.1)', strokeWidth: 2 }} />
                                                 <Legend iconType="circle" />
-                                                <Area type="monotone" name="Individual Total" dataKey="Individual Total" stroke={CHART_COLORS.brand} fill="url(#gradIndividual)" strokeWidth={3} activeDot={{ r: 6, stroke: 'var(--card)', strokeWidth: 2 }} animationDuration={600} animationEasing="ease-out" />
+                                                <Area type="monotone" name="Individual Total" dataKey="Individual Total" stroke={CHART_COLORS.individual} fill="url(#gradIndividual)" strokeWidth={3} activeDot={{ r: 6, stroke: 'var(--card)', strokeWidth: 2 }} animationDuration={600} animationEasing="ease-out" />
                                                 <Line type="monotone" name="Loss" dataKey="Loss" stroke={CHART_COLORS.loss} strokeWidth={2} dot={false} strokeDasharray="5 5" animationDuration={600} animationEasing="ease-out" />
                                                 <Area type="monotone" name="Zone Bulk" dataKey="Zone Bulk" stroke={CHART_COLORS.primary} fill="url(#gradZoneBulk)" strokeWidth={3} animationDuration={600} animationEasing="ease-out" />
                                             </AreaChart>
