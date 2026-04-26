@@ -20,7 +20,7 @@
  * N/A meters are excluded upstream (page.tsx level filter); nothing extra needed here.
  */
 
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
     Search, ArrowUpDown, ChevronUp, ChevronDown,
     Droplets, Activity, Home, Building2, TrendingDown, ChevronRight,
@@ -183,6 +183,16 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
     const [rowsPerPage, setRowsPerPage] = useState(pageSize);
     const [expandedBuildings, setExpandedBuildings] = useState<Set<string>>(new Set());
 
+    const handleSearchChange = useCallback((value: string) => {
+        setSearch(value);
+        setPage(1);
+    }, []);
+
+    const handleSortChange = useCallback((nextSortState: SortState) => {
+        setSort(nextSortState);
+        setPage(1);
+    }, []);
+
     const toggleBuilding = useCallback((account: string) => {
         setExpandedBuildings(prev => {
             const next = new Set(prev);
@@ -328,8 +338,6 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
         return rows;
     }, [l3Meters, search, sort, meterTotals, months]);
 
-    useEffect(() => { setPage(1); }, [search, sort]);
-
     const totalPages = Math.max(1, Math.ceil(filtered.length / rowsPerPage));
     const paginated = filtered.slice((page - 1) * rowsPerPage, page * rowsPerPage);
     const colSpan = 3 + months.length + 1;
@@ -367,13 +375,13 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                     <input
                         type="text"
                         value={search}
-                        onChange={e => setSearch(e.target.value)}
+                        onChange={e => handleSearchChange(e.target.value)}
                         placeholder="Search meter or account…"
                         className="h-9 w-full sm:w-64 pl-9 pr-8 text-[13px] rounded-full border border-slate-200 dark:border-slate-700/80 bg-slate-50/80 dark:bg-slate-800/50 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-secondary/30 focus:border-secondary/50 transition-all"
                     />
                     {search && (
                         <button
-                            onClick={() => setSearch('')}
+                            onClick={() => handleSearchChange('')}
                             className="absolute right-2.5 top-1/2 -translate-y-1/2 h-4 w-4 rounded-full bg-slate-200 dark:bg-slate-600 flex items-center justify-center"
                         >
                             <span className="text-[10px] font-bold text-slate-500 dark:text-slate-300">&times;</span>
@@ -516,18 +524,18 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                 >
                     <thead>
                         <tr className="border-b border-slate-100 dark:border-slate-800">
-                            <Th sortKey="label" sort={sort} onSort={setSort}
+                            <Th sortKey="label" sort={sort} onSort={handleSortChange}
                                 className="sticky left-0 z-10 bg-white dark:bg-slate-900 min-w-[200px]">
                                 Meter
                             </Th>
-                            <Th sortKey="account" sort={sort} onSort={setSort} className="min-w-[110px]">Account</Th>
+                            <Th sortKey="account" sort={sort} onSort={handleSortChange} className="min-w-[110px]">Account</Th>
                             <th className={cn(thBase, 'text-center min-w-[90px]')}>Level</th>
                             {months.map(mo => (
-                                <Th key={mo} sortKey={mo} sort={sort} onSort={setSort} className="text-right min-w-[96px]">
+                                <Th key={mo} sortKey={mo} sort={sort} onSort={handleSortChange} className="text-right min-w-[96px]">
                                     {mo}
                                 </Th>
                             ))}
-                            <Th sortKey="total" sort={sort} onSort={setSort}
+                            <Th sortKey="total" sort={sort} onSort={handleSortChange}
                                 className="text-right min-w-[100px] bg-slate-50/80 dark:bg-slate-800/40">
                                 Total m³
                             </Th>
