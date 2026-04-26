@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback, useRef } from "react";
+import { useState, useMemo, useCallback } from "react";
 import dynamic from "next/dynamic";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { StatsGrid } from "@/components/shared/stats-grid";
@@ -31,7 +31,7 @@ export default function DashboardPage() {
     const { stats, chartData, stpChartData, recentActivity, loading, isLiveData, error } = useDashboardData();
     const [activityFilter, setActivityFilter] = useState<'all' | 'critical' | 'warning' | 'info'>('all');
     // Computed once on first render — greeting changes every few hours, not on every state update
-    const greeting = useRef(getGreeting()).current;
+    const greeting = useMemo(() => getGreeting(), []);
 
     // Add icons and navigation hrefs to stats (memoized to avoid recalc on every render)
     const statsWithIcons = useMemo(() => stats.map(stat => ({

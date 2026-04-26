@@ -9,7 +9,6 @@ import { useTheme } from "@/components/providers";
 
 export function Topbar() {
     const { setTheme, theme } = useTheme();
-    const [mounted, setMounted] = useState(false);
     const [isProfileOpen, setIsProfileOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
     const { profile, user, logout } = useAuth();
@@ -17,10 +16,6 @@ export function Topbar() {
     const displayName = profile?.full_name || user?.email?.split("@")[0] || "User";
     const initials = displayName.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2);
     const userRole = profile?.role === 'admin' ? 'Administrator' : 'User';
-
-    useEffect(() => {
-        setMounted(true);
-    }, []);
 
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
@@ -64,14 +59,12 @@ export function Topbar() {
                 <button
                     onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
                     className="w-11 h-11 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-white/[0.06] rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:outline-none"
-                    aria-label={mounted ? `Switch to ${theme === "dark" ? "light" : "dark"} mode` : "Toggle theme"}
-                    aria-pressed={mounted ? theme === "dark" : undefined}
+                    aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+                    aria-pressed={theme === "dark"}
                 >
-                    {mounted
-                        ? (theme === "dark"
-                            ? <Moon className="w-[17px] h-[17px]" />
-                            : <Sun className="w-[17px] h-[17px]" />)
-                        : <Sun className="w-[17px] h-[17px] opacity-0" aria-hidden="true" />
+                    {theme === "dark"
+                        ? <Moon className="w-[17px] h-[17px]" />
+                        : <Sun className="w-[17px] h-[17px]" />
                     }
                 </button>
 
