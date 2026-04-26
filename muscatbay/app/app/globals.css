@@ -180,7 +180,7 @@
   --status-missing-bg: rgba(148, 163, 184, 0.10);
 
   /* ── Module domain accent colors ── */
-  --module-water:       #1DA1F2;
+  --module-water:       #3B7ED2;
   --module-electricity: #E8A838;
   --module-stp:         #10B981;
   --module-assets:      #8B7F94;
@@ -262,11 +262,9 @@
   --chart-gray: #9B86A8;
 
   /* Domain-specific chart colors */
-  --chart-water-bulk:      #1DA1F2;  /* Twitter Blue — bulk supply/distribution */
-  --chart-water-individual:#7DD3FC;  /* Sky Blue — individual end consumption */
-  --chart-water-primary:   #1DA1F2;
-  --chart-water-secondary: #7DD3FC;
-  --chart-water-accent:    #7DD3FC;
+  --chart-water-primary: #6B9AC4;
+  --chart-water-secondary: #A1D1D5;
+  --chart-water-accent: #A1D1D5;
   --chart-elec-primary: #E8C064;
   --chart-elec-secondary: #DF9A5B;
   --chart-elec-accent: #E8C064;

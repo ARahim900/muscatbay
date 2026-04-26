@@ -46,8 +46,8 @@ const BG_COLORS: Record<string, string> = {
         'bg-badge-blue/12 text-badge-blue-fg ring-1 ring-badge-blue/30 ' +
         'dark:bg-badge-blue/20 dark:ring-badge-blue/35',
     purple:
-        'bg-primary/10 text-badge-purple-fg ring-1 ring-primary/25 ' +
-        'dark:bg-primary/30 dark:ring-primary/40',
+        'bg-secondary text-white ring-1 ring-secondary/60 ' +
+        'dark:bg-secondary/90 dark:text-white dark:ring-secondary/50',
     slate:
         'bg-slate-100 text-slate-600 ring-1 ring-slate-200/80 ' +
         'dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700/60',

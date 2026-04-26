@@ -662,7 +662,6 @@ export default function STPPage() {
                 activeTab={activeTab}
                 onTabChange={setActiveTab}
                 variant="secondary"
-                moduleColor="var(--module-stp)"
                 tabs={[
                     { key: "dashboard", label: "Dashboard", icon: Activity },
                     { key: "details", label: "Details Data", icon: Database },
@@ -696,8 +695,7 @@ export default function STPPage() {
                                                                 setEndMonth(yearMonths[yearMonths.length - 1]);
                                                             }
                                                         }}
-                                                        className={`rounded-full px-4 ${selectedYear === year ? "text-white border-0" : "border-slate-200 dark:border-slate-700"}`}
-                                                        style={selectedYear === year ? { backgroundColor: 'var(--module-stp)' } : undefined}
+                                                        className={`rounded-full px-4 ${selectedYear === year ? "bg-secondary text-white" : "border-slate-200 dark:border-slate-700"}`}
                                                     >
                                                         {year}
                                                     </Button>
@@ -716,7 +714,6 @@ export default function STPPage() {
                                         availableMonths={filteredMonthsByYear}
                                         onRangeChange={handleRangeChange}
                                         onReset={handleResetRange}
-                                        accentColor="var(--module-stp)"
                                     />
                                 </div>
                             </CardContent>
@@ -724,7 +721,7 @@ export default function STPPage() {
                     )}
 
                     {/* Unified Stats Grid */}
-                    <StatsGrid stats={stats} moduleColor="var(--module-stp)" />
+                    <StatsGrid stats={stats} />
 
                     {/* Water Treatment Volumes Chart */}
                     <Card className="card-elevated">

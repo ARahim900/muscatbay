@@ -738,7 +738,6 @@ export default function ElectricityPage() {
             <TabNavigation
                 activeTab={activeTab}
                 onTabChange={setActiveTab}
-                moduleColor="var(--module-electricity)"
                 tabs={[
                     { key: "overview", label: "Overview", icon: BarChart3 },
                     { key: "analysis", label: "Analysis by Type", icon: TrendingUp },
@@ -768,8 +767,7 @@ export default function ElectricityPage() {
                                                     setEndMonth(allMonths[allMonths.length - 1]);
                                                 }
                                             }}
-                                            className={`rounded-full px-4 ${selectedYear === "" ? "text-white border-0" : "border-slate-200 dark:border-slate-700"}`}
-                                            style={selectedYear === "" ? { backgroundColor: 'var(--module-electricity)' } : undefined}
+                                            className={`rounded-full px-4 ${selectedYear === "" ? "bg-secondary text-white" : "border-slate-200 dark:border-slate-700"}`}
                                         >
                                             All
                                         </Button>
@@ -788,8 +786,7 @@ export default function ElectricityPage() {
                                                         setEndMonth(yearMonths[yearMonths.length - 1]);
                                                     }
                                                 }}
-                                                className={`rounded-full px-4 ${selectedYear === year ? "text-white border-0" : "border-slate-200 dark:border-slate-700"}`}
-                                                style={selectedYear === year ? { backgroundColor: 'var(--module-electricity)' } : undefined}
+                                                className={`rounded-full px-4 ${selectedYear === year ? "bg-secondary text-white" : "border-slate-200 dark:border-slate-700"}`}
                                             >
                                                 {year}
                                             </Button>
@@ -853,7 +850,6 @@ export default function ElectricityPage() {
                                 availableMonths={allMonths}
                                 onRangeChange={handleRangeChange}
                                 onReset={handleResetRange}
-                                accentColor="var(--module-electricity)"
                             />
                         </div>
                     </CardContent>
@@ -863,7 +859,7 @@ export default function ElectricityPage() {
             {activeTab === 'overview' && (
                 <div id="panel-overview" role="tabpanel" aria-labelledby="tab-overview" tabIndex={0} className="space-y-6 motion-safe:animate-in motion-safe:fade-in duration-200">
 
-                    <StatsGrid stats={stats} moduleColor="var(--module-electricity)" />
+                    <StatsGrid stats={stats} />
 
                     <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-5">
                         <Card className="lg:col-span-3">
@@ -919,7 +915,7 @@ export default function ElectricityPage() {
             {activeTab === 'analysis' && (
                 <div id="panel-analysis" role="tabpanel" aria-labelledby="tab-analysis" tabIndex={0} className="space-y-6 motion-safe:animate-in motion-safe:fade-in duration-200">
                     {/* Filtered Stats Grid */}
-                    <StatsGrid stats={analysisData.stats} moduleColor="var(--module-electricity)" />
+                    <StatsGrid stats={analysisData.stats} />
 
                     {/* Monthly Trend Chart */}
                     <Card className="card-elevated">

@@ -30,23 +30,23 @@ import {
 // ─── Chart color constants (CSS variable-backed) ────────────────────────────
 
 const CHART_COLORS = {
-    bulk:       '#1DA1F2',              // Twitter Blue — bulk supply/distribution
-    individual: '#7DD3FC',             // Sky Blue — individual end consumption
-    loss:       'var(--chart-loss)',   // coral red — losses (unchanged)
-    success:    'var(--chart-success)',
-    teal:       'var(--chart-teal)',
-    brand:      'var(--chart-brand)',
-    amber:      'var(--chart-amber)',
-    gray:       'var(--chart-gray)',
+    loss: 'var(--chart-loss)',
+    success: 'var(--chart-success)',
+    teal: 'var(--chart-teal)',
+    brand: 'var(--chart-brand)',
+    amber: 'var(--chart-amber)',
+    gray: 'var(--chart-gray)',
 } as const;
 
 // ─── Unified brand palette (Muscat Bay) ──────────────────────────────────────
+// Applied to the Zone → L3 hierarchy view for visual consistency with the
+// monthly dashboard and other sections of the app.
 
 const PALETTE = {
-    primary: '#1DA1F2',        // Twitter Blue  — bulk headers, emphasis
+    primary: CHART_PALETTE[0], // brand purple  — bulk headers, emphasis
     neutral: CHART_PALETTE[1], // teal-gray     — subtle row fills
     mint:    CHART_PALETTE[5], // sage green    — OK / in-balance / sum totals
-    blue:    '#7DD3FC',        // Sky Blue      — individual rollup rows
+    blue:    CHART_PALETTE[4], // soft blue     — informational / secondary rollups
     amber:   CHART_PALETTE[2], // amber         — mid-magnitude difference warnings
     red:     CHART_PALETTE[3], // coral         — high-loss / out-of-tolerance
 } as const;
@@ -307,7 +307,7 @@ function StatusChip({ label, color }: { label: string; color: 'success' | 'dange
         danger: 'bg-red-50 text-red-600 ring-red-500/20 dark:bg-red-500/10 dark:text-red-400 dark:ring-red-500/20',
         warning: 'bg-amber-50 text-amber-600 ring-amber-500/20 dark:bg-amber-500/10 dark:text-amber-400 dark:ring-amber-500/20',
         default: 'bg-slate-100 text-slate-500 ring-slate-500/10 dark:bg-slate-500/10 dark:text-slate-400 dark:ring-slate-500/20',
-        primary: 'bg-violet-50 text-violet-600 ring-violet-500/20 dark:bg-violet-500/10 dark:text-violet-400 dark:ring-violet-500/20',
+        primary: 'bg-secondary text-white ring-secondary/60 dark:bg-secondary/90 dark:text-white dark:ring-secondary/50',
     }[color];
     return (
         <span className={cn("inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium ring-1 ring-inset", styles)}>
@@ -450,7 +450,7 @@ function ZoneAnalyticsPanel({ reportData, monthData, selectedDay, month, activeZ
                     max={gaugeMax}
                     label="L2 Bulk Meter"
                     sublabel="Total water entering zone"
-                    color={CHART_COLORS.bulk}
+                    color={CHART_COLORS.teal}
                     size={160}
                     showPercentage={false}
                     unit="m³"
@@ -461,7 +461,7 @@ function ZoneAnalyticsPanel({ reportData, monthData, selectedDay, month, activeZ
                     max={gaugeMax}
                     label="ΣL3 Meters Total"
                     sublabel="Recorded by L3 meters"
-                    color={CHART_COLORS.individual}
+                    color={CHART_COLORS.brand}
                     size={160}
                     showPercentage={false}
                     unit="m³"
@@ -500,12 +500,12 @@ function ZoneAnalyticsPanel({ reportData, monthData, selectedDay, month, activeZ
                                 <AreaChart data={trendData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                                     <defs>
                                         <linearGradient id="gradDailyBulk" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor={CHART_COLORS.bulk} stopOpacity={0.4} />
-                                            <stop offset="95%" stopColor={CHART_COLORS.bulk} stopOpacity={0} />
+                                            <stop offset="5%" stopColor={CHART_COLORS.teal} stopOpacity={0.4} />
+                                            <stop offset="95%" stopColor={CHART_COLORS.teal} stopOpacity={0} />
                                         </linearGradient>
                                         <linearGradient id="gradDailyL3" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor={CHART_COLORS.individual} stopOpacity={0.4} />
-                                            <stop offset="95%" stopColor={CHART_COLORS.individual} stopOpacity={0} />
+                                            <stop offset="5%" stopColor={CHART_COLORS.brand} stopOpacity={0.4} />
+                                            <stop offset="95%" stopColor={CHART_COLORS.brand} stopOpacity={0} />
                                         </linearGradient>
                                     </defs>
                                     <XAxis
@@ -525,15 +525,15 @@ function ZoneAnalyticsPanel({ reportData, monthData, selectedDay, month, activeZ
                                     {currentDayLabel && (
                                         <ReferenceLine
                                             x={currentDayLabel}
-                                            stroke={CHART_COLORS.individual}
+                                            stroke={CHART_COLORS.brand}
                                             strokeDasharray="4 3"
                                             strokeWidth={1.5}
-                                            label={{ value: `Day ${selectedDay}`, position: 'top', fontSize: 10, fill: CHART_COLORS.individual, fontWeight: 600 }}
+                                            label={{ value: `Day ${selectedDay}`, position: 'top', fontSize: 10, fill: CHART_COLORS.brand, fontWeight: 600 }}
                                         />
                                     )}
                                     <Area
                                         type="monotone" name="ΣL3 Total" dataKey="ΣL3"
-                                        stroke={CHART_COLORS.individual} fill="url(#gradDailyL3)" strokeWidth={3}
+                                        stroke={CHART_COLORS.brand} fill="url(#gradDailyL3)" strokeWidth={3}
                                         activeDot={{ r: 6, stroke: 'var(--card)', strokeWidth: 2 }}
                                         animationDuration={600}
                                     />
@@ -545,7 +545,7 @@ function ZoneAnalyticsPanel({ reportData, monthData, selectedDay, month, activeZ
                                     />
                                     <Area
                                         type="monotone" name="L2 Bulk" dataKey="L2 Bulk"
-                                        stroke={CHART_COLORS.bulk} fill="url(#gradDailyBulk)" strokeWidth={3}
+                                        stroke={CHART_COLORS.teal} fill="url(#gradDailyBulk)" strokeWidth={3}
                                         activeDot={{ r: 6, stroke: 'var(--card)', strokeWidth: 2 }}
                                         animationDuration={600}
                                     />
@@ -1341,10 +1341,10 @@ function DCAnalyticsPanel({ reportData, monthData, selectedDay, month }: DCAnaly
                                     {currentDayLabel && (
                                         <ReferenceLine
                                             x={currentDayLabel}
-                                            stroke={CHART_COLORS.individual}
+                                            stroke={CHART_COLORS.brand}
                                             strokeDasharray="4 3"
                                             strokeWidth={1.5}
-                                            label={{ value: `Day ${selectedDay}`, position: 'top', fontSize: 10, fill: CHART_COLORS.individual, fontWeight: 600 }}
+                                            label={{ value: `Day ${selectedDay}`, position: 'top', fontSize: 10, fill: CHART_COLORS.brand, fontWeight: 600 }}
                                         />
                                     )}
                                     <Area

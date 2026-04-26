@@ -17,12 +17,9 @@ interface TabNavigationProps {
     className?: string;
     variant?: "primary" | "secondary";
     ariaLabel?: string;
-    /** Domain accent color (CSS value, e.g. "var(--module-water)"). When provided,
-     *  active tabs use this color instead of the generic brand primary. */
-    moduleColor?: string;
 }
 
-export function TabNavigation({ tabs, activeTab, onTabChange, className, variant = "primary", ariaLabel = "Navigation tabs", moduleColor }: TabNavigationProps) {
+export function TabNavigation({ tabs, activeTab, onTabChange, className, variant = "primary", ariaLabel = "Navigation tabs" }: TabNavigationProps) {
     const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
     // ARIA tabs keyboard pattern: Arrow keys move focus and activate tabs
@@ -64,7 +61,6 @@ export function TabNavigation({ tabs, activeTab, onTabChange, className, variant
 
                     if (variant === "secondary") {
                         // Secondary variant: Outlined/bordered style for view switching
-                        const accentColor = moduleColor || 'var(--secondary)';
                         return (
                             <button
                                 key={tab.key}
@@ -79,7 +75,7 @@ export function TabNavigation({ tabs, activeTab, onTabChange, className, variant
                                 className={cn(
                                     "relative flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2.5 sm:py-3 min-h-[44px] lg:min-h-0 rounded-lg text-xs sm:text-sm font-medium whitespace-nowrap",
                                     "transition-colors duration-200 ease-out",
-                                    "focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1",
+                                    "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-1",
                                     isActive
                                         ? [
                                             "bg-white dark:bg-slate-900",
@@ -93,20 +89,20 @@ export function TabNavigation({ tabs, activeTab, onTabChange, className, variant
                                             "hover:bg-white/60 dark:hover:bg-slate-700/50",
                                         ]
                                 )}
-                                style={isActive ? { ['--tw-ring-color' as string]: accentColor } : undefined}
                             >
                                 {tab.icon && (
                                     <tab.icon
-                                        className="w-4 h-4 transition-colors duration-200"
-                                        style={isActive ? { color: accentColor } : { color: undefined }}
+                                        className={cn(
+                                            "w-4 h-4 transition-colors duration-200",
+                                            isActive ? "text-secondary" : "text-slate-400 dark:text-slate-500"
+                                        )}
                                     />
                                 )}
                                 {tab.label}
                                 {/* Active indicator bar */}
                                 {isActive && (
                                     <span
-                                        className="absolute bottom-0 left-3 right-3 h-0.5 rounded-full"
-                                        style={{ backgroundColor: accentColor }}
+                                        className="absolute bottom-0 left-3 right-3 h-0.5 bg-secondary rounded-full"
                                         aria-hidden="true"
                                     />
                                 )}
@@ -115,7 +111,6 @@ export function TabNavigation({ tabs, activeTab, onTabChange, className, variant
                     }
 
                     // Primary variant: Solid fill style for sub-navigation
-                    const accentColor = moduleColor || null;
                     return (
                         <button
                             key={tab.key}
@@ -130,13 +125,12 @@ export function TabNavigation({ tabs, activeTab, onTabChange, className, variant
                             className={cn(
                                 "relative flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2.5 sm:py-3 min-h-[44px] lg:min-h-0 rounded-lg text-xs sm:text-sm font-medium whitespace-nowrap",
                                 "transition-colors duration-200 ease-out",
-                                "focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1",
+                                "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-1",
                                 isActive
                                     ? [
-                                        !accentColor && "bg-primary dark:bg-primary/80",
+                                        "bg-primary dark:bg-primary/80",
                                         "text-white",
-                                        "shadow-md",
-                                        !accentColor && "shadow-primary/20",
+                                        "shadow-md shadow-primary/20",
                                     ]
                                     : [
                                         "text-slate-600 dark:text-slate-400",
@@ -145,13 +139,12 @@ export function TabNavigation({ tabs, activeTab, onTabChange, className, variant
                                         "hover:shadow-sm",
                                     ]
                             )}
-                            style={isActive && accentColor ? { backgroundColor: accentColor } : undefined}
                         >
                             {tab.icon && (
                                 <tab.icon
                                     className={cn(
                                         "w-4 h-4 transition-colors duration-200",
-                                        isActive ? "text-white/80" : "text-slate-400 dark:text-slate-500"
+                                        isActive ? "text-secondary" : ""
                                     )}
                                 />
                             )}

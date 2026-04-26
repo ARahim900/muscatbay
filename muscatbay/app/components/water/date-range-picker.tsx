@@ -9,8 +9,6 @@ interface DateRangePickerProps {
     availableMonths: string[];
     onRangeChange: (start: string, end: string) => void;
     onReset: () => void;
-    /** Module accent color (CSS value). Defaults to brand secondary (teal). */
-    accentColor?: string;
 }
 
 // Maximum number of months visible in the slider at once
@@ -34,10 +32,9 @@ interface DualRangeSliderProps {
     onValueChange: (value: [number, number]) => void;
     startLabel?: string;
     endLabel?: string;
-    color?: string;
 }
 
-function DualRangeSlider({ min, max, value, onValueChange, startLabel, endLabel, color = 'var(--secondary)' }: DualRangeSliderProps) {
+function DualRangeSlider({ min, max, value, onValueChange, startLabel, endLabel }: DualRangeSliderProps) {
     const trackRef = useRef<HTMLDivElement>(null);
     const draggingRef = useRef<'start' | 'end' | null>(null);
     // Refs to always read the latest props inside window event listeners.
@@ -131,7 +128,7 @@ function DualRangeSlider({ min, max, value, onValueChange, startLabel, endLabel,
         }
     }, [getValueFromPointer, min, max, onValueChange]);
 
-    const thumbBase = "absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-5 h-5 rounded-full border-2 bg-white dark:bg-slate-900 shadow-md shadow-black/10 dark:shadow-black/30 hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 transition-transform cursor-grab active:cursor-grabbing z-10";
+    const thumbClass = "absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-5 h-5 rounded-full border-2 border-primary bg-white dark:border-secondary dark:bg-slate-900 shadow-md shadow-black/10 dark:shadow-black/30 hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 transition-transform cursor-grab active:cursor-grabbing z-10";
 
     return (
         <div
@@ -143,8 +140,8 @@ function DualRangeSlider({ min, max, value, onValueChange, startLabel, endLabel,
             <div className="absolute inset-x-0 h-2 rounded-full bg-slate-200 dark:bg-slate-700" />
             {/* Active range */}
             <div
-                className="absolute h-2 rounded-full"
-                style={{ left: `${startPct}%`, right: `${100 - endPct}%`, backgroundColor: color }}
+                className="absolute h-2 rounded-full bg-secondary"
+                style={{ left: `${startPct}%`, right: `${100 - endPct}%` }}
             />
             {/* Start thumb */}
             <div
@@ -155,8 +152,8 @@ function DualRangeSlider({ min, max, value, onValueChange, startLabel, endLabel,
                 aria-valuemax={max}
                 aria-valuenow={value[0]}
                 aria-valuetext={startLabel}
-                className={thumbBase}
-                style={{ left: `${startPct}%`, borderColor: color }}
+                className={thumbClass}
+                style={{ left: `${startPct}%` }}
                 onPointerDown={e => handlePointerDown(e, 'start')}
             />
             {/* End thumb */}
@@ -168,8 +165,8 @@ function DualRangeSlider({ min, max, value, onValueChange, startLabel, endLabel,
                 aria-valuemax={max}
                 aria-valuenow={value[1]}
                 aria-valuetext={endLabel}
-                className={thumbBase}
-                style={{ left: `${endPct}%`, borderColor: color }}
+                className={thumbClass}
+                style={{ left: `${endPct}%` }}
                 onPointerDown={e => handlePointerDown(e, 'end')}
             />
         </div>
@@ -183,10 +180,8 @@ export function DateRangePicker({
     endMonth,
     availableMonths,
     onRangeChange,
-    onReset,
-    accentColor,
+    onReset
 }: DateRangePickerProps) {
-    const ac = accentColor || 'var(--secondary)';
     const [activePreset, setActivePreset] = React.useState<PresetKey>(null);
     const onRangeChangeRef = useRef(onRangeChange);
     useEffect(() => {
@@ -289,31 +284,20 @@ export function DateRangePicker({
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                 {/* Left: Icon + Range Display */}
                 <div className="flex items-start gap-3">
-                    <div
-                        className="w-9 h-9 rounded-xl flex items-center justify-center mt-0.5 shrink-0"
-                        style={{ backgroundColor: `color-mix(in srgb, ${ac} 12%, transparent)` }}
-                    >
-                        <Calendar className="w-[18px] h-[18px]" style={{ color: ac }} />
+                    <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-secondary/10 dark:bg-secondary/15 mt-0.5 shrink-0">
+                        <Calendar className="w-[18px] h-[18px] text-primary dark:text-secondary" />
                     </div>
                     <div className="space-y-0.5 min-w-0">
                         <div className="flex items-center gap-2">
                             <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 tracking-tight">Date Range</h3>
-                            <span
-                                className="inline-flex items-center px-1.5 py-px text-[10px] font-bold rounded-full tabular-nums"
-                                style={{
-                                    backgroundColor: `color-mix(in srgb, ${ac} 12%, transparent)`,
-                                    color: ac,
-                                    outline: `1px solid color-mix(in srgb, ${ac} 25%, transparent)`,
-                                    outlineOffset: '-1px',
-                                }}
-                            >
+                            <span className="inline-flex items-center px-1.5 py-px text-[10px] font-bold rounded-full bg-secondary/10 text-primary dark:bg-secondary/15 dark:text-secondary tabular-nums ring-1 ring-secondary/20 dark:ring-secondary/20">
                                 {selectedDataMonths} mo
                             </span>
                         </div>
                         <p className="text-[13px] text-slate-500 dark:text-slate-400 leading-tight truncate">
-                            <span className="font-semibold" style={{ color: ac }}>{formatMonthWithYear(displayStartMonth)}</span>
+                            <span className="font-semibold text-primary dark:text-secondary">{formatMonthWithYear(displayStartMonth)}</span>
                             <span className="mx-1.5 text-slate-300 dark:text-slate-600">&rarr;</span>
-                            <span className="font-semibold" style={{ color: ac }}>{formatMonthWithYear(displayEndMonth)}</span>
+                            <span className="font-semibold text-primary dark:text-secondary">{formatMonthWithYear(displayEndMonth)}</span>
                         </p>
                     </div>
                 </div>
@@ -324,13 +308,13 @@ export function DateRangePicker({
                         <button
                             key={key}
                             onClick={() => key && applyPreset(key)}
-                            className={`px-2 py-1 text-[11px] font-semibold rounded-md transition-all duration-200 ${activePreset !== key ? 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50 hover:text-slate-600 dark:hover:text-slate-300' : ''}`}
-                            style={activePreset === key ? {
-                                backgroundColor: `color-mix(in srgb, ${ac} 12%, transparent)`,
-                                color: ac,
-                                outline: `1px solid color-mix(in srgb, ${ac} 25%, transparent)`,
-                                outlineOffset: '-1px',
-                            } : undefined}
+                            className={`
+                                px-2 py-1 text-[11px] font-semibold rounded-md transition-all duration-200
+                                ${activePreset === key
+                                    ? 'bg-primary/10 text-primary dark:bg-secondary/15 dark:text-secondary ring-1 ring-primary/20 dark:ring-secondary/25'
+                                    : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50 hover:text-slate-600 dark:hover:text-slate-300'
+                                }
+                            `}
                         >
                             {label}
                         </button>
@@ -353,7 +337,7 @@ export function DateRangePicker({
                 {/* Dual-Thumb Range Slider — px-3 keeps thumbs away from Card overflow-hidden edges */}
                 <div className="px-3 overflow-visible">
                     {activeTimeline.length < 2 ? (
-                        <div className="h-2 w-full rounded-full" style={{ backgroundColor: ac }} />
+                        <div className="h-2 w-full rounded-full bg-secondary" />
                     ) : (
                         <DualRangeSlider
                             value={[activeStartIndex, activeEndIndex]}
@@ -362,7 +346,6 @@ export function DateRangePicker({
                             min={0}
                             startLabel={formatMonthWithYear(displayStartMonth)}
                             endLabel={formatMonthWithYear(displayEndMonth)}
-                            color={ac}
                         />
                     )}
                 </div>
@@ -384,44 +367,42 @@ export function DateRangePicker({
                             >
                                 {/* Year badge - only when timeline spans multiple years */}
                                 {isFirstOfYear && uniqueYears > 1 && (
-                                    <span
-                                        className="absolute -top-5 left-1/2 -translate-x-1/2 text-[9px] font-extrabold tracking-wider whitespace-nowrap"
-                                        style={{ color: `color-mix(in srgb, ${ac} 50%, transparent)` }}
-                                    >
+                                    <span className="absolute -top-5 left-1/2 -translate-x-1/2 text-[9px] font-extrabold text-primary/50 dark:text-secondary/35 tracking-wider whitespace-nowrap">
                                         20{yearPart}
                                     </span>
                                 )}
 
                                 {/* Year divider */}
                                 {isYearBoundary && uniqueYears > 1 && (
-                                    <div
-                                        className="absolute -top-2 -left-0.5 w-px h-[calc(100%+12px)]"
-                                        style={{ background: `linear-gradient(to bottom, color-mix(in srgb, ${ac} 25%, transparent), transparent)` }}
-                                    />
+                                    <div className="absolute -top-2 -left-0.5 w-px h-[calc(100%+12px)] bg-gradient-to-b from-primary/20 to-transparent dark:from-secondary/20 dark:to-transparent" />
                                 )}
 
                                 {/* Month label */}
                                 <span
-                                    className={`text-[11px] leading-none transition-colors duration-200 ${!isEndpoint && !isInRange ? 'font-medium text-slate-400 dark:text-slate-500' : ''}`}
-                                    style={isEndpoint
-                                        ? { fontWeight: 800, color: ac }
-                                        : isInRange
-                                            ? { fontWeight: 600, color: `color-mix(in srgb, ${ac} 80%, transparent)` }
-                                            : undefined
-                                    }
+                                    className={`
+                                        text-[11px] leading-none transition-colors duration-200
+                                        ${isEndpoint
+                                            ? 'font-extrabold text-primary dark:text-secondary'
+                                            : isInRange
+                                                ? 'font-semibold text-secondary dark:text-secondary/90'
+                                                : 'font-medium text-slate-400 dark:text-slate-500'
+                                        }
+                                    `}
                                 >
                                     {monthPart}
                                 </span>
 
                                 {/* Data availability dot */}
                                 <span
-                                    className={`mt-1.5 rounded-full transition-all duration-200 ${!isEndpoint && !isInRange ? 'w-1 h-1 bg-slate-300 dark:bg-slate-600' : ''}`}
-                                    style={isEndpoint
-                                        ? { width: 6, height: 6, backgroundColor: ac }
-                                        : isInRange
-                                            ? { width: 4, height: 4, backgroundColor: `color-mix(in srgb, ${ac} 70%, transparent)` }
-                                            : undefined
-                                    }
+                                    className={`
+                                        mt-1.5 w-1 h-1 rounded-full transition-all duration-200
+                                        ${isEndpoint
+                                            ? 'bg-primary dark:bg-secondary w-1.5 h-1.5'
+                                            : isInRange
+                                                ? 'bg-secondary dark:bg-secondary/70'
+                                                : 'bg-slate-300 dark:bg-slate-600'
+                                        }
+                                    `}
                                 />
                             </div>
                         );

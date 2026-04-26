@@ -32,8 +32,6 @@ interface StatItem {
 interface StatsGridProps {
     stats: StatItem[];
     className?: string;
-    /** Default icon color for all cards (CSS value). Applied when individual stats don't set their own color. */
-    moduleColor?: string;
 }
 
 const SCROLL_ANIMATION_CONFIG = { y: 30, duration: 0.5, stagger: 0.1 } as const;
@@ -49,7 +47,7 @@ const variantIconClass: Record<StatVariant, string> = {
     default: "text-muted-foreground",
 };
 
-export function StatsGrid({ stats, className, moduleColor }: StatsGridProps) {
+export function StatsGrid({ stats, className }: StatsGridProps) {
     const gridRef = useScrollAnimation<HTMLDivElement>(SCROLL_ANIMATION_CONFIG);
 
     const count = stats.length;
@@ -68,10 +66,6 @@ export function StatsGrid({ stats, className, moduleColor }: StatsGridProps) {
             {stats.map((stat, index) => {
                 const variant = stat.variant || "primary";
                 const iconClass = variantIconClass[variant];
-                // moduleColor only applies to neutral variants — semantic variants (warning/danger/success/info)
-                // keep their own color so they don't lose meaning.
-                const SEMANTIC: StatVariant[] = ['success', 'warning', 'danger', 'info'];
-                const useModuleColor = !!moduleColor && !stat.color && !SEMANTIC.includes(variant);
 
                 // Resolve whether the current trend direction is "good" or "bad".
                 // invertTrend=true  → down is good (savings: energy, water, cost)
@@ -98,13 +92,10 @@ export function StatsGrid({ stats, className, moduleColor }: StatsGridProps) {
                                     {stat.value}
                                 </h3>
                             </div>
-                            <div
-                                className={cn("p-1.5 sm:p-2 rounded-lg flex-shrink-0 transition-colors duration-200", !(stat.bgColor || useModuleColor) && "bg-gray-50/80 dark:bg-slate-800/80")}
-                                style={(stat.bgColor || useModuleColor) ? { backgroundColor: stat.bgColor || `color-mix(in srgb, ${moduleColor} 14%, transparent)` } : undefined}
-                            >
+                            <div className="p-1.5 sm:p-2 rounded-lg bg-gray-50/80 dark:bg-slate-800/80 flex-shrink-0">
                                 <stat.icon
-                                    className={cn("w-4 h-4 sm:w-5 sm:h-5", !(stat.color || useModuleColor) && iconClass)}
-                                    style={(stat.color || useModuleColor) ? { color: stat.color || moduleColor } : undefined}
+                                    className={cn("w-4 h-4 sm:w-5 sm:h-5", !stat.color && iconClass)}
+                                    style={stat.color ? { color: stat.color } : undefined}
                                 />
                             </div>
                         </div>

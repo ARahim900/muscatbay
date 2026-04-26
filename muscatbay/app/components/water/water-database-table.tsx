@@ -44,7 +44,7 @@ const ZONE_BG_COLORS: Record<string, string> = {
 const LEVEL_STYLES: Record<string, string> = {
     'L1': 'bg-badge-green/25 text-badge-green-fg ring-1 ring-badge-green/50 dark:bg-badge-green/15 dark:ring-badge-green/30',
     'L2': 'bg-badge-blue/15 text-badge-blue-fg ring-1 ring-badge-blue/35 dark:bg-badge-blue/20 dark:ring-badge-blue/35',
-    'L3': 'bg-primary/10 text-badge-purple-fg ring-1 ring-primary/25 dark:bg-primary/35 dark:ring-primary/40',
+    'L3': 'bg-secondary text-white ring-1 ring-secondary/60 dark:bg-secondary/90 dark:text-white dark:ring-secondary/50',
     'L4': 'bg-badge-red/12 text-badge-red-fg ring-1 ring-badge-red/35 dark:bg-badge-red/20 dark:ring-badge-red/35',
     'DC': 'bg-badge-amber/20 text-badge-amber-fg ring-1 ring-badge-amber/45 dark:bg-badge-amber/15 dark:ring-badge-amber/35',
 };
@@ -361,7 +361,7 @@ export function WaterDatabaseTable({ meters, months }: WaterDatabaseTableProps) 
                         "inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap",
                         meter.type === 'Supply'
                             ? 'bg-badge-blue/12 text-badge-blue-fg ring-1 ring-badge-blue/30 dark:bg-badge-blue/20 dark:ring-badge-blue/30'
-                            : 'bg-primary/10 text-badge-purple-fg ring-1 ring-primary/20 dark:bg-primary/30 dark:ring-primary/35'
+                            : 'bg-secondary text-white ring-1 ring-secondary/60 dark:bg-secondary/90 dark:text-white dark:ring-secondary/50'
                     )}>
                         {meter.type}
                     </span>

@@ -358,7 +358,7 @@ export default function AssetsPage() {
             </div>
 
             {/* Tabs */}
-            <TabNavigation tabs={TABS} activeTab={activeTab} onTabChange={handleTabChange} moduleColor="var(--module-assets)" />
+            <TabNavigation tabs={TABS} activeTab={activeTab} onTabChange={handleTabChange} />
 
             <div className="space-y-4">
                 {/* Toolbar */}
@@ -399,7 +399,7 @@ export default function AssetsPage() {
                 {/* ── TAB: OVERVIEW ─────────────────────────────────────────────────────── */}
                 {activeTab === 'overview' && (
                     <div id="panel-overview" role="tabpanel" aria-labelledby="tab-overview" tabIndex={0} className="space-y-4">
-                    <StatsGrid stats={stats} moduleColor="var(--module-assets)" />
+                    <StatsGrid stats={stats} />
                     <div className="overflow-x-auto rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900 shadow-sm">
                         {/* Mobile cards */}
                         <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">

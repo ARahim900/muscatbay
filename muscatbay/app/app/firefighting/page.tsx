@@ -476,7 +476,6 @@ export default function FirefightingPage() {
             <TabNavigation
                 activeTab={activeTab}
                 onTabChange={handleTabChange}
-                moduleColor="var(--module-fire)"
                 tabs={[
                     { key: "dashboard", label: "Dashboard", icon: Gauge },
                     { key: "ppm", label: "PPM Tracker", icon: Calendar },

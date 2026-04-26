@@ -470,13 +470,12 @@ export default function ContractorsPage() {
             </div>
 
             {/* Stats */}
-            <StatsGrid stats={stats} moduleColor="var(--module-contractors)" />
+            <StatsGrid stats={stats} />
 
             {/* Tabs */}
             <TabNavigation
                 activeTab={activeTab}
                 onTabChange={setActiveTab}
-                moduleColor="var(--module-contractors)"
                 tabs={[
                     { key: 'contracts', label: 'Contracts', icon: FileText },
                     { key: 'yearly', label: 'Yearly Costs', icon: BarChart3 },
