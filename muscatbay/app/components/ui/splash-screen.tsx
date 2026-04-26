@@ -14,7 +14,7 @@ export function SplashScreen({ exiting = false }: SplashScreenProps) {
       aria-label="Loading Muscat Bay Operations"
       className="fixed inset-0 z-[9999] flex flex-col items-center justify-center overflow-hidden"
       style={{
-        backgroundColor: "#0f172a",
+        backgroundColor: "#0A090C",
         animation: exiting
           ? "mb-splash-out 600ms cubic-bezier(0.4,0,1,1) both"
           : "mb-splash-in 350ms ease-out both",
