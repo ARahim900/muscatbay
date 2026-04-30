@@ -26,7 +26,7 @@ import {
     Download,
 } from "lucide-react";
 import { SortIcon, TablePagination, TableToolbar, StatusBadge, type BadgeColor, type PageSizeOption } from "@/components/shared/data-table";
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
+import { Table, TableHeader, TableBody, TableFooter, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { exportToCSV, getDateForFilename } from "@/lib/export-utils";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, BarChart, Bar, LineChart, Line, Legend } from "recharts";
 import { LiquidTooltip } from "../../components/charts/liquid-tooltip";
@@ -553,6 +553,19 @@ export default function STPPage() {
         return dailyOperations.slice(logStartIndex, logStartIndex + logEffectivePageSize);
     }, [dailyOperations, logStartIndex, logEffectivePageSize]);
 
+    // Month totals — computed from ALL daily operations (not paginated) for the selected month
+    const monthTotals = useMemo(() => {
+        if (dailyOperations.length === 0) return null;
+        const totalInlet = dailyOperations.reduce((sum, op) => sum + op.inlet_sewage, 0);
+        const totalTSE = dailyOperations.reduce((sum, op) => sum + op.tse_for_irrigation, 0);
+        const totalTrips = dailyOperations.reduce((sum, op) => sum + op.tanker_trips, 0);
+        const avgEfficiency = totalInlet > 0 ? (totalTSE / totalInlet) * 100 : 0;
+        const totalIncome = totalTrips * TANKER_FEE;
+        const totalSavings = totalTSE * TSE_SAVING_RATE;
+        const totalImpact = totalIncome + totalSavings;
+        return { totalInlet, totalTSE, totalTrips, avgEfficiency, totalIncome, totalSavings, totalImpact };
+    }, [dailyOperations]);
+
     // Handle sort for daily log
     const handleLogSort = (field: string) => {
         if (logSortField === field) {
@@ -932,6 +945,37 @@ export default function STPPage() {
                                     <p className="text-xs text-slate-400">Select a different month to view operations data.</p>
                                 </div>
                             )}
+                            {/* Mobile monthly totals card */}
+                            {monthTotals && (() => {
+                                const STP_COLOR = '#84B59F';
+                                return (
+                                    <div className="rounded-xl border-2 p-4 space-y-3"
+                                        style={{ borderColor: `${STP_COLOR}50`, backgroundColor: `${STP_COLOR}10` }}>
+                                        <p className="text-sm font-bold" style={{ color: STP_COLOR }}>
+                                            <Activity className="inline h-3.5 w-3.5 mr-1.5" />
+                                            Monthly Total — {dailyOperations.length} day{dailyOperations.length !== 1 ? 's' : ''}
+                                        </p>
+                                        <div className="grid grid-cols-2 gap-3 text-xs">
+                                            <div>
+                                                <p className="text-slate-400 uppercase tracking-wide text-[10px]">Inlet (m³)</p>
+                                                <p className="font-mono font-bold text-sm mt-0.5" style={{ color: STP_COLOR }}>{monthTotals.totalInlet.toLocaleString('en-US', { maximumFractionDigits: 1 })}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-slate-400 uppercase tracking-wide text-[10px]">TSE Output (m³)</p>
+                                                <p className="font-mono font-bold text-sm mt-0.5" style={{ color: STP_COLOR }}>{monthTotals.totalTSE.toLocaleString('en-US', { maximumFractionDigits: 1 })}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-slate-400 uppercase tracking-wide text-[10px]">Tanker Trips</p>
+                                                <p className="font-mono font-bold text-sm mt-0.5" style={{ color: STP_COLOR }}>{monthTotals.totalTrips}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-slate-400 uppercase tracking-wide text-[10px]">Total Impact (OMR)</p>
+                                                <p className="font-mono font-bold text-sm mt-0.5" style={{ color: STP_COLOR }}>{monthTotals.totalImpact.toFixed(1)}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })()}
                         </div>
 
                         {/* Desktop table */}
@@ -1002,6 +1046,54 @@ export default function STPPage() {
                                         </TableRow>
                                     )}
                                 </TableBody>
+
+                                {/* Totals footer row — styled like the water table total row */}
+                                {monthTotals && (() => {
+                                    const STP_COLOR = '#84B59F';
+                                    const effColor: BadgeColor = monthTotals.avgEfficiency >= 95 ? 'green' : monthTotals.avgEfficiency >= 90 ? 'amber' : 'red';
+                                    return (
+                                        <TableFooter>
+                                            <tr className="border-t-2 border-slate-200 dark:border-slate-700" style={{ backgroundColor: `${STP_COLOR}12` }}>
+                                                <td className="px-4 sm:px-6 py-4 align-middle text-sm font-bold whitespace-nowrap"
+                                                    style={{ color: STP_COLOR, boxShadow: `inset 4px 0 0 ${STP_COLOR}` }}>
+                                                    <span className="inline-flex items-center gap-2">
+                                                        <Activity className="h-3.5 w-3.5 shrink-0" />
+                                                        Monthly Total ({dailyOperations.length} day{dailyOperations.length !== 1 ? 's' : ''})
+                                                    </span>
+                                                </td>
+                                                <td className="px-4 sm:px-6 py-4 align-middle text-sm font-bold text-right tabular-nums"
+                                                    style={{ color: STP_COLOR }}>
+                                                    {monthTotals.totalInlet.toLocaleString('en-US', { maximumFractionDigits: 1 })}
+                                                </td>
+                                                <td className="px-4 sm:px-6 py-4 align-middle text-sm font-bold text-right tabular-nums"
+                                                    style={{ color: STP_COLOR }}>
+                                                    {monthTotals.totalTSE.toLocaleString('en-US', { maximumFractionDigits: 1 })}
+                                                </td>
+                                                <td className="px-4 sm:px-6 py-4 align-middle text-sm text-right">
+                                                    <div className="flex justify-end">
+                                                        <StatusBadge label={`${monthTotals.avgEfficiency.toFixed(1)}%`} color={effColor} />
+                                                    </div>
+                                                </td>
+                                                <td className="px-4 sm:px-6 py-4 align-middle text-sm font-bold text-right tabular-nums"
+                                                    style={{ color: STP_COLOR }}>
+                                                    {monthTotals.totalTrips}
+                                                </td>
+                                                <td className="px-4 sm:px-6 py-4 align-middle text-sm font-bold text-right tabular-nums"
+                                                    style={{ color: STP_COLOR }}>
+                                                    {monthTotals.totalIncome.toFixed(1)}
+                                                </td>
+                                                <td className="px-4 sm:px-6 py-4 align-middle text-sm font-bold text-right tabular-nums"
+                                                    style={{ color: STP_COLOR }}>
+                                                    {monthTotals.totalSavings.toFixed(1)}
+                                                </td>
+                                                <td className="px-4 sm:px-6 py-4 align-middle text-sm font-bold text-right tabular-nums"
+                                                    style={{ backgroundColor: `${STP_COLOR}22`, color: STP_COLOR }}>
+                                                    {monthTotals.totalImpact.toFixed(1)}
+                                                </td>
+                                            </tr>
+                                        </TableFooter>
+                                    );
+                                })()}
                             </Table>
                         </div>
 
