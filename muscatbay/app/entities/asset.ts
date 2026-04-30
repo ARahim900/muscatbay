@@ -129,13 +129,27 @@ function normalizePpmFrequency(raw: string | null | undefined): string {
 
 export function transformAsset(db: SupabaseAsset): Asset {
     const CURRENT_YEAR = new Date().getFullYear();
+    const legacy = db as unknown as Record<string, unknown>;
+    const legacyString = (...keys: string[]): string | null => {
+        for (const key of keys) {
+            const value = legacy[key];
+            if (typeof value === 'string' && value.trim()) return value.trim();
+        }
+        return null;
+    };
 
-    const isActiveFlag = db.is_asset_active === true;
+    const legacyActive = legacy['Is_Asset_Active'];
+    const isActiveFlag = db.is_asset_active === true
+        || legacyActive === true
+        || legacyActive === 'Y'
+        || legacyActive === 'y'
+        || legacyActive === 'YES';
+    const rawStatus = db.status || legacyString('Status');
 
     let status: Asset['status'] = 'Working';
-    if (db.status) {
-        const upper = db.status.toUpperCase().trim();
-        const lower = db.status.toLowerCase();
+    if (rawStatus) {
+        const upper = rawStatus.toUpperCase().trim();
+        const lower = rawStatus.toLowerCase();
         if (upper === 'WORKING')            status = 'Working';
         else if (upper === 'ACTIVE')        status = 'Active';
         else if (upper === 'TO VERIFY')     status = 'TO VERIFY';
@@ -170,12 +184,20 @@ export function transformAsset(db: SupabaseAsset): Asset {
         db.zone ||
         db.system_area ||
         db.sub_zone ||
-        'Unspecified';
+        legacyString('Location_Name', 'Location_Tag', 'Building') ||
+        'Unknown Location';
+
+    const stableId =
+        db.asset_uid ||
+        legacyString('Asset_UID', 'asset_uid', 'id') ||
+        db.asset_tag ||
+        legacyString('Asset_Tag', 'legacy_tag') ||
+        'unknown-asset';
 
     return {
-        id: db.asset_uid || String(Math.random()),
-        name: db.asset_name || 'Unknown Asset',
-        type: db.category || db.discipline || 'General',
+        id: stableId,
+        name: db.asset_name || legacyString('Asset_Name') || 'Unknown Asset',
+        type: db.discipline || db.category || legacyString('Discipline', 'Category') || 'General',
         category: db.category || '',
         subcategory: db.subcategory || '',
         systemArea: db.system_area || '',
@@ -186,8 +208,8 @@ export function transformAsset(db: SupabaseAsset): Asset {
         status,
         purchaseDate: db.install_date || '',
         value: db.current_replacement_cost_omr ?? db.original_unit_cost_omr ?? 0,
-        serialNumber: db.asset_tag || '',
-        assetTag: db.asset_tag || '',
+        serialNumber: db.asset_tag || legacyString('Asset_Tag') || '',
+        assetTag: db.asset_tag || legacyString('Asset_Tag') || '',
         lastService: db.last_ppm_date || '',
         manufacturer: db.manufacturer || '',
         model: db.model || '',

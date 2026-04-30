@@ -4,14 +4,6 @@ import { Providers } from "@/components/providers";
 import { NotificationProvider } from "@/components/NotificationProvider";
 import { RegisterSW } from "@/components/pwa/register-sw";
 import { LayoutRouter } from "@/components/layout/layout-router";
-import { DM_Sans } from "next/font/google";
-
-const dmSans = DM_Sans({
-  subsets: ["latin"],
-  display: "swap",
-  variable: "--font-sans",
-  weight: ["400", "500", "600", "700", "800"],
-});
 
 export const metadata = {
   title: "Muscat Bay Operations",
@@ -68,7 +60,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://utnlgeuqajmwibqmdmgt.supabase.co" />
         <link rel="preconnect" href="https://utnlgeuqajmwibqmdmgt.supabase.co" crossOrigin="anonymous" />
       </head>
-      <body className={`${dmSans.className} ${dmSans.variable}`} suppressHydrationWarning>
+      <body className="font-sans" suppressHydrationWarning>
         <RegisterSW />
         <Providers>
           <NotificationProvider>

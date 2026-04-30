@@ -1338,18 +1338,26 @@ export default function ElectricityPage() {
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead className="cursor-pointer sticky left-0 bg-slate-50 dark:bg-slate-800/80 z-20 min-w-[200px]" onClick={() => handleDbSort('label')}>
-                                        <div className="flex items-center gap-1.5">Name <SortIcon field="label" currentSortField={dbSortField} currentSortDirection={dbSortDirection} /></div>
+                                    <TableHead className="sticky left-0 bg-slate-50 dark:bg-slate-800/80 z-20 min-w-[200px]">
+                                        <button type="button" className="flex items-center gap-1.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/50 rounded-sm" onClick={() => handleDbSort('label')}>
+                                            Name <SortIcon field="label" currentSortField={dbSortField} currentSortDirection={dbSortDirection} />
+                                        </button>
                                     </TableHead>
-                                    <TableHead className="cursor-pointer" onClick={() => handleDbSort('account')}>
-                                        <div className="flex items-center gap-1.5">Account # <SortIcon field="account" currentSortField={dbSortField} currentSortDirection={dbSortDirection} /></div>
+                                    <TableHead>
+                                        <button type="button" className="flex items-center gap-1.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/50 rounded-sm" onClick={() => handleDbSort('account')}>
+                                            Account # <SortIcon field="account" currentSortField={dbSortField} currentSortDirection={dbSortDirection} />
+                                        </button>
                                     </TableHead>
-                                    <TableHead className="cursor-pointer" onClick={() => handleDbSort('type')}>
-                                        <div className="flex items-center gap-1.5">Type <SortIcon field="type" currentSortField={dbSortField} currentSortDirection={dbSortDirection} /></div>
+                                    <TableHead>
+                                        <button type="button" className="flex items-center gap-1.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/50 rounded-sm" onClick={() => handleDbSort('type')}>
+                                            Type <SortIcon field="type" currentSortField={dbSortField} currentSortDirection={dbSortDirection} />
+                                        </button>
                                     </TableHead>
                                     {displayMonths.map(month => (
-                                        <TableHead key={month} className="text-right cursor-pointer min-w-[90px]" onClick={() => handleDbSort(month)}>
-                                            <div className="flex items-center justify-end gap-1.5">{month} <SortIcon field={month} currentSortField={dbSortField} currentSortDirection={dbSortDirection} /></div>
+                                        <TableHead key={month} className="text-right min-w-[90px]">
+                                            <button type="button" className="ml-auto flex items-center justify-end gap-1.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/50 rounded-sm" onClick={() => handleDbSort(month)}>
+                                                {month} <SortIcon field={month} currentSortField={dbSortField} currentSortDirection={dbSortDirection} />
+                                            </button>
                                         </TableHead>
                                     ))}
                                     <TableHead className="text-right border-l border-slate-200 dark:border-slate-700 min-w-[100px]">Total (kWh)</TableHead>
