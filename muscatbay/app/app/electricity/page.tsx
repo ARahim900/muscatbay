@@ -89,6 +89,8 @@ export default function ElectricityPage() {
     // Track one-time initialization of filter defaults
     const typesInitializedRef = useRef(false);
     const meterValidatedRef = useRef(false);
+    // Tracks the latest data month seen — used to detect when new months genuinely arrive
+    const latestDataMonthRef = useRef<string>('');
 
     // PDF export
     const reportRef = useRef<HTMLDivElement>(null);
@@ -214,23 +216,23 @@ export default function ElectricityPage() {
         });
     }, [allMonths, selectedYear]);
 
-    // Initialize start/end months when data loads; auto-extend end to newest month when no year filter is active
+    // Initialize start/end months when data loads; auto-extend end only when a new month arrives in the data
     useEffect(() => {
-        if (allMonths.length > 0) {
-            const startValid = startMonth && allMonths.includes(startMonth);
-            const endValid = endMonth && allMonths.includes(endMonth);
-            const latestMonth = allMonths[allMonths.length - 1];
+        if (allMonths.length === 0) return;
+        const latestMonth = allMonths[allMonths.length - 1];
+        const startValid = startMonth && allMonths.includes(startMonth);
+        const endValid = endMonth && allMonths.includes(endMonth);
 
-            if (!startValid) {
-                setStartMonth(allMonths[0]);
-            }
-            if (!endValid) {
-                setEndMonth(latestMonth);
-            } else if (!selectedYear && endMonth !== latestMonth) {
-                // No year filter active — auto-extend to newest data when new months arrive
-                setEndMonth(latestMonth);
-            }
+        if (!startValid) setStartMonth(allMonths[0]);
+
+        if (!endValid) {
+            setEndMonth(latestMonth);
+        } else if (!selectedYear && latestMonth !== latestDataMonthRef.current) {
+            // A genuinely new month arrived in the data — auto-extend end to include it
+            setEndMonth(latestMonth);
         }
+
+        latestDataMonthRef.current = latestMonth;
     }, [allMonths, startMonth, endMonth, selectedYear]);
 
     // Unique types for multi-select filter
