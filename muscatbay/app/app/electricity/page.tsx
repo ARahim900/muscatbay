@@ -73,8 +73,8 @@ export default function ElectricityPage() {
     const [selectedMeter, setSelectedMeter] = useState<string>("All");
     const [dateRangeIndex, setDateRangeIndex] = useState<[number, number]>([0, 100]);
     // Date range state for Overview tab
-    const [startMonth, setStartMonth] = useState<string>("Apr-24");
-    const [endMonth, setEndMonth] = useState<string>("Dec-25");
+    const [startMonth, setStartMonth] = useState<string>("");
+    const [endMonth, setEndMonth] = useState<string>("");
 
     // Database table sorting and pagination state
     const [dbSortField, setDbSortField] = useState<string>('label');
@@ -149,8 +149,12 @@ export default function ElectricityPage() {
         if (savedPrefs) {
             if (savedPrefs.activeTab) setActiveTab(savedPrefs.activeTab);
             if (savedPrefs.startMonth) setStartMonth(savedPrefs.startMonth);
-            if (savedPrefs.endMonth) setEndMonth(savedPrefs.endMonth);
-            if (savedPrefs.selectedYear) setSelectedYear(savedPrefs.selectedYear);
+            if (savedPrefs.selectedYear) {
+                setSelectedYear(savedPrefs.selectedYear);
+                // Only restore the saved end month when a year filter is active
+                if (savedPrefs.endMonth) setEndMonth(savedPrefs.endMonth);
+            }
+            // Without a year filter, always default to the latest available month
             if (savedPrefs.analysisType) {
                 prefApplyingRef.current = true;
                 setAnalysisType(savedPrefs.analysisType);
@@ -162,6 +166,7 @@ export default function ElectricityPage() {
 
     // Save filter preferences when they change
     useEffect(() => {
+        if (!startMonth || !endMonth) return; // skip saving during initialization
         saveFilterPreferences('electricity', {
             activeTab,
             startMonth,
@@ -208,6 +213,25 @@ export default function ElectricityPage() {
             return year === selectedYear;
         });
     }, [allMonths, selectedYear]);
+
+    // Initialize start/end months when data loads; auto-extend end to newest month when no year filter is active
+    useEffect(() => {
+        if (allMonths.length > 0) {
+            const startValid = startMonth && allMonths.includes(startMonth);
+            const endValid = endMonth && allMonths.includes(endMonth);
+            const latestMonth = allMonths[allMonths.length - 1];
+
+            if (!startValid) {
+                setStartMonth(allMonths[0]);
+            }
+            if (!endValid) {
+                setEndMonth(latestMonth);
+            } else if (!selectedYear && endMonth !== latestMonth) {
+                // No year filter active — auto-extend to newest data when new months arrive
+                setEndMonth(latestMonth);
+            }
+        }
+    }, [allMonths, startMonth, endMonth, selectedYear]);
 
     // Unique types for multi-select filter
     const allMeterTypes = useMemo(() => {
