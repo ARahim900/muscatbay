@@ -81,7 +81,7 @@ function Th({
 }) {
     const sortable = sortKey && sort && onSort;
     return (
-        <th
+        <th scope="col"
             className={cn(
                 thBase,
                 sortable && 'cursor-pointer select-none hover:text-slate-600 dark:hover:text-slate-300 transition-colors',
@@ -369,14 +369,16 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                         value={search}
                         onChange={e => setSearch(e.target.value)}
                         placeholder="Search meter or account…"
-                        className="h-9 w-full sm:w-64 pl-9 pr-8 text-[13px] rounded-full border border-slate-200 dark:border-slate-700/80 bg-slate-50/80 dark:bg-slate-800/50 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-secondary/30 focus:border-secondary/50 transition-all"
+                        className="h-9 w-full sm:w-64 pl-9 pr-8 text-[13px] rounded-full border border-slate-200 dark:border-slate-700/80 bg-slate-50/80 dark:bg-slate-800/50 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-secondary/30 focus:border-secondary/50 transition-design"
                     />
                     {search && (
                         <button
+                            type="button"
                             onClick={() => setSearch('')}
-                            className="absolute right-2.5 top-1/2 -translate-y-1/2 h-4 w-4 rounded-full bg-slate-200 dark:bg-slate-600 flex items-center justify-center"
+                            aria-label="Clear search"
+                            className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700/60 transition-colors"
                         >
-                            <span className="text-[10px] font-bold text-slate-500 dark:text-slate-300">&times;</span>
+                            <span aria-hidden="true" className="text-[14px] font-bold leading-none">&times;</span>
                         </button>
                     )}
                 </div>
@@ -509,7 +511,12 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
             </div>
 
             {/* ── Desktop table ─────────────────────────────────────────────── */}
-            <div className="hidden md:block relative overflow-x-auto -mx-4 sm:-mx-5 md:-mx-6 border-t border-slate-100 dark:border-slate-800">
+            <div
+                role="region"
+                aria-label="L3 meter readings. Scroll horizontally to view all months."
+                tabIndex={0}
+                className="hidden md:block relative overflow-x-auto scroll-hint-x -mx-4 sm:-mx-5 md:-mx-6 border-t border-slate-100 dark:border-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary focus-visible:ring-offset-2"
+            >
                 <table
                     className="w-full border-collapse"
                     style={{ minWidth: `${340 + months.length * 100}px` }}
@@ -521,7 +528,7 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                                 Meter
                             </Th>
                             <Th sortKey="account" sort={sort} onSort={setSort} className="min-w-[110px]">Account</Th>
-                            <th className={cn(thBase, 'text-center min-w-[90px]')}>Level</th>
+                            <th scope="col" className={cn(thBase, 'text-center min-w-[90px]')}>Level</th>
                             {months.map(mo => (
                                 <Th key={mo} sortKey={mo} sort={sort} onSort={setSort} className="text-right min-w-[96px]">
                                     {mo}
@@ -843,7 +850,7 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                             return (
                                 <button key={p} onClick={() => setPage(p)}
                                     className={cn(
-                                        'h-8 w-8 rounded-full flex items-center justify-center text-[12px] font-medium transition-all',
+                                        'h-8 w-8 rounded-full flex items-center justify-center text-[12px] font-medium transition-design',
                                         p === page ? 'bg-primary text-white shadow-sm dark:bg-secondary' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800',
                                     )}>
                                     {p}

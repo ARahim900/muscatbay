@@ -92,30 +92,62 @@ function ColumnVisibilityDropdown({
     const showLast6 = () => onChange(months.slice(-6));
     const showLast12 = () => onChange(months.slice(-12));
 
+    const popoverId = React.useId();
     return (
         <div className="relative">
             <button
+                type="button"
                 onClick={() => setIsOpen(!isOpen)}
+                aria-expanded={isOpen}
+                aria-haspopup="dialog"
+                aria-controls={popoverId}
+                aria-label={`Toggle visible months. ${visibleMonths.length} of ${months.length} months selected.`}
                 className="flex items-center gap-2 px-3.5 py-2 text-sm rounded-lg border border-slate-200/80 dark:border-slate-700/80 hover:border-slate-300 dark:hover:border-slate-600 hover:shadow-sm text-slate-600 dark:text-slate-300 transition-all duration-200"
             >
-                <Columns className="w-3.5 h-3.5" />
+                <Columns className="w-3.5 h-3.5" aria-hidden="true" />
                 <span>Columns</span>
                 <span className="text-sm text-slate-500">({visibleMonths.length}/{months.length})</span>
-                <ChevronDown className={cn("w-3.5 h-3.5 transition-transform", isOpen && "rotate-180")} />
+                <ChevronDown className={cn("w-3.5 h-3.5 transition-transform", isOpen && "rotate-180")} aria-hidden="true" />
             </button>
 
             {isOpen && (
                 <>
-                    <div role="presentation" aria-hidden="true" className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
-                    <div className="absolute top-full right-0 mt-1 z-50 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg w-[min(220px,calc(100vw-2rem))] sm:w-[280px] py-1">
-                        <div className="flex items-center gap-2 px-3 py-2 border-b border-slate-100 dark:border-slate-700">
-                            <button onClick={showAll} className="text-sm px-2 py-1 rounded bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600">
+                    <button
+                        type="button"
+                        aria-label="Dismiss column visibility menu"
+                        tabIndex={-1}
+                        className="fixed inset-0 z-40 cursor-default"
+                        onClick={() => setIsOpen(false)}
+                    />
+                    <div
+                        id={popoverId}
+                        role="dialog"
+                        aria-label="Column visibility"
+                        className="absolute top-full right-0 mt-1 z-50 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg w-[min(220px,calc(100vw-2rem))] sm:w-[280px] py-1"
+                    >
+                        <div role="group" aria-label="Quick range" className="flex items-center gap-2 px-3 py-2 border-b border-slate-100 dark:border-slate-700">
+                            <button
+                                type="button"
+                                onClick={showAll}
+                                aria-label={`Show all ${months.length} months`}
+                                className="text-sm px-2 py-1 rounded bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600"
+                            >
                                 All ({months.length})
                             </button>
-                            <button onClick={showLast12} className="text-sm px-2 py-1 rounded bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600">
+                            <button
+                                type="button"
+                                onClick={showLast12}
+                                aria-label="Show last 12 months"
+                                className="text-sm px-2 py-1 rounded bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600"
+                            >
                                 Last 12
                             </button>
-                            <button onClick={showLast6} className="text-sm px-2 py-1 rounded bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600">
+                            <button
+                                type="button"
+                                onClick={showLast6}
+                                aria-label="Show last 6 months"
+                                className="text-sm px-2 py-1 rounded bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600"
+                            >
                                 Last 6
                             </button>
                         </div>
@@ -337,10 +369,10 @@ export function WaterDatabaseTable({ meters, months }: WaterDatabaseTableProps) 
                     zoneColor
                 )}
             >
-                <td className="py-4 px-5 font-medium text-slate-800 dark:text-slate-200 whitespace-nowrap sticky left-0 bg-inherit z-10 w-[140px] sm:w-[180px] md:w-[200px]">
+                <td className="py-4 px-5 font-medium text-slate-800 dark:text-slate-200 whitespace-nowrap sticky left-0 bg-inherit z-10 w-[120px] sm:w-[180px] md:w-[200px]">
                     {meter.label}
                 </td>
-                <td className="py-4 px-5 text-slate-600 dark:text-slate-400 font-mono text-sm sticky left-[140px] sm:left-[180px] md:left-[200px] bg-inherit z-10">
+                <td className="py-4 px-5 text-slate-600 dark:text-slate-400 font-mono text-sm sticky left-[120px] sm:left-[180px] md:left-[200px] bg-inherit z-10">
                     {meter.accountNumber}
                 </td>
                 <td className="py-4 px-5 text-center">
@@ -420,7 +452,10 @@ export function WaterDatabaseTable({ meters, months }: WaterDatabaseTableProps) 
 
                 {/* Group By Toggle */}
                 <button
+                    type="button"
                     onClick={() => setGroupByZone(!groupByZone)}
+                    aria-pressed={groupByZone}
+                    aria-label={groupByZone ? "Disable zone grouping" : "Group rows by zone"}
                     className={cn(
                         "flex items-center gap-2 px-3 py-1.5 text-sm rounded-lg border transition-colors",
                         groupByZone
@@ -428,7 +463,7 @@ export function WaterDatabaseTable({ meters, months }: WaterDatabaseTableProps) 
                             : "border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 text-slate-700 dark:text-slate-300"
                     )}
                 >
-                    <Users className="w-3.5 h-3.5" />
+                    <Users className="w-3.5 h-3.5" aria-hidden="true" />
                     <span>Group by Zone</span>
                 </button>
 
@@ -442,20 +477,24 @@ export function WaterDatabaseTable({ meters, months }: WaterDatabaseTableProps) 
                 {/* Clear Filters */}
                 {hasActiveFilters && (
                     <button
+                        type="button"
                         onClick={clearFilters}
+                        aria-label="Clear all active filters"
                         className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors"
                     >
-                        <X className="w-3.5 h-3.5" />
+                        <X className="w-3.5 h-3.5" aria-hidden="true" />
                         Clear
                     </button>
                 )}
 
                 {/* Export */}
                 <button
+                    type="button"
                     onClick={handleExportCSV}
+                    aria-label="Export filtered meters to CSV"
                     className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors ml-auto"
                 >
-                    <Download className="w-3.5 h-3.5" />
+                    <Download className="w-3.5 h-3.5" aria-hidden="true" />
                     <span>Export CSV</span>
                 </button>
 
@@ -507,20 +546,25 @@ export function WaterDatabaseTable({ meters, months }: WaterDatabaseTableProps) 
             )}
 
             {/* Table */}
-            <div className="overflow-x-auto rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900 shadow-[0_1px_3px_rgba(0,0,0,0.06),0_4px_16px_-4px_rgba(0,0,0,0.1)] dark:shadow-[0_1px_3px_rgba(0,0,0,0.2),0_4px_16px_-4px_rgba(0,0,0,0.3)]">
+            <div
+                role="region"
+                aria-label="Water meter consumption table. Scroll horizontally to view more months."
+                tabIndex={0}
+                className="overflow-x-auto scroll-hint-x rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900 shadow-[0_1px_3px_rgba(0,0,0,0.06),0_4px_16px_-4px_rgba(0,0,0,0.1)] dark:shadow-[0_1px_3px_rgba(0,0,0,0.2),0_4px_16px_-4px_rgba(0,0,0,0.3)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary focus-visible:ring-offset-2"
+            >
                 <table className="w-full text-sm border-collapse">
                     <thead className="sticky top-0 z-30">
                         <tr className="bg-slate-50 dark:bg-slate-800/80">
                             <th
                                 scope="col"
-                                className="text-left py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors sticky left-0 bg-slate-50 dark:bg-slate-800/80 z-20 w-[140px] sm:w-[180px] md:w-[200px]"
+                                className="text-left py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors sticky left-0 bg-slate-50 dark:bg-slate-800/80 z-20 w-[120px] sm:w-[180px] md:w-[200px]"
                                 onClick={() => handleSort('label')}
                             >
-                                <div className="flex items-center gap-1.5">Label <SortIcon field="label" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
+                                <div className="flex items-center gap-1.5 truncate">Label <SortIcon field="label" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
                             </th>
                             <th
                                 scope="col"
-                                className="text-left py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors sticky left-[140px] sm:left-[180px] md:left-[200px] bg-slate-50 dark:bg-slate-800/80 z-20 min-w-[100px]"
+                                className="text-left py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors sticky left-[120px] sm:left-[180px] md:left-[200px] bg-slate-50 dark:bg-slate-800/80 z-20 min-w-[100px]"
                                 onClick={() => handleSort('account')}
                             >
                                 <div className="flex items-center gap-1.5">Account # <SortIcon field="account" currentSortField={sortField} currentSortDirection={sortDirection} /></div>

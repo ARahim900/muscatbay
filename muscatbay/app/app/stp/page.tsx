@@ -67,7 +67,7 @@ function ChartViewToggle({ value, onChange }: { value: 'daily' | 'monthly'; onCh
             <button
                 onClick={() => onChange('daily')}
                 className={cn(
-                    "px-3 py-1 text-xs font-medium rounded-md transition-all",
+                    "px-3 py-1 text-xs font-medium rounded-md transition-design",
                     value === 'daily'
                         ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-sm"
                         : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
@@ -78,7 +78,7 @@ function ChartViewToggle({ value, onChange }: { value: 'daily' | 'monthly'; onCh
             <button
                 onClick={() => onChange('monthly')}
                 className={cn(
-                    "px-3 py-1 text-xs font-medium rounded-md transition-all",
+                    "px-3 py-1 text-xs font-medium rounded-md transition-design",
                     value === 'monthly'
                         ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-sm"
                         : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"

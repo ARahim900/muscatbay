@@ -822,6 +822,28 @@
     font-variant-numeric: tabular-nums;
   }
 
+  /* ── Horizontal scroll affordance ──
+   * Fades the right edge so users see content extends beyond the viewport.
+   * Pair with overflow-x-auto on a wrapper. Pure CSS mask, theme-independent. */
+  .scroll-hint-x {
+    -webkit-mask-image: linear-gradient(to right, black 0, black calc(100% - 24px), transparent 100%);
+            mask-image: linear-gradient(to right, black 0, black calc(100% - 24px), transparent 100%);
+  }
+  /* Hide the fade when the user has reached the end of the scroll. */
+  @supports (animation-timeline: scroll(self inline)) {
+    .scroll-hint-x {
+      animation: scroll-hint-fade 1ms linear both;
+      animation-timeline: scroll(self inline);
+      animation-range: calc(100% - 1px) 100%;
+    }
+    @keyframes scroll-hint-fade {
+      to {
+        -webkit-mask-image: linear-gradient(to right, black 0, black 100%, black 100%);
+                mask-image: linear-gradient(to right, black 0, black 100%, black 100%);
+      }
+    }
+  }
+
   /* ── Notification dot pulse animation ── */
   @keyframes pulse-dot {
     0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }

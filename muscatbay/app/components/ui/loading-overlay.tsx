@@ -47,7 +47,7 @@ export function LoadingOverlay() {
       aria-label={state.message ?? "Loading"}
       className="fixed inset-0 z-[9998] flex items-center justify-center"
       style={{
-        backgroundColor: "rgba(10, 9, 12, 0.78)",
+        backgroundColor: "color-mix(in srgb, var(--background) 78%, transparent)",
         backdropFilter: "blur(5px)",
         WebkitBackdropFilter: "blur(5px)",
         animation: exiting
@@ -58,8 +58,8 @@ export function LoadingOverlay() {
       <div
         className="flex flex-col items-center gap-5 rounded-2xl px-10 py-8"
         style={{
-          background: "rgba(22, 20, 27, 0.92)",
-          border: "1px solid rgba(161, 209, 213, 0.14)",
+          background: "color-mix(in srgb, var(--card) 92%, transparent)",
+          border: "1px solid color-mix(in srgb, var(--secondary) 14%, transparent)",
           boxShadow: "0 32px 72px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.04)",
           animation: exiting
             ? "mb-card-out 260ms ease-in both"
@@ -71,7 +71,7 @@ export function LoadingOverlay() {
           {/* Outer track */}
           <div
             className="absolute inset-0 rounded-full"
-            style={{ border: "2.5px solid rgba(161,209,213,0.12)" }}
+            style={{ border: "2.5px solid color-mix(in srgb, var(--secondary) 12%, transparent)" }}
           />
           {/* Spinning arc */}
           <div
@@ -79,8 +79,8 @@ export function LoadingOverlay() {
             className="absolute inset-0 rounded-full mb-spin"
             style={{
               border: "2.5px solid transparent",
-              borderTopColor: "#A1D1D5",
-              borderRightColor: "rgba(161,209,213,0.3)",
+              borderTopColor: "var(--secondary)",
+              borderRightColor: "color-mix(in srgb, var(--secondary) 30%, transparent)",
             }}
           />
           {/* Logo */}
@@ -95,7 +95,7 @@ export function LoadingOverlay() {
         </div>
 
         {/* ── Message ── */}
-        <p className="text-sm font-medium tracking-wide" style={{ color: "#cbd5e1" }}>
+        <p className="text-sm font-medium tracking-wide text-muted-foreground">
           {state.message ?? "Loading…"}
         </p>
       </div>

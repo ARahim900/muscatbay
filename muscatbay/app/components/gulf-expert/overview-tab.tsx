@@ -202,11 +202,11 @@ export function OverviewTab({ data }: OverviewTabProps) {
             <table className="w-full text-sm">
               <thead className="bg-slate-50 dark:bg-slate-800/80">
                 <tr className="border-b border-slate-200 dark:border-slate-700">
-                  <th className="text-left py-4 px-4 font-semibold uppercase tracking-wide text-sm text-white">System</th>
-                  <th className="text-center py-4 px-4 font-semibold uppercase tracking-wide text-sm text-white">Q1 (PPM1)</th>
-                  <th className="text-center py-4 px-4 font-semibold uppercase tracking-wide text-sm text-white">Q2 (PPM2)</th>
-                  <th className="text-center py-4 px-4 font-semibold uppercase tracking-wide text-sm text-white">Q3 (PPM3)</th>
-                  <th className="text-center py-4 px-4 font-semibold uppercase tracking-wide text-sm text-white">Q4 (PPM4)</th>
+                  <th scope="col" className="text-left py-4 px-4 font-semibold uppercase tracking-wide text-sm text-white">System</th>
+                  <th scope="col" className="text-center py-4 px-4 font-semibold uppercase tracking-wide text-sm text-white">Q1 (PPM1)</th>
+                  <th scope="col" className="text-center py-4 px-4 font-semibold uppercase tracking-wide text-sm text-white">Q2 (PPM2)</th>
+                  <th scope="col" className="text-center py-4 px-4 font-semibold uppercase tracking-wide text-sm text-white">Q3 (PPM3)</th>
+                  <th scope="col" className="text-center py-4 px-4 font-semibold uppercase tracking-wide text-sm text-white">Q4 (PPM4)</th>
                 </tr>
               </thead>
               <tbody>

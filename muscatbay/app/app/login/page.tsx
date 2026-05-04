@@ -131,9 +131,9 @@ function LoginContent() {
                             </p>
 
                             {([
-                                { label: "Water Production",  value: "2,847",  unit: "m³ today",   color: "#6B9AC4", status: "Normal",  statusColor: "#84B59F" },
-                                { label: "Electricity",       value: "148",    unit: "kWh current", color: "#E8C064", status: "Nominal", statusColor: "#E8C064" },
-                                { label: "STP Treated",       value: "892",    unit: "m³ today",   color: "#84B59F", status: "Active",  statusColor: "#A1D1D5" },
+                                { label: "Water Production",  value: "2,847",  unit: "m³ today",   color: "var(--module-water)",       status: "Normal",  statusColor: "var(--mb-success)" },
+                                { label: "Electricity",       value: "148",    unit: "kWh current", color: "var(--module-electricity)", status: "Nominal", statusColor: "var(--mb-warning)" },
+                                { label: "STP Treated",       value: "892",    unit: "m³ today",   color: "var(--module-stp)",         status: "Active",  statusColor: "var(--secondary)" },
                             ] as const).map((sys) => (
                                 <div
                                     key={sys.label}
@@ -206,7 +206,7 @@ function LoginContent() {
                                 />
                             </div>
                             <div>
-                                <h1 className="text-xl font-bold text-slate-900 dark:text-white">Muscat Bay</h1>
+                                <h1 className="text-xl font-bold text-foreground">Muscat Bay</h1>
                                 <p className="text-sm text-primary dark:text-secondary">Operations Dashboard</p>
                             </div>
                         </div>
@@ -214,16 +214,16 @@ function LoginContent() {
 
                     {/* Welcome Text */}
                     <div className="text-center lg:text-left mb-8">
-                        <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">
+                        <h2 className="text-3xl font-bold text-foreground mb-2">
                             Welcome back
                         </h2>
-                        <p className="text-slate-500 dark:text-slate-300">
+                        <p className="text-muted-foreground">
                             Sign in to access your dashboard and manage operations
                         </p>
                     </div>
 
                     {/* Login Form Card */}
-                    <div className="bg-white dark:bg-slate-800/50 rounded-2xl shadow-xl border border-slate-200/50 dark:border-slate-700/50 p-8">
+                    <div className="bg-card rounded-2xl shadow-xl border border-border p-8">
                         <form onSubmit={handleSubmit} className="space-y-6">
                             {/* Success Message (e.g. after password reset) */}
                             {successMessage && !error && (
@@ -243,11 +243,11 @@ function LoginContent() {
 
                             {/* Email Field */}
                             <div className="space-y-2">
-                                <Label htmlFor="email" className="text-slate-700 dark:text-slate-300 font-medium">
+                                <Label htmlFor="email" className="text-foreground font-medium">
                                     Email Address
                                 </Label>
-                                <div className="relative transition-all duration-200">
-                                    <div className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors duration-200 ${focusedField === 'email' ? 'text-primary' : 'text-slate-400'}`}>
+                                <div className="relative">
+                                    <div className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors duration-200 ${focusedField === 'email' ? 'text-primary' : 'text-muted-foreground'}`}>
                                         <Mail className="h-5 w-5" />
                                     </div>
                                     <Input
@@ -260,11 +260,11 @@ function LoginContent() {
                                         onBlur={() => setFocusedField(null)}
                                         aria-describedby={emailError ? "email-error" : undefined}
                                         aria-invalid={emailError ? true : undefined}
-                                        className={`pl-12 h-12 rounded-xl border-2 transition-all duration-200 ${emailError
+                                        className={`pl-12 h-12 rounded-xl border-2 transition-design ${emailError
                                             ? 'border-destructive focus:border-destructive'
                                             : focusedField === 'email'
                                                 ? 'border-primary shadow-lg shadow-primary/10'
-                                                : 'border-slate-200 dark:border-slate-600 hover:border-slate-300'
+                                                : 'border-border hover:border-muted-foreground/40'
                                             }`}
                                         required
                                         autoComplete="email"
@@ -281,7 +281,7 @@ function LoginContent() {
                             {/* Password Field */}
                             <div className="space-y-2">
                                 <div className="flex items-center justify-between">
-                                    <Label htmlFor="password" className="text-slate-700 dark:text-slate-300 font-medium">
+                                    <Label htmlFor="password" className="text-foreground font-medium">
                                         Password
                                     </Label>
                                     <Link
@@ -291,8 +291,8 @@ function LoginContent() {
                                         Forgot password?
                                     </Link>
                                 </div>
-                                <div className="relative transition-all duration-200">
-                                    <div className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors duration-200 ${focusedField === 'password' ? 'text-primary' : 'text-slate-400'}`}>
+                                <div className="relative">
+                                    <div className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors duration-200 ${focusedField === 'password' ? 'text-primary' : 'text-muted-foreground'}`}>
                                         <Lock className="h-5 w-5" />
                                     </div>
                                     <Input
@@ -305,9 +305,9 @@ function LoginContent() {
                                         onBlur={() => setFocusedField(null)}
                                         aria-describedby={error ? "password-error" : undefined}
                                         aria-invalid={error ? true : undefined}
-                                        className={`pl-12 pr-12 h-12 rounded-xl border-2 transition-all duration-200 ${focusedField === 'password'
+                                        className={`pl-12 pr-12 h-12 rounded-xl border-2 transition-design ${focusedField === 'password'
                                             ? 'border-primary shadow-lg shadow-primary/10'
-                                            : 'border-slate-200 dark:border-slate-600 hover:border-slate-300'
+                                            : 'border-border hover:border-muted-foreground/40'
                                             }`}
                                         required
                                         autoComplete="current-password"
@@ -316,7 +316,7 @@ function LoginContent() {
                                         type="button"
                                         onClick={() => setShowPassword(!showPassword)}
                                         aria-label={showPassword ? "Hide password" : "Show password"}
-                                        className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-primary transition-colors duration-200"
+                                        className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary transition-colors duration-200"
                                     >
                                         {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                                     </button>
@@ -326,7 +326,7 @@ function LoginContent() {
                             {/* Submit Button */}
                             <Button
                                 type="submit"
-                                className="w-full h-12 bg-primary hover:bg-primary/90 text-white font-semibold rounded-xl shadow-lg shadow-primary/25 transition-all duration-200 hover:shadow-xl"
+                                className="w-full h-12 bg-primary hover:bg-primary/90 text-white font-semibold rounded-xl shadow-lg shadow-primary/25 transition-design hover:shadow-xl"
                                 disabled={loading}
                             >
                                 {loading ? (
@@ -342,10 +342,10 @@ function LoginContent() {
                             {/* Divider */}
                             <div className="relative">
                                 <div className="absolute inset-0 flex items-center">
-                                    <div className="w-full border-t border-slate-200 dark:border-slate-700" />
+                                    <div className="w-full border-t border-border" />
                                 </div>
                                 <div className="relative flex justify-center text-xs uppercase">
-                                    <span className="bg-white dark:bg-slate-800/50 px-3 text-slate-400">
+                                    <span className="bg-card px-3 text-muted-foreground">
                                         New to Muscat Bay?
                                     </span>
                                 </div>
@@ -355,7 +355,7 @@ function LoginContent() {
                             <div className="text-center">
                                 <Link
                                     href="/signup"
-                                    className="inline-flex items-center justify-center w-full h-12 border-2 border-primary/20 hover:border-primary text-primary dark:text-secondary dark:border-secondary/20 dark:hover:border-secondary font-semibold rounded-xl transition-all duration-200 hover:bg-primary/5 dark:hover:bg-secondary/5"
+                                    className="inline-flex items-center justify-center w-full h-12 border-2 border-primary/20 hover:border-primary text-primary dark:text-secondary dark:border-secondary/20 dark:hover:border-secondary font-semibold rounded-xl transition-design hover:bg-primary/5 dark:hover:bg-secondary/5"
                                 >
                                     Create an account
                                 </Link>
@@ -365,7 +365,7 @@ function LoginContent() {
 
                     {/* Footer */}
                     <div className="mt-8 text-center">
-                        <p className="text-xs text-slate-400 dark:text-slate-400">
+                        <p className="text-xs text-muted-foreground">
                             By signing in, you agree to our{' '}
                             <Link href="/terms" className="text-primary dark:text-secondary hover:underline">
                                 Terms of Service

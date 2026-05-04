@@ -210,11 +210,22 @@ function SystemTag({ label }: { label: string }) {
 function ProgressBar({ done, total, faults }: { done: number; total: number; faults: number }) {
     const pctDone = Math.round((done / total) * 100);
     const pctFault = Math.round((faults / total) * 100);
+    // Stacked absolute layers + transform: scaleX keeps the animation on the
+    // compositor (no layout / paint per frame). Faults sits underneath; done
+    // covers it from 0..pctDone, so the visible faults band runs pctDone..pctDone+pctFault.
     return (
         <div className="flex items-center gap-3">
-            <div className="flex-1 h-2.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden flex">
-                <div className="h-full bg-secondary transition-all duration-200" style={{ width: `${pctDone}%` }} />
-                {faults > 0 && <div className="h-full bg-destructive/70 transition-all duration-200" style={{ width: `${pctFault}%` }} />}
+            <div className="relative flex-1 h-2.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+                {faults > 0 && (
+                    <div
+                        className="absolute inset-y-0 left-0 w-full bg-destructive/70 origin-left transition-transform duration-200"
+                        style={{ transform: `scaleX(${(pctDone + pctFault) / 100})` }}
+                    />
+                )}
+                <div
+                    className="absolute inset-y-0 left-0 w-full bg-secondary origin-left transition-transform duration-200"
+                    style={{ transform: `scaleX(${pctDone / 100})` }}
+                />
             </div>
             <span className="text-xs font-semibold text-slate-600 dark:text-slate-400 tabular-nums whitespace-nowrap">{done}/{total}</span>
         </div>

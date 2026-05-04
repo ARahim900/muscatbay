@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { getSTPOperations, STPOperation } from "@/lib/mock-data";
 import { getSTPOperationsFromSupabase, isSupabaseConfigured } from "@/lib/supabase";
 import { STP_RATES } from "@/lib/config";
@@ -88,23 +88,26 @@ export function useSTPData(): UseSTPDataReturn {
         fetchData();
     }, [fetchData]);
 
-    // Calculate statistics
-    const stats = {
-        totalInlet: operations.reduce((sum, op) => sum + op.inlet_sewage, 0),
-        totalTSE: operations.reduce((sum, op) => sum + op.tse_for_irrigation, 0),
-        totalTrips: operations.reduce((sum, op) => sum + op.tanker_trips, 0),
-        generatedIncome: 0,
-        waterSavings: 0,
-        totalEconomicImpact: 0,
-        treatmentEfficiency: 0,
-        dailyAverageInlet: 0,
-    };
-
-    stats.generatedIncome = stats.totalTrips * STP_RATES.TANKER_FEE;
-    stats.waterSavings = stats.totalTSE * STP_RATES.TSE_SAVING_RATE;
-    stats.totalEconomicImpact = stats.generatedIncome + stats.waterSavings;
-    stats.treatmentEfficiency = stats.totalInlet > 0 ? (stats.totalTSE / stats.totalInlet) * 100 : 0;
-    stats.dailyAverageInlet = operations.length > 0 ? stats.totalInlet / operations.length : 0;
+    // Calculate statistics — memoized so the stats reference is stable
+    // across renders that don't change `operations`. Downstream React.memo'd
+    // chart/card components can then skip re-render.
+    const stats = useMemo(() => {
+        const totalInlet = operations.reduce((sum, op) => sum + op.inlet_sewage, 0);
+        const totalTSE = operations.reduce((sum, op) => sum + op.tse_for_irrigation, 0);
+        const totalTrips = operations.reduce((sum, op) => sum + op.tanker_trips, 0);
+        const generatedIncome = totalTrips * STP_RATES.TANKER_FEE;
+        const waterSavings = totalTSE * STP_RATES.TSE_SAVING_RATE;
+        return {
+            totalInlet,
+            totalTSE,
+            totalTrips,
+            generatedIncome,
+            waterSavings,
+            totalEconomicImpact: generatedIncome + waterSavings,
+            treatmentEfficiency: totalInlet > 0 ? (totalTSE / totalInlet) * 100 : 0,
+            dailyAverageInlet: operations.length > 0 ? totalInlet / operations.length : 0,
+        };
+    }, [operations]);
 
     return {
         operations,

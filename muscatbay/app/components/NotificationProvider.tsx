@@ -89,33 +89,41 @@ function PermissionBanner({
 
   return (
     <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[101] max-w-md w-[calc(100%-2rem)]">
-      <div className="flex items-center gap-3 p-4 rounded-lg bg-slate-800 border border-slate-700 shadow-xl">
-        <Bell className="h-5 w-5 text-secondary flex-shrink-0" />
+      <div
+        role="region"
+        aria-label="Notifications permission"
+        className="flex items-center gap-3 p-4 rounded-lg bg-card border border-border shadow-xl"
+      >
+        <Bell className="h-5 w-5 text-secondary flex-shrink-0" aria-hidden="true" />
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-slate-100">
+          <p className="text-sm font-medium text-foreground">
             Enable notifications?
           </p>
-          <p className="text-xs text-slate-400 mt-0.5">
+          <p className="text-xs text-muted-foreground mt-0.5">
             Get alerts for STP thresholds, pump failures, and maintenance
             reminders.
           </p>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
           <button
+            type="button"
+            aria-label="Dismiss notifications permission banner"
             onClick={() => {
               setDismissed(true);
               localStorage.setItem("notif-banner-dismissed", "true");
             }}
-            className="text-xs text-slate-400 hover:text-slate-200 transition-colors px-2 py-1"
+            className="text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1 min-h-[44px]"
           >
             Later
           </button>
           <button
+            type="button"
+            aria-label="Enable browser notifications"
             onClick={() => {
               onRequest();
               setDismissed(true);
             }}
-            className="text-xs font-medium bg-secondary text-slate-900 dark:text-white rounded-md px-3 py-1.5 hover:bg-secondary/80 transition-colors"
+            className="text-xs font-medium bg-secondary text-secondary-foreground rounded-md px-3 py-1.5 hover:bg-secondary/80 transition-colors min-h-[44px]"
           >
             Enable
           </button>

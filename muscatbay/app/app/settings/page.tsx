@@ -147,10 +147,10 @@ export default function SettingsPage() {
                 <div className="rounded-xl border border-secondary/30 dark:border-secondary/20 bg-secondary/5 dark:bg-secondary/10 p-4 sm:p-5">
                     <div className="flex items-start sm:items-center justify-between gap-4 flex-col sm:flex-row">
                         <div className="space-y-1">
-                            <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                            <p className="text-sm font-semibold text-foreground">
                                 Complete your profile — {completionPct}% done
                             </p>
-                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                            <p className="text-xs text-muted-foreground">
                                 {completionFields.filter(f => !f.filled).map(f => f.label).join(", ")} still needed.
                             </p>
                         </div>
@@ -261,7 +261,7 @@ export default function SettingsPage() {
                                             value={formData.full_name}
                                             onChange={e => setFormData({ ...formData, full_name: e.target.value })}
                                             placeholder="e.g. John Doe"
-                                            className="max-w-md bg-white/50 dark:bg-slate-800/50"
+                                            className="max-w-md bg-card/50"
                                         />
                                     </div>
 
@@ -272,7 +272,7 @@ export default function SettingsPage() {
                                             value={formData.username}
                                             onChange={e => setFormData({ ...formData, username: e.target.value })}
                                             placeholder="e.g. john_doe"
-                                            className="max-w-md bg-white/50 dark:bg-slate-800/50"
+                                            className="max-w-md bg-card/50"
                                         />
                                     </div>
 
@@ -283,7 +283,7 @@ export default function SettingsPage() {
                                             value={formData.website}
                                             onChange={e => setFormData({ ...formData, website: e.target.value })}
                                             placeholder="https://example.com"
-                                            className="max-w-md bg-white/50 dark:bg-slate-800/50"
+                                            className="max-w-md bg-card/50"
                                         />
                                     </div>
                                 </div>
@@ -320,7 +320,7 @@ export default function SettingsPage() {
                                             id="email"
                                             value={user?.email || ""}
                                             disabled
-                                            className="bg-slate-100 dark:bg-slate-800 text-slate-500"
+                                            className="bg-muted text-muted-foreground"
                                         />
                                     </div>
                                     <p className="text-xs text-muted-foreground mt-1">
@@ -332,9 +332,9 @@ export default function SettingsPage() {
 
                                 <div className="space-y-4">
                                     <h2 className="text-sm font-medium">Active Sessions</h2>
-                                    <div className="flex items-center justify-between p-4 border rounded-lg bg-white/50 dark:bg-slate-900 border-mb-primary/10">
+                                    <div className="flex items-center justify-between p-4 border rounded-lg bg-card/50 border-mb-primary/10">
                                         <div className="flex items-center gap-3">
-                                            <div className="p-2 bg-white dark:bg-slate-800 rounded-full border shadow-sm">
+                                            <div className="p-2 bg-card rounded-full border border-border shadow-sm">
                                                 <Monitor className="w-5 h-5 text-mb-primary" />
                                             </div>
                                             <div>
@@ -382,9 +382,9 @@ export default function SettingsPage() {
                                         aria-checked={emailAlertsEnabled}
                                         aria-label="Email Alerts"
                                         onClick={() => setEmailAlertsEnabled(v => !v)}
-                                        className={`h-6 w-11 rounded-full relative cursor-pointer transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 ${emailAlertsEnabled ? 'bg-sidebar' : 'bg-slate-200 dark:bg-slate-700'}`}
+                                        className={`h-6 w-11 rounded-full relative cursor-pointer transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 ${emailAlertsEnabled ? 'bg-sidebar' : 'bg-muted dark:bg-slate-700'}`}
                                     >
-                                        <div className={`absolute top-1 left-1 h-4 w-4 rounded-full bg-white shadow-sm transition-transform duration-200 ${emailAlertsEnabled ? 'translate-x-5' : 'translate-x-0'}`} />
+                                        <div className={`absolute top-1 left-1 h-4 w-4 rounded-full bg-white dark:bg-slate-100 shadow-sm transition-transform duration-200 ${emailAlertsEnabled ? 'translate-x-5' : 'translate-x-0'}`} />
                                     </button>
                                 </div>
                                 <Separator />
@@ -399,9 +399,9 @@ export default function SettingsPage() {
                                         aria-checked={criticalAlarmsEnabled}
                                         aria-label="Critical Alarms"
                                         onClick={() => setCriticalAlarmsEnabled(v => !v)}
-                                        className={`h-6 w-11 rounded-full relative cursor-pointer transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 ${criticalAlarmsEnabled ? 'bg-sidebar' : 'bg-slate-200 dark:bg-slate-700'}`}
+                                        className={`h-6 w-11 rounded-full relative cursor-pointer transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 ${criticalAlarmsEnabled ? 'bg-sidebar' : 'bg-muted dark:bg-slate-700'}`}
                                     >
-                                        <div className={`absolute top-1 left-1 h-4 w-4 rounded-full bg-white shadow-sm transition-transform duration-200 ${criticalAlarmsEnabled ? 'translate-x-5' : 'translate-x-0'}`} />
+                                        <div className={`absolute top-1 left-1 h-4 w-4 rounded-full bg-white dark:bg-slate-100 shadow-sm transition-transform duration-200 ${criticalAlarmsEnabled ? 'translate-x-5' : 'translate-x-0'}`} />
                                     </button>
                                 </div>
                             </CardContent>

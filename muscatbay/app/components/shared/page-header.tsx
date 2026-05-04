@@ -53,7 +53,7 @@ export function PageHeader({ title, description, className, showBreadcrumbs = tr
             {showBreadcrumbs && <Breadcrumbs className="mb-1" />}
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                 <div
-                    className={cn("transition-all duration-200", accentColor && "border-s-[3px] ps-3")}
+                    className={cn("transition-design", accentColor && "border-s-[3px] ps-3")}
                     style={accentColor ? { borderColor: accentColor } : undefined}
                 >
                     <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight">{title}</h1>

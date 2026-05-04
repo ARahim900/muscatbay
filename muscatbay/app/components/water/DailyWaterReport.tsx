@@ -269,7 +269,7 @@ function Th({
 }) {
     const sortable = sortKey && sort && onSort;
     return (
-        <th
+        <th scope="col"
             className={cn(thBase, sortable && "cursor-pointer select-none group hover:text-slate-600 dark:hover:text-slate-300 transition-colors", className)}
             onClick={sortable ? () => onSort(nextSort(sort, sortKey)) : undefined}
         >
@@ -290,11 +290,16 @@ function TableSearch({ value, onChange, placeholder }: { value: string; onChange
                 value={value}
                 onChange={e => onChange(e.target.value)}
                 placeholder={placeholder}
-                className="h-9 w-full sm:w-64 pl-9 pr-8 text-[13px] rounded-full border border-slate-200 dark:border-slate-700/80 bg-slate-50/80 dark:bg-slate-800/50 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-secondary/30 focus:border-secondary/50 transition-all"
+                className="h-9 w-full sm:w-64 pl-9 pr-8 text-[13px] rounded-full border border-slate-200 dark:border-slate-700/80 bg-slate-50/80 dark:bg-slate-800/50 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-secondary/30 focus:border-secondary/50 transition-design"
             />
             {value && (
-                <button onClick={() => onChange('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 h-4 w-4 rounded-full bg-slate-200 dark:bg-slate-600 flex items-center justify-center text-slate-500 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-500 transition-colors">
-                    <span className="text-[10px] leading-none font-bold">&times;</span>
+                <button
+                    type="button"
+                    onClick={() => onChange('')}
+                    aria-label="Clear search"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700/60 transition-colors"
+                >
+                    <span aria-hidden="true" className="text-[14px] leading-none font-bold">&times;</span>
                 </button>
             )}
         </div>
@@ -340,7 +345,7 @@ function TablePagination({
                         key={p}
                         onClick={() => onPageChange(p)}
                         className={cn(
-                            "h-8 w-8 rounded-full flex items-center justify-center text-[12px] font-medium transition-all",
+                            "h-8 w-8 rounded-full flex items-center justify-center text-[12px] font-medium transition-design",
                             p === page
                                 ? "bg-primary text-white shadow-sm dark:bg-secondary dark:text-white"
                                 : "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800",
@@ -828,9 +833,9 @@ function ZoneL3Table({
                                     className="sticky left-0 z-10 bg-white dark:bg-slate-900 min-w-[150px]"
                                 >Meter</Th>
                                 <Th sortKey="account" sort={sort} onSort={setSort} className="min-w-[100px]">Account</Th>
-                                <th className={cn(thBase, "text-center min-w-[90px]")}>Type</th>
+                                <th scope="col" className={cn(thBase, "text-center min-w-[90px]")}>Type</th>
                                 {days.map(d => (
-                                    <th key={d} className={cn(thBase, "text-right min-w-[64px] px-2")}>D{d}</th>
+                                    <th scope="col" key={d} className={cn(thBase, "text-right min-w-[64px] px-2")}>D{d}</th>
                                 ))}
                                 <Th
                                     sortKey="total" sort={sort} onSort={setSort}
@@ -1528,9 +1533,9 @@ function DCDailyTable({ monthData }: { monthData: SupabaseDailyWaterConsumption[
                                     className="sticky left-0 z-10 bg-white dark:bg-slate-900 min-w-[180px]"
                                 >Meter</Th>
                                 <Th sortKey="account" sort={sort} onSort={setSort} className="min-w-[100px]">Account</Th>
-                                <th className={cn(thBase, "text-center min-w-[90px]")}>Type</th>
+                                <th scope="col" className={cn(thBase, "text-center min-w-[90px]")}>Type</th>
                                 {days.map(d => (
-                                    <th key={d} className={cn(thBase, "text-right min-w-[64px] px-2")}>D{d}</th>
+                                    <th scope="col" key={d} className={cn(thBase, "text-right min-w-[64px] px-2")}>D{d}</th>
                                 ))}
                                 <Th
                                     sortKey="total" sort={sort} onSort={setSort}
@@ -1954,7 +1959,7 @@ export function DailyWaterReport() {
                                                 key={z.zoneName}
                                                 onClick={() => setActiveView(z.zoneName)}
                                                 className={cn(
-                                                    "w-full sm:w-auto px-4 py-2.5 sm:px-3 sm:py-1.5 rounded-full text-sm font-medium transition-all border text-center whitespace-nowrap",
+                                                    "w-full sm:w-auto px-4 py-2.5 sm:px-3 sm:py-1.5 rounded-full text-sm font-medium transition-design border text-center whitespace-nowrap",
                                                     isActive
                                                         ? "bg-primary text-white border-primary shadow-sm dark:bg-secondary dark:text-white dark:border-secondary"
                                                         : "bg-white text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700"
@@ -1967,7 +1972,7 @@ export function DailyWaterReport() {
                                     <button
                                         onClick={() => setActiveView('dc')}
                                         className={cn(
-                                            "w-full sm:w-auto col-span-2 sm:col-span-1 px-4 py-2.5 sm:px-3 sm:py-1.5 rounded-full text-sm font-medium transition-all border text-center whitespace-nowrap",
+                                            "w-full sm:w-auto col-span-2 sm:col-span-1 px-4 py-2.5 sm:px-3 sm:py-1.5 rounded-full text-sm font-medium transition-design border text-center whitespace-nowrap",
                                             activeView === 'dc'
                                                 ? "bg-primary text-white border-primary shadow-sm dark:bg-secondary dark:text-white dark:border-secondary"
                                                 : "bg-white text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700"

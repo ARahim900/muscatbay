@@ -14,7 +14,8 @@ export function SplashScreen({ exiting = false }: SplashScreenProps) {
       aria-label="Loading Muscat Bay Operations"
       className="fixed inset-0 z-[9999] flex flex-col items-center justify-center overflow-hidden"
       style={{
-        backgroundColor: "#0A090C",
+        // Splash always renders against the dark brand surface regardless of theme.
+        backgroundColor: "var(--mb-splash-bg, #0A090C)",
         animation: exiting
           ? "mb-splash-out 600ms cubic-bezier(0.4,0,1,1) both"
           : "mb-splash-in 350ms ease-out both",
@@ -26,13 +27,13 @@ export function SplashScreen({ exiting = false }: SplashScreenProps) {
         <span
           aria-hidden
           className="absolute rounded-2xl mb-ring-anim"
-          style={{ width: 148, height: 148, border: "1.5px solid rgba(161,209,213,0.25)", animationDelay: "0s" }}
+          style={{ width: 148, height: 148, border: "1.5px solid color-mix(in srgb, var(--secondary) 25%, transparent)", animationDelay: "0s" }}
         />
         {/* Inner pulse ring */}
         <span
           aria-hidden
           className="absolute rounded-2xl mb-ring-anim"
-          style={{ width: 120, height: 120, border: "1.5px solid rgba(161,209,213,0.40)", animationDelay: "0.6s" }}
+          style={{ width: 120, height: 120, border: "1.5px solid color-mix(in srgb, var(--secondary) 40%, transparent)", animationDelay: "0.6s" }}
         />
 
         {/* Logo — scale pulse while idle */}
@@ -43,8 +44,12 @@ export function SplashScreen({ exiting = false }: SplashScreenProps) {
             width={96}
             height={96}
             priority
-            className="rounded-2xl shadow-[0_0_40px_rgba(161,209,213,0.15)]"
-            style={{ animation: "mb-logo-enter 400ms cubic-bezier(0.34,1.56,0.64,1) both" }}
+            className="rounded-2xl"
+            style={{
+              boxShadow: "0 0 40px color-mix(in srgb, var(--secondary) 15%, transparent)",
+              // Calmer settle (audit P3): replaces overshoot easing
+              animation: "mb-logo-enter 400ms cubic-bezier(0.2,0,0,1) both",
+            }}
           />
         </div>
       </div>
@@ -57,8 +62,10 @@ export function SplashScreen({ exiting = false }: SplashScreenProps) {
         <p className="text-base font-semibold tracking-[0.22em] text-white uppercase select-none">
           Muscat Bay
         </p>
-        <p className="text-[11px] font-medium tracking-[0.30em] uppercase select-none"
-          style={{ color: "#A1D1D5" }}>
+        <p
+          className="text-[11px] font-medium tracking-[0.30em] uppercase select-none"
+          style={{ color: "var(--secondary)" }}
+        >
           Operations
         </p>
       </div>
@@ -76,7 +83,7 @@ export function SplashScreen({ exiting = false }: SplashScreenProps) {
           className="h-full rounded-full mb-shimmer"
           style={{
             width: "38%",
-            background: "linear-gradient(90deg, transparent, #A1D1D5, transparent)",
+            background: "linear-gradient(90deg, transparent, var(--secondary), transparent)",
           }}
         />
       </div>

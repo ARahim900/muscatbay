@@ -643,20 +643,20 @@ export function WaterHierarchyReport() {
                             <table className="w-full border-collapse text-[13px]">
                                 <thead>
                                     <tr className="bg-primary text-white">
-                                        <th className="sticky left-0 z-20 bg-primary text-left px-4 py-3 font-semibold min-w-[280px] sm:min-w-[320px]">
+                                        <th scope="col" className="sticky left-0 z-20 bg-primary text-left px-4 py-3 font-semibold min-w-[280px] sm:min-w-[320px]">
                                             Meter Hierarchy
                                         </th>
-                                        <th className="px-3 py-3 text-left font-semibold whitespace-nowrap">Acct #</th>
-                                        <th className="px-3 py-3 text-center font-semibold whitespace-nowrap">Level</th>
+                                        <th scope="col" className="px-3 py-3 text-left font-semibold whitespace-nowrap">Acct #</th>
+                                        <th scope="col" className="px-3 py-3 text-center font-semibold whitespace-nowrap">Level</th>
                                         {Array.from({ length: nDays }, (_, i) => i + 1).map(d => (
-                                            <th
+                                            <th scope="col"
                                                 key={d}
                                                 className="px-2 py-3 text-right font-semibold whitespace-nowrap tabular-nums"
                                             >
                                                 {d}
                                             </th>
                                         ))}
-                                        <th className="sticky right-0 z-20 bg-primary px-4 py-3 text-right font-semibold whitespace-nowrap">
+                                        <th scope="col" className="sticky right-0 z-20 bg-primary px-4 py-3 text-right font-semibold whitespace-nowrap">
                                             Month Total
                                         </th>
                                     </tr>

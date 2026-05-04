@@ -1,6 +1,15 @@
 "use client";
 
 import { cn } from '@/lib/utils';
+import {
+    CheckCircle2,
+    AlertCircle,
+    AlertTriangle,
+    Info,
+    Circle,
+    Sparkles,
+} from 'lucide-react';
+import type { ComponentType, SVGProps } from 'react';
 
 export type BadgeColor = 'green' | 'red' | 'orange' | 'blue' | 'purple' | 'slate' | 'amber' | 'cyan' | 'emerald' | 'sage';
 
@@ -8,6 +17,12 @@ interface StatusBadgeProps {
     label: string;
     color?: BadgeColor;
     className?: string;
+    /**
+     * Hide the leading status icon. Default: icon is shown.
+     * Disable only when the badge sits next to another icon that already
+     * conveys status (e.g. inside a row whose first cell carries the icon).
+     */
+    hideIcon?: boolean;
 }
 
 // Colors sourced from --badge-* tokens in globals.css.
@@ -59,14 +74,33 @@ const BG_COLORS: Record<string, string> = {
         'dark:bg-badge-sage/10 dark:ring-badge-sage/25',
 };
 
-export function StatusBadge({ label, color = 'slate', className }: StatusBadgeProps) {
+// Shape-distinct icons so status is distinguishable without color (WCAG 1.4.1).
+// Pairs with the existing label and tinted background.
+const ICON_FOR_COLOR: Record<BadgeColor, ComponentType<SVGProps<SVGSVGElement>>> = {
+    green:   CheckCircle2,
+    emerald: CheckCircle2,
+    red:     AlertCircle,
+    orange:  AlertTriangle,
+    amber:   AlertTriangle,
+    blue:    Info,
+    purple:  Sparkles,
+    cyan:    CheckCircle2,
+    sage:    CheckCircle2,
+    slate:   Circle,
+};
+
+export function StatusBadge({ label, color = 'slate', className, hideIcon = false }: StatusBadgeProps) {
+    const Icon = ICON_FOR_COLOR[color] ?? Circle;
     return (
         <span className={cn(
             "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap",
             BG_COLORS[color] ?? BG_COLORS.slate,
             className
         )}>
-            <span className={cn("w-1.5 h-1.5 rounded-full flex-shrink-0 shadow-sm", DOT_COLORS[color] ?? DOT_COLORS.slate)} />
+            {hideIcon
+                ? <span aria-hidden="true" className={cn("w-1.5 h-1.5 rounded-full flex-shrink-0 shadow-sm", DOT_COLORS[color] ?? DOT_COLORS.slate)} />
+                : <Icon aria-hidden="true" className="w-3 h-3 flex-shrink-0" strokeWidth={2.5} />
+            }
             {label}
         </span>
     );

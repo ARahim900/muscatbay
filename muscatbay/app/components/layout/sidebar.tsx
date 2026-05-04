@@ -87,10 +87,11 @@ export function Sidebar() {
 
   return (
     <>
-      {/* Mobile overlay - only shown on mobile when sidebar is open */}
+      {/* Mobile overlay - only shown on mobile when sidebar is open.
+          Solid scrim (no backdrop-blur) so paint cost stays low on low-end phones. */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/40 backdrop-blur-[2px] z-30 md:hidden transition-opacity duration-200"
+          className="fixed inset-0 bg-black/50 z-30 md:hidden transition-opacity duration-200"
           onClick={() => setIsOpen(false)}
           aria-hidden="true"
         />
@@ -108,6 +109,12 @@ export function Sidebar() {
           ${isCollapsed ? "w-[72px]" : "w-[220px]"}
           md:translate-x-0
         `}
+        // Respect notched-device safe areas in landscape so nav content doesn't
+        // sit under a hardware cutout.
+        style={{
+          paddingInlineStart: "env(safe-area-inset-left, 0px)",
+          paddingBottom: "env(safe-area-inset-bottom, 0px)",
+        }}
         aria-label="Main navigation"
       >
         {/* Brand lockup — same height as topbar (h-16 = 64px) */}

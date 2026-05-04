@@ -58,27 +58,36 @@ export function Breadcrumbs({ items, className = "" }: BreadcrumbsProps) {
     }
 
     return (
-        <nav aria-label="Breadcrumb" className={`flex items-center gap-1.5 text-sm ${className}`}>
-            {breadcrumbItems.map((item, index) => (
-                <span key={item.href} className="flex items-center gap-1.5">
-                    {index > 0 && (
-                        <ChevronRight className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500 flex-shrink-0" />
-                    )}
-                    {item.isCurrentPage ? (
-                        <span className="font-medium text-slate-700 dark:text-slate-200">
-                            {item.label}
-                        </span>
-                    ) : (
-                        <Link
-                            href={item.href}
-                            className="flex items-center gap-1 text-slate-500 dark:text-slate-300 hover:text-primary dark:hover:text-secondary transition-colors focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:outline-none rounded-sm"
-                        >
-                            {index === 0 && <Home className="h-3.5 w-3.5" />}
-                            <span>{item.label}</span>
-                        </Link>
-                    )}
-                </span>
-            ))}
+        <nav
+            aria-label="Breadcrumb"
+            className={`flex items-center gap-1.5 text-sm min-w-0 max-w-full overflow-hidden whitespace-nowrap ${className}`}
+        >
+            {breadcrumbItems.map((item, index) => {
+                const isLast = index === breadcrumbItems.length - 1;
+                return (
+                    <span
+                        key={item.href}
+                        className={`flex items-center gap-1.5 min-w-0 ${isLast ? "flex-1 min-w-0" : "flex-shrink-0"}`}
+                    >
+                        {index > 0 && (
+                            <ChevronRight className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500 flex-shrink-0" aria-hidden="true" />
+                        )}
+                        {item.isCurrentPage ? (
+                            <span className="font-medium text-slate-700 dark:text-slate-200 truncate">
+                                {item.label}
+                            </span>
+                        ) : (
+                            <Link
+                                href={item.href}
+                                className="flex items-center gap-1 min-w-0 text-slate-500 dark:text-slate-300 hover:text-primary dark:hover:text-secondary transition-colors focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:outline-none rounded-sm"
+                            >
+                                {index === 0 && <Home className="h-3.5 w-3.5 flex-shrink-0" aria-hidden="true" />}
+                                <span className="truncate">{item.label}</span>
+                            </Link>
+                        )}
+                    </span>
+                );
+            })}
         </nav>
     );
 }
