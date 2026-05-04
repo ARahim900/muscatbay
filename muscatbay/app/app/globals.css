@@ -885,6 +885,33 @@
   .bottom-nav-safe {
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
+
+  /* ── Print mode adjustments ──
+   * 1. Disable the scroll-fade utility so tables don't print with a faded right edge.
+   * 2. Drop overflow-x clipping on table wrappers so off-screen columns print.
+   * 3. Remap dark-mode surface/text tokens to their light-mode equivalents when
+   *    the user prints from dark mode — keeps text legible on white paper. */
+  @media print {
+    .scroll-hint-x {
+      -webkit-mask-image: none;
+              mask-image: none;
+    }
+
+    .scroll-hint-x,
+    .overflow-x-auto {
+      overflow: visible !important;
+    }
+
+    .dark {
+      color-scheme: light;
+      --background: #FFFFFF;
+      --foreground: #0A0A0A;
+      --card: #FFFFFF;
+      --card-foreground: #0A0A0A;
+      --muted-foreground: #6B7280;
+      --border: #E5E7EB;
+    }
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
