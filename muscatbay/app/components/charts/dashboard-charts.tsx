@@ -7,6 +7,7 @@ import { Droplets, ArrowUpRight, Recycle } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar, Legend, ReferenceLine } from "recharts";
 import { LiquidTooltip } from "./liquid-tooltip";
 import { ChartContainer } from "./chart-container";
+import { ToggleableLegendContent, useChartLegendToggle } from "./toggleable-legend";
 import { AnimateOnScroll } from "@/components/shared/scroll-animation";
 import type { ChartData } from "@/hooks/useDashboardData";
 
@@ -30,6 +31,7 @@ interface DashboardChartsProps {
 const REFERENCE_LINE_LABEL = { position: 'insideTopRight' as const, fontSize: 10, fill: 'var(--chart-axis)', dy: -4 };
 
 function DashboardChartsInner({ chartData, stpChartData }: DashboardChartsProps) {
+    const stpLegend = useChartLegendToggle();
     const waterAvg = useMemo(() =>
         chartData.length > 0
             ? chartData.reduce((sum, d) => sum + ((d.water as number) || 0), 0) / chartData.length
@@ -96,9 +98,9 @@ function DashboardChartsInner({ chartData, stpChartData }: DashboardChartsProps)
                                 <XAxis dataKey="month" className="text-xs" tick={AXIS_TICK_SM} axisLine={false} tickLine={false} dy={10} />
                                 <YAxis className="text-xs" tick={AXIS_TICK_SM} axisLine={false} tickLine={false} />
                                 <Tooltip content={<LiquidTooltip />} cursor={BAR_CURSOR} />
-                                <Legend iconType="circle" />
-                                <Bar dataKey="inlet" name="Inlet" fill="var(--chart-inlet)" radius={BAR_RADIUS} animationDuration={200} />
-                                <Bar dataKey="tse" name="TSE Output" fill={CHART_COLORS.teal} radius={BAR_RADIUS} animationDuration={200} />
+                                <Legend content={<ToggleableLegendContent isHidden={stpLegend.isHidden} onToggle={stpLegend.toggle} />} />
+                                <Bar dataKey="inlet" name="Inlet" hide={stpLegend.isHidden("inlet")} fill="var(--chart-inlet)" radius={BAR_RADIUS} animationDuration={200} />
+                                <Bar dataKey="tse" name="TSE Output" hide={stpLegend.isHidden("tse")} fill={CHART_COLORS.teal} radius={BAR_RADIUS} animationDuration={200} />
                             </BarChart>
                         </ChartContainer>
                     </div>

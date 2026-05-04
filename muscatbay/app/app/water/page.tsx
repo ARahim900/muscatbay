@@ -36,6 +36,7 @@ import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
 import { PageStatusBar } from "@/components/shared/page-status-bar";
 
 // Components
+import { ToggleableLegendContent, useChartLegendToggle } from "@/components/charts/toggleable-legend";
 import { DateRangePicker } from "@/components/water/date-range-picker";
 import { TypeFilterPills } from "@/components/water/type-filter-pills";
 import { LiquidProgressRing } from "../../components/charts/liquid-progress-ring";
@@ -262,6 +263,12 @@ export default function WaterPage() {
     const [selectedType, setSelectedType] = useState('All');
     const [selectedChartType, setSelectedChartType] = useState<string | null>(null);
     const [selectedYear, setSelectedYear] = useState<string>('');
+
+    // Independent legend-toggle state per chart so each chart can be hidden/shown
+    // without affecting the others.
+    const aValuesLegend     = useChartLegendToggle();
+    const lossAnalysisLegend = useChartLegendToggle();
+    const zoneTrendLegend    = useChartLegendToggle();
 
     // Supabase data state
     const [waterMeters, setWaterMeters] = useState<WaterMeter[]>(MOCK_WATER_METERS);
@@ -867,10 +874,10 @@ export default function WaterPage() {
                                                 <XAxis dataKey="month" className="text-xs" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "var(--chart-axis)" }} dy={10} />
                                                 <YAxis className="text-xs" tickFormatter={(v) => `${v / 1000}k`} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "var(--chart-axis)" }} label={{ value: 'm³', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: "var(--chart-axis)", fontSize: 11 } }} />
                                                 <Tooltip content={<LiquidTooltip />} cursor={{ stroke: 'rgba(0,0,0,0.1)', strokeWidth: 2 }} />
-                                                <Legend iconType="circle" />
-                                                <Area type="monotone" name="A1 - Main Source" dataKey="A1" stroke={CHART_COLORS.brand} fill="url(#gradA1)" strokeWidth={3} activeDot={{ r: 6, stroke: 'var(--card)', strokeWidth: 2 }} animationDuration={600} animationEasing="ease-out" />
-                                                <Area type="monotone" name="A2 - Zone Distribution" dataKey="A2" stroke={CHART_COLORS.primary} fill="url(#gradA2)" strokeWidth={3} animationDuration={600} animationEasing="ease-out" />
-                                                <Area type="monotone" name="A3 - Individual" dataKey="A3Individual" stroke={CHART_COLORS.gray} fill="none" strokeWidth={2} strokeDasharray="5 5" animationDuration={600} animationEasing="ease-out" />
+                                                <Legend content={<ToggleableLegendContent isHidden={aValuesLegend.isHidden} onToggle={aValuesLegend.toggle} />} />
+                                                <Area type="monotone" name="A1 - Main Source" dataKey="A1" hide={aValuesLegend.isHidden("A1")} stroke={CHART_COLORS.brand} fill="url(#gradA1)" strokeWidth={3} activeDot={{ r: 6, stroke: 'var(--card)', strokeWidth: 2 }} animationDuration={600} animationEasing="ease-out" />
+                                                <Area type="monotone" name="A2 - Zone Distribution" dataKey="A2" hide={aValuesLegend.isHidden("A2")} stroke={CHART_COLORS.primary} fill="url(#gradA2)" strokeWidth={3} animationDuration={600} animationEasing="ease-out" />
+                                                <Area type="monotone" name="A3 - Individual" dataKey="A3Individual" hide={aValuesLegend.isHidden("A3Individual")} stroke={CHART_COLORS.gray} fill="none" strokeWidth={2} strokeDasharray="5 5" animationDuration={600} animationEasing="ease-out" />
                                             </AreaChart>
                                         </ResponsiveContainer>
                                     </div>
@@ -895,10 +902,10 @@ export default function WaterPage() {
                                                 <XAxis dataKey="month" className="text-xs" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "var(--chart-axis)" }} dy={10} />
                                                 <YAxis className="text-xs" tickFormatter={(v) => `${v / 1000}k`} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "var(--chart-axis)" }} label={{ value: 'm³', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: "var(--chart-axis)", fontSize: 11 } }} />
                                                 <Tooltip content={<LiquidTooltip />} cursor={{ stroke: 'rgba(0,0,0,0.1)', strokeWidth: 2 }} />
-                                                <Legend iconType="circle" />
-                                                <Area type="monotone" name="Total Loss" dataKey="totalLoss" stroke={CHART_COLORS.loss} fill="url(#gradLoss)" strokeWidth={2} strokeDasharray="5 5" animationDuration={600} animationEasing="ease-out" />
-                                                <Line type="monotone" name="Stage 1 Loss" dataKey="stage1Loss" stroke={CHART_COLORS.amber} strokeWidth={2} strokeDasharray="3 3" dot={false} animationDuration={600} animationEasing="ease-out" />
-                                                <Line type="monotone" name="Stage 2 Loss" dataKey="stage2Loss" stroke={CHART_COLORS.gray} strokeWidth={2} strokeDasharray="3 3" dot={false} animationDuration={600} animationEasing="ease-out" />
+                                                <Legend content={<ToggleableLegendContent isHidden={lossAnalysisLegend.isHidden} onToggle={lossAnalysisLegend.toggle} />} />
+                                                <Area type="monotone" name="Total Loss" dataKey="totalLoss" hide={lossAnalysisLegend.isHidden("totalLoss")} stroke={CHART_COLORS.loss} fill="url(#gradLoss)" strokeWidth={2} strokeDasharray="5 5" animationDuration={600} animationEasing="ease-out" />
+                                                <Line type="monotone" name="Stage 1 Loss" dataKey="stage1Loss" hide={lossAnalysisLegend.isHidden("stage1Loss")} stroke={CHART_COLORS.amber} strokeWidth={2} strokeDasharray="3 3" dot={false} animationDuration={600} animationEasing="ease-out" />
+                                                <Line type="monotone" name="Stage 2 Loss" dataKey="stage2Loss" hide={lossAnalysisLegend.isHidden("stage2Loss")} stroke={CHART_COLORS.gray} strokeWidth={2} strokeDasharray="3 3" dot={false} animationDuration={600} animationEasing="ease-out" />
                                             </AreaChart>
                                         </ResponsiveContainer>
                                     </div>
@@ -988,10 +995,10 @@ export default function WaterPage() {
                                                 <XAxis dataKey="month" className="text-xs" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "var(--chart-axis)" }} dy={10} />
                                                 <YAxis className="text-xs" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "var(--chart-axis)" }} label={{ value: 'm³', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: "var(--chart-axis)", fontSize: 11 } }} />
                                                 <Tooltip content={<LiquidTooltip />} cursor={{ stroke: 'rgba(0,0,0,0.1)', strokeWidth: 2 }} />
-                                                <Legend iconType="circle" />
-                                                <Area type="monotone" name="Individual Total" dataKey="Individual Total" stroke={CHART_COLORS.brand} fill="url(#gradIndividual)" strokeWidth={3} activeDot={{ r: 6, stroke: 'var(--card)', strokeWidth: 2 }} animationDuration={600} animationEasing="ease-out" />
-                                                <Line type="monotone" name="Loss" dataKey="Loss" stroke={CHART_COLORS.loss} strokeWidth={2} dot={false} strokeDasharray="5 5" animationDuration={600} animationEasing="ease-out" />
-                                                <Area type="monotone" name="Zone Bulk" dataKey="Zone Bulk" stroke={CHART_COLORS.primary} fill="url(#gradZoneBulk)" strokeWidth={3} animationDuration={600} animationEasing="ease-out" />
+                                                <Legend content={<ToggleableLegendContent isHidden={zoneTrendLegend.isHidden} onToggle={zoneTrendLegend.toggle} />} />
+                                                <Area type="monotone" name="Individual Total" dataKey="Individual Total" hide={zoneTrendLegend.isHidden("Individual Total")} stroke={CHART_COLORS.brand} fill="url(#gradIndividual)" strokeWidth={3} activeDot={{ r: 6, stroke: 'var(--card)', strokeWidth: 2 }} animationDuration={600} animationEasing="ease-out" />
+                                                <Line type="monotone" name="Loss" dataKey="Loss" hide={zoneTrendLegend.isHidden("Loss")} stroke={CHART_COLORS.loss} strokeWidth={2} dot={false} strokeDasharray="5 5" animationDuration={600} animationEasing="ease-out" />
+                                                <Area type="monotone" name="Zone Bulk" dataKey="Zone Bulk" hide={zoneTrendLegend.isHidden("Zone Bulk")} stroke={CHART_COLORS.primary} fill="url(#gradZoneBulk)" strokeWidth={3} animationDuration={600} animationEasing="ease-out" />
                                             </AreaChart>
                                         </ResponsiveContainer>
                                     </div>

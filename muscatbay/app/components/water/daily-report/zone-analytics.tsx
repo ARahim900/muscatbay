@@ -8,11 +8,13 @@ import {
 } from "recharts";
 import { LiquidProgressRing } from "@/components/charts/liquid-progress-ring";
 import { LiquidTooltip } from "@/components/charts/liquid-tooltip";
+import { ToggleableLegendContent, useChartLegendToggle } from "@/components/charts/toggleable-legend";
 import { ZONE_BULK_CONFIG } from "@/lib/water-accounts";
 import type { SupabaseDailyWaterConsumption } from "@/entities/water";
 import { type ZoneAnalyticsPanelProps, CHART_COLORS, r2 } from "./report-types";
 
 export function ZoneAnalyticsPanel({ reportData, monthData, selectedDay, month, activeZoneName }: ZoneAnalyticsPanelProps) {
+    const { isHidden, toggle } = useChartLegendToggle();
     const accountMap = useMemo(() => {
         const map = new Map<string, SupabaseDailyWaterConsumption>();
         for (const row of monthData) map.set(row.account_number, row);
@@ -107,18 +109,18 @@ export function ZoneAnalyticsPanel({ reportData, monthData, selectedDay, month, 
                                         tickFormatter={v => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v}
                                         label={{ value: 'm³', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: "var(--chart-axis)", fontSize: 11 } }} />
                                     <Tooltip content={<LiquidTooltip />} cursor={{ stroke: 'rgba(0,0,0,0.1)', strokeWidth: 2 }} />
-                                    <Legend iconType="circle" />
+                                    <Legend content={<ToggleableLegendContent isHidden={isHidden} onToggle={toggle} />} />
                                     {currentDayLabel && (
                                         <ReferenceLine x={currentDayLabel} stroke={CHART_COLORS.individual}
                                             strokeDasharray="4 3" strokeWidth={1.5}
                                             label={{ value: `Day ${selectedDay}`, position: 'top', fontSize: 10, fill: CHART_COLORS.individual, fontWeight: 600 }} />
                                     )}
-                                    <Area type="monotone" name="ΣL3 Total" dataKey="ΣL3"
+                                    <Area type="monotone" name="ΣL3 Total" dataKey="ΣL3" hide={isHidden("ΣL3")}
                                         stroke={CHART_COLORS.individual} fill="url(#gradDailyL3)" strokeWidth={3}
                                         activeDot={{ r: 6, stroke: 'var(--card)', strokeWidth: 2 }} animationDuration={600} />
-                                    <Line type="monotone" name="Loss" dataKey="Loss"
+                                    <Line type="monotone" name="Loss" dataKey="Loss" hide={isHidden("Loss")}
                                         stroke={CHART_COLORS.loss} strokeWidth={2} dot={false} strokeDasharray="5 5" animationDuration={600} />
-                                    <Area type="monotone" name="L2 Bulk" dataKey="L2 Bulk"
+                                    <Area type="monotone" name="L2 Bulk" dataKey="L2 Bulk" hide={isHidden("L2 Bulk")}
                                         stroke={CHART_COLORS.bulk} fill="url(#gradDailyBulk)" strokeWidth={3}
                                         activeDot={{ r: 6, stroke: 'var(--card)', strokeWidth: 2 }} animationDuration={600} />
                                 </AreaChart>
