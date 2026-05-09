@@ -11,15 +11,15 @@ interface DateRangePickerProps {
     onReset: () => void;
 }
 
-// Maximum number of months visible in the slider at once
-const MAX_VISIBLE_MONTHS = 12;
-
 // Stable reference outside component
 const monthFullNames: Record<string, string> = {
     'Jan': 'January', 'Feb': 'February', 'Mar': 'March', 'Apr': 'April',
     'May': 'May', 'Jun': 'June', 'Jul': 'July', 'Aug': 'August',
     'Sep': 'September', 'Oct': 'October', 'Nov': 'November', 'Dec': 'December'
 };
+
+// Fixed Jan-Dec axis — slider always displays a complete 12-month year
+const MONTH_ORDER = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'] as const;
 
 type PresetKey = 'ytd' | 'last3' | 'last6' | 'last12' | null;
 
@@ -188,17 +188,31 @@ export function DateRangePicker({
         onRangeChangeRef.current = onRangeChange;
     }, [onRangeChange]);
 
-    // Cap the visible timeline to the last MAX_VISIBLE_MONTHS months
-    const activeTimeline = useMemo(() => {
-        if (availableMonths.length <= MAX_VISIBLE_MONTHS) return availableMonths;
-        return availableMonths.slice(-MAX_VISIBLE_MONTHS);
-    }, [availableMonths]);
+    // Determine the year the slider should display: prefer endMonth's year,
+    // then startMonth's year, then the latest year present in availableMonths.
+    const displayYear = useMemo(() => {
+        const fromEnd = endMonth?.split('-')[1];
+        if (fromEnd) return fromEnd;
+        const fromStart = startMonth?.split('-')[1];
+        if (fromStart) return fromStart;
+        if (availableMonths.length === 0) return '';
+        return availableMonths[availableMonths.length - 1].split('-')[1];
+    }, [startMonth, endMonth, availableMonths]);
 
-    // Calculate slider indices (clamped to visible timeline)
+    // Fixed Jan-Dec timeline for the display year ("Jan-YY" .. "Dec-YY")
+    const activeTimeline = useMemo(() => {
+        if (!displayYear) return [] as string[];
+        return MONTH_ORDER.map(m => `${m}-${displayYear}`);
+    }, [displayYear]);
+
+    // Set of months that actually have data (used for dot visibility)
+    const dataMonthsSet = useMemo(() => new Set(availableMonths), [availableMonths]);
+
+    // Calculate slider indices (clamped to fixed Jan-Dec axis)
     let activeStartIndex = activeTimeline.length > 0 ? activeTimeline.indexOf(startMonth) : 0;
     let activeEndIndex = activeTimeline.length > 0 ? activeTimeline.indexOf(endMonth) : 0;
 
-    // If out of bounds, default to full visible range
+    // If out of bounds (e.g. startMonth is from a different year), clamp to bounds
     if (activeStartIndex === -1) activeStartIndex = 0;
     if (activeEndIndex === -1) activeEndIndex = Math.max(0, activeTimeline.length - 1);
 
@@ -213,14 +227,8 @@ export function DateRangePicker({
     // Count of selected months
     const selectedDataMonths = activeEndIndex - activeStartIndex + 1;
 
-    // Detect whether the timeline spans multiple years (for year boundary markers)
-    const uniqueYears = useMemo(() => {
-        const years = new Set(activeTimeline.map(m => m.split('-')[1]));
-        return years.size;
-    }, [activeTimeline]);
-
-    // Auto-sync parent when start/end months fall outside visible timeline
-    // (e.g. after timeline cap, or after reset with year filter cleared)
+    // Auto-sync parent when start/end months fall outside the fixed Jan-Dec axis
+    // (e.g. after switching years, or when initial values span multiple years)
     useEffect(() => {
         if (activeTimeline.length === 0) return;
         const startInTimeline = activeTimeline.includes(startMonth);
@@ -350,33 +358,28 @@ export function DateRangePicker({
                     )}
                 </div>
 
-                {/* Month Labels with Year Separators + Data Dots */}
-                <div className="flex justify-between px-3 mt-4 relative">
+                {/* Year badge */}
+                {displayYear && (
+                    <div className="px-3 mt-3 mb-1">
+                        <span className="text-[10px] font-extrabold text-primary/50 dark:text-secondary/40 tracking-wider">
+                            20{displayYear}
+                        </span>
+                    </div>
+                )}
+
+                {/* Fixed Jan-Dec month labels + data dots */}
+                <div className="flex justify-between px-3 mt-1 relative">
                     {activeTimeline.map((m, i) => {
-                        const [monthPart, yearPart] = m.split('-');
-                        const prevYear = i > 0 ? activeTimeline[i - 1].split('-')[1] : null;
-                        const isYearBoundary = prevYear !== null && prevYear !== yearPart;
-                        const isFirstOfYear = i === 0 || isYearBoundary;
+                        const [monthPart] = m.split('-');
                         const isInRange = i >= activeStartIndex && i <= activeEndIndex;
                         const isEndpoint = i === activeStartIndex || i === activeEndIndex;
+                        const hasData = dataMonthsSet.has(m);
 
                         return (
                             <div
                                 key={m}
                                 className="relative flex flex-col items-center"
                             >
-                                {/* Year badge - only when timeline spans multiple years */}
-                                {isFirstOfYear && uniqueYears > 1 && (
-                                    <span className="absolute -top-5 left-1/2 -translate-x-1/2 text-[9px] font-extrabold text-primary/50 dark:text-secondary/35 tracking-wider whitespace-nowrap">
-                                        20{yearPart}
-                                    </span>
-                                )}
-
-                                {/* Year divider */}
-                                {isYearBoundary && uniqueYears > 1 && (
-                                    <div className="absolute -top-2 -left-0.5 w-px h-[calc(100%+12px)] bg-gradient-to-b from-primary/20 to-transparent dark:from-secondary/20 dark:to-transparent" />
-                                )}
-
                                 {/* Month label */}
                                 <span
                                     className={`
@@ -385,22 +388,26 @@ export function DateRangePicker({
                                             ? 'font-extrabold text-primary dark:text-secondary'
                                             : isInRange
                                                 ? 'font-semibold text-secondary dark:text-secondary/90'
-                                                : 'font-medium text-slate-400 dark:text-slate-500'
+                                                : hasData
+                                                    ? 'font-medium text-slate-400 dark:text-slate-500'
+                                                    : 'font-medium text-slate-300 dark:text-slate-600'
                                         }
                                     `}
                                 >
                                     {monthPart}
                                 </span>
 
-                                {/* Data availability dot */}
+                                {/* Data availability dot — empty ring for months without data */}
                                 <span
                                     className={`
-                                        mt-1.5 w-1 h-1 rounded-full transition-all duration-200
+                                        mt-1.5 rounded-full transition-all duration-200
                                         ${isEndpoint
                                             ? 'bg-primary dark:bg-secondary w-1.5 h-1.5'
-                                            : isInRange
-                                                ? 'bg-secondary dark:bg-secondary/70'
-                                                : 'bg-slate-300 dark:bg-slate-600'
+                                            : isInRange && hasData
+                                                ? 'bg-secondary dark:bg-secondary/70 w-1 h-1'
+                                                : hasData
+                                                    ? 'bg-slate-300 dark:bg-slate-600 w-1 h-1'
+                                                    : 'border border-slate-300 dark:border-slate-700 w-1 h-1'
                                         }
                                     `}
                                 />

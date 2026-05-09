@@ -37,6 +37,28 @@ const CHART_COLORS = {
     gray: 'var(--chart-gray)',
 } as const;
 
+// Map "Mon-YY" → numeric ordinal (year * 12 + month) for chronological compare.
+// Used so the Jan-Dec slider can point at months that have no data without
+// breaking range filters that previously used array `indexOf`.
+const MONTH_INDEX: Record<string, number> = {
+    Jan: 1, Feb: 2, Mar: 3, Apr: 4, May: 5, Jun: 6,
+    Jul: 7, Aug: 8, Sep: 9, Oct: 10, Nov: 11, Dec: 12,
+};
+const monthOrdinal = (code: string): number => {
+    const [m, y] = code.split('-');
+    return (parseInt('20' + y, 10) || 0) * 12 + (MONTH_INDEX[m] || 0);
+};
+const monthsInRange = (allMonths: string[], start: string, end: string): string[] => {
+    if (!start || !end) return allMonths;
+    const lo = monthOrdinal(start);
+    const hi = monthOrdinal(end);
+    if (!lo || !hi) return allMonths;
+    return allMonths.filter(m => {
+        const ord = monthOrdinal(m);
+        return ord >= lo && ord <= hi;
+    });
+};
+
 // Color palette for per-meter lines (module-level to avoid recreating on each render)
 const meterColors = [
     CHART_COLORS.primary,
@@ -216,19 +238,34 @@ export default function ElectricityPage() {
         });
     }, [allMonths, selectedYear]);
 
-    // Initialize start/end months when data loads; auto-extend end only when a new month arrives in the data
+    // Initialize start/end months when data loads. The slider is locked to a single
+    // year (Jan-Dec), so we only need the YEARS to be valid — the months themselves
+    // may legitimately point at positions without data (those just render empty on
+    // the axis). Validating by data presence here would yank the slider back every
+    // time the user drags onto a no-data month.
     useEffect(() => {
         if (allMonths.length === 0) return;
         const latestMonth = allMonths[allMonths.length - 1];
-        const startValid = startMonth && allMonths.includes(startMonth);
-        const endValid = endMonth && allMonths.includes(endMonth);
+        const latestYear = latestMonth.split('-')[1];
+        const dataYears = new Set(allMonths.map(m => m.split('-')[1]));
+        const startYear = startMonth?.split('-')[1];
+        const endYear = endMonth?.split('-')[1];
+        const yearsKnown = startYear && endYear && dataYears.has(startYear) && dataYears.has(endYear);
+        const yearsMatch = startYear && endYear && startYear === endYear;
 
-        if (!startValid) setStartMonth(allMonths[0]);
-
-        if (!endValid) {
-            setEndMonth(latestMonth);
-        } else if (!selectedYear && latestMonth !== latestDataMonthRef.current) {
-            // A genuinely new month arrived in the data — auto-extend end to include it
+        if (!startMonth || !endMonth || !yearsKnown || !yearsMatch) {
+            // Default to the latest year's full Jan-Dec axis on first load or
+            // when restored state spans multiple years / unknown years.
+            const monthsForLatest = allMonths.filter(m => m.split('-')[1] === latestYear);
+            if (monthsForLatest.length > 0) {
+                setStartMonth(monthsForLatest[0]);
+                setEndMonth(monthsForLatest[monthsForLatest.length - 1]);
+            }
+        } else if (latestMonth !== latestDataMonthRef.current && endYear === latestYear && endMonth !== latestMonth) {
+            // The slider is on the latest year but a newer month has arrived since
+            // the prefs were saved (or since last poll) — advance end to include it.
+            // Runs on first mount (ref empty) and on real-time updates that bring in
+            // a new latest month, so the UI never gets pinned to a stale endpoint.
             setEndMonth(latestMonth);
         }
 
@@ -350,12 +387,9 @@ export default function ElectricityPage() {
     };
 
     const stats = useMemo(() => {
-        // Get months within selected range
-        const startIdx = allMonths.indexOf(startMonth);
-        const endIdx = allMonths.indexOf(endMonth);
-        const rangeMonths = startIdx >= 0 && endIdx >= 0
-            ? allMonths.slice(startIdx, endIdx + 1)
-            : allMonths;
+        // Months within the selected (chronological) range — slider may point at
+        // months with no data, so we filter by ordinal rather than by indexOf.
+        const rangeMonths = monthsInRange(allMonths, startMonth, endMonth);
 
         // Calculate totals across selected months
         const totalConsumption = meters.reduce((sum, meter) => {
@@ -373,9 +407,10 @@ export default function ElectricityPage() {
 
         const rangeLabel = startMonth && endMonth ? `${startMonth} - ${endMonth}` : "All Time";
 
-        // Calculate previous period for trend comparison
-        const prevEndIdx = startIdx > 0 ? startIdx - 1 : -1;
-        const prevStartIdx = prevEndIdx >= 0 ? Math.max(0, prevEndIdx - (endIdx - startIdx)) : -1;
+        // Previous period for trend comparison: same length immediately before the current range
+        const startIdxAll = rangeMonths.length > 0 ? allMonths.indexOf(rangeMonths[0]) : -1;
+        const prevEndIdx = startIdxAll > 0 ? startIdxAll - 1 : -1;
+        const prevStartIdx = prevEndIdx >= 0 ? Math.max(0, prevEndIdx - (rangeMonths.length - 1)) : -1;
 
         let prevConsumption = 0;
         let prevCost = 0;
@@ -434,12 +469,7 @@ export default function ElectricityPage() {
 
     // Monthly data filtered by selected range (for Overview chart)
     const filteredMonthlyData = useMemo(() => {
-        const startIdx = allMonths.indexOf(startMonth);
-        const endIdx = allMonths.indexOf(endMonth);
-        const rangeMonths = startIdx >= 0 && endIdx >= 0
-            ? allMonths.slice(startIdx, endIdx + 1)
-            : allMonths;
-
+        const rangeMonths = monthsInRange(allMonths, startMonth, endMonth);
         return rangeMonths.map(month => {
             const total = meters.reduce((sum, m) => sum + (m.readings[month] || 0), 0);
             return { month, consumption: total };
@@ -448,11 +478,7 @@ export default function ElectricityPage() {
 
     // --- Consumption By Type (for Overview) - filtered by range ---
     const consumptionByType = useMemo(() => {
-        const startIdx = allMonths.indexOf(startMonth);
-        const endIdx = allMonths.indexOf(endMonth);
-        const rangeMonths = startIdx >= 0 && endIdx >= 0
-            ? allMonths.slice(startIdx, endIdx + 1)
-            : allMonths;
+        const rangeMonths = monthsInRange(allMonths, startMonth, endMonth);
 
         const grouped: Record<string, number> = {};
         meters.forEach(m => {
@@ -520,10 +546,9 @@ export default function ElectricityPage() {
         const monthsToUse = (selectedYear && filteredMonthsByYear.length > 0) ? filteredMonthsByYear : allMonths;
         if (monthsToUse.length === 0) return { stats: [], chartData: [], tableData: [], dateRangeLabel: "", topConsumers: [], perMeterChartData: [], selectedMonths: [] as string[], typeAverage: 0, comparisonData: [], selectedMeterName: null };
 
-        // Use startMonth/endMonth from DateRangePicker
-        const startIdx = Math.max(0, monthsToUse.indexOf(startMonth));
-        const endIdx = monthsToUse.indexOf(endMonth);
-        const selectedMonths = monthsToUse.slice(startIdx, (endIdx >= 0 ? endIdx : monthsToUse.length - 1) + 1);
+        // Use startMonth/endMonth from DateRangePicker. The slider can point at
+        // months without data (Jan-Dec axis), so filter chronologically.
+        const selectedMonths = monthsInRange(monthsToUse, startMonth, endMonth);
 
         // Filter Meters by Type
         const typeFilteredMeters = analysisType === "All"
@@ -668,8 +693,9 @@ export default function ElectricityPage() {
             }
         ];
 
-        const startMonthStr = selectedMonths[0];
-        const endMonthStr = selectedMonths[selectedMonths.length - 1];
+        // Fall back to slider values when the chosen range contains no data months
+        const startMonthStr = selectedMonths[0] || startMonth;
+        const endMonthStr = selectedMonths[selectedMonths.length - 1] || endMonth;
 
         // Top consumers data for bar chart (top 10)
         const topConsumers = tableRows.slice(0, 10).map((meter, idx) => ({
