@@ -216,6 +216,19 @@ Loaded weights: **400, 500, 600, 700, 800**
 ### Heading Rule
 All headings (`h1–h6`) use `font-semibold tracking-tight` and take the `--primary` color in light mode, `--foreground` in dark mode.
 
+### KPI Value Rule
+KPI numbers on `StatsGrid` tiles use a heavier, larger override so they dominate the tile visually:
+
+| Property | Value |
+|----------|-------|
+| Size | `text-2xl` (24px) — flat; `text-3xl` was tested but truncated long values like `92,051.5 OMR` on 8-tile grids once the icon claimed its space |
+| Weight | `font-semibold` (600) — modern, elegant. 700+ reads heavy/dated on tabular data |
+| Color | `--primary` (`#4E4456`) in light · `--foreground` in dark |
+| Numerals | `tabular-nums` |
+| Line height | `leading-none` |
+
+Colour never shifts to red/green based on the metric — that semantic lives in the trend chip below.
+
 ---
 
 ## 4. Layout & Spacing

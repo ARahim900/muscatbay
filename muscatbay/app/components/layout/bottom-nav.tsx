@@ -4,6 +4,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/components/auth/auth-provider';
+import { useUserRole } from '@/hooks/useUserRole';
+import { canAccessModule, type ModuleKey } from '@/lib/rbac';
 import {
   LayoutDashboard,
   Droplets,
@@ -25,22 +27,23 @@ interface NavItem {
   name: string;
   icon: React.ComponentType<{ className?: string }>;
   href: string;
+  module?: ModuleKey;
 }
 
 const primaryItems: NavItem[] = [
-  { id: "dashboard", name: "Dashboard", icon: LayoutDashboard, href: "/" },
-  { id: "water", name: "Water", icon: Droplets, href: "/water" },
-  { id: "electricity", name: "Electricity", icon: Zap, href: "/electricity" },
-  { id: "stp", name: "STP Plant", icon: Waves, href: "/stp" },
-  { id: "fire-safety", name: "Fire Safety", icon: Flame, href: "/firefighting" },
+  { id: "dashboard", name: "Dashboard", icon: LayoutDashboard, href: "/", module: "dashboard" },
+  { id: "water", name: "Water", icon: Droplets, href: "/water", module: "water" },
+  { id: "electricity", name: "Electricity", icon: Zap, href: "/electricity", module: "electricity" },
+  { id: "stp", name: "STP Plant", icon: Waves, href: "/stp", module: "stp" },
+  { id: "fire-safety", name: "Fire Safety", icon: Flame, href: "/firefighting", module: "firefighting" },
 ];
 
 const overflowItems: NavItem[] = [
-  { id: "contractors", name: "Contractors", icon: Users, href: "/contractors" },
-  { id: "hvac-system", name: "HVAC System", icon: Wrench, href: "/hvac" },
-  { id: "assets", name: "Assets", icon: Package, href: "/assets" },
-  { id: "pest-control", name: "Pest Control", icon: Bug, href: "/pest-control" },
-  { id: "settings", name: "Settings", icon: Settings, href: "/settings" },
+  { id: "contractors", name: "Contractors", icon: Users, href: "/contractors", module: "contractors" },
+  { id: "hvac-system", name: "HVAC System", icon: Wrench, href: "/hvac", module: "hvac" },
+  { id: "assets", name: "Assets", icon: Package, href: "/assets", module: "assets" },
+  { id: "pest-control", name: "Pest Control", icon: Bug, href: "/pest-control", module: "pest-control" },
+  { id: "settings", name: "Settings", icon: Settings, href: "/settings", module: "settings" },
 ];
 
 const allNavItems = [...primaryItems, ...overflowItems];
@@ -56,12 +59,17 @@ function isRouteActive(href: string, pathname: string | null) {
 
 export function BottomNav() {
   const pathname = usePathname();
-  const { logout } = useAuth();
+  const { logout, isDevMode } = useAuth();
+  const role = useUserRole();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const drawerRef = useRef<HTMLDivElement>(null);
   const moreButtonRef = useRef<HTMLButtonElement>(null);
 
-  const isOverflowActive = overflowItems.some(i => isRouteActive(i.href, pathname));
+  // RBAC filter — same rule as sidebar; dev mode bypasses.
+  const visiblePrimary = isDevMode ? primaryItems : primaryItems.filter((i) => !i.module || canAccessModule(role, i.module));
+  const visibleOverflow = isDevMode ? overflowItems : overflowItems.filter((i) => !i.module || canAccessModule(role, i.module));
+
+  const isOverflowActive = visibleOverflow.some(i => isRouteActive(i.href, pathname));
 
   // Close drawer on route change — canonical "close overlay on navigation"
   // pattern. Cannot be derived from pathname at render time because it must
@@ -172,7 +180,7 @@ export function BottomNav() {
 
           {/* Overflow nav items */}
           <nav className="py-2">
-            {overflowItems.map((item) => {
+            {visibleOverflow.map((item) => {
               const Icon = item.icon;
               const active = isRouteActive(item.href, pathname);
               return (
@@ -217,7 +225,7 @@ export function BottomNav() {
         inert={drawerOpen}
       >
         <div className="flex items-center justify-around h-16 px-1">
-          {primaryItems.map((item) => {
+          {visiblePrimary.map((item) => {
             const Icon = item.icon;
             const active = isRouteActive(item.href, pathname);
             return (

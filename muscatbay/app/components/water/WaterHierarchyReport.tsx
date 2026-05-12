@@ -275,7 +275,7 @@ function KpiCard({
         <Card className={cn("card-elevated border", t.border)}>
             <CardContent className={cn("p-4 rounded-lg", t.bg)}>
                 <div className="flex items-start justify-between mb-2">
-                    <span className="text-[10px] font-bold tracking-wider uppercase text-muted-foreground dark:text-muted-foreground">
+                    <span className="text-[10px] font-medium tracking-wider uppercase text-muted-foreground dark:text-muted-foreground">
                         {label}
                     </span>
                     <div className={t.text}>{icon}</div>
@@ -284,7 +284,7 @@ function KpiCard({
                     {value === null ? (
                         <span
                             className={cn(
-                                "text-2xl sm:text-3xl font-bold tabular-nums text-muted-foreground dark:text-muted-foreground",
+                                "text-2xl sm:text-3xl font-medium tabular-nums text-muted-foreground dark:text-muted-foreground",
                             )}
                             aria-label="unavailable"
                         >
@@ -292,7 +292,7 @@ function KpiCard({
                         </span>
                     ) : (
                         <>
-                            <span className={cn("text-2xl sm:text-3xl font-bold tabular-nums", t.text)}>
+                            <span className={cn("text-2xl sm:text-3xl font-medium tabular-nums", t.text)}>
                                 {value.toLocaleString(undefined, {
                                     maximumFractionDigits: unit === '%' ? 1 : 0,
                                 })}
@@ -705,7 +705,7 @@ export function WaterHierarchyReport() {
                                                         )}
                                                         <span className={cn(
                                                             "truncate",
-                                                            node.level === 'L1' && "font-bold text-primary dark:text-primary-foreground",
+                                                            node.level === 'L1' && "font-medium text-primary dark:text-primary-foreground",
                                                             node.level === 'L2' && "font-semibold",
                                                         )}>
                                                             {node.meterName}
@@ -717,7 +717,7 @@ export function WaterHierarchyReport() {
                                                 </td>
                                                 <td className="px-3 py-2.5 text-center whitespace-nowrap">
                                                     <span className={cn(
-                                                        "inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold",
+                                                        "inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium",
                                                         color.badge,
                                                     )}>
                                                         {node.level}
@@ -737,7 +737,7 @@ export function WaterHierarchyReport() {
                                                     </td>
                                                 ))}
                                                 <td className={cn(
-                                                    "sticky right-0 z-10 px-4 py-2.5 text-right font-bold tabular-nums whitespace-nowrap",
+                                                    "sticky right-0 z-10 px-4 py-2.5 text-right font-medium tabular-nums whitespace-nowrap",
                                                     color.bg,
                                                     color.text,
                                                 )}>
@@ -767,7 +767,7 @@ export function WaterHierarchyReport() {
                         <span className="font-semibold uppercase tracking-wider text-[10px]">Legend:</span>
                         {(['L1', 'L2', 'L3', 'L4', 'DC'] as const).map(lvl => (
                             <span key={lvl} className="inline-flex items-center gap-1.5">
-                                <span className={cn("inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold", LEVEL_COLORS[lvl].badge)}>
+                                <span className={cn("inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium", LEVEL_COLORS[lvl].badge)}>
                                     {lvl}
                                 </span>
                                 <span>

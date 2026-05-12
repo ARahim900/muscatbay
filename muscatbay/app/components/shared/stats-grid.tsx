@@ -84,11 +84,12 @@ export function StatsGrid({ stats, className }: StatsGridProps) {
                     <>
                         <div className="flex justify-between items-start gap-2">
                             <div className="min-w-0">
-                                <p className="text-muted-foreground text-[11px] sm:text-xs font-medium mb-0.5 sm:mb-1 uppercase tracking-wide truncate">
+                                {/* Label: wraps to 2 lines on mobile so "WATER PRODUC..." never happens */}
+                                <p className="text-muted-foreground text-[11px] sm:text-xs font-medium mb-0.5 sm:mb-1 uppercase tracking-[0.06em] leading-tight line-clamp-2 sm:line-clamp-1 sm:truncate min-h-[2.2em] sm:min-h-0">
                                     {stat.label}
                                 </p>
-                                {/* Big value: always neutral — never colored red/green */}
-                                <h3 className="text-xl sm:text-2xl font-bold tabular-nums tracking-tight truncate text-foreground leading-none">
+                                {/* Brand-purple value — semibold for a clean, modern feel (extrabold reads heavy/dated). */}
+                                <h3 className="text-lg sm:text-2xl font-semibold tabular-nums tracking-tight truncate text-primary dark:text-foreground leading-none">
                                     {stat.value}
                                 </h3>
                             </div>

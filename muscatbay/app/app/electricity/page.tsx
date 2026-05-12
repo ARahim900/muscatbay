@@ -919,7 +919,7 @@ export default function ElectricityPage() {
                                 <CardTitle>Monthly Consumption Trend</CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <div role="img" aria-label="Monthly electricity consumption trend: area chart showing kilowatt-hour usage over selected date range" className="h-[220px] sm:h-[260px] md:h-[300px]">
+                                <div role="img" aria-label="Monthly electricity consumption trend: area chart showing kilowatt-hour usage over selected date range" className="h-[220px] sm:h-[260px] md:h-[300px] min-h-[260px]">
                                     <ResponsiveContainer width="100%" height="100%">
                                         <AreaChart data={filteredMonthlyData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                                             <defs>
@@ -944,7 +944,7 @@ export default function ElectricityPage() {
                                 <CardTitle>Consumption by Type</CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <div role="img" aria-label="Electricity consumption by type: horizontal bar chart breaking down kilowatt-hour usage across meter categories" className="h-[220px] sm:h-[260px] md:h-[300px]">
+                                <div role="img" aria-label="Electricity consumption by type: horizontal bar chart breaking down kilowatt-hour usage across meter categories" className="h-[220px] sm:h-[260px] md:h-[300px] min-h-[260px]">
                                     <ResponsiveContainer width="100%" height="100%">
                                         <BarChart data={consumptionByType} layout="vertical" margin={{ left: 10 }}>
                                             <XAxis type="number" hide />
@@ -990,7 +990,7 @@ export default function ElectricityPage() {
                             </div>
                         </CardHeader>
                         <CardContent>
-                            <div role="img" aria-label={`Electricity consumption trend for ${analysisType === 'All' ? 'all meter types' : analysisType}: chart showing kilowatt-hour usage over time per meter or aggregate`} className="h-[280px] sm:h-[340px] md:h-[380px]">
+                            <div role="img" aria-label={`Electricity consumption trend for ${analysisType === 'All' ? 'all meter types' : analysisType}: chart showing kilowatt-hour usage over time per meter or aggregate`} className="h-[280px] sm:h-[340px] md:h-[380px] min-h-[260px]">
                                 <ResponsiveContainer width="100%" height="100%">
                                     {/* Multi-line chart for type aggregate with ≤10 meters */}
                                     {analysisType !== "All" && selectedMeter === "All" && metersOfSelectedType.length <= 10 ? (
@@ -1063,7 +1063,7 @@ export default function ElectricityPage() {
                                 <CardTitle className="text-lg">Top 10 {analysisType === "All" ? "Overall" : analysisType} Consumers</CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <div role="img" aria-label={`Top 10 electricity consumers bar chart for ${analysisType === 'All' ? 'all types' : analysisType}, ranked by kilowatt-hour consumption`} className="h-[300px] sm:h-[350px] md:h-[400px]">
+                                <div role="img" aria-label={`Top 10 electricity consumers bar chart for ${analysisType === 'All' ? 'all types' : analysisType}, ranked by kilowatt-hour consumption`} className="h-[300px] sm:h-[350px] md:h-[400px] min-h-[260px]">
                                     <ResponsiveContainer width="100%" height="100%">
                                         <BarChart
                                             data={analysisData.topConsumers}
@@ -1142,7 +1142,7 @@ export default function ElectricityPage() {
                                     </div>
                                 </CardHeader>
                                 <CardContent>
-                                    <div role="img" aria-label={`Meter vs type average bar chart for ${analysisType}: comparing each meter's consumption against the group average`} className="h-[300px] sm:h-[350px] md:h-[400px]">
+                                    <div role="img" aria-label={`Meter vs type average bar chart for ${analysisType}: comparing each meter's consumption against the group average`} className="h-[300px] sm:h-[350px] md:h-[400px] min-h-[260px]">
                                         <ResponsiveContainer width="100%" height="100%">
                                             <BarChart
                                                 data={analysisData.comparisonData}

@@ -134,8 +134,8 @@
   /* Muscat Bay Brand Colors (for auth pages and legacy usage) */
   --mb-primary: #4D445D;
   --mb-primary-hover: #3A3341;
-  --mb-secondary: #A1D1D5;
-  --mb-secondary-foreground: #FFFFFF;
+  --mb-secondary: #43B3AE;
+  --mb-secondary-foreground: #1F2937;
   --mb-secondary-light: #E8F1EF;
   --mb-secondary-active: #8AAFA5;
   --mb-primary-light: #6B5F73;
@@ -221,16 +221,16 @@
   --primary-foreground: #FFFFFF;
 
   /* Secondary (Brand Teal) */
-  --secondary: #A1D1D5;
-  --secondary-foreground: #FFFFFF;
+  --secondary: #43B3AE;
+  --secondary-foreground: #1F2937;
 
   /* Muted / Neutral */
   --muted: #F3F4F6;
   --muted-foreground: #6B7280;
 
   /* Accents */
-  --accent: #A1D1D5;
-  --accent-foreground: #FFFFFF;
+  --accent: #43B3AE;
+  --accent-foreground: #1F2937;
 
   /* Destructive */
   --destructive: #D67A7A;
@@ -244,11 +244,11 @@
   --border: #E5E7EB;
   --border-light: #E5E7EB;
   --input: #E5E7EB;
-  --ring: #A1D1D5;
+  --ring: #43B3AE;
 
   /* Chart Colors — Muscat Bay Elegant Palette */
   --chart-1: #6B9AC4;
-  --chart-2: #A1D1D5;
+  --chart-2: #43B3AE;
   --chart-3: #E8C064;
   --chart-4: #84B59F;
   --chart-5: #4D445D;
@@ -256,21 +256,32 @@
   --chart-axis: #6B7280;
   --chart-loss: #D67A7A;
   --chart-success: #84B59F;
-  --chart-teal: #A1D1D5;
+  --chart-teal: #43B3AE;
   --chart-brand: #4D445D;
   --chart-amber: #E8C064;
   --chart-gray: #9B86A8;
 
   /* Domain-specific chart colors */
   --chart-water-primary: #6B9AC4;
-  --chart-water-secondary: #A1D1D5;
-  --chart-water-accent: #A1D1D5;
+  --chart-water-secondary: #43B3AE;
+  --chart-water-accent: #43B3AE;
   --chart-elec-primary: #E8C064;
   --chart-elec-secondary: #DF9A5B;
   --chart-elec-accent: #E8C064;
   --chart-stp-primary: #84B59F;
-  --chart-stp-secondary: #A1D1D5;
+  --chart-stp-secondary: #43B3AE;
   --chart-stp-accent: #84B59F;
+
+  /* Recharts cursor / grid — theme-aware overlays for tooltip cursors and CartesianGrid */
+  --chart-cursor-stroke: rgba(15, 23, 42, 0.10);
+  --chart-cursor-fill: rgba(15, 23, 42, 0.04);
+  --chart-grid: rgba(148, 163, 184, 0.25);
+  --chart-zone-a: #6B9AC4;
+  --chart-zone-b: #8B7AB5;
+  --chart-zone-c: #84B59F;
+  --chart-zone-d: #E8C064;
+  --chart-zone-e: #D67A7A;
+  --chart-zone-f: #43B3AE;
 
   /* Chart Background Colors */
   --chart-bg-blue: #EFF6FF;
@@ -328,7 +339,7 @@
   /* Dark mode mappings */
   --mb-primary: #5f5168;
   --mb-primary-hover: #4E4456;
-  --mb-secondary: #A1D1D5;
+  --mb-secondary: #43B3AE;
   --mb-secondary-foreground: #1F2937;
   --mb-secondary-light: rgba(77, 191, 191, 0.12);
   --mb-secondary-active: #8AAFA5;
@@ -368,23 +379,26 @@
   --primary-foreground: #FFFFFF;
   /* Sidebar slightly darker than --primary in dark mode too */
   --sidebar: #3B3240;
-  --secondary: #A1D1D5;
+  --secondary: #43B3AE;
   --secondary-foreground: #1F2937;
   --muted: #22202A;
   --muted-foreground: #9CA3AF;
-  --accent: #A1D1D5;
+  --accent: #43B3AE;
   --accent-foreground: #1F2937;
   --destructive: #D67A7A;
   --popover: #16141B;
   --popover-foreground: #F1F5F9;
   --border: rgba(255, 255, 255, 0.1);
   --input: rgba(255, 255, 255, 0.1);
-  --ring: #A1D1D5;
+  --ring: #43B3AE;
 
   /* Chart colors — lighter variants for dark backgrounds */
   --chart-5: #8B7F94;
   --chart-inlet: #9B8FA6;
   --chart-axis: #94A3B8;
+  --chart-cursor-stroke: rgba(255, 255, 255, 0.12);
+  --chart-cursor-fill: rgba(255, 255, 255, 0.06);
+  --chart-grid: rgba(148, 163, 184, 0.18);
 
   /* Badge fg colors flip to the badge color itself for readability on dark surfaces */
   --badge-green-fg:  #A4DCC6;
@@ -533,6 +547,100 @@
 
 @layer components {
 
+  .ops-table-shell {
+    position: relative;
+    width: 100%;
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--card);
+    box-shadow: 0 1px 2px rgb(15 23 42 / 0.06);
+  }
+
+  .dark .ops-table-shell {
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04);
+  }
+
+  .ops-table {
+    width: 100%;
+    border-collapse: collapse;
+    caption-side: bottom;
+    font-size: 0.8125rem;
+    line-height: 1.35;
+  }
+
+  .ops-table thead {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: color-mix(in srgb, var(--component) 80%, var(--card));
+  }
+
+  /* Native row-level virtualization: browser skips layout/paint for off-screen rows.
+     Reserves ~44px (one row) so the scroll thumb stays accurate without measuring every row. */
+  .ops-table tbody tr {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 44px;
+  }
+
+  .dark .ops-table thead {
+    background: color-mix(in srgb, var(--component) 70%, var(--card));
+  }
+
+  .ops-table th {
+    height: 2.875rem !important;
+    padding: 0.75rem 1rem !important;
+    border-bottom: 1px solid var(--border);
+    color: var(--muted-foreground);
+    font-size: 0.6875rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.04em;
+    line-height: 1.2;
+    text-align: start;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .ops-table td {
+    padding: 0.8125rem 1rem !important;
+    border-bottom: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+    color: var(--card-foreground);
+    font-size: 0.8125rem !important;
+    line-height: 1.4;
+    vertical-align: middle;
+  }
+
+  .ops-table tbody tr {
+    transition: background-color 150ms ease-out;
+  }
+
+  .ops-table thead tr {
+    background: inherit !important;
+  }
+
+  .ops-table tbody tr:nth-child(even) {
+    background: color-mix(in srgb, var(--component) 38%, transparent);
+  }
+
+  .dark .ops-table tbody tr:nth-child(even) {
+    background: color-mix(in srgb, var(--component) 28%, transparent);
+  }
+
+  .ops-table tbody tr:hover {
+    background: color-mix(in srgb, var(--secondary) 9%, transparent);
+  }
+
+  .ops-table tbody tr:last-child td {
+    border-bottom: 0;
+  }
+
+  .ops-table-toolbar {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--card);
+    box-shadow: 0 1px 2px rgb(15 23 42 / 0.05);
+  }
+
   /* Header blur — @supports fallback for browsers without backdrop-filter */
   .header-blur {
     background-color: rgba(255, 255, 255, 0.95);
@@ -554,9 +662,9 @@
   /* Elevated Card - white with subtle border matching example design */
   .card-elevated {
     background-color: rgba(255, 255, 255, 0.9);
-    border-radius: 0.75rem;
+    border-radius: var(--radius-md);
     border: 1px solid var(--border);
-    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    box-shadow: 0 1px 2px 0 rgb(15 23 42 / 0.06);
     /* Only box-shadow changes on hover — transition-all watches every property
        and forces the browser to check for changes every frame. will-change is
        also removed: box-shadow is paint-only (not composited) so layer promotion
@@ -565,8 +673,7 @@
   }
 
   .card-elevated:hover {
-    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-    /* shadow-md */
+    box-shadow: 0 6px 18px -10px rgb(15 23 42 / 0.35);
   }
 
   .card-elevated-header {
@@ -577,11 +684,11 @@
   .dark .card-elevated {
     background-color: color-mix(in srgb, var(--card) 90%, transparent);
     border: 1px solid var(--border);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04);
   }
 
   .dark .card-elevated:hover {
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 4px 8px rgba(0, 0, 0, 0.25);
+    box-shadow: 0 10px 24px -18px rgba(0, 0, 0, 0.75), 0 1px 0 rgba(255, 255, 255, 0.05);
   }
 
   /* ── Topbar responsive offset ──
@@ -589,11 +696,16 @@
    * On md+ it starts after the sidebar, reading the CSS var set by LayoutContent. */
   .topbar-dynamic {
     inset-inline-start: 0;
+    contain: layout style;
+    will-change: inset-inline-start;
   }
   @media (min-width: 768px) {
     .topbar-dynamic {
       inset-inline-start: var(--sidebar-w, 220px);
     }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .topbar-dynamic { transition: none !important; }
   }
 
   /* ── Table density variants ──
@@ -911,6 +1023,54 @@
       --muted-foreground: #6B7280;
       --border: #E5E7EB;
     }
+
+    /* Hide app chrome — sidebar, topbar, bottom-nav, mobile drawers, palette */
+    aside[aria-label="Main navigation"],
+    nav[aria-label="Primary navigation"],
+    header[role="banner"],
+    .header-blur,
+    [role="dialog"][aria-label="Command palette"],
+    [role="dialog"][aria-label="Navigation menu"],
+    .print\:hidden {
+      display: none !important;
+    }
+
+    /* Let the content take full page width since the sidebar is hidden */
+    body, main, .layout-shell {
+      padding-inline-start: 0 !important;
+      margin-inline-start: 0 !important;
+      max-width: 100% !important;
+    }
+
+    /* Charts and cards: break responsibly — avoid splitting a card across pages */
+    .card-elevated,
+    [data-slot="card"] {
+      break-inside: avoid;
+      page-break-inside: avoid;
+      box-shadow: none !important;
+      border: 1px solid #E5E7EB !important;
+    }
+
+    /* Print KPI tiles in black for ink-efficiency */
+    h3.text-primary,
+    .text-primary {
+      color: #1F1A24 !important;
+    }
+
+    /* Hidden footer with print timestamp + URL for traceability on hand-outs */
+    body::after {
+      content: "Muscat Bay Operations — printed " counter(page);
+      display: block;
+      text-align: center;
+      font-size: 9pt;
+      color: #6B7280;
+      padding-top: 16pt;
+    }
+
+    /* Prevent chart areas from being cut to one line */
+    .recharts-wrapper {
+      page-break-inside: avoid;
+    }
   }
 }
 
@@ -1010,28 +1170,13 @@
   100% { transform: translateX(500%);  }
 }
 
-/* Overlay: fade text/elements up */
-@keyframes mb-fade-up {
-  from { opacity: 0; transform: translateY(10px); }
-  to   { opacity: 1; transform: translateY(0);    }
-}
-
-/* Splash enter/exit */
-@keyframes mb-splash-in {
+/* Shared opacity fade — used by splash and overlay enter/exit.
+   Replaces former mb-splash-in/out + mb-overlay-in/out (identical bodies). */
+@keyframes mb-fade-in {
   from { opacity: 0; }
   to   { opacity: 1; }
 }
-@keyframes mb-splash-out {
-  from { opacity: 1; }
-  to   { opacity: 0; }
-}
-
-/* Overlay backdrop enter/exit */
-@keyframes mb-overlay-in {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
-@keyframes mb-overlay-out {
+@keyframes mb-fade-out {
   from { opacity: 1; }
   to   { opacity: 0; }
 }

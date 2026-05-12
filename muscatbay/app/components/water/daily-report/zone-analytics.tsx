@@ -58,7 +58,7 @@ export function ZoneAnalyticsPanel({ reportData, monthData, selectedDay, month, 
     return (
         <div className="space-y-6">
             <div>
-                <h2 className="text-xl font-bold text-foreground">
+                <h2 className="text-xl font-medium text-foreground">
                     {activeZoneName} Analysis — Day {selectedDay}, {month}
                 </h2>
                 <p className="text-sm text-muted-foreground dark:text-muted-foreground mt-1">

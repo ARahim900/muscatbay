@@ -22,7 +22,7 @@ export function Skeleton({ className, style }: SkeletonProps) {
 // Skeleton for individual stat cards
 export function CardSkeleton({ className }: SkeletonProps) {
     return (
-        <div className={cn("p-5 rounded-xl border border-border/60 dark:border-border/50 bg-white dark:bg-muted/50", className)}>
+        <div className={cn("p-5 rounded-xl border border-border/60 dark:border-border/50 bg-card", className)}>
             <div className="flex items-start justify-between">
                 <div className="space-y-3 flex-1">
                     <Skeleton className="h-3 w-24" />

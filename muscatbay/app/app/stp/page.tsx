@@ -753,7 +753,7 @@ export default function STPPage() {
                             </div>
                         </CardHeader>
                         <CardContent>
-                            <div role="img" aria-label="Water treatment volumes area chart showing sewage inlet versus TSE reuse output in cubic meters over the selected period" className="h-[350px]">
+                            <div role="img" aria-label="Water treatment volumes area chart showing sewage inlet versus TSE reuse output in cubic meters over the selected period" className="h-[350px] min-h-[260px]">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <AreaChart data={volumeChartView === 'daily' ? dailyChartData : monthlyChartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                                         <defs>
@@ -799,7 +799,7 @@ export default function STPPage() {
                                 </div>
                             </CardHeader>
                             <CardContent>
-                                <div role="img" aria-label="Economic impact bar chart showing income and savings from TSE reuse in Omani Rials over the selected period" className="h-[280px]">
+                                <div role="img" aria-label="Economic impact bar chart showing income and savings from TSE reuse in Omani Rials over the selected period" className="h-[280px] min-h-[260px]">
                                     <ResponsiveContainer width="100%" height="100%">
                                         <BarChart data={economicChartView === 'daily' ? dailyChartData : monthlyChartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                                             <XAxis dataKey="month" className="text-xs" tick={{ fontSize: 10, fill: "var(--chart-axis)" }} axisLine={false} tickLine={false} dy={10} interval={economicChartView === 'daily' && dailyChartData.length > 15 ? Math.ceil(dailyChartData.length / 12) - 1 : 0} />
@@ -833,7 +833,7 @@ export default function STPPage() {
                                 </div>
                             </CardHeader>
                             <CardContent>
-                                <div role="img" aria-label="Tanker operations line chart showing number of tanker trips over the selected period" className="h-[280px]">
+                                <div role="img" aria-label="Tanker operations line chart showing number of tanker trips over the selected period" className="h-[280px] min-h-[260px]">
                                     <ResponsiveContainer width="100%" height="100%">
                                         <LineChart data={tankerChartView === 'daily' ? dailyChartData : monthlyChartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                                             <XAxis dataKey="month" className="text-xs" tick={{ fontSize: 10, fill: "var(--chart-axis)" }} axisLine={false} tickLine={false} dy={10} interval={tankerChartView === 'daily' && dailyChartData.length > 15 ? Math.ceil(dailyChartData.length / 12) - 1 : 0} />

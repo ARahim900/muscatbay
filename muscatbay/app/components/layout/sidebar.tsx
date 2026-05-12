@@ -6,6 +6,8 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useSidebar } from './sidebar-context';
 import { useAuth } from '@/components/auth/auth-provider';
+import { useUserRole } from '@/hooks/useUserRole';
+import { canAccessModule, type ModuleKey } from '@/lib/rbac';
 import {
   LayoutDashboard,
   Droplets,
@@ -26,6 +28,8 @@ interface NavigationItem {
   name: string;
   icon: React.ComponentType<{ className?: string }>;
   href: string;
+  /** Module key for RBAC filtering. Omit for always-visible items. */
+  module?: ModuleKey;
 }
 
 interface NavGroup {
@@ -40,27 +44,27 @@ const navGroups: NavGroup[] = [
   {
     id: "overview",
     items: [
-      { id: "dashboard", name: "Dashboard", icon: LayoutDashboard, href: "/" },
+      { id: "dashboard", name: "Dashboard", icon: LayoutDashboard, href: "/", module: "dashboard" },
     ],
   },
   {
     id: "utilities",
     label: "Utilities",
     items: [
-      { id: "water", name: "Water", icon: Droplets, href: "/water" },
-{ id: "electricity", name: "Electricity", icon: Zap, href: "/electricity" },
-      { id: "stp", name: "STP Plant", icon: Waves, href: "/stp" },
+      { id: "water", name: "Water", icon: Droplets, href: "/water", module: "water" },
+      { id: "electricity", name: "Electricity", icon: Zap, href: "/electricity", module: "electricity" },
+      { id: "stp", name: "STP Plant", icon: Waves, href: "/stp", module: "stp" },
     ],
   },
   {
     id: "operations",
     label: "Operations",
     items: [
-      { id: "contractors", name: "Contractors", icon: Users, href: "/contractors" },
-      { id: "hvac-system", name: "HVAC System", icon: Wrench, href: "/hvac" },
-      { id: "assets", name: "Assets", icon: Package, href: "/assets" },
-      { id: "pest-control", name: "Pest Control", icon: Bug, href: "/pest-control" },
-      { id: "fire-safety", name: "Fire Safety", icon: Flame, href: "/firefighting" },
+      { id: "contractors", name: "Contractors", icon: Users, href: "/contractors", module: "contractors" },
+      { id: "hvac-system", name: "HVAC System", icon: Wrench, href: "/hvac", module: "hvac" },
+      { id: "assets", name: "Assets", icon: Package, href: "/assets", module: "assets" },
+      { id: "pest-control", name: "Pest Control", icon: Bug, href: "/pest-control", module: "pest-control" },
+      { id: "fire-safety", name: "Fire Safety", icon: Flame, href: "/firefighting", module: "firefighting" },
     ],
   },
 ];
@@ -70,13 +74,23 @@ const allNavigationItems: NavigationItem[] = navGroups.flatMap((g) => g.items);
 
 // Bottom navigation items
 const bottomNavItems: NavigationItem[] = [
-  { id: "settings", name: "Settings", icon: Settings, href: "/settings" },
+  { id: "settings", name: "Settings", icon: Settings, href: "/settings", module: "settings" },
 ];
 
 export function Sidebar() {
   const { isOpen, setIsOpen, isCollapsed, toggleCollapse } = useSidebar();
   const pathname = usePathname();
-  const { logout } = useAuth();
+  const { logout, isDevMode } = useAuth();
+  const role = useUserRole();
+
+  // RBAC filter — hide nav items the current role can't access. Dev mode
+  // bypasses for local testing. This is a soft UI gate; Supabase RLS is the
+  // hard gate on the data itself.
+  const visibleNavGroups = isDevMode ? navGroups : navGroups
+    .map((g) => ({ ...g, items: g.items.filter((it) => !it.module || canAccessModule(role, it.module)) }))
+    .filter((g) => g.items.length > 0);
+  const visibleBottomItems = isDevMode ? bottomNavItems : bottomNavItems
+    .filter((it) => !it.module || canAccessModule(role, it.module));
 
   const handleItemClick = () => {
     // Close sidebar on mobile when an item is clicked
@@ -158,7 +172,7 @@ export function Sidebar() {
 
         {/* Main Navigation */}
         <nav className="flex-1 px-3 pt-2 pb-4 overflow-y-auto" aria-label="Primary">
-          {navGroups.map((group, groupIdx) => (
+          {visibleNavGroups.map((group, groupIdx) => (
             <div
               key={group.id}
               className={groupIdx > 0 ? (isCollapsed ? "mt-3 pt-3 border-t border-white/10" : "mt-4") : ""}
@@ -224,7 +238,7 @@ export function Sidebar() {
         {/* Bottom section - Settings & Logout */}
         <div className="mt-auto border-t border-white/10 px-3 py-2.5 space-y-0.5">
           {/* Settings */}
-          {bottomNavItems.map((item) => {
+          {visibleBottomItems.map((item) => {
             const Icon = item.icon;
             const isActive = pathname?.startsWith(item.href);
 

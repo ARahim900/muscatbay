@@ -315,7 +315,7 @@ export function ZoneL3Table({
                                 }}
                             >
                                 <td
-                                    className={cn(tdBase, "font-bold sticky left-0 z-10")}
+                                    className={cn(tdBase, "font-medium sticky left-0 z-10")}
                                     style={{
                                         backgroundColor: `${PALETTE.primary}14`,
                                         color: PALETTE.primary,
@@ -336,7 +336,7 @@ export function ZoneL3Table({
                                 {l2DayTotals.map((val, i) => (
                                     <td
                                         key={i}
-                                        className={cn(tdBase, "text-right tabular-nums px-2 text-[12px] font-bold")}
+                                        className={cn(tdBase, "text-right tabular-nums px-2 text-[12px] font-medium")}
                                         style={{ color: PALETTE.primary }}
                                     >
                                         {val === null ? (
@@ -347,7 +347,7 @@ export function ZoneL3Table({
                                     </td>
                                 ))}
                                 <td
-                                    className={cn(tdBase, "text-right tabular-nums font-bold")}
+                                    className={cn(tdBase, "text-right tabular-nums font-medium")}
                                     style={{
                                         backgroundColor: `${PALETTE.primary}20`,
                                         color: PALETTE.primary,
@@ -486,7 +486,7 @@ export function ZoneL3Table({
                                             style={{ backgroundColor: `${PALETTE.blue}12` }}
                                         >
                                             <td
-                                                className={cn(tdBase, "pl-10 font-bold sticky left-0 z-10 text-[12px]")}
+                                                className={cn(tdBase, "pl-10 font-medium sticky left-0 z-10 text-[12px]")}
                                                 style={{
                                                     backgroundColor: `${PALETTE.blue}12`,
                                                     color: PALETTE.blue,
@@ -499,14 +499,14 @@ export function ZoneL3Table({
                                             {detail.childDayTotals.map((t, i) => (
                                                 <td
                                                     key={i}
-                                                    className={cn(tdBase, "text-right tabular-nums font-bold px-2 text-[12px]")}
+                                                    className={cn(tdBase, "text-right tabular-nums font-medium px-2 text-[12px]")}
                                                     style={{ color: PALETTE.blue }}
                                                 >
                                                     {n(t)}
                                                 </td>
                                             ))}
                                             <td
-                                                className={cn(tdBase, "text-right tabular-nums font-bold")}
+                                                className={cn(tdBase, "text-right tabular-nums font-medium")}
                                                 style={{ backgroundColor: `${PALETTE.blue}20`, color: PALETTE.blue }}
                                             >
                                                 {n(detail.childGrandTotal)}
@@ -527,7 +527,7 @@ export function ZoneL3Table({
                                             }}
                                         >
                                             <td
-                                                className={cn(tdBase, "pl-10 font-bold sticky left-0 z-10 text-[12px]")}
+                                                className={cn(tdBase, "pl-10 font-medium sticky left-0 z-10 text-[12px]")}
                                                 style={{
                                                     backgroundColor: `${diffTint}14`,
                                                     color: diffTint,
@@ -540,14 +540,14 @@ export function ZoneL3Table({
                                             {detail.diffDayTotals.map((t, i) => (
                                                 <td
                                                     key={i}
-                                                    className={cn(tdBase, "text-right tabular-nums font-bold px-2 text-[12px]")}
+                                                    className={cn(tdBase, "text-right tabular-nums font-medium px-2 text-[12px]")}
                                                     style={{ color: diffTint }}
                                                 >
                                                     {diffCell(t)}
                                                 </td>
                                             ))}
                                             <td
-                                                className={cn(tdBase, "text-right tabular-nums font-bold")}
+                                                className={cn(tdBase, "text-right tabular-nums font-medium")}
                                                 style={{ backgroundColor: `${diffTint}20`, color: diffTint }}
                                             >
                                                 {diffCell(detail.diffGrandTotal)}
@@ -568,7 +568,7 @@ export function ZoneL3Table({
                                 }}
                             >
                                 <td
-                                    className={cn(tdBase, "font-bold sticky left-0 z-10")}
+                                    className={cn(tdBase, "font-medium sticky left-0 z-10")}
                                     colSpan={3}
                                     style={{
                                         backgroundColor: `${PALETTE.blue}12`,
@@ -581,14 +581,14 @@ export function ZoneL3Table({
                                 {dayTotals.map((t, i) => (
                                     <td
                                         key={i}
-                                        className={cn(tdBase, "text-right tabular-nums font-bold px-2 text-[12px]")}
+                                        className={cn(tdBase, "text-right tabular-nums font-medium px-2 text-[12px]")}
                                         style={{ color: PALETTE.blue }}
                                     >
                                         {n(t)}
                                     </td>
                                 ))}
                                 <td
-                                    className={cn(tdBase, "text-right tabular-nums font-bold")}
+                                    className={cn(tdBase, "text-right tabular-nums font-medium")}
                                     style={{ backgroundColor: `${PALETTE.blue}20`, color: PALETTE.blue }}
                                 >
                                     {n(grandTotal)}
@@ -608,7 +608,7 @@ export function ZoneL3Table({
                                         }}
                                     >
                                         <td
-                                            className={cn(tdBase, "font-bold sticky left-0 z-10")}
+                                            className={cn(tdBase, "font-medium sticky left-0 z-10")}
                                             colSpan={3}
                                             style={{
                                                 backgroundColor: `${diffTint}14`,
@@ -621,14 +621,14 @@ export function ZoneL3Table({
                                         {diffByDay.map((t, i) => (
                                             <td
                                                 key={i}
-                                                className={cn(tdBase, "text-right tabular-nums font-bold px-2 text-[12px]")}
+                                                className={cn(tdBase, "text-right tabular-nums font-medium px-2 text-[12px]")}
                                                 style={{ color: diffTint }}
                                             >
                                                 {diffCell(t)}
                                             </td>
                                         ))}
                                         <td
-                                            className={cn(tdBase, "text-right tabular-nums font-bold")}
+                                            className={cn(tdBase, "text-right tabular-nums font-medium")}
                                             style={{ backgroundColor: `${diffTint}20`, color: diffTint }}
                                         >
                                             {diffCell(diffGrandTotal)}

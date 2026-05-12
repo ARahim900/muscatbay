@@ -75,7 +75,7 @@ export function DCAnalyticsPanel({ reportData, monthData, selectedDay, month }: 
 
             {/* ── DC heading ─────────────────────────────────────────────── */}
             <div>
-                <h2 className="text-xl font-bold text-foreground">
+                <h2 className="text-xl font-medium text-foreground">
                     Direct Connection Analysis — Day {selectedDay}, {month}
                 </h2>
                 <p className="text-sm text-muted-foreground dark:text-muted-foreground mt-1">
@@ -303,7 +303,7 @@ export function DCDailyTable({ monthData }: { monthData: SupabaseDailyWaterConsu
                         <div className="flex justify-between items-start gap-2">
                             <div className="min-w-0">
                                 <p className="text-muted-foreground dark:text-muted-foreground text-[10px] sm:text-xs font-medium mb-1 uppercase tracking-wide">Monthly DC Total (m³)</p>
-                                <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-foreground tabular-nums tracking-tight">{n(grandTotal)}</h3>
+                                <h3 className="text-lg sm:text-xl md:text-2xl font-medium text-foreground tabular-nums tracking-tight">{n(grandTotal)}</h3>
                             </div>
                             <div className="p-2 sm:p-3 rounded-lg bg-mb-secondary-light flex-shrink-0">
                                 <Droplets className="w-4 h-4 sm:w-5 sm:h-5 text-mb-secondary" />
@@ -315,7 +315,7 @@ export function DCDailyTable({ monthData }: { monthData: SupabaseDailyWaterConsu
                         <div className="flex justify-between items-start gap-2">
                             <div className="min-w-0">
                                 <p className="text-muted-foreground dark:text-muted-foreground text-[10px] sm:text-xs font-medium mb-1 uppercase tracking-wide">DC Meters</p>
-                                <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-foreground tabular-nums tracking-tight">{dcMeters.length}</h3>
+                                <h3 className="text-lg sm:text-xl md:text-2xl font-medium text-foreground tabular-nums tracking-tight">{dcMeters.length}</h3>
                             </div>
                             <div className="p-2 sm:p-3 rounded-lg bg-mb-primary-light/20 flex-shrink-0">
                                 <Activity className="w-4 h-4 sm:w-5 sm:h-5 text-mb-primary" />
@@ -327,7 +327,7 @@ export function DCDailyTable({ monthData }: { monthData: SupabaseDailyWaterConsu
                         <div className="flex justify-between items-start gap-2">
                             <div className="min-w-0">
                                 <p className="text-muted-foreground dark:text-muted-foreground text-[10px] sm:text-xs font-medium mb-1 uppercase tracking-wide">Active (Day {latestDay})</p>
-                                <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-mb-success-text tabular-nums tracking-tight">
+                                <h3 className="text-lg sm:text-xl md:text-2xl font-medium text-mb-success-text tabular-nums tracking-tight">
                                     {activeMeters}<span className="text-muted-foreground dark:text-muted-foreground text-base font-semibold"> / {dcMeters.length}</span>
                                 </h3>
                             </div>
@@ -409,13 +409,13 @@ export function DCDailyTable({ monthData }: { monthData: SupabaseDailyWaterConsu
                             ))}
                             {/* ΣDC Footer */}
                             <tr className="border-t-2 border-border dark:border-border bg-muted/60 dark:bg-muted/20">
-                                <td className={cn(tdBase, "font-bold sticky left-0 z-10 bg-muted/60 dark:bg-muted/20")} colSpan={3}>
+                                <td className={cn(tdBase, "font-medium sticky left-0 z-10 bg-muted/60 dark:bg-muted/20")} colSpan={3}>
                                     ΣDC Total ({dcMeters.length} meters)
                                 </td>
                                 {dayTotals.map((t, i) => (
-                                    <td key={i} className={cn(tdBase, "text-right tabular-nums font-bold px-2 text-[12px]")}>{n(t)}</td>
+                                    <td key={i} className={cn(tdBase, "text-right tabular-nums font-medium px-2 text-[12px]")}>{n(t)}</td>
                                 ))}
-                                <td className={cn(tdBase, "text-right tabular-nums font-bold bg-muted/80 dark:bg-muted/40")}>{n(grandTotal)}</td>
+                                <td className={cn(tdBase, "text-right tabular-nums font-medium bg-muted/80 dark:bg-muted/40")}>{n(grandTotal)}</td>
                             </tr>
                         </tbody>
                     </table>

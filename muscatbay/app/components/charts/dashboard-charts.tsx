@@ -30,6 +30,26 @@ interface DashboardChartsProps {
 
 const REFERENCE_LINE_LABEL = { position: 'insideTopRight' as const, fontSize: 10, fill: 'var(--chart-axis)', dy: -4 };
 
+/** Synthesise a one-line insight from the data so boards see the takeaway, not the numbers. */
+function buildWaterInsight(data: ChartData[], avg: number): string {
+    if (data.length < 2) return "";
+    const last = (data[data.length - 1]?.water as number) ?? 0;
+    const prev = (data[data.length - 2]?.water as number) ?? 0;
+    if (prev === 0) return "";
+    const delta = ((last - prev) / prev) * 100;
+    const direction = delta >= 0 ? "up" : "down";
+    return `Latest month is ${Math.abs(delta).toFixed(1)}% ${direction} vs the prior month; running average is ${avg.toFixed(1)}k m³.`;
+}
+
+function buildStpInsight(data: ChartData[]): string {
+    if (data.length === 0) return "";
+    const totalInlet = data.reduce((s, d) => s + ((d.inlet as number) || 0), 0);
+    const totalTse = data.reduce((s, d) => s + ((d.tse as number) || 0), 0);
+    if (totalInlet === 0) return "";
+    const reusePct = (totalTse / totalInlet) * 100;
+    return `TSE reuse is ${reusePct.toFixed(0)}% of inlet across the period — every recycled m³ avoids tanker cost.`;
+}
+
 function DashboardChartsInner({ chartData, stpChartData }: DashboardChartsProps) {
     const stpLegend = useChartLegendToggle();
     const waterAvg = useMemo(() =>
@@ -38,6 +58,8 @@ function DashboardChartsInner({ chartData, stpChartData }: DashboardChartsProps)
             : 0,
         [chartData]
     );
+    const waterInsight = useMemo(() => buildWaterInsight(chartData, waterAvg), [chartData, waterAvg]);
+    const stpInsight = useMemo(() => buildStpInsight(stpChartData), [stpChartData]);
 
     return (
         <AnimateOnScroll className="grid gap-4 sm:gap-5 md:gap-6 grid-cols-1 lg:grid-cols-7">
@@ -53,6 +75,11 @@ function DashboardChartsInner({ chartData, stpChartData }: DashboardChartsProps)
                             <ArrowUpRight className="h-4 w-4 ml-auto text-muted-foreground opacity-40 group-hover/chart:opacity-100 transition-opacity" />
                         </CardTitle>
                         <p className="text-xs sm:text-sm text-muted-foreground">Monthly water production in thousand m³</p>
+                        {waterInsight && (
+                            <p className="mt-1 text-[11px] sm:text-xs italic text-foreground/70">
+                                {waterInsight}
+                            </p>
+                        )}
                     </CardHeader>
                     <div role="img" aria-label="Water production monthly trend chart in thousand cubic meters">
                         <ChartContainer height="100%" className="h-[200px] sm:h-[250px] md:h-[300px]">
@@ -90,6 +117,11 @@ function DashboardChartsInner({ chartData, stpChartData }: DashboardChartsProps)
                             <ArrowUpRight className="h-4 w-4 ml-auto text-muted-foreground opacity-40 group-hover/chart:opacity-100 transition-opacity" />
                         </CardTitle>
                         <p className="text-xs sm:text-sm text-muted-foreground">Monthly inlet vs TSE output (k m³)</p>
+                        {stpInsight && (
+                            <p className="mt-1 text-[11px] sm:text-xs italic text-foreground/70">
+                                {stpInsight}
+                            </p>
+                        )}
                     </CardHeader>
                     <div role="img" aria-label="STP monthly inlet vs TSE output comparison bar chart">
                         <ChartContainer height="100%" className="h-[200px] sm:h-[250px] md:h-[300px]">

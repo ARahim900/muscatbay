@@ -858,7 +858,7 @@ export default function WaterPage() {
                                     <CardTitle className="text-base sm:text-lg">Water System A-Values Distribution</CardTitle>
                                 </CardHeader>
                                 <CardContent className="p-4 sm:p-5 md:p-6 pt-0">
-                                    <div role="img" aria-label="Water System A-Values Distribution: area chart showing monthly trends for A1 main source input, A2 zone distribution, and A3 individual consumption" className="h-[250px] sm:h-[300px] md:h-[350px] w-full">
+                                    <div role="img" aria-label="Water System A-Values Distribution: area chart showing monthly trends for A1 main source input, A2 zone distribution, and A3 individual consumption" className="h-[250px] sm:h-[300px] md:h-[350px] w-full min-h-[260px]">
                                         <ResponsiveContainer width="100%" height="100%">
                                             <AreaChart data={monthlyTrends} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                                                 <defs>
@@ -890,7 +890,7 @@ export default function WaterPage() {
                                     <CardTitle className="text-base sm:text-lg">Water Loss Analysis</CardTitle>
                                 </CardHeader>
                                 <CardContent className="p-4 sm:p-5 md:p-6 pt-0">
-                                    <div role="img" aria-label="Water Loss Analysis: area chart showing total system loss, stage 1 loss (L1−L2), and stage 2 loss (L2−L3) trends over time in cubic meters" className="h-[200px] sm:h-[250px] md:h-[300px] w-full">
+                                    <div role="img" aria-label="Water Loss Analysis: area chart showing total system loss, stage 1 loss (L1−L2), and stage 2 loss (L2−L3) trends over time in cubic meters" className="h-[200px] sm:h-[250px] md:h-[300px] w-full min-h-[260px]">
                                         <ResponsiveContainer width="100%" height="100%">
                                             <AreaChart data={monthlyTrends} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                                                 <defs>
@@ -979,7 +979,7 @@ export default function WaterPage() {
                                     <p className="text-xs sm:text-sm text-muted-foreground">{isDC ? 'Monthly comparison of L1 (Main Bulk) vs L2 + DC totals' : 'Monthly comparison of L2 (Bulk) vs L3 totals'}</p>
                                 </CardHeader>
                                 <CardContent className="p-4 sm:p-5 md:p-6 pt-0">
-                                    <div role="img" aria-label={isDC ? 'Main Bulk vs Distribution Trend: area chart comparing L1 main bulk input against L2 zone bulk plus direct connections' : 'Zone Consumption Trend: area chart comparing zone bulk meter readings against individual L3 meter totals and loss'} className="h-[200px] sm:h-[250px] md:h-[300px] w-full">
+                                    <div role="img" aria-label={isDC ? 'Main Bulk vs Distribution Trend: area chart comparing L1 main bulk input against L2 zone bulk plus direct connections' : 'Zone Consumption Trend: area chart comparing zone bulk meter readings against individual L3 meter totals and loss'} className="h-[200px] sm:h-[250px] md:h-[300px] w-full min-h-[260px]">
                                         <ResponsiveContainer width="100%" height="100%">
                                             <AreaChart data={zoneConsumptionTrend}>
                                                 <defs>
@@ -1063,7 +1063,7 @@ export default function WaterPage() {
                                     </div>
                                 </CardHeader>
                                 <CardContent className="p-4 sm:p-5 md:p-6 pt-0">
-                                    <div role="img" aria-label="Consumption by Type: horizontal bar chart ranking meter types by total water usage in cubic meters" className="h-[280px] sm:h-[320px] md:h-[360px] w-full">
+                                    <div role="img" aria-label="Consumption by Type: horizontal bar chart ranking meter types by total water usage in cubic meters" className="h-[280px] sm:h-[320px] md:h-[360px] w-full min-h-[260px]">
                                         <ResponsiveContainer width="100%" height="100%">
                                             <BarChart
                                                 data={consumptionChartData}
@@ -1131,7 +1131,7 @@ export default function WaterPage() {
                                             <CardTitle className="text-sm sm:text-base">Monthly Trend</CardTitle>
                                         </CardHeader>
                                         <CardContent className="p-4 sm:p-5 md:p-6 pt-0">
-                                            <div role="img" aria-label={`Monthly consumption trend for ${activeDetailType || 'selected meter type'}: area chart showing cubic meter usage per month`} className="h-[220px] sm:h-[260px] w-full">
+                                            <div role="img" aria-label={`Monthly consumption trend for ${activeDetailType || 'selected meter type'}: area chart showing cubic meter usage per month`} className="h-[220px] sm:h-[260px] w-full min-h-[260px]">
                                                 <ResponsiveContainer width="100%" height="100%">
                                                     <AreaChart data={typeTrendData} margin={{ left: 10, right: 10, top: 5, bottom: 5 }}>
                                                         <defs>

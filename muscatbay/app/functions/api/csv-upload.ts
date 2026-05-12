@@ -6,6 +6,7 @@
 
 import { getSupabaseClient } from '../supabase-client';
 import { getWaterMetersFromSupabase } from './water';
+import { logger } from "@/lib/logger";
 
 /**
  * Result of a CSV import operation
@@ -69,7 +70,7 @@ export async function uploadCSVToStorage(
             return null;
         }
 
-        console.log(`[CSV Storage] File backed up to: ${data.path}`);
+        logger.debug(`[CSV Storage] File backed up to: ${data.path}`);
         return data.path;
     } catch (err) {
         // Storage is optional - don't fail the import if storage fails
@@ -196,7 +197,7 @@ export function parseCSV(
 
     // Log detected format
     const dayColumnCount = Object.keys(dayColumns).length;
-    console.log(`[CSV Parse] Format: ${isPivotFormat ? 'Pivot' : 'Standard'}, Day columns found: ${dayColumnCount}`);
+    logger.debug(`[CSV Parse] Format: ${isPivotFormat ? 'Pivot' : 'Standard'}, Day columns found: ${dayColumnCount}`);
 
     const rows: CSVWaterConsumptionRow[] = [];
 
@@ -356,7 +357,7 @@ export async function filterMetersByConfiguration(
         }
     }
 
-    console.log(`[CSV Filter] Valid: ${validRows.length}, Skipped: ${skippedCount}`);
+    logger.debug(`[CSV Filter] Valid: ${validRows.length}, Skipped: ${skippedCount}`);
     return { validRows, skippedCount };
 }
 
@@ -412,7 +413,7 @@ export async function importWaterConsumptionData(
             imported = upsertSuccess;
         } else {
             // Fallback: delete existing + insert new (when unique constraint is missing)
-            console.log('[CSV Import] Upsert failed, using delete+insert fallback...');
+            logger.debug('[CSV Import] Upsert failed, using delete+insert fallback...');
             errors.length = 0; // Clear upsert errors
             imported = await fallbackDeleteInsert(client, records, rows, errors);
         }
@@ -428,7 +429,7 @@ export async function importWaterConsumptionData(
         errors.push(rlsMsg);
     }
 
-    console.log(`[CSV Import] Imported: ${imported}, Errors: ${errors.length}`);
+    logger.debug(`[CSV Import] Imported: ${imported}, Errors: ${errors.length}`);
     return { imported, errors };
 }
 
@@ -622,7 +623,7 @@ async function computeAndUpdateWaterLossDaily(
     }
 
     if (zoneGroups.size === 0) {
-        console.log('[Water Loss] No zone-mapped rows found, skipping water_loss_daily update');
+        logger.debug('[Water Loss] No zone-mapped rows found, skipping water_loss_daily update');
         return { upserted: 0, errors: [] };
     }
 
@@ -637,7 +638,7 @@ async function computeAndUpdateWaterLossDaily(
     }
 
     if (maxDay === 0) {
-        console.log('[Water Loss] No daily readings found, skipping water_loss_daily update');
+        logger.debug('[Water Loss] No daily readings found, skipping water_loss_daily update');
         return { upserted: 0, errors: [] };
     }
 
@@ -698,11 +699,11 @@ async function computeAndUpdateWaterLossDaily(
     }
 
     if (records.length === 0) {
-        console.log('[Water Loss] No loss records to insert');
+        logger.debug('[Water Loss] No loss records to insert');
         return { upserted: 0, errors: [] };
     }
 
-    console.log(`[Water Loss] Upserting ${records.length} water_loss_daily records for ${zoneGroups.size} zones, days 1-${maxDay}`);
+    logger.debug(`[Water Loss] Upserting ${records.length} water_loss_daily records for ${zoneGroups.size} zones, days 1-${maxDay}`);
 
     // Upsert in batches
     let upserted = 0;
@@ -726,7 +727,7 @@ async function computeAndUpdateWaterLossDaily(
         }
     }
 
-    console.log(`[Water Loss] Upserted ${upserted}/${records.length} water_loss_daily records`);
+    logger.debug(`[Water Loss] Upserted ${upserted}/${records.length} water_loss_daily records`);
     return { upserted, errors };
 }
 
@@ -751,14 +752,14 @@ export async function processCSVUpload(
 
     try {
         // Step 1: Upload to storage
-        console.log('[CSV Upload] Step 1: Uploading to storage...');
+        logger.debug('[CSV Upload] Step 1: Uploading to storage...');
         const storagePath = await uploadCSVToStorage(file, month, year);
         if (storagePath) {
             result.storagePath = storagePath;
         }
 
         // Step 2: Read and parse CSV content
-        console.log('[CSV Upload] Step 2: Parsing CSV content...');
+        logger.debug('[CSV Upload] Step 2: Parsing CSV content...');
         const csvContent = await file.text();
         const parsedRows = parseCSV(csvContent, month, year);
 
@@ -767,10 +768,10 @@ export async function processCSVUpload(
             return result;
         }
 
-        console.log(`[CSV Upload] Parsed ${parsedRows.length} rows from CSV`);
+        logger.debug(`[CSV Upload] Parsed ${parsedRows.length} rows from CSV`);
 
         // Step 3: Filter to only configured meters
-        console.log('[CSV Upload] Step 3: Filtering by configured meters...');
+        logger.debug('[CSV Upload] Step 3: Filtering by configured meters...');
         const { validRows, skippedCount } = await filterMetersByConfiguration(parsedRows);
         result.skipped = skippedCount;
 
@@ -780,25 +781,25 @@ export async function processCSVUpload(
         }
 
         // Step 4: Import to database
-        console.log('[CSV Upload] Step 4: Importing to database...');
+        logger.debug('[CSV Upload] Step 4: Importing to database...');
         const { imported, errors } = await importWaterConsumptionData(validRows);
         result.imported = imported;
         result.errors.push(...errors);
 
         // Step 5: Compute and update water_loss_daily (zone analysis)
         if (imported > 0) {
-            console.log('[CSV Upload] Step 5: Computing water loss daily data...');
+            logger.debug('[CSV Upload] Step 5: Computing water loss daily data...');
             const lossResult = await computeAndUpdateWaterLossDaily(validRows, month, year);
             if (lossResult.errors.length > 0) {
                 result.errors.push(...lossResult.errors);
             }
             if (lossResult.upserted > 0) {
-                console.log(`[CSV Upload] Water loss daily: ${lossResult.upserted} zone-day records updated`);
+                logger.debug(`[CSV Upload] Water loss daily: ${lossResult.upserted} zone-day records updated`);
             }
         }
 
         result.success = imported > 0;
-        console.log(`[CSV Upload] Complete! Imported: ${imported}, Skipped: ${skippedCount}`);
+        logger.debug(`[CSV Upload] Complete! Imported: ${imported}, Skipped: ${skippedCount}`);
 
     } catch (err) {
         result.errors.push(`Processing error: ${err instanceof Error ? err.message : 'Unknown error'}`);

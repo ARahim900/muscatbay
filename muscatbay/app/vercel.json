@@ -1,33 +1,3 @@
 {
-      "headers": [
-              {
-                        "source": "/(.*)",
-                        "headers": [
-                                    {
-                                                  "key": "X-Content-Type-Options",
-                                                  "value": "nosniff"
-                                    },
-                                    {
-                                                  "key": "X-Frame-Options",
-                                                  "value": "SAMEORIGIN"
-                                    },
-                                    {
-                                                  "key": "X-XSS-Protection",
-                                                  "value": "1; mode=block"
-                                    },
-                                    {
-                                                  "key": "Referrer-Policy",
-                                                  "value": "strict-origin-when-cross-origin"
-                                    },
-                                    {
-                                                  "key": "Permissions-Policy",
-                                                  "value": "camera=(), microphone=(), geolocation=()"
-                                    },
-                                    {
-                                                  "key": "Content-Security-Policy",
-                                                  "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; frame-src 'self' https://airtable.com https://*.airtable.com https://aitable.ai https://*.aitable.ai https://grafana.nec-oman.com"
-                                    }
-                        ]
-              }
-      ]
+  "_comment": "Security headers are emitted from proxy.ts so CSP can include a per-request nonce. Keep this file minimal to avoid duplicate/conflicting headers. Static assets get headers from Next.js / Vercel defaults."
 }

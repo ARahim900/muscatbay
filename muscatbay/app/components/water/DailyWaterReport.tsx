@@ -222,7 +222,7 @@ function HierarchyStatCard({
                         {label}
                     </p>
                     <h3
-                        className="text-lg sm:text-xl md:text-2xl font-bold tabular-nums tracking-tight text-foreground"
+                        className="text-lg sm:text-xl md:text-2xl font-medium tabular-nums tracking-tight text-foreground"
                         style={valueColor ? { color: valueColor } : undefined}
                     >
                         {value}
@@ -299,7 +299,7 @@ function TableSearch({ value, onChange, placeholder }: { value: string; onChange
                     aria-label="Clear search"
                     className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted dark:text-muted-foreground/70 dark:hover:bg-muted/60 transition-colors"
                 >
-                    <span aria-hidden="true" className="text-[14px] leading-none font-bold">&times;</span>
+                    <span aria-hidden="true" className="text-[14px] leading-none font-medium">&times;</span>
                 </button>
             )}
         </div>
@@ -438,7 +438,7 @@ function ZoneAnalyticsPanel({ reportData, monthData, selectedDay, month, activeZ
 
             {/* ── Zone heading ─────────────────────────────────────────────── */}
             <div>
-                <h2 className="text-xl font-bold text-foreground">
+                <h2 className="text-xl font-medium text-foreground">
                     {activeZoneName} Analysis — Day {selectedDay}, {month}
                 </h2>
                 <p className="text-sm text-muted-foreground dark:text-muted-foreground mt-1">
@@ -859,7 +859,7 @@ function ZoneL3Table({
                                 }}
                             >
                                 <td
-                                    className={cn(tdBase, "font-bold sticky left-0 z-10")}
+                                    className={cn(tdBase, "font-medium sticky left-0 z-10")}
                                     style={{
                                         backgroundColor: `${PALETTE.primary}14`,
                                         color: PALETTE.primary,
@@ -880,7 +880,7 @@ function ZoneL3Table({
                                 {l2DayTotals.map((val, i) => (
                                     <td
                                         key={i}
-                                        className={cn(tdBase, "text-right tabular-nums px-2 text-[12px] font-bold")}
+                                        className={cn(tdBase, "text-right tabular-nums px-2 text-[12px] font-medium")}
                                         style={{ color: PALETTE.primary }}
                                     >
                                         {val === null ? (
@@ -891,7 +891,7 @@ function ZoneL3Table({
                                     </td>
                                 ))}
                                 <td
-                                    className={cn(tdBase, "text-right tabular-nums font-bold")}
+                                    className={cn(tdBase, "text-right tabular-nums font-medium")}
                                     style={{
                                         backgroundColor: `${PALETTE.primary}20`,
                                         color: PALETTE.primary,
@@ -1030,7 +1030,7 @@ function ZoneL3Table({
                                             style={{ backgroundColor: `${PALETTE.blue}12` }}
                                         >
                                             <td
-                                                className={cn(tdBase, "pl-10 font-bold sticky left-0 z-10 text-[12px]")}
+                                                className={cn(tdBase, "pl-10 font-medium sticky left-0 z-10 text-[12px]")}
                                                 style={{
                                                     backgroundColor: `${PALETTE.blue}12`,
                                                     color: PALETTE.blue,
@@ -1043,14 +1043,14 @@ function ZoneL3Table({
                                             {detail.childDayTotals.map((t, i) => (
                                                 <td
                                                     key={i}
-                                                    className={cn(tdBase, "text-right tabular-nums font-bold px-2 text-[12px]")}
+                                                    className={cn(tdBase, "text-right tabular-nums font-medium px-2 text-[12px]")}
                                                     style={{ color: PALETTE.blue }}
                                                 >
                                                     {n(t)}
                                                 </td>
                                             ))}
                                             <td
-                                                className={cn(tdBase, "text-right tabular-nums font-bold")}
+                                                className={cn(tdBase, "text-right tabular-nums font-medium")}
                                                 style={{ backgroundColor: `${PALETTE.blue}20`, color: PALETTE.blue }}
                                             >
                                                 {n(detail.childGrandTotal)}
@@ -1071,7 +1071,7 @@ function ZoneL3Table({
                                             }}
                                         >
                                             <td
-                                                className={cn(tdBase, "pl-10 font-bold sticky left-0 z-10 text-[12px]")}
+                                                className={cn(tdBase, "pl-10 font-medium sticky left-0 z-10 text-[12px]")}
                                                 style={{
                                                     backgroundColor: `${diffTint}14`,
                                                     color: diffTint,
@@ -1084,14 +1084,14 @@ function ZoneL3Table({
                                             {detail.diffDayTotals.map((t, i) => (
                                                 <td
                                                     key={i}
-                                                    className={cn(tdBase, "text-right tabular-nums font-bold px-2 text-[12px]")}
+                                                    className={cn(tdBase, "text-right tabular-nums font-medium px-2 text-[12px]")}
                                                     style={{ color: diffTint }}
                                                 >
                                                     {diffCell(t)}
                                                 </td>
                                             ))}
                                             <td
-                                                className={cn(tdBase, "text-right tabular-nums font-bold")}
+                                                className={cn(tdBase, "text-right tabular-nums font-medium")}
                                                 style={{ backgroundColor: `${diffTint}20`, color: diffTint }}
                                             >
                                                 {diffCell(detail.diffGrandTotal)}
@@ -1112,7 +1112,7 @@ function ZoneL3Table({
                                 }}
                             >
                                 <td
-                                    className={cn(tdBase, "font-bold sticky left-0 z-10")}
+                                    className={cn(tdBase, "font-medium sticky left-0 z-10")}
                                     colSpan={3}
                                     style={{
                                         backgroundColor: `${PALETTE.blue}12`,
@@ -1125,14 +1125,14 @@ function ZoneL3Table({
                                 {dayTotals.map((t, i) => (
                                     <td
                                         key={i}
-                                        className={cn(tdBase, "text-right tabular-nums font-bold px-2 text-[12px]")}
+                                        className={cn(tdBase, "text-right tabular-nums font-medium px-2 text-[12px]")}
                                         style={{ color: PALETTE.blue }}
                                     >
                                         {n(t)}
                                     </td>
                                 ))}
                                 <td
-                                    className={cn(tdBase, "text-right tabular-nums font-bold")}
+                                    className={cn(tdBase, "text-right tabular-nums font-medium")}
                                     style={{ backgroundColor: `${PALETTE.blue}20`, color: PALETTE.blue }}
                                 >
                                     {n(grandTotal)}
@@ -1152,7 +1152,7 @@ function ZoneL3Table({
                                         }}
                                     >
                                         <td
-                                            className={cn(tdBase, "font-bold sticky left-0 z-10")}
+                                            className={cn(tdBase, "font-medium sticky left-0 z-10")}
                                             colSpan={3}
                                             style={{
                                                 backgroundColor: `${diffTint}14`,
@@ -1165,14 +1165,14 @@ function ZoneL3Table({
                                         {diffByDay.map((t, i) => (
                                             <td
                                                 key={i}
-                                                className={cn(tdBase, "text-right tabular-nums font-bold px-2 text-[12px]")}
+                                                className={cn(tdBase, "text-right tabular-nums font-medium px-2 text-[12px]")}
                                                 style={{ color: diffTint }}
                                             >
                                                 {diffCell(t)}
                                             </td>
                                         ))}
                                         <td
-                                            className={cn(tdBase, "text-right tabular-nums font-bold")}
+                                            className={cn(tdBase, "text-right tabular-nums font-medium")}
                                             style={{ backgroundColor: `${diffTint}20`, color: diffTint }}
                                         >
                                             {diffCell(diffGrandTotal)}
@@ -1263,7 +1263,7 @@ function DCAnalyticsPanel({ reportData, monthData, selectedDay, month }: DCAnaly
 
             {/* ── DC heading ─────────────────────────────────────────────── */}
             <div>
-                <h2 className="text-xl font-bold text-foreground">
+                <h2 className="text-xl font-medium text-foreground">
                     Direct Connection Analysis — Day {selectedDay}, {month}
                 </h2>
                 <p className="text-sm text-muted-foreground dark:text-muted-foreground mt-1">
@@ -1491,7 +1491,7 @@ function DCDailyTable({ monthData }: { monthData: SupabaseDailyWaterConsumption[
                         <div className="flex justify-between items-start gap-2">
                             <div className="min-w-0">
                                 <p className="text-muted-foreground dark:text-muted-foreground text-[10px] sm:text-xs font-medium mb-1 uppercase tracking-wide">Monthly DC Total (m³)</p>
-                                <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-foreground tabular-nums tracking-tight">{n(grandTotal)}</h3>
+                                <h3 className="text-lg sm:text-xl md:text-2xl font-medium text-foreground tabular-nums tracking-tight">{n(grandTotal)}</h3>
                             </div>
                             <div className="p-2 sm:p-3 rounded-lg bg-mb-secondary-light flex-shrink-0">
                                 <Droplets className="w-4 h-4 sm:w-5 sm:h-5 text-mb-secondary" />
@@ -1503,7 +1503,7 @@ function DCDailyTable({ monthData }: { monthData: SupabaseDailyWaterConsumption[
                         <div className="flex justify-between items-start gap-2">
                             <div className="min-w-0">
                                 <p className="text-muted-foreground dark:text-muted-foreground text-[10px] sm:text-xs font-medium mb-1 uppercase tracking-wide">DC Meters</p>
-                                <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-foreground tabular-nums tracking-tight">{dcMeters.length}</h3>
+                                <h3 className="text-lg sm:text-xl md:text-2xl font-medium text-foreground tabular-nums tracking-tight">{dcMeters.length}</h3>
                             </div>
                             <div className="p-2 sm:p-3 rounded-lg bg-mb-primary-light/20 flex-shrink-0">
                                 <Activity className="w-4 h-4 sm:w-5 sm:h-5 text-mb-primary" />
@@ -1515,7 +1515,7 @@ function DCDailyTable({ monthData }: { monthData: SupabaseDailyWaterConsumption[
                         <div className="flex justify-between items-start gap-2">
                             <div className="min-w-0">
                                 <p className="text-muted-foreground dark:text-muted-foreground text-[10px] sm:text-xs font-medium mb-1 uppercase tracking-wide">Active (Day {latestDay})</p>
-                                <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-mb-success-text tabular-nums tracking-tight">
+                                <h3 className="text-lg sm:text-xl md:text-2xl font-medium text-mb-success-text tabular-nums tracking-tight">
                                     {activeMeters}<span className="text-muted-foreground dark:text-muted-foreground text-base font-semibold"> / {dcMeters.length}</span>
                                 </h3>
                             </div>
@@ -1597,13 +1597,13 @@ function DCDailyTable({ monthData }: { monthData: SupabaseDailyWaterConsumption[
                             ))}
                             {/* ΣDC Footer */}
                             <tr className="border-t-2 border-border dark:border-border bg-muted/60 dark:bg-muted/20">
-                                <td className={cn(tdBase, "font-bold sticky left-0 z-10 bg-muted/60 dark:bg-muted/20")} colSpan={3}>
+                                <td className={cn(tdBase, "font-medium sticky left-0 z-10 bg-muted/60 dark:bg-muted/20")} colSpan={3}>
                                     ΣDC Total ({dcMeters.length} meters)
                                 </td>
                                 {dayTotals.map((t, i) => (
-                                    <td key={i} className={cn(tdBase, "text-right tabular-nums font-bold px-2 text-[12px]")}>{n(t)}</td>
+                                    <td key={i} className={cn(tdBase, "text-right tabular-nums font-medium px-2 text-[12px]")}>{n(t)}</td>
                                 ))}
-                                <td className={cn(tdBase, "text-right tabular-nums font-bold bg-muted/80 dark:bg-muted/40")}>{n(grandTotal)}</td>
+                                <td className={cn(tdBase, "text-right tabular-nums font-medium bg-muted/80 dark:bg-muted/40")}>{n(grandTotal)}</td>
                             </tr>
                         </tbody>
                     </table>
@@ -1935,7 +1935,7 @@ export function DailyWaterReport() {
                             >
                                 <ChevronRight className="h-4 w-4" />
                             </Button>
-                            <span className="text-base font-bold text-primary min-w-[56px] tabular-nums text-right">
+                            <span className="text-base font-medium text-primary min-w-[56px] tabular-nums text-right">
                                 Day {selectedDay}
                             </span>
                         </div>

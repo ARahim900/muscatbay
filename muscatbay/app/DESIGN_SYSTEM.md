@@ -140,6 +140,18 @@ Sizes live as Tailwind tokens. Avoid arbitrary `text-[Npx]` outside this scale.
 
 All `h1–h6` use `font-semibold tracking-tight`. Color is `text-primary` in light mode, `text-foreground` in dark.
 
+### KPI values (overrides the base scale)
+
+KPI numbers on `StatsGrid` tiles intentionally break out of the base scale so they read as the dominant element on the page. See §5 `StatsGrid` for the full recipe.
+
+| Property | Value |
+|----------|-------|
+| Size | `text-2xl` (24px) — flat across all breakpoints so values like `92,051.5 OMR` fit in 4-column 8-tile grids without truncation |
+| Weight | `font-semibold` (600) — modern dashboards (Linear, Stripe, Vercel) use 500–600 for emphasis; 800 reads heavy and dated |
+| Color | `text-primary` (light) · `text-foreground` (dark) |
+| Numerals | `tabular-nums` |
+| Line height | `leading-none` |
+
 ---
 
 ## 4. Layout & Spacing
@@ -212,6 +224,21 @@ Reference implementations: `app/electricity/page.tsx`, `app/stp/page.tsx`, `app/
 ### `StatsGrid`
 
 Auto-lays out 3 / 4 / 6 / 8 KPI tiles responsively. Tile variants drive the icon tint via tokens: `primary | secondary | success | warning | danger | info | water | default`. Trend indicators auto-color (green=good, red=bad), with `invertTrend` for savings-style metrics where down is good. Optional `href` makes tiles clickable as `<Link>`.
+
+**Value typography** is intentionally heavy and brand-coloured to anchor the eye:
+
+```tsx
+<h3 className="text-lg sm:text-2xl font-semibold tabular-nums tracking-tight truncate
+               text-primary dark:text-foreground leading-none">
+  {stat.value}
+</h3>
+```
+
+- **Color**: `text-primary` (`#4E4456`, brand purple) in light mode, `text-foreground` in dark mode so contrast stays AA on `#0A090C`.
+- **Weight**: `font-extrabold` (800) — heaviest weight Inter ships in this app.
+- **Size**: `text-lg` (15px) on mobile, `text-2xl` (24px) from `sm` up. Capped here because (a) larger reads heavy/dated, and (b) values like `92,051.5 OMR` on the 8-tile STP layout truncated at `text-3xl` once the icon and padding took their share. Tabular nums + `leading-none` keep neighbouring tiles aligned even when values differ in width.
+- **Weight**: `font-semibold` (600) — modern dashboards (Linear, Stripe, Vercel) cap value emphasis here. Avoid `font-bold`/`font-extrabold` on tabular data — they make the dashboard read like a 2010-era spreadsheet rather than a 2026 product.
+- **Never tint red/green based on the metric** — colour stays brand-purple regardless of trend. The trend chip below the value carries the sentiment.
 
 ### `PageStatusBar`
 
@@ -344,6 +371,8 @@ Every interactive element gets this. Never remove without a replacement.
 | One-off KPI card `<div>` per page | `StatsGrid` |
 | Per-module page chrome in module-accent color | Module accents in icons & chart series only |
 | `font-family: "Inter"` declared in a component | `var(--font-sans)` (loaded once in layout) |
+| `font-bold` / `font-extrabold` on table cells, totals, or KPI values | `font-medium` on cells, `font-semibold` on totals & KPI values |
+| Same weight for header + cell + total (visual flat) | Cells `font-normal`, headers `font-medium`, totals `font-semibold` (gentle hierarchy) |
 | Animating `height`, `width`, `top`, `left` | `transform` + `opacity` |
 | Bounce / elastic easing | `cubic-bezier(0.4, 0, 0.2, 1)` (ease-out) |
 | Pure `#FFFFFF` / `#000000` outside `globals.css` | `--background` / `--foreground` |

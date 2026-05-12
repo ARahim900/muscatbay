@@ -2,12 +2,14 @@
 
 import { useState, useMemo, useCallback } from "react";
 import dynamic from "next/dynamic";
+import { useSearchParams } from "next/navigation";
 import { useDashboardData } from "@/hooks/useDashboardData";
+import { useAuth } from "@/components/auth/auth-provider";
 import { StatsGrid } from "@/components/shared/stats-grid";
 import { PageHeader } from "@/components/shared/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Activity, Droplets, Zap, AlertTriangle, ArrowUpRight, Boxes, Recycle, TrendingUp, Wifi, WifiOff } from "lucide-react";
+import { Activity, Droplets, Zap, AlertTriangle, ArrowUpRight, Boxes, Recycle, TrendingUp, Wifi, WifiOff, Printer } from "lucide-react";
 import { AnimateOnScroll } from "@/components/shared/scroll-animation";
 import Link from "next/link";
 
@@ -31,6 +33,31 @@ export default function DashboardPage() {
     const { stats, chartData, stpChartData, recentActivity, loading, isLiveData, error } = useDashboardData();
     const [activityFilter, setActivityFilter] = useState<'all' | 'critical' | 'warning' | 'info'>('all');
     const greeting = useMemo(() => getGreeting(), []);
+    const { profile } = useAuth();
+    const searchParams = useSearchParams();
+    const isPresentMode = searchParams?.get("present") === "1";
+
+    // First name for warmer greeting in daily mode
+    const firstName = useMemo(() => {
+        const full = profile?.full_name?.trim();
+        if (!full) return "";
+        return full.split(" ")[0];
+    }, [profile?.full_name]);
+
+    // Board-friendly date scope for presentation mode
+    const presentScope = useMemo(() => {
+        return new Date().toLocaleDateString("en-GB", {
+            weekday: "long", day: "numeric", month: "long", year: "numeric",
+        });
+    }, []);
+
+    // Headline string varies by mode
+    const headlineTitle = isPresentMode
+        ? "Muscat Bay — Operations Snapshot"
+        : firstName ? `${greeting}, ${firstName}` : greeting;
+    const headlineDescription = isPresentMode
+        ? `Board briefing · ${presentScope}`
+        : "Water, Electricity, and STP performance at a glance";
 
     // Add icons and navigation hrefs to stats (memoized to avoid recalc on every render)
     const statsWithIcons = useMemo(() => stats.map(stat => ({
@@ -84,7 +111,7 @@ export default function DashboardPage() {
                             <div className="flex justify-between items-start gap-2">
                                 <div className="space-y-2 flex-1">
                                     <div className="h-3 w-20 bg-muted rounded" />
-                                    <div className="h-6 w-28 bg-muted rounded" />
+                                    <div className="h-8 w-32 bg-muted rounded" />
                                 </div>
                                 <div className="w-9 h-9 bg-muted rounded-lg flex-shrink-0" />
                             </div>
@@ -124,16 +151,25 @@ export default function DashboardPage() {
 
     return (
         <div className="space-y-6 md:space-y-8 w-full">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between print:items-start">
                 <PageHeader
-                    title={greeting}
-                    description="Water, Electricity, and STP performance at a glance"
+                    title={headlineTitle}
+                    description={headlineDescription}
                 />
-                <div className="flex items-center gap-2">
-
+                <div className="flex items-center gap-2 print:hidden">
+                    <button
+                        onClick={() => window.print()}
+                        aria-label="Print or save as PDF"
+                        title="Print / Save as PDF"
+                        className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md border border-border text-muted-foreground hover:bg-muted hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/60"
+                    >
+                        <Printer className="h-3.5 w-3.5" />
+                        Print
+                    </button>
                     <Badge variant={isLiveData ? "default" : "secondary"} className={`flex items-center gap-1.5 ${isLiveData ? "bg-mb-success text-primary-foreground" : "bg-mb-secondary text-mb-secondary-foreground"}`}>
                         {isLiveData ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
-                        {isLiveData ? "Live Data" : "Demo Mode"}
+                        <span className="sm:inline hidden">{isLiveData ? "Live Data" : "Demo Mode"}</span>
+                        <span className="sm:hidden">{isLiveData ? "Live" : "Demo"}</span>
                     </Badge>
                 </div>
             </div>
@@ -142,8 +178,8 @@ export default function DashboardPage() {
 
             <DashboardCharts chartData={chartData} stpChartData={stpChartData} />
 
-            {/* Recent Activity Card */}
-            <AnimateOnScroll>
+            {/* Recent Activity Card — hidden in board presentation mode and in print */}
+            <AnimateOnScroll className={isPresentMode ? "hidden" : "print:hidden"}>
                 <Card className="card-elevated">
                     <CardHeader className="card-elevated-header p-4 sm:p-5 md:p-6">
                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
@@ -213,12 +249,14 @@ export default function DashboardPage() {
                             {recentActivity.filter(item => activityFilter === 'all' || item.type === activityFilter).length === 0 && (
                                 <div className="col-span-full flex flex-col items-center gap-2 py-8 text-center">
                                     <Activity className="w-8 h-8 text-muted-foreground/70 dark:text-muted-foreground" />
-                                    <p className="text-sm text-muted-foreground">No records for the selected period.</p>
+                                    <p className="text-sm text-muted-foreground">
+                                        Nothing to show for the &ldquo;{activityFilter}&rdquo; filter — try another type or clear the filter to see all recent activity.
+                                    </p>
                                     <button
                                         onClick={() => setActivityFilter('all')}
                                         className="text-xs text-secondary hover:underline font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/60 rounded"
                                     >
-                                        Clear filters
+                                        Show all updates
                                     </button>
                                 </div>
                             )}

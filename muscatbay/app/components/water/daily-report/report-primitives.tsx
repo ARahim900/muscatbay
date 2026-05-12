@@ -6,7 +6,7 @@ import type { SortDir, SortState } from "./report-types";
 
 // ─── Table base classes ───────────────────────────────────────────────────────
 
-export const thBase = "h-[2.875rem] px-4 py-3 text-left align-middle text-[11px] font-bold uppercase tracking-[0.04em] text-muted-foreground whitespace-nowrap";
+export const thBase = "h-[2.875rem] px-4 py-3 text-left align-middle text-[11px] font-medium uppercase tracking-[0.04em] text-muted-foreground whitespace-nowrap";
 export const tdBase = "px-4 py-3.5 align-middle text-[13px] font-medium text-card-foreground";
 
 // ─── Sort helpers ─────────────────────────────────────────────────────────────
@@ -74,7 +74,7 @@ export function TableSearch({ value, onChange, placeholder }: { value: string; o
                     aria-label="Clear search"
                     className="absolute right-2.5 top-1/2 -translate-y-1/2 h-4 w-4 rounded-full bg-border dark:bg-muted flex items-center justify-center text-muted-foreground dark:text-muted-foreground/70 hover:bg-border dark:hover:bg-muted-foreground/40 transition-colors"
                 >
-                    <span className="text-[10px] leading-none font-bold">&times;</span>
+                    <span className="text-[10px] leading-none font-medium">&times;</span>
                 </button>
             )}
         </div>
@@ -173,7 +173,7 @@ export function HierarchyStatCard({
                         {label}
                     </p>
                     <h3
-                        className="text-lg sm:text-xl md:text-2xl font-bold tabular-nums tracking-tight text-foreground"
+                        className="text-lg sm:text-xl md:text-2xl font-medium tabular-nums tracking-tight text-foreground"
                         style={valueColor ? { color: valueColor } : undefined}
                     >
                         {value}

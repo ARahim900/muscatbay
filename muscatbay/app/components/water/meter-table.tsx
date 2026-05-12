@@ -138,7 +138,7 @@ function SummaryCard({
                 <div className="min-w-0">
                     <p className="text-muted-foreground text-[10px] sm:text-xs font-medium mb-1 uppercase tracking-wide">{label}</p>
                     <h3
-                        className="text-lg sm:text-xl font-bold tabular-nums tracking-tight text-foreground"
+                        className="text-lg sm:text-xl font-medium tabular-nums tracking-tight text-foreground"
                         style={valueColor ? { color: valueColor } : undefined}
                     >
                         {value}
@@ -394,7 +394,7 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                             aria-label="Clear search"
                             className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted dark:text-muted-foreground/70 dark:hover:bg-muted/60 transition-colors"
                         >
-                            <span aria-hidden="true" className="text-[14px] font-bold leading-none">&times;</span>
+                            <span aria-hidden="true" className="text-[14px] font-medium leading-none">&times;</span>
                         </button>
                     )}
                 </div>
@@ -410,7 +410,7 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                     <div key={bulk.accountNumber} className="rounded-xl border-2 p-4 shadow-sm space-y-2"
                         style={{ borderColor: `${PALETTE.primary}40`, backgroundColor: `${PALETTE.primary}0D` }}>
                         <div className="flex items-center justify-between">
-                            <span className="text-sm font-bold" style={{ color: PALETTE.primary }}>
+                            <span className="text-sm font-medium" style={{ color: PALETTE.primary }}>
                                 <Droplets className="inline h-3.5 w-3.5 mr-1" />{bulk.label || bulk.accountNumber}
                             </span>
                             <StatusChip label={bulk.level === 'L1' ? 'L1' : 'L2 BULK'} color="primary" />
@@ -422,14 +422,14 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                                 return (
                                     <div key={mo} className="text-xs space-y-0.5">
                                         <span className="text-muted-foreground">{mo}</span>
-                                        <p className="font-mono font-bold" style={{ color: PALETTE.primary }}>{v > 0 ? fmt(v) : '—'}</p>
+                                        <p className="font-mono font-medium" style={{ color: PALETTE.primary }}>{v > 0 ? fmt(v) : '—'}</p>
                                     </div>
                                 );
                             })}
                         </div>
                         <div className="flex items-center justify-between pt-1 border-t border-border/60">
                             <span className="text-xs text-muted-foreground">Monthly Total</span>
-                            <span className="font-mono font-bold text-sm" style={{ color: PALETTE.primary }}>{fmt(meterTotals.get(bulk.accountNumber) ?? 0)} m³</span>
+                            <span className="font-mono font-medium text-sm" style={{ color: PALETTE.primary }}>{fmt(meterTotals.get(bulk.accountNumber) ?? 0)} m³</span>
                         </div>
                     </div>
                 ))}
@@ -472,7 +472,7 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                             </div>
                             <div className="flex items-center justify-between pt-1 border-t border-border/60">
                                 <span className="text-xs text-muted-foreground">Total</span>
-                                <span className="font-mono font-bold text-sm">{fmt(total)} m³</span>
+                                <span className="font-mono font-medium text-sm">{fmt(total)} m³</span>
                             </div>
                             {bData && isExpanded && (
                                 <div className="pt-2 border-t border-border/60 space-y-2">
@@ -503,19 +503,19 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                 {l3Meters.length > 0 && (
                     <div className="rounded-xl border-2 p-4 space-y-3"
                         style={{ borderColor: diffTotal > 0 ? `${PALETTE.red}40` : `${PALETTE.mint}60`, backgroundColor: diffTotal > 0 ? `${PALETTE.red}08` : `${PALETTE.mint}14` }}>
-                        <p className="text-sm font-bold text-foreground">Zone Monthly Summary</p>
+                        <p className="text-sm font-medium text-foreground">Zone Monthly Summary</p>
                         <div className="grid grid-cols-3 gap-2 text-center">
                             <div>
                                 <p className="text-[10px] text-muted-foreground uppercase tracking-wide">L2 Bulk</p>
-                                <p className="font-mono font-bold text-sm mt-0.5" style={{ color: PALETTE.primary }}>{fmt(bulkTotal)}</p>
+                                <p className="font-mono font-medium text-sm mt-0.5" style={{ color: PALETTE.primary }}>{fmt(bulkTotal)}</p>
                             </div>
                             <div>
                                 <p className="text-[10px] text-muted-foreground uppercase tracking-wide">ΣL3</p>
-                                <p className="font-mono font-bold text-sm mt-0.5" style={{ color: PALETTE.blue }}>{fmt(indivTotal)}</p>
+                                <p className="font-mono font-medium text-sm mt-0.5" style={{ color: PALETTE.blue }}>{fmt(indivTotal)}</p>
                             </div>
                             <div>
                                 <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Diff</p>
-                                <p className="font-mono font-bold text-sm mt-0.5" style={{ color: diffTotal > 0 ? PALETTE.red : PALETTE.mint }}>{diffLabel(diffTotal)}</p>
+                                <p className="font-mono font-medium text-sm mt-0.5" style={{ color: diffTotal > 0 ? PALETTE.red : PALETTE.mint }}>{diffLabel(diffTotal)}</p>
                             </div>
                         </div>
                         <div className="flex items-center justify-between">
@@ -565,7 +565,7 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                                 <tr key={bulk.accountNumber} className="border-b-2"
                                     style={{ backgroundColor: `${PALETTE.primary}14`, borderBottomColor: `${PALETTE.primary}40` }}>
                                     <td
-                                        className={cn(tdBase, 'font-bold sticky left-0 z-10')}
+                                        className={cn(tdBase, 'font-medium sticky left-0 z-10')}
                                         style={{ backgroundColor: `${PALETTE.primary}14`, color: PALETTE.primary, boxShadow: `inset 4px 0 0 ${PALETTE.primary}` }}
                                     >
                                         <span className="inline-flex items-center gap-2">
@@ -582,13 +582,13 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                                     {months.map(mo => {
                                         const v = getConsumption(bulk, mo);
                                         return (
-                                            <td key={mo} className={cn(tdBase, 'text-right tabular-nums text-[12px] font-bold')}
+                                            <td key={mo} className={cn(tdBase, 'text-right tabular-nums text-[12px] font-medium')}
                                                 style={{ color: PALETTE.primary }}>
                                                 {v > 0 ? fmt(v) : <span className="text-muted-foreground/70 dark:text-muted-foreground">—</span>}
                                             </td>
                                         );
                                     })}
-                                    <td className={cn(tdBase, 'text-right tabular-nums font-bold')}
+                                    <td className={cn(tdBase, 'text-right tabular-nums font-medium')}
                                         style={{ backgroundColor: `${PALETTE.primary}20`, color: PALETTE.primary }}>
                                         {fmt(bTotal)}
                                     </td>
@@ -633,7 +633,7 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                                                         ? <ChevronDown className="h-3.5 w-3.5 shrink-0" />
                                                         : <ChevronRight className="h-3.5 w-3.5 shrink-0" />}
                                                     <Building2 className="h-3.5 w-3.5 shrink-0" />
-                                                    <span className="font-bold">{bData.buildingName}</span>
+                                                    <span className="font-medium">{bData.buildingName}</span>
                                                 </button>
                                             ) : (
                                                 <>
@@ -659,7 +659,7 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                                             </td>
                                         );
                                     })}
-                                    <td className={cn(tdBase, 'text-right tabular-nums font-bold bg-muted/80 dark:bg-muted/40')}>
+                                    <td className={cn(tdBase, 'text-right tabular-nums font-medium bg-muted/80 dark:bg-muted/40')}>
                                         {fmt(total)}
                                     </td>
                                 </tr>,
@@ -712,7 +712,7 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                                     <tr key={`${meter.accountNumber}-sigma`}
                                         style={{ backgroundColor: `${PALETTE.blue}0A` }}>
                                         <td
-                                            className={cn(tdBase, 'sticky left-0 z-10 pl-12 font-bold')}
+                                            className={cn(tdBase, 'sticky left-0 z-10 pl-12 font-medium')}
                                             style={{ backgroundColor: `${PALETTE.blue}0A`, color: PALETTE.blue, boxShadow: `inset 3px 0 0 ${PALETTE.blue}` }}
                                         >
                                             <span className="inline-flex items-center gap-1.5">
@@ -722,12 +722,12 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                                         </td>
                                         <td className={cn(tdBase, 'text-muted-foreground text-[11px]')} colSpan={2} />
                                         {bData.childMonthly.map((v, i) => (
-                                            <td key={i} className={cn(tdBase, 'text-right tabular-nums text-[12px] font-bold')}
+                                            <td key={i} className={cn(tdBase, 'text-right tabular-nums text-[12px] font-medium')}
                                                 style={{ color: PALETTE.blue }}>
                                                 {fmt(v)}
                                             </td>
                                         ))}
-                                        <td className={cn(tdBase, 'text-right tabular-nums font-bold')}
+                                        <td className={cn(tdBase, 'text-right tabular-nums font-medium')}
                                             style={{ color: PALETTE.blue, backgroundColor: `${PALETTE.blue}14` }}>
                                             {fmt(bData.childTotal)}
                                         </td>
@@ -739,7 +739,7 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                                     <tr key={`${meter.accountNumber}-diff`}
                                         style={{ backgroundColor: bData.diff > 0 ? `${PALETTE.red}07` : `${PALETTE.mint}12` }}>
                                         <td
-                                            className={cn(tdBase, 'sticky left-0 z-10 pl-12 font-bold')}
+                                            className={cn(tdBase, 'sticky left-0 z-10 pl-12 font-medium')}
                                             style={{
                                                 backgroundColor: bData.diff > 0 ? `${PALETTE.red}07` : `${PALETTE.mint}12`,
                                                 color: bData.diff > 0 ? PALETTE.red : PALETTE.mint,
@@ -763,7 +763,7 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                                                 </td>
                                             );
                                         })}
-                                        <td className={cn(tdBase, 'text-right tabular-nums font-bold')}
+                                        <td className={cn(tdBase, 'text-right tabular-nums font-medium')}
                                             style={{
                                                 backgroundColor: bData.diff > 0 ? `${PALETTE.red}14` : `${PALETTE.mint}25`,
                                                 color: bData.diff > 0 ? PALETTE.red : PALETTE.mint,
@@ -782,7 +782,7 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                             <tr className="border-t-2 border-border"
                                 style={{ backgroundColor: `${PALETTE.blue}0E` }}>
                                 <td
-                                    className={cn(tdBase, 'font-bold sticky left-0 z-10')}
+                                    className={cn(tdBase, 'font-medium sticky left-0 z-10')}
                                     style={{ backgroundColor: `${PALETTE.blue}0E`, color: PALETTE.blue, boxShadow: `inset 4px 0 0 ${PALETTE.blue}` }}
                                 >
                                     <span className="inline-flex items-center gap-2">
@@ -794,12 +794,12 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                                     {l3Meters.length} meters
                                 </td>
                                 {indivMonthly.map((v, i) => (
-                                    <td key={i} className={cn(tdBase, 'text-right tabular-nums text-[12px] font-bold')}
+                                    <td key={i} className={cn(tdBase, 'text-right tabular-nums text-[12px] font-medium')}
                                         style={{ color: PALETTE.blue }}>
                                         {fmt(v)}
                                     </td>
                                 ))}
-                                <td className={cn(tdBase, 'text-right tabular-nums font-bold')}
+                                <td className={cn(tdBase, 'text-right tabular-nums font-medium')}
                                     style={{ backgroundColor: `${PALETTE.blue}20`, color: PALETTE.blue }}>
                                     {fmt(indivTotal)}
                                 </td>
@@ -810,7 +810,7 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                         {bulkMeters.length > 0 && l3Meters.length > 0 && (
                             <tr style={{ backgroundColor: diffTotal > 0 ? `${PALETTE.red}08` : `${PALETTE.mint}18` }}>
                                 <td
-                                    className={cn(tdBase, 'font-bold sticky left-0 z-10')}
+                                    className={cn(tdBase, 'font-medium sticky left-0 z-10')}
                                     style={{
                                         backgroundColor: diffTotal > 0 ? `${PALETTE.red}08` : `${PALETTE.mint}18`,
                                         color: diffTotal > 0 ? PALETTE.red : PALETTE.mint,
@@ -831,7 +831,7 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                                         {diffLabel(v)}
                                     </td>
                                 ))}
-                                <td className={cn(tdBase, 'text-right tabular-nums font-bold')}
+                                <td className={cn(tdBase, 'text-right tabular-nums font-medium')}
                                     style={{
                                         backgroundColor: diffTotal > 0 ? `${PALETTE.red}18` : `${PALETTE.mint}30`,
                                         color: diffTotal > 0 ? PALETTE.red : PALETTE.mint,

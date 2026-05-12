@@ -1,5 +1,6 @@
 import { getSupabaseClient } from './supabase';
 import { validateEmail, validatePassword, validateFullName, validateUsername, validateUrl, sanitizeInput } from './validation';
+import { logger } from "@/lib/logger";
 
 export interface UserProfile {
     id: string;
@@ -105,7 +106,7 @@ export async function signUp(email: string, password: string, fullName?: string)
 export async function signIn(email: string, password: string) {
     // DEV MODE: Bypass authentication
     if (isDevMode()) {
-        console.log('🔧 DEV MODE: Authentication bypassed');
+        logger.debug('🔧 DEV MODE: Authentication bypassed');
         return {
             user: DEV_USER,
             session: null,
