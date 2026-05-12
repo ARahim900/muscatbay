@@ -83,12 +83,12 @@ export const UI_CONFIG = {
 
 export const CHART_COLORS = {
     PRIMARY: '#4E4456',    // Plum
-    SECONDARY: '#81D8D0',  // Tiffany
+    SECONDARY: '#A1D1D5',  // Muscat Bay teal
     ACCENT: '#C9A962',     // Gold
     SUCCESS: '#22c55e',
     WARNING: '#f59e0b',
     ERROR: '#ef4444',
-    GRADIENT_START: 'rgba(129, 216, 208, 0.3)',
+    GRADIENT_START: 'rgba(161, 209, 213, 0.3)',
     GRADIENT_END: 'transparent',
 } as const;
 

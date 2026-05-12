@@ -22,13 +22,22 @@ import { NextResponse, type NextRequest } from 'next/server'
 function buildCsp(nonce: string): string {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''
     const supabaseHost = supabaseUrl ? new URL(supabaseUrl).host : '*.supabase.co'
+    // Dev-only allowance so the Impeccable live helper (port 8400) can load
+    // its picker script and stream SSE events. Removed in production builds.
+    const isDev = process.env.NODE_ENV !== 'production'
+    const liveDevScript = isDev ? ' http://localhost:8400' : ''
+    const liveDevConnect = isDev ? ' http://localhost:8400 ws://localhost:8400' : ''
+    // strict-dynamic invalidates host-source allowlists in modern browsers
+    // (only nonced scripts and their dynamic children run). In dev we drop it
+    // so the live helper script (no nonce, host allowlisted) can load.
+    const strictDynamic = isDev ? '' : ` 'strict-dynamic'`
     return [
         `default-src 'self'`,
-        `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' 'unsafe-eval' 'unsafe-inline'`,
+        `script-src 'self' 'nonce-${nonce}'${strictDynamic} 'unsafe-eval' 'unsafe-inline'${liveDevScript}`,
         `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com`,
         `font-src 'self' https://fonts.gstatic.com`,
         `img-src 'self' data: https:`,
-        `connect-src 'self' https://${supabaseHost} wss://${supabaseHost}`,
+        `connect-src 'self' https://${supabaseHost} wss://${supabaseHost}${liveDevConnect}`,
         `frame-src 'self' https://airtable.com https://*.airtable.com https://aitable.ai https://*.aitable.ai https://grafana.nec-oman.com`,
         `frame-ancestors 'none'`,
         `base-uri 'self'`,

@@ -134,10 +134,10 @@
   /* Muscat Bay Brand Colors (for auth pages and legacy usage) */
   --mb-primary: #4D445D;
   --mb-primary-hover: #3A3341;
-  --mb-secondary: #43B3AE;
+  --mb-secondary: #A1D1D5;
   --mb-secondary-foreground: #1F2937;
   --mb-secondary-light: #E8F1EF;
-  --mb-secondary-active: #8AAFA5;
+  --mb-secondary-active: #7BB6BA;
   --mb-primary-light: #6B5F73;
 
   /* Muscat Bay Status Colors — Elegant Palette */
@@ -221,7 +221,7 @@
   --primary-foreground: #FFFFFF;
 
   /* Secondary (Brand Teal) */
-  --secondary: #43B3AE;
+  --secondary: #A1D1D5;
   --secondary-foreground: #1F2937;
 
   /* Muted / Neutral */
@@ -229,7 +229,7 @@
   --muted-foreground: #6B7280;
 
   /* Accents */
-  --accent: #43B3AE;
+  --accent: #A1D1D5;
   --accent-foreground: #1F2937;
 
   /* Destructive */
@@ -244,11 +244,11 @@
   --border: #E5E7EB;
   --border-light: #E5E7EB;
   --input: #E5E7EB;
-  --ring: #43B3AE;
+  --ring: #A1D1D5;
 
   /* Chart Colors — Muscat Bay Elegant Palette */
   --chart-1: #6B9AC4;
-  --chart-2: #43B3AE;
+  --chart-2: #A1D1D5;
   --chart-3: #E8C064;
   --chart-4: #84B59F;
   --chart-5: #4D445D;
@@ -256,20 +256,20 @@
   --chart-axis: #6B7280;
   --chart-loss: #D67A7A;
   --chart-success: #84B59F;
-  --chart-teal: #43B3AE;
+  --chart-teal: #A1D1D5;
   --chart-brand: #4D445D;
   --chart-amber: #E8C064;
   --chart-gray: #9B86A8;
 
   /* Domain-specific chart colors */
   --chart-water-primary: #6B9AC4;
-  --chart-water-secondary: #43B3AE;
-  --chart-water-accent: #43B3AE;
+  --chart-water-secondary: #A1D1D5;
+  --chart-water-accent: #A1D1D5;
   --chart-elec-primary: #E8C064;
   --chart-elec-secondary: #DF9A5B;
   --chart-elec-accent: #E8C064;
   --chart-stp-primary: #84B59F;
-  --chart-stp-secondary: #43B3AE;
+  --chart-stp-secondary: #A1D1D5;
   --chart-stp-accent: #84B59F;
 
   /* Recharts cursor / grid — theme-aware overlays for tooltip cursors and CartesianGrid */
@@ -281,7 +281,7 @@
   --chart-zone-c: #84B59F;
   --chart-zone-d: #E8C064;
   --chart-zone-e: #D67A7A;
-  --chart-zone-f: #43B3AE;
+  --chart-zone-f: #A1D1D5;
 
   /* Chart Background Colors */
   --chart-bg-blue: #EFF6FF;
@@ -339,10 +339,10 @@
   /* Dark mode mappings */
   --mb-primary: #5f5168;
   --mb-primary-hover: #4E4456;
-  --mb-secondary: #43B3AE;
+  --mb-secondary: #A1D1D5;
   --mb-secondary-foreground: #1F2937;
   --mb-secondary-light: rgba(77, 191, 191, 0.12);
-  --mb-secondary-active: #8AAFA5;
+  --mb-secondary-active: #7BB6BA;
   --mb-primary-light: #8b7f94;
 
   /* Dark mode status colors — elegant palette, slightly lighter for dark bg readability */
@@ -379,18 +379,18 @@
   --primary-foreground: #FFFFFF;
   /* Sidebar slightly darker than --primary in dark mode too */
   --sidebar: #3B3240;
-  --secondary: #43B3AE;
+  --secondary: #A1D1D5;
   --secondary-foreground: #1F2937;
   --muted: #22202A;
   --muted-foreground: #9CA3AF;
-  --accent: #43B3AE;
+  --accent: #A1D1D5;
   --accent-foreground: #1F2937;
   --destructive: #D67A7A;
   --popover: #16141B;
   --popover-foreground: #F1F5F9;
   --border: rgba(255, 255, 255, 0.1);
   --input: rgba(255, 255, 255, 0.1);
-  --ring: #43B3AE;
+  --ring: #A1D1D5;
 
   /* Chart colors — lighter variants for dark backgrounds */
   --chart-5: #8B7F94;

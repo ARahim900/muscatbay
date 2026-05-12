@@ -42,7 +42,7 @@
 | `--mb-primary` | `#4D445D` | `77 68 93` | Auth pages, legacy usage |
 | `--mb-primary-hover` | `#3A3341` | `58 51 65` | Hover state on primary |
 | `--mb-primary-light` | `#6B5F73` | `107 95 115` | Lighter primary tint |
-| `--secondary` / `--accent` | `#A1D1D5` | `161 209 213` | CTAs, focus rings, highlights |
+| `--secondary` / `--accent` | `#A1D1D5` | `161 209 213` | CTAs, focus rings, highlights — sampled directly from the cyan-teal slashes in `mb-logo.png` so brand teal and logo stay in lockstep. Never override to a different teal. |
 | `--mb-secondary` | `#A1D1D5` | `161 209 213` | Brand teal |
 | `--mb-secondary-light` | `#E8F1EF` | — | Tinted backgrounds |
 | `--mb-secondary-active` | `#8AAFA5` | — | Active/pressed teal |

@@ -13,7 +13,7 @@ const config: Config = {
                 // Muscat Bay Brand Colors
                 brand: {
                     primary: '#4E4456', // Deep Purple - Sidebar background and Headings
-                    accent: '#43B3AE',  // Muscat Bay teal - Active links, Highlights, and Buttons
+                    accent: '#A1D1D5',  // Muscat Bay teal - Active links, Highlights, and Buttons
                 },
                 // Semantic Colors
                 semantic: {
@@ -48,7 +48,7 @@ const config: Config = {
                     foreground: '#FFFFFF',
                 },
                 secondary: {
-                    DEFAULT: '#43B3AE', // Muscat Bay teal (Brand Accent)
+                    DEFAULT: '#A1D1D5', // Muscat Bay teal (Brand Accent)
                     foreground: '#FFFFFF',
                 },
                 success: '#10B981',
