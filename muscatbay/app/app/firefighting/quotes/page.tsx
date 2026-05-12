@@ -80,14 +80,14 @@ export default function FireQuotesPage() {
             case 'approved': return 'bg-mb-success-light text-mb-success-text';
             case 'pending_approval': return 'bg-mb-warning-light text-mb-warning-text';
             case 'rejected': return 'bg-mb-danger-light text-mb-danger-text';
-            default: return 'bg-slate-100 text-slate-800';
+            default: return 'bg-muted text-foreground';
         }
     };
 
     if (loading || !data) {
         return (
             <div className="flex h-full items-center justify-center p-8">
-                <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-slate-800"></div>
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-border border-t-foreground"></div>
             </div>
         );
     }
@@ -115,7 +115,7 @@ export default function FireQuotesPage() {
             <div className="space-y-6">
                 {quotesWithItems.map(quote => (
                     <Card key={quote.id}>
-                        <CardHeader className="flex flex-row items-center justify-between bg-slate-50 dark:bg-slate-800/50 rounded-t-lg">
+                        <CardHeader className="flex flex-row items-center justify-between bg-muted dark:bg-muted/50 rounded-t-lg">
                             <div className="space-y-1">
                                 <CardTitle className="text-lg flex items-center gap-3">
                                     {quote.quote_code}

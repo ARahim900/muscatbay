@@ -25,13 +25,14 @@ import {
     Search,
     Download,
 } from "lucide-react";
-import { SortIcon, TablePagination, TableToolbar, StatusBadge, type BadgeColor, type PageSizeOption } from "@/components/shared/data-table";
-import { Table, TableHeader, TableBody, TableFooter, TableRow, TableHead, TableCell } from "@/components/ui/table";
+import { TablePagination, TableToolbar, StatusBadge, SortableTableHead, type BadgeColor, type PageSizeOption } from "@/components/shared/data-table";
+import { Table, TableHeader, TableBody, TableFooter, TableRow, TableCell } from "@/components/ui/table";
 import { exportToCSV, getDateForFilename } from "@/lib/export-utils";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, BarChart, Bar, LineChart, Line, Legend } from "recharts";
 import { LiquidTooltip } from "../../components/charts/liquid-tooltip";
 import { format } from "date-fns";
 import { saveFilterPreferences, loadFilterPreferences } from "@/lib/filter-preferences";
+import { MODULE_COLORS } from "@/lib/tokens";
 import { DateRangePicker } from "@/components/water/date-range-picker";
 import { Button } from "@/components/ui/button";
 import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
@@ -63,14 +64,14 @@ const calcTrend = (current: number, previous: number): { trend: 'up' | 'down' | 
 
 function ChartViewToggle({ value, onChange }: { value: 'daily' | 'monthly'; onChange: (v: 'daily' | 'monthly') => void }) {
     return (
-        <div className="flex items-center gap-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 p-0.5">
+        <div className="flex items-center gap-0.5 rounded-lg bg-muted dark:bg-muted p-0.5">
             <button
                 onClick={() => onChange('daily')}
                 className={cn(
                     "px-3 py-1 text-xs font-medium rounded-md transition-design",
                     value === 'daily'
-                        ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-sm"
-                        : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
+                        ? "bg-white dark:bg-muted text-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground dark:hover:text-muted-foreground/70"
                 )}
             >
                 Daily
@@ -80,8 +81,8 @@ function ChartViewToggle({ value, onChange }: { value: 'daily' | 'monthly'; onCh
                 className={cn(
                     "px-3 py-1 text-xs font-medium rounded-md transition-design",
                     value === 'monthly'
-                        ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-sm"
-                        : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
+                        ? "bg-white dark:bg-muted text-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground dark:hover:text-muted-foreground/70"
                 )}
             >
                 Monthly
@@ -634,7 +635,7 @@ export default function STPPage() {
                     <Skeleton className="h-9 w-28 rounded-lg" />
                 </div>
                 {/* Filter skeleton */}
-                <div className="p-6 rounded-xl border border-slate-200/60 bg-white dark:bg-slate-800/50">
+                <div className="p-6 rounded-xl border border-border/60 bg-white dark:bg-muted/50">
                     <div className="flex justify-between items-center mb-4">
                         <Skeleton className="h-6 w-48" />
                         <Skeleton className="h-8 w-24" />
@@ -691,7 +692,7 @@ export default function STPPage() {
                                     {/* Year Selector Row */}
                                     <div className="flex items-center justify-between flex-wrap gap-3">
                                         <div className="flex items-center gap-3">
-                                            <span className="text-sm font-medium text-slate-600 dark:text-slate-400">Filter by Year:</span>
+                                            <span className="text-sm font-medium text-muted-foreground dark:text-muted-foreground">Filter by Year:</span>
                                             <div className="flex items-center gap-2">
                                                 {availableYears.map((year) => (
                                                     <Button
@@ -708,7 +709,7 @@ export default function STPPage() {
                                                                 setEndMonth(yearMonths[yearMonths.length - 1]);
                                                             }
                                                         }}
-                                                        className={`rounded-full px-4 ${selectedYear === year ? "bg-secondary text-white" : "border-slate-200 dark:border-slate-700"}`}
+                                                        className={`rounded-full px-4 ${selectedYear === year ? "bg-secondary text-primary-foreground" : "border-border dark:border-border"}`}
                                                     >
                                                         {year}
                                                     </Button>
@@ -767,7 +768,7 @@ export default function STPPage() {
                                         </defs>
                                         <XAxis dataKey="month" className="text-xs" tick={{ fontSize: 11, fill: "var(--chart-axis)" }} axisLine={false} tickLine={false} dy={10} interval={volumeChartView === 'daily' && dailyChartData.length > 15 ? Math.ceil(dailyChartData.length / 12) - 1 : 0} />
                                         <YAxis className="text-xs" tick={{ fontSize: 11, fill: "var(--chart-axis)" }} tickFormatter={(v: number) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v)} axisLine={false} tickLine={false} label={{ value: 'm³', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: "var(--chart-axis)", fontSize: 11 } }} />
-                                        <Tooltip content={<LiquidTooltip />} cursor={{ stroke: 'rgba(0,0,0,0.1)', strokeWidth: 2 }} />
+                                        <Tooltip content={<LiquidTooltip />} cursor={{ stroke: 'var(--chart-cursor-stroke)', strokeWidth: 2 }} />
                                         <Legend iconType="circle" />
                                         <Area type="monotone" dataKey="inlet" name="Sewage Inlet" stroke={CHART_COLORS.brand} fill="url(#gradInlet)" strokeWidth={volumeChartView === 'daily' ? 2 : 3} activeDot={{ r: 6, stroke: 'var(--card)', strokeWidth: 2 }} animationDuration={800} />
                                         <Area type="monotone" dataKey="tse" name="TSE Output" stroke={CHART_COLORS.primary} fill="url(#gradTSE)" strokeWidth={volumeChartView === 'daily' ? 2 : 3} animationDuration={800} />
@@ -803,7 +804,7 @@ export default function STPPage() {
                                         <BarChart data={economicChartView === 'daily' ? dailyChartData : monthlyChartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                                             <XAxis dataKey="month" className="text-xs" tick={{ fontSize: 10, fill: "var(--chart-axis)" }} axisLine={false} tickLine={false} dy={10} interval={economicChartView === 'daily' && dailyChartData.length > 15 ? Math.ceil(dailyChartData.length / 12) - 1 : 0} />
                                             <YAxis className="text-xs" tick={{ fontSize: 10, fill: "var(--chart-axis)" }} axisLine={false} tickLine={false} label={{ value: 'OMR', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: "var(--chart-axis)", fontSize: 10 } }} />
-                                            <Tooltip content={<LiquidTooltip />} cursor={{ fill: 'rgba(0,0,0,0.04)', radius: 6 }} />
+                                            <Tooltip content={<LiquidTooltip />} cursor={{ fill: 'var(--chart-cursor-fill)', radius: 6 }} />
                                             <Legend iconType="circle" wrapperStyle={{ paddingTop: 10 }} />
                                             <Bar dataKey="income" name="Income" fill={CHART_COLORS.success} radius={[6, 6, 0, 0]} animationDuration={800} />
                                             <Bar dataKey="savings" name="Savings" fill="var(--chart-inlet)" radius={[6, 6, 0, 0]} animationDuration={800} />
@@ -837,7 +838,7 @@ export default function STPPage() {
                                         <LineChart data={tankerChartView === 'daily' ? dailyChartData : monthlyChartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                                             <XAxis dataKey="month" className="text-xs" tick={{ fontSize: 10, fill: "var(--chart-axis)" }} axisLine={false} tickLine={false} dy={10} interval={tankerChartView === 'daily' && dailyChartData.length > 15 ? Math.ceil(dailyChartData.length / 12) - 1 : 0} />
                                             <YAxis className="text-xs" tick={{ fontSize: 10, fill: "var(--chart-axis)" }} axisLine={false} tickLine={false} label={{ value: 'trips', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: "var(--chart-axis)", fontSize: 10 } }} />
-                                            <Tooltip content={<LiquidTooltip />} cursor={{ stroke: 'rgba(0,0,0,0.1)', strokeWidth: 2 }} />
+                                            <Tooltip content={<LiquidTooltip />} cursor={{ stroke: 'var(--chart-cursor-stroke)', strokeWidth: 2 }} />
                                             <Legend iconType="circle" wrapperStyle={{ paddingTop: 10 }} />
                                             <Line
                                                 type="monotone"
@@ -861,23 +862,23 @@ export default function STPPage() {
                         {/* Toolbar */}
                         <TableToolbar className="flex-wrap">
                             <div>
-                                <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-200">Daily Operations Log</h2>
-                                <p className="text-sm text-slate-500 dark:text-slate-400">Detailed daily STP operation records</p>
+                                <h2 className="text-lg font-semibold text-foreground dark:text-muted-foreground">Daily Operations Log</h2>
+                                <p className="text-sm text-muted-foreground">Detailed daily STP operation records</p>
                             </div>
 
-                            <div className="relative flex-1 min-w-[200px] max-w-md ml-auto">
-                                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                            <div className="relative flex-1 min-w-0 sm:min-w-[200px] max-w-md sm:ml-auto">
+                                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                                 <input
                                     type="text"
                                     placeholder="Search operations..."
                                     value={logSearchTerm}
                                     onChange={(e) => { setLogSearchTerm(e.target.value); setLogCurrentPage(1); }}
-                                    className="pl-10 pr-4 py-2 w-full rounded-lg border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-sm placeholder:text-slate-400 shadow-sm transition-shadow focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40"
+                                    className="pl-10 pr-4 py-2 w-full rounded-lg border border-border/80 dark:border-border/80 bg-white dark:bg-muted text-foreground dark:text-muted-foreground text-sm placeholder:text-muted-foreground shadow-sm transition-shadow focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40"
                                 />
                             </div>
 
                             <Select value={selectedMonth} onValueChange={(value) => { if (value) { setSelectedMonth(value); setLogCurrentPage(1); } }}>
-                                <SelectTrigger className="w-[200px]">
+                                <SelectTrigger className="w-full sm:w-[200px]">
                                     <SelectValue placeholder="Select month" />
                                 </SelectTrigger>
                                 <SelectContent alignItemWithTrigger={false}>
@@ -891,14 +892,14 @@ export default function STPPage() {
 
                             <button
                                 onClick={handleLogExportCSV}
-                                className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors"
+                                className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
                             >
                                 <Download className="w-3.5 h-3.5" />
                                 <span>Export CSV</span>
                             </button>
 
-                            <div className="text-sm text-slate-500 dark:text-slate-400 whitespace-nowrap">
-                                <span className="font-semibold text-slate-700 dark:text-slate-300">{dailyOperations.length}</span> records
+                            <div className="text-sm text-muted-foreground whitespace-nowrap">
+                                <span className="font-semibold text-foreground dark:text-muted-foreground/70">{dailyOperations.length}</span> records
                             </div>
                         </TableToolbar>
 
@@ -912,26 +913,26 @@ export default function STPPage() {
                                 const efficiencyBadgeColor: BadgeColor = efficiency >= 95 ? 'green' : efficiency >= 90 ? 'amber' : 'red';
 
                                 return (
-                                    <div key={op.id} className="rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900 p-4 shadow-sm space-y-3">
+                                    <div key={op.id} className="rounded-xl border border-border/80 dark:border-border/80 bg-white dark:bg-muted p-4 shadow-sm space-y-3">
                                         <div className="flex items-center justify-between">
-                                            <span className="text-sm font-medium text-slate-700 dark:text-slate-200">{format(new Date(op.date), "dd/MM/yyyy")}</span>
+                                            <span className="text-sm font-medium text-foreground">{format(new Date(op.date), "dd/MM/yyyy")}</span>
                                             <StatusBadge label={`${efficiency.toFixed(1)}%`} color={efficiencyBadgeColor} />
                                         </div>
                                         <div className="grid grid-cols-2 gap-2 text-xs">
                                             <div className="space-y-0.5">
-                                                <span className="text-slate-400">Inlet</span>
+                                                <span className="text-muted-foreground">Inlet</span>
                                                 <p className="font-mono font-medium text-primary">{op.inlet_sewage.toLocaleString('en-US', { maximumFractionDigits: 1 })} m³</p>
                                             </div>
                                             <div className="space-y-0.5">
-                                                <span className="text-slate-400">TSE Output</span>
+                                                <span className="text-muted-foreground">TSE Output</span>
                                                 <p className="font-mono font-medium text-blue-600 dark:text-blue-400">{op.tse_for_irrigation.toLocaleString('en-US', { maximumFractionDigits: 1 })} m³</p>
                                             </div>
                                             <div className="space-y-0.5">
-                                                <span className="text-slate-400">Tanker Trips</span>
+                                                <span className="text-muted-foreground">Tanker Trips</span>
                                                 <p className="font-mono font-medium text-[var(--mb-warning-text)]">{op.tanker_trips}</p>
                                             </div>
                                             <div className="space-y-0.5">
-                                                <span className="text-slate-400">Total Impact</span>
+                                                <span className="text-muted-foreground">Total Impact</span>
                                                 <p className="font-mono font-semibold text-[var(--mb-success-text)]">{totalImpact.toFixed(1)} OMR</p>
                                             </div>
                                         </div>
@@ -939,15 +940,15 @@ export default function STPPage() {
                                 );
                             })}
                             {dailyOperations.length === 0 && (
-                                <div className="py-12 text-center text-slate-500 dark:text-slate-400">
-                                    <Droplets className="w-7 h-7 mx-auto text-slate-300 dark:text-slate-600 mb-2" />
+                                <div className="py-12 text-center text-muted-foreground">
+                                    <Droplets className="w-7 h-7 mx-auto text-muted-foreground/70 dark:text-muted-foreground mb-2" />
                                     <p className="text-sm font-medium">No STP data for this month</p>
-                                    <p className="text-xs text-slate-400">Select a different month to view operations data.</p>
+                                    <p className="text-xs text-muted-foreground">Select a different month to view operations data.</p>
                                 </div>
                             )}
                             {/* Mobile monthly totals card */}
                             {monthTotals && (() => {
-                                const STP_COLOR = '#84B59F';
+                                const STP_COLOR = MODULE_COLORS.stp;
                                 return (
                                     <div className="rounded-xl border-2 p-4 space-y-3"
                                         style={{ borderColor: `${STP_COLOR}50`, backgroundColor: `${STP_COLOR}10` }}>
@@ -957,19 +958,19 @@ export default function STPPage() {
                                         </p>
                                         <div className="grid grid-cols-2 gap-3 text-xs">
                                             <div>
-                                                <p className="text-slate-400 uppercase tracking-wide text-[10px]">Inlet (m³)</p>
+                                                <p className="text-muted-foreground uppercase tracking-wide text-[10px]">Inlet (m³)</p>
                                                 <p className="font-mono font-bold text-sm mt-0.5" style={{ color: STP_COLOR }}>{monthTotals.totalInlet.toLocaleString('en-US', { maximumFractionDigits: 1 })}</p>
                                             </div>
                                             <div>
-                                                <p className="text-slate-400 uppercase tracking-wide text-[10px]">TSE Output (m³)</p>
+                                                <p className="text-muted-foreground uppercase tracking-wide text-[10px]">TSE Output (m³)</p>
                                                 <p className="font-mono font-bold text-sm mt-0.5" style={{ color: STP_COLOR }}>{monthTotals.totalTSE.toLocaleString('en-US', { maximumFractionDigits: 1 })}</p>
                                             </div>
                                             <div>
-                                                <p className="text-slate-400 uppercase tracking-wide text-[10px]">Tanker Trips</p>
+                                                <p className="text-muted-foreground uppercase tracking-wide text-[10px]">Tanker Trips</p>
                                                 <p className="font-mono font-bold text-sm mt-0.5" style={{ color: STP_COLOR }}>{monthTotals.totalTrips}</p>
                                             </div>
                                             <div>
-                                                <p className="text-slate-400 uppercase tracking-wide text-[10px]">Total Impact (OMR)</p>
+                                                <p className="text-muted-foreground uppercase tracking-wide text-[10px]">Total Impact (OMR)</p>
                                                 <p className="font-mono font-bold text-sm mt-0.5" style={{ color: STP_COLOR }}>{monthTotals.totalImpact.toFixed(1)}</p>
                                             </div>
                                         </div>
@@ -983,30 +984,14 @@ export default function STPPage() {
                             <Table>
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead className="cursor-pointer" onClick={() => handleLogSort('date')}>
-                                            <div className="flex items-center gap-1.5">Date <SortIcon field="date" currentSortField={logSortField} currentSortDirection={logSortDirection} /></div>
-                                        </TableHead>
-                                        <TableHead className="text-right cursor-pointer" onClick={() => handleLogSort('inlet')}>
-                                            <div className="flex items-center justify-end gap-1.5">Inlet (m³) <SortIcon field="inlet" currentSortField={logSortField} currentSortDirection={logSortDirection} /></div>
-                                        </TableHead>
-                                        <TableHead className="text-right cursor-pointer" onClick={() => handleLogSort('tse')}>
-                                            <div className="flex items-center justify-end gap-1.5">TSE Output (m³) <SortIcon field="tse" currentSortField={logSortField} currentSortDirection={logSortDirection} /></div>
-                                        </TableHead>
-                                        <TableHead className="text-right cursor-pointer" onClick={() => handleLogSort('efficiency')}>
-                                            <div className="flex items-center justify-end gap-1.5">Efficiency % <SortIcon field="efficiency" currentSortField={logSortField} currentSortDirection={logSortDirection} /></div>
-                                        </TableHead>
-                                        <TableHead className="text-right cursor-pointer" onClick={() => handleLogSort('trips')}>
-                                            <div className="flex items-center justify-end gap-1.5">Tanker Trips <SortIcon field="trips" currentSortField={logSortField} currentSortDirection={logSortDirection} /></div>
-                                        </TableHead>
-                                        <TableHead className="text-right cursor-pointer" onClick={() => handleLogSort('income')}>
-                                            <div className="flex items-center justify-end gap-1.5">Income (OMR) <SortIcon field="income" currentSortField={logSortField} currentSortDirection={logSortDirection} /></div>
-                                        </TableHead>
-                                        <TableHead className="text-right cursor-pointer" onClick={() => handleLogSort('savings')}>
-                                            <div className="flex items-center justify-end gap-1.5">Savings (OMR) <SortIcon field="savings" currentSortField={logSortField} currentSortDirection={logSortDirection} /></div>
-                                        </TableHead>
-                                        <TableHead className="text-right cursor-pointer" onClick={() => handleLogSort('total')}>
-                                            <div className="flex items-center justify-end gap-1.5">Total Impact (OMR) <SortIcon field="total" currentSortField={logSortField} currentSortDirection={logSortDirection} /></div>
-                                        </TableHead>
+                                        <SortableTableHead field="date" currentSortField={logSortField} currentSortDirection={logSortDirection} onSort={handleLogSort}>Date</SortableTableHead>
+                                        <SortableTableHead field="inlet" currentSortField={logSortField} currentSortDirection={logSortDirection} onSort={handleLogSort} align="right" className="text-right">Inlet (m³)</SortableTableHead>
+                                        <SortableTableHead field="tse" currentSortField={logSortField} currentSortDirection={logSortDirection} onSort={handleLogSort} align="right" className="text-right">TSE Output (m³)</SortableTableHead>
+                                        <SortableTableHead field="efficiency" currentSortField={logSortField} currentSortDirection={logSortDirection} onSort={handleLogSort} align="right" className="text-right">Efficiency %</SortableTableHead>
+                                        <SortableTableHead field="trips" currentSortField={logSortField} currentSortDirection={logSortDirection} onSort={handleLogSort} align="right" className="text-right">Tanker Trips</SortableTableHead>
+                                        <SortableTableHead field="income" currentSortField={logSortField} currentSortDirection={logSortDirection} onSort={handleLogSort} align="right" className="text-right">Income (OMR)</SortableTableHead>
+                                        <SortableTableHead field="savings" currentSortField={logSortField} currentSortDirection={logSortDirection} onSort={handleLogSort} align="right" className="text-right">Savings (OMR)</SortableTableHead>
+                                        <SortableTableHead field="total" currentSortField={logSortField} currentSortDirection={logSortDirection} onSort={handleLogSort} align="right" className="text-right">Total Impact (OMR)</SortableTableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -1037,10 +1022,10 @@ export default function STPPage() {
                                     {dailyOperations.length === 0 && (
                                         <TableRow>
                                             <TableCell colSpan={8} className="py-12 text-center">
-                                                <div className="flex flex-col items-center gap-2 text-slate-500 dark:text-slate-400">
-                                                    <Droplets className="w-7 h-7 text-slate-300 dark:text-slate-600" />
+                                                <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                                                    <Droplets className="w-7 h-7 text-muted-foreground/70 dark:text-muted-foreground" />
                                                     <p className="text-sm font-medium">No STP data for this month</p>
-                                                    <p className="text-xs text-slate-400">Select a different month to view operations data.</p>
+                                                    <p className="text-xs text-muted-foreground">Select a different month to view operations data.</p>
                                                 </div>
                                             </TableCell>
                                         </TableRow>
@@ -1049,11 +1034,11 @@ export default function STPPage() {
 
                                 {/* Totals footer row — styled like the water table total row */}
                                 {monthTotals && (() => {
-                                    const STP_COLOR = '#84B59F';
+                                    const STP_COLOR = MODULE_COLORS.stp;
                                     const effColor: BadgeColor = monthTotals.avgEfficiency >= 95 ? 'green' : monthTotals.avgEfficiency >= 90 ? 'amber' : 'red';
                                     return (
                                         <TableFooter>
-                                            <tr className="border-t-2 border-slate-200 dark:border-slate-700" style={{ backgroundColor: `${STP_COLOR}12` }}>
+                                            <tr className="border-t-2 border-border dark:border-border" style={{ backgroundColor: `${STP_COLOR}12` }}>
                                                 <td className="px-4 sm:px-6 py-4 align-middle text-sm font-bold whitespace-nowrap"
                                                     style={{ color: STP_COLOR, boxShadow: `inset 4px 0 0 ${STP_COLOR}` }}>
                                                     <span className="inline-flex items-center gap-2">

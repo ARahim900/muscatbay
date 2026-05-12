@@ -39,12 +39,12 @@ export function WelcomeCard({ userName, className }: WelcomeCardProps) {
     const greeting = userName ? `Welcome, ${userName}` : "Welcome to Muscat Bay";
 
     return (
-        <div className={cn("rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 sm:p-8 space-y-6", className)}>
+        <div className={cn("rounded-2xl border border-border dark:border-border bg-white dark:bg-muted p-6 sm:p-8 space-y-6", className)}>
             <div className="space-y-2">
-                <h2 className="text-lg sm:text-xl font-bold text-slate-800 dark:text-slate-100">
+                <h2 className="text-lg sm:text-xl font-bold text-foreground">
                     {greeting}
                 </h2>
-                <p className="text-sm text-slate-500 dark:text-slate-400 max-w-lg">
+                <p className="text-sm text-muted-foreground max-w-lg">
                     Your operations dashboard is ready. Explore the modules below to start monitoring utilities, managing assets, and tracking contractors.
                 </p>
             </div>
@@ -56,17 +56,17 @@ export function WelcomeCard({ userName, className }: WelcomeCardProps) {
                         <Link
                             key={feature.href}
                             href={feature.href}
-                            className="group flex flex-col gap-3 p-4 rounded-xl border border-slate-100 dark:border-slate-800 hover:border-slate-200 dark:hover:border-slate-700 hover:shadow-sm transition-[border-color,box-shadow] duration-200"
+                            className="group flex flex-col gap-3 p-4 rounded-xl border border-border dark:border-border hover:border-border dark:hover:border-border hover:shadow-sm transition-[border-color,box-shadow] duration-200"
                         >
                             <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center", feature.bgColor)}>
                                 <Icon className={cn("w-5 h-5", feature.color)} />
                             </div>
                             <div>
-                                <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-1">
+                                <p className="text-sm font-semibold text-foreground flex items-center gap-1">
                                     {feature.label}
                                     <ArrowRight className="w-3 h-3 opacity-40 group-hover:opacity-100 motion-safe:-translate-x-1 motion-safe:group-hover:translate-x-0 transition-[transform,opacity] duration-200" />
                                 </p>
-                                <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5 line-clamp-1">
+                                <p className="text-xs text-muted-foreground/70 mt-0.5 line-clamp-1">
                                     {feature.description}
                                 </p>
                             </div>

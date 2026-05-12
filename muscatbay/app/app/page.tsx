@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback, useRef } from "react";
+import { useState, useMemo, useCallback } from "react";
 import dynamic from "next/dynamic";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { StatsGrid } from "@/components/shared/stats-grid";
@@ -15,8 +15,8 @@ import Link from "next/link";
 const DashboardCharts = dynamic(() => import("@/components/charts/dashboard-charts"), {
     loading: () => (
         <div className="grid gap-4 sm:gap-5 md:gap-6 grid-cols-1 lg:grid-cols-7">
-            <div className="card-elevated col-span-1 lg:col-span-4 h-[300px] motion-safe:animate-pulse rounded-xl bg-slate-200/50 dark:bg-slate-800/50" />
-            <div className="card-elevated col-span-1 lg:col-span-3 h-[300px] motion-safe:animate-pulse rounded-xl bg-slate-200/50 dark:bg-slate-800/50" />
+            <div className="card-elevated col-span-1 lg:col-span-4 h-[300px] motion-safe:animate-pulse rounded-xl bg-border/50 dark:bg-muted/50" />
+            <div className="card-elevated col-span-1 lg:col-span-3 h-[300px] motion-safe:animate-pulse rounded-xl bg-border/50 dark:bg-muted/50" />
         </div>
     ),
     ssr: false,
@@ -30,8 +30,7 @@ function getGreeting() {
 export default function DashboardPage() {
     const { stats, chartData, stpChartData, recentActivity, loading, isLiveData, error } = useDashboardData();
     const [activityFilter, setActivityFilter] = useState<'all' | 'critical' | 'warning' | 'info'>('all');
-    // Computed once on first render — greeting changes every few hours, not on every state update
-    const greeting = useRef(getGreeting()).current;
+    const greeting = useMemo(() => getGreeting(), []);
 
     // Add icons and navigation hrefs to stats (memoized to avoid recalc on every render)
     const statsWithIcons = useMemo(() => stats.map(stat => ({
@@ -75,27 +74,27 @@ export default function DashboardPage() {
             <div className="space-y-6 md:space-y-8 w-full">
                 <div className="flex items-center justify-between">
                     <div className="space-y-2">
-                        <div className="h-7 w-48 bg-slate-200 dark:bg-slate-700 rounded-lg motion-safe:animate-pulse" />
-                        <div className="h-4 w-72 bg-slate-200 dark:bg-slate-700 rounded motion-safe:animate-pulse" />
+                        <div className="h-7 w-48 bg-muted rounded-lg motion-safe:animate-pulse" />
+                        <div className="h-4 w-72 bg-muted rounded motion-safe:animate-pulse" />
                     </div>
                 </div>
                 <div className="grid gap-3 sm:gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
                     {Array.from({ length: 6 }).map((_, i) => (
-                        <div key={i} className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 sm:p-5 motion-safe:animate-pulse">
+                        <div key={i} className="bg-card rounded-xl border border-border p-4 sm:p-5 motion-safe:animate-pulse">
                             <div className="flex justify-between items-start gap-2">
                                 <div className="space-y-2 flex-1">
-                                    <div className="h-3 w-20 bg-slate-200 dark:bg-slate-700 rounded" />
-                                    <div className="h-6 w-28 bg-slate-200 dark:bg-slate-700 rounded" />
+                                    <div className="h-3 w-20 bg-muted rounded" />
+                                    <div className="h-6 w-28 bg-muted rounded" />
                                 </div>
-                                <div className="w-9 h-9 bg-slate-200 dark:bg-slate-700 rounded-lg flex-shrink-0" />
+                                <div className="w-9 h-9 bg-muted rounded-lg flex-shrink-0" />
                             </div>
-                            <div className="mt-3 h-3 w-24 bg-slate-200 dark:bg-slate-700 rounded" />
+                            <div className="mt-3 h-3 w-24 bg-muted rounded" />
                         </div>
                     ))}
                 </div>
                 <div className="grid gap-4 sm:gap-5 md:gap-6 grid-cols-1 lg:grid-cols-7">
-                    <div className="col-span-1 lg:col-span-4 h-[300px] motion-safe:animate-pulse rounded-xl bg-slate-200/50 dark:bg-slate-800/50" />
-                    <div className="col-span-1 lg:col-span-3 h-[300px] motion-safe:animate-pulse rounded-xl bg-slate-200/50 dark:bg-slate-800/50" />
+                    <div className="col-span-1 lg:col-span-4 h-[300px] motion-safe:animate-pulse rounded-xl bg-muted" />
+                    <div className="col-span-1 lg:col-span-3 h-[300px] motion-safe:animate-pulse rounded-xl bg-muted" />
                 </div>
             </div>
         );
@@ -109,12 +108,12 @@ export default function DashboardPage() {
                         <AlertTriangle className="w-7 h-7 text-destructive" aria-hidden="true" />
                     </div>
                     <div className="space-y-1">
-                        <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">Unable to load dashboard</p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs mx-auto">{error}</p>
+                        <p className="text-sm font-semibold text-foreground">Unable to load dashboard</p>
+                        <p className="text-xs text-muted-foreground max-w-xs mx-auto">{error}</p>
                     </div>
                     <button
                         onClick={() => window.location.reload()}
-                        className="px-4 py-2 text-sm bg-primary text-white rounded-lg hover:bg-primary/80 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+                        className="px-4 py-2 text-sm bg-primary text-primary-foreground rounded-lg hover:bg-primary/80 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
                     >
                         Try again
                     </button>
@@ -132,7 +131,7 @@ export default function DashboardPage() {
                 />
                 <div className="flex items-center gap-2">
 
-                    <Badge variant={isLiveData ? "default" : "secondary"} className={`flex items-center gap-1.5 ${isLiveData ? "bg-mb-success text-white" : "bg-mb-secondary text-mb-secondary-foreground"}`}>
+                    <Badge variant={isLiveData ? "default" : "secondary"} className={`flex items-center gap-1.5 ${isLiveData ? "bg-mb-success text-primary-foreground" : "bg-mb-secondary text-mb-secondary-foreground"}`}>
                         {isLiveData ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
                         {isLiveData ? "Live Data" : "Demo Mode"}
                     </Badge>
@@ -149,18 +148,18 @@ export default function DashboardPage() {
                     <CardHeader className="card-elevated-header p-4 sm:p-5 md:p-6">
                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
                             <CardTitle>Latest Updates</CardTitle>
-                            <div role="group" aria-label="Filter updates by type" className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-lg">
+                            <div role="group" aria-label="Filter updates by type" className="flex items-center gap-1 bg-muted p-1 rounded-lg">
                                 {(['all', 'critical', 'warning', 'info'] as const).map(filter => (
                                     <button
                                         key={filter}
                                         onClick={() => handleFilterClick(filter)}
                                         aria-pressed={activityFilter === filter}
                                         className={`px-3 py-2.5 min-h-[44px] text-xs font-medium rounded-md transition-colors capitalize focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/60 ${activityFilter === filter
-                                            ? filter === 'critical' ? 'bg-destructive text-white'
-                                                : filter === 'warning' ? 'bg-mb-warning text-white'
-                                                    : filter === 'info' ? 'bg-mb-info text-white'
-                                                        : 'bg-primary text-white'
-                                            : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
+                                            ? filter === 'critical' ? 'bg-destructive text-primary-foreground'
+                                                : filter === 'warning' ? 'bg-mb-warning text-primary-foreground'
+                                                    : filter === 'info' ? 'bg-mb-info text-primary-foreground'
+                                                        : 'bg-primary text-primary-foreground'
+                                            : 'text-muted-foreground hover:bg-card hover:text-foreground'
                                             }`}
                                     >
                                         {filter}
@@ -185,7 +184,7 @@ export default function DashboardPage() {
                                                 {item.type === 'critical' ? <AlertTriangle className="h-4 w-4" /> : <ArrowUpRight className="h-4 w-4" />}
                                             </div>
                                             <div className="space-y-1 min-w-0 flex-1">
-                                                <p className="text-sm font-medium leading-none text-mb-primary dark:text-slate-100">{item.title}</p>
+                                                <p className="text-sm font-medium leading-none text-foreground">{item.title}</p>
                                                 <p className="text-xs text-muted-foreground truncate">{item.description}</p>
                                             </div>
                                             {activityHref && (
@@ -194,7 +193,7 @@ export default function DashboardPage() {
                                         </>
                                     );
 
-                                    const itemClassName = "flex items-center gap-3 p-3 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-white dark:hover:bg-slate-700/80 group/activity motion-safe:hover:-translate-y-0.5 transition-[background-color,border-color,transform] duration-150 ease-out";
+                                    const itemClassName = "flex items-center gap-3 p-3 rounded-lg bg-muted/60 border border-border hover:bg-card hover:border-border/80 group/activity motion-safe:hover:-translate-y-0.5 transition-[background-color,border-color,transform] duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/60";
 
                                     return activityHref ? (
                                         <Link
@@ -213,8 +212,8 @@ export default function DashboardPage() {
                                 })}
                             {recentActivity.filter(item => activityFilter === 'all' || item.type === activityFilter).length === 0 && (
                                 <div className="col-span-full flex flex-col items-center gap-2 py-8 text-center">
-                                    <Activity className="w-8 h-8 text-slate-300 dark:text-slate-600" />
-                                    <p className="text-sm text-slate-500 dark:text-slate-400">No records for the selected period.</p>
+                                    <Activity className="w-8 h-8 text-muted-foreground/70 dark:text-muted-foreground" />
+                                    <p className="text-sm text-muted-foreground">No records for the selected period.</p>
                                     <button
                                         onClick={() => setActivityFilter('all')}
                                         className="text-xs text-secondary hover:underline font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/60 rounded"

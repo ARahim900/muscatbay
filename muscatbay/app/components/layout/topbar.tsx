@@ -8,8 +8,7 @@ import Link from "next/link";
 import { useTheme } from "@/components/providers";
 
 export function Topbar() {
-    const { setTheme, theme } = useTheme();
-    const [mounted, setMounted] = useState(false);
+    const { setTheme, resolvedTheme } = useTheme();
     const [isProfileOpen, setIsProfileOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
     const { profile, user, logout } = useAuth();
@@ -17,10 +16,6 @@ export function Topbar() {
     const displayName = profile?.full_name || user?.email?.split("@")[0] || "User";
     const initials = displayName.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2);
     const userRole = profile?.role === 'admin' ? 'Administrator' : 'User';
-
-    useEffect(() => {
-        setMounted(true);
-    }, []);
 
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
@@ -57,35 +52,33 @@ export function Topbar() {
     }, [isProfileOpen]);
 
     return (
-        <header className="topbar-dynamic h-16 fixed top-0 end-0 z-40 bg-white dark:bg-[var(--card)] flex items-center justify-end px-4 sm:px-6 border-b border-slate-200/80 dark:border-white/[0.06] shadow-[0_1px_3px_rgba(0,0,0,0.07),0_4px_16px_-4px_rgba(0,0,0,0.06)] dark:shadow-[0_1px_0_rgba(255,255,255,0.04)] transition-[inset-inline-start] duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]">
+        <header className="topbar-dynamic h-16 fixed top-0 end-0 z-40 bg-white dark:bg-[var(--card)] flex items-center justify-end px-4 sm:px-6 border-b border-border/80 dark:border-white/[0.06] shadow-[0_1px_3px_rgba(0,0,0,0.07),0_4px_16px_-4px_rgba(0,0,0,0.06)] dark:shadow-[0_1px_0_rgba(255,255,255,0.04)] transition-[inset-inline-start] duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]">
 
             <div className="flex items-center gap-0.5 sm:gap-1">
                 {/* Theme Toggle */}
                 <button
-                    onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                    className="w-11 h-11 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-white/[0.06] rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:outline-none"
-                    aria-label={mounted ? `Switch to ${theme === "dark" ? "light" : "dark"} mode` : "Toggle theme"}
-                    aria-pressed={mounted ? theme === "dark" : undefined}
+                    onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+                    className="w-11 h-11 flex items-center justify-center hover:bg-muted dark:hover:bg-white/[0.06] rounded-lg text-muted-foreground hover:text-foreground dark:hover:text-foreground transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:outline-none"
+                    aria-label={`Switch to ${resolvedTheme === "dark" ? "light" : "dark"} mode`}
+                    aria-pressed={resolvedTheme === "dark"}
                 >
-                    {mounted
-                        ? (theme === "dark"
-                            ? <Moon className="w-[17px] h-[17px]" />
-                            : <Sun className="w-[17px] h-[17px]" />)
-                        : <Sun className="w-[17px] h-[17px] opacity-0" aria-hidden="true" />
+                    {resolvedTheme === "dark"
+                        ? <Moon className="w-[17px] h-[17px]" />
+                        : <Sun className="w-[17px] h-[17px]" />
                     }
                 </button>
 
                 {/* Settings */}
                 <Link
                     href="/settings"
-                    className="w-11 h-11 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-white/[0.06] rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:outline-none"
+                    className="w-11 h-11 flex items-center justify-center hover:bg-muted dark:hover:bg-white/[0.06] rounded-lg text-muted-foreground hover:text-foreground dark:hover:text-foreground transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:outline-none"
                     aria-label="Settings"
                 >
                     <Settings className="w-[17px] h-[17px]" />
                 </Link>
 
                 {/* Divider */}
-                <div className="w-px h-5 bg-slate-200 dark:bg-white/10 mx-1.5" aria-hidden="true" />
+                <div className="w-px h-5 bg-border dark:bg-white/10 mx-1.5" aria-hidden="true" />
 
                 {/* User Profile */}
                 <div className="relative" ref={dropdownRef}>
@@ -101,20 +94,20 @@ export function Topbar() {
                                 }, 10);
                             }
                         }}
-                        className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:outline-none"
+                        className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-muted dark:hover:bg-white/[0.06] transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:outline-none"
                         aria-label="User profile menu"
                         aria-expanded={isProfileOpen}
                         aria-haspopup="menu"
                         aria-controls="profile-dropdown-menu"
                         id="profile-menu-trigger"
                     >
-                        <Avatar className="w-8 h-8 border-2 border-slate-200 dark:border-white/10">
+                        <Avatar className="w-8 h-8 border-2 border-border dark:border-white/10">
                             <AvatarImage src={profile?.avatar_url || undefined} alt={displayName} />
-                            <AvatarFallback className="bg-primary text-white text-xs font-bold">
+                            <AvatarFallback className="bg-primary text-primary-foreground text-xs font-bold">
                                 {initials}
                             </AvatarFallback>
                         </Avatar>
-                        <span className="hidden lg:block text-sm font-medium text-slate-700 dark:text-slate-200 max-w-[140px] truncate">
+                        <span className="hidden lg:block text-sm font-medium text-foreground max-w-[140px] truncate">
                             {displayName}
                         </span>
                         <ChevronDown className={`w-3.5 h-3.5 text-muted-foreground hidden sm:block transition-transform duration-150 ${isProfileOpen ? "rotate-180" : ""}`} />
@@ -132,7 +125,7 @@ export function Topbar() {
                                 <div className="flex items-center gap-3">
                                     <Avatar className="w-10 h-10">
                                         <AvatarImage src={profile?.avatar_url || undefined} alt={displayName} />
-                                        <AvatarFallback className="bg-primary text-white text-sm font-bold">
+                                        <AvatarFallback className="bg-primary text-primary-foreground text-sm font-bold">
                                             {initials}
                                         </AvatarFallback>
                                     </Avatar>

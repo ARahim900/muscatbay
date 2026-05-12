@@ -14,7 +14,7 @@ function getUrgencyBadge(urgency: string) {
     return "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400 border border-red-200 dark:border-red-800";
   if (u === "HIGH")
     return "bg-orange-50 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400 border border-orange-200 dark:border-orange-800";
-  return "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 border border-slate-200 dark:border-slate-700";
+  return "bg-muted text-muted-foreground dark:bg-muted dark:text-muted-foreground border border-border dark:border-border";
 }
 
 function getStatusBadge(status: string) {
@@ -25,14 +25,14 @@ function getStatusBadge(status: string) {
     return "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400";
   if (s.includes("rejected"))
     return "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400";
-  return "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400";
+  return "bg-muted text-muted-foreground dark:bg-muted dark:text-muted-foreground";
 }
 
 export function QuotationsTab({ quotations }: QuotationsTabProps) {
   if (quotations.length === 0) {
     return (
-      <div className="py-12 text-center text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700">
-        <FileText className="h-10 w-10 mx-auto mb-3 text-slate-300" />
+      <div className="py-12 text-center text-muted-foreground dark:text-muted-foreground bg-white dark:bg-muted rounded-xl border border-border dark:border-border">
+        <FileText className="h-10 w-10 mx-auto mb-3 text-muted-foreground/70" />
         <p>No quotations found.</p>
       </div>
     );
@@ -43,16 +43,16 @@ export function QuotationsTab({ quotations }: QuotationsTabProps) {
       {quotations.map((q) => (
         <Card
           key={q.id}
-          className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md motion-safe:hover:-translate-y-0.5 transition-[transform,box-shadow] duration-200"
+          className="bg-white dark:bg-muted rounded-xl border border-border dark:border-border shadow-sm hover:shadow-md motion-safe:hover:-translate-y-0.5 transition-[transform,box-shadow] duration-200"
         >
           <CardContent className="p-5 space-y-3">
             <div className="flex items-start justify-between gap-2">
               <div>
-                <p className="font-bold text-sm text-slate-800 dark:text-slate-200">
+                <p className="font-bold text-sm text-foreground dark:text-muted-foreground">
                   {q.quotation_ref}
                 </p>
                 {q.submitted_by && (
-                  <p className="text-[11px] text-slate-400 mt-0.5">
+                  <p className="text-[11px] text-muted-foreground mt-0.5">
                     by {q.submitted_by}
                   </p>
                 )}
@@ -64,21 +64,21 @@ export function QuotationsTab({ quotations }: QuotationsTabProps) {
               </span>
             </div>
 
-            <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+            <p className="text-xs text-muted-foreground dark:text-muted-foreground leading-relaxed">
               {q.scope_summary}
             </p>
 
             <div className="flex flex-wrap gap-2 text-xs">
-              <span className="flex items-center gap-1 text-slate-500 dark:text-slate-400">
+              <span className="flex items-center gap-1 text-muted-foreground dark:text-muted-foreground">
                 <Calendar className="h-3 w-3" />
                 {q.submission_date || "N/A"}
               </span>
-              <span className="text-slate-300 dark:text-slate-600">|</span>
-              <span className="text-slate-500 dark:text-slate-400">
+              <span className="text-muted-foreground/70 dark:text-muted-foreground">|</span>
+              <span className="text-muted-foreground dark:text-muted-foreground">
                 {q.buildings_covered}
               </span>
-              <span className="text-slate-300 dark:text-slate-600">|</span>
-              <span className="text-slate-500 dark:text-slate-400">
+              <span className="text-muted-foreground/70 dark:text-muted-foreground">|</span>
+              <span className="text-muted-foreground dark:text-muted-foreground">
                 {q.total_items_count} items
               </span>
             </div>
@@ -97,9 +97,9 @@ export function QuotationsTab({ quotations }: QuotationsTabProps) {
             </div>
 
             {q.notes && (
-              <div className="flex gap-2 p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700/50">
-                <Info className="h-3.5 w-3.5 text-slate-400 flex-shrink-0 mt-0.5" />
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+              <div className="flex gap-2 p-2.5 rounded-lg bg-muted dark:bg-muted/50 border border-border dark:border-border/50">
+                <Info className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0 mt-0.5" />
+                <p className="text-[11px] text-muted-foreground dark:text-muted-foreground leading-relaxed">
                   {q.notes}
                 </p>
               </div>

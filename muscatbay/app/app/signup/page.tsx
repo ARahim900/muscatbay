@@ -130,21 +130,21 @@ export default function SignUpPage() {
                             <CheckCircle2 className="w-8 h-8 text-mb-success-text" />
                         </div>
                         <h2 className="text-2xl font-bold mb-2">Check your email</h2>
-                        <p className="text-slate-500 dark:text-slate-400 mb-6">
+                        <p className="text-muted-foreground mb-6">
                             We&apos;ve sent a confirmation link to{" "}
-                            <strong className="text-slate-700 dark:text-slate-200">{status.email}</strong>.
+                            <strong className="text-foreground">{status.email}</strong>.
                             Click the link in the email to activate your account, then sign in.
                         </p>
                         <div className="space-y-3">
                             <Link href="/login" className="block">
-                                <Button className="w-full bg-[var(--mb-primary)] hover:bg-[var(--mb-primary-hover)] text-white">
+                                <Button className="w-full bg-[var(--mb-primary)] hover:bg-[var(--mb-primary-hover)] text-primary-foreground">
                                     Go to Login
                                 </Button>
                             </Link>
                             <button
                                 type="button"
                                 onClick={() => setStatus({ kind: "form" })}
-                                className="text-sm text-slate-400 dark:text-slate-500 hover:text-[var(--mb-primary)] dark:hover:text-secondary transition-colors"
+                                className="text-sm text-muted-foreground/70 hover:text-[var(--mb-primary)] dark:hover:text-secondary transition-colors"
                             >
                                 Use a different email
                             </button>
@@ -162,11 +162,11 @@ export default function SignUpPage() {
                 <div className="flex justify-center mb-8">
                     <div className="flex items-center gap-3">
                         <div className="w-12 h-12 rounded-xl bg-[var(--mb-primary)] flex items-center justify-center shadow-lg">
-                            <span className="text-white font-bold text-xl">MB</span>
+                            <span className="text-primary-foreground font-bold text-xl">MB</span>
                         </div>
                         <div>
-                            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Muscat Bay</h1>
-                            <p className="text-sm text-slate-500 dark:text-slate-300">Operations Dashboard</p>
+                            <h1 className="text-2xl font-bold text-foreground dark:text-primary-foreground">Muscat Bay</h1>
+                            <p className="text-sm text-muted-foreground">Operations Dashboard</p>
                         </div>
                     </div>
                 </div>
@@ -189,7 +189,7 @@ export default function SignUpPage() {
                             <div className="space-y-2">
                                 <Label htmlFor="fullName">Full Name</Label>
                                 <div className="relative">
-                                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                     <Input
                                         id="fullName"
                                         type="text"
@@ -212,7 +212,7 @@ export default function SignUpPage() {
                             <div className="space-y-2">
                                 <Label htmlFor="email">Email</Label>
                                 <div className="relative">
-                                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                     <Input
                                         id="email"
                                         type="email"
@@ -234,7 +234,7 @@ export default function SignUpPage() {
                             <div className="space-y-2">
                                 <Label htmlFor="password">Password</Label>
                                 <div className="relative">
-                                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                     <Input
                                         id="password"
                                         type={showPassword ? "text" : "password"}
@@ -249,7 +249,7 @@ export default function SignUpPage() {
                                         type="button"
                                         onClick={() => setShowPassword(!showPassword)}
                                         aria-label={showPassword ? "Hide password" : "Show password"}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-muted-foreground"
                                     >
                                         {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                                     </button>
@@ -259,8 +259,8 @@ export default function SignUpPage() {
                                     <div className="space-y-1 mt-2">
                                         {passwordRequirements.map((req) => (
                                             <div key={req.label} className="flex items-center gap-2 text-xs">
-                                                <div className={`w-1.5 h-1.5 rounded-full ${req.met ? "bg-mb-success" : "bg-slate-300"}`} />
-                                                <span className={req.met ? "text-mb-success-text" : "text-slate-500"}>
+                                                <div className={`w-1.5 h-1.5 rounded-full ${req.met ? "bg-mb-success" : "bg-border"}`} />
+                                                <span className={req.met ? "text-mb-success-text" : "text-muted-foreground"}>
                                                     {req.label}
                                                 </span>
                                             </div>
@@ -272,7 +272,7 @@ export default function SignUpPage() {
                             <div className="space-y-2">
                                 <Label htmlFor="confirmPassword">Confirm Password</Label>
                                 <div className="relative">
-                                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                     <Input
                                         id="confirmPassword"
                                         type={showPassword ? "text" : "password"}
@@ -295,7 +295,7 @@ export default function SignUpPage() {
                         <CardFooter className="flex flex-col gap-4">
                             <Button
                                 type="submit"
-                                className="w-full bg-[var(--mb-primary)] hover:bg-[var(--mb-primary-hover)] text-white"
+                                className="w-full bg-[var(--mb-primary)] hover:bg-[var(--mb-primary-hover)] text-primary-foreground"
                                 disabled={loading || !allRequirementsMet}
                             >
                                 {loading ? (
@@ -308,7 +308,7 @@ export default function SignUpPage() {
                                 )}
                             </Button>
 
-                            <p className="text-sm text-center text-slate-500 dark:text-slate-300">
+                            <p className="text-sm text-center text-muted-foreground">
                                 Already have an account?{" "}
                                 <Link href="/login" className="text-[var(--mb-primary)] hover:underline font-medium">
                                     Sign in
@@ -317,10 +317,10 @@ export default function SignUpPage() {
 
                             <div className="relative">
                                 <div className="absolute inset-0 flex items-center">
-                                    <div className="w-full border-t border-slate-200 dark:border-slate-700" />
+                                    <div className="w-full border-t border-border dark:border-border" />
                                 </div>
                                 <div className="relative flex justify-center text-xs uppercase">
-                                    <span className="bg-white dark:bg-slate-800 px-2 text-slate-400">
+                                    <span className="bg-white dark:bg-muted px-2 text-muted-foreground">
                                         or
                                     </span>
                                 </div>
@@ -339,7 +339,7 @@ export default function SignUpPage() {
                     </form>
                 </Card>
 
-                <p className="text-center text-xs text-slate-500 dark:text-slate-300 mt-6">
+                <p className="text-center text-xs text-muted-foreground mt-6">
                     By creating an account, you agree to our Terms of Service and Privacy Policy.
                 </p>
             </div>

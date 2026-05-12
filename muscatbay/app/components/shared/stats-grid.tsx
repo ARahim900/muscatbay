@@ -38,12 +38,12 @@ const SCROLL_ANIMATION_CONFIG = { y: 30, duration: 0.5, stagger: 0.1 } as const;
 
 const variantIconClass: Record<StatVariant, string> = {
     primary: "text-primary",
-    secondary: "text-amber-500",
-    success: "text-emerald-500",
-    warning: "text-amber-500",
-    danger: "text-destructive",
-    info: "text-blue-500",
-    water: "text-blue-500",
+    secondary: "text-secondary",
+    success: "text-[var(--status-normal)]",
+    warning: "text-[var(--status-warning)]",
+    danger: "text-[var(--status-danger)]",
+    info: "text-[var(--status-info)]",
+    water: "text-[var(--module-water)]",
     default: "text-muted-foreground",
 };
 
@@ -84,15 +84,15 @@ export function StatsGrid({ stats, className }: StatsGridProps) {
                     <>
                         <div className="flex justify-between items-start gap-2">
                             <div className="min-w-0">
-                                <p className="text-slate-500 dark:text-slate-300 text-[10px] sm:text-xs font-medium mb-0.5 sm:mb-1 uppercase tracking-wide truncate">
+                                <p className="text-muted-foreground text-[11px] sm:text-xs font-medium mb-0.5 sm:mb-1 uppercase tracking-wide truncate">
                                     {stat.label}
                                 </p>
                                 {/* Big value: always neutral — never colored red/green */}
-                                <h3 className="text-xl sm:text-2xl font-bold tabular-nums tracking-tight truncate text-slate-800 dark:text-slate-100 leading-none">
+                                <h3 className="text-xl sm:text-2xl font-bold tabular-nums tracking-tight truncate text-foreground leading-none">
                                     {stat.value}
                                 </h3>
                             </div>
-                            <div className="p-1.5 sm:p-2 rounded-lg bg-gray-50/80 dark:bg-slate-800/80 flex-shrink-0">
+                            <div className="p-1.5 sm:p-2 rounded-lg bg-muted flex-shrink-0">
                                 <stat.icon
                                     className={cn("w-4 h-4 sm:w-5 sm:h-5", !stat.color && iconClass)}
                                     style={stat.color ? { color: stat.color } : undefined}
@@ -107,19 +107,19 @@ export function StatsGrid({ stats, className }: StatsGridProps) {
                                     "flex items-center font-medium",
                                     isGoodTrend  ? "text-[var(--status-normal)]" :
                                     isBadTrend   ? "text-[var(--status-danger)]" :
-                                                   "text-slate-500 dark:text-slate-400"
+                                                   "text-muted-foreground"
                                 )}>
                                     {stat.trend === 'up'      && <TrendingUp  size={14} className="me-1" />}
                                     {stat.trend === 'down'    && <TrendingDown size={14} className="me-1" />}
                                     {stat.trend === 'neutral' && <Minus        size={14} className="me-1" />}
                                     {stat.trendValue}
                                 </span>
-                                <span className="text-slate-500 dark:text-slate-400 ms-1.5 text-xs">vs last month</span>
+                                <span className="text-muted-foreground ms-1.5 text-xs">vs last month</span>
                             </div>
                         )}
 
                         {stat.subtitle && !stat.trendValue && (
-                            <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 mt-1.5 sm:mt-2 truncate">{stat.subtitle}</p>
+                            <p className="text-[11px] sm:text-xs text-muted-foreground mt-1.5 sm:mt-2 truncate">{stat.subtitle}</p>
                         )}
 
                         {stat.status && (
@@ -129,16 +129,16 @@ export function StatsGrid({ stats, className }: StatsGridProps) {
                                     className="inline-block w-1.5 h-1.5 rounded-full flex-shrink-0"
                                     style={{ backgroundColor: stat.status === 'normal' ? 'var(--status-normal)' : stat.status === 'warning' ? 'var(--status-warning)' : stat.status === 'danger' ? 'var(--status-danger)' : stat.status === 'stale' ? 'var(--status-stale)' : 'var(--status-missing)' }}
                                 />
-                                <span className="text-slate-500 dark:text-slate-400 capitalize font-medium">{stat.status}</span>
+                                <span className="text-muted-foreground capitalize font-medium">{stat.status}</span>
                             </div>
                         )}
                         {stat.lastUpdated && (
-                            <p className="mt-1 text-[10px] text-slate-400 dark:text-slate-500 tabular-nums">Updated {stat.lastUpdated}</p>
+                            <p className="mt-1 text-[11px] text-muted-foreground/70 tabular-nums">Updated {stat.lastUpdated}</p>
                         )}
                     </>
                 );
 
-                const baseCardClassName = "bg-white dark:bg-slate-900 p-3 sm:p-4 md:p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm group/stat overflow-hidden hover:shadow-md transition-[box-shadow] duration-200";
+                const baseCardClassName = "bg-card p-3 sm:p-4 md:p-5 rounded-lg border border-border shadow-[0_1px_2px_rgb(15_23_42_/_0.06)] dark:shadow-[0_1px_0_rgba(255,255,255,0.04)] group/stat overflow-hidden hover:shadow-[0_6px_18px_-10px_rgb(15_23_42_/_0.35)] transition-[box-shadow] duration-200";
 
                 return stat.href ? (
                     <Link

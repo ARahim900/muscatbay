@@ -36,7 +36,7 @@ export const DOT_COLORS: Record<string, string> = {
     amber:   'bg-badge-amber',
     blue:    'bg-badge-blue',
     purple:  'bg-primary',
-    slate:   'bg-slate-400',
+    slate:   'bg-muted-foreground',
     cyan:    'bg-badge-sage',
     sage:    'bg-badge-sage',
 };
@@ -61,11 +61,11 @@ const BG_COLORS: Record<string, string> = {
         'bg-badge-blue/12 text-badge-blue-fg ring-1 ring-badge-blue/30 ' +
         'dark:bg-badge-blue/20 dark:ring-badge-blue/35',
     purple:
-        'bg-secondary text-white ring-1 ring-secondary/60 ' +
-        'dark:bg-secondary/90 dark:text-white dark:ring-secondary/50',
+        'bg-secondary text-primary-foreground ring-1 ring-secondary/60 ' +
+        'dark:bg-secondary/90 dark:text-primary-foreground dark:ring-secondary/50',
     slate:
-        'bg-slate-100 text-slate-600 ring-1 ring-slate-200/80 ' +
-        'dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700/60',
+        'bg-muted text-muted-foreground ring-1 ring-border/80 ' +
+        'dark:bg-muted dark:text-muted-foreground/70 dark:ring-border/60',
     cyan:
         'bg-badge-sage/30 text-badge-sage-fg ring-1 ring-badge-sage/60 ' +
         'dark:bg-badge-sage/10 dark:ring-badge-sage/25',

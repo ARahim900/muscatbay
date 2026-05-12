@@ -63,7 +63,7 @@ function DashboardChartsInner({ chartData, stpChartData }: DashboardChartsProps)
                                         <stop offset="95%" stopColor={CHART_COLORS.teal} stopOpacity={0} />
                                     </linearGradient>
                                 </defs>
-                                <CartesianGrid strokeDasharray="3 3" className="stroke-slate-200 dark:stroke-slate-700" opacity={0.5} />
+                                <CartesianGrid strokeDasharray="3 3" className="stroke-border dark:stroke-border" opacity={0.5} />
                                 <XAxis dataKey="month" className="text-xs" tick={AXIS_TICK} axisLine={false} tickLine={false} dy={10} />
                                 <YAxis className="text-xs" tick={AXIS_TICK} axisLine={false} tickLine={false} label={Y_AXIS_LABEL} />
                                 <Tooltip content={<LiquidTooltip />} cursor={AREA_CURSOR} />
@@ -94,7 +94,7 @@ function DashboardChartsInner({ chartData, stpChartData }: DashboardChartsProps)
                     <div role="img" aria-label="STP monthly inlet vs TSE output comparison bar chart">
                         <ChartContainer height="100%" className="h-[200px] sm:h-[250px] md:h-[300px]">
                             <BarChart data={stpChartData}>
-                                <CartesianGrid strokeDasharray="3 3" className="stroke-slate-200 dark:stroke-slate-700" opacity={0.5} />
+                                <CartesianGrid strokeDasharray="3 3" className="stroke-border dark:stroke-border" opacity={0.5} />
                                 <XAxis dataKey="month" className="text-xs" tick={AXIS_TICK_SM} axisLine={false} tickLine={false} dy={10} />
                                 <YAxis className="text-xs" tick={AXIS_TICK_SM} axisLine={false} tickLine={false} />
                                 <Tooltip content={<LiquidTooltip />} cursor={BAR_CURSOR} />

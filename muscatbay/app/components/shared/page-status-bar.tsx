@@ -49,8 +49,8 @@ export function PageStatusBar({
                         className={cn(
                             "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold transition-colors",
                             isLive
-                                ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-                                : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400"
+                                ? "bg-[color-mix(in_oklab,var(--status-normal)_15%,transparent)] text-[var(--status-normal)]"
+                                : "bg-muted text-muted-foreground"
                         )}
                     >
                         <Radio className={cn("h-3 w-3", isLive && "motion-safe:animate-pulse")} />
@@ -58,7 +58,7 @@ export function PageStatusBar({
                     </span>
                 )}
                 {lastUpdated && (
-                    <span className="flex items-center gap-1 text-[11px] text-slate-400 dark:text-slate-500">
+                    <span className="flex items-center gap-1 text-[11px] text-muted-foreground/70">
                         <Clock className="h-3 w-3" />
                         {lastUpdated.toLocaleTimeString("en-US", {
                             hour: "2-digit",

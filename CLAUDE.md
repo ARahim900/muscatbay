@@ -59,8 +59,10 @@ muscatbay/app/
 - **Tailwind 4** with CSS variables in `app/globals.css`
 - `cn()` utility for conditional class merging (clsx + tailwind-merge)
 - Dark theme by default
-- Brand colors: primary `#4E4456` (purple), accent `#00D2B3` (teal)
-- Full design system documented in `DESIGN_SYSTEM.md`
+- Brand colors: primary `#4E4456` (purple), accent `#A1D1D5` (soft teal)
+- **Authoritative brand spec**: `BRAND_DESIGN.md` (overrides any older tokens elsewhere)
+- Full design system also documented in `muscatbay/app/DESIGN_SYSTEM.md`
+- Font: **Inter** (variable, weights 400/500/600/700/800) via `--font-sans` — single source of truth in `app/layout.tsx`, wired through `tailwind.config.ts` so every `font-sans` class resolves to it. Never re-declare `font-family` elsewhere.
 
 ### Components
 - **UI primitives**: shadcn/ui (base-vega style) in `components/ui/`
@@ -117,6 +119,37 @@ Pages use server actions or client-side hooks. Water and STP pages use custom ho
 - Error handling on all Supabase queries
 - Tailwind class ordering via prettier/eslint
 - Components must be properly structured (types → component → exports)
+
+## Design Context
+
+> Full spec: [`.impeccable.md`](./.impeccable.md) · [`BRAND_DESIGN.md`](./BRAND_DESIGN.md) · [`muscatbay/app/DESIGN_SYSTEM.md`](./muscatbay/app/DESIGN_SYSTEM.md). When values conflict, `BRAND_DESIGN.md` wins.
+
+### Users
+Operations staff and facility/asset managers at Muscat Bay (water, electricity, STP, assets, contractors, HVAC, pest, fire). Secondary: executives on the dashboard. Field: tablet users in control rooms and on-site, sometimes gloved or in night-shift lighting. Live Supabase data — never assume demo mode.
+
+### Brand Personality
+**Professional, reliable, modern.** A serious operations tool — closer to industrial BMS dashboards (Siemens Desigo, Schneider EcoStruxure) than to a marketing site or SaaS landing page. Emotional goals: confidence & trust, calm control, low-key urgency.
+
+### Aesthetic Direction
+Clean enterprise dashboard — flat, minimal, data-first. References: Grafana, Linear, Azure Portal-style cards, modern BMS HMIs. Anti-references: neon, heavy gradients, marketing-y aesthetics, dense SCADA mimic panels, per-module re-skins. **Dark mode is primary** (control rooms, night shifts); light mode is first-class and equally readable for executives/daytime use.
+
+### Design Principles
+
+1. **Data first, decoration never** — every visual element must serve the data. Remove anything that doesn't help an operator read status faster.
+2. **Calm by default, urgent only when earned** — reserve red, animation, and elevated visual weight for genuine alarms. Normal state = quiet confidence.
+3. **One system, many modules** — water, electricity, STP, assets, contractors, HVAC, pest, fire must look like pages of one app, not seven. Reuse `DataTable`, `StatsGrid`, `PageHeader`, `Breadcrumbs`, `TabNavigation`, cards, spacing, typography. Module accent colors live in icons and chart series only — never wholesale page chrome.
+4. **Tokens, never hex** — colors, radii, spacing, shadows come from CSS variables in `globals.css`. Inline hex codes in components are a bug. Status → `--status-*`; charts → `--chart-*` / `--module-*`.
+5. **Accessible in the field** — generous touch targets, never color-only status (pair color with icon + text), WCAG AA in both themes, respect `prefers-reduced-motion`, RTL-aware.
+6. **Equally readable in light and dark** — both themes ship as production-grade. Test every KPI, chart axis, and badge in both.
+
+### Quick Token Reminders
+- **Primary** `--primary` `#4E4456` (sidebar, headings, buttons)
+- **Accent** `--secondary` / `--accent` `#A1D1D5` (CTAs, focus ring, highlights)
+- **Background** light `#F7F8F9` · dark `#0A090C`
+- **Card** light `#FFFFFF` · dark `#16141B`
+- **Radius** `10.5px` cards · `7px` inputs · `5px` chips/buttons
+- **Status** `--status-normal/warning/danger/info/stale/missing` (always paired with icon + label)
+- **Module accents** `--module-water/electricity/stp/assets/contractors/hvac/pest/fire` (icons & chart series only)
 
 ## Dependencies Not to Upgrade (Pinned)
 - `typescript` — stay on 5.x until ecosystem supports 6.x

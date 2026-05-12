@@ -106,7 +106,7 @@ function LoginContent() {
                             />
                         </div>
                         <div>
-                            <h1 className="text-2xl font-bold text-white tracking-tight">Muscat Bay</h1>
+                            <h1 className="text-2xl font-bold text-primary-foreground tracking-tight">Muscat Bay</h1>
                             <p className="text-secondary text-sm font-medium">Operations Dashboard</p>
                         </div>
                     </div>
@@ -114,11 +114,11 @@ function LoginContent() {
                     {/* Center Content */}
                     <div className="space-y-8">
                         <div>
-                            <h2 className="text-4xl font-bold text-white leading-tight mb-4">
+                            <h2 className="text-4xl font-bold text-primary-foreground leading-tight mb-4">
                                 Smart Operations<br />
                                 <span className="text-secondary">Management</span>
                             </h2>
-                            <p className="text-white/90 text-lg max-w-md">
+                            <p className="text-primary-foreground/90 text-lg max-w-md">
                                 Monitor, analyze, and optimize your community infrastructure with real-time insights and intelligent reporting.
                             </p>
                         </div>
@@ -126,7 +126,7 @@ function LoginContent() {
                         {/* Operational Systems Preview — shows actual system data
                             instead of generic marketing bullets */}
                         <div className="space-y-2">
-                            <p className="text-white/50 text-[10px] font-semibold uppercase tracking-[0.14em]">
+                            <p className="text-primary-foreground/50 text-[10px] font-semibold uppercase tracking-[0.14em]">
                                 Live System Status
                             </p>
 
@@ -148,12 +148,12 @@ function LoginContent() {
 
                                     {/* Label + value */}
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-white/55 text-[10px] uppercase tracking-wide font-medium leading-none mb-1">
+                                        <p className="text-primary-foreground/55 text-[10px] uppercase tracking-wide font-medium leading-none mb-1">
                                             {sys.label}
                                         </p>
-                                        <p className="text-white font-semibold text-sm tabular-nums leading-none">
+                                        <p className="text-primary-foreground font-semibold text-sm tabular-nums leading-none">
                                             {sys.value}
-                                            <span className="text-white/45 font-normal text-xs ms-1.5">{sys.unit}</span>
+                                            <span className="text-primary-foreground/45 font-normal text-xs ms-1.5">{sys.unit}</span>
                                         </p>
                                     </div>
 
@@ -174,17 +174,17 @@ function LoginContent() {
 
                             {/* Grounding footer */}
                             <div className="flex items-center gap-3 pt-0.5">
-                                <span className="text-white/40 text-xs">8 utility systems</span>
+                                <span className="text-primary-foreground/40 text-xs">8 utility systems</span>
                                 <span aria-hidden="true" className="w-px h-2.5 bg-white/15 flex-shrink-0" />
-                                <span className="text-white/40 text-xs">Muscat Bay, Oman</span>
+                                <span className="text-primary-foreground/40 text-xs">Muscat Bay, Oman</span>
                                 <span aria-hidden="true" className="w-px h-2.5 bg-white/15 flex-shrink-0" />
-                                <span className="text-white/40 text-xs">Since 2022</span>
+                                <span className="text-primary-foreground/40 text-xs">Since 2022</span>
                             </div>
                         </div>
                     </div>
 
                     {/* Footer */}
-                    <div className="text-white/40 text-sm">
+                    <div className="text-primary-foreground/40 text-sm">
                         &copy; 2026 Muscat Bay
                     </div>
                 </div>
@@ -326,7 +326,7 @@ function LoginContent() {
                             {/* Submit Button */}
                             <Button
                                 type="submit"
-                                className="w-full h-12 bg-primary hover:bg-primary/90 text-white font-semibold rounded-xl shadow-lg shadow-primary/25 transition-design hover:shadow-xl"
+                                className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-xl shadow-lg shadow-primary/25 transition-design hover:shadow-xl"
                                 disabled={loading}
                             >
                                 {loading ? (
@@ -375,7 +375,7 @@ function LoginContent() {
                                 Privacy Policy
                             </Link>
                         </p>
-                        <p className="text-xs text-slate-400 dark:text-slate-400 mt-2">
+                        <p className="text-xs text-muted-foreground dark:text-muted-foreground mt-2">
                             © 2026 Muscat Bay. All rights reserved.
                         </p>
                     </div>

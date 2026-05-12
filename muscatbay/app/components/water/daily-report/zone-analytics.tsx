@@ -58,10 +58,10 @@ export function ZoneAnalyticsPanel({ reportData, monthData, selectedDay, month, 
     return (
         <div className="space-y-6">
             <div>
-                <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">
+                <h2 className="text-xl font-bold text-foreground">
                     {activeZoneName} Analysis — Day {selectedDay}, {month}
                 </h2>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                <p className="text-sm text-muted-foreground dark:text-muted-foreground mt-1">
                     <span className="text-mb-secondary font-medium">L2 Bulk</span> = zone entry meter &bull;{" "}
                     <span className="text-mb-primary font-medium">ΣL3 Total</span> = sum of all L3 meters &bull;{" "}
                     <span style={{ color: CHART_COLORS.loss }} className="font-medium">Difference</span> = L2 &minus; ΣL3
@@ -80,13 +80,13 @@ export function ZoneAnalyticsPanel({ reportData, monthData, selectedDay, month, 
             <Card className="card-elevated">
                 <CardHeader className="card-elevated-header p-4 sm:p-5 md:p-6">
                     <CardTitle className="text-base sm:text-lg">Zone Daily Consumption Trend</CardTitle>
-                    <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+                    <p className="text-xs sm:text-sm text-muted-foreground dark:text-muted-foreground mt-0.5">
                         Day-by-day comparison of L2 Bulk vs ΣL3 totals — {activeZoneName}, {month}
                     </p>
                 </CardHeader>
                 <CardContent className="p-4 sm:p-5 md:p-6 pt-0">
                     {trendData.length === 0 ? (
-                        <div className="flex items-center justify-center h-48 text-sm text-slate-400 dark:text-slate-500">
+                        <div className="flex items-center justify-center h-48 text-sm text-muted-foreground dark:text-muted-foreground">
                             No trend data available for this zone
                         </div>
                     ) : (
@@ -108,7 +108,7 @@ export function ZoneAnalyticsPanel({ reportData, monthData, selectedDay, month, 
                                     <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "var(--chart-axis)" }}
                                         tickFormatter={v => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v}
                                         label={{ value: 'm³', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: "var(--chart-axis)", fontSize: 11 } }} />
-                                    <Tooltip content={<LiquidTooltip />} cursor={{ stroke: 'rgba(0,0,0,0.1)', strokeWidth: 2 }} />
+                                    <Tooltip content={<LiquidTooltip />} cursor={{ stroke: 'var(--chart-cursor-stroke)', strokeWidth: 2 }} />
                                     <Legend content={<ToggleableLegendContent isHidden={isHidden} onToggle={toggle} />} />
                                     {currentDayLabel && (
                                         <ReferenceLine x={currentDayLabel} stroke={CHART_COLORS.individual}

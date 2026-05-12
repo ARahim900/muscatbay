@@ -17,8 +17,8 @@ export function SplashScreen({ exiting = false }: SplashScreenProps) {
         // Splash always renders against the dark brand surface regardless of theme.
         backgroundColor: "var(--mb-splash-bg, #0A090C)",
         animation: exiting
-          ? "mb-splash-out 600ms cubic-bezier(0.4,0,1,1) both"
-          : "mb-splash-in 350ms ease-out both",
+          ? "mb-fade-out 600ms cubic-bezier(0.4,0,1,1) both"
+          : "mb-fade-in 350ms ease-out both",
       }}
     >
       {/* ── Logo + rings ── */}
@@ -57,7 +57,7 @@ export function SplashScreen({ exiting = false }: SplashScreenProps) {
       {/* ── Brand name ── */}
       <div
         className="mt-8 flex flex-col items-center gap-1"
-        style={{ animation: "mb-fade-up 450ms ease-out 200ms both" }}
+        style={{ animation: "fadeInUp 450ms ease-out 200ms both" }}
       >
         <p className="text-base font-semibold tracking-[0.22em] text-white uppercase select-none">
           Muscat Bay
@@ -76,7 +76,7 @@ export function SplashScreen({ exiting = false }: SplashScreenProps) {
         style={{
           height: 2,
           backgroundColor: "rgba(255,255,255,0.08)",
-          animation: "mb-fade-up 450ms ease-out 400ms both",
+          animation: "fadeInUp 450ms ease-out 400ms both",
         }}
       >
         <div

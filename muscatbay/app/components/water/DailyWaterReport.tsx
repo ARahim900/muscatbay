@@ -11,7 +11,7 @@ import {
     type ZoneBulkConfig,
 } from "@/lib/water-accounts";
 import { getSupabaseClient } from "@/lib/supabase";
-import type { SupabaseDailyWaterConsumption } from "@/entities/water";
+import { DAILY_WATER_CONSUMPTION_SELECT_COLUMNS, type SupabaseDailyWaterConsumption } from "@/entities/water";
 import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
 import {
     ChevronLeft, ChevronRight, ChevronDown, ChevronUp, CalendarDays,
@@ -209,7 +209,7 @@ function HierarchyStatCard({
 }) {
     return (
         <div
-            className="relative overflow-hidden bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-[0_2px_10px_-3px_rgba(15,23,42,0.08)] dark:shadow-[0_2px_10px_-3px_rgba(0,0,0,0.4)] hover:shadow-[0_8px_30px_-4px_rgba(15,23,42,0.12)] dark:hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.5)] motion-safe:hover:-translate-y-0.5 transition-[box-shadow,transform] duration-200 ease-out group/stat"
+            className="relative overflow-hidden bg-white dark:bg-muted p-4 sm:p-5 rounded-xl border border-border dark:border-border shadow-[0_2px_10px_-3px_rgba(15,23,42,0.08)] dark:shadow-[0_2px_10px_-3px_rgba(0,0,0,0.4)] hover:shadow-[0_8px_30px_-4px_rgba(15,23,42,0.12)] dark:hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.5)] motion-safe:hover:-translate-y-0.5 transition-[box-shadow,transform] duration-200 ease-out group/stat"
         >
             <div
                 className="absolute top-0 left-0 right-0 h-[3px]"
@@ -218,11 +218,11 @@ function HierarchyStatCard({
             />
             <div className="flex justify-between items-start gap-2">
                 <div className="min-w-0">
-                    <p className="text-slate-500 dark:text-slate-400 text-[10px] sm:text-xs font-medium mb-1 uppercase tracking-wide">
+                    <p className="text-muted-foreground dark:text-muted-foreground text-[10px] sm:text-xs font-medium mb-1 uppercase tracking-wide">
                         {label}
                     </p>
                     <h3
-                        className="text-lg sm:text-xl md:text-2xl font-bold tabular-nums tracking-tight text-slate-800 dark:text-slate-100"
+                        className="text-lg sm:text-xl md:text-2xl font-bold tabular-nums tracking-tight text-foreground"
                         style={valueColor ? { color: valueColor } : undefined}
                     >
                         {value}
@@ -242,8 +242,8 @@ function HierarchyStatCard({
 // ─── Modern table primitives ─────────────────────────────────────────────────
 // Uses raw HTML table elements styled inline to avoid shadcn's double-border wrapper.
 
-const thBase = "h-14 px-5 text-left align-middle font-semibold text-sm uppercase tracking-wider text-slate-500 dark:text-slate-400 whitespace-nowrap";
-const tdBase = "px-5 py-4 align-middle text-sm font-semibold text-slate-700 dark:text-slate-300";
+const thBase = "h-14 px-5 text-left align-middle font-semibold text-sm uppercase tracking-wider text-muted-foreground dark:text-muted-foreground whitespace-nowrap";
+const tdBase = "px-5 py-4 align-middle text-sm font-semibold text-foreground dark:text-muted-foreground/70";
 
 type SortDir = 'asc' | 'desc' | null;
 interface SortState { key: string; dir: SortDir }
@@ -270,7 +270,7 @@ function Th({
     const sortable = sortKey && sort && onSort;
     return (
         <th scope="col"
-            className={cn(thBase, sortable && "cursor-pointer select-none group hover:text-slate-600 dark:hover:text-slate-300 transition-colors", className)}
+            className={cn(thBase, sortable && "cursor-pointer select-none group hover:text-muted-foreground dark:hover:text-muted-foreground/70 transition-colors", className)}
             onClick={sortable ? () => onSort(nextSort(sort, sortKey)) : undefined}
         >
             <span className="inline-flex items-center gap-1">
@@ -284,20 +284,20 @@ function Th({
 function TableSearch({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder: string }) {
     return (
         <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <input
                 type="text"
                 value={value}
                 onChange={e => onChange(e.target.value)}
                 placeholder={placeholder}
-                className="h-9 w-full sm:w-64 pl-9 pr-8 text-[13px] rounded-full border border-slate-200 dark:border-slate-700/80 bg-slate-50/80 dark:bg-slate-800/50 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-secondary/30 focus:border-secondary/50 transition-design"
+                className="h-9 w-full sm:w-64 pl-9 pr-8 text-[13px] rounded-full border border-border dark:border-border/80 bg-muted/80 dark:bg-muted/50 placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-secondary/30 focus:border-secondary/50 transition-design"
             />
             {value && (
                 <button
                     type="button"
                     onClick={() => onChange('')}
                     aria-label="Clear search"
-                    className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700/60 transition-colors"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted dark:text-muted-foreground/70 dark:hover:bg-muted/60 transition-colors"
                 >
                     <span aria-hidden="true" className="text-[14px] leading-none font-bold">&times;</span>
                 </button>
@@ -311,8 +311,8 @@ function StatusChip({ label, color }: { label: string; color: 'success' | 'dange
         success: 'bg-emerald-50 text-emerald-600 ring-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-400 dark:ring-emerald-500/20',
         danger: 'bg-red-50 text-red-600 ring-red-500/20 dark:bg-red-500/10 dark:text-red-400 dark:ring-red-500/20',
         warning: 'bg-amber-50 text-amber-600 ring-amber-500/20 dark:bg-amber-500/10 dark:text-amber-400 dark:ring-amber-500/20',
-        default: 'bg-slate-100 text-slate-500 ring-slate-500/10 dark:bg-slate-500/10 dark:text-slate-400 dark:ring-slate-500/20',
-        primary: 'bg-secondary text-white ring-secondary/60 dark:bg-secondary/90 dark:text-white dark:ring-secondary/50',
+        default: 'bg-muted text-muted-foreground ring-border/10 dark:bg-muted/10 dark:text-muted-foreground dark:ring-border/20',
+        primary: 'bg-secondary text-primary-foreground ring-secondary/60 dark:bg-secondary/90 dark:text-primary-foreground dark:ring-secondary/50',
     }[color];
     return (
         <span className={cn("inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium ring-1 ring-inset", styles)}>
@@ -329,12 +329,12 @@ function TablePagination({
 }) {
     return (
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-1 py-2">
-            <span className="text-[12px] text-slate-400 dark:text-slate-500 tabular-nums">
+            <span className="text-[12px] text-muted-foreground dark:text-muted-foreground tabular-nums">
                 {totalItems} result{totalItems !== 1 ? 's' : ''}
             </span>
             <div className="flex items-center gap-1">
                 <button
-                    className="h-8 px-3 text-[12px] font-medium rounded-full border border-slate-200 dark:border-slate-700 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    className="min-h-11 px-4 text-[12px] font-medium rounded-full border border-border dark:border-border text-muted-foreground hover:bg-muted dark:hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors sm:min-h-8 sm:px-3"
                     disabled={page <= 1}
                     onClick={() => onPageChange(page - 1)}
                 >
@@ -345,29 +345,29 @@ function TablePagination({
                         key={p}
                         onClick={() => onPageChange(p)}
                         className={cn(
-                            "h-8 w-8 rounded-full flex items-center justify-center text-[12px] font-medium transition-design",
+                            "flex min-h-11 min-w-11 items-center justify-center rounded-full text-[12px] font-medium transition-design sm:min-h-8 sm:min-w-8",
                             p === page
-                                ? "bg-primary text-white shadow-sm dark:bg-secondary dark:text-white"
-                                : "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800",
+                                ? "bg-primary text-primary-foreground shadow-sm dark:bg-secondary dark:text-primary-foreground"
+                                : "text-muted-foreground hover:bg-muted dark:hover:bg-muted",
                         )}
                     >
                         {p}
                     </button>
                 ))}
                 <button
-                    className="h-8 px-3 text-[12px] font-medium rounded-full border border-slate-200 dark:border-slate-700 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    className="min-h-11 px-4 text-[12px] font-medium rounded-full border border-border dark:border-border text-muted-foreground hover:bg-muted dark:hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors sm:min-h-8 sm:px-3"
                     disabled={page >= totalPages}
                     onClick={() => onPageChange(page + 1)}
                 >
                     Next
                 </button>
             </div>
-            <label className="flex items-center gap-1.5 text-[12px] text-slate-400 dark:text-slate-500">
+            <label className="flex items-center gap-1.5 text-[12px] text-muted-foreground dark:text-muted-foreground">
                 Rows
                 <select
                     value={rowsPerPage}
                     onChange={e => onRowsPerPageChange(Number(e.target.value))}
-                    className="h-8 rounded-full border border-slate-200 dark:border-slate-700 bg-transparent text-[12px] px-2 focus:outline-none focus:ring-2 focus:ring-secondary/30 cursor-pointer"
+                    className="min-h-11 rounded-full border border-border dark:border-border bg-transparent text-[12px] px-3 focus:outline-none focus:ring-2 focus:ring-secondary/30 cursor-pointer sm:min-h-8 sm:px-2"
                 >
                     {[5, 10, 15, 21].map(n => <option key={n} value={n}>{n}</option>)}
                 </select>
@@ -438,10 +438,10 @@ function ZoneAnalyticsPanel({ reportData, monthData, selectedDay, month, activeZ
 
             {/* ── Zone heading ─────────────────────────────────────────────── */}
             <div>
-                <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">
+                <h2 className="text-xl font-bold text-foreground">
                     {activeZoneName} Analysis — Day {selectedDay}, {month}
                 </h2>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                <p className="text-sm text-muted-foreground dark:text-muted-foreground mt-1">
                     <span className="text-mb-secondary font-medium">L2 Bulk</span> = zone entry meter &bull;{" "}
                     <span className="text-mb-primary font-medium">ΣL3 Total</span> = sum of all L3 meters &bull;{" "}
                     <span style={{ color: CHART_COLORS.loss }} className="font-medium">Difference</span> = L2 &minus; ΣL3
@@ -490,13 +490,13 @@ function ZoneAnalyticsPanel({ reportData, monthData, selectedDay, month, activeZ
                     <CardTitle className="text-base sm:text-lg">
                         Zone Daily Consumption Trend
                     </CardTitle>
-                    <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+                    <p className="text-xs sm:text-sm text-muted-foreground dark:text-muted-foreground mt-0.5">
                         Day-by-day comparison of L2 Bulk vs ΣL3 totals — {activeZoneName}, {month}
                     </p>
                 </CardHeader>
                 <CardContent className="p-4 sm:p-5 md:p-6 pt-0">
                     {trendData.length === 0 ? (
-                        <div className="flex items-center justify-center h-48 text-sm text-slate-400 dark:text-slate-500">
+                        <div className="flex items-center justify-center h-48 text-sm text-muted-foreground dark:text-muted-foreground">
                             No trend data available for this zone
                         </div>
                     ) : (
@@ -525,7 +525,7 @@ function ZoneAnalyticsPanel({ reportData, monthData, selectedDay, month, activeZ
                                         tickFormatter={v => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v}
                                         label={{ value: 'm³', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: "var(--chart-axis)", fontSize: 11 } }}
                                     />
-                                    <Tooltip content={<LiquidTooltip />} cursor={{ stroke: 'rgba(0,0,0,0.1)', strokeWidth: 2 }} />
+                                    <Tooltip content={<LiquidTooltip />} cursor={{ stroke: 'var(--chart-cursor-stroke)', strokeWidth: 2 }} />
                                     <Legend iconType="circle" />
                                     {currentDayLabel && (
                                         <ReferenceLine
@@ -789,7 +789,7 @@ function ZoneL3Table({
             <CardHeader className="card-elevated-header p-4 sm:p-5 md:p-6">
                 <div>
                     <CardTitle className="text-base sm:text-lg">{zoneRow.zoneName} — L3 Meters</CardTitle>
-                    <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+                    <p className="text-xs sm:text-sm text-muted-foreground dark:text-muted-foreground mt-1">
                         {l3Meters.length} meters — Day 1 to Day {latestDay}
                     </p>
                 </div>
@@ -824,13 +824,18 @@ function ZoneL3Table({
                 <TableSearch value={search} onChange={setSearch} placeholder="Search meter or account..." />
 
                 {/* Horizontally scrollable table */}
-                <div className="relative overflow-x-auto -mx-4 sm:-mx-5 md:-mx-6 border-t border-slate-100 dark:border-slate-800">
-                    <table className="w-full border-collapse" style={{ minWidth: `${420 + days.length * 72}px` }}>
+                <div
+                    role="region"
+                    aria-label="Zone daily readings. Scroll horizontally to view all days."
+                    tabIndex={0}
+                    className="ops-table-shell relative -mx-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary focus-visible:ring-offset-2 sm:-mx-5 md:-mx-6"
+                >
+                    <table className="ops-table" style={{ minWidth: `${420 + days.length * 72}px` }}>
                         <thead>
-                            <tr className="border-b border-slate-100 dark:border-slate-800">
+                            <tr className="border-b border-border dark:border-border">
                                 <Th
                                     sortKey="label" sort={sort} onSort={setSort}
-                                    className="sticky left-0 z-10 bg-white dark:bg-slate-900 min-w-[150px]"
+                                    className="sticky left-0 z-10 bg-white dark:bg-muted min-w-[150px]"
                                 >Meter</Th>
                                 <Th sortKey="account" sort={sort} onSort={setSort} className="min-w-[100px]">Account</Th>
                                 <th scope="col" className={cn(thBase, "text-center min-w-[90px]")}>Type</th>
@@ -839,7 +844,7 @@ function ZoneL3Table({
                                 ))}
                                 <Th
                                     sortKey="total" sort={sort} onSort={setSort}
-                                    className="text-right min-w-[80px] bg-slate-50/80 dark:bg-slate-800/40"
+                                    className="text-right min-w-[80px] bg-muted/80 dark:bg-muted/40"
                                 >Total</Th>
                             </tr>
                         </thead>
@@ -879,7 +884,7 @@ function ZoneL3Table({
                                         style={{ color: PALETTE.primary }}
                                     >
                                         {val === null ? (
-                                            <span className="text-slate-300 dark:text-slate-600">—</span>
+                                            <span className="text-muted-foreground/70 dark:text-muted-foreground">—</span>
                                         ) : (
                                             n(val)
                                         )}
@@ -899,7 +904,7 @@ function ZoneL3Table({
                             {/* ── Individual L3 meter rows (paginated/filtered) ── */}
                             {paginated.length === 0 ? (
                                 <tr>
-                                    <td colSpan={colCount} className="text-center py-10 text-[13px] text-slate-400 dark:text-slate-500">
+                                    <td colSpan={colCount} className="text-center py-10 text-[13px] text-muted-foreground dark:text-muted-foreground">
                                         No meters found
                                     </td>
                                 </tr>
@@ -913,11 +918,11 @@ function ZoneL3Table({
                                     <tr
                                         key={meter.account}
                                         className={cn(
-                                            "border-b border-slate-50 dark:border-slate-800/60 transition-colors hover:bg-slate-50/70 dark:hover:bg-slate-800/30",
-                                            !isExpanded && "even:bg-slate-50/40 dark:even:bg-slate-800/20",
+                                            "border-b border-border/60 dark:border-border/60 transition-colors hover:bg-muted/70 dark:hover:bg-muted/30",
+                                            !isExpanded && "even:bg-muted/40 dark:even:bg-muted/20",
                                         )}
                                     >
-                                        <td className={cn(tdBase, "font-semibold sticky left-0 z-10 bg-white dark:bg-slate-900")}>
+                                        <td className={cn(tdBase, "font-semibold sticky left-0 z-10 bg-white dark:bg-muted")}>
                                             <span className="inline-flex items-center gap-2">
                                                 {detail ? (
                                                     <button
@@ -925,7 +930,7 @@ function ZoneL3Table({
                                                         onClick={() => toggleBuilding(meter.account)}
                                                         aria-expanded={isExpanded}
                                                         aria-label={`${isExpanded ? 'Collapse' : 'Expand'} ${detail.buildingName} L4 meters`}
-                                                        className="inline-flex items-center gap-1 rounded-md px-1.5 py-1 -ml-1 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                                                        className="inline-flex items-center gap-1 rounded-md px-1.5 py-1 -ml-1 hover:bg-muted dark:hover:bg-muted transition-colors"
                                                         style={{ color: PALETTE.primary }}
                                                     >
                                                         {isExpanded
@@ -941,29 +946,29 @@ function ZoneL3Table({
                                                     </>
                                                 ) : (
                                                     <>
-                                                        <Home className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                                                        <Home className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                                                         {meter.account}
                                                         {meter.isNullAsZero && <StatusChip label="IRR" color="primary" />}
                                                     </>
                                                 )}
                                             </span>
                                         </td>
-                                        <td className={cn(tdBase, "font-mono text-[11px] text-slate-400 dark:text-slate-500")}>{meter.account}</td>
+                                        <td className={cn(tdBase, "font-mono text-[11px] text-muted-foreground dark:text-muted-foreground")}>{meter.account}</td>
                                         <td className={cn(tdBase, "text-center")}>
                                             <StatusChip label={meter.building ? "Building" : "Individual"} color={meter.building ? "primary" : "default"} />
                                         </td>
                                         {meter.dailyValues.map((val, i) => (
                                             <td key={i} className={cn(tdBase, "text-right tabular-nums px-2 text-[12px]")}>
                                                 {val === null ? (
-                                                    <span className="text-slate-300 dark:text-slate-600">—</span>
+                                                    <span className="text-muted-foreground/70 dark:text-muted-foreground">—</span>
                                                 ) : val === 0 ? (
-                                                    <span className="text-slate-400">0.00</span>
+                                                    <span className="text-muted-foreground">0.00</span>
                                                 ) : (
                                                     n(val)
                                                 )}
                                             </td>
                                         ))}
-                                        <td className={cn(tdBase, "text-right tabular-nums font-semibold bg-slate-50/80 dark:bg-slate-800/40")}>
+                                        <td className={cn(tdBase, "text-right tabular-nums font-semibold bg-muted/80 dark:bg-muted/40")}>
                                             {n(meter.total)}
                                         </td>
                                     </tr>,
@@ -976,7 +981,7 @@ function ZoneL3Table({
                                         rows.push(
                                             <tr
                                                 key={`${meter.account}-child-${child.account}`}
-                                                className="border-b border-slate-50 dark:border-slate-800/60"
+                                                className="border-b border-border/60 dark:border-border/60"
                                                 style={{ backgroundColor: `${PALETTE.neutral}26` }}
                                             >
                                                 <td
@@ -986,14 +991,14 @@ function ZoneL3Table({
                                                         boxShadow: `inset 4px 0 0 ${PALETTE.primary}30`,
                                                     }}
                                                 >
-                                                    <span className="inline-flex items-center gap-2 text-slate-600 dark:text-slate-300">
+                                                    <span className="inline-flex items-center gap-2 text-muted-foreground dark:text-muted-foreground/70">
                                                         {idx === detail.children.length - 1
                                                             ? <span className="inline-block w-2 h-2 rounded-full" style={{ backgroundColor: PALETTE.primary }} />
-                                                            : <span className="inline-block w-2 h-2 rounded-full bg-slate-300 dark:bg-slate-600" />}
+                                                            : <span className="inline-block w-2 h-2 rounded-full bg-border dark:bg-muted" />}
                                                         {child.label}
                                                     </span>
                                                 </td>
-                                                <td className={cn(tdBase, "font-mono text-[11px] text-slate-400 dark:text-slate-500")}>{child.account}</td>
+                                                <td className={cn(tdBase, "font-mono text-[11px] text-muted-foreground dark:text-muted-foreground")}>{child.account}</td>
                                                 <td className={cn(tdBase, "text-center")}>
                                                     <StatusChip
                                                         label={child.type === 'Common' ? 'Common' : 'Apartment'}
@@ -1003,15 +1008,15 @@ function ZoneL3Table({
                                                 {child.dailyValues.map((val, i) => (
                                                     <td key={i} className={cn(tdBase, "text-right tabular-nums px-2 text-[12px] font-normal")}>
                                                         {val === null ? (
-                                                            <span className="text-slate-300 dark:text-slate-600">—</span>
+                                                            <span className="text-muted-foreground/70 dark:text-muted-foreground">—</span>
                                                         ) : val === 0 ? (
-                                                            <span className="text-slate-400">0.00</span>
+                                                            <span className="text-muted-foreground">0.00</span>
                                                         ) : (
                                                             n(val)
                                                         )}
                                                     </td>
                                                 ))}
-                                                <td className={cn(tdBase, "text-right tabular-nums font-semibold bg-slate-50/80 dark:bg-slate-800/40")}>
+                                                <td className={cn(tdBase, "text-right tabular-nums font-semibold bg-muted/80 dark:bg-muted/40")}>
                                                     {n(child.total)}
                                                 </td>
                                             </tr>,
@@ -1258,10 +1263,10 @@ function DCAnalyticsPanel({ reportData, monthData, selectedDay, month }: DCAnaly
 
             {/* ── DC heading ─────────────────────────────────────────────── */}
             <div>
-                <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">
+                <h2 className="text-xl font-bold text-foreground">
                     Direct Connection Analysis — Day {selectedDay}, {month}
                 </h2>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                <p className="text-sm text-muted-foreground dark:text-muted-foreground mt-1">
                     <span className="text-mb-secondary font-medium">DC Daily Total</span> = sum of all DC meters today &bull;{" "}
                     <span className="text-mb-primary font-medium">Monthly Total</span> = month-to-date DC consumption &bull;{" "}
                     <span style={{ color: CHART_COLORS.success }} className="font-medium">Active Meters</span> = meters reporting today
@@ -1310,13 +1315,13 @@ function DCAnalyticsPanel({ reportData, monthData, selectedDay, month }: DCAnaly
                     <CardTitle className="text-base sm:text-lg">
                         Direct Connection Daily Consumption Trend
                     </CardTitle>
-                    <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+                    <p className="text-xs sm:text-sm text-muted-foreground dark:text-muted-foreground mt-0.5">
                         Day-by-day DC total across all {totalMeters} meters — {month}
                     </p>
                 </CardHeader>
                 <CardContent className="p-4 sm:p-5 md:p-6 pt-0">
                     {trendData.length === 0 ? (
-                        <div className="flex items-center justify-center h-48 text-sm text-slate-400 dark:text-slate-500">
+                        <div className="flex items-center justify-center h-48 text-sm text-muted-foreground dark:text-muted-foreground">
                             No trend data available for direct connections
                         </div>
                     ) : (
@@ -1341,7 +1346,7 @@ function DCAnalyticsPanel({ reportData, monthData, selectedDay, month }: DCAnaly
                                         tickFormatter={v => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v}
                                         label={{ value: 'm³', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: "var(--chart-axis)", fontSize: 11 } }}
                                     />
-                                    <Tooltip content={<LiquidTooltip />} cursor={{ stroke: 'rgba(0,0,0,0.1)', strokeWidth: 2 }} />
+                                    <Tooltip content={<LiquidTooltip />} cursor={{ stroke: 'var(--chart-cursor-stroke)', strokeWidth: 2 }} />
                                     <Legend iconType="circle" />
                                     {currentDayLabel && (
                                         <ReferenceLine
@@ -1473,7 +1478,7 @@ function DCDailyTable({ monthData }: { monthData: SupabaseDailyWaterConsumption[
             <CardHeader className="card-elevated-header p-4 sm:p-5 md:p-6">
                 <div>
                     <CardTitle className="text-base sm:text-lg">Direct Connection — Meters</CardTitle>
-                    <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+                    <p className="text-xs sm:text-sm text-muted-foreground dark:text-muted-foreground mt-1">
                         {dcMeters.length} meters — Day 1 to Day {latestDay}
                     </p>
                 </div>
@@ -1482,11 +1487,11 @@ function DCDailyTable({ monthData }: { monthData: SupabaseDailyWaterConsumption[
                 {/* DC summary KPI cards */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                     {/* Monthly Total */}
-                    <div className="bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] dark:shadow-[0_2px_10px_-3px_rgba(0,0,0,0.3)] hover:shadow-[0_8px_30px_-4px_rgba(6,81,237,0.15)] dark:hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.4)] motion-safe:hover:-translate-y-0.5 transition-[box-shadow,transform] duration-200 ease-out">
+                    <div className="bg-white dark:bg-muted p-4 sm:p-5 rounded-xl border border-border dark:border-border shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] dark:shadow-[0_2px_10px_-3px_rgba(0,0,0,0.3)] hover:shadow-[0_8px_30px_-4px_rgba(6,81,237,0.15)] dark:hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.4)] motion-safe:hover:-translate-y-0.5 transition-[box-shadow,transform] duration-200 ease-out">
                         <div className="flex justify-between items-start gap-2">
                             <div className="min-w-0">
-                                <p className="text-slate-500 dark:text-slate-400 text-[10px] sm:text-xs font-medium mb-1 uppercase tracking-wide">Monthly DC Total (m³)</p>
-                                <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-slate-800 dark:text-slate-100 tabular-nums tracking-tight">{n(grandTotal)}</h3>
+                                <p className="text-muted-foreground dark:text-muted-foreground text-[10px] sm:text-xs font-medium mb-1 uppercase tracking-wide">Monthly DC Total (m³)</p>
+                                <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-foreground tabular-nums tracking-tight">{n(grandTotal)}</h3>
                             </div>
                             <div className="p-2 sm:p-3 rounded-lg bg-mb-secondary-light flex-shrink-0">
                                 <Droplets className="w-4 h-4 sm:w-5 sm:h-5 text-mb-secondary" />
@@ -1494,11 +1499,11 @@ function DCDailyTable({ monthData }: { monthData: SupabaseDailyWaterConsumption[
                         </div>
                     </div>
                     {/* Total Meters */}
-                    <div className="bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] dark:shadow-[0_2px_10px_-3px_rgba(0,0,0,0.3)] hover:shadow-[0_8px_30px_-4px_rgba(6,81,237,0.15)] dark:hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.4)] motion-safe:hover:-translate-y-0.5 transition-[box-shadow,transform] duration-200 ease-out">
+                    <div className="bg-white dark:bg-muted p-4 sm:p-5 rounded-xl border border-border dark:border-border shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] dark:shadow-[0_2px_10px_-3px_rgba(0,0,0,0.3)] hover:shadow-[0_8px_30px_-4px_rgba(6,81,237,0.15)] dark:hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.4)] motion-safe:hover:-translate-y-0.5 transition-[box-shadow,transform] duration-200 ease-out">
                         <div className="flex justify-between items-start gap-2">
                             <div className="min-w-0">
-                                <p className="text-slate-500 dark:text-slate-400 text-[10px] sm:text-xs font-medium mb-1 uppercase tracking-wide">DC Meters</p>
-                                <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-slate-800 dark:text-slate-100 tabular-nums tracking-tight">{dcMeters.length}</h3>
+                                <p className="text-muted-foreground dark:text-muted-foreground text-[10px] sm:text-xs font-medium mb-1 uppercase tracking-wide">DC Meters</p>
+                                <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-foreground tabular-nums tracking-tight">{dcMeters.length}</h3>
                             </div>
                             <div className="p-2 sm:p-3 rounded-lg bg-mb-primary-light/20 flex-shrink-0">
                                 <Activity className="w-4 h-4 sm:w-5 sm:h-5 text-mb-primary" />
@@ -1506,12 +1511,12 @@ function DCDailyTable({ monthData }: { monthData: SupabaseDailyWaterConsumption[
                         </div>
                     </div>
                     {/* Active Meters (latest day) */}
-                    <div className="bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] dark:shadow-[0_2px_10px_-3px_rgba(0,0,0,0.3)] hover:shadow-[0_8px_30px_-4px_rgba(6,81,237,0.15)] dark:hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.4)] motion-safe:hover:-translate-y-0.5 transition-[box-shadow,transform] duration-200 ease-out">
+                    <div className="bg-white dark:bg-muted p-4 sm:p-5 rounded-xl border border-border dark:border-border shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] dark:shadow-[0_2px_10px_-3px_rgba(0,0,0,0.3)] hover:shadow-[0_8px_30px_-4px_rgba(6,81,237,0.15)] dark:hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.4)] motion-safe:hover:-translate-y-0.5 transition-[box-shadow,transform] duration-200 ease-out">
                         <div className="flex justify-between items-start gap-2">
                             <div className="min-w-0">
-                                <p className="text-slate-500 dark:text-slate-400 text-[10px] sm:text-xs font-medium mb-1 uppercase tracking-wide">Active (Day {latestDay})</p>
+                                <p className="text-muted-foreground dark:text-muted-foreground text-[10px] sm:text-xs font-medium mb-1 uppercase tracking-wide">Active (Day {latestDay})</p>
                                 <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-mb-success-text tabular-nums tracking-tight">
-                                    {activeMeters}<span className="text-slate-400 dark:text-slate-500 text-base font-semibold"> / {dcMeters.length}</span>
+                                    {activeMeters}<span className="text-muted-foreground dark:text-muted-foreground text-base font-semibold"> / {dcMeters.length}</span>
                                 </h3>
                             </div>
                             <div className="p-2 sm:p-3 rounded-lg bg-mb-success-light flex-shrink-0">
@@ -1524,13 +1529,18 @@ function DCDailyTable({ monthData }: { monthData: SupabaseDailyWaterConsumption[
                 <TableSearch value={search} onChange={setSearch} placeholder="Search meter or account..." />
 
                 {/* Horizontally scrollable table */}
-                <div className="relative overflow-x-auto -mx-4 sm:-mx-5 md:-mx-6 border-t border-slate-100 dark:border-slate-800">
-                    <table className="w-full border-collapse" style={{ minWidth: `${420 + days.length * 72}px` }}>
+                <div
+                    role="region"
+                    aria-label="Direct connection daily readings. Scroll horizontally to view all days."
+                    tabIndex={0}
+                    className="ops-table-shell relative -mx-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary focus-visible:ring-offset-2 sm:-mx-5 md:-mx-6"
+                >
+                    <table className="ops-table" style={{ minWidth: `${420 + days.length * 72}px` }}>
                         <thead>
-                            <tr className="border-b border-slate-100 dark:border-slate-800">
+                            <tr className="border-b border-border dark:border-border">
                                 <Th
                                     sortKey="label" sort={sort} onSort={setSort}
-                                    className="sticky left-0 z-10 bg-white dark:bg-slate-900 min-w-[180px]"
+                                    className="sticky left-0 z-10 bg-white dark:bg-muted min-w-[180px]"
                                 >Meter</Th>
                                 <Th sortKey="account" sort={sort} onSort={setSort} className="min-w-[100px]">Account</Th>
                                 <th scope="col" className={cn(thBase, "text-center min-w-[90px]")}>Type</th>
@@ -1539,23 +1549,23 @@ function DCDailyTable({ monthData }: { monthData: SupabaseDailyWaterConsumption[
                                 ))}
                                 <Th
                                     sortKey="total" sort={sort} onSort={setSort}
-                                    className="text-right min-w-[80px] bg-slate-50/80 dark:bg-slate-800/40"
+                                    className="text-right min-w-[80px] bg-muted/80 dark:bg-muted/40"
                                 >Total</Th>
                             </tr>
                         </thead>
                         <tbody>
                             {paginated.length === 0 ? (
                                 <tr>
-                                    <td colSpan={colCount} className="text-center py-10 text-[13px] text-slate-400 dark:text-slate-500">
+                                    <td colSpan={colCount} className="text-center py-10 text-[13px] text-muted-foreground dark:text-muted-foreground">
                                         No meters found
                                     </td>
                                 </tr>
                             ) : paginated.map(meter => (
                                 <tr
                                     key={meter.account}
-                                    className="border-b border-slate-50 dark:border-slate-800/60 transition-colors hover:bg-slate-50/70 dark:hover:bg-slate-800/30 even:bg-slate-50/40 dark:even:bg-slate-800/20"
+                                    className="border-b border-border/60 dark:border-border/60 transition-colors hover:bg-muted/70 dark:hover:bg-muted/30 even:bg-muted/40 dark:even:bg-muted/20"
                                 >
-                                    <td className={cn(tdBase, "font-semibold sticky left-0 z-10 bg-white dark:bg-slate-900")}>
+                                    <td className={cn(tdBase, "font-semibold sticky left-0 z-10 bg-white dark:bg-muted")}>
                                         <span className="inline-flex items-center gap-2">
                                             {meter.isIrr ? (
                                                 <Droplets className="h-3.5 w-3.5 text-teal-500 shrink-0" />
@@ -1565,35 +1575,35 @@ function DCDailyTable({ monthData }: { monthData: SupabaseDailyWaterConsumption[
                                             {meter.label}
                                         </span>
                                     </td>
-                                    <td className={cn(tdBase, "font-mono text-[11px] text-slate-400 dark:text-slate-500")}>{meter.account}</td>
+                                    <td className={cn(tdBase, "font-mono text-[11px] text-muted-foreground dark:text-muted-foreground")}>{meter.account}</td>
                                     <td className={cn(tdBase, "text-center")}>
                                         <StatusChip label={meter.isIrr ? "Irrigation" : "Service"} color={meter.isIrr ? "primary" : "default"} />
                                     </td>
                                     {meter.dailyValues.map((val, i) => (
                                         <td key={i} className={cn(tdBase, "text-right tabular-nums px-2 text-[12px]")}>
                                             {val === null ? (
-                                                <span className="text-slate-300 dark:text-slate-600">—</span>
+                                                <span className="text-muted-foreground/70 dark:text-muted-foreground">—</span>
                                             ) : val === 0 ? (
-                                                <span className="text-slate-400">0.00</span>
+                                                <span className="text-muted-foreground">0.00</span>
                                             ) : (
                                                 n(val)
                                             )}
                                         </td>
                                     ))}
-                                    <td className={cn(tdBase, "text-right tabular-nums font-semibold bg-slate-50/80 dark:bg-slate-800/40")}>
+                                    <td className={cn(tdBase, "text-right tabular-nums font-semibold bg-muted/80 dark:bg-muted/40")}>
                                         {n(meter.total)}
                                     </td>
                                 </tr>
                             ))}
                             {/* ΣDC Footer */}
-                            <tr className="border-t-2 border-slate-200 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-800/20">
-                                <td className={cn(tdBase, "font-bold sticky left-0 z-10 bg-slate-50/60 dark:bg-slate-800/20")} colSpan={3}>
+                            <tr className="border-t-2 border-border dark:border-border bg-muted/60 dark:bg-muted/20">
+                                <td className={cn(tdBase, "font-bold sticky left-0 z-10 bg-muted/60 dark:bg-muted/20")} colSpan={3}>
                                     ΣDC Total ({dcMeters.length} meters)
                                 </td>
                                 {dayTotals.map((t, i) => (
                                     <td key={i} className={cn(tdBase, "text-right tabular-nums font-bold px-2 text-[12px]")}>{n(t)}</td>
                                 ))}
-                                <td className={cn(tdBase, "text-right tabular-nums font-bold bg-slate-50/80 dark:bg-slate-800/40")}>{n(grandTotal)}</td>
+                                <td className={cn(tdBase, "text-right tabular-nums font-bold bg-muted/80 dark:bg-muted/40")}>{n(grandTotal)}</td>
                             </tr>
                         </tbody>
                     </table>
@@ -1624,16 +1634,16 @@ function LoadingState() {
                 <Card key={label} className="card-elevated">
                     <CardHeader className="card-elevated-header p-4">
                         <div className="flex items-center gap-3">
-                            <div className="h-9 w-9 rounded-lg bg-slate-200 dark:bg-slate-700 motion-safe:animate-pulse" />
+                            <div className="h-9 w-9 rounded-lg bg-border dark:bg-muted motion-safe:animate-pulse" />
                             <div className="space-y-2 flex-1">
-                                <div className="h-4 w-48 bg-slate-200 dark:bg-slate-700 rounded motion-safe:animate-pulse" />
-                                <div className="h-3 w-72 bg-slate-100 dark:bg-slate-800 rounded motion-safe:animate-pulse" />
+                                <div className="h-4 w-48 bg-border dark:bg-muted rounded motion-safe:animate-pulse" />
+                                <div className="h-3 w-72 bg-muted dark:bg-muted rounded motion-safe:animate-pulse" />
                             </div>
                         </div>
                     </CardHeader>
                     <CardContent className="p-4 space-y-3">
                         {Array.from({ length: 5 }).map((_, i) => (
-                            <div key={i} className="h-9 w-full rounded bg-slate-100 dark:bg-slate-800 motion-safe:animate-pulse" />
+                            <div key={i} className="h-9 w-full rounded bg-muted dark:bg-muted motion-safe:animate-pulse" />
                         ))}
                     </CardContent>
                 </Card>
@@ -1648,10 +1658,10 @@ function ErrorState({ message, onRetry }: { message: string; onRetry: () => void
             <div className="p-4 rounded-full bg-red-100 dark:bg-red-900/30 mb-4">
                 <WifiOff className="h-10 w-10 text-red-500" />
             </div>
-            <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-2">
+            <h3 className="text-lg font-semibold text-foreground mb-2">
                 Failed to Load Report
             </h3>
-            <p className="text-sm text-slate-500 dark:text-slate-400 max-w-md mb-6">
+            <p className="text-sm text-muted-foreground dark:text-muted-foreground max-w-md mb-6">
                 {message}
             </p>
             <Button onClick={onRetry} variant="outline" className="gap-2">
@@ -1747,7 +1757,7 @@ export function DailyWaterReport() {
 
             const { data, error } = await client
                 .from('water_daily_consumption')
-                .select('*')
+                .select(DAILY_WATER_CONSUMPTION_SELECT_COLUMNS)
                 .eq('month', month);
 
             if (error) throw new Error(error.message);
@@ -1760,7 +1770,7 @@ export function DailyWaterReport() {
                 return;
             }
 
-            setMonthData(data as SupabaseDailyWaterConsumption[]);
+            setMonthData(data as unknown as SupabaseDailyWaterConsumption[]);
             setLastFetched(new Date());
             if (!silent) setStatus('success');
         } catch (err) {
@@ -1835,7 +1845,7 @@ export function DailyWaterReport() {
                                         setSelectedDay(getDefaultDay(next));
                                     }}
                                     disabled={status === 'loading'}
-                                    className="px-2 py-1.5 text-sm rounded-md border border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
+                                    className="px-2 py-1.5 text-sm rounded-md border border-border dark:border-border bg-white/50 dark:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
                                 >
                                     {[...getAvailableYears()].reverse().map(yr => (
                                         <option key={yr} value={yr}>20{yr}</option>
@@ -1846,7 +1856,7 @@ export function DailyWaterReport() {
                                     value={selectedMonth}
                                     onChange={e => { const m = e.target.value; setSelectedMonth(m); setSelectedDay(getDefaultDay(m)); }}
                                     disabled={status === 'loading'}
-                                    className="px-2 py-1.5 text-sm rounded-md border border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
+                                    className="px-2 py-1.5 text-sm rounded-md border border-border dark:border-border bg-white/50 dark:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
                                 >
                                     {getMonthsForYear(selectedMonth.split('-')[1]).map(m => (
                                         <option key={m} value={m}>{m.split('-')[0]}</option>
@@ -1874,7 +1884,7 @@ export function DailyWaterReport() {
                                     "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold transition-colors",
                                     isLive
                                         ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-                                        : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400"
+                                        : "bg-muted text-muted-foreground dark:bg-muted dark:text-muted-foreground"
                                 )}>
                                     <Radio className={cn("h-3 w-3", isLive && "motion-safe:animate-pulse")} />
                                     {isLive ? "Live" : "Offline"}
@@ -1889,7 +1899,7 @@ export function DailyWaterReport() {
 
                                 {/* Last fetched time */}
                                 {lastFetched && status !== 'loading' && (
-                                    <span className="flex items-center gap-1 text-[11px] text-slate-400 dark:text-slate-500">
+                                    <span className="flex items-center gap-1 text-[11px] text-muted-foreground dark:text-muted-foreground">
                                         <Clock className="h-3 w-3" />
                                         Updated {lastFetched.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                                     </span>
@@ -1898,7 +1908,7 @@ export function DailyWaterReport() {
                         </div>
 
                         {/* Day selector — own row on mobile (w-full), flex-1 inline on sm+ */}
-                        <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto sm:flex-1 sm:min-w-[220px] sm:order-2 pt-1 sm:pt-0 border-t border-slate-200/60 dark:border-slate-700/60 sm:border-t-0">
+                        <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto sm:flex-1 sm:min-w-[220px] sm:order-2 pt-1 sm:pt-0 border-t border-border/60 dark:border-border/60 sm:border-t-0">
                             <Button
                                 variant="outline" size="icon"
                                 className="h-10 w-10 shrink-0"
@@ -1948,7 +1958,7 @@ export function DailyWaterReport() {
                              * sm+   : label inline with wrap-flex pills (matches original).
                              */}
                             <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-2">
-                                <span className="text-sm font-medium text-slate-600 dark:text-slate-400 sm:mr-1">
+                                <span className="text-sm font-medium text-muted-foreground dark:text-muted-foreground sm:mr-1">
                                     Select Zone
                                 </span>
                                 <div className="grid grid-cols-2 gap-2 sm:contents">
@@ -1961,8 +1971,8 @@ export function DailyWaterReport() {
                                                 className={cn(
                                                     "w-full sm:w-auto px-4 py-2.5 sm:px-3 sm:py-1.5 rounded-full text-sm font-medium transition-design border text-center whitespace-nowrap",
                                                     isActive
-                                                        ? "bg-primary text-white border-primary shadow-sm dark:bg-secondary dark:text-white dark:border-secondary"
-                                                        : "bg-white text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700"
+                                                        ? "bg-primary text-primary-foreground border-primary shadow-sm dark:bg-secondary dark:text-primary-foreground dark:border-secondary"
+                                                        : "bg-white text-muted-foreground border-border dark:bg-muted dark:text-muted-foreground/70 dark:border-border hover:bg-muted dark:hover:bg-muted"
                                                 )}
                                             >
                                                 {z.zoneName}
@@ -1974,8 +1984,8 @@ export function DailyWaterReport() {
                                         className={cn(
                                             "w-full sm:w-auto col-span-2 sm:col-span-1 px-4 py-2.5 sm:px-3 sm:py-1.5 rounded-full text-sm font-medium transition-design border text-center whitespace-nowrap",
                                             activeView === 'dc'
-                                                ? "bg-primary text-white border-primary shadow-sm dark:bg-secondary dark:text-white dark:border-secondary"
-                                                : "bg-white text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700"
+                                                ? "bg-primary text-primary-foreground border-primary shadow-sm dark:bg-secondary dark:text-primary-foreground dark:border-secondary"
+                                                : "bg-white text-muted-foreground border-border dark:bg-muted dark:text-muted-foreground/70 dark:border-border hover:bg-muted dark:hover:bg-muted"
                                         )}
                                     >
                                         Direct Connection

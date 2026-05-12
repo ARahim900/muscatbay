@@ -4,9 +4,9 @@ import { useState, useMemo } from "react";
 import { Search, X, AlertCircle } from "lucide-react";
 import {
   MultiSelectDropdown,
-  SortIcon,
   TablePagination,
   TableToolbar,
+  SortableTableHead,
   type PageSizeOption,
 } from "@/components/shared/data-table";
 import type { PpmFinding } from "./types";
@@ -20,7 +20,7 @@ function getPriorityColor(priority: string) {
   if (p === "critical") return "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400";
   if (p === "high") return "bg-orange-50 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400";
   if (p === "medium") return "bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400";
-  return "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400";
+  return "bg-muted text-muted-foreground dark:bg-muted dark:text-muted-foreground";
 }
 
 function getStatusColor(status: string) {
@@ -29,7 +29,7 @@ function getStatusColor(status: string) {
   if (s.includes("awaiting")) return "bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400";
   if (s === "open") return "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400";
   if (s === "quoted") return "bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400";
-  return "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400";
+  return "bg-muted text-muted-foreground dark:bg-muted dark:text-muted-foreground";
 }
 
 export function FindingsTab({ findings }: FindingsTabProps) {
@@ -135,13 +135,14 @@ export function FindingsTab({ findings }: FindingsTabProps) {
     <div className="space-y-4">
       <TableToolbar>
         <div className="relative flex-1 min-w-0 sm:min-w-[200px] max-w-md">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <input
             type="text"
+            aria-label="Search findings"
             placeholder="Search findings..."
             value={search}
             onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
-            className="pl-10 pr-4 py-2 w-full rounded-lg border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40 shadow-sm"
+            className="pl-10 pr-4 py-2 w-full rounded-lg border border-border/80 dark:border-border/80 bg-white dark:bg-muted text-foreground dark:text-muted-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40 shadow-sm"
           />
         </div>
         <MultiSelectDropdown label="Building" options={uniqueBuildings} selected={selectedBuildings} onChange={(s) => { setSelectedBuildings(s); setCurrentPage(1); }} />
@@ -152,13 +153,13 @@ export function FindingsTab({ findings }: FindingsTabProps) {
         {hasFilters && (
           <button
             onClick={clearFilters}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg text-muted-foreground hover:text-foreground dark:text-muted-foreground dark:hover:text-foreground transition-colors"
           >
             <X className="w-3.5 h-3.5" /> Clear
           </button>
         )}
-        <div className="text-sm text-slate-500 dark:text-slate-400 whitespace-nowrap ml-auto">
-          <span className="font-semibold text-slate-700 dark:text-slate-300">{filtered.length}</span>
+        <div className="text-sm text-muted-foreground dark:text-muted-foreground whitespace-nowrap ml-auto">
+          <span className="font-semibold text-foreground dark:text-muted-foreground/70">{filtered.length}</span>
           {filtered.length !== findings.length && <span> of {findings.length}</span>} findings
         </div>
       </TableToolbar>
@@ -166,31 +167,31 @@ export function FindingsTab({ findings }: FindingsTabProps) {
       {/* Mobile Cards */}
       <div className="md:hidden space-y-3">
         {paginated.map((f, i) => (
-          <div key={f.id || i} className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 space-y-2">
+          <div key={f.id || i} className="rounded-xl border border-border dark:border-border bg-white dark:bg-muted p-4 space-y-2">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
-                <p className="font-semibold text-sm text-slate-800 dark:text-slate-200 flex items-center gap-1">
+                <p className="font-semibold text-sm text-foreground dark:text-muted-foreground flex items-center gap-1">
                   {f.finding_code}
                   {f.is_recurring && <span className="text-amber-500" title="Recurring">↻</span>}
                 </p>
-                <p className="text-xs text-slate-500 dark:text-slate-400">{f.building} — {f.equipment_label}</p>
+                <p className="text-xs text-muted-foreground dark:text-muted-foreground">{f.building} — {f.equipment_label}</p>
               </div>
               <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${getPriorityColor(f.priority)}`}>
                 {f.priority}
               </span>
             </div>
-            <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2">{f.description}</p>
+            <p className="text-xs text-muted-foreground dark:text-muted-foreground line-clamp-2">{f.description}</p>
             <div className="flex items-center gap-2 flex-wrap">
               <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${getStatusColor(f.status)}`}>
                 {f.status}
               </span>
-              <span className="text-[10px] text-slate-400">{f.fiscal_year} · {f.ppm_visit}</span>
+              <span className="text-[10px] text-muted-foreground">{f.fiscal_year} · {f.ppm_visit}</span>
               {f.quotation_ref && <span className="text-[10px] text-blue-500">{f.quotation_ref}</span>}
             </div>
           </div>
         ))}
         {filtered.length === 0 && (
-          <div className="py-12 text-center text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700">
+          <div className="py-12 text-center text-muted-foreground dark:text-muted-foreground bg-white dark:bg-muted rounded-xl border border-border dark:border-border">
             <AlertCircle className="h-8 w-8 mx-auto mb-2" />
             <p>No findings match your filters.</p>
           </div>
@@ -198,37 +199,37 @@ export function FindingsTab({ findings }: FindingsTabProps) {
       </div>
 
       {/* Desktop Table */}
-      <div className="hidden md:block overflow-x-auto rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900 shadow-[0_1px_3px_rgba(0,0,0,0.06),0_4px_16px_-4px_rgba(0,0,0,0.1)] dark:shadow-[0_1px_3px_rgba(0,0,0,0.2),0_4px_16px_-4px_rgba(0,0,0,0.3)]">
-        <table className="w-full text-sm border-collapse">
+      <div className="ops-table-shell hidden md:block">
+        <table className="ops-table">
           <thead>
-            <tr className="bg-slate-50 dark:bg-slate-800/80">
+            <tr className="bg-muted dark:bg-muted/80">
               {columns.map((col) => (
-                <th
+                <SortableTableHead
                   key={col.field}
-                  className="text-left py-4 px-4 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors"
-                  onClick={() => handleSort(col.field)}
+                  field={col.field}
+                  currentSortField={sortField}
+                  currentSortDirection={sortDirection}
+                  onSort={handleSort}
+                  className="px-4"
                 >
-                  <div className="flex items-center gap-1.5">
-                    {col.label}
-                    <SortIcon field={col.field} currentSortField={sortField} currentSortDirection={sortDirection} />
-                  </div>
-                </th>
+                  {col.label}
+                </SortableTableHead>
               ))}
             </tr>
           </thead>
           <tbody>
             {paginated.map((f, i) => (
-              <tr key={f.id || i} className="border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-secondary/5 dark:hover:bg-slate-700/40 transition-colors even:bg-slate-50/40 dark:even:bg-slate-800/20">
-                <td className="py-4 px-5 font-semibold text-slate-800 dark:text-slate-200 whitespace-nowrap">
+              <tr key={f.id || i} className="border-b border-border/80 dark:border-border/80 hover:bg-secondary/5 dark:hover:bg-muted/40 transition-colors even:bg-muted/40 dark:even:bg-muted/20">
+                <td className="py-4 px-5 font-semibold text-foreground dark:text-muted-foreground whitespace-nowrap">
                   {f.finding_code}
                   {f.is_recurring && <span className="ml-1 text-amber-500" title="Recurring issue">↻</span>}
                 </td>
-                <td className="py-4 px-5 font-semibold text-slate-600 dark:text-slate-400 text-sm">{f.building}</td>
-                <td className="py-4 px-5 font-semibold text-slate-600 dark:text-slate-400 text-sm max-w-[150px] truncate" title={f.equipment_label}>{f.equipment_label}</td>
-                <td className="py-4 px-5 font-semibold text-slate-600 dark:text-slate-400 text-sm">{f.fiscal_year}</td>
-                <td className="py-4 px-5 font-semibold text-slate-600 dark:text-slate-400 text-sm">{f.ppm_visit}</td>
-                <td className="py-4 px-5 font-semibold text-slate-600 dark:text-slate-400 text-sm max-w-[200px] truncate" title={f.description}>{f.description}</td>
-                <td className="py-4 px-5 font-semibold text-slate-600 dark:text-slate-400 text-sm text-center">{f.quantity}</td>
+                <td className="py-4 px-5 font-semibold text-muted-foreground dark:text-muted-foreground text-sm">{f.building}</td>
+                <td className="py-4 px-5 font-semibold text-muted-foreground dark:text-muted-foreground text-sm max-w-[150px] truncate" title={f.equipment_label}>{f.equipment_label}</td>
+                <td className="py-4 px-5 font-semibold text-muted-foreground dark:text-muted-foreground text-sm">{f.fiscal_year}</td>
+                <td className="py-4 px-5 font-semibold text-muted-foreground dark:text-muted-foreground text-sm">{f.ppm_visit}</td>
+                <td className="py-4 px-5 font-semibold text-muted-foreground dark:text-muted-foreground text-sm max-w-[200px] truncate" title={f.description}>{f.description}</td>
+                <td className="py-4 px-5 font-semibold text-muted-foreground dark:text-muted-foreground text-sm text-center">{f.quantity}</td>
                 <td className="py-4 px-5">
                   <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${getPriorityColor(f.priority)}`}>{f.priority}</span>
                 </td>
@@ -240,7 +241,7 @@ export function FindingsTab({ findings }: FindingsTabProps) {
             ))}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={10} className="py-12 text-center text-slate-500 dark:text-slate-400">
+                <td colSpan={10} className="py-12 text-center text-muted-foreground dark:text-muted-foreground">
                   <AlertCircle className="h-8 w-8 mx-auto mb-2" />
                   <p>No findings match your filters.</p>
                 </td>

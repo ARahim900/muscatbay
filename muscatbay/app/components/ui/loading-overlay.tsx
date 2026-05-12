@@ -51,8 +51,8 @@ export function LoadingOverlay() {
         backdropFilter: "blur(5px)",
         WebkitBackdropFilter: "blur(5px)",
         animation: exiting
-          ? "mb-overlay-out 260ms ease-in both"
-          : "mb-overlay-in 200ms ease-out both",
+          ? "mb-fade-out 260ms ease-in both"
+          : "mb-fade-in 200ms ease-out both",
       }}
     >
       <div

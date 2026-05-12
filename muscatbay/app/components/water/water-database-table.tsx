@@ -15,17 +15,18 @@ interface WaterDatabaseTableProps {
     months: string[];
 }
 
-// Zone colors for left border (pastel)
-const ZONE_COLORS: Record<string, string> = {
-    'Zone_01_(FM)': 'border-l-emerald-400',
-    'Zone_03_(A)': 'border-l-blue-400',
-    'Zone_03_(B)': 'border-l-indigo-400',
-    'Zone_05': 'border-l-purple-400',
-    'Zone_08': 'border-l-pink-400',
-    'Zone_VS': 'border-l-amber-400',
-    'DC': 'border-l-orange-400',
-    'Main': 'border-l-slate-400',
-    'N/A': 'border-l-slate-300',
+// Zone border colors — sourced from --chart-zone-* tokens in globals.css
+// (categorical, theme-aware, retired the indigo/pink Tailwind utilities)
+const ZONE_BORDER_VAR: Record<string, string> = {
+    'Zone_01_(FM)': 'var(--chart-zone-c)', // sage
+    'Zone_03_(A)':  'var(--chart-zone-a)', // blue
+    'Zone_03_(B)':  'var(--chart-zone-b)', // muted violet
+    'Zone_05':      'var(--chart-zone-b)', // muted violet
+    'Zone_08':      'var(--chart-zone-f)', // teal
+    'Zone_VS':      'var(--chart-zone-d)', // amber
+    'DC':           'var(--chart-zone-d)', // amber
+    'Main':         'var(--muted-foreground)',
+    'N/A':          'var(--border)',
 };
 
 const ZONE_BG_COLORS: Record<string, string> = {
@@ -36,15 +37,15 @@ const ZONE_BG_COLORS: Record<string, string> = {
     'Zone_08': 'bg-pink-50 dark:bg-pink-950/30',
     'Zone_VS': 'bg-amber-50 dark:bg-amber-950/30',
     'DC': 'bg-orange-50 dark:bg-orange-950/30',
-    'Main': 'bg-slate-50 dark:bg-slate-900/50',
-    'N/A': 'bg-slate-50 dark:bg-slate-900/30',
+    'Main': 'bg-muted dark:bg-muted/50',
+    'N/A': 'bg-muted dark:bg-muted/30',
 };
 
 // Level badge colors — sourced from --badge-* tokens in globals.css
 const LEVEL_STYLES: Record<string, string> = {
     'L1': 'bg-badge-green/25 text-badge-green-fg ring-1 ring-badge-green/50 dark:bg-badge-green/15 dark:ring-badge-green/30',
     'L2': 'bg-badge-blue/15 text-badge-blue-fg ring-1 ring-badge-blue/35 dark:bg-badge-blue/20 dark:ring-badge-blue/35',
-    'L3': 'bg-secondary text-white ring-1 ring-secondary/60 dark:bg-secondary/90 dark:text-white dark:ring-secondary/50',
+    'L3': 'bg-secondary text-primary-foreground ring-1 ring-secondary/60 dark:bg-secondary/90 dark:text-primary-foreground dark:ring-secondary/50',
     'L4': 'bg-badge-red/12 text-badge-red-fg ring-1 ring-badge-red/35 dark:bg-badge-red/20 dark:ring-badge-red/35',
     'DC': 'bg-badge-amber/20 text-badge-amber-fg ring-1 ring-badge-amber/45 dark:bg-badge-amber/15 dark:ring-badge-amber/35',
 };
@@ -102,11 +103,11 @@ function ColumnVisibilityDropdown({
                 aria-haspopup="dialog"
                 aria-controls={popoverId}
                 aria-label={`Toggle visible months. ${visibleMonths.length} of ${months.length} months selected.`}
-                className="flex items-center gap-2 px-3.5 py-2 text-sm rounded-lg border border-slate-200/80 dark:border-slate-700/80 hover:border-slate-300 dark:hover:border-slate-600 hover:shadow-sm text-slate-600 dark:text-slate-300 transition-all duration-200"
+                className="flex items-center gap-2 px-3.5 py-2 text-sm rounded-lg border border-border/80 dark:border-border/80 hover:border-border dark:hover:border-border hover:shadow-sm text-muted-foreground transition-all duration-200"
             >
                 <Columns className="w-3.5 h-3.5" aria-hidden="true" />
                 <span>Columns</span>
-                <span className="text-sm text-slate-500">({visibleMonths.length}/{months.length})</span>
+                <span className="text-sm text-muted-foreground">({visibleMonths.length}/{months.length})</span>
                 <ChevronDown className={cn("w-3.5 h-3.5 transition-transform", isOpen && "rotate-180")} aria-hidden="true" />
             </button>
 
@@ -123,14 +124,14 @@ function ColumnVisibilityDropdown({
                         id={popoverId}
                         role="dialog"
                         aria-label="Column visibility"
-                        className="absolute top-full right-0 mt-1 z-50 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg w-[min(220px,calc(100vw-2rem))] sm:w-[280px] py-1"
+                        className="absolute top-full right-0 mt-1 z-50 bg-card border border-border rounded-lg shadow-lg w-[min(220px,calc(100vw-2rem))] sm:w-[280px] py-1"
                     >
-                        <div role="group" aria-label="Quick range" className="flex items-center gap-2 px-3 py-2 border-b border-slate-100 dark:border-slate-700">
+                        <div role="group" aria-label="Quick range" className="flex items-center gap-2 px-3 py-2 border-b border-border/60">
                             <button
                                 type="button"
                                 onClick={showAll}
                                 aria-label={`Show all ${months.length} months`}
-                                className="text-sm px-2 py-1 rounded bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600"
+                                className="text-sm px-2 py-1 rounded bg-muted dark:bg-muted hover:bg-border dark:hover:bg-border"
                             >
                                 All ({months.length})
                             </button>
@@ -138,7 +139,7 @@ function ColumnVisibilityDropdown({
                                 type="button"
                                 onClick={showLast12}
                                 aria-label="Show last 12 months"
-                                className="text-sm px-2 py-1 rounded bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600"
+                                className="text-sm px-2 py-1 rounded bg-muted dark:bg-muted hover:bg-border dark:hover:bg-border"
                             >
                                 Last 12
                             </button>
@@ -146,7 +147,7 @@ function ColumnVisibilityDropdown({
                                 type="button"
                                 onClick={showLast6}
                                 aria-label="Show last 6 months"
-                                className="text-sm px-2 py-1 rounded bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600"
+                                className="text-sm px-2 py-1 rounded bg-muted dark:bg-muted hover:bg-border dark:hover:bg-border"
                             >
                                 Last 6
                             </button>
@@ -159,7 +160,7 @@ function ColumnVisibilityDropdown({
                                         "flex items-center gap-1.5 px-2 py-1 rounded text-sm cursor-pointer transition-colors",
                                         visibleMonths.includes(month)
                                             ? "bg-primary/10 text-primary"
-                                            : "text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700/50"
+                                            : "text-muted-foreground hover:bg-muted dark:hover:bg-muted/50"
                                     )}
                                 >
                                     <input
@@ -357,22 +358,22 @@ export function WaterDatabaseTable({ meters, months }: WaterDatabaseTableProps) 
 
     // Render table row
     const renderRow = (meter: WaterMeter, _index: number, isGrouped: boolean = false) => {
-        const zoneColor = ZONE_COLORS[meter.zone] || ZONE_COLORS['N/A'];
-        const levelStyle = LEVEL_STYLES[meter.level] || 'bg-slate-100 text-slate-700';
+        const zoneBorder = ZONE_BORDER_VAR[meter.zone] || ZONE_BORDER_VAR['N/A'];
+        const levelStyle = LEVEL_STYLES[meter.level] || 'bg-muted text-foreground';
 
         return (
             <tr
                 key={meter.accountNumber}
+                style={{ borderLeftColor: zoneBorder }}
                 className={cn(
-                    "border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-secondary/5 dark:hover:bg-slate-700/40 transition-colors even:bg-slate-50/40 dark:even:bg-slate-800/20",
-                    "border-l-2",
-                    zoneColor
+                    "border-b border-border/80 dark:border-border/80 hover:bg-secondary/5 dark:hover:bg-muted/40 transition-colors even:bg-muted/40 dark:even:bg-muted/20",
+                    "border-l-2"
                 )}
             >
-                <td className="py-4 px-5 font-medium text-slate-800 dark:text-slate-200 whitespace-nowrap sticky left-0 bg-inherit z-10 w-[120px] sm:w-[180px] md:w-[200px]">
+                <td className="py-4 px-5 font-medium text-foreground whitespace-nowrap sticky left-0 bg-inherit z-10 w-[120px] sm:w-[180px] md:w-[200px]">
                     {meter.label}
                 </td>
-                <td className="py-4 px-5 text-slate-600 dark:text-slate-400 font-mono text-sm sticky left-[120px] sm:left-[180px] md:left-[200px] bg-inherit z-10">
+                <td className="py-4 px-5 text-muted-foreground font-mono text-sm sticky left-[120px] sm:left-[180px] md:left-[200px] bg-inherit z-10">
                     {meter.accountNumber}
                 </td>
                 <td className="py-4 px-5 text-center">
@@ -385,7 +386,7 @@ export function WaterDatabaseTable({ meters, months }: WaterDatabaseTableProps) 
                         {ZONE_NAMES[meter.zone] || meter.zone}
                     </span>
                 </td>
-                <td className="py-4 px-5 text-slate-500 dark:text-slate-500 text-sm max-w-[150px] truncate">
+                <td className="py-4 px-5 text-muted-foreground dark:text-muted-foreground text-sm max-w-[150px] truncate">
                     {meter.parentMeter || '—'}
                 </td>
                 <td className="py-4 px-5">
@@ -393,7 +394,7 @@ export function WaterDatabaseTable({ meters, months }: WaterDatabaseTableProps) 
                         "inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap",
                         meter.type === 'Supply'
                             ? 'bg-badge-blue/12 text-badge-blue-fg ring-1 ring-badge-blue/30 dark:bg-badge-blue/20 dark:ring-badge-blue/30'
-                            : 'bg-secondary text-white ring-1 ring-secondary/60 dark:bg-secondary/90 dark:text-white dark:ring-secondary/50'
+                            : 'bg-secondary text-primary-foreground ring-1 ring-secondary/60 dark:bg-secondary/90 dark:text-primary-foreground dark:ring-secondary/50'
                     )}>
                         {meter.type}
                     </span>
@@ -401,8 +402,8 @@ export function WaterDatabaseTable({ meters, months }: WaterDatabaseTableProps) 
                 {visibleMonths.map(month => {
                     const val = getConsumption(meter, month);
                     return (
-                        <td key={month} className="py-4 px-5 text-right font-mono text-sm text-slate-700 dark:text-slate-300">
-                            {val > 0 ? val.toLocaleString('en-US', { maximumFractionDigits: 1 }) : <span className="text-slate-300 dark:text-slate-600">—</span>}
+                        <td key={month} className="py-4 px-5 text-right font-mono text-sm text-foreground/80">
+                            {val > 0 ? val.toLocaleString('en-US', { maximumFractionDigits: 1 }) : <span className="text-muted-foreground/70 dark:text-muted-foreground">—</span>}
                         </td>
                     );
                 })}
@@ -416,14 +417,14 @@ export function WaterDatabaseTable({ meters, months }: WaterDatabaseTableProps) 
             <TableToolbar>
                 {/* Search */}
                 <div className="relative flex-1 min-w-0 sm:min-w-[200px] max-w-md">
-                    <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                     <input
                         type="text"
                         aria-label="Search meters by name, account number, or zone"
                         placeholder="Search meters..."
                         value={searchTerm}
                         onChange={(e) => { setSearchTerm(e.target.value); handleFilterChange(); }}
-                        className="pl-10 pr-4 py-2 w-full rounded-full border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40 shadow-sm transition-shadow"
+                        className="pl-10 pr-4 py-2 w-full rounded-full border border-border/80 dark:border-border/80 bg-card text-foreground text-sm placeholder:text-muted-foreground/70 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40 shadow-sm transition-shadow"
                     />
                 </div>
 
@@ -460,7 +461,7 @@ export function WaterDatabaseTable({ meters, months }: WaterDatabaseTableProps) 
                         "flex items-center gap-2 px-3 py-1.5 text-sm rounded-lg border transition-colors",
                         groupByZone
                             ? "border-primary bg-primary/10 text-primary"
-                            : "border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 text-slate-700 dark:text-slate-300"
+                            : "border-border hover:border-border dark:hover:border-border text-foreground/80"
                     )}
                 >
                     <Users className="w-3.5 h-3.5" aria-hidden="true" />
@@ -480,7 +481,7 @@ export function WaterDatabaseTable({ meters, months }: WaterDatabaseTableProps) 
                         type="button"
                         onClick={clearFilters}
                         aria-label="Clear all active filters"
-                        className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors"
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg text-muted-foreground hover:text-foreground dark:text-muted-foreground dark:hover:text-foreground transition-colors"
                     >
                         <X className="w-3.5 h-3.5" aria-hidden="true" />
                         Clear
@@ -492,15 +493,15 @@ export function WaterDatabaseTable({ meters, months }: WaterDatabaseTableProps) 
                     type="button"
                     onClick={handleExportCSV}
                     aria-label="Export filtered meters to CSV"
-                    className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors ml-auto"
+                    className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors ml-auto"
                 >
                     <Download className="w-3.5 h-3.5" aria-hidden="true" />
                     <span>Export CSV</span>
                 </button>
 
                 {/* Record Count */}
-                <div className="text-sm text-slate-500 dark:text-slate-400 whitespace-nowrap">
-                    <span className="font-semibold text-slate-700 dark:text-slate-300">{filteredMeters.length}</span>
+                <div className="text-sm text-muted-foreground whitespace-nowrap">
+                    <span className="font-semibold text-foreground/80">{filteredMeters.length}</span>
                     {filteredMeters.length !== meters.length && (
                         <span> of {meters.length}</span>
                     )} records
@@ -511,9 +512,9 @@ export function WaterDatabaseTable({ meters, months }: WaterDatabaseTableProps) 
             {hasActiveFilters && (
                 <div className="flex flex-wrap items-center gap-2 px-1">
                     {searchTerm && (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-sm bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-sm bg-muted text-foreground/80">
                             Search: &ldquo;{searchTerm}&rdquo;
-                            <button onClick={() => setSearchTerm('')} className="hover:text-slate-900">
+                            <button onClick={() => setSearchTerm('')} className="hover:text-foreground">
                                 <X className="w-3 h-3" />
                             </button>
                         </span>
@@ -550,49 +551,49 @@ export function WaterDatabaseTable({ meters, months }: WaterDatabaseTableProps) 
                 role="region"
                 aria-label="Water meter consumption table. Scroll horizontally to view more months."
                 tabIndex={0}
-                className="overflow-x-auto scroll-hint-x rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900 shadow-[0_1px_3px_rgba(0,0,0,0.06),0_4px_16px_-4px_rgba(0,0,0,0.1)] dark:shadow-[0_1px_3px_rgba(0,0,0,0.2),0_4px_16px_-4px_rgba(0,0,0,0.3)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary focus-visible:ring-offset-2"
+                className="ops-table-shell scroll-hint-x focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary focus-visible:ring-offset-2"
             >
-                <table className="w-full text-sm border-collapse">
+                <table className="ops-table">
                     <thead className="sticky top-0 z-30">
-                        <tr className="bg-slate-50 dark:bg-slate-800/80">
+                        <tr className="bg-muted/80">
                             <th
                                 scope="col"
-                                className="text-left py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors sticky left-0 bg-slate-50 dark:bg-slate-800/80 z-20 w-[120px] sm:w-[180px] md:w-[200px]"
+                                className="text-left py-4 px-5 font-semibold uppercase tracking-wider text-xs text-muted-foreground border-b-2 border-border cursor-pointer hover:bg-muted/60 transition-colors sticky left-0 bg-muted/80 z-20 w-[120px] sm:w-[180px] md:w-[200px]"
                                 onClick={() => handleSort('label')}
                             >
                                 <div className="flex items-center gap-1.5 truncate">Label <SortIcon field="label" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
                             </th>
                             <th
                                 scope="col"
-                                className="text-left py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors sticky left-[120px] sm:left-[180px] md:left-[200px] bg-slate-50 dark:bg-slate-800/80 z-20 min-w-[100px]"
+                                className="text-left py-4 px-5 font-semibold uppercase tracking-wider text-xs text-muted-foreground border-b-2 border-border cursor-pointer hover:bg-muted/60 transition-colors sticky left-[120px] sm:left-[180px] md:left-[200px] bg-muted/80 z-20 min-w-[100px]"
                                 onClick={() => handleSort('account')}
                             >
                                 <div className="flex items-center gap-1.5">Account # <SortIcon field="account" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
                             </th>
                             <th
                                 scope="col"
-                                className="text-center py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors min-w-[70px]"
+                                className="text-center py-4 px-5 font-semibold uppercase tracking-wider text-xs text-muted-foreground border-b-2 border-border cursor-pointer hover:bg-muted/60 transition-colors min-w-[70px]"
                                 onClick={() => handleSort('level')}
                             >
                                 <div className="flex items-center justify-center gap-1.5">Level <SortIcon field="level" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
                             </th>
                             <th
                                 scope="col"
-                                className="text-left py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors min-w-[100px]"
+                                className="text-left py-4 px-5 font-semibold uppercase tracking-wider text-xs text-muted-foreground border-b-2 border-border cursor-pointer hover:bg-muted/60 transition-colors min-w-[100px]"
                                 onClick={() => handleSort('zone')}
                             >
                                 <div className="flex items-center gap-1.5">Zone <SortIcon field="zone" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
                             </th>
                             <th
                                 scope="col"
-                                className="text-left py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors min-w-[150px]"
+                                className="text-left py-4 px-5 font-semibold uppercase tracking-wider text-xs text-muted-foreground border-b-2 border-border cursor-pointer hover:bg-muted/60 transition-colors min-w-[150px]"
                                 onClick={() => handleSort('parentMeter')}
                             >
                                 <div className="flex items-center gap-1.5">Parent <SortIcon field="parentMeter" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
                             </th>
                             <th
                                 scope="col"
-                                className="text-left py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors min-w-[120px]"
+                                className="text-left py-4 px-5 font-semibold uppercase tracking-wider text-xs text-muted-foreground border-b-2 border-border cursor-pointer hover:bg-muted/60 transition-colors min-w-[120px]"
                                 onClick={() => handleSort('type')}
                             >
                                 <div className="flex items-center gap-1.5">Type <SortIcon field="type" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
@@ -601,7 +602,7 @@ export function WaterDatabaseTable({ meters, months }: WaterDatabaseTableProps) 
                                 <th
                                     key={month}
                                     scope="col"
-                                    className="text-right py-4 px-5 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors min-w-[80px] whitespace-nowrap"
+                                    className="text-right py-4 px-5 font-semibold uppercase tracking-wider text-xs text-muted-foreground border-b-2 border-border cursor-pointer hover:bg-muted/60 transition-colors min-w-[80px] whitespace-nowrap"
                                     onClick={() => handleSort(month)}
                                 >
                                     <div className="flex items-center justify-end gap-1.5">{month} <SortIcon field={month} currentSortField={sortField} currentSortDirection={sortDirection} /></div>
@@ -614,14 +615,14 @@ export function WaterDatabaseTable({ meters, months }: WaterDatabaseTableProps) 
                             groupedMeters.map(group => (
                                 <React.Fragment key={group.zone}>
                                     {/* Group Header */}
-                                    <tr className={cn("border-b border-slate-200 dark:border-slate-700", ZONE_BG_COLORS[group.zone] || ZONE_BG_COLORS['N/A'])}>
+                                    <tr className={cn("border-b border-border", ZONE_BG_COLORS[group.zone] || ZONE_BG_COLORS['N/A'])}>
                                         <td colSpan={6 + visibleMonths.length} className="py-2.5 px-4">
                                             <div className="flex items-center gap-3">
-                                                <ChevronRight className="w-4 h-4 text-slate-400" />
-                                                <span className="font-semibold text-slate-700 dark:text-slate-300">
+                                                <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                                                <span className="font-semibold text-foreground/80">
                                                     {ZONE_NAMES[group.zone] || group.zone}
                                                 </span>
-                                                <span className="px-2 py-0.5 rounded-full text-sm bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400">
+                                                <span className="px-2 py-0.5 rounded-full text-sm bg-border dark:bg-muted text-muted-foreground">
                                                     {group.meters.length} meter{group.meters.length !== 1 ? 's' : ''}
                                                 </span>
                                             </div>
@@ -637,7 +638,7 @@ export function WaterDatabaseTable({ meters, months }: WaterDatabaseTableProps) 
 
                         {filteredMeters.length === 0 && (
                             <tr>
-                                <td colSpan={6 + visibleMonths.length} className="py-12 text-center text-slate-500 dark:text-slate-400">
+                                <td colSpan={6 + visibleMonths.length} className="py-12 text-center text-muted-foreground">
                                     No meters found matching your filters.
                                 </td>
                             </tr>

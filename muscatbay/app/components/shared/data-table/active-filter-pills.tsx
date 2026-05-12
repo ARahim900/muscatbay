@@ -27,10 +27,10 @@ export function ActiveFilterPills({ pills }: ActiveFilterPillsProps) {
                     className={cn(
                         "inline-flex items-center gap-1.5 pl-2.5 pr-1 py-1 rounded-full text-xs font-medium border transition-colors",
                         pill.color
-                            ? "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300"
+                            ? "bg-card border-border text-foreground/80"
                             : pill.colorClass
                                 ? pill.colorClass
-                                : "bg-slate-100 dark:bg-slate-800 border-slate-200/80 dark:border-slate-700/80 text-slate-700 dark:text-slate-300"
+                                : "bg-muted border-border/80 text-foreground/80"
                     )}
                 >
                     {pill.color && (
@@ -42,7 +42,7 @@ export function ActiveFilterPills({ pills }: ActiveFilterPillsProps) {
                     {pill.label}
                     <button
                         onClick={pill.onRemove}
-                        className="ml-0.5 w-4 h-4 flex items-center justify-center rounded-full hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors flex-shrink-0"
+                        className="ml-0.5 w-4 h-4 flex items-center justify-center rounded-full hover:bg-border transition-colors flex-shrink-0"
                         aria-label={`Remove ${pill.label} filter`}
                     >
                         <X className="w-2.5 h-2.5" />

@@ -20,8 +20,8 @@ interface EmptyStateProps {
 const variantDefaults: Record<EmptyVariant, { icon: LucideIcon; iconClass: string; bgClass: string }> = {
     "no-data": {
         icon: PackageOpen,
-        iconClass: "text-slate-400 dark:text-slate-500",
-        bgClass: "bg-slate-100 dark:bg-slate-800/50",
+        iconClass: "text-muted-foreground/70",
+        bgClass: "bg-muted",
     },
     "no-results": {
         icon: SearchX,
@@ -56,18 +56,18 @@ export function EmptyState({
             <div className={cn("w-14 h-14 rounded-2xl flex items-center justify-center mb-4", defaults.bgClass)}>
                 <Icon className={cn("w-7 h-7", defaults.iconClass)} />
             </div>
-            <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1">
+            <h3 className="text-sm font-semibold text-foreground mb-1">
                 {title}
             </h3>
             {description && (
-                <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs leading-relaxed">
+                <p className="text-xs text-muted-foreground max-w-xs leading-relaxed">
                     {description}
                 </p>
             )}
             {action && (
                 <button
                     onClick={action.onClick}
-                    className="mt-4 px-4 py-2 text-xs font-medium rounded-lg bg-primary text-white hover:bg-primary/80 dark:bg-primary/80 dark:hover:bg-primary transition-colors duration-200"
+                    className="mt-4 px-4 py-2 text-xs font-medium rounded-lg bg-primary text-primary-foreground hover:bg-primary/80 dark:bg-primary/80 dark:hover:bg-primary transition-colors duration-200"
                 >
                     {action.label}
                 </button>

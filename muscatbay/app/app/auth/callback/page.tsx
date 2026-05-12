@@ -90,11 +90,11 @@ function BrandLogo() {
         <div className="flex justify-center mb-8">
             <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-xl bg-[var(--mb-primary)] flex items-center justify-center shadow-lg">
-                    <span className="text-white font-bold text-xl">MB</span>
+                    <span className="text-primary-foreground font-bold text-xl">MB</span>
                 </div>
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Muscat Bay</h1>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">Operations Dashboard</p>
+                    <h1 className="text-2xl font-bold text-foreground dark:text-primary-foreground">Muscat Bay</h1>
+                    <p className="text-sm text-muted-foreground">Operations Dashboard</p>
                 </div>
             </div>
         </div>
@@ -121,7 +121,7 @@ function LoadingSpinner({ message }: { message: string }) {
                     <CardFooter className="justify-center">
                         <Link
                             href="/login"
-                            className="flex items-center justify-center gap-2 text-sm text-slate-400 dark:text-slate-500 hover:text-[var(--mb-primary)] dark:hover:text-secondary transition-colors"
+                            className="flex items-center justify-center gap-2 text-sm text-muted-foreground/70 hover:text-[var(--mb-primary)] dark:hover:text-secondary transition-colors"
                         >
                             <ArrowLeft className="h-4 w-4" />
                             Back to Login
@@ -312,15 +312,15 @@ function AuthCallbackContent() {
                             </div>
 
                             {/* Contextual Tips — proactive error prevention */}
-                            <div className="rounded-lg bg-slate-50 dark:bg-slate-800/50 p-3.5 space-y-2">
-                                <div className="flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400">
+                            <div className="rounded-lg bg-muted dark:bg-muted/50 p-3.5 space-y-2">
+                                <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
                                     <Info className="h-3.5 w-3.5" />
                                     <span>Common causes</span>
                                 </div>
-                                <ul className="space-y-1.5 text-xs text-slate-500 dark:text-slate-400" aria-label="Common causes for this error">
+                                <ul className="space-y-1.5 text-xs text-muted-foreground" aria-label="Common causes for this error">
                                     {config.tips.map((tip) => (
                                         <li key={tip} className="flex items-start gap-2">
-                                            <span className="mt-1.5 w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-600 shrink-0" aria-hidden="true" />
+                                            <span className="mt-1.5 w-1 h-1 rounded-full bg-border dark:bg-muted shrink-0" aria-hidden="true" />
                                             <span>{tip}</span>
                                         </li>
                                     ))}
@@ -332,7 +332,7 @@ function AuthCallbackContent() {
                                 <Button
                                     ref={primaryButtonRef}
                                     onClick={() => router.push('/login')}
-                                    className="w-full h-12 bg-[var(--mb-primary)] hover:bg-[var(--mb-primary-hover)] text-white font-semibold rounded-xl shadow-lg shadow-primary/25 transition-all duration-200"
+                                    className="w-full h-12 bg-[var(--mb-primary)] hover:bg-[var(--mb-primary-hover)] text-primary-foreground font-semibold rounded-xl shadow-lg shadow-primary/25 transition-all duration-200"
                                 >
                                     Go to Login
                                 </Button>
@@ -349,13 +349,13 @@ function AuthCallbackContent() {
                         <CardFooter className="flex flex-col gap-4">
                             <Link
                                 href="/login"
-                                className="flex items-center justify-center gap-2 text-sm text-slate-500 dark:text-slate-400 hover:text-[var(--mb-primary)] dark:hover:text-secondary transition-colors"
+                                className="flex items-center justify-center gap-2 text-sm text-muted-foreground hover:text-[var(--mb-primary)] dark:hover:text-secondary transition-colors"
                             >
                                 <ArrowLeft className="h-4 w-4" />
                                 Back to Login
                             </Link>
 
-                            <div className="flex items-center justify-center gap-1.5 text-xs text-slate-400 dark:text-slate-500">
+                            <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground/70">
                                 <HelpCircle className="h-3.5 w-3.5" />
                                 <span>Still having trouble?</span>
                                 <a

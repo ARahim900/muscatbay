@@ -155,7 +155,7 @@ export default function SettingsPage() {
                             </p>
                         </div>
                         <div className="w-full sm:w-48 flex-shrink-0">
-                            <div className="h-2 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+                            <div className="h-2 rounded-full bg-border dark:bg-muted overflow-hidden">
                                 <div
                                     className="h-full rounded-full bg-secondary transition-all duration-500"
                                     style={{ width: `${completionPct}%` }}
@@ -179,7 +179,7 @@ export default function SettingsPage() {
                             onClick={() => setActiveTab(item.id)}
                             aria-current={activeTab === item.id ? "page" : undefined}
                             className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-lg transition-colors ${activeTab === item.id
-                                ? "bg-sidebar text-white shadow-md"
+                                ? "bg-sidebar text-primary-foreground shadow-md"
                                 : "text-muted-foreground hover:bg-sidebar/10 hover:text-sidebar"
                                 }`}
                         >
@@ -214,9 +214,9 @@ export default function SettingsPage() {
                             </CardHeader>
                             <CardContent className="space-y-6">
                                 <div className="flex items-center gap-6">
-                                    <Avatar className="h-24 w-24 border-4 border-white dark:border-slate-900 shadow-lg">
+                                    <Avatar className="h-24 w-24 border-4 border-white dark:border-border shadow-lg">
                                         <AvatarImage src={avatarPreview || formData.avatar_url} />
-                                        <AvatarFallback className="bg-mb-secondary text-white text-2xl font-bold">
+                                        <AvatarFallback className="bg-mb-secondary text-primary-foreground text-2xl font-bold">
                                             {initials}
                                         </AvatarFallback>
                                     </Avatar>
@@ -224,7 +224,7 @@ export default function SettingsPage() {
                                         <div className="flex items-center gap-3">
                                             <Label
                                                 htmlFor="avatar-upload"
-                                                className="cursor-pointer inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-sidebar text-white hover:bg-sidebar/90 h-9 px-4 py-2"
+                                                className="cursor-pointer inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-sidebar text-primary-foreground hover:bg-sidebar/90 h-9 px-4 py-2"
                                             >
                                                 <Upload className="mr-2 h-4 w-4" />
                                                 Change Avatar
@@ -295,7 +295,7 @@ export default function SettingsPage() {
                                 <Button
                                     onClick={updateProfile}
                                     disabled={updating}
-                                    className="bg-sidebar hover:bg-sidebar/90 text-white"
+                                    className="bg-sidebar hover:bg-sidebar/90 text-primary-foreground"
                                 >
                                     {updating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                                     Save Changes
@@ -353,7 +353,7 @@ export default function SettingsPage() {
                                 <Button
                                     onClick={updateProfile}
                                     disabled={updating}
-                                    className="bg-sidebar hover:bg-sidebar/90 text-white"
+                                    className="bg-sidebar hover:bg-sidebar/90 text-primary-foreground"
                                 >
                                     {updating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                                     Save Changes
@@ -382,9 +382,9 @@ export default function SettingsPage() {
                                         aria-checked={emailAlertsEnabled}
                                         aria-label="Email Alerts"
                                         onClick={() => setEmailAlertsEnabled(v => !v)}
-                                        className={`h-6 w-11 rounded-full relative cursor-pointer transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 ${emailAlertsEnabled ? 'bg-sidebar' : 'bg-muted dark:bg-slate-700'}`}
+                                        className={`h-6 w-11 rounded-full relative cursor-pointer transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 ${emailAlertsEnabled ? 'bg-sidebar' : 'bg-muted dark:bg-muted'}`}
                                     >
-                                        <div className={`absolute top-1 left-1 h-4 w-4 rounded-full bg-white dark:bg-slate-100 shadow-sm transition-transform duration-200 ${emailAlertsEnabled ? 'translate-x-5' : 'translate-x-0'}`} />
+                                        <div className={`absolute top-1 left-1 h-4 w-4 rounded-full bg-white dark:bg-muted shadow-sm transition-transform duration-200 ${emailAlertsEnabled ? 'translate-x-5' : 'translate-x-0'}`} />
                                     </button>
                                 </div>
                                 <Separator />
@@ -399,9 +399,9 @@ export default function SettingsPage() {
                                         aria-checked={criticalAlarmsEnabled}
                                         aria-label="Critical Alarms"
                                         onClick={() => setCriticalAlarmsEnabled(v => !v)}
-                                        className={`h-6 w-11 rounded-full relative cursor-pointer transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 ${criticalAlarmsEnabled ? 'bg-sidebar' : 'bg-muted dark:bg-slate-700'}`}
+                                        className={`h-6 w-11 rounded-full relative cursor-pointer transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 ${criticalAlarmsEnabled ? 'bg-sidebar' : 'bg-muted dark:bg-muted'}`}
                                     >
-                                        <div className={`absolute top-1 left-1 h-4 w-4 rounded-full bg-white dark:bg-slate-100 shadow-sm transition-transform duration-200 ${criticalAlarmsEnabled ? 'translate-x-5' : 'translate-x-0'}`} />
+                                        <div className={`absolute top-1 left-1 h-4 w-4 rounded-full bg-white dark:bg-muted shadow-sm transition-transform duration-200 ${criticalAlarmsEnabled ? 'translate-x-5' : 'translate-x-0'}`} />
                                     </button>
                                 </div>
                             </CardContent>
@@ -412,7 +412,7 @@ export default function SettingsPage() {
                                 <Button
                                     onClick={updateProfile}
                                     disabled={updating}
-                                    className="bg-sidebar hover:bg-sidebar/90 text-white"
+                                    className="bg-sidebar hover:bg-sidebar/90 text-primary-foreground"
                                 >
                                     {updating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                                     Save Changes

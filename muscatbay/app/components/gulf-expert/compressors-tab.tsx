@@ -60,14 +60,14 @@ export function CompressorsTab({ compressors }: CompressorsTabProps) {
           return (
             <Card
               key={building}
-              className={`bg-white dark:bg-slate-900 rounded-xl shadow-sm ${
+              className={`bg-white dark:bg-muted rounded-xl shadow-sm ${
                 hasFault
                   ? "border-2 border-red-300 dark:border-red-700 ring-1 ring-red-200 dark:ring-red-800"
-                  : "border border-slate-200 dark:border-slate-800"
+                  : "border border-border dark:border-border"
               }`}
             >
               <CardHeader className="pb-2 pt-4 px-4">
-                <CardTitle className="text-sm font-semibold text-slate-700 dark:text-slate-200 flex items-center justify-between">
+                <CardTitle className="text-sm font-semibold text-foreground dark:text-muted-foreground flex items-center justify-between">
                   {building}
                   {hasFault && <AlertTriangle className="h-4 w-4 text-red-500" />}
                 </CardTitle>
@@ -76,7 +76,7 @@ export function CompressorsTab({ compressors }: CompressorsTabProps) {
                 <div className="space-y-2.5">
                   {[1, 2].map((chiller) => (
                     <div key={chiller}>
-                      <p className="text-[10px] font-medium text-slate-400 dark:text-slate-500 mb-1 uppercase">
+                      <p className="text-[10px] font-medium text-muted-foreground dark:text-muted-foreground mb-1 uppercase">
                         Chiller {chiller}
                       </p>
                       <div className="grid grid-cols-2 gap-1.5">
@@ -99,7 +99,7 @@ export function CompressorsTab({ compressors }: CompressorsTabProps) {
                                     ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400"
                                     : isFault
                                     ? "bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400"
-                                    : "bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-500"
+                                    : "bg-muted dark:bg-muted text-muted-foreground dark:text-muted-foreground"
                                 }`}
                                 title={match?.notes || `S${sys}C${comp}: ${status}`}
                               >
@@ -109,7 +109,7 @@ export function CompressorsTab({ compressors }: CompressorsTabProps) {
                                       ? "bg-emerald-500"
                                       : isFault
                                       ? "bg-red-500 motion-safe:animate-pulse"
-                                      : "bg-slate-300 dark:bg-slate-600"
+                                      : "bg-border dark:bg-muted"
                                   }`}
                                 />
                                 <span className="truncate">S{sys}C{comp}</span>

@@ -75,10 +75,10 @@ export function DCAnalyticsPanel({ reportData, monthData, selectedDay, month }: 
 
             {/* ── DC heading ─────────────────────────────────────────────── */}
             <div>
-                <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">
+                <h2 className="text-xl font-bold text-foreground">
                     Direct Connection Analysis — Day {selectedDay}, {month}
                 </h2>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                <p className="text-sm text-muted-foreground dark:text-muted-foreground mt-1">
                     <span className="text-mb-secondary font-medium">DC Daily Total</span> = sum of all DC meters today &bull;{" "}
                     <span className="text-mb-primary font-medium">Monthly Total</span> = month-to-date DC consumption &bull;{" "}
                     <span style={{ color: CHART_COLORS.success }} className="font-medium">Active Meters</span> = meters reporting today
@@ -127,13 +127,13 @@ export function DCAnalyticsPanel({ reportData, monthData, selectedDay, month }: 
                     <CardTitle className="text-base sm:text-lg">
                         Direct Connection Daily Consumption Trend
                     </CardTitle>
-                    <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+                    <p className="text-xs sm:text-sm text-muted-foreground dark:text-muted-foreground mt-0.5">
                         Day-by-day DC total across all {totalMeters} meters — {month}
                     </p>
                 </CardHeader>
                 <CardContent className="p-4 sm:p-5 md:p-6 pt-0">
                     {trendData.length === 0 ? (
-                        <div className="flex items-center justify-center h-48 text-sm text-slate-400 dark:text-slate-500">
+                        <div className="flex items-center justify-center h-48 text-sm text-muted-foreground dark:text-muted-foreground">
                             No trend data available for direct connections
                         </div>
                     ) : (
@@ -158,7 +158,7 @@ export function DCAnalyticsPanel({ reportData, monthData, selectedDay, month }: 
                                         tickFormatter={v => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v}
                                         label={{ value: 'm³', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: "var(--chart-axis)", fontSize: 11 } }}
                                     />
-                                    <Tooltip content={<LiquidTooltip />} cursor={{ stroke: 'rgba(0,0,0,0.1)', strokeWidth: 2 }} />
+                                    <Tooltip content={<LiquidTooltip />} cursor={{ stroke: 'var(--chart-cursor-stroke)', strokeWidth: 2 }} />
                                     <Legend iconType="circle" />
                                     {currentDayLabel && (
                                         <ReferenceLine
@@ -290,7 +290,7 @@ export function DCDailyTable({ monthData }: { monthData: SupabaseDailyWaterConsu
             <CardHeader className="card-elevated-header p-4 sm:p-5 md:p-6">
                 <div>
                     <CardTitle className="text-base sm:text-lg">Direct Connection — Meters</CardTitle>
-                    <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+                    <p className="text-xs sm:text-sm text-muted-foreground dark:text-muted-foreground mt-1">
                         {dcMeters.length} meters — Day 1 to Day {latestDay}
                     </p>
                 </div>
@@ -299,11 +299,11 @@ export function DCDailyTable({ monthData }: { monthData: SupabaseDailyWaterConsu
                 {/* DC summary KPI cards */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                     {/* Monthly Total */}
-                    <div className="bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] dark:shadow-[0_2px_10px_-3px_rgba(0,0,0,0.3)] hover:shadow-[0_8px_30px_-4px_rgba(6,81,237,0.15)] dark:hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.4)] motion-safe:hover:-translate-y-0.5 transition-[box-shadow,transform] duration-200 ease-out">
+                    <div className="bg-white dark:bg-muted p-4 sm:p-5 rounded-xl border border-border dark:border-border shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] dark:shadow-[0_2px_10px_-3px_rgba(0,0,0,0.3)] hover:shadow-[0_8px_30px_-4px_rgba(6,81,237,0.15)] dark:hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.4)] motion-safe:hover:-translate-y-0.5 transition-[box-shadow,transform] duration-200 ease-out">
                         <div className="flex justify-between items-start gap-2">
                             <div className="min-w-0">
-                                <p className="text-slate-500 dark:text-slate-400 text-[10px] sm:text-xs font-medium mb-1 uppercase tracking-wide">Monthly DC Total (m³)</p>
-                                <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-slate-800 dark:text-slate-100 tabular-nums tracking-tight">{n(grandTotal)}</h3>
+                                <p className="text-muted-foreground dark:text-muted-foreground text-[10px] sm:text-xs font-medium mb-1 uppercase tracking-wide">Monthly DC Total (m³)</p>
+                                <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-foreground tabular-nums tracking-tight">{n(grandTotal)}</h3>
                             </div>
                             <div className="p-2 sm:p-3 rounded-lg bg-mb-secondary-light flex-shrink-0">
                                 <Droplets className="w-4 h-4 sm:w-5 sm:h-5 text-mb-secondary" />
@@ -311,11 +311,11 @@ export function DCDailyTable({ monthData }: { monthData: SupabaseDailyWaterConsu
                         </div>
                     </div>
                     {/* Total Meters */}
-                    <div className="bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] dark:shadow-[0_2px_10px_-3px_rgba(0,0,0,0.3)] hover:shadow-[0_8px_30px_-4px_rgba(6,81,237,0.15)] dark:hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.4)] motion-safe:hover:-translate-y-0.5 transition-[box-shadow,transform] duration-200 ease-out">
+                    <div className="bg-white dark:bg-muted p-4 sm:p-5 rounded-xl border border-border dark:border-border shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] dark:shadow-[0_2px_10px_-3px_rgba(0,0,0,0.3)] hover:shadow-[0_8px_30px_-4px_rgba(6,81,237,0.15)] dark:hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.4)] motion-safe:hover:-translate-y-0.5 transition-[box-shadow,transform] duration-200 ease-out">
                         <div className="flex justify-between items-start gap-2">
                             <div className="min-w-0">
-                                <p className="text-slate-500 dark:text-slate-400 text-[10px] sm:text-xs font-medium mb-1 uppercase tracking-wide">DC Meters</p>
-                                <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-slate-800 dark:text-slate-100 tabular-nums tracking-tight">{dcMeters.length}</h3>
+                                <p className="text-muted-foreground dark:text-muted-foreground text-[10px] sm:text-xs font-medium mb-1 uppercase tracking-wide">DC Meters</p>
+                                <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-foreground tabular-nums tracking-tight">{dcMeters.length}</h3>
                             </div>
                             <div className="p-2 sm:p-3 rounded-lg bg-mb-primary-light/20 flex-shrink-0">
                                 <Activity className="w-4 h-4 sm:w-5 sm:h-5 text-mb-primary" />
@@ -323,12 +323,12 @@ export function DCDailyTable({ monthData }: { monthData: SupabaseDailyWaterConsu
                         </div>
                     </div>
                     {/* Active Meters (latest day) */}
-                    <div className="bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] dark:shadow-[0_2px_10px_-3px_rgba(0,0,0,0.3)] hover:shadow-[0_8px_30px_-4px_rgba(6,81,237,0.15)] dark:hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.4)] motion-safe:hover:-translate-y-0.5 transition-[box-shadow,transform] duration-200 ease-out">
+                    <div className="bg-white dark:bg-muted p-4 sm:p-5 rounded-xl border border-border dark:border-border shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] dark:shadow-[0_2px_10px_-3px_rgba(0,0,0,0.3)] hover:shadow-[0_8px_30px_-4px_rgba(6,81,237,0.15)] dark:hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.4)] motion-safe:hover:-translate-y-0.5 transition-[box-shadow,transform] duration-200 ease-out">
                         <div className="flex justify-between items-start gap-2">
                             <div className="min-w-0">
-                                <p className="text-slate-500 dark:text-slate-400 text-[10px] sm:text-xs font-medium mb-1 uppercase tracking-wide">Active (Day {latestDay})</p>
+                                <p className="text-muted-foreground dark:text-muted-foreground text-[10px] sm:text-xs font-medium mb-1 uppercase tracking-wide">Active (Day {latestDay})</p>
                                 <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-mb-success-text tabular-nums tracking-tight">
-                                    {activeMeters}<span className="text-slate-400 dark:text-slate-500 text-base font-semibold"> / {dcMeters.length}</span>
+                                    {activeMeters}<span className="text-muted-foreground dark:text-muted-foreground text-base font-semibold"> / {dcMeters.length}</span>
                                 </h3>
                             </div>
                             <div className="p-2 sm:p-3 rounded-lg bg-mb-success-light flex-shrink-0">
@@ -341,13 +341,18 @@ export function DCDailyTable({ monthData }: { monthData: SupabaseDailyWaterConsu
                 <TableSearch value={search} onChange={setSearch} placeholder="Search meter or account..." />
 
                 {/* Horizontally scrollable table */}
-                <div className="relative overflow-x-auto -mx-4 sm:-mx-5 md:-mx-6 border-t border-slate-100 dark:border-slate-800">
-                    <table className="w-full border-collapse" style={{ minWidth: `${420 + days.length * 72}px` }}>
+                <div
+                    role="region"
+                    aria-label="Direct connection daily readings. Scroll horizontally to view all days."
+                    tabIndex={0}
+                    className="ops-table-shell relative -mx-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary focus-visible:ring-offset-2 sm:-mx-5 md:-mx-6"
+                >
+                    <table className="ops-table" style={{ minWidth: `${420 + days.length * 72}px` }}>
                         <thead>
-                            <tr className="border-b border-slate-100 dark:border-slate-800">
+                            <tr className="border-b border-border dark:border-border">
                                 <Th
                                     sortKey="label" sort={sort} onSort={setSort}
-                                    className="sticky left-0 z-10 bg-white dark:bg-slate-900 min-w-[180px]"
+                                    className="sticky left-0 z-10 bg-white dark:bg-muted min-w-[180px]"
                                 >Meter</Th>
                                 <Th sortKey="account" sort={sort} onSort={setSort} className="min-w-[100px]">Account</Th>
                                 <th scope="col" className={cn(thBase, "text-center min-w-[90px]")}>Type</th>
@@ -356,23 +361,23 @@ export function DCDailyTable({ monthData }: { monthData: SupabaseDailyWaterConsu
                                 ))}
                                 <Th
                                     sortKey="total" sort={sort} onSort={setSort}
-                                    className="text-right min-w-[80px] bg-slate-50/80 dark:bg-slate-800/40"
+                                    className="text-right min-w-[80px] bg-muted/80 dark:bg-muted/40"
                                 >Total</Th>
                             </tr>
                         </thead>
                         <tbody>
                             {paginated.length === 0 ? (
                                 <tr>
-                                    <td colSpan={colCount} className="text-center py-10 text-[13px] text-slate-400 dark:text-slate-500">
+                                    <td colSpan={colCount} className="text-center py-10 text-[13px] text-muted-foreground dark:text-muted-foreground">
                                         No meters found
                                     </td>
                                 </tr>
                             ) : paginated.map(meter => (
                                 <tr
                                     key={meter.account}
-                                    className="border-b border-slate-50 dark:border-slate-800/60 transition-colors hover:bg-slate-50/70 dark:hover:bg-slate-800/30 even:bg-slate-50/40 dark:even:bg-slate-800/20"
+                                    className="border-b border-border/60 dark:border-border/60 transition-colors hover:bg-muted/70 dark:hover:bg-muted/30 even:bg-muted/40 dark:even:bg-muted/20"
                                 >
-                                    <td className={cn(tdBase, "font-semibold sticky left-0 z-10 bg-white dark:bg-slate-900")}>
+                                    <td className={cn(tdBase, "font-semibold sticky left-0 z-10 bg-white dark:bg-muted")}>
                                         <span className="inline-flex items-center gap-2">
                                             {meter.isIrr ? (
                                                 <Droplets className="h-3.5 w-3.5 text-teal-500 shrink-0" />
@@ -382,35 +387,35 @@ export function DCDailyTable({ monthData }: { monthData: SupabaseDailyWaterConsu
                                             {meter.label}
                                         </span>
                                     </td>
-                                    <td className={cn(tdBase, "font-mono text-[11px] text-slate-400 dark:text-slate-500")}>{meter.account}</td>
+                                    <td className={cn(tdBase, "font-mono text-[11px] text-muted-foreground dark:text-muted-foreground")}>{meter.account}</td>
                                     <td className={cn(tdBase, "text-center")}>
                                         <StatusChip label={meter.isIrr ? "Irrigation" : "Service"} color={meter.isIrr ? "primary" : "default"} />
                                     </td>
                                     {meter.dailyValues.map((val, i) => (
                                         <td key={i} className={cn(tdBase, "text-right tabular-nums px-2 text-[12px]")}>
                                             {val === null ? (
-                                                <span className="text-slate-300 dark:text-slate-600">—</span>
+                                                <span className="text-muted-foreground/70 dark:text-muted-foreground">—</span>
                                             ) : val === 0 ? (
-                                                <span className="text-slate-400">0.00</span>
+                                                <span className="text-muted-foreground">0.00</span>
                                             ) : (
                                                 n(val)
                                             )}
                                         </td>
                                     ))}
-                                    <td className={cn(tdBase, "text-right tabular-nums font-semibold bg-slate-50/80 dark:bg-slate-800/40")}>
+                                    <td className={cn(tdBase, "text-right tabular-nums font-semibold bg-muted/80 dark:bg-muted/40")}>
                                         {n(meter.total)}
                                     </td>
                                 </tr>
                             ))}
                             {/* ΣDC Footer */}
-                            <tr className="border-t-2 border-slate-200 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-800/20">
-                                <td className={cn(tdBase, "font-bold sticky left-0 z-10 bg-slate-50/60 dark:bg-slate-800/20")} colSpan={3}>
+                            <tr className="border-t-2 border-border dark:border-border bg-muted/60 dark:bg-muted/20">
+                                <td className={cn(tdBase, "font-bold sticky left-0 z-10 bg-muted/60 dark:bg-muted/20")} colSpan={3}>
                                     ΣDC Total ({dcMeters.length} meters)
                                 </td>
                                 {dayTotals.map((t, i) => (
                                     <td key={i} className={cn(tdBase, "text-right tabular-nums font-bold px-2 text-[12px]")}>{n(t)}</td>
                                 ))}
-                                <td className={cn(tdBase, "text-right tabular-nums font-bold bg-slate-50/80 dark:bg-slate-800/40")}>{n(grandTotal)}</td>
+                                <td className={cn(tdBase, "text-right tabular-nums font-bold bg-muted/80 dark:bg-muted/40")}>{n(grandTotal)}</td>
                             </tr>
                         </tbody>
                     </table>

@@ -35,15 +35,15 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
                     <div className="w-14 h-14 rounded-2xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center mb-4">
                         <AlertTriangle className="w-7 h-7 text-red-500" />
                     </div>
-                    <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1">
+                    <h3 className="text-sm font-semibold text-foreground mb-1">
                         {this.props.fallbackTitle || "Something went wrong"}
                     </h3>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mb-4">
+                    <p className="text-xs text-muted-foreground max-w-sm mb-4">
                         {this.props.fallbackDescription || "An unexpected error occurred. Please try again."}
                     </p>
                     <button
                         onClick={this.handleRetry}
-                        className="flex items-center gap-2 px-4 py-2 text-xs font-medium rounded-lg bg-primary text-white hover:bg-primary/80 transition-colors duration-200"
+                        className="flex items-center gap-2 px-4 py-2 text-xs font-medium rounded-lg bg-primary text-primary-foreground hover:bg-primary/80 transition-colors duration-200"
                     >
                         <RefreshCw className="w-3.5 h-3.5" />
                         Try again

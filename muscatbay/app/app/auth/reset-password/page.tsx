@@ -78,9 +78,9 @@ export default function ResetPasswordPage() {
 
     if (verifying) {
         return (
-            <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-900">
-                <Loader2 className="h-10 w-10 animate-spin text-slate-400 mb-4" />
-                <p className="text-slate-500 dark:text-slate-400">Verifying reset link...</p>
+            <div className="min-h-screen flex flex-col items-center justify-center bg-muted dark:bg-muted">
+                <Loader2 className="h-10 w-10 animate-spin text-muted-foreground mb-4" />
+                <p className="text-muted-foreground">Verifying reset link...</p>
             </div>
         );
     }
@@ -94,12 +94,12 @@ export default function ResetPasswordPage() {
                             <CheckCircle2 className="w-8 h-8 text-mb-success-text" />
                         </div>
                         <h2 className="text-2xl font-bold mb-2">Password Updated</h2>
-                        <p className="text-slate-500 dark:text-slate-400 mb-6">
+                        <p className="text-muted-foreground mb-6">
                             Your password has been successfully reset. Redirecting you to login...
                         </p>
                         <Button
                             onClick={() => router.push("/login")}
-                            className="bg-[var(--mb-primary)] hover:bg-[var(--mb-primary-hover)] text-white"
+                            className="bg-[var(--mb-primary)] hover:bg-[var(--mb-primary-hover)] text-primary-foreground"
                         >
                             Go to Login
                         </Button>
@@ -111,10 +111,10 @@ export default function ResetPasswordPage() {
 
     if (error && !loading && !password) { // Show error state if session check failed
         return (
-            <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900 p-4">
-                <div className="max-w-md w-full bg-white dark:bg-slate-800 p-8 rounded-xl shadow-lg border border-mb-danger/30">
+            <div className="min-h-screen flex items-center justify-center bg-muted dark:bg-muted p-4">
+                <div className="max-w-md w-full bg-white dark:bg-muted p-8 rounded-xl shadow-lg border border-mb-danger/30">
                     <h2 className="text-xl font-bold text-destructive mb-2">Reset Password Error</h2>
-                    <p className="text-slate-600 dark:text-slate-300 mb-6">{error}</p>
+                    <p className="text-muted-foreground mb-6">{error}</p>
                     <Button
                         onClick={() => router.push('/forgot-password')}
                         className="w-full"
@@ -133,11 +133,11 @@ export default function ResetPasswordPage() {
                 <div className="flex justify-center mb-8">
                     <div className="flex items-center gap-3">
                         <div className="w-12 h-12 rounded-xl bg-[var(--mb-primary)] flex items-center justify-center shadow-lg">
-                            <span className="text-white font-bold text-xl">MB</span>
+                            <span className="text-primary-foreground font-bold text-xl">MB</span>
                         </div>
                         <div>
-                            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Muscat Bay</h1>
-                            <p className="text-sm text-slate-500 dark:text-slate-400">Operations Dashboard</p>
+                            <h1 className="text-2xl font-bold text-foreground dark:text-primary-foreground">Muscat Bay</h1>
+                            <p className="text-sm text-muted-foreground">Operations Dashboard</p>
                         </div>
                     </div>
                 </div>
@@ -160,7 +160,7 @@ export default function ResetPasswordPage() {
                             <div className="space-y-2">
                                 <Label htmlFor="password">New Password</Label>
                                 <div className="relative">
-                                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                     <Input
                                         id="password"
                                         type={showPassword ? "text" : "password"}
@@ -175,7 +175,7 @@ export default function ResetPasswordPage() {
                                         type="button"
                                         aria-label={showPassword ? "Hide password" : "Show password"}
                                         onClick={() => setShowPassword(!showPassword)}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-muted-foreground"
                                     >
                                         {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                                     </button>
@@ -185,8 +185,8 @@ export default function ResetPasswordPage() {
                                     <div className="space-y-1 mt-2">
                                         {passwordRequirements.map((req, index) => (
                                             <div key={index} className="flex items-center gap-2 text-xs">
-                                                <div className={`w-1.5 h-1.5 rounded-full ${req.met ? "bg-mb-success" : "bg-slate-300"}`} />
-                                                <span className={req.met ? "text-mb-success-text" : "text-slate-500"}>
+                                                <div className={`w-1.5 h-1.5 rounded-full ${req.met ? "bg-mb-success" : "bg-border"}`} />
+                                                <span className={req.met ? "text-mb-success-text" : "text-muted-foreground"}>
                                                     {req.label}
                                                 </span>
                                             </div>
@@ -198,7 +198,7 @@ export default function ResetPasswordPage() {
                             <div className="space-y-2">
                                 <Label htmlFor="confirmPassword">Confirm Password</Label>
                                 <div className="relative">
-                                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                     <Input
                                         id="confirmPassword"
                                         type={showPassword ? "text" : "password"}
@@ -216,7 +216,7 @@ export default function ResetPasswordPage() {
                         <CardFooter className="flex flex-col gap-4">
                             <Button
                                 type="submit"
-                                className="w-full bg-[var(--mb-primary)] hover:bg-[var(--mb-primary-hover)] text-white"
+                                className="w-full bg-[var(--mb-primary)] hover:bg-[var(--mb-primary-hover)] text-primary-foreground"
                                 disabled={loading || !allRequirementsMet}
                             >
                                 {loading ? (

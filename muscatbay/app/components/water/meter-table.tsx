@@ -20,7 +20,7 @@
  * N/A meters are excluded upstream (page.tsx level filter); nothing extra needed here.
  */
 
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
     Search, ArrowUpDown, ChevronUp, ChevronDown,
     Droplets, Activity, Home, Building2, TrendingDown, ChevronRight,
@@ -41,9 +41,9 @@ interface MeterTableProps {
 // ─── Shared table primitives (mirrors DailyWaterReport style) ─────────────────
 
 const thBase =
-    'h-14 px-5 text-left align-middle font-semibold text-sm uppercase tracking-wider text-slate-500 dark:text-slate-400 whitespace-nowrap';
+    'h-14 px-5 text-left align-middle font-semibold text-sm uppercase tracking-wider text-muted-foreground whitespace-nowrap';
 const tdBase =
-    'px-5 py-4 align-middle text-sm font-semibold text-slate-700 dark:text-slate-300';
+    'px-5 py-4 align-middle text-sm font-semibold text-foreground/80';
 
 const PALETTE = {
     primary: CHART_PALETTE[0], // brand purple  — L2 bulk / zone header
@@ -79,20 +79,31 @@ function Th({
     children: React.ReactNode; sortKey?: string; sort?: SortState;
     onSort?: (s: SortState) => void; className?: string;
 }) {
-    const sortable = sortKey && sort && onSort;
+    const sortable = Boolean(sortKey && sort && onSort);
+    const isSorted = Boolean(sortable && sort?.key === sortKey);
     return (
-        <th scope="col"
+        <th
+            scope="col"
+            aria-sort={isSorted && sort ? (sort.dir === 'asc' ? 'ascending' : 'descending') : sortable ? 'none' : undefined}
             className={cn(
                 thBase,
-                sortable && 'cursor-pointer select-none hover:text-slate-600 dark:hover:text-slate-300 transition-colors',
                 className,
             )}
-            onClick={sortable ? () => onSort(nextSort(sort, sortKey)) : undefined}
         >
-            <span className="inline-flex items-center gap-1">
-                {children}
-                {sortable && <SortIcon active={sort.key === sortKey} dir={sort.key === sortKey ? sort.dir : null} />}
-            </span>
+            {sortable ? (
+                <button
+                    type="button"
+                    onClick={() => {
+                        if (sortKey && sort && onSort) onSort(nextSort(sort, sortKey));
+                    }}
+                    className="inline-flex min-h-11 items-center gap-1 rounded-md text-inherit transition-colors hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/60 dark:hover:text-muted-foreground/70"
+                >
+                    {children}
+                    <SortIcon active={isSorted} dir={isSorted && sort ? sort.dir : null} />
+                </button>
+            ) : (
+                <span className="inline-flex items-center gap-1">{children}</span>
+            )}
         </th>
     );
 }
@@ -103,8 +114,8 @@ function StatusChip({ label, color }: { label: string; color: ChipColor }) {
         success: 'bg-mb-success-light text-mb-success-text ring-mb-success/20',
         danger:  'bg-mb-danger-light text-mb-danger-text ring-mb-danger/20',
         warning: 'bg-mb-warning-light text-mb-warning-text ring-mb-warning/20',
-        default: 'bg-slate-100 text-slate-500 ring-slate-500/10 dark:bg-slate-500/10 dark:text-slate-400 dark:ring-slate-500/20',
-        primary: 'bg-secondary text-white ring-secondary/60 dark:bg-secondary/90 dark:text-white dark:ring-secondary/50',
+        default: 'bg-muted text-muted-foreground ring-border/20 dark:bg-muted/10 dark:text-muted-foreground dark:ring-border/20',
+        primary: 'bg-secondary text-primary-foreground ring-secondary/60 dark:bg-secondary/90 dark:text-primary-foreground dark:ring-secondary/50',
         info:    'bg-mb-info-light text-mb-info-text ring-mb-info/20',
     };
     return (
@@ -121,13 +132,13 @@ function SummaryCard({
     color: string; valueColor?: string;
 }) {
     return (
-        <div className="relative overflow-hidden bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-[0_2px_10px_-3px_rgba(15,23,42,0.08)] dark:shadow-[0_2px_10px_-3px_rgba(0,0,0,0.4)] motion-safe:hover:-translate-y-0.5 transition-[transform] duration-200 ease-out group/stat">
+        <div className="relative overflow-hidden bg-card p-4 sm:p-5 rounded-xl border border-border shadow-[0_2px_10px_-3px_rgba(15,23,42,0.08)] dark:shadow-[0_2px_10px_-3px_rgba(0,0,0,0.4)] motion-safe:hover:-translate-y-0.5 transition-[transform] duration-200 ease-out group/stat">
             <div className="absolute top-0 left-0 right-0 h-[3px]" style={{ backgroundColor: color }} aria-hidden="true" />
             <div className="flex justify-between items-start gap-2">
                 <div className="min-w-0">
-                    <p className="text-slate-500 dark:text-slate-400 text-[10px] sm:text-xs font-medium mb-1 uppercase tracking-wide">{label}</p>
+                    <p className="text-muted-foreground text-[10px] sm:text-xs font-medium mb-1 uppercase tracking-wide">{label}</p>
                     <h3
-                        className="text-lg sm:text-xl font-bold tabular-nums tracking-tight text-slate-800 dark:text-slate-100"
+                        className="text-lg sm:text-xl font-bold tabular-nums tracking-tight text-foreground"
                         style={valueColor ? { color: valueColor } : undefined}
                     >
                         {value}
@@ -328,8 +339,6 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
         return rows;
     }, [l3Meters, search, sort, meterTotals, months]);
 
-    useEffect(() => { setPage(1); }, [search, sort]);
-
     const totalPages = Math.max(1, Math.ceil(filtered.length / rowsPerPage));
     const paginated = filtered.slice((page - 1) * rowsPerPage, page * rowsPerPage);
     const colSpan = 3 + months.length + 1;
@@ -363,26 +372,33 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
             {/* ── Search + count ────────────────────────────────────────────── */}
             <div className="flex items-center gap-3 flex-wrap">
                 <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <input
                         type="text"
                         value={search}
-                        onChange={e => setSearch(e.target.value)}
+                        onChange={e => {
+                            setSearch(e.target.value);
+                            setPage(1);
+                        }}
+                        aria-label="Search meter or account"
                         placeholder="Search meter or account…"
-                        className="h-9 w-full sm:w-64 pl-9 pr-8 text-[13px] rounded-full border border-slate-200 dark:border-slate-700/80 bg-slate-50/80 dark:bg-slate-800/50 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-secondary/30 focus:border-secondary/50 transition-design"
+                        className="h-9 w-full sm:w-64 pl-9 pr-8 text-[13px] rounded-full border border-border/80 bg-muted/80 dark:bg-muted/50 placeholder:text-muted-foreground/70 focus:outline-none focus:ring-2 focus:ring-secondary/30 focus:border-secondary/50 transition-design"
                     />
                     {search && (
                         <button
                             type="button"
-                            onClick={() => setSearch('')}
+                            onClick={() => {
+                                setSearch('');
+                                setPage(1);
+                            }}
                             aria-label="Clear search"
-                            className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700/60 transition-colors"
+                            className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted dark:text-muted-foreground/70 dark:hover:bg-muted/60 transition-colors"
                         >
                             <span aria-hidden="true" className="text-[14px] font-bold leading-none">&times;</span>
                         </button>
                     )}
                 </div>
-                <span className="text-[12px] text-slate-400 dark:text-slate-500 tabular-nums">
+                <span className="text-[12px] text-muted-foreground/70 tabular-nums">
                     {filtered.length} L3 meter{filtered.length !== 1 ? 's' : ''}
                     {!isDC && buildingDataMap.size > 0 && ` · ${buildingDataMap.size} building${buildingDataMap.size !== 1 ? 's' : ''} expandable`}
                 </span>
@@ -399,20 +415,20 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                             </span>
                             <StatusChip label={bulk.level === 'L1' ? 'L1' : 'L2 BULK'} color="primary" />
                         </div>
-                        <p className="font-mono text-[11px] text-slate-400">{bulk.accountNumber}</p>
-                        <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                        <p className="font-mono text-[11px] text-muted-foreground">{bulk.accountNumber}</p>
+                        <div className="grid grid-cols-2 gap-2 pt-2 border-t border-border/60">
                             {months.map(mo => {
                                 const v = getConsumption(bulk, mo);
                                 return (
                                     <div key={mo} className="text-xs space-y-0.5">
-                                        <span className="text-slate-400">{mo}</span>
+                                        <span className="text-muted-foreground">{mo}</span>
                                         <p className="font-mono font-bold" style={{ color: PALETTE.primary }}>{v > 0 ? fmt(v) : '—'}</p>
                                     </div>
                                 );
                             })}
                         </div>
-                        <div className="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-slate-800">
-                            <span className="text-xs text-slate-500">Monthly Total</span>
+                        <div className="flex items-center justify-between pt-1 border-t border-border/60">
+                            <span className="text-xs text-muted-foreground">Monthly Total</span>
                             <span className="font-mono font-bold text-sm" style={{ color: PALETTE.primary }}>{fmt(meterTotals.get(bulk.accountNumber) ?? 0)} m³</span>
                         </div>
                     </div>
@@ -422,13 +438,13 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                     const bData = buildingDataMap.get(meter.accountNumber);
                     const isExpanded = expandedBuildings.has(meter.accountNumber);
                     return (
-                        <div key={meter.accountNumber} className="rounded-xl border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-slate-900 p-4 shadow-sm space-y-2">
+                        <div key={meter.accountNumber} className="rounded-xl border border-border/80 bg-card p-4 shadow-sm space-y-2">
                             <div className="flex items-center justify-between gap-2">
                                 <div className="min-w-0 flex items-center gap-2">
                                     {bData
-                                        ? <Building2 className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                                        : <Home className="h-3.5 w-3.5 text-slate-400 shrink-0" />}
-                                    <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 truncate">{meter.label || meter.accountNumber}</p>
+                                        ? <Building2 className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                                        : <Home className="h-3.5 w-3.5 text-muted-foreground shrink-0" />}
+                                    <p className="text-sm font-semibold text-foreground truncate">{meter.label || meter.accountNumber}</p>
                                 </div>
                                 <div className="flex items-center gap-2 shrink-0">
                                     <StatusChip label={meter.level} color="default" />
@@ -442,28 +458,28 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                                     )}
                                 </div>
                             </div>
-                            <p className="text-[11px] text-slate-400 font-mono">{meter.accountNumber}</p>
-                            <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                            <p className="text-[11px] text-muted-foreground font-mono">{meter.accountNumber}</p>
+                            <div className="grid grid-cols-2 gap-2 pt-2 border-t border-border/60">
                                 {months.map(mo => {
                                     const v = getConsumption(meter, mo);
                                     return (
                                         <div key={mo} className="text-xs space-y-0.5">
-                                            <span className="text-slate-400">{mo}</span>
-                                            <p className="font-mono font-medium text-slate-700 dark:text-slate-300">{v > 0 ? fmt(v) : '—'}</p>
+                                            <span className="text-muted-foreground">{mo}</span>
+                                            <p className="font-mono font-medium text-foreground/80">{v > 0 ? fmt(v) : '—'}</p>
                                         </div>
                                     );
                                 })}
                             </div>
-                            <div className="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-slate-800">
-                                <span className="text-xs text-slate-500">Total</span>
+                            <div className="flex items-center justify-between pt-1 border-t border-border/60">
+                                <span className="text-xs text-muted-foreground">Total</span>
                                 <span className="font-mono font-bold text-sm">{fmt(total)} m³</span>
                             </div>
                             {bData && isExpanded && (
-                                <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-2">
-                                    <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Child Meters ({bData.buildingName})</p>
+                                <div className="pt-2 border-t border-border/60 space-y-2">
+                                    <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">Child Meters ({bData.buildingName})</p>
                                     {bData.children.map(c => (
-                                        <div key={c.account} className="flex items-center justify-between text-xs px-2 py-1 rounded-lg bg-slate-50 dark:bg-slate-800">
-                                            <span className="text-slate-600 dark:text-slate-300 truncate">{c.label}</span>
+                                        <div key={c.account} className="flex items-center justify-between text-xs px-2 py-1 rounded-lg bg-muted">
+                                            <span className="text-muted-foreground truncate">{c.label}</span>
                                             <div className="flex items-center gap-2 shrink-0 ml-2">
                                                 <StatusChip label={c.type} color={c.type === 'Common' ? 'info' : 'default'} />
                                                 <span className="font-mono font-medium">{fmt(c.total)}</span>
@@ -487,18 +503,18 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                 {l3Meters.length > 0 && (
                     <div className="rounded-xl border-2 p-4 space-y-3"
                         style={{ borderColor: diffTotal > 0 ? `${PALETTE.red}40` : `${PALETTE.mint}60`, backgroundColor: diffTotal > 0 ? `${PALETTE.red}08` : `${PALETTE.mint}14` }}>
-                        <p className="text-sm font-bold text-slate-700 dark:text-slate-200">Zone Monthly Summary</p>
+                        <p className="text-sm font-bold text-foreground">Zone Monthly Summary</p>
                         <div className="grid grid-cols-3 gap-2 text-center">
                             <div>
-                                <p className="text-[10px] text-slate-400 uppercase tracking-wide">L2 Bulk</p>
+                                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">L2 Bulk</p>
                                 <p className="font-mono font-bold text-sm mt-0.5" style={{ color: PALETTE.primary }}>{fmt(bulkTotal)}</p>
                             </div>
                             <div>
-                                <p className="text-[10px] text-slate-400 uppercase tracking-wide">ΣL3</p>
+                                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">ΣL3</p>
                                 <p className="font-mono font-bold text-sm mt-0.5" style={{ color: PALETTE.blue }}>{fmt(indivTotal)}</p>
                             </div>
                             <div>
-                                <p className="text-[10px] text-slate-400 uppercase tracking-wide">Diff</p>
+                                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Diff</p>
                                 <p className="font-mono font-bold text-sm mt-0.5" style={{ color: diffTotal > 0 ? PALETTE.red : PALETTE.mint }}>{diffLabel(diffTotal)}</p>
                             </div>
                         </div>
@@ -515,16 +531,16 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                 role="region"
                 aria-label="L3 meter readings. Scroll horizontally to view all months."
                 tabIndex={0}
-                className="hidden md:block relative overflow-x-auto scroll-hint-x -mx-4 sm:-mx-5 md:-mx-6 border-t border-slate-100 dark:border-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary focus-visible:ring-offset-2"
+                className="ops-table-shell relative -mx-4 hidden scroll-hint-x focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary focus-visible:ring-offset-2 sm:-mx-5 md:-mx-6 md:block"
             >
                 <table
-                    className="w-full border-collapse"
+                    className="ops-table"
                     style={{ minWidth: `${340 + months.length * 100}px` }}
                 >
                     <thead>
-                        <tr className="border-b border-slate-100 dark:border-slate-800">
+                        <tr className="border-b border-border/60">
                             <Th sortKey="label" sort={sort} onSort={setSort}
-                                className="sticky left-0 z-10 bg-white dark:bg-slate-900 min-w-[200px]">
+                                className="sticky left-0 z-10 bg-card min-w-[200px]">
                                 Meter
                             </Th>
                             <Th sortKey="account" sort={sort} onSort={setSort} className="min-w-[110px]">Account</Th>
@@ -535,7 +551,7 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                                 </Th>
                             ))}
                             <Th sortKey="total" sort={sort} onSort={setSort}
-                                className="text-right min-w-[100px] bg-slate-50/80 dark:bg-slate-800/40">
+                                className="text-right min-w-[100px] bg-muted/80 dark:bg-muted/40">
                                 Total m³
                             </Th>
                         </tr>
@@ -568,7 +584,7 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                                         return (
                                             <td key={mo} className={cn(tdBase, 'text-right tabular-nums text-[12px] font-bold')}
                                                 style={{ color: PALETTE.primary }}>
-                                                {v > 0 ? fmt(v) : <span className="text-slate-300 dark:text-slate-600">—</span>}
+                                                {v > 0 ? fmt(v) : <span className="text-muted-foreground/70 dark:text-muted-foreground">—</span>}
                                             </td>
                                         );
                                     })}
@@ -583,7 +599,7 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                         {/* ── L3 individual rows + building expand ──────────── */}
                         {paginated.length === 0 ? (
                             <tr>
-                                <td colSpan={colSpan} className="text-center py-10 text-[13px] text-slate-400 dark:text-slate-500">
+                                <td colSpan={colSpan} className="text-center py-10 text-[13px] text-muted-foreground/70">
                                     No meters found
                                 </td>
                             </tr>
@@ -598,11 +614,11 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                                 <tr
                                     key={meter.accountNumber}
                                     className={cn(
-                                        'border-b border-slate-50 dark:border-slate-800/60 transition-colors hover:bg-slate-50/70 dark:hover:bg-slate-800/30',
-                                        !isExpanded && idx % 2 !== 0 && 'bg-slate-50/40 dark:bg-slate-800/20',
+                                        'border-b border-border/60 dark:border-border/80 transition-colors hover:bg-muted/70 dark:hover:bg-muted/30',
+                                        !isExpanded && idx % 2 !== 0 && 'bg-muted/40 dark:bg-muted/20',
                                     )}
                                 >
-                                    <td className={cn(tdBase, 'font-semibold sticky left-0 z-10 bg-white dark:bg-slate-900')}>
+                                    <td className={cn(tdBase, 'font-semibold sticky left-0 z-10 bg-card')}>
                                         <span className="inline-flex items-center gap-2">
                                             {bData ? (
                                                 <button
@@ -610,7 +626,7 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                                                     onClick={() => toggleBuilding(meter.accountNumber)}
                                                     aria-expanded={isExpanded}
                                                     aria-label={`${isExpanded ? 'Collapse' : 'Expand'} ${bData.buildingName}`}
-                                                    className="inline-flex items-center gap-1 rounded-md px-1 py-0.5 -ml-1 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                                                    className="inline-flex items-center gap-1 rounded-md px-1 py-0.5 -ml-1 hover:bg-muted transition-colors"
                                                     style={{ color: PALETTE.primary }}
                                                 >
                                                     {isExpanded
@@ -621,13 +637,13 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                                                 </button>
                                             ) : (
                                                 <>
-                                                    <Home className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                                                    <Home className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                                                     {meter.label || meter.accountNumber}
                                                 </>
                                             )}
                                         </span>
                                     </td>
-                                    <td className={cn(tdBase, 'font-mono text-[11px] text-slate-400 dark:text-slate-500')}>
+                                    <td className={cn(tdBase, 'font-mono text-[11px] text-muted-foreground/70')}>
                                         {meter.accountNumber}
                                     </td>
                                     <td className={cn(tdBase, 'text-center')}>
@@ -639,11 +655,11 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                                         const v = getConsumption(meter, mo);
                                         return (
                                             <td key={mo} className={cn(tdBase, 'text-right tabular-nums text-[12px]')}>
-                                                {v > 0 ? fmt(v) : <span className="text-slate-300 dark:text-slate-600">—</span>}
+                                                {v > 0 ? fmt(v) : <span className="text-muted-foreground/70 dark:text-muted-foreground">—</span>}
                                             </td>
                                         );
                                     })}
-                                    <td className={cn(tdBase, 'text-right tabular-nums font-bold bg-slate-50/80 dark:bg-slate-800/40')}>
+                                    <td className={cn(tdBase, 'text-right tabular-nums font-bold bg-muted/80 dark:bg-muted/40')}>
                                         {fmt(total)}
                                     </td>
                                 </tr>,
@@ -664,27 +680,27 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                                         <tr key={`${meter.accountNumber}-${child.account}`}
                                             style={{ backgroundColor: `${PALETTE.primary}06` }}>
                                             <td
-                                                className={cn(tdBase, 'sticky left-0 z-10 pl-12 font-medium text-slate-500 dark:text-slate-400')}
+                                                className={cn(tdBase, 'sticky left-0 z-10 pl-12 font-medium text-muted-foreground')}
                                                 style={{ backgroundColor: `${PALETTE.primary}06` }}
                                             >
                                                 <span className="inline-flex items-center gap-2">
                                                     {/* Tree connector */}
-                                                    <span className="shrink-0 w-4 h-4 border-b-2 border-l-2 border-slate-200 dark:border-slate-700 rounded-bl" aria-hidden="true" />
+                                                    <span className="shrink-0 w-4 h-4 border-b-2 border-l-2 border-border rounded-bl" aria-hidden="true" />
                                                     {child.label}
                                                 </span>
                                             </td>
-                                            <td className={cn(tdBase, 'font-mono text-[11px] text-slate-400')}>
+                                            <td className={cn(tdBase, 'font-mono text-[11px] text-muted-foreground')}>
                                                 {child.account}
                                             </td>
                                             <td className={cn(tdBase, 'text-center')}>
                                                 <StatusChip label={child.type} color={child.type === 'Common' ? 'info' : 'default'} />
                                             </td>
                                             {child.monthlyValues.map((v, i) => (
-                                                <td key={i} className={cn(tdBase, 'text-right tabular-nums text-[12px] text-slate-500 dark:text-slate-400')}>
-                                                    {v > 0 ? fmt(v) : <span className="text-slate-300 dark:text-slate-600">—</span>}
+                                                <td key={i} className={cn(tdBase, 'text-right tabular-nums text-[12px] text-muted-foreground')}>
+                                                    {v > 0 ? fmt(v) : <span className="text-muted-foreground/70 dark:text-muted-foreground">—</span>}
                                                 </td>
                                             ))}
-                                            <td className={cn(tdBase, 'text-right tabular-nums text-slate-500 dark:text-slate-400')}>
+                                            <td className={cn(tdBase, 'text-right tabular-nums text-muted-foreground')}>
                                                 {fmt(child.total)}
                                             </td>
                                         </tr>,
@@ -704,7 +720,7 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                                                 Σ Child Meters ({bData.children.length})
                                             </span>
                                         </td>
-                                        <td className={cn(tdBase, 'text-slate-400 text-[11px]')} colSpan={2} />
+                                        <td className={cn(tdBase, 'text-muted-foreground text-[11px]')} colSpan={2} />
                                         {bData.childMonthly.map((v, i) => (
                                             <td key={i} className={cn(tdBase, 'text-right tabular-nums text-[12px] font-bold')}
                                                 style={{ color: PALETTE.blue }}>
@@ -763,7 +779,7 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
 
                         {/* ── ΣL3 footer row ───────────────────────────────── */}
                         {l3Meters.length > 0 && (
-                            <tr className="border-t-2 border-slate-200 dark:border-slate-700"
+                            <tr className="border-t-2 border-border"
                                 style={{ backgroundColor: `${PALETTE.blue}0E` }}>
                                 <td
                                     className={cn(tdBase, 'font-bold sticky left-0 z-10')}
@@ -774,7 +790,7 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                                         ΣL3 Total — Villas + Building Bulks
                                     </span>
                                 </td>
-                                <td className={cn(tdBase, 'text-slate-400 text-[11px]')} colSpan={2}>
+                                <td className={cn(tdBase, 'text-muted-foreground text-[11px]')} colSpan={2}>
                                     {l3Meters.length} meters
                                 </td>
                                 {indivMonthly.map((v, i) => (
@@ -831,12 +847,12 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
             {/* ── Pagination ────────────────────────────────────────────────── */}
             {filtered.length > rowsPerPage && (
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-1 py-2">
-                    <span className="text-[12px] text-slate-400 dark:text-slate-500 tabular-nums">
+                    <span className="text-[12px] text-muted-foreground/70 tabular-nums">
                         {filtered.length} result{filtered.length !== 1 ? 's' : ''}
                     </span>
                     <div className="flex items-center gap-1">
                         <button
-                            className="h-8 px-3 text-[12px] font-medium rounded-full border border-slate-200 dark:border-slate-700 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                            className="h-8 px-3 text-[12px] font-medium rounded-full border border-border text-muted-foreground hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                             disabled={page <= 1}
                             onClick={() => setPage(p => p - 1)}
                         >Prev</button>
@@ -851,24 +867,24 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                                 <button key={p} onClick={() => setPage(p)}
                                     className={cn(
                                         'h-8 w-8 rounded-full flex items-center justify-center text-[12px] font-medium transition-design',
-                                        p === page ? 'bg-primary text-white shadow-sm dark:bg-secondary' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800',
+                                        p === page ? 'bg-primary text-primary-foreground shadow-sm dark:bg-secondary' : 'text-muted-foreground hover:bg-muted',
                                     )}>
                                     {p}
                                 </button>
                             );
                         })}
                         <button
-                            className="h-8 px-3 text-[12px] font-medium rounded-full border border-slate-200 dark:border-slate-700 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                            className="h-8 px-3 text-[12px] font-medium rounded-full border border-border text-muted-foreground hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                             disabled={page >= totalPages}
                             onClick={() => setPage(p => p + 1)}
                         >Next</button>
                     </div>
-                    <label className="flex items-center gap-1.5 text-[12px] text-slate-400 dark:text-slate-500">
+                    <label className="flex items-center gap-1.5 text-[12px] text-muted-foreground/70">
                         Rows
                         <select
                             value={rowsPerPage}
                             onChange={e => { setRowsPerPage(Number(e.target.value)); setPage(1); }}
-                            className="h-8 rounded-full border border-slate-200 dark:border-slate-700 bg-transparent text-[12px] px-2 focus:outline-none focus:ring-2 focus:ring-secondary/30 cursor-pointer"
+                            className="h-8 rounded-full border border-border bg-transparent text-[12px] px-2 focus:outline-none focus:ring-2 focus:ring-secondary/30 cursor-pointer"
                         >
                             {[5, 10, 15, 25].map(n => <option key={n} value={n}>{n}</option>)}
                         </select>

@@ -61,12 +61,12 @@ export default function ForgotPasswordPage() {
                             <CheckCircle2 className="w-8 h-8 text-mb-success-text" />
                         </div>
                         <h2 className="text-2xl font-bold mb-2">Check your email</h2>
-                        <p className="text-slate-500 dark:text-slate-400 mb-6">
+                        <p className="text-muted-foreground mb-6">
                             We&apos;ve sent a password reset link to <strong>{email}</strong>.
                             Please check your inbox and follow the instructions.
                         </p>
                         <Link href="/login">
-                            <Button className="bg-[var(--mb-primary)] hover:bg-[var(--mb-primary-hover)] text-white">
+                            <Button className="bg-[var(--mb-primary)] hover:bg-[var(--mb-primary-hover)] text-primary-foreground">
                                 Back to Login
                             </Button>
                         </Link>
@@ -83,11 +83,11 @@ export default function ForgotPasswordPage() {
                 <div className="flex justify-center mb-8">
                     <div className="flex items-center gap-3">
                         <div className="w-12 h-12 rounded-xl bg-[var(--mb-primary)] flex items-center justify-center shadow-lg">
-                            <span className="text-white font-bold text-xl">MB</span>
+                            <span className="text-primary-foreground font-bold text-xl">MB</span>
                         </div>
                         <div>
-                            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Muscat Bay</h1>
-                            <p className="text-sm text-slate-500 dark:text-slate-400">Operations Dashboard</p>
+                            <h1 className="text-2xl font-bold text-foreground dark:text-primary-foreground">Muscat Bay</h1>
+                            <p className="text-sm text-muted-foreground">Operations Dashboard</p>
                         </div>
                     </div>
                 </div>
@@ -110,7 +110,7 @@ export default function ForgotPasswordPage() {
                             <div className="space-y-2">
                                 <Label htmlFor="email">Email</Label>
                                 <div className="relative">
-                                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                     <Input
                                         id="email"
                                         type="email"
@@ -128,7 +128,7 @@ export default function ForgotPasswordPage() {
                         <CardFooter className="flex flex-col gap-4">
                             <Button
                                 type="submit"
-                                className="w-full bg-[var(--mb-primary)] hover:bg-[var(--mb-primary-hover)] text-white"
+                                className="w-full bg-[var(--mb-primary)] hover:bg-[var(--mb-primary-hover)] text-primary-foreground"
                                 disabled={loading}
                             >
                                 {loading ? (
@@ -143,7 +143,7 @@ export default function ForgotPasswordPage() {
 
                             <Link
                                 href="/login"
-                                className="flex items-center justify-center gap-2 text-sm text-slate-500 dark:text-slate-400 hover:text-[var(--mb-primary)]"
+                                className="flex items-center justify-center gap-2 text-sm text-muted-foreground hover:text-[var(--mb-primary)]"
                             >
                                 <ArrowLeft className="h-4 w-4" />
                                 Back to login

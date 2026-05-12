@@ -16,18 +16,18 @@ interface FilterTabsProps {
 }
 
 const colorMap: Record<string, { bg: string; text: string }> = {
-    red: { bg: "bg-red-500 dark:bg-red-600", text: "text-white" },
-    orange: { bg: "bg-amber-500 dark:bg-amber-600", text: "text-white" },
-    green: { bg: "bg-emerald-500 dark:bg-emerald-600", text: "text-white" },
-    blue: { bg: "bg-blue-500 dark:bg-blue-600", text: "text-white" },
-    teal: { bg: "bg-teal-500 dark:bg-teal-600", text: "text-white" },
+    red: { bg: "bg-red-500 dark:bg-red-600", text: "text-primary-foreground" },
+    orange: { bg: "bg-amber-500 dark:bg-amber-600", text: "text-primary-foreground" },
+    green: { bg: "bg-emerald-500 dark:bg-emerald-600", text: "text-primary-foreground" },
+    blue: { bg: "bg-blue-500 dark:bg-blue-600", text: "text-primary-foreground" },
+    teal: { bg: "bg-teal-500 dark:bg-teal-600", text: "text-primary-foreground" },
 };
 
 export function FilterTabs({ label, options, value, onChange, className }: FilterTabsProps) {
     return (
         <div className={cn("flex items-center gap-3", className)}>
             {label && <span className="text-sm text-muted-foreground hidden sm:inline-block">{label}:</span>}
-            <div className="flex p-1 bg-slate-100/80 dark:bg-slate-800/60 rounded-lg border border-slate-200/60 dark:border-slate-700/50">
+            <div className="flex p-1 bg-muted/80 dark:bg-muted/60 rounded-lg border border-border/60 dark:border-border/50">
                 {options.map((option) => {
                     const isSelected = value === option.value;
                     const colorStyle = option.color && colorMap[option.color];
@@ -40,8 +40,8 @@ export function FilterTabs({ label, options, value, onChange, className }: Filte
                                 isSelected
                                     ? colorStyle
                                         ? `${colorStyle.bg} ${colorStyle.text} shadow-sm`
-                                        : "bg-primary text-white shadow-sm"
-                                    : "text-muted-foreground hover:bg-white/70 dark:hover:bg-slate-700/60 hover:text-slate-700 dark:hover:text-slate-200"
+                                        : "bg-primary text-primary-foreground shadow-sm"
+                                    : "text-muted-foreground hover:bg-white/70 dark:hover:bg-muted/60 hover:text-foreground dark:hover:text-foreground"
                             )}
                         >
                             {option.label}

@@ -114,7 +114,7 @@ export class ErrorBoundary extends Component<Props, State> {
                                     </button>
 
                                     {this.state.showDetails && (
-                                        <pre className="max-h-32 overflow-auto p-2 text-xs font-mono bg-slate-100 dark:bg-slate-800 rounded border text-muted-foreground">
+                                        <pre className="max-h-32 overflow-auto p-2 text-xs font-mono bg-muted dark:bg-muted rounded border text-muted-foreground">
                                             {this.state.errorInfo.componentStack}
                                         </pre>
                                     )}

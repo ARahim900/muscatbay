@@ -10,7 +10,7 @@ interface TableToolbarProps {
 export function TableToolbar({ children, className }: TableToolbarProps) {
     return (
         <div className={cn(
-            "flex flex-wrap items-center gap-2 sm:gap-3 px-3 sm:px-5 py-3 sm:py-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm",
+            "ops-table-toolbar flex flex-wrap items-center gap-2 px-3 py-3 sm:gap-3 sm:px-5 sm:py-4",
             className
         )}>
             {children}
@@ -62,7 +62,7 @@ export function DensityToggle({ density, onChange, className }: DensityTogglePro
             role="group"
             aria-label="Table density"
             className={cn(
-                "flex items-center rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden h-8",
+                "flex items-center rounded-lg border border-border overflow-hidden h-8",
                 className
             )}
         >
@@ -77,7 +77,7 @@ export function DensityToggle({ density, onChange, className }: DensityTogglePro
                         "flex items-center justify-center w-8 h-8 transition-colors duration-150",
                         density === value
                             ? "bg-primary text-primary-foreground"
-                            : "text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-700 dark:hover:text-slate-300"
+                            : "text-muted-foreground/70 hover:bg-muted hover:text-foreground"
                     )}
                 >
                     <Icon />

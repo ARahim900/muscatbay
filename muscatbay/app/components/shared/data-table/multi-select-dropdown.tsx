@@ -51,8 +51,8 @@ export function MultiSelectDropdown({
                 className={cn(
                     "flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1.5 sm:py-2 text-xs sm:text-sm rounded-lg border transition-all duration-200",
                     hasActiveFilter
-                        ? "border-primary/40 bg-primary/5 text-primary shadow-sm dark:border-primary/50 dark:bg-primary/15 dark:text-slate-100 dark:shadow-primary/10"
-                        : "border-slate-200/80 dark:border-slate-700/80 hover:border-slate-300 dark:hover:border-slate-600 hover:shadow-sm text-slate-600 dark:text-slate-300"
+                        ? "border-primary/40 bg-primary/5 text-primary shadow-sm dark:border-primary/50 dark:bg-primary/15 dark:text-foreground dark:shadow-primary/10"
+                        : "border-border/80 hover:border-border hover:shadow-sm text-muted-foreground"
                 )}
             >
                 <Icon className="w-3.5 h-3.5" />
@@ -73,14 +73,14 @@ export function MultiSelectDropdown({
                                 ) : null;
                             })}
                             {selected.length > 3 && (
-                                <span className="text-xs font-semibold ml-0.5 bg-primary text-white px-1.5 py-0.5 rounded-full">
+                                <span className="text-xs font-semibold ml-0.5 bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full">
                                     +{selected.length - 3}
                                 </span>
                             )}
                         </span>
                     ) : (
                         <span
-                            className="bg-primary text-white text-xs font-semibold px-1.5 py-0.5 rounded-full"
+                            className="bg-primary text-primary-foreground text-xs font-semibold px-1.5 py-0.5 rounded-full"
                             aria-label={`${selected.length} filters selected`}
                             aria-live="polite"
                         >
@@ -94,18 +94,18 @@ export function MultiSelectDropdown({
             {isOpen && (
                 <>
                     <div role="presentation" aria-hidden="true" className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
-                    <div className="absolute top-full left-0 sm:left-0 right-0 sm:right-auto mt-1.5 z-50 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl min-w-[200px] max-w-[calc(100vw-2rem)] overflow-hidden">
-                        <div className="flex items-center justify-between px-3 py-2 border-b border-slate-100 dark:border-slate-700/70">
+                    <div className="absolute top-full left-0 sm:left-0 right-0 sm:right-auto mt-1.5 z-50 bg-popover border border-border rounded-xl shadow-xl min-w-[200px] max-w-[calc(100vw-2rem)] overflow-hidden">
+                        <div className="flex items-center justify-between px-3 py-2 border-b border-border/70">
                             <button
                                 onClick={selectAll}
                                 className="text-xs font-medium text-primary hover:text-primary/80 transition-colors min-h-[36px] px-1 flex items-center"
                             >
                                 Select All
                             </button>
-                            <span className="text-slate-200 dark:text-slate-600 select-none text-xs">|</span>
+                            <span className="text-border select-none text-xs">|</span>
                             <button
                                 onClick={clearAll}
-                                className="text-xs font-medium text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors min-h-[36px] px-1 flex items-center"
+                                className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors min-h-[36px] px-1 flex items-center"
                             >
                                 Clear
                             </button>
@@ -125,7 +125,7 @@ export function MultiSelectDropdown({
                                         key={option}
                                         role="option"
                                         aria-selected={isChecked}
-                                        className="flex items-center gap-2.5 px-3 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer min-h-[44px] transition-colors duration-100"
+                                        className="flex items-center gap-2.5 px-3 py-2.5 hover:bg-muted cursor-pointer min-h-[44px] transition-colors duration-100"
                                     >
                                         <input
                                             type="checkbox"
@@ -139,11 +139,11 @@ export function MultiSelectDropdown({
                                                 "w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors duration-150",
                                                 isChecked
                                                     ? "border-primary bg-primary"
-                                                    : "border-slate-300 dark:border-slate-600"
+                                                    : "border-border"
                                             )}
                                         >
                                             {isChecked && (
-                                                <Check className="w-2.5 h-2.5 text-white" strokeWidth={3} />
+                                                <Check className="w-2.5 h-2.5 text-primary-foreground" strokeWidth={3} />
                                             )}
                                         </div>
                                         {optionColor && (
@@ -158,8 +158,8 @@ export function MultiSelectDropdown({
                                         <span className={cn(
                                             "text-sm flex-1 transition-colors duration-100",
                                             isChecked
-                                                ? "text-slate-800 dark:text-slate-100 font-medium"
-                                                : "text-slate-700 dark:text-slate-300"
+                                                ? "text-foreground font-medium"
+                                                : "text-foreground/80"
                                         )}>
                                             {displayName(option)}
                                         </span>

@@ -245,7 +245,7 @@ export function ZoneL3Table({
             <CardHeader className="card-elevated-header p-4 sm:p-5 md:p-6">
                 <div>
                     <CardTitle className="text-base sm:text-lg">{zoneRow.zoneName} — L3 Meters</CardTitle>
-                    <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+                    <p className="text-xs sm:text-sm text-muted-foreground dark:text-muted-foreground mt-1">
                         {l3Meters.length} meters — Day 1 to Day {latestDay}
                     </p>
                 </div>
@@ -280,13 +280,18 @@ export function ZoneL3Table({
                 <TableSearch value={search} onChange={setSearch} placeholder="Search meter or account..." />
 
                 {/* Horizontally scrollable table */}
-                <div className="relative overflow-x-auto -mx-4 sm:-mx-5 md:-mx-6 border-t border-slate-100 dark:border-slate-800">
-                    <table className="w-full border-collapse" style={{ minWidth: `${420 + days.length * 72}px` }}>
+                <div
+                    role="region"
+                    aria-label="Zone daily readings. Scroll horizontally to view all days."
+                    tabIndex={0}
+                    className="ops-table-shell relative -mx-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary focus-visible:ring-offset-2 sm:-mx-5 md:-mx-6"
+                >
+                    <table className="ops-table" style={{ minWidth: `${420 + days.length * 72}px` }}>
                         <thead>
-                            <tr className="border-b border-slate-100 dark:border-slate-800">
+                            <tr className="border-b border-border dark:border-border">
                                 <Th
                                     sortKey="label" sort={sort} onSort={setSort}
-                                    className="sticky left-0 z-10 bg-white dark:bg-slate-900 min-w-[150px]"
+                                    className="sticky left-0 z-10 bg-white dark:bg-muted min-w-[150px]"
                                 >Meter</Th>
                                 <Th sortKey="account" sort={sort} onSort={setSort} className="min-w-[100px]">Account</Th>
                                 <th scope="col" className={cn(thBase, "text-center min-w-[90px]")}>Type</th>
@@ -295,7 +300,7 @@ export function ZoneL3Table({
                                 ))}
                                 <Th
                                     sortKey="total" sort={sort} onSort={setSort}
-                                    className="text-right min-w-[80px] bg-slate-50/80 dark:bg-slate-800/40"
+                                    className="text-right min-w-[80px] bg-muted/80 dark:bg-muted/40"
                                 >Total</Th>
                             </tr>
                         </thead>
@@ -335,7 +340,7 @@ export function ZoneL3Table({
                                         style={{ color: PALETTE.primary }}
                                     >
                                         {val === null ? (
-                                            <span className="text-slate-300 dark:text-slate-600">—</span>
+                                            <span className="text-muted-foreground/70 dark:text-muted-foreground">—</span>
                                         ) : (
                                             n(val)
                                         )}
@@ -355,7 +360,7 @@ export function ZoneL3Table({
                             {/* ── Individual L3 meter rows (paginated/filtered) ── */}
                             {paginated.length === 0 ? (
                                 <tr>
-                                    <td colSpan={colCount} className="text-center py-10 text-[13px] text-slate-400 dark:text-slate-500">
+                                    <td colSpan={colCount} className="text-center py-10 text-[13px] text-muted-foreground dark:text-muted-foreground">
                                         No meters found
                                     </td>
                                 </tr>
@@ -369,11 +374,11 @@ export function ZoneL3Table({
                                     <tr
                                         key={meter.account}
                                         className={cn(
-                                            "border-b border-slate-50 dark:border-slate-800/60 transition-colors hover:bg-slate-50/70 dark:hover:bg-slate-800/30",
-                                            !isExpanded && "even:bg-slate-50/40 dark:even:bg-slate-800/20",
+                                            "border-b border-border/60 dark:border-border/60 transition-colors hover:bg-muted/70 dark:hover:bg-muted/30",
+                                            !isExpanded && "even:bg-muted/40 dark:even:bg-muted/20",
                                         )}
                                     >
-                                        <td className={cn(tdBase, "font-semibold sticky left-0 z-10 bg-white dark:bg-slate-900")}>
+                                        <td className={cn(tdBase, "font-semibold sticky left-0 z-10 bg-white dark:bg-muted")}>
                                             <span className="inline-flex items-center gap-2">
                                                 {detail ? (
                                                     <button
@@ -381,7 +386,7 @@ export function ZoneL3Table({
                                                         onClick={() => toggleBuilding(meter.account)}
                                                         aria-expanded={isExpanded}
                                                         aria-label={`${isExpanded ? 'Collapse' : 'Expand'} ${detail.buildingName} L4 meters`}
-                                                        className="inline-flex items-center gap-1 rounded-md px-1.5 py-1 -ml-1 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                                                        className="inline-flex items-center gap-1 rounded-md px-1.5 py-1 -ml-1 hover:bg-muted dark:hover:bg-muted transition-colors"
                                                         style={{ color: PALETTE.primary }}
                                                     >
                                                         {isExpanded
@@ -397,29 +402,29 @@ export function ZoneL3Table({
                                                     </>
                                                 ) : (
                                                     <>
-                                                        <Home className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                                                        <Home className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                                                         {meter.account}
                                                         {meter.isNullAsZero && <StatusChip label="IRR" color="primary" />}
                                                     </>
                                                 )}
                                             </span>
                                         </td>
-                                        <td className={cn(tdBase, "font-mono text-[11px] text-slate-400 dark:text-slate-500")}>{meter.account}</td>
+                                        <td className={cn(tdBase, "font-mono text-[11px] text-muted-foreground dark:text-muted-foreground")}>{meter.account}</td>
                                         <td className={cn(tdBase, "text-center")}>
                                             <StatusChip label={meter.building ? "Building" : "Individual"} color={meter.building ? "primary" : "default"} />
                                         </td>
                                         {meter.dailyValues.map((val, i) => (
                                             <td key={i} className={cn(tdBase, "text-right tabular-nums px-2 text-[12px]")}>
                                                 {val === null ? (
-                                                    <span className="text-slate-300 dark:text-slate-600">—</span>
+                                                    <span className="text-muted-foreground/70 dark:text-muted-foreground">—</span>
                                                 ) : val === 0 ? (
-                                                    <span className="text-slate-400">0.00</span>
+                                                    <span className="text-muted-foreground">0.00</span>
                                                 ) : (
                                                     n(val)
                                                 )}
                                             </td>
                                         ))}
-                                        <td className={cn(tdBase, "text-right tabular-nums font-semibold bg-slate-50/80 dark:bg-slate-800/40")}>
+                                        <td className={cn(tdBase, "text-right tabular-nums font-semibold bg-muted/80 dark:bg-muted/40")}>
                                             {n(meter.total)}
                                         </td>
                                     </tr>,
@@ -432,7 +437,7 @@ export function ZoneL3Table({
                                         rows.push(
                                             <tr
                                                 key={`${meter.account}-child-${child.account}`}
-                                                className="border-b border-slate-50 dark:border-slate-800/60"
+                                                className="border-b border-border/60 dark:border-border/60"
                                                 style={{ backgroundColor: `${PALETTE.neutral}26` }}
                                             >
                                                 <td
@@ -442,14 +447,14 @@ export function ZoneL3Table({
                                                         boxShadow: `inset 4px 0 0 ${PALETTE.primary}30`,
                                                     }}
                                                 >
-                                                    <span className="inline-flex items-center gap-2 text-slate-600 dark:text-slate-300">
+                                                    <span className="inline-flex items-center gap-2 text-muted-foreground dark:text-muted-foreground/70">
                                                         {idx === detail.children.length - 1
                                                             ? <span className="inline-block w-2 h-2 rounded-full" style={{ backgroundColor: PALETTE.primary }} />
-                                                            : <span className="inline-block w-2 h-2 rounded-full bg-slate-300 dark:bg-slate-600" />}
+                                                            : <span className="inline-block w-2 h-2 rounded-full bg-border dark:bg-muted" />}
                                                         {child.label}
                                                     </span>
                                                 </td>
-                                                <td className={cn(tdBase, "font-mono text-[11px] text-slate-400 dark:text-slate-500")}>{child.account}</td>
+                                                <td className={cn(tdBase, "font-mono text-[11px] text-muted-foreground dark:text-muted-foreground")}>{child.account}</td>
                                                 <td className={cn(tdBase, "text-center")}>
                                                     <StatusChip
                                                         label={child.type === 'Common' ? 'Common' : 'Apartment'}
@@ -459,15 +464,15 @@ export function ZoneL3Table({
                                                 {child.dailyValues.map((val, i) => (
                                                     <td key={i} className={cn(tdBase, "text-right tabular-nums px-2 text-[12px] font-normal")}>
                                                         {val === null ? (
-                                                            <span className="text-slate-300 dark:text-slate-600">—</span>
+                                                            <span className="text-muted-foreground/70 dark:text-muted-foreground">—</span>
                                                         ) : val === 0 ? (
-                                                            <span className="text-slate-400">0.00</span>
+                                                            <span className="text-muted-foreground">0.00</span>
                                                         ) : (
                                                             n(val)
                                                         )}
                                                     </td>
                                                 ))}
-                                                <td className={cn(tdBase, "text-right tabular-nums font-semibold bg-slate-50/80 dark:bg-slate-800/40")}>
+                                                <td className={cn(tdBase, "text-right tabular-nums font-semibold bg-muted/80 dark:bg-muted/40")}>
                                                     {n(child.total)}
                                                 </td>
                                             </tr>,

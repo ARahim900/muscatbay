@@ -6,8 +6,8 @@ import type { SortDir, SortState } from "./report-types";
 
 // ─── Table base classes ───────────────────────────────────────────────────────
 
-export const thBase = "h-14 px-5 text-left align-middle font-semibold text-sm uppercase tracking-wider text-slate-500 dark:text-slate-400 whitespace-nowrap";
-export const tdBase = "px-5 py-4 align-middle text-sm font-semibold text-slate-700 dark:text-slate-300";
+export const thBase = "h-[2.875rem] px-4 py-3 text-left align-middle text-[11px] font-bold uppercase tracking-[0.04em] text-muted-foreground whitespace-nowrap";
+export const tdBase = "px-4 py-3.5 align-middle text-[13px] font-medium text-card-foreground";
 
 // ─── Sort helpers ─────────────────────────────────────────────────────────────
 
@@ -30,16 +30,28 @@ export function Th({
     children: React.ReactNode; sortKey?: string; sort?: SortState;
     onSort?: (s: SortState) => void; className?: string;
 }) {
-    const sortable = sortKey && sort && onSort;
+    const sortable = Boolean(sortKey && sort && onSort);
+    const isSorted = Boolean(sortable && sort?.key === sortKey);
     return (
         <th
-            className={cn(thBase, sortable && "cursor-pointer select-none group hover:text-slate-600 dark:hover:text-slate-300 transition-colors", className)}
-            onClick={sortable ? () => onSort(nextSort(sort, sortKey)) : undefined}
+            scope="col"
+            aria-sort={isSorted && sort ? (sort.dir === 'asc' ? 'ascending' : 'descending') : sortable ? 'none' : undefined}
+            className={cn(thBase, className)}
         >
-            <span className="inline-flex items-center gap-1">
-                {children}
-                {sortable && <SortIcon active={sort.key === sortKey} dir={sort.key === sortKey ? sort.dir : null} />}
-            </span>
+            {sortable ? (
+                <button
+                    type="button"
+                    onClick={() => {
+                        if (sortKey && sort && onSort) onSort(nextSort(sort, sortKey));
+                    }}
+                    className="inline-flex min-h-11 items-center gap-1 rounded-md text-inherit transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/60"
+                >
+                    {children}
+                    <SortIcon active={isSorted} dir={isSorted && sort ? sort.dir : null} />
+                </button>
+            ) : (
+                <span className="inline-flex items-center gap-1">{children}</span>
+            )}
         </th>
     );
 }
@@ -47,20 +59,20 @@ export function Th({
 export function TableSearch({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder: string }) {
     return (
         <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <input
                 type="text"
                 aria-label={placeholder}
                 value={value}
                 onChange={e => onChange(e.target.value)}
                 placeholder={placeholder}
-                className="h-9 w-full sm:w-64 pl-9 pr-8 text-[13px] rounded-full border border-slate-200 dark:border-slate-700/80 bg-slate-50/80 dark:bg-slate-800/50 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-secondary/30 focus:border-secondary/50 transition-colors"
+                className="h-9 w-full sm:w-64 pl-9 pr-8 text-[13px] rounded-full border border-border dark:border-border/80 bg-muted/80 dark:bg-muted/50 placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-secondary/30 focus:border-secondary/50 transition-colors"
             />
             {value && (
                 <button
                     onClick={() => onChange('')}
                     aria-label="Clear search"
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 h-4 w-4 rounded-full bg-slate-200 dark:bg-slate-600 flex items-center justify-center text-slate-500 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-500 transition-colors"
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 h-4 w-4 rounded-full bg-border dark:bg-muted flex items-center justify-center text-muted-foreground dark:text-muted-foreground/70 hover:bg-border dark:hover:bg-muted-foreground/40 transition-colors"
                 >
                     <span className="text-[10px] leading-none font-bold">&times;</span>
                 </button>
@@ -74,8 +86,8 @@ export function StatusChip({ label, color }: { label: string; color: 'success' |
         success: 'bg-emerald-50 text-emerald-600 ring-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-400 dark:ring-emerald-500/20',
         danger:  'bg-red-50 text-red-600 ring-red-500/20 dark:bg-red-500/10 dark:text-red-400 dark:ring-red-500/20',
         warning: 'bg-amber-50 text-amber-600 ring-amber-500/20 dark:bg-amber-500/10 dark:text-amber-400 dark:ring-amber-500/20',
-        default: 'bg-slate-100 text-slate-500 ring-slate-500/10 dark:bg-slate-500/10 dark:text-slate-400 dark:ring-slate-500/20',
-        primary: 'bg-secondary text-white ring-secondary/60 dark:bg-secondary/90 dark:text-white dark:ring-secondary/50',
+        default: 'bg-muted text-muted-foreground ring-border/10 dark:bg-muted/10 dark:text-muted-foreground dark:ring-border/20',
+        primary: 'bg-secondary text-primary-foreground ring-secondary/60 dark:bg-secondary/90 dark:text-primary-foreground dark:ring-secondary/50',
     }[color];
     return (
         <span className={cn("inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium ring-1 ring-inset", styles)}>
@@ -92,12 +104,12 @@ export function TablePagination({
 }) {
     return (
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-1 py-2">
-            <span className="text-[12px] text-slate-400 dark:text-slate-500 tabular-nums">
+            <span className="text-[12px] text-muted-foreground dark:text-muted-foreground tabular-nums">
                 {totalItems} result{totalItems !== 1 ? 's' : ''}
             </span>
             <div className="flex items-center gap-1">
                 <button
-                    className="h-8 px-3 text-[12px] font-medium rounded-full border border-slate-200 dark:border-slate-700 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    className="min-h-11 px-4 text-[12px] font-medium rounded-full border border-border dark:border-border text-muted-foreground hover:bg-muted dark:hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors sm:min-h-8 sm:px-3"
                     disabled={page <= 1}
                     onClick={() => onPageChange(page - 1)}
                 >
@@ -108,29 +120,29 @@ export function TablePagination({
                         key={p}
                         onClick={() => onPageChange(p)}
                         className={cn(
-                            "h-8 w-8 rounded-full flex items-center justify-center text-[12px] font-medium transition-colors",
+                            "flex min-h-11 min-w-11 items-center justify-center rounded-full text-[12px] font-medium transition-colors sm:min-h-8 sm:min-w-8",
                             p === page
-                                ? "bg-primary text-white shadow-sm dark:bg-secondary dark:text-white"
-                                : "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800",
+                                ? "bg-primary text-primary-foreground shadow-sm dark:bg-secondary dark:text-primary-foreground"
+                                : "text-muted-foreground hover:bg-muted dark:hover:bg-muted",
                         )}
                     >
                         {p}
                     </button>
                 ))}
                 <button
-                    className="h-8 px-3 text-[12px] font-medium rounded-full border border-slate-200 dark:border-slate-700 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    className="min-h-11 px-4 text-[12px] font-medium rounded-full border border-border dark:border-border text-muted-foreground hover:bg-muted dark:hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors sm:min-h-8 sm:px-3"
                     disabled={page >= totalPages}
                     onClick={() => onPageChange(page + 1)}
                 >
                     Next
                 </button>
             </div>
-            <label className="flex items-center gap-1.5 text-[12px] text-slate-400 dark:text-slate-500">
+            <label className="flex items-center gap-1.5 text-[12px] text-muted-foreground dark:text-muted-foreground">
                 Rows
                 <select
                     value={rowsPerPage}
                     onChange={e => onRowsPerPageChange(Number(e.target.value))}
-                    className="h-8 rounded-full border border-slate-200 dark:border-slate-700 bg-transparent text-[12px] px-2 focus:outline-none focus:ring-2 focus:ring-secondary/30 cursor-pointer"
+                    className="min-h-11 rounded-full border border-border dark:border-border bg-transparent text-[12px] px-3 focus:outline-none focus:ring-2 focus:ring-secondary/30 cursor-pointer sm:min-h-8 sm:px-2"
                 >
                     {[5, 10, 15, 21].map(n => <option key={n} value={n}>{n}</option>)}
                 </select>
@@ -149,7 +161,7 @@ export function HierarchyStatCard({
     valueColor?: string;
 }) {
     return (
-        <div className="relative overflow-hidden bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-[0_2px_10px_-3px_rgba(15,23,42,0.08)] dark:shadow-[0_2px_10px_-3px_rgba(0,0,0,0.4)] hover:shadow-[0_8px_30px_-4px_rgba(15,23,42,0.12)] dark:hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.5)] motion-safe:hover:-translate-y-0.5 transition-[box-shadow,transform] duration-200 ease-out group/stat">
+        <div className="relative overflow-hidden bg-white dark:bg-muted p-4 sm:p-5 rounded-xl border border-border dark:border-border shadow-[0_2px_10px_-3px_rgba(15,23,42,0.08)] dark:shadow-[0_2px_10px_-3px_rgba(0,0,0,0.4)] hover:shadow-[0_8px_30px_-4px_rgba(15,23,42,0.12)] dark:hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.5)] motion-safe:hover:-translate-y-0.5 transition-[box-shadow,transform] duration-200 ease-out group/stat">
             <div
                 className="absolute top-0 left-0 right-0 h-[3px]"
                 style={{ backgroundColor: color }}
@@ -157,11 +169,11 @@ export function HierarchyStatCard({
             />
             <div className="flex justify-between items-start gap-2">
                 <div className="min-w-0">
-                    <p className="text-slate-500 dark:text-slate-400 text-[10px] sm:text-xs font-medium mb-1 uppercase tracking-wide">
+                    <p className="text-muted-foreground dark:text-muted-foreground text-[10px] sm:text-xs font-medium mb-1 uppercase tracking-wide">
                         {label}
                     </p>
                     <h3
-                        className="text-lg sm:text-xl md:text-2xl font-bold tabular-nums tracking-tight text-slate-800 dark:text-slate-100"
+                        className="text-lg sm:text-xl md:text-2xl font-bold tabular-nums tracking-tight text-foreground"
                         style={valueColor ? { color: valueColor } : undefined}
                     >
                         {value}

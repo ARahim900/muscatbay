@@ -49,8 +49,8 @@ export function TabNavigation({ tabs, activeTab, onTabChange, className, variant
             <div
                 className={cn(
                     "inline-flex items-center gap-1.5 sm:gap-3 p-1 sm:p-1.5 rounded-xl overflow-x-auto max-w-full",
-                    "bg-slate-100/80 dark:bg-slate-800/60",
-                    "border border-slate-200/60 dark:border-slate-700/50",
+                    "bg-muted/80",
+                    "border border-border/60",
                     "shadow-sm"
                 )}
                 role="tablist"
@@ -78,15 +78,15 @@ export function TabNavigation({ tabs, activeTab, onTabChange, className, variant
                                     "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-1",
                                     isActive
                                         ? [
-                                            "bg-white dark:bg-slate-900",
-                                            "text-primary dark:text-slate-100",
+                                            "bg-card",
+                                            "text-primary dark:text-foreground",
                                             "shadow-md",
-                                            "border border-slate-200/80 dark:border-slate-600/50",
+                                            "border border-border/80",
                                         ]
                                         : [
-                                            "text-slate-500 dark:text-slate-400",
-                                            "hover:text-primary dark:hover:text-slate-200",
-                                            "hover:bg-white/60 dark:hover:bg-slate-700/50",
+                                            "text-muted-foreground",
+                                            "hover:text-primary dark:hover:text-foreground",
+                                            "hover:bg-card/60",
                                         ]
                                 )}
                             >
@@ -94,7 +94,7 @@ export function TabNavigation({ tabs, activeTab, onTabChange, className, variant
                                     <tab.icon
                                         className={cn(
                                             "w-4 h-4 transition-colors duration-200",
-                                            isActive ? "text-secondary" : "text-slate-400 dark:text-slate-500"
+                                            isActive ? "text-secondary" : "text-muted-foreground/70"
                                         )}
                                     />
                                 )}
@@ -129,13 +129,13 @@ export function TabNavigation({ tabs, activeTab, onTabChange, className, variant
                                 isActive
                                     ? [
                                         "bg-primary dark:bg-primary/80",
-                                        "text-white",
+                                        "text-primary-foreground",
                                         "shadow-md shadow-primary/20",
                                     ]
                                     : [
-                                        "text-slate-600 dark:text-slate-400",
-                                        "hover:bg-white/70 dark:hover:bg-slate-700/60",
-                                        "hover:text-primary dark:hover:text-slate-200",
+                                        "text-muted-foreground",
+                                        "hover:bg-card/70",
+                                        "hover:text-primary dark:hover:text-foreground",
                                         "hover:shadow-sm",
                                     ]
                             )}

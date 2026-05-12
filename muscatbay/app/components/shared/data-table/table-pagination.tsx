@@ -37,7 +37,7 @@ export function TablePagination({
             {/* Left side: Page Size + Showing info */}
             <div className="flex items-center gap-3 sm:gap-4 w-full sm:w-auto justify-between sm:justify-start">
                 <div className="flex items-center gap-2">
-                    <span className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">Show</span>
+                    <span className="text-xs sm:text-sm text-muted-foreground">Show</span>
                     <select
                         value={pageSize}
                         onChange={(e) => {
@@ -45,7 +45,7 @@ export function TablePagination({
                             onPageSizeChange(val === 'All' ? 'All' : parseInt(val));
                         }}
                         aria-label="Rows per page"
-                        className="px-2 py-2 text-xs sm:text-sm rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-colors"
+                        className="px-2 py-2 text-xs sm:text-sm rounded-full border border-border bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-colors"
                     >
                         {pageSizeOptions.map(size => (
                             <option key={size} value={size}>{size}</option>
@@ -53,8 +53,8 @@ export function TablePagination({
                     </select>
                 </div>
 
-                <div className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-                    <span className="font-medium text-slate-700 dark:text-slate-300">{startIndex + 1}</span>–<span className="font-medium text-slate-700 dark:text-slate-300">{endIndex}</span> of <span className="font-medium text-slate-700 dark:text-slate-300">{totalItems}</span>
+                <div className="text-xs sm:text-sm text-muted-foreground">
+                    <span className="font-medium text-foreground">{startIndex + 1}</span>–<span className="font-medium text-foreground">{endIndex}</span> of <span className="font-medium text-foreground">{totalItems}</span>
                 </div>
             </div>
 
@@ -64,20 +64,20 @@ export function TablePagination({
                     <button
                         onClick={() => onPageChange(1)}
                         disabled={currentPage === 1}
-                        className="w-11 h-11 flex items-center justify-center rounded-full border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                        className="w-11 h-11 flex items-center justify-center rounded-full border border-border hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                         title="First page"
                         aria-label="First page"
                     >
-                        <ChevronsLeft className="w-4 h-4 text-slate-600 dark:text-slate-400" />
+                        <ChevronsLeft className="w-4 h-4 text-muted-foreground" />
                     </button>
                     <button
                         onClick={() => onPageChange(Math.max(1, currentPage - 1))}
                         disabled={currentPage === 1}
-                        className="w-11 h-11 flex items-center justify-center rounded-full border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                        className="w-11 h-11 flex items-center justify-center rounded-full border border-border hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                         title="Previous page"
                         aria-label="Previous page"
                     >
-                        <ChevronLeft className="w-4 h-4 text-slate-600 dark:text-slate-400" />
+                        <ChevronLeft className="w-4 h-4 text-muted-foreground" />
                     </button>
 
                     {/* Page Numbers */}
@@ -99,7 +99,7 @@ export function TablePagination({
 
                         return pages.map((page, idx) => (
                             page === '...' ? (
-                                <span key={`ellipsis-${idx}`} className="px-1.5 text-slate-400 dark:text-slate-500 text-sm">...</span>
+                                <span key={`ellipsis-${idx}`} className="px-1.5 text-muted-foreground/70 text-sm">...</span>
                             ) : (
                                 <button
                                     key={page}
@@ -108,8 +108,8 @@ export function TablePagination({
                                     className={cn(
                                         "min-w-11 h-11 rounded-full text-sm font-medium transition-colors duration-200",
                                         currentPage === page
-                                            ? "bg-primary text-white shadow-sm"
-                                            : "border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400"
+                                            ? "bg-primary text-primary-foreground shadow-sm"
+                                            : "border border-border hover:bg-muted text-muted-foreground"
                                     )}
                                 >
                                     {page}
@@ -121,20 +121,20 @@ export function TablePagination({
                     <button
                         onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
                         disabled={currentPage === totalPages}
-                        className="w-11 h-11 flex items-center justify-center rounded-full border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                        className="w-11 h-11 flex items-center justify-center rounded-full border border-border hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                         title="Next page"
                         aria-label="Next page"
                     >
-                        <ChevronRight className="w-4 h-4 text-slate-600 dark:text-slate-400" />
+                        <ChevronRight className="w-4 h-4 text-muted-foreground" />
                     </button>
                     <button
                         onClick={() => onPageChange(totalPages)}
                         disabled={currentPage === totalPages}
-                        className="w-11 h-11 flex items-center justify-center rounded-full border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                        className="w-11 h-11 flex items-center justify-center rounded-full border border-border hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                         title="Last page"
                         aria-label="Last page"
                     >
-                        <ChevronsRight className="w-4 h-4 text-slate-600 dark:text-slate-400" />
+                        <ChevronsRight className="w-4 h-4 text-muted-foreground" />
                     </button>
                 </div>
             )}

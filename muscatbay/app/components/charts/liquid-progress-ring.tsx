@@ -100,16 +100,16 @@ export function LiquidProgressRing({
                 {/* Center Content */}
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                     {showPercentage ? (
-                        <span className="text-2xl font-bold text-slate-800 dark:text-slate-100">
+                        <span className="text-2xl font-bold text-foreground">
                             {Math.round(percentage * 100)}%
                         </span>
                     ) : (
                         <>
-                            <span className="text-2xl font-bold text-slate-800 dark:text-slate-100">
+                            <span className="text-2xl font-bold text-foreground">
                                 {formatValue(value)}
                             </span>
                             {unit && (
-                                <span className="text-[10px] font-medium text-slate-400 dark:text-slate-500 -mt-0.5">
+                                <span className="text-[10px] font-medium text-muted-foreground/70 -mt-0.5">
                                     {unit}
                                 </span>
                             )}
@@ -122,12 +122,12 @@ export function LiquidProgressRing({
             {(label || sublabel || statusBadge) && (
                 <div className="mt-2 text-center">
                     {label && (
-                        <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
+                        <p className="text-sm font-medium text-muted-foreground">
                             {label}
                         </p>
                     )}
                     {sublabel && (
-                        <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
+                        <p className="text-xs text-muted-foreground/70 mt-0.5">
                             {sublabel}
                         </p>
                     )}

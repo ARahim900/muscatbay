@@ -59,7 +59,7 @@ export function CircularGauge({
 
     return (
         <div className={`flex flex-col items-center ${colorClasses.bg} rounded-2xl p-6`}>
-            <div className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-2 text-center">
+            <div className="text-xs font-medium text-muted-foreground dark:text-muted-foreground mb-2 text-center">
                 {label}
             </div>
             <div className={`relative ${sizeClasses.container}`}>
@@ -72,7 +72,7 @@ export function CircularGauge({
                         fill="none"
                         stroke="currentColor"
                         strokeWidth={sizeClasses.strokeWidth}
-                        className="text-slate-200 dark:text-slate-700"
+                        className="text-border dark:text-foreground"
                     />
                     {/* Progress circle */}
                     <circle
@@ -91,7 +91,7 @@ export function CircularGauge({
                     />
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className={`font-bold ${sizeClasses.text} text-slate-800 dark:text-slate-100`}>
+                    <span className={`font-bold ${sizeClasses.text} text-foreground`}>
                         {formatValue(value)}
                     </span>
                     {showPercentage && (
@@ -102,7 +102,7 @@ export function CircularGauge({
                 </div>
             </div>
             {sublabel && (
-                <div className={`mt-2 ${sizeClasses.sublabel} text-slate-500 dark:text-slate-400 text-center`}>
+                <div className={`mt-2 ${sizeClasses.sublabel} text-muted-foreground dark:text-muted-foreground text-center`}>
                     {sublabel}
                 </div>
             )}

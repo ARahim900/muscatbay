@@ -4,9 +4,9 @@ import { Providers } from "@/components/providers";
 import { NotificationProvider } from "@/components/NotificationProvider";
 import { RegisterSW } from "@/components/pwa/register-sw";
 import { LayoutRouter } from "@/components/layout/layout-router";
-import { DM_Sans } from "next/font/google";
+import { Inter } from "next/font/google";
 
-const dmSans = DM_Sans({
+const inter = Inter({
   subsets: ["latin"],
   display: "swap",
   variable: "--font-sans",
@@ -51,8 +51,8 @@ export const viewport = {
   initialScale: 1,
   viewportFit: "cover" as const,
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#F9FAFB" },
-    { media: "(prefers-color-scheme: dark)", color: "#0f172a" },
+    { media: "(prefers-color-scheme: light)", color: "#F7F8F9" },
+    { media: "(prefers-color-scheme: dark)", color: "#0A090C" },
   ],
 };
 
@@ -68,7 +68,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://utnlgeuqajmwibqmdmgt.supabase.co" />
         <link rel="preconnect" href="https://utnlgeuqajmwibqmdmgt.supabase.co" crossOrigin="anonymous" />
       </head>
-      <body className={`${dmSans.className} ${dmSans.variable}`} suppressHydrationWarning>
+      <body className={`${inter.className} ${inter.variable}`} suppressHydrationWarning>
         <RegisterSW />
         <Providers>
           <NotificationProvider>

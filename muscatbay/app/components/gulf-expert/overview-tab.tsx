@@ -105,9 +105,9 @@ export function OverviewTab({ data }: OverviewTabProps) {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Bar chart — Open items by building */}
-        <Card className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+        <Card className="bg-white dark:bg-muted rounded-xl border border-border dark:border-border shadow-sm">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-2">
+            <CardTitle className="text-sm font-semibold text-foreground dark:text-muted-foreground flex items-center gap-2">
               <Building2 className="h-4 w-4 text-primary" />
               Open Items by Building
             </CardTitle>
@@ -116,7 +116,7 @@ export function OverviewTab({ data }: OverviewTabProps) {
             <div className="h-[280px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={openByBuilding} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.2)" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" />
                   <XAxis dataKey="building" tick={{ fontSize: 11, fill: "var(--chart-axis)" }} />
                   <YAxis tick={{ fontSize: 11, fill: "var(--chart-axis)" }} allowDecimals={false} />
                   <Tooltip
@@ -136,9 +136,9 @@ export function OverviewTab({ data }: OverviewTabProps) {
         </Card>
 
         {/* Pie chart — Findings by status */}
-        <Card className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+        <Card className="bg-white dark:bg-muted rounded-xl border border-border dark:border-border shadow-sm">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-2">
+            <CardTitle className="text-sm font-semibold text-foreground dark:text-muted-foreground flex items-center gap-2">
               <ClipboardList className="h-4 w-4 text-secondary" />
               Findings by Status
             </CardTitle>
@@ -180,7 +180,7 @@ export function OverviewTab({ data }: OverviewTabProps) {
                     height={36}
                     iconSize={10}
                     formatter={(value: string) => (
-                      <span className="text-xs text-slate-600 dark:text-slate-400">{value}</span>
+                      <span className="text-xs text-muted-foreground dark:text-muted-foreground">{value}</span>
                     )}
                   />
                 </PieChart>
@@ -191,31 +191,31 @@ export function OverviewTab({ data }: OverviewTabProps) {
       </div>
 
       {/* PPM Schedule Grid */}
-      <Card className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+      <Card className="bg-white dark:bg-muted rounded-xl border border-border dark:border-border shadow-sm">
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+          <CardTitle className="text-sm font-semibold text-foreground dark:text-muted-foreground">
             FY25 PPM Schedule
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-slate-50 dark:bg-slate-800/80">
-                <tr className="border-b border-slate-200 dark:border-slate-700">
-                  <th scope="col" className="text-left py-4 px-4 font-semibold uppercase tracking-wide text-sm text-white">System</th>
-                  <th scope="col" className="text-center py-4 px-4 font-semibold uppercase tracking-wide text-sm text-white">Q1 (PPM1)</th>
-                  <th scope="col" className="text-center py-4 px-4 font-semibold uppercase tracking-wide text-sm text-white">Q2 (PPM2)</th>
-                  <th scope="col" className="text-center py-4 px-4 font-semibold uppercase tracking-wide text-sm text-white">Q3 (PPM3)</th>
-                  <th scope="col" className="text-center py-4 px-4 font-semibold uppercase tracking-wide text-sm text-white">Q4 (PPM4)</th>
+          <div className="ops-table-shell">
+            <table className="ops-table">
+              <thead className="bg-muted dark:bg-muted/80">
+                <tr className="border-b border-border dark:border-border">
+                  <th scope="col" className="text-left py-4 px-4 font-semibold uppercase tracking-wide text-sm text-primary-foreground">System</th>
+                  <th scope="col" className="text-center py-4 px-4 font-semibold uppercase tracking-wide text-sm text-primary-foreground">Q1 (PPM1)</th>
+                  <th scope="col" className="text-center py-4 px-4 font-semibold uppercase tracking-wide text-sm text-primary-foreground">Q2 (PPM2)</th>
+                  <th scope="col" className="text-center py-4 px-4 font-semibold uppercase tracking-wide text-sm text-primary-foreground">Q3 (PPM3)</th>
+                  <th scope="col" className="text-center py-4 px-4 font-semibold uppercase tracking-wide text-sm text-primary-foreground">Q4 (PPM4)</th>
                 </tr>
               </thead>
               <tbody>
                 {(["hvac", "bms"] as const).map((system, sIdx) => (
                   <tr
                     key={system}
-                    className={sIdx === 0 ? "border-b border-slate-100 dark:border-slate-800" : ""}
+                    className={sIdx === 0 ? "border-b border-border dark:border-border" : ""}
                   >
-                    <td className="py-4 px-4 font-medium text-slate-700 dark:text-slate-300 uppercase">
+                    <td className="py-4 px-4 font-medium text-foreground dark:text-muted-foreground/70 uppercase">
                       {system}
                     </td>
                     {ppmSchedule[system].map((q, i) => (
@@ -226,7 +226,7 @@ export function OverviewTab({ data }: OverviewTabProps) {
                               ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
                               : q.status === "In Progress"
                               ? "bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
-                              : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400"
+                              : "bg-muted text-muted-foreground dark:bg-muted dark:text-muted-foreground"
                           }`}
                         >
                           {q.status === "Completed" && <CheckCircle2 className="h-3 w-3" />}
@@ -245,15 +245,15 @@ export function OverviewTab({ data }: OverviewTabProps) {
 
       {/* Contract Summary */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Card className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+        <Card className="bg-white dark:bg-muted rounded-xl border border-border dark:border-border shadow-sm">
           <CardContent className="p-5">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-primary/10">
                 <Shield className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">HVAC AMC — Gulf Expert</p>
-                <p className="text-lg font-bold text-slate-800 dark:text-slate-100 tabular-nums">OMR 8,557.5</p>
+                <p className="text-xs font-medium text-muted-foreground dark:text-muted-foreground uppercase tracking-wide">HVAC AMC — Gulf Expert</p>
+                <p className="text-lg font-bold text-foreground tabular-nums">OMR 8,557.5</p>
               </div>
             </div>
             <div className="mt-3 space-y-2">
@@ -261,7 +261,7 @@ export function OverviewTab({ data }: OverviewTabProps) {
                 <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
                   Active
                 </span>
-                <span className="text-xs text-slate-400">3 Jun 2025 → 2 Jun 2026</span>
+                <span className="text-xs text-muted-foreground">3 Jun 2025 → 2 Jun 2026</span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
@@ -269,22 +269,22 @@ export function OverviewTab({ data }: OverviewTabProps) {
                   Renewal In Progress
                 </span>
               </div>
-              <p className="text-[10px] text-slate-400 leading-relaxed">
+              <p className="text-[10px] text-muted-foreground leading-relaxed">
                 2-year renewal requested 25 Mar 2026 · AHU/VRF excluded from scope · Quarterly PPM (Chillers B1–B8)
               </p>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+        <Card className="bg-white dark:bg-muted rounded-xl border border-border dark:border-border shadow-sm">
           <CardContent className="p-5">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-secondary/10">
                 <Shield className="h-5 w-5 text-secondary" />
               </div>
               <div>
-                <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">BMS AMC — Gulf Expert</p>
-                <p className="text-lg font-bold text-slate-800 dark:text-slate-100 tabular-nums">OMR 2,205</p>
+                <p className="text-xs font-medium text-muted-foreground dark:text-muted-foreground uppercase tracking-wide">BMS AMC — Gulf Expert</p>
+                <p className="text-lg font-bold text-foreground tabular-nums">OMR 2,205</p>
               </div>
             </div>
             <div className="mt-3 space-y-2">
@@ -292,7 +292,7 @@ export function OverviewTab({ data }: OverviewTabProps) {
                 <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
                   Active
                 </span>
-                <span className="text-xs text-slate-400">3 Jun 2025 → 2 Jun 2026</span>
+                <span className="text-xs text-muted-foreground">3 Jun 2025 → 2 Jun 2026</span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
@@ -300,7 +300,7 @@ export function OverviewTab({ data }: OverviewTabProps) {
                   Renewal In Progress
                 </span>
               </div>
-              <p className="text-[10px] text-slate-400 leading-relaxed">
+              <p className="text-[10px] text-muted-foreground leading-relaxed">
                 2-year renewal requested 25 Mar 2026 · Johnson Controls BMS · Software backup now in scope
               </p>
             </div>
@@ -309,7 +309,7 @@ export function OverviewTab({ data }: OverviewTabProps) {
       </div>
 
       {/* Pending Items */}
-      <Card className="bg-white dark:bg-slate-900 rounded-xl border border-amber-200 dark:border-amber-800/50 shadow-sm">
+      <Card className="bg-white dark:bg-muted rounded-xl border border-amber-200 dark:border-amber-800/50 shadow-sm">
         <CardContent className="p-4">
           <p className="text-xs font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wide mb-3">Action Items — Verified 28 Mar 2026</p>
           <div className="space-y-2">
@@ -330,16 +330,16 @@ export function OverviewTab({ data }: OverviewTabProps) {
                 status: "PR Revision Needed",
               },
             ].map((a) => (
-              <div key={a.item} className="flex gap-3 p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/50">
+              <div key={a.item} className="flex gap-3 p-2.5 rounded-lg bg-muted dark:bg-muted/50">
                 <AlertCircle className="h-4 w-4 text-amber-500 flex-shrink-0 mt-0.5" />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">{a.item}</p>
+                    <p className="text-xs font-semibold text-foreground dark:text-muted-foreground">{a.item}</p>
                     <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400">
                       {a.status}
                     </span>
                   </div>
-                  <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">{a.detail}</p>
+                  <p className="text-[10px] text-muted-foreground dark:text-muted-foreground mt-0.5 leading-relaxed">{a.detail}</p>
                 </div>
               </div>
             ))}

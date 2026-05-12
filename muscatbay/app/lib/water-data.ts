@@ -669,7 +669,10 @@ export function calculateBuildingAnalysis(buildingBulkAccount: string, month: st
 
 export function getConsumptionByType(month: string): { type: string; total: number; percentage: number; color: string }[] {
   const typeColors: Record<string, string> = {
-    Commercial: '#3B82F6', Residential: '#10B981', Irrigation: '#F59E0B', Common: '#8B5CF6'
+    Commercial: 'var(--status-info)',
+    Residential: 'var(--status-normal)',
+    Irrigation: 'var(--status-warning)',
+    Common: 'var(--module-assets)',
   };
 
   const results: { type: string; total: number; percentage: number; color: string }[] = [];
@@ -679,7 +682,7 @@ export function getConsumptionByType(month: string): { type: string; total: numb
     const meters = getWaterMeters().filter(m => types.includes(m.type));
     const total = meters.reduce((sum, m) => sum + getConsumption(m, month), 0);
     grandTotal += total;
-    results.push({ type: category, total, percentage: 0, color: typeColors[category] || '#6B7280' });
+    results.push({ type: category, total, percentage: 0, color: typeColors[category] || 'var(--status-missing)' });
   }
 
   results.forEach(r => { r.percentage = grandTotal > 0 ? Math.round((r.total / grandTotal) * 1000) / 10 : 0; });
@@ -708,10 +711,10 @@ export function getAllBuildingsAnalysis(month: string): BuildingAnalysis[] {
 }
 
 export function getPerformanceRating(lossPercentage: number): { status: string; color: string; emoji: string } {
-  if (lossPercentage < 10) return { status: 'Excellent', color: '#10B981', emoji: '🟢' };
-  if (lossPercentage < 20) return { status: 'Good', color: '#3B82F6', emoji: '🟡' };
-  if (lossPercentage < 30) return { status: 'Average', color: '#F59E0B', emoji: '🟠' };
-  return { status: 'Poor', color: '#EF4444', emoji: '🔴' };
+  if (lossPercentage < 10) return { status: 'Excellent', color: 'var(--status-normal)', emoji: '🟢' };
+  if (lossPercentage < 20) return { status: 'Good', color: 'var(--status-info)', emoji: '🟡' };
+  if (lossPercentage < 30) return { status: 'Average', color: 'var(--status-warning)', emoji: '🟠' };
+  return { status: 'Poor', color: 'var(--status-danger)', emoji: '🔴' };
 }
 
 export function formatNumber(num: number): string {

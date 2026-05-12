@@ -157,13 +157,13 @@ export function BottomNav() {
         }}
         className="fixed left-0 right-0 z-[95] md:hidden motion-safe:transition-transform motion-safe:duration-200 motion-safe:ease-out"
       >
-        <div className="mx-3 mb-2 rounded-2xl bg-white dark:bg-slate-800 shadow-2xl border border-gray-200 dark:border-slate-700 overflow-hidden">
+        <div className="mx-3 mb-2 rounded-2xl bg-white dark:bg-muted shadow-2xl border border-gray-200 dark:border-border overflow-hidden">
           {/* Drawer header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-slate-700">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-border">
             <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">More</span>
             <button
               onClick={() => setDrawerOpen(false)}
-              className="w-11 h-11 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-400 dark:text-gray-400 transition-colors focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:outline-none"
+              className="w-11 h-11 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-muted text-muted-foreground transition-colors focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:outline-none"
               aria-label="Close menu"
             >
               <X className="w-4 h-4" />
@@ -183,7 +183,7 @@ export function BottomNav() {
                     flex items-center gap-3 px-4 py-3 transition-colors focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:outline-none
                     ${active
                       ? 'bg-secondary/10 text-secondary'
-                      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700/50'
+                      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-muted/50'
                     }
                   `}
                 >
@@ -211,7 +211,7 @@ export function BottomNav() {
       {/* Bottom navigation bar — inert+aria-hidden when the More drawer is
           open so keyboard users cannot tab into it while the dialog is modal */}
       <nav
-        className="fixed bottom-0 left-0 right-0 z-[100] md:hidden bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-700/80 shadow-[0_-4px_16px_rgba(0,0,0,0.07)] dark:shadow-[0_-2px_10px_rgba(0,0,0,0.3)] bottom-nav-safe"
+        className="fixed bottom-0 left-0 right-0 z-[100] md:hidden bg-white dark:bg-muted border-t border-gray-200 dark:border-border/80 shadow-[0_-4px_16px_rgba(0,0,0,0.07)] dark:shadow-[0_-2px_10px_rgba(0,0,0,0.3)] bottom-nav-safe"
         aria-label="Mobile navigation"
         aria-hidden={drawerOpen || undefined}
         inert={drawerOpen}
@@ -228,7 +228,7 @@ export function BottomNav() {
                   flex flex-col items-center justify-center gap-0.5 flex-1 h-full pt-1.5 pb-1 rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:outline-none
                   ${active
                     ? 'text-secondary'
-                    : 'text-primary/70 dark:text-slate-400 hover:text-primary dark:hover:text-slate-200'
+                    : 'text-primary/70 dark:text-muted-foreground hover:text-primary dark:hover:text-foreground'
                   }
                 `}
               >
@@ -251,7 +251,7 @@ export function BottomNav() {
               flex flex-col items-center justify-center gap-0.5 flex-1 h-full pt-1.5 pb-1 rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:outline-none
               ${drawerOpen || isOverflowActive
                 ? 'text-secondary'
-                : 'text-primary/70 dark:text-slate-400 hover:text-primary dark:hover:text-slate-200'
+                : 'text-primary/70 dark:text-muted-foreground hover:text-primary dark:hover:text-foreground'
               }
             `}
             aria-label="More navigation items"

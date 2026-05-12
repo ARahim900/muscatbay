@@ -165,13 +165,13 @@ export default function ProfessionalApplicationPage() {
                             <CheckCircle2 className="w-8 h-8 text-mb-success-text" />
                         </div>
                         <h2 className="text-2xl font-bold mb-2">Application Submitted</h2>
-                        <p className="text-slate-500 dark:text-slate-400 mb-6">
+                        <p className="text-muted-foreground mb-6">
                             Thank you for your application! Our team will review your information and contact you at <strong>{formData.email}</strong> within 2-3 business days.
                         </p>
                         <div className="space-y-3">
                             <Button
                                 onClick={() => router.push("/login")}
-                                className="w-full bg-[var(--mb-primary)] hover:bg-[var(--mb-primary-hover)] text-white"
+                                className="w-full bg-[var(--mb-primary)] hover:bg-[var(--mb-primary-hover)] text-primary-foreground"
                             >
                                 Go to Login
                             </Button>
@@ -203,8 +203,8 @@ export default function ProfessionalApplicationPage() {
                             />
                         </div>
                         <div>
-                            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Muscat Bay</h1>
-                            <p className="text-sm text-slate-500 dark:text-slate-400">Professional Services</p>
+                            <h1 className="text-2xl font-bold text-foreground dark:text-primary-foreground">Muscat Bay</h1>
+                            <p className="text-sm text-muted-foreground">Professional Services</p>
                         </div>
                     </div>
                 </div>
@@ -228,7 +228,7 @@ export default function ProfessionalApplicationPage() {
                             <div className="space-y-2">
                                 <Label htmlFor="companyName">Company / Business Name *</Label>
                                 <div className="relative">
-                                    <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                                    <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                     <Input
                                         id="companyName"
                                         type="text"
@@ -248,7 +248,7 @@ export default function ProfessionalApplicationPage() {
                             <div className="space-y-2">
                                 <Label htmlFor="contactName">Contact Person *</Label>
                                 <div className="relative">
-                                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                     <Input
                                         id="contactName"
                                         type="text"
@@ -269,7 +269,7 @@ export default function ProfessionalApplicationPage() {
                                 <div className="space-y-2">
                                     <Label htmlFor="email">Email *</Label>
                                     <div className="relative">
-                                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                         <Input
                                             id="email"
                                             type="email"
@@ -287,7 +287,7 @@ export default function ProfessionalApplicationPage() {
                                 <div className="space-y-2">
                                     <Label htmlFor="phone">Phone *</Label>
                                     <div className="relative">
-                                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                         <Input
                                             id="phone"
                                             type="tel"
@@ -311,7 +311,7 @@ export default function ProfessionalApplicationPage() {
                                     onValueChange={(value) => value && handleChange('serviceCategory', value)}
                                 >
                                     <SelectTrigger className={fieldErrors.serviceCategory ? 'border-red-500' : ''}>
-                                        <Briefcase className="h-4 w-4 text-slate-400 mr-2" />
+                                        <Briefcase className="h-4 w-4 text-muted-foreground mr-2" />
                                         <SelectValue placeholder="Select your service category" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -331,7 +331,7 @@ export default function ProfessionalApplicationPage() {
                             <div className="space-y-2">
                                 <Label htmlFor="registrationNumber">Business Registration Number (Optional)</Label>
                                 <div className="relative">
-                                    <FileText className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                                    <FileText className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                     <Input
                                         id="registrationNumber"
                                         type="text"
@@ -355,7 +355,7 @@ export default function ProfessionalApplicationPage() {
                                     className={`min-h-[100px] ${fieldErrors.description ? 'border-red-500' : ''}`}
                                     maxLength={1000}
                                 />
-                                <div className="flex justify-between text-xs text-slate-400">
+                                <div className="flex justify-between text-xs text-muted-foreground">
                                     {fieldErrors.description ? (
                                         <p className="text-red-500">{fieldErrors.description}</p>
                                     ) : (
@@ -369,7 +369,7 @@ export default function ProfessionalApplicationPage() {
                         <CardFooter className="flex flex-col gap-4">
                             <Button
                                 type="submit"
-                                className="w-full bg-[var(--mb-primary)] hover:bg-[var(--mb-primary-hover)] text-white"
+                                className="w-full bg-[var(--mb-primary)] hover:bg-[var(--mb-primary-hover)] text-primary-foreground"
                                 disabled={loading}
                             >
                                 {loading ? (
@@ -385,12 +385,12 @@ export default function ProfessionalApplicationPage() {
                             <div className="flex items-center justify-center gap-4 text-sm">
                                 <Link
                                     href="/signup"
-                                    className="flex items-center gap-1 text-slate-500 dark:text-slate-400 hover:text-[var(--mb-primary)]"
+                                    className="flex items-center gap-1 text-muted-foreground hover:text-[var(--mb-primary)]"
                                 >
                                     <ArrowLeft className="h-4 w-4" />
                                     Back to Sign Up
                                 </Link>
-                                <span className="text-slate-300 dark:text-slate-600">|</span>
+                                <span className="text-muted-foreground/70 dark:text-muted-foreground">|</span>
                                 <Link
                                     href="/login"
                                     className="text-[var(--mb-primary)] hover:underline font-medium"
@@ -402,7 +402,7 @@ export default function ProfessionalApplicationPage() {
                     </form>
                 </Card>
 
-                <p className="text-center text-xs text-slate-500 dark:text-slate-400 mt-6">
+                <p className="text-center text-xs text-muted-foreground mt-6">
                     Your application will be reviewed by our team. We&apos;ll contact you within 2-3 business days.
                 </p>
             </div>

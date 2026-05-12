@@ -181,7 +181,7 @@ export function CSVUploadDialog({ month, year, onUploadComplete }: CSVUploadDial
                         onClick={uploadState === 'idle' || uploadState === 'error' ? handleClickUpload : undefined}
                         className={cn(
                             "relative border-2 border-dashed rounded-lg p-8 text-center transition-all duration-200 cursor-pointer",
-                            uploadState === 'idle' && "border-slate-300 dark:border-slate-600 hover:border-primary hover:bg-primary/5",
+                            uploadState === 'idle' && "border-border dark:border-border hover:border-primary hover:bg-primary/5",
                             uploadState === 'dragging' && "border-primary bg-primary/10",
                             uploadState === 'uploading' && "border-mb-warning bg-mb-warning-light cursor-wait",
                             uploadState === 'success' && "border-mb-success bg-mb-success-light cursor-default",
@@ -198,11 +198,11 @@ export function CSVUploadDialog({ month, year, onUploadComplete }: CSVUploadDial
 
                         {uploadState === 'idle' && (
                             <div className="space-y-2">
-                                <Upload className="h-10 w-10 mx-auto text-slate-400" />
-                                <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                                <Upload className="h-10 w-10 mx-auto text-muted-foreground" />
+                                <p className="text-sm font-medium text-foreground dark:text-muted-foreground/70">
                                     Drag & drop your CSV file here
                                 </p>
-                                <p className="text-xs text-slate-500">
+                                <p className="text-xs text-muted-foreground">
                                     or click to browse
                                 </p>
                             </div>
@@ -244,7 +244,7 @@ export function CSVUploadDialog({ month, year, onUploadComplete }: CSVUploadDial
                                 <p className="text-sm font-medium text-mb-danger-text">
                                     Import Failed
                                 </p>
-                                <p className="text-xs text-slate-500">
+                                <p className="text-xs text-muted-foreground">
                                     Click to try again
                                 </p>
                             </div>
@@ -265,7 +265,7 @@ export function CSVUploadDialog({ month, year, onUploadComplete }: CSVUploadDial
                                     <p className="text-2xl font-bold text-mb-success-text">
                                         {result.imported}
                                     </p>
-                                    <p className="text-xs text-slate-600 dark:text-slate-400">
+                                    <p className="text-xs text-muted-foreground dark:text-muted-foreground">
                                         Rows Imported
                                     </p>
                                 </div>
@@ -273,7 +273,7 @@ export function CSVUploadDialog({ month, year, onUploadComplete }: CSVUploadDial
                                     <p className="text-2xl font-bold text-mb-warning-text">
                                         {result.skipped}
                                     </p>
-                                    <p className="text-xs text-slate-600 dark:text-slate-400">
+                                    <p className="text-xs text-muted-foreground dark:text-muted-foreground">
                                         Rows Skipped
                                     </p>
                                 </div>
@@ -296,7 +296,7 @@ export function CSVUploadDialog({ month, year, onUploadComplete }: CSVUploadDial
 
                             {/* Storage path */}
                             {result.storagePath && (
-                                <p className="text-xs text-slate-500 truncate">
+                                <p className="text-xs text-muted-foreground truncate">
                                     📁 Saved to: {result.storagePath}
                                 </p>
                             )}

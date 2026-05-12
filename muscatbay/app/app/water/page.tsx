@@ -62,8 +62,8 @@ type DashboardView = 'monthly' | 'daily';
 
 const CHART_COLORS = {
     primary: 'var(--chart-water-primary, #6B9AC4)',
-    secondary: 'var(--chart-water-secondary, #A1D1D5)',
-    accent: 'var(--chart-water-accent, #A1D1D5)',
+    secondary: 'var(--chart-water-secondary, #43B3AE)',
+    accent: 'var(--chart-water-accent, #43B3AE)',
     success: 'var(--chart-success, #84B59F)',
     loss: 'var(--chart-loss, #D67A7A)',
     brand: 'var(--chart-brand, #4D445D)',
@@ -740,7 +740,7 @@ export default function WaterPage() {
                                     {/* Year Selector Row */}
                                     <div className="flex items-center justify-between flex-wrap gap-3">
                                         <div className="flex items-center gap-3">
-                                            <span className="text-sm font-medium text-slate-600 dark:text-slate-400">Filter by Year:</span>
+                                            <span className="text-sm font-medium text-muted-foreground dark:text-muted-foreground">Filter by Year:</span>
                                             <div className="flex items-center gap-2">
                                                 {availableYears.map((year) => (
                                                     <Button
@@ -757,7 +757,7 @@ export default function WaterPage() {
                                                                 setEndMonth(yearMonths[yearMonths.length - 1]);
                                                             }
                                                         }}
-                                                        className={`rounded-full px-4 min-h-[44px] lg:min-h-0 ${selectedYear === year ? "bg-secondary text-white" : "border-slate-200 dark:border-slate-700"}`}
+                                                        className={`rounded-full px-4 min-h-[44px] lg:min-h-0 ${selectedYear === year ? "bg-secondary text-primary-foreground" : "border-border dark:border-border"}`}
                                                     >
                                                         {year}
                                                     </Button>
@@ -767,7 +767,7 @@ export default function WaterPage() {
 
                                         {monthlyTab === 'consumption' ? (
                                             <div className="flex items-center gap-2 flex-wrap">
-                                                <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Type:</span>
+                                                <span className="text-xs font-medium text-muted-foreground">Type:</span>
                                                 <select
                                                     value={selectedType}
                                                     onChange={(e) => {
@@ -776,7 +776,7 @@ export default function WaterPage() {
                                                         setSelectedChartType(val === 'All' ? null : val);
                                                     }}
                                                     aria-label="Filter by meter type"
-                                                    className="px-2.5 py-2 sm:py-1.5 min-h-[44px] lg:min-h-0 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 text-sm font-medium text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                                                    className="px-2.5 py-2 sm:py-1.5 min-h-[44px] lg:min-h-0 rounded-lg border border-border dark:border-border bg-white/50 dark:bg-muted/50 text-sm font-medium text-foreground dark:text-muted-foreground/70 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
                                                 >
                                                     {uniqueTypes.map((t) => (
                                                         <option key={t} value={t}>{t}</option>
@@ -804,8 +804,8 @@ export default function WaterPage() {
 
                                     {/* Zone selector - only shown on zone tab */}
                                     {monthlyTab === 'zone' && (
-                                        <div className="flex items-center gap-2 flex-wrap pt-1 border-t border-slate-100 dark:border-slate-800">
-                                            <span className="text-sm font-medium text-slate-600 dark:text-slate-400 shrink-0">Zone:</span>
+                                        <div className="flex items-center gap-2 flex-wrap pt-1 border-t border-border dark:border-border">
+                                            <span className="text-sm font-medium text-muted-foreground dark:text-muted-foreground shrink-0">Zone:</span>
                                             <Button
                                                 key="Direct_Connection"
                                                 variant={selectedZone === 'Direct_Connection' ? "default" : "outline"}
@@ -813,7 +813,7 @@ export default function WaterPage() {
                                                 aria-label="Select Direct Connection"
                                                 aria-pressed={selectedZone === 'Direct_Connection'}
                                                 onClick={() => setSelectedZone('Direct_Connection')}
-                                                className={`rounded-full px-3 text-xs min-h-[44px] lg:min-h-0 h-auto lg:h-7 ${selectedZone === 'Direct_Connection' ? "bg-secondary text-white border-secondary" : "border-slate-200 dark:border-slate-700"}`}
+                                                className={`rounded-full px-3 text-xs min-h-[44px] lg:min-h-0 h-auto lg:h-7 ${selectedZone === 'Direct_Connection' ? "bg-secondary text-primary-foreground border-secondary" : "border-border dark:border-border"}`}
                                             >
                                                 Direct Connection
                                             </Button>
@@ -825,7 +825,7 @@ export default function WaterPage() {
                                                     aria-label={`Select ${z.name} zone`}
                                                     aria-pressed={selectedZone === z.code}
                                                     onClick={() => setSelectedZone(z.code)}
-                                                    className={`rounded-full px-3 text-xs min-h-[44px] lg:min-h-0 h-auto lg:h-7 ${selectedZone === z.code ? "bg-secondary text-white border-secondary" : "border-slate-200 dark:border-slate-700"}`}
+                                                    className={`rounded-full px-3 text-xs min-h-[44px] lg:min-h-0 h-auto lg:h-7 ${selectedZone === z.code ? "bg-secondary text-primary-foreground border-secondary" : "border-border dark:border-border"}`}
                                                 >
                                                     {z.name}
                                                 </Button>
@@ -835,7 +835,7 @@ export default function WaterPage() {
                                                 size="sm"
                                                 aria-label="Reset zone selection"
                                                 onClick={() => setSelectedZone(ZONE_CONFIG[0].code)}
-                                                className="text-xs text-slate-400 hover:text-red-500 dark:hover:text-red-400 min-h-[44px] lg:min-h-0 h-auto lg:h-7 ml-1"
+                                                className="text-xs text-muted-foreground hover:text-red-500 dark:hover:text-red-400 min-h-[44px] lg:min-h-0 h-auto lg:h-7 ml-1"
                                             >
                                                 Reset
                                             </Button>
@@ -873,7 +873,7 @@ export default function WaterPage() {
                                                 </defs>
                                                 <XAxis dataKey="month" className="text-xs" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "var(--chart-axis)" }} dy={10} />
                                                 <YAxis className="text-xs" tickFormatter={(v) => `${v / 1000}k`} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "var(--chart-axis)" }} label={{ value: 'm³', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: "var(--chart-axis)", fontSize: 11 } }} />
-                                                <Tooltip content={<LiquidTooltip />} cursor={{ stroke: 'rgba(0,0,0,0.1)', strokeWidth: 2 }} />
+                                                <Tooltip content={<LiquidTooltip />} cursor={{ stroke: 'var(--chart-cursor-stroke)', strokeWidth: 2 }} />
                                                 <Legend content={<ToggleableLegendContent isHidden={aValuesLegend.isHidden} onToggle={aValuesLegend.toggle} />} />
                                                 <Area type="monotone" name="A1 - Main Source" dataKey="A1" hide={aValuesLegend.isHidden("A1")} stroke={CHART_COLORS.brand} fill="url(#gradA1)" strokeWidth={3} activeDot={{ r: 6, stroke: 'var(--card)', strokeWidth: 2 }} animationDuration={600} animationEasing="ease-out" />
                                                 <Area type="monotone" name="A2 - Zone Distribution" dataKey="A2" hide={aValuesLegend.isHidden("A2")} stroke={CHART_COLORS.primary} fill="url(#gradA2)" strokeWidth={3} animationDuration={600} animationEasing="ease-out" />
@@ -901,7 +901,7 @@ export default function WaterPage() {
                                                 </defs>
                                                 <XAxis dataKey="month" className="text-xs" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "var(--chart-axis)" }} dy={10} />
                                                 <YAxis className="text-xs" tickFormatter={(v) => `${v / 1000}k`} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "var(--chart-axis)" }} label={{ value: 'm³', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: "var(--chart-axis)", fontSize: 11 } }} />
-                                                <Tooltip content={<LiquidTooltip />} cursor={{ stroke: 'rgba(0,0,0,0.1)', strokeWidth: 2 }} />
+                                                <Tooltip content={<LiquidTooltip />} cursor={{ stroke: 'var(--chart-cursor-stroke)', strokeWidth: 2 }} />
                                                 <Legend content={<ToggleableLegendContent isHidden={lossAnalysisLegend.isHidden} onToggle={lossAnalysisLegend.toggle} />} />
                                                 <Area type="monotone" name="Total Loss" dataKey="totalLoss" hide={lossAnalysisLegend.isHidden("totalLoss")} stroke={CHART_COLORS.loss} fill="url(#gradLoss)" strokeWidth={2} strokeDasharray="5 5" animationDuration={600} animationEasing="ease-out" />
                                                 <Line type="monotone" name="Stage 1 Loss" dataKey="stage1Loss" hide={lossAnalysisLegend.isHidden("stage1Loss")} stroke={CHART_COLORS.amber} strokeWidth={2} strokeDasharray="3 3" dot={false} animationDuration={600} animationEasing="ease-out" />
@@ -919,10 +919,10 @@ export default function WaterPage() {
                         <div id="panel-zone" role="tabpanel" aria-labelledby="tab-zone" tabIndex={0} className="space-y-6">
                             {/* Zone Heading */}
                             <div>
-                                <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">
+                                <h2 className="text-xl font-bold text-foreground">
                                     {selectedZone === 'Direct_Connection' ? 'Direct Connection' : ZONE_CONFIG.find(z => z.code === selectedZone)?.name} — {startMonth === endMonth ? endMonth : `${startMonth} – ${endMonth}`}
                                 </h2>
-                                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                                <p className="text-sm text-muted-foreground mt-1">
                                     {selectedZone === 'Direct_Connection' ? (
                                         <>
                                             <span className="text-mb-secondary font-medium">Main Bulk (L1)</span> = Total NAMA input •
@@ -976,7 +976,7 @@ export default function WaterPage() {
                             <Card className="card-elevated">
                                 <CardHeader className="card-elevated-header p-4 sm:p-5 md:p-6">
                                     <CardTitle className="text-base sm:text-lg">{isDC ? 'Main Bulk vs Distribution Trend' : 'Zone Consumption Trend'}</CardTitle>
-                                    <p className="text-xs sm:text-sm text-slate-500">{isDC ? 'Monthly comparison of L1 (Main Bulk) vs L2 + DC totals' : 'Monthly comparison of L2 (Bulk) vs L3 totals'}</p>
+                                    <p className="text-xs sm:text-sm text-muted-foreground">{isDC ? 'Monthly comparison of L1 (Main Bulk) vs L2 + DC totals' : 'Monthly comparison of L2 (Bulk) vs L3 totals'}</p>
                                 </CardHeader>
                                 <CardContent className="p-4 sm:p-5 md:p-6 pt-0">
                                     <div role="img" aria-label={isDC ? 'Main Bulk vs Distribution Trend: area chart comparing L1 main bulk input against L2 zone bulk plus direct connections' : 'Zone Consumption Trend: area chart comparing zone bulk meter readings against individual L3 meter totals and loss'} className="h-[200px] sm:h-[250px] md:h-[300px] w-full">
@@ -994,7 +994,7 @@ export default function WaterPage() {
                                                 </defs>
                                                 <XAxis dataKey="month" className="text-xs" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "var(--chart-axis)" }} dy={10} />
                                                 <YAxis className="text-xs" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "var(--chart-axis)" }} label={{ value: 'm³', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: "var(--chart-axis)", fontSize: 11 } }} />
-                                                <Tooltip content={<LiquidTooltip />} cursor={{ stroke: 'rgba(0,0,0,0.1)', strokeWidth: 2 }} />
+                                                <Tooltip content={<LiquidTooltip />} cursor={{ stroke: 'var(--chart-cursor-stroke)', strokeWidth: 2 }} />
                                                 <Legend content={<ToggleableLegendContent isHidden={zoneTrendLegend.isHidden} onToggle={zoneTrendLegend.toggle} />} />
                                                 <Area type="monotone" name="Individual Total" dataKey="Individual Total" hide={zoneTrendLegend.isHidden("Individual Total")} stroke={CHART_COLORS.brand} fill="url(#gradIndividual)" strokeWidth={3} activeDot={{ r: 6, stroke: 'var(--card)', strokeWidth: 2 }} animationDuration={600} animationEasing="ease-out" />
                                                 <Line type="monotone" name="Loss" dataKey="Loss" hide={zoneTrendLegend.isHidden("Loss")} stroke={CHART_COLORS.loss} strokeWidth={2} dot={false} strokeDasharray="5 5" animationDuration={600} animationEasing="ease-out" />
@@ -1011,7 +1011,7 @@ export default function WaterPage() {
                                     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                                         <div>
                                             <CardTitle className="text-base sm:text-lg">{isDC ? 'Main Bulk, Zone Bulks & DC Meters' : `Zone Meters - ${ZONE_CONFIG.find(z => z.code === selectedZone)?.name}`}</CardTitle>
-                                            <p className="text-xs sm:text-sm text-slate-500">{isDC ? 'L1 main source, L2 zone bulk meters, and direct connections' : 'Zone bulk and individual meters'}</p>
+                                            <p className="text-xs sm:text-sm text-muted-foreground">{isDC ? 'L1 main source, L2 zone bulk meters, and direct connections' : 'Zone bulk and individual meters'}</p>
                                         </div>
                                     </div>
                                 </CardHeader>
@@ -1046,8 +1046,8 @@ export default function WaterPage() {
                                     <div className="flex items-center justify-between flex-wrap gap-2">
                                         <div>
                                             <CardTitle className="text-base sm:text-lg">Consumption by Type (m³)</CardTitle>
-                                            <p className="text-xs text-slate-500 mt-0.5">
-                                                {startMonth} – {endMonth} · <span className="font-medium text-slate-600 dark:text-slate-300">{totalConsumption.toLocaleString('en-US', { maximumFractionDigits: 1 })} m³</span> total · {filteredMeters.length} meters
+                                            <p className="text-xs text-muted-foreground mt-0.5">
+                                                {startMonth} – {endMonth} · <span className="font-medium text-muted-foreground">{totalConsumption.toLocaleString('en-US', { maximumFractionDigits: 1 })} m³</span> total · {filteredMeters.length} meters
                                             </p>
                                         </div>
                                         {activeDetailType && (
@@ -1055,7 +1055,7 @@ export default function WaterPage() {
                                                 variant="ghost"
                                                 size="sm"
                                                 onClick={() => { setSelectedChartType(null); setSelectedType('All'); }}
-                                                className="text-xs text-slate-400 hover:text-red-500 dark:hover:text-red-400"
+                                                className="text-xs text-muted-foreground hover:text-red-500 dark:hover:text-red-400"
                                             >
                                                 Clear selection
                                             </Button>
@@ -1085,7 +1085,7 @@ export default function WaterPage() {
                                             >
                                                 <XAxis type="number" tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "var(--chart-axis)" }} label={{ value: 'm³', position: 'insideBottom', offset: -5, style: { textAnchor: 'middle', fill: "var(--chart-axis)", fontSize: 11 } }} />
                                                 <YAxis type="category" dataKey="type" width={55} className="text-xs" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "var(--chart-axis)" }} />
-                                                <Tooltip content={<LiquidTooltip />} cursor={{ fill: 'rgba(0,0,0,0.04)', radius: 6 }} />
+                                                <Tooltip content={<LiquidTooltip />} cursor={{ fill: 'var(--chart-cursor-fill)', radius: 6 }} />
                                                 <Bar dataKey="total" radius={[0, 6, 6, 0]} barSize={24} animationDuration={600} animationEasing="ease-out">
                                                     {consumptionChartData.map((entry, index) => (
                                                         <Cell
@@ -1101,7 +1101,7 @@ export default function WaterPage() {
                                         </ResponsiveContainer>
                                     </div>
                                     {!activeDetailType && (
-                                        <p className="text-[11px] text-slate-400 text-center mt-2">Click any bar to see detailed breakdown</p>
+                                        <p className="text-[11px] text-muted-foreground text-center mt-2">Click any bar to see detailed breakdown</p>
                                     )}
                                 </CardContent>
                             </Card>
@@ -1114,15 +1114,15 @@ export default function WaterPage() {
                                     <div className="flex items-center gap-3 px-1 flex-wrap">
                                         <div className="flex items-center gap-2">
                                             <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: TYPE_COLORS[activeDetailType] || CHART_COLORS.gray }} />
-                                            <span className="text-sm font-semibold text-slate-800 dark:text-slate-100">{activeDetailType}</span>
+                                            <span className="text-sm font-semibold text-foreground">{activeDetailType}</span>
                                         </div>
-                                        <span className="text-xs text-slate-400">|</span>
-                                        <span className="text-xs text-slate-500 dark:text-slate-400">
-                                            <span className="font-medium text-slate-700 dark:text-slate-200">{typeDetailStats.totalForType.toLocaleString('en-US', { maximumFractionDigits: 0 })} m³</span>
+                                        <span className="text-xs text-muted-foreground">|</span>
+                                        <span className="text-xs text-muted-foreground">
+                                            <span className="font-medium text-foreground">{typeDetailStats.totalForType.toLocaleString('en-US', { maximumFractionDigits: 0 })} m³</span>
                                             {' '}({typeDetailStats.pctOfTotal.toFixed(1)}% of total)
                                         </span>
-                                        <span className="text-xs text-slate-400">|</span>
-                                        <span className="text-xs text-slate-500 dark:text-slate-400">{typeDetailStats.meterCount} meters · avg {typeDetailStats.avgPerMeter.toLocaleString('en-US', { maximumFractionDigits: 0 })} m³ each</span>
+                                        <span className="text-xs text-muted-foreground">|</span>
+                                        <span className="text-xs text-muted-foreground">{typeDetailStats.meterCount} meters · avg {typeDetailStats.avgPerMeter.toLocaleString('en-US', { maximumFractionDigits: 0 })} m³ each</span>
                                     </div>
 
                                     {/* Monthly Trend — full width */}
@@ -1140,7 +1140,7 @@ export default function WaterPage() {
                                                                 <stop offset="95%" stopColor={TYPE_COLORS[activeDetailType] || CHART_COLORS.primary} stopOpacity={0} />
                                                             </linearGradient>
                                                         </defs>
-                                                        <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid, rgba(148,163,184,0.15))" />
+                                                        <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" />
                                                         <XAxis dataKey="month" tick={{ fontSize: 10, fill: "var(--chart-axis)" }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
                                                         <YAxis tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v} tick={{ fontSize: 10, fill: "var(--chart-axis)" }} axisLine={false} tickLine={false} />
                                                         <Tooltip content={<LiquidTooltip />} />
@@ -1164,7 +1164,7 @@ export default function WaterPage() {
                                             <CardTitle className="text-sm sm:text-base">Representing Meters</CardTitle>
                                         </CardHeader>
                                         <CardContent className="p-0">
-                                            <div className="overflow-x-auto">
+                                            <div>
                                                 <Table>
                                                     <TableHeader>
                                                         <TableRow>
@@ -1178,9 +1178,9 @@ export default function WaterPage() {
                                                     <TableBody>
                                                         {typeTopConsumers.map((meter, idx) => (
                                                             <TableRow key={meter.label}>
-                                                                <TableCell className="text-xs text-slate-400 pl-4 sm:pl-6 font-mono">{idx + 1}</TableCell>
+                                                                <TableCell className="text-xs text-muted-foreground pl-4 sm:pl-6 font-mono">{idx + 1}</TableCell>
                                                                 <TableCell className="text-xs font-medium">{meter.label}</TableCell>
-                                                                <TableCell className="text-xs text-slate-500">
+                                                                <TableCell className="text-xs text-muted-foreground">
                                                                     {ZONE_CONFIG.find(z => z.code === meter.zone)?.name || meter.zone}
                                                                 </TableCell>
                                                                 <TableCell className="text-xs text-right font-mono pr-4 sm:pr-6">
@@ -1188,7 +1188,7 @@ export default function WaterPage() {
                                                                 </TableCell>
                                                                 <TableCell className="text-xs text-right pr-4 sm:pr-6 hidden sm:table-cell">
                                                                     <div className="flex items-center justify-end gap-2">
-                                                                        <div className="w-16 h-1.5 rounded-full bg-slate-100 dark:bg-slate-700/50 overflow-hidden">
+                                                                        <div className="w-16 h-1.5 rounded-full bg-muted dark:bg-muted/50 overflow-hidden">
                                                                             <div
                                                                                 className="h-full rounded-full transition-all"
                                                                                 style={{
@@ -1198,7 +1198,7 @@ export default function WaterPage() {
                                                                                 }}
                                                                             />
                                                                         </div>
-                                                                        <span className="text-slate-400 w-10 text-right">
+                                                                        <span className="text-muted-foreground w-10 text-right">
                                                                             {typeDetailStats.totalForType > 0 ? ((meter.total / typeDetailStats.totalForType) * 100).toFixed(1) : '0'}%
                                                                         </span>
                                                                     </div>
@@ -1245,4 +1245,3 @@ export default function WaterPage() {
         </div>
     );
 }
-

@@ -12,7 +12,7 @@ import { DateRangePicker } from "@/components/water/date-range-picker";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { Zap, DollarSign, MapPin, TrendingUp, BarChart3, Database, Search, Download, X, Filter, LineChart } from "lucide-react";
-import { MultiSelectDropdown, SortIcon, TablePagination, ActiveFilterPills, TableToolbar, StatusBadge, type BadgeColor, type PageSizeOption } from "@/components/shared/data-table";
+import { MultiSelectDropdown, TablePagination, ActiveFilterPills, TableToolbar, StatusBadge, SortableTableHead, type BadgeColor, type PageSizeOption } from "@/components/shared/data-table";
 import { exportToCSV, getDateForFilename } from "@/lib/export-utils";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar, Cell, Legend, ReferenceLine, LineChart as RechartsLineChart, Line } from "recharts";
 import { LiquidTooltip } from "@/components/charts/liquid-tooltip";
@@ -751,7 +751,7 @@ export default function ElectricityPage() {
                     <Skeleton className="h-10 w-28 rounded-lg" />
                 </div>
                 {/* Date filter skeleton */}
-                <div className="p-6 rounded-xl border border-slate-200/60 bg-white dark:bg-slate-800/50">
+                <div className="p-6 rounded-xl border border-border/60 bg-white dark:bg-muted/50">
                     <div className="flex flex-wrap gap-4">
                         <Skeleton className="h-10 w-48" />
                         <Skeleton className="h-10 w-48" />
@@ -805,7 +805,7 @@ export default function ElectricityPage() {
                             {/* Year Selector Row */}
                             <div className="flex items-center justify-between flex-wrap gap-3">
                                 <div className="flex items-center gap-3">
-                                    <span className="text-sm font-medium text-slate-600 dark:text-slate-400">Filter by Year:</span>
+                                    <span className="text-sm font-medium text-muted-foreground dark:text-muted-foreground">Filter by Year:</span>
                                     <div className="flex items-center gap-2">
                                         <Button
                                             variant={selectedYear === "" ? "default" : "outline"}
@@ -819,7 +819,7 @@ export default function ElectricityPage() {
                                                     setEndMonth(allMonths[allMonths.length - 1]);
                                                 }
                                             }}
-                                            className={`rounded-full px-4 ${selectedYear === "" ? "bg-secondary text-white" : "border-slate-200 dark:border-slate-700"}`}
+                                            className={`rounded-full px-4 ${selectedYear === "" ? "bg-secondary text-primary-foreground" : "border-border dark:border-border"}`}
                                         >
                                             All
                                         </Button>
@@ -838,7 +838,7 @@ export default function ElectricityPage() {
                                                         setEndMonth(yearMonths[yearMonths.length - 1]);
                                                     }
                                                 }}
-                                                className={`rounded-full px-4 ${selectedYear === year ? "bg-secondary text-white" : "border-slate-200 dark:border-slate-700"}`}
+                                                className={`rounded-full px-4 ${selectedYear === year ? "bg-secondary text-primary-foreground" : "border-border dark:border-border"}`}
                                             >
                                                 {year}
                                             </Button>
@@ -851,12 +851,12 @@ export default function ElectricityPage() {
                                     <div className="flex items-center gap-3 flex-wrap">
                                         {/* Type selector */}
                                         <div className="flex items-center gap-2">
-                                            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Type:</span>
+                                            <span className="text-xs font-medium text-muted-foreground">Type:</span>
                                             <select
                                                 value={analysisType}
                                                 onChange={(e) => setAnalysisType(e.target.value)}
                                                 aria-label="Filter by meter type"
-                                                className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 text-sm font-medium text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-secondary/40"
+                                                className="px-2.5 py-1.5 rounded-lg border border-border dark:border-border bg-white/50 dark:bg-muted/50 text-sm font-medium text-foreground dark:text-muted-foreground/70 focus:outline-none focus:ring-2 focus:ring-secondary/40"
                                             >
                                                 <option value="All">All ({meters.length})</option>
                                                 {meterTypes.map((t) => (
@@ -874,7 +874,7 @@ export default function ElectricityPage() {
                                                     value={selectedMeter}
                                                     onChange={(e) => setSelectedMeter(e.target.value)}
                                                     aria-label={`Select individual ${analysisType} meter`}
-                                                    className="px-2.5 py-1.5 rounded-lg border border-secondary/40 bg-white dark:bg-slate-800 text-sm font-medium text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-secondary/40 w-full max-w-full sm:max-w-[280px]"
+                                                    className="px-2.5 py-1.5 rounded-lg border border-secondary/40 bg-white dark:bg-muted text-sm font-medium text-foreground dark:text-muted-foreground/70 focus:outline-none focus:ring-2 focus:ring-secondary/40 w-full max-w-full sm:max-w-[280px]"
                                                 >
                                                     <option value="All">All {analysisType} ({metersOfSelectedType.length})</option>
                                                     {metersOfSelectedType.map((m) => (
@@ -930,7 +930,7 @@ export default function ElectricityPage() {
                                             </defs>
                                             <XAxis dataKey="month" className="text-xs" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "var(--chart-axis)" }} dy={10} />
                                             <YAxis className="text-xs" tickFormatter={(v) => `${v / 1000}k`} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "var(--chart-axis)" }} label={{ value: 'kWh', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: "var(--chart-axis)", fontSize: 11 } }} />
-                                            <Tooltip content={<LiquidTooltip />} cursor={{ stroke: 'rgba(0,0,0,0.1)', strokeWidth: 2 }} />
+                                            <Tooltip content={<LiquidTooltip />} cursor={{ stroke: 'var(--chart-cursor-stroke)', strokeWidth: 2 }} />
                                             <Legend iconType="circle" wrapperStyle={{ paddingTop: 10 }} />
                                             <Area type="natural" dataKey="consumption" name="Consumption" stroke={CHART_COLORS.primary} fill="url(#elecGrad)" strokeWidth={3} activeDot={{ r: 6, stroke: 'var(--card)', strokeWidth: 2 }} animationDuration={600} />
                                         </AreaChart>
@@ -949,7 +949,7 @@ export default function ElectricityPage() {
                                         <BarChart data={consumptionByType} layout="vertical" margin={{ left: 10 }}>
                                             <XAxis type="number" hide />
                                             <YAxis type="category" dataKey="type" width={80} className="text-xs" axisLine={false} tickLine={false} tick={{ fill: "var(--chart-axis)" }} />
-                                            <Tooltip content={<LiquidTooltip />} cursor={{ fill: 'rgba(0,0,0,0.04)', radius: 6 }} />
+                                            <Tooltip content={<LiquidTooltip />} cursor={{ fill: 'var(--chart-cursor-fill)', radius: 6 }} />
                                             <Bar dataKey="value" radius={[0, 6, 6, 0]} barSize={24} animationDuration={600}>
                                                 {consumptionByType.map((entry, index) => (
                                                     <Cell key={`c-${index}`} fill={entry.color} />
@@ -995,20 +995,20 @@ export default function ElectricityPage() {
                                     {/* Multi-line chart for type aggregate with ≤10 meters */}
                                     {analysisType !== "All" && selectedMeter === "All" && metersOfSelectedType.length <= 10 ? (
                                         <RechartsLineChart data={analysisData.perMeterChartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" />
+                                            <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" />
                                             <XAxis dataKey="month" tick={{ fontSize: 11, fill: "var(--chart-axis)" }} axisLine={false} tickLine={false} dy={10} />
                                             <YAxis tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : `${v}`} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "var(--chart-axis)" }} />
                                             <Tooltip
                                                 content={({ active, payload, label }) => {
                                                     if (active && payload && payload.length) {
                                                         return (
-                                                            <div className="card-elevated px-4 py-3 border border-white/50 shadow-xl !rounded-xl !bg-white dark:!bg-slate-900 max-w-[280px]">
-                                                                <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">{label}</p>
+                                                            <div className="card-elevated px-4 py-3 border border-border/40 shadow-xl !rounded-xl !bg-card max-w-[280px]">
+                                                                <p className="text-sm font-semibold text-foreground mb-2">{label}</p>
                                                                 {[...payload].sort((a, b) => (Number(b.value) || 0) - (Number(a.value) || 0)).map((entry) => (
                                                                     <div key={entry.name} className="flex items-center gap-2 text-xs mb-0.5">
                                                                         <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: entry.color }} />
-                                                                        <span className="text-slate-500 dark:text-slate-400 truncate">{entry.name}:</span>
-                                                                        <span className="font-mono font-medium text-slate-700 dark:text-slate-200 ml-auto">
+                                                                        <span className="text-muted-foreground truncate">{entry.name}:</span>
+                                                                        <span className="font-mono font-medium text-foreground ml-auto">
                                                                             {(entry.value || 0).toLocaleString('en-US', { maximumFractionDigits: 1 })} kWh
                                                                         </span>
                                                                     </div>
@@ -1042,10 +1042,10 @@ export default function ElectricityPage() {
                                                     <stop offset="95%" stopColor={CHART_COLORS.secondary} stopOpacity={0} />
                                                 </linearGradient>
                                             </defs>
-                                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" />
+                                            <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" />
                                             <XAxis dataKey="month" tick={{ fontSize: 11, fill: "var(--chart-axis)" }} axisLine={false} tickLine={false} dy={10} />
                                             <YAxis tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : `${v}`} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "var(--chart-axis)" }} />
-                                            <Tooltip content={<LiquidTooltip />} cursor={{ stroke: 'rgba(0,0,0,0.1)', strokeWidth: 2 }} />
+                                            <Tooltip content={<LiquidTooltip />} cursor={{ stroke: 'var(--chart-cursor-stroke)', strokeWidth: 2 }} />
                                             <Legend iconType="circle" wrapperStyle={{ paddingTop: 10 }} />
                                             <Area type="monotone" dataKey="consumption" name="Consumption" stroke={CHART_COLORS.secondary} fill="url(#anlGrad)" strokeWidth={3} activeDot={{ r: 6, stroke: 'var(--card)', strokeWidth: 2 }} animationDuration={600} />
                                         </AreaChart>
@@ -1070,7 +1070,7 @@ export default function ElectricityPage() {
                                             layout="vertical"
                                             margin={{ top: 10, right: 30, left: 10, bottom: 10 }}
                                         >
-                                            <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="rgba(0,0,0,0.06)" />
+                                            <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="var(--chart-grid)" />
                                             <XAxis
                                                 type="number"
                                                 tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : `${v}`}
@@ -1091,18 +1091,18 @@ export default function ElectricityPage() {
                                                     if (active && payload && payload.length) {
                                                         const data = payload[0].payload;
                                                         return (
-                                                            <div className="card-elevated px-4 py-3 border border-white/50 shadow-xl !rounded-xl !bg-white dark:!bg-slate-900">
-                                                                <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">{data.fullName}</p>
+                                                            <div className="card-elevated px-4 py-3 border border-border/40 shadow-xl !rounded-xl !bg-card">
+                                                                <p className="text-sm font-semibold text-foreground mb-2">{data.fullName}</p>
                                                                 <div className="flex items-center gap-2 text-xs mb-1">
                                                                     <div className="w-2 h-2 rounded-full bg-mb-warning" />
-                                                                    <span className="text-slate-500 dark:text-slate-400">Consumption:</span>
-                                                                    <span className="font-mono font-medium text-slate-700 dark:text-slate-200">
+                                                                    <span className="text-muted-foreground">Consumption:</span>
+                                                                    <span className="font-mono font-medium text-foreground">
                                                                         {data.consumption.toLocaleString('en-US', { maximumFractionDigits: 1 })} kWh
                                                                     </span>
                                                                 </div>
                                                                 <div className="flex items-center gap-2 text-xs">
                                                                     <div className="w-2 h-2 rounded-full bg-mb-success" />
-                                                                    <span className="text-slate-500 dark:text-slate-400">Cost:</span>
+                                                                    <span className="text-muted-foreground">Cost:</span>
                                                                     <span className="font-mono font-medium text-[var(--mb-success-text)]">
                                                                         {data.cost.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} OMR
                                                                     </span>
@@ -1112,7 +1112,7 @@ export default function ElectricityPage() {
                                                     }
                                                     return null;
                                                 }}
-                                                cursor={{ fill: 'rgba(0,0,0,0.04)', radius: 6 }}
+                                                cursor={{ fill: 'var(--chart-cursor-fill)', radius: 6 }}
                                             />
                                             <Bar
                                                 dataKey="consumption"
@@ -1149,7 +1149,7 @@ export default function ElectricityPage() {
                                                 layout="vertical"
                                                 margin={{ top: 10, right: 30, left: 10, bottom: 10 }}
                                             >
-                                                <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="rgba(0,0,0,0.06)" />
+                                                <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="var(--chart-grid)" />
                                                 <XAxis
                                                     type="number"
                                                     tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : `${v}`}
@@ -1179,16 +1179,16 @@ export default function ElectricityPage() {
                                                             const diff = data.consumption - analysisData.typeAverage;
                                                             const pct = analysisData.typeAverage > 0 ? ((diff / analysisData.typeAverage) * 100).toFixed(1) : '0';
                                                             return (
-                                                                <div className="card-elevated px-4 py-3 border border-white/50 shadow-xl !rounded-xl !bg-white dark:!bg-slate-900">
-                                                                    <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">{data.fullName}</p>
+                                                                <div className="card-elevated px-4 py-3 border border-border/40 shadow-xl !rounded-xl !bg-card">
+                                                                    <p className="text-sm font-semibold text-foreground mb-2">{data.fullName}</p>
                                                                     <div className="flex items-center gap-2 text-xs mb-1">
                                                                         <div className="w-2 h-2 rounded-full" style={{ backgroundColor: data.color }} />
-                                                                        <span className="text-slate-500">Total:</span>
+                                                                        <span className="text-muted-foreground">Total:</span>
                                                                         <span className="font-mono font-medium">{data.consumption.toLocaleString('en-US', { maximumFractionDigits: 1 })} kWh</span>
                                                                     </div>
                                                                     <div className="flex items-center gap-2 text-xs">
                                                                         <div className="w-2 h-2 rounded-full bg-mb-warning" />
-                                                                        <span className="text-slate-500">vs Avg:</span>
+                                                                        <span className="text-muted-foreground">vs Avg:</span>
                                                                         <span className={`font-mono font-medium ${diff > 0 ? 'text-red-500' : 'text-emerald-500'}`}>
                                                                             {diff > 0 ? '+' : ''}{pct}%
                                                                         </span>
@@ -1198,7 +1198,7 @@ export default function ElectricityPage() {
                                                         }
                                                         return null;
                                                     }}
-                                                    cursor={{ fill: 'rgba(0,0,0,0.04)', radius: 6 }}
+                                                    cursor={{ fill: 'var(--chart-cursor-fill)', radius: 6 }}
                                                 />
                                                 <Bar dataKey="consumption" radius={[0, 8, 8, 0]} barSize={24} animationDuration={600}>
                                                     {analysisData.comparisonData.map((entry, index) => (
@@ -1228,29 +1228,29 @@ export default function ElectricityPage() {
                                 <Table>
                                     <TableHeader>
                                         <TableRow>
-                                            <TableHead className="sticky left-0 bg-slate-50 dark:bg-slate-800/80 z-20 min-w-[180px]">Name</TableHead>
+                                            <TableHead className="sticky left-0 bg-muted dark:bg-muted/80 z-20 min-w-[180px]">Name</TableHead>
                                             <TableHead className="min-w-[100px]">Account #</TableHead>
                                             {analysisData.selectedMonths.map(month => (
                                                 <TableHead key={month} className="text-right min-w-[75px]">{month}</TableHead>
                                             ))}
-                                            <TableHead className="text-right border-l border-slate-200 dark:border-slate-700 min-w-[90px]">Total (kWh)</TableHead>
+                                            <TableHead className="text-right border-l border-border dark:border-border min-w-[90px]">Total (kWh)</TableHead>
                                             <TableHead className="text-right min-w-[90px]">Cost (OMR)</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
                                         {analysisData.tableData.map((meter) => (
                                             <TableRow key={meter.id}>
-                                                <TableCell className="text-slate-800 dark:text-slate-200 sticky left-0 bg-white dark:bg-slate-900 z-10">{meter.name}</TableCell>
-                                                <TableCell className="text-slate-500 dark:text-slate-400 font-mono">{meter.account_number}</TableCell>
+                                                <TableCell className="text-foreground dark:text-muted-foreground sticky left-0 bg-white dark:bg-muted z-10">{meter.name}</TableCell>
+                                                <TableCell className="text-muted-foreground font-mono">{meter.account_number}</TableCell>
                                                 {analysisData.selectedMonths.map(month => {
                                                     const val = meter.monthlyReadings?.[month] || 0;
                                                     return (
                                                         <TableCell key={month} className="text-right font-mono">
-                                                            {val > 0 ? val.toLocaleString('en-US', { maximumFractionDigits: 1 }) : <span className="text-slate-300 dark:text-slate-600">—</span>}
+                                                            {val > 0 ? val.toLocaleString('en-US', { maximumFractionDigits: 1 }) : <span className="text-muted-foreground/70 dark:text-muted-foreground">—</span>}
                                                         </TableCell>
                                                     );
                                                 })}
-                                                <TableCell className="text-right font-mono text-slate-800 dark:text-slate-200 border-l border-slate-100 dark:border-slate-800">
+                                                <TableCell className="text-right font-mono text-foreground dark:text-muted-foreground border-l border-border dark:border-border">
                                                     {meter.rangeConsumption.toLocaleString('en-US', { maximumFractionDigits: 1 })}
                                                 </TableCell>
                                                 <TableCell className="text-right font-mono text-mb-success dark:text-mb-success-hover">
@@ -1259,18 +1259,18 @@ export default function ElectricityPage() {
                                             </TableRow>
                                         ))}
                                         {analysisData.tableData.length > 1 && (
-                                            <TableRow className="bg-slate-50/80 dark:bg-slate-800/60">
-                                                <TableCell className="text-slate-800 dark:text-slate-200 sticky left-0 bg-slate-50/80 dark:bg-slate-800/60 z-10">Total</TableCell>
+                                            <TableRow className="bg-muted/80 dark:bg-muted/60">
+                                                <TableCell className="text-foreground dark:text-muted-foreground sticky left-0 bg-muted/80 dark:bg-muted/60 z-10">Total</TableCell>
                                                 <TableCell />
                                                 {analysisData.selectedMonths.map(month => {
                                                     const monthTotal = analysisData.tableData.reduce((sum, m) => sum + (m.monthlyReadings?.[month] || 0), 0);
                                                     return (
-                                                        <TableCell key={`total-${month}`} className="text-right font-mono text-slate-800 dark:text-slate-200">
+                                                        <TableCell key={`total-${month}`} className="text-right font-mono text-foreground dark:text-muted-foreground">
                                                             {monthTotal > 0 ? monthTotal.toLocaleString('en-US', { maximumFractionDigits: 0 }) : '—'}
                                                         </TableCell>
                                                     );
                                                 })}
-                                                <TableCell className="text-right font-mono text-slate-800 dark:text-slate-200 border-l border-slate-200 dark:border-slate-700">
+                                                <TableCell className="text-right font-mono text-foreground dark:text-muted-foreground border-l border-border dark:border-border">
                                                     {analysisData.tableData.reduce((s, m) => s + m.rangeConsumption, 0).toLocaleString('en-US', { maximumFractionDigits: 0 })}
                                                 </TableCell>
                                                 <TableCell className="text-right font-mono text-mb-success dark:text-mb-success-hover">
@@ -1308,15 +1308,15 @@ export default function ElectricityPage() {
                     <div id="panel-database" role="tabpanel" aria-labelledby="tab-database" tabIndex={0} className="space-y-4 motion-safe:animate-in motion-safe:fade-in duration-200">
                         {/* Toolbar */}
                         <TableToolbar>
-                            <div className="relative flex-1 min-w-[200px] max-w-md">
-                                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                            <div className="relative flex-1 min-w-0 sm:min-w-[200px] max-w-md">
+                                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                                 <input
                                     type="text"
                                     aria-label="Search meters"
                                     placeholder="Search meters..."
                                     value={dbSearchTerm}
                                     onChange={(e) => { setDbSearchTerm(e.target.value); setDbCurrentPage(1); }}
-                                    className="pl-10 pr-4 py-2 w-full rounded-lg border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-sm placeholder:text-slate-400 shadow-sm transition-shadow focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40"
+                                    className="pl-10 pr-4 py-2 w-full rounded-lg border border-border/80 dark:border-border/80 bg-white dark:bg-muted text-foreground dark:text-muted-foreground text-sm placeholder:text-muted-foreground shadow-sm transition-shadow focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40"
                                 />
                             </div>
 
@@ -1331,7 +1331,7 @@ export default function ElectricityPage() {
                             {dbHasActiveFilters && (
                                 <button
                                     onClick={() => { setDbSearchTerm(''); setDbSelectedTypes([...allMeterTypes]); setDbCurrentPage(1); }}
-                                    className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors"
+                                    className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg text-muted-foreground hover:text-foreground dark:text-muted-foreground dark:hover:text-foreground transition-colors"
                                 >
                                     <X className="w-3.5 h-3.5" />
                                     Clear
@@ -1340,14 +1340,14 @@ export default function ElectricityPage() {
 
                             <button
                                 onClick={handleDbExportCSV}
-                                className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors ml-auto"
+                                className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors ml-auto"
                             >
                                 <Download className="w-3.5 h-3.5" />
                                 <span>Export CSV</span>
                             </button>
 
-                            <div className="text-sm text-slate-500 dark:text-slate-400 whitespace-nowrap">
-                                <span className="font-semibold text-slate-700 dark:text-slate-300">{dbFilteredMeters.length}</span>
+                            <div className="text-sm text-muted-foreground whitespace-nowrap">
+                                <span className="font-semibold text-foreground dark:text-muted-foreground/70">{dbFilteredMeters.length}</span>
                                 {dbFilteredMeters.length !== meters.length && (
                                     <span> of {meters.length}</span>
                                 )} meters
@@ -1355,8 +1355,8 @@ export default function ElectricityPage() {
                         </TableToolbar>
 
                         {/* Anomaly Legend */}
-                        <div className="flex items-center gap-4 px-1 text-xs text-slate-500 dark:text-slate-400">
-                            <span className="font-medium text-slate-600 dark:text-slate-300">Anomaly Detection:</span>
+                        <div className="flex items-center gap-4 px-1 text-xs text-muted-foreground">
+                            <span className="font-medium text-muted-foreground">Anomaly Detection:</span>
                             <span className="flex items-center gap-1.5">
                                 <span className="w-3 h-3 rounded bg-red-100 dark:bg-red-900/30 border border-red-200 dark:border-red-800" />
                                 &gt;2× average (High)
@@ -1390,21 +1390,13 @@ export default function ElectricityPage() {
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead className="cursor-pointer sticky left-0 bg-slate-50 dark:bg-slate-800/80 z-20 min-w-[200px]" onClick={() => handleDbSort('label')}>
-                                        <div className="flex items-center gap-1.5">Name <SortIcon field="label" currentSortField={dbSortField} currentSortDirection={dbSortDirection} /></div>
-                                    </TableHead>
-                                    <TableHead className="cursor-pointer" onClick={() => handleDbSort('account')}>
-                                        <div className="flex items-center gap-1.5">Account # <SortIcon field="account" currentSortField={dbSortField} currentSortDirection={dbSortDirection} /></div>
-                                    </TableHead>
-                                    <TableHead className="cursor-pointer" onClick={() => handleDbSort('type')}>
-                                        <div className="flex items-center gap-1.5">Type <SortIcon field="type" currentSortField={dbSortField} currentSortDirection={dbSortDirection} /></div>
-                                    </TableHead>
+                                    <SortableTableHead field="label" currentSortField={dbSortField} currentSortDirection={dbSortDirection} onSort={handleDbSort} className="sticky left-0 bg-muted dark:bg-muted/80 z-20 min-w-[200px]">Name</SortableTableHead>
+                                    <SortableTableHead field="account" currentSortField={dbSortField} currentSortDirection={dbSortDirection} onSort={handleDbSort}>Account #</SortableTableHead>
+                                    <SortableTableHead field="type" currentSortField={dbSortField} currentSortDirection={dbSortDirection} onSort={handleDbSort}>Type</SortableTableHead>
                                     {displayMonths.map(month => (
-                                        <TableHead key={month} className="text-right cursor-pointer min-w-[90px]" onClick={() => handleDbSort(month)}>
-                                            <div className="flex items-center justify-end gap-1.5">{month} <SortIcon field={month} currentSortField={dbSortField} currentSortDirection={dbSortDirection} /></div>
-                                        </TableHead>
+                                        <SortableTableHead key={month} field={month} currentSortField={dbSortField} currentSortDirection={dbSortDirection} onSort={handleDbSort} align="right" className="text-right min-w-[90px]">{month}</SortableTableHead>
                                     ))}
-                                    <TableHead className="text-right border-l border-slate-200 dark:border-slate-700 min-w-[100px]">Total (kWh)</TableHead>
+                                    <TableHead className="text-right border-l border-border dark:border-border min-w-[100px]">Total (kWh)</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -1412,8 +1404,8 @@ export default function ElectricityPage() {
                                     const sum = Object.values(meter.readings).reduce((a, b) => a + b, 0);
                                     return (
                                         <TableRow key={meter.id}>
-                                            <TableCell className="text-slate-800 dark:text-slate-200 sticky left-0 bg-white dark:bg-slate-900 z-10">{meter.name}</TableCell>
-                                            <TableCell className="text-slate-600 dark:text-slate-400 font-mono">{meter.account_number}</TableCell>
+                                            <TableCell className="text-foreground dark:text-muted-foreground sticky left-0 bg-white dark:bg-muted z-10">{meter.name}</TableCell>
+                                            <TableCell className="text-muted-foreground dark:text-muted-foreground font-mono">{meter.account_number}</TableCell>
                                             <TableCell>
                                                 <StatusBadge label={meter.type} color={getMeterTypeColor(meter.type)} />
                                             </TableCell>
@@ -1422,17 +1414,17 @@ export default function ElectricityPage() {
                                                 const anomaly = getAnomalyClass(val, meter);
                                                 return (
                                                     <TableCell key={month} className={`text-right font-mono ${anomaly || ''}`}>
-                                                        {val > 0 ? val.toLocaleString('en-US', { maximumFractionDigits: 1 }) : <span className="text-slate-300 dark:text-slate-600">—</span>}
+                                                        {val > 0 ? val.toLocaleString('en-US', { maximumFractionDigits: 1 }) : <span className="text-muted-foreground/70 dark:text-muted-foreground">—</span>}
                                                     </TableCell>
                                                 );
                                             })}
-                                            <TableCell className="text-right font-mono text-slate-800 dark:text-slate-200 border-l border-slate-100 dark:border-slate-800">{sum.toLocaleString('en-US', { maximumFractionDigits: 1 })}</TableCell>
+                                            <TableCell className="text-right font-mono text-foreground dark:text-muted-foreground border-l border-border dark:border-border">{sum.toLocaleString('en-US', { maximumFractionDigits: 1 })}</TableCell>
                                         </TableRow>
                                     );
                                 })}
                                 {dbFilteredMeters.length === 0 && (
                                     <TableRow>
-                                        <TableCell colSpan={4 + displayMonths.length} className="py-12 text-center text-slate-500 dark:text-slate-400">
+                                        <TableCell colSpan={4 + displayMonths.length} className="py-12 text-center text-muted-foreground">
                                             No meters found matching your filters.
                                         </TableCell>
                                     </TableRow>

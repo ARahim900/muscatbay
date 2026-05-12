@@ -8,7 +8,7 @@ import {
     ZONE_BULK_CONFIG, BUILDING_CONFIG, DC_METERS, BUILDING_CHILD_METERS,
 } from "@/lib/water-accounts";
 import { getSupabaseClient } from "@/lib/supabase";
-import type { SupabaseDailyWaterConsumption } from "@/entities/water";
+import { DAILY_WATER_CONSUMPTION_SELECT_COLUMNS, type SupabaseDailyWaterConsumption } from "@/entities/water";
 import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
 import {
     CalendarDays, ChevronRight, ChevronDown, Loader2, RefreshCw,
@@ -209,27 +209,27 @@ const LEVEL_COLORS: Record<HierarchyNode['level'], { bg: string; text: string; b
     L1: {
         bg: 'bg-primary/10 dark:bg-primary/20',
         text: 'text-primary dark:text-primary-foreground',
-        badge: 'bg-primary text-white',
+        badge: 'bg-primary text-primary-foreground',
     },
     L2: {
         bg: 'bg-blue-50/70 dark:bg-blue-900/20',
         text: 'text-blue-700 dark:text-blue-300',
-        badge: 'bg-blue-600 text-white dark:bg-blue-500',
+        badge: 'bg-blue-600 text-primary-foreground dark:bg-blue-500',
     },
     L3: {
         bg: 'bg-amber-50/60 dark:bg-amber-900/15',
         text: 'text-amber-700 dark:text-amber-300',
-        badge: 'bg-amber-600 text-white dark:bg-amber-500',
+        badge: 'bg-amber-600 text-primary-foreground dark:bg-amber-500',
     },
     L4: {
-        bg: 'bg-slate-50/80 dark:bg-slate-800/40',
-        text: 'text-slate-700 dark:text-slate-300',
-        badge: 'bg-slate-500 text-white',
+        bg: 'bg-muted/80 dark:bg-muted/40',
+        text: 'text-foreground dark:text-muted-foreground/70',
+        badge: 'bg-muted-foreground text-primary-foreground',
     },
     DC: {
         bg: 'bg-purple-50/60 dark:bg-purple-900/20',
         text: 'text-purple-700 dark:text-purple-300',
-        badge: 'bg-purple-600 text-white dark:bg-purple-500',
+        badge: 'bg-purple-600 text-primary-foreground dark:bg-purple-500',
     },
 };
 
@@ -275,7 +275,7 @@ function KpiCard({
         <Card className={cn("card-elevated border", t.border)}>
             <CardContent className={cn("p-4 rounded-lg", t.bg)}>
                 <div className="flex items-start justify-between mb-2">
-                    <span className="text-[10px] font-bold tracking-wider uppercase text-slate-500 dark:text-slate-400">
+                    <span className="text-[10px] font-bold tracking-wider uppercase text-muted-foreground dark:text-muted-foreground">
                         {label}
                     </span>
                     <div className={t.text}>{icon}</div>
@@ -284,7 +284,7 @@ function KpiCard({
                     {value === null ? (
                         <span
                             className={cn(
-                                "text-2xl sm:text-3xl font-bold tabular-nums text-slate-400 dark:text-slate-500",
+                                "text-2xl sm:text-3xl font-bold tabular-nums text-muted-foreground dark:text-muted-foreground",
                             )}
                             aria-label="unavailable"
                         >
@@ -297,11 +297,11 @@ function KpiCard({
                                     maximumFractionDigits: unit === '%' ? 1 : 0,
                                 })}
                             </span>
-                            <span className="text-xs text-slate-400 dark:text-slate-500 font-medium">{unit}</span>
+                            <span className="text-xs text-muted-foreground dark:text-muted-foreground font-medium">{unit}</span>
                         </>
                     )}
                 </div>
-                <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1">{subtitle}</p>
+                <p className="text-[11px] text-muted-foreground dark:text-muted-foreground mt-1">{subtitle}</p>
             </CardContent>
         </Card>
     );
@@ -358,7 +358,7 @@ export function WaterHierarchyReport() {
             if (!client) throw new Error('Supabase is not configured.');
             const { data, error } = await client
                 .from('water_daily_consumption')
-                .select('*')
+                .select(DAILY_WATER_CONSUMPTION_SELECT_COLUMNS)
                 .eq('month', month);
             if (error) throw new Error(error.message);
             if (!data || data.length === 0) {
@@ -371,7 +371,7 @@ export function WaterHierarchyReport() {
             }
             // Success reconciliation applies to both manual and silent refreshes
             // so a recovering realtime update can flip the UI out of an error state.
-            setRows(data as SupabaseDailyWaterConsumption[]);
+            setRows(data as unknown as SupabaseDailyWaterConsumption[]);
             setLastFetched(new Date());
             setErrorMsg('');
             setStatus('success');
@@ -495,7 +495,7 @@ export function WaterHierarchyReport() {
                                     setSelectedMonth(match ?? months[months.length - 1]);
                                 }}
                                 disabled={status === 'loading'}
-                                className="px-2 py-1.5 text-sm rounded-md border border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
+                                className="px-2 py-1.5 text-sm rounded-md border border-border dark:border-border bg-white/50 dark:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
                             >
                                 {[...getAvailableYears()].reverse().map(yr => (
                                     <option key={yr} value={yr}>20{yr}</option>
@@ -506,7 +506,7 @@ export function WaterHierarchyReport() {
                                 value={selectedMonth}
                                 onChange={e => setSelectedMonth(e.target.value)}
                                 disabled={status === 'loading'}
-                                className="px-2 py-1.5 text-sm rounded-md border border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
+                                className="px-2 py-1.5 text-sm rounded-md border border-border dark:border-border bg-white/50 dark:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
                             >
                                 {getMonthsForYear(selectedMonth.split('-')[1]).map(m => (
                                     <option key={m} value={m}>{m.split('-')[0]}</option>
@@ -516,20 +516,20 @@ export function WaterHierarchyReport() {
 
                         {/* Search */}
                         <div className="relative flex-1 min-w-[200px] max-w-sm">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                             <input
                                 type="text"
                                 aria-label="Search meters by name, account number, or zone"
                                 value={search}
                                 onChange={e => setSearch(e.target.value)}
                                 placeholder="Search meter name, account, zone…"
-                                className="h-9 w-full pl-9 pr-8 text-sm rounded-full border border-slate-200 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-800/50 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-secondary/30 focus:border-secondary/50"
+                                className="h-9 w-full pl-9 pr-8 text-sm rounded-full border border-border dark:border-border bg-muted/80 dark:bg-muted/50 placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-secondary/30 focus:border-secondary/50"
                             />
                             {search && (
                                 <button
                                     onClick={() => setSearch('')}
                                     aria-label="Clear search"
-                                    className="absolute right-2.5 top-1/2 -translate-y-1/2 h-4 w-4 rounded-full bg-slate-200 dark:bg-slate-600 flex items-center justify-center text-slate-500 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-500 transition"
+                                    className="absolute right-2.5 top-1/2 -translate-y-1/2 h-4 w-4 rounded-full bg-border dark:bg-muted flex items-center justify-center text-muted-foreground dark:text-muted-foreground/70 hover:bg-border dark:hover:bg-muted-foreground/40 transition"
                                 >
                                     <XIcon className="h-2.5 w-2.5" />
                                 </button>
@@ -565,13 +565,13 @@ export function WaterHierarchyReport() {
                                 "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold transition-colors",
                                 isLive
                                     ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-                                    : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400",
+                                    : "bg-muted text-muted-foreground dark:bg-muted dark:text-muted-foreground",
                             )}>
                                 <Radio className={cn("h-3 w-3", isLive && "motion-safe:animate-pulse")} />
                                 {isLive ? "Live" : "Offline"}
                             </span>
                             {lastFetched && status !== 'loading' && (
-                                <span className="flex items-center gap-1 text-[11px] text-slate-400 dark:text-slate-500">
+                                <span className="flex items-center gap-1 text-[11px] text-muted-foreground dark:text-muted-foreground">
                                     <Clock className="h-3 w-3" />
                                     Updated {lastFetched.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                                 </span>
@@ -624,10 +624,10 @@ export function WaterHierarchyReport() {
                 <Card className="card-elevated">
                     <CardContent className="p-6 flex flex-col items-center text-center gap-3">
                         <WifiOff className="h-8 w-8 text-red-500" />
-                        <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+                        <h3 className="text-lg font-semibold text-foreground">
                             Failed to Load Hierarchy
                         </h3>
-                        <p className="text-sm text-slate-500 dark:text-slate-400 max-w-md">{errorMsg}</p>
+                        <p className="text-sm text-muted-foreground dark:text-muted-foreground max-w-md">{errorMsg}</p>
                         <Button onClick={() => fetchMonth(selectedMonth)} variant="outline" className="gap-2">
                             <RefreshCw className="h-4 w-4" /> Retry
                         </Button>
@@ -639,10 +639,10 @@ export function WaterHierarchyReport() {
             {status !== 'error' && (
                 <Card className="card-elevated overflow-hidden">
                     <CardContent className="p-0">
-                        <div className="overflow-x-auto">
-                            <table className="w-full border-collapse text-[13px]">
+                        <div className="ops-table-shell">
+                            <table className="ops-table">
                                 <thead>
-                                    <tr className="bg-primary text-white">
+                                    <tr className="bg-primary text-primary-foreground">
                                         <th scope="col" className="sticky left-0 z-20 bg-primary text-left px-4 py-3 font-semibold min-w-[280px] sm:min-w-[320px]">
                                             Meter Hierarchy
                                         </th>
@@ -664,7 +664,7 @@ export function WaterHierarchyReport() {
                                 <tbody>
                                     {status === 'loading' && rows.length === 0 && (
                                         <tr>
-                                            <td colSpan={colSpan} className="text-center py-16 text-slate-400">
+                                            <td colSpan={colSpan} className="text-center py-16 text-muted-foreground">
                                                 <Loader2 className="h-8 w-8 animate-spin text-secondary inline-block" />
                                             </td>
                                         </tr>
@@ -677,13 +677,13 @@ export function WaterHierarchyReport() {
                                             <tr
                                                 key={node.accountNumber}
                                                 className={cn(
-                                                    "border-b border-slate-100 dark:border-slate-800 transition-colors",
-                                                    "hover:bg-slate-50/60 dark:hover:bg-slate-800/40",
+                                                    "border-b border-border dark:border-border transition-colors",
+                                                    "hover:bg-muted/60 dark:hover:bg-muted/40",
                                                 )}
                                             >
                                                 <td
                                                     className={cn(
-                                                        "sticky left-0 z-10 py-2.5 pr-4 font-medium text-slate-800 dark:text-slate-100 min-w-[280px] sm:min-w-[320px]",
+                                                        "sticky left-0 z-10 py-2.5 pr-4 font-medium text-foreground min-w-[280px] sm:min-w-[320px]",
                                                         color.bg,
                                                     )}
                                                     style={{ paddingLeft: `${16 + node.depth * 18}px` }}
@@ -692,7 +692,7 @@ export function WaterHierarchyReport() {
                                                         {hasChildren ? (
                                                             <button
                                                                 onClick={() => toggle(node.accountNumber)}
-                                                                className="h-5 w-5 flex items-center justify-center rounded hover:bg-slate-200/70 dark:hover:bg-slate-700/60 transition shrink-0"
+                                                                className="h-5 w-5 flex items-center justify-center rounded hover:bg-border/70 dark:hover:bg-muted/60 transition shrink-0"
                                                                 aria-label={isExpanded ? 'Collapse row' : 'Expand row'}
                                                                 aria-expanded={isExpanded}
                                                             >
@@ -712,7 +712,7 @@ export function WaterHierarchyReport() {
                                                         </span>
                                                     </div>
                                                 </td>
-                                                <td className="px-3 py-2.5 text-slate-500 dark:text-slate-400 font-mono text-xs whitespace-nowrap">
+                                                <td className="px-3 py-2.5 text-muted-foreground dark:text-muted-foreground font-mono text-xs whitespace-nowrap">
                                                     {node.accountNumber}
                                                 </td>
                                                 <td className="px-3 py-2.5 text-center whitespace-nowrap">
@@ -729,8 +729,8 @@ export function WaterHierarchyReport() {
                                                         className={cn(
                                                             "px-2 py-2.5 text-right tabular-nums whitespace-nowrap",
                                                             v === null || v === 0
-                                                                ? "text-slate-300 dark:text-slate-600"
-                                                                : "text-slate-600 dark:text-slate-300",
+                                                                ? "text-muted-foreground/70 dark:text-muted-foreground"
+                                                                : "text-muted-foreground dark:text-muted-foreground/70",
                                                         )}
                                                     >
                                                         {v === null ? '—' : fmt(v, v < 10 ? 1 : 0)}
@@ -748,7 +748,7 @@ export function WaterHierarchyReport() {
                                     })}
                                     {tree && visibleNodes.length === 0 && (
                                         <tr>
-                                            <td colSpan={colSpan} className="text-center py-12 text-slate-500">
+                                            <td colSpan={colSpan} className="text-center py-12 text-muted-foreground">
                                                 No meters match &quot;{search}&quot;.
                                             </td>
                                         </tr>
@@ -763,7 +763,7 @@ export function WaterHierarchyReport() {
             {/* ── Legend ────────────────────────────────────────────────────── */}
             {tree && (
                 <Card className="card-elevated">
-                    <CardContent className="p-4 flex flex-wrap items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
+                    <CardContent className="p-4 flex flex-wrap items-center gap-3 text-xs text-muted-foreground dark:text-muted-foreground">
                         <span className="font-semibold uppercase tracking-wider text-[10px]">Legend:</span>
                         {(['L1', 'L2', 'L3', 'L4', 'DC'] as const).map(lvl => (
                             <span key={lvl} className="inline-flex items-center gap-1.5">

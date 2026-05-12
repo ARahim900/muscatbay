@@ -89,7 +89,7 @@ export function Navbar() {
                 {/* Mobile hamburger menu */}
                 <button
                     onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                    className="w-10 h-10 flex items-center justify-center rounded-lg bg-white/10 text-white lg:hidden hover:bg-white/20 transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:outline-none"
+                    className="w-10 h-10 flex items-center justify-center rounded-lg bg-white/10 text-primary-foreground lg:hidden hover:bg-white/20 transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:outline-none"
                     aria-label="Toggle menu"
                 >
                     <Menu className="w-5 h-5" />
@@ -109,10 +109,10 @@ export function Navbar() {
                     </div>
                     <div className="hidden sm:flex flex-col">
                         <span className="font-semibold text-base leading-tight tracking-tight">
-                            <span className="text-white">MUSCAT</span>
+                            <span className="text-primary-foreground">MUSCAT</span>
                             <span className="text-secondary"> BAY</span>
                         </span>
-                        <span className="text-[11px] text-white/85 font-normal hidden md:block">
+                        <span className="text-[11px] text-primary-foreground/85 font-normal hidden md:block">
                             Resource Management
                         </span>
                     </div>
@@ -133,8 +133,8 @@ export function Navbar() {
                                 className={`
                   flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200
                   ${isActive
-                                        ? "bg-white/20 text-white"
-                                        : "text-white/90 hover:bg-white/10 hover:text-white"
+                                        ? "bg-white/20 text-primary-foreground"
+                                        : "text-primary-foreground/90 hover:bg-white/10 hover:text-primary-foreground"
                                     }
                 `}
                             >
@@ -151,7 +151,7 @@ export function Navbar() {
                 {/* Theme Toggle */}
                 <button
                     onClick={() => setIsDarkMode(!isDarkMode)}
-                    className="w-11 h-11 flex items-center justify-center hover:bg-white/10 rounded-lg text-white/90 hover:text-white transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:outline-none"
+                    className="w-11 h-11 flex items-center justify-center hover:bg-white/10 rounded-lg text-primary-foreground/90 hover:text-primary-foreground transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:outline-none"
                     aria-label="Toggle theme"
                 >
                     {isDarkMode ? (
@@ -163,7 +163,7 @@ export function Navbar() {
 
                 {/* Search Button - Hidden on small mobile */}
                 <button
-                    className="w-11 h-11 hidden sm:flex items-center justify-center hover:bg-white/10 rounded-lg text-white/90 hover:text-white transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:outline-none"
+                    className="w-11 h-11 hidden sm:flex items-center justify-center hover:bg-white/10 rounded-lg text-primary-foreground/90 hover:text-primary-foreground transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:outline-none"
                     aria-label="Search"
                 >
                     <Search className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -171,7 +171,7 @@ export function Navbar() {
 
                 {/* Notifications Button */}
                 <button
-                    className="w-11 h-11 flex items-center justify-center hover:bg-white/10 rounded-lg relative text-white/90 hover:text-white transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:outline-none"
+                    className="w-11 h-11 flex items-center justify-center hover:bg-white/10 rounded-lg relative text-primary-foreground/90 hover:text-primary-foreground transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:outline-none"
                     aria-label="Notifications"
                 >
                     <Bell className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -201,26 +201,26 @@ export function Navbar() {
 
                         {/* User name - Hidden on mobile */}
                         <div className="hidden md:flex flex-col items-start">
-                            <span className="text-sm font-medium text-white leading-tight">
+                            <span className="text-sm font-medium text-primary-foreground leading-tight">
                                 {displayName}
                             </span>
-                            <span className="text-xs text-white/85 leading-tight">
+                            <span className="text-xs text-primary-foreground/85 leading-tight">
                                 {userRole}
                             </span>
                         </div>
 
                         {/* Dropdown Arrow */}
                         <ChevronDown
-                            className={`w-4 h-4 text-white/60 hidden sm:block transition-transform duration-200 ${isProfileDropdownOpen ? "rotate-180" : ""
+                            className={`w-4 h-4 text-primary-foreground/60 hidden sm:block transition-transform duration-200 ${isProfileDropdownOpen ? "rotate-180" : ""
                                 }`}
                         />
                     </button>
 
                     {/* Profile Dropdown Menu */}
                     {isProfileDropdownOpen && (
-                        <div id="navbar-profile-menu" className="absolute right-0 mt-2 w-56 max-w-[calc(100vw-2rem)] bg-white rounded-xl shadow-xl border border-slate-200 py-2 z-50 motion-safe:animate-in fade-in slide-in-from-top-2 duration-200">
+                        <div id="navbar-profile-menu" className="absolute right-0 mt-2 w-56 max-w-[calc(100vw-2rem)] bg-white rounded-xl shadow-xl border border-border py-2 z-50 motion-safe:animate-in fade-in slide-in-from-top-2 duration-200">
                             {/* User Info Header */}
-                            <div className="px-4 py-3 border-b border-slate-100">
+                            <div className="px-4 py-3 border-b border-border">
                                 <div className="flex items-center gap-3">
                                     <Avatar className="w-10 h-10">
                                         <AvatarImage src={profile?.avatar_url || undefined} alt={displayName} />
@@ -229,10 +229,10 @@ export function Navbar() {
                                         </AvatarFallback>
                                     </Avatar>
                                     <div className="flex flex-col">
-                                        <span className="text-sm font-semibold text-slate-800">
+                                        <span className="text-sm font-semibold text-foreground">
                                             {displayName}
                                         </span>
-                                        <span className="text-xs text-slate-500">
+                                        <span className="text-xs text-muted-foreground">
                                             {user?.email || 'user@muscatbay.com'}
                                         </span>
                                     </div>
@@ -244,20 +244,20 @@ export function Navbar() {
                                 <Link
                                     href="/settings"
                                     onClick={() => setIsProfileDropdownOpen(false)}
-                                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 hover:text-primary transition-colors duration-200"
+                                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-muted hover:text-primary transition-colors duration-200"
                                 >
-                                    <User className="w-4 h-4 text-slate-400" />
+                                    <User className="w-4 h-4 text-muted-foreground" />
                                     Profile
                                 </Link>
                                 <Link
                                     href="/settings"
                                     onClick={() => setIsProfileDropdownOpen(false)}
-                                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 hover:text-primary transition-colors duration-200"
+                                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-muted hover:text-primary transition-colors duration-200"
                                 >
-                                    <Settings className="w-4 h-4 text-slate-400" />
+                                    <Settings className="w-4 h-4 text-muted-foreground" />
                                     Settings
                                 </Link>
-                                <div className="my-1 border-t border-slate-100" />
+                                <div className="my-1 border-t border-border" />
                                 <button
                                     onClick={() => {
                                         logout();
@@ -295,8 +295,8 @@ export function Navbar() {
                                     className={`
                     flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors duration-200
                     ${isActive
-                                            ? "bg-white/20 text-white"
-                                            : "text-white/90 hover:bg-white/10 hover:text-white"
+                                            ? "bg-white/20 text-primary-foreground"
+                                            : "text-primary-foreground/90 hover:bg-white/10 hover:text-primary-foreground"
                                         }
                   `}
                                 >

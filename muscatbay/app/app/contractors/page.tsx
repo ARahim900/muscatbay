@@ -27,8 +27,8 @@ import {
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { exportToCSV, getDateForFilename } from "@/lib/export-utils";
 import {
-    MultiSelectDropdown, SortIcon, TablePagination, ActiveFilterPills,
-    TableToolbar, StatusBadge, type PageSizeOption
+    MultiSelectDropdown, TablePagination, ActiveFilterPills,
+    TableToolbar, StatusBadge, SortableTableHead, type PageSizeOption
 } from "@/components/shared/data-table";
 import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
 import { PageStatusBar } from "@/components/shared/page-status-bar";
@@ -403,7 +403,7 @@ export default function ContractorsPage() {
                 </div>
                 <StatsGridSkeleton />
                 <Skeleton className="h-12 w-80" />
-                <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6">
+                <div className="bg-white dark:bg-muted rounded-xl border border-border dark:border-border p-6">
                     <TableSkeleton columns={7} rows={8} />
                 </div>
             </div>
@@ -488,13 +488,13 @@ export default function ContractorsPage() {
                 <div className="space-y-4">
                     <TableToolbar>
                         <div className="relative flex-1 min-w-0 sm:min-w-[200px] max-w-md">
-                            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                             <input
                                 type="text"
                                 placeholder="Search contracts..."
                                 value={search}
                                 onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
-                                className="pl-10 pr-4 py-2 w-full rounded-lg border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40 shadow-sm transition-shadow"
+                                className="pl-10 pr-4 py-2 w-full rounded-lg border border-border/80 dark:border-border/80 bg-white dark:bg-muted text-foreground dark:text-muted-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40 shadow-sm transition-shadow"
                             />
                         </div>
 
@@ -508,19 +508,19 @@ export default function ContractorsPage() {
 
                         {hasContractFilters && (
                             <button onClick={() => { setSearch(''); setSelectedFlows([...uniqueFlows]); setCurrentPage(1); }}
-                                className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors">
+                                className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg text-muted-foreground hover:text-foreground dark:text-muted-foreground dark:hover:text-foreground transition-colors">
                                 <X className="w-3.5 h-3.5" /> Clear
                             </button>
                         )}
 
                         <button onClick={handleExportContracts}
-                            className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors ml-auto">
+                            className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors ml-auto">
                             <Download className="w-3.5 h-3.5" />
                             <span className="hidden sm:inline">Export CSV</span>
                         </button>
 
-                        <div className="text-sm text-slate-500 dark:text-slate-400 whitespace-nowrap">
-                            <span className="font-semibold text-slate-700 dark:text-slate-300">{filteredContracts.length}</span>
+                        <div className="text-sm text-muted-foreground whitespace-nowrap">
+                            <span className="font-semibold text-foreground dark:text-muted-foreground/70">{filteredContracts.length}</span>
                             {filteredContracts.length !== contracts.length && <span> of {contracts.length}</span>} contracts
                         </div>
                     </TableToolbar>
@@ -540,31 +540,31 @@ export default function ContractorsPage() {
                     {/* Mobile Cards */}
                     <div className="md:hidden space-y-3">
                         {paginatedContracts.map(c => (
-                            <div key={c.id} className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 space-y-3">
+                            <div key={c.id} className="rounded-xl border border-border dark:border-border bg-white dark:bg-muted p-4 space-y-3">
                                 <div className="flex items-start justify-between gap-2">
                                     <div className="min-w-0">
-                                        <p className="font-semibold text-sm text-slate-800 dark:text-slate-200 truncate">{c.contractor}</p>
-                                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{c.service || '-'}</p>
+                                        <p className="font-semibold text-sm text-foreground dark:text-muted-foreground truncate">{c.contractor}</p>
+                                        <p className="text-xs text-muted-foreground mt-0.5">{c.service || '-'}</p>
                                     </div>
                                     <StatusBadge label={c.flow} color={getFlowDotColor(c.flow)} />
                                 </div>
                                 <div className="grid grid-cols-2 gap-2 text-xs">
-                                    <div><span className="text-slate-400">Ref:</span> <span className="text-slate-600 dark:text-slate-300">{c.contract_ref || '-'}</span></div>
-                                    <div><span className="text-slate-400">Years:</span> <span className="text-slate-600 dark:text-slate-300">{c.contract_years ?? '-'}</span></div>
-                                    <div><span className="text-slate-400">Annual:</span> <span className="font-mono text-slate-700 dark:text-slate-300">{c.annual_value_omr ? fmtOMR(c.annual_value_omr) : (c.rate_note || 'Variable')}</span></div>
-                                    <div><span className="text-slate-400">Total:</span> <span className="font-mono font-semibold text-primary">{c.total_value_omr ? fmtOMR(c.total_value_omr) : 'Variable'}</span></div>
+                                    <div><span className="text-muted-foreground">Ref:</span> <span className="text-muted-foreground">{c.contract_ref || '-'}</span></div>
+                                    <div><span className="text-muted-foreground">Years:</span> <span className="text-muted-foreground">{c.contract_years ?? '-'}</span></div>
+                                    <div><span className="text-muted-foreground">Annual:</span> <span className="font-mono text-foreground dark:text-muted-foreground/70">{c.annual_value_omr ? fmtOMR(c.annual_value_omr) : (c.rate_note || 'Variable')}</span></div>
+                                    <div><span className="text-muted-foreground">Total:</span> <span className="font-mono font-semibold text-primary">{c.total_value_omr ? fmtOMR(c.total_value_omr) : 'Variable'}</span></div>
                                 </div>
-                                {c.note && <p className="text-xs text-slate-500 line-clamp-2">{c.note}</p>}
+                                {c.note && <p className="text-xs text-muted-foreground line-clamp-2">{c.note}</p>}
                                 <button
                                     onClick={() => openPdfModal(c.id, c.contractor, c.contract_ref || '', c.contract_pdf_url)}
-                                    className={`text-xs flex items-center gap-1 mt-2 ${c.contract_pdf_url ? 'text-secondary' : 'text-slate-400'}`}
+                                    className={`text-xs flex items-center gap-1 mt-2 ${c.contract_pdf_url ? 'text-secondary' : 'text-muted-foreground'}`}
                                 >
                                     {c.contract_pdf_url ? <><FileText className="w-3 h-3" /> View Contract PDF</> : <><Link className="w-3 h-3" /> Add PDF Link</>}
                                 </button>
                             </div>
                         ))}
                         {filteredContracts.length === 0 && (
-                            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700">
+                            <div className="bg-white dark:bg-muted rounded-xl border border-border dark:border-border">
                                 <EmptyState variant={hasContractFilters ? "filter-empty" : "no-data"}
                                     title={hasContractFilters ? "No contracts match your filters" : "No contracts yet"}
                                     description={hasContractFilters ? "Try adjusting your search or filters." : "Contracts will appear once added to the system."} />
@@ -578,47 +578,35 @@ export default function ContractorsPage() {
                             <TableHeader>
                                 <TableRow>
                                     <TableHead scope="col" className="w-8">#</TableHead>
-                                    <TableHead scope="col" className="cursor-pointer" onClick={() => handleSort('contractor')}>
-                                        <div className="flex items-center gap-1.5">Contractor <SortIcon field="contractor" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
-                                    </TableHead>
+                                    <SortableTableHead field="contractor" currentSortField={sortField} currentSortDirection={sortDirection} onSort={handleSort}>Contractor</SortableTableHead>
                                     <TableHead scope="col" className="hidden lg:table-cell">Contract Ref</TableHead>
-                                    <TableHead scope="col" className="cursor-pointer" onClick={() => handleSort('service')}>
-                                        <div className="flex items-center gap-1.5">Service <SortIcon field="service" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
-                                    </TableHead>
-                                    <TableHead scope="col" className="cursor-pointer" onClick={() => handleSort('flow')}>
-                                        <div className="flex items-center gap-1.5">Flow <SortIcon field="flow" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
-                                    </TableHead>
-                                    <TableHead scope="col" className="text-center cursor-pointer" onClick={() => handleSort('years')}>
-                                        <div className="flex items-center justify-center gap-1.5">Years <SortIcon field="years" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
-                                    </TableHead>
-                                    <TableHead scope="col" className="text-right cursor-pointer" onClick={() => handleSort('annual')}>
-                                        <div className="flex items-center justify-end gap-1.5">Annual (OMR) <SortIcon field="annual" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
-                                    </TableHead>
-                                    <TableHead scope="col" className="text-right cursor-pointer" onClick={() => handleSort('total')}>
-                                        <div className="flex items-center justify-end gap-1.5">Total (OMR) <SortIcon field="total" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
-                                    </TableHead>
+                                    <SortableTableHead field="service" currentSortField={sortField} currentSortDirection={sortDirection} onSort={handleSort}>Service</SortableTableHead>
+                                    <SortableTableHead field="flow" currentSortField={sortField} currentSortDirection={sortDirection} onSort={handleSort}>Flow</SortableTableHead>
+                                    <SortableTableHead field="years" currentSortField={sortField} currentSortDirection={sortDirection} onSort={handleSort} align="center" className="text-center">Years</SortableTableHead>
+                                    <SortableTableHead field="annual" currentSortField={sortField} currentSortDirection={sortDirection} onSort={handleSort} align="right" className="text-right">Annual (OMR)</SortableTableHead>
+                                    <SortableTableHead field="total" currentSortField={sortField} currentSortDirection={sortDirection} onSort={handleSort} align="right" className="text-right">Total (OMR)</SortableTableHead>
                                     <TableHead scope="col" className="text-center w-16">Doc</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {paginatedContracts.map(c => (
                                     <TableRow key={c.id}>
-                                        <TableCell className="text-slate-500">{c.id}</TableCell>
-                                        <TableCell className="text-slate-800 dark:text-slate-200">
+                                        <TableCell className="text-muted-foreground">{c.id}</TableCell>
+                                        <TableCell className="text-foreground dark:text-muted-foreground">
                                             {c.contractor}
-                                            {c.note && <p className="text-xs text-slate-400 mt-0.5 max-w-[200px] truncate" title={c.note}>{c.note}</p>}
+                                            {c.note && <p className="text-xs text-muted-foreground mt-0.5 max-w-[200px] truncate" title={c.note}>{c.note}</p>}
                                         </TableCell>
-                                        <TableCell className="text-slate-500 dark:text-slate-400 hidden lg:table-cell font-mono">{c.contract_ref || '-'}</TableCell>
-                                        <TableCell className="text-slate-600 dark:text-slate-400">{c.service || '-'}</TableCell>
+                                        <TableCell className="text-muted-foreground hidden lg:table-cell font-mono">{c.contract_ref || '-'}</TableCell>
+                                        <TableCell className="text-muted-foreground dark:text-muted-foreground">{c.service || '-'}</TableCell>
                                         <TableCell>
                                             <StatusBadge label={c.flow} color={getFlowDotColor(c.flow)} />
                                         </TableCell>
-                                        <TableCell className="text-center text-slate-600 dark:text-slate-300">{c.contract_years ?? '-'}</TableCell>
+                                        <TableCell className="text-center text-muted-foreground">{c.contract_years ?? '-'}</TableCell>
                                         <TableCell className="text-right font-mono">
-                                            {c.annual_value_omr ? fmtOMR(c.annual_value_omr) : <span className="text-slate-400 italic">{c.rate_note || 'Variable'}</span>}
+                                            {c.annual_value_omr ? fmtOMR(c.annual_value_omr) : <span className="text-muted-foreground italic">{c.rate_note || 'Variable'}</span>}
                                         </TableCell>
                                         <TableCell className="text-right font-mono text-primary">
-                                            {c.total_value_omr ? fmtOMR(c.total_value_omr) : <span className="text-slate-400 italic font-normal">Variable</span>}
+                                            {c.total_value_omr ? fmtOMR(c.total_value_omr) : <span className="text-muted-foreground italic font-normal">Variable</span>}
                                         </TableCell>
                                         <TableCell className="text-center px-3">
                                             <button
@@ -627,7 +615,7 @@ export default function ContractorsPage() {
                                                 className={`p-1.5 rounded-md transition-colors ${
                                                     c.contract_pdf_url
                                                         ? 'text-secondary hover:bg-secondary/10'
-                                                        : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/60'
+                                                        : 'text-muted-foreground hover:bg-muted dark:hover:bg-muted/60'
                                                 }`}
                                             >
                                                 {c.contract_pdf_url ? <FileText className="w-4 h-4" /> : <Link className="w-4 h-4" />}
@@ -661,18 +649,18 @@ export default function ContractorsPage() {
                 <div className="space-y-4">
                     <div className="flex items-center justify-between">
                         <div>
-                            <h2 className="text-base font-semibold text-slate-800 dark:text-slate-200">Year-by-Year Expense Breakdown</h2>
-                            <p className="text-xs text-slate-500 mt-1">All values in OMR. Blank cells indicate no cost in that year.</p>
+                            <h2 className="text-base font-semibold text-foreground dark:text-muted-foreground">Year-by-Year Expense Breakdown</h2>
+                            <p className="text-xs text-muted-foreground mt-1">All values in OMR. Blank cells indicate no cost in that year.</p>
                         </div>
                         <button onClick={handleExportYearly}
-                            className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors">
+                            className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors">
                             <Download className="w-3.5 h-3.5" />
                             <span className="hidden sm:inline">Export CSV</span>
                         </button>
                     </div>
 
                     {yearlyCosts.length === 0 ? (
-                        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700">
+                        <div className="bg-white dark:bg-muted rounded-xl border border-border dark:border-border">
                             <EmptyState variant="no-data" title="No yearly cost data" description="Run the contractor-contracts-data.sql script in Supabase to populate yearly costs." />
                         </div>
                     ) : (
@@ -680,11 +668,11 @@ export default function ContractorsPage() {
                             {/* Mobile: stacked cards per year */}
                             <div className="md:hidden space-y-4">
                                 {matrix.rows.map(row => (
-                                    <div key={row.year} className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 space-y-3">
+                                    <div key={row.year} className="rounded-xl border border-border dark:border-border bg-white dark:bg-muted p-4 space-y-3">
                                         <div className="flex items-center justify-between">
                                             <div>
-                                                <p className="font-semibold text-sm text-slate-800 dark:text-slate-200">Year {row.year}</p>
-                                                <p className="text-xs text-slate-500">{row.label}</p>
+                                                <p className="font-semibold text-sm text-foreground dark:text-muted-foreground">Year {row.year}</p>
+                                                <p className="text-xs text-muted-foreground">{row.label}</p>
                                             </div>
                                             <span className="font-mono text-sm font-bold text-primary">{fmtOMR(row.total)}</span>
                                         </div>
@@ -694,8 +682,8 @@ export default function ContractorsPage() {
                                                 if (val == null) return null;
                                                 return (
                                                     <div key={cn} className="flex justify-between">
-                                                        <span className="text-slate-500 truncate mr-2">{shortName(cn)}</span>
-                                                        <span className="font-mono text-slate-700 dark:text-slate-300">{fmtOMR(val)}</span>
+                                                        <span className="text-muted-foreground truncate mr-2">{shortName(cn)}</span>
+                                                        <span className="font-mono text-foreground dark:text-muted-foreground/70">{fmtOMR(val)}</span>
                                                     </div>
                                                 );
                                             })}
@@ -705,24 +693,24 @@ export default function ContractorsPage() {
                             </div>
 
                             {/* Desktop: matrix table */}
-                            <div className="hidden md:block overflow-x-auto rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900 shadow-[0_1px_3px_rgba(0,0,0,0.06),0_4px_16px_-4px_rgba(0,0,0,0.1)] dark:shadow-[0_1px_3px_rgba(0,0,0,0.2),0_4px_16px_-4px_rgba(0,0,0,0.3)]">
-                                <table className="w-full text-sm border-collapse whitespace-nowrap">
+                            <div className="ops-table-shell hidden md:block">
+                                <table className="ops-table whitespace-nowrap">
                                     <thead>
-                                        <tr className="bg-slate-50 dark:bg-slate-800/80">
-                                            <th scope="col" className="text-left py-4 px-4 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 sticky left-0 bg-slate-50 dark:bg-slate-800/80 z-10">Year</th>
+                                        <tr className="bg-muted dark:bg-muted/80">
+                                            <th scope="col" className="text-left py-4 px-4 font-semibold uppercase tracking-wider text-xs text-muted-foreground border-b-2 border-border dark:border-border sticky left-0 bg-muted dark:bg-muted/80 z-10">Year</th>
                                             {matrix.contractors.map(cn => (
-                                                <th key={cn} scope="col" className="text-right py-4 px-3 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700" title={cn}>
+                                                <th key={cn} scope="col" className="text-right py-4 px-3 font-semibold uppercase tracking-wider text-xs text-muted-foreground border-b-2 border-border dark:border-border" title={cn}>
                                                     {shortName(cn)}
                                                 </th>
                                             ))}
-                                            <th scope="col" className="text-right py-4 px-4 font-semibold text-sm text-slate-700 dark:text-slate-200 border-b-2 border-slate-200 dark:border-slate-700 bg-slate-100/60 dark:bg-slate-700/30">Year Total</th>
+                                            <th scope="col" className="text-right py-4 px-4 font-semibold text-sm text-foreground border-b-2 border-border dark:border-border bg-muted/60 dark:bg-muted/30">Year Total</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {matrix.rows.map(row => (
-                                            <tr key={row.year} className="border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-secondary/5 dark:hover:bg-slate-700/40 transition-colors even:bg-slate-50/40 dark:even:bg-slate-800/20">
-                                                <td className="py-4 px-4 font-semibold text-slate-700 dark:text-slate-300 sticky left-0 bg-white dark:bg-slate-900 z-10">
-                                                    <span className="text-xs text-slate-400 mr-1.5">Y{row.year}</span>
+                                            <tr key={row.year} className="border-b border-border/80 dark:border-border/80 hover:bg-secondary/5 dark:hover:bg-muted/40 transition-colors even:bg-muted/40 dark:even:bg-muted/20">
+                                                <td className="py-4 px-4 font-semibold text-foreground dark:text-muted-foreground/70 sticky left-0 bg-white dark:bg-muted z-10">
+                                                    <span className="text-xs text-muted-foreground mr-1.5">Y{row.year}</span>
                                                     {row.label}
                                                 </td>
                                                 {matrix.contractors.map(cn => {
@@ -730,27 +718,27 @@ export default function ContractorsPage() {
                                                     return (
                                                         <td key={cn} className="py-4 px-3 text-right font-mono font-semibold text-sm">
                                                             {val != null ? (
-                                                                <span className="text-slate-700 dark:text-slate-300">{fmtOMR(val)}</span>
+                                                                <span className="text-foreground dark:text-muted-foreground/70">{fmtOMR(val)}</span>
                                                             ) : (
-                                                                <span className="text-slate-300 dark:text-slate-600">—</span>
+                                                                <span className="text-muted-foreground/70 dark:text-muted-foreground">—</span>
                                                             )}
                                                         </td>
                                                     );
                                                 })}
-                                                <td className="py-4 px-4 text-right font-mono text-sm font-bold text-primary bg-slate-50/40 dark:bg-slate-800/20">
+                                                <td className="py-4 px-4 text-right font-mono text-sm font-bold text-primary bg-muted/40 dark:bg-muted/20">
                                                     {fmtOMR(row.total)}
                                                 </td>
                                             </tr>
                                         ))}
                                         {/* Totals row */}
-                                        <tr className="bg-slate-50/80 dark:bg-slate-800/50 font-semibold border-t-2 border-slate-300 dark:border-slate-600">
-                                            <td className="py-4 px-4 text-slate-700 dark:text-slate-200 sticky left-0 bg-slate-50/80 dark:bg-slate-800/50 z-10">Contract Total</td>
+                                        <tr className="bg-muted/80 dark:bg-muted/50 font-semibold border-t-2 border-border dark:border-border">
+                                            <td className="py-4 px-4 text-foreground sticky left-0 bg-muted/80 dark:bg-muted/50 z-10">Contract Total</td>
                                             {matrix.contractors.map(cn => (
-                                                <td key={cn} className="py-4 px-3 text-right font-mono text-sm text-slate-700 dark:text-slate-300">
+                                                <td key={cn} className="py-4 px-3 text-right font-mono text-sm text-foreground dark:text-muted-foreground/70">
                                                     {fmtOMR(matrix.contractorTotals[cn])}
                                                 </td>
                                             ))}
-                                            <td className="py-4 px-4 text-right font-mono text-sm font-bold text-primary bg-slate-100/60 dark:bg-slate-700/30">
+                                            <td className="py-4 px-4 text-right font-mono text-sm font-bold text-primary bg-muted/60 dark:bg-muted/30">
                                                 {fmtOMR(matrix.grandTotal)}
                                             </td>
                                         </tr>
@@ -780,10 +768,10 @@ export default function ContractorsPage() {
                 <div className="space-y-4">
                     <TableToolbar>
                         <div className="relative flex-1 min-w-0 sm:min-w-[200px] max-w-md">
-                            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                             <input type="text" placeholder="Search tracker..." value={trackerSearch}
                                 onChange={(e) => { setTrackerSearch(e.target.value); setTrackerPage(1); }}
-                                className="pl-10 pr-4 py-2 w-full rounded-lg border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40 shadow-sm transition-shadow" />
+                                className="pl-10 pr-4 py-2 w-full rounded-lg border border-border/80 dark:border-border/80 bg-white dark:bg-muted text-foreground dark:text-muted-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40 shadow-sm transition-shadow" />
                         </div>
                         <MultiSelectDropdown label="Status" options={uniqueStatuses} selected={selectedStatuses}
                             onChange={(s) => { setSelectedStatuses(s); setTrackerPage(1); }}
@@ -792,12 +780,12 @@ export default function ContractorsPage() {
                             onChange={(s) => { setSelectedTypes(s); setTrackerPage(1); }} />
                         {hasTrackerFilters && (
                             <button onClick={() => { setTrackerSearch(''); setSelectedStatuses([...uniqueStatuses]); setSelectedTypes([...uniqueContractTypes]); setTrackerPage(1); }}
-                                className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors">
+                                className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg text-muted-foreground hover:text-foreground dark:text-muted-foreground dark:hover:text-foreground transition-colors">
                                 <X className="w-3.5 h-3.5" /> Clear
                             </button>
                         )}
-                        <div className="text-sm text-slate-500 dark:text-slate-400 whitespace-nowrap ml-auto">
-                            <span className="font-semibold text-slate-700 dark:text-slate-300">{filteredTracker.length}</span>
+                        <div className="text-sm text-muted-foreground whitespace-nowrap ml-auto">
+                            <span className="font-semibold text-foreground dark:text-muted-foreground/70">{filteredTracker.length}</span>
                             {filteredTracker.length !== trackerData.length && <span> of {trackerData.length}</span>} entries
                         </div>
                     </TableToolbar>
@@ -823,19 +811,19 @@ export default function ContractorsPage() {
                         {paginatedTracker.map(c => {
                             const rowKey = `${c.Contractor ?? 'unknown'}--${c["Service Provided"] ?? ''}`;
                             return (
-                                <div key={`m-${rowKey}`} className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 space-y-3">
+                                <div key={`m-${rowKey}`} className="rounded-xl border border-border dark:border-border bg-white dark:bg-muted p-4 space-y-3">
                                     <div className="flex items-start justify-between gap-2">
                                         <div className="min-w-0">
-                                            <p className="font-semibold text-sm text-slate-800 dark:text-slate-200 truncate">{c.Contractor || '-'}</p>
-                                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{c["Service Provided"] || '-'}</p>
+                                            <p className="font-semibold text-sm text-foreground dark:text-muted-foreground truncate">{c.Contractor || '-'}</p>
+                                            <p className="text-xs text-muted-foreground mt-0.5">{c["Service Provided"] || '-'}</p>
                                         </div>
                                         <StatusBadge label={c.Status || 'N/A'} color={getStatusDotColor(c.Status)} />
                                     </div>
                                     <div className="grid grid-cols-2 gap-2 text-xs">
-                                        <div><span className="text-slate-400">Start:</span> <span className="text-slate-600 dark:text-slate-300">{c["Start Date"] || '-'}</span></div>
-                                        <div><span className="text-slate-400">End:</span> <span className="text-slate-600 dark:text-slate-300">{c["End Date"] || '-'}</span></div>
-                                        <div><span className="text-slate-400">Monthly:</span> <span className="font-mono text-slate-700 dark:text-slate-300">{c["Contract (OMR)/Month"] || '-'}</span></div>
-                                        <div><span className="text-slate-400">Annual:</span> <span className="font-mono font-semibold text-primary">{c["Annual Value (OMR)"]?.toLocaleString('en-US', { maximumFractionDigits: 1 }) || '-'}</span></div>
+                                        <div><span className="text-muted-foreground">Start:</span> <span className="text-muted-foreground">{c["Start Date"] || '-'}</span></div>
+                                        <div><span className="text-muted-foreground">End:</span> <span className="text-muted-foreground">{c["End Date"] || '-'}</span></div>
+                                        <div><span className="text-muted-foreground">Monthly:</span> <span className="font-mono text-foreground dark:text-muted-foreground/70">{c["Contract (OMR)/Month"] || '-'}</span></div>
+                                        <div><span className="text-muted-foreground">Annual:</span> <span className="font-mono font-semibold text-primary">{c["Annual Value (OMR)"]?.toLocaleString('en-US', { maximumFractionDigits: 1 }) || '-'}</span></div>
                                     </div>
                                     {c["Renewal Plan"] && (
                                         <span className="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400"><RefreshCw className="h-3 w-3" />{c["Renewal Plan"]}</span>
@@ -852,7 +840,7 @@ export default function ContractorsPage() {
                             );
                         })}
                         {filteredTracker.length === 0 && (
-                            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700">
+                            <div className="bg-white dark:bg-muted rounded-xl border border-border dark:border-border">
                                 <EmptyState variant={hasTrackerFilters ? "filter-empty" : "no-data"}
                                     title={hasTrackerFilters ? "No entries match" : "No tracker data"}
                                     description="Adjust filters or add data to the Contractor_Tracker table." />
@@ -865,21 +853,13 @@ export default function ContractorsPage() {
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead className="cursor-pointer" onClick={() => handleTrackerSort('contractor')}>
-                                        <div className="flex items-center gap-1.5">Contractor <SortIcon field="contractor" currentSortField={trackerSortField} currentSortDirection={trackerSortDir} /></div>
-                                    </TableHead>
-                                    <TableHead className="cursor-pointer" onClick={() => handleTrackerSort('service')}>
-                                        <div className="flex items-center gap-1.5">Service <SortIcon field="service" currentSortField={trackerSortField} currentSortDirection={trackerSortDir} /></div>
-                                    </TableHead>
-                                    <TableHead className="cursor-pointer" onClick={() => handleTrackerSort('status')}>
-                                        <div className="flex items-center gap-1.5">Status <SortIcon field="status" currentSortField={trackerSortField} currentSortDirection={trackerSortDir} /></div>
-                                    </TableHead>
+                                    <SortableTableHead field="contractor" currentSortField={trackerSortField} currentSortDirection={trackerSortDir} onSort={handleTrackerSort}>Contractor</SortableTableHead>
+                                    <SortableTableHead field="service" currentSortField={trackerSortField} currentSortDirection={trackerSortDir} onSort={handleTrackerSort}>Service</SortableTableHead>
+                                    <SortableTableHead field="status" currentSortField={trackerSortField} currentSortDirection={trackerSortDir} onSort={handleTrackerSort}>Status</SortableTableHead>
                                     <TableHead>Type</TableHead>
                                     <TableHead className="hidden lg:table-cell">Start</TableHead>
                                     <TableHead className="hidden lg:table-cell">End</TableHead>
-                                    <TableHead className="text-right cursor-pointer" onClick={() => handleTrackerSort('annual')}>
-                                        <div className="flex items-center justify-end gap-1.5">Annual <SortIcon field="annual" currentSortField={trackerSortField} currentSortDirection={trackerSortDir} /></div>
-                                    </TableHead>
+                                    <SortableTableHead field="annual" currentSortField={trackerSortField} currentSortDirection={trackerSortDir} onSort={handleTrackerSort} align="right" className="text-right">Annual</SortableTableHead>
                                     <TableHead className="text-center w-16">Doc</TableHead>
                                     <TableHead className="hidden xl:table-cell">Renewal</TableHead>
                                     <TableHead className="hidden xl:table-cell">Note</TableHead>
@@ -888,14 +868,14 @@ export default function ContractorsPage() {
                             <TableBody>
                                 {paginatedTracker.map(c => (
                                     <TableRow key={`${c.Contractor ?? ''}--${c["Service Provided"] ?? ''}`}>
-                                        <TableCell className="text-slate-800 dark:text-slate-200">{c.Contractor || '-'}</TableCell>
-                                        <TableCell className="text-slate-600 dark:text-slate-400">{c["Service Provided"] || '-'}</TableCell>
+                                        <TableCell className="text-foreground dark:text-muted-foreground">{c.Contractor || '-'}</TableCell>
+                                        <TableCell className="text-muted-foreground dark:text-muted-foreground">{c["Service Provided"] || '-'}</TableCell>
                                         <TableCell><StatusBadge label={c.Status || 'N/A'} color={getStatusDotColor(c.Status)} /></TableCell>
-                                        <TableCell className="text-slate-500">{c["Contract Type"] || '-'}</TableCell>
-                                        <TableCell className="text-slate-500 hidden lg:table-cell">
+                                        <TableCell className="text-muted-foreground">{c["Contract Type"] || '-'}</TableCell>
+                                        <TableCell className="text-muted-foreground hidden lg:table-cell">
                                             {c["Start Date"] ? <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{c["Start Date"]}</span> : '-'}
                                         </TableCell>
-                                        <TableCell className="text-slate-500 hidden lg:table-cell">
+                                        <TableCell className="text-muted-foreground hidden lg:table-cell">
                                             {c["End Date"] ? <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{c["End Date"]}</span> : '-'}
                                         </TableCell>
                                         <TableCell className="text-right font-mono text-primary">{c["Annual Value (OMR)"]?.toLocaleString('en-US', { maximumFractionDigits: 1 }) || '-'}</TableCell>
@@ -906,17 +886,17 @@ export default function ContractorsPage() {
                                                 className={`p-1.5 rounded-md transition-colors ${
                                                     c.contract_pdf_url
                                                         ? 'text-secondary hover:bg-secondary/10'
-                                                        : 'text-slate-300 dark:text-slate-600 cursor-not-allowed'
+                                                        : 'text-muted-foreground/70 dark:text-muted-foreground cursor-not-allowed'
                                                 }`}
                                                 disabled={!c.contract_pdf_url}
                                             >
                                                 <FileText className="w-4 h-4" />
                                             </button>
                                         </TableCell>
-                                        <TableCell className="text-slate-600 dark:text-slate-400 hidden xl:table-cell">
+                                        <TableCell className="text-muted-foreground dark:text-muted-foreground hidden xl:table-cell">
                                             {c["Renewal Plan"] ? <span className="flex items-center gap-1"><RefreshCw className="h-3 w-3 text-blue-500" />{c["Renewal Plan"]}</span> : '-'}
                                         </TableCell>
-                                        <TableCell className="text-slate-500 max-w-[200px] truncate hidden xl:table-cell" title={c.Note || ''}>{c.Note || '-'}</TableCell>
+                                        <TableCell className="text-muted-foreground max-w-[200px] truncate hidden xl:table-cell" title={c.Note || ''}>{c.Note || '-'}</TableCell>
                                     </TableRow>
                                 ))}
                                 {filteredTracker.length === 0 && (
@@ -944,7 +924,7 @@ export default function ContractorsPage() {
             <Dialog open={pdfModal.isOpen} onOpenChange={(open) => { if (!open) closePdfModal(); }}>
                 <DialogContent className="sm:max-w-3xl max-h-[90vh]">
                     <DialogHeader>
-                        <DialogTitle className="text-base text-slate-800 dark:text-slate-200">
+                        <DialogTitle className="text-base text-foreground dark:text-muted-foreground">
                             {pdfModal.contractorName}
                         </DialogTitle>
                         <DialogDescription>
@@ -956,8 +936,8 @@ export default function ContractorsPage() {
 
                     {/* PDF link editor */}
                     {pdfLinkEditing && pdfModal.contractId && (
-                        <div className="flex flex-col gap-3 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
-                            <label className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                        <div className="flex flex-col gap-3 p-4 bg-muted dark:bg-muted/50 rounded-xl">
+                            <label className="text-sm font-medium text-foreground dark:text-muted-foreground/70 flex items-center gap-2">
                                 <Link className="w-4 h-4" />
                                 {pdfModal.pdfUrl ? 'Edit PDF Link' : 'Paste Google Drive PDF Link'}
                             </label>
@@ -966,14 +946,14 @@ export default function ContractorsPage() {
                                 value={pdfLinkInput}
                                 onChange={(e) => setPdfLinkInput(e.target.value)}
                                 placeholder="https://drive.google.com/file/d/.../view?usp=sharing"
-                                className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary"
+                                className="w-full px-3 py-2 text-sm rounded-lg border border-border dark:border-border bg-white dark:bg-muted text-foreground dark:text-muted-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary"
                             />
-                            <p className="text-xs text-slate-400">Right-click PDF in Drive &rarr; Share &rarr; Copy link (set to &quot;Anyone with the link&quot;)</p>
+                            <p className="text-xs text-muted-foreground">Right-click PDF in Drive &rarr; Share &rarr; Copy link (set to &quot;Anyone with the link&quot;)</p>
                             <div className="flex gap-2">
                                 <button
                                     onClick={savePdfLink}
                                     disabled={pdfLinkSaving || !pdfLinkInput.trim()}
-                                    className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg bg-secondary text-white hover:bg-secondary/90 transition-colors disabled:opacity-50"
+                                    className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg bg-secondary text-primary-foreground hover:bg-secondary/90 transition-colors disabled:opacity-50"
                                 >
                                     {pdfLinkSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
                                     {pdfLinkSaving ? 'Saving...' : 'Save Link'}
@@ -981,7 +961,7 @@ export default function ContractorsPage() {
                                 {pdfModal.pdfUrl && (
                                     <button
                                         onClick={() => setPdfLinkEditing(false)}
-                                        className="px-4 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors"
+                                        className="px-4 py-2 text-sm rounded-lg border border-border dark:border-border text-muted-foreground dark:text-muted-foreground hover:bg-muted dark:hover:bg-muted/60 transition-colors"
                                     >
                                         Cancel
                                     </button>
@@ -999,14 +979,14 @@ export default function ContractorsPage() {
                         <div className="flex flex-col gap-3">
                             <iframe
                                 src={previewUrl}
-                                className="w-full h-[65vh] rounded-lg border border-slate-200 dark:border-slate-700"
+                                className="w-full h-[65vh] rounded-lg border border-border dark:border-border"
                                 title="Contract PDF"
                                 allow="autoplay"
                             />
                         </div>
                         );
                     })() : !pdfLinkEditing && (
-                        <div className="flex flex-col items-center justify-center py-16 text-slate-400 dark:text-slate-500">
+                        <div className="flex flex-col items-center justify-center py-16 text-muted-foreground/70">
                             <FileWarning className="w-12 h-12 mb-3" />
                             <p className="text-sm font-medium">No contract document linked yet</p>
                         </div>
@@ -1016,7 +996,7 @@ export default function ContractorsPage() {
                         {pdfModal.pdfUrl && !pdfLinkEditing && pdfModal.contractId && (
                             <button
                                 onClick={() => setPdfLinkEditing(true)}
-                                className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors"
+                                className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg border border-border dark:border-border text-muted-foreground dark:text-muted-foreground hover:bg-muted dark:hover:bg-muted/60 transition-colors"
                             >
                                 <Pencil className="w-4 h-4" />
                                 Edit Link
@@ -1027,7 +1007,7 @@ export default function ContractorsPage() {
                                 href={pdfModal.pdfUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg bg-secondary text-white hover:bg-secondary/90 transition-colors"
+                                className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg bg-secondary text-primary-foreground hover:bg-secondary/90 transition-colors"
                             >
                                 <ExternalLink className="w-4 h-4" />
                                 Open in Drive

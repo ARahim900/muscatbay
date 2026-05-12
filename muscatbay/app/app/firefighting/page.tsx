@@ -163,8 +163,8 @@ const CONTACTS = [
 
 const STATUS_CONFIG: Record<PPMStatus, { label: string; icon: typeof CheckCircle; bg: string; text: string; dot: string }> = {
     done: { label: "Done", icon: CheckCircle, bg: "bg-secondary/10 dark:bg-secondary/15", text: "text-secondary dark:text-secondary", dot: "bg-secondary" },
-    in_progress: { label: "In Progress", icon: Clock, bg: "bg-primary/10 dark:bg-primary/15", text: "text-primary dark:text-slate-300", dot: "bg-primary" },
-    not_started: { label: "Not Started", icon: CircleDot, bg: "bg-muted dark:bg-muted", text: "text-muted-foreground", dot: "bg-slate-300 dark:bg-slate-500" },
+    in_progress: { label: "In Progress", icon: Clock, bg: "bg-primary/10 dark:bg-primary/15", text: "text-primary dark:text-muted-foreground/70", dot: "bg-primary" },
+    not_started: { label: "Not Started", icon: CircleDot, bg: "bg-muted dark:bg-muted", text: "text-muted-foreground", dot: "bg-border dark:bg-muted-foreground" },
     fault: { label: "Fault", icon: XCircle, bg: "bg-destructive/10 dark:bg-destructive/15", text: "text-destructive", dot: "bg-destructive" },
     no_access: { label: "No Access", icon: AlertTriangle, bg: "bg-mb-warning-light", text: "text-mb-warning-text", dot: "bg-mb-warning" },
 };
@@ -172,7 +172,7 @@ const STATUS_CONFIG: Record<PPMStatus, { label: string; icon: typeof CheckCircle
 const STAGE_STATUS: Record<StageStatus, { label: string; color: string; border: string; bg: string }> = {
     completed: { label: "Completed", color: "bg-secondary", border: "border-secondary/30 dark:border-secondary/20", bg: "bg-secondary/5 dark:bg-secondary/10" },
     in_progress: { label: "In Progress", color: "bg-primary", border: "border-primary/30 dark:border-primary/20", bg: "bg-primary/5 dark:bg-primary/10" },
-    upcoming: { label: "Upcoming", color: "bg-slate-400 dark:bg-slate-600", border: "border-slate-200 dark:border-slate-700", bg: "bg-slate-50 dark:bg-slate-800/50" },
+    upcoming: { label: "Upcoming", color: "bg-muted-foreground dark:bg-muted", border: "border-border dark:border-border", bg: "bg-muted dark:bg-muted/50" },
 };
 
 // ═══════════════════════════════════════════════════════════════
@@ -194,7 +194,7 @@ function StatusBadge({ status }: { status: PPMStatus }) {
 function SystemTag({ label }: { label: string }) {
     // Use muted, consistent tones — avoid bright saturated colors
     const colors: Record<string, string> = {
-        FA: "bg-primary/10 text-primary dark:bg-primary/20 dark:text-slate-300",
+        FA: "bg-primary/10 text-primary dark:bg-primary/20 dark:text-muted-foreground/70",
         FF: "bg-destructive/10 text-destructive dark:bg-destructive/20",
         FE: "bg-mb-warning-light text-mb-warning-text",
         "Hose Reel": "bg-secondary/10 text-primary dark:bg-secondary/20 dark:text-secondary",
@@ -215,7 +215,7 @@ function ProgressBar({ done, total, faults }: { done: number; total: number; fau
     // covers it from 0..pctDone, so the visible faults band runs pctDone..pctDone+pctFault.
     return (
         <div className="flex items-center gap-3">
-            <div className="relative flex-1 h-2.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+            <div className="relative flex-1 h-2.5 bg-muted dark:bg-muted rounded-full overflow-hidden">
                 {faults > 0 && (
                     <div
                         className="absolute inset-y-0 left-0 w-full bg-destructive/70 origin-left transition-transform duration-200"
@@ -227,7 +227,7 @@ function ProgressBar({ done, total, faults }: { done: number; total: number; fau
                     style={{ transform: `scaleX(${pctDone / 100})` }}
                 />
             </div>
-            <span className="text-xs font-semibold text-slate-600 dark:text-slate-400 tabular-nums whitespace-nowrap">{done}/{total}</span>
+            <span className="text-xs font-semibold text-muted-foreground dark:text-muted-foreground tabular-nums whitespace-nowrap">{done}/{total}</span>
         </div>
     );
 }
@@ -250,54 +250,54 @@ function StageCard({ stage, isExpanded, onToggle, filterStatus }: { stage: Stage
                 onClick={onToggle}
                 className={cn("w-full flex items-center gap-3 sm:gap-4 px-3 sm:px-5 py-3 sm:py-4 transition-colors text-left", stageStyle.bg)}
             >
-                <div className={cn("w-9 h-9 sm:w-11 sm:h-11 rounded-xl text-white flex items-center justify-center font-bold text-base sm:text-lg flex-shrink-0", stageStyle.color)}>
+                <div className={cn("w-9 h-9 sm:w-11 sm:h-11 rounded-xl text-primary-foreground flex items-center justify-center font-bold text-base sm:text-lg flex-shrink-0", stageStyle.color)}>
                     {stage.id}
                 </div>
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                        <h2 className="font-bold text-slate-900 dark:text-slate-100 text-base">{stage.name}</h2>
-                        <span className={cn("px-2 py-0.5 rounded-full text-[10px] font-bold uppercase text-white", stageStyle.color)}>
+                        <h2 className="font-bold text-foreground text-base">{stage.name}</h2>
+                        <span className={cn("px-2 py-0.5 rounded-full text-[10px] font-bold uppercase text-primary-foreground", stageStyle.color)}>
                             {stageStyle.label}
                         </span>
-                        <span className="text-[10px] text-slate-400 font-medium">{stage.year}</span>
+                        <span className="text-[10px] text-muted-foreground font-medium">{stage.year}</span>
                     </div>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{stage.period}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{stage.period}</p>
                 </div>
 
                 <div className="hidden sm:flex items-center gap-3 me-2">
                     {doneCount > 0 && <span className="flex items-center gap-1 text-xs text-secondary font-semibold"><span className="w-2 h-2 rounded-full bg-secondary" />{doneCount}</span>}
-                    {inProgressCount > 0 && <span className="flex items-center gap-1 text-xs text-primary dark:text-slate-400 font-semibold"><span className="w-2 h-2 rounded-full bg-primary" />{inProgressCount}</span>}
+                    {inProgressCount > 0 && <span className="flex items-center gap-1 text-xs text-primary dark:text-muted-foreground font-semibold"><span className="w-2 h-2 rounded-full bg-primary" />{inProgressCount}</span>}
                     {faultCount > 0 && <span className="flex items-center gap-1 text-xs text-destructive font-semibold"><span className="w-2 h-2 rounded-full bg-destructive" />{faultCount}</span>}
-                    {notStartedCount > 0 && <span className="flex items-center gap-1 text-xs text-muted-foreground font-semibold"><span className="w-2 h-2 rounded-full bg-slate-300 dark:bg-slate-500" />{notStartedCount}</span>}
+                    {notStartedCount > 0 && <span className="flex items-center gap-1 text-xs text-muted-foreground font-semibold"><span className="w-2 h-2 rounded-full bg-border dark:bg-muted-foreground" />{notStartedCount}</span>}
                 </div>
 
                 <div className="w-32 hidden md:block">
                     <ProgressBar done={doneCount} total={totalBuildings} faults={faultCount} />
                 </div>
-                {isExpanded ? <ChevronDown className="w-5 h-5 text-slate-400" /> : <ChevronRight className="w-5 h-5 text-slate-400" />}
+                {isExpanded ? <ChevronDown className="w-5 h-5 text-muted-foreground" /> : <ChevronRight className="w-5 h-5 text-muted-foreground" />}
             </button>
 
             {isExpanded && (
-                <div className="bg-white dark:bg-slate-800">
+                <div className="bg-white dark:bg-muted">
                     <div className="md:hidden px-3 sm:px-5 pt-3">
                         <ProgressBar done={doneCount} total={totalBuildings} faults={faultCount} />
                     </div>
 
-                    <div className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-2 sm:py-2.5 border-b border-slate-100 dark:border-slate-700 flex-wrap">
-                        <span className="text-[10px] text-slate-400 uppercase font-semibold me-1">Legend:</span>
+                    <div className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-2 sm:py-2.5 border-b border-border dark:border-border flex-wrap">
+                        <span className="text-[10px] text-muted-foreground uppercase font-semibold me-1">Legend:</span>
                         <span className="text-[10px] text-secondary flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Done</span>
-                        <span className="text-[10px] text-primary dark:text-slate-400 flex items-center gap-1"><Clock className="w-3 h-3" /> In Progress</span>
+                        <span className="text-[10px] text-primary dark:text-muted-foreground flex items-center gap-1"><Clock className="w-3 h-3" /> In Progress</span>
                         <span className="text-[10px] text-destructive flex items-center gap-1"><XCircle className="w-3 h-3" /> Fault</span>
                         <span className="text-[10px] text-mb-warning-text flex items-center gap-1"><AlertTriangle className="w-3 h-3" /> No Access</span>
                         <span className="text-[10px] text-muted-foreground flex items-center gap-1"><CircleDot className="w-3 h-3" /> Not Started</span>
                     </div>
 
-                    <div className="divide-y divide-slate-50 dark:divide-slate-700/50">
+                    <div className="divide-y divide-border dark:divide-border/50">
                         {buildings.map((b) => (
                             <div
                                 key={b.id}
                                 className={cn(
-                                    "flex items-start sm:items-center gap-2 sm:gap-3 px-3 sm:px-5 py-2.5 sm:py-3 hover:bg-slate-50/70 dark:hover:bg-slate-700/30 transition-colors",
+                                    "flex items-start sm:items-center gap-2 sm:gap-3 px-3 sm:px-5 py-2.5 sm:py-3 hover:bg-muted/70 dark:hover:bg-muted/30 transition-colors",
                                     b.status === "fault" && "bg-destructive/5 dark:bg-destructive/10",
                                     b.status === "no_access" && "bg-mb-warning-light/40"
                                 )}
@@ -305,7 +305,7 @@ function StageCard({ stage, isExpanded, onToggle, filterStatus }: { stage: Stage
                                 <span className={cn("w-2.5 h-2.5 rounded-full flex-shrink-0 mt-1.5 sm:mt-0", STATUS_CONFIG[b.status]?.dot)} />
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2 flex-wrap">
-                                        <p className={cn("text-sm font-medium", b.status === "fault" ? "text-destructive" : b.status === "no_access" ? "text-mb-warning-text" : "text-slate-900 dark:text-slate-100")}>
+                                        <p className={cn("text-sm font-medium", b.status === "fault" ? "text-destructive" : b.status === "no_access" ? "text-mb-warning-text" : "text-foreground")}>
                                             {b.area}
                                         </p>
                                         <div className="sm:hidden flex-shrink-0">
@@ -313,26 +313,26 @@ function StageCard({ stage, isExpanded, onToggle, filterStatus }: { stage: Stage
                                         </div>
                                     </div>
                                     {b.notes && (
-                                        <p className={cn("text-[11px] mt-0.5", b.status === "fault" ? "text-destructive font-medium" : b.status === "no_access" ? "text-mb-warning-text font-medium" : "text-slate-400")}>
+                                        <p className={cn("text-[11px] mt-0.5", b.status === "fault" ? "text-destructive font-medium" : b.status === "no_access" ? "text-mb-warning-text font-medium" : "text-muted-foreground")}>
                                             {b.notes}
                                         </p>
                                     )}
                                     <div className="flex gap-1 mt-1 sm:hidden flex-wrap">
                                         {b.systems.map((s) => <SystemTag key={s} label={s} />)}
-                                        {b.date !== "TBD" && <span className="text-[10px] text-slate-400 tabular-nums">{b.date}</span>}
+                                        {b.date !== "TBD" && <span className="text-[10px] text-muted-foreground tabular-nums">{b.date}</span>}
                                     </div>
                                 </div>
                                 <div className="hidden sm:flex gap-1 flex-shrink-0">
                                     {b.systems.map((s) => <SystemTag key={s} label={s} />)}
                                 </div>
-                                <span className="text-[11px] text-slate-400 hidden sm:block w-24 text-right flex-shrink-0 tabular-nums">{b.date}</span>
+                                <span className="text-[11px] text-muted-foreground hidden sm:block w-24 text-right flex-shrink-0 tabular-nums">{b.date}</span>
                                 <div className="hidden sm:block flex-shrink-0">
                                     <StatusBadge status={b.status} />
                                 </div>
                             </div>
                         ))}
                         {buildings.length === 0 && (
-                            <div className="px-5 py-8 text-center text-sm text-slate-400">No items match the selected filter.</div>
+                            <div className="px-5 py-8 text-center text-sm text-muted-foreground">No items match the selected filter.</div>
                         )}
                     </div>
                 </div>
@@ -444,8 +444,8 @@ export default function FirefightingPage() {
 
     const getPriorityColor = (priority: string) => {
         switch (priority) {
-            case "Critical": return "bg-destructive text-white";
-            case "High": return "bg-mb-warning text-white";
+            case "Critical": return "bg-destructive text-primary-foreground";
+            case "High": return "bg-mb-warning text-primary-foreground";
             case "Medium": return "bg-mb-warning-light text-mb-warning-text";
             case "Low": return "bg-secondary/20 text-secondary dark:text-secondary";
             default: return "bg-muted text-muted-foreground";
@@ -602,12 +602,12 @@ export default function FirefightingPage() {
                     </div>
 
                     {/* Year 2 note */}
-                    <Card className="card-elevated border-slate-200 dark:border-slate-700">
+                    <Card className="card-elevated border-border dark:border-border">
                         <CardContent className="p-4 flex items-start gap-3">
                             <Info className="w-5 h-5 text-secondary flex-shrink-0 mt-0.5" />
-                            <div className="text-sm text-slate-700 dark:text-slate-300">
+                            <div className="text-sm text-foreground dark:text-muted-foreground/70">
                                 <p className="font-semibold">Year 2 stages (Dec 2026, Apr 2027, Aug 2027) not yet added.</p>
-                                <p className="mt-1 text-slate-500 dark:text-slate-400">PPM visits in Apr & Aug 2025 were under the previous AMC and are not tracked here.</p>
+                                <p className="mt-1 text-muted-foreground">PPM visits in Apr & Aug 2025 were under the previous AMC and are not tracked here.</p>
                             </div>
                         </CardContent>
                     </Card>
@@ -625,7 +625,7 @@ export default function FirefightingPage() {
                                     placeholder="Search equipment by name, location, or type..."
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
-                                    className="pl-10 bg-white/50 dark:bg-slate-800/50"
+                                    className="pl-10 bg-white/50 dark:bg-muted/50"
                                 />
                             </div>
                         </CardContent>
@@ -646,7 +646,7 @@ export default function FirefightingPage() {
                                         </div>
 
                                         <div>
-                                            <h2 className="font-semibold text-lg flex items-center gap-2 text-primary dark:text-slate-100">
+                                            <h2 className="font-semibold text-lg flex items-center gap-2 text-primary dark:text-foreground">
                                                 <HardHat className="w-4 h-4 text-muted-foreground" />
                                                 {item.name}
                                             </h2>
@@ -657,23 +657,23 @@ export default function FirefightingPage() {
                                         </div>
 
                                         {(item.battery !== null || item.signal !== null) && (
-                                            <div className="grid grid-cols-2 gap-2 p-2 bg-slate-50/50 dark:bg-slate-800/50 rounded-lg">
+                                            <div className="grid grid-cols-2 gap-2 p-2 bg-muted/50 dark:bg-muted/50 rounded-lg">
                                                 {item.battery !== null && (
                                                     <div className="flex items-center gap-2 text-xs">
-                                                        <Battery className="w-3 h-3 text-slate-500" />
+                                                        <Battery className="w-3 h-3 text-muted-foreground" />
                                                         <span>Batt: {item.battery}%</span>
                                                     </div>
                                                 )}
                                                 {item.signal !== null && (
                                                     <div className="flex items-center gap-2 text-xs">
-                                                        <Signal className="w-3 h-3 text-slate-500" />
+                                                        <Signal className="w-3 h-3 text-muted-foreground" />
                                                         <span>Sig: {item.signal}%</span>
                                                     </div>
                                                 )}
                                             </div>
                                         )}
                                     </div>
-                                    <div className="bg-slate-50/50 dark:bg-slate-800/50 p-3 flex justify-between items-center rounded-b-[20px] border-t border-slate-100 dark:border-slate-700">
+                                    <div className="bg-muted/50 dark:bg-muted/50 p-3 flex justify-between items-center rounded-b-[20px] border-t border-border dark:border-border">
                                         <span className="text-xs text-muted-foreground">Maintained by: {item.inspector}</span>
                                         <span className="text-xs font-medium text-secondary">Due: {format(new Date(item.next_maintenance), "MMM d, yyyy")}</span>
                                     </div>
@@ -707,7 +707,7 @@ export default function FirefightingPage() {
 
                     {/* Quotation Reference */}
                     <Card className="card-elevated">
-                        <CardHeader className="card-elevated-header border-b border-slate-100 dark:border-slate-700">
+                        <CardHeader className="card-elevated-header border-b border-border dark:border-border">
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                                 <CardTitle className="text-sm sm:text-base">BEC Rectification Quotation</CardTitle>
                                 <Badge className="bg-mb-warning-light text-mb-warning-text w-fit">AWAITING PO</Badge>
@@ -722,8 +722,8 @@ export default function FirefightingPage() {
                                 ["PO Status", "Not issued"],
                             ].map(([label, value]) => (
                                 <div key={label} className="flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-3 text-sm">
-                                    <span className="text-slate-400 text-xs sm:w-28 flex-shrink-0">{label}</span>
-                                    <span className={cn("font-medium", label === "PO Status" ? "text-destructive font-bold" : "text-slate-900 dark:text-slate-100")}>{value}</span>
+                                    <span className="text-muted-foreground text-xs sm:w-28 flex-shrink-0">{label}</span>
+                                    <span className={cn("font-medium", label === "PO Status" ? "text-destructive font-bold" : "text-foreground")}>{value}</span>
                                 </div>
                             ))}
                         </CardContent>
@@ -731,12 +731,12 @@ export default function FirefightingPage() {
 
                     {/* Open Faults List */}
                     <Card className="card-elevated">
-                        <CardHeader className="card-elevated-header border-b border-slate-100 dark:border-slate-700">
+                        <CardHeader className="card-elevated-header border-b border-border dark:border-border">
                             <CardTitle>Open Faults — Stage 1 PPM (Dec 2025)</CardTitle>
-                            <p className="text-[11px] text-slate-400 mt-1">Source: Wali Anwar email 16 Feb 2026, confirmed by Arun Achuthan 22 Feb 2026</p>
+                            <p className="text-[11px] text-muted-foreground mt-1">Source: Wali Anwar email 16 Feb 2026, confirmed by Arun Achuthan 22 Feb 2026</p>
                         </CardHeader>
                         <CardContent className="p-0">
-                            <div className="divide-y divide-slate-50 dark:divide-slate-700/50">
+                            <div className="divide-y divide-border dark:divide-border/50">
                                 {OPEN_FAULTS.map((f) => (
                                     <div key={`${f.equipment}-${f.location}`} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 px-4 sm:px-5 py-3 sm:py-4">
                                         <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -744,8 +744,8 @@ export default function FirefightingPage() {
                                                 <XCircle className="w-4 h-4 text-destructive" />
                                             </span>
                                             <div className="flex-1 min-w-0">
-                                                <p className="text-sm font-medium text-slate-900 dark:text-slate-100">{f.equipment}</p>
-                                                <p className="text-[11px] text-slate-500 flex items-center gap-1 mt-0.5"><MapPin className="w-3 h-3" />{f.location}</p>
+                                                <p className="text-sm font-medium text-foreground">{f.equipment}</p>
+                                                <p className="text-[11px] text-muted-foreground flex items-center gap-1 mt-0.5"><MapPin className="w-3 h-3" />{f.location}</p>
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-2 pl-11 sm:pl-0">
@@ -769,15 +769,15 @@ export default function FirefightingPage() {
                             </div>
                         </CardHeader>
                         <CardContent className="p-4 sm:p-5 space-y-2 text-sm">
-                            <p><span className="text-slate-400 text-xs">Location:</span> <span className="font-medium text-slate-900 dark:text-slate-100">Zone 5 — Villa 33, Muscat Bay Qantab</span></p>
-                            <p><span className="text-slate-400 text-xs">Items:</span> <span className="font-medium text-slate-900 dark:text-slate-100">Fire extinguisher, fire blanket, smoke detector</span></p>
-                            <p><span className="text-slate-400 text-xs">Work Status:</span> <span className="font-medium text-mb-success-text">Completed (Aug 2025)</span></p>
-                            <p><span className="text-slate-400 text-xs">Original Quote:</span> <span className="font-medium text-slate-900 dark:text-slate-100">13 Jul 2025 by BEC FA Team (Suneesh.L)</span></p>
-                            <p><span className="text-slate-400 text-xs">Approved by:</span> <span className="font-medium text-slate-900 dark:text-slate-100">Abdulrahim AlBalushi — 13 Jul 2025</span></p>
-                            <p><span className="text-slate-400 text-xs">Updated Quote:</span> <span className="font-medium text-slate-900 dark:text-slate-100">26 Mar 2026 by Nadim M. Ahmad (BEC)</span></p>
-                            <p><span className="text-slate-400 text-xs">PO Status:</span> <span className="font-bold text-mb-warning-text">Original PR lost — New PR being raised with updated quote</span></p>
-                            <p><span className="text-slate-400 text-xs">Latest Action:</span> <span className="font-medium text-slate-900 dark:text-slate-100">26 Mar 2026 — Rahim instructed Helpdesk to raise new PR; BEC provided updated quote; Amjad confirmed to raise MB PR</span></p>
-                            <p><span className="text-slate-400 text-xs">Reminders:</span> <span className="font-medium text-slate-900 dark:text-slate-100">6+ sent by Arun Achuthan (Dec 2025 – Mar 2026)</span></p>
+                            <p><span className="text-muted-foreground text-xs">Location:</span> <span className="font-medium text-foreground">Zone 5 — Villa 33, Muscat Bay Qantab</span></p>
+                            <p><span className="text-muted-foreground text-xs">Items:</span> <span className="font-medium text-foreground">Fire extinguisher, fire blanket, smoke detector</span></p>
+                            <p><span className="text-muted-foreground text-xs">Work Status:</span> <span className="font-medium text-mb-success-text">Completed (Aug 2025)</span></p>
+                            <p><span className="text-muted-foreground text-xs">Original Quote:</span> <span className="font-medium text-foreground">13 Jul 2025 by BEC FA Team (Suneesh.L)</span></p>
+                            <p><span className="text-muted-foreground text-xs">Approved by:</span> <span className="font-medium text-foreground">Abdulrahim AlBalushi — 13 Jul 2025</span></p>
+                            <p><span className="text-muted-foreground text-xs">Updated Quote:</span> <span className="font-medium text-foreground">26 Mar 2026 by Nadim M. Ahmad (BEC)</span></p>
+                            <p><span className="text-muted-foreground text-xs">PO Status:</span> <span className="font-bold text-mb-warning-text">Original PR lost — New PR being raised with updated quote</span></p>
+                            <p><span className="text-muted-foreground text-xs">Latest Action:</span> <span className="font-medium text-foreground">26 Mar 2026 — Rahim instructed Helpdesk to raise new PR; BEC provided updated quote; Amjad confirmed to raise MB PR</span></p>
+                            <p><span className="text-muted-foreground text-xs">Reminders:</span> <span className="font-medium text-foreground">6+ sent by Arun Achuthan (Dec 2025 – Mar 2026)</span></p>
                         </CardContent>
                         <div className="px-5 py-3 bg-mb-info-light border-t border-mb-info/20">
                             <p className="text-[11px] text-mb-info-text flex items-center gap-1.5">
@@ -798,13 +798,13 @@ export default function FirefightingPage() {
                             </div>
                         </CardHeader>
                         <CardContent className="p-4 sm:p-5 space-y-2 text-sm">
-                            <p><span className="text-slate-400 text-xs">Location:</span> <span className="font-medium text-slate-900 dark:text-slate-100">Village Square, Muscat Bay</span></p>
-                            <p><span className="text-slate-400 text-xs">Scope — Fire Pump:</span> <span className="font-medium text-slate-900 dark:text-slate-100">Pressure drop (8→6.5 bar in 1 hr), leak repairs, system testing & calibration</span></p>
-                            <p><span className="text-slate-400 text-xs">Scope — Fire Alarm:</span> <span className="font-medium text-slate-900 dark:text-slate-100">Full commissioning (non-operational), BMS/elevator/auto-door integration</span></p>
-                            <p><span className="text-slate-400 text-xs">Quote:</span> <span className="font-medium text-slate-900 dark:text-slate-100">4 Nov 2024 by Arun Achuthan (BEC) — Supply & Replacement of Fire Pump + FA commissioning</span></p>
-                            <p><span className="text-slate-400 text-xs">Requested by:</span> <span className="font-medium text-slate-900 dark:text-slate-100">Abdulrahim AlBalushi — 21 Oct 2024</span></p>
-                            <p><span className="text-slate-400 text-xs">Monitoring:</span> <span className="font-medium text-slate-900 dark:text-slate-100">BEC on-site monitoring conducted Nov 2024; no issues in initial 2-hr observation</span></p>
-                            <p><span className="text-slate-400 text-xs">PO Status:</span> <span className="font-bold text-mb-warning-text">Pending — awaiting management decision</span></p>
+                            <p><span className="text-muted-foreground text-xs">Location:</span> <span className="font-medium text-foreground">Village Square, Muscat Bay</span></p>
+                            <p><span className="text-muted-foreground text-xs">Scope — Fire Pump:</span> <span className="font-medium text-foreground">Pressure drop (8→6.5 bar in 1 hr), leak repairs, system testing & calibration</span></p>
+                            <p><span className="text-muted-foreground text-xs">Scope — Fire Alarm:</span> <span className="font-medium text-foreground">Full commissioning (non-operational), BMS/elevator/auto-door integration</span></p>
+                            <p><span className="text-muted-foreground text-xs">Quote:</span> <span className="font-medium text-foreground">4 Nov 2024 by Arun Achuthan (BEC) — Supply & Replacement of Fire Pump + FA commissioning</span></p>
+                            <p><span className="text-muted-foreground text-xs">Requested by:</span> <span className="font-medium text-foreground">Abdulrahim AlBalushi — 21 Oct 2024</span></p>
+                            <p><span className="text-muted-foreground text-xs">Monitoring:</span> <span className="font-medium text-foreground">BEC on-site monitoring conducted Nov 2024; no issues in initial 2-hr observation</span></p>
+                            <p><span className="text-muted-foreground text-xs">PO Status:</span> <span className="font-bold text-mb-warning-text">Pending — awaiting management decision</span></p>
                         </CardContent>
                         <div className="px-5 py-3 bg-mb-warning-light border-t border-mb-warning/20">
                             <p className="text-[11px] text-mb-warning-text flex items-center gap-1.5">
@@ -820,22 +820,22 @@ export default function FirefightingPage() {
             {activeTab === 'contacts' && (
                 <div className="space-y-6 motion-safe:animate-in motion-safe:fade-in duration-200">
                     <Card className="card-elevated">
-                        <CardHeader className="card-elevated-header border-b border-slate-100 dark:border-slate-700">
+                        <CardHeader className="card-elevated-header border-b border-border dark:border-border">
                             <CardTitle className="flex items-center gap-2">
                                 <Users className="w-5 h-5 text-secondary" />
                                 Quick Contacts — BEC & Muscat Bay
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="p-0">
-                            <div className="divide-y divide-slate-50 dark:divide-slate-700/50">
+                            <div className="divide-y divide-border dark:divide-border/50">
                                 {CONTACTS.map((c) => (
-                                    <div key={c.name} className="flex items-center gap-3 sm:gap-4 px-4 sm:px-5 py-3 sm:py-4 hover:bg-slate-50/70 dark:hover:bg-slate-700/30 transition-colors">
-                                        <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-secondary/10 dark:bg-secondary/20 flex items-center justify-center text-xs sm:text-sm font-bold text-primary dark:text-slate-200 flex-shrink-0">
+                                    <div key={c.name} className="flex items-center gap-3 sm:gap-4 px-4 sm:px-5 py-3 sm:py-4 hover:bg-muted/70 dark:hover:bg-muted/30 transition-colors">
+                                        <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-secondary/10 dark:bg-secondary/20 flex items-center justify-center text-xs sm:text-sm font-bold text-primary dark:text-muted-foreground flex-shrink-0">
                                             {c.name.split(' ').slice(0, 2).map(n => n[0]).join('')}
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate">{c.name}</p>
-                                            <p className="text-[11px] text-slate-400 truncate">{c.role}</p>
+                                            <p className="text-sm font-semibold text-foreground truncate">{c.name}</p>
+                                            <p className="text-[11px] text-muted-foreground truncate">{c.role}</p>
                                         </div>
                                         <div className="flex items-center gap-2 flex-shrink-0">
                                             {c.email && (
@@ -860,7 +860,7 @@ export default function FirefightingPage() {
                 <div className="space-y-6 motion-safe:animate-in motion-safe:fade-in duration-200">
                     {/* Contract Summary */}
                     <Card className="card-elevated">
-                        <CardHeader className="card-elevated-header border-b border-slate-100 dark:border-slate-700">
+                        <CardHeader className="card-elevated-header border-b border-border dark:border-border">
                             <CardTitle className="flex items-center gap-2">
                                 <FileText className="w-5 h-5 text-secondary" />
                                 Contract Summary
@@ -882,9 +882,9 @@ export default function FirefightingPage() {
                                     ["Signed by MB", "Nouf AlHajri — Asst. Commercial Manager"],
                                     ["Signed by BEC", "Sujith Kumar Rao — Authorized Signatory"],
                                 ].map(([label, value]) => (
-                                    <div key={label} className="py-2 border-b border-slate-50 dark:border-slate-700/50">
-                                        <p className="text-[10px] uppercase text-slate-400 font-semibold">{label}</p>
-                                        <p className="text-sm text-slate-900 dark:text-slate-100 font-medium">{value}</p>
+                                    <div key={label} className="py-2 border-b border-border/60 dark:border-border/50">
+                                        <p className="text-[10px] uppercase text-muted-foreground font-semibold">{label}</p>
+                                        <p className="text-sm text-foreground font-medium">{value}</p>
                                     </div>
                                 ))}
                             </div>
@@ -893,7 +893,7 @@ export default function FirefightingPage() {
 
                     {/* SLA */}
                     <Card className="card-elevated">
-                        <CardHeader className="card-elevated-header border-b border-slate-100 dark:border-slate-700">
+                        <CardHeader className="card-elevated-header border-b border-border dark:border-border">
                             <CardTitle>Response Time SLA</CardTitle>
                         </CardHeader>
                         <CardContent className="p-4 sm:p-5">
@@ -902,15 +902,15 @@ export default function FirefightingPage() {
                                     { p: "P1 Emergency", time: "3 Hours", desc: "Continuous alarm, pump failure, major leak", bg: "bg-mb-danger-light", dot: "bg-destructive" },
                                     { p: "P2 Urgent", time: "8 Hours", desc: "Minor leak, panel malfunction, abnormal pump noise", bg: "bg-mb-warning-light", dot: "bg-mb-warning" },
                                     { p: "P3 Normal", time: "24 Hours", desc: "Extinguisher refilling, general maintenance", bg: "bg-mb-info-light", dot: "bg-mb-info" },
-                                    { p: "P4 PPM", time: "Per schedule", desc: "Scheduled preventive maintenance", bg: "bg-slate-50 dark:bg-slate-800/50", dot: "bg-slate-400 dark:bg-slate-500" },
+                                    { p: "P4 PPM", time: "Per schedule", desc: "Scheduled preventive maintenance", bg: "bg-muted dark:bg-muted/50", dot: "bg-muted-foreground dark:bg-muted-foreground" },
                                 ].map((s) => (
                                     <div key={s.p} className={cn("rounded-lg px-4 py-3", s.bg)}>
-                                        <p className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                                        <p className="text-xs font-bold text-foreground dark:text-muted-foreground flex items-center gap-1.5">
                                             <span className={cn("w-2 h-2 rounded-full flex-shrink-0", s.dot)} />
                                             {s.p}
                                         </p>
-                                        <p className="text-xl font-bold text-slate-900 dark:text-slate-100 mt-1">{s.time}</p>
-                                        <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">{s.desc}</p>
+                                        <p className="text-xl font-bold text-foreground mt-1">{s.time}</p>
+                                        <p className="text-[10px] text-muted-foreground mt-1">{s.desc}</p>
                                     </div>
                                 ))}
                             </div>
@@ -919,7 +919,7 @@ export default function FirefightingPage() {
 
                     {/* Equipment Under AMC */}
                     <Card className="card-elevated">
-                        <CardHeader className="card-elevated-header border-b border-slate-100 dark:border-slate-700">
+                        <CardHeader className="card-elevated-header border-b border-border dark:border-border">
                             <CardTitle className="flex items-center gap-2">
                                 <Building2 className="w-5 h-5 text-secondary" />
                                 Equipment Under AMC
@@ -937,10 +937,10 @@ export default function FirefightingPage() {
                                     { label: "Jockey Pump", value: "1", sub: "13.5 kW NAFFCO" },
                                     { label: "Total Pump Make", value: "NAFFCO", sub: "All 5 pumps" },
                                 ].map((eq) => (
-                                    <div key={eq.label} className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg text-center">
-                                        <p className="text-xl font-bold text-slate-900 dark:text-slate-100">{eq.value}</p>
-                                        <p className="text-[10px] text-slate-600 dark:text-slate-400 font-semibold uppercase">{eq.label}</p>
-                                        <p className="text-[9px] text-slate-400">{eq.sub}</p>
+                                    <div key={eq.label} className="p-3 bg-muted dark:bg-muted/50 rounded-lg text-center">
+                                        <p className="text-xl font-bold text-foreground">{eq.value}</p>
+                                        <p className="text-[10px] text-muted-foreground dark:text-muted-foreground font-semibold uppercase">{eq.label}</p>
+                                        <p className="text-[9px] text-muted-foreground">{eq.sub}</p>
                                     </div>
                                 ))}
                             </div>
@@ -949,7 +949,7 @@ export default function FirefightingPage() {
 
                     {/* Insurance */}
                     <Card className="card-elevated">
-                        <CardHeader className="card-elevated-header border-b border-slate-100 dark:border-slate-700">
+                        <CardHeader className="card-elevated-header border-b border-border dark:border-border">
                             <CardTitle>Insurance Coverage (Contractual)</CardTitle>
                         </CardHeader>
                         <CardContent className="p-4 sm:p-5 space-y-3">
@@ -958,9 +958,9 @@ export default function FirefightingPage() {
                                 ["Third-party property liability", "RO 250,000"],
                                 ["Workmen's compensation", "Covered under open policy"],
                             ].map(([coverage, limit]) => (
-                                <div key={coverage} className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-0.5 sm:gap-4 py-2 border-b border-slate-50 dark:border-slate-700/50 last:border-0">
-                                    <span className="text-sm text-slate-600 dark:text-slate-400">{coverage}</span>
-                                    <span className="text-sm font-bold text-slate-900 dark:text-slate-100 flex-shrink-0">{limit}</span>
+                                <div key={coverage} className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-0.5 sm:gap-4 py-2 border-b border-border/60 dark:border-border/50 last:border-0">
+                                    <span className="text-sm text-muted-foreground dark:text-muted-foreground">{coverage}</span>
+                                    <span className="text-sm font-bold text-foreground flex-shrink-0">{limit}</span>
                                 </div>
                             ))}
                         </CardContent>
@@ -968,12 +968,12 @@ export default function FirefightingPage() {
 
                     {/* ── Sewage Tanker Discharge Contracts ── */}
                     <Card className="card-elevated">
-                        <CardHeader className="card-elevated-header border-b border-slate-100 dark:border-slate-700">
+                        <CardHeader className="card-elevated-header border-b border-border dark:border-border">
                             <CardTitle className="flex items-center gap-2">
                                 <Truck className="w-5 h-5 text-secondary" />
                                 Sewage Tanker Discharge Agreements
                             </CardTitle>
-                            <p className="text-xs text-slate-400 mt-1">
+                            <p className="text-xs text-muted-foreground mt-1">
                                 External sewage tankers discharging into Muscat Bay STP Plant
                             </p>
                         </CardHeader>
@@ -981,10 +981,10 @@ export default function FirefightingPage() {
                             {/* Rate Structure */}
                             <div className="p-3 bg-mb-success-light rounded-lg">
                                 <p className="text-xs font-bold text-mb-success-text uppercase">Discharge Rate</p>
-                                <p className="text-lg font-bold text-slate-900 dark:text-slate-100 mt-1">
-                                    1 OMR per 1,000 Gallons <span className="text-sm font-normal text-slate-500">(5 OMR per standard 5,000-gal tanker)</span>
+                                <p className="text-lg font-bold text-foreground mt-1">
+                                    1 OMR per 1,000 Gallons <span className="text-sm font-normal text-muted-foreground">(5 OMR per standard 5,000-gal tanker)</span>
                                 </p>
-                                <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">
+                                <p className="text-[10px] text-muted-foreground mt-1">
                                     Quantity based on each vehicle&apos;s marked tank capacity · Rate set by Abdullah AlNasiri (Sep 2024)
                                 </p>
                             </div>
@@ -992,9 +992,9 @@ export default function FirefightingPage() {
                             {/* Company Cards */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 {/* Al Abraj */}
-                                <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-100 dark:border-slate-700/50">
+                                <div className="p-4 bg-muted dark:bg-muted/50 rounded-lg border border-border dark:border-border/50">
                                     <div className="flex items-center justify-between mb-3">
-                                        <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">Al Abraj</h4>
+                                        <h4 className="text-sm font-bold text-foreground">Al Abraj</h4>
                                         <Badge className="bg-mb-success-light text-mb-success-text text-[10px]">Active</Badge>
                                     </div>
                                     <div className="space-y-2">
@@ -1007,17 +1007,17 @@ export default function FirefightingPage() {
                                             ["Revised", "11 Mar 2026"],
                                         ].map(([label, value]) => (
                                             <div key={label}>
-                                                <p className="text-[10px] uppercase text-slate-400 font-semibold">{label}</p>
-                                                <p className="text-xs text-slate-900 dark:text-slate-100">{value}</p>
+                                                <p className="text-[10px] uppercase text-muted-foreground font-semibold">{label}</p>
+                                                <p className="text-xs text-foreground">{value}</p>
                                             </div>
                                         ))}
                                     </div>
                                 </div>
 
                                 {/* Jomon */}
-                                <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-100 dark:border-slate-700/50">
+                                <div className="p-4 bg-muted dark:bg-muted/50 rounded-lg border border-border dark:border-border/50">
                                     <div className="flex items-center justify-between mb-3">
-                                        <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">Jomon&apos;s Company</h4>
+                                        <h4 className="text-sm font-bold text-foreground">Jomon&apos;s Company</h4>
                                         <Badge className="bg-mb-success-light text-mb-success-text text-[10px]">Active</Badge>
                                     </div>
                                     <div className="space-y-2">
@@ -1030,8 +1030,8 @@ export default function FirefightingPage() {
                                             ["Revised", "11 Mar 2026"],
                                         ].map(([label, value]) => (
                                             <div key={label}>
-                                                <p className="text-[10px] uppercase text-slate-400 font-semibold">{label}</p>
-                                                <p className="text-xs text-slate-900 dark:text-slate-100">{value}</p>
+                                                <p className="text-[10px] uppercase text-muted-foreground font-semibold">{label}</p>
+                                                <p className="text-xs text-foreground">{value}</p>
                                             </div>
                                         ))}
                                     </div>
@@ -1039,7 +1039,7 @@ export default function FirefightingPage() {
                             </div>
 
                             {/* Footer note */}
-                            <p className="text-[10px] text-slate-400 text-center pt-2 border-t border-slate-100 dark:border-slate-700/50">
+                            <p className="text-[10px] text-muted-foreground text-center pt-2 border-t border-border dark:border-border/50">
                                 Agreements managed by Rahim · Legal review by Shireen AlHabib · Rate approved by Abdullah AlNasiri
                             </p>
                         </CardContent>

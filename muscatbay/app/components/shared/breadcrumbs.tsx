@@ -70,16 +70,16 @@ export function Breadcrumbs({ items, className = "" }: BreadcrumbsProps) {
                         className={`flex items-center gap-1.5 min-w-0 ${isLast ? "flex-1 min-w-0" : "flex-shrink-0"}`}
                     >
                         {index > 0 && (
-                            <ChevronRight className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500 flex-shrink-0" aria-hidden="true" />
+                            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/70 flex-shrink-0" aria-hidden="true" />
                         )}
                         {item.isCurrentPage ? (
-                            <span className="font-medium text-slate-700 dark:text-slate-200 truncate">
+                            <span className="font-medium text-foreground truncate">
                                 {item.label}
                             </span>
                         ) : (
                             <Link
                                 href={item.href}
-                                className="flex items-center gap-1 min-w-0 text-slate-500 dark:text-slate-300 hover:text-primary dark:hover:text-secondary transition-colors focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:outline-none rounded-sm"
+                                className="flex items-center gap-1 min-w-0 text-muted-foreground hover:text-primary dark:hover:text-secondary transition-colors focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:outline-none rounded-sm"
                             >
                                 {index === 0 && <Home className="h-3.5 w-3.5 flex-shrink-0" aria-hidden="true" />}
                                 <span className="truncate">{item.label}</span>

@@ -13,10 +13,10 @@ function Card({
       data-slot="card"
       data-size={size}
       className={cn(
-        "bg-white dark:bg-[var(--card)] rounded-xl border border-slate-200 dark:border-white/10 shadow-sm",
-        "hover:shadow-md hover:bg-slate-50/50 dark:hover:bg-white/5",
+        "bg-card rounded-xl border border-border shadow-sm",
+        "hover:shadow-md hover:bg-muted/50 dark:hover:bg-white/5",
         "transition-[background-color,box-shadow,transform] duration-200 ease-out",
-        "text-card-foreground dark:text-slate-100 gap-6 overflow-hidden py-6 text-sm",
+        "text-card-foreground gap-6 overflow-hidden py-6 text-sm",
         "has-[>img:first-child]:pt-0 data-[size=sm]:gap-4 data-[size=sm]:py-4",
         "*:[img:first-child]:rounded-t-2xl *:[img:last-child]:rounded-b-2xl group/card flex flex-col",
         interactive && "motion-safe:hover:-translate-y-0.5 motion-safe:active:scale-[0.995] cursor-pointer",

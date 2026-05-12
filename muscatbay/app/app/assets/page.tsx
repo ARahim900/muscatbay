@@ -86,28 +86,28 @@ function fmtOMR(n: number | null | undefined): string {
 }
 
 function CritBadge({ level }: { level?: string }) {
-    if (!level) return <span className="text-slate-300 dark:text-slate-600">-</span>;
+    if (!level) return <span className="text-muted-foreground/70 dark:text-muted-foreground">-</span>;
     const colors: Record<string, string> = {
         High:   'bg-mb-danger-light text-mb-danger-text',
         Medium: 'bg-mb-warning-light text-mb-warning-text',
         Low:    'bg-mb-success-light text-mb-success-text',
     };
     return (
-        <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold ${colors[level] || 'bg-slate-100 text-slate-600'}`}>
+        <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold ${colors[level] || 'bg-muted text-muted-foreground'}`}>
             {level}
         </span>
     );
 }
 
 function PctBar({ pct }: { pct?: number | null }) {
-    if (pct === null || pct === undefined) return <span className="text-slate-300 dark:text-slate-600">-</span>;
+    if (pct === null || pct === undefined) return <span className="text-muted-foreground/70 dark:text-muted-foreground">-</span>;
     const color = pct >= 80 ? 'bg-red-500' : pct >= 60 ? 'bg-amber-400' : 'bg-secondary';
     return (
         <div className="flex items-center gap-2">
-            <div className="w-16 bg-slate-200 dark:bg-slate-700 rounded-full h-1.5">
+            <div className="w-16 bg-border dark:bg-muted rounded-full h-1.5">
                 <div className={`h-1.5 rounded-full ${color}`} style={{ width: `${Math.min(pct, 100)}%` }} />
             </div>
-            <span className="text-xs font-mono text-slate-600 dark:text-slate-400">{pct.toFixed(0)}%</span>
+            <span className="text-xs font-mono text-muted-foreground dark:text-muted-foreground">{pct.toFixed(0)}%</span>
         </div>
     );
 }
@@ -314,7 +314,7 @@ export default function AssetsPage() {
     };
 
     const erlColor = (n: number | null | undefined) =>
-        n === null || n === undefined ? 'text-slate-400' :
+        n === null || n === undefined ? 'text-muted-foreground' :
         n <= 2  ? 'text-red-600 dark:text-red-400' :
         n <= 5  ? 'text-amber-500 dark:text-amber-400' :
                   'text-secondary';
@@ -323,14 +323,21 @@ export default function AssetsPage() {
     const Th = ({ label, field, right }: { label: string; field?: string; right?: boolean }) => (
         <th
             scope="col"
-            className={`py-3.5 px-4 font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 whitespace-nowrap ${field ? 'cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/60' : ''} ${right ? 'text-right' : 'text-left'}`}
-            aria-sort={field && sortField === field ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
-            onClick={field ? () => handleSort(field) : undefined}
+            className={`py-3.5 px-4 font-semibold uppercase tracking-wider text-xs text-muted-foreground border-b-2 border-border dark:border-border whitespace-nowrap ${field ? 'hover:bg-muted dark:hover:bg-muted/60' : ''} ${right ? 'text-right' : 'text-left'}`}
+            aria-sort={field ? (sortField === field ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none') : undefined}
         >
-            <div className={`flex items-center gap-1.5 ${right ? 'justify-end' : ''}`}>
-                {label}
-                {field && <SortIcon field={field} currentSortField={sortField} currentSortDirection={sortDirection} />}
-            </div>
+            {field ? (
+                <button
+                    type="button"
+                    onClick={() => handleSort(field)}
+                    className={`inline-flex min-h-11 w-full items-center gap-1.5 rounded-md text-inherit transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/60 ${right ? 'justify-end' : ''}`}
+                >
+                    {label}
+                    <SortIcon field={field} currentSortField={sortField} currentSortDirection={sortDirection} />
+                </button>
+            ) : (
+                <span className={`flex items-center gap-1.5 ${right ? 'justify-end' : ''}`}>{label}</span>
+            )}
         </th>
     );
 
@@ -364,45 +371,45 @@ export default function AssetsPage() {
                 {/* Toolbar */}
                 <TableToolbar>
                     <div className="relative flex-1 min-w-0 sm:min-w-[200px] max-w-md">
-                        <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                        <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                         <input
                             type="text"
                             aria-label="Search assets"
                             placeholder="Search name, tag, zone, manufacturer…"
                             value={search}
                             onChange={e => setSearch(e.target.value)}
-                            className="pl-10 pr-4 py-2 w-full rounded-lg border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40 shadow-sm"
+                            className="pl-10 pr-4 py-2 w-full rounded-lg border border-border/80 dark:border-border/80 bg-white dark:bg-muted text-foreground dark:text-muted-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40 shadow-sm"
                         />
                     </div>
                     <MultiSelectDropdown label="Status" options={STATUS_OPTIONS} selected={selectedStatuses} onChange={s => { setSelectedStatuses(s); setCurrentPage(1); }} getOptionColor={getStatusColor} />
                     <MultiSelectDropdown label="Discipline" options={DISCIPLINE_OPTIONS} selected={selectedDisciplines} onChange={s => { setSelectedDisciplines(s); setCurrentPage(1); }} icon={Layers} />
                     {hasActiveFilters && (
-                        <button onClick={clearFilters} aria-label="Clear filters" className="flex items-center gap-1.5 px-3 py-2.5 min-h-[44px] text-sm rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors">
+                        <button onClick={clearFilters} aria-label="Clear filters" className="flex items-center gap-1.5 px-3 py-2.5 min-h-[44px] text-sm rounded-lg text-muted-foreground hover:text-foreground dark:text-muted-foreground dark:hover:text-foreground transition-colors">
                             <X className="w-3.5 h-3.5" /> Clear
                         </button>
                     )}
-                    <button onClick={handleExportCSV} aria-label="Export CSV" className="flex items-center gap-2 px-3 py-2.5 min-h-[44px] text-sm rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors ml-auto">
+                    <button onClick={handleExportCSV} aria-label="Export CSV" className="flex items-center gap-2 px-3 py-2.5 min-h-[44px] text-sm rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors ml-auto">
                         <Download className="w-3.5 h-3.5" />
                         <span className="hidden sm:inline">Export CSV</span>
                     </button>
-                    <div className="text-sm text-slate-500 dark:text-slate-400 whitespace-nowrap">
-                        <span className="font-semibold text-slate-700 dark:text-slate-300">{totalCount}</span> assets
+                    <div className="text-sm text-muted-foreground whitespace-nowrap">
+                        <span className="font-semibold text-foreground dark:text-muted-foreground/70">{totalCount}</span> assets
                     </div>
                 </TableToolbar>
 
                 <ActiveFilterPills pills={[
                     ...(search ? [{ key: 'search', label: `"${search}"`, onRemove: () => { setSearch(''); setCurrentPage(1); } }] : []),
-                    ...(selectedStatuses.length < STATUS_OPTIONS.length ? [{ key: 'status', label: `${selectedStatuses.length} statuses`, colorClass: 'bg-secondary/20 text-slate-700 dark:bg-secondary/10 dark:text-secondary', onRemove: () => { setSelectedStatuses([...STATUS_OPTIONS]); setCurrentPage(1); } }] : []),
-                    ...(selectedDisciplines.length < DISCIPLINE_OPTIONS.length ? [{ key: 'disc', label: `${selectedDisciplines.length} disciplines`, colorClass: 'bg-primary/10 text-primary dark:bg-primary/20 dark:text-slate-300', onRemove: () => { setSelectedDisciplines([...DISCIPLINE_OPTIONS]); setCurrentPage(1); } }] : []),
+                    ...(selectedStatuses.length < STATUS_OPTIONS.length ? [{ key: 'status', label: `${selectedStatuses.length} statuses`, colorClass: 'bg-secondary/20 text-foreground dark:bg-secondary/10 dark:text-secondary', onRemove: () => { setSelectedStatuses([...STATUS_OPTIONS]); setCurrentPage(1); } }] : []),
+                    ...(selectedDisciplines.length < DISCIPLINE_OPTIONS.length ? [{ key: 'disc', label: `${selectedDisciplines.length} disciplines`, colorClass: 'bg-primary/10 text-primary dark:bg-primary/20 dark:text-muted-foreground/70', onRemove: () => { setSelectedDisciplines([...DISCIPLINE_OPTIONS]); setCurrentPage(1); } }] : []),
                 ]} />
 
                 {/* ── TAB: OVERVIEW ─────────────────────────────────────────────────────── */}
                 {activeTab === 'overview' && (
                     <div id="panel-overview" role="tabpanel" aria-labelledby="tab-overview" tabIndex={0} className="space-y-4">
                     <StatsGrid stats={stats} />
-                    <div className="overflow-x-auto rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900 shadow-sm">
+                    <div className="ops-table-shell">
                         {/* Mobile cards */}
-                        <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
+                        <div className="md:hidden divide-y divide-border dark:divide-border">
                             {loading ? (
                                 <div className="p-4 space-y-3">{Array.from({length:6}).map((_,i) => <Skeleton key={i} className="h-16 w-full" />)}</div>
                             ) : rows.length === 0 ? (
@@ -411,12 +418,12 @@ export default function AssetsPage() {
                                 <div key={a.id} className="p-4 space-y-2">
                                     <div className="flex items-start justify-between gap-2">
                                         <div>
-                                            <p className="font-semibold text-sm text-slate-800 dark:text-slate-200">{a.name}</p>
-                                            <p className="text-xs text-slate-500 mt-0.5">{a.discipline} · {a.type}</p>
+                                            <p className="font-semibold text-sm text-foreground dark:text-muted-foreground">{a.name}</p>
+                                            <p className="text-xs text-muted-foreground mt-0.5">{a.discipline} · {a.type}</p>
                                         </div>
                                         <CritBadge level={a.criticalityLevel} />
                                     </div>
-                                    <div className="flex items-center justify-between text-xs text-slate-500">
+                                    <div className="flex items-center justify-between text-xs text-muted-foreground">
                                         <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{a.buildingArea || a.zone || a.location}</span>
                                         <StatusBadge label={a.status} color={getStatusColor(a.status)} />
                                     </div>
@@ -424,9 +431,9 @@ export default function AssetsPage() {
                             ))}
                         </div>
                         {/* Desktop table */}
-                        <table className="hidden md:table w-full text-sm border-collapse">
+                        <table className="ops-table hidden md:table">
                             <thead>
-                                <tr className="bg-slate-50 dark:bg-slate-800/80">
+                                <tr className="bg-muted dark:bg-muted/80">
                                     <Th label="Asset Name"  field="name" />
                                     <Th label="Asset Tag"   field="tag" />
                                     <Th label="Discipline"  field="discipline" />
@@ -439,13 +446,13 @@ export default function AssetsPage() {
                             </thead>
                             <tbody aria-busy={loading}>
                                 {loading ? loadingRows(8) : rows.length === 0 ? emptyRow(8) : rows.map(a => (
-                                    <tr key={a.id} className="border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-secondary/5 dark:hover:bg-slate-700/40 transition-colors even:bg-slate-50/40 dark:even:bg-slate-800/20">
-                                        <td className="py-3.5 px-4 font-medium text-slate-800 dark:text-slate-200 max-w-[220px]"><span className="line-clamp-2">{a.name}</span></td>
-                                        <td className="py-3.5 px-4 font-mono text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">{a.assetTag || '-'}</td>
-                                        <td className="py-3.5 px-4 text-slate-600 dark:text-slate-400">{a.discipline || '-'}</td>
-                                        <td className="py-3.5 px-4 text-slate-600 dark:text-slate-400">{a.type || '-'}</td>
-                                        <td className="py-3.5 px-4 text-slate-600 dark:text-slate-400">{a.zone || '-'}</td>
-                                        <td className="py-3.5 px-4 text-slate-600 dark:text-slate-400 max-w-[160px]"><span className="truncate block">{a.buildingArea || '-'}</span></td>
+                                    <tr key={a.id} className="border-b border-border/80 dark:border-border/80 hover:bg-secondary/5 dark:hover:bg-muted/40 transition-colors even:bg-muted/40 dark:even:bg-muted/20">
+                                        <td className="py-3.5 px-4 font-medium text-foreground dark:text-muted-foreground max-w-[220px]"><span className="line-clamp-2">{a.name}</span></td>
+                                        <td className="py-3.5 px-4 font-mono text-xs text-muted-foreground whitespace-nowrap">{a.assetTag || '-'}</td>
+                                        <td className="py-3.5 px-4 text-muted-foreground dark:text-muted-foreground">{a.discipline || '-'}</td>
+                                        <td className="py-3.5 px-4 text-muted-foreground dark:text-muted-foreground">{a.type || '-'}</td>
+                                        <td className="py-3.5 px-4 text-muted-foreground dark:text-muted-foreground">{a.zone || '-'}</td>
+                                        <td className="py-3.5 px-4 text-muted-foreground dark:text-muted-foreground max-w-[160px]"><span className="truncate block">{a.buildingArea || '-'}</span></td>
                                         <td className="py-3.5 px-4"><StatusBadge label={a.status} color={getStatusColor(a.status)} /></td>
                                         <td className="py-3.5 px-4"><CritBadge level={a.criticalityLevel} /></td>
                                     </tr>
@@ -458,27 +465,27 @@ export default function AssetsPage() {
 
                 {/* ── TAB: LIFECYCLE ────────────────────────────────────────────────────── */}
                 {activeTab === 'lifecycle' && (
-                    <div id="panel-lifecycle" role="tabpanel" aria-labelledby="tab-lifecycle" tabIndex={0} className="overflow-x-auto rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900 shadow-sm">
-                        <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
+                    <div id="panel-lifecycle" role="tabpanel" aria-labelledby="tab-lifecycle" tabIndex={0} className="ops-table-shell focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/60">
+                        <div className="md:hidden divide-y divide-border dark:divide-border">
                             {loading ? <div className="p-4 space-y-3">{Array.from({length:6}).map((_,i)=><Skeleton key={i} className="h-20 w-full"/>)}</div>
                             : rows.length === 0 ? <EmptyState variant={hasActiveFilters?"filter-empty":"no-data"} title="No assets" description="Adjust filters." />
                             : rows.map(a => (
                                 <div key={a.id} className="p-4 space-y-2">
-                                    <div className="flex items-center justify-between"><span className="font-mono text-xs text-slate-400">{a.assetTag||'-'}</span><CritBadge level={a.criticalityLevel}/></div>
-                                    <p className="font-semibold text-sm text-slate-800 dark:text-slate-200">{a.name}</p>
-                                    <div className="grid grid-cols-3 gap-2 text-xs text-slate-500">
+                                    <div className="flex items-center justify-between"><span className="font-mono text-xs text-muted-foreground">{a.assetTag||'-'}</span><CritBadge level={a.criticalityLevel}/></div>
+                                    <p className="font-semibold text-sm text-foreground dark:text-muted-foreground">{a.name}</p>
+                                    <div className="grid grid-cols-3 gap-2 text-xs text-muted-foreground">
                                         <span className="flex items-center gap-1"><Calendar className="w-3 h-3"/>Inst: {a.installYear??'-'}</span>
                                         <span className="flex items-center gap-1"><Clock className="w-3 h-3"/>ERL: {fmtYrs(a.erlYears)}</span>
                                         <span>Life: {fmtYrs(a.lifeExpectancyYears)}</span>
                                     </div>
                                     <PctBar pct={a.pctLifeUsed}/>
-                                    {a.warrantyExpiryDate && <div className="text-xs text-slate-500">Warranty: {fmt(a.warrantyExpiryDate)}</div>}
+                                    {a.warrantyExpiryDate && <div className="text-xs text-muted-foreground">Warranty: {fmt(a.warrantyExpiryDate)}</div>}
                                 </div>
                             ))}
                         </div>
-                        <table className="hidden md:table w-full text-sm border-collapse">
+                        <table className="ops-table hidden md:table">
                             <thead>
-                                <tr className="bg-slate-50 dark:bg-slate-800/80">
+                                <tr className="bg-muted dark:bg-muted/80">
                                     <Th label="Asset Tag"      field="tag" />
                                     <Th label="Asset Name"     field="name" />
                                     <Th label="Discipline"     field="discipline" />
@@ -494,17 +501,17 @@ export default function AssetsPage() {
                             </thead>
                             <tbody aria-busy={loading}>
                                 {loading ? loadingRows(11) : rows.length === 0 ? emptyRow(11) : rows.map(a => (
-                                    <tr key={a.id} className="border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-secondary/5 dark:hover:bg-slate-700/40 transition-colors even:bg-slate-50/40 dark:even:bg-slate-800/20">
-                                        <td className="py-3.5 px-4 font-mono text-xs text-slate-500 whitespace-nowrap">{a.assetTag||'-'}</td>
-                                        <td className="py-3.5 px-4 font-medium text-slate-800 dark:text-slate-200 max-w-[200px]"><span className="line-clamp-2">{a.name}</span></td>
-                                        <td className="py-3.5 px-4 text-slate-600 dark:text-slate-400 text-xs">{a.discipline||'-'}</td>
-                                        <td className="py-3.5 px-4 text-center font-mono text-sm text-slate-600 dark:text-slate-400">{a.installYear??'-'}</td>
-                                        <td className="py-3.5 px-4 text-center font-mono text-sm text-slate-600 dark:text-slate-400">{fmtYrs(a.currentAgeYears)}</td>
-                                        <td className="py-3.5 px-4 text-center font-mono text-sm text-slate-600 dark:text-slate-400">{fmtYrs(a.lifeExpectancyYears)}</td>
+                                    <tr key={a.id} className="border-b border-border/80 dark:border-border/80 hover:bg-secondary/5 dark:hover:bg-muted/40 transition-colors even:bg-muted/40 dark:even:bg-muted/20">
+                                        <td className="py-3.5 px-4 font-mono text-xs text-muted-foreground whitespace-nowrap">{a.assetTag||'-'}</td>
+                                        <td className="py-3.5 px-4 font-medium text-foreground dark:text-muted-foreground max-w-[200px]"><span className="line-clamp-2">{a.name}</span></td>
+                                        <td className="py-3.5 px-4 text-muted-foreground dark:text-muted-foreground text-xs">{a.discipline||'-'}</td>
+                                        <td className="py-3.5 px-4 text-center font-mono text-sm text-muted-foreground dark:text-muted-foreground">{a.installYear??'-'}</td>
+                                        <td className="py-3.5 px-4 text-center font-mono text-sm text-muted-foreground dark:text-muted-foreground">{fmtYrs(a.currentAgeYears)}</td>
+                                        <td className="py-3.5 px-4 text-center font-mono text-sm text-muted-foreground dark:text-muted-foreground">{fmtYrs(a.lifeExpectancyYears)}</td>
                                         <td className={`py-3.5 px-4 text-center font-mono text-sm font-semibold ${erlColor(a.erlYears)}`}>{fmtYrs(a.erlYears)}</td>
                                         <td className="py-3.5 px-4"><PctBar pct={a.pctLifeUsed}/></td>
-                                        <td className="py-3.5 px-4 text-xs text-slate-500 whitespace-nowrap">{fmt(a.warrantyExpiryDate)}</td>
-                                        <td className="py-3.5 px-4 text-slate-600 dark:text-slate-400 text-sm">{a.condition||'-'}</td>
+                                        <td className="py-3.5 px-4 text-xs text-muted-foreground whitespace-nowrap">{fmt(a.warrantyExpiryDate)}</td>
+                                        <td className="py-3.5 px-4 text-muted-foreground dark:text-muted-foreground text-sm">{a.condition||'-'}</td>
                                         <td className="py-3.5 px-4"><CritBadge level={a.criticalityLevel}/></td>
                                     </tr>
                                 ))}
@@ -515,25 +522,25 @@ export default function AssetsPage() {
 
                 {/* ── TAB: MAINTENANCE ─────────────────────────────────────────────────── */}
                 {activeTab === 'maintenance' && (
-                    <div id="panel-maintenance" role="tabpanel" aria-labelledby="tab-maintenance" tabIndex={0} className="overflow-x-auto rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900 shadow-sm">
-                        <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
+                    <div id="panel-maintenance" role="tabpanel" aria-labelledby="tab-maintenance" tabIndex={0} className="ops-table-shell focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/60">
+                        <div className="md:hidden divide-y divide-border dark:divide-border">
                             {loading ? <div className="p-4 space-y-3">{Array.from({length:6}).map((_,i)=><Skeleton key={i} className="h-20 w-full"/>)}</div>
                             : rows.length === 0 ? <EmptyState variant={hasActiveFilters?"filter-empty":"no-data"} title="No assets" description="Adjust filters." />
                             : rows.map(a => (
                                 <div key={a.id} className="p-4 space-y-2">
-                                    <div className="flex items-center justify-between"><span className="font-mono text-xs text-slate-400">{a.assetTag||'-'}</span>{a.ppmFrequency && <span className="text-xs font-medium text-primary">{a.ppmFrequency}</span>}</div>
-                                    <p className="font-semibold text-sm text-slate-800 dark:text-slate-200">{a.name}</p>
-                                    {a.amcContractor && <div className="text-xs text-slate-500"><Wrench className="w-3 h-3 inline mr-1"/>{a.amcContractor}</div>}
-                                    <div className="flex gap-4 text-xs text-slate-500">
+                                    <div className="flex items-center justify-between"><span className="font-mono text-xs text-muted-foreground">{a.assetTag||'-'}</span>{a.ppmFrequency && <span className="text-xs font-medium text-primary">{a.ppmFrequency}</span>}</div>
+                                    <p className="font-semibold text-sm text-foreground dark:text-muted-foreground">{a.name}</p>
+                                    {a.amcContractor && <div className="text-xs text-muted-foreground"><Wrench className="w-3 h-3 inline mr-1"/>{a.amcContractor}</div>}
+                                    <div className="flex gap-4 text-xs text-muted-foreground">
                                         {a.lastPpmDate && <span>Last: {fmt(a.lastPpmDate)}</span>}
                                         {a.nextPpmDate && <span>Next: {fmt(a.nextPpmDate)}</span>}
                                     </div>
                                 </div>
                             ))}
                         </div>
-                        <table className="hidden md:table w-full text-sm border-collapse">
+                        <table className="ops-table hidden md:table">
                             <thead>
-                                <tr className="bg-slate-50 dark:bg-slate-800/80">
+                                <tr className="bg-muted dark:bg-muted/80">
                                     <Th label="Asset Tag"          field="tag" />
                                     <Th label="Asset Name"         field="name" />
                                     <Th label="Discipline"         field="discipline" />
@@ -549,18 +556,18 @@ export default function AssetsPage() {
                             </thead>
                             <tbody aria-busy={loading}>
                                 {loading ? loadingRows(11) : rows.length === 0 ? emptyRow(11) : rows.map(a => (
-                                    <tr key={a.id} className="border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-secondary/5 dark:hover:bg-slate-700/40 transition-colors even:bg-slate-50/40 dark:even:bg-slate-800/20">
-                                        <td className="py-3.5 px-4 font-mono text-xs text-slate-500 whitespace-nowrap">{a.assetTag||'-'}</td>
-                                        <td className="py-3.5 px-4 font-medium text-slate-800 dark:text-slate-200 max-w-[200px]"><span className="line-clamp-2">{a.name}</span></td>
-                                        <td className="py-3.5 px-4 text-slate-600 dark:text-slate-400 text-xs">{a.discipline||'-'}</td>
-                                        <td className="py-3.5 px-4 text-slate-600 dark:text-slate-400 text-xs">{a.buildingArea||a.zone||'-'}</td>
-                                        <td className="py-3.5 px-4 text-sm font-medium text-primary">{a.ppmFrequency||<span className="text-slate-300 dark:text-slate-600">-</span>}</td>
-                                        <td className="py-3.5 px-4 text-center font-mono text-sm text-slate-600 dark:text-slate-400">{a.ppmIntervalMonths??'-'}</td>
-                                        <td className="py-3.5 px-4 text-slate-700 dark:text-slate-300 text-sm">{a.amcContractor||<span className="text-slate-300 dark:text-slate-600">-</span>}</td>
-                                        <td className="py-3.5 px-4 text-xs text-slate-500 whitespace-nowrap">{fmt(a.lastPpmDate)}</td>
-                                        <td className="py-3.5 px-4 text-xs text-slate-500 whitespace-nowrap">{fmt(a.nextPpmDate)}</td>
-                                        <td className="py-3.5 px-4 text-xs text-slate-500 max-w-[180px]"><span className="line-clamp-2">{a.amcNotes||<span className="text-slate-300 dark:text-slate-600">-</span>}</span></td>
-                                        <td className="py-3.5 px-4 text-xs text-slate-500 max-w-[200px]"><span className="line-clamp-2">{a.maintenanceRequirements||<span className="text-slate-300 dark:text-slate-600">-</span>}</span></td>
+                                    <tr key={a.id} className="border-b border-border/80 dark:border-border/80 hover:bg-secondary/5 dark:hover:bg-muted/40 transition-colors even:bg-muted/40 dark:even:bg-muted/20">
+                                        <td className="py-3.5 px-4 font-mono text-xs text-muted-foreground whitespace-nowrap">{a.assetTag||'-'}</td>
+                                        <td className="py-3.5 px-4 font-medium text-foreground dark:text-muted-foreground max-w-[200px]"><span className="line-clamp-2">{a.name}</span></td>
+                                        <td className="py-3.5 px-4 text-muted-foreground dark:text-muted-foreground text-xs">{a.discipline||'-'}</td>
+                                        <td className="py-3.5 px-4 text-muted-foreground dark:text-muted-foreground text-xs">{a.buildingArea||a.zone||'-'}</td>
+                                        <td className="py-3.5 px-4 text-sm font-medium text-primary">{a.ppmFrequency||<span className="text-muted-foreground/70 dark:text-muted-foreground">-</span>}</td>
+                                        <td className="py-3.5 px-4 text-center font-mono text-sm text-muted-foreground dark:text-muted-foreground">{a.ppmIntervalMonths??'-'}</td>
+                                        <td className="py-3.5 px-4 text-foreground dark:text-muted-foreground/70 text-sm">{a.amcContractor||<span className="text-muted-foreground/70 dark:text-muted-foreground">-</span>}</td>
+                                        <td className="py-3.5 px-4 text-xs text-muted-foreground whitespace-nowrap">{fmt(a.lastPpmDate)}</td>
+                                        <td className="py-3.5 px-4 text-xs text-muted-foreground whitespace-nowrap">{fmt(a.nextPpmDate)}</td>
+                                        <td className="py-3.5 px-4 text-xs text-muted-foreground max-w-[180px]"><span className="line-clamp-2">{a.amcNotes||<span className="text-muted-foreground/70 dark:text-muted-foreground">-</span>}</span></td>
+                                        <td className="py-3.5 px-4 text-xs text-muted-foreground max-w-[200px]"><span className="line-clamp-2">{a.maintenanceRequirements||<span className="text-muted-foreground/70 dark:text-muted-foreground">-</span>}</span></td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -570,16 +577,16 @@ export default function AssetsPage() {
 
                 {/* ── TAB: TECHNICAL ───────────────────────────────────────────────────── */}
                 {activeTab === 'technical' && (
-                    <div id="panel-technical" role="tabpanel" aria-labelledby="tab-technical" tabIndex={0} className="overflow-x-auto rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900 shadow-sm">
-                        <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
+                    <div id="panel-technical" role="tabpanel" aria-labelledby="tab-technical" tabIndex={0} className="ops-table-shell focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/60">
+                        <div className="md:hidden divide-y divide-border dark:divide-border">
                             {loading ? <div className="p-4 space-y-3">{Array.from({length:6}).map((_,i)=><Skeleton key={i} className="h-20 w-full"/>)}</div>
                             : rows.length === 0 ? <EmptyState variant={hasActiveFilters?"filter-empty":"no-data"} title="No assets" description="Adjust filters." />
                             : rows.map(a => (
                                 <div key={a.id} className="p-4 space-y-2">
-                                    <span className="font-mono text-xs text-slate-400">{a.assetTag||'-'}</span>
-                                    <p className="font-semibold text-sm text-slate-800 dark:text-slate-200">{a.name}</p>
-                                    <div className="grid grid-cols-2 gap-1 text-xs text-slate-500">
-                                        {a.manufacturer && <span>Brand: <span className="font-medium text-slate-700 dark:text-slate-300">{a.manufacturer}</span></span>}
+                                    <span className="font-mono text-xs text-muted-foreground">{a.assetTag||'-'}</span>
+                                    <p className="font-semibold text-sm text-foreground dark:text-muted-foreground">{a.name}</p>
+                                    <div className="grid grid-cols-2 gap-1 text-xs text-muted-foreground">
+                                        {a.manufacturer && <span>Brand: <span className="font-medium text-foreground dark:text-muted-foreground/70">{a.manufacturer}</span></span>}
                                         {a.model && <span>Model: {a.model}</span>}
                                         {a.countryOfOrigin && <span>Origin: {a.countryOfOrigin}</span>}
                                         {a.powerCapacity && <span>Cap: {a.powerCapacity}</span>}
@@ -587,9 +594,9 @@ export default function AssetsPage() {
                                 </div>
                             ))}
                         </div>
-                        <table className="hidden md:table w-full text-sm border-collapse">
+                        <table className="ops-table hidden md:table">
                             <thead>
-                                <tr className="bg-slate-50 dark:bg-slate-800/80">
+                                <tr className="bg-muted dark:bg-muted/80">
                                     <Th label="Asset Tag"      field="tag" />
                                     <Th label="Asset Name"     field="name" />
                                     <Th label="Discipline"     field="discipline" />
@@ -605,18 +612,18 @@ export default function AssetsPage() {
                             </thead>
                             <tbody aria-busy={loading}>
                                 {loading ? loadingRows(11) : rows.length === 0 ? emptyRow(11) : rows.map(a => (
-                                    <tr key={a.id} className="border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-secondary/5 dark:hover:bg-slate-700/40 transition-colors even:bg-slate-50/40 dark:even:bg-slate-800/20">
-                                        <td className="py-3.5 px-4 font-mono text-xs text-slate-500 whitespace-nowrap">{a.assetTag||'-'}</td>
-                                        <td className="py-3.5 px-4 font-medium text-slate-800 dark:text-slate-200 max-w-[200px]"><span className="line-clamp-2">{a.name}</span></td>
-                                        <td className="py-3.5 px-4 text-slate-600 dark:text-slate-400 text-xs">{a.discipline||'-'}</td>
-                                        <td className="py-3.5 px-4 text-slate-600 dark:text-slate-400 text-xs">{a.subcategory||'-'}</td>
-                                        <td className="py-3.5 px-4 font-medium text-slate-700 dark:text-slate-300">{a.manufacturer||<span className="text-slate-300 dark:text-slate-600">-</span>}</td>
-                                        <td className="py-3.5 px-4 text-slate-600 dark:text-slate-400 text-sm">{a.model||<span className="text-slate-300 dark:text-slate-600">-</span>}</td>
-                                        <td className="py-3.5 px-4 text-slate-600 dark:text-slate-400 text-sm">{a.countryOfOrigin||<span className="text-slate-300 dark:text-slate-600">-</span>}</td>
-                                        <td className="py-3.5 px-4 text-slate-600 dark:text-slate-400 text-xs max-w-[140px]"><span className="truncate block">{a.powerCapacity||<span className="text-slate-300 dark:text-slate-600">-</span>}</span></td>
-                                        <td className="py-3.5 px-4 font-mono text-xs text-slate-500">{a.serialNo||<span className="text-slate-300 dark:text-slate-600">-</span>}</td>
-                                        <td className="py-3.5 px-4 text-xs text-slate-500 max-w-[150px]"><span className="truncate block">{a.registrationAuthority||<span className="text-slate-300 dark:text-slate-600">-</span>}</span></td>
-                                        <td className="py-3.5 px-4 text-xs text-slate-400">{a.dataSource||'-'}</td>
+                                    <tr key={a.id} className="border-b border-border/80 dark:border-border/80 hover:bg-secondary/5 dark:hover:bg-muted/40 transition-colors even:bg-muted/40 dark:even:bg-muted/20">
+                                        <td className="py-3.5 px-4 font-mono text-xs text-muted-foreground whitespace-nowrap">{a.assetTag||'-'}</td>
+                                        <td className="py-3.5 px-4 font-medium text-foreground dark:text-muted-foreground max-w-[200px]"><span className="line-clamp-2">{a.name}</span></td>
+                                        <td className="py-3.5 px-4 text-muted-foreground dark:text-muted-foreground text-xs">{a.discipline||'-'}</td>
+                                        <td className="py-3.5 px-4 text-muted-foreground dark:text-muted-foreground text-xs">{a.subcategory||'-'}</td>
+                                        <td className="py-3.5 px-4 font-medium text-foreground dark:text-muted-foreground/70">{a.manufacturer||<span className="text-muted-foreground/70 dark:text-muted-foreground">-</span>}</td>
+                                        <td className="py-3.5 px-4 text-muted-foreground dark:text-muted-foreground text-sm">{a.model||<span className="text-muted-foreground/70 dark:text-muted-foreground">-</span>}</td>
+                                        <td className="py-3.5 px-4 text-muted-foreground dark:text-muted-foreground text-sm">{a.countryOfOrigin||<span className="text-muted-foreground/70 dark:text-muted-foreground">-</span>}</td>
+                                        <td className="py-3.5 px-4 text-muted-foreground dark:text-muted-foreground text-xs max-w-[140px]"><span className="truncate block">{a.powerCapacity||<span className="text-muted-foreground/70 dark:text-muted-foreground">-</span>}</span></td>
+                                        <td className="py-3.5 px-4 font-mono text-xs text-muted-foreground">{a.serialNo||<span className="text-muted-foreground/70 dark:text-muted-foreground">-</span>}</td>
+                                        <td className="py-3.5 px-4 text-xs text-muted-foreground max-w-[150px]"><span className="truncate block">{a.registrationAuthority||<span className="text-muted-foreground/70 dark:text-muted-foreground">-</span>}</span></td>
+                                        <td className="py-3.5 px-4 text-xs text-muted-foreground">{a.dataSource||'-'}</td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -626,25 +633,25 @@ export default function AssetsPage() {
 
                 {/* ── TAB: FINANCIAL ───────────────────────────────────────────────────── */}
                 {activeTab === 'financial' && (
-                    <div id="panel-financial" role="tabpanel" aria-labelledby="tab-financial" tabIndex={0} className="overflow-x-auto rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900 shadow-sm">
-                        <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
+                    <div id="panel-financial" role="tabpanel" aria-labelledby="tab-financial" tabIndex={0} className="ops-table-shell focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/60">
+                        <div className="md:hidden divide-y divide-border dark:divide-border">
                             {loading ? <div className="p-4 space-y-3">{Array.from({length:6}).map((_,i)=><Skeleton key={i} className="h-20 w-full"/>)}</div>
                             : rows.length === 0 ? <EmptyState variant={hasActiveFilters?"filter-empty":"no-data"} title="No assets" description="Adjust filters." />
                             : rows.map(a => (
                                 <div key={a.id} className="p-4 space-y-2">
-                                    <span className="font-mono text-xs text-slate-400">{a.assetTag||'-'}</span>
-                                    <p className="font-semibold text-sm text-slate-800 dark:text-slate-200">{a.name}</p>
+                                    <span className="font-mono text-xs text-muted-foreground">{a.assetTag||'-'}</span>
+                                    <p className="font-semibold text-sm text-foreground dark:text-muted-foreground">{a.name}</p>
                                     <div className="flex justify-between text-xs">
-                                        <span className="text-slate-500">Original: <span className="font-mono font-semibold text-slate-700 dark:text-slate-300">{fmtOMR(a.boqUnitCost)}</span></span>
-                                        <span className="text-slate-500">Replace: <span className="font-mono font-semibold text-primary">{fmtOMR(a.replacementCost)}</span></span>
+                                        <span className="text-muted-foreground">Original: <span className="font-mono font-semibold text-foreground dark:text-muted-foreground/70">{fmtOMR(a.boqUnitCost)}</span></span>
+                                        <span className="text-muted-foreground">Replace: <span className="font-mono font-semibold text-primary">{fmtOMR(a.replacementCost)}</span></span>
                                     </div>
-                                    {a.boqProjectRef && <div className="text-xs text-slate-500 flex items-center gap-1"><FileText className="w-3 h-3"/>{a.boqProjectRef}</div>}
+                                    {a.boqProjectRef && <div className="text-xs text-muted-foreground flex items-center gap-1"><FileText className="w-3 h-3"/>{a.boqProjectRef}</div>}
                                 </div>
                             ))}
                         </div>
-                        <table className="hidden md:table w-full text-sm border-collapse">
+                        <table className="ops-table hidden md:table">
                             <thead>
-                                <tr className="bg-slate-50 dark:bg-slate-800/80">
+                                <tr className="bg-muted dark:bg-muted/80">
                                     <Th label="Asset Tag"           field="tag" />
                                     <Th label="Asset Name"          field="name" />
                                     <Th label="Discipline"          field="discipline" />
@@ -659,17 +666,17 @@ export default function AssetsPage() {
                             </thead>
                             <tbody aria-busy={loading}>
                                 {loading ? loadingRows(10) : rows.length === 0 ? emptyRow(10) : rows.map(a => (
-                                    <tr key={a.id} className="border-b border-slate-100/80 dark:border-slate-800/80 hover:bg-secondary/5 dark:hover:bg-slate-700/40 transition-colors even:bg-slate-50/40 dark:even:bg-slate-800/20">
-                                        <td className="py-3.5 px-4 font-mono text-xs text-slate-500 whitespace-nowrap">{a.assetTag||'-'}</td>
-                                        <td className="py-3.5 px-4 font-medium text-slate-800 dark:text-slate-200 max-w-[200px]"><span className="line-clamp-2">{a.name}</span></td>
-                                        <td className="py-3.5 px-4 text-slate-600 dark:text-slate-400 text-xs">{a.discipline||'-'}</td>
-                                        <td className="py-3.5 px-4 text-slate-600 dark:text-slate-400 text-xs">{a.buildingArea||a.zone||'-'}</td>
-                                        <td className="py-3.5 px-4 text-right font-mono text-sm text-slate-700 dark:text-slate-300 whitespace-nowrap">{fmtOMR(a.boqUnitCost)}</td>
+                                    <tr key={a.id} className="border-b border-border/80 dark:border-border/80 hover:bg-secondary/5 dark:hover:bg-muted/40 transition-colors even:bg-muted/40 dark:even:bg-muted/20">
+                                        <td className="py-3.5 px-4 font-mono text-xs text-muted-foreground whitespace-nowrap">{a.assetTag||'-'}</td>
+                                        <td className="py-3.5 px-4 font-medium text-foreground dark:text-muted-foreground max-w-[200px]"><span className="line-clamp-2">{a.name}</span></td>
+                                        <td className="py-3.5 px-4 text-muted-foreground dark:text-muted-foreground text-xs">{a.discipline||'-'}</td>
+                                        <td className="py-3.5 px-4 text-muted-foreground dark:text-muted-foreground text-xs">{a.buildingArea||a.zone||'-'}</td>
+                                        <td className="py-3.5 px-4 text-right font-mono text-sm text-foreground dark:text-muted-foreground/70 whitespace-nowrap">{fmtOMR(a.boqUnitCost)}</td>
                                         <td className="py-3.5 px-4 text-right font-mono text-sm font-semibold text-primary whitespace-nowrap">{fmtOMR(a.replacementCost)}</td>
-                                        <td className="py-3.5 px-4 text-xs text-slate-500 max-w-[180px]">{a.boqProjectRef ? <span className="truncate block" title={a.boqProjectRef}>{a.boqProjectRef}</span> : <span className="text-slate-300 dark:text-slate-600">-</span>}</td>
-                                        <td className="py-3.5 px-4 text-center font-mono text-sm text-slate-600 dark:text-slate-400">{a.boqDesignLife ? `${a.boqDesignLife}y` : '-'}</td>
-                                        <td className="py-3.5 px-4 text-xs text-slate-500">{a.responsibilityOwner||'-'}</td>
-                                        <td className="py-3.5 px-4 text-xs text-slate-400 max-w-[160px]"><span className="truncate block">{a.notes||'-'}</span></td>
+                                        <td className="py-3.5 px-4 text-xs text-muted-foreground max-w-[180px]">{a.boqProjectRef ? <span className="truncate block" title={a.boqProjectRef}>{a.boqProjectRef}</span> : <span className="text-muted-foreground/70 dark:text-muted-foreground">-</span>}</td>
+                                        <td className="py-3.5 px-4 text-center font-mono text-sm text-muted-foreground dark:text-muted-foreground">{a.boqDesignLife ? `${a.boqDesignLife}y` : '-'}</td>
+                                        <td className="py-3.5 px-4 text-xs text-muted-foreground">{a.responsibilityOwner||'-'}</td>
+                                        <td className="py-3.5 px-4 text-xs text-muted-foreground max-w-[160px]"><span className="truncate block">{a.notes||'-'}</span></td>
                                     </tr>
                                 ))}
                             </tbody>
