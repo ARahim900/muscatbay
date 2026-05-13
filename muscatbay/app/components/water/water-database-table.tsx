@@ -370,10 +370,10 @@ export function WaterDatabaseTable({ meters, months }: WaterDatabaseTableProps) 
                     "border-l-2"
                 )}
             >
-                <td className="py-4 px-5 font-medium text-foreground whitespace-nowrap sticky left-0 bg-inherit z-10 w-[120px] sm:w-[180px] md:w-[200px]">
+                <td className="py-4 px-5 font-medium whitespace-nowrap col-sticky w-[120px] sm:w-[180px] md:w-[200px]">
                     {meter.label}
                 </td>
-                <td className="py-4 px-5 text-muted-foreground font-mono text-sm sticky left-[120px] sm:left-[180px] md:left-[200px] bg-inherit z-10">
+                <td className="py-4 px-5 text-muted-foreground meter text-sm col-sticky left-[120px] sm:left-[180px] md:left-[200px]">
                     {meter.accountNumber}
                 </td>
                 <td className="py-4 px-5 text-center">
@@ -402,7 +402,7 @@ export function WaterDatabaseTable({ meters, months }: WaterDatabaseTableProps) 
                 {visibleMonths.map(month => {
                     const val = getConsumption(meter, month);
                     return (
-                        <td key={month} className="py-4 px-5 text-right font-mono text-sm text-foreground/80">
+                        <td key={month} className="py-4 px-5 num text-sm text-foreground/80">
                             {val > 0 ? val.toLocaleString('en-US', { maximumFractionDigits: 1 }) : <span className="text-muted-foreground/70 dark:text-muted-foreground">—</span>}
                         </td>
                     );
@@ -558,7 +558,7 @@ export function WaterDatabaseTable({ meters, months }: WaterDatabaseTableProps) 
                         <tr className="bg-muted/80">
                             <th
                                 scope="col"
-                                className="text-left py-4 px-5 font-semibold uppercase tracking-wider text-xs text-muted-foreground border-b-2 border-border cursor-pointer hover:bg-muted/60 transition-colors sticky left-0 bg-muted/80 z-20 w-[120px] sm:w-[180px] md:w-[200px]"
+                                className="text-left py-4 px-5 font-semibold uppercase tracking-wider text-xs text-muted-foreground border-b-2 border-border cursor-pointer hover:bg-muted/60 transition-colors col-sticky z-20 w-[120px] sm:w-[180px] md:w-[200px]"
                                 onClick={() => handleSort('label')}
                             >
                                 <div className="flex items-center gap-1.5 truncate">Label <SortIcon field="label" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
