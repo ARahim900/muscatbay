@@ -1233,7 +1233,7 @@ export default function ElectricityPage() {
                                             {analysisData.selectedMonths.map(month => (
                                                 <TableHead key={month} className="text-right min-w-[75px]">{month}</TableHead>
                                             ))}
-                                            <TableHead className="text-right border-l border-border dark:border-border min-w-[90px]">Total (kWh)</TableHead>
+                                            <TableHead className="num min-w-[90px]">Total (kWh)</TableHead>
                                             <TableHead className="text-right min-w-[90px]">Cost (OMR)</TableHead>
                                         </TableRow>
                                     </TableHeader>
@@ -1396,7 +1396,7 @@ export default function ElectricityPage() {
                                     {displayMonths.map(month => (
                                         <SortableTableHead key={month} field={month} currentSortField={dbSortField} currentSortDirection={dbSortDirection} onSort={handleDbSort} align="right" className="text-right min-w-[90px]">{month}</SortableTableHead>
                                     ))}
-                                    <TableHead className="text-right border-l border-border dark:border-border min-w-[100px]">Total (kWh)</TableHead>
+                                    <TableHead className="num min-w-[100px]">Total (kWh)</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
