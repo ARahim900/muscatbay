@@ -296,9 +296,9 @@ export function ZoneL3Table({
                                     className="sticky left-0 z-10 bg-white dark:bg-muted min-w-[150px]"
                                 >Meter</Th>
                                 <Th sortKey="account" sort={sort} onSort={setSort} className="min-w-[100px]">Account</Th>
-                                <th scope="col" className={cn(thBase, "text-center min-w-[90px]")}>Type</th>
+                                <TableHead scope="col" className={cn(thBase, "text-center min-w-[90px]")}>Type</TableHead>
                                 {days.map(d => (
-                                    <th scope="col" key={d} className={cn(thBase, "text-right min-w-[64px] px-2")}>D{d}</th>
+                                    <TableHead scope="col" key={d} className={cn(thBase, "text-right min-w-[64px] px-2")}>D{d}</TableHead>
                                 ))}
                                 <Th
                                     sortKey="total" sort={sort} onSort={setSort}
