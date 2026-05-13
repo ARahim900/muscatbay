@@ -565,7 +565,7 @@ export function WaterDatabaseTable({ meters, months }: WaterDatabaseTableProps) 
                             </th>
                             <th
                                 scope="col"
-                                className="text-left py-4 px-5 font-semibold uppercase tracking-wider text-xs text-muted-foreground border-b-2 border-border cursor-pointer hover:bg-muted/60 transition-colors sticky left-[120px] sm:left-[180px] md:left-[200px] bg-muted/80 z-20 min-w-[100px]"
+                                className="text-left py-4 px-5 font-semibold uppercase tracking-wider text-xs text-muted-foreground border-b-2 border-border cursor-pointer hover:bg-muted/60 transition-colors col-sticky left-[120px] sm:left-[180px] md:left-[200px] z-20 min-w-[100px]"
                                 onClick={() => handleSort('account')}
                             >
                                 <div className="flex items-center gap-1.5">Account # <SortIcon field="account" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
