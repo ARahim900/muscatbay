@@ -79,11 +79,12 @@ export const MODULE_ROUTE: Record<ModuleKey, string> = {
 const ROUTE_TO_MODULE: Record<string, ModuleKey> = Object.fromEntries(
     Object.entries(MODULE_ROUTE).map(([k, v]) => [v, k as ModuleKey])
 ) as Record<string, ModuleKey>;
+const MODULE_ROUTE_ENTRIES = Object.entries(MODULE_ROUTE) as Array<[ModuleKey, string]>;
 
 export function resolveModuleFromPathname(pathname: string): ModuleKey | null {
     // Match exact first, then prefix (e.g. /firefighting/quotes → firefighting)
     if (ROUTE_TO_MODULE[pathname]) return ROUTE_TO_MODULE[pathname];
-    for (const [route, mod] of Object.entries(MODULE_ROUTE)) {
+    for (const [mod, route] of MODULE_ROUTE_ENTRIES) {
         if (route === "/") continue; // skip catch-all
         if (pathname.startsWith(route + "/") || pathname === route) return mod;
     }
