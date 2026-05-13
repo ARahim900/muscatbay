@@ -557,98 +557,105 @@
 
 @layer components {
 
+  /* ── Unified table system ───────────────────────────────────────────────
+   * Spec: docs/superpowers/specs/2026-05-14-unified-table-system-design.md
+   * Single source of truth: every <Table> consumer inherits this look. */
   .ops-table-shell {
     position: relative;
     width: 100%;
     overflow-x: auto;
     border: 1px solid var(--border);
-    border-radius: var(--radius-md);
+    border-radius: var(--radius); /* 10.5px card radius */
     background: var(--card);
     box-shadow: 0 1px 2px rgb(15 23 42 / 0.06);
   }
 
   .dark .ops-table-shell {
-    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.03);
   }
 
   .ops-table {
     width: 100%;
-    border-collapse: collapse;
-    caption-side: bottom;
-    font-size: 0.8125rem;
-    line-height: 1.35;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 13px;
+    line-height: 1.4;
+    color: var(--card-foreground);
   }
 
-  .ops-table thead {
+  /* HEADER */
+  .ops-table thead th {
     position: sticky;
     top: 0;
-    z-index: 10;
-    background: color-mix(in srgb, var(--component) 80%, var(--card));
+    z-index: 2;
+    background: var(--header-band);
+    color: var(--muted-foreground);
+    font-weight: 500;
+    font-size: 12.5px;
+    letter-spacing: 0;
+    text-align: start;
+    text-transform: none;
+    white-space: nowrap;
+    height: 44px;
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--border);
+    border-right: 1px solid var(--hairline);
   }
+  .ops-table thead th:last-child { border-right: 0; }
 
-  /* Native row-level virtualization: browser skips layout/paint for off-screen rows.
-     Reserves ~44px (one row) so the scroll thumb stays accurate without measuring every row. */
+  /* BODY */
+  .ops-table tbody td {
+    padding: 14px 18px;
+    height: 52px;
+    border-bottom: 1px solid var(--hairline);
+    border-right: 1px solid var(--hairline);
+    vertical-align: middle;
+    color: var(--card-foreground);
+    font-size: 13px;
+    line-height: 1.4;
+  }
+  .ops-table tbody td:last-child { border-right: 0; }
+  .ops-table tbody tr:last-child td { border-bottom: 0; }
+
+  /* Native row-level virtualization (preserves the previous implementation) */
   .ops-table tbody tr {
     content-visibility: auto;
-    contain-intrinsic-size: auto 44px;
-  }
-
-  .dark .ops-table thead {
-    background: color-mix(in srgb, var(--component) 70%, var(--card));
-  }
-
-  .ops-table th {
-    height: 2.875rem !important;
-    padding: 0.75rem 1rem !important;
-    border-bottom: 1px solid var(--border);
-    color: var(--muted-foreground);
-    font-size: 0.6875rem !important;
-    font-weight: 700 !important;
-    letter-spacing: 0.04em;
-    line-height: 1.2;
-    text-align: start;
-    text-transform: uppercase;
-    white-space: nowrap;
-  }
-
-  .ops-table td {
-    padding: 0.8125rem 1rem !important;
-    border-bottom: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
-    color: var(--card-foreground);
-    font-size: 0.8125rem !important;
-    line-height: 1.4;
-    vertical-align: middle;
-  }
-
-  .ops-table tbody tr {
-    transition: background-color 150ms ease-out;
-  }
-
-  .ops-table thead tr {
-    background: inherit !important;
-  }
-
-  .ops-table tbody tr:nth-child(even) {
-    background: color-mix(in srgb, var(--component) 38%, transparent);
-  }
-
-  .dark .ops-table tbody tr:nth-child(even) {
-    background: color-mix(in srgb, var(--component) 28%, transparent);
+    contain-intrinsic-size: auto 52px;
+    transition: background-color 120ms ease-out;
   }
 
   .ops-table tbody tr:hover {
-    background: color-mix(in srgb, var(--secondary) 9%, transparent);
+    background: var(--row-hover);
   }
 
-  .ops-table tbody tr:last-child td {
-    border-bottom: 0;
+  .ops-table tr[data-state="selected"] {
+    background: color-mix(in srgb, var(--secondary) 12%, transparent);
   }
 
+  /* Density variants — applied via data-density on the <table> element */
+  .ops-table[data-density="compact"] tbody td {
+    padding: 10px 14px;
+    height: 40px;
+  }
+  .ops-table[data-density="compact"] tbody tr {
+    contain-intrinsic-size: auto 40px;
+  }
+  .ops-table[data-density="spacious"] tbody td {
+    padding: 18px 22px;
+    height: 64px;
+  }
+  .ops-table[data-density="spacious"] tbody tr {
+    contain-intrinsic-size: auto 64px;
+  }
+
+  /* Toolbar surface — sits inside the same card border, separated by hairline */
   .ops-table-toolbar {
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
     background: var(--card);
-    box-shadow: 0 1px 2px rgb(15 23 42 / 0.05);
+    border-bottom: 1px solid var(--hairline);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ops-table tbody tr { transition: none; }
   }
 
   /* Header blur — @supports fallback for browsers without backdrop-filter */
