@@ -210,16 +210,52 @@ When adding any page or feature, reach for these first. Building a one-off table
 
 Re-exported from `components/shared/data-table/index.ts`:
 
-- `SortableTableHead` — column header with sort indicator & keyboard support
+- `SortableTableHead` — column header with sort indicator & keyboard support. Inactive caret renders at 11px / 45% opacity, active caret at `text-foreground` / 100%
 - `SortIcon` — standalone sort glyph
-- `TableToolbar` — search + filter container
-- `DensityToggle` — compact / comfortable / spacious switcher
+- `TableToolbar` — search + filter container. Accepts optional `title?: ReactNode` and `count?: number | string` slot props; numeric `count` is locale-formatted automatically
+- `DensityToggle` — compact / comfortable / spacious switcher (writes `data-density` on the `<table>`)
 - `TablePagination` — page-size selector + paging controls (`PageSizeOption`)
 - `MultiSelectDropdown` — filter dropdown with color dots
 - `ActiveFilterPills` — removable filter chips
-- `StatusBadge` — themed badge with `BadgeColor` (`DOT_COLORS` map)
+- `StatusBadge` — themed badge with `BadgeColor` (`DOT_COLORS` map). Defaults to a soft dot leading visual; pass `iconVariant="icon"` for the lucide symbol or `"none"` for label-only. Legacy `hideIcon` is still accepted (maps to `iconVariant="dot"`).
 
-Reference implementations: `app/electricity/page.tsx`, `app/stp/page.tsx`, `app/contractors/page.tsx`. Water (`meter-table.tsx`, `water-database-table.tsx`) and firefighting (`app/firefighting/page.tsx`) still use bespoke tables — those are tracked as P1 normalization debt.
+Reference implementations: `app/assets/page.tsx`, `app/contractors/page.tsx`, `app/electricity/page.tsx`, `app/stp/page.tsx`, `app/firefighting/quotes/page.tsx`, `components/water/meter-table.tsx`, `components/water/water-database-table.tsx`, `components/water/DailyWaterReport.tsx` (and the `daily-report/` panel family), `components/gulf-expert/{overview,findings,equipment}-tab.tsx`. The system is unified — bespoke tables are anti-patterns, not legacy debt.
+
+### Unified table look — what `<Table>` gives you for free
+
+The shared `<Table>` primitive (`components/ui/table.tsx`) wraps every consumer in `.ops-table-shell`. The look is driven entirely by `app/globals.css` so a single CSS change reskins every page.
+
+- **Card chrome** — 1px `--border`, `--radius` (10.5px), `box-shadow: 0 1px 2px rgb(15 23 42 / 0.06)` (`0 1px 0 rgba(255,255,255,0.03)` dark). One bordered card per table, no nested `ops-table-shell` divs.
+- **Header band** — `background: var(--header-band)`, full-strength `--border` underline, hairline vertical dividers between columns. Text: 12.5px / 500 / mixed-case / `--muted-foreground`. No uppercase, no letter-spacing.
+- **Body cells** — 13px / `--card-foreground`, 14×18 padding, 52px row height (comfortable default). Every cell gets a `--hairline` right + bottom border (last-of-row/last-of-table collapse). **No zebra striping** — flat rows are the system.
+- **Hover** — `background: var(--row-hover)`, 120ms ease-out transition (guarded by `prefers-reduced-motion`).
+- **Density variants** — set on the `<Table>` element directly:
+  ```tsx
+  <Table data-density="compact">   {/* 40px rows, 10×14 padding — ledger pages */}
+  <Table>                          {/* 52px rows, 14×18 padding — default */}
+  <Table data-density="spacious">  {/* 64px rows, 18×22 padding — short tables */}
+  ```
+
+### Table helper classes — use these on `<TableHead>` / `<TableCell>`
+
+All scoped to `.ops-table` so they only apply inside tables:
+
+- `.num` — right-aligned + `font-variant-numeric: tabular-nums`. Use on every numeric column (header AND cell). **Replaces ad-hoc `text-right font-mono` on quantity / money cells.**
+- `.meter` — monospace + tabular-nums + `--muted-foreground` for genuine mono content (account numbers, meter IDs).
+- `.strong` — `--foreground` + `font-weight: 500` for a row's primary identifier (the cell that names the row).
+- `.col-sticky` — sticky first-column helper. Bundles `position: sticky; left: 0; z-index: 1` for cells (z-index 6 on header cells to clear the sticky `thead`) plus a tinted hover state. **Replaces the inline `sticky left-0 bg-muted dark:bg-muted/80 z-20` strings that used to clutter wide-ledger pages.**
+
+### Table system tokens (in `globals.css`)
+
+| Token | Purpose | Light | Dark |
+|---|---|---|---|
+| `--hairline` | Cell-grid borders | `color-mix(--border 55%, transparent)` | `color-mix(--border 70%, transparent)` |
+| `--header-band` | Header background | `color-mix(--card 96%, --muted)` | `color-mix(--card 88%, --muted)` |
+| `--row-hover` | Hover row bg | `color-mix(--secondary 8%, transparent)` | `color-mix(--secondary 7%, transparent)` |
+
+Driven by `--card` / `--border` / `--secondary` / `--muted` — the table look retunes automatically when those move.
+
+Spec / plan: `docs/superpowers/specs/2026-05-14-unified-table-system-design.md` · `docs/superpowers/plans/2026-05-14-unified-table-system.md`.
 
 ### `StatsGrid`
 
@@ -368,6 +404,15 @@ Every interactive element gets this. Never remove without a replacement.
 | `text-white` (on a primary surface) | `text-primary-foreground` |
 | Inline hex `#3B82F6` in a `.tsx` | `var(--status-info)` or `var(--module-water)` |
 | Bespoke `<table>` with custom sort icons | `DataTable` family from `components/shared/data-table` |
+| `<TableCell className="text-right font-mono">` on a number | `<TableCell className="num">` |
+| `<TableCell className="text-muted-foreground font-mono">` on an ID/account | `<TableCell className="meter">` |
+| Inline `sticky left-0 bg-muted dark:bg-muted/80 z-20` on a column | `className="col-sticky"` (drop the bg + z-index) |
+| `even:bg-*` / `nth-child(even)` zebra striping on rows | Flat rows — the unified table system removes striping intentionally |
+| `hover:bg-secondary/5 dark:hover:bg-muted/40` on `<TableRow>` | Drop it — `.ops-table tbody tr:hover` uses `--row-hover` automatically |
+| `text-transform: uppercase tracking-wide` on `<TableHead>` | Drop it — headers are mixed-case 12.5px muted by system |
+| Raw `<Badge>` inside a table row for status | `<StatusBadge label={…} color={…}>` (defaults to dot) |
+| `manual border-l border-border` between column groups | Drop it — the cell-grid CSS provides uniform hairlines |
+| Nested `<div className="ops-table-shell">` wrapping a `<Table>` | Just `<Table>` — the primitive wraps itself |
 | One-off KPI card `<div>` per page | `StatsGrid` |
 | Per-module page chrome in module-accent color | Module accents in icons & chart series only |
 | `font-family: "Inter"` declared in a component | `var(--font-sans)` (loaded once in layout) |
