@@ -596,16 +596,16 @@ export default function ContractorsPage() {
                                             {c.contractor}
                                             {c.note && <p className="text-xs text-muted-foreground mt-0.5 max-w-[200px] truncate" title={c.note}>{c.note}</p>}
                                         </TableCell>
-                                        <TableCell className="text-muted-foreground hidden lg:table-cell font-mono">{c.contract_ref || '-'}</TableCell>
+                                        <TableCell className="text-muted-foreground hidden lg:table-cell meter">{c.contract_ref || '-'}</TableCell>
                                         <TableCell className="text-muted-foreground dark:text-muted-foreground">{c.service || '-'}</TableCell>
                                         <TableCell>
                                             <StatusBadge label={c.flow} color={getFlowDotColor(c.flow)} />
                                         </TableCell>
                                         <TableCell className="text-center text-muted-foreground">{c.contract_years ?? '-'}</TableCell>
-                                        <TableCell className="text-right font-mono">
+                                        <TableCell className="num">
                                             {c.annual_value_omr ? fmtOMR(c.annual_value_omr) : <span className="text-muted-foreground italic">{c.rate_note || 'Variable'}</span>}
                                         </TableCell>
-                                        <TableCell className="text-right font-mono text-primary">
+                                        <TableCell className="num text-primary">
                                             {c.total_value_omr ? fmtOMR(c.total_value_omr) : <span className="text-muted-foreground italic font-normal">Variable</span>}
                                         </TableCell>
                                         <TableCell className="text-center px-3">
@@ -878,7 +878,7 @@ export default function ContractorsPage() {
                                         <TableCell className="text-muted-foreground hidden lg:table-cell">
                                             {c["End Date"] ? <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{c["End Date"]}</span> : '-'}
                                         </TableCell>
-                                        <TableCell className="text-right font-mono text-primary">{c["Annual Value (OMR)"]?.toLocaleString('en-US', { maximumFractionDigits: 1 }) || '-'}</TableCell>
+                                        <TableCell className="num text-primary">{c["Annual Value (OMR)"]?.toLocaleString('en-US', { maximumFractionDigits: 1 }) || '-'}</TableCell>
                                         <TableCell className="text-center px-3">
                                             <button
                                                 onClick={() => openPdfModal(null, c.Contractor || '', c["Service Provided"] || '', c.contract_pdf_url)}
