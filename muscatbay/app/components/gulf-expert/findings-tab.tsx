@@ -9,6 +9,7 @@ import {
   SortableTableHead,
   type PageSizeOption,
 } from "@/components/shared/data-table";
+import { Table, TableHeader, TableBody, TableRow, TableCell } from "@/components/ui/table";
 import type { PpmFinding } from "./types";
 
 interface FindingsTabProps {
@@ -199,10 +200,10 @@ export function FindingsTab({ findings }: FindingsTabProps) {
       </div>
 
       {/* Desktop Table */}
-      <div className="ops-table-shell hidden md:block">
-        <table className="ops-table">
-          <thead>
-            <tr className="bg-muted dark:bg-muted/80">
+      <div className="hidden md:block">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-muted dark:bg-muted/80">
               {columns.map((col) => (
                 <SortableTableHead
                   key={col.field}
@@ -215,40 +216,40 @@ export function FindingsTab({ findings }: FindingsTabProps) {
                   {col.label}
                 </SortableTableHead>
               ))}
-            </tr>
-          </thead>
-          <tbody>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {paginated.map((f, i) => (
-              <tr key={f.id || i} className="border-b border-border/80 dark:border-border/80 hover:bg-secondary/5 dark:hover:bg-muted/40 transition-colors even:bg-muted/40 dark:even:bg-muted/20">
-                <td className="py-4 px-5 font-semibold text-foreground dark:text-muted-foreground whitespace-nowrap">
+              <TableRow key={f.id || i} className="hover:bg-secondary/5 dark:hover:bg-muted/40 even:bg-muted/40 dark:even:bg-muted/20">
+                <TableCell className="font-semibold text-foreground dark:text-muted-foreground whitespace-nowrap">
                   {f.finding_code}
                   {f.is_recurring && <span className="ml-1 text-amber-500" title="Recurring issue">↻</span>}
-                </td>
-                <td className="py-4 px-5 font-semibold text-muted-foreground dark:text-muted-foreground text-sm">{f.building}</td>
-                <td className="py-4 px-5 font-semibold text-muted-foreground dark:text-muted-foreground text-sm max-w-[150px] truncate" title={f.equipment_label}>{f.equipment_label}</td>
-                <td className="py-4 px-5 font-semibold text-muted-foreground dark:text-muted-foreground text-sm">{f.fiscal_year}</td>
-                <td className="py-4 px-5 font-semibold text-muted-foreground dark:text-muted-foreground text-sm">{f.ppm_visit}</td>
-                <td className="py-4 px-5 font-semibold text-muted-foreground dark:text-muted-foreground text-sm max-w-[200px] truncate" title={f.description}>{f.description}</td>
-                <td className="py-4 px-5 font-semibold text-muted-foreground dark:text-muted-foreground text-sm text-center">{f.quantity}</td>
-                <td className="py-4 px-5">
+                </TableCell>
+                <TableCell className="text-muted-foreground dark:text-muted-foreground text-sm">{f.building}</TableCell>
+                <TableCell className="text-muted-foreground dark:text-muted-foreground text-sm max-w-[150px] truncate" title={f.equipment_label}>{f.equipment_label}</TableCell>
+                <TableCell className="text-muted-foreground dark:text-muted-foreground text-sm">{f.fiscal_year}</TableCell>
+                <TableCell className="text-muted-foreground dark:text-muted-foreground text-sm">{f.ppm_visit}</TableCell>
+                <TableCell className="text-muted-foreground dark:text-muted-foreground text-sm max-w-[200px] truncate" title={f.description}>{f.description}</TableCell>
+                <TableCell className="text-muted-foreground dark:text-muted-foreground text-sm text-center">{f.quantity}</TableCell>
+                <TableCell>
                   <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${getPriorityColor(f.priority)}`}>{f.priority}</span>
-                </td>
-                <td className="py-4 px-5">
+                </TableCell>
+                <TableCell>
                   <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${getStatusColor(f.status)}`}>{f.status}</span>
-                </td>
-                <td className="py-4 px-5 font-semibold text-sm text-blue-600 dark:text-blue-400">{f.quotation_ref || "—"}</td>
-              </tr>
+                </TableCell>
+                <TableCell className="font-semibold text-sm text-blue-600 dark:text-blue-400">{f.quotation_ref || "—"}</TableCell>
+              </TableRow>
             ))}
             {filtered.length === 0 && (
-              <tr>
-                <td colSpan={10} className="py-12 text-center text-muted-foreground dark:text-muted-foreground">
+              <TableRow>
+                <TableCell colSpan={10} className="py-12 text-center text-muted-foreground dark:text-muted-foreground">
                   <AlertCircle className="h-8 w-8 mx-auto mb-2" />
                   <p>No findings match your filters.</p>
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             )}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
 
       {filtered.length > 0 && (
