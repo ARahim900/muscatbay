@@ -246,6 +246,11 @@
   --input: #E5E7EB;
   --ring: #A1D1D5;
 
+  /* Table-system tokens — see docs/superpowers/specs/2026-05-14-unified-table-system-design.md */
+  --hairline: color-mix(in srgb, var(--border) 55%, transparent);
+  --header-band: color-mix(in srgb, var(--card) 96%, var(--muted));
+  --row-hover: color-mix(in srgb, var(--secondary) 8%, transparent);
+
   /* Chart Colors — Muscat Bay Elegant Palette */
   --chart-1: #6B9AC4;
   --chart-2: #A1D1D5;
@@ -391,6 +396,11 @@
   --border: rgba(255, 255, 255, 0.1);
   --input: rgba(255, 255, 255, 0.1);
   --ring: #A1D1D5;
+
+  /* Table-system tokens — see docs/superpowers/specs/2026-05-14-unified-table-system-design.md */
+  --hairline: color-mix(in srgb, var(--border) 70%, transparent);
+  --header-band: color-mix(in srgb, var(--card) 88%, var(--muted));
+  --row-hover: color-mix(in srgb, var(--secondary) 7%, transparent);
 
   /* Chart colors — lighter variants for dark backgrounds */
   --chart-5: #8B7F94;
