@@ -3,17 +3,33 @@
 import { cn } from '@/lib/utils';
 
 interface TableToolbarProps {
-    children: React.ReactNode;
+    children?: React.ReactNode;
     className?: string;
+    title?: React.ReactNode;
+    count?: number | string;
 }
 
-export function TableToolbar({ children, className }: TableToolbarProps) {
+export function TableToolbar({ children, className, title, count }: TableToolbarProps) {
     return (
         <div className={cn(
-            "ops-table-toolbar flex flex-wrap items-center gap-2 px-3 py-3 sm:gap-3 sm:px-5 sm:py-4",
+            "ops-table-toolbar flex flex-wrap items-center gap-2 px-3 py-3 sm:gap-3 sm:px-5 sm:py-3.5",
             className
         )}>
-            {children}
+            {title != null && (
+                <div className="flex items-baseline gap-1.5 min-w-0">
+                    <span className="text-sm font-semibold text-foreground truncate">{title}</span>
+                    {count != null && (
+                        <span className="text-xs font-medium text-muted-foreground tabular-nums">
+                            · {typeof count === 'number' ? count.toLocaleString() : count}
+                        </span>
+                    )}
+                </div>
+            )}
+            {children != null && (
+                <div className="flex flex-wrap items-center gap-2 sm:gap-3 ml-auto">
+                    {children}
+                </div>
+            )}
         </div>
     );
 }
