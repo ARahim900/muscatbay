@@ -17,6 +17,7 @@ import {
     HierarchyStatCard, Th, TableSearch, StatusChip,
     TablePagination, thBase, tdBase,
 } from "./report-primitives";
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 
 // ZoneAnalyticsPanel extracted to zone-analytics.tsx
 
@@ -280,15 +281,16 @@ export function ZoneL3Table({
                 <TableSearch value={search} onChange={setSearch} placeholder="Search meter or account..." />
 
                 {/* Horizontally scrollable table */}
-                <div
+                <Table
                     role="region"
                     aria-label="Zone daily readings. Scroll horizontally to view all days."
                     tabIndex={0}
-                    className="ops-table-shell relative -mx-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary focus-visible:ring-offset-2 sm:-mx-5 md:-mx-6"
+                    className="relative -mx-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary focus-visible:ring-offset-2 sm:-mx-5 md:-mx-6"
+                    style={{ minWidth: `${420 + days.length * 72}px` }}
+                    data-density="compact"
                 >
-                    <table className="ops-table" style={{ minWidth: `${420 + days.length * 72}px` }}>
-                        <thead>
-                            <tr className="border-b border-border dark:border-border">
+                    <TableHeader>
+                            <TableRow className="border-b border-border dark:border-border">
                                 <Th
                                     sortKey="label" sort={sort} onSort={setSort}
                                     className="sticky left-0 z-10 bg-white dark:bg-muted min-w-[150px]"
@@ -302,19 +304,19 @@ export function ZoneL3Table({
                                     sortKey="total" sort={sort} onSort={setSort}
                                     className="text-right min-w-[80px] bg-muted/80 dark:bg-muted/40"
                                 >Total</Th>
-                            </tr>
-                        </thead>
-                        <tbody>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
                             {/* ── L2 Bulk summary row (top) ──────────────────────
                                Always visible, unaffected by pagination/search.  */}
-                            <tr
+                            <TableRow
                                 className="border-b-2"
                                 style={{
                                     backgroundColor: `${PALETTE.primary}14`,
                                     borderBottomColor: `${PALETTE.primary}40`,
                                 }}
                             >
-                                <td
+                                <TableCell
                                     className={cn(tdBase, "font-medium sticky left-0 z-10")}
                                     style={{
                                         backgroundColor: `${PALETTE.primary}14`,
@@ -326,15 +328,15 @@ export function ZoneL3Table({
                                         <Droplets className="h-3.5 w-3.5 shrink-0" />
                                         {zoneRow.zoneName} Bulk (L2)
                                     </span>
-                                </td>
-                                <td className={cn(tdBase, "font-mono text-[11px]")} style={{ color: `${PALETTE.primary}AA` }}>
+                                </TableCell>
+                                <TableCell className={cn(tdBase, "font-mono text-[11px]")} style={{ color: `${PALETTE.primary}AA` }}>
                                     {zoneConfig.l2Account}
-                                </td>
-                                <td className={cn(tdBase, "text-center")}>
+                                </TableCell>
+                                <TableCell className={cn(tdBase, "text-center")}>
                                     <StatusChip label="L2 BULK" color="primary" />
-                                </td>
+                                </TableCell>
                                 {l2DayTotals.map((val, i) => (
-                                    <td
+                                    <TableCell
                                         key={i}
                                         className={cn(tdBase, "text-right tabular-nums px-2 text-[12px] font-medium")}
                                         style={{ color: PALETTE.primary }}
@@ -344,9 +346,9 @@ export function ZoneL3Table({
                                         ) : (
                                             n(val)
                                         )}
-                                    </td>
+                                    </TableCell>
                                 ))}
-                                <td
+                                <TableCell
                                     className={cn(tdBase, "text-right tabular-nums font-medium")}
                                     style={{
                                         backgroundColor: `${PALETTE.primary}20`,
@@ -354,16 +356,16 @@ export function ZoneL3Table({
                                     }}
                                 >
                                     {n(l2GrandTotal)}
-                                </td>
-                            </tr>
+                                </TableCell>
+                            </TableRow>
 
                             {/* ── Individual L3 meter rows (paginated/filtered) ── */}
                             {paginated.length === 0 ? (
-                                <tr>
-                                    <td colSpan={colCount} className="text-center py-10 text-[13px] text-muted-foreground dark:text-muted-foreground">
+                                <TableRow>
+                                    <TableCell colSpan={colCount} className="text-center py-10 text-[13px] text-muted-foreground dark:text-muted-foreground">
                                         No meters found
-                                    </td>
-                                </tr>
+                                    </TableCell>
+                                </TableRow>
                             ) : paginated.flatMap(meter => {
                                 const detail = meter.building ? buildingL4Data.get(meter.account) : null;
                                 const isExpanded = !!detail && expandedBuildings.has(meter.account);
@@ -371,14 +373,14 @@ export function ZoneL3Table({
 
                                 // ── The L3 meter row itself ───────────────────────
                                 rows.push(
-                                    <tr
+                                    <TableRow
                                         key={meter.account}
                                         className={cn(
                                             "border-b border-border/60 dark:border-border/60 transition-colors hover:bg-muted/70 dark:hover:bg-muted/30",
                                             !isExpanded && "even:bg-muted/40 dark:even:bg-muted/20",
                                         )}
                                     >
-                                        <td className={cn(tdBase, "font-semibold sticky left-0 z-10 bg-white dark:bg-muted")}>
+                                        <TableCell className={cn(tdBase, "font-semibold sticky left-0 z-10 bg-white dark:bg-muted")}>
                                             <span className="inline-flex items-center gap-2">
                                                 {detail ? (
                                                     <button
@@ -408,13 +410,13 @@ export function ZoneL3Table({
                                                     </>
                                                 )}
                                             </span>
-                                        </td>
-                                        <td className={cn(tdBase, "font-mono text-[11px] text-muted-foreground dark:text-muted-foreground")}>{meter.account}</td>
-                                        <td className={cn(tdBase, "text-center")}>
+                                        </TableCell>
+                                        <TableCell className={cn(tdBase, "font-mono text-[11px] text-muted-foreground dark:text-muted-foreground")}>{meter.account}</TableCell>
+                                        <TableCell className={cn(tdBase, "text-center")}>
                                             <StatusChip label={meter.building ? "Building" : "Individual"} color={meter.building ? "primary" : "default"} />
-                                        </td>
+                                        </TableCell>
                                         {meter.dailyValues.map((val, i) => (
-                                            <td key={i} className={cn(tdBase, "text-right tabular-nums px-2 text-[12px]")}>
+                                            <TableCell key={i} className={cn(tdBase, "text-right tabular-nums px-2 text-[12px]")}>
                                                 {val === null ? (
                                                     <span className="text-muted-foreground/70 dark:text-muted-foreground">—</span>
                                                 ) : val === 0 ? (
@@ -422,12 +424,12 @@ export function ZoneL3Table({
                                                 ) : (
                                                     n(val)
                                                 )}
-                                            </td>
+                                            </TableCell>
                                         ))}
-                                        <td className={cn(tdBase, "text-right tabular-nums font-semibold bg-muted/80 dark:bg-muted/40")}>
+                                        <TableCell className={cn(tdBase, "text-right tabular-nums font-semibold bg-muted/80 dark:bg-muted/40")}>
                                             {n(meter.total)}
-                                        </td>
-                                    </tr>,
+                                        </TableCell>
+                                    </TableRow>,
                                 );
 
                                 // ── Expanded: child L4 meters + ΣL4 + diff ───────
@@ -435,12 +437,12 @@ export function ZoneL3Table({
                                     // L4 child rows
                                     detail.children.forEach((child, idx) => {
                                         rows.push(
-                                            <tr
+                                            <TableRow
                                                 key={`${meter.account}-child-${child.account}`}
                                                 className="border-b border-border/60 dark:border-border/60"
                                                 style={{ backgroundColor: `${PALETTE.neutral}26` }}
                                             >
-                                                <td
+                                                <TableCell
                                                     className={cn(tdBase, "pl-10 font-normal sticky left-0 z-10 text-[13px]")}
                                                     style={{
                                                         backgroundColor: `${PALETTE.neutral}26`,
@@ -453,16 +455,16 @@ export function ZoneL3Table({
                                                             : <span className="inline-block w-2 h-2 rounded-full bg-border dark:bg-muted" />}
                                                         {child.label}
                                                     </span>
-                                                </td>
-                                                <td className={cn(tdBase, "font-mono text-[11px] text-muted-foreground dark:text-muted-foreground")}>{child.account}</td>
-                                                <td className={cn(tdBase, "text-center")}>
+                                                </TableCell>
+                                                <TableCell className={cn(tdBase, "font-mono text-[11px] text-muted-foreground dark:text-muted-foreground")}>{child.account}</TableCell>
+                                                <TableCell className={cn(tdBase, "text-center")}>
                                                     <StatusChip
                                                         label={child.type === 'Common' ? 'Common' : 'Apartment'}
                                                         color={child.type === 'Common' ? 'primary' : 'default'}
                                                     />
-                                                </td>
+                                                </TableCell>
                                                 {child.dailyValues.map((val, i) => (
-                                                    <td key={i} className={cn(tdBase, "text-right tabular-nums px-2 text-[12px] font-normal")}>
+                                                    <TableCell key={i} className={cn(tdBase, "text-right tabular-nums px-2 text-[12px] font-normal")}>
                                                         {val === null ? (
                                                             <span className="text-muted-foreground/70 dark:text-muted-foreground">—</span>
                                                         ) : val === 0 ? (
@@ -470,22 +472,22 @@ export function ZoneL3Table({
                                                         ) : (
                                                             n(val)
                                                         )}
-                                                    </td>
+                                                    </TableCell>
                                                 ))}
-                                                <td className={cn(tdBase, "text-right tabular-nums font-semibold bg-muted/80 dark:bg-muted/40")}>
+                                                <TableCell className={cn(tdBase, "text-right tabular-nums font-semibold bg-muted/80 dark:bg-muted/40")}>
                                                     {n(child.total)}
-                                                </td>
-                                            </tr>,
+                                                </TableCell>
+                                            </TableRow>,
                                         );
                                     });
 
                                     // ΣL4 sub-footer — sum of apartments
                                     rows.push(
-                                        <tr
+                                        <TableRow
                                             key={`${meter.account}-l4sum`}
                                             style={{ backgroundColor: `${PALETTE.blue}12` }}
                                         >
-                                            <td
+                                            <TableCell
                                                 className={cn(tdBase, "pl-10 font-medium sticky left-0 z-10 text-[12px]")}
                                                 style={{
                                                     backgroundColor: `${PALETTE.blue}12`,
@@ -495,30 +497,30 @@ export function ZoneL3Table({
                                                 colSpan={3}
                                             >
                                                 Σ Individuals — {detail.children.length} meters
-                                            </td>
+                                            </TableCell>
                                             {detail.childDayTotals.map((t, i) => (
-                                                <td
+                                                <TableCell
                                                     key={i}
                                                     className={cn(tdBase, "text-right tabular-nums font-medium px-2 text-[12px]")}
                                                     style={{ color: PALETTE.blue }}
                                                 >
                                                     {n(t)}
-                                                </td>
+                                                </TableCell>
                                             ))}
-                                            <td
+                                            <TableCell
                                                 className={cn(tdBase, "text-right tabular-nums font-medium")}
                                                 style={{ backgroundColor: `${PALETTE.blue}20`, color: PALETTE.blue }}
                                             >
                                                 {n(detail.childGrandTotal)}
-                                            </td>
-                                        </tr>,
+                                            </TableCell>
+                                        </TableRow>,
                                     );
 
                                     // Difference sub-footer — bulk − sum
                                     const isHighBuildingDiff = Math.abs(detail.diffGrandTotal) > 5;
                                     const diffTint = isHighBuildingDiff ? PALETTE.red : PALETTE.mint;
                                     rows.push(
-                                        <tr
+                                        <TableRow
                                             key={`${meter.account}-l4diff`}
                                             className="border-b-2"
                                             style={{
@@ -526,7 +528,7 @@ export function ZoneL3Table({
                                                 borderBottomColor: `${diffTint}40`,
                                             }}
                                         >
-                                            <td
+                                            <TableCell
                                                 className={cn(tdBase, "pl-10 font-medium sticky left-0 z-10 text-[12px]")}
                                                 style={{
                                                     backgroundColor: `${diffTint}14`,
@@ -536,23 +538,23 @@ export function ZoneL3Table({
                                                 colSpan={3}
                                             >
                                                 Difference (Bulk − Σ)
-                                            </td>
+                                            </TableCell>
                                             {detail.diffDayTotals.map((t, i) => (
-                                                <td
+                                                <TableCell
                                                     key={i}
                                                     className={cn(tdBase, "text-right tabular-nums font-medium px-2 text-[12px]")}
                                                     style={{ color: diffTint }}
                                                 >
                                                     {diffCell(t)}
-                                                </td>
+                                                </TableCell>
                                             ))}
-                                            <td
+                                            <TableCell
                                                 className={cn(tdBase, "text-right tabular-nums font-medium")}
                                                 style={{ backgroundColor: `${diffTint}20`, color: diffTint }}
                                             >
                                                 {diffCell(detail.diffGrandTotal)}
-                                            </td>
-                                        </tr>,
+                                            </TableCell>
+                                        </TableRow>,
                                     );
                                 }
 
@@ -560,14 +562,14 @@ export function ZoneL3Table({
                             })}
 
                             {/* ── Σ Individuals footer row (zone level) ──────── */}
-                            <tr
+                            <TableRow
                                 className="border-t-2"
                                 style={{
                                     backgroundColor: `${PALETTE.blue}12`,
                                     borderTopColor: `${PALETTE.blue}40`,
                                 }}
                             >
-                                <td
+                                <TableCell
                                     className={cn(tdBase, "font-medium sticky left-0 z-10")}
                                     colSpan={3}
                                     style={{
@@ -577,37 +579,37 @@ export function ZoneL3Table({
                                     }}
                                 >
                                     Σ Individuals — {l3Meters.length} meters
-                                </td>
+                                </TableCell>
                                 {dayTotals.map((t, i) => (
-                                    <td
+                                    <TableCell
                                         key={i}
                                         className={cn(tdBase, "text-right tabular-nums font-medium px-2 text-[12px]")}
                                         style={{ color: PALETTE.blue }}
                                     >
                                         {n(t)}
-                                    </td>
+                                    </TableCell>
                                 ))}
-                                <td
+                                <TableCell
                                     className={cn(tdBase, "text-right tabular-nums font-medium")}
                                     style={{ backgroundColor: `${PALETTE.blue}20`, color: PALETTE.blue }}
                                 >
                                     {n(grandTotal)}
-                                </td>
-                            </tr>
+                                </TableCell>
+                            </TableRow>
 
                             {/* ── Difference footer row (zone level) ─────────── */}
                             {(() => {
                                 const isHighZoneDiff = Math.abs(diffGrandTotal) > 20;
                                 const diffTint = isHighZoneDiff ? PALETTE.red : PALETTE.mint;
                                 return (
-                                    <tr
+                                    <TableRow
                                         className="border-t"
                                         style={{
                                             backgroundColor: `${diffTint}14`,
                                             borderTopColor: `${diffTint}40`,
                                         }}
                                     >
-                                        <td
+                                        <TableCell
                                             className={cn(tdBase, "font-medium sticky left-0 z-10")}
                                             colSpan={3}
                                             style={{
@@ -617,29 +619,28 @@ export function ZoneL3Table({
                                             }}
                                         >
                                             Difference (L2 − Σ Individuals)
-                                        </td>
+                                        </TableCell>
                                         {diffByDay.map((t, i) => (
-                                            <td
+                                            <TableCell
                                                 key={i}
                                                 className={cn(tdBase, "text-right tabular-nums font-medium px-2 text-[12px]")}
                                                 style={{ color: diffTint }}
                                             >
                                                 {diffCell(t)}
-                                            </td>
+                                            </TableCell>
                                         ))}
-                                        <td
+                                        <TableCell
                                             className={cn(tdBase, "text-right tabular-nums font-medium")}
                                             style={{ backgroundColor: `${diffTint}20`, color: diffTint }}
                                         >
                                             {diffCell(diffGrandTotal)}
-                                        </td>
-                                    </tr>
+                                        </TableCell>
+                                    </TableRow>
                                 );
                             })()}
-                        </tbody>
-                    </table>
+                        </TableBody>
                     <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-card to-transparent sm:hidden" />
-                </div>
+                </Table>
 
                 {filtered.length > rowsPerPage && (
                     <TablePagination
