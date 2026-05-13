@@ -1,3 +1,1 @@
-{
-  "_comment": "Security headers are emitted from proxy.ts so CSP can include a per-request nonce. Keep this file minimal to avoid duplicate/conflicting headers. Static assets get headers from Next.js / Vercel defaults."
-}
+{}
