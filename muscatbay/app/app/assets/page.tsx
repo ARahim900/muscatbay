@@ -23,6 +23,7 @@ import {
 import { exportToCSV, getDateForFilename } from "@/lib/export-utils";
 import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
 import { PageStatusBar } from "@/components/shared/page-status-bar";
+import { sortAssets, type AssetSortField } from "./sort";
 
 type ActiveTab = 'overview' | 'lifecycle' | 'maintenance' | 'technical' | 'financial';
 
@@ -126,7 +127,7 @@ export default function AssetsPage() {
     const [dataSource, setDataSource] = useState<'supabase' | 'mock'>('mock');
     const [error, setError] = useState<string | null>(null);
     const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
-    const [sortField, setSortField] = useState<string>('name');
+    const [sortField, setSortField] = useState<AssetSortField>('name');
     const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState<PageSizeOption>(25);
@@ -222,7 +223,7 @@ export default function AssetsPage() {
         setSortField(prev => {
             if (prev === field) setSortDirection(d => d === 'asc' ? 'desc' : 'asc');
             else setSortDirection('asc');
-            return prev === field ? prev : field;
+            return prev === field ? prev : field as AssetSortField;
         });
         setCurrentPage(1);
     }, []);
@@ -345,7 +346,11 @@ export default function AssetsPage() {
     const emptyRow = (cols: number) => (
         <tr><td colSpan={cols}><EmptyState variant={hasActiveFilters ? "filter-empty" : "no-data"} title="No assets found" description="Try adjusting your filters." /></td></tr>
     );
-    const rows = filteredAssets;
+    // Apply client-side sort for mock/demo data (Supabase handles it server-side)
+    const sortedAssets = dataSource === 'mock'
+        ? sortAssets(filteredAssets, sortField, sortDirection)
+        : filteredAssets;
+    const rows = sortedAssets;
 
     return (
         <div className="space-y-6 sm:space-y-7 md:space-y-8 w-full">
