@@ -981,7 +981,7 @@ export default function STPPage() {
 
                         {/* Desktop table */}
                         <div className="hidden md:block">
-                            <Table>
+                            <Table data-density="compact">
                                 <TableHeader>
                                     <TableRow>
                                         <SortableTableHead field="date" currentSortField={logSortField} currentSortDirection={logSortDirection} onSort={handleLogSort}>Date</SortableTableHead>
@@ -1005,17 +1005,17 @@ export default function STPPage() {
                                         return (
                                             <TableRow key={op.id}>
                                                 <TableCell className="font-semibold">{format(new Date(op.date), "dd/MM/yyyy")}</TableCell>
-                                                <TableCell className="text-right font-mono text-primary">{op.inlet_sewage.toLocaleString('en-US', { maximumFractionDigits: 1 })}</TableCell>
-                                                <TableCell className="text-right font-mono text-blue-600 dark:text-blue-400">{op.tse_for_irrigation.toLocaleString('en-US', { maximumFractionDigits: 1 })}</TableCell>
+                                                <TableCell className="num text-primary">{op.inlet_sewage.toLocaleString('en-US', { maximumFractionDigits: 1 })}</TableCell>
+                                                <TableCell className="num text-blue-600 dark:text-blue-400">{op.tse_for_irrigation.toLocaleString('en-US', { maximumFractionDigits: 1 })}</TableCell>
                                                 <TableCell className="text-right">
                                                     <div className="flex justify-end">
                                                         <StatusBadge label={`${efficiency.toFixed(1)}%`} color={efficiencyBadgeColor} />
                                                     </div>
                                                 </TableCell>
-                                                <TableCell className="text-right font-mono text-amber-600 dark:text-amber-400">{op.tanker_trips}</TableCell>
-                                                <TableCell className="text-right font-mono text-emerald-600 dark:text-emerald-400">{income.toFixed(1)}</TableCell>
-                                                <TableCell className="text-right font-mono text-primary">{savings.toFixed(1)}</TableCell>
-                                                <TableCell className="text-right font-mono text-emerald-600 dark:text-emerald-400">{totalImpact.toFixed(1)}</TableCell>
+                                                <TableCell className="num text-amber-600 dark:text-amber-400">{op.tanker_trips}</TableCell>
+                                                <TableCell className="num text-emerald-600 dark:text-emerald-400">{income.toFixed(1)}</TableCell>
+                                                <TableCell className="num text-primary">{savings.toFixed(1)}</TableCell>
+                                                <TableCell className="num text-emerald-600 dark:text-emerald-400">{totalImpact.toFixed(1)}</TableCell>
                                             </TableRow>
                                         );
                                     })}

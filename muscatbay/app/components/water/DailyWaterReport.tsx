@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { getDynamicMonths } from "@/lib/water-data";
@@ -824,366 +825,366 @@ function ZoneL3Table({
                 <TableSearch value={search} onChange={setSearch} placeholder="Search meter or account..." />
 
                 {/* Horizontally scrollable table */}
-                <div
+                <Table
                     role="region"
                     aria-label="Zone daily readings. Scroll horizontally to view all days."
                     tabIndex={0}
-                    className="ops-table-shell relative -mx-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary focus-visible:ring-offset-2 sm:-mx-5 md:-mx-6"
+                    className="relative -mx-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary focus-visible:ring-offset-2 sm:-mx-5 md:-mx-6"
+                    style={{ minWidth: `${420 + days.length * 72}px` }}
+                    data-density="compact"
                 >
-                    <table className="ops-table" style={{ minWidth: `${420 + days.length * 72}px` }}>
-                        <thead>
-                            <tr className="border-b border-border dark:border-border">
-                                <Th
-                                    sortKey="label" sort={sort} onSort={setSort}
-                                    className="sticky left-0 z-10 bg-white dark:bg-muted min-w-[150px]"
-                                >Meter</Th>
-                                <Th sortKey="account" sort={sort} onSort={setSort} className="min-w-[100px]">Account</Th>
-                                <th scope="col" className={cn(thBase, "text-center min-w-[90px]")}>Type</th>
-                                {days.map(d => (
-                                    <th scope="col" key={d} className={cn(thBase, "text-right min-w-[64px] px-2")}>D{d}</th>
-                                ))}
-                                <Th
-                                    sortKey="total" sort={sort} onSort={setSort}
-                                    className="text-right min-w-[80px] bg-muted/80 dark:bg-muted/40"
-                                >Total</Th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {/* ── L2 Bulk summary row (top) ──────────────────────
-                               Always visible, unaffected by pagination/search.  */}
-                            <tr
-                                className="border-b-2"
+                    <TableHeader>
+                        <TableRow className="border-b border-border dark:border-border">
+                            <Th
+                                sortKey="label" sort={sort} onSort={setSort}
+                                className="sticky left-0 z-10 bg-white dark:bg-muted min-w-[150px]"
+                            >Meter</Th>
+                            <Th sortKey="account" sort={sort} onSort={setSort} className="min-w-[100px]">Account</Th>
+                            <TableHead scope="col" className={cn(thBase, "text-center min-w-[90px]")}>Type</TableHead>
+                            {days.map(d => (
+                                <TableHead scope="col" key={d} className={cn(thBase, "text-right min-w-[64px] px-2")}>D{d}</TableHead>
+                            ))}
+                            <Th
+                                sortKey="total" sort={sort} onSort={setSort}
+                                className="text-right min-w-[80px] bg-muted/80 dark:bg-muted/40"
+                            >Total</Th>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {/* ── L2 Bulk summary row (top) ──────────────────────
+                           Always visible, unaffected by pagination/search.  */}
+                        <TableRow
+                            className="border-b-2"
+                            style={{
+                                backgroundColor: `${PALETTE.primary}14`,
+                                borderBottomColor: `${PALETTE.primary}40`,
+                            }}
+                        >
+                            <TableCell
+                                className={cn(tdBase, "font-medium sticky left-0 z-10")}
                                 style={{
                                     backgroundColor: `${PALETTE.primary}14`,
-                                    borderBottomColor: `${PALETTE.primary}40`,
+                                    color: PALETTE.primary,
+                                    boxShadow: `inset 4px 0 0 ${PALETTE.primary}`,
                                 }}
                             >
-                                <td
-                                    className={cn(tdBase, "font-medium sticky left-0 z-10")}
-                                    style={{
-                                        backgroundColor: `${PALETTE.primary}14`,
-                                        color: PALETTE.primary,
-                                        boxShadow: `inset 4px 0 0 ${PALETTE.primary}`,
-                                    }}
+                                <span className="inline-flex items-center gap-2">
+                                    <Droplets className="h-3.5 w-3.5 shrink-0" />
+                                    {zoneRow.zoneName} Bulk (L2)
+                                </span>
+                            </TableCell>
+                            <TableCell className={cn(tdBase, "font-mono text-[11px]")} style={{ color: `${PALETTE.primary}AA` }}>
+                                {zoneConfig.l2Account}
+                            </TableCell>
+                            <TableCell className={cn(tdBase, "text-center")}>
+                                <StatusChip label="L2 BULK" color="primary" />
+                            </TableCell>
+                            {l2DayTotals.map((val, i) => (
+                                <TableCell
+                                    key={i}
+                                    className={cn(tdBase, "text-right tabular-nums px-2 text-[12px] font-medium")}
+                                    style={{ color: PALETTE.primary }}
                                 >
-                                    <span className="inline-flex items-center gap-2">
-                                        <Droplets className="h-3.5 w-3.5 shrink-0" />
-                                        {zoneRow.zoneName} Bulk (L2)
-                                    </span>
-                                </td>
-                                <td className={cn(tdBase, "font-mono text-[11px]")} style={{ color: `${PALETTE.primary}AA` }}>
-                                    {zoneConfig.l2Account}
-                                </td>
-                                <td className={cn(tdBase, "text-center")}>
-                                    <StatusChip label="L2 BULK" color="primary" />
-                                </td>
-                                {l2DayTotals.map((val, i) => (
-                                    <td
-                                        key={i}
-                                        className={cn(tdBase, "text-right tabular-nums px-2 text-[12px] font-medium")}
-                                        style={{ color: PALETTE.primary }}
-                                    >
-                                        {val === null ? (
-                                            <span className="text-muted-foreground/70 dark:text-muted-foreground">—</span>
-                                        ) : (
-                                            n(val)
-                                        )}
-                                    </td>
-                                ))}
-                                <td
-                                    className={cn(tdBase, "text-right tabular-nums font-medium")}
-                                    style={{
-                                        backgroundColor: `${PALETTE.primary}20`,
-                                        color: PALETTE.primary,
-                                    }}
+                                    {val === null ? (
+                                        <span className="text-muted-foreground/70 dark:text-muted-foreground">—</span>
+                                    ) : (
+                                        n(val)
+                                    )}
+                                </TableCell>
+                            ))}
+                            <TableCell
+                                className={cn(tdBase, "text-right tabular-nums font-medium")}
+                                style={{
+                                    backgroundColor: `${PALETTE.primary}20`,
+                                    color: PALETTE.primary,
+                                }}
+                            >
+                                {n(l2GrandTotal)}
+                            </TableCell>
+                        </TableRow>
+
+                        {/* ── Individual L3 meter rows (paginated/filtered) ── */}
+                        {paginated.length === 0 ? (
+                            <TableRow>
+                                <TableCell colSpan={colCount} className="text-center py-10 text-[13px] text-muted-foreground dark:text-muted-foreground">
+                                    No meters found
+                                </TableCell>
+                            </TableRow>
+                        ) : paginated.flatMap(meter => {
+                            const detail = meter.building ? buildingL4Data.get(meter.account) : null;
+                            const isExpanded = !!detail && expandedBuildings.has(meter.account);
+                            const rows: React.ReactNode[] = [];
+
+                            // ── The L3 meter row itself ───────────────────────
+                            rows.push(
+                                <TableRow
+                                    key={meter.account}
+                                    className={cn(
+                                        "border-b border-border/60 dark:border-border/60 transition-colors hover:bg-muted/70 dark:hover:bg-muted/30",
+                                        !isExpanded && "even:bg-muted/40 dark:even:bg-muted/20",
+                                    )}
                                 >
-                                    {n(l2GrandTotal)}
-                                </td>
-                            </tr>
+                                    <TableCell className={cn(tdBase, "font-semibold sticky left-0 z-10 bg-white dark:bg-muted")}>
+                                        <span className="inline-flex items-center gap-2">
+                                            {detail ? (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => toggleBuilding(meter.account)}
+                                                    aria-expanded={isExpanded}
+                                                    aria-label={`${isExpanded ? 'Collapse' : 'Expand'} ${detail.buildingName} L4 meters`}
+                                                    className="inline-flex items-center gap-1 rounded-md px-1.5 py-1 -ml-1 hover:bg-muted dark:hover:bg-muted transition-colors"
+                                                    style={{ color: PALETTE.primary }}
+                                                >
+                                                    {isExpanded
+                                                        ? <ChevronDown className="h-3.5 w-3.5 shrink-0" />
+                                                        : <ChevronRight className="h-3.5 w-3.5 shrink-0" />}
+                                                    <Building2 className="h-3.5 w-3.5 shrink-0" />
+                                                    <span className="font-semibold">{detail.buildingName}</span>
+                                                </button>
+                                            ) : meter.building ? (
+                                                <>
+                                                    <Building2 className="h-3.5 w-3.5 shrink-0" style={{ color: PALETTE.primary }} />
+                                                    {meter.building.buildingName}
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Home className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                                                    {meter.account}
+                                                    {meter.isNullAsZero && <StatusChip label="IRR" color="primary" />}
+                                                </>
+                                            )}
+                                        </span>
+                                    </TableCell>
+                                    <TableCell className={cn(tdBase, "font-mono text-[11px] text-muted-foreground dark:text-muted-foreground")}>{meter.account}</TableCell>
+                                    <TableCell className={cn(tdBase, "text-center")}>
+                                        <StatusChip label={meter.building ? "Building" : "Individual"} color={meter.building ? "primary" : "default"} />
+                                    </TableCell>
+                                    {meter.dailyValues.map((val, i) => (
+                                        <TableCell key={i} className={cn(tdBase, "text-right tabular-nums px-2 text-[12px]")}>
+                                            {val === null ? (
+                                                <span className="text-muted-foreground/70 dark:text-muted-foreground">—</span>
+                                            ) : val === 0 ? (
+                                                <span className="text-muted-foreground">0.00</span>
+                                            ) : (
+                                                n(val)
+                                            )}
+                                        </TableCell>
+                                    ))}
+                                    <TableCell className={cn(tdBase, "text-right tabular-nums font-semibold bg-muted/80 dark:bg-muted/40")}>
+                                        {n(meter.total)}
+                                    </TableCell>
+                                </TableRow>,
+                            );
 
-                            {/* ── Individual L3 meter rows (paginated/filtered) ── */}
-                            {paginated.length === 0 ? (
-                                <tr>
-                                    <td colSpan={colCount} className="text-center py-10 text-[13px] text-muted-foreground dark:text-muted-foreground">
-                                        No meters found
-                                    </td>
-                                </tr>
-                            ) : paginated.flatMap(meter => {
-                                const detail = meter.building ? buildingL4Data.get(meter.account) : null;
-                                const isExpanded = !!detail && expandedBuildings.has(meter.account);
-                                const rows: React.ReactNode[] = [];
+                            // ── Expanded: child L4 meters + ΣL4 + diff ───────
+                            if (detail && isExpanded) {
+                                // L4 child rows
+                                detail.children.forEach((child, idx) => {
+                                    rows.push(
+                                        <TableRow
+                                            key={`${meter.account}-child-${child.account}`}
+                                            className="border-b border-border/60 dark:border-border/60"
+                                            style={{ backgroundColor: `${PALETTE.neutral}26` }}
+                                        >
+                                            <TableCell
+                                                className={cn(tdBase, "pl-10 font-normal sticky left-0 z-10 text-[13px]")}
+                                                style={{
+                                                    backgroundColor: `${PALETTE.neutral}26`,
+                                                    boxShadow: `inset 4px 0 0 ${PALETTE.primary}30`,
+                                                }}
+                                            >
+                                                <span className="inline-flex items-center gap-2 text-muted-foreground dark:text-muted-foreground/70">
+                                                    {idx === detail.children.length - 1
+                                                        ? <span className="inline-block w-2 h-2 rounded-full" style={{ backgroundColor: PALETTE.primary }} />
+                                                        : <span className="inline-block w-2 h-2 rounded-full bg-border dark:bg-muted" />}
+                                                    {child.label}
+                                                </span>
+                                            </TableCell>
+                                            <TableCell className={cn(tdBase, "font-mono text-[11px] text-muted-foreground dark:text-muted-foreground")}>{child.account}</TableCell>
+                                            <TableCell className={cn(tdBase, "text-center")}>
+                                                <StatusChip
+                                                    label={child.type === 'Common' ? 'Common' : 'Apartment'}
+                                                    color={child.type === 'Common' ? 'primary' : 'default'}
+                                                />
+                                            </TableCell>
+                                            {child.dailyValues.map((val, i) => (
+                                                <TableCell key={i} className={cn(tdBase, "text-right tabular-nums px-2 text-[12px] font-normal")}>
+                                                    {val === null ? (
+                                                        <span className="text-muted-foreground/70 dark:text-muted-foreground">—</span>
+                                                    ) : val === 0 ? (
+                                                        <span className="text-muted-foreground">0.00</span>
+                                                    ) : (
+                                                        n(val)
+                                                    )}
+                                                </TableCell>
+                                            ))}
+                                            <TableCell className={cn(tdBase, "text-right tabular-nums font-semibold bg-muted/80 dark:bg-muted/40")}>
+                                                {n(child.total)}
+                                            </TableCell>
+                                        </TableRow>,
+                                    );
+                                });
 
-                                // ── The L3 meter row itself ───────────────────────
+                                // ΣL4 sub-footer — sum of apartments
                                 rows.push(
-                                    <tr
-                                        key={meter.account}
-                                        className={cn(
-                                            "border-b border-border/60 dark:border-border/60 transition-colors hover:bg-muted/70 dark:hover:bg-muted/30",
-                                            !isExpanded && "even:bg-muted/40 dark:even:bg-muted/20",
-                                        )}
+                                    <TableRow
+                                        key={`${meter.account}-l4sum`}
+                                        style={{ backgroundColor: `${PALETTE.blue}12` }}
                                     >
-                                        <td className={cn(tdBase, "font-semibold sticky left-0 z-10 bg-white dark:bg-muted")}>
-                                            <span className="inline-flex items-center gap-2">
-                                                {detail ? (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => toggleBuilding(meter.account)}
-                                                        aria-expanded={isExpanded}
-                                                        aria-label={`${isExpanded ? 'Collapse' : 'Expand'} ${detail.buildingName} L4 meters`}
-                                                        className="inline-flex items-center gap-1 rounded-md px-1.5 py-1 -ml-1 hover:bg-muted dark:hover:bg-muted transition-colors"
-                                                        style={{ color: PALETTE.primary }}
-                                                    >
-                                                        {isExpanded
-                                                            ? <ChevronDown className="h-3.5 w-3.5 shrink-0" />
-                                                            : <ChevronRight className="h-3.5 w-3.5 shrink-0" />}
-                                                        <Building2 className="h-3.5 w-3.5 shrink-0" />
-                                                        <span className="font-semibold">{detail.buildingName}</span>
-                                                    </button>
-                                                ) : meter.building ? (
-                                                    <>
-                                                        <Building2 className="h-3.5 w-3.5 shrink-0" style={{ color: PALETTE.primary }} />
-                                                        {meter.building.buildingName}
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <Home className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                                                        {meter.account}
-                                                        {meter.isNullAsZero && <StatusChip label="IRR" color="primary" />}
-                                                    </>
-                                                )}
-                                            </span>
-                                        </td>
-                                        <td className={cn(tdBase, "font-mono text-[11px] text-muted-foreground dark:text-muted-foreground")}>{meter.account}</td>
-                                        <td className={cn(tdBase, "text-center")}>
-                                            <StatusChip label={meter.building ? "Building" : "Individual"} color={meter.building ? "primary" : "default"} />
-                                        </td>
-                                        {meter.dailyValues.map((val, i) => (
-                                            <td key={i} className={cn(tdBase, "text-right tabular-nums px-2 text-[12px]")}>
-                                                {val === null ? (
-                                                    <span className="text-muted-foreground/70 dark:text-muted-foreground">—</span>
-                                                ) : val === 0 ? (
-                                                    <span className="text-muted-foreground">0.00</span>
-                                                ) : (
-                                                    n(val)
-                                                )}
-                                            </td>
+                                        <TableCell
+                                            className={cn(tdBase, "pl-10 font-medium sticky left-0 z-10 text-[12px]")}
+                                            style={{
+                                                backgroundColor: `${PALETTE.blue}12`,
+                                                color: PALETTE.blue,
+                                                boxShadow: `inset 4px 0 0 ${PALETTE.blue}`,
+                                            }}
+                                            colSpan={3}
+                                        >
+                                            Σ Individuals — {detail.children.length} meters
+                                        </TableCell>
+                                        {detail.childDayTotals.map((t, i) => (
+                                            <TableCell
+                                                key={i}
+                                                className={cn(tdBase, "text-right tabular-nums font-medium px-2 text-[12px]")}
+                                                style={{ color: PALETTE.blue }}
+                                            >
+                                                {n(t)}
+                                            </TableCell>
                                         ))}
-                                        <td className={cn(tdBase, "text-right tabular-nums font-semibold bg-muted/80 dark:bg-muted/40")}>
-                                            {n(meter.total)}
-                                        </td>
-                                    </tr>,
+                                        <TableCell
+                                            className={cn(tdBase, "text-right tabular-nums font-medium")}
+                                            style={{ backgroundColor: `${PALETTE.blue}20`, color: PALETTE.blue }}
+                                        >
+                                            {n(detail.childGrandTotal)}
+                                        </TableCell>
+                                    </TableRow>,
                                 );
 
-                                // ── Expanded: child L4 meters + ΣL4 + diff ───────
-                                if (detail && isExpanded) {
-                                    // L4 child rows
-                                    detail.children.forEach((child, idx) => {
-                                        rows.push(
-                                            <tr
-                                                key={`${meter.account}-child-${child.account}`}
-                                                className="border-b border-border/60 dark:border-border/60"
-                                                style={{ backgroundColor: `${PALETTE.neutral}26` }}
-                                            >
-                                                <td
-                                                    className={cn(tdBase, "pl-10 font-normal sticky left-0 z-10 text-[13px]")}
-                                                    style={{
-                                                        backgroundColor: `${PALETTE.neutral}26`,
-                                                        boxShadow: `inset 4px 0 0 ${PALETTE.primary}30`,
-                                                    }}
-                                                >
-                                                    <span className="inline-flex items-center gap-2 text-muted-foreground dark:text-muted-foreground/70">
-                                                        {idx === detail.children.length - 1
-                                                            ? <span className="inline-block w-2 h-2 rounded-full" style={{ backgroundColor: PALETTE.primary }} />
-                                                            : <span className="inline-block w-2 h-2 rounded-full bg-border dark:bg-muted" />}
-                                                        {child.label}
-                                                    </span>
-                                                </td>
-                                                <td className={cn(tdBase, "font-mono text-[11px] text-muted-foreground dark:text-muted-foreground")}>{child.account}</td>
-                                                <td className={cn(tdBase, "text-center")}>
-                                                    <StatusChip
-                                                        label={child.type === 'Common' ? 'Common' : 'Apartment'}
-                                                        color={child.type === 'Common' ? 'primary' : 'default'}
-                                                    />
-                                                </td>
-                                                {child.dailyValues.map((val, i) => (
-                                                    <td key={i} className={cn(tdBase, "text-right tabular-nums px-2 text-[12px] font-normal")}>
-                                                        {val === null ? (
-                                                            <span className="text-muted-foreground/70 dark:text-muted-foreground">—</span>
-                                                        ) : val === 0 ? (
-                                                            <span className="text-muted-foreground">0.00</span>
-                                                        ) : (
-                                                            n(val)
-                                                        )}
-                                                    </td>
-                                                ))}
-                                                <td className={cn(tdBase, "text-right tabular-nums font-semibold bg-muted/80 dark:bg-muted/40")}>
-                                                    {n(child.total)}
-                                                </td>
-                                            </tr>,
-                                        );
-                                    });
-
-                                    // ΣL4 sub-footer — sum of apartments
-                                    rows.push(
-                                        <tr
-                                            key={`${meter.account}-l4sum`}
-                                            style={{ backgroundColor: `${PALETTE.blue}12` }}
-                                        >
-                                            <td
-                                                className={cn(tdBase, "pl-10 font-medium sticky left-0 z-10 text-[12px]")}
-                                                style={{
-                                                    backgroundColor: `${PALETTE.blue}12`,
-                                                    color: PALETTE.blue,
-                                                    boxShadow: `inset 4px 0 0 ${PALETTE.blue}`,
-                                                }}
-                                                colSpan={3}
-                                            >
-                                                Σ Individuals — {detail.children.length} meters
-                                            </td>
-                                            {detail.childDayTotals.map((t, i) => (
-                                                <td
-                                                    key={i}
-                                                    className={cn(tdBase, "text-right tabular-nums font-medium px-2 text-[12px]")}
-                                                    style={{ color: PALETTE.blue }}
-                                                >
-                                                    {n(t)}
-                                                </td>
-                                            ))}
-                                            <td
-                                                className={cn(tdBase, "text-right tabular-nums font-medium")}
-                                                style={{ backgroundColor: `${PALETTE.blue}20`, color: PALETTE.blue }}
-                                            >
-                                                {n(detail.childGrandTotal)}
-                                            </td>
-                                        </tr>,
-                                    );
-
-                                    // Difference sub-footer — bulk − sum
-                                    const isHighBuildingDiff = Math.abs(detail.diffGrandTotal) > 5;
-                                    const diffTint = isHighBuildingDiff ? PALETTE.red : PALETTE.mint;
-                                    rows.push(
-                                        <tr
-                                            key={`${meter.account}-l4diff`}
-                                            className="border-b-2"
-                                            style={{
-                                                backgroundColor: `${diffTint}14`,
-                                                borderBottomColor: `${diffTint}40`,
-                                            }}
-                                        >
-                                            <td
-                                                className={cn(tdBase, "pl-10 font-medium sticky left-0 z-10 text-[12px]")}
-                                                style={{
-                                                    backgroundColor: `${diffTint}14`,
-                                                    color: diffTint,
-                                                    boxShadow: `inset 4px 0 0 ${diffTint}`,
-                                                }}
-                                                colSpan={3}
-                                            >
-                                                Difference (Bulk − Σ)
-                                            </td>
-                                            {detail.diffDayTotals.map((t, i) => (
-                                                <td
-                                                    key={i}
-                                                    className={cn(tdBase, "text-right tabular-nums font-medium px-2 text-[12px]")}
-                                                    style={{ color: diffTint }}
-                                                >
-                                                    {diffCell(t)}
-                                                </td>
-                                            ))}
-                                            <td
-                                                className={cn(tdBase, "text-right tabular-nums font-medium")}
-                                                style={{ backgroundColor: `${diffTint}20`, color: diffTint }}
-                                            >
-                                                {diffCell(detail.diffGrandTotal)}
-                                            </td>
-                                        </tr>,
-                                    );
-                                }
-
-                                return rows;
-                            })}
-
-                            {/* ── Σ Individuals footer row (zone level) ──────── */}
-                            <tr
-                                className="border-t-2"
-                                style={{
-                                    backgroundColor: `${PALETTE.blue}12`,
-                                    borderTopColor: `${PALETTE.blue}40`,
-                                }}
-                            >
-                                <td
-                                    className={cn(tdBase, "font-medium sticky left-0 z-10")}
-                                    colSpan={3}
-                                    style={{
-                                        backgroundColor: `${PALETTE.blue}12`,
-                                        color: PALETTE.blue,
-                                        boxShadow: `inset 4px 0 0 ${PALETTE.blue}`,
-                                    }}
-                                >
-                                    Σ Individuals — {l3Meters.length} meters
-                                </td>
-                                {dayTotals.map((t, i) => (
-                                    <td
-                                        key={i}
-                                        className={cn(tdBase, "text-right tabular-nums font-medium px-2 text-[12px]")}
-                                        style={{ color: PALETTE.blue }}
-                                    >
-                                        {n(t)}
-                                    </td>
-                                ))}
-                                <td
-                                    className={cn(tdBase, "text-right tabular-nums font-medium")}
-                                    style={{ backgroundColor: `${PALETTE.blue}20`, color: PALETTE.blue }}
-                                >
-                                    {n(grandTotal)}
-                                </td>
-                            </tr>
-
-                            {/* ── Difference footer row (zone level) ─────────── */}
-                            {(() => {
-                                const isHighZoneDiff = Math.abs(diffGrandTotal) > 20;
-                                const diffTint = isHighZoneDiff ? PALETTE.red : PALETTE.mint;
-                                return (
-                                    <tr
-                                        className="border-t"
+                                // Difference sub-footer — bulk − sum
+                                const isHighBuildingDiff = Math.abs(detail.diffGrandTotal) > 5;
+                                const diffTint = isHighBuildingDiff ? PALETTE.red : PALETTE.mint;
+                                rows.push(
+                                    <TableRow
+                                        key={`${meter.account}-l4diff`}
+                                        className="border-b-2"
                                         style={{
                                             backgroundColor: `${diffTint}14`,
-                                            borderTopColor: `${diffTint}40`,
+                                            borderBottomColor: `${diffTint}40`,
                                         }}
                                     >
-                                        <td
-                                            className={cn(tdBase, "font-medium sticky left-0 z-10")}
-                                            colSpan={3}
+                                        <TableCell
+                                            className={cn(tdBase, "pl-10 font-medium sticky left-0 z-10 text-[12px]")}
                                             style={{
                                                 backgroundColor: `${diffTint}14`,
                                                 color: diffTint,
                                                 boxShadow: `inset 4px 0 0 ${diffTint}`,
                                             }}
+                                            colSpan={3}
                                         >
-                                            Difference (L2 − Σ Individuals)
-                                        </td>
-                                        {diffByDay.map((t, i) => (
-                                            <td
+                                            Difference (Bulk − Σ)
+                                        </TableCell>
+                                        {detail.diffDayTotals.map((t, i) => (
+                                            <TableCell
                                                 key={i}
                                                 className={cn(tdBase, "text-right tabular-nums font-medium px-2 text-[12px]")}
                                                 style={{ color: diffTint }}
                                             >
                                                 {diffCell(t)}
-                                            </td>
+                                            </TableCell>
                                         ))}
-                                        <td
+                                        <TableCell
                                             className={cn(tdBase, "text-right tabular-nums font-medium")}
                                             style={{ backgroundColor: `${diffTint}20`, color: diffTint }}
                                         >
-                                            {diffCell(diffGrandTotal)}
-                                        </td>
-                                    </tr>
+                                            {diffCell(detail.diffGrandTotal)}
+                                        </TableCell>
+                                    </TableRow>,
                                 );
-                            })()}
-                        </tbody>
-                    </table>
+                            }
+
+                            return rows;
+                        })}
+
+                        {/* ── Σ Individuals footer row (zone level) ──────── */}
+                        <TableRow
+                            className="border-t-2"
+                            style={{
+                                backgroundColor: `${PALETTE.blue}12`,
+                                borderTopColor: `${PALETTE.blue}40`,
+                            }}
+                        >
+                            <TableCell
+                                className={cn(tdBase, "font-medium sticky left-0 z-10")}
+                                colSpan={3}
+                                style={{
+                                    backgroundColor: `${PALETTE.blue}12`,
+                                    color: PALETTE.blue,
+                                    boxShadow: `inset 4px 0 0 ${PALETTE.blue}`,
+                                }}
+                            >
+                                Σ Individuals — {l3Meters.length} meters
+                            </TableCell>
+                            {dayTotals.map((t, i) => (
+                                <TableCell
+                                    key={i}
+                                    className={cn(tdBase, "text-right tabular-nums font-medium px-2 text-[12px]")}
+                                    style={{ color: PALETTE.blue }}
+                                >
+                                    {n(t)}
+                                </TableCell>
+                            ))}
+                            <TableCell
+                                className={cn(tdBase, "text-right tabular-nums font-medium")}
+                                style={{ backgroundColor: `${PALETTE.blue}20`, color: PALETTE.blue }}
+                            >
+                                {n(grandTotal)}
+                            </TableCell>
+                        </TableRow>
+
+                        {/* ── Difference footer row (zone level) ─────────── */}
+                        {(() => {
+                            const isHighZoneDiff = Math.abs(diffGrandTotal) > 20;
+                            const diffTint = isHighZoneDiff ? PALETTE.red : PALETTE.mint;
+                            return (
+                                <TableRow
+                                    className="border-t"
+                                    style={{
+                                        backgroundColor: `${diffTint}14`,
+                                        borderTopColor: `${diffTint}40`,
+                                    }}
+                                >
+                                    <TableCell
+                                        className={cn(tdBase, "font-medium sticky left-0 z-10")}
+                                        colSpan={3}
+                                        style={{
+                                            backgroundColor: `${diffTint}14`,
+                                            color: diffTint,
+                                            boxShadow: `inset 4px 0 0 ${diffTint}`,
+                                        }}
+                                    >
+                                        Difference (L2 − Σ Individuals)
+                                    </TableCell>
+                                    {diffByDay.map((t, i) => (
+                                        <TableCell
+                                            key={i}
+                                            className={cn(tdBase, "text-right tabular-nums font-medium px-2 text-[12px]")}
+                                            style={{ color: diffTint }}
+                                        >
+                                            {diffCell(t)}
+                                        </TableCell>
+                                    ))}
+                                    <TableCell
+                                        className={cn(tdBase, "text-right tabular-nums font-medium")}
+                                        style={{ backgroundColor: `${diffTint}20`, color: diffTint }}
+                                    >
+                                        {diffCell(diffGrandTotal)}
+                                    </TableCell>
+                                </TableRow>
+                            );
+                        })()}
+                    </TableBody>
                     <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-card to-transparent sm:hidden" />
-                </div>
+                </Table>
 
                 {filtered.length > rowsPerPage && (
                     <TablePagination
@@ -1529,86 +1530,86 @@ function DCDailyTable({ monthData }: { monthData: SupabaseDailyWaterConsumption[
                 <TableSearch value={search} onChange={setSearch} placeholder="Search meter or account..." />
 
                 {/* Horizontally scrollable table */}
-                <div
+                <Table
                     role="region"
                     aria-label="Direct connection daily readings. Scroll horizontally to view all days."
                     tabIndex={0}
-                    className="ops-table-shell relative -mx-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary focus-visible:ring-offset-2 sm:-mx-5 md:-mx-6"
+                    className="relative -mx-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary focus-visible:ring-offset-2 sm:-mx-5 md:-mx-6"
+                    style={{ minWidth: `${420 + days.length * 72}px` }}
+                    data-density="compact"
                 >
-                    <table className="ops-table" style={{ minWidth: `${420 + days.length * 72}px` }}>
-                        <thead>
-                            <tr className="border-b border-border dark:border-border">
-                                <Th
-                                    sortKey="label" sort={sort} onSort={setSort}
-                                    className="sticky left-0 z-10 bg-white dark:bg-muted min-w-[180px]"
-                                >Meter</Th>
-                                <Th sortKey="account" sort={sort} onSort={setSort} className="min-w-[100px]">Account</Th>
-                                <th scope="col" className={cn(thBase, "text-center min-w-[90px]")}>Type</th>
-                                {days.map(d => (
-                                    <th scope="col" key={d} className={cn(thBase, "text-right min-w-[64px] px-2")}>D{d}</th>
-                                ))}
-                                <Th
-                                    sortKey="total" sort={sort} onSort={setSort}
-                                    className="text-right min-w-[80px] bg-muted/80 dark:bg-muted/40"
-                                >Total</Th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {paginated.length === 0 ? (
-                                <tr>
-                                    <td colSpan={colCount} className="text-center py-10 text-[13px] text-muted-foreground dark:text-muted-foreground">
-                                        No meters found
-                                    </td>
-                                </tr>
-                            ) : paginated.map(meter => (
-                                <tr
-                                    key={meter.account}
-                                    className="border-b border-border/60 dark:border-border/60 transition-colors hover:bg-muted/70 dark:hover:bg-muted/30 even:bg-muted/40 dark:even:bg-muted/20"
-                                >
-                                    <td className={cn(tdBase, "font-semibold sticky left-0 z-10 bg-white dark:bg-muted")}>
-                                        <span className="inline-flex items-center gap-2">
-                                            {meter.isIrr ? (
-                                                <Droplets className="h-3.5 w-3.5 text-teal-500 shrink-0" />
-                                            ) : (
-                                                <Zap className="h-3.5 w-3.5 text-amber-500 shrink-0" />
-                                            )}
-                                            {meter.label}
-                                        </span>
-                                    </td>
-                                    <td className={cn(tdBase, "font-mono text-[11px] text-muted-foreground dark:text-muted-foreground")}>{meter.account}</td>
-                                    <td className={cn(tdBase, "text-center")}>
-                                        <StatusChip label={meter.isIrr ? "Irrigation" : "Service"} color={meter.isIrr ? "primary" : "default"} />
-                                    </td>
-                                    {meter.dailyValues.map((val, i) => (
-                                        <td key={i} className={cn(tdBase, "text-right tabular-nums px-2 text-[12px]")}>
-                                            {val === null ? (
-                                                <span className="text-muted-foreground/70 dark:text-muted-foreground">—</span>
-                                            ) : val === 0 ? (
-                                                <span className="text-muted-foreground">0.00</span>
-                                            ) : (
-                                                n(val)
-                                            )}
-                                        </td>
-                                    ))}
-                                    <td className={cn(tdBase, "text-right tabular-nums font-semibold bg-muted/80 dark:bg-muted/40")}>
-                                        {n(meter.total)}
-                                    </td>
-                                </tr>
+                    <TableHeader>
+                        <TableRow className="border-b border-border dark:border-border">
+                            <Th
+                                sortKey="label" sort={sort} onSort={setSort}
+                                className="sticky left-0 z-10 bg-white dark:bg-muted min-w-[180px]"
+                            >Meter</Th>
+                            <Th sortKey="account" sort={sort} onSort={setSort} className="min-w-[100px]">Account</Th>
+                            <TableHead scope="col" className={cn(thBase, "text-center min-w-[90px]")}>Type</TableHead>
+                            {days.map(d => (
+                                <TableHead scope="col" key={d} className={cn(thBase, "text-right min-w-[64px] px-2")}>D{d}</TableHead>
                             ))}
-                            {/* ΣDC Footer */}
-                            <tr className="border-t-2 border-border dark:border-border bg-muted/60 dark:bg-muted/20">
-                                <td className={cn(tdBase, "font-medium sticky left-0 z-10 bg-muted/60 dark:bg-muted/20")} colSpan={3}>
-                                    ΣDC Total ({dcMeters.length} meters)
-                                </td>
-                                {dayTotals.map((t, i) => (
-                                    <td key={i} className={cn(tdBase, "text-right tabular-nums font-medium px-2 text-[12px]")}>{n(t)}</td>
+                            <Th
+                                sortKey="total" sort={sort} onSort={setSort}
+                                className="text-right min-w-[80px] bg-muted/80 dark:bg-muted/40"
+                            >Total</Th>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {paginated.length === 0 ? (
+                            <TableRow>
+                                <TableCell colSpan={colCount} className="text-center py-10 text-[13px] text-muted-foreground dark:text-muted-foreground">
+                                    No meters found
+                                </TableCell>
+                            </TableRow>
+                        ) : paginated.map(meter => (
+                            <TableRow
+                                key={meter.account}
+                                className="border-b border-border/60 dark:border-border/60 transition-colors hover:bg-muted/70 dark:hover:bg-muted/30 even:bg-muted/40 dark:even:bg-muted/20"
+                            >
+                                <TableCell className={cn(tdBase, "font-semibold sticky left-0 z-10 bg-white dark:bg-muted")}>
+                                    <span className="inline-flex items-center gap-2">
+                                        {meter.isIrr ? (
+                                            <Droplets className="h-3.5 w-3.5 text-teal-500 shrink-0" />
+                                        ) : (
+                                            <Zap className="h-3.5 w-3.5 text-amber-500 shrink-0" />
+                                        )}
+                                        {meter.label}
+                                    </span>
+                                </TableCell>
+                                <TableCell className={cn(tdBase, "font-mono text-[11px] text-muted-foreground dark:text-muted-foreground")}>{meter.account}</TableCell>
+                                <TableCell className={cn(tdBase, "text-center")}>
+                                    <StatusChip label={meter.isIrr ? "Irrigation" : "Service"} color={meter.isIrr ? "primary" : "default"} />
+                                </TableCell>
+                                {meter.dailyValues.map((val, i) => (
+                                    <TableCell key={i} className={cn(tdBase, "text-right tabular-nums px-2 text-[12px]")}>
+                                        {val === null ? (
+                                            <span className="text-muted-foreground/70 dark:text-muted-foreground">—</span>
+                                        ) : val === 0 ? (
+                                            <span className="text-muted-foreground">0.00</span>
+                                        ) : (
+                                            n(val)
+                                        )}
+                                    </TableCell>
                                 ))}
-                                <td className={cn(tdBase, "text-right tabular-nums font-medium bg-muted/80 dark:bg-muted/40")}>{n(grandTotal)}</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                                <TableCell className={cn(tdBase, "text-right tabular-nums font-semibold bg-muted/80 dark:bg-muted/40")}>
+                                    {n(meter.total)}
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                        {/* ΣDC Footer */}
+                        <TableRow className="border-t-2 border-border dark:border-border bg-muted/60 dark:bg-muted/20">
+                            <TableCell className={cn(tdBase, "font-medium sticky left-0 z-10 bg-muted/60 dark:bg-muted/20")} colSpan={3}>
+                                ΣDC Total ({dcMeters.length} meters)
+                            </TableCell>
+                            {dayTotals.map((t, i) => (
+                                <TableCell key={i} className={cn(tdBase, "text-right tabular-nums font-medium px-2 text-[12px]")}>{n(t)}</TableCell>
+                            ))}
+                            <TableCell className={cn(tdBase, "text-right tabular-nums font-medium bg-muted/80 dark:bg-muted/40")}>{n(grandTotal)}</TableCell>
+                        </TableRow>
+                    </TableBody>
                     <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-card to-transparent sm:hidden" />
-                </div>
+                </Table>
 
                 {filtered.length > rowsPerPage && (
                     <TablePagination

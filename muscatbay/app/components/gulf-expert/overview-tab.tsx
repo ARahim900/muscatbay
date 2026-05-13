@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import { StatsGrid } from "@/components/shared/stats-grid";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import {
   ClipboardList, CheckCircle2, AlertCircle, Clock,
   AlertTriangle, RefreshCw, Building2, Shield,
@@ -198,48 +199,43 @@ export function OverviewTab({ data }: OverviewTabProps) {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="ops-table-shell">
-            <table className="ops-table">
-              <thead className="bg-muted dark:bg-muted/80">
-                <tr className="border-b border-border dark:border-border">
-                  <th scope="col" className="text-left py-4 px-4 font-semibold uppercase tracking-wide text-sm text-primary-foreground">System</th>
-                  <th scope="col" className="text-center py-4 px-4 font-semibold uppercase tracking-wide text-sm text-primary-foreground">Q1 (PPM1)</th>
-                  <th scope="col" className="text-center py-4 px-4 font-semibold uppercase tracking-wide text-sm text-primary-foreground">Q2 (PPM2)</th>
-                  <th scope="col" className="text-center py-4 px-4 font-semibold uppercase tracking-wide text-sm text-primary-foreground">Q3 (PPM3)</th>
-                  <th scope="col" className="text-center py-4 px-4 font-semibold uppercase tracking-wide text-sm text-primary-foreground">Q4 (PPM4)</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(["hvac", "bms"] as const).map((system, sIdx) => (
-                  <tr
-                    key={system}
-                    className={sIdx === 0 ? "border-b border-border dark:border-border" : ""}
-                  >
-                    <td className="py-4 px-4 font-medium text-foreground dark:text-muted-foreground/70 uppercase">
-                      {system}
-                    </td>
-                    {ppmSchedule[system].map((q, i) => (
-                      <td key={i} className="py-4 px-4 text-center">
-                        <span
-                          className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${
-                            q.status === "Completed"
-                              ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-                              : q.status === "In Progress"
-                              ? "bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
-                              : "bg-muted text-muted-foreground dark:bg-muted dark:text-muted-foreground"
-                          }`}
-                        >
-                          {q.status === "Completed" && <CheckCircle2 className="h-3 w-3" />}
-                          {q.status === "In Progress" && <Clock className="h-3 w-3" />}
-                          {q.status}
-                        </span>
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <Table>
+            <TableHeader className="bg-muted dark:bg-muted/80">
+              <TableRow>
+                <TableHead scope="col" className="text-left font-semibold text-sm">System</TableHead>
+                <TableHead scope="col" className="text-center font-semibold text-sm">Q1 (PPM1)</TableHead>
+                <TableHead scope="col" className="text-center font-semibold text-sm">Q2 (PPM2)</TableHead>
+                <TableHead scope="col" className="text-center font-semibold text-sm">Q3 (PPM3)</TableHead>
+                <TableHead scope="col" className="text-center font-semibold text-sm">Q4 (PPM4)</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {(["hvac", "bms"] as const).map((system) => (
+                <TableRow key={system}>
+                  <TableCell className="font-medium text-foreground dark:text-muted-foreground/70 uppercase">
+                    {system}
+                  </TableCell>
+                  {ppmSchedule[system].map((q, i) => (
+                    <TableCell key={i} className="text-center">
+                      <span
+                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${
+                          q.status === "Completed"
+                            ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                            : q.status === "In Progress"
+                            ? "bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                            : "bg-muted text-muted-foreground dark:bg-muted dark:text-muted-foreground"
+                        }`}
+                      >
+                        {q.status === "Completed" && <CheckCircle2 className="h-3 w-3" />}
+                        {q.status === "In Progress" && <Clock className="h-3 w-3" />}
+                        {q.status}
+                      </span>
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
 

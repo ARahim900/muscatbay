@@ -5,7 +5,7 @@ import { useEffect, useState, useMemo } from "react";
 import { getFireQuotations, FireQuotation, FireQuotationItem } from "@/lib/mock-data";
 import { StatsGrid } from "@/components/shared/stats-grid";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { StatusBadge, type BadgeColor } from "@/components/shared/data-table";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { FileText, CheckCircle2, AlertTriangle, ArrowLeft } from "lucide-react";
@@ -75,12 +75,31 @@ export default function FireQuotesPage() {
         ];
     }, [data]);
 
-    const getStatusBadge = (status: string) => {
+    const getStatusColor = (status: string): BadgeColor => {
         switch (status) {
-            case 'approved': return 'bg-mb-success-light text-mb-success-text';
-            case 'pending_approval': return 'bg-mb-warning-light text-mb-warning-text';
-            case 'rejected': return 'bg-mb-danger-light text-mb-danger-text';
-            default: return 'bg-muted text-foreground';
+            case 'approved':         return 'green';
+            case 'pending_approval': return 'amber';
+            case 'rejected':         return 'red';
+            default:                 return 'slate';
+        }
+    };
+
+    const getPriorityColor = (priority: string): BadgeColor => {
+        switch (priority.toLowerCase()) {
+            case 'high':   return 'red';
+            case 'medium': return 'amber';
+            case 'low':    return 'slate';
+            default:       return 'slate';
+        }
+    };
+
+    const getCategoryColor = (category: string): BadgeColor => {
+        switch (category.toLowerCase()) {
+            case 'critical repairs': return 'red';
+            case 'sprinklers':       return 'blue';
+            case 'extinguishers':    return 'purple';
+            case 'hose systems':     return 'blue';
+            default:                 return 'slate';
         }
     };
 
@@ -119,9 +138,7 @@ export default function FireQuotesPage() {
                             <div className="space-y-1">
                                 <CardTitle className="text-lg flex items-center gap-3">
                                     {quote.quote_code}
-                                    <Badge variant="secondary" className={getStatusBadge(quote.status)}>
-                                        {quote.status.replace('_', ' ')}
-                                    </Badge>
+                                    <StatusBadge label={quote.status.replace('_', ' ')} color={getStatusColor(quote.status)} />
                                 </CardTitle>
                                 <div className="text-sm text-muted-foreground">
                                     {quote.provider} • {format(new Date(quote.date), "MMMM d, yyyy")}
@@ -142,7 +159,7 @@ export default function FireQuotesPage() {
                                         <TableHead>Description</TableHead>
                                         <TableHead>Category</TableHead>
                                         <TableHead>Priority</TableHead>
-                                        <TableHead className="text-right">Cost (OMR)</TableHead>
+                                        <TableHead className="num">Cost (OMR)</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -151,14 +168,12 @@ export default function FireQuotesPage() {
                                             <TableCell className="font-medium">{item.location}</TableCell>
                                             <TableCell>{item.description}</TableCell>
                                             <TableCell>
-                                                <Badge variant="outline">{item.category}</Badge>
+                                                <StatusBadge label={item.category} color={getCategoryColor(item.category)} />
                                             </TableCell>
                                             <TableCell>
-                                                <span className={`capitalize ${item.priority === 'high' ? 'text-red-500 font-medium' : ''}`}>
-                                                    {item.priority}
-                                                </span>
+                                                <StatusBadge label={item.priority} color={getPriorityColor(item.priority)} />
                                             </TableCell>
-                                            <TableCell className="text-right font-mono">
+                                            <TableCell className="num">
                                                 {item.cost_omr.toLocaleString('en-US', { maximumFractionDigits: 1 })}
                                             </TableCell>
                                         </TableRow>

@@ -1,6 +1,7 @@
 "use client";
 
 import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface SortIconProps {
     field: string;
@@ -10,9 +11,9 @@ interface SortIconProps {
 
 export function SortIcon({ field, currentSortField, currentSortDirection }: SortIconProps) {
     if (currentSortField !== field) {
-        return <ArrowUpDown className="w-3.5 h-3.5 opacity-40" />;
+        return <ArrowUpDown className={cn("w-[11px] h-[11px] transition-opacity opacity-[0.45]")} />;
     }
     return currentSortDirection === 'asc'
-        ? <ArrowUp className="w-3.5 h-3.5 text-primary" />
-        : <ArrowDown className="w-3.5 h-3.5 text-primary" />;
+        ? <ArrowUp className={cn("w-[11px] h-[11px] transition-opacity opacity-100 text-foreground")} />
+        : <ArrowDown className={cn("w-[11px] h-[11px] transition-opacity opacity-100 text-foreground")} />;
 }

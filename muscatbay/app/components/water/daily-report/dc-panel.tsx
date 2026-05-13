@@ -20,6 +20,7 @@ import {
     Th, TableSearch, StatusChip,
     TablePagination, thBase, tdBase,
 } from "./report-primitives";
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 
 export function DCAnalyticsPanel({ reportData, monthData, selectedDay, month }: DCAnalyticsPanelProps) {
     // O(1) lookup map keyed by account_number
@@ -341,86 +342,86 @@ export function DCDailyTable({ monthData }: { monthData: SupabaseDailyWaterConsu
                 <TableSearch value={search} onChange={setSearch} placeholder="Search meter or account..." />
 
                 {/* Horizontally scrollable table */}
-                <div
+                <Table
                     role="region"
                     aria-label="Direct connection daily readings. Scroll horizontally to view all days."
                     tabIndex={0}
-                    className="ops-table-shell relative -mx-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary focus-visible:ring-offset-2 sm:-mx-5 md:-mx-6"
+                    className="relative -mx-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary focus-visible:ring-offset-2 sm:-mx-5 md:-mx-6"
+                    style={{ minWidth: `${420 + days.length * 72}px` }}
+                    data-density="compact"
                 >
-                    <table className="ops-table" style={{ minWidth: `${420 + days.length * 72}px` }}>
-                        <thead>
-                            <tr className="border-b border-border dark:border-border">
-                                <Th
-                                    sortKey="label" sort={sort} onSort={setSort}
-                                    className="sticky left-0 z-10 bg-white dark:bg-muted min-w-[180px]"
-                                >Meter</Th>
-                                <Th sortKey="account" sort={sort} onSort={setSort} className="min-w-[100px]">Account</Th>
-                                <th scope="col" className={cn(thBase, "text-center min-w-[90px]")}>Type</th>
-                                {days.map(d => (
-                                    <th scope="col" key={d} className={cn(thBase, "text-right min-w-[64px] px-2")}>D{d}</th>
-                                ))}
-                                <Th
-                                    sortKey="total" sort={sort} onSort={setSort}
-                                    className="text-right min-w-[80px] bg-muted/80 dark:bg-muted/40"
-                                >Total</Th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {paginated.length === 0 ? (
-                                <tr>
-                                    <td colSpan={colCount} className="text-center py-10 text-[13px] text-muted-foreground dark:text-muted-foreground">
-                                        No meters found
-                                    </td>
-                                </tr>
-                            ) : paginated.map(meter => (
-                                <tr
-                                    key={meter.account}
-                                    className="border-b border-border/60 dark:border-border/60 transition-colors hover:bg-muted/70 dark:hover:bg-muted/30 even:bg-muted/40 dark:even:bg-muted/20"
-                                >
-                                    <td className={cn(tdBase, "font-semibold sticky left-0 z-10 bg-white dark:bg-muted")}>
-                                        <span className="inline-flex items-center gap-2">
-                                            {meter.isIrr ? (
-                                                <Droplets className="h-3.5 w-3.5 text-teal-500 shrink-0" />
-                                            ) : (
-                                                <Zap className="h-3.5 w-3.5 text-amber-500 shrink-0" />
-                                            )}
-                                            {meter.label}
-                                        </span>
-                                    </td>
-                                    <td className={cn(tdBase, "font-mono text-[11px] text-muted-foreground dark:text-muted-foreground")}>{meter.account}</td>
-                                    <td className={cn(tdBase, "text-center")}>
-                                        <StatusChip label={meter.isIrr ? "Irrigation" : "Service"} color={meter.isIrr ? "primary" : "default"} />
-                                    </td>
-                                    {meter.dailyValues.map((val, i) => (
-                                        <td key={i} className={cn(tdBase, "text-right tabular-nums px-2 text-[12px]")}>
-                                            {val === null ? (
-                                                <span className="text-muted-foreground/70 dark:text-muted-foreground">—</span>
-                                            ) : val === 0 ? (
-                                                <span className="text-muted-foreground">0.00</span>
-                                            ) : (
-                                                n(val)
-                                            )}
-                                        </td>
-                                    ))}
-                                    <td className={cn(tdBase, "text-right tabular-nums font-semibold bg-muted/80 dark:bg-muted/40")}>
-                                        {n(meter.total)}
-                                    </td>
-                                </tr>
+                    <TableHeader>
+                        <TableRow className="border-b border-border dark:border-border">
+                            <Th
+                                sortKey="label" sort={sort} onSort={setSort}
+                                className="sticky left-0 z-10 bg-white dark:bg-muted min-w-[180px]"
+                            >Meter</Th>
+                            <Th sortKey="account" sort={sort} onSort={setSort} className="min-w-[100px]">Account</Th>
+                            <TableHead scope="col" className={cn(thBase, "text-center min-w-[90px]")}>Type</TableHead>
+                            {days.map(d => (
+                                <TableHead scope="col" key={d} className={cn(thBase, "text-right min-w-[64px] px-2")}>D{d}</TableHead>
                             ))}
-                            {/* ΣDC Footer */}
-                            <tr className="border-t-2 border-border dark:border-border bg-muted/60 dark:bg-muted/20">
-                                <td className={cn(tdBase, "font-medium sticky left-0 z-10 bg-muted/60 dark:bg-muted/20")} colSpan={3}>
-                                    ΣDC Total ({dcMeters.length} meters)
-                                </td>
-                                {dayTotals.map((t, i) => (
-                                    <td key={i} className={cn(tdBase, "text-right tabular-nums font-medium px-2 text-[12px]")}>{n(t)}</td>
+                            <Th
+                                sortKey="total" sort={sort} onSort={setSort}
+                                className="text-right min-w-[80px] bg-muted/80 dark:bg-muted/40"
+                            >Total</Th>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {paginated.length === 0 ? (
+                            <TableRow>
+                                <TableCell colSpan={colCount} className="text-center py-10 text-[13px] text-muted-foreground dark:text-muted-foreground">
+                                    No meters found
+                                </TableCell>
+                            </TableRow>
+                        ) : paginated.map(meter => (
+                            <TableRow
+                                key={meter.account}
+                                className="border-b border-border/60 dark:border-border/60 transition-colors hover:bg-muted/70 dark:hover:bg-muted/30 even:bg-muted/40 dark:even:bg-muted/20"
+                            >
+                                <TableCell className={cn(tdBase, "font-semibold sticky left-0 z-10 bg-white dark:bg-muted")}>
+                                    <span className="inline-flex items-center gap-2">
+                                        {meter.isIrr ? (
+                                            <Droplets className="h-3.5 w-3.5 text-teal-500 shrink-0" />
+                                        ) : (
+                                            <Zap className="h-3.5 w-3.5 text-amber-500 shrink-0" />
+                                        )}
+                                        {meter.label}
+                                    </span>
+                                </TableCell>
+                                <TableCell className={cn(tdBase, "font-mono text-[11px] text-muted-foreground dark:text-muted-foreground")}>{meter.account}</TableCell>
+                                <TableCell className={cn(tdBase, "text-center")}>
+                                    <StatusChip label={meter.isIrr ? "Irrigation" : "Service"} color={meter.isIrr ? "primary" : "default"} />
+                                </TableCell>
+                                {meter.dailyValues.map((val, i) => (
+                                    <TableCell key={i} className={cn(tdBase, "text-right tabular-nums px-2 text-[12px]")}>
+                                        {val === null ? (
+                                            <span className="text-muted-foreground/70 dark:text-muted-foreground">—</span>
+                                        ) : val === 0 ? (
+                                            <span className="text-muted-foreground">0.00</span>
+                                        ) : (
+                                            n(val)
+                                        )}
+                                    </TableCell>
                                 ))}
-                                <td className={cn(tdBase, "text-right tabular-nums font-medium bg-muted/80 dark:bg-muted/40")}>{n(grandTotal)}</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                                <TableCell className={cn(tdBase, "text-right tabular-nums font-semibold bg-muted/80 dark:bg-muted/40")}>
+                                    {n(meter.total)}
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                        {/* ΣDC Footer */}
+                        <TableRow className="border-t-2 border-border dark:border-border bg-muted/60 dark:bg-muted/20">
+                            <TableCell className={cn(tdBase, "font-medium sticky left-0 z-10 bg-muted/60 dark:bg-muted/20")} colSpan={3}>
+                                ΣDC Total ({dcMeters.length} meters)
+                            </TableCell>
+                            {dayTotals.map((t, i) => (
+                                <TableCell key={i} className={cn(tdBase, "text-right tabular-nums font-medium px-2 text-[12px]")}>{n(t)}</TableCell>
+                            ))}
+                            <TableCell className={cn(tdBase, "text-right tabular-nums font-medium bg-muted/80 dark:bg-muted/40")}>{n(grandTotal)}</TableCell>
+                        </TableRow>
+                    </TableBody>
                     <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-card to-transparent sm:hidden" />
-                </div>
+                </Table>
 
                 {filtered.length > rowsPerPage && (
                     <TablePagination

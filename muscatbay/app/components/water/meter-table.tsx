@@ -540,7 +540,7 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                     <thead>
                         <tr className="border-b border-border/60">
                             <Th sortKey="label" sort={sort} onSort={setSort}
-                                className="sticky left-0 z-10 bg-card min-w-[200px]">
+                                className="col-sticky min-w-[200px]">
                                 Meter
                             </Th>
                             <Th sortKey="account" sort={sort} onSort={setSort} className="min-w-[110px]">Account</Th>
@@ -565,7 +565,7 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                                 <tr key={bulk.accountNumber} className="border-b-2"
                                     style={{ backgroundColor: `${PALETTE.primary}14`, borderBottomColor: `${PALETTE.primary}40` }}>
                                     <td
-                                        className={cn(tdBase, 'font-medium sticky left-0 z-10')}
+                                        className={cn(tdBase, 'font-medium col-sticky')}
                                         style={{ backgroundColor: `${PALETTE.primary}14`, color: PALETTE.primary, boxShadow: `inset 4px 0 0 ${PALETTE.primary}` }}
                                     >
                                         <span className="inline-flex items-center gap-2">
@@ -573,7 +573,7 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                                             {bulk.label || bulk.accountNumber}
                                         </span>
                                     </td>
-                                    <td className={cn(tdBase, 'font-mono text-[11px]')} style={{ color: `${PALETTE.primary}AA` }}>
+                                    <td className={cn(tdBase, 'meter text-[11px]')} style={{ color: `${PALETTE.primary}AA` }}>
                                         {bulk.accountNumber}
                                     </td>
                                     <td className={cn(tdBase, 'text-center')}>
@@ -618,7 +618,7 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                                         !isExpanded && idx % 2 !== 0 && 'bg-muted/40 dark:bg-muted/20',
                                     )}
                                 >
-                                    <td className={cn(tdBase, 'font-semibold sticky left-0 z-10 bg-card')}>
+                                    <td className={cn(tdBase, 'font-semibold col-sticky')}>
                                         <span className="inline-flex items-center gap-2">
                                             {bData ? (
                                                 <button
@@ -643,7 +643,7 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                                             )}
                                         </span>
                                     </td>
-                                    <td className={cn(tdBase, 'font-mono text-[11px] text-muted-foreground/70')}>
+                                    <td className={cn(tdBase, 'meter text-[11px] text-muted-foreground/70')}>
                                         {meter.accountNumber}
                                     </td>
                                     <td className={cn(tdBase, 'text-center')}>
@@ -680,7 +680,7 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                                         <tr key={`${meter.accountNumber}-${child.account}`}
                                             style={{ backgroundColor: `${PALETTE.primary}06` }}>
                                             <td
-                                                className={cn(tdBase, 'sticky left-0 z-10 pl-12 font-medium text-muted-foreground')}
+                                                className={cn(tdBase, 'col-sticky pl-12 font-medium text-muted-foreground')}
                                                 style={{ backgroundColor: `${PALETTE.primary}06` }}
                                             >
                                                 <span className="inline-flex items-center gap-2">
@@ -689,7 +689,7 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                                                     {child.label}
                                                 </span>
                                             </td>
-                                            <td className={cn(tdBase, 'font-mono text-[11px] text-muted-foreground')}>
+                                            <td className={cn(tdBase, 'meter text-[11px] text-muted-foreground')}>
                                                 {child.account}
                                             </td>
                                             <td className={cn(tdBase, 'text-center')}>
@@ -712,7 +712,7 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                                     <tr key={`${meter.accountNumber}-sigma`}
                                         style={{ backgroundColor: `${PALETTE.blue}0A` }}>
                                         <td
-                                            className={cn(tdBase, 'sticky left-0 z-10 pl-12 font-medium')}
+                                            className={cn(tdBase, 'col-sticky pl-12 font-medium')}
                                             style={{ backgroundColor: `${PALETTE.blue}0A`, color: PALETTE.blue, boxShadow: `inset 3px 0 0 ${PALETTE.blue}` }}
                                         >
                                             <span className="inline-flex items-center gap-1.5">
@@ -739,7 +739,7 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                                     <tr key={`${meter.accountNumber}-diff`}
                                         style={{ backgroundColor: bData.diff > 0 ? `${PALETTE.red}07` : `${PALETTE.mint}12` }}>
                                         <td
-                                            className={cn(tdBase, 'sticky left-0 z-10 pl-12 font-medium')}
+                                            className={cn(tdBase, 'col-sticky pl-12 font-medium')}
                                             style={{
                                                 backgroundColor: bData.diff > 0 ? `${PALETTE.red}07` : `${PALETTE.mint}12`,
                                                 color: bData.diff > 0 ? PALETTE.red : PALETTE.mint,
@@ -782,7 +782,7 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                             <tr className="border-t-2 border-border"
                                 style={{ backgroundColor: `${PALETTE.blue}0E` }}>
                                 <td
-                                    className={cn(tdBase, 'font-medium sticky left-0 z-10')}
+                                    className={cn(tdBase, 'font-medium col-sticky')}
                                     style={{ backgroundColor: `${PALETTE.blue}0E`, color: PALETTE.blue, boxShadow: `inset 4px 0 0 ${PALETTE.blue}` }}
                                 >
                                     <span className="inline-flex items-center gap-2">
@@ -810,7 +810,7 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                         {bulkMeters.length > 0 && l3Meters.length > 0 && (
                             <tr style={{ backgroundColor: diffTotal > 0 ? `${PALETTE.red}08` : `${PALETTE.mint}18` }}>
                                 <td
-                                    className={cn(tdBase, 'font-medium sticky left-0 z-10')}
+                                    className={cn(tdBase, 'font-medium col-sticky')}
                                     style={{
                                         backgroundColor: diffTotal > 0 ? `${PALETTE.red}08` : `${PALETTE.mint}18`,
                                         color: diffTotal > 0 ? PALETTE.red : PALETTE.mint,

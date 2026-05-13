@@ -1225,55 +1225,55 @@ export default function ElectricityPage() {
                         </CardHeader>
                         <CardContent>
                             <div className="overflow-auto max-h-[calc(100vh-20rem)] sm:max-h-[600px] rounded-xl">
-                                <Table>
+                                <Table data-density="compact">
                                     <TableHeader>
                                         <TableRow>
-                                            <TableHead className="sticky left-0 bg-muted dark:bg-muted/80 z-20 min-w-[180px]">Name</TableHead>
+                                            <TableHead className="col-sticky min-w-[180px]">Name</TableHead>
                                             <TableHead className="min-w-[100px]">Account #</TableHead>
                                             {analysisData.selectedMonths.map(month => (
                                                 <TableHead key={month} className="text-right min-w-[75px]">{month}</TableHead>
                                             ))}
-                                            <TableHead className="text-right border-l border-border dark:border-border min-w-[90px]">Total (kWh)</TableHead>
+                                            <TableHead className="num min-w-[90px]">Total (kWh)</TableHead>
                                             <TableHead className="text-right min-w-[90px]">Cost (OMR)</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
                                         {analysisData.tableData.map((meter) => (
                                             <TableRow key={meter.id}>
-                                                <TableCell className="text-foreground dark:text-muted-foreground sticky left-0 bg-white dark:bg-muted z-10">{meter.name}</TableCell>
-                                                <TableCell className="text-muted-foreground font-mono">{meter.account_number}</TableCell>
+                                                <TableCell className="col-sticky strong">{meter.name}</TableCell>
+                                                <TableCell className="meter">{meter.account_number}</TableCell>
                                                 {analysisData.selectedMonths.map(month => {
                                                     const val = meter.monthlyReadings?.[month] || 0;
                                                     return (
-                                                        <TableCell key={month} className="text-right font-mono">
+                                                        <TableCell key={month} className="num">
                                                             {val > 0 ? val.toLocaleString('en-US', { maximumFractionDigits: 1 }) : <span className="text-muted-foreground/70 dark:text-muted-foreground">—</span>}
                                                         </TableCell>
                                                     );
                                                 })}
-                                                <TableCell className="text-right font-mono text-foreground dark:text-muted-foreground border-l border-border dark:border-border">
+                                                <TableCell className="num">
                                                     {meter.rangeConsumption.toLocaleString('en-US', { maximumFractionDigits: 1 })}
                                                 </TableCell>
-                                                <TableCell className="text-right font-mono text-mb-success dark:text-mb-success-hover">
+                                                <TableCell className="num text-mb-success dark:text-mb-success-hover">
                                                     {meter.rangeCost.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
                                                 </TableCell>
                                             </TableRow>
                                         ))}
                                         {analysisData.tableData.length > 1 && (
                                             <TableRow className="bg-muted/80 dark:bg-muted/60">
-                                                <TableCell className="text-foreground dark:text-muted-foreground sticky left-0 bg-muted/80 dark:bg-muted/60 z-10">Total</TableCell>
+                                                <TableCell className="col-sticky strong">Total</TableCell>
                                                 <TableCell />
                                                 {analysisData.selectedMonths.map(month => {
                                                     const monthTotal = analysisData.tableData.reduce((sum, m) => sum + (m.monthlyReadings?.[month] || 0), 0);
                                                     return (
-                                                        <TableCell key={`total-${month}`} className="text-right font-mono text-foreground dark:text-muted-foreground">
+                                                        <TableCell key={`total-${month}`} className="num">
                                                             {monthTotal > 0 ? monthTotal.toLocaleString('en-US', { maximumFractionDigits: 0 }) : '—'}
                                                         </TableCell>
                                                     );
                                                 })}
-                                                <TableCell className="text-right font-mono text-foreground dark:text-muted-foreground border-l border-border dark:border-border">
+                                                <TableCell className="num">
                                                     {analysisData.tableData.reduce((s, m) => s + m.rangeConsumption, 0).toLocaleString('en-US', { maximumFractionDigits: 0 })}
                                                 </TableCell>
-                                                <TableCell className="text-right font-mono text-mb-success dark:text-mb-success-hover">
+                                                <TableCell className="num text-mb-success dark:text-mb-success-hover">
                                                     {analysisData.tableData.reduce((s, m) => s + m.rangeCost, 0).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
                                                 </TableCell>
                                             </TableRow>
@@ -1387,16 +1387,16 @@ export default function ElectricityPage() {
                         ]} />
 
                         {/* Table */}
-                        <Table>
+                        <Table data-density="compact">
                             <TableHeader>
                                 <TableRow>
-                                    <SortableTableHead field="label" currentSortField={dbSortField} currentSortDirection={dbSortDirection} onSort={handleDbSort} className="sticky left-0 bg-muted dark:bg-muted/80 z-20 min-w-[200px]">Name</SortableTableHead>
+                                    <SortableTableHead field="label" currentSortField={dbSortField} currentSortDirection={dbSortDirection} onSort={handleDbSort} className="col-sticky min-w-[200px]">Name</SortableTableHead>
                                     <SortableTableHead field="account" currentSortField={dbSortField} currentSortDirection={dbSortDirection} onSort={handleDbSort}>Account #</SortableTableHead>
                                     <SortableTableHead field="type" currentSortField={dbSortField} currentSortDirection={dbSortDirection} onSort={handleDbSort}>Type</SortableTableHead>
                                     {displayMonths.map(month => (
                                         <SortableTableHead key={month} field={month} currentSortField={dbSortField} currentSortDirection={dbSortDirection} onSort={handleDbSort} align="right" className="text-right min-w-[90px]">{month}</SortableTableHead>
                                     ))}
-                                    <TableHead className="text-right border-l border-border dark:border-border min-w-[100px]">Total (kWh)</TableHead>
+                                    <TableHead className="num min-w-[100px]">Total (kWh)</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -1404,8 +1404,8 @@ export default function ElectricityPage() {
                                     const sum = Object.values(meter.readings).reduce((a, b) => a + b, 0);
                                     return (
                                         <TableRow key={meter.id}>
-                                            <TableCell className="text-foreground dark:text-muted-foreground sticky left-0 bg-white dark:bg-muted z-10">{meter.name}</TableCell>
-                                            <TableCell className="text-muted-foreground dark:text-muted-foreground font-mono">{meter.account_number}</TableCell>
+                                            <TableCell className="col-sticky strong">{meter.name}</TableCell>
+                                            <TableCell className="meter">{meter.account_number}</TableCell>
                                             <TableCell>
                                                 <StatusBadge label={meter.type} color={getMeterTypeColor(meter.type)} />
                                             </TableCell>
@@ -1413,12 +1413,12 @@ export default function ElectricityPage() {
                                                 const val = meter.readings[month] || 0;
                                                 const anomaly = getAnomalyClass(val, meter);
                                                 return (
-                                                    <TableCell key={month} className={`text-right font-mono ${anomaly || ''}`}>
+                                                    <TableCell key={month} className={`num ${anomaly || ''}`}>
                                                         {val > 0 ? val.toLocaleString('en-US', { maximumFractionDigits: 1 }) : <span className="text-muted-foreground/70 dark:text-muted-foreground">—</span>}
                                                     </TableCell>
                                                 );
                                             })}
-                                            <TableCell className="text-right font-mono text-foreground dark:text-muted-foreground border-l border-border dark:border-border">{sum.toLocaleString('en-US', { maximumFractionDigits: 1 })}</TableCell>
+                                            <TableCell className="num">{sum.toLocaleString('en-US', { maximumFractionDigits: 1 })}</TableCell>
                                         </TableRow>
                                     );
                                 })}

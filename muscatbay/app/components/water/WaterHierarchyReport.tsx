@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { getDynamicMonths } from "@/lib/water-data";
 import {
@@ -639,123 +640,121 @@ export function WaterHierarchyReport() {
             {status !== 'error' && (
                 <Card className="card-elevated overflow-hidden">
                     <CardContent className="p-0">
-                        <div className="ops-table-shell">
-                            <table className="ops-table">
-                                <thead>
-                                    <tr className="bg-primary text-primary-foreground">
-                                        <th scope="col" className="sticky left-0 z-20 bg-primary text-left px-4 py-3 font-semibold min-w-[280px] sm:min-w-[320px]">
-                                            Meter Hierarchy
-                                        </th>
-                                        <th scope="col" className="px-3 py-3 text-left font-semibold whitespace-nowrap">Acct #</th>
-                                        <th scope="col" className="px-3 py-3 text-center font-semibold whitespace-nowrap">Level</th>
-                                        {Array.from({ length: nDays }, (_, i) => i + 1).map(d => (
-                                            <th scope="col"
-                                                key={d}
-                                                className="px-2 py-3 text-right font-semibold whitespace-nowrap tabular-nums"
-                                            >
-                                                {d}
-                                            </th>
-                                        ))}
-                                        <th scope="col" className="sticky right-0 z-20 bg-primary px-4 py-3 text-right font-semibold whitespace-nowrap">
-                                            Month Total
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {status === 'loading' && rows.length === 0 && (
-                                        <tr>
-                                            <td colSpan={colSpan} className="text-center py-16 text-muted-foreground">
-                                                <Loader2 className="h-8 w-8 animate-spin text-secondary inline-block" />
-                                            </td>
-                                        </tr>
-                                    )}
-                                    {visibleNodes.map(node => {
-                                        const color = LEVEL_COLORS[node.level];
-                                        const isExpanded = expanded.has(node.accountNumber);
-                                        const hasChildren = node.children.length > 0;
-                                        return (
-                                            <tr
-                                                key={node.accountNumber}
+                        <Table data-density="compact">
+                            <TableHeader>
+                                <TableRow className="bg-primary text-primary-foreground">
+                                    <TableHead className="sticky left-0 z-20 bg-primary text-left px-4 py-3 font-semibold min-w-[280px] sm:min-w-[320px]">
+                                        Meter Hierarchy
+                                    </TableHead>
+                                    <TableHead className="px-3 py-3 text-left font-semibold whitespace-nowrap">Acct #</TableHead>
+                                    <TableHead className="px-3 py-3 text-center font-semibold whitespace-nowrap">Level</TableHead>
+                                    {Array.from({ length: nDays }, (_, i) => i + 1).map(d => (
+                                        <TableHead
+                                            key={d}
+                                            className="px-2 py-3 text-right font-semibold whitespace-nowrap tabular-nums"
+                                        >
+                                            {d}
+                                        </TableHead>
+                                    ))}
+                                    <TableHead className="sticky right-0 z-20 bg-primary px-4 py-3 text-right font-semibold whitespace-nowrap">
+                                        Month Total
+                                    </TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {status === 'loading' && rows.length === 0 && (
+                                    <TableRow>
+                                        <TableCell colSpan={colSpan} className="text-center py-16 text-muted-foreground">
+                                            <Loader2 className="h-8 w-8 animate-spin text-secondary inline-block" />
+                                        </TableCell>
+                                    </TableRow>
+                                )}
+                                {visibleNodes.map(node => {
+                                    const color = LEVEL_COLORS[node.level];
+                                    const isExpanded = expanded.has(node.accountNumber);
+                                    const hasChildren = node.children.length > 0;
+                                    return (
+                                        <TableRow
+                                            key={node.accountNumber}
+                                            className={cn(
+                                                "border-b border-border dark:border-border transition-colors",
+                                                "hover:bg-muted/60 dark:hover:bg-muted/40",
+                                            )}
+                                        >
+                                            <TableCell
                                                 className={cn(
-                                                    "border-b border-border dark:border-border transition-colors",
-                                                    "hover:bg-muted/60 dark:hover:bg-muted/40",
-                                                )}
-                                            >
-                                                <td
-                                                    className={cn(
-                                                        "sticky left-0 z-10 py-2.5 pr-4 font-medium text-foreground min-w-[280px] sm:min-w-[320px]",
-                                                        color.bg,
-                                                    )}
-                                                    style={{ paddingLeft: `${16 + node.depth * 18}px` }}
-                                                >
-                                                    <div className="flex items-center gap-1.5">
-                                                        {hasChildren ? (
-                                                            <button
-                                                                onClick={() => toggle(node.accountNumber)}
-                                                                className="h-5 w-5 flex items-center justify-center rounded hover:bg-border/70 dark:hover:bg-muted/60 transition shrink-0"
-                                                                aria-label={isExpanded ? 'Collapse row' : 'Expand row'}
-                                                                aria-expanded={isExpanded}
-                                                            >
-                                                                {isExpanded
-                                                                    ? <ChevronDown className="h-3.5 w-3.5" />
-                                                                    : <ChevronRight className="h-3.5 w-3.5" />}
-                                                            </button>
-                                                        ) : (
-                                                            <span className="inline-block w-5 shrink-0" />
-                                                        )}
-                                                        <span className={cn(
-                                                            "truncate",
-                                                            node.level === 'L1' && "font-medium text-primary dark:text-primary-foreground",
-                                                            node.level === 'L2' && "font-semibold",
-                                                        )}>
-                                                            {node.meterName}
-                                                        </span>
-                                                    </div>
-                                                </td>
-                                                <td className="px-3 py-2.5 text-muted-foreground dark:text-muted-foreground font-mono text-xs whitespace-nowrap">
-                                                    {node.accountNumber}
-                                                </td>
-                                                <td className="px-3 py-2.5 text-center whitespace-nowrap">
-                                                    <span className={cn(
-                                                        "inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium",
-                                                        color.badge,
-                                                    )}>
-                                                        {node.level}
-                                                    </span>
-                                                </td>
-                                                {node.dailyReadings.map((v, idx) => (
-                                                    <td
-                                                        key={idx}
-                                                        className={cn(
-                                                            "px-2 py-2.5 text-right tabular-nums whitespace-nowrap",
-                                                            v === null || v === 0
-                                                                ? "text-muted-foreground/70 dark:text-muted-foreground"
-                                                                : "text-muted-foreground dark:text-muted-foreground/70",
-                                                        )}
-                                                    >
-                                                        {v === null ? '—' : fmt(v, v < 10 ? 1 : 0)}
-                                                    </td>
-                                                ))}
-                                                <td className={cn(
-                                                    "sticky right-0 z-10 px-4 py-2.5 text-right font-medium tabular-nums whitespace-nowrap",
+                                                    "sticky left-0 z-10 py-2.5 pr-4 font-medium text-foreground min-w-[280px] sm:min-w-[320px]",
                                                     color.bg,
-                                                    color.text,
+                                                )}
+                                                style={{ paddingLeft: `${16 + node.depth * 18}px` }}
+                                            >
+                                                <div className="flex items-center gap-1.5">
+                                                    {hasChildren ? (
+                                                        <button
+                                                            onClick={() => toggle(node.accountNumber)}
+                                                            className="h-5 w-5 flex items-center justify-center rounded hover:bg-border/70 dark:hover:bg-muted/60 transition shrink-0"
+                                                            aria-label={isExpanded ? 'Collapse row' : 'Expand row'}
+                                                            aria-expanded={isExpanded}
+                                                        >
+                                                            {isExpanded
+                                                                ? <ChevronDown className="h-3.5 w-3.5" />
+                                                                : <ChevronRight className="h-3.5 w-3.5" />}
+                                                        </button>
+                                                    ) : (
+                                                        <span className="inline-block w-5 shrink-0" />
+                                                    )}
+                                                    <span className={cn(
+                                                        "truncate",
+                                                        node.level === 'L1' && "font-medium text-primary dark:text-primary-foreground",
+                                                        node.level === 'L2' && "font-semibold",
+                                                    )}>
+                                                        {node.meterName}
+                                                    </span>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell className="px-3 py-2.5 text-muted-foreground dark:text-muted-foreground font-mono text-xs whitespace-nowrap">
+                                                {node.accountNumber}
+                                            </TableCell>
+                                            <TableCell className="px-3 py-2.5 text-center whitespace-nowrap">
+                                                <span className={cn(
+                                                    "inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium",
+                                                    color.badge,
                                                 )}>
-                                                    {fmt(node.monthTotal)}
-                                                </td>
-                                            </tr>
-                                        );
-                                    })}
-                                    {tree && visibleNodes.length === 0 && (
-                                        <tr>
-                                            <td colSpan={colSpan} className="text-center py-12 text-muted-foreground">
-                                                No meters match &quot;{search}&quot;.
-                                            </td>
-                                        </tr>
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
+                                                    {node.level}
+                                                </span>
+                                            </TableCell>
+                                            {node.dailyReadings.map((v, idx) => (
+                                                <TableCell
+                                                    key={idx}
+                                                    className={cn(
+                                                        "px-2 py-2.5 text-right tabular-nums whitespace-nowrap",
+                                                        v === null || v === 0
+                                                            ? "text-muted-foreground/70 dark:text-muted-foreground"
+                                                            : "text-muted-foreground dark:text-muted-foreground/70",
+                                                    )}
+                                                >
+                                                    {v === null ? '—' : fmt(v, v < 10 ? 1 : 0)}
+                                                </TableCell>
+                                            ))}
+                                            <TableCell className={cn(
+                                                "sticky right-0 z-10 px-4 py-2.5 text-right font-medium tabular-nums whitespace-nowrap",
+                                                color.bg,
+                                                color.text,
+                                            )}>
+                                                {fmt(node.monthTotal)}
+                                            </TableCell>
+                                        </TableRow>
+                                    );
+                                })}
+                                {tree && visibleNodes.length === 0 && (
+                                    <TableRow>
+                                        <TableCell colSpan={colSpan} className="text-center py-12 text-muted-foreground">
+                                            No meters match &quot;{search}&quot;.
+                                        </TableCell>
+                                    </TableRow>
+                                )}
+                            </TableBody>
+                        </Table>
                     </CardContent>
                 </Card>
             )}

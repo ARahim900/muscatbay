@@ -13,18 +13,6 @@ import type { ComponentType, SVGProps } from 'react';
 
 export type BadgeColor = 'green' | 'red' | 'orange' | 'blue' | 'purple' | 'slate' | 'amber' | 'cyan' | 'emerald' | 'sage';
 
-interface StatusBadgeProps {
-    label: string;
-    color?: BadgeColor;
-    className?: string;
-    /**
-     * Hide the leading status icon. Default: icon is shown.
-     * Disable only when the badge sits next to another icon that already
-     * conveys status (e.g. inside a row whose first cell carries the icon).
-     */
-    hideIcon?: boolean;
-}
-
 // Colors sourced from --badge-* tokens in globals.css.
 // Opacity modifiers (e.g. /20) vary per mode so explicit dark: variants are kept;
 // the *-fg variables flip automatically via the .dark block in globals.css.
@@ -89,7 +77,32 @@ const ICON_FOR_COLOR: Record<BadgeColor, ComponentType<SVGProps<SVGSVGElement>>>
     slate:   Circle,
 };
 
-export function StatusBadge({ label, color = 'slate', className, hideIcon = false }: StatusBadgeProps) {
+export type IconVariant = 'dot' | 'icon' | 'none';
+
+interface StatusBadgeProps {
+    label: string;
+    color?: BadgeColor;
+    className?: string;
+    /**
+     * Leading visual: 'dot' (default — calm cell-grid look), 'icon' (lucide
+     * symbol for high-information rows), or 'none' (label only).
+     */
+    iconVariant?: IconVariant;
+    /**
+     * @deprecated Use `iconVariant` instead. `hideIcon={true}` maps to
+     * `iconVariant="dot"` (legacy "dot-only" mode).
+     */
+    hideIcon?: boolean;
+}
+
+export function StatusBadge({
+    label,
+    color = 'slate',
+    className,
+    iconVariant,
+    hideIcon,
+}: StatusBadgeProps) {
+    const variant: IconVariant = iconVariant ?? (hideIcon ? 'dot' : 'dot');
     const Icon = ICON_FOR_COLOR[color] ?? Circle;
     return (
         <span className={cn(
@@ -97,10 +110,24 @@ export function StatusBadge({ label, color = 'slate', className, hideIcon = fals
             BG_COLORS[color] ?? BG_COLORS.slate,
             className
         )}>
-            {hideIcon
-                ? <span aria-hidden="true" className={cn("w-1.5 h-1.5 rounded-full flex-shrink-0 shadow-sm", DOT_COLORS[color] ?? DOT_COLORS.slate)} />
-                : <Icon aria-hidden="true" className="w-3 h-3 flex-shrink-0" strokeWidth={2.5} />
-            }
+            {variant === 'icon' && (
+                <Icon
+                    data-testid="status-badge-icon"
+                    aria-hidden="true"
+                    className="w-3 h-3 flex-shrink-0"
+                    strokeWidth={2.5}
+                />
+            )}
+            {variant === 'dot' && (
+                <span
+                    data-testid="status-badge-dot"
+                    aria-hidden="true"
+                    className={cn(
+                        "w-1.5 h-1.5 rounded-full flex-shrink-0 shadow-sm",
+                        DOT_COLORS[color] ?? DOT_COLORS.slate
+                    )}
+                />
+            )}
             {label}
         </span>
     );
