@@ -81,46 +81,56 @@ export function AuthProvider({ children }: AuthProviderProps) {
     useEffect(() => {
         let mounted = true;
 
+        const loadProfile = async (userId: string) => {
+            // Profile is non-critical for unblocking the UI. Fetch it in
+            // the background so the splash dismisses as soon as auth resolves.
+            try {
+                const userProfile = await getUserProfile(userId);
+                if (mounted) setProfile(userProfile);
+            } catch (error) {
+                console.error("Profile fetch error:", error);
+            }
+        };
+
         const initAuth = async () => {
-            // Safety net: if Supabase hangs (paused project, silent network drop),
-            // force loading=false after 8 s so the splash never blocks forever.
+            // Safety net: if the session read hangs (paused project, silent
+            // network drop), force loading=false after 3 s so the splash
+            // never blocks the UI for long.
             const safetyTimer = setTimeout(() => {
                 if (mounted) setLoading(false);
-            }, 8000);
+            }, 3000);
 
             try {
                 const currentUser = await getCurrentUser();
+                if (!mounted) return;
 
-                if (mounted) {
-                    setUser(currentUser);
+                setUser(currentUser);
+                setLoading(false);
+                clearTimeout(safetyTimer);
 
-                    if (currentUser) {
-                        const userProfile = await getUserProfile(currentUser.id);
-                        setProfile(userProfile);
-                    }
+                if (currentUser) {
+                    void loadProfile(currentUser.id);
                 }
             } catch (error) {
                 console.error("Auth init error:", error);
-            } finally {
+                if (mounted) setLoading(false);
                 clearTimeout(safetyTimer);
-                if (mounted) {
-                    setLoading(false);
-                }
             }
         };
 
         initAuth();
 
-        // Listen for auth changes
-        const { data: { subscription } } = onAuthStateChange(async (authUser) => {
-            if (mounted) {
-                setUser(authUser);
-                if (authUser) {
-                    const userProfile = await getUserProfile(authUser.id);
-                    setProfile(userProfile);
-                } else {
-                    setProfile(null);
-                }
+        // Listen for auth changes. This also fires INITIAL_SESSION shortly
+        // after subscribing, which acts as a second safety net for clearing
+        // `loading` if getCurrentUser() somehow never resolves.
+        const { data: { subscription } } = onAuthStateChange((authUser) => {
+            if (!mounted) return;
+            setUser(authUser);
+            setLoading(false);
+            if (authUser) {
+                void loadProfile(authUser.id);
+            } else {
+                setProfile(null);
             }
         });
 

@@ -165,22 +165,13 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
         return null;
     }
 
+    // Read the session from local storage / cookies. The Next.js proxy
+    // (proxy.ts) calls supabase.auth.getUser() server-side on every
+    // navigation, so the cookies arriving in the browser are already
+    // server-validated. Using getSession() here avoids a second network
+    // round-trip that can hang the splash screen indefinitely when the
+    // Supabase auth endpoint is slow or unreachable.
     try {
-        // getUser() validates the token with the Supabase server. It can
-        // occasionally fail with "lock released because another request stole it"
-        // when the Next.js middleware is simultaneously refreshing the session.
-        // In that case we fall back to getSession() which reads the locally
-        // stored (already-validated) session without a network round-trip.
-        const { data: { user }, error } = await supabase.auth.getUser();
-        if (error || !user) return null;
-        return {
-            id: user.id,
-            email: user.email || '',
-            user_metadata: user.user_metadata as AuthUser['user_metadata'],
-        };
-    } catch {
-        // Lock was stolen by the middleware — fall back to cached session.
-        // The middleware already validated the token server-side, so this is safe.
         const { data: { session } } = await supabase.auth.getSession();
         if (!session?.user) return null;
         return {
@@ -188,6 +179,8 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
             email: session.user.email || '',
             user_metadata: session.user.user_metadata as AuthUser['user_metadata'],
         };
+    } catch {
+        return null;
     }
 }
 
@@ -353,7 +346,7 @@ export function onAuthStateChange(callback: (user: AuthUser | null) => void) {
         return { data: { subscription: { unsubscribe: () => { } } } };
     }
 
-    return supabase.auth.onAuthStateChange((event, session) => {
+    return supabase.auth.onAuthStateChange((_event, session) => {
         if (session?.user) {
             callback({
                 id: session.user.id,
