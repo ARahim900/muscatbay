@@ -654,6 +654,52 @@
     border-bottom: 1px solid var(--hairline);
   }
 
+  /* ── Table helper utilities ─────────────────────────────────────────────
+   * Use these on individual <TableHead> / <TableCell> elements to avoid
+   * re-implementing the same alignment/typographic patterns on every page. */
+
+  /* Right-aligned numeric cells with tabular figures.
+     Use everywhere a column holds quantities or money. */
+  .ops-table .num,
+  .ops-table th.num,
+  .ops-table td.num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Genuine mono content (account numbers, meter IDs). Mono font + tabular nums. */
+  .ops-table .meter,
+  .ops-table td.meter {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 0.78125rem; /* 12.5px */
+    font-variant-numeric: tabular-nums;
+    color: var(--muted-foreground);
+  }
+
+  /* Slightly emphasized body cell text (e.g. row's primary identifier). */
+  .ops-table td.strong {
+    color: var(--foreground);
+    font-weight: 500;
+  }
+
+  /* Sticky first column for wide ledger tables. Bundles position + bg
+     so consumers stop hand-rolling `sticky left-0 bg-muted dark:bg-muted/80 z-10`. */
+  .ops-table .col-sticky,
+  .ops-table th.col-sticky,
+  .ops-table td.col-sticky {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    background: var(--card);
+  }
+  .ops-table thead th.col-sticky {
+    z-index: 6; /* one above the sticky header's z-index of 5, so it stays on top during scroll */
+    background: var(--header-band);
+  }
+  .ops-table tbody tr:hover td.col-sticky {
+    background: color-mix(in srgb, var(--card) 92%, var(--row-hover));
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .ops-table tbody tr { transition: none; }
   }
