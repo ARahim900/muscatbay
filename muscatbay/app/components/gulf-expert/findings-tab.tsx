@@ -220,7 +220,7 @@ export function FindingsTab({ findings }: FindingsTabProps) {
           </TableHeader>
           <TableBody>
             {paginated.map((f, i) => (
-              <TableRow key={f.id || i} className="hover:bg-secondary/5 dark:hover:bg-muted/40 even:bg-muted/40 dark:even:bg-muted/20">
+              <TableRow key={f.id || i}>
                 <TableCell className="font-semibold text-foreground dark:text-muted-foreground whitespace-nowrap">
                   {f.finding_code}
                   {f.is_recurring && <span className="ml-1 text-amber-500" title="Recurring issue">↻</span>}

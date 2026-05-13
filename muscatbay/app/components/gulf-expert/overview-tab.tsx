@@ -202,11 +202,11 @@ export function OverviewTab({ data }: OverviewTabProps) {
           <Table>
             <TableHeader className="bg-muted dark:bg-muted/80">
               <TableRow>
-                <TableHead scope="col" className="text-left font-semibold uppercase tracking-wide text-sm text-primary-foreground">System</TableHead>
-                <TableHead scope="col" className="text-center font-semibold uppercase tracking-wide text-sm text-primary-foreground">Q1 (PPM1)</TableHead>
-                <TableHead scope="col" className="text-center font-semibold uppercase tracking-wide text-sm text-primary-foreground">Q2 (PPM2)</TableHead>
-                <TableHead scope="col" className="text-center font-semibold uppercase tracking-wide text-sm text-primary-foreground">Q3 (PPM3)</TableHead>
-                <TableHead scope="col" className="text-center font-semibold uppercase tracking-wide text-sm text-primary-foreground">Q4 (PPM4)</TableHead>
+                <TableHead scope="col" className="text-left font-semibold text-sm">System</TableHead>
+                <TableHead scope="col" className="text-center font-semibold text-sm">Q1 (PPM1)</TableHead>
+                <TableHead scope="col" className="text-center font-semibold text-sm">Q2 (PPM2)</TableHead>
+                <TableHead scope="col" className="text-center font-semibold text-sm">Q3 (PPM3)</TableHead>
+                <TableHead scope="col" className="text-center font-semibold text-sm">Q4 (PPM4)</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
