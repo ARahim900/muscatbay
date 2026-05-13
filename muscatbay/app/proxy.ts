@@ -2,24 +2,13 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 /**
- * Build a per-request Content-Security-Policy header.
- * We generate a fresh nonce for every request and emit a `script-src`
- * directive that combines:
- *   - `'nonce-<NONCE>'`  — explicitly authorises Next.js's own inline scripts
- *   - `'strict-dynamic'` — modern browsers IGNORE 'unsafe-inline' and only
- *                          trust scripts loaded by nonce'd scripts
- *   - `'unsafe-inline'`  — fallback for older browsers that don't support
- *                          strict-dynamic; these browsers are < 5% globally
- *                          and the nonce gives modern browsers strong XSS
- *                          protection without breaking legacy
- *   - `'unsafe-eval'`    — Recharts uses Function() internally for animations;
- *                          remove this if/when Recharts ships a CSP-safe build
+ * Build the Content-Security-Policy header.
  *
- * Style-src keeps `'unsafe-inline'` because Tailwind's runtime utilities
- * and styled-jsx both inject inline <style> tags that we cannot nonce
- * without major refactor.
+ * Next.js 16 currently emits required framework inline scripts without a nonce
+ * in this app. Using a nonce or strict-dynamic here blocks hydration in modern
+ * browsers, leaving users stuck on the splash screen.
  */
-function buildCsp(nonce: string): string {
+function buildCsp(): string {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''
     const supabaseHost = supabaseUrl ? new URL(supabaseUrl).host : '*.supabase.co'
     // Dev-only allowance so the Impeccable live helper (port 8400) can load
@@ -27,13 +16,9 @@ function buildCsp(nonce: string): string {
     const isDev = process.env.NODE_ENV !== 'production'
     const liveDevScript = isDev ? ' http://localhost:8400' : ''
     const liveDevConnect = isDev ? ' http://localhost:8400 ws://localhost:8400' : ''
-    // strict-dynamic invalidates host-source allowlists in modern browsers
-    // (only nonced scripts and their dynamic children run). In dev we drop it
-    // so the live helper script (no nonce, host allowlisted) can load.
-    const strictDynamic = isDev ? '' : ` 'strict-dynamic'`
     return [
         `default-src 'self'`,
-        `script-src 'self' 'nonce-${nonce}'${strictDynamic} 'unsafe-eval' 'unsafe-inline'${liveDevScript}`,
+        `script-src 'self' 'unsafe-eval' 'unsafe-inline'${liveDevScript}`,
         `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com`,
         `font-src 'self' https://fonts.gstatic.com`,
         `img-src 'self' data: https:`,
@@ -47,16 +32,7 @@ function buildCsp(nonce: string): string {
 }
 
 export async function proxy(request: NextRequest) {
-    // Generate a fresh nonce for every request. Web Crypto is available in
-    // the edge runtime; 16 bytes → 22 char base64 ≈ 128 bits entropy.
-    const nonceBytes = new Uint8Array(16)
-    crypto.getRandomValues(nonceBytes)
-    const nonce = btoa(String.fromCharCode(...nonceBytes))
-
-    // Propagate the nonce to Server Components / Pages via a request header
-    // so they can apply it to their own inline scripts when needed.
     const requestHeaders = new Headers(request.headers)
-    requestHeaders.set('x-nonce', nonce)
 
     let response = NextResponse.next({
         request: { headers: requestHeaders },
@@ -89,7 +65,7 @@ export async function proxy(request: NextRequest) {
     await supabase.auth.getUser()
 
     // Security headers — applied to every navigation response.
-    response.headers.set('Content-Security-Policy', buildCsp(nonce))
+    response.headers.set('Content-Security-Policy', buildCsp())
     response.headers.set('X-Content-Type-Options', 'nosniff')
     response.headers.set('X-Frame-Options', 'DENY')
     response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
