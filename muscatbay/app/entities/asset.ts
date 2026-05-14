@@ -49,7 +49,38 @@ export interface Asset {
     dataSource?: string;
 }
 
-export interface SupabaseAsset {
+interface LegacySupabaseAssetFields {
+    Asset_UID?: string | null;
+    Asset_Tag?: string | null;
+    Asset_Name?: string | null;
+    Discipline?: string | null;
+    Category?: string | null;
+    System_Area?: string | null;
+    Zone?: string | null;
+    Location_Name?: string | null;
+    Building?: string | null;
+    Manufacturer_Brand?: string | null;
+    Model?: string | null;
+    Country_Of_Origin?: string | null;
+    Capacity_Size?: string | null;
+    Quantity?: number | null;
+    Install_Year?: number | null;
+    Install_Date?: string | null;
+    Life_Expectancy_Years?: number | null;
+    Current_Age_Years?: number | null;
+    ERL_Years?: number | null;
+    Condition?: string | null;
+    Status?: string | null;
+    Is_Asset_Active?: boolean | string | null;
+    PPM_Frequency?: string | null;
+    PPM_Interval?: number | null;
+    Supplier_Vendor?: string | null;
+    AMC_Contractor?: string | null;
+    Responsibility_Owner?: string | null;
+    Notes_Remarks?: string | null;
+}
+
+export interface SupabaseAsset extends LegacySupabaseAssetFields {
     asset_uid: string | null;
     asset_tag: string | null;
     legacy_tag: string | null;
@@ -108,6 +139,44 @@ export interface SupabaseAsset {
     last_updated: string | null;
 }
 
+function firstNonBlank(...values: Array<string | null | undefined>): string | null {
+    for (const v of values) {
+        if (typeof v !== 'string') continue;
+        const trimmed = v.trim();
+        if (trimmed !== '') return trimmed;
+    }
+    return null;
+}
+
+function djb2Hash(input: string): string {
+    let hash = 5381;
+    for (let i = 0; i < input.length; i++) {
+        hash = ((hash << 5) + hash + input.charCodeAt(i)) | 0;
+    }
+    return (hash >>> 0).toString(36);
+}
+
+function deriveAssetIdFromContent(db: SupabaseAsset): string {
+    const composite = [
+        db.asset_name ?? db.Asset_Name ?? '',
+        db.discipline ?? db.Discipline ?? '',
+        db.category ?? db.Category ?? '',
+        db.subcategory ?? '',
+        db.system_area ?? db.System_Area ?? '',
+        db.zone ?? db.Zone ?? '',
+        db.sub_zone ?? '',
+        db.building_area ?? db.Building ?? '',
+        db.floor_level ?? '',
+        db.room_role ?? db.Location_Name ?? '',
+        db.manufacturer ?? db.Manufacturer_Brand ?? '',
+        db.model ?? db.Model ?? '',
+        db.serial_number ?? '',
+        db.install_date ?? db.Install_Date ?? '',
+        db.install_year != null ? String(db.install_year) : (db.Install_Year != null ? String(db.Install_Year) : ''),
+    ].join('|');
+    return `asset-${djb2Hash(composite)}`;
+}
+
 function normalizePpmFrequency(raw: string | null | undefined): string {
     if (!raw) return '';
     const upper = raw.trim().toUpperCase();
@@ -130,12 +199,35 @@ function normalizePpmFrequency(raw: string | null | undefined): string {
 export function transformAsset(db: SupabaseAsset): Asset {
     const CURRENT_YEAR = new Date().getFullYear();
 
-    const isActiveFlag = db.is_asset_active === true;
+    const assetTag = (db.asset_tag ?? db.Asset_Tag ?? '').trim();
+    const assetName = db.asset_name ?? db.Asset_Name ?? null;
+    const discipline = db.discipline ?? db.Discipline ?? null;
+    const category = db.category ?? db.Category ?? null;
+    const systemArea = db.system_area ?? db.System_Area ?? null;
+    const zone = db.zone ?? db.Zone ?? null;
+    const buildingArea = db.building_area ?? db.Building ?? null;
+    const roomRole = db.room_role ?? db.Location_Name ?? null;
+    const manufacturer = db.manufacturer ?? db.Manufacturer_Brand ?? null;
+    const model = db.model ?? db.Model ?? null;
+    const countryOfOrigin = db.country_of_origin ?? db.Country_Of_Origin ?? null;
+    const powerCapacity = db.power_capacity ?? db.Capacity_Size ?? null;
+    const quantity = db.quantity ?? db.Quantity ?? null;
+    const installYear = db.install_year ?? db.Install_Year ?? null;
+    const installDate = db.install_date ?? db.Install_Date ?? '';
+    const condition = db.condition ?? db.Condition ?? '';
+    const rawStatus = db.status ?? db.Status ?? null;
+    const isActiveRaw = db.is_asset_active ?? db.Is_Asset_Active ?? null;
+    const isActiveFlag = isActiveRaw === true || isActiveRaw === 'Y';
+    const ppmFrequency = db.ppm_frequency ?? db.PPM_Frequency ?? null;
+    const ppmIntervalMonths = db.ppm_interval_months ?? db.PPM_Interval ?? null;
+    const amcContractor = db.amc_contractor ?? db.AMC_Contractor ?? null;
+    const responsibilityOwner = db.responsibility_owner ?? db.Responsibility_Owner ?? null;
+    const notes = db.notes_remarks ?? db.Notes_Remarks ?? null;
 
     let status: Asset['status'] = 'Working';
-    if (db.status) {
-        const upper = db.status.toUpperCase().trim();
-        const lower = db.status.toLowerCase();
+    if (rawStatus) {
+        const upper = rawStatus.toUpperCase().trim();
+        const lower = rawStatus.toLowerCase();
         if (upper === 'WORKING')            status = 'Working';
         else if (upper === 'ACTIVE')        status = 'Active';
         else if (upper === 'TO VERIFY')     status = 'TO VERIFY';
@@ -146,12 +238,12 @@ export function transformAsset(db: SupabaseAsset): Asset {
         status = 'Decommissioned';
     }
 
-    const installYear = db.install_year ?? null;
     const computedAge = installYear ? CURRENT_YEAR - installYear : null;
-    const currentAgeYears = db.current_age_years ?? computedAge;
-    const lifeExpectancyYears = db.life_expectancy_years ?? null;
-    const erlYears = db.erl_years !== null && db.erl_years !== undefined
-        ? db.erl_years
+    const currentAgeYears = db.current_age_years ?? db.Current_Age_Years ?? computedAge;
+    const lifeExpectancyYears = db.life_expectancy_years ?? db.Life_Expectancy_Years ?? null;
+    const rawErlYears = db.erl_years ?? db.ERL_Years ?? null;
+    const erlYears = rawErlYears !== null && rawErlYears !== undefined
+        ? rawErlYears
         : (lifeExpectancyYears !== null && currentAgeYears !== null
             ? Math.max(0, lifeExpectancyYears - currentAgeYears)
             : null);
@@ -166,44 +258,49 @@ export function transformAsset(db: SupabaseAsset): Asset {
     }
 
     const location =
-        db.building_area ||
-        db.zone ||
-        db.system_area ||
+        roomRole ||
+        buildingArea ||
+        zone ||
+        systemArea ||
         db.sub_zone ||
-        'Unspecified';
+        'Unknown Location';
 
     return {
-        id: db.asset_uid || String(Math.random()),
-        name: db.asset_name || 'Unknown Asset',
-        type: db.category || db.discipline || 'General',
-        category: db.category || '',
+        id: firstNonBlank(
+            db.asset_uid, db.Asset_UID,
+            db.asset_tag, db.Asset_Tag,
+            db.legacy_tag,
+        ) ?? deriveAssetIdFromContent(db),
+        name: assetName || 'Unknown Asset',
+        type: category || discipline || 'General',
+        category: category || '',
         subcategory: db.subcategory || '',
-        systemArea: db.system_area || '',
-        zone: db.zone || '',
-        buildingArea: db.building_area || '',
+        systemArea: systemArea || '',
+        zone: zone || '',
+        buildingArea: buildingArea || '',
         floorLevel: db.floor_level || '',
         location,
         status,
-        purchaseDate: db.install_date || '',
+        purchaseDate: installDate,
         value: db.current_replacement_cost_omr ?? db.original_unit_cost_omr ?? 0,
-        serialNumber: db.asset_tag || '',
-        assetTag: db.asset_tag || '',
+        serialNumber: assetTag,
+        assetTag,
         lastService: db.last_ppm_date || '',
-        manufacturer: db.manufacturer || '',
-        model: db.model || '',
-        countryOfOrigin: db.country_of_origin || '',
-        powerCapacity: db.power_capacity || '',
+        manufacturer: manufacturer || '',
+        model: model || '',
+        countryOfOrigin: countryOfOrigin || '',
+        powerCapacity: powerCapacity || '',
         serialNo: db.serial_number || '',
-        quantity: db.quantity ?? null,
-        ppmFrequency: normalizePpmFrequency(db.ppm_frequency),
-        ppmIntervalMonths: db.ppm_interval_months ?? null,
+        quantity,
+        ppmFrequency: normalizePpmFrequency(ppmFrequency),
+        ppmIntervalMonths,
         maintenanceRequirements: db.maintenance_requirements || '',
         lastPpmDate: db.last_ppm_date || '',
         nextPpmDate: db.next_ppm_date || '',
         installYear,
-        discipline: db.discipline || '',
-        condition: db.condition || '',
-        responsibilityOwner: db.responsibility_owner || '',
+        discipline: discipline || '',
+        condition,
+        responsibilityOwner: responsibilityOwner || '',
         lifeExpectancyYears,
         currentAgeYears,
         erlYears,
@@ -213,9 +310,9 @@ export function transformAsset(db: SupabaseAsset): Asset {
         criticalityLevel,
         lifecycleRisk,
         isAssetActive: isActiveFlag,
-        amcContractor: db.amc_contractor || '',
+        amcContractor: amcContractor || '',
         amcNotes: db.amc_notes || '',
-        notes: db.notes_remarks || '',
+        notes: notes || '',
         boqProjectRef: db.boq_project_ref || null,
         boqDesignLife: db.boq_category_design_life !== null && db.boq_category_design_life !== undefined
             ? Number(db.boq_category_design_life) || null
