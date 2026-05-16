@@ -8,16 +8,12 @@ import { StatsGridSkeleton, ChartSkeleton, Skeleton } from "@/components/shared/
 import { PageHeader } from "@/components/shared/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import {
-    ShieldCheck, HardHat, AlertTriangle, Wrench, Search, MapPin, Battery, Signal, Plus,
-    CheckCircle, XCircle, Clock, CircleDot, ChevronDown, ChevronRight, Phone, Mail,
-    FileText, Users, Info, Filter, Flame, Calendar, Building2, Gauge, Truck
+    ShieldCheck, HardHat, AlertTriangle, Wrench, Plus,
+    CheckCircle, XCircle, Clock, CircleDot, ChevronDown, ChevronRight,
+    FileText, Info, Filter, Flame, Calendar, Building2, Gauge, Truck
 } from "lucide-react";
-import { format } from "date-fns";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
-import { useRouter } from "next/navigation";
 import { LiquidTooltip } from "../../components/charts/liquid-tooltip";
 import { cn } from "@/lib/utils";
 
@@ -138,23 +134,6 @@ const PPM_DATABASE: Stage[] = [
             { id: "s3-8", area: "Fire Pump Testing", systems: ["FF"], date: "TBD", status: "not_started", notes: "Electric + Diesel + Jockey" },
         ],
     },
-];
-
-const OPEN_FAULTS = [
-    { equipment: "Fire Extinguisher", location: "Bldg-1, Room-4", fault: "No access for service" },
-    { equipment: "Fire Extinguisher DCP 4.5 KG", location: "Bldg-1, Room-7", fault: "Missing" },
-    { equipment: "Fire Extinguisher CO₂ 5 KG", location: "Bldg-2, GF Electrical Room", fault: "Found empty" },
-    { equipment: "Smoke Detector SD-32", location: "Bldg-8", fault: "Defective" },
-];
-
-const CONTACTS = [
-    { name: "Arun Achuthan", role: "BEC Site Lead / FM&M", phone: "+968 96590516", email: "arunachuthan.fmm@becoman.com" },
-    { name: "Nadim Mushir Ahmad", role: "BEC PPM Team Lead", phone: "+968 97725265", email: "nadim.fmm@becoman.com" },
-    { name: "Joji C. John", role: "BEC Asst. Manager", phone: "+968 99318348", email: "joji.fmm@becoman.com" },
-    { name: "FA Team (Wali Anwar / Suneesh.L)", role: "BEC Field Technicians", phone: "+968 95624943", email: "fateam.fmm@becoman.com" },
-    { name: "BEC Office", role: "Emergency / General", phone: "+968 24592028", email: "" },
-    { name: "MB Helpdesk", role: "24/7 Operations", phone: "+968 98285725", email: "helpdesk@muscatbay.com" },
-    { name: "Amjad Khan", role: "FM Manager (Kalhat)", phone: "+968 98863960", email: "amjad@kalhat.com" },
 ];
 
 // ═══════════════════════════════════════════════════════════════
@@ -346,11 +325,9 @@ function StageCard({ stage, isExpanded, onToggle, filterStatus }: { stage: Stage
 // ═══════════════════════════════════════════════════════════════
 
 export default function FirefightingPage() {
-    const router = useRouter();
     const [activeTab, setActiveTab] = useState("dashboard");
     const [equipment, setEquipment] = useState<FireSafetyEquipment[]>([]);
     const [loading, setLoading] = useState(true);
-    const [search, setSearch] = useState("");
     const [expandedStage, setExpandedStage] = useState<number | null>(1);
     const [filterStatus, setFilterStatus] = useState("all");
 
@@ -368,18 +345,8 @@ export default function FirefightingPage() {
     useEffect(() => { loadData(); }, [loadData]);
 
     const handleTabChange = (key: string) => {
-        if (key === 'quotes') {
-            router.push('/firefighting/quotes');
-        } else {
-            setActiveTab(key);
-        }
+        setActiveTab(key);
     };
-
-    const filteredEquipment = equipment.filter(item =>
-        item.name.toLowerCase().includes(search.toLowerCase()) ||
-        item.location.toLowerCase().includes(search.toLowerCase()) ||
-        item.type.toLowerCase().includes(search.toLowerCase())
-    );
 
     const stats = useMemo(() => {
         const total = equipment.length;
@@ -432,26 +399,6 @@ export default function FirefightingPage() {
     // Chart colors matching design system tokens (chart-1 through chart-5)
     const COLORS = ["var(--chart-success)", "var(--chart-amber)", "var(--chart-loss)", "var(--chart-2)"];
 
-    const getStatusColor = (status: string) => {
-        switch (status) {
-            case "Operational": return "bg-secondary/10 text-secondary dark:bg-secondary/15 dark:text-secondary";
-            case "Needs Attention": return "bg-mb-warning-light text-mb-warning-text";
-            case "Expired": return "bg-destructive/10 text-destructive dark:bg-destructive/15";
-            case "Maintenance Due": return "bg-mb-warning-light text-mb-warning-text";
-            default: return "bg-muted text-muted-foreground";
-        }
-    };
-
-    const getPriorityColor = (priority: string) => {
-        switch (priority) {
-            case "Critical": return "bg-destructive text-primary-foreground";
-            case "High": return "bg-mb-warning text-primary-foreground";
-            case "Medium": return "bg-mb-warning-light text-mb-warning-text";
-            case "Low": return "bg-secondary/20 text-secondary dark:text-secondary";
-            default: return "bg-muted text-muted-foreground";
-        }
-    };
-
     if (loading) {
         return (
             <div className="space-y-6 sm:space-y-7 md:space-y-8 w-full motion-safe:animate-in motion-safe:fade-in duration-200">
@@ -490,11 +437,7 @@ export default function FirefightingPage() {
                 tabs={[
                     { key: "dashboard", label: "Dashboard", icon: Gauge },
                     { key: "ppm", label: "PPM Tracker", icon: Calendar },
-                    { key: "equipment", label: "Equipment", icon: HardHat },
-                    { key: "faults", label: `Faults (${OPEN_FAULTS.length})`, icon: AlertTriangle },
-                    { key: "contacts", label: "Contacts", icon: Users },
                     { key: "contract", label: "Contract", icon: FileText },
-                    { key: "quotes", label: "Quotes", icon: FileText },
                 ]}
             />
 
@@ -608,247 +551,6 @@ export default function FirefightingPage() {
                             <div className="text-sm text-foreground dark:text-muted-foreground/70">
                                 <p className="font-semibold">Year 2 stages (Dec 2026, Apr 2027, Aug 2027) not yet added.</p>
                                 <p className="mt-1 text-muted-foreground">PPM visits in Apr & Aug 2025 were under the previous AMC and are not tracked here.</p>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
-            )}
-
-            {/* ══════════ EQUIPMENT ══════════ */}
-            {activeTab === 'equipment' && (
-                <div className="space-y-6 motion-safe:animate-in motion-safe:fade-in duration-200">
-                    <Card className="card-elevated">
-                        <CardContent className="p-4">
-                            <div className="relative">
-                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                                <Input
-                                    placeholder="Search equipment by name, location, or type..."
-                                    value={search}
-                                    onChange={(e) => setSearch(e.target.value)}
-                                    className="pl-10 bg-white/50 dark:bg-muted/50"
-                                />
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                        {filteredEquipment.map(item => (
-                            <Card key={item.id} className="card-elevated hover:shadow-md transition-shadow">
-                                <CardContent className="p-0">
-                                    <div className="p-5 space-y-4">
-                                        <div className="flex justify-between items-start">
-                                            <Badge variant="outline" className={cn(getStatusColor(item.status), "border-transparent")}>
-                                                {item.status}
-                                            </Badge>
-                                            <Badge className={cn(getPriorityColor(item.priority), "border-transparent ms-2")}>
-                                                {item.priority}
-                                            </Badge>
-                                        </div>
-
-                                        <div>
-                                            <h2 className="font-semibold text-lg flex items-center gap-2 text-primary dark:text-foreground">
-                                                <HardHat className="w-4 h-4 text-muted-foreground" />
-                                                {item.name}
-                                            </h2>
-                                            <p className="text-sm text-muted-foreground mt-1">
-                                                {item.location} • {item.type}
-                                            </p>
-                                            <p className="text-xs text-muted-foreground">Zone: {item.zone}</p>
-                                        </div>
-
-                                        {(item.battery !== null || item.signal !== null) && (
-                                            <div className="grid grid-cols-2 gap-2 p-2 bg-muted/50 dark:bg-muted/50 rounded-lg">
-                                                {item.battery !== null && (
-                                                    <div className="flex items-center gap-2 text-xs">
-                                                        <Battery className="w-3 h-3 text-muted-foreground" />
-                                                        <span>Batt: {item.battery}%</span>
-                                                    </div>
-                                                )}
-                                                {item.signal !== null && (
-                                                    <div className="flex items-center gap-2 text-xs">
-                                                        <Signal className="w-3 h-3 text-muted-foreground" />
-                                                        <span>Sig: {item.signal}%</span>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        )}
-                                    </div>
-                                    <div className="bg-muted/50 dark:bg-muted/50 p-3 flex justify-between items-center rounded-b-[20px] border-t border-border dark:border-border">
-                                        <span className="text-xs text-muted-foreground">Maintained by: {item.inspector}</span>
-                                        <span className="text-xs font-medium text-secondary">Due: {format(new Date(item.next_maintenance), "MMM d, yyyy")}</span>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        ))}
-                        {filteredEquipment.length === 0 && (
-                            <div className="col-span-full text-center p-12 text-muted-foreground">
-                                No equipment found matching your search.
-                            </div>
-                        )}
-                    </div>
-                </div>
-            )}
-
-            {/* ══════════ FAULTS ══════════ */}
-            {activeTab === 'faults' && (
-                <div className="space-y-6 motion-safe:animate-in motion-safe:fade-in duration-200">
-                    {/* PO Blocker Alert */}
-                    <Card className="card-elevated border-destructive/30 dark:border-destructive/20 bg-destructive/5 dark:bg-destructive/10">
-                        <CardContent className="p-4">
-                            <div className="flex items-start gap-3">
-                                <AlertTriangle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
-                                <div>
-                                    <p className="font-bold text-destructive text-sm">PO Not Yet Issued by Muscat Bay</p>
-                                    <p className="text-xs text-destructive/80 mt-1">Arun Achuthan confirmed on 22 Feb 2026: &ldquo;We are awaiting the PO to proceed with the work.&rdquo;</p>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    {/* Quotation Reference */}
-                    <Card className="card-elevated">
-                        <CardHeader className="card-elevated-header border-b border-border dark:border-border">
-                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                                <CardTitle className="text-sm sm:text-base">BEC Rectification Quotation</CardTitle>
-                                <Badge className="bg-mb-warning-light text-mb-warning-text w-fit">AWAITING PO</Badge>
-                            </div>
-                        </CardHeader>
-                        <CardContent className="p-4 sm:p-5 space-y-3">
-                            {[
-                                ["Quotation Ref", "219580"],
-                                ["Submitted by", "Arun Achuthan (BEC)"],
-                                ["Date", "13 Jan 2026"],
-                                ["Covers", "Spares replacement for 4 faults found during Stage 1 PPM"],
-                                ["PO Status", "Not issued"],
-                            ].map(([label, value]) => (
-                                <div key={label} className="flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-3 text-sm">
-                                    <span className="text-muted-foreground text-xs sm:w-28 flex-shrink-0">{label}</span>
-                                    <span className={cn("font-medium", label === "PO Status" ? "text-destructive font-bold" : "text-foreground")}>{value}</span>
-                                </div>
-                            ))}
-                        </CardContent>
-                    </Card>
-
-                    {/* Open Faults List */}
-                    <Card className="card-elevated">
-                        <CardHeader className="card-elevated-header border-b border-border dark:border-border">
-                            <CardTitle>Open Faults — Stage 1 PPM (Dec 2025)</CardTitle>
-                            <p className="text-[11px] text-muted-foreground mt-1">Source: Wali Anwar email 16 Feb 2026, confirmed by Arun Achuthan 22 Feb 2026</p>
-                        </CardHeader>
-                        <CardContent className="p-0">
-                            <div className="divide-y divide-border dark:divide-border/50">
-                                {OPEN_FAULTS.map((f) => (
-                                    <div key={`${f.equipment}-${f.location}`} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 px-4 sm:px-5 py-3 sm:py-4">
-                                        <div className="flex items-center gap-3 flex-1 min-w-0">
-                                            <span className="w-8 h-8 rounded-full bg-mb-danger-light flex items-center justify-center flex-shrink-0">
-                                                <XCircle className="w-4 h-4 text-destructive" />
-                                            </span>
-                                            <div className="flex-1 min-w-0">
-                                                <p className="text-sm font-medium text-foreground">{f.equipment}</p>
-                                                <p className="text-[11px] text-muted-foreground flex items-center gap-1 mt-0.5"><MapPin className="w-3 h-3" />{f.location}</p>
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center gap-2 pl-11 sm:pl-0">
-                                            <span className="text-xs text-destructive font-medium">{f.fault}</span>
-                                            <Badge className="bg-mb-danger-light text-mb-danger-text text-[10px]">OPEN</Badge>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    {/* Villa 33 Note */}
-                    <Card className="card-elevated border-mb-warning/30">
-                        <CardHeader className="card-elevated-header border-b border-mb-warning/20 bg-mb-warning-light">
-                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                                <CardTitle className="text-sm sm:text-base">Villa 33 — Separate Job (Ref: 215459)</CardTitle>
-                                <Badge className="bg-blue-200 text-blue-800 dark:bg-blue-800/50 dark:text-blue-200 flex items-center gap-1 w-fit">
-                                    <Clock className="w-3 h-3" /> NEW PR IN PROGRESS
-                                </Badge>
-                            </div>
-                        </CardHeader>
-                        <CardContent className="p-4 sm:p-5 space-y-2 text-sm">
-                            <p><span className="text-muted-foreground text-xs">Location:</span> <span className="font-medium text-foreground">Zone 5 — Villa 33, Muscat Bay Qantab</span></p>
-                            <p><span className="text-muted-foreground text-xs">Items:</span> <span className="font-medium text-foreground">Fire extinguisher, fire blanket, smoke detector</span></p>
-                            <p><span className="text-muted-foreground text-xs">Work Status:</span> <span className="font-medium text-mb-success-text">Completed (Aug 2025)</span></p>
-                            <p><span className="text-muted-foreground text-xs">Original Quote:</span> <span className="font-medium text-foreground">13 Jul 2025 by BEC FA Team (Suneesh.L)</span></p>
-                            <p><span className="text-muted-foreground text-xs">Approved by:</span> <span className="font-medium text-foreground">Abdulrahim AlBalushi — 13 Jul 2025</span></p>
-                            <p><span className="text-muted-foreground text-xs">Updated Quote:</span> <span className="font-medium text-foreground">26 Mar 2026 by Nadim M. Ahmad (BEC)</span></p>
-                            <p><span className="text-muted-foreground text-xs">PO Status:</span> <span className="font-bold text-mb-warning-text">Original PR lost — New PR being raised with updated quote</span></p>
-                            <p><span className="text-muted-foreground text-xs">Latest Action:</span> <span className="font-medium text-foreground">26 Mar 2026 — Rahim instructed Helpdesk to raise new PR; BEC provided updated quote; Amjad confirmed to raise MB PR</span></p>
-                            <p><span className="text-muted-foreground text-xs">Reminders:</span> <span className="font-medium text-foreground">6+ sent by Arun Achuthan (Dec 2025 – Mar 2026)</span></p>
-                        </CardContent>
-                        <div className="px-5 py-3 bg-mb-info-light border-t border-mb-info/20">
-                            <p className="text-[11px] text-mb-info-text flex items-center gap-1.5">
-                                <Info className="w-3.5 h-3.5 flex-shrink-0" />
-                                Verified against BEC email thread 26 Mar 2026. Updated quote (215459) received from Nadim; new PR instructed.
-                            </p>
-                        </div>
-                    </Card>
-
-                    {/* Village Square Fire Safety — Separate Repair */}
-                    <Card className="card-elevated border-mb-warning/30">
-                        <CardHeader className="card-elevated-header border-b border-mb-warning/20 bg-mb-warning-light">
-                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                                <CardTitle className="text-sm sm:text-base">Village Square — Fire Pump & Alarm Rectification</CardTitle>
-                                <Badge className="bg-mb-warning-light text-mb-warning-text flex items-center gap-1 w-fit">
-                                    <Info className="w-3 h-3" /> QUOTE SUBMITTED
-                                </Badge>
-                            </div>
-                        </CardHeader>
-                        <CardContent className="p-4 sm:p-5 space-y-2 text-sm">
-                            <p><span className="text-muted-foreground text-xs">Location:</span> <span className="font-medium text-foreground">Village Square, Muscat Bay</span></p>
-                            <p><span className="text-muted-foreground text-xs">Scope — Fire Pump:</span> <span className="font-medium text-foreground">Pressure drop (8→6.5 bar in 1 hr), leak repairs, system testing & calibration</span></p>
-                            <p><span className="text-muted-foreground text-xs">Scope — Fire Alarm:</span> <span className="font-medium text-foreground">Full commissioning (non-operational), BMS/elevator/auto-door integration</span></p>
-                            <p><span className="text-muted-foreground text-xs">Quote:</span> <span className="font-medium text-foreground">4 Nov 2024 by Arun Achuthan (BEC) — Supply & Replacement of Fire Pump + FA commissioning</span></p>
-                            <p><span className="text-muted-foreground text-xs">Requested by:</span> <span className="font-medium text-foreground">Abdulrahim AlBalushi — 21 Oct 2024</span></p>
-                            <p><span className="text-muted-foreground text-xs">Monitoring:</span> <span className="font-medium text-foreground">BEC on-site monitoring conducted Nov 2024; no issues in initial 2-hr observation</span></p>
-                            <p><span className="text-muted-foreground text-xs">PO Status:</span> <span className="font-bold text-mb-warning-text">Pending — awaiting management decision</span></p>
-                        </CardContent>
-                        <div className="px-5 py-3 bg-mb-warning-light border-t border-mb-warning/20">
-                            <p className="text-[11px] text-mb-warning-text flex items-center gap-1.5">
-                                <Info className="w-3.5 h-3.5 flex-shrink-0" />
-                                Verified against BEC email thread Oct–Nov 2024. Originally escalated due to OSCO non-response on project contractor obligations.
-                            </p>
-                        </div>
-                    </Card>
-                </div>
-            )}
-
-            {/* ══════════ CONTACTS ══════════ */}
-            {activeTab === 'contacts' && (
-                <div className="space-y-6 motion-safe:animate-in motion-safe:fade-in duration-200">
-                    <Card className="card-elevated">
-                        <CardHeader className="card-elevated-header border-b border-border dark:border-border">
-                            <CardTitle className="flex items-center gap-2">
-                                <Users className="w-5 h-5 text-secondary" />
-                                Quick Contacts — BEC & Muscat Bay
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="p-0">
-                            <div className="divide-y divide-border dark:divide-border/50">
-                                {CONTACTS.map((c) => (
-                                    <div key={c.name} className="flex items-center gap-3 sm:gap-4 px-4 sm:px-5 py-3 sm:py-4 hover:bg-muted/70 dark:hover:bg-muted/30 transition-colors">
-                                        <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-secondary/10 dark:bg-secondary/20 flex items-center justify-center text-xs sm:text-sm font-bold text-primary dark:text-muted-foreground flex-shrink-0">
-                                            {c.name.split(' ').slice(0, 2).map(n => n[0]).join('')}
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-sm font-semibold text-foreground truncate">{c.name}</p>
-                                            <p className="text-[11px] text-muted-foreground truncate">{c.role}</p>
-                                        </div>
-                                        <div className="flex items-center gap-2 flex-shrink-0">
-                                            {c.email && (
-                                                <a href={`mailto:${c.email}`} aria-label={`Email ${c.name}`} className="w-11 h-11 md:w-9 md:h-9 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors">
-                                                    <Mail className="w-4 h-4 text-blue-600 dark:text-blue-400" aria-hidden="true" />
-                                                </a>
-                                            )}
-                                            <a href={`tel:${c.phone.replace(/\s/g, '')}`} aria-label={`Call ${c.name} at ${c.phone}`} className="w-11 h-11 md:w-9 md:h-9 rounded-full bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors">
-                                                <Phone className="w-4 h-4 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
-                                            </a>
-                                        </div>
-                                    </div>
-                                ))}
                             </div>
                         </CardContent>
                     </Card>

@@ -6,8 +6,6 @@
 
 import { getSupabaseClient } from '../supabase-client';
 import {
-    SupabaseWaterMeter,
-    transformWaterMeter,
     SupabaseDailyWaterConsumption,
     transformDailyWaterConsumption,
     DailyWaterConsumption,
@@ -16,49 +14,93 @@ import {
     WaterLossSummary,
     SupabaseWaterLossDaily,
     transformWaterLossDaily,
-    WaterLossDaily
+    WaterLossDaily,
+    DAILY_WATER_CONSUMPTION_SELECT_COLUMNS
 } from '@/entities/water';
 import type { WaterMeter } from '@/lib/water-data';
 
-/**
- * Log meters with negative consumption values for debugging
- */
-function logNegativeValues(records: SupabaseWaterMeter[]): void {
-    const monthColumns = [
-        'jan_24', 'feb_24', 'mar_24', 'apr_24', 'may_24', 'jun_24',
-        'jul_24', 'aug_24', 'sep_24', 'oct_24', 'nov_24', 'dec_24',
-        'jan_25', 'feb_25', 'mar_25', 'apr_25', 'may_25', 'jun_25',
-        'jul_25', 'aug_25', 'sep_25', 'oct_25', 'nov_25', 'dec_25',
-        'jan_26', 'feb_26', 'mar_26', 'apr_26', 'may_26', 'jun_26',
-        'jul_26', 'aug_26', 'sep_26', 'oct_26', 'nov_26', 'dec_26',
-    ] as const;
+// Earliest period in the seeded dataset. Acts as a floor so old backfills
+// can't accidentally inflate the response. The ceiling is derived from the
+// current month so accidental future-dated rows can't leak through.
+const PERIOD_FLOOR = '2024-01';
 
-    const negativeMeters: { label: string; account: string; month: string; value: number }[] = [];
+// Supabase / PostgREST caps every response at 1000 rows regardless of the
+// `range()` value the client passes, so we page through `consumption` rows
+// in fixed-size windows until a short page signals the end.
+const CONSUMPTION_PAGE_SIZE = 1000;
 
-    for (const record of records) {
-        for (const month of monthColumns) {
-            const rawVal = record[month];
-            const value = typeof rawVal === 'number' ? rawVal : null;
-            if (value !== null && value < 0) {
-                const [m, y] = month.split('_');
-                negativeMeters.push({
-                    label: record.label,
-                    account: record.account_number,
-                    month: `${m}-${y}`,
-                    value
-                });
-            }
-        }
-    }
+function currentPeriod(): string {
+    const now = new Date();
+    return `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}`;
+}
 
-    if (negativeMeters.length > 0) {
-        console.warn(`[Water Data] Found ${negativeMeters.length} negative consumption values in Supabase:`);
-        console.table(negativeMeters);
-    }
+// Mirror the legacy-name translations baked into the "Water System" SQL view
+// so downstream code (lib/water-data.ts, water-database-table, etc.) keeps
+// seeing the same strings it does today. Drop these once that code migrates
+// to the clean codes from water_meters.
+const ZONE_TO_LEGACY: Record<string, string> = {
+    Zone_FM: 'Zone_01_(FM)',
+    Zone_03A: 'Zone_03_(A)',
+    Zone_03B: 'Zone_03_(B)',
+    Direct_Connection: 'Direct Connection',
+    Main_Bulk: 'Main Bulk',
+};
+const PARENT_TO_LEGACY: Record<string, string> = {
+    'Zone 3A (Bulk)': 'ZONE 3A (BULK ZONE 3A)',
+    'Zone 3B (Bulk)': 'ZONE 3B (BULK ZONE 3B)',
+    'Zone 5 (Bulk)': 'ZONE 5 (Bulk Zone 5)',
+    'Zone 8 (Bulk)': 'BULK ZONE 8',
+    'Zone FM (Bulk)': 'ZONE FM ( BULK ZONE FM )',
+    'Village Square (Bulk)': 'Village Square (Zone Bulk)',
+};
+const TYPE_TO_LEGACY: Record<string, string> = {
+    'Building (Bulk)': 'D_Building_Bulk',
+    'Building (Common)': 'D_Building_Common',
+    'Irrigation (Services)': 'IRR_Servies',
+    'Common Area (MB)': 'MB_Common',
+    'Main Bulk': 'Main BULK',
+    'Residential (Apartment)': 'Residential (Apart)',
+};
+
+const MONTH_ABBR = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+const PERIOD_REGEX = /^(\d{4})-(0[1-9]|1[0-2])$/;
+
+function periodToConsumptionKey(period: string): string | null {
+    const match = PERIOD_REGEX.exec(period);
+    if (!match) return null;
+    const monthIdx = Number(match[2]) - 1;
+    return `${MONTH_ABBR[monthIdx]}-${match[1].slice(2)}`;
+}
+
+const METER_LEVELS = new Set<WaterMeter['level']>(['L1', 'L2', 'L3', 'L4', 'DC', 'N/A']);
+
+interface WaterMeterRow {
+    meter_id: string;
+    account_number: string;
+    meter_name: string;
+    meter_name_original: string | null;
+    level: string;
+    zone: string;
+    parent_meter: string | null;
+    type: string;
+    sort_order: number | null;
+}
+
+interface MonthlyConsumptionRow {
+    account_number: string;
+    period: string;
+    consumption: number | string | null;
 }
 
 /**
- * Fetch water meters from Supabase
+ * Fetch water meters from Supabase.
+ *
+ * Reads the long-format `water_monthly_consumption` + `water_meters` tables
+ * directly (not the legacy `"Water System"` wide view) so the response
+ * payload is bounded by an explicit column list per row. New months appear
+ * as new rows, not new columns, so dynamic months are still supported
+ * automatically without any schema-shaped payload growth per row.
  */
 export async function getWaterMetersFromSupabase(): Promise<WaterMeter[]> {
     const client = getSupabaseClient();
@@ -67,24 +109,93 @@ export async function getWaterMetersFromSupabase(): Promise<WaterMeter[]> {
     }
 
     try {
-        const { data, error } = await client
-            .from('Water System')
-            .select('*') // Dynamic month columns — must use SELECT * as new months are added over time
-            .limit(5000);
+        const metersResult = await client
+            .from('water_meters')
+            .select(
+                'meter_id, account_number, meter_name, meter_name_original, level:label, zone, parent_meter, type, sort_order'
+            )
+            .returns<WaterMeterRow[]>();
 
-        if (error) {
-            console.error('Error fetching water meters:', error.message);
+        if (metersResult.error) {
+            console.error('Error fetching water meters:', metersResult.error.message);
             return [];
         }
 
-        if (!data || data.length === 0) {
+        const meters = metersResult.data ?? [];
+        if (meters.length === 0) {
             return [];
         }
 
-        // Log any negative values found in the data for debugging
-        logNegativeValues(data);
+        const periodCeiling = currentPeriod();
+        const consumptionRows: MonthlyConsumptionRow[] = [];
+        for (let from = 0; ; from += CONSUMPTION_PAGE_SIZE) {
+            const { data, error } = await client
+                .from('water_monthly_consumption')
+                .select('account_number, period, consumption')
+                .gte('period', PERIOD_FLOOR)
+                .lte('period', periodCeiling)
+                .order('account_number')
+                .order('period')
+                .range(from, from + CONSUMPTION_PAGE_SIZE - 1)
+                .returns<MonthlyConsumptionRow[]>();
+            if (error) {
+                console.error('Error fetching water monthly consumption:', error.message);
+                return [];
+            }
+            if (!data || data.length === 0) break;
+            consumptionRows.push(...data);
+            if (data.length < CONSUMPTION_PAGE_SIZE) break;
+        }
 
-        const result = data.map((record: SupabaseWaterMeter) => transformWaterMeter(record));
+        const byAccount = new Map<string, MonthlyConsumptionRow[]>();
+        for (const row of consumptionRows) {
+            const list = byAccount.get(row.account_number);
+            if (list) list.push(row);
+            else byAccount.set(row.account_number, [row]);
+        }
+
+        const negativeMeters: { label: string; account: string; month: string; value: number }[] = [];
+
+        const result: WaterMeter[] = meters.map((m) => {
+            const displayLabel = (m.meter_name_original ?? m.meter_name) || 'Unknown Meter';
+            const level = METER_LEVELS.has(m.level as WaterMeter['level']) ? (m.level as WaterMeter['level']) : 'N/A';
+            const parent = m.parent_meter ?? '';
+
+            const consumption: Record<string, number | null> = {};
+            for (const row of byAccount.get(m.account_number) ?? []) {
+                const key = periodToConsumptionKey(row.period);
+                if (!key) continue;
+                const raw = row.consumption;
+                const value = raw === null || raw === undefined ? null : Number(raw);
+                if (value !== null && Number.isNaN(value)) {
+                    consumption[key] = null;
+                    continue;
+                }
+                if (value !== null && value < 0) {
+                    negativeMeters.push({ label: displayLabel, account: m.account_number, month: key, value });
+                    consumption[key] = 0;
+                } else {
+                    consumption[key] = value;
+                }
+            }
+
+            return {
+                id: m.meter_id || m.account_number || undefined,
+                label: displayLabel,
+                accountNumber: m.account_number || '',
+                level,
+                zone: ZONE_TO_LEGACY[m.zone] ?? m.zone ?? '',
+                parentMeter: PARENT_TO_LEGACY[parent] ?? parent,
+                type: TYPE_TO_LEGACY[m.type] ?? m.type ?? '',
+                consumption,
+            };
+        });
+
+        if (negativeMeters.length > 0) {
+            console.warn(`[Water Data] Found ${negativeMeters.length} negative consumption values in Supabase:`);
+            console.table(negativeMeters);
+        }
+
         return result;
     } catch (err) {
         console.error('Error in getWaterMetersFromSupabase:', err);
@@ -109,7 +220,7 @@ export async function getDailyWaterConsumptionFromSupabase(
     try {
         let query = client
             .from('water_daily_consumption')
-            .select('id, meter_name, account_number, label, zone, parent_meter, type, month, year, day_1, day_2, day_3, day_4, day_5, day_6, day_7, day_8, day_9, day_10, day_11, day_12, day_13, day_14, day_15, day_16, day_17, day_18, day_19, day_20, day_21, day_22, day_23, day_24, day_25, day_26, day_27, day_28, day_29, day_30, day_31');
+            .select(DAILY_WATER_CONSUMPTION_SELECT_COLUMNS);
 
         if (month) {
             query = query.eq('month', month);
@@ -118,7 +229,7 @@ export async function getDailyWaterConsumptionFromSupabase(
             query = query.eq('year', year);
         }
 
-        const { data, error } = await query;
+        const { data, error } = await query.returns<SupabaseDailyWaterConsumption[]>();
 
         if (error) {
             console.error('Error fetching daily water consumption:', error.message);
@@ -129,7 +240,7 @@ export async function getDailyWaterConsumptionFromSupabase(
             return [];
         }
 
-        return data.map((record: SupabaseDailyWaterConsumption) => transformDailyWaterConsumption(record));
+        return data.map((record) => transformDailyWaterConsumption(record));
     } catch (err) {
         console.error('Error in getDailyWaterConsumptionFromSupabase:', err);
         return [];

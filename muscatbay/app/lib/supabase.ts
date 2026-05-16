@@ -74,8 +74,6 @@ export {
     type SupabaseSTPOperation,
     transformSTPOperation,
     // Water
-    type SupabaseWaterMeter,
-    transformWaterMeter,
     type SupabaseDailyWaterConsumption,
     type DailyWaterConsumption,
     transformDailyWaterConsumption,

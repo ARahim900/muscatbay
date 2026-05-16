@@ -87,7 +87,7 @@ function buildYearlyMatrix(costs: ContractorYearlyCost[]): {
 // ─── Page Component ──────────────────────────────────────────────────────────
 export default function ContractorsPage() {
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState("contracts");
+    const [activeTab, setActiveTab] = useState("tracker");
 
     // Data
     const [contracts, setContracts] = useState<ContractorContract[]>([]);
@@ -477,9 +477,9 @@ export default function ContractorsPage() {
                 activeTab={activeTab}
                 onTabChange={setActiveTab}
                 tabs={[
+                    { key: 'tracker', label: 'AMC Tracker', icon: List },
                     { key: 'contracts', label: 'Contracts', icon: FileText },
                     { key: 'yearly', label: 'Yearly Costs', icon: BarChart3 },
-                    { key: 'tracker', label: 'AMC Tracker', icon: List },
                 ]}
             />
 
