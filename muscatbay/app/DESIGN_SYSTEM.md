@@ -29,10 +29,10 @@ Every UI decision in this app follows these. They are repeated in `BRAND_DESIGN.
 |-------|-------|------|----------------|---------|
 | `--primary` | `#4E4456` | `#4E4456` | `bg-primary` / `text-primary` | Sidebar, primary buttons, headings (light mode) |
 | `--primary-foreground` | `#FFFFFF` | `#FFFFFF` | `text-primary-foreground` | Text on primary surfaces |
-| `--secondary` / `--accent` | `#43B3AE` | `#43B3AE` | `bg-secondary` / `text-secondary` / `ring-secondary` | CTAs, focus rings, active tab indicator |
+| `--secondary` / `--accent` | `#A1D1D5` | `#A1D1D5` | `bg-secondary` / `text-secondary` / `ring-secondary` | CTAs, focus rings, active tab indicator |
 | `--secondary-foreground` | `#1F2937` | `#1F2937` | `text-secondary-foreground` | Text on secondary surfaces |
-| `--mb-primary-hover` | `#3A3341` | `#3A3341` | `hover:bg-[var(--mb-primary-hover)]` | Primary hover state |
-| `--mb-secondary-active` | `#8AAFA5` | `#8AAFA5` | n/a | Pressed/active teal |
+| `--mb-primary-hover` | `#3A3341` | `#4E4456` | `hover:bg-[var(--mb-primary-hover)]` | Primary hover state |
+| `--mb-secondary-active` | `#7BB6BA` | `#7BB6BA` | n/a | Pressed/active teal |
 
 ### 2.2 Surfaces
 
@@ -53,7 +53,7 @@ Every UI decision in this app follows these. They are repeated in `BRAND_DESIGN.
 | `--muted-foreground` | `#6B7280` | `#9CA3AF` | `text-muted-foreground` |
 | `--border` | `#E5E7EB` | `rgba(255,255,255,0.1)` | `border-border` |
 | `--input` | `#E5E7EB` | `rgba(255,255,255,0.1)` | `border-input` |
-| `--ring` | `#43B3AE` | `#43B3AE` | `ring-ring` / `focus-visible:ring-secondary` |
+| `--ring` | `#A1D1D5` | `#A1D1D5` | `ring-ring` / `focus-visible:ring-secondary` |
 
 ### 2.4 Status colors (always paired with icon + text label)
 
@@ -92,7 +92,7 @@ For multi-series charts use the chart slots; for domain-specific charts, layer w
 | Token | Hex | Role |
 |-------|-----|------|
 | `--chart-1` | `#6B9AC4` | Primary series (sky blue) |
-| `--chart-2` | `#43B3AE` | Secondary series (brand teal) |
+| `--chart-2` | `#A1D1D5` | Secondary series (brand teal) |
 | `--chart-3` | `#E8C064` | Tertiary series (amber) |
 | `--chart-4` | `#84B59F` | Quaternary series (sage) |
 | `--chart-5` | `#4D445D` | Brand purple |
@@ -219,7 +219,7 @@ Re-exported from `components/shared/data-table/index.ts`:
 - `ActiveFilterPills` — removable filter chips
 - `StatusBadge` — themed badge with `BadgeColor` (`DOT_COLORS` map). Defaults to a soft dot leading visual; pass `iconVariant="icon"` for the lucide symbol or `"none"` for label-only. Legacy `hideIcon` is still accepted (maps to `iconVariant="dot"`).
 
-Reference implementations: `app/assets/page.tsx`, `app/contractors/page.tsx`, `app/electricity/page.tsx`, `app/stp/page.tsx`, `app/firefighting/quotes/page.tsx`, `components/water/meter-table.tsx`, `components/water/water-database-table.tsx`, `components/water/DailyWaterReport.tsx` (and the `daily-report/` panel family), `components/gulf-expert/{overview,findings,equipment}-tab.tsx`. The system is unified — bespoke tables are anti-patterns, not legacy debt.
+Reference implementations: `app/assets/page.tsx`, `app/contractors/page.tsx`, `app/electricity/page.tsx`, `app/stp/page.tsx`, `app/firefighting/page.tsx`, `components/water/meter-table.tsx`, `components/water/water-database-table.tsx`, `components/water/DailyWaterReport.tsx` (and the `daily-report/` panel family), `components/gulf-expert/{overview,findings,recurring}-tab.tsx`. The system is unified — bespoke tables are anti-patterns, not legacy debt.
 
 ### Unified table look — what `<Table>` gives you for free
 
@@ -271,9 +271,8 @@ Auto-lays out 3 / 4 / 6 / 8 KPI tiles responsively. Tile variants drive the icon
 ```
 
 - **Color**: `text-primary` (`#4E4456`, brand purple) in light mode, `text-foreground` in dark mode so contrast stays AA on `#0A090C`.
-- **Weight**: `font-extrabold` (800) — heaviest weight Inter ships in this app.
 - **Size**: `text-lg` (15px) on mobile, `text-2xl` (24px) from `sm` up. Capped here because (a) larger reads heavy/dated, and (b) values like `92,051.5 OMR` on the 8-tile STP layout truncated at `text-3xl` once the icon and padding took their share. Tabular nums + `leading-none` keep neighbouring tiles aligned even when values differ in width.
-- **Weight**: `font-semibold` (600) — modern dashboards (Linear, Stripe, Vercel) cap value emphasis here. Avoid `font-bold`/`font-extrabold` on tabular data — they make the dashboard read like a 2010-era spreadsheet rather than a 2026 product.
+- **Weight**: `font-semibold` (600) — modern dashboards (Linear, Stripe, Vercel) cap value emphasis here. Avoid `font-bold`/`font-extrabold` on tabular data — they make the dashboard read like a 2010-era spreadsheet rather than a 2026 product. (Inter still ships 400/500/600/700/800, but values stop at 600.)
 - **Never tint red/green based on the metric** — colour stays brand-purple regardless of trend. The trend chip below the value carries the sentiment.
 
 ### `PageStatusBar`
@@ -283,6 +282,8 @@ Right-aligned cluster showing connection state, optional live-subscription badge
 ---
 
 ## 6. Motion
+
+All motion is **pure CSS / Web Animations** — keyframes in `globals.css` plus the `tw-animate-css` utilities and an `IntersectionObserver`-based `useScrollAnimation` hook (`hooks/useScrollAnimation.ts`) / `AnimateOnScroll` wrapper. There is **no GSAP or Framer Motion** dependency; do not add one.
 
 ### Standard easing
 

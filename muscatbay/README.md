@@ -50,7 +50,7 @@ Built by the **Assets & Operations Manager** to solve real-world infrastructure 
 | Tailwind CSS | 4 | Utility-first styling |
 | shadcn/ui + Radix UI | Latest | Modern UI components |
 | Recharts | 3.6 | Data visualization and charts |
-| GSAP | 3.14 | Micro-animations and transitions |
+| tw-animate-css | 1.4 | CSS animation utilities (no GSAP/Framer) |
 | date-fns | 4.1 | Date manipulation |
 
 ### Backend & Database
@@ -78,13 +78,15 @@ muscatbay/
 │   │   ├── stp/                  # STP plant operations
 │   │   ├── contractors/          # AMC contractor tracking
 │   │   ├── assets/               # Asset management
-│   │   ├── firefighting/         # Fire safety (+ /quotes sub-page)
+│   │   ├── firefighting/         # Fire safety monitoring
 │   │   ├── pest-control/         # Pest control management
 │   │   ├── settings/             # User settings
 │   │   ├── login/                # Authentication pages
 │   │   ├── signup/               # Registration (+ /professional)
 │   │   ├── forgot-password/      # Password reset
 │   │   ├── auth/                 # Auth callbacks & reset
+│   │   ├── privacy/              # Privacy policy
+│   │   ├── terms/                # Terms of service
 │   │   └── page.tsx              # Main dashboard
 │   ├── components/               # React components
 │   │   ├── ui/                   # Base UI components (shadcn/ui)
@@ -155,7 +157,7 @@ muscatbay/
 ### Dashboard
 - KPI cards with real-time stats
 - Interactive charts and trend analysis
-- GSAP micro-animations for smooth transitions
+- CSS micro-animations and scroll-reveal for smooth transitions
 
 ### Water Tracking
 - **Meter Hierarchy:** 350+ meters across L1 → L2 → L3 → L4 zones
@@ -234,7 +236,7 @@ Security headers (CSP, X-Frame-Options) are configured in `vercel.json`.
 - [x] Fully responsive design (PC, tablet, phone)
 - [x] Progressive Web App (PWA) support
 - [x] Mobile bottom navigation
-- [x] GSAP animations and UI polish
+- [x] CSS animations and UI polish
 - [x] Date range picker with dual-range slider
 - [x] Building consumption reports
 - [x] Unified filter controls
@@ -304,6 +306,6 @@ For questions or issues:
 
 ---
 
-**Last Updated:** March 2026
-**Version:** 1.1.0
+**Last Updated:** May 2026
+**Version:** 1.2.0
 **Status:** Active Development

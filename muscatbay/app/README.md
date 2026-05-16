@@ -12,13 +12,15 @@ app/
 │   ├── stp/                   # STP plant operations
 │   ├── contractors/           # AMC contractor tracking
 │   ├── assets/                # Asset management
-│   ├── firefighting/          # Fire safety (+ /quotes)
+│   ├── firefighting/          # Fire safety monitoring
 │   ├── pest-control/          # Pest control management
 │   ├── settings/              # User settings
 │   ├── login/                 # Authentication
 │   ├── signup/                # Registration (+ /professional)
 │   ├── forgot-password/       # Password reset
 │   ├── auth/                  # Auth callbacks & reset
+│   ├── privacy/               # Privacy policy
+│   ├── terms/                 # Terms of service
 │   └── page.tsx               # Main dashboard
 │
 ├── components/                # React components
@@ -115,7 +117,7 @@ app/
 - **Styling**: Tailwind CSS 4
 - **Components**: shadcn/ui, Radix UI, Base UI
 - **Charts**: Recharts 3.6
-- **Animations**: GSAP 3.14
+- **Animations**: Pure CSS + `IntersectionObserver` (`tw-animate-css` 1.4, `useScrollAnimation`) — no GSAP/Framer
 - **Dates**: date-fns 4.1
 - **Testing**: Vitest 4, Testing Library
 
@@ -134,10 +136,10 @@ The dark theme uses a **warm near-black palette** that harmonizes with the `#4E4
 | Muted text | `--muted-foreground` | `#9CA3AF` |
 | Primary (brand purple) | `--primary` | `#4E4456` |
 | Sidebar (darker than primary) | `--sidebar` | `#3B3240` |
-| Secondary / accent (teal) | `--secondary`, `--accent` | `#4DBFBF` |
+| Secondary / accent (teal) | `--secondary`, `--accent` | `#A1D1D5` |
 | Destructive | `--destructive` | `#D67A7A` |
 | Border / input | `--border`, `--input` | `rgba(255,255,255,0.1)` |
-| Focus ring | `--ring` | `#4DBFBF` |
+| Focus ring | `--ring` | `#A1D1D5` |
 
 ### Near-Black Surface Scale
 
@@ -168,7 +170,7 @@ Borders for `slate-700/800/900` are remapped to white-tinted hairlines (`rgba(25
 4. **Headings** auto-color: `--primary` in light, `--foreground` in dark (handled in the base layer).
 5. **Sidebar must stay darker than `--primary`** so it reads as a distinct zone under the topbar.
 6. **Charts** use the teal/amber/green/purple palette via `--chart-*` tokens — don't import Recharts' defaults.
-7. **Focus ring** is always the teal `--ring` (`#4DBFBF`) for WCAG contrast against near-black.
+7. **Focus ring** is always the teal `--ring` (`#A1D1D5`) for WCAG contrast against near-black.
 8. **To retune the entire dark shell**, change the 4 base hex values in the "Dark Surface Remap" block in `globals.css` — every surface retracks automatically.
 
 See [`DESIGN_SYSTEM.md`](./DESIGN_SYSTEM.md) for the full light-mode spec, component patterns, and typography scale.
