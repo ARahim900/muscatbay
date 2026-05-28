@@ -192,7 +192,7 @@ export function useDashboardData() {
                         stpMonthlyCalc[monthKey].inlet += op.inlet_sewage || 0;
                         stpMonthlyCalc[monthKey].tse += op.tse_for_irrigation || 0;
                         stpMonthlyCalc[monthKey].days += 1;
-                    } catch (e) { /* skip invalid dates */ }
+                    } catch { /* skip invalid dates */ }
                 }
             });
             const stpSortedMonths = Object.keys(stpMonthlyCalc).sort();
@@ -333,7 +333,7 @@ export function useDashboardData() {
                         if (!stpMonthlyChart[monthKey]) stpMonthlyChart[monthKey] = { inlet: 0, tse: 0 };
                         stpMonthlyChart[monthKey].inlet += op.inlet_sewage || 0;
                         stpMonthlyChart[monthKey].tse += op.tse_for_irrigation || 0;
-                    } catch (e) { /* skip */ }
+                    } catch { /* skip */ }
                 }
             });
             const stpChartMonthsSorted = sortMonthKeys(Object.keys(stpMonthlyChart));

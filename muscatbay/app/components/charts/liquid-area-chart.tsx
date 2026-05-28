@@ -10,7 +10,6 @@ import {
     CartesianGrid,
     Tooltip,
     ResponsiveContainer,
-    TooltipProps,
     LabelList,
     Legend,
 } from "recharts";
@@ -144,7 +143,7 @@ export const LiquidAreaChart = memo(function LiquidAreaChart({
                                     position="top"
                                     formatter={formatLabel}
                                     style={{
-                                        fill: "#374151",
+                                        fill: "var(--muted-foreground)",
                                         fontSize: 9,
                                         fontWeight: 600,
                                     }}

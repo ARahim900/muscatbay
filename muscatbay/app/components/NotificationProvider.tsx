@@ -80,7 +80,7 @@ function PermissionBanner({
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
     const wasDismissed = localStorage.getItem("notif-banner-dismissed");
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+     
     if (wasDismissed) setDismissed(true);
   }, []);
 

@@ -74,7 +74,7 @@ export function useSupabaseRealtime({
 
         const client = getSupabaseClient();
         if (!client) {
-            // eslint-disable-next-line react-hooks/set-state-in-effect
+             
             setIsLive(false);
             return;
         }

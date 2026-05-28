@@ -182,10 +182,6 @@ async function paged(path, select) {
   console.log(`✓ Upserted ${inserted.length} rows.`);
 
   // 4. Verify
-  const v = await paged(
-    `water_monthly_consumption`,
-    `meter_id,account_number,period,consumption&period=eq.${PERIOD}`
-  );
   // Re-fetch with filter (paged() ignores filters in select param so do direct call)
   const r2 = await fetch(
     `${SUPABASE_URL}/rest/v1/water_monthly_consumption?select=meter_id,account_number,consumption&period=eq.${PERIOD}&limit=2000`,

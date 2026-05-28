@@ -1,5 +1,18 @@
 ## Changelog
 
+### 2026-05-29
+- **Invisible Stability + Security Maintenance (No UI/Theme Changes)**:
+  - Fixed command palette lint blocker by keeping the existing behavior and adding an explicit lint-safe reset for active index.
+  - Resolved build gate failure in `verify-skills-lock` by removing the stale `impeccable` lock entry that was not part of installed verified skills.
+  - Applied `npm audit fix` in `muscatbay/app` to patch vulnerable transitive dependencies without changing product behavior.
+  - Re-validated project health with TypeScript, tests, lint, and production build checks after updates.
+- **Non-Visual Hardening Pass**:
+  - Set `metadataBase` in root layout using `NEXT_PUBLIC_SITE_URL` / `VERCEL_URL` (fixes OG/Twitter URL resolution only; no on-screen UI change).
+  - Cleaned safe ESLint warnings (unused imports/variables, dead code) across app, hooks, API helpers, and scripts.
+  - Left intentional `react-hooks/exhaustive-deps` warnings in water analytics untouched to avoid behavior changes.
+- **Daily Water Report Hydration Fix**:
+  - Moved mobile scroll-fade overlay outside `<table>` in zone/DC daily report tables to fix invalid HTML nesting and React hydration errors (no visual change).
+
 ### 2026-04-16
 - **Assets Register Reset + Excel Source Alignment**:
   - Replaced generated/mixed asset data with a clean import from `Muscat_Bay_Asset_Register_Enhanced.xlsx` (`Master_Asset_Register` sheet).

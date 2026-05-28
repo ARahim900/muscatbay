@@ -25,7 +25,7 @@ export async function getElectricityMetersFromSupabase(): Promise<MeterReading[]
                 .from('electricity_meters')
                 .select('id, name, account_number, meter_type')
                 .order('name');
-        } catch (networkError) {
+        } catch {
             // Network error (e.g., Failed to fetch, proxy errors) - silently return empty
             console.warn('Network error fetching electricity meters - using fallback data');
             return [];
@@ -69,7 +69,7 @@ export async function getElectricityMetersFromSupabase(): Promise<MeterReading[]
                 if (page.length < PAGE_SIZE) break;
                 offset += PAGE_SIZE;
             }
-        } catch (networkError) {
+        } catch {
             console.warn('Network error fetching electricity readings - using fallback data');
             return [];
         }

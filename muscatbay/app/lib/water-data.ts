@@ -555,9 +555,6 @@ export function calculateMonthlyAnalysis(month: string): WaterAnalysis {
   const l4Meters = getMetersByLevel('L4');
   const dcMeters = getMetersByLevel('DC');
 
-  // Helper to check if a meter has data for the month
-  const hasData = (m: WaterMeter) => m.consumption[month] !== null && m.consumption[month] !== undefined;
-
   // Helper to get consumption only if it exists
   const getVal = (m: WaterMeter) => getConsumption(m, month);
 

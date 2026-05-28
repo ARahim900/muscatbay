@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { Search, ArrowRight, Sun, Moon, LogOut } from "lucide-react";
+import { Search, ArrowRight, Sun, LogOut } from "lucide-react";
 import { useAuth } from "@/components/auth/auth-provider";
 import { useUserRole } from "@/hooks/useUserRole";
 import { canAccessModule, MODULE_ROUTE, type ModuleKey } from "@/lib/rbac";
@@ -53,10 +53,15 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
     const [activeIdx, setActiveIdx] = useState(0);
     const inputRef = useRef<HTMLInputElement>(null);
 
+    const handleClose = useCallback(() => {
+        setQuery("");
+        onClose();
+    }, [onClose]);
+
     const navigate = useCallback((href: string) => {
         router.push(href);
-        onClose();
-    }, [router, onClose]);
+        handleClose();
+    }, [router, handleClose]);
 
     const toggleTheme = useCallback(() => {
         const root = document.documentElement;
@@ -84,11 +89,11 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
         const actions: CommandItem[] = [
             { id: "theme-toggle", label: "Toggle light / dark theme", icon: Sun, run: toggleTheme },
             { id: "board-mode", label: "Open dashboard in Board mode", hint: "Adds ?present=1", icon: LayoutDashboard, run: () => navigate("/?present=1") },
-            { id: "sign-out", label: "Sign out", icon: LogOut, run: () => { logout(); onClose(); } },
+            { id: "sign-out", label: "Sign out", icon: LogOut, run: () => { logout(); handleClose(); } },
         ];
 
         return [...navCommands, ...actions];
-    }, [role, isDevMode, navigate, toggleTheme, logout, onClose]);
+    }, [role, isDevMode, navigate, toggleTheme, logout, handleClose]);
 
     // Filter by query (case-insensitive, fuzzy-ish)
     const filtered = useMemo(() => {
@@ -100,12 +105,14 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
     }, [commands, query]);
 
     // Reset active index when filter changes
-    useEffect(() => { setActiveIdx(0); }, [query, open]);
+    useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setActiveIdx(0);
+    }, [query, open]);
 
     // Focus the input when the palette opens
     useEffect(() => {
         if (open) inputRef.current?.focus();
-        else setQuery("");
     }, [open]);
 
     // Keyboard handling
@@ -121,7 +128,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
             const cmd = filtered[activeIdx];
             if (cmd) cmd.run();
         } else if (e.key === "Escape") {
-            onClose();
+            handleClose();
         }
     };
 
@@ -133,7 +140,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
             aria-modal="true"
             aria-label="Command palette"
             className="fixed inset-0 z-[100] flex items-start justify-center pt-24 px-4 sm:px-6"
-            onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+            onClick={(e) => { if (e.target === e.currentTarget) handleClose(); }}
         >
             {/* Backdrop */}
             <div className="absolute inset-0 bg-black/40 backdrop-blur-sm motion-safe:animate-in motion-safe:fade-in" aria-hidden="true" />
@@ -145,6 +152,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
                     <input
                         ref={inputRef}
                         type="text"
+                        aria-label="Search modules and actions"
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
                         onKeyDown={onKeyDown}

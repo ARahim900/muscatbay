@@ -6,7 +6,7 @@ import {
     Download, Columns, Users,
     X, Check
 } from 'lucide-react';
-import { WaterMeter, getConsumption, ZONE_CONFIG } from '@/lib/water-data';
+import { WaterMeter, getConsumption } from '@/lib/water-data';
 import { cn } from '@/lib/utils';
 import { MultiSelectDropdown, SortIcon, TablePagination, TableToolbar } from '@/components/shared/data-table';
 
@@ -357,7 +357,7 @@ export function WaterDatabaseTable({ meters, months }: WaterDatabaseTableProps) 
         (selectedTypes.length > 0 && selectedTypes.length < allTypes.length);
 
     // Render table row
-    const renderRow = (meter: WaterMeter, _index: number, isGrouped: boolean = false) => {
+    const renderRow = (meter: WaterMeter) => {
         const zoneBorder = ZONE_BORDER_VAR[meter.zone] || ZONE_BORDER_VAR['N/A'];
         const levelStyle = LEVEL_STYLES[meter.level] || 'bg-muted text-foreground';
 
@@ -629,11 +629,11 @@ export function WaterDatabaseTable({ meters, months }: WaterDatabaseTableProps) 
                                         </td>
                                     </tr>
                                     {/* Group Rows */}
-                                    {group.meters.map((meter, idx) => renderRow(meter, idx, true))}
+                                    {group.meters.map((meter) => renderRow(meter))}
                                 </React.Fragment>
                             ))
                         ) : (
-                            paginatedMeters.map((meter, idx) => renderRow(meter, idx))
+                            paginatedMeters.map((meter) => renderRow(meter))
                         )}
 
                         {filteredMeters.length === 0 && (

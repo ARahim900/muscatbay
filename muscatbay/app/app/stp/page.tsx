@@ -135,7 +135,7 @@ export default function STPPage() {
                 setAllOperations(result);
                 setIsLiveData(false);
             }
-        } catch (e) {
+        } catch {
             if (!silent) {
                 // Silent fallback to mock data
                 const result = await getSTPOperations();
@@ -870,6 +870,7 @@ export default function STPPage() {
                                 <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                                 <input
                                     type="text"
+                                    aria-label="Search operations"
                                     placeholder="Search operations..."
                                     value={logSearchTerm}
                                     onChange={(e) => { setLogSearchTerm(e.target.value); setLogCurrentPage(1); }}

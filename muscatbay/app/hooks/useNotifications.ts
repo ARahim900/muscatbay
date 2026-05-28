@@ -73,7 +73,7 @@ function uid(): string {
 }
 
 /** Map notification level to a browser notification icon path */
-function levelToIcon(level: NotificationLevel): string {
+function levelToIcon(): string {
   // Using the app icon for all browser notifications
   return "/icons/icon-192x192.png";
 }
@@ -122,7 +122,7 @@ export function useNotifications(
       setPermission("unsupported");
       return;
     }
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+     
     setPermission(Notification.permission as PushPermission);
   }, []);
 
@@ -160,7 +160,7 @@ export function useNotifications(
             data?: Record<string, unknown>;
           } = {
             body: message,
-            icon: levelToIcon(level),
+            icon: levelToIcon(),
             badge: "/icons/icon-192x192.png",
             tag: `muscatbay-${level}-${Date.now()}`,
             vibrate:
@@ -175,7 +175,7 @@ export function useNotifications(
         // Fallback: plain Notification API (foreground only)
         new Notification(title, {
           body: message,
-          icon: levelToIcon(level),
+          icon: levelToIcon(),
           tag: `muscatbay-${level}-${Date.now()}`,
         });
       }

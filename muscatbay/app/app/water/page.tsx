@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo, useCallback, useRef } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
     Table,
@@ -13,9 +13,7 @@ import {
 import {
     Droplets, ChevronsRight, Users, AlertTriangle, ArrowRightLeft,
     BarChart3, TestTube2, Database, Minus, TrendingUp,
-    Gauge, Calendar, Activity, Loader2, CalendarDays,
-    Home, Layers, AlertCircle, MapPin,
-    TrendingDown, ChevronDown, ChevronRight, Download
+    Activity, CalendarDays,
 } from "lucide-react";
 import {
     AreaChart, Area, XAxis, YAxis, Tooltip,
@@ -30,17 +28,14 @@ import {
 } from "@/lib/water-data";
 
 // Supabase imports
-import { getWaterMetersFromSupabase, getWaterLossDailyFromSupabase, getDailyWaterConsumptionFromSupabase, isSupabaseConfigured } from "@/lib/supabase";
-import type { WaterLossDaily, DailyWaterConsumption } from "@/entities/water";
+import { getWaterMetersFromSupabase, isSupabaseConfigured } from "@/lib/supabase";
 import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
 import { PageStatusBar } from "@/components/shared/page-status-bar";
 
 // Components
 import { ToggleableLegendContent, useChartLegendToggle } from "@/components/charts/toggleable-legend";
 import { DateRangePicker } from "@/components/water/date-range-picker";
-import { TypeFilterPills } from "@/components/water/type-filter-pills";
 import { LiquidProgressRing } from "../../components/charts/liquid-progress-ring";
-import { WaterLossGauge } from "@/components/water/water-loss-gauge";
 import { LiquidTooltip } from "../../components/charts/liquid-tooltip";
 import { MeterTable } from "@/components/water/meter-table";
 import dynamic from "next/dynamic";
@@ -250,10 +245,6 @@ function calculateZoneRangeAnalysisFromData(caches: LevelCaches, zone: string, s
     return { zone, zoneName: config.name, bulkMeterReading, individualTotal, loss, lossPercentage, efficiency, meterCount: zoneL3.length };
 }
 
-function getAllZonesAnalysisFromData(caches: LevelCaches, month: string) {
-    return ZONE_CONFIG.map(config => calculateZoneAnalysisFromData(caches, config.code, month));
-}
-
 export default function WaterPage() {
     const [dashboardView, setDashboardView] = useState<DashboardView>('monthly');
     const [monthlyTab, setMonthlyTab] = useState("overview"); // Changed to string for TabNavigation compatibility
@@ -401,11 +392,6 @@ export default function WaterPage() {
 
     const zoneAnalysis = useMemo(() =>
         calculateZoneRangeAnalysisFromData(levelCaches, selectedZone, startMonth, endMonth), [levelCaches, selectedZone, startMonth, endMonth]);
-
-    const allZones = useMemo(() =>
-        getAllZonesAnalysisFromData(levelCaches, endMonth), [levelCaches, endMonth]);
-
-    const meterCounts = useMemo(() => levelCaches.counts, [levelCaches]);
 
     // Muscat Bay Community: specific meters billed to the community
     const MUSCAT_BAY_COMMUNITY = 'Muscat Bay Community';

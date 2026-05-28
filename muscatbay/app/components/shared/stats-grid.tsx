@@ -63,7 +63,7 @@ export function StatsGrid({ stats, className }: StatsGridProps) {
             gridCols,
             className
         )}>
-            {stats.map((stat, index) => {
+            {stats.map((stat) => {
                 const variant = stat.variant || "primary";
                 const iconClass = variantIconClass[variant];
 

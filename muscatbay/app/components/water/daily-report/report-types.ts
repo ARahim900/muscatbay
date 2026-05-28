@@ -12,8 +12,8 @@ import { CHART_PALETTE } from "@/lib/tokens";
 // ─── Chart palette ────────────────────────────────────────────────────────────
 
 export const CHART_COLORS = {
-    bulk:       '#1DA1F2',
-    individual: '#7DD3FC',
+    bulk:       'var(--chart-water-primary)',
+    individual: 'var(--chart-water-secondary)',
     loss:       'var(--chart-loss)',
     success:    'var(--chart-success)',
     teal:       'var(--chart-teal)',
@@ -23,10 +23,10 @@ export const CHART_COLORS = {
 } as const;
 
 export const PALETTE = {
-    primary: '#1DA1F2',
+    primary: 'var(--chart-water-primary)',
     neutral: CHART_PALETTE[1],
     mint:    CHART_PALETTE[5],
-    blue:    '#7DD3FC',
+    blue:    'var(--chart-water-secondary)',
     amber:   CHART_PALETTE[2],
     red:     CHART_PALETTE[3],
 } as const;

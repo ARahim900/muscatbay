@@ -35,14 +35,6 @@ const navItems: NavItem[] = [
     { name: "Contact", href: "/contact", icon: Mail },
 ];
 
-interface DropdownItem {
-    name: string;
-    href?: string;
-    icon: React.ComponentType<{ className?: string }>;
-    onClick?: () => void;
-    divider?: boolean;
-}
-
 // Profile dropdown items are now created dynamically inside the component to use the real logout function
 
 export function Navbar() {

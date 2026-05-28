@@ -10,7 +10,7 @@ import { Separator } from "@/components/ui/separator"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Loader2, Upload, Save, User, Shield, Bell, Smartphone, Monitor, CheckCircle2 } from "lucide-react"
+import { Loader2, Upload, Save, User, Shield, Bell, Monitor, CheckCircle2 } from "lucide-react"
 
 export default function SettingsPage() {
     const { user, profile, isAuthenticated, refreshProfile } = useAuth()

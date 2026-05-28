@@ -1,5 +1,6 @@
 import "./globals.css";
 
+import type { Metadata } from "next";
 import { Providers } from "@/components/providers";
 import { NotificationProvider } from "@/components/NotificationProvider";
 import { RegisterSW } from "@/components/pwa/register-sw";
@@ -13,7 +14,17 @@ const inter = Inter({
   weight: ["400", "500", "600", "700", "800"],
 });
 
-export const metadata = {
+/** Resolve canonical site URL for Open Graph/Twitter metadata only (no UI impact). */
+function resolveMetadataBase(): URL {
+  const site = process.env.NEXT_PUBLIC_SITE_URL;
+  if (site) return new URL(site);
+  const vercel = process.env.VERCEL_URL;
+  if (vercel) return new URL(`https://${vercel}`);
+  return new URL("http://localhost:3000");
+}
+
+export const metadata: Metadata = {
+  metadataBase: resolveMetadataBase(),
   title: "Muscat Bay Operations",
   description: "Operations Dashboard for Muscat Bay",
   icons: {

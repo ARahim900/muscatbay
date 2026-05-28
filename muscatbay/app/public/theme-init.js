@@ -9,5 +9,5 @@
         : t;
     document.documentElement.classList.add(d);
     document.documentElement.style.colorScheme = d;
-  } catch (e) {}
+  } catch {}
 })();

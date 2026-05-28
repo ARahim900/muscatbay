@@ -28,7 +28,7 @@ async function verifyData() {
 
     console.log(`Found ${data.length} records for Nov-25 and Dec-25.`);
 
-    const { count, error: countError } = await supabase
+    const { count } = await supabase
         .from('electricity_readings')
         .select('*', { count: 'exact', head: true });
 

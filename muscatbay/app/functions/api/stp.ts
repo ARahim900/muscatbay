@@ -35,7 +35,7 @@ export async function getSTPOperationsFromSupabase(): Promise<STPOperation[]> {
 
         const result = data.map((record: SupabaseSTPOperation) => transformSTPOperation(record));
         return result;
-    } catch (err) {
+    } catch {
         return [];
     }
 }

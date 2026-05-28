@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { CONFIG, STP_RATES, ELECTRICITY_RATES, WATER_RATES, PAGINATION, UI_CONFIG } from '@/lib/config';
 
 describe('Configuration', () => {

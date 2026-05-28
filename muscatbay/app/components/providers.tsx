@@ -30,8 +30,6 @@ export function useTheme() {
 export function Providers({ children }: { children: ReactNode }) {
     const [theme, setThemeState] = useState<Theme>("system");
     const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark">("dark");
-    const [mounted, setMounted] = useState(false);
-
     const applyTheme = useCallback((resolved: "light" | "dark") => {
         const root = document.documentElement;
         root.classList.remove("light", "dark");
@@ -56,8 +54,6 @@ export function Providers({ children }: { children: ReactNode }) {
         setThemeState(stored);
         const resolved = stored === "system" ? getSystemTheme() : stored;
         applyTheme(resolved);
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setMounted(true);
     }, [applyTheme]);
 
     // Listen for system theme changes

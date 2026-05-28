@@ -1,28 +1,38 @@
 "use client";
 
+// ─── DCAnalyticsPanel + DCDailyTable — extracted verbatim from
+//     DailyWaterReport.tsx. Pure relocation; no behavior changes.
+
 import { useState, useMemo, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Droplets, Zap, Activity } from "lucide-react";
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import {
     AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
     ReferenceLine, Legend,
 } from "recharts";
 import { LiquidProgressRing } from "@/components/charts/liquid-progress-ring";
 import { LiquidTooltip } from "@/components/charts/liquid-tooltip";
+import { Droplets, Activity, Zap } from "lucide-react";
 import { DC_METERS, NULL_AS_ZERO_ACCOUNTS } from "@/lib/water-accounts";
 import type { SupabaseDailyWaterConsumption } from "@/entities/water";
 import { cn } from "@/lib/utils";
 import {
-    type DCAnalyticsPanelProps, type SortState,
+    type ReportData, type SortState,
     CHART_COLORS, r2, n,
-} from "./report-types";
-import {
-    Th, TableSearch, StatusChip,
-    TablePagination, thBase, tdBase,
-} from "./report-primitives";
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
+    Th, TableSearch, StatusChip, TablePagination, thBase, tdBase,
+} from "./inline-shared";
 
-export function DCAnalyticsPanel({ reportData, monthData, selectedDay, month }: DCAnalyticsPanelProps) {
+export { DCAnalyticsPanel, DCDailyTable };
+// ─── DC Analytics Panel (mirrors ZoneAnalyticsPanel) ─────────────────────────
+
+interface DCAnalyticsPanelProps {
+    reportData: ReportData;
+    monthData: SupabaseDailyWaterConsumption[];
+    selectedDay: number;
+    month: string;
+}
+
+function DCAnalyticsPanel({ reportData, monthData, selectedDay, month }: DCAnalyticsPanelProps) {
     // O(1) lookup map keyed by account_number
     const accountMap = useMemo(() => {
         const map = new Map<string, SupabaseDailyWaterConsumption>();
@@ -164,10 +174,10 @@ export function DCAnalyticsPanel({ reportData, monthData, selectedDay, month }: 
                                     {currentDayLabel && (
                                         <ReferenceLine
                                             x={currentDayLabel}
-                                            stroke={CHART_COLORS.individual}
+                                            stroke={CHART_COLORS.brand}
                                             strokeDasharray="4 3"
                                             strokeWidth={1.5}
-                                            label={{ value: `Day ${selectedDay}`, position: 'top', fontSize: 10, fill: CHART_COLORS.individual, fontWeight: 600 }}
+                                            label={{ value: `Day ${selectedDay}`, position: 'top', fontSize: 10, fill: CHART_COLORS.brand, fontWeight: 600 }}
                                         />
                                     )}
                                     <Area
@@ -188,7 +198,7 @@ export function DCAnalyticsPanel({ reportData, monthData, selectedDay, month }: 
 
 // ─── DC Daily Meters Table (mirrors ZoneL3Table) ─────────────────────────────
 
-export function DCDailyTable({ monthData }: { monthData: SupabaseDailyWaterConsumption[] }) {
+function DCDailyTable({ monthData }: { monthData: SupabaseDailyWaterConsumption[] }) {
     const [search, setSearch] = useState('');
     const [sort, setSort] = useState<SortState>({ key: '', dir: null });
     const [page, setPage] = useState(1);

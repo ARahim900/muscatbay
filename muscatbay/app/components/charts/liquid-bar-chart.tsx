@@ -10,8 +10,6 @@ import {
     CartesianGrid,
     Tooltip,
     ResponsiveContainer,
-    TooltipProps,
-    Cell,
     LabelList,
     Legend,
 } from "recharts";

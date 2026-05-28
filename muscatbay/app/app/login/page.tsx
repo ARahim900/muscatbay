@@ -101,6 +101,7 @@ function LoginContent() {
                                 src="/logo.png"
                                 alt="Muscat Bay Logo"
                                 fill
+                                sizes="56px"
                                 className="object-contain p-1"
                                 priority
                             />
@@ -201,6 +202,7 @@ function LoginContent() {
                                     src="/logo.png"
                                     alt="Muscat Bay Logo"
                                     fill
+                                    sizes="48px"
                                     className="object-contain p-1"
                                     priority
                                 />

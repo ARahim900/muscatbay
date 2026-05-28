@@ -7,7 +7,6 @@ import {
     validateUrl,
     sanitizeInput,
     sanitizeSearchQuery,
-    validateFile,
     getPasswordRequirements,
     checkRateLimit,
     resetRateLimit,

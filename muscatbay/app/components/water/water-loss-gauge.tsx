@@ -1,6 +1,6 @@
 "use client";
 
-import { RadialBarChart, RadialBar, PolarAngleAxis, ResponsiveContainer, Cell } from "recharts";
+import { RadialBarChart, RadialBar, PolarAngleAxis, ResponsiveContainer } from "recharts";
 import { cn } from "@/lib/utils";
 
 interface WaterLossGaugeProps {

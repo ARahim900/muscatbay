@@ -35,7 +35,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
         id="main-content"
         className={`
           flex-1 min-w-0 transition-[margin-inline-start] duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]
-          min-h-[100dvh] bg-gray-50 dark:bg-[var(--background)]
+          min-h-[100dvh] bg-background
           ms-0 pt-16 pb-[calc(4rem+env(safe-area-inset-bottom,0px))] md:pb-0
           ${isCollapsed ? "md:ms-[72px]" : "md:ms-[220px]"}
         `}

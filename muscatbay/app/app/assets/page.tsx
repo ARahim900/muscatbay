@@ -12,7 +12,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { TabNavigation } from "@/components/shared/tab-navigation";
 import {
     Boxes, MapPin, Wrench, Search, Plus, Download, X, Layers,
-    ClipboardCheck, ShieldAlert, LayoutDashboard, ClipboardList,
+    ClipboardCheck, ShieldAlert, LayoutDashboard,
     Calendar, Clock, FileText, Settings, DollarSign, AlertTriangle,
 } from "lucide-react";
 import { format } from "date-fns";
@@ -63,7 +63,6 @@ const SORT_FIELD_MAP: Record<string, string> = {
 };
 
 const STATUS_OPTIONS = ['Working', 'Active', 'Under Maintenance', 'Decommissioned', 'In Storage', 'TO VERIFY'];
-const CRITICALITY_OPTIONS = ['High', 'Medium', 'Low'];
 const DISCIPLINE_OPTIONS = [
     'STP Equipment', 'Electrical', 'Mechanical & Plumbing', 'HVAC',
     'Civil', 'Painting', 'Village Square Assets', 'Lifts & Transport', 'Hotel Assets (JMB)',

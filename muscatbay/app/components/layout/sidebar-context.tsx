@@ -27,7 +27,7 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
     setIsMounted(true);
     const savedCollapsed = localStorage.getItem('sidebarCollapsed');
     if (savedCollapsed) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
+       
       setIsCollapsed(JSON.parse(savedCollapsed));
     }
   }, []);

@@ -19,7 +19,7 @@ import { TabNavigation } from "@/components/shared/tab-navigation";
 import {
     Search, Plus, Users, DollarSign, Download, Calendar,
     Building2, FileText, RefreshCw, X, TrendingUp, ArrowRightLeft, BarChart3, List,
-    ExternalLink, FileWarning, Link, Save, Pencil, Check, Loader2
+    ExternalLink, FileWarning, Link, Pencil, Check, Loader2
 } from "lucide-react";
 import {
     Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter
@@ -491,6 +491,7 @@ export default function ContractorsPage() {
                             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                             <input
                                 type="text"
+                                aria-label="Search contracts"
                                 placeholder="Search contracts..."
                                 value={search}
                                 onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
@@ -769,7 +770,7 @@ export default function ContractorsPage() {
                     <TableToolbar>
                         <div className="relative flex-1 min-w-0 sm:min-w-[200px] max-w-md">
                             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                            <input type="text" placeholder="Search tracker..." value={trackerSearch}
+                            <input type="text" aria-label="Search tracker" placeholder="Search tracker..." value={trackerSearch}
                                 onChange={(e) => { setTrackerSearch(e.target.value); setTrackerPage(1); }}
                                 className="pl-10 pr-4 py-2 w-full rounded-lg border border-border/80 dark:border-border/80 bg-white dark:bg-muted text-foreground dark:text-muted-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40 shadow-sm transition-shadow" />
                         </div>
@@ -943,6 +944,7 @@ export default function ContractorsPage() {
                             </label>
                             <input
                                 type="url"
+                                aria-label="PDF link URL"
                                 value={pdfLinkInput}
                                 onChange={(e) => setPdfLinkInput(e.target.value)}
                                 placeholder="https://drive.google.com/file/d/.../view?usp=sharing"

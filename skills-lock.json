@@ -79,13 +79,6 @@
       "ref": "4af581e23f17d112d8f9d6b7a5b7ff37823494e1",
       "computedHash": "f8ce420b3c78b90707704122264da76514c793ac0e12fb9540ace68d257c231c"
     },
-    "impeccable": {
-      "source": "pbakaus/impeccable",
-      "sourceType": "github",
-      "ref": "4af581e23f17d112d8f9d6b7a5b7ff37823494e1",
-      "skillPath": "skill/SKILL.md",
-      "computedHash": "8cdf2e788eaca3af7d02026ef9cec55b506100a00d130f938e3fb1ad669c0ad0"
-    },
     "normalize": {
       "source": "pbakaus/impeccable",
       "sourceType": "github",

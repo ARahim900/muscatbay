@@ -11,7 +11,7 @@ import type { SupabaseDailyWaterConsumption } from "@/entities/water";
 import { cn } from "@/lib/utils";
 import {
     type ZoneRow, type BuildingRow, type SortState,
-    CHART_COLORS, PALETTE, r2, n, diffCell,
+    PALETTE, r2, n, diffCell,
 } from "./report-types";
 import {
     HierarchyStatCard, Th, TableSearch, StatusChip,
@@ -281,11 +281,12 @@ export function ZoneL3Table({
                 <TableSearch value={search} onChange={setSearch} placeholder="Search meter or account..." />
 
                 {/* Horizontally scrollable table */}
+                <div className="relative -mx-4 sm:-mx-5 md:-mx-6">
                 <Table
                     role="region"
                     aria-label="Zone daily readings. Scroll horizontally to view all days."
                     tabIndex={0}
-                    className="relative -mx-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary focus-visible:ring-offset-2 sm:-mx-5 md:-mx-6"
+                    className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary focus-visible:ring-offset-2"
                     style={{ minWidth: `${420 + days.length * 72}px` }}
                     data-density="compact"
                 >
@@ -639,8 +640,12 @@ export function ZoneL3Table({
                                 );
                             })()}
                         </TableBody>
-                    <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-card to-transparent sm:hidden" />
                 </Table>
+                <div
+                    className="pointer-events-none absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-card to-transparent sm:hidden"
+                    aria-hidden="true"
+                />
+                </div>
 
                 {filtered.length > rowsPerPage && (
                     <TablePagination

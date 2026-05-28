@@ -198,6 +198,7 @@ export default function ProfessionalApplicationPage() {
                                 src="/logo.png"
                                 alt="Muscat Bay Logo"
                                 fill
+                                sizes="48px"
                                 className="object-contain p-1"
                                 priority
                             />
