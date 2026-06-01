@@ -1,103 +1,44 @@
-name: Sync Water Consumption Data
+name: Sync Water Consumption
 
 on:
   schedule:
-    # Runs daily at 06:00 AM UTC (10:00 AM Oman time - UTC+4)
-    - cron: '0 2 * * *'
-  workflow_dispatch: # Allows manual triggering
+    # 2nd of every month at 01:00 UTC — captures the previous complete month
+    - cron: '0 1 2 * *'
+  workflow_dispatch:
+    inputs:
+      bill_month:
+        description: 'Override bill month (MMYYYY, e.g. 052026). Leave blank for previous month.'
+        required: false
+        default: ''
 
 jobs:
   sync:
-    runs-on: self-hosted    
+    name: Grafana → Supabase water_daily_consumption
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
-          node-version: '20'
-      
-      - name: Install dependencies
-        run: |
-          npm install axios
-      
-      - name: Sync Grafana to Supabase
+          python-version: '3.12'
+
+      - name: Run sync script
         env:
-          GRAFANA_URL: ${{ secrets.GRAFANA_URL }}
-          GRAFANA_USERNAME: ${{ secrets.GRAFANA_USERNAME }}
-          GRAFANA_PASSWORD: ${{ secrets.GRAFANA_PASSWORD }}
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          GRAFANA_URL:         ${{ secrets.GRAFANA_URL }}
+          GRAFANA_USER:        ${{ secrets.GRAFANA_USER }}
+          GRAFANA_PASS:        ${{ secrets.GRAFANA_PASS }}
+          GRAFANA_ORG_ID:      ${{ secrets.GRAFANA_ORG_ID }}
+          GRAFANA_DS_UID:      ${{ secrets.GRAFANA_DS_UID }}
+          SUPABASE_URL:        ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
         run: |
-          node - <<'EOF'
-          const axios = require('axios');
-          
-          async function syncData() {
-            try {
-              console.log('Starting sync process...');
-              
-              // Login to Grafana
-              const loginResponse = await axios.post(
-                `${process.env.GRAFANA_URL}/login`,
-                {
-                  user: process.env.GRAFANA_USERNAME,
-                  password: process.env.GRAFANA_PASSWORD
-                },
-                {
-                  headers: { 'Content-Type': 'application/json' },
-                  withCredentials: true
-                }
-              );
-              
-              console.log('Logged in to Grafana');
-              
-              // Extract cookies from login response
-              const cookies = loginResponse.headers['set-cookie'];
-              const cookieHeader = cookies ? cookies.join('; ') : '';
-              
-              // Fetch data from Grafana
-              // Note: You'll need to update the query parameters based on your specific needs
-              const dataResponse = await axios.get(
-                `${process.env.GRAFANA_URL}/api/ds/query`,
-                {
-                  headers: {
-                    'Cookie': cookieHeader,
-                    'Content-Type': 'application/json'
-                  }
-                }
-              );
-              
-              console.log('Fetched data from Grafana');
-              
-              // Process and insert data into Supabase
-              // This is a placeholder - you'll need to adapt based on your data structure
-              const dataToInsert = dataResponse.data; // Transform as needed
-              
-              const supabaseResponse = await axios.post(
-                `${process.env.SUPABASE_URL}/rest/v1/water_daily_consumption`,
-                dataToInsert,
-                {
-                  headers: {
-                    'apikey': process.env.SUPABASE_KEY,
-                    'Authorization': `Bearer ${process.env.SUPABASE_KEY}`,
-                    'Content-Type': 'application/json',
-                    'Prefer': 'resolution=merge-duplicates'
-                  }
-                }
-              );
-              
-              console.log('Data synced to Supabase successfully');
-              
-            } catch (error) {
-              console.error('Error during sync:', error.message);
-              if (error.response) {
-                console.error('Response data:', error.response.data);
-                console.error('Response status:', error.response.status);
-              }
-              process.exit(1);
-            }
-          }
-          
-          syncData();
-          EOF
+          MONTH_ARG="${{ github.event.inputs.bill_month }}"
+          if [ -n "$MONTH_ARG" ]; then
+            python muscatbay/app/scripts/sync_water_consumption.py --bill-month "$MONTH_ARG"
+          else
+            python muscatbay/app/scripts/sync_water_consumption.py
+          fi
