@@ -88,7 +88,7 @@ export interface ReportData {
     grandTotal: number;
 }
 
-export type ReportStatus = 'loading' | 'success' | 'error';
+export type ReportStatus = 'loading' | 'success' | 'error' | 'empty';
 
 // ─── Data processing ──────────────────────────────────────────────────────────
 

@@ -116,6 +116,32 @@ export function getDynamicMonths(): string[] {
 /** Dynamically generated from Jan 2024 to the current calendar month — no manual updates needed. */
 export const AVAILABLE_MONTHS = getDynamicMonths();
 
+/**
+ * Walk `months` newest-first and return the most recent one that actually has
+ * data, according to the injected `hasData` probe. Returns `null` if none of
+ * the probed months (capped at `maxProbes`, newest-first) have data.
+ *
+ * Why this exists: `getDynamicMonths()` extends to the *current* calendar
+ * month, so on the first days of a new month the daily report would otherwise
+ * default to a month with no rows yet and surface a scary "Failed to Load"
+ * error. This lets callers default to the latest *populated* month instead.
+ *
+ * Pure with respect to the injected probe (no network/DB dependency here), so
+ * it is unit-testable in isolation. `months` is expected oldest → newest, the
+ * shape `getDynamicMonths()` returns.
+ */
+export async function findLatestMonthWithData(
+  months: string[],
+  hasData: (month: string) => Promise<boolean>,
+  maxProbes = 18,
+): Promise<string | null> {
+  const latestFirst = [...months].reverse().slice(0, maxProbes);
+  for (const month of latestFirst) {
+    if (await hasData(month)) return month;
+  }
+  return null;
+}
+
 export const TYPE_CATEGORIES: Record<string, string[]> = {
   Commercial: ['Retail', 'Building'],
   Residential: ['Residential (Villa)', 'Residential (Apart)', 'D_Building_Bulk', 'D_Building_Common', 'Un-Sold'],

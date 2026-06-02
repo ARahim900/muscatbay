@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
-import { getDynamicMonths } from "@/lib/water-data";
+import { getDynamicMonths, findLatestMonthWithData } from "@/lib/water-data";
 import { ZONE_BULK_CONFIG } from "@/lib/water-accounts";
 import { getSupabaseClient } from "@/lib/supabase";
 import { DAILY_WATER_CONSUMPTION_SELECT_COLUMNS, type SupabaseDailyWaterConsumption } from "@/entities/water";
@@ -26,7 +26,7 @@ import {
 import { ZoneAnalyticsPanel } from "./daily-report/inline-zone-analytics";
 import { ZoneL3Table } from "./daily-report/inline-zone-l3-table";
 import { DCAnalyticsPanel, DCDailyTable } from "./daily-report/inline-dc-panel";
-import { LoadingState, ErrorState } from "./daily-report/inline-states";
+import { LoadingState, ErrorState, EmptyState } from "./daily-report/inline-states";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -79,15 +79,43 @@ export function DailyWaterReport() {
     const [lastFetched, setLastFetched] = useState<Date | null>(null);
     const [activeView, setActiveView] = useState<string>(ZONE_BULK_CONFIG[0].zoneName);
 
-    // ── Apply "yesterday" defaults on client mount ────────────────────────────
-    // Runs once on the client so `new Date()` reflects the user's local time,
-    // not the server's UTC time. Guaranteed to land on (today − 1 day).
-    useEffect(() => {
-        const m = getDefaultMonth();
-        setSelectedMonth(m);
-        setSelectedDay(getDefaultDay(m));
-        setDefaultsApplied(true);
+    // ── Cheap existence probe: does a month have any rows? (HEAD count, no data)
+    const monthHasData = useCallback(async (month: string): Promise<boolean> => {
+        const client = getSupabaseClient();
+        if (!client) return false;
+        const { count, error } = await client
+            .from('water_daily_consumption')
+            .select('id', { count: 'exact', head: true })
+            .eq('month', month);
+        if (error) throw new Error(error.message);
+        return (count ?? 0) > 0;
     }, []);
+
+    // ── Resolve the default month on client mount ──────────────────────────────
+    // `getDynamicMonths()` extends to the current calendar month, so on the first
+    // days of a new month "yesterday" points at a month with no rows yet → a
+    // scary "Failed to Load" error. Instead, default to the most recent month
+    // that actually has data (falling back to the "yesterday" heuristic only if
+    // the probe errors). Client-only so `new Date()` uses the user's local time.
+    useEffect(() => {
+        let cancelled = false;
+        (async () => {
+            let m: string;
+            try {
+                const latest = await findLatestMonthWithData(getDynamicMonths(), monthHasData);
+                m = latest ?? getDefaultMonth();
+            } catch {
+                // Probe failed (network/DB) — fall back to the calendar default and
+                // let the normal fetch below surface the real error to the user.
+                m = getDefaultMonth();
+            }
+            if (cancelled) return;
+            setSelectedMonth(m);
+            setSelectedDay(getDefaultDay(m));
+            setDefaultsApplied(true);
+        })();
+        return () => { cancelled = true; };
+    }, [monthHasData]);
 
     // ── Build report from cached month rows for any day (no network call) ──────
     const computeReport = useCallback((rows: SupabaseDailyWaterConsumption[], day: number) => {
@@ -119,8 +147,13 @@ export function DailyWaterReport() {
 
             if (!data || data.length === 0) {
                 if (!silent) {
-                    setErrorMsg(`No data found for ${month}. This month may not have been loaded yet.`);
-                    setStatus('error');
+                    // Not a failure — the month simply hasn't been uploaded yet.
+                    // Clear cached rows/report so the recompute effect can't
+                    // resurrect a previous month's data under the empty state.
+                    setMonthData([]);
+                    setReportData(null);
+                    setErrorMsg('');
+                    setStatus('empty');
                 }
                 return;
             }
@@ -301,6 +334,7 @@ export function DailyWaterReport() {
             {/* ─── Content ─────────────────────────────────────────────────── */}
             {status === 'loading' && !reportData && <LoadingState />}
             {status === 'error' && <ErrorState message={errorMsg} onRetry={() => fetchMonth(selectedMonth)} />}
+            {status === 'empty' && <EmptyState month={selectedMonth} onRetry={() => fetchMonth(selectedMonth)} />}
 
             {reportData && (
                 <>

@@ -5,7 +5,7 @@
 
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, WifiOff } from "lucide-react";
+import { RefreshCw, WifiOff, CalendarClock } from "lucide-react";
 
 export function LoadingState() {
     return (
@@ -32,6 +32,7 @@ export function LoadingState() {
     );
 }
 
+/** Genuine fetch/network/database failure — alarm styling is earned here. */
 export function ErrorState({ message, onRetry }: { message: string; onRetry: () => void }) {
     return (
         <div className="flex flex-col items-center justify-center py-16 text-center px-4">
@@ -46,6 +47,31 @@ export function ErrorState({ message, onRetry }: { message: string; onRetry: () 
             </p>
             <Button onClick={onRetry} variant="outline" className="gap-2">
                 <RefreshCw className="h-4 w-4" /> Retry
+            </Button>
+        </div>
+    );
+}
+
+/**
+ * Benign "this month has no readings yet" state — distinct from a real failure.
+ * Calm, info-toned styling (no red alarm, no Wi-Fi/network imagery) so operators
+ * read it as "data not uploaded yet", not "the system is broken".
+ */
+export function EmptyState({ month, onRetry }: { month: string; onRetry: () => void }) {
+    return (
+        <div className="flex flex-col items-center justify-center py-16 text-center px-4">
+            <div className="p-4 rounded-full bg-muted dark:bg-muted/50 mb-4">
+                <CalendarClock className="h-10 w-10 text-muted-foreground" />
+            </div>
+            <h3 className="text-lg font-semibold text-foreground mb-2">
+                No readings yet for {month}
+            </h3>
+            <p className="text-sm text-muted-foreground dark:text-muted-foreground max-w-md mb-6">
+                Daily consumption for this month hasn’t been uploaded yet. Pick an
+                earlier month, or check back once the data has been loaded.
+            </p>
+            <Button onClick={onRetry} variant="outline" className="gap-2">
+                <RefreshCw className="h-4 w-4" /> Check again
             </Button>
         </div>
     );
