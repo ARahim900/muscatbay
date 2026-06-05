@@ -1,0 +1,39 @@
+name: Sync Water Consumption
+
+on:
+  schedule:
+    # 2nd of every month at 01:00 UTC — captures the previous complete month
+    - cron: '0 1 2 * *'
+  workflow_dispatch:
+    inputs:
+      bill_month:
+        description: 'Override bill month as MMYYYY (e.g. 052026). Leave blank for previous month.'
+        required: false
+        default: ''
+
+jobs:
+  sync:
+    name: Grafana → Supabase
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Run sync script
+        env:
+          GRAFANA_URL:         ${{ secrets.GRAFANA_URL }}
+          GRAFANA_USER:        ${{ secrets.GRAFANA_USER }}
+          GRAFANA_PASS:        ${{ secrets.GRAFANA_PASS }}
+          GRAFANA_ORG_ID:      ${{ secrets.GRAFANA_ORG_ID }}
+          GRAFANA_DS_UID:      ${{ secrets.GRAFANA_DS_UID }}
+          SUPABASE_URL:        ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: |
+          python muscatbay/app/scripts/sync_water_consumption.py ${{ github.event.inputs.bill_month }}
