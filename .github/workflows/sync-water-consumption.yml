@@ -1,0 +1,53 @@
+name: Sync Water Consumption
+
+on:
+  # Automatic: 2nd of every month at 01:00 UTC (captures previous complete month)
+  schedule:
+    - cron: '0 1 2 * *'
+
+  # Manual trigger from GitHub UI or mobile app
+  workflow_dispatch:
+    inputs:
+      bill_month:
+        description: >
+          Override bill month as MMYYYY (e.g. 052026 for May 2026).
+          Leave blank to sync the previous complete month.
+        required: false
+        default: ''
+
+jobs:
+  sync:
+    name: Sync Grafana → Supabase
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install requests urllib3
+
+      - name: Run sync script
+        env:
+          GRAFANA_URL:      ${{ secrets.GRAFANA_URL }}
+          GRAFANA_USER:     ${{ secrets.GRAFANA_USER }}
+          GRAFANA_PASS:     ${{ secrets.GRAFANA_PASS }}
+          GRAFANA_ORG_ID:   ${{ secrets.GRAFANA_ORG_ID }}
+          GRAFANA_DS_UID:   ${{ secrets.GRAFANA_DS_UID }}
+          SUPABASE_URL:     ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: |
+          BILL_MONTH="${{ github.event.inputs.bill_month }}"
+          if [ -n "$BILL_MONTH" ]; then
+            echo "Manual override: syncing bill month $BILL_MONTH"
+            python muscatbay/app/scripts/sync_water_consumption.py "$BILL_MONTH"
+          else
+            echo "Syncing previous complete month (automatic)"
+            python muscatbay/app/scripts/sync_water_consumption.py
+          fi
