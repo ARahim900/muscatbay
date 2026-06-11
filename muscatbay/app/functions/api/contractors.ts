@@ -139,6 +139,32 @@ export async function getContractorSummary(): Promise<AmcContractorSummary[]> {
     return data || [];
 }
 
+/**
+ * Count contractors in amc_contractor_summary without fetching any rows.
+ * `head: true` makes Supabase return only the exact counts — no data transfer.
+ * Returns both the total row count and the count of Active-status contractors.
+ */
+export async function getContractorCounts(): Promise<{ total: number; active: number }> {
+    const client = getSupabaseClient();
+    if (!client) return { total: 0, active: 0 };
+
+    const [totalRes, activeRes] = await Promise.all([
+        client.from('amc_contractor_summary').select('id', { count: 'exact', head: true }),
+        client.from('amc_contractor_summary').select('id', { count: 'exact', head: true }).eq('status', 'Active'),
+    ]);
+
+    if (totalRes.error) {
+        console.error('Error counting amc_contractor_summary:', totalRes.error.message);
+        return { total: 0, active: 0 };
+    }
+    if (activeRes.error) {
+        console.error('Error counting active amc_contractor_summary:', activeRes.error.message);
+        return { total: 0, active: 0 };
+    }
+
+    return { total: totalRes.count || 0, active: activeRes.count || 0 };
+}
+
 export async function getContractorDetails(): Promise<AmcContractorDetails[]> {
     const client = getSupabaseClient();
     if (!client) return [];

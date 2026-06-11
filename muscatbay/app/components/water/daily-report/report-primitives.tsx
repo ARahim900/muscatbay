@@ -44,7 +44,7 @@ export function Th({
                     onClick={() => {
                         if (sortKey && sort && onSort) onSort(nextSort(sort, sortKey));
                     }}
-                    className="inline-flex min-h-11 items-center gap-1 rounded-md text-inherit transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/60"
+                    className="inline-flex min-h-11 items-center gap-1 rounded-md text-inherit transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                     {children}
                     <SortIcon active={isSorted} dir={isSorted && sort ? sort.dir : null} />

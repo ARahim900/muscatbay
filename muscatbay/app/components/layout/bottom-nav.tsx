@@ -165,13 +165,13 @@ export function BottomNav() {
         }}
         className="fixed left-0 right-0 z-[95] md:hidden motion-safe:transition-transform motion-safe:duration-200 motion-safe:ease-out"
       >
-        <div className="mx-3 mb-2 rounded-2xl bg-white dark:bg-muted shadow-2xl border border-gray-200 dark:border-border overflow-hidden">
+        <div className="mx-3 mb-2 rounded-2xl bg-card dark:bg-muted shadow-2xl border border-border overflow-hidden">
           {/* Drawer header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-border">
-            <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">More</span>
+          <div className="flex items-center justify-between px-4 py-3 border-b border-border/60 dark:border-border">
+            <span className="text-sm font-semibold text-foreground/80 dark:text-foreground/90">More</span>
             <button
               onClick={() => setDrawerOpen(false)}
-              className="w-11 h-11 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-muted text-muted-foreground transition-colors focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:outline-none"
+              className="w-11 h-11 flex items-center justify-center rounded-full hover:bg-muted dark:hover:bg-muted text-muted-foreground transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
               aria-label="Close menu"
             >
               <X className="w-4 h-4" />
@@ -188,10 +188,10 @@ export function BottomNav() {
                   key={item.id}
                   href={item.href}
                   className={`
-                    flex items-center gap-3 px-4 py-3 transition-colors focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:outline-none
+                    flex items-center gap-3 px-4 py-3 transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none
                     ${active
                       ? 'bg-secondary/10 text-secondary'
-                      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-muted/50'
+                      : 'text-foreground/70 dark:text-foreground/85 hover:bg-muted/60 dark:hover:bg-muted/50'
                     }
                   `}
                 >
@@ -207,7 +207,7 @@ export function BottomNav() {
             {/* Sign Out */}
             <button
               onClick={() => { setDrawerOpen(false); logout(); }}
-              className="w-full flex items-center gap-3 px-4 py-3 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:outline-none"
+              className="w-full flex items-center gap-3 px-4 py-3 text-mb-danger-text hover:bg-mb-danger-light transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             >
               <LogOut className="w-5 h-5 flex-shrink-0" />
               <span className="text-sm font-medium">Sign Out</span>
@@ -219,7 +219,7 @@ export function BottomNav() {
       {/* Bottom navigation bar — inert+aria-hidden when the More drawer is
           open so keyboard users cannot tab into it while the dialog is modal */}
       <nav
-        className="fixed bottom-0 left-0 right-0 z-[100] md:hidden bg-white dark:bg-muted border-t border-gray-200 dark:border-border/80 shadow-[0_-4px_16px_rgba(0,0,0,0.07)] dark:shadow-[0_-2px_10px_rgba(0,0,0,0.3)] bottom-nav-safe"
+        className="fixed bottom-0 left-0 right-0 z-[100] md:hidden bg-card dark:bg-muted border-t border-border dark:border-border/80 shadow-[0_-4px_16px_rgba(0,0,0,0.07)] dark:shadow-[0_-2px_10px_rgba(0,0,0,0.3)] bottom-nav-safe"
         aria-label="Mobile navigation"
         aria-hidden={drawerOpen || undefined}
         inert={drawerOpen}
@@ -233,7 +233,7 @@ export function BottomNav() {
                 key={item.id}
                 href={item.href}
                 className={`
-                  flex flex-col items-center justify-center gap-0.5 flex-1 h-full pt-1.5 pb-1 rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:outline-none
+                  flex flex-col items-center justify-center gap-0.5 flex-1 h-full pt-1.5 pb-1 rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none
                   ${active
                     ? 'text-secondary'
                     : 'text-primary/70 dark:text-muted-foreground hover:text-primary dark:hover:text-foreground'
@@ -256,7 +256,7 @@ export function BottomNav() {
             ref={moreButtonRef}
             onClick={() => setDrawerOpen(prev => !prev)}
             className={`
-              flex flex-col items-center justify-center gap-0.5 flex-1 h-full pt-1.5 pb-1 rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:outline-none
+              flex flex-col items-center justify-center gap-0.5 flex-1 h-full pt-1.5 pb-1 rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none
               ${drawerOpen || isOverflowActive
                 ? 'text-secondary'
                 : 'text-primary/70 dark:text-muted-foreground hover:text-primary dark:hover:text-foreground'

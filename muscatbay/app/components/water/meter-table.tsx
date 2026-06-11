@@ -96,7 +96,7 @@ function Th({
                     onClick={() => {
                         if (sortKey && sort && onSort) onSort(nextSort(sort, sortKey));
                     }}
-                    className="inline-flex min-h-11 items-center gap-1 rounded-md text-inherit transition-colors hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/60 dark:hover:text-muted-foreground/70"
+                    className="inline-flex min-h-11 items-center gap-1 rounded-md text-inherit transition-colors hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:hover:text-muted-foreground/70"
                 >
                     {children}
                     <SortIcon active={isSorted} dir={isSorted && sort ? sort.dir : null} />
@@ -531,7 +531,7 @@ export function MeterTable({ meters, months, pageSize = 15 }: MeterTableProps) {
                 role="region"
                 aria-label="L3 meter readings. Scroll horizontally to view all months."
                 tabIndex={0}
-                className="ops-table-shell relative -mx-4 hidden scroll-hint-x focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary focus-visible:ring-offset-2 sm:-mx-5 md:-mx-6 md:block"
+                className="ops-table-shell relative -mx-4 hidden scroll-hint-x focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:-mx-5 md:-mx-6 md:block"
             >
                 <table
                     className="ops-table"

@@ -161,7 +161,7 @@ export default function DashboardPage() {
                         onClick={() => window.print()}
                         aria-label="Print or save as PDF"
                         title="Print / Save as PDF"
-                        className="inline-flex items-center justify-center gap-1.5 min-h-11 min-w-11 sm:min-h-0 sm:min-w-0 px-2 sm:px-3 sm:py-1.5 text-xs font-medium rounded-md border border-border text-muted-foreground hover:bg-muted hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/60"
+                        className="inline-flex items-center justify-center gap-1.5 min-h-11 min-w-11 sm:min-h-0 sm:min-w-0 px-2 sm:px-3 sm:py-1.5 text-xs font-medium rounded-md border border-border text-muted-foreground hover:bg-muted hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
                         <Printer className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
                         <span className="hidden sm:inline">Print</span>
@@ -190,7 +190,7 @@ export default function DashboardPage() {
                                         key={filter}
                                         onClick={() => handleFilterClick(filter)}
                                         aria-pressed={activityFilter === filter}
-                                        className={`px-3 py-2.5 min-h-[44px] text-xs font-medium rounded-md transition-colors capitalize focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/60 ${activityFilter === filter
+                                        className={`px-3 py-2.5 min-h-[44px] text-xs font-medium rounded-md transition-colors capitalize focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${activityFilter === filter
                                             ? filter === 'critical' ? 'bg-destructive text-primary-foreground'
                                                 : filter === 'warning' ? 'bg-mb-warning text-primary-foreground'
                                                     : filter === 'info' ? 'bg-mb-info text-primary-foreground'
@@ -229,7 +229,7 @@ export default function DashboardPage() {
                                         </>
                                     );
 
-                                    const itemClassName = "flex items-center gap-3 p-3 rounded-lg bg-muted/60 border border-border hover:bg-card hover:border-border/80 group/activity motion-safe:hover:-translate-y-0.5 transition-[background-color,border-color,transform] duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/60";
+                                    const itemClassName = "flex items-center gap-3 p-3 rounded-lg bg-muted/60 border border-border hover:bg-card hover:border-border/80 group/activity motion-safe:hover:-translate-y-0.5 transition-[background-color,border-color,transform] duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 
                                     return activityHref ? (
                                         <Link
@@ -254,7 +254,7 @@ export default function DashboardPage() {
                                     </p>
                                     <button
                                         onClick={() => setActivityFilter('all')}
-                                        className="text-xs text-secondary hover:underline font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/60 rounded"
+                                        className="text-xs text-secondary hover:underline font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
                                     >
                                         Show all updates
                                     </button>

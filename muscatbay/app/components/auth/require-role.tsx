@@ -54,7 +54,7 @@ export function RequireRole({ module, children }: RequireRoleProps) {
                 </div>
                 <button
                     onClick={() => router.push("/")}
-                    className="px-4 py-2 text-sm bg-primary text-primary-foreground rounded-md hover:bg-primary/80 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/60"
+                    className="px-4 py-2 text-sm bg-primary text-primary-foreground rounded-md hover:bg-primary/80 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                     Go to dashboard now
                 </button>

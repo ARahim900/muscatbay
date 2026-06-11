@@ -31,6 +31,7 @@ import {
     TableToolbar, StatusBadge, SortableTableHead, type PageSizeOption
 } from "@/components/shared/data-table";
 import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
+import { useVirtualTableRows } from "@/hooks/useVirtualTableRows";
 import { PageStatusBar } from "@/components/shared/page-status-bar";
 
 // ─── Yearly cost matrix helpers ──────────────────────────────────────────────
@@ -240,6 +241,12 @@ export default function ContractorsPage() {
     const startIdx = (currentPage - 1) * effectivePageSize;
     const paginatedContracts = filteredContracts.slice(startIdx, startIdx + effectivePageSize);
 
+    // Window-scroll row virtualization (spacer-row technique) — kicks in past 100 rows
+    const contractsVirtual = useVirtualTableRows({
+        count: paginatedContracts.length,
+        enabled: paginatedContracts.length > 100,
+    });
+
     // ── Tracker tab: derived data ────────────────────────────────────────────
     const uniqueStatuses = useMemo(() =>
         [...new Set(trackerData.map(c => c.Status).filter(Boolean))] as string[],
@@ -300,6 +307,12 @@ export default function ContractorsPage() {
     const trackerTotalPages = Math.ceil(filteredTracker.length / (trackerEffPageSize || 1));
     const trackerStartIdx = (trackerPage - 1) * trackerEffPageSize;
     const paginatedTracker = filteredTracker.slice(trackerStartIdx, trackerStartIdx + trackerEffPageSize);
+
+    // Same treatment for the tracker table — virtualize past 100 rows
+    const trackerVirtual = useVirtualTableRows({
+        count: paginatedTracker.length,
+        enabled: paginatedTracker.length > 100,
+    });
 
     // ── Yearly matrix ────────────────────────────────────────────────────────
     const matrix = useMemo(() => buildYearlyMatrix(yearlyCosts), [yearlyCosts]);
@@ -589,16 +602,24 @@ export default function ContractorsPage() {
                                     <TableHead scope="col" className="text-center w-16">Doc</TableHead>
                                 </TableRow>
                             </TableHeader>
-                            <TableBody>
-                                {paginatedContracts.map(c => (
+                            <TableBody ref={contractsVirtual.bodyRef}>
+                                {/* Spacer row — keeps virtualized rows at their true scroll offset */}
+                                {contractsVirtual.paddingTop > 0 && (
+                                    <tr aria-hidden="true">
+                                        <td colSpan={9} style={{ height: contractsVirtual.paddingTop, padding: 0, border: 0 }} />
+                                    </tr>
+                                )}
+                                {contractsVirtual.virtualItems.map(vi => {
+                                    const c = paginatedContracts[vi.index];
+                                    return (
                                     <TableRow key={c.id}>
                                         <TableCell className="text-muted-foreground">{c.id}</TableCell>
                                         <TableCell className="text-foreground dark:text-muted-foreground">
-                                            {c.contractor}
+                                            <span className="block max-w-[180px] truncate" title={c.contractor}>{c.contractor}</span>
                                             {c.note && <p className="text-xs text-muted-foreground mt-0.5 max-w-[200px] truncate" title={c.note}>{c.note}</p>}
                                         </TableCell>
-                                        <TableCell className="text-muted-foreground hidden lg:table-cell meter">{c.contract_ref || '-'}</TableCell>
-                                        <TableCell className="text-muted-foreground dark:text-muted-foreground">{c.service || '-'}</TableCell>
+                                        <TableCell className="text-muted-foreground hidden lg:table-cell meter max-w-[180px] truncate" title={c.contract_ref || ''}>{c.contract_ref || '-'}</TableCell>
+                                        <TableCell className="text-muted-foreground dark:text-muted-foreground max-w-[180px] truncate" title={c.service || ''}>{c.service || '-'}</TableCell>
                                         <TableCell>
                                             <StatusBadge label={c.flow} color={getFlowDotColor(c.flow)} />
                                         </TableCell>
@@ -623,7 +644,13 @@ export default function ContractorsPage() {
                                             </button>
                                         </TableCell>
                                     </TableRow>
-                                ))}
+                                    );
+                                })}
+                                {contractsVirtual.paddingBottom > 0 && (
+                                    <tr aria-hidden="true">
+                                        <td colSpan={9} style={{ height: contractsVirtual.paddingBottom, padding: 0, border: 0 }} />
+                                    </tr>
+                                )}
                                 {filteredContracts.length === 0 && (
                                     <TableRow>
                                         <TableCell colSpan={9}>
@@ -866,11 +893,19 @@ export default function ContractorsPage() {
                                     <TableHead className="hidden xl:table-cell">Note</TableHead>
                                 </TableRow>
                             </TableHeader>
-                            <TableBody>
-                                {paginatedTracker.map(c => (
+                            <TableBody ref={trackerVirtual.bodyRef}>
+                                {/* Spacer row — keeps virtualized rows at their true scroll offset */}
+                                {trackerVirtual.paddingTop > 0 && (
+                                    <tr aria-hidden="true">
+                                        <td colSpan={10} style={{ height: trackerVirtual.paddingTop, padding: 0, border: 0 }} />
+                                    </tr>
+                                )}
+                                {trackerVirtual.virtualItems.map(vi => {
+                                    const c = paginatedTracker[vi.index];
+                                    return (
                                     <TableRow key={`${c.Contractor ?? ''}--${c["Service Provided"] ?? ''}`}>
-                                        <TableCell className="text-foreground dark:text-muted-foreground">{c.Contractor || '-'}</TableCell>
-                                        <TableCell className="text-muted-foreground dark:text-muted-foreground">{c["Service Provided"] || '-'}</TableCell>
+                                        <TableCell className="text-foreground dark:text-muted-foreground max-w-[180px] truncate" title={c.Contractor || ''}>{c.Contractor || '-'}</TableCell>
+                                        <TableCell className="text-muted-foreground dark:text-muted-foreground max-w-[180px] truncate" title={c["Service Provided"] || ''}>{c["Service Provided"] || '-'}</TableCell>
                                         <TableCell><StatusBadge label={c.Status || 'N/A'} color={getStatusDotColor(c.Status)} /></TableCell>
                                         <TableCell className="text-muted-foreground">{c["Contract Type"] || '-'}</TableCell>
                                         <TableCell className="text-muted-foreground hidden lg:table-cell">
@@ -899,7 +934,13 @@ export default function ContractorsPage() {
                                         </TableCell>
                                         <TableCell className="text-muted-foreground max-w-[200px] truncate hidden xl:table-cell" title={c.Note || ''}>{c.Note || '-'}</TableCell>
                                     </TableRow>
-                                ))}
+                                    );
+                                })}
+                                {trackerVirtual.paddingBottom > 0 && (
+                                    <tr aria-hidden="true">
+                                        <td colSpan={10} style={{ height: trackerVirtual.paddingBottom, padding: 0, border: 0 }} />
+                                    </tr>
+                                )}
                                 {filteredTracker.length === 0 && (
                                     <TableRow>
                                         <TableCell colSpan={10}>

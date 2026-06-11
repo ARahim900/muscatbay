@@ -5,12 +5,11 @@ import type { STPOperation, MeterReading } from "@/lib/mock-data";
 import { getWaterSystemData, getElectricityMeters, getSTPOperations, getContractors, getAssets } from "@/lib/mock-data";
 import {
     getSTPOperationsFromSupabase,
-    getContractorSummary,
-    getAssetsFromSupabase,
     getElectricityMetersFromSupabase,
     getWaterMetersFromSupabase,
     isSupabaseConfigured
 } from "@/lib/supabase";
+import { getContractorCounts, getAssetsCountFromSupabase } from "@/functions";
 import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
 import type { WaterMeter } from "@/lib/water-data";
 
@@ -39,6 +38,18 @@ export interface RecentActivityItem {
     description: string;
     type: 'critical' | 'warning' | 'info';
 }
+
+// Tables the dashboard reacts to in realtime — all share ONE Supabase channel.
+// Module-level constant keeps the array reference stable across renders.
+const DASHBOARD_REALTIME_TABLES = [
+    'stp_operations',
+    'Water System',
+    'electricity_readings',
+    'Contractor_Tracker',
+    // Must match the table the asset queries actually read (the assets page
+    // subscribes to the same one) — 'assets_register' never fired.
+    'master_assets_register',
+];
 
 // Sort month keys like 'Jan-25', 'Feb-26' chronologically
 const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -102,8 +113,8 @@ export function useDashboardData() {
                 const [stpResult, elecResult, contractorsResult, assetsResult, waterResult] = await Promise.allSettled([
                     getSTPOperationsFromSupabase(),
                     getElectricityMetersFromSupabase(),
-                    getContractorSummary(),
-                    getAssetsFromSupabase(1, 1, ''),
+                    getContractorCounts(),
+                    getAssetsCountFromSupabase(),
                     getWaterMetersFromSupabase()
                 ]);
 
@@ -121,15 +132,16 @@ export function useDashboardData() {
                     console.warn("Electricity fetch from Supabase failed, using mock");
                 }
 
-                if (contractorsResult.status === 'fulfilled' && contractorsResult.value.length > 0) {
-                    contractorsCount = contractorsResult.value.filter(c => c.status === "Active").length;
+                // Count-only queries (head: true) — no rows are transferred
+                if (contractorsResult.status === 'fulfilled' && contractorsResult.value.total > 0) {
+                    contractorsCount = contractorsResult.value.active;
                     liveDataFetched = true;
                 } else if (contractorsResult.status === 'rejected') {
                     console.warn("Contractors fetch from Supabase failed, using mock");
                 }
 
-                if (assetsResult.status === 'fulfilled' && assetsResult.value.count > 0) {
-                    assetsCount = assetsResult.value.count;
+                if (assetsResult.status === 'fulfilled' && assetsResult.value > 0) {
+                    assetsCount = assetsResult.value;
                     liveDataFetched = true;
                 } else if (assetsResult.status === 'rejected') {
                     console.warn("Assets fetch from Supabase failed, using mock");
@@ -413,11 +425,9 @@ export function useDashboardData() {
         if (refreshTimeoutRef.current) clearTimeout(refreshTimeoutRef.current);
     }, []);
 
-    useSupabaseRealtime({ table: 'stp_operations', channelName: 'dashboard-stp-rt', onChanged: triggerRefresh });
-    useSupabaseRealtime({ table: 'Water System', channelName: 'dashboard-water-rt', onChanged: triggerRefresh });
-    useSupabaseRealtime({ table: 'electricity_readings', channelName: 'dashboard-elec-rt', onChanged: triggerRefresh });
-    useSupabaseRealtime({ table: 'Contractor_Tracker', channelName: 'dashboard-contractors-rt', onChanged: triggerRefresh });
-    useSupabaseRealtime({ table: 'assets_register', channelName: 'dashboard-assets-rt', onChanged: triggerRefresh });
+    // One consolidated realtime channel with a postgres_changes listener per
+    // table — instead of five separate channels (one per table).
+    useSupabaseRealtime({ table: DASHBOARD_REALTIME_TABLES, channelName: 'dashboard-rt', onChanged: triggerRefresh });
 
     return {
         stats,

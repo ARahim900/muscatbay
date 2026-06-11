@@ -22,6 +22,7 @@ import {
 } from "@/components/shared/data-table";
 import { exportToCSV, getDateForFilename } from "@/lib/export-utils";
 import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
+import { useVirtualTableRows } from "@/hooks/useVirtualTableRows";
 import { PageStatusBar } from "@/components/shared/page-status-bar";
 import { sortAssets, type AssetSortField } from "./sort";
 
@@ -330,7 +331,7 @@ export default function AssetsPage() {
                 <button
                     type="button"
                     onClick={() => handleSort(field)}
-                    className={`inline-flex min-h-11 w-full items-center gap-1.5 rounded-md text-inherit transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/60 ${right ? 'justify-end' : ''}`}
+                    className={`inline-flex min-h-11 w-full items-center gap-1.5 rounded-md text-inherit transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${right ? 'justify-end' : ''}`}
                 >
                     {label}
                     <SortIcon field={field} currentSortField={sortField} currentSortDirection={sortDirection} />
@@ -350,6 +351,21 @@ export default function AssetsPage() {
         ? sortAssets(filteredAssets, sortField, sortDirection)
         : filteredAssets;
     const rows = sortedAssets;
+
+    // Window-scroll row virtualization (spacer-row technique) — kicks in when
+    // the 'All' page size pulls more than 100 rows. Only one tab's table is
+    // mounted at a time, so a single hook instance serves every tab.
+    const { bodyRef, virtualItems, paddingTop, paddingBottom } = useVirtualTableRows({
+        count: rows.length,
+        enabled: rows.length > 100,
+    });
+    const spacerRow = (height: number, cols: number) => height > 0 ? (
+        <tr aria-hidden="true"><td colSpan={cols} style={{ height, padding: 0, border: 0 }} /></tr>
+    ) : null;
+    // Zebra striping derives from the row's index in the full list (not DOM
+    // position) so it stays stable when spacer rows shift nth-child parity
+    const rowCls = (i: number) =>
+        `border-b border-border/80 dark:border-border/80 hover:bg-secondary/5 dark:hover:bg-muted/40 transition-colors ${i % 2 === 1 ? 'bg-muted/40 dark:bg-muted/20' : ''}`;
 
     return (
         <div className="space-y-6 sm:space-y-7 md:space-y-8 w-full">
@@ -448,9 +464,11 @@ export default function AssetsPage() {
                                     <Th label="Criticality" field="criticality" />
                                 </tr>
                             </thead>
-                            <tbody aria-busy={loading}>
-                                {loading ? loadingRows(8) : rows.length === 0 ? emptyRow(8) : rows.map(a => (
-                                    <tr key={a.id} className="border-b border-border/80 dark:border-border/80 hover:bg-secondary/5 dark:hover:bg-muted/40 transition-colors even:bg-muted/40 dark:even:bg-muted/20">
+                            <tbody aria-busy={loading} ref={bodyRef}>
+                                {loading ? loadingRows(8) : rows.length === 0 ? emptyRow(8) : <>
+                                    {spacerRow(paddingTop, 8)}
+                                    {virtualItems.map(vi => { const a = rows[vi.index]; return (
+                                    <tr key={a.id} className={rowCls(vi.index)}>
                                         <td className="py-3.5 px-4 font-medium text-foreground dark:text-muted-foreground max-w-[220px]"><span className="line-clamp-2">{a.name}</span></td>
                                         <td className="py-3.5 px-4 font-mono text-xs text-muted-foreground whitespace-nowrap">{a.assetTag || '-'}</td>
                                         <td className="py-3.5 px-4 text-muted-foreground dark:text-muted-foreground">{a.discipline || '-'}</td>
@@ -460,7 +478,9 @@ export default function AssetsPage() {
                                         <td className="py-3.5 px-4"><StatusBadge label={a.status} color={getStatusColor(a.status)} /></td>
                                         <td className="py-3.5 px-4"><CritBadge level={a.criticalityLevel} /></td>
                                     </tr>
-                                ))}
+                                    ); })}
+                                    {spacerRow(paddingBottom, 8)}
+                                </>}
                             </tbody>
                         </table>
                     </div>
@@ -469,7 +489,7 @@ export default function AssetsPage() {
 
                 {/* ── TAB: LIFECYCLE ────────────────────────────────────────────────────── */}
                 {activeTab === 'lifecycle' && (
-                    <div id="panel-lifecycle" role="tabpanel" aria-labelledby="tab-lifecycle" tabIndex={0} className="ops-table-shell focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/60">
+                    <div id="panel-lifecycle" role="tabpanel" aria-labelledby="tab-lifecycle" tabIndex={0} className="ops-table-shell focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                         <div className="md:hidden divide-y divide-border dark:divide-border">
                             {loading ? <div className="p-4 space-y-3">{Array.from({length:6}).map((_,i)=><Skeleton key={i} className="h-20 w-full"/>)}</div>
                             : rows.length === 0 ? <EmptyState variant={hasActiveFilters?"filter-empty":"no-data"} title="No assets" description="Adjust filters." />
@@ -477,7 +497,7 @@ export default function AssetsPage() {
                                 <div key={a.id} className="p-4 space-y-2">
                                     <div className="flex items-center justify-between"><span className="font-mono text-xs text-muted-foreground">{a.assetTag||'-'}</span><CritBadge level={a.criticalityLevel}/></div>
                                     <p className="font-semibold text-sm text-foreground dark:text-muted-foreground">{a.name}</p>
-                                    <div className="grid grid-cols-3 gap-2 text-xs text-muted-foreground">
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs text-muted-foreground">
                                         <span className="flex items-center gap-1"><Calendar className="w-3 h-3"/>Inst: {a.installYear??'-'}</span>
                                         <span className="flex items-center gap-1"><Clock className="w-3 h-3"/>ERL: {fmtYrs(a.erlYears)}</span>
                                         <span>Life: {fmtYrs(a.lifeExpectancyYears)}</span>
@@ -503,9 +523,11 @@ export default function AssetsPage() {
                                     <Th label="Criticality"    field="criticality" />
                                 </tr>
                             </thead>
-                            <tbody aria-busy={loading}>
-                                {loading ? loadingRows(11) : rows.length === 0 ? emptyRow(11) : rows.map(a => (
-                                    <tr key={a.id} className="border-b border-border/80 dark:border-border/80 hover:bg-secondary/5 dark:hover:bg-muted/40 transition-colors even:bg-muted/40 dark:even:bg-muted/20">
+                            <tbody aria-busy={loading} ref={bodyRef}>
+                                {loading ? loadingRows(11) : rows.length === 0 ? emptyRow(11) : <>
+                                    {spacerRow(paddingTop, 11)}
+                                    {virtualItems.map(vi => { const a = rows[vi.index]; return (
+                                    <tr key={a.id} className={rowCls(vi.index)}>
                                         <td className="py-3.5 px-4 font-mono text-xs text-muted-foreground whitespace-nowrap">{a.assetTag||'-'}</td>
                                         <td className="py-3.5 px-4 font-medium text-foreground dark:text-muted-foreground max-w-[200px]"><span className="line-clamp-2">{a.name}</span></td>
                                         <td className="py-3.5 px-4 text-muted-foreground dark:text-muted-foreground text-xs">{a.discipline||'-'}</td>
@@ -518,7 +540,9 @@ export default function AssetsPage() {
                                         <td className="py-3.5 px-4 text-muted-foreground dark:text-muted-foreground text-sm">{a.condition||'-'}</td>
                                         <td className="py-3.5 px-4"><CritBadge level={a.criticalityLevel}/></td>
                                     </tr>
-                                ))}
+                                    ); })}
+                                    {spacerRow(paddingBottom, 11)}
+                                </>}
                             </tbody>
                         </table>
                     </div>
@@ -526,7 +550,7 @@ export default function AssetsPage() {
 
                 {/* ── TAB: MAINTENANCE ─────────────────────────────────────────────────── */}
                 {activeTab === 'maintenance' && (
-                    <div id="panel-maintenance" role="tabpanel" aria-labelledby="tab-maintenance" tabIndex={0} className="ops-table-shell focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/60">
+                    <div id="panel-maintenance" role="tabpanel" aria-labelledby="tab-maintenance" tabIndex={0} className="ops-table-shell focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                         <div className="md:hidden divide-y divide-border dark:divide-border">
                             {loading ? <div className="p-4 space-y-3">{Array.from({length:6}).map((_,i)=><Skeleton key={i} className="h-20 w-full"/>)}</div>
                             : rows.length === 0 ? <EmptyState variant={hasActiveFilters?"filter-empty":"no-data"} title="No assets" description="Adjust filters." />
@@ -558,9 +582,11 @@ export default function AssetsPage() {
                                     <Th label="Maintenance Notes"  />
                                 </tr>
                             </thead>
-                            <tbody aria-busy={loading}>
-                                {loading ? loadingRows(11) : rows.length === 0 ? emptyRow(11) : rows.map(a => (
-                                    <tr key={a.id} className="border-b border-border/80 dark:border-border/80 hover:bg-secondary/5 dark:hover:bg-muted/40 transition-colors even:bg-muted/40 dark:even:bg-muted/20">
+                            <tbody aria-busy={loading} ref={bodyRef}>
+                                {loading ? loadingRows(11) : rows.length === 0 ? emptyRow(11) : <>
+                                    {spacerRow(paddingTop, 11)}
+                                    {virtualItems.map(vi => { const a = rows[vi.index]; return (
+                                    <tr key={a.id} className={rowCls(vi.index)}>
                                         <td className="py-3.5 px-4 font-mono text-xs text-muted-foreground whitespace-nowrap">{a.assetTag||'-'}</td>
                                         <td className="py-3.5 px-4 font-medium text-foreground dark:text-muted-foreground max-w-[200px]"><span className="line-clamp-2">{a.name}</span></td>
                                         <td className="py-3.5 px-4 text-muted-foreground dark:text-muted-foreground text-xs">{a.discipline||'-'}</td>
@@ -573,7 +599,9 @@ export default function AssetsPage() {
                                         <td className="py-3.5 px-4 text-xs text-muted-foreground max-w-[180px]"><span className="line-clamp-2">{a.amcNotes||<span className="text-muted-foreground/70 dark:text-muted-foreground">-</span>}</span></td>
                                         <td className="py-3.5 px-4 text-xs text-muted-foreground max-w-[200px]"><span className="line-clamp-2">{a.maintenanceRequirements||<span className="text-muted-foreground/70 dark:text-muted-foreground">-</span>}</span></td>
                                     </tr>
-                                ))}
+                                    ); })}
+                                    {spacerRow(paddingBottom, 11)}
+                                </>}
                             </tbody>
                         </table>
                     </div>
@@ -581,7 +609,7 @@ export default function AssetsPage() {
 
                 {/* ── TAB: TECHNICAL ───────────────────────────────────────────────────── */}
                 {activeTab === 'technical' && (
-                    <div id="panel-technical" role="tabpanel" aria-labelledby="tab-technical" tabIndex={0} className="ops-table-shell focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/60">
+                    <div id="panel-technical" role="tabpanel" aria-labelledby="tab-technical" tabIndex={0} className="ops-table-shell focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                         <div className="md:hidden divide-y divide-border dark:divide-border">
                             {loading ? <div className="p-4 space-y-3">{Array.from({length:6}).map((_,i)=><Skeleton key={i} className="h-20 w-full"/>)}</div>
                             : rows.length === 0 ? <EmptyState variant={hasActiveFilters?"filter-empty":"no-data"} title="No assets" description="Adjust filters." />
@@ -589,7 +617,7 @@ export default function AssetsPage() {
                                 <div key={a.id} className="p-4 space-y-2">
                                     <span className="font-mono text-xs text-muted-foreground">{a.assetTag||'-'}</span>
                                     <p className="font-semibold text-sm text-foreground dark:text-muted-foreground">{a.name}</p>
-                                    <div className="grid grid-cols-2 gap-1 text-xs text-muted-foreground">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 text-xs text-muted-foreground">
                                         {a.manufacturer && <span>Brand: <span className="font-medium text-foreground dark:text-muted-foreground/70">{a.manufacturer}</span></span>}
                                         {a.model && <span>Model: {a.model}</span>}
                                         {a.countryOfOrigin && <span>Origin: {a.countryOfOrigin}</span>}
@@ -614,9 +642,11 @@ export default function AssetsPage() {
                                     <Th label="Data Source"    />
                                 </tr>
                             </thead>
-                            <tbody aria-busy={loading}>
-                                {loading ? loadingRows(11) : rows.length === 0 ? emptyRow(11) : rows.map(a => (
-                                    <tr key={a.id} className="border-b border-border/80 dark:border-border/80 hover:bg-secondary/5 dark:hover:bg-muted/40 transition-colors even:bg-muted/40 dark:even:bg-muted/20">
+                            <tbody aria-busy={loading} ref={bodyRef}>
+                                {loading ? loadingRows(11) : rows.length === 0 ? emptyRow(11) : <>
+                                    {spacerRow(paddingTop, 11)}
+                                    {virtualItems.map(vi => { const a = rows[vi.index]; return (
+                                    <tr key={a.id} className={rowCls(vi.index)}>
                                         <td className="py-3.5 px-4 font-mono text-xs text-muted-foreground whitespace-nowrap">{a.assetTag||'-'}</td>
                                         <td className="py-3.5 px-4 font-medium text-foreground dark:text-muted-foreground max-w-[200px]"><span className="line-clamp-2">{a.name}</span></td>
                                         <td className="py-3.5 px-4 text-muted-foreground dark:text-muted-foreground text-xs">{a.discipline||'-'}</td>
@@ -629,7 +659,9 @@ export default function AssetsPage() {
                                         <td className="py-3.5 px-4 text-xs text-muted-foreground max-w-[150px]"><span className="truncate block">{a.registrationAuthority||<span className="text-muted-foreground/70 dark:text-muted-foreground">-</span>}</span></td>
                                         <td className="py-3.5 px-4 text-xs text-muted-foreground">{a.dataSource||'-'}</td>
                                     </tr>
-                                ))}
+                                    ); })}
+                                    {spacerRow(paddingBottom, 11)}
+                                </>}
                             </tbody>
                         </table>
                     </div>
@@ -637,7 +669,7 @@ export default function AssetsPage() {
 
                 {/* ── TAB: FINANCIAL ───────────────────────────────────────────────────── */}
                 {activeTab === 'financial' && (
-                    <div id="panel-financial" role="tabpanel" aria-labelledby="tab-financial" tabIndex={0} className="ops-table-shell focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/60">
+                    <div id="panel-financial" role="tabpanel" aria-labelledby="tab-financial" tabIndex={0} className="ops-table-shell focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                         <div className="md:hidden divide-y divide-border dark:divide-border">
                             {loading ? <div className="p-4 space-y-3">{Array.from({length:6}).map((_,i)=><Skeleton key={i} className="h-20 w-full"/>)}</div>
                             : rows.length === 0 ? <EmptyState variant={hasActiveFilters?"filter-empty":"no-data"} title="No assets" description="Adjust filters." />
@@ -668,9 +700,11 @@ export default function AssetsPage() {
                                     <Th label="Notes"               />
                                 </tr>
                             </thead>
-                            <tbody aria-busy={loading}>
-                                {loading ? loadingRows(10) : rows.length === 0 ? emptyRow(10) : rows.map(a => (
-                                    <tr key={a.id} className="border-b border-border/80 dark:border-border/80 hover:bg-secondary/5 dark:hover:bg-muted/40 transition-colors even:bg-muted/40 dark:even:bg-muted/20">
+                            <tbody aria-busy={loading} ref={bodyRef}>
+                                {loading ? loadingRows(10) : rows.length === 0 ? emptyRow(10) : <>
+                                    {spacerRow(paddingTop, 10)}
+                                    {virtualItems.map(vi => { const a = rows[vi.index]; return (
+                                    <tr key={a.id} className={rowCls(vi.index)}>
                                         <td className="py-3.5 px-4 font-mono text-xs text-muted-foreground whitespace-nowrap">{a.assetTag||'-'}</td>
                                         <td className="py-3.5 px-4 font-medium text-foreground dark:text-muted-foreground max-w-[200px]"><span className="line-clamp-2">{a.name}</span></td>
                                         <td className="py-3.5 px-4 text-muted-foreground dark:text-muted-foreground text-xs">{a.discipline||'-'}</td>
@@ -682,7 +716,9 @@ export default function AssetsPage() {
                                         <td className="py-3.5 px-4 text-xs text-muted-foreground">{a.responsibilityOwner||'-'}</td>
                                         <td className="py-3.5 px-4 text-xs text-muted-foreground max-w-[160px]"><span className="truncate block">{a.notes||'-'}</span></td>
                                     </tr>
-                                ))}
+                                    ); })}
+                                    {spacerRow(paddingBottom, 10)}
+                                </>}
                             </tbody>
                         </table>
                     </div>

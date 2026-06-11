@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "verify:skills": "node ../../scripts/verify-skills-lock.mjs",
+    "verify:skills": "node verify-skills.mjs",
     "prebuild": "npm run verify:skills",
     "build": "next build",
     "start": "next start",
