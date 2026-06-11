@@ -9,11 +9,17 @@ import {
 import { WaterMeter, getConsumption } from '@/lib/water-data';
 import { cn } from '@/lib/utils';
 import { MultiSelectDropdown, SortIcon, TablePagination, TableToolbar } from '@/components/shared/data-table';
+import { useVirtualTableRows } from '@/hooks/useVirtualTableRows';
 
 interface WaterDatabaseTableProps {
     meters: WaterMeter[];
     months: string[];
 }
+
+// Unified body row model — flat and grouped modes share one virtualizable list
+type TableRowModel =
+    | { kind: 'group-header'; zone: string; meterCount: number }
+    | { kind: 'meter'; meter: WaterMeter };
 
 // Zone border colors — sourced from --chart-zone-* tokens in globals.css
 // (categorical, theme-aware, retired the indigo/pink Tailwind utilities)
@@ -298,7 +304,30 @@ export function WaterDatabaseTable({ meters, months }: WaterDatabaseTableProps) 
     const effectivePageSize = pageSize === 'All' ? filteredMeters.length : pageSize;
     const totalPages = Math.ceil(filteredMeters.length / effectivePageSize);
     const startIndex = (currentPage - 1) * effectivePageSize;
-    const paginatedMeters = filteredMeters.slice(startIndex, startIndex + effectivePageSize);
+    const paginatedMeters = useMemo(
+        () => filteredMeters.slice(startIndex, startIndex + effectivePageSize),
+        [filteredMeters, startIndex, effectivePageSize]
+    );
+
+    // Flatten grouped/flat modes into one row list so both can be virtualized.
+    // Grouped mode renders ALL rows (no pagination), so large zones rely on this.
+    const bodyRows = useMemo<TableRowModel[]>(() => {
+        if (groupByZone && groupedMeters) {
+            const rows: TableRowModel[] = [];
+            groupedMeters.forEach(group => {
+                rows.push({ kind: 'group-header', zone: group.zone, meterCount: group.meters.length });
+                group.meters.forEach(meter => rows.push({ kind: 'meter', meter }));
+            });
+            return rows;
+        }
+        return paginatedMeters.map(meter => ({ kind: 'meter', meter }));
+    }, [groupByZone, groupedMeters, paginatedMeters]);
+
+    // Window-scroll virtualization with spacer rows — only above 100 rows
+    const { bodyRef, virtualItems, paddingTop, paddingBottom } = useVirtualTableRows({
+        count: bodyRows.length,
+        enabled: bodyRows.length > 100,
+    });
 
     // Reset page when filters change
     const handleFilterChange = useCallback(() => {
@@ -356,8 +385,9 @@ export function WaterDatabaseTable({ meters, months }: WaterDatabaseTableProps) 
         selectedZones.length < ALL_ZONES.length ||
         (selectedTypes.length > 0 && selectedTypes.length < allTypes.length);
 
-    // Render table row
-    const renderRow = (meter: WaterMeter) => {
+    // Render table row — zebra striping derives from the row's index in the
+    // full body list (not DOM position) so it stays stable under virtualization
+    const renderRow = (meter: WaterMeter, rowIndex: number) => {
         const zoneBorder = ZONE_BORDER_VAR[meter.zone] || ZONE_BORDER_VAR['N/A'];
         const levelStyle = LEVEL_STYLES[meter.level] || 'bg-muted text-foreground';
 
@@ -366,7 +396,8 @@ export function WaterDatabaseTable({ meters, months }: WaterDatabaseTableProps) 
                 key={meter.accountNumber}
                 style={{ borderLeftColor: zoneBorder }}
                 className={cn(
-                    "border-b border-border/80 dark:border-border/80 hover:bg-secondary/5 dark:hover:bg-muted/40 transition-colors even:bg-muted/40 dark:even:bg-muted/20",
+                    "border-b border-border/80 dark:border-border/80 hover:bg-secondary/5 dark:hover:bg-muted/40 transition-colors",
+                    rowIndex % 2 === 1 && "bg-muted/40 dark:bg-muted/20",
                     "border-l-2"
                 )}
             >
@@ -551,7 +582,7 @@ export function WaterDatabaseTable({ meters, months }: WaterDatabaseTableProps) 
                 role="region"
                 aria-label="Water meter consumption table. Scroll horizontally to view more months."
                 tabIndex={0}
-                className="ops-table-shell scroll-hint-x focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary focus-visible:ring-offset-2"
+                className="ops-table-shell scroll-hint-x focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
                 <table className="ops-table">
                     <thead className="sticky top-0 z-30">
@@ -610,30 +641,39 @@ export function WaterDatabaseTable({ meters, months }: WaterDatabaseTableProps) 
                             ))}
                         </tr>
                     </thead>
-                    <tbody>
-                        {groupByZone && groupedMeters ? (
-                            groupedMeters.map(group => (
-                                <React.Fragment key={group.zone}>
-                                    {/* Group Header */}
-                                    <tr className={cn("border-b border-border", ZONE_BG_COLORS[group.zone] || ZONE_BG_COLORS['N/A'])}>
+                    <tbody ref={bodyRef}>
+                        {/* Spacer row — keeps virtualized rows at their true scroll offset */}
+                        {paddingTop > 0 && (
+                            <tr aria-hidden="true">
+                                <td colSpan={6 + visibleMonths.length} style={{ height: paddingTop, padding: 0, border: 0 }} />
+                            </tr>
+                        )}
+                        {virtualItems.map(vi => {
+                            const row = bodyRows[vi.index];
+                            if (row.kind === 'group-header') {
+                                return (
+                                    /* Group Header */
+                                    <tr key={`group-${row.zone}`} className={cn("border-b border-border", ZONE_BG_COLORS[row.zone] || ZONE_BG_COLORS['N/A'])}>
                                         <td colSpan={6 + visibleMonths.length} className="py-2.5 px-4">
                                             <div className="flex items-center gap-3">
                                                 <ChevronRight className="w-4 h-4 text-muted-foreground" />
                                                 <span className="font-semibold text-foreground/80">
-                                                    {ZONE_NAMES[group.zone] || group.zone}
+                                                    {ZONE_NAMES[row.zone] || row.zone}
                                                 </span>
                                                 <span className="px-2 py-0.5 rounded-full text-sm bg-border dark:bg-muted text-muted-foreground">
-                                                    {group.meters.length} meter{group.meters.length !== 1 ? 's' : ''}
+                                                    {row.meterCount} meter{row.meterCount !== 1 ? 's' : ''}
                                                 </span>
                                             </div>
                                         </td>
                                     </tr>
-                                    {/* Group Rows */}
-                                    {group.meters.map((meter) => renderRow(meter))}
-                                </React.Fragment>
-                            ))
-                        ) : (
-                            paginatedMeters.map((meter) => renderRow(meter))
+                                );
+                            }
+                            return renderRow(row.meter, vi.index);
+                        })}
+                        {paddingBottom > 0 && (
+                            <tr aria-hidden="true">
+                                <td colSpan={6 + visibleMonths.length} style={{ height: paddingBottom, padding: 0, border: 0 }} />
+                            </tr>
                         )}
 
                         {filteredMeters.length === 0 && (

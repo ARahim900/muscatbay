@@ -18,18 +18,18 @@ interface FindingsTabProps {
 
 function getPriorityColor(priority: string) {
   const p = priority?.toLowerCase() || "";
-  if (p === "critical") return "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400";
-  if (p === "high") return "bg-orange-50 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400";
-  if (p === "medium") return "bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400";
+  if (p === "critical") return "bg-mb-danger-light text-mb-danger-text";
+  if (p === "high") return "bg-mb-stale-light text-mb-stale-text";
+  if (p === "medium") return "bg-mb-warning-light text-mb-warning-text";
   return "bg-muted text-muted-foreground dark:bg-muted dark:text-muted-foreground";
 }
 
 function getStatusColor(status: string) {
   const s = status?.toLowerCase() || "";
-  if (s === "closed") return "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400";
-  if (s.includes("awaiting")) return "bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400";
-  if (s === "open") return "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400";
-  if (s === "quoted") return "bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400";
+  if (s === "closed") return "bg-mb-success-light text-mb-success-text";
+  if (s.includes("awaiting")) return "bg-mb-warning-light text-mb-warning-text";
+  if (s === "open") return "bg-mb-danger-light text-mb-danger-text";
+  if (s === "quoted") return "bg-mb-info-light text-mb-info-text";
   return "bg-muted text-muted-foreground dark:bg-muted dark:text-muted-foreground";
 }
 
@@ -143,7 +143,7 @@ export function FindingsTab({ findings }: FindingsTabProps) {
             placeholder="Search findings..."
             value={search}
             onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
-            className="pl-10 pr-4 py-2 w-full rounded-lg border border-border/80 dark:border-border/80 bg-white dark:bg-muted text-foreground dark:text-muted-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40 shadow-sm"
+            className="pl-10 pr-4 py-2 w-full rounded-lg border border-border/80 dark:border-border/80 bg-card text-foreground dark:text-muted-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40 shadow-sm"
           />
         </div>
         <MultiSelectDropdown label="Building" options={uniqueBuildings} selected={selectedBuildings} onChange={(s) => { setSelectedBuildings(s); setCurrentPage(1); }} />
@@ -168,12 +168,12 @@ export function FindingsTab({ findings }: FindingsTabProps) {
       {/* Mobile Cards */}
       <div className="md:hidden space-y-3">
         {paginated.map((f, i) => (
-          <div key={f.id || i} className="rounded-xl border border-border dark:border-border bg-white dark:bg-muted p-4 space-y-2">
+          <div key={f.id || i} className="rounded-xl border border-border dark:border-border bg-card p-4 space-y-2">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
                 <p className="font-semibold text-sm text-foreground dark:text-muted-foreground flex items-center gap-1">
                   {f.finding_code}
-                  {f.is_recurring && <span className="text-amber-500" title="Recurring">↻</span>}
+                  {f.is_recurring && <span className="text-mb-warning" title="Recurring">↻</span>}
                 </p>
                 <p className="text-xs text-muted-foreground dark:text-muted-foreground">{f.building} — {f.equipment_label}</p>
               </div>
@@ -187,12 +187,12 @@ export function FindingsTab({ findings }: FindingsTabProps) {
                 {f.status}
               </span>
               <span className="text-[10px] text-muted-foreground">{f.fiscal_year} · {f.ppm_visit}</span>
-              {f.quotation_ref && <span className="text-[10px] text-blue-500">{f.quotation_ref}</span>}
+              {f.quotation_ref && <span className="text-[10px] text-mb-info">{f.quotation_ref}</span>}
             </div>
           </div>
         ))}
         {filtered.length === 0 && (
-          <div className="py-12 text-center text-muted-foreground dark:text-muted-foreground bg-white dark:bg-muted rounded-xl border border-border dark:border-border">
+          <div className="py-12 text-center text-muted-foreground dark:text-muted-foreground bg-card rounded-xl border border-border dark:border-border">
             <AlertCircle className="h-8 w-8 mx-auto mb-2" />
             <p>No findings match your filters.</p>
           </div>
@@ -223,7 +223,7 @@ export function FindingsTab({ findings }: FindingsTabProps) {
               <TableRow key={f.id || i}>
                 <TableCell className="font-semibold text-foreground dark:text-muted-foreground whitespace-nowrap">
                   {f.finding_code}
-                  {f.is_recurring && <span className="ml-1 text-amber-500" title="Recurring issue">↻</span>}
+                  {f.is_recurring && <span className="ml-1 text-mb-warning" title="Recurring issue">↻</span>}
                 </TableCell>
                 <TableCell className="text-muted-foreground dark:text-muted-foreground text-sm">{f.building}</TableCell>
                 <TableCell className="text-muted-foreground dark:text-muted-foreground text-sm max-w-[150px] truncate" title={f.equipment_label}>{f.equipment_label}</TableCell>
@@ -237,7 +237,7 @@ export function FindingsTab({ findings }: FindingsTabProps) {
                 <TableCell>
                   <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${getStatusColor(f.status)}`}>{f.status}</span>
                 </TableCell>
-                <TableCell className="font-semibold text-sm text-blue-600 dark:text-blue-400">{f.quotation_ref || "—"}</TableCell>
+                <TableCell className="font-semibold text-sm text-mb-info">{f.quotation_ref || "—"}</TableCell>
               </TableRow>
             ))}
             {filtered.length === 0 && (

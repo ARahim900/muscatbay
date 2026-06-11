@@ -357,7 +357,7 @@ function DCDailyTable({ monthData }: { monthData: SupabaseDailyWaterConsumption[
                     role="region"
                     aria-label="Direct connection daily readings. Scroll horizontally to view all days."
                     tabIndex={0}
-                    className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary focus-visible:ring-offset-2"
+                    className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                     style={{ minWidth: `${420 + days.length * 72}px` }}
                     data-density="compact"
                 >

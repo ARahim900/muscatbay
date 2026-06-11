@@ -125,7 +125,7 @@ export default function SignUpPage() {
         return (
             <div className="min-h-screen flex items-center justify-center bg-background p-4">
                 <Card className="w-full max-w-md card-elevated">
-                    <CardContent className="pt-8 pb-8 text-center">
+                    <CardContent role="status" aria-live="polite" className="pt-8 pb-8 text-center">
                         <div className="w-16 h-16 bg-mb-success-light rounded-full flex items-center justify-center mx-auto mb-4">
                             <CheckCircle2 className="w-8 h-8 text-mb-success-text" />
                         </div>
@@ -181,13 +181,13 @@ export default function SignUpPage() {
                     <form onSubmit={handleSubmit}>
                         <CardContent className="space-y-4">
                             {error && (
-                                <div className="p-3 text-sm text-mb-danger-text bg-mb-danger-light rounded-lg border border-mb-danger/20">
+                                <div role="alert" className="p-3 text-sm text-mb-danger-text bg-mb-danger-light rounded-lg border border-mb-danger/20">
                                     {error}
                                 </div>
                             )}
 
                             <div className="space-y-2">
-                                <Label htmlFor="fullName">Full Name</Label>
+                                <Label htmlFor="fullName">Full Name <span aria-hidden="true" className="text-destructive">*</span></Label>
                                 <div className="relative">
                                     <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                     <Input
@@ -210,7 +210,7 @@ export default function SignUpPage() {
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="email">Email</Label>
+                                <Label htmlFor="email">Email <span aria-hidden="true" className="text-destructive">*</span></Label>
                                 <div className="relative">
                                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                     <Input
@@ -232,7 +232,7 @@ export default function SignUpPage() {
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="password">Password</Label>
+                                <Label htmlFor="password">Password <span aria-hidden="true" className="text-destructive">*</span></Label>
                                 <div className="relative">
                                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                     <Input
@@ -241,6 +241,7 @@ export default function SignUpPage() {
                                         placeholder="Create a password"
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
+                                        aria-describedby={password.length > 0 ? "password-requirements" : undefined}
                                         className="pl-10 pr-10"
                                         required
                                         autoComplete="new-password"
@@ -256,7 +257,7 @@ export default function SignUpPage() {
                                 </div>
                                 {/* Password requirements */}
                                 {password.length > 0 && (
-                                    <div className="space-y-1 mt-2">
+                                    <div id="password-requirements" className="space-y-1 mt-2">
                                         {passwordRequirements.map((req) => (
                                             <div key={req.label} className="flex items-center gap-2 text-xs">
                                                 <div className={`w-1.5 h-1.5 rounded-full ${req.met ? "bg-mb-success" : "bg-border"}`} />
@@ -270,7 +271,7 @@ export default function SignUpPage() {
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                                <Label htmlFor="confirmPassword">Confirm Password <span aria-hidden="true" className="text-destructive">*</span></Label>
                                 <div className="relative">
                                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                     <Input

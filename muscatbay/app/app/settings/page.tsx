@@ -193,7 +193,7 @@ export default function SettingsPage() {
                 <div className="flex-1 space-y-6">
                     {/* Success/Error Messages */}
                     {success && (
-                        <div className="flex items-center gap-2 p-3 text-sm text-mb-success bg-mb-success/10 rounded-lg border border-mb-success/20">
+                        <div role="status" aria-live="polite" className="flex items-center gap-2 p-3 text-sm text-mb-success bg-mb-success/10 rounded-lg border border-mb-success/20">
                             <CheckCircle2 className="h-4 w-4" />
                             Profile updated successfully!
                         </div>

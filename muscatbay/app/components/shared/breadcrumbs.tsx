@@ -79,7 +79,7 @@ export function Breadcrumbs({ items, className = "" }: BreadcrumbsProps) {
                         ) : (
                             <Link
                                 href={item.href}
-                                className="flex items-center gap-1 min-w-0 text-muted-foreground hover:text-primary dark:hover:text-secondary transition-colors focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:outline-none rounded-sm"
+                                className="flex items-center gap-1 min-w-0 text-muted-foreground hover:text-primary dark:hover:text-secondary transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none rounded-sm"
                             >
                                 {index === 0 && <Home className="h-3.5 w-3.5 flex-shrink-0" aria-hidden="true" />}
                                 <span className="truncate">{item.label}</span>

@@ -37,6 +37,10 @@ interface DualRangeSliderProps {
 function DualRangeSlider({ min, max, value, onValueChange, startLabel, endLabel }: DualRangeSliderProps) {
     const trackRef = useRef<HTMLDivElement>(null);
     const draggingRef = useRef<'start' | 'end' | null>(null);
+    // Track rect is captured once on pointerdown instead of per pointermove —
+    // avoids forced layout reads during drag. Stale only if the page scrolls
+    // mid-drag, which a horizontal slider drag doesn't trigger.
+    const dragRectRef = useRef<DOMRect | null>(null);
     // Refs to always read the latest props inside window event listeners.
     // Updated in a layout effect (not during render) so concurrent rendering
     // cannot observe inconsistent values.
@@ -63,10 +67,8 @@ function DualRangeSlider({ min, max, value, onValueChange, startLabel, endLabel 
         const handleMove = (e: PointerEvent) => {
             if (!draggingRef.current) return;
             e.preventDefault();
-            const track = trackRef.current;
-            if (!track) return;
-            const rect = track.getBoundingClientRect();
-            if (rect.width === 0) return;
+            const rect = dragRectRef.current ?? trackRef.current?.getBoundingClientRect() ?? null;
+            if (!rect || rect.width === 0) return;
             const lo = minRef.current;
             const hi = maxRef.current;
             const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
@@ -87,6 +89,7 @@ function DualRangeSlider({ min, max, value, onValueChange, startLabel, endLabel 
                 requestAnimationFrame(() => { justDraggedRef.current = false; });
             }
             draggingRef.current = null;
+            dragRectRef.current = null;
         };
         window.addEventListener('pointermove', handleMove);
         window.addEventListener('pointerup', handleUp);
@@ -100,6 +103,7 @@ function DualRangeSlider({ min, max, value, onValueChange, startLabel, endLabel 
         e.preventDefault();
         e.stopPropagation();
         draggingRef.current = thumb;
+        dragRectRef.current = trackRef.current?.getBoundingClientRect() ?? null;
         justDraggedRef.current = false;
     }, []);
 

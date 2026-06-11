@@ -73,6 +73,23 @@ export async function getAssetsFromSupabase(
     }
 }
 
+/**
+ * Count registered assets without fetching any rows.
+ * `head: true` makes Supabase return only the exact count — no data transfer.
+ */
+export async function getAssetsCountFromSupabase(clientOverride?: SupabaseClient): Promise<number> {
+    const client = clientOverride ?? getSupabaseClient();
+    if (!client) return 0;
+
+    const { count, error } = await client
+        .from(TABLE)
+        .select('asset_uid', { count: 'exact', head: true });
+
+    if (error) throw new Error(`Supabase error: ${error.message}`);
+
+    return count || 0;
+}
+
 export async function getAssetSummaryFromSupabase(clientOverride?: SupabaseClient): Promise<{
     total: number;
     activeFlagged: number;

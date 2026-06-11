@@ -69,7 +69,7 @@ export function ToggleableLegendContent({
                                 "inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium",
                                 "text-foreground/80 hover:bg-muted",
                                 "transition-colors duration-150",
-                                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/50",
+                                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                                 dimmed && "opacity-40"
                             )}
                         >

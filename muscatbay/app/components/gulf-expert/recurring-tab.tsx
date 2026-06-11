@@ -11,7 +11,7 @@ interface RecurringTabProps {
 export function RecurringTab({ issues }: RecurringTabProps) {
   if (issues.length === 0) {
     return (
-      <div className="py-12 text-center text-muted-foreground dark:text-muted-foreground bg-white dark:bg-muted rounded-xl border border-border dark:border-border">
+      <div className="py-12 text-center text-muted-foreground dark:text-muted-foreground bg-card rounded-xl border border-border dark:border-border">
         <RefreshCw className="h-10 w-10 mx-auto mb-3 text-muted-foreground/70" />
         <p>No recurring issues found.</p>
       </div>
@@ -23,7 +23,7 @@ export function RecurringTab({ issues }: RecurringTabProps) {
       {issues.map((issue) => (
         <Card
           key={issue.id}
-          className="bg-white dark:bg-muted rounded-xl border border-border dark:border-border shadow-sm hover:shadow-md motion-safe:hover:-translate-y-0.5 transition-[transform,box-shadow] duration-200"
+          className="bg-card rounded-xl border border-border dark:border-border shadow-sm hover:shadow-md motion-safe:hover:-translate-y-0.5 transition-[transform,box-shadow] duration-200"
         >
           <CardContent className="p-4 sm:p-5">
             <div className="flex items-start gap-4">
@@ -42,8 +42,8 @@ export function RecurringTab({ issues }: RecurringTabProps) {
                   <span
                     className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-medium ${
                       issue.still_open
-                        ? "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-                        : "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                        ? "bg-mb-danger-light text-mb-danger-text"
+                        : "bg-mb-success-light text-mb-success-text"
                     }`}
                   >
                     {issue.still_open ? "Open" : "Closed"}
@@ -61,7 +61,7 @@ export function RecurringTab({ issues }: RecurringTabProps) {
                   {issue.resolved_ppm && (
                     <>
                       <span className="text-muted-foreground/70 dark:text-muted-foreground">|</span>
-                      <span className="text-emerald-600 dark:text-emerald-400">
+                      <span className="text-mb-success">
                         Resolved: {issue.resolved_ppm}
                       </span>
                     </>

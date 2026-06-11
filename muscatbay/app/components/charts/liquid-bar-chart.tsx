@@ -91,7 +91,7 @@ export const LiquidBarChart = memo(function LiquidBarChart({
                         <CartesianGrid
                             strokeDasharray="3 3"
                             vertical={false}
-                            stroke="rgba(0,0,0,0.05)"
+                            stroke="var(--chart-grid)"
                         />
                     )}
                     <XAxis
@@ -112,7 +112,7 @@ export const LiquidBarChart = memo(function LiquidBarChart({
                     />
                     <Tooltip
                         content={<CustomTooltip />}
-                        cursor={{ fill: "rgba(0,0,0,0.04)", radius: 8 }}
+                        cursor={{ fill: "var(--chart-cursor-fill)", radius: 8 }}
                     />
                     {showLegend && <Legend iconType="circle" wrapperStyle={{ paddingTop: 10 }} />}
                     {categories.map((cat, i) => (

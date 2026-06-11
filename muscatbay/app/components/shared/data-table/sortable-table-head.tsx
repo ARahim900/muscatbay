@@ -36,7 +36,7 @@ export function SortableTableHead({
                 type="button"
                 onClick={() => onSort(field)}
                 className={cn(
-                    "inline-flex min-h-11 w-full items-center gap-1.5 rounded-md py-1 text-inherit transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/60",
+                    "inline-flex min-h-11 w-full items-center gap-1.5 rounded-md py-1 text-inherit transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                     align === "right" && "justify-end",
                     align === "center" && "justify-center"
                 )}

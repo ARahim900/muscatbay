@@ -14,14 +14,28 @@
  *   onChanged: () => refetchData(),
  * });
  * ```
+ *
+ * @example
+ * ```tsx
+ * // Multiple tables share ONE channel (one listener per table)
+ * useSupabaseRealtime({
+ *   table: ['stp_operations', 'Water System'],
+ *   channelName: 'dashboard-rt',
+ *   onChanged: () => refetchData(),
+ * });
+ * ```
  */
 
 import { useEffect, useState, useRef } from 'react';
 import { getSupabaseClient } from '@/functions/supabase-client';
 
 export interface UseSupabaseRealtimeOptions {
-    /** The Supabase table name to listen for changes on */
-    table: string;
+    /**
+     * The Supabase table name(s) to listen for changes on.
+     * Pass an array to attach several `postgres_changes` listeners
+     * to a single shared channel instead of one channel per table.
+     */
+    table: string | string[];
     /** Unique channel name — used to avoid duplicate subscriptions */
     channelName: string;
     /** Called whenever an INSERT, UPDATE, or DELETE is received */
@@ -38,7 +52,11 @@ export interface UseSupabaseRealtimeResult {
 }
 
 /**
- * Subscribe to real-time Postgres changes on a Supabase table.
+ * Subscribe to real-time Postgres changes on one or more Supabase tables.
+ *
+ * All tables share a single realtime channel — supabase-js supports
+ * chaining several `.on('postgres_changes', …)` listeners on one channel
+ * before calling `.subscribe()`.
  *
  * The hook automatically cleans up the channel when:
  * - the component unmounts
@@ -62,6 +80,10 @@ export function useSupabaseRealtime({
         onChangedRef.current = onChanged;
     }, [onChanged]);
 
+    // Serialize the table list into a stable key so callers passing a new
+    // array instance with the same contents do not re-subscribe every render.
+    const tablesKey = JSON.stringify(Array.isArray(table) ? table : [table]);
+
     // isLive is external-world state (Supabase subscription status), not
     // derivable from props alone; guard clauses must reset it when
     // prerequisites change.
@@ -74,40 +96,45 @@ export function useSupabaseRealtime({
 
         const client = getSupabaseClient();
         if (!client) {
-             
+
             setIsLive(false);
             return;
         }
 
-        const channelConfig: {
-            event: '*';
-            schema: string;
-            table: string;
-            filter?: string;
-        } = {
-            event: '*',
-            schema: 'public',
-            table,
-        };
+        const tables = JSON.parse(tablesKey) as string[];
 
-        if (filter) {
-            channelConfig.filter = filter;
+        // ONE channel for all tables — one postgres_changes listener per table
+        let channel = client.channel(channelName);
+        for (const tableName of tables) {
+            const channelConfig: {
+                event: '*';
+                schema: string;
+                table: string;
+                filter?: string;
+            } = {
+                event: '*',
+                schema: 'public',
+                table: tableName,
+            };
+
+            if (filter) {
+                channelConfig.filter = filter;
+            }
+
+            channel = channel.on('postgres_changes', channelConfig, () => {
+                onChangedRef.current();
+            });
         }
 
-        const channel = client
-            .channel(channelName)
-            .on('postgres_changes', channelConfig, () => {
-                onChangedRef.current();
-            })
-            .subscribe((status) => {
-                setIsLive(status === 'SUBSCRIBED');
-            });
+        channel.subscribe((status) => {
+            setIsLive(status === 'SUBSCRIBED');
+        });
 
         return () => {
             setIsLive(false);
             client.removeChannel(channel);
         };
-    }, [table, channelName, filter, enabled]);
+    }, [tablesKey, channelName, filter, enabled]);
 
     return { isLive };
 }

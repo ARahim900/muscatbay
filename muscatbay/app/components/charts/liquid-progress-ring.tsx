@@ -68,15 +68,14 @@ export function LiquidProgressRing({
                         </filter>
                     </defs>
 
-                    {/* Background Circle */}
+                    {/* Background Circle — var(--chart-grid) flips with theme, no dark: override needed */}
                     <circle
                         cx={size / 2}
                         cy={size / 2}
                         r={radius}
-                        stroke="rgba(0,0,0,0.05)"
+                        stroke="var(--chart-grid)"
                         strokeWidth={strokeWidth}
                         fill="none"
-                        className="dark:stroke-white/10"
                     />
 
                     {/* Progress Circle with glow */}

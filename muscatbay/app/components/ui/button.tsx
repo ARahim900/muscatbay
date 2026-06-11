@@ -15,16 +15,19 @@ const buttonVariants = cva(
         destructive: "bg-destructive/10 hover:bg-destructive/20 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/20 text-destructive focus-visible:border-destructive/40 dark:hover:bg-destructive/30",
         link: "text-primary underline-offset-4 hover:underline",
       },
+      /* Touch devices (pointer-coarse) get ≥44px targets per WCAG 2.5.5 —
+       * field operators use gloved tablets — while mouse/trackpad keeps the
+       * dense desktop sizing. xs/icon-xs stay desktop-only by contract. */
       size: {
-        default: "h-9 gap-1.5 px-4 rounded-lg has-data-[icon=inline-end]:pr-3 has-data-[icon=inline-start]:pl-3",
+        default: "h-9 pointer-coarse:min-h-11 gap-1.5 px-4 rounded-lg has-data-[icon=inline-end]:pr-3 has-data-[icon=inline-start]:pl-3",
         /** Desktop-only dense controls. 24px height does not meet the 44px touch target spec — do not use in mobile or tablet UI. */
         xs: "h-6 gap-1 rounded-md px-2 text-xs has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3",
-        sm: "h-9 gap-1 rounded-md px-3 has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5",
-        lg: "h-10 gap-1.5 px-5 rounded-lg has-data-[icon=inline-end]:pr-4 has-data-[icon=inline-start]:pl-4",
-        icon: "size-9 rounded-lg",
+        sm: "h-9 pointer-coarse:min-h-11 gap-1 rounded-md px-3 has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5",
+        lg: "h-10 pointer-coarse:min-h-11 gap-1.5 px-5 rounded-lg has-data-[icon=inline-end]:pr-4 has-data-[icon=inline-start]:pl-4",
+        icon: "size-9 pointer-coarse:min-h-11 pointer-coarse:min-w-11 rounded-lg",
         "icon-xs": "size-6 rounded-md [&_svg:not([class*='size-'])]:size-3",
-        "icon-sm": "size-8 rounded-md",
-        "icon-lg": "size-10 rounded-lg",
+        "icon-sm": "size-8 pointer-coarse:min-h-11 pointer-coarse:min-w-11 rounded-md",
+        "icon-lg": "size-10 pointer-coarse:min-h-11 pointer-coarse:min-w-11 rounded-lg",
       },
     },
     defaultVariants: {
