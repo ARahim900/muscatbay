@@ -89,7 +89,7 @@ export default function ResetPasswordPage() {
         return (
             <div className="min-h-screen flex items-center justify-center bg-background p-4">
                 <Card className="w-full max-w-md card-elevated">
-                    <CardContent className="pt-8 pb-8 text-center">
+                    <CardContent role="status" aria-live="polite" className="pt-8 pb-8 text-center">
                         <div className="w-16 h-16 bg-mb-success-light rounded-full flex items-center justify-center mx-auto mb-4">
                             <CheckCircle2 className="w-8 h-8 text-mb-success-text" />
                         </div>
@@ -152,13 +152,13 @@ export default function ResetPasswordPage() {
                     <form onSubmit={handleSubmit}>
                         <CardContent className="space-y-4">
                             {error && (
-                                <div role="alert" className="p-3 text-sm text-mb-danger-text bg-mb-danger-light rounded-lg border border-mb-danger/20">
+                                <div id="reset-error" role="alert" className="p-3 text-sm text-mb-danger-text bg-mb-danger-light rounded-lg border border-mb-danger/20">
                                     {error}
                                 </div>
                             )}
 
                             <div className="space-y-2">
-                                <Label htmlFor="password">New Password</Label>
+                                <Label htmlFor="password">New Password <span aria-hidden="true" className="text-destructive">*</span></Label>
                                 <div className="relative">
                                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                     <Input
@@ -167,6 +167,7 @@ export default function ResetPasswordPage() {
                                         placeholder="Enter new password"
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
+                                        aria-describedby={password.length > 0 ? "password-requirements" : undefined}
                                         className="pl-10 pr-10"
                                         required
                                         autoComplete="new-password"
@@ -182,7 +183,7 @@ export default function ResetPasswordPage() {
                                 </div>
                                 {/* Password requirements */}
                                 {password.length > 0 && (
-                                    <div className="space-y-1 mt-2">
+                                    <div id="password-requirements" className="space-y-1 mt-2">
                                         {passwordRequirements.map((req, index) => (
                                             <div key={index} className="flex items-center gap-2 text-xs">
                                                 <div className={`w-1.5 h-1.5 rounded-full ${req.met ? "bg-mb-success" : "bg-border"}`} />
@@ -196,7 +197,7 @@ export default function ResetPasswordPage() {
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                                <Label htmlFor="confirmPassword">Confirm Password <span aria-hidden="true" className="text-destructive">*</span></Label>
                                 <div className="relative">
                                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                     <Input
@@ -205,6 +206,8 @@ export default function ResetPasswordPage() {
                                         placeholder="Confirm new password"
                                         value={confirmPassword}
                                         onChange={(e) => setConfirmPassword(e.target.value)}
+                                        aria-invalid={error ? true : undefined}
+                                        aria-describedby={error ? "reset-error" : undefined}
                                         className="pl-10"
                                         required
                                         autoComplete="new-password"

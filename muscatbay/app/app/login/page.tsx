@@ -246,7 +246,7 @@ function LoginContent() {
                             {/* Email Field */}
                             <div className="space-y-2">
                                 <Label htmlFor="email" className="text-foreground font-medium">
-                                    Email Address
+                                    Email Address <span aria-hidden="true" className="text-destructive">*</span>
                                 </Label>
                                 <div className="relative">
                                     <div className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors duration-200 ${focusedField === 'email' ? 'text-primary' : 'text-muted-foreground'}`}>
@@ -284,7 +284,7 @@ function LoginContent() {
                             <div className="space-y-2">
                                 <div className="flex items-center justify-between">
                                     <Label htmlFor="password" className="text-foreground font-medium">
-                                        Password
+                                        Password <span aria-hidden="true" className="text-destructive">*</span>
                                     </Label>
                                     <Link
                                         href="/forgot-password"

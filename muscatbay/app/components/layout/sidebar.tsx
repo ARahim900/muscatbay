@@ -208,6 +208,7 @@ export function Sidebar() {
                           ${isActive ? "bg-white/10 text-white" : "text-white/85 hover:bg-white/[0.04] hover:text-white"}
                           ${isCollapsed ? "justify-center px-2" : ""}
                         `}
+                        aria-label={isCollapsed ? item.name : undefined}
                         aria-describedby={isCollapsed ? `tooltip-${item.id}` : undefined}
                       >
                         <span
@@ -256,6 +257,7 @@ export function Sidebar() {
                   }
                   ${isCollapsed ? "justify-center px-2" : ""}
                 `}
+                aria-label={isCollapsed ? item.name : undefined}
                 aria-describedby={isCollapsed ? `tooltip-${item.id}` : undefined}
               >
                 {/* Left accent bar */}
@@ -288,13 +290,14 @@ export function Sidebar() {
           <button
             onClick={logout}
             className={`
-              group/nav w-full flex items-center gap-3 py-2.5 px-3 rounded-lg transition-colors duration-150 ease-out relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400/60 focus-visible:ring-inset
-              text-white/85 hover:bg-red-500/10 hover:text-red-200
+              group/nav w-full flex items-center gap-3 py-2.5 px-3 rounded-lg transition-colors duration-150 ease-out relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-danger/60 focus-visible:ring-inset
+              text-white/85 hover:bg-sidebar-danger/10 hover:text-sidebar-danger
               ${isCollapsed ? "justify-center px-2" : ""}
             `}
+            aria-label={isCollapsed ? "Sign Out" : undefined}
             aria-describedby={isCollapsed ? "tooltip-logout" : undefined}
           >
-            <LogOut className="w-5 h-5 flex-shrink-0 text-white/75 group-hover/nav:text-red-300 transition-colors duration-150" />
+            <LogOut className="w-5 h-5 flex-shrink-0 text-white/75 group-hover/nav:text-sidebar-danger transition-colors duration-150" />
             {!isCollapsed && (
               <span className="text-sm font-medium">Sign Out</span>
             )}

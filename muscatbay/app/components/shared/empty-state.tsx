@@ -25,18 +25,18 @@ const variantDefaults: Record<EmptyVariant, { icon: LucideIcon; iconClass: strin
     },
     "no-results": {
         icon: SearchX,
-        iconClass: "text-amber-500 dark:text-amber-400",
-        bgClass: "bg-amber-50 dark:bg-amber-900/20",
+        iconClass: "text-mb-warning",
+        bgClass: "bg-mb-warning-light",
     },
     "filter-empty": {
         icon: FilterX,
-        iconClass: "text-blue-500 dark:text-blue-400",
-        bgClass: "bg-blue-50 dark:bg-blue-900/20",
+        iconClass: "text-mb-info",
+        bgClass: "bg-mb-info-light",
     },
     "error": {
         icon: DatabaseZap,
-        iconClass: "text-red-500 dark:text-red-400",
-        bgClass: "bg-red-50 dark:bg-red-900/20",
+        iconClass: "text-mb-danger",
+        bgClass: "bg-mb-danger-light",
     },
 };
 

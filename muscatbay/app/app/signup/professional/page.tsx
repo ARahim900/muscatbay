@@ -160,7 +160,7 @@ export default function ProfessionalApplicationPage() {
         return (
             <div className="min-h-screen flex items-center justify-center bg-background p-4">
                 <Card className="w-full max-w-md card-elevated">
-                    <CardContent className="pt-8 pb-8 text-center">
+                    <CardContent role="status" aria-live="polite" className="pt-8 pb-8 text-center">
                         <div className="w-16 h-16 bg-mb-success-light rounded-full flex items-center justify-center mx-auto mb-4">
                             <CheckCircle2 className="w-8 h-8 text-mb-success-text" />
                         </div>
@@ -220,14 +220,14 @@ export default function ProfessionalApplicationPage() {
                     <form onSubmit={handleSubmit}>
                         <CardContent className="space-y-4">
                             {error && (
-                                <div className="p-3 text-sm text-mb-danger-text bg-mb-danger-light rounded-lg border border-mb-danger/20">
+                                <div role="alert" className="p-3 text-sm text-mb-danger-text bg-mb-danger-light rounded-lg border border-mb-danger/20">
                                     {error}
                                 </div>
                             )}
 
                             {/* Company Name */}
                             <div className="space-y-2">
-                                <Label htmlFor="companyName">Company / Business Name *</Label>
+                                <Label htmlFor="companyName">Company / Business Name <span aria-hidden="true" className="text-destructive">*</span></Label>
                                 <div className="relative">
                                     <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                     <Input
@@ -236,18 +236,21 @@ export default function ProfessionalApplicationPage() {
                                         placeholder="Your company name"
                                         value={formData.companyName}
                                         onChange={(e) => handleChange('companyName', e.target.value)}
+                                        aria-required="true"
+                                        aria-invalid={fieldErrors.companyName ? true : undefined}
+                                        aria-describedby={fieldErrors.companyName ? "companyName-error" : undefined}
                                         className={`pl-10 ${fieldErrors.companyName ? 'border-red-500' : ''}`}
                                         maxLength={100}
                                     />
                                 </div>
                                 {fieldErrors.companyName && (
-                                    <p className="text-xs text-red-500">{fieldErrors.companyName}</p>
+                                    <p id="companyName-error" className="text-xs text-red-500">{fieldErrors.companyName}</p>
                                 )}
                             </div>
 
                             {/* Contact Name */}
                             <div className="space-y-2">
-                                <Label htmlFor="contactName">Contact Person *</Label>
+                                <Label htmlFor="contactName">Contact Person <span aria-hidden="true" className="text-destructive">*</span></Label>
                                 <div className="relative">
                                     <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                     <Input
@@ -256,19 +259,22 @@ export default function ProfessionalApplicationPage() {
                                         placeholder="Primary contact name"
                                         value={formData.contactName}
                                         onChange={(e) => handleChange('contactName', e.target.value)}
+                                        aria-required="true"
+                                        aria-invalid={fieldErrors.contactName ? true : undefined}
+                                        aria-describedby={fieldErrors.contactName ? "contactName-error" : undefined}
                                         className={`pl-10 ${fieldErrors.contactName ? 'border-red-500' : ''}`}
                                         maxLength={100}
                                     />
                                 </div>
                                 {fieldErrors.contactName && (
-                                    <p className="text-xs text-red-500">{fieldErrors.contactName}</p>
+                                    <p id="contactName-error" className="text-xs text-red-500">{fieldErrors.contactName}</p>
                                 )}
                             </div>
 
                             {/* Email and Phone Row */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <Label htmlFor="email">Email *</Label>
+                                    <Label htmlFor="email">Email <span aria-hidden="true" className="text-destructive">*</span></Label>
                                     <div className="relative">
                                         <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                         <Input
@@ -277,16 +283,19 @@ export default function ProfessionalApplicationPage() {
                                             placeholder="company@email.com"
                                             value={formData.email}
                                             onChange={(e) => handleChange('email', e.target.value)}
+                                            aria-required="true"
+                                            aria-invalid={fieldErrors.email ? true : undefined}
+                                            aria-describedby={fieldErrors.email ? "email-error" : undefined}
                                             className={`pl-10 ${fieldErrors.email ? 'border-red-500' : ''}`}
                                         />
                                     </div>
                                     {fieldErrors.email && (
-                                        <p className="text-xs text-red-500">{fieldErrors.email}</p>
+                                        <p id="email-error" className="text-xs text-red-500">{fieldErrors.email}</p>
                                     )}
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="phone">Phone *</Label>
+                                    <Label htmlFor="phone">Phone <span aria-hidden="true" className="text-destructive">*</span></Label>
                                     <div className="relative">
                                         <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                         <Input
@@ -295,23 +304,32 @@ export default function ProfessionalApplicationPage() {
                                             placeholder="+968 XXXX XXXX"
                                             value={formData.phone}
                                             onChange={(e) => handleChange('phone', e.target.value)}
+                                            aria-required="true"
+                                            aria-invalid={fieldErrors.phone ? true : undefined}
+                                            aria-describedby={fieldErrors.phone ? "phone-error" : undefined}
                                             className={`pl-10 ${fieldErrors.phone ? 'border-red-500' : ''}`}
                                         />
                                     </div>
                                     {fieldErrors.phone && (
-                                        <p className="text-xs text-red-500">{fieldErrors.phone}</p>
+                                        <p id="phone-error" className="text-xs text-red-500">{fieldErrors.phone}</p>
                                     )}
                                 </div>
                             </div>
 
                             {/* Service Category */}
                             <div className="space-y-2">
-                                <Label htmlFor="serviceCategory">Service Category *</Label>
+                                <Label htmlFor="serviceCategory">Service Category <span aria-hidden="true" className="text-destructive">*</span></Label>
                                 <Select
                                     value={formData.serviceCategory}
                                     onValueChange={(value) => value && handleChange('serviceCategory', value)}
                                 >
-                                    <SelectTrigger className={fieldErrors.serviceCategory ? 'border-red-500' : ''}>
+                                    <SelectTrigger
+                                        id="serviceCategory"
+                                        aria-required="true"
+                                        aria-invalid={fieldErrors.serviceCategory ? true : undefined}
+                                        aria-describedby={fieldErrors.serviceCategory ? "serviceCategory-error" : undefined}
+                                        className={fieldErrors.serviceCategory ? 'border-red-500' : ''}
+                                    >
                                         <Briefcase className="h-4 w-4 text-muted-foreground mr-2" />
                                         <SelectValue placeholder="Select your service category" />
                                     </SelectTrigger>
@@ -324,7 +342,7 @@ export default function ProfessionalApplicationPage() {
                                     </SelectContent>
                                 </Select>
                                 {fieldErrors.serviceCategory && (
-                                    <p className="text-xs text-red-500">{fieldErrors.serviceCategory}</p>
+                                    <p id="serviceCategory-error" className="text-xs text-red-500">{fieldErrors.serviceCategory}</p>
                                 )}
                             </div>
 
@@ -347,20 +365,23 @@ export default function ProfessionalApplicationPage() {
 
                             {/* Description */}
                             <div className="space-y-2">
-                                <Label htmlFor="description">Description of Services *</Label>
+                                <Label htmlFor="description">Description of Services <span aria-hidden="true" className="text-destructive">*</span></Label>
                                 <Textarea
                                     id="description"
                                     placeholder="Briefly describe your company and the services you provide..."
                                     value={formData.description}
                                     onChange={(e) => handleChange('description', e.target.value)}
+                                    aria-required="true"
+                                    aria-invalid={fieldErrors.description ? true : undefined}
+                                    aria-describedby={fieldErrors.description ? "description-error" : "description-hint"}
                                     className={`min-h-[100px] ${fieldErrors.description ? 'border-red-500' : ''}`}
                                     maxLength={1000}
                                 />
                                 <div className="flex justify-between text-xs text-muted-foreground">
                                     {fieldErrors.description ? (
-                                        <p className="text-red-500">{fieldErrors.description}</p>
+                                        <p id="description-error" className="text-red-500">{fieldErrors.description}</p>
                                     ) : (
-                                        <span>Minimum 20 characters</span>
+                                        <span id="description-hint">Minimum 20 characters</span>
                                     )}
                                     <span>{formData.description.length}/1000</span>
                                 </div>

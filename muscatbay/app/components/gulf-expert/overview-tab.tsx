@@ -106,7 +106,7 @@ export function OverviewTab({ data }: OverviewTabProps) {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Bar chart — Open items by building */}
-        <Card className="bg-white dark:bg-muted rounded-xl border border-border dark:border-border shadow-sm">
+        <Card className="bg-card rounded-xl border border-border dark:border-border shadow-sm">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold text-foreground dark:text-muted-foreground flex items-center gap-2">
               <Building2 className="h-4 w-4 text-primary" />
@@ -137,7 +137,7 @@ export function OverviewTab({ data }: OverviewTabProps) {
         </Card>
 
         {/* Pie chart — Findings by status */}
-        <Card className="bg-white dark:bg-muted rounded-xl border border-border dark:border-border shadow-sm">
+        <Card className="bg-card rounded-xl border border-border dark:border-border shadow-sm">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold text-foreground dark:text-muted-foreground flex items-center gap-2">
               <ClipboardList className="h-4 w-4 text-secondary" />
@@ -192,7 +192,7 @@ export function OverviewTab({ data }: OverviewTabProps) {
       </div>
 
       {/* PPM Schedule Grid */}
-      <Card className="bg-white dark:bg-muted rounded-xl border border-border dark:border-border shadow-sm">
+      <Card className="bg-card rounded-xl border border-border dark:border-border shadow-sm">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-semibold text-foreground dark:text-muted-foreground">
             FY25 PPM Schedule
@@ -220,9 +220,9 @@ export function OverviewTab({ data }: OverviewTabProps) {
                       <span
                         className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${
                           q.status === "Completed"
-                            ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                            ? "bg-mb-success-light text-mb-success-text"
                             : q.status === "In Progress"
-                            ? "bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                            ? "bg-mb-warning-light text-mb-warning-text"
                             : "bg-muted text-muted-foreground dark:bg-muted dark:text-muted-foreground"
                         }`}
                       >
@@ -241,7 +241,7 @@ export function OverviewTab({ data }: OverviewTabProps) {
 
       {/* Contract Summary */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Card className="bg-white dark:bg-muted rounded-xl border border-border dark:border-border shadow-sm">
+        <Card className="bg-card rounded-xl border border-border dark:border-border shadow-sm">
           <CardContent className="p-5">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-primary/10">
@@ -254,13 +254,13 @@ export function OverviewTab({ data }: OverviewTabProps) {
             </div>
             <div className="mt-3 space-y-2">
               <div className="flex items-center gap-2">
-                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-mb-success-light text-mb-success-text">
                   Active
                 </span>
                 <span className="text-xs text-muted-foreground">3 Jun 2025 → 2 Jun 2026</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-mb-warning-light text-mb-warning-text">
                   <Clock className="h-3 w-3 mr-1" />
                   Renewal In Progress
                 </span>
@@ -272,7 +272,7 @@ export function OverviewTab({ data }: OverviewTabProps) {
           </CardContent>
         </Card>
 
-        <Card className="bg-white dark:bg-muted rounded-xl border border-border dark:border-border shadow-sm">
+        <Card className="bg-card rounded-xl border border-border dark:border-border shadow-sm">
           <CardContent className="p-5">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-secondary/10">
@@ -285,13 +285,13 @@ export function OverviewTab({ data }: OverviewTabProps) {
             </div>
             <div className="mt-3 space-y-2">
               <div className="flex items-center gap-2">
-                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-mb-success-light text-mb-success-text">
                   Active
                 </span>
                 <span className="text-xs text-muted-foreground">3 Jun 2025 → 2 Jun 2026</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-mb-warning-light text-mb-warning-text">
                   <Clock className="h-3 w-3 mr-1" />
                   Renewal In Progress
                 </span>
@@ -305,9 +305,9 @@ export function OverviewTab({ data }: OverviewTabProps) {
       </div>
 
       {/* Pending Items */}
-      <Card className="bg-white dark:bg-muted rounded-xl border border-amber-200 dark:border-amber-800/50 shadow-sm">
+      <Card className="bg-card rounded-xl border border-mb-warning/40 shadow-sm">
         <CardContent className="p-4">
-          <p className="text-xs font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wide mb-3">Action Items — Verified 28 Mar 2026</p>
+          <p className="text-xs font-semibold text-mb-warning-text uppercase tracking-wide mb-3">Action Items — Verified 28 Mar 2026</p>
           <div className="space-y-2">
             {[
               {
@@ -327,11 +327,11 @@ export function OverviewTab({ data }: OverviewTabProps) {
               },
             ].map((a) => (
               <div key={a.item} className="flex gap-3 p-2.5 rounded-lg bg-muted dark:bg-muted/50">
-                <AlertCircle className="h-4 w-4 text-amber-500 flex-shrink-0 mt-0.5" />
+                <AlertCircle className="h-4 w-4 text-mb-warning flex-shrink-0 mt-0.5" />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <p className="text-xs font-semibold text-foreground dark:text-muted-foreground">{a.item}</p>
-                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400">
+                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium bg-mb-warning-light text-mb-warning-text">
                       {a.status}
                     </span>
                   </div>

@@ -1,5 +1,3 @@
-"use client";
-
 import { cn } from "@/lib/utils";
 import { Clock, Radio, Wifi, WifiOff } from "lucide-react";
 

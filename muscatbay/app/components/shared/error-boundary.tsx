@@ -32,8 +32,8 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
         if (this.state.hasError) {
             return (
                 <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
-                    <div className="w-14 h-14 rounded-2xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center mb-4">
-                        <AlertTriangle className="w-7 h-7 text-red-500" />
+                    <div className="w-14 h-14 rounded-2xl bg-mb-danger-light flex items-center justify-center mb-4">
+                        <AlertTriangle className="w-7 h-7 text-mb-danger" />
                     </div>
                     <h3 className="text-sm font-semibold text-foreground mb-1">
                         {this.props.fallbackTitle || "Something went wrong"}

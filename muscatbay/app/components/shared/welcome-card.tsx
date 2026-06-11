@@ -1,5 +1,3 @@
-"use client";
-
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import {
@@ -22,12 +20,12 @@ interface FeatureLink {
 }
 
 const features: FeatureLink[] = [
-    { label: "Water", description: "Monitor production and consumption", href: "/water", icon: Droplets, color: "text-blue-600 dark:text-blue-400", bgColor: "bg-blue-50 dark:bg-blue-900/20" },
-    { label: "Electricity", description: "Track meter readings and costs", href: "/electricity", icon: Zap, color: "text-amber-600 dark:text-amber-400", bgColor: "bg-amber-50 dark:bg-amber-900/20" },
-    { label: "STP Plant", description: "Sewage treatment operations", href: "/stp", icon: Waves, color: "text-teal-600 dark:text-teal-400", bgColor: "bg-teal-50 dark:bg-teal-900/20" },
-    { label: "Contractors", description: "Manage service providers", href: "/contractors", icon: Users, color: "text-purple-600 dark:text-purple-400", bgColor: "bg-purple-50 dark:bg-purple-900/20" },
-    { label: "Assets", description: "Track equipment and inventory", href: "/assets", icon: Package, color: "text-emerald-600 dark:text-emerald-400", bgColor: "bg-emerald-50 dark:bg-emerald-900/20" },
-    { label: "Fire Safety", description: "PPM and equipment status", href: "/firefighting", icon: Flame, color: "text-red-600 dark:text-red-400", bgColor: "bg-red-50 dark:bg-red-900/20" },
+    { label: "Water", description: "Monitor production and consumption", href: "/water", icon: Droplets, color: "text-module-water", bgColor: "bg-module-water/10" },
+    { label: "Electricity", description: "Track meter readings and costs", href: "/electricity", icon: Zap, color: "text-module-electricity", bgColor: "bg-module-electricity/10" },
+    { label: "STP Plant", description: "Sewage treatment operations", href: "/stp", icon: Waves, color: "text-module-stp", bgColor: "bg-module-stp/10" },
+    { label: "Contractors", description: "Manage service providers", href: "/contractors", icon: Users, color: "text-module-contractors", bgColor: "bg-module-contractors/10" },
+    { label: "Assets", description: "Track equipment and inventory", href: "/assets", icon: Package, color: "text-module-assets", bgColor: "bg-module-assets/10" },
+    { label: "Fire Safety", description: "PPM and equipment status", href: "/firefighting", icon: Flame, color: "text-module-fire", bgColor: "bg-module-fire/10" },
 ];
 
 interface WelcomeCardProps {
@@ -39,7 +37,7 @@ export function WelcomeCard({ userName, className }: WelcomeCardProps) {
     const greeting = userName ? `Welcome, ${userName}` : "Welcome to Muscat Bay";
 
     return (
-        <div className={cn("rounded-2xl border border-border dark:border-border bg-white dark:bg-muted p-6 sm:p-8 space-y-6", className)}>
+        <div className={cn("rounded-2xl border border-border dark:border-border bg-card p-6 sm:p-8 space-y-6", className)}>
             <div className="space-y-2">
                 <h2 className="text-lg sm:text-xl font-bold text-foreground">
                     {greeting}

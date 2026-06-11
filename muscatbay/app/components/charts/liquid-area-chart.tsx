@@ -104,7 +104,7 @@ export const LiquidAreaChart = memo(function LiquidAreaChart({
                         <CartesianGrid
                             strokeDasharray="3 3"
                             vertical={false}
-                            stroke="rgba(0,0,0,0.05)"
+                            stroke="var(--chart-grid)"
                         />
                     )}
                     <XAxis
@@ -123,7 +123,7 @@ export const LiquidAreaChart = memo(function LiquidAreaChart({
                         }
                         label={yAxisLabel ? { value: yAxisLabel, angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: "var(--chart-axis)", fontSize: 11 } } : undefined}
                     />
-                    <Tooltip content={<CustomTooltip />} cursor={{ stroke: "rgba(0,0,0,0.1)", strokeWidth: 2 }} />
+                    <Tooltip content={<CustomTooltip />} cursor={{ stroke: "var(--chart-cursor-stroke)", strokeWidth: 2 }} />
                     {showLegend && <Legend iconType="circle" wrapperStyle={{ paddingTop: 10 }} />}
                     {categories.map((cat, i) => (
                         <Area

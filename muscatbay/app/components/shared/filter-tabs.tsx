@@ -16,11 +16,12 @@ interface FilterTabsProps {
 }
 
 const colorMap: Record<string, { bg: string; text: string }> = {
-    red: { bg: "bg-red-500 dark:bg-red-600", text: "text-primary-foreground" },
-    orange: { bg: "bg-amber-500 dark:bg-amber-600", text: "text-primary-foreground" },
-    green: { bg: "bg-emerald-500 dark:bg-emerald-600", text: "text-primary-foreground" },
-    blue: { bg: "bg-blue-500 dark:bg-blue-600", text: "text-primary-foreground" },
-    teal: { bg: "bg-teal-500 dark:bg-teal-600", text: "text-primary-foreground" },
+    red: { bg: "bg-mb-danger", text: "text-primary-foreground" },
+    orange: { bg: "bg-mb-warning", text: "text-primary-foreground" },
+    green: { bg: "bg-mb-success", text: "text-primary-foreground" },
+    blue: { bg: "bg-mb-info", text: "text-primary-foreground" },
+    // bg-secondary is light in both themes — pair with its dedicated foreground token
+    teal: { bg: "bg-secondary", text: "text-secondary-foreground" },
 };
 
 export function FilterTabs({ label, options, value, onChange, className }: FilterTabsProps) {
@@ -41,7 +42,7 @@ export function FilterTabs({ label, options, value, onChange, className }: Filte
                                     ? colorStyle
                                         ? `${colorStyle.bg} ${colorStyle.text} shadow-sm`
                                         : "bg-primary text-primary-foreground shadow-sm"
-                                    : "text-muted-foreground hover:bg-white/70 dark:hover:bg-muted/60 hover:text-foreground dark:hover:text-foreground"
+                                    : "text-muted-foreground hover:bg-card/70 dark:hover:bg-muted/60 hover:text-foreground dark:hover:text-foreground"
                             )}
                         >
                             {option.label}

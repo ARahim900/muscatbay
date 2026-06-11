@@ -56,7 +56,7 @@ export default function ForgotPasswordPage() {
         return (
             <div className="min-h-screen flex items-center justify-center bg-background p-4">
                 <Card className="w-full max-w-md card-elevated">
-                    <CardContent className="pt-8 pb-8 text-center">
+                    <CardContent role="status" aria-live="polite" className="pt-8 pb-8 text-center">
                         <div className="w-16 h-16 bg-mb-success-light rounded-full flex items-center justify-center mx-auto mb-4">
                             <CheckCircle2 className="w-8 h-8 text-mb-success-text" />
                         </div>
@@ -102,13 +102,13 @@ export default function ForgotPasswordPage() {
                     <form onSubmit={handleSubmit}>
                         <CardContent className="space-y-4">
                             {error && (
-                                <div className="p-3 text-sm text-mb-danger-text bg-mb-danger-light rounded-lg border border-mb-danger/20">
+                                <div id="email-error" role="alert" className="p-3 text-sm text-mb-danger-text bg-mb-danger-light rounded-lg border border-mb-danger/20">
                                     {error}
                                 </div>
                             )}
 
                             <div className="space-y-2">
-                                <Label htmlFor="email">Email</Label>
+                                <Label htmlFor="email">Email <span aria-hidden="true" className="text-destructive">*</span></Label>
                                 <div className="relative">
                                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                     <Input
@@ -117,6 +117,8 @@ export default function ForgotPasswordPage() {
                                         placeholder="name@muscatbay.com"
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
+                                        aria-invalid={error ? true : undefined}
+                                        aria-describedby={error ? "email-error" : undefined}
                                         className="pl-10"
                                         required
                                         autoComplete="email"
