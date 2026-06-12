@@ -1,10 +1,10 @@
 "use client";
 
-import { ReactNode, useRef } from "react";
+import { ReactNode, useRef, useSyncExternalStore } from "react";
 import dynamic from "next/dynamic";
 import gsap from "gsap";
 import Link from "next/link";
-import { TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { LucideIcon, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Breadcrumbs } from "@/components/shared/breadcrumbs";
 import { CountUp } from "@/components/motion/count-up";
@@ -15,6 +15,20 @@ import type { StatItem, StatVariant } from "@/components/shared/stats-grid";
 // brand-purple chrome and the water field fades in when the chunk lands.
 const AmbientBay = dynamic(() => import("@/components/three/ambient-bay"), { ssr: false });
 
+/** One module entry on the deck's status rail. Alert counts come from the
+ * live activity feed — the rail reports "recent alerts", never invented
+ * system health. */
+export interface ModuleStatus {
+    key: string;
+    name: string;
+    href: string;
+    icon: LucideIcon;
+    /** CSS value for the module accent, e.g. "var(--module-water)" */
+    accent: string;
+    critical: number;
+    warning: number;
+}
+
 interface CommandDeckProps {
     title: string;
     description?: string;
@@ -22,6 +36,10 @@ interface CommandDeckProps {
     actions?: ReactNode;
     /** Aggregate KPIs — same items the StatsGrid renders on module pages */
     stats: StatItem[];
+    /** Module quick-nav rail with alert-feed status dots */
+    modules?: ModuleStatus[];
+    /** When the dashboard data finished loading — drives the freshness stamp */
+    updatedAt?: Date;
     className?: string;
 }
 
@@ -40,6 +58,48 @@ const deckIconColor: Record<StatVariant, string> = {
     default: "var(--secondary)",
 };
 
+const MUSCAT_TZ = "Asia/Muscat";
+
+const clockFormat = new Intl.DateTimeFormat("en-GB", {
+    weekday: "short", day: "numeric", month: "short",
+    hour: "2-digit", minute: "2-digit", hour12: false,
+    timeZone: MUSCAT_TZ,
+});
+
+const timeFormat = new Intl.DateTimeFormat("en-GB", {
+    hour: "2-digit", minute: "2-digit", hour12: false, timeZone: MUSCAT_TZ,
+});
+
+function subscribeToClock(onTick: () => void) {
+    const id = setInterval(onTick, 30_000);
+    return () => clearInterval(id);
+}
+
+/** Site-local (Gulf Standard Time) clock. useSyncExternalStore renders the
+ * em-dash server snapshot during SSR/hydration, then the live minute — no
+ * mismatch, no setState-in-effect. */
+function DeckClock() {
+    const label = useSyncExternalStore(
+        subscribeToClock,
+        () => `${clockFormat.format(new Date())} GST`,
+        () => "—"
+    );
+    return <span className="tabular-nums">{label}</span>;
+}
+
+/** Status dot semantics: red = critical alerts, amber = warnings, teal =
+ * quiet feed. Color is never the only carrier — the tooltip and aria-label
+ * spell the counts out. */
+function moduleAlertSummary(m: ModuleStatus): { color: string; text: string } {
+    if (m.critical > 0) {
+        return { color: "var(--status-danger)", text: `${m.critical} critical alert${m.critical > 1 ? "s" : ""}` };
+    }
+    if (m.warning > 0) {
+        return { color: "var(--status-warning)", text: `${m.warning} warning${m.warning > 1 ? "s" : ""}` };
+    }
+    return { color: "var(--secondary)", text: "No recent alerts" };
+}
+
 /**
  * Executive command deck — the dashboard's opening statement. One monumental
  * brand-purple panel that fuses the greeting with the cross-module KPIs as a
@@ -49,7 +109,7 @@ const deckIconColor: Record<StatVariant, string> = {
  * StatsGrid because they ARE the official per-system records; the deck is the
  * aggregation layer above them. Used on the dashboard only.
  */
-export function CommandDeck({ title, description, actions, stats, className }: CommandDeckProps) {
+export function CommandDeck({ title, description, actions, stats, modules, updatedAt, className }: CommandDeckProps) {
     const deckRef = useRef<HTMLElement>(null);
 
     useIsomorphicLayoutEffect(() => {
@@ -171,8 +231,8 @@ export function CommandDeck({ title, description, actions, stats, className }: C
                                         className="w-3.5 h-3.5 flex-shrink-0 mt-px"
                                         style={{ color: stat.color || deckIconColor[variant] }}
                                     />
-                                    {/* Wraps to 2 lines on mobile so "STP ECONOMIC IMP…" never happens */}
-                                    <p className="text-[10px] sm:text-[11px] font-medium uppercase tracking-[0.08em] leading-tight text-white/55 line-clamp-2 sm:line-clamp-1 min-h-[2.1em] sm:min-h-0 print:text-(--muted-foreground)">
+                                    {/* Wraps to 2 lines so "STP ECONOMIC IMPACT" never clips, even at 6 columns */}
+                                    <p className="text-[10px] sm:text-[11px] font-medium uppercase tracking-[0.08em] leading-tight text-white/55 line-clamp-2 min-h-[2.1em] print:text-(--muted-foreground)">
                                         {stat.label}
                                     </p>
                                 </div>
@@ -232,6 +292,61 @@ export function CommandDeck({ title, description, actions, stats, className }: C
                         );
                     })}
                 </div>
+
+                {/* Live operations strip: module quick-nav rail + site clock,
+                    systems count, and data freshness. Navigation/meta chrome —
+                    excluded from print hand-outs. */}
+                {(modules?.length || updatedAt) && (
+                    <div
+                        data-deck-item
+                        className="mt-4 sm:mt-5 flex flex-col gap-2.5 print:hidden"
+                    >
+                        {modules && modules.length > 0 && (
+                            <nav aria-label="Module status rail" className="min-w-0">
+                                <ul className="flex items-center gap-1.5 flex-nowrap overflow-x-auto sm:flex-wrap sm:overflow-x-visible scrollbar-hide -mx-1 px-1 py-0.5">
+                                    {modules.map((m) => {
+                                        const alert = moduleAlertSummary(m);
+                                        return (
+                                            <li key={m.key} className="flex-shrink-0">
+                                                <Link
+                                                    href={m.href}
+                                                    data-tooltip={`${m.name} — ${alert.text}`}
+                                                    aria-label={`${m.name}: ${alert.text}. Open module.`}
+                                                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-white/[0.05] border border-white/[0.07] text-[11px] font-medium text-white/75 hover:text-white hover:bg-white/10 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/70"
+                                                >
+                                                    <m.icon aria-hidden="true" className="w-3.5 h-3.5" style={{ color: m.accent }} />
+                                                    <span className="whitespace-nowrap">{m.name}</span>
+                                                    <span
+                                                        aria-hidden="true"
+                                                        className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                                                        style={{ backgroundColor: alert.color }}
+                                                    />
+                                                </Link>
+                                            </li>
+                                        );
+                                    })}
+                                </ul>
+                            </nav>
+                        )}
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-white/50 whitespace-nowrap sm:justify-end">
+                            <DeckClock />
+                            {modules && modules.length > 0 && (
+                                <>
+                                    <span aria-hidden="true" className="w-px h-3 bg-white/15" />
+                                    <span>{modules.length} utility systems</span>
+                                </>
+                            )}
+                            {updatedAt && (
+                                <>
+                                    <span aria-hidden="true" className="w-px h-3 bg-white/15" />
+                                    <span className="tabular-nums" suppressHydrationWarning>
+                                        Updated {timeFormat.format(updatedAt)}
+                                    </span>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                )}
             </div>
         </section>
     );

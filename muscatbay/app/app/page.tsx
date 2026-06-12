@@ -5,10 +5,12 @@ import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { useAuth } from "@/components/auth/auth-provider";
-import { CommandDeck } from "@/components/dashboard/command-deck";
+import { useUserRole } from "@/hooks/useUserRole";
+import { canAccessModule, type ModuleKey } from "@/lib/rbac";
+import { CommandDeck, type ModuleStatus } from "@/components/dashboard/command-deck";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Activity, Droplets, Zap, AlertTriangle, ArrowUpRight, Boxes, Recycle, TrendingUp, Wifi, WifiOff, Printer } from "lucide-react";
+import { Activity, Droplets, Zap, AlertTriangle, ArrowUpRight, Boxes, Recycle, TrendingUp, Wifi, WifiOff, Printer, Waves, Users, Wrench, Package, Bug, Flame } from "lucide-react";
 import { AnimateOnScroll } from "@/components/shared/scroll-animation";
 import Link from "next/link";
 
@@ -28,11 +30,24 @@ function getGreeting() {
     return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
 }
 
+// Deck status rail — same modules, names, routes, and accents as the sidebar.
+const DECK_MODULES: Array<Omit<ModuleStatus, 'critical' | 'warning'> & { module: ModuleKey }> = [
+    { key: 'water', name: 'Water', href: '/water', icon: Droplets, accent: 'var(--module-water)', module: 'water' },
+    { key: 'electricity', name: 'Electricity', href: '/electricity', icon: Zap, accent: 'var(--module-electricity)', module: 'electricity' },
+    { key: 'stp', name: 'STP Plant', href: '/stp', icon: Waves, accent: 'var(--module-stp)', module: 'stp' },
+    { key: 'contractors', name: 'Contractors', href: '/contractors', icon: Users, accent: 'var(--module-contractors)', module: 'contractors' },
+    { key: 'hvac', name: 'HVAC System', href: '/hvac', icon: Wrench, accent: 'var(--module-hvac)', module: 'hvac' },
+    { key: 'assets', name: 'Assets', href: '/assets', icon: Package, accent: 'var(--module-assets)', module: 'assets' },
+    { key: 'pest-control', name: 'Pest Control', href: '/pest-control', icon: Bug, accent: 'var(--module-pest)', module: 'pest-control' },
+    { key: 'fire-safety', name: 'Fire Safety', href: '/firefighting', icon: Flame, accent: 'var(--module-fire)', module: 'firefighting' },
+];
+
 export default function DashboardPage() {
     const { stats, chartData, stpChartData, recentActivity, loading, isLiveData, error } = useDashboardData();
     const [activityFilter, setActivityFilter] = useState<'all' | 'critical' | 'warning' | 'info'>('all');
     const greeting = useMemo(() => getGreeting(), []);
-    const { profile } = useAuth();
+    const { profile, isDevMode } = useAuth();
+    const role = useUserRole();
     const searchParams = useSearchParams();
     const isPresentMode = searchParams?.get("present") === "1";
 
@@ -95,6 +110,34 @@ export default function DashboardPage() {
         return undefined;
     }, []);
 
+    // Status rail data: alert counts per module from the live activity feed —
+    // the rail reports recent alerts, never invented system health. RBAC
+    // filtering mirrors the sidebar so users only see modules they can open.
+    const moduleStatuses = useMemo<ModuleStatus[]>(() => {
+        const visible = isDevMode ? DECK_MODULES : DECK_MODULES.filter((m) => canAccessModule(role, m.module));
+        return visible.map((entry) => {
+            let critical = 0;
+            let warning = 0;
+            for (const item of recentActivity) {
+                if (getActivityHref(item.title) !== entry.href) continue;
+                if (item.type === 'critical') critical++;
+                else if (item.type === 'warning') warning++;
+            }
+            return {
+                key: entry.key,
+                name: entry.name,
+                href: entry.href,
+                icon: entry.icon,
+                accent: entry.accent,
+                critical,
+                warning,
+            };
+        });
+    }, [recentActivity, getActivityHref, role, isDevMode]);
+
+    // Freshness stamp — when the current data load completed.
+    const updatedAt = useMemo(() => (loading ? undefined : new Date()), [loading]);
+
     if (loading) {
         return (
             <div className="space-y-6 md:space-y-8 w-full">
@@ -136,6 +179,8 @@ export default function DashboardPage() {
                 title={headlineTitle}
                 description={headlineDescription}
                 stats={statsWithIcons}
+                modules={moduleStatuses}
+                updatedAt={updatedAt}
                 actions={
                     <div className="flex items-center gap-2 print:hidden">
                         <button
