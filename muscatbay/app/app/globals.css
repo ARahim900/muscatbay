@@ -339,6 +339,12 @@
   --transition-normal: 0.2s;
   --transition-duration: 0.2s;
 
+  /* Premium easing family — exponential decelerations for entrances and
+   * micro-interactions. Matches the GSAP tokens in lib/motion.ts so CSS and
+   * JS choreography settle identically. */
+  --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+
   /* Border Radius */
   --radius: 10.5px;
   --radius-sm: 5px;
@@ -1037,6 +1043,46 @@
         -webkit-mask-image: linear-gradient(to right, black 0, black 100%, black 100%);
                 mask-image: linear-gradient(to right, black 0, black 100%, black 100%);
       }
+    }
+  }
+
+  /* ── Sidebar gliding rail ──
+   * When the JS rail is active (data-rail="on" on the aside), the per-item
+   * static accent bars step aside; they return automatically for no-JS and
+   * reduced-motion users. */
+  aside[data-rail="on"] .nav-rail-static {
+    opacity: 0 !important;
+  }
+
+  /* ── Cursor-tracked sheen for interactive cards ──
+   * Pair with data-glow on the element; GlowDelegate (one app-wide listener)
+   * feeds --glow-x/--glow-y. Brand teal at 10% — visible in both themes,
+   * decorative only, never carries meaning. Hidden for touch + reduced motion. */
+  .mb-glow {
+    position: relative;
+  }
+  .mb-glow::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: radial-gradient(
+      200px circle at var(--glow-x, 50%) var(--glow-y, 50%),
+      color-mix(in srgb, var(--secondary) 10%, transparent),
+      transparent 65%
+    );
+    opacity: 0;
+    transition: opacity 0.35s var(--ease-out-quint);
+    pointer-events: none;
+  }
+  @media (hover: hover) {
+    .mb-glow:hover::after {
+      opacity: 1;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .mb-glow::after {
+      display: none;
     }
   }
 

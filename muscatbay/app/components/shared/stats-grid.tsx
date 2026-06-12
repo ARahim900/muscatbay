@@ -3,11 +3,12 @@
 import { cn } from "@/lib/utils";
 import { LucideIcon, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
+import { CountUp } from "@/components/motion/count-up";
 import Link from "next/link";
 
 export type StatVariant = "primary" | "secondary" | "success" | "warning" | "danger" | "info" | "water" | "default";
 
-interface StatItem {
+export interface StatItem {
     label: string;
     value: string;
     subtitle?: string;
@@ -63,7 +64,7 @@ export function StatsGrid({ stats, className }: StatsGridProps) {
             gridCols,
             className
         )}>
-            {stats.map((stat) => {
+            {stats.map((stat, index) => {
                 const variant = stat.variant || "primary";
                 const iconClass = variantIconClass[variant];
 
@@ -90,10 +91,10 @@ export function StatsGrid({ stats, className }: StatsGridProps) {
                                 </p>
                                 {/* Brand-purple value — semibold for a clean, modern feel (extrabold reads heavy/dated). */}
                                 <h3 className="text-lg sm:text-2xl font-semibold tabular-nums tracking-tight truncate text-primary dark:text-foreground leading-none">
-                                    {stat.value}
+                                    <CountUp value={stat.value} delay={index * 0.06} />
                                 </h3>
                             </div>
-                            <div className="p-1.5 sm:p-2 rounded-lg bg-muted flex-shrink-0">
+                            <div className="p-1.5 sm:p-2 rounded-lg bg-muted flex-shrink-0 transition-transform duration-300 ease-(--ease-out-quint) motion-safe:group-hover/stat:scale-110">
                                 <stat.icon
                                     className={cn("w-4 h-4 sm:w-5 sm:h-5", !stat.color && iconClass)}
                                     style={stat.color ? { color: stat.color } : undefined}
@@ -139,19 +140,20 @@ export function StatsGrid({ stats, className }: StatsGridProps) {
                     </>
                 );
 
-                const baseCardClassName = "bg-card p-3 sm:p-4 md:p-5 rounded-lg border border-border shadow-[0_1px_2px_rgb(15_23_42_/_0.06)] dark:shadow-[0_1px_0_rgba(255,255,255,0.04)] group/stat overflow-hidden hover:shadow-[0_6px_18px_-10px_rgb(15_23_42_/_0.35)] transition-[box-shadow] duration-200";
+                const baseCardClassName = "mb-glow bg-card p-3 sm:p-4 md:p-5 rounded-lg border border-border shadow-[0_1px_2px_rgb(15_23_42_/_0.06)] dark:shadow-[0_1px_0_rgba(255,255,255,0.04)] group/stat overflow-hidden hover:shadow-[0_6px_18px_-10px_rgb(15_23_42_/_0.35)] hover:border-secondary/40 transition-[box-shadow,border-color,transform] duration-200 ease-(--ease-out-quint) motion-safe:active:scale-[0.99]";
 
                 return stat.href ? (
                     <Link
                         key={stat.label}
                         href={stat.href}
+                        data-glow
                         aria-label={`${stat.label}: ${stat.value}. ${stat.trend === 'up' ? 'Up' : stat.trend === 'down' ? 'Down' : 'No change'} ${stat.trendValue || ''} compared to last period. Click to view details.`}
                         className={cn(baseCardClassName, "block cursor-pointer")}
                     >
                         {cardContent}
                     </Link>
                 ) : (
-                    <div key={stat.label} className={baseCardClassName}>
+                    <div key={stat.label} data-glow className={baseCardClassName}>
                         {cardContent}
                     </div>
                 );

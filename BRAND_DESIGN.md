@@ -313,7 +313,45 @@ box-shadow: 0 8px 24px rgba(0,0,0,0.4), 0 4px 8px rgba(0,0,0,0.25);
 ```css
 --transition-timing: cubic-bezier(0.4, 0, 0.2, 1);
 --transition-duration: 0.2s;
+
+/* Premium decelerations — entrances & micro-interactions */
+--ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
+--ease-out-expo:  cubic-bezier(0.16, 1, 0.3, 1);
 ```
+
+### GSAP Motion System (`lib/motion.ts`)
+One choreography language for every module. JS animation goes through the
+shared tokens — never ad-hoc durations/eases:
+
+| Token | Value | Use |
+|-------|-------|-----|
+| `MOTION.dur.xs` | 0.18s | Press/toggle feedback |
+| `MOTION.dur.sm` | 0.35s | Chips, badges |
+| `MOTION.dur.md` | 0.6s | Card/row entrances |
+| `MOTION.dur.lg` | 0.85s | Header/hero orchestration |
+| `MOTION.dur.count` | 1.1s | KPI numeric roll-ups |
+| `MOTION.ease.out` | `power3.out` | Default settle |
+| `MOTION.ease.outExpo` | `expo.out` | Hero/headline moments |
+| `MOTION.stagger.*` | 0.05–0.1s | Group reveals |
+
+**Signature interactions** (all gated by `prefers-reduced-motion`):
+- **KPI roll-up** — `CountUp` animates the numeric part of pre-formatted
+  values into place on first view; SSR/reduced-motion render the final string.
+- **Scroll reveals** — `useScrollAnimation` / `AnimateOnScroll` (GSAP +
+  IntersectionObserver) stagger cards in with `power3.out`.
+- **Cursor sheen** — `.mb-glow` + `data-glow`: a 10% brand-teal radial that
+  tracks the pointer on interactive cards (one delegated app-wide listener).
+- **Gliding rails** — the sidebar's active indicator and TabNavigation's
+  active pill travel between items instead of blinking; static styles remain
+  as the no-JS / reduced-motion fallback.
+
+### Ambient Bay scene (Three.js)
+`components/three/ambient-bay.tsx` — a calm GPU point-wave field in brand
+teal/lavender, used **only** on brand-purple chrome: the dashboard `HeroBand`
+and the login brand panel. Rules: lazy-loaded (`next/dynamic`, ssr:false),
+DPR-capped at 1.75, paused off-screen, one static frame under reduced motion,
+silently absent without WebGL (the gradient stands alone). Colors are read
+from CSS tokens at runtime — never hex literals.
 
 ### Named Utility Classes
 | Class | Properties animated |
