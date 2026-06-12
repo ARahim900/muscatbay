@@ -8,7 +8,7 @@ import Link from "next/link";
 
 export type StatVariant = "primary" | "secondary" | "success" | "warning" | "danger" | "info" | "water" | "default";
 
-interface StatItem {
+export interface StatItem {
     label: string;
     value: string;
     subtitle?: string;
