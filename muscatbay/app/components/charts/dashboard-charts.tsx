@@ -66,7 +66,8 @@ function DashboardChartsInner({ chartData, stpChartData }: DashboardChartsProps)
             <Link href="/water" aria-label="View water production details" className="col-span-1 lg:col-span-4 group/chart">
                 <Card
                     interactive
-                    className="card-elevated transition-shadow duration-200 hover:shadow-[0_8px_30px_-4px_rgba(6,81,237,0.15)] dark:hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.4)] focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none"
+                    data-glow
+                    className="card-elevated mb-glow overflow-hidden transition-shadow duration-200 hover:shadow-[0_8px_30px_-4px_rgba(6,81,237,0.15)] dark:hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.4)] focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none"
                 >
                     <CardHeader className="card-elevated-header p-4 sm:p-5 md:p-6">
                         <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
@@ -108,7 +109,8 @@ function DashboardChartsInner({ chartData, stpChartData }: DashboardChartsProps)
             <Link href="/stp" aria-label="View STP treatment details" className="col-span-1 lg:col-span-3 group/chart">
                 <Card
                     interactive
-                    className="card-elevated transition-shadow duration-200 hover:shadow-[0_8px_30px_-4px_rgba(6,81,237,0.15)] dark:hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.4)] focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none"
+                    data-glow
+                    className="card-elevated mb-glow overflow-hidden transition-shadow duration-200 hover:shadow-[0_8px_30px_-4px_rgba(6,81,237,0.15)] dark:hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.4)] focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none"
                 >
                     <CardHeader className="card-elevated-header p-4 sm:p-5 md:p-6">
                         <CardTitle className="flex items-center gap-2 text-base sm:text-lg">

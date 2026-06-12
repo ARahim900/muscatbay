@@ -1,13 +1,15 @@
 "use client";
 
-import { useRef, useEffect } from "react";
+import { useRef } from "react";
+import gsap from "gsap";
+import { MOTION, prefersReducedMotion, useIsomorphicLayoutEffect } from "@/lib/motion";
 
 export interface ScrollAnimationConfig {
     /** Vertical offset to animate from (px). Default: 30 */
     y?: number;
-    /** Animation duration in seconds. Default: 0.5 */
+    /** Animation duration in seconds. Default: 0.6 */
     duration?: number;
-    /** Stagger delay between children in seconds. Default: 0.1 */
+    /** Stagger delay between children in seconds. Default: 0.07 */
     stagger?: number;
     /** IntersectionObserver rootMargin. Default: '0px 0px -15% 0px' */
     rootMargin?: string;
@@ -16,8 +18,12 @@ export interface ScrollAnimationConfig {
 }
 
 /**
- * Reusable hook that applies a CSS fade-in + slide-up animation to
- * the direct children of a container element when they enter the viewport.
+ * GSAP-powered scroll reveal: fades + lifts the children of a container the
+ * first time it enters the viewport, with a calm exponential settle.
+ *
+ * IntersectionObserver does the (cheap) triggering; GSAP does the (precise)
+ * choreography. Inline transforms are cleared after the timeline completes so
+ * hover lifts and sticky positioning inside revealed cards keep working.
  *
  * Usage:
  *   const containerRef = useScrollAnimation<HTMLDivElement>();
@@ -28,60 +34,55 @@ export function useScrollAnimation<T extends HTMLElement = HTMLDivElement>(
 ) {
     const {
         y = 30,
-        duration = 0.5,
-        stagger = 0.1,
+        duration = MOTION.dur.md,
+        stagger = MOTION.stagger.base,
         rootMargin = "0px 0px -15% 0px",
         childSelector = ":scope > *",
     } = config;
 
     const containerRef = useRef<T>(null);
 
-    useEffect(() => {
+    useIsomorphicLayoutEffect(() => {
         const container = containerRef.current;
         if (!container) return;
 
-        const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        const targets = Array.from(container.querySelectorAll<HTMLElement>(childSelector));
+        if (targets.length === 0) return;
 
-        const children = container.querySelectorAll(childSelector);
-        if (children.length === 0) return;
-
-        if (prefersReducedMotion) {
-            children.forEach((child) => {
-                const el = child as HTMLElement;
-                el.style.opacity = "1";
-                el.style.transform = "translateY(0)";
-            });
+        if (prefersReducedMotion()) {
+            gsap.set(targets, { clearProps: "opacity,visibility,transform" });
             return;
         }
 
-        children.forEach((child) => {
-            const el = child as HTMLElement;
-            el.style.willChange = "opacity, transform";
-            el.style.opacity = "0";
-            el.style.transform = `translateY(${y}px)`;
-        });
+        // autoAlpha (opacity + visibility) keeps hidden children out of the
+        // accessibility tree / tab order until they reveal.
+        gsap.set(targets, { autoAlpha: 0, y });
+
+        let timeline: gsap.core.Timeline | null = null;
 
         const observer = new IntersectionObserver(
             (entries) => {
-                entries.forEach((entry) => {
-                    if (!entry.isIntersecting) return;
+                if (!entries.some((e) => e.isIntersecting)) return;
+                observer.disconnect();
 
-                    children.forEach((child, i) => {
-                        const el = child as HTMLElement;
-                        el.style.transition = `opacity ${duration}s ease-out ${i * stagger}s, transform ${duration}s ease-out ${i * stagger}s`;
-                        el.style.opacity = "1";
-                        el.style.transform = "translateY(0)";
-                        setTimeout(() => { el.style.willChange = 'auto'; }, (duration + i * stagger) * 1000);
-                    });
-
-                    observer.unobserve(entry.target);
+                timeline = gsap.timeline().to(targets, {
+                    autoAlpha: 1,
+                    y: 0,
+                    duration,
+                    ease: MOTION.ease.out,
+                    stagger,
+                    clearProps: "opacity,visibility,transform",
                 });
             },
             { rootMargin }
         );
-
         observer.observe(container);
-        return () => observer.disconnect();
+
+        return () => {
+            observer.disconnect();
+            timeline?.kill();
+            gsap.set(targets, { clearProps: "opacity,visibility,transform" });
+        };
     }, [y, duration, stagger, rootMargin, childSelector]);
 
     return containerRef;

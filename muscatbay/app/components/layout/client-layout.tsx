@@ -5,6 +5,7 @@ import { SidebarProvider, useSidebar } from './sidebar-context';
 import { Sidebar } from './sidebar';
 import { Topbar } from './topbar';
 import { BottomNav } from './bottom-nav';
+import { GlowDelegate } from '@/components/motion/glow-delegate';
 
 // This internal component consumes the context to adjust its margin
 function LayoutContent({ children }: { children: React.ReactNode }) {
@@ -48,6 +49,9 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
 
       {/* Bottom navigation - mobile only */}
       <BottomNav />
+
+      {/* One app-wide pointer listener feeding the [data-glow] card sheen */}
+      <GlowDelegate />
     </div>
   );
 }

@@ -6,7 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { useAuth } from "@/components/auth/auth-provider";
 import { StatsGrid } from "@/components/shared/stats-grid";
-import { PageHeader } from "@/components/shared/page-header";
+import { HeroBand } from "@/components/shared/hero-band";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Activity, Droplets, Zap, AlertTriangle, ArrowUpRight, Boxes, Recycle, TrendingUp, Wifi, WifiOff, Printer } from "lucide-react";
@@ -99,12 +99,8 @@ export default function DashboardPage() {
     if (loading) {
         return (
             <div className="space-y-6 md:space-y-8 w-full">
-                <div className="flex items-center justify-between">
-                    <div className="space-y-2">
-                        <div className="h-7 w-48 bg-muted rounded-lg motion-safe:animate-pulse" />
-                        <div className="h-4 w-72 bg-muted rounded motion-safe:animate-pulse" />
-                    </div>
-                </div>
+                {/* Hero-shaped placeholder so the band doesn't jump in after load */}
+                <div className="h-28 sm:h-32 rounded-[var(--radius)] bg-muted motion-safe:animate-pulse" />
                 <div className="grid gap-3 sm:gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
                     {Array.from({ length: 6 }).map((_, i) => (
                         <div key={i} className="bg-card rounded-xl border border-border p-4 sm:p-5 motion-safe:animate-pulse">
@@ -151,28 +147,28 @@ export default function DashboardPage() {
 
     return (
         <div className="space-y-6 md:space-y-8 w-full">
-            <div className="flex items-center justify-between print:items-start">
-                <PageHeader
-                    title={headlineTitle}
-                    description={headlineDescription}
-                />
-                <div className="flex items-center gap-2 print:hidden">
-                    <button
-                        onClick={() => window.print()}
-                        aria-label="Print or save as PDF"
-                        title="Print / Save as PDF"
-                        className="inline-flex items-center justify-center gap-1.5 min-h-11 min-w-11 sm:min-h-0 sm:min-w-0 px-2 sm:px-3 sm:py-1.5 text-xs font-medium rounded-md border border-border text-muted-foreground hover:bg-muted hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    >
-                        <Printer className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
-                        <span className="hidden sm:inline">Print</span>
-                    </button>
-                    <Badge variant={isLiveData ? "default" : "secondary"} className={`flex items-center gap-1.5 ${isLiveData ? "bg-mb-success text-primary-foreground" : "bg-mb-secondary text-mb-secondary-foreground"}`}>
-                        {isLiveData ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
-                        <span className="sm:inline hidden">{isLiveData ? "Live Data" : "Demo Mode"}</span>
-                        <span className="sm:hidden">{isLiveData ? "Live" : "Demo"}</span>
-                    </Badge>
-                </div>
-            </div>
+            <HeroBand
+                title={headlineTitle}
+                description={headlineDescription}
+                actions={
+                    <div className="flex items-center gap-2 print:hidden">
+                        <button
+                            onClick={() => window.print()}
+                            aria-label="Print or save as PDF"
+                            title="Print / Save as PDF"
+                            className="inline-flex items-center justify-center gap-1.5 min-h-11 min-w-11 sm:min-h-0 sm:min-w-0 px-2 sm:px-3 sm:py-1.5 text-xs font-medium rounded-md border border-white/20 text-white/80 hover:bg-white/10 hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/60"
+                        >
+                            <Printer className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
+                            <span className="hidden sm:inline">Print</span>
+                        </button>
+                        <Badge variant={isLiveData ? "default" : "secondary"} className={`flex items-center gap-1.5 ${isLiveData ? "bg-mb-success text-primary-foreground" : "bg-mb-secondary text-mb-secondary-foreground"}`}>
+                            {isLiveData ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
+                            <span className="sm:inline hidden">{isLiveData ? "Live Data" : "Demo Mode"}</span>
+                            <span className="sm:hidden">{isLiveData ? "Live" : "Demo"}</span>
+                        </Badge>
+                    </div>
+                }
+            />
 
             <StatsGrid stats={statsWithIcons} />
 

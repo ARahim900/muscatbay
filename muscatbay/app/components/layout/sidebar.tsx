@@ -1,13 +1,15 @@
 "use client";
 
-import React from 'react';
+import React, { useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
+import gsap from 'gsap';
 import { useSidebar } from './sidebar-context';
 import { useAuth } from '@/components/auth/auth-provider';
 import { useUserRole } from '@/hooks/useUserRole';
 import { canAccessModule, type ModuleKey } from '@/lib/rbac';
+import { MOTION, prefersReducedMotion, useIsomorphicLayoutEffect } from '@/lib/motion';
 import {
   LayoutDashboard,
   Droplets,
@@ -82,6 +84,60 @@ export function Sidebar() {
   const pathname = usePathname();
   const { logout, isDevMode } = useAuth();
   const role = useUserRole();
+  const asideRef = useRef<HTMLElement>(null);
+  const railRef = useRef<HTMLSpanElement>(null);
+  const railAnimatedRef = useRef(false);
+
+  // Gliding active rail: one teal indicator that travels between nav items on
+  // navigation instead of blinking on/off. The per-item static bars (class
+  // nav-rail-static) remain as the no-JS / reduced-motion fallback and are
+  // hidden via [data-rail="on"] once the rail takes over.
+  useIsomorphicLayoutEffect(() => {
+    const aside = asideRef.current;
+    const rail = railRef.current;
+    if (!aside || !rail || prefersReducedMotion()) return;
+
+    aside.dataset.rail = 'on';
+
+    const place = (animate: boolean) => {
+      const active = aside.querySelector<HTMLAnchorElement>('a[aria-current="page"]');
+      if (!active) {
+        gsap.set(rail, { autoAlpha: 0 });
+        return;
+      }
+      const asideRect = aside.getBoundingClientRect();
+      const rect = active.getBoundingClientRect();
+      // top-1.5/bottom-1.5 (6px) insets match the static bars exactly
+      const target = { y: rect.top - asideRect.top + 6, height: rect.height - 12, autoAlpha: 1 };
+      if (animate && railAnimatedRef.current) {
+        gsap.to(rail, { ...target, duration: 0.5, ease: MOTION.ease.out, overwrite: 'auto' });
+      } else {
+        gsap.set(rail, target);
+      }
+      railAnimatedRef.current = true;
+    };
+
+    place(true);
+
+    const nav = aside.querySelector('nav');
+    const onScroll = () => place(false);
+    nav?.addEventListener('scroll', onScroll, { passive: true });
+
+    // Re-seat after the 200ms collapse/expand width transition settles
+    const onTransitionEnd = (e: TransitionEvent) => {
+      if (e.propertyName === 'width') place(false);
+    };
+    aside.addEventListener('transitionend', onTransitionEnd);
+
+    const resizeObserver = new ResizeObserver(() => place(false));
+    resizeObserver.observe(aside);
+
+    return () => {
+      nav?.removeEventListener('scroll', onScroll);
+      aside.removeEventListener('transitionend', onTransitionEnd);
+      resizeObserver.disconnect();
+    };
+  }, [pathname, isCollapsed, role, isDevMode]);
 
   // RBAC filter — hide nav items the current role can't access. Dev mode
   // bypasses for local testing. This is a soft UI gate; Supabase RLS is the
@@ -114,6 +170,7 @@ export function Sidebar() {
       {/* Sidebar Container — sits below the fixed 76px topbar so
           the brand-purple topbar spans edge-to-edge above it. */}
       <aside
+        ref={asideRef}
         className={`
           fixed top-0 start-0 h-dvh z-40
           flex flex-col
@@ -131,6 +188,13 @@ export function Sidebar() {
         }}
         aria-label="Main navigation"
       >
+        {/* Gliding active rail — travels between items; see effect above */}
+        <span
+          ref={railRef}
+          aria-hidden="true"
+          className="pointer-events-none absolute start-0 top-0 z-10 w-[3px] rounded-e-full bg-secondary opacity-0"
+        />
+
         {/* Brand lockup — same height as topbar (h-16 = 64px) */}
         <div className="h-16 flex items-center flex-shrink-0 border-b border-white/10 px-3">
           {isCollapsed ? (
@@ -213,7 +277,7 @@ export function Sidebar() {
                       >
                         <span
                           aria-hidden="true"
-                          className={`absolute start-0 top-1.5 bottom-1.5 w-[3px] rounded-e-full bg-secondary transition-opacity duration-150 ease-out ${isActive ? 'opacity-100' : 'opacity-0'}`}
+                          className={`nav-rail-static absolute start-0 top-1.5 bottom-1.5 w-[3px] rounded-e-full bg-secondary transition-opacity duration-150 ease-out ${isActive ? 'opacity-100' : 'opacity-0'}`}
                         />
                         <Icon className={`w-5 h-5 flex-shrink-0 transition-colors duration-150 relative z-10 ${isActive ? "text-secondary" : "text-white/80 group-hover/nav:text-white"}`} />
                         {!isCollapsed && (
@@ -263,7 +327,7 @@ export function Sidebar() {
                 {/* Left accent bar */}
                 <span
                   aria-hidden="true"
-                  className={`absolute start-0 top-1.5 bottom-1.5 w-[3px] rounded-e-full bg-secondary transition-opacity duration-150 ease-out ${isActive ? 'opacity-100' : 'opacity-0'}`}
+                  className={`nav-rail-static absolute start-0 top-1.5 bottom-1.5 w-[3px] rounded-e-full bg-secondary transition-opacity duration-150 ease-out ${isActive ? 'opacity-100' : 'opacity-0'}`}
                 />
                 <Icon
                   className={`

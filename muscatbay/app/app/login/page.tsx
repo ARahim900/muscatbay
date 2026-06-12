@@ -1,15 +1,22 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import Image from "next/image";
+import gsap from "gsap";
 import { signIn } from "@/lib/auth";
 import { validateEmail, checkRateLimit, resetRateLimit, recordRateLimitAttempt } from "@/lib/validation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { CountUp } from "@/components/motion/count-up";
+import { MOTION, prefersReducedMotion, useIsomorphicLayoutEffect } from "@/lib/motion";
 import { Loader2, Mail, Lock, Eye, EyeOff } from "lucide-react";
+
+// The bay backdrop loads after the form is interactive — sign-in never waits on WebGL
+const AmbientBay = dynamic(() => import("@/components/three/ambient-bay"), { ssr: false });
 
 export default function LoginPage() {
     return (
@@ -22,6 +29,7 @@ export default function LoginPage() {
 function LoginContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
+    const rootRef = useRef<HTMLDivElement>(null);
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
@@ -30,6 +38,30 @@ function LoginContent() {
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
     const [emailError, setEmailError] = useState<string | null>(null);
     const [focusedField, setFocusedField] = useState<string | null>(null);
+
+    // Entrance choreography: brand panel and form settle in as one sequence.
+    // DOM order drives the stagger, so the story reads logo → headline →
+    // live systems → form. Skipped entirely under prefers-reduced-motion.
+    useIsomorphicLayoutEffect(() => {
+        const root = rootRef.current;
+        if (!root || prefersReducedMotion()) return;
+
+        const ctx = gsap.context(() => {
+            const items = root.querySelectorAll<HTMLElement>("[data-reveal]");
+            if (items.length === 0) return;
+            gsap.set(items, { autoAlpha: 0, y: 22 });
+            gsap.to(items, {
+                autoAlpha: 1,
+                y: 0,
+                duration: MOTION.dur.lg,
+                ease: MOTION.ease.outExpo,
+                stagger: MOTION.stagger.base,
+                delay: 0.05,
+                clearProps: "opacity,visibility,transform",
+            });
+        }, root);
+        return () => ctx.revert();
+    }, []);
 
     // Pick up error/success messages from redirects (?error=... or ?message=...)
     // — e.g. reset-password routes back here with a success message.
@@ -88,14 +120,20 @@ function LoginContent() {
     };
 
     return (
-        <div className="min-h-screen flex">
+        <div ref={rootRef} className="min-h-screen flex">
             {/* Left Panel - Branding */}
-            <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-primary">
+            <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-primary bg-[linear-gradient(150deg,var(--primary)_0%,var(--sidebar)_100%)]">
+
+                {/* Ambient bay water field — the literal subject of the brand */}
+                <div className="absolute inset-0" aria-hidden="true">
+                    <AmbientBay className="absolute inset-0" intensity="bold" />
+                    <div className="absolute inset-0 bg-[radial-gradient(110%_80%_at_80%_-10%,color-mix(in_srgb,var(--secondary)_14%,transparent),transparent_60%)]" />
+                </div>
 
                 {/* Content */}
-                <div className="flex flex-col justify-between w-full p-12">
+                <div className="relative z-10 flex flex-col justify-between w-full p-12">
                     {/* Logo Section */}
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-4" data-reveal>
                         <div className="relative w-14 h-14 bg-white/10 rounded-2xl p-2 border border-white/20 shadow-2xl">
                             <Image
                                 src="/logo.png"
@@ -114,7 +152,7 @@ function LoginContent() {
 
                     {/* Center Content */}
                     <div className="space-y-8">
-                        <div>
+                        <div data-reveal>
                             <h2 className="text-4xl font-bold text-primary-foreground leading-tight mb-4">
                                 Smart Operations<br />
                                 <span className="text-secondary">Management</span>
@@ -127,7 +165,7 @@ function LoginContent() {
                         {/* Operational Systems Preview — shows actual system data
                             instead of generic marketing bullets */}
                         <div className="space-y-2">
-                            <p className="text-primary-foreground/50 text-[10px] font-semibold uppercase tracking-[0.14em]">
+                            <p className="text-primary-foreground/50 text-[10px] font-semibold uppercase tracking-[0.14em]" data-reveal>
                                 Live System Status
                             </p>
 
@@ -135,10 +173,11 @@ function LoginContent() {
                                 { label: "Water Production",  value: "2,847",  unit: "m³ today",   color: "var(--module-water)",       status: "Normal",  statusColor: "var(--mb-success)" },
                                 { label: "Electricity",       value: "148",    unit: "kWh current", color: "var(--module-electricity)", status: "Nominal", statusColor: "var(--mb-warning)" },
                                 { label: "STP Treated",       value: "892",    unit: "m³ today",   color: "var(--module-stp)",         status: "Active",  statusColor: "var(--secondary)" },
-                            ] as const).map((sys) => (
+                            ] as const).map((sys, sysIndex) => (
                                 <div
                                     key={sys.label}
-                                    className="flex items-center gap-3 bg-white/[0.06] rounded-lg px-4 py-3 border border-white/[0.05]"
+                                    data-reveal
+                                    className="flex items-center gap-3 bg-white/[0.06] rounded-lg px-4 py-3 border border-white/[0.05] backdrop-blur-[2px]"
                                 >
                                     {/* Module colour accent */}
                                     <div
@@ -153,7 +192,7 @@ function LoginContent() {
                                             {sys.label}
                                         </p>
                                         <p className="text-primary-foreground font-semibold text-sm tabular-nums leading-none">
-                                            {sys.value}
+                                            <CountUp value={sys.value} delay={0.55 + sysIndex * 0.12} duration={1.2} />
                                             <span className="text-primary-foreground/45 font-normal text-xs ms-1.5">{sys.unit}</span>
                                         </p>
                                     </div>
@@ -174,7 +213,7 @@ function LoginContent() {
                             ))}
 
                             {/* Grounding footer */}
-                            <div className="flex items-center gap-3 pt-0.5">
+                            <div className="flex items-center gap-3 pt-0.5" data-reveal>
                                 <span className="text-primary-foreground/40 text-xs">8 utility systems</span>
                                 <span aria-hidden="true" className="w-px h-2.5 bg-white/15 flex-shrink-0" />
                                 <span className="text-primary-foreground/40 text-xs">Muscat Bay, Oman</span>
@@ -185,7 +224,7 @@ function LoginContent() {
                     </div>
 
                     {/* Footer */}
-                    <div className="text-primary-foreground/40 text-sm">
+                    <div className="text-primary-foreground/40 text-sm" data-reveal>
                         &copy; 2026 Muscat Bay
                     </div>
                 </div>
@@ -195,7 +234,7 @@ function LoginContent() {
             <div className="w-full lg:w-1/2 flex items-center justify-center bg-background p-6 lg:p-12">
                 <div className="w-full max-w-md">
                     {/* Mobile Logo */}
-                    <div className="flex justify-center mb-8 lg:hidden">
+                    <div className="flex justify-center mb-8 lg:hidden" data-reveal>
                         <div className="flex items-center gap-3">
                             <div className="relative w-12 h-12 bg-primary rounded-xl p-2 shadow-lg">
                                 <Image
@@ -215,7 +254,7 @@ function LoginContent() {
                     </div>
 
                     {/* Welcome Text */}
-                    <div className="text-center lg:text-left mb-8">
+                    <div className="text-center lg:text-left mb-8" data-reveal>
                         <h2 className="text-3xl font-bold text-foreground mb-2">
                             Welcome back
                         </h2>
@@ -225,7 +264,7 @@ function LoginContent() {
                     </div>
 
                     {/* Login Form Card */}
-                    <div className="bg-card rounded-2xl shadow-xl border border-border p-8">
+                    <div className="bg-card rounded-2xl shadow-xl border border-border p-8" data-reveal>
                         <form onSubmit={handleSubmit} className="space-y-6">
                             {/* Success Message (e.g. after password reset) */}
                             {successMessage && !error && (
@@ -366,7 +405,7 @@ function LoginContent() {
                     </div>
 
                     {/* Footer */}
-                    <div className="mt-8 text-center">
+                    <div className="mt-8 text-center" data-reveal>
                         <p className="text-xs text-muted-foreground">
                             By signing in, you agree to our{' '}
                             <Link href="/terms" className="text-primary dark:text-secondary hover:underline">

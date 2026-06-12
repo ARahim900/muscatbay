@@ -1,7 +1,10 @@
 "use client";
 
-import { ReactNode, useRef, useEffect } from "react";
+import { ReactNode, useRef } from "react";
+import gsap from "gsap";
 import { cn } from "@/lib/utils";
+import { useScrollAnimation } from "@/hooks/useScrollAnimation";
+import { MOTION, prefersReducedMotion, useIsomorphicLayoutEffect } from "@/lib/motion";
 
 // ─── Staggered container animation ───────────────────────────────────────────
 
@@ -10,9 +13,9 @@ interface AnimateOnScrollProps {
   className?: string;
   /** Vertical offset (px). Default: 30 */
   y?: number;
-  /** Duration in seconds. Default: 0.5 */
+  /** Duration in seconds. Default: 0.6 */
   duration?: number;
-  /** Stagger delay between children (s). Default: 0.1 */
+  /** Stagger delay between children (s). Default: 0.07 */
   stagger?: number;
   /** IntersectionObserver rootMargin. Default: '0px 0px -15% 0px' */
   rootMargin?: string;
@@ -21,67 +24,26 @@ interface AnimateOnScrollProps {
 }
 
 /**
- * Wrapper component that applies a staggered CSS fade-in + slide-up
- * animation to its children when they enter the viewport.
+ * Wrapper component that applies a GSAP staggered fade-in + lift to its
+ * children when they enter the viewport. Same API as before; the
+ * choreography now runs on the shared motion tokens.
  */
 export function AnimateOnScroll({
   children,
   className,
   y = 30,
-  duration = 0.5,
-  stagger = 0.1,
+  duration = MOTION.dur.md,
+  stagger = MOTION.stagger.base,
   rootMargin = "0px 0px -15% 0px",
   selector = ":scope > *",
 }: AnimateOnScrollProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-
-    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-    const targets = el.querySelectorAll(selector);
-    if (targets.length === 0) return;
-
-    if (prefersReducedMotion) {
-      targets.forEach((target) => {
-        const htmlEl = target as HTMLElement;
-        htmlEl.style.opacity = "1";
-        htmlEl.style.transform = "translateY(0)";
-      });
-      return;
-    }
-
-    targets.forEach((target) => {
-      const htmlEl = target as HTMLElement;
-      htmlEl.style.willChange = "opacity, transform";
-      htmlEl.style.opacity = "0";
-      htmlEl.style.transform = `translateY(${y}px)`;
-    });
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (!entry.isIntersecting) return;
-
-          targets.forEach((target, i) => {
-            const htmlEl = target as HTMLElement;
-            htmlEl.style.transition = `opacity ${duration}s ease-out ${i * stagger}s, transform ${duration}s ease-out ${i * stagger}s`;
-            htmlEl.style.opacity = "1";
-            htmlEl.style.transform = "translateY(0)";
-            setTimeout(() => { htmlEl.style.willChange = 'auto'; }, (duration + i * stagger) * 1000);
-          });
-
-          observer.unobserve(entry.target);
-        });
-      },
-      { rootMargin }
-    );
-
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [y, duration, stagger, rootMargin, selector]);
+  const containerRef = useScrollAnimation<HTMLDivElement>({
+    y,
+    duration,
+    stagger,
+    rootMargin,
+    childSelector: selector,
+  });
 
   return (
     <div ref={containerRef} className={cn(className)}>
@@ -101,52 +63,52 @@ interface AnimateOnScrollItemProps {
 }
 
 /**
- * Wraps a single element with a fade-in + slide-up animation on scroll.
+ * Wraps a single element with a GSAP fade-in + lift animation on scroll.
  */
 export function AnimateOnScrollItem({
   children,
   className,
   y = 30,
-  duration = 0.5,
+  duration = MOTION.dur.md,
   rootMargin = "0px 0px -15% 0px",
 }: AnimateOnScrollItemProps) {
   const ref = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     const el = ref.current;
     if (!el) return;
 
-    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-    if (prefersReducedMotion) {
-      el.style.opacity = "1";
-      el.style.transform = "translateY(0)";
+    if (prefersReducedMotion()) {
+      gsap.set(el, { clearProps: "opacity,visibility,transform" });
       return;
     }
 
-    el.style.willChange = "opacity, transform";
-    el.style.opacity = "0";
-    el.style.transform = `translateY(${y}px)`;
+    gsap.set(el, { autoAlpha: 0, y });
+
+    let tween: gsap.core.Tween | null = null;
 
     const observer = new IntersectionObserver(
       (entries) => {
-        entries.forEach((entry) => {
-          if (!entry.isIntersecting) return;
+        if (!entries.some((e) => e.isIntersecting)) return;
+        observer.disconnect();
 
-          const htmlEl = entry.target as HTMLElement;
-          htmlEl.style.transition = `opacity ${duration}s ease-out, transform ${duration}s ease-out`;
-          htmlEl.style.opacity = "1";
-          htmlEl.style.transform = "translateY(0)";
-          setTimeout(() => { htmlEl.style.willChange = 'auto'; }, duration * 1000);
-
-          observer.unobserve(entry.target);
+        tween = gsap.to(el, {
+          autoAlpha: 1,
+          y: 0,
+          duration,
+          ease: MOTION.ease.out,
+          clearProps: "opacity,visibility,transform",
         });
       },
       { rootMargin }
     );
-
     observer.observe(el);
-    return () => observer.disconnect();
+
+    return () => {
+      observer.disconnect();
+      tween?.kill();
+      gsap.set(el, { clearProps: "opacity,visibility,transform" });
+    };
   }, [y, duration, rootMargin]);
 
   return (
