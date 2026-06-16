@@ -84,6 +84,23 @@ export function CommandDeck({ title, description, actions, stats, className }: C
                     clearProps: "opacity,visibility,transform",
                 }, items.length > 0 ? "-=0.55" : 0);
             }
+
+            // Occasional, staggered "breathing" pulse on the KPI icons — calm by
+            // default (a soft swell every few seconds), never a constant jitter.
+            const icons = deck.querySelectorAll<HTMLElement>("[data-deck-icon]");
+            if (icons.length > 0) {
+                gsap.to(icons, {
+                    scale: 1.12,
+                    duration: 0.5,
+                    ease: "sine.inOut",
+                    yoyo: true,
+                    repeat: -1,
+                    repeatDelay: 4.5,
+                    delay: 1.1,
+                    transformOrigin: "center center",
+                    stagger: { each: 0.18 },
+                });
+            }
         }, deck);
 
         return () => ctx.revert();
@@ -157,6 +174,7 @@ export function CommandDeck({ title, description, actions, stats, className }: C
                 >
                     {stats.map((stat, index) => {
                         const variant = stat.variant || "primary";
+                        const iconColor = stat.color || deckIconColor[variant];
 
                         const isGoodTrend = stat.trend === "neutral" ? false :
                             stat.invertTrend ? stat.trend === "down" : stat.trend === "up";
@@ -165,14 +183,20 @@ export function CommandDeck({ title, description, actions, stats, className }: C
 
                         const cellContent = (
                             <>
-                                <div className="flex items-start gap-1.5 min-w-0">
-                                    <stat.icon
+                                <div className="flex items-start gap-2 min-w-0">
+                                    <span
+                                        data-deck-icon
                                         aria-hidden="true"
-                                        className="w-3.5 h-3.5 flex-shrink-0 mt-px"
-                                        style={{ color: stat.color || deckIconColor[variant] }}
-                                    />
+                                        className="grid size-7 sm:size-8 flex-shrink-0 place-items-center rounded-md ring-1 ring-inset ring-white/10 print:ring-border"
+                                        style={{
+                                            backgroundColor: `color-mix(in srgb, ${iconColor} 16%, transparent)`,
+                                            color: iconColor,
+                                        }}
+                                    >
+                                        <stat.icon className="h-4 w-4" />
+                                    </span>
                                     {/* Wraps to 2 lines on mobile so "STP ECONOMIC IMP…" never happens */}
-                                    <p className="text-[10px] sm:text-[11px] font-medium uppercase tracking-[0.08em] leading-tight text-white/55 line-clamp-2 sm:line-clamp-1 min-h-[2.1em] sm:min-h-0 print:text-(--muted-foreground)">
+                                    <p className="mt-0.5 text-[10px] sm:text-[11px] font-medium uppercase tracking-[0.08em] leading-tight text-white/55 line-clamp-2 sm:line-clamp-1 min-h-[2.1em] sm:min-h-0 print:text-(--muted-foreground)">
                                         {stat.label}
                                     </p>
                                 </div>
