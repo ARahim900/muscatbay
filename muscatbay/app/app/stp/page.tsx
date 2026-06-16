@@ -39,6 +39,14 @@ import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
 import { useAppNotifications } from "@/components/NotificationProvider";
 import { useToast } from "@/components/ui/toast-provider";
 import { cn } from "@/lib/utils";
+import dynamic from "next/dynamic";
+import type { StpTwinMetrics } from "@/components/three/stp-plant-twin";
+
+// The 3D plant twin is client-only WebGL — keep it out of SSR.
+const StpPlantTwin = dynamic(() => import("@/components/three/stp-plant-twin"), {
+    ssr: false,
+    loading: () => <Skeleton className="h-[340px] w-full rounded-lg sm:h-[420px]" />,
+});
 
 // Use centralized config for rates
 const { TANKER_FEE, TSE_SAVING_RATE } = STP_RATES;
@@ -613,6 +621,17 @@ export default function STPPage() {
         }
     };
 
+    // Live inputs for the 3D plant twin — same filtered operations the KPIs use.
+    const twinMetrics: StpTwinMetrics = useMemo(() => {
+        const totalInlet = operations.reduce((sum, op) => sum + op.inlet_sewage, 0);
+        const totalTSE = operations.reduce((sum, op) => sum + op.tse_for_irrigation, 0);
+        const totalTrips = operations.reduce((sum, op) => sum + op.tanker_trips, 0);
+        const days = operations.length;
+        const dailyAvgInlet = days > 0 ? totalInlet / days : 0;
+        const efficiency = totalInlet > 0 ? (totalTSE / totalInlet) * 100 : 0;
+        return { totalInlet, totalTSE, totalTrips, dailyAvgInlet, efficiency, days };
+    }, [operations]);
+
     if (loading) {
         return (
             <div className="space-y-6 sm:space-y-7 md:space-y-8 w-full motion-safe:animate-in motion-safe:fade-in duration-200">
@@ -736,6 +755,26 @@ export default function STPPage() {
 
                     {/* Unified Stats Grid */}
                     <StatsGrid stats={stats} />
+
+                    {/* 3D Plant Process Twin — live, data-bound view of the plant */}
+                    <Card className="card-elevated">
+                        <CardHeader className="card-elevated-header">
+                            <div className="flex items-center justify-between gap-4 flex-wrap">
+                                <div className="space-y-1">
+                                    <CardTitle className="text-lg">Plant Process Twin</CardTitle>
+                                    <p className="text-sm text-muted-foreground">
+                                        Live 3D view — tank levels and status track the readings above
+                                    </p>
+                                </div>
+                                <Badge variant="outline" className="px-3 py-1.5 text-sm font-normal">
+                                    Inlet → Treatment → TSE
+                                </Badge>
+                            </div>
+                        </CardHeader>
+                        <CardContent>
+                            <StpPlantTwin metrics={twinMetrics} isLive={isLiveData} />
+                        </CardContent>
+                    </Card>
 
                     {/* Water Treatment Volumes Chart */}
                     <Card className="card-elevated">
