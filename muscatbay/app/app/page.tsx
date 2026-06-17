@@ -23,6 +23,12 @@ const DashboardCharts = dynamic(() => import("@/components/charts/dashboard-char
     ssr: false,
 });
 
+// Interactive 3D site model — client-only WebGL, kept out of SSR and the critical path.
+const BaySiteModel = dynamic(() => import("@/components/three/bay-site-model"), {
+    ssr: false,
+    loading: () => <div className="h-[300px] sm:h-[400px] lg:h-[440px] rounded-lg bg-white/5 motion-safe:animate-pulse" />,
+});
+
 function getGreeting() {
     const h = new Date().getHours();
     return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
@@ -155,6 +161,25 @@ export default function DashboardPage() {
                     </div>
                 }
             />
+
+            {/* Live Site Model — interactive 3D overview of every system */}
+            <section
+                aria-label="Live site model"
+                className="relative overflow-hidden rounded-[var(--radius)] border border-white/10 bg-[linear-gradient(140deg,var(--primary)_0%,var(--sidebar)_100%)] shadow-card-primary print:hidden"
+            >
+                <div className="flex flex-wrap items-center justify-between gap-3 p-4 sm:p-5 md:px-6 md:pt-5">
+                    <div className="space-y-0.5">
+                        <h2 className="text-base sm:text-lg font-semibold text-white">Live Site Model</h2>
+                        <p className="text-xs text-white/60">Every system at a glance — click a district to open it</p>
+                    </div>
+                    <Badge variant="outline" className="border-white/20 text-white/70">Interactive 3D</Badge>
+                </div>
+                <div className="px-3 pb-3 sm:px-4 sm:pb-4 md:px-5 md:pb-5">
+                    <div className="rounded-lg bg-black/20">
+                        <BaySiteModel stats={statsWithIcons} />
+                    </div>
+                </div>
+            </section>
 
             <DashboardCharts chartData={chartData} stpChartData={stpChartData} />
 
