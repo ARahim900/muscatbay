@@ -41,6 +41,7 @@ export function SplashScreen({ exiting = false }: SplashScreenProps) {
             alt="Muscat Bay"
             width={96}
             height={96}
+            quality={100}
             priority
             className="rounded-2xl"
             style={{

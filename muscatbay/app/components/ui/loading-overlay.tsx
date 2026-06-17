@@ -90,6 +90,7 @@ export function LoadingOverlay() {
             aria-hidden
             width={52}
             height={52}
+            quality={100}
             className="rounded-xl relative z-10"
           />
         </div>
