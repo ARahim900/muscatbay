@@ -193,13 +193,14 @@ export default function ProfessionalApplicationPage() {
                 {/* Logo */}
                 <div className="flex justify-center mb-6">
                     <div className="flex items-center gap-3">
-                        <div className="relative w-12 h-12 rounded-xl bg-[var(--mb-primary)] flex items-center justify-center shadow-lg overflow-hidden">
+                        <div className="relative w-12 h-12 rounded-xl overflow-hidden shadow-lg">
                             <Image
                                 src="/logo.png"
                                 alt="Muscat Bay Logo"
                                 fill
                                 sizes="48px"
-                                className="object-contain p-1"
+                                className="object-cover"
+                                quality={100}
                                 priority
                             />
                         </div>

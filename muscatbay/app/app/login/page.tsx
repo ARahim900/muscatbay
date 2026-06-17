@@ -134,13 +134,14 @@ function LoginContent() {
                 <div className="relative z-10 flex flex-col justify-between w-full p-12">
                     {/* Logo Section */}
                     <div className="flex items-center gap-4" data-reveal>
-                        <div className="relative w-14 h-14 bg-white/10 rounded-2xl p-2 border border-white/20 shadow-2xl">
+                        <div className="relative w-14 h-14 rounded-2xl overflow-hidden shadow-2xl">
                             <Image
                                 src="/logo.png"
                                 alt="Muscat Bay Logo"
                                 fill
                                 sizes="56px"
-                                className="object-contain p-1"
+                                className="object-cover"
+                                quality={100}
                                 priority
                             />
                         </div>
@@ -236,13 +237,14 @@ function LoginContent() {
                     {/* Mobile Logo */}
                     <div className="flex justify-center mb-8 lg:hidden" data-reveal>
                         <div className="flex items-center gap-3">
-                            <div className="relative w-12 h-12 bg-primary rounded-xl p-2 shadow-lg">
+                            <div className="relative w-12 h-12 rounded-xl overflow-hidden shadow-lg">
                                 <Image
                                     src="/logo.png"
                                     alt="Muscat Bay Logo"
                                     fill
                                     sizes="48px"
-                                    className="object-contain p-1"
+                                    className="object-cover"
+                                    quality={100}
                                     priority
                                 />
                             </div>

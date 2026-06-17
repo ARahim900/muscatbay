@@ -201,17 +201,17 @@ export function Sidebar() {
             /* Collapsed: centred logo icon doubles as expand trigger on desktop */
             <button
               onClick={toggleCollapse}
-              className="hidden md:flex mx-auto w-10 h-10 rounded-xl items-center justify-center bg-white/10 ring-1 ring-white/15 hover:bg-white/20 hover:ring-secondary/30 transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:outline-none"
+              className="hidden md:flex mx-auto w-10 h-10 rounded-xl items-center justify-center hover:bg-white/10 transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:outline-none"
               aria-label="Expand sidebar"
             >
-              <Image src="/mb-logo.png" alt="Muscat Bay" width={26} height={26} className="object-contain" priority />
+              <Image src="/mb-logo.png" alt="Muscat Bay" width={32} height={32} quality={100} className="object-contain" priority />
             </button>
           ) : (
             /* Expanded: full brand lockup + collapse button */
             <div className="flex items-center gap-2 flex-1 min-w-0">
               <Link href="/" className="flex items-center gap-2.5 group flex-1 min-w-0" aria-label="Muscat Bay home">
-                <div className="w-9 h-9 rounded-xl flex-shrink-0 flex items-center justify-center bg-white/10 ring-1 ring-white/15 shadow-md group-hover:bg-white/20 group-hover:ring-secondary/30 transition-colors duration-150">
-                  <Image src="/mb-logo.png" alt="Muscat Bay" width={26} height={26} className="object-contain" priority />
+                <div className="w-9 h-9 rounded-xl flex-shrink-0 flex items-center justify-center transition-colors duration-150">
+                  <Image src="/mb-logo.png" alt="Muscat Bay" width={32} height={32} quality={100} className="object-contain" priority />
                 </div>
                 <div className="min-w-0">
                   <p className="text-sm font-bold tracking-tight leading-none">
