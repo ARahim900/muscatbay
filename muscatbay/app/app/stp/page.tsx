@@ -263,22 +263,36 @@ export default function STPPage() {
         });
     }, [allMonths, selectedYear]);
 
-    // Initialize start and end months when data loads, and validate saved prefs against actual data
-    useEffect(() => {
-        if (allMonths.length > 0) {
-            const startValid = startMonth && allMonths.includes(startMonth);
-            const endValid = endMonth && allMonths.includes(endMonth);
-            const latestMonth = allMonths[allMonths.length - 1];
+    // Read the current range through refs so the validation effect below does NOT
+    // depend on startMonth/endMonth. An effect that depends on the very state it
+    // sets re-fires on its own updates — the classic "Maximum update depth
+    // exceeded" loop. The legitimate triggers are data-driven (allMonths) and
+    // filter-driven (selectedYear), never the range values themselves.
+    const startMonthRef = useRef(startMonth);
+    startMonthRef.current = startMonth;
+    const endMonthRef = useRef(endMonth);
+    endMonthRef.current = endMonth;
 
-            if (!startValid || !endValid) {
-                setStartMonth(allMonths[0]);
-                setEndMonth(latestMonth);
-            } else if (!selectedYear && endMonth !== latestMonth) {
-                // No year filter active — auto-extend to newest data when new months arrive
-                setEndMonth(latestMonth);
-            }
+    // Initialize start/end months when data loads, validate saved prefs against
+    // the actual data, and auto-extend to the newest month when new data arrives.
+    useEffect(() => {
+        if (allMonths.length === 0) return;
+
+        const start = startMonthRef.current;
+        const end = endMonthRef.current;
+        const startValid = start && allMonths.includes(start);
+        const endValid = end && allMonths.includes(end);
+        const latestMonth = allMonths[allMonths.length - 1];
+
+        if (!startValid || !endValid) {
+            // Missing or stale selection — snap to the full available range.
+            if (start !== allMonths[0]) setStartMonth(allMonths[0]);
+            if (end !== latestMonth) setEndMonth(latestMonth);
+        } else if (!selectedYear && end !== latestMonth) {
+            // No year filter active — extend to newest data when new months arrive.
+            setEndMonth(latestMonth);
         }
-    }, [allMonths, startMonth, endMonth, selectedYear]);
+    }, [allMonths, selectedYear]);
 
     // Calculate filtered operations based on start/end month selection
     const operations = useMemo(() => {
