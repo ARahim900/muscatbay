@@ -84,6 +84,7 @@ export interface ReportData {
     buildingRows: BuildingRow[];
     dcRows: DCRow[];
     l2Total: number;
+    l3Total: number;
     dcTotal: number;
     grandTotal: number;
 }
@@ -160,9 +161,10 @@ export function processReport(readings: Record<string, number | null>): ReportDa
 
     // SUMMARY
     const l2Total = r2(zoneRows.reduce((s, r) => s + (r.l2Value ?? 0), 0));
+    const l3Total = r2(zoneRows.reduce((s, r) => s + r.l3Sum, 0));
     const dcTotal = r2(dcRows.reduce((s, r) => s + (r.displayValue ?? 0), 0));
 
-    return { zoneRows, buildingRows, dcRows, l2Total, dcTotal, grandTotal: r2(l2Total + dcTotal) };
+    return { zoneRows, buildingRows, dcRows, l2Total, l3Total, dcTotal, grandTotal: r2(l2Total + dcTotal) };
 }
 
 // ─── Number formatters ────────────────────────────────────────────────────────

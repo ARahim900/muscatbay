@@ -40,13 +40,22 @@ function DCAnalyticsPanel({ reportData, monthData, selectedDay, month }: DCAnaly
         return map;
     }, [monthData]);
 
-    // Daily DC total = sum of all DC meters for the selected day
-    const dailyDcTotal = r2(reportData.dcRows.reduce((s, r) => s + (r.displayValue ?? 0), 0));
+    const l2PlusDcTotal = r2(reportData.l2Total + reportData.dcTotal);
+    const l3PlusDcTotal = r2(reportData.l3Total + reportData.dcTotal);
+    const connectionDifference = r2(l2PlusDcTotal - l3PlusDcTotal);
+    const connectionDifferenceMagnitude = Math.abs(connectionDifference);
+    const totalGaugeMax = Math.max(l2PlusDcTotal, l3PlusDcTotal) * 1.2 || 100;
+    const differenceGaugeMax = connectionDifferenceMagnitude * 1.2 || 100;
+    const differenceColor = connectionDifference > 0 ? CHART_COLORS.loss : CHART_COLORS.success;
+    const differenceSublabel = connectionDifference === 0
+        ? "No difference between totals"
+        : connectionDifference > 0
+            ? "L2 + DC is higher"
+            : "L3 + DC is higher";
 
-    // 31-day DC trend + monthly aggregates
-    const { trendData, monthlyTotal } = useMemo(() => {
+    // 31-day DC trend
+    const trendData = useMemo(() => {
         const results: { day: string; dayNum: number; 'DC Total': number }[] = [];
-        let mTotal = 0;
         for (let day = 1; day <= 31; day++) {
             const dayCol = `day_${day}` as keyof SupabaseDailyWaterConsumption;
             let dayTotal = 0;
@@ -60,24 +69,16 @@ function DCAnalyticsPanel({ reportData, monthData, selectedDay, month }: DCAnaly
                 }
             }
             if (!hasAny) continue;
-            mTotal += dayTotal;
             results.push({
                 day: `D${String(day).padStart(2, '0')}`,
                 dayNum: day,
                 'DC Total': r2(dayTotal),
             });
         }
-        return { trendData: results, monthlyTotal: r2(mTotal) };
+        return results;
     }, [accountMap]);
 
-    // Active meters (reporting on selected day)
-    const activeMeters = reportData.dcRows.filter(r => r.rawValue !== null).length;
     const totalMeters = reportData.dcRows.length;
-
-    // Gauge scales
-    const maxDaily = Math.max(...trendData.map(d => d['DC Total']), dailyDcTotal);
-    const dailyGaugeMax = maxDaily * 1.2 || 100;
-    const monthlyGaugeMax = monthlyTotal * 1.2 || 100;
 
     const currentDayLabel = trendData.find(d => d.dayNum === selectedDay)?.day;
 
@@ -90,19 +91,19 @@ function DCAnalyticsPanel({ reportData, monthData, selectedDay, month }: DCAnaly
                     Direct Connection Analysis — Day {selectedDay}, {month}
                 </h2>
                 <p className="text-sm text-muted-foreground dark:text-muted-foreground mt-1">
-                    <span className="text-mb-secondary font-medium">DC Daily Total</span> = sum of all DC meters today &bull;{" "}
-                    <span className="text-mb-primary font-medium">Monthly Total</span> = month-to-date DC consumption &bull;{" "}
-                    <span style={{ color: CHART_COLORS.success }} className="font-medium">Active Meters</span> = meters reporting today
+                    <span className="text-mb-secondary font-medium">L2 + DC</span> = zone bulks plus direct connections &bull;{" "}
+                    <span className="text-mb-primary font-medium">L3 + DC</span> = individual meters plus the same direct connections &bull;{" "}
+                    <span className="text-mb-primary font-medium">Sales Center</span> is counted as DC
                 </p>
             </div>
 
             {/* ── 3 Gauge rings ────────────────────────────────────────────── */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 md:gap-6">
                 <LiquidProgressRing
-                    value={dailyDcTotal}
-                    max={dailyGaugeMax}
-                    label="DC Daily Total"
-                    sublabel="Sum of DC meters today"
+                    value={l2PlusDcTotal}
+                    max={totalGaugeMax}
+                    label="L2 + DC Total"
+                    sublabel="Zone bulk total + DC"
                     color={CHART_COLORS.teal}
                     size={160}
                     showPercentage={false}
@@ -110,10 +111,10 @@ function DCAnalyticsPanel({ reportData, monthData, selectedDay, month }: DCAnaly
                     elementId="daily-dc-gauge-1"
                 />
                 <LiquidProgressRing
-                    value={monthlyTotal}
-                    max={monthlyGaugeMax}
-                    label="Monthly DC Total"
-                    sublabel="Month-to-date consumption"
+                    value={l3PlusDcTotal}
+                    max={totalGaugeMax}
+                    label="L3 + DC Total"
+                    sublabel="Individual meters + DC"
                     color={CHART_COLORS.brand}
                     size={160}
                     showPercentage={false}
@@ -121,13 +122,15 @@ function DCAnalyticsPanel({ reportData, monthData, selectedDay, month }: DCAnaly
                     elementId="daily-dc-gauge-2"
                 />
                 <LiquidProgressRing
-                    value={activeMeters}
-                    max={totalMeters || 1}
-                    label="Active DC Meters"
-                    sublabel={`${activeMeters} of ${totalMeters} reporting`}
-                    color={CHART_COLORS.success}
+                    value={connectionDifferenceMagnitude}
+                    displayValue={connectionDifference}
+                    max={differenceGaugeMax}
+                    label="Difference"
+                    sublabel={differenceSublabel}
+                    color={differenceColor}
                     size={160}
-                    showPercentage={true}
+                    showPercentage={false}
+                    unit="m³"
                     elementId="daily-dc-gauge-3"
                 />
             </div>

@@ -16,6 +16,7 @@ interface LiquidProgressRingProps {
     unit?: string;
     statusBadge?: string;
     statusColor?: string;
+    displayValue?: number;
 }
 
 export function LiquidProgressRing({
@@ -31,6 +32,7 @@ export function LiquidProgressRing({
     unit,
     statusBadge,
     statusColor,
+    displayValue = value,
 }: LiquidProgressRingProps) {
     const percentage = Math.min(Math.max(value / max, 0), 1);
     const radius = (size - strokeWidth) / 2;
@@ -38,11 +40,13 @@ export function LiquidProgressRing({
     const offset = circumference - percentage * circumference;
 
     const formatValue = (v: number) => {
-        if (v >= 10000) return `${(v / 1000).toFixed(1)}k`;
-        if (v >= 1000) return `${(v / 1000).toFixed(1)}k`;
-        if (v === 0) return '0';
-        if (v < 10) return v.toFixed(1);
-        return Math.round(v).toLocaleString('en-US');
+        const sign = v < 0 ? '-' : '';
+        const absValue = Math.abs(v);
+        if (absValue >= 10000) return `${sign}${(absValue / 1000).toFixed(1)}k`;
+        if (absValue >= 1000) return `${sign}${(absValue / 1000).toFixed(1)}k`;
+        if (absValue === 0) return '0';
+        if (absValue < 10) return `${sign}${absValue.toFixed(1)}`;
+        return `${sign}${Math.round(absValue).toLocaleString('en-US')}`;
     };
 
     return (
@@ -105,7 +109,7 @@ export function LiquidProgressRing({
                     ) : (
                         <>
                             <span className="text-2xl font-bold text-foreground">
-                                {formatValue(value)}
+                                {formatValue(displayValue)}
                             </span>
                             {unit && (
                                 <span className="text-[10px] font-medium text-muted-foreground/70 -mt-0.5">
