@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { Clock, Radio, Wifi, WifiOff } from "lucide-react";
+import { Wifi, WifiOff } from "lucide-react";
 
 interface PageStatusBarProps {
     /** Whether data is connected to Supabase */
@@ -45,24 +45,32 @@ export function PageStatusBar({
                 {isLive !== undefined && (
                     <span
                         className={cn(
-                            "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold transition-colors",
+                            "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold uppercase tracking-[0.08em] transition-colors",
                             isLive
                                 ? "bg-[color-mix(in_oklab,var(--status-normal)_15%,transparent)] text-[var(--status-normal)]"
                                 : "bg-muted text-muted-foreground"
                         )}
                     >
-                        <Radio className={cn("h-3 w-3", isLive && "motion-safe:animate-pulse")} />
+                        <span
+                            aria-hidden="true"
+                            className={cn(
+                                "inline-block h-2 w-2 rounded-full",
+                                isLive ? "bg-[var(--status-normal)] motion-safe:animate-pulse" : "bg-muted-foreground"
+                            )}
+                        />
                         {isLive ? "Live" : "Offline"}
                     </span>
                 )}
                 {lastUpdated && (
-                    <span className="flex items-center gap-1 text-[11px] text-muted-foreground/70">
-                        <Clock className="h-3 w-3" />
-                        {lastUpdated.toLocaleTimeString("en-US", {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                            second: "2-digit",
-                        })}
+                    <span className="inline-flex items-center gap-1.5 text-[11px]">
+                        <span className="uppercase tracking-[0.06em] text-muted-foreground/70">Last sync</span>
+                        <span className="font-mono tabular-nums text-foreground/80">
+                            {lastUpdated.toLocaleTimeString("en-US", {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                                second: "2-digit",
+                            })}
+                        </span>
                     </span>
                 )}
             </div>

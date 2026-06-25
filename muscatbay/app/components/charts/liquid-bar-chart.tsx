@@ -89,7 +89,7 @@ export const LiquidBarChart = memo(function LiquidBarChart({
                 <BarChart data={data} margin={{ top: 25, right: 10, left: 0, bottom: 0 }} barGap={2}>
                     {showGrid && (
                         <CartesianGrid
-                            strokeDasharray="3 3"
+                            strokeDasharray="2 6"
                             vertical={false}
                             stroke="var(--chart-grid)"
                         />
@@ -98,13 +98,13 @@ export const LiquidBarChart = memo(function LiquidBarChart({
                         dataKey={index}
                         axisLine={false}
                         tickLine={false}
-                        tick={{ fill: "var(--chart-axis)", fontSize: 12 }}
+                        tick={{ fill: "var(--chart-axis)", fontSize: 11 }}
                         dy={10}
                     />
                     <YAxis
                         axisLine={false}
                         tickLine={false}
-                        tick={{ fill: "var(--chart-axis)", fontSize: 12 }}
+                        tick={{ fill: "var(--chart-axis)", fontSize: 11 }}
                         tickFormatter={(value) =>
                             value >= 1000 ? `${(value / 1000).toFixed(0)}k` : value
                         }

@@ -4,7 +4,7 @@ import React, { useMemo } from "react";
 import Link from "next/link";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Droplets, ArrowUpRight, Recycle } from "lucide-react";
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar, Legend, ReferenceLine } from "recharts";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar, Legend, ReferenceLine, ReferenceDot } from "recharts";
 import { LiquidTooltip } from "./liquid-tooltip";
 import { ChartContainer } from "./chart-container";
 import { ToggleableLegendContent, useChartLegendToggle } from "./toggleable-legend";
@@ -29,6 +29,9 @@ interface DashboardChartsProps {
 }
 
 const REFERENCE_LINE_LABEL = { position: 'insideTopRight' as const, fontSize: 10, fill: 'var(--chart-axis)', dy: -4 };
+const MAX_MARKER_LABEL = { value: 'Max', position: 'top' as const, fontSize: 9, fill: 'var(--chart-axis)' };
+const MIN_MARKER_LABEL = { value: 'Min', position: 'bottom' as const, fontSize: 9, fill: 'var(--chart-axis)' };
+const NOW_MARKER_LABEL = { value: 'Now', position: 'top' as const, fontSize: 10, fill: 'var(--status-info)', fontWeight: 700 };
 
 /** Synthesise a one-line insight from the data so boards see the takeaway, not the numbers. */
 function buildWaterInsight(data: ChartData[], avg: number): string {
@@ -61,6 +64,22 @@ function DashboardChartsInner({ chartData, stpChartData }: DashboardChartsProps)
     const waterInsight = useMemo(() => buildWaterInsight(chartData, waterAvg), [chartData, waterAvg]);
     const stpInsight = useMemo(() => buildStpInsight(stpChartData), [stpChartData]);
 
+    // Min / max / latest markers — standard industrial-monitoring annotations so a
+    // glance reads the range and the current reading without scanning every point.
+    const waterMarkers = useMemo(() => {
+        const pts = chartData
+            .map((d) => ({ month: d.month as string, v: d.water as number | null | undefined }))
+            .filter((p): p is { month: string; v: number } => typeof p.v === "number");
+        if (pts.length < 2) return null;
+        let min = pts[0];
+        let max = pts[0];
+        for (const p of pts) {
+            if (p.v < min.v) min = p;
+            if (p.v > max.v) max = p;
+        }
+        return { min, max, latest: pts[pts.length - 1] };
+    }, [chartData]);
+
     return (
         <AnimateOnScroll className="grid gap-4 sm:gap-5 md:gap-6 grid-cols-1 lg:grid-cols-7">
             <Link href="/water" aria-label="View water production details" className="col-span-1 lg:col-span-4 group/chart">
@@ -84,14 +103,14 @@ function DashboardChartsInner({ chartData, stpChartData }: DashboardChartsProps)
                     </CardHeader>
                     <div role="img" aria-label="Water production monthly trend chart in thousand cubic meters">
                         <ChartContainer height="100%" className="h-[200px] sm:h-[250px] md:h-[300px]">
-                            <AreaChart data={chartData}>
+                            <AreaChart data={chartData} margin={{ top: 12, right: 24, left: 0, bottom: 0 }}>
                                 <defs>
                                     <linearGradient id="colorWater" x1="0" y1="0" x2="0" y2="1">
                                         <stop offset="5%" stopColor={CHART_COLORS.teal} stopOpacity={0.4} />
                                         <stop offset="95%" stopColor={CHART_COLORS.teal} stopOpacity={0} />
                                     </linearGradient>
                                 </defs>
-                                <CartesianGrid strokeDasharray="3 3" className="stroke-border dark:stroke-border" opacity={0.5} />
+                                <CartesianGrid strokeDasharray="2 6" stroke="var(--chart-grid)" vertical={false} />
                                 <XAxis dataKey="month" className="text-xs" tick={AXIS_TICK} axisLine={false} tickLine={false} dy={10} />
                                 <YAxis className="text-xs" tick={AXIS_TICK} axisLine={false} tickLine={false} label={Y_AXIS_LABEL} />
                                 <Tooltip content={<LiquidTooltip />} cursor={AREA_CURSOR} />
@@ -99,6 +118,17 @@ function DashboardChartsInner({ chartData, stpChartData }: DashboardChartsProps)
                                 <Area type="monotone" dataKey="water" stroke={CHART_COLORS.teal} fill="url(#colorWater)" name="Water (k m³)" strokeWidth={3} activeDot={WATER_ACTIVE_DOT} animationDuration={200} />
                                 {waterAvg > 0 && (
                                     <ReferenceLine y={waterAvg} stroke="var(--status-warning)" strokeDasharray="5 3" strokeWidth={1.5} label={{ ...REFERENCE_LINE_LABEL, value: `Avg ${waterAvg.toFixed(1)}k` }} />
+                                )}
+                                {waterMarkers && (
+                                    <>
+                                        {waterMarkers.max.month !== waterMarkers.latest.month && (
+                                            <ReferenceDot x={waterMarkers.max.month} y={waterMarkers.max.v} r={3.5} fill="var(--chart-teal)" stroke="var(--card)" strokeWidth={2} ifOverflow="extendDomain" label={MAX_MARKER_LABEL} />
+                                        )}
+                                        {waterMarkers.min.month !== waterMarkers.latest.month && (
+                                            <ReferenceDot x={waterMarkers.min.month} y={waterMarkers.min.v} r={3.5} fill="var(--chart-axis)" stroke="var(--card)" strokeWidth={2} ifOverflow="extendDomain" label={MIN_MARKER_LABEL} />
+                                        )}
+                                        <ReferenceDot x={waterMarkers.latest.month} y={waterMarkers.latest.v} r={5} fill="var(--status-info)" stroke="var(--card)" strokeWidth={2} ifOverflow="extendDomain" label={NOW_MARKER_LABEL} />
+                                    </>
                                 )}
                             </AreaChart>
                         </ChartContainer>
@@ -128,7 +158,7 @@ function DashboardChartsInner({ chartData, stpChartData }: DashboardChartsProps)
                     <div role="img" aria-label="STP monthly inlet vs TSE output comparison bar chart">
                         <ChartContainer height="100%" className="h-[200px] sm:h-[250px] md:h-[300px]">
                             <BarChart data={stpChartData}>
-                                <CartesianGrid strokeDasharray="3 3" className="stroke-border dark:stroke-border" opacity={0.5} />
+                                <CartesianGrid strokeDasharray="2 6" stroke="var(--chart-grid)" vertical={false} />
                                 <XAxis dataKey="month" className="text-xs" tick={AXIS_TICK_SM} axisLine={false} tickLine={false} dy={10} />
                                 <YAxis className="text-xs" tick={AXIS_TICK_SM} axisLine={false} tickLine={false} />
                                 <Tooltip content={<LiquidTooltip />} cursor={BAR_CURSOR} />

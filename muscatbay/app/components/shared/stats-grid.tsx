@@ -89,8 +89,9 @@ export function StatsGrid({ stats, className }: StatsGridProps) {
                                 <p className="text-muted-foreground text-[11px] sm:text-xs font-medium mb-0.5 sm:mb-1 uppercase tracking-[0.06em] leading-tight line-clamp-2 sm:line-clamp-1 sm:truncate min-h-[2.2em] sm:min-h-0">
                                     {stat.label}
                                 </p>
-                                {/* Brand-purple value — semibold for a clean, modern feel (extrabold reads heavy/dated). */}
-                                <h3 className="text-lg sm:text-2xl font-semibold tabular-nums tracking-tight truncate text-primary dark:text-foreground leading-none">
+                                {/* Brand-purple KPI value — Plex Mono + tabular figures give the
+                                    operational, control-room read and keep the CountUp width steady. */}
+                                <h3 className="text-[1.25rem] sm:text-2xl font-mono font-semibold tabular-nums truncate text-primary dark:text-foreground leading-none">
                                     <CountUp value={stat.value} delay={index * 0.06} />
                                 </h3>
                             </div>

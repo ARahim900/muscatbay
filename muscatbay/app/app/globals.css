@@ -263,6 +263,7 @@
   --hairline: color-mix(in srgb, var(--border) 55%, transparent);
   --header-band: color-mix(in srgb, var(--card) 96%, var(--muted));
   --row-hover: color-mix(in srgb, var(--secondary) 8%, transparent);
+  --row-zebra: color-mix(in srgb, var(--card) 93%, var(--muted));
 
   /* Chart Colors — Muscat Bay Elegant Palette */
   --chart-1: #6B9AC4;
@@ -427,6 +428,7 @@
   --hairline: color-mix(in srgb, var(--border) 70%, transparent);
   --header-band: color-mix(in srgb, var(--card) 88%, var(--muted));
   --row-hover: color-mix(in srgb, var(--secondary) 7%, transparent);
+  --row-zebra: color-mix(in srgb, var(--card) 93%, var(--muted));
 
   /* Chart colors — lighter variants for dark backgrounds */
   --chart-5: #8B7F94;
@@ -641,6 +643,7 @@
     color: var(--card-foreground);
     font-size: 0.8125rem; /* 13px */
     line-height: 1.4;
+    transition: background-color 120ms ease-out;
   }
   .ops-table tbody td:last-child { border-right: 0; }
   .ops-table tbody tr:last-child td { border-bottom: 0; }
@@ -652,11 +655,18 @@
     transition: background-color 120ms ease-out;
   }
 
-  .ops-table tbody tr:hover {
+  /* Zebra striping — subtle opaque alternating fill so the eye tracks across
+     wide ledgers. Declared before hover/selection so those outrank it, and
+     opaque so it holds under the frozen first column during horizontal scroll. */
+  .ops-table tbody tr:nth-child(even) td {
+    background: var(--row-zebra);
+  }
+
+  .ops-table tbody tr:hover td {
     background: var(--row-hover);
   }
 
-  .ops-table tr[data-state="selected"] {
+  .ops-table tbody tr[data-state="selected"] td {
     background: color-mix(in srgb, var(--secondary) 12%, transparent);
   }
 
@@ -694,6 +704,14 @@
     text-align: right;
     font-variant-numeric: tabular-nums;
   }
+
+  /* Conditional numeric tone for delta / change cells. Pair with numTone() in
+     lib/utils, which maps a change's magnitude (or sign) to one of these:
+     calm green for small/expected movement, amber for moderate, red for large
+     swings — so colour lands only on the readings that warrant attention. */
+  .ops-table .num-good { color: var(--status-normal); font-weight: 500; }
+  .ops-table .num-warn { color: var(--status-warning); font-weight: 500; }
+  .ops-table .num-bad  { color: var(--status-danger); font-weight: 500; }
 
   /* Genuine mono content (account numbers, meter IDs). Mono font + tabular nums. */
   .ops-table .meter,

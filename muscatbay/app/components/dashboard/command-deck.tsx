@@ -1,7 +1,6 @@
 "use client";
 
 import { ReactNode, useRef } from "react";
-import dynamic from "next/dynamic";
 import gsap from "gsap";
 import Link from "next/link";
 import { TrendingUp, TrendingDown, Minus } from "lucide-react";
@@ -10,10 +9,6 @@ import { Breadcrumbs } from "@/components/shared/breadcrumbs";
 import { CountUp } from "@/components/motion/count-up";
 import { MOTION, prefersReducedMotion, useIsomorphicLayoutEffect } from "@/lib/motion";
 import type { StatItem, StatVariant } from "@/components/shared/stats-grid";
-
-// Three.js stays out of the critical path — the deck paints instantly as
-// brand-purple chrome and the water field fades in when the chunk lands.
-const AmbientBay = dynamic(() => import("@/components/three/ambient-bay"), { ssr: false });
 
 interface CommandDeckProps {
     title: string;
@@ -43,7 +38,8 @@ const deckIconColor: Record<StatVariant, string> = {
 /**
  * Executive command deck — the dashboard's opening statement. One monumental
  * brand-purple panel that fuses the greeting with the cross-module KPIs as a
- * hairline-divided statistics board over the ambient bay water field.
+ * hairline-divided statistics board on a solid brand-purple surface — a calm,
+ * static BMS backdrop with no decorative background motion.
  *
  * Deliberately unlike the module pages: they keep the calm white-card
  * StatsGrid because they ARE the official per-system records; the deck is the
@@ -101,19 +97,12 @@ export function CommandDeck({ title, description, actions, stats, className }: C
             aria-label="Operations command deck"
             className={cn(
                 "relative overflow-hidden rounded-[var(--radius)] border border-white/10",
-                "bg-[linear-gradient(140deg,var(--primary)_0%,var(--sidebar)_100%)]",
+                "bg-(--primary)",
                 "shadow-card-primary",
-                "print:bg-none print:border-border print:shadow-none",
+                "print:bg-transparent print:border-border print:shadow-none",
                 className
             )}
         >
-            {/* Ambient water field, teal dawn, and text-protection scrim */}
-            <div className="absolute inset-0 print:hidden" aria-hidden="true">
-                <AmbientBay className="absolute inset-0" intensity="bold" />
-                <div className="absolute inset-0 bg-[radial-gradient(120%_90%_at_85%_-20%,color-mix(in_srgb,var(--secondary)_18%,transparent),transparent_60%)]" />
-                <div className="absolute inset-0 bg-[linear-gradient(to_bottom,color-mix(in_srgb,var(--sidebar)_35%,transparent),transparent_34%,color-mix(in_srgb,var(--sidebar)_30%,transparent))]" />
-            </div>
-
             <div className="relative z-10 p-4 sm:p-6 md:p-8">
                 {/* Briefing header */}
                 <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
@@ -176,7 +165,7 @@ export function CommandDeck({ title, description, actions, stats, className }: C
                                         {stat.label}
                                     </p>
                                 </div>
-                                <p className="mt-2 sm:mt-2.5 text-xl sm:text-2xl font-semibold tabular-nums tracking-tight leading-none truncate text-white print:text-(--primary)">
+                                <p className="mt-2 sm:mt-2.5 text-xl sm:text-2xl font-mono font-semibold tabular-nums leading-none truncate text-white print:text-(--primary)">
                                     <CountUp value={stat.value} delay={0.3 + index * 0.06} />
                                 </p>
                                 {stat.trend && stat.trendValue && (

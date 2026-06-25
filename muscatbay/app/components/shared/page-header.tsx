@@ -56,9 +56,9 @@ export function PageHeader({ title, description, className, showBreadcrumbs = tr
                     className={cn("transition-design", accentColor && "border-s-[3px] ps-3")}
                     style={accentColor ? { borderColor: accentColor } : undefined}
                 >
-                    <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight">{title}</h1>
+                    <h1 className="text-2xl sm:text-3xl md:text-[2.125rem] font-bold tracking-tight md:leading-[1.15]">{title}</h1>
                     {description && (
-                        <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 sm:mt-1">{description}</p>
+                        <p className="text-sm sm:text-[0.9375rem] text-muted-foreground mt-1.5 sm:mt-2 leading-relaxed">{description}</p>
                     )}
                 </div>
                 <div className="flex items-center gap-2">

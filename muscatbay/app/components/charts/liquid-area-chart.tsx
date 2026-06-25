@@ -102,7 +102,7 @@ export const LiquidAreaChart = memo(function LiquidAreaChart({
                     </defs>
                     {showGrid && (
                         <CartesianGrid
-                            strokeDasharray="3 3"
+                            strokeDasharray="2 6"
                             vertical={false}
                             stroke="var(--chart-grid)"
                         />
@@ -111,19 +111,19 @@ export const LiquidAreaChart = memo(function LiquidAreaChart({
                         dataKey={index}
                         axisLine={false}
                         tickLine={false}
-                        tick={{ fill: "var(--chart-axis)", fontSize: 12 }}
+                        tick={{ fill: "var(--chart-axis)", fontSize: 11 }}
                         dy={10}
                     />
                     <YAxis
                         axisLine={false}
                         tickLine={false}
-                        tick={{ fill: "var(--chart-axis)", fontSize: 12 }}
+                        tick={{ fill: "var(--chart-axis)", fontSize: 11 }}
                         tickFormatter={(value) =>
                             value >= 1000 ? `${(value / 1000).toFixed(0)}k` : value
                         }
                         label={yAxisLabel ? { value: yAxisLabel, angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: "var(--chart-axis)", fontSize: 11 } } : undefined}
                     />
-                    <Tooltip content={<CustomTooltip />} cursor={{ stroke: "var(--chart-cursor-stroke)", strokeWidth: 2 }} />
+                    <Tooltip content={<CustomTooltip />} cursor={{ stroke: "var(--chart-cursor-stroke)", strokeWidth: 1, strokeDasharray: "4 4" }} />
                     {showLegend && <Legend iconType="circle" wrapperStyle={{ paddingTop: 10 }} />}
                     {categories.map((cat, i) => (
                         <Area
