@@ -62,7 +62,7 @@ muscatbay/app/
 - Brand colors: primary `#4E4456` (purple), accent `#A1D1D5` (soft teal)
 - **Authoritative brand spec**: `BRAND_DESIGN.md` (overrides any older tokens elsewhere)
 - Full design system also documented in `muscatbay/app/DESIGN_SYSTEM.md`
-- Font: **Inter** (variable, weights 400/500/600/700/800) via `--font-sans` — single source of truth in `app/layout.tsx`, wired through `tailwind.config.ts` so every `font-sans` class resolves to it. Never re-declare `font-family` elsewhere.
+- Fonts: **IBM Plex Sans** (UI/body, `--font-sans`) + **IBM Plex Mono** (meter IDs/account numbers via the `.meter` rule, `--font-mono`) — both from Google Fonts, single source of truth in `app/layout.tsx`, wired through `tailwind.config.ts` (`fontFamily.sans` / `fontFamily.mono`) so every `font-sans`/`font-mono` class resolves to them. Never re-declare `font-family` elsewhere. Plex Sans loads weights **400/500/600/700** — `font-medium` (500) and `font-semibold` (600) are real weights. **Plex Sans has no 800/900**, so `tailwind.config.ts` caps `font-extrabold`/`font-black`→700; don't rely on 800/900 in raw CSS or inline `fontWeight` (the browser would synthesise a faux weight).
 
 ### Components
 - **UI primitives**: shadcn/ui (base-vega style) in `components/ui/`

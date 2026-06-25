@@ -97,6 +97,24 @@ const config: Config = {
                     '"Segoe UI Symbol"',
                     '"Noto Color Emoji"',
                 ],
+                mono: [
+                    'var(--font-mono)',
+                    'ui-monospace',
+                    '"SF Mono"',
+                    'Menlo',
+                    'monospace',
+                ],
+            },
+            // IBM Plex Sans ships 100–700 (no 800/900). 400/500/600/700 are all
+            // real weights, so font-medium and font-semibold render genuine glyphs.
+            // Only extrabold/black need capping to 700 to avoid faux synthesis.
+            fontWeight: {
+                normal: '400',
+                medium: '500',
+                semibold: '600',
+                bold: '700',
+                extrabold: '700', // Plex Sans tops out at 700
+                black: '700',
             },
             fontSize: {
                 'xs': ['12.25px', { lineHeight: '20px' }],
