@@ -1372,3 +1372,70 @@
 /* ═══════════════════════════════════════════════════════════════════════
  * End Splash & Loading Keyframes
  * ═══════════════════════════════════════════════════════════════════════ */
+
+/* ═══════════════════════════════════════════════════════════════════════
+ * Water → Monthly dashboard
+ * Scoped token bridge for the externally-authored dashboard: maps its local
+ * `--wm-*` variables onto the app's design tokens so it follows light/dark
+ * automatically. Also styles the dual-handle date-range slider.
+ * ═══════════════════════════════════════════════════════════════════════ */
+.water-monthly {
+  --wm-page: var(--background);
+  --wm-card: var(--card);
+  --wm-comp: var(--muted);
+  --wm-ink: var(--foreground);
+  --wm-muted: var(--muted-foreground);
+  --wm-border: var(--border);
+  --wm-heading: var(--primary);
+  --wm-track: #E9E9EE;
+  --wm-zebra: #FAFAFB;
+}
+.dark .water-monthly {
+  --wm-comp: var(--component);
+  --wm-heading: var(--foreground);
+  --wm-track: rgba(255, 255, 255, 0.12);
+  --wm-zebra: #1A1820;
+}
+
+/* Dual-handle range slider — transparent track (drawn separately), themed thumb */
+.water-monthly .water-range-input {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2rem;
+  margin: 0;
+  background: transparent;
+  pointer-events: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.water-monthly .water-range-input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  pointer-events: auto;
+  width: 18px;
+  height: 18px;
+  border-radius: 9999px;
+  background: var(--primary);
+  border: 2px solid var(--card);
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.25);
+  cursor: pointer;
+}
+.water-monthly .water-range-input::-moz-range-thumb {
+  pointer-events: auto;
+  width: 18px;
+  height: 18px;
+  border-radius: 9999px;
+  background: var(--primary);
+  border: 2px solid var(--card);
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.25);
+  cursor: pointer;
+}
+.water-monthly .water-range-input::-moz-range-track {
+  background: transparent;
+}
+.water-monthly .water-range-input:focus-visible::-webkit-slider-thumb {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
