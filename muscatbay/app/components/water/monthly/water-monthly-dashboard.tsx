@@ -108,10 +108,14 @@ interface PanelProps {
     right?: ReactNode;
     children: ReactNode;
     note?: string;
+    /** Extra classes on the panel root (e.g. `h-full flex flex-col` for equal-height rows). */
+    className?: string;
+    /** Extra classes on the panel body (e.g. `flex-1 flex flex-col` so a chart fills the height). */
+    bodyClassName?: string;
 }
-function Panel({ title, icon: Icon, right, children, note }: PanelProps) {
+function Panel({ title, icon: Icon, right, children, note, className, bodyClassName }: PanelProps) {
     return (
-        <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: RADIUS.card, boxShadow: SHADOW }}>
+        <div className={className} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: RADIUS.card, boxShadow: SHADOW }}>
             <div className="flex items-center justify-between px-4 pt-4 pb-2">
                 <div className="flex items-center gap-2">
                     {Icon && <Icon className="w-4 h-4" style={{ color: C.heading }} />}
@@ -119,7 +123,7 @@ function Panel({ title, icon: Icon, right, children, note }: PanelProps) {
                 </div>{right}
             </div>
             {note && <p className="px-4 text-[11px] -mt-1 mb-1" style={{ color: C.muted }}>{note}</p>}
-            <div className="px-4 pb-4">{children}</div>
+            <div className={`px-4 pb-4 ${bodyClassName ?? ""}`}>{children}</div>
         </div>
     );
 }
@@ -275,9 +279,6 @@ function Overview({ period: t, monthly, sel, lossDelta, periodLabel }: OverviewP
     const selM = isRangeSel(sel) ? `${MONTHS[sel[0]]}–${MONTHS[sel[1]]}` : sel != null ? MONTHS[sel] : null;
     const selectedLineMonths = isRangeSel(sel) ? [sel[0], sel[1]] : sel != null ? [sel] : [];
     const efficiency = pct(t.A3, t.A1);
-    const bestZone = [...t.zones].filter((z) => z.bulk > 0).sort((a, b) => a.lossPct - b.lossPct)[0];
-    const worstZone = [...t.zones].filter((z) => z.bulk > 0).sort((a, b) => b.lossPct - a.lossPct)[0];
-    const highestLossZone = [...t.zones].filter((z) => z.bulk > 0).sort((a, b) => b.loss - a.loss)[0];
     const lossCost = Math.max(0, t.loss) * LOSS_RATE_OMR;
 
     return (
@@ -289,12 +290,6 @@ function Overview({ period: t, monthly, sel, lossDelta, periodLabel }: OverviewP
                 <Kpi icon={Gauge} label="Efficiency" value={`${efficiency}%`} bg="var(--chart-bg-green)" ic="#5E8C77" sub={`Target ≥ ${100 - TARGET_LOSS_PCT}%`} />
                 <Kpi icon={AlertTriangle} label="Total Loss" value={fmt(t.loss)} unit="m³" bg="var(--chart-bg-red)" ic="#B85C5C" sub={`${t.lossPct}% of supply`} delta={lossDelta} />
                 <Kpi icon={FileSpreadsheet} label="Loss Cost Estimate" value={fmt(lossCost)} unit="OMR" bg="var(--chart-bg-orange)" ic="#B5703A" sub={`${LOSS_RATE_OMR} OMR / m³ assumption`} />
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                <Kpi icon={Activity} label="Stage 1 · Trunk" value={`${t.stage1Pct}%`} bg="var(--chart-bg-orange)" ic="#B5703A" sub={`${fmt(t.stage1)} m³ (A1−A2)`} />
-                <Kpi icon={Gauge} label="Stage 2 · Network" value={`${t.stage2Pct}%`} bg="var(--chart-bg-purple)" ic="#4D445D" sub={`${fmt(t.stage2)} m³ (A2−A3)`} />
-                <Kpi icon={CheckCircle2} label="Best Zone" value={bestZone ? bestZone.name : "—"} bg="var(--chart-bg-green)" ic="#5E8C77" sub={bestZone ? `${bestZone.lossPct}% loss` : "No zone data"} />
-                <Kpi icon={AlertTriangle} label="Worst / Highest Loss Zone" value={worstZone ? worstZone.name : "—"} bg="var(--chart-bg-red)" ic="#B85C5C" sub={highestLossZone ? `${worstZone.lossPct}% loss · ${fmt(highestLossZone.loss)} m³ highest volume` : "No zone data"} />
             </div>
 
             <Panel title="System Water Balance" icon={Gauge}
@@ -317,10 +312,10 @@ function Overview({ period: t, monthly, sel, lossDelta, periodLabel }: OverviewP
                 </div>
             </Panel>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-                <div className="lg:col-span-2">
-                    <Panel title="Monthly Supply vs Consumption vs Loss" icon={Activity} note={selM ? `Highlighted: ${selM}.` : "Full year series."}>
-                        <ResponsiveContainer width="100%" height={300}>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-stretch">
+                <Panel className="h-full flex flex-col" bodyClassName="flex-1 flex flex-col" title="Monthly Supply vs Consumption vs Loss" icon={Activity} note={selM ? `Highlighted: ${selM}.` : "Full year series."}>
+                    <div className="flex-1 min-h-[300px]">
+                        <ResponsiveContainer width="100%" height="100%">
                             <ComposedChart data={trend} margin={{ top: 6, right: 8, left: -10, bottom: 0 }}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="var(--wm-track)" />
                                 <XAxis dataKey="m" tick={{ fontSize: 11, fill: C.muted }} />
@@ -333,9 +328,9 @@ function Overview({ period: t, monthly, sel, lossDelta, periodLabel }: OverviewP
                                 <Line dataKey="loss" name="Loss" stroke={C.loss} strokeWidth={2.5} dot={{ r: 2 }} />
                             </ComposedChart>
                         </ResponsiveContainer>
-                    </Panel>
-                </div>
-                <Panel title="Consumption by Type" icon={Layers} note={`Share of A3 — ${periodLabel}.`}>
+                    </div>
+                </Panel>
+                <Panel className="h-full flex flex-col" bodyClassName="flex-1 flex flex-col" title="Consumption by Type" icon={Layers} note={`Share of A3 — ${periodLabel}.`}>
                     <ResponsiveContainer width="100%" height={210}>
                         <PieChart>
                             <Pie data={typePie} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={48} outerRadius={80} paddingAngle={2}>
