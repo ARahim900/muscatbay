@@ -129,11 +129,10 @@ export default function WaterPage() {
                 />
             </div>
 
-            {/* View switching tabs */}
+            {/* View switching tabs — solid-pill (primary) style, matching the section tabs */}
             <TabNavigation
                 activeTab={dashboardView}
                 onTabChange={(key) => setDashboardView(key as DashboardView)}
-                variant="secondary"
                 tabs={[
                     { key: "monthly", label: "Monthly", icon: BarChart3 },
                     { key: "daily", label: "Daily", icon: CalendarDays },
