@@ -5,26 +5,23 @@ import { Providers } from "@/components/providers";
 import { NotificationProvider } from "@/components/NotificationProvider";
 import { RegisterSW } from "@/components/pwa/register-sw";
 import { LayoutRouter } from "@/components/layout/layout-router";
-import { IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 
-// IBM Plex Sans — modern, engineered UI face that fits the industrial BMS tone.
-// Static weights 100–700 (no 800/900); we load the four the app uses. font-medium
-// (500) and font-semibold (600) are now REAL weights — only font-extrabold/black
-// are capped to 700 in tailwind.config.ts so nothing synthesises a faux weight.
-const plexSans = IBM_Plex_Sans({
+// Geist — modern, precise, elegant UI face that suits the dark-first BMS tone.
+// Variable font (100–900), so font-medium/semibold/bold AND font-extrabold (800)
+// and font-black (900) are all genuine weights — nothing synthesises a faux weight.
+const geistSans = Geist({
   subsets: ["latin"],
   display: "swap",
   variable: "--font-sans",
-  weight: ["400", "500", "600", "700"],
 });
 
-// IBM Plex Mono — meter IDs, account numbers and other genuine mono content
+// Geist Mono — meter IDs, account numbers and other genuine mono content
 // (wired to --font-mono and consumed by the .meter rule in globals.css).
-const plexMono = IBM_Plex_Mono({
+const geistMono = Geist_Mono({
   subsets: ["latin"],
   display: "swap",
   variable: "--font-mono",
-  weight: ["400", "600"],
 });
 
 /** Resolve canonical site URL for Open Graph/Twitter metadata only (no UI impact). */
@@ -92,7 +89,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://utnlgeuqajmwibqmdmgt.supabase.co" />
         <link rel="preconnect" href="https://utnlgeuqajmwibqmdmgt.supabase.co" crossOrigin="anonymous" />
       </head>
-      <body className={`${plexSans.className} ${plexSans.variable} ${plexMono.variable}`} suppressHydrationWarning>
+      <body className={`${geistSans.className} ${geistSans.variable} ${geistMono.variable}`} suppressHydrationWarning>
         <RegisterSW />
         <Providers>
           <NotificationProvider>

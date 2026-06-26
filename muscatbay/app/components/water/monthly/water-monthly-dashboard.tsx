@@ -9,7 +9,7 @@
  * from the `WaterMeter[]` the page fetches via `getWaterMetersFromSupabase`.
  *
  * Theming: the prototype's standalone header, dark-mode toggle and DM Sans
- * import were dropped — the app shell, theme and IBM Plex Sans take over. The
+ * import were dropped — the app shell, theme and Geist font take over. The
  * prototype's local CSS variables were renamed to `--wm-*` and are mapped to the
  * app's design tokens in `globals.css`, so the dashboard follows the app's
  * light/dark themes automatically.

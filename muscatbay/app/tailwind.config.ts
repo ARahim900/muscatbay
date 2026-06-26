@@ -105,16 +105,15 @@ const config: Config = {
                     'monospace',
                 ],
             },
-            // IBM Plex Sans ships 100–700 (no 800/900). 400/500/600/700 are all
-            // real weights, so font-medium and font-semibold render genuine glyphs.
-            // Only extrabold/black need capping to 700 to avoid faux synthesis.
+            // Geist is a variable font (100–900), so every weight below is a genuine
+            // glyph — including extrabold (800) and black (900). No capping needed.
             fontWeight: {
                 normal: '400',
                 medium: '500',
                 semibold: '600',
                 bold: '700',
-                extrabold: '700', // Plex Sans tops out at 700
-                black: '700',
+                extrabold: '800',
+                black: '900',
             },
             fontSize: {
                 'xs': ['12.25px', { lineHeight: '20px' }],
