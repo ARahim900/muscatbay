@@ -961,12 +961,6 @@ export function WaterMonthlyDashboard({ waterMeters }: { waterMeters: WaterMeter
                     <AlertTriangle className="w-4 h-4 shrink-0" /> {MONTHS[safeStart]} {year} contains source billing adjustments (estimate/reset), so this month&apos;s balance isn&apos;t reliable — use Year-to-date for an accurate figure.
                 </div>
             )}
-            {partial && periodSel == null && (
-                <div className="flex items-center gap-2 text-xs font-medium px-3 py-2 rounded-lg" style={{ background: "#FEFCE8", color: "#854D0E", border: "1px solid #FDE68A" }}>
-                    <AlertTriangle className="w-4 h-4" /> {year} has {nMonths} months of data. Showing year-to-date — use the date range control to narrow the view.
-                </div>
-            )}
-
             {tab === "overview" && <Overview data={data} period={period} monthly={monthly} sel={periodSel} year={year} nMonths={nMonths} lossDelta={lossDelta} periodLabel={periodLabel} />}
             {tab === "zones" && <ZonesView data={data} period={period} monthly={monthly} sel={periodSel} nMonths={nMonths} year={year} />}
             {tab === "assets" && <AssetsView period={period} />}
