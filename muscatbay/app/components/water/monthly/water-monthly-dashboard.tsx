@@ -17,7 +17,7 @@
  * @module components/water/monthly/water-monthly-dashboard
  */
 
-import { useMemo, useState, type ReactNode } from "react";
+import { useCallback, useMemo, useState, type ReactNode } from "react";
 import {
     ResponsiveContainer, ComposedChart, BarChart, Bar, Line, Area, AreaChart,
     XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell, ReferenceLine,
@@ -26,9 +26,13 @@ import {
     Droplet, TrendingDown, TrendingUp, AlertTriangle, Activity,
     Gauge, Building2, Plug, Search, Layers, ArrowRight, MapPin, CheckCircle2,
     Filter, Download, ClipboardList, XCircle, Target, FileSpreadsheet,
-    BarChart3, Database, RotateCcw, CalendarRange, type LucideIcon,
+    BarChart3, Database, type LucideIcon,
 } from "lucide-react";
 
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { TabNavigation } from "@/components/shared/tab-navigation";
+import { DateRangePicker } from "@/components/water/date-range-picker";
 import type { WaterMeter } from "@/lib/water-data";
 import {
     buildMonthlyData, computePeriod, MONTHS, TARGET_LOSS_PCT, LOSS_RATE_OMR, TYPECOL,
@@ -183,206 +187,73 @@ function LossLink({ label, v, of }: { label: string; v: number; of: number }) {
     );
 }
 
-const SECTION_TABS: [string, string, LucideIcon][] = [
-    ["overview", "Overview", BarChart3],
-    ["zones", "Zone Analysis", MapPin],
-    ["assets", "Assets & Connections", Activity],
-    ["meters", "Main Database", Database],
-    ["exceptions", "Exceptions & Actions", ClipboardList],
+/** Section tabs, in display order. */
+const SECTION_TABS: { key: string; label: string; icon: LucideIcon }[] = [
+    { key: "overview", label: "Overview", icon: BarChart3 },
+    { key: "zones", label: "Zone Analysis", icon: MapPin },
+    { key: "assets", label: "Assets & Connections", icon: Activity },
+    { key: "meters", label: "Main Database", icon: Database },
+    { key: "exceptions", label: "Exceptions & Actions", icon: ClipboardList },
 ];
-function SectionTabs({ tab, setTab }: { tab: string; setTab: (t: string) => void }) {
-    return (
-        <nav className="pt-1" aria-label="Water monthly sections">
-            <div
-                role="tablist"
-                className="inline-flex max-w-full gap-2 overflow-x-auto p-2"
-                style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, boxShadow: "0 2px 10px rgba(15,23,42,0.08)" }}
-            >
-                {SECTION_TABS.map(([key, label, Icon]) => {
-                    const active = tab === key;
-                    return (
-                        <button
-                            key={key}
-                            type="button"
-                            role="tab"
-                            aria-selected={active}
-                            onClick={() => setTab(key)}
-                            className="flex min-h-12 items-center gap-2 whitespace-nowrap px-4 text-sm font-bold transition-all sm:px-5"
-                            style={active
-                                ? { background: C.primary, color: "#fff", borderRadius: 12, boxShadow: "0 6px 14px rgba(78,68,86,0.28)" }
-                                : { color: C.muted, borderRadius: 12 }}
-                        >
-                            <Icon className="h-4 w-4 shrink-0" style={{ color: active ? C.accent : C.muted }} />
-                            {label}
-                        </button>
-                    );
-                })}
-            </div>
-        </nav>
-    );
-}
 
 interface PeriodFilterProps {
     data: WaterData;
     year: string;
-    setYear: (y: string) => void;
     nMonths: number;
-    range: [number, number];
-    setRange: (r: [number, number]) => void;
-    periodLabel: string;
+    startMonth: string;
+    endMonth: string;
+    onRangeChange: (start: string, end: string) => void;
+    onYear: (year: number) => void;
+    onReset: () => void;
 }
-function PeriodFilter({ data, year, setYear, nMonths, range, setRange, periodLabel }: PeriodFilterProps) {
-    const safeStart = Math.max(0, Math.min(Math.min(range[0], range[1]), nMonths - 1));
-    const safeEnd = Math.max(safeStart, Math.min(Math.max(range[0], range[1]), nMonths - 1));
-    const selectedMonths = safeEnd - safeStart + 1;
-    const left = (safeStart / 11) * 100;
-    const width = ((safeEnd - safeStart) / 11) * 100;
-    const chooseYear = (nextYear: number) => {
-        const y = String(nextYear);
-        setYear(y);
-        setRange([0, (data.meta.monthsWithData[y] ?? 1) - 1]);
-    };
-    const setLastMonths = (count: number) => {
-        const end = nMonths - 1;
-        setRange([Math.max(0, end - count + 1), end]);
-    };
-    const resetRange = () => setRange([0, nMonths - 1]);
-    const chooseMonth = (i: number) => {
-        if (i >= nMonths) return;
-        if (i <= safeStart) setRange([i, safeEnd]);
-        else if (i >= safeEnd) setRange([safeStart, i]);
-        else if (i - safeStart <= safeEnd - i) setRange([i, safeEnd]);
-        else setRange([safeStart, i]);
-    };
-    const clampMonth = (value: string | number) => Math.max(0, Math.min(Number(value), nMonths - 1));
-    const updateStart = (value: string | number) => setRange([Math.min(clampMonth(value), safeEnd), safeEnd]);
-    const updateEnd = (value: string | number) => setRange([safeStart, Math.max(clampMonth(value), safeStart)]);
-    const quickButtons: [string, () => void][] = [
-        ["3M", () => setLastMonths(3)],
-        ["6M", () => setLastMonths(6)],
-        ["1Y", resetRange],
-        ["YTD", resetRange],
-    ];
-
+/**
+ * Year selector + date-range picker, built from the app's shared
+ * `DateRangePicker` and `Card` so it matches every other section's filter bar.
+ */
+function PeriodFilter({ data, year, nMonths, startMonth, endMonth, onRangeChange, onYear, onReset }: PeriodFilterProps) {
     return (
-        <section className="mb-1 p-4 sm:p-6" style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 18, boxShadow: "0 3px 14px rgba(15,23,42,0.08)" }}>
-            <div className="flex flex-col gap-5">
-                <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                    <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                        <span className="text-sm font-bold" style={{ color: C.muted }}>Filter by Year:</span>
-                        {data.meta.years.map((y) => {
-                            const active = year === String(y);
-                            return (
-                                <button
-                                    key={y}
-                                    type="button"
-                                    onClick={() => chooseYear(y)}
-                                    className="min-w-16 px-5 py-2.5 text-sm font-bold transition-all"
-                                    style={active
-                                        ? { background: C.accent, color: "#fff", borderRadius: 999, boxShadow: "0 4px 12px rgba(161,209,213,0.38)" }
-                                        : { background: "var(--wm-page)", color: C.ink, border: `1px solid ${C.border}`, borderRadius: 999, boxShadow: "0 2px 8px rgba(15,23,42,0.06)" }}
-                                >
-                                    {y}
-                                </button>
-                            );
-                        })}
-                    </div>
-                    <span className="self-start rounded-full px-4 py-1.5 text-sm font-semibold lg:self-auto" style={{ color: C.ink, border: `1px solid ${C.border}`, background: C.card }}>
-                        {nMonths} Months Available
-                    </span>
-                </div>
-
-                <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-start">
-                    <div className="flex items-start gap-4">
-                        <div className="flex h-12 w-12 shrink-0 items-center justify-center" style={{ background: "var(--wm-page)", borderRadius: 14 }}>
-                            <CalendarRange className="h-5 w-5" style={{ color: C.primary }} />
-                        </div>
-                        <div>
-                            <div className="flex flex-wrap items-center gap-2">
-                                <h2 className="text-sm font-extrabold tracking-tight" style={{ color: C.ink }}>Date Range</h2>
-                                <span className="rounded-full px-2 py-0.5 text-[11px] font-bold" style={{ background: "var(--wm-comp)", color: C.muted }}>{selectedMonths} mo</span>
+        <Card className="card-elevated">
+            <CardContent className="p-4 sm:p-5 md:p-6">
+                <div className="flex flex-col gap-4">
+                    {/* Year selector */}
+                    <div className="flex items-center justify-between flex-wrap gap-3">
+                        <div className="flex items-center gap-3">
+                            <span className="text-sm font-medium text-muted-foreground">Filter by Year:</span>
+                            <div className="flex items-center gap-2">
+                                {data.meta.years.map((y) => {
+                                    const active = year === String(y);
+                                    return (
+                                        <Button
+                                            key={y}
+                                            variant={active ? "default" : "outline"}
+                                            size="sm"
+                                            aria-label={`Filter by year ${y}`}
+                                            aria-pressed={active}
+                                            onClick={() => onYear(y)}
+                                            className={`rounded-full px-4 min-h-[44px] lg:min-h-0 ${active ? "bg-secondary text-primary-foreground" : "border-border dark:border-border"}`}
+                                        >
+                                            {y}
+                                        </Button>
+                                    );
+                                })}
                             </div>
-                            <p className="mt-1 text-base font-bold sm:text-lg" style={{ color: C.heading }}>
-                                {MONTHS[safeStart]} {year} <span style={{ color: C.muted }}>→</span> {MONTHS[safeEnd]} {year}
-                            </p>
-                            <p className="mt-1 text-xs" style={{ color: C.muted }}>Showing <b style={{ color: C.ink }}>{periodLabel}</b></p>
                         </div>
+                        <span className="self-start rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground lg:self-auto">
+                            {nMonths} {nMonths === 1 ? "Month" : "Months"} Available
+                        </span>
                     </div>
-                    <div className="flex flex-wrap items-center gap-2 lg:justify-end">
-                        <label className="flex items-center gap-1 text-xs font-bold" style={{ color: C.muted }}>
-                            Start
-                            <select aria-label="Start month selector" value={safeStart} onChange={(e) => updateStart(e.target.value)} className="rounded-full px-2 py-1 text-xs font-bold outline-none" style={{ color: C.ink, background: C.card, border: `1px solid ${C.border}` }}>
-                                {MONTHS.slice(0, nMonths).map((month, i) => <option key={month} value={i}>{month}</option>)}
-                            </select>
-                        </label>
-                        <label className="flex items-center gap-1 text-xs font-bold" style={{ color: C.muted }}>
-                            End
-                            <select aria-label="End month selector" value={safeEnd} onChange={(e) => updateEnd(e.target.value)} className="rounded-full px-2 py-1 text-xs font-bold outline-none" style={{ color: C.ink, background: C.card, border: `1px solid ${C.border}` }}>
-                                {MONTHS.slice(0, nMonths).map((month, i) => <option key={month} value={i}>{month}</option>)}
-                            </select>
-                        </label>
-                        {quickButtons.map(([label, action]) => (
-                            <button key={label} type="button" onClick={action} className="px-2 py-1 text-sm font-bold transition-colors" style={{ color: C.muted }}>
-                                {label}
-                            </button>
-                        ))}
-                        <button type="button" onClick={resetRange} className="flex items-center gap-1 px-2 py-1 text-sm font-bold" style={{ color: C.muted }}>
-                            <RotateCcw className="h-4 w-4" /> Reset
-                        </button>
-                    </div>
-                </div>
 
-                <div className="overflow-x-auto px-2 pt-2">
-                    <div className="min-w-[760px] md:min-w-0">
-                        <div className="relative mx-4 h-8">
-                            <div className="absolute left-0 right-0 top-3 h-2 rounded-full" style={{ background: "var(--wm-track)" }} />
-                            <div className="absolute top-3 h-2 rounded-full" style={{ left: `${left}%`, width: `${width}%`, background: C.accent }} />
-                            <input
-                                aria-label="Range start handle"
-                                type="range"
-                                min="0"
-                                max="11"
-                                step="1"
-                                value={safeStart}
-                                onChange={(e) => updateStart(e.target.value)}
-                                className="water-range-input"
-                            />
-                            <input
-                                aria-label="Range end handle"
-                                type="range"
-                                min="0"
-                                max="11"
-                                step="1"
-                                value={safeEnd}
-                                onChange={(e) => updateEnd(e.target.value)}
-                                className="water-range-input"
-                            />
-                        </div>
-                        <div className="mx-4 grid grid-cols-12 gap-1 pt-2">
-                            {MONTHS.map((month, i) => {
-                                const available = i < nMonths;
-                                const selected = i >= safeStart && i <= safeEnd;
-                                const edge = i === safeStart || i === safeEnd;
-                                return (
-                                    <button
-                                        key={month}
-                                        type="button"
-                                        disabled={!available}
-                                        onClick={() => chooseMonth(i)}
-                                        className="min-w-0 rounded-md px-1 py-1 text-center transition-colors"
-                                        style={{ color: !available ? "#A8B0BA" : edge ? C.primary : selected ? C.accentActive : C.muted }}
-                                    >
-                                        <span className="block text-xs font-bold">{i === 0 ? year : ""}</span>
-                                        <span className="block text-sm font-extrabold">{month}</span>
-                                        <span className="mx-auto mt-1 block h-1.5 w-1.5 rounded-full" style={{ background: !available ? "var(--wm-track)" : selected ? (edge ? C.primary : C.accent) : "transparent", border: selected ? "none" : `1px solid ${C.border}` }} />
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    </div>
+                    {/* Date range */}
+                    <DateRangePicker
+                        startMonth={startMonth}
+                        endMonth={endMonth}
+                        availableMonths={data.meta.availableMonths}
+                        onRangeChange={onRangeChange}
+                        onReset={onReset}
+                    />
                 </div>
-            </div>
-        </section>
+            </CardContent>
+        </Card>
     );
 }
 
@@ -981,26 +852,52 @@ export function WaterMonthlyDashboard({ waterMeters }: { waterMeters: WaterMeter
     const years = data.meta.years;
     const latestYear = years.length ? String(years[years.length - 1]) : "";
 
-    const [selectedYear, setYear] = useState(latestYear);
-    const [range, setRange] = useState<[number, number]>([0, Math.max(0, (data.meta.monthsWithData[latestYear] ?? 1) - 1)]);
+    // "Mon-YY" months that have data, for a given year.
+    const monthsOfYear = useCallback(
+        (yy: string) => data.meta.availableMonths.filter((m) => `20${m.split("-")[1]}` === yy),
+        [data],
+    );
+    const latestYearMonths = useMemo(() => monthsOfYear(latestYear), [monthsOfYear, latestYear]);
+
+    // The filter is driven by start/end "Mon-YY" months — same model the rest of
+    // the app's date pickers use — so the shared DateRangePicker drops straight in.
+    const [startMonth, setStartMonth] = useState(latestYearMonths[0] ?? "");
+    const [endMonth, setEndMonth] = useState(latestYearMonths[latestYearMonths.length - 1] ?? "");
     const [tab, setTab] = useState("overview");
 
-    // Derive a valid year instead of correcting state in an effect: if the live
-    // data no longer covers the user's pick (e.g. mock → Supabase swap), fall
-    // back to the latest year with data. The slider clamps the range to match.
-    const year = selectedYear && data.meta.monthsWithData[selectedYear] ? selectedYear : latestYear;
+    // Year is derived from the selected end month, with a safe fallback.
+    const endYear = endMonth ? `20${endMonth.split("-")[1]}` : "";
+    const year = endYear && data.meta.monthsWithData[endYear] ? endYear : latestYear;
     const nMonths = data.meta.monthsWithData[year] ?? 0;
 
-    const safeStart = nMonths ? Math.max(0, Math.min(Math.min(range[0], range[1]), nMonths - 1)) : 0;
-    const safeEnd = nMonths ? Math.max(safeStart, Math.min(Math.max(range[0], range[1]), nMonths - 1)) : 0;
+    // Map the "Mon-YY" range onto Jan-first month indices for the compute layer.
+    const monthNames: readonly string[] = MONTHS;
+    const rawStart = startMonth ? monthNames.indexOf(startMonth.split("-")[0]) : 0;
+    const rawEnd = endMonth ? monthNames.indexOf(endMonth.split("-")[0]) : nMonths - 1;
+    const safeStart = Math.max(0, Math.min(rawStart < 0 ? 0 : rawStart, 11));
+    const safeEnd = Math.max(safeStart, Math.min(rawEnd < 0 ? Math.max(0, nMonths - 1) : rawEnd, 11));
     const selectedMonths = safeEnd - safeStart + 1;
-    const fullSelection = safeStart === 0 && safeEnd === nMonths - 1;
+    // Covering Jan → last data month (or beyond) is treated as the whole period.
+    const fullSelection = safeStart === 0 && safeEnd >= nMonths - 1;
     const singleMonthSelection = selectedMonths === 1;
     const partial = nMonths > 0 && nMonths < 12;
     const periodSel = useMemo<Sel>(
         () => (fullSelection ? null : singleMonthSelection ? safeStart : [safeStart, safeEnd]),
         [fullSelection, singleMonthSelection, safeStart, safeEnd],
     );
+
+    const handleRangeChange = useCallback((start: string, end: string) => {
+        setStartMonth(start);
+        setEndMonth(end);
+    }, []);
+    const chooseYear = useCallback((y: number) => {
+        const ms = monthsOfYear(String(y));
+        if (ms.length) {
+            setStartMonth(ms[0]);
+            setEndMonth(ms[ms.length - 1]);
+        }
+    }, [monthsOfYear]);
+    const resetRange = useCallback(() => chooseYear(Number(year)), [chooseYear, year]);
 
     const monthly = useMemo(
         () => (nMonths ? Array.from({ length: nMonths }, (_, i) => computePeriod(data, year, i)) : []),
@@ -1009,7 +906,7 @@ export function WaterMonthlyDashboard({ waterMeters }: { waterMeters: WaterMeter
     const period = useMemo(() => {
         if (!nMonths) return computePeriod(data, year, null);
         if (periodSel == null) return computePeriod(data, year, null);
-        if (typeof periodSel === "number") return monthly[periodSel];
+        if (typeof periodSel === "number") return periodSel < monthly.length ? monthly[periodSel] : computePeriod(data, year, periodSel);
         return computePeriod(data, year, periodSel);
     }, [data, year, periodSel, monthly, nMonths]);
 
@@ -1026,7 +923,7 @@ export function WaterMonthlyDashboard({ waterMeters }: { waterMeters: WaterMeter
             : `${MONTHS[safeStart]} ${year} – ${MONTHS[safeEnd]} ${year}`;
 
     let lossDelta: { up: boolean; text: string } | null = null;
-    if (singleMonthSelection && safeStart > 0) {
+    if (singleMonthSelection && safeStart > 0 && safeStart - 1 < monthly.length) {
         const prev = monthly[safeStart - 1];
         lossDelta = { up: period.lossPct > prev.lossPct, text: `${(period.lossPct - prev.lossPct).toFixed(1)} pp MoM` };
     } else if (periodSel == null && prevFull && !partial && data.meta.monthsWithData[prevYear] >= 12) {
@@ -1047,9 +944,18 @@ export function WaterMonthlyDashboard({ waterMeters }: { waterMeters: WaterMeter
 
     return (
         <div className="water-monthly space-y-5">
-            <SectionTabs tab={tab} setTab={setTab} />
+            <TabNavigation activeTab={tab} onTabChange={setTab} tabs={SECTION_TABS} ariaLabel="Water monthly sections" />
 
-            <PeriodFilter data={data} year={year} setYear={setYear} nMonths={nMonths} range={[safeStart, safeEnd]} setRange={setRange} periodLabel={periodLabel} />
+            <PeriodFilter
+                data={data}
+                year={year}
+                nMonths={nMonths}
+                startMonth={startMonth || (monthsOfYear(year)[0] ?? "")}
+                endMonth={endMonth || (monthsOfYear(year).slice(-1)[0] ?? "")}
+                onRangeChange={handleRangeChange}
+                onYear={chooseYear}
+                onReset={resetRange}
+            />
 
             <p className="text-[11px] -mt-2 px-1" style={{ color: "var(--wm-muted)" }}>
                 NAMA Bulk Account {data.meta.mainAccount} · {data.meta.totalMeters} meters · {periodLabel}

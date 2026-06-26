@@ -86,6 +86,8 @@ export interface WaterMeta {
     months: readonly string[];
     /** Number of months with data per year, keyed by year string. */
     monthsWithData: Record<string, number>;
+    /** Every month that has data, as `"Mon-YY"` keys, ascending. */
+    availableMonths: string[];
     /** Total meter count. */
     totalMeters: number;
     /** Main bulk (NAMA L1) account number. */
@@ -426,8 +428,12 @@ export function buildMonthlyData(meters: WaterMeter[]): WaterData {
         .sort((a, b) => a - b);
 
     const monthsWithData: Record<string, number> = {};
+    const availableMonths: string[] = [];
     for (const year of years) {
-        monthsWithData[String(year)] = monthsPresent[String(year)]?.size ?? 0;
+        const yy = String(year).slice(2);
+        const idxs = Array.from(monthsPresent[String(year)] ?? []).sort((a, b) => a - b);
+        monthsWithData[String(year)] = idxs.length;
+        for (const i of idxs) availableMonths.push(`${MONTHS[i]}-${yy}`);
     }
 
     const mainMeter = meters.find((m) => m.level === "L1");
@@ -437,6 +443,7 @@ export function buildMonthlyData(meters: WaterMeter[]): WaterData {
             years,
             months: MONTHS,
             monthsWithData,
+            availableMonths,
             totalMeters: meters.length,
             mainAccount: mainMeter?.accountNumber ?? "—",
         },
