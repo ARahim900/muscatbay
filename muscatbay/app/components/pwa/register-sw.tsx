@@ -6,6 +6,34 @@ export function RegisterSW() {
   useEffect(() => {
     if (!("serviceWorker" in navigator)) return;
 
+    // In development the service worker is pure downside: the rebuild-heavy
+    // dev loop regenerates hashed `_next/` chunks constantly, and a cached app
+    // shell that still references now-deleted chunks makes those chunk requests
+    // 404 — the bundle never loads, React never hydrates, and the app hangs on
+    // the splash screen forever (the auto-reload rescue below can't fire because
+    // it needs hydration to run). Never register the SW in dev, and proactively
+    // tear down any SW + caches a previous run (or a visited preview/prod build)
+    // left behind on this origin, so a stranded developer self-heals on reload.
+    if (process.env.NODE_ENV !== "production") {
+      navigator.serviceWorker
+        .getRegistrations()
+        .then((registrations) => {
+          registrations.forEach((registration) => registration.unregister());
+        })
+        .catch(() => {
+          /* silent */
+        });
+      if ("caches" in window) {
+        caches
+          .keys()
+          .then((keys) => Promise.all(keys.map((key) => caches.delete(key))))
+          .catch(() => {
+            /* silent */
+          });
+      }
+      return;
+    }
+
     // Only auto-reload when a PREVIOUS controller is being replaced by a
     // new SW. On a brand-new visit there is no controller yet, so skip the
     // reload — otherwise every first-time visitor would flash a reload.
