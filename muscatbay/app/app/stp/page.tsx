@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo, useCallback, useRef } from "react";
+import { memo, useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { getSTPOperations, STPOperation } from "@/lib/mock-data";
 import { getSTPOperationsFromSupabase, isSupabaseConfigured } from "@/lib/supabase";
 import { STP_RATES } from "@/lib/config";
@@ -28,8 +28,6 @@ import {
 import { TablePagination, TableToolbar, StatusBadge, SortableTableHead, type BadgeColor, type PageSizeOption } from "@/components/shared/data-table";
 import { Table, TableHeader, TableBody, TableFooter, TableRow, TableCell } from "@/components/ui/table";
 import { exportToCSV, getDateForFilename } from "@/lib/export-utils";
-import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, BarChart, Bar, LineChart, Line, Legend } from "recharts";
-import { LiquidTooltip } from "../../components/charts/liquid-tooltip";
 import { format } from "date-fns";
 import { saveFilterPreferences, loadFilterPreferences } from "@/lib/filter-preferences";
 import { MODULE_COLORS } from "@/lib/tokens";
@@ -53,6 +51,28 @@ const CHART_COLORS = {
     amber: 'var(--chart-amber)',
     gray: 'var(--chart-gray)',
 } as const;
+
+type ChartView = 'daily' | 'monthly';
+
+interface STPChartDataPoint {
+    month: string;
+    sortKey: string;
+    inlet: number;
+    tse: number;
+    income: number;
+    savings: number;
+    trips: number;
+}
+
+const SVG_WIDTH = 720;
+const SVG_HEIGHT = 260;
+const CHART_LEFT = 56;
+const CHART_RIGHT = 18;
+const CHART_TOP = 18;
+const CHART_BOTTOM = 214;
+const CHART_PLOT_WIDTH = SVG_WIDTH - CHART_LEFT - CHART_RIGHT;
+const CHART_PLOT_HEIGHT = CHART_BOTTOM - CHART_TOP;
+const AXIS_TICKS = [0, 0.5, 1];
 
 // Helper: compute trend direction and formatted % change between two values
 const calcTrend = (current: number, previous: number): { trend: 'up' | 'down' | 'neutral'; trendValue: string } => {
@@ -90,6 +110,187 @@ function ChartViewToggle({ value, onChange }: { value: 'daily' | 'monthly'; onCh
         </div>
     );
 }
+
+function sampleChartData(data: STPChartDataPoint[], view: ChartView): STPChartDataPoint[] {
+    const maxPoints = view === 'daily' ? 120 : 72;
+    if (data.length <= maxPoints) return data;
+
+    const step = Math.ceil(data.length / maxPoints);
+    return data.filter((_, index) => index % step === 0 || index === data.length - 1);
+}
+
+function getX(index: number, count: number): number {
+    if (count <= 1) return CHART_LEFT + CHART_PLOT_WIDTH / 2;
+    return CHART_LEFT + (index / (count - 1)) * CHART_PLOT_WIDTH;
+}
+
+function getY(value: number, maxValue: number): number {
+    const safeMax = Math.max(maxValue, 1);
+    return CHART_BOTTOM - (value / safeMax) * CHART_PLOT_HEIGHT;
+}
+
+function buildLinePath(data: STPChartDataPoint[], accessor: (point: STPChartDataPoint) => number, maxValue: number): string {
+    if (data.length === 0) return "";
+    return data
+        .map((point, index) => `${index === 0 ? "M" : "L"} ${getX(index, data.length).toFixed(2)} ${getY(accessor(point), maxValue).toFixed(2)}`)
+        .join(" ");
+}
+
+function buildAreaPath(data: STPChartDataPoint[], accessor: (point: STPChartDataPoint) => number, maxValue: number): string {
+    const linePath = buildLinePath(data, accessor, maxValue);
+    if (!linePath || data.length === 0) return "";
+    return `${linePath} L ${getX(data.length - 1, data.length).toFixed(2)} ${CHART_BOTTOM} L ${getX(0, data.length).toFixed(2)} ${CHART_BOTTOM} Z`;
+}
+
+function formatShortValue(value: number): string {
+    if (value >= 1000000) return `${(value / 1000000).toFixed(1)}m`;
+    if (value >= 1000) return `${(value / 1000).toFixed(0)}k`;
+    if (value % 1 !== 0) return value.toFixed(1);
+    return String(value);
+}
+
+function shouldShowXLabel(index: number, count: number): boolean {
+    if (count <= 8) return true;
+    return index === 0 || index === count - 1 || index % Math.ceil(count / 6) === 0;
+}
+
+function ChartGrid({ maxValue, unit }: { maxValue: number; unit: string }) {
+    return (
+        <g>
+            {AXIS_TICKS.map((tick) => {
+                const y = CHART_BOTTOM - tick * CHART_PLOT_HEIGHT;
+                const value = maxValue * tick;
+                return (
+                    <g key={tick}>
+                        <line x1={CHART_LEFT} x2={SVG_WIDTH - CHART_RIGHT} y1={y} y2={y} stroke="var(--chart-grid)" strokeDasharray="4 4" />
+                        <text x={CHART_LEFT - 10} y={y + 4} textAnchor="end" className="fill-muted-foreground text-[11px]">
+                            {formatShortValue(value)}
+                        </text>
+                    </g>
+                );
+            })}
+            <line x1={CHART_LEFT} x2={SVG_WIDTH - CHART_RIGHT} y1={CHART_BOTTOM} y2={CHART_BOTTOM} stroke="var(--border)" />
+            <text x={16} y={CHART_TOP + 10} className="fill-muted-foreground text-[11px]">
+                {unit}
+            </text>
+        </g>
+    );
+}
+
+function XAxisLabels({ data }: { data: STPChartDataPoint[] }) {
+    return (
+        <g>
+            {data.map((point, index) => (
+                shouldShowXLabel(index, data.length) && (
+                    <text key={`${point.sortKey}-${index}`} x={getX(index, data.length)} y={CHART_BOTTOM + 24} textAnchor="middle" className="fill-muted-foreground text-[10px]">
+                        {point.month}
+                    </text>
+                )
+            ))}
+        </g>
+    );
+}
+
+function ChartLegend({ items }: { items: { label: string; color: string }[] }) {
+    return (
+        <div className="mt-2 flex flex-wrap items-center justify-center gap-4 text-xs text-muted-foreground">
+            {items.map((item) => (
+                <span key={item.label} className="inline-flex items-center gap-1.5">
+                    <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: item.color }} />
+                    {item.label}
+                </span>
+            ))}
+        </div>
+    );
+}
+
+const STPVolumeChart = memo(function STPVolumeChart({ data, view }: { data: STPChartDataPoint[]; view: ChartView }) {
+    const chartData = useMemo(() => sampleChartData(data, view), [data, view]);
+    const maxValue = useMemo(() => Math.max(1, ...chartData.flatMap(point => [point.inlet, point.tse])), [chartData]);
+    const inletPath = buildLinePath(chartData, point => point.inlet, maxValue);
+    const tsePath = buildLinePath(chartData, point => point.tse, maxValue);
+    const inletArea = buildAreaPath(chartData, point => point.inlet, maxValue);
+    const tseArea = buildAreaPath(chartData, point => point.tse, maxValue);
+
+    return (
+        <div role="img" aria-label="Water treatment volumes area chart showing sewage inlet versus TSE reuse output in cubic meters over the selected period" className="h-[350px] min-h-[260px] w-full min-w-0">
+            <svg className="h-full w-full overflow-visible" viewBox={`0 0 ${SVG_WIDTH} ${SVG_HEIGHT}`} aria-hidden="true">
+                <defs>
+                    <linearGradient id="stp-inlet-area" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor={CHART_COLORS.brand} stopOpacity={0.28} />
+                        <stop offset="100%" stopColor={CHART_COLORS.brand} stopOpacity={0.04} />
+                    </linearGradient>
+                    <linearGradient id="stp-tse-area" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor={CHART_COLORS.primary} stopOpacity={0.24} />
+                        <stop offset="100%" stopColor={CHART_COLORS.primary} stopOpacity={0.04} />
+                    </linearGradient>
+                </defs>
+                <ChartGrid maxValue={maxValue} unit="m³" />
+                <path d={inletArea} fill="url(#stp-inlet-area)" />
+                <path d={tseArea} fill="url(#stp-tse-area)" />
+                <path d={inletPath} fill="none" stroke={CHART_COLORS.brand} strokeWidth={view === 'daily' ? 2 : 3} strokeLinecap="round" strokeLinejoin="round" />
+                <path d={tsePath} fill="none" stroke={CHART_COLORS.primary} strokeWidth={view === 'daily' ? 2 : 3} strokeLinecap="round" strokeLinejoin="round" />
+                <XAxisLabels data={chartData} />
+            </svg>
+            <ChartLegend items={[
+                { label: "Sewage Inlet", color: CHART_COLORS.brand },
+                { label: "TSE Output", color: CHART_COLORS.primary },
+            ]} />
+        </div>
+    );
+});
+
+const STPEconomicChart = memo(function STPEconomicChart({ data, view }: { data: STPChartDataPoint[]; view: ChartView }) {
+    const chartData = useMemo(() => sampleChartData(data, view), [data, view]);
+    const maxValue = useMemo(() => Math.max(1, ...chartData.flatMap(point => [point.income, point.savings])), [chartData]);
+
+    return (
+        <div role="img" aria-label="Economic impact bar chart showing income and savings from TSE reuse in Omani Rials over the selected period" className="h-[280px] min-h-[260px] w-full min-w-0">
+            <svg className="h-full w-full overflow-visible" viewBox={`0 0 ${SVG_WIDTH} ${SVG_HEIGHT}`} aria-hidden="true">
+                <ChartGrid maxValue={maxValue} unit="OMR" />
+                {chartData.map((point, index) => {
+                    const centerX = getX(index, chartData.length);
+                    const groupWidth = Math.max(6, CHART_PLOT_WIDTH / Math.max(chartData.length, 1));
+                    const barWidth = Math.max(2, Math.min(14, groupWidth * 0.28));
+                    const incomeY = getY(point.income, maxValue);
+                    const savingsY = getY(point.savings, maxValue);
+
+                    return (
+                        <g key={`${point.sortKey}-${index}`}>
+                            <rect x={centerX - barWidth - 1} y={incomeY} width={barWidth} height={CHART_BOTTOM - incomeY} rx="3" fill={CHART_COLORS.success} />
+                            <rect x={centerX + 1} y={savingsY} width={barWidth} height={CHART_BOTTOM - savingsY} rx="3" fill="var(--chart-inlet)" />
+                        </g>
+                    );
+                })}
+                <XAxisLabels data={chartData} />
+            </svg>
+            <ChartLegend items={[
+                { label: "Income", color: CHART_COLORS.success },
+                { label: "Savings", color: "var(--chart-inlet)" },
+            ]} />
+        </div>
+    );
+});
+
+const STPTankerChart = memo(function STPTankerChart({ data, view }: { data: STPChartDataPoint[]; view: ChartView }) {
+    const chartData = useMemo(() => sampleChartData(data, view), [data, view]);
+    const maxValue = useMemo(() => Math.max(1, ...chartData.map(point => point.trips)), [chartData]);
+    const tripsPath = buildLinePath(chartData, point => point.trips, maxValue);
+
+    return (
+        <div role="img" aria-label="Tanker operations line chart showing number of tanker trips over the selected period" className="h-[280px] min-h-[260px] w-full min-w-0">
+            <svg className="h-full w-full overflow-visible" viewBox={`0 0 ${SVG_WIDTH} ${SVG_HEIGHT}`} aria-hidden="true">
+                <ChartGrid maxValue={maxValue} unit="trips" />
+                <path d={tripsPath} fill="none" stroke={CHART_COLORS.amber} strokeWidth={view === 'daily' ? 2 : 3} strokeLinecap="round" strokeLinejoin="round" />
+                {chartData.length <= 60 && chartData.map((point, index) => (
+                    <circle key={`${point.sortKey}-${index}`} cx={getX(index, chartData.length)} cy={getY(point.trips, maxValue)} r="4" fill={CHART_COLORS.amber} stroke="var(--card)" strokeWidth="2" />
+                ))}
+                <XAxisLabels data={chartData} />
+            </svg>
+            <ChartLegend items={[{ label: "Tanker Trips", color: CHART_COLORS.amber }]} />
+        </div>
+    );
+});
 
 export default function STPPage() {
     const [activeTab, setActiveTab] = useState("dashboard");
@@ -613,10 +814,10 @@ export default function STPPage() {
     };
 
     // Range change handler for DateRangePicker
-    const handleRangeChange = (start: string, end: string) => {
-        setStartMonth(start);
-        setEndMonth(end);
-    };
+    const handleRangeChange = useCallback((start: string, end: string) => {
+        if (start !== startMonth) setStartMonth(start);
+        if (end !== endMonth) setEndMonth(end);
+    }, [startMonth, endMonth]);
 
     // Reset date range to full
     const handleResetRange = () => {
@@ -767,28 +968,7 @@ export default function STPPage() {
                             </div>
                         </CardHeader>
                         <CardContent>
-                            <div role="img" aria-label="Water treatment volumes area chart showing sewage inlet versus TSE reuse output in cubic meters over the selected period" className="h-[350px] min-h-[260px]">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <AreaChart data={volumeChartView === 'daily' ? dailyChartData : monthlyChartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                                        <defs>
-                                            <linearGradient id="gradInlet" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor={CHART_COLORS.brand} stopOpacity={0.4} />
-                                                <stop offset="95%" stopColor={CHART_COLORS.brand} stopOpacity={0} />
-                                            </linearGradient>
-                                            <linearGradient id="gradTSE" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor={CHART_COLORS.primary} stopOpacity={0.4} />
-                                                <stop offset="95%" stopColor={CHART_COLORS.primary} stopOpacity={0} />
-                                            </linearGradient>
-                                        </defs>
-                                        <XAxis dataKey="month" className="text-xs" tick={{ fontSize: 11, fill: "var(--chart-axis)" }} axisLine={false} tickLine={false} dy={10} interval={volumeChartView === 'daily' && dailyChartData.length > 15 ? Math.ceil(dailyChartData.length / 12) - 1 : 0} />
-                                        <YAxis className="text-xs" tick={{ fontSize: 11, fill: "var(--chart-axis)" }} tickFormatter={(v: number) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v)} axisLine={false} tickLine={false} label={{ value: 'm³', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: "var(--chart-axis)", fontSize: 11 } }} />
-                                        <Tooltip content={<LiquidTooltip />} cursor={{ stroke: 'var(--chart-cursor-stroke)', strokeWidth: 2 }} />
-                                        <Legend iconType="circle" />
-                                        <Area type="monotone" dataKey="inlet" name="Sewage Inlet" stroke={CHART_COLORS.brand} fill="url(#gradInlet)" strokeWidth={volumeChartView === 'daily' ? 2 : 3} activeDot={{ r: 6, stroke: 'var(--card)', strokeWidth: 2 }} animationDuration={800} />
-                                        <Area type="monotone" dataKey="tse" name="TSE Output" stroke={CHART_COLORS.primary} fill="url(#gradTSE)" strokeWidth={volumeChartView === 'daily' ? 2 : 3} animationDuration={800} />
-                                    </AreaChart>
-                                </ResponsiveContainer>
-                            </div>
+                            <STPVolumeChart data={volumeChartView === 'daily' ? dailyChartData : monthlyChartData} view={volumeChartView} />
                         </CardContent>
                     </Card>
 
@@ -813,18 +993,7 @@ export default function STPPage() {
                                 </div>
                             </CardHeader>
                             <CardContent>
-                                <div role="img" aria-label="Economic impact bar chart showing income and savings from TSE reuse in Omani Rials over the selected period" className="h-[280px] min-h-[260px]">
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <BarChart data={economicChartView === 'daily' ? dailyChartData : monthlyChartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                                            <XAxis dataKey="month" className="text-xs" tick={{ fontSize: 10, fill: "var(--chart-axis)" }} axisLine={false} tickLine={false} dy={10} interval={economicChartView === 'daily' && dailyChartData.length > 15 ? Math.ceil(dailyChartData.length / 12) - 1 : 0} />
-                                            <YAxis className="text-xs" tick={{ fontSize: 10, fill: "var(--chart-axis)" }} axisLine={false} tickLine={false} label={{ value: 'OMR', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: "var(--chart-axis)", fontSize: 10 } }} />
-                                            <Tooltip content={<LiquidTooltip />} cursor={{ fill: 'var(--chart-cursor-fill)', radius: 6 }} />
-                                            <Legend iconType="circle" wrapperStyle={{ paddingTop: 10 }} />
-                                            <Bar dataKey="income" name="Income" fill={CHART_COLORS.success} radius={[6, 6, 0, 0]} animationDuration={800} />
-                                            <Bar dataKey="savings" name="Savings" fill="var(--chart-inlet)" radius={[6, 6, 0, 0]} animationDuration={800} />
-                                        </BarChart>
-                                    </ResponsiveContainer>
-                                </div>
+                                <STPEconomicChart data={economicChartView === 'daily' ? dailyChartData : monthlyChartData} view={economicChartView} />
                             </CardContent>
                         </Card>
 
@@ -847,26 +1016,7 @@ export default function STPPage() {
                                 </div>
                             </CardHeader>
                             <CardContent>
-                                <div role="img" aria-label="Tanker operations line chart showing number of tanker trips over the selected period" className="h-[280px] min-h-[260px]">
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <LineChart data={tankerChartView === 'daily' ? dailyChartData : monthlyChartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                                            <XAxis dataKey="month" className="text-xs" tick={{ fontSize: 10, fill: "var(--chart-axis)" }} axisLine={false} tickLine={false} dy={10} interval={tankerChartView === 'daily' && dailyChartData.length > 15 ? Math.ceil(dailyChartData.length / 12) - 1 : 0} />
-                                            <YAxis className="text-xs" tick={{ fontSize: 10, fill: "var(--chart-axis)" }} axisLine={false} tickLine={false} label={{ value: 'trips', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: "var(--chart-axis)", fontSize: 10 } }} />
-                                            <Tooltip content={<LiquidTooltip />} cursor={{ stroke: 'var(--chart-cursor-stroke)', strokeWidth: 2 }} />
-                                            <Legend iconType="circle" wrapperStyle={{ paddingTop: 10 }} />
-                                            <Line
-                                                type="monotone"
-                                                dataKey="trips"
-                                                name="Tanker Trips"
-                                                stroke={CHART_COLORS.amber}
-                                                strokeWidth={tankerChartView === 'daily' ? 2 : 3}
-                                                dot={tankerChartView === 'daily' && dailyChartData.length > 30 ? false : { r: 5, fill: CHART_COLORS.amber, strokeWidth: 2, stroke: 'var(--card)' }}
-                                                activeDot={{ r: 7, strokeWidth: 2, stroke: 'var(--card)' }}
-                                                animationDuration={800}
-                                            />
-                                        </LineChart>
-                                    </ResponsiveContainer>
-                                </div>
+                                <STPTankerChart data={tankerChartView === 'daily' ? dailyChartData : monthlyChartData} view={tankerChartView} />
                             </CardContent>
                         </Card>
                     </div>

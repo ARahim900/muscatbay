@@ -107,6 +107,36 @@ function DualRangeSlider({ min, max, value, onValueChange, startLabel, endLabel 
         justDraggedRef.current = false;
     }, []);
 
+    const handleKeyDown = useCallback((e: React.KeyboardEvent, thumb: 'start' | 'end') => {
+        const current = valueRef.current;
+        const lo = minRef.current;
+        const hi = maxRef.current;
+        const step = e.shiftKey ? 3 : 1;
+        let nextValue: number | null = null;
+
+        if (e.key === 'ArrowRight' || e.key === 'ArrowUp') {
+            nextValue = thumb === 'start'
+                ? Math.min(current[0] + step, current[1])
+                : Math.min(current[1] + step, hi);
+        } else if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') {
+            nextValue = thumb === 'start'
+                ? Math.max(current[0] - step, lo)
+                : Math.max(current[1] - step, current[0]);
+        } else if (e.key === 'Home') {
+            nextValue = thumb === 'start' ? lo : current[0];
+        } else if (e.key === 'End') {
+            nextValue = thumb === 'start' ? current[1] : hi;
+        }
+
+        if (nextValue === null) return;
+        e.preventDefault();
+        if (thumb === 'start') {
+            onValueChange([nextValue, current[1]]);
+        } else {
+            onValueChange([current[0], nextValue]);
+        }
+    }, [onValueChange]);
+
     const getValueFromPointer = useCallback((clientX: number): number => {
         const track = trackRef.current;
         if (!track) return min;
@@ -161,6 +191,7 @@ function DualRangeSlider({ min, max, value, onValueChange, startLabel, endLabel 
                 className={thumbClass}
                 style={{ left: `${startPct}%` }}
                 onPointerDown={e => handlePointerDown(e, 'start')}
+                onKeyDown={e => handleKeyDown(e, 'start')}
             />
             {/* End thumb */}
             <div
@@ -174,6 +205,7 @@ function DualRangeSlider({ min, max, value, onValueChange, startLabel, endLabel 
                 className={thumbClass}
                 style={{ left: `${endPct}%` }}
                 onPointerDown={e => handlePointerDown(e, 'end')}
+                onKeyDown={e => handleKeyDown(e, 'end')}
             />
         </div>
     );
@@ -214,35 +246,52 @@ export function DateRangePicker({
     // Set of months that actually have data (used for dot visibility)
     const dataMonthsSet = useMemo(() => new Set(availableMonths), [availableMonths]);
 
+    const selectableMonthIndexes = useMemo(() => {
+        return activeTimeline
+            .map((month, index) => dataMonthsSet.has(month) ? index : -1)
+            .filter(index => index >= 0);
+    }, [activeTimeline, dataMonthsSet]);
+
+    const firstSelectableIndex = selectableMonthIndexes[0] ?? 0;
+    const lastSelectableIndex = selectableMonthIndexes[selectableMonthIndexes.length - 1] ?? Math.max(0, activeTimeline.length - 1);
+
+    const clampToAvailableMonth = useCallback((index: number) => {
+        if (selectableMonthIndexes.length === 0) return 0;
+        return Math.max(firstSelectableIndex, Math.min(index, lastSelectableIndex));
+    }, [firstSelectableIndex, lastSelectableIndex, selectableMonthIndexes.length]);
+
     // Calculate slider indices (clamped to fixed Jan-Dec axis)
     let activeStartIndex = activeTimeline.length > 0 ? activeTimeline.indexOf(startMonth) : 0;
     let activeEndIndex = activeTimeline.length > 0 ? activeTimeline.indexOf(endMonth) : 0;
 
     // If out of bounds (e.g. startMonth is from a different year), clamp to bounds
-    if (activeStartIndex === -1) activeStartIndex = 0;
-    if (activeEndIndex === -1) activeEndIndex = Math.max(0, activeTimeline.length - 1);
+    if (activeStartIndex === -1) activeStartIndex = firstSelectableIndex;
+    if (activeEndIndex === -1) activeEndIndex = lastSelectableIndex;
 
     // Ensure start ≤ end and within bounds
-    activeStartIndex = Math.max(0, Math.min(activeStartIndex, Math.max(0, activeTimeline.length - 1)));
-    activeEndIndex = Math.max(activeStartIndex, Math.min(activeEndIndex, Math.max(0, activeTimeline.length - 1)));
+    activeStartIndex = clampToAvailableMonth(activeStartIndex);
+    activeEndIndex = Math.max(activeStartIndex, clampToAvailableMonth(activeEndIndex));
 
     // The displayed start/end months (what the slider actually shows)
     const displayStartMonth = activeTimeline[activeStartIndex] || '';
     const displayEndMonth = activeTimeline[activeEndIndex] || '';
 
     // Count of selected months
-    const selectedDataMonths = activeEndIndex - activeStartIndex + 1;
+    const selectedDataMonths = activeTimeline
+        .slice(activeStartIndex, activeEndIndex + 1)
+        .filter(month => dataMonthsSet.has(month)).length;
 
     // Auto-sync parent when start/end months fall outside the fixed Jan-Dec axis
     // (e.g. after switching years, or when initial values span multiple years)
     useEffect(() => {
         if (activeTimeline.length === 0) return;
-        const startInTimeline = activeTimeline.includes(startMonth);
-        const endInTimeline = activeTimeline.includes(endMonth);
-        if (!startInTimeline || !endInTimeline) {
+        const startIsSelectable = dataMonthsSet.has(startMonth);
+        const endIsSelectable = dataMonthsSet.has(endMonth);
+        const nextRangeChanged = displayStartMonth !== startMonth || displayEndMonth !== endMonth;
+        if ((!startIsSelectable || !endIsSelectable) && nextRangeChanged) {
             onRangeChangeRef.current(displayStartMonth, displayEndMonth);
         }
-    }, [activeTimeline, displayStartMonth, displayEndMonth, startMonth, endMonth]);
+    }, [activeTimeline, dataMonthsSet, displayStartMonth, displayEndMonth, startMonth, endMonth]);
 
     // Format: "January 2024"
     const formatMonthWithYear = useCallback((month: string) => {
@@ -253,34 +302,66 @@ export function DateRangePicker({
 
     const handleSliderChange = useCallback((values: [number, number]) => {
         setActivePreset(null);
-        const start = activeTimeline[values[0]];
-        const end = activeTimeline[values[1]];
+        const nextStartIndex = clampToAvailableMonth(Math.min(values[0], values[1]));
+        const nextEndIndex = Math.max(nextStartIndex, clampToAvailableMonth(Math.max(values[0], values[1])));
+        const start = activeTimeline[nextStartIndex];
+        const end = activeTimeline[nextEndIndex];
         if (start && end) onRangeChange(start, end);
-    }, [activeTimeline, onRangeChange]);
+    }, [activeTimeline, clampToAvailableMonth, onRangeChange]);
+
+    const handleStartSelect = useCallback((value: string) => {
+        setActivePreset(null);
+        const nextStartIndex = clampToAvailableMonth(Number(value));
+        const nextEndIndex = Math.max(nextStartIndex, activeEndIndex);
+        const start = activeTimeline[nextStartIndex];
+        const end = activeTimeline[nextEndIndex];
+        if (start && end) onRangeChange(start, end);
+    }, [activeEndIndex, activeTimeline, clampToAvailableMonth, onRangeChange]);
+
+    const handleEndSelect = useCallback((value: string) => {
+        setActivePreset(null);
+        const nextEndIndex = clampToAvailableMonth(Number(value));
+        const nextStartIndex = Math.min(activeStartIndex, nextEndIndex);
+        const start = activeTimeline[nextStartIndex];
+        const end = activeTimeline[nextEndIndex];
+        if (start && end) onRangeChange(start, end);
+    }, [activeStartIndex, activeTimeline, clampToAvailableMonth, onRangeChange]);
+
+    const handleMonthClick = useCallback((index: number) => {
+        if (!dataMonthsSet.has(activeTimeline[index])) return;
+        setActivePreset(null);
+        const distStart = Math.abs(index - activeStartIndex);
+        const distEnd = Math.abs(index - activeEndIndex);
+        const nextStartIndex = distStart <= distEnd ? index : activeStartIndex;
+        const nextEndIndex = distStart <= distEnd ? activeEndIndex : index;
+        const start = activeTimeline[Math.min(nextStartIndex, nextEndIndex)];
+        const end = activeTimeline[Math.max(nextStartIndex, nextEndIndex)];
+        if (start && end) onRangeChange(start, end);
+    }, [activeEndIndex, activeStartIndex, activeTimeline, dataMonthsSet, onRangeChange]);
 
     // Quick preset handlers (operate within the visible timeline)
     const applyPreset = useCallback((preset: 'ytd' | 'last3' | 'last6' | 'last12') => {
-        if (activeTimeline.length === 0) return;
+        if (activeTimeline.length === 0 || selectableMonthIndexes.length === 0) return;
         setActivePreset(preset);
-        const lastIndex = activeTimeline.length - 1;
         switch (preset) {
             case 'ytd': {
-                const latestYear = activeTimeline[lastIndex].split('-')[1];
+                const latestYear = activeTimeline[lastSelectableIndex].split('-')[1];
                 const janOfLatestYear = activeTimeline.find(m => m.startsWith('Jan-') && m.endsWith(latestYear));
-                onRangeChange(janOfLatestYear || activeTimeline[0], activeTimeline[lastIndex]);
+                const ytdStart = janOfLatestYear && dataMonthsSet.has(janOfLatestYear) ? janOfLatestYear : activeTimeline[firstSelectableIndex];
+                onRangeChange(ytdStart, activeTimeline[lastSelectableIndex]);
                 break;
             }
             case 'last3':
-                onRangeChange(activeTimeline[Math.max(0, lastIndex - 2)], activeTimeline[lastIndex]);
+                onRangeChange(activeTimeline[Math.max(firstSelectableIndex, lastSelectableIndex - 2)], activeTimeline[lastSelectableIndex]);
                 break;
             case 'last6':
-                onRangeChange(activeTimeline[Math.max(0, lastIndex - 5)], activeTimeline[lastIndex]);
+                onRangeChange(activeTimeline[Math.max(firstSelectableIndex, lastSelectableIndex - 5)], activeTimeline[lastSelectableIndex]);
                 break;
             case 'last12':
-                onRangeChange(activeTimeline[0], activeTimeline[lastIndex]);
+                onRangeChange(activeTimeline[firstSelectableIndex], activeTimeline[lastSelectableIndex]);
                 break;
         }
-    }, [activeTimeline, onRangeChange]);
+    }, [activeTimeline, dataMonthsSet, firstSelectableIndex, lastSelectableIndex, onRangeChange, selectableMonthIndexes.length]);
 
     const presets = useMemo<{ key: PresetKey; label: string }[]>(() => [
         { key: 'last3', label: '3M' },
@@ -316,8 +397,38 @@ export function DateRangePicker({
                     </div>
                 </div>
 
-                {/* Right: Quick Presets */}
-                <div className="inline-flex items-center gap-1 shrink-0">
+                {/* Right: Direct selectors + quick presets */}
+                <div className="flex flex-wrap items-center gap-2 shrink-0 sm:justify-end">
+                    <label className="flex items-center gap-1.5 text-[11px] font-semibold text-muted-foreground">
+                        Start
+                        <select
+                            aria-label="Start month selector"
+                            value={activeStartIndex}
+                            onChange={(e) => handleStartSelect(e.target.value)}
+                            className="min-h-9 rounded-full border border-border bg-card px-3 py-1 text-xs font-semibold text-foreground outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
+                        >
+                            {selectableMonthIndexes.map(index => (
+                                <option key={`start-${activeTimeline[index]}`} value={index}>
+                                    {formatMonthWithYear(activeTimeline[index])}
+                                </option>
+                            ))}
+                        </select>
+                    </label>
+                    <label className="flex items-center gap-1.5 text-[11px] font-semibold text-muted-foreground">
+                        End
+                        <select
+                            aria-label="End month selector"
+                            value={activeEndIndex}
+                            onChange={(e) => handleEndSelect(e.target.value)}
+                            className="min-h-9 rounded-full border border-border bg-card px-3 py-1 text-xs font-semibold text-foreground outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
+                        >
+                            {selectableMonthIndexes.map(index => (
+                                <option key={`end-${activeTimeline[index]}`} value={index}>
+                                    {formatMonthWithYear(activeTimeline[index])}
+                                </option>
+                            ))}
+                        </select>
+                    </label>
                     {presets.map(({ key, label }) => (
                         <button
                             key={key}
@@ -374,7 +485,7 @@ export function DateRangePicker({
                 )}
 
                 {/* Fixed Jan-Dec month labels + data dots */}
-                <div className="flex justify-between px-3 mt-1 relative">
+                <div className="grid grid-cols-12 gap-1 px-3 mt-1 relative">
                     {activeTimeline.map((m, i) => {
                         const [monthPart] = m.split('-');
                         const isInRange = i >= activeStartIndex && i <= activeEndIndex;
@@ -382,9 +493,13 @@ export function DateRangePicker({
                         const hasData = dataMonthsSet.has(m);
 
                         return (
-                            <div
+                            <button
                                 key={m}
-                                className="relative flex flex-col items-center"
+                                type="button"
+                                disabled={!hasData}
+                                onClick={() => handleMonthClick(i)}
+                                aria-label={`${hasData ? 'Select' : 'Unavailable'} ${formatMonthWithYear(m)}`}
+                                className="relative flex min-w-0 flex-col items-center rounded-md px-1 py-1 transition-colors disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                             >
                                 {/* Month label */}
                                 <span
@@ -417,7 +532,7 @@ export function DateRangePicker({
                                         }
                                     `}
                                 />
-                            </div>
+                            </button>
                         );
                     })}
                 </div>

@@ -28,7 +28,10 @@ export function TabNavigation({ tabs, activeTab, onTabChange, className, variant
     // While false (SSR, pre-hydration, reduced motion) the active button keeps
     // its own background — the pill is purely an enhancement.
     const [pillReady, setPillReady] = useState(false);
+    const pillReadyRef = useRef(false);
     const hasAnimatedRef = useRef(false);
+    const activeIndex = tabs.findIndex((t) => t.key === activeTab);
+    const tabKeys = tabs.map((tab) => tab.key).join("|");
 
     // ARIA tabs keyboard pattern: Arrow keys move focus and activate tabs
     const handleKeyDown = useCallback((e: React.KeyboardEvent, currentIndex: number) => {
@@ -58,7 +61,6 @@ export function TabNavigation({ tabs, activeTab, onTabChange, className, variant
 
         const pill = pillRef.current;
         const list = listRef.current;
-        const activeIndex = tabs.findIndex((t) => t.key === activeTab);
         const button = tabRefs.current[activeIndex];
         if (!pill || !list || !button) return;
 
@@ -78,12 +80,15 @@ export function TabNavigation({ tabs, activeTab, onTabChange, className, variant
 
         place(hasAnimatedRef.current);
         hasAnimatedRef.current = true;
-        setPillReady(true);
+        if (!pillReadyRef.current) {
+            pillReadyRef.current = true;
+            setPillReady(true);
+        }
 
         const resizeObserver = new ResizeObserver(() => place(false));
         resizeObserver.observe(list);
         return () => resizeObserver.disconnect();
-    }, [activeTab, tabs, variant]);
+    }, [activeIndex, tabKeys, variant]);
 
     const pillClassName = variant === "secondary"
         ? "bg-card border border-border/80 shadow-md"
