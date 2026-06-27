@@ -85,30 +85,28 @@ interface KpiProps {
     ic?: string;
     delta?: { up: boolean; text: string } | null;
 }
-/* KPI card — mirrors the app-wide shared StatsGrid card (muted icon box, mono
- * brand-purple value, hover lift) so every water panel reads as one system with
- * the rest of the app. `bg` is accepted for call-site compatibility but ignored:
- * the unified design keeps domain colour on the icon only, over a neutral box. */
-function Kpi({ icon: Icon, label, value, unit, sub, ic, delta }: KpiProps) {
+function Kpi({ icon: Icon, label, value, unit, sub, bg, ic, delta }: KpiProps) {
     return (
-        <div className="mb-glow group/stat overflow-hidden bg-card p-3 sm:p-4 md:p-5 rounded-lg border border-border shadow-[0_1px_2px_rgb(15_23_42_/_0.06)] dark:shadow-[0_1px_0_rgba(255,255,255,0.04)] transition-[box-shadow,border-color,transform] duration-200 ease-(--ease-out-quint) hover:shadow-[0_6px_18px_-10px_rgb(15_23_42_/_0.35)] hover:border-secondary/40 motion-safe:active:scale-[0.99]">
-            <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0">
-                    <p className="text-muted-foreground text-[11px] sm:text-xs font-medium mb-0.5 sm:mb-1 uppercase tracking-[0.06em] leading-tight truncate">{label}</p>
-                    <h3 className="text-[1.25rem] sm:text-2xl font-mono font-semibold tabular-nums truncate text-primary dark:text-foreground leading-none">
-                        {value}{unit && <span className="text-xs font-medium ml-1 text-muted-foreground">{unit}</span>}
-                    </h3>
+        <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: RADIUS.card, boxShadow: SHADOW }} className="p-4 transition-shadow">
+            <div className="flex items-start justify-between">
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 flex items-center justify-center shrink-0" style={{ background: bg, borderRadius: RADIUS.md }}>
+                        <Icon className="w-5 h-5" style={{ color: ic }} />
+                    </div>
+                    <div>
+                        <p className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: C.muted }}>{label}</p>
+                        <p className="text-xl font-semibold tracking-tight leading-tight" style={{ color: C.ink }}>
+                            {value}<span className="text-xs font-medium ml-1" style={{ color: C.muted }}>{unit}</span>
+                        </p>
+                    </div>
                 </div>
-                <div className="p-1.5 sm:p-2 rounded-lg bg-muted flex-shrink-0 transition-transform duration-300 ease-(--ease-out-quint) motion-safe:group-hover/stat:scale-110">
-                    <Icon className="w-4 h-4 sm:w-5 sm:h-5" style={{ color: ic }} />
-                </div>
+                {delta && (
+                    <div className={`flex items-center gap-1 text-xs font-semibold ${delta.up ? "text-mb-danger-text" : "text-mb-success-text"}`}>
+                        {delta.up ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}{delta.text}
+                    </div>
+                )}
             </div>
-            {delta && (
-                <div className={`mt-2 sm:mt-3 flex items-center text-xs sm:text-sm font-medium ${delta.up ? "text-[var(--status-danger)]" : "text-[var(--status-normal)]"}`}>
-                    {delta.up ? <TrendingUp className="w-3.5 h-3.5 me-1" /> : <TrendingDown className="w-3.5 h-3.5 me-1" />}{delta.text}
-                </div>
-            )}
-            {sub && !delta && <p className="text-[11px] sm:text-xs text-muted-foreground mt-1.5 sm:mt-2 truncate">{sub}</p>}
+            {sub && <p className="text-[11px] mt-2" style={{ color: C.muted }}>{sub}</p>}
         </div>
     );
 }
@@ -190,28 +188,14 @@ function RingGauge({ frac, color, big, small, label, caption }: RingGaugeProps) 
     );
 }
 
-/* Total-loss connector shown between the Supply and Consumption gauges.
- * Calm by default — danger styling only when loss exceeds the management target
- * ("urgent only when earned"); otherwise a reassuring success tint. */
-function LossLink({ loss, pct, over }: { loss: number; pct: number; over: boolean }) {
-    const text = over ? "var(--mb-danger-text)" : "var(--mb-success-text)";
+/* loss connector shown between gauges */
+function LossLink({ label, v, of }: { label: string; v: number; of: number }) {
+    const p = of ? Math.round((v / of) * 1000) / 10 : 0;
     return (
-        <div className="flex shrink-0 flex-col items-center justify-center px-1 sm:px-3">
-            <ArrowRight className="w-5 h-5" style={{ color: C.muted }} />
-            <div
-                className="mt-2 flex flex-col items-center rounded-lg border px-3 py-1.5"
-                style={{
-                    background: over ? "var(--mb-danger-light)" : "var(--mb-success-light)",
-                    borderColor: over ? "var(--mb-danger)" : "var(--mb-success)",
-                }}
-            >
-                <span className="whitespace-nowrap text-base font-bold tabular-nums sm:text-lg" style={{ color: text }}>
-                    −{fmt(loss)} m³
-                </span>
-                <span className="whitespace-nowrap text-[10px] font-semibold uppercase tracking-wide sm:text-[11px]" style={{ color: text }}>
-                    total loss · {pct}%
-                </span>
-            </div>
+        <div className="flex flex-col items-center shrink-0 px-0.5">
+            <ArrowRight className="w-4 h-4" style={{ color: C.muted }} />
+            <span className="px-1.5 py-0.5 rounded text-[11px] font-bold mt-1 whitespace-nowrap bg-mb-danger-light text-mb-danger-text">−{fmt(v)} m³</span>
+            <span className="text-[10px] mt-0.5 whitespace-nowrap font-semibold text-mb-danger-text">{label} · {p}%</span>
         </div>
     );
 }
@@ -298,7 +282,7 @@ interface OverviewProps {
     periodLabel: string;
 }
 function Overview({ period: t, monthly, sel, lossDelta, periodLabel }: OverviewProps) {
-    const a3f = pct(t.A3, t.A1) / 100;
+    const a2f = pct(t.A2, t.A1) / 100, a3f = pct(t.A3, t.A1) / 100;
     const typePie = t.types.map((x) => ({ name: x.type.replace("Residential ", "").replace("(", "").replace(")", ""), value: x.total, pct: x.pct }));
     const trend = monthly.map((p, i) => ({ m: MONTHS[i], A1: p.A1, A3: p.A3, loss: p.loss, lossPct: p.lossPct, target: TARGET_LOSS_PCT }));
     const selM = isRangeSel(sel) ? `${MONTHS[sel[0]]}–${MONTHS[sel[1]]}` : sel != null ? MONTHS[sel] : null;
@@ -319,10 +303,12 @@ function Overview({ period: t, monthly, sel, lossDelta, periodLabel }: OverviewP
 
             <Panel title="System Water Balance" icon={Gauge}
                 note={`Supply → distribution → consumption, with the loss at each stage — ${periodLabel}. Management target: loss ≤ ${TARGET_LOSS_PCT}%.`}>
-                <div className="flex items-center justify-center gap-2 sm:gap-8 overflow-x-auto pb-1">
+                <div className="flex items-center justify-center gap-1 sm:gap-3 overflow-x-auto pb-1">
                     <RingGauge frac={1} color={C.accent} big={fmt(t.A1)} small="m³" label="A1 · Supply" caption="total entering" />
-                    <LossLink loss={t.loss} pct={t.lossPct} over={t.lossPct > TARGET_LOSS_PCT} />
-                    <RingGauge frac={a3f} color={C.cons} big={fmt(t.A3)} small="m³" label="A3 · Consumption" caption="metered at end-user" />
+                    <LossLink label="trunk" v={t.stage1} of={t.A1} />
+                    <RingGauge frac={a2f} color={C.dist} big={fmt(t.A2)} small="m³" label="A2 · Distribution" caption="reaches zones" />
+                    <LossLink label="network" v={t.stage2} of={t.A1} />
+                    <RingGauge frac={a3f} color={C.cons} big={fmt(t.A3)} small="m³" label="A3 · Consumption" caption="at meters" />
                 </div>
                 <div className="flex justify-center mt-3 pt-3" style={{ borderTop: `1px solid ${C.border}` }}>
                     <div className={`flex items-center gap-3 px-4 py-2 rounded-lg border ${t.lossPct > TARGET_LOSS_PCT ? "bg-mb-danger-light border-mb-danger" : "bg-mb-success-light border-mb-success"}`}>
