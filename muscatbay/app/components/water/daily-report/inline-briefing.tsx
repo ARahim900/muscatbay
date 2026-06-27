@@ -1,8 +1,8 @@
 "use client";
 
-import { Droplets, TrendingDown, AlertTriangle, CheckCircle2, ArrowUp, ArrowDown } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { HierarchyStatCard, n } from "./inline-shared";
+import { Droplets, TrendingDown, AlertTriangle, ArrowUp, ArrowDown } from "lucide-react";
+import { StatsGrid, type StatItem } from "@/components/shared/stats-grid";
+import { n } from "./inline-shared";
 import type { BriefingMetrics } from "./briefing-metrics";
 
 /** Format a signed percentage, or em dash when null. */
@@ -22,13 +22,44 @@ export function DailyBriefing({
     const { totalSupply, lossM3, lossPct, alarmCount, alarmZones, vsYesterdayPct, status } = metrics;
 
     const isWarning = status === "warning";
-    const verdictColor = isWarning ? "var(--status-warning)" : "var(--status-normal)";
-    const VerdictIcon = isWarning ? AlertTriangle : CheckCircle2;
-    const verdictText = isWarning
-        ? `${alarmCount} zone${alarmCount === 1 ? "" : "s"} above tolerance: ${alarmZones.join(", ")}`
-        : "All zones within tolerance.";
+    // null → neutral up arrow placeholder; otherwise points with the movement.
+    const TrendIcon = vsYesterdayPct !== null && vsYesterdayPct < 0 ? ArrowDown : ArrowUp;
 
-    const TrendIcon = vsYesterdayPct === null ? null : vsYesterdayPct >= 0 ? ArrowUp : ArrowDown;
+    // Unified KPI cards — same shared StatsGrid the rest of the app uses, so the
+    // daily briefing reads as one system with every other section. The alarm-zone
+    // list now lives calmly in the "Zones in Alarm" subtitle (replacing the loud
+    // amber banner) instead of shouting from a full-width callout.
+    const stats: StatItem[] = [
+        {
+            label: "Total Supply",
+            value: `${n(totalSupply)} m³`,
+            icon: Droplets,
+            variant: "water",
+            subtitle: "Total entering the network",
+        },
+        {
+            label: "Distribution Loss",
+            value: lossPct === null ? `${n(lossM3)} m³` : `${n(lossM3)} m³ · ${lossPct.toFixed(1)}%`,
+            icon: TrendingDown,
+            // Calm by default: amber only when a zone is actually in alarm.
+            variant: isWarning ? "warning" : "water",
+            subtitle: "Zone bulk (L2) vs sub-meters (L3)",
+        },
+        {
+            label: "Zones in Alarm",
+            value: String(alarmCount),
+            icon: AlertTriangle,
+            variant: alarmCount > 0 ? "danger" : "success",
+            subtitle: alarmCount > 0 ? alarmZones.join(", ") : "All zones within tolerance",
+        },
+        {
+            label: "vs. Yesterday",
+            value: pct(vsYesterdayPct),
+            icon: TrendIcon,
+            variant: "info",
+            subtitle: "Day-over-day supply",
+        },
+    ];
 
     return (
         <section aria-label="Daily briefing" className="space-y-3">
@@ -41,53 +72,7 @@ export function DailyBriefing({
                 </span>
             </div>
 
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-                <HierarchyStatCard
-                    label="Total Supply"
-                    value={`${n(totalSupply)} m³`}
-                    icon={<Droplets className="h-5 w-5" />}
-                    color="var(--module-water, var(--chart-water-primary))"
-                />
-                <HierarchyStatCard
-                    label="Distribution Loss"
-                    value={lossPct === null ? `${n(lossM3)} m³` : `${n(lossM3)} m³ · ${lossPct.toFixed(1)}%`}
-                    icon={<TrendingDown className="h-5 w-5" />}
-                    // Calm by default: amber only when a zone is actually in alarm,
-                    // otherwise an informational water accent (no urgency on a clean day).
-                    color={isWarning ? "var(--status-warning)" : "var(--module-water, var(--chart-water-primary))"}
-                />
-                <HierarchyStatCard
-                    label="Zones in Alarm"
-                    value={String(alarmCount)}
-                    icon={<AlertTriangle className="h-5 w-5" />}
-                    color={alarmCount > 0 ? "var(--status-danger)" : "var(--status-normal)"}
-                    valueColor={alarmCount > 0 ? "var(--status-danger)" : undefined}
-                />
-                <HierarchyStatCard
-                    label="vs. Yesterday"
-                    value={
-                        TrendIcon === null
-                            ? "—"
-                            : pct(vsYesterdayPct)
-                    }
-                    icon={TrendIcon ? <TrendIcon className="h-5 w-5" /> : <ArrowUp className="h-5 w-5 opacity-30" />}
-                    color="var(--status-info)"
-                />
-            </div>
-
-            <div
-                className={cn(
-                    "flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium",
-                )}
-                style={{
-                    color: verdictColor,
-                    borderColor: verdictColor,
-                    backgroundColor: isWarning ? "var(--status-warning-bg)" : "var(--status-normal-bg)",
-                }}
-            >
-                <VerdictIcon className="h-4 w-4 shrink-0" aria-hidden="true" />
-                <span>{verdictText}</span>
-            </div>
+            <StatsGrid stats={stats} />
         </section>
     );
 }
