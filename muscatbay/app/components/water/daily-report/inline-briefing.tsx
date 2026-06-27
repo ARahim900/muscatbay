@@ -46,7 +46,7 @@ export function DailyBriefing({
                     label="Total Supply"
                     value={`${n(totalSupply)} m³`}
                     icon={<Droplets className="h-5 w-5" />}
-                    color="var(--module-water, #6B9AC4)"
+                    color="var(--module-water, var(--chart-water-primary))"
                 />
                 <HierarchyStatCard
                     label="Distribution Loss"
@@ -54,7 +54,7 @@ export function DailyBriefing({
                     icon={<TrendingDown className="h-5 w-5" />}
                     // Calm by default: amber only when a zone is actually in alarm,
                     // otherwise an informational water accent (no urgency on a clean day).
-                    color={isWarning ? "var(--status-warning)" : "var(--module-water, #6B9AC4)"}
+                    color={isWarning ? "var(--status-warning)" : "var(--module-water, var(--chart-water-primary))"}
                 />
                 <HierarchyStatCard
                     label="Zones in Alarm"

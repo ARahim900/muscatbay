@@ -21,8 +21,10 @@ export interface BriefingMetrics {
 }
 
 export function computeBriefing(today: ReportData, yesterday: ReportData | null): BriefingMetrics {
-    const lossM3 = r2(today.l2Total - today.l3Total);
-    const lossPct = today.l2Total === 0 ? null : r2((lossM3 / today.l2Total) * 100);
+    // Keep the raw delta for the percentage; only round for the displayed m³ value.
+    const rawLoss = today.l2Total - today.l3Total;
+    const lossM3 = r2(rawLoss);
+    const lossPct = today.l2Total === 0 ? null : r2((rawLoss / today.l2Total) * 100);
 
     const alarmZones = today.zoneRows.filter(z => z.isHighLoss).map(z => z.zoneName);
 

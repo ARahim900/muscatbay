@@ -8,6 +8,8 @@ interface PageStatusBarProps {
     isLive?: boolean;
     /** Last data update timestamp */
     lastUpdated: Date | null;
+    /** Locale for timestamp formatting; omit to use the runtime/browser locale */
+    locale?: string;
     /** Label shown when connected */
     connectedLabel?: string;
     /** Label shown when disconnected */
@@ -22,6 +24,7 @@ export function PageStatusBar({
     isConnected,
     isLive,
     lastUpdated,
+    locale,
     connectedLabel = "Live Data (Supabase)",
     disconnectedLabel = "Demo Data (Local)",
     children,
@@ -65,7 +68,7 @@ export function PageStatusBar({
                     <span className="inline-flex items-center gap-1.5 text-[11px]">
                         <span className="uppercase tracking-[0.06em] text-muted-foreground/70">Last sync</span>
                         <span className="font-mono tabular-nums text-foreground/80">
-                            {lastUpdated.toLocaleTimeString("en-US", {
+                            {lastUpdated.toLocaleTimeString(locale, {
                                 hour: "2-digit",
                                 minute: "2-digit",
                                 second: "2-digit",
