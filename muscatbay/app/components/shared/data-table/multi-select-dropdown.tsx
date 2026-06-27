@@ -98,14 +98,14 @@ export function MultiSelectDropdown({
                         <div className="flex items-center justify-between px-3 py-2 border-b border-border/70">
                             <button
                                 onClick={selectAll}
-                                className="text-xs font-medium text-primary hover:text-primary/80 transition-colors min-h-[36px] px-1 flex items-center"
+                                className="text-xs font-medium text-primary hover:text-primary/80 transition-colors min-h-[36px] pointer-coarse:min-h-11 px-1 flex items-center"
                             >
                                 Select All
                             </button>
                             <span className="text-border select-none text-xs">|</span>
                             <button
                                 onClick={clearAll}
-                                className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors min-h-[36px] px-1 flex items-center"
+                                className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors min-h-[36px] pointer-coarse:min-h-11 px-1 flex items-center"
                             >
                                 Clear
                             </button>

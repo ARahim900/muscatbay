@@ -57,6 +57,9 @@ export function SplashScreen({ exiting = false }: SplashScreenProps) {
         className="mt-8 flex flex-col items-center gap-1"
         style={{ animation: "fadeInUp 450ms ease-out 200ms both" }}
       >
+        {/* text-white is intentional: the splash bg is always the dark brand
+            surface (--mb-splash-bg) regardless of theme, so white is the
+            correct, fully-legible foreground in both light and dark mode. */}
         <p className="text-base font-semibold tracking-[0.22em] text-white uppercase select-none">
           Muscat Bay
         </p>

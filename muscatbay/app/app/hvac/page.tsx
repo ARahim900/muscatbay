@@ -104,9 +104,9 @@ export default function GulfExpertPage() {
         />
         <div role="alert" className="bg-card rounded-xl border border-[var(--status-danger)]/30 p-8 text-center">
           <AlertTriangle className="h-12 w-12 text-[var(--status-danger)] mx-auto mb-4" aria-hidden="true" />
-          <h3 className="text-lg font-semibold text-foreground mb-2">
+          <h2 className="text-lg font-semibold text-foreground mb-2">
             Failed to Load Data
-          </h3>
+          </h2>
           <p className="text-sm text-muted-foreground mb-4">{error}</p>
           <button
             onClick={() => loadData()}

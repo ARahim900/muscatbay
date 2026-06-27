@@ -63,7 +63,12 @@ export function CircularGauge({
                 {label}
             </div>
             <div className={`relative ${sizeClasses.container}`}>
-                <svg className="w-full h-full transform -rotate-90" viewBox="0 0 160 160">
+                <svg
+                    className="w-full h-full transform -rotate-90"
+                    viewBox="0 0 160 160"
+                    role="img"
+                    aria-label={`${label}: ${percentage.toFixed(1)}%`}
+                >
                     {/* Background circle */}
                     <circle
                         cx="80"
@@ -73,6 +78,7 @@ export function CircularGauge({
                         stroke="currentColor"
                         strokeWidth={sizeClasses.strokeWidth}
                         className="text-border dark:text-foreground"
+                        aria-hidden="true"
                     />
                     {/* Progress circle */}
                     <circle
@@ -88,6 +94,7 @@ export function CircularGauge({
                             strokeDashoffset: strokeDashoffset,
                             transition: 'stroke-dashoffset 0.5s ease-in-out'
                         }}
+                        aria-hidden="true"
                     />
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center">

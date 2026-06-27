@@ -241,7 +241,7 @@ export function BottomNav() {
                 `}
               >
                 <Icon className="w-5 h-5" />
-                <span className={`text-[10px] leading-tight ${active ? 'font-semibold' : 'font-medium'}`}>
+                <span className={`text-[11px] leading-tight ${active ? 'font-semibold' : 'font-medium'}`}>
                   {item.name}
                 </span>
                 {active && (
@@ -266,7 +266,7 @@ export function BottomNav() {
             aria-expanded={drawerOpen}
           >
             <MoreHorizontal className="w-5 h-5" />
-            <span className={`text-[10px] leading-tight ${drawerOpen || isOverflowActive ? 'font-semibold' : 'font-medium'}`}>
+            <span className={`text-[11px] leading-tight ${drawerOpen || isOverflowActive ? 'font-semibold' : 'font-medium'}`}>
               More
             </span>
             {isOverflowActive && !drawerOpen && (

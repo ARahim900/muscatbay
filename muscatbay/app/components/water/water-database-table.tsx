@@ -56,6 +56,15 @@ const LEVEL_STYLES: Record<string, string> = {
     'DC': 'bg-badge-amber/20 text-badge-amber-fg ring-1 ring-badge-amber/45 dark:bg-badge-amber/15 dark:ring-badge-amber/35',
 };
 
+// Type badge colors — sourced from --badge-* tokens in globals.css.
+// 'Supply' gets the blue treatment; every other type falls back to the
+// secondary/primary pairing (see DEFAULT_TYPE_BADGE_STYLE).
+const DEFAULT_TYPE_BADGE_STYLE =
+    'bg-secondary text-primary-foreground ring-1 ring-secondary/60 dark:bg-secondary/90 dark:text-primary-foreground dark:ring-secondary/50';
+const TYPE_BADGE_STYLES: Record<string, string> = {
+    'Supply': 'bg-badge-blue/12 text-badge-blue-fg ring-1 ring-badge-blue/30 dark:bg-badge-blue/20 dark:ring-badge-blue/30',
+};
+
 // All unique levels
 const ALL_LEVELS = ['L1', 'L2', 'L3', 'L4', 'DC'];
 
@@ -137,7 +146,7 @@ function ColumnVisibilityDropdown({
                                 type="button"
                                 onClick={showAll}
                                 aria-label={`Show all ${months.length} months`}
-                                className="text-sm px-2 py-1 rounded bg-muted dark:bg-muted hover:bg-border dark:hover:bg-border"
+                                className="text-sm px-2 py-1 rounded bg-muted dark:bg-muted hover:bg-border dark:hover:bg-border pointer-coarse:inline-flex pointer-coarse:items-center pointer-coarse:justify-center pointer-coarse:min-h-11 pointer-coarse:min-w-11 pointer-coarse:px-3"
                             >
                                 All ({months.length})
                             </button>
@@ -145,7 +154,7 @@ function ColumnVisibilityDropdown({
                                 type="button"
                                 onClick={showLast12}
                                 aria-label="Show last 12 months"
-                                className="text-sm px-2 py-1 rounded bg-muted dark:bg-muted hover:bg-border dark:hover:bg-border"
+                                className="text-sm px-2 py-1 rounded bg-muted dark:bg-muted hover:bg-border dark:hover:bg-border pointer-coarse:inline-flex pointer-coarse:items-center pointer-coarse:justify-center pointer-coarse:min-h-11 pointer-coarse:min-w-11 pointer-coarse:px-3"
                             >
                                 Last 12
                             </button>
@@ -153,7 +162,7 @@ function ColumnVisibilityDropdown({
                                 type="button"
                                 onClick={showLast6}
                                 aria-label="Show last 6 months"
-                                className="text-sm px-2 py-1 rounded bg-muted dark:bg-muted hover:bg-border dark:hover:bg-border"
+                                className="text-sm px-2 py-1 rounded bg-muted dark:bg-muted hover:bg-border dark:hover:bg-border pointer-coarse:inline-flex pointer-coarse:items-center pointer-coarse:justify-center pointer-coarse:min-h-11 pointer-coarse:min-w-11 pointer-coarse:px-3"
                             >
                                 Last 6
                             </button>
@@ -390,15 +399,16 @@ export function WaterDatabaseTable({ meters, months }: WaterDatabaseTableProps) 
     const renderRow = (meter: WaterMeter, rowIndex: number) => {
         const zoneBorder = ZONE_BORDER_VAR[meter.zone] || ZONE_BORDER_VAR['N/A'];
         const levelStyle = LEVEL_STYLES[meter.level] || 'bg-muted text-foreground';
+        const typeStyle = TYPE_BADGE_STYLES[meter.type] || DEFAULT_TYPE_BADGE_STYLE;
 
         return (
             <tr
                 key={meter.accountNumber}
-                style={{ borderLeftColor: zoneBorder }}
+                style={{ '--zone-border': zoneBorder } as React.CSSProperties}
                 className={cn(
                     "border-b border-border/80 dark:border-border/80 hover:bg-secondary/5 dark:hover:bg-muted/40 transition-colors",
                     rowIndex % 2 === 1 && "bg-muted/40 dark:bg-muted/20",
-                    "border-l-2"
+                    "border-l-2 border-l-[color:var(--zone-border)]"
                 )}
             >
                 <td className="py-4 px-5 font-medium whitespace-nowrap col-sticky w-[120px] sm:w-[180px] md:w-[200px]">
@@ -423,9 +433,7 @@ export function WaterDatabaseTable({ meters, months }: WaterDatabaseTableProps) 
                 <td className="py-4 px-5">
                     <span className={cn(
                         "inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap",
-                        meter.type === 'Supply'
-                            ? 'bg-badge-blue/12 text-badge-blue-fg ring-1 ring-badge-blue/30 dark:bg-badge-blue/20 dark:ring-badge-blue/30'
-                            : 'bg-secondary text-primary-foreground ring-1 ring-secondary/60 dark:bg-secondary/90 dark:text-primary-foreground dark:ring-secondary/50'
+                        typeStyle
                     )}>
                         {meter.type}
                     </span>

@@ -246,6 +246,7 @@ export default function SettingsPage() {
                                         id="avatar-upload"
                                         type="file"
                                         accept="image/*"
+                                        aria-label="Upload avatar"
                                         className="hidden"
                                         onChange={handleAvatarChange}
                                     />

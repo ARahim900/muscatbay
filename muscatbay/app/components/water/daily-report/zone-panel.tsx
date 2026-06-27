@@ -21,6 +21,27 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@
 
 // ZoneAnalyticsPanel extracted to zone-analytics.tsx
 
+// ─── Dark-mode-aware status tokens for DOM cells ─────────────────────────────
+// PALETTE stays for chart-only / HierarchyStatCard props. For table cells we
+// route status colors through CSS variables so they auto-flip in dark mode.
+// `tint(role, pct)` builds a translucent background from the role's base var;
+// the `*Text` vars are the WCAG-tuned foreground colors (light in dark theme).
+type StatusRole = 'primary' | 'info' | 'success' | 'danger';
+const STATUS_BASE: Record<StatusRole, string> = {
+    primary: 'var(--primary)',
+    info: 'var(--mb-info)',
+    success: 'var(--mb-success)',
+    danger: 'var(--mb-danger)',
+};
+const STATUS_TEXT: Record<StatusRole, string> = {
+    primary: 'var(--primary)',
+    info: 'var(--mb-info-text)',
+    success: 'var(--mb-success-text)',
+    danger: 'var(--mb-danger-text)',
+};
+const tint = (role: StatusRole, pct: number) =>
+    `color-mix(in srgb, ${STATUS_BASE[role]} ${pct}%, transparent)`;
+
 // ─── Zone L3 Meters Table — All-Days View ────────────────────────────────────
 
 export function ZoneL3Table({
@@ -313,16 +334,16 @@ export function ZoneL3Table({
                             <TableRow
                                 className="border-b-2"
                                 style={{
-                                    backgroundColor: `${PALETTE.primary}14`,
-                                    borderBottomColor: `${PALETTE.primary}40`,
+                                    backgroundColor: tint('primary', 8),
+                                    borderBottomColor: tint('primary', 25),
                                 }}
                             >
                                 <TableCell
                                     className={cn(tdBase, "font-medium sticky left-0 z-10")}
                                     style={{
-                                        backgroundColor: `${PALETTE.primary}14`,
-                                        color: PALETTE.primary,
-                                        boxShadow: `inset 4px 0 0 ${PALETTE.primary}`,
+                                        backgroundColor: tint('primary', 8),
+                                        color: STATUS_TEXT.primary,
+                                        boxShadow: `inset 4px 0 0 ${STATUS_BASE.primary}`,
                                     }}
                                 >
                                     <span className="inline-flex items-center gap-2">
@@ -330,7 +351,7 @@ export function ZoneL3Table({
                                         {zoneRow.zoneName} Bulk (L2)
                                     </span>
                                 </TableCell>
-                                <TableCell className={cn(tdBase, "font-mono text-[11px]")} style={{ color: `${PALETTE.primary}AA` }}>
+                                <TableCell className={cn(tdBase, "font-mono text-[11px]")} style={{ color: `color-mix(in srgb, ${STATUS_TEXT.primary} 67%, transparent)` }}>
                                     {zoneConfig.l2Account}
                                 </TableCell>
                                 <TableCell className={cn(tdBase, "text-center")}>
@@ -340,7 +361,7 @@ export function ZoneL3Table({
                                     <TableCell
                                         key={i}
                                         className={cn(tdBase, "text-right tabular-nums px-2 text-[12px] font-medium")}
-                                        style={{ color: PALETTE.primary }}
+                                        style={{ color: STATUS_TEXT.primary }}
                                     >
                                         {val === null ? (
                                             <span className="text-muted-foreground/70 dark:text-muted-foreground">—</span>
@@ -352,8 +373,8 @@ export function ZoneL3Table({
                                 <TableCell
                                     className={cn(tdBase, "text-right tabular-nums font-medium")}
                                     style={{
-                                        backgroundColor: `${PALETTE.primary}20`,
-                                        color: PALETTE.primary,
+                                        backgroundColor: tint('primary', 12),
+                                        color: STATUS_TEXT.primary,
                                     }}
                                 >
                                     {n(l2GrandTotal)}
@@ -390,7 +411,7 @@ export function ZoneL3Table({
                                                         aria-expanded={isExpanded}
                                                         aria-label={`${isExpanded ? 'Collapse' : 'Expand'} ${detail.buildingName} L4 meters`}
                                                         className="inline-flex items-center gap-1 rounded-md px-1.5 py-1 -ml-1 hover:bg-muted dark:hover:bg-muted transition-colors"
-                                                        style={{ color: PALETTE.primary }}
+                                                        style={{ color: STATUS_TEXT.primary }}
                                                     >
                                                         {isExpanded
                                                             ? <ChevronDown className="h-3.5 w-3.5 shrink-0" />
@@ -400,7 +421,7 @@ export function ZoneL3Table({
                                                     </button>
                                                 ) : meter.building ? (
                                                     <>
-                                                        <Building2 className="h-3.5 w-3.5 shrink-0" style={{ color: PALETTE.primary }} />
+                                                        <Building2 className="h-3.5 w-3.5 shrink-0 text-primary" />
                                                         {meter.building.buildingName}
                                                     </>
                                                 ) : (
@@ -440,19 +461,17 @@ export function ZoneL3Table({
                                         rows.push(
                                             <TableRow
                                                 key={`${meter.account}-child-${child.account}`}
-                                                className="border-b border-border/60 dark:border-border/60"
-                                                style={{ backgroundColor: `${PALETTE.neutral}26` }}
+                                                className="border-b border-border/60 dark:border-border/60 bg-muted/40 dark:bg-muted/20"
                                             >
                                                 <TableCell
-                                                    className={cn(tdBase, "pl-10 font-normal sticky left-0 z-10 text-[13px]")}
+                                                    className={cn(tdBase, "pl-10 font-normal sticky left-0 z-10 text-[13px] bg-muted/40 dark:bg-muted/20")}
                                                     style={{
-                                                        backgroundColor: `${PALETTE.neutral}26`,
-                                                        boxShadow: `inset 4px 0 0 ${PALETTE.primary}30`,
+                                                        boxShadow: `inset 4px 0 0 ${tint('primary', 19)}`,
                                                     }}
                                                 >
                                                     <span className="inline-flex items-center gap-2 text-muted-foreground dark:text-muted-foreground/70">
                                                         {idx === detail.children.length - 1
-                                                            ? <span className="inline-block w-2 h-2 rounded-full" style={{ backgroundColor: PALETTE.primary }} />
+                                                            ? <span className="inline-block w-2 h-2 rounded-full" style={{ backgroundColor: STATUS_BASE.primary }} />
                                                             : <span className="inline-block w-2 h-2 rounded-full bg-border dark:bg-muted" />}
                                                         {child.label}
                                                     </span>
@@ -486,14 +505,14 @@ export function ZoneL3Table({
                                     rows.push(
                                         <TableRow
                                             key={`${meter.account}-l4sum`}
-                                            style={{ backgroundColor: `${PALETTE.blue}12` }}
+                                            style={{ backgroundColor: tint('info', 7) }}
                                         >
                                             <TableCell
                                                 className={cn(tdBase, "pl-10 font-medium sticky left-0 z-10 text-[12px]")}
                                                 style={{
-                                                    backgroundColor: `${PALETTE.blue}12`,
-                                                    color: PALETTE.blue,
-                                                    boxShadow: `inset 4px 0 0 ${PALETTE.blue}`,
+                                                    backgroundColor: tint('info', 7),
+                                                    color: STATUS_TEXT.info,
+                                                    boxShadow: `inset 4px 0 0 ${STATUS_BASE.info}`,
                                                 }}
                                                 colSpan={3}
                                             >
@@ -503,14 +522,14 @@ export function ZoneL3Table({
                                                 <TableCell
                                                     key={i}
                                                     className={cn(tdBase, "text-right tabular-nums font-medium px-2 text-[12px]")}
-                                                    style={{ color: PALETTE.blue }}
+                                                    style={{ color: STATUS_TEXT.info }}
                                                 >
                                                     {n(t)}
                                                 </TableCell>
                                             ))}
                                             <TableCell
                                                 className={cn(tdBase, "text-right tabular-nums font-medium")}
-                                                style={{ backgroundColor: `${PALETTE.blue}20`, color: PALETTE.blue }}
+                                                style={{ backgroundColor: tint('info', 12), color: STATUS_TEXT.info }}
                                             >
                                                 {n(detail.childGrandTotal)}
                                             </TableCell>
@@ -519,22 +538,22 @@ export function ZoneL3Table({
 
                                     // Difference sub-footer — bulk − sum
                                     const isHighBuildingDiff = Math.abs(detail.diffGrandTotal) > 5;
-                                    const diffTint = isHighBuildingDiff ? PALETTE.red : PALETTE.mint;
+                                    const diffRole: StatusRole = isHighBuildingDiff ? 'danger' : 'success';
                                     rows.push(
                                         <TableRow
                                             key={`${meter.account}-l4diff`}
                                             className="border-b-2"
                                             style={{
-                                                backgroundColor: `${diffTint}14`,
-                                                borderBottomColor: `${diffTint}40`,
+                                                backgroundColor: tint(diffRole, 8),
+                                                borderBottomColor: tint(diffRole, 25),
                                             }}
                                         >
                                             <TableCell
                                                 className={cn(tdBase, "pl-10 font-medium sticky left-0 z-10 text-[12px]")}
                                                 style={{
-                                                    backgroundColor: `${diffTint}14`,
-                                                    color: diffTint,
-                                                    boxShadow: `inset 4px 0 0 ${diffTint}`,
+                                                    backgroundColor: tint(diffRole, 8),
+                                                    color: STATUS_TEXT[diffRole],
+                                                    boxShadow: `inset 4px 0 0 ${STATUS_BASE[diffRole]}`,
                                                 }}
                                                 colSpan={3}
                                             >
@@ -544,14 +563,14 @@ export function ZoneL3Table({
                                                 <TableCell
                                                     key={i}
                                                     className={cn(tdBase, "text-right tabular-nums font-medium px-2 text-[12px]")}
-                                                    style={{ color: diffTint }}
+                                                    style={{ color: STATUS_TEXT[diffRole] }}
                                                 >
                                                     {diffCell(t)}
                                                 </TableCell>
                                             ))}
                                             <TableCell
                                                 className={cn(tdBase, "text-right tabular-nums font-medium")}
-                                                style={{ backgroundColor: `${diffTint}20`, color: diffTint }}
+                                                style={{ backgroundColor: tint(diffRole, 12), color: STATUS_TEXT[diffRole] }}
                                             >
                                                 {diffCell(detail.diffGrandTotal)}
                                             </TableCell>
@@ -566,17 +585,17 @@ export function ZoneL3Table({
                             <TableRow
                                 className="border-t-2"
                                 style={{
-                                    backgroundColor: `${PALETTE.blue}12`,
-                                    borderTopColor: `${PALETTE.blue}40`,
+                                    backgroundColor: tint('info', 7),
+                                    borderTopColor: tint('info', 25),
                                 }}
                             >
                                 <TableCell
                                     className={cn(tdBase, "font-medium sticky left-0 z-10")}
                                     colSpan={3}
                                     style={{
-                                        backgroundColor: `${PALETTE.blue}12`,
-                                        color: PALETTE.blue,
-                                        boxShadow: `inset 4px 0 0 ${PALETTE.blue}`,
+                                        backgroundColor: tint('info', 7),
+                                        color: STATUS_TEXT.info,
+                                        boxShadow: `inset 4px 0 0 ${STATUS_BASE.info}`,
                                     }}
                                 >
                                     Σ Individuals — {l3Meters.length} meters
@@ -585,14 +604,14 @@ export function ZoneL3Table({
                                     <TableCell
                                         key={i}
                                         className={cn(tdBase, "text-right tabular-nums font-medium px-2 text-[12px]")}
-                                        style={{ color: PALETTE.blue }}
+                                        style={{ color: STATUS_TEXT.info }}
                                     >
                                         {n(t)}
                                     </TableCell>
                                 ))}
                                 <TableCell
                                     className={cn(tdBase, "text-right tabular-nums font-medium")}
-                                    style={{ backgroundColor: `${PALETTE.blue}20`, color: PALETTE.blue }}
+                                    style={{ backgroundColor: tint('info', 12), color: STATUS_TEXT.info }}
                                 >
                                     {n(grandTotal)}
                                 </TableCell>
@@ -601,22 +620,22 @@ export function ZoneL3Table({
                             {/* ── Difference footer row (zone level) ─────────── */}
                             {(() => {
                                 const isHighZoneDiff = Math.abs(diffGrandTotal) > 20;
-                                const diffTint = isHighZoneDiff ? PALETTE.red : PALETTE.mint;
+                                const diffRole: StatusRole = isHighZoneDiff ? 'danger' : 'success';
                                 return (
                                     <TableRow
                                         className="border-t"
                                         style={{
-                                            backgroundColor: `${diffTint}14`,
-                                            borderTopColor: `${diffTint}40`,
+                                            backgroundColor: tint(diffRole, 8),
+                                            borderTopColor: tint(diffRole, 25),
                                         }}
                                     >
                                         <TableCell
                                             className={cn(tdBase, "font-medium sticky left-0 z-10")}
                                             colSpan={3}
                                             style={{
-                                                backgroundColor: `${diffTint}14`,
-                                                color: diffTint,
-                                                boxShadow: `inset 4px 0 0 ${diffTint}`,
+                                                backgroundColor: tint(diffRole, 8),
+                                                color: STATUS_TEXT[diffRole],
+                                                boxShadow: `inset 4px 0 0 ${STATUS_BASE[diffRole]}`,
                                             }}
                                         >
                                             Difference (L2 − Σ Individuals)
@@ -625,14 +644,14 @@ export function ZoneL3Table({
                                             <TableCell
                                                 key={i}
                                                 className={cn(tdBase, "text-right tabular-nums font-medium px-2 text-[12px]")}
-                                                style={{ color: diffTint }}
+                                                style={{ color: STATUS_TEXT[diffRole] }}
                                             >
                                                 {diffCell(t)}
                                             </TableCell>
                                         ))}
                                         <TableCell
                                             className={cn(tdBase, "text-right tabular-nums font-medium")}
-                                            style={{ backgroundColor: `${diffTint}20`, color: diffTint }}
+                                            style={{ backgroundColor: tint(diffRole, 12), color: STATUS_TEXT[diffRole] }}
                                         >
                                             {diffCell(diffGrandTotal)}
                                         </TableCell>
