@@ -140,11 +140,13 @@ function DualRangeSlider({ min, max, value, onValueChange, startLabel, endLabel 
             className="relative flex items-center w-full h-5 cursor-pointer touch-none select-none overflow-visible"
             onClick={handleTrackClick}
         >
-            {/* Track background */}
-            <div className="absolute inset-x-0 h-2 rounded-full bg-border dark:bg-muted" />
-            {/* Active range */}
+            {/* Track background — lifted off the dark card surface (--muted #22202A is
+                nearly indistinguishable from --card #16141B) so the inactive portion of
+                the track stays visible and the active range reads as a clear contrast. */}
+            <div className="absolute inset-x-0 h-2 rounded-full bg-border dark:bg-muted-foreground/30" />
+            {/* Active range — brand teal is bright in both themes; pinned explicitly for dark. */}
             <div
-                className="absolute h-2 rounded-full bg-secondary"
+                className="absolute h-2 rounded-full bg-secondary dark:bg-secondary"
                 style={{ left: `${startPct}%`, right: `${100 - endPct}%` }}
             />
             {/* Start thumb */}

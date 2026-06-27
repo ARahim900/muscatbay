@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, type KeyboardEvent } from "react";
 import { Button } from "@/components/ui/button";
 import {
     Dialog,
@@ -149,6 +149,19 @@ export function CSVUploadDialog({ month, year, onUploadComplete }: CSVUploadDial
         fileInputRef.current?.click();
     }, []);
 
+    const isUploadInteractive = uploadState === 'idle' || uploadState === 'error';
+
+    const handleDropZoneKeyDown = useCallback(
+        (event: KeyboardEvent<HTMLDivElement>) => {
+            if (!isUploadInteractive) return;
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                handleClickUpload();
+            }
+        },
+        [isUploadInteractive, handleClickUpload]
+    );
+
     return (
         <Dialog open={open} onOpenChange={handleOpenChange}>
             <DialogTrigger
@@ -174,12 +187,18 @@ export function CSVUploadDialog({ month, year, onUploadComplete }: CSVUploadDial
                 <div className="mt-4 space-y-4">
                     {/* Drop Zone */}
                     <div
+                        role="button"
+                        tabIndex={isUploadInteractive ? 0 : -1}
+                        aria-label="Upload CSV file — drag and drop or activate to browse"
+                        aria-disabled={!isUploadInteractive}
                         onDragOver={handleDragOver}
                         onDragLeave={handleDragLeave}
                         onDrop={handleDrop}
-                        onClick={uploadState === 'idle' || uploadState === 'error' ? handleClickUpload : undefined}
+                        onClick={isUploadInteractive ? handleClickUpload : undefined}
+                        onKeyDown={handleDropZoneKeyDown}
                         className={cn(
                             "relative border-2 border-dashed rounded-lg p-8 text-center transition-all duration-200 cursor-pointer",
+                            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                             uploadState === 'idle' && "border-border dark:border-border hover:border-primary hover:bg-primary/5",
                             uploadState === 'dragging' && "border-primary bg-primary/10",
                             uploadState === 'uploading' && "border-mb-warning bg-mb-warning-light cursor-wait",

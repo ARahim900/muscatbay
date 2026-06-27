@@ -438,6 +438,20 @@
   --chart-cursor-fill: rgba(255, 255, 255, 0.06);
   --chart-grid: rgba(148, 163, 184, 0.18);
 
+  /* Chart Background Colors — dark mode.
+   * Light-mode values (--chart-bg-*) are pale pastels that wash out and clash
+   * against the warm near-black surfaces (--card #16141B, --background #0A090C).
+   * Override with deep, low-chroma tints (~12–17% lightness) that sit just above
+   * the card surface and keep the hue association so KPI tiles read correctly. */
+  --chart-bg-blue: #131A26;
+  --chart-bg-green: #121E18;
+  --chart-bg-yellow: #201D11;
+  --chart-bg-red: #231314;
+  --chart-bg-purple: #1B1422;
+  --chart-bg-cyan: #11201F;
+  --chart-bg-orange: #221A11;
+  --chart-bg-pink: #221320;
+
   /* Badge fg colors flip to the badge color itself for readability on dark surfaces */
   --badge-green-fg:  #A4DCC6;
   --badge-red-fg:    #E05050;

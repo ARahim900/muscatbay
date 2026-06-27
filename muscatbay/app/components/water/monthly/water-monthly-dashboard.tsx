@@ -17,7 +17,7 @@
  * @module components/water/monthly/water-monthly-dashboard
  */
 
-import { useCallback, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useMemo, useState, type MouseEvent, type ReactNode } from "react";
 import {
     ResponsiveContainer, ComposedChart, BarChart, Bar, Line, Area, AreaChart,
     XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell, ReferenceLine,
@@ -65,6 +65,15 @@ const TIP = {
     background: "var(--wm-card)", color: "var(--wm-ink)", border: "1px solid var(--wm-border)",
 } as const;
 
+/* ---------- stable Recharts formatters (module-level: identity-stable across renders) ----------
+ * Param types mirror Recharts' Formatter signature (value may be a number/string/array or undefined,
+ * name is string | number) so these are assignable to <Tooltip formatter={...}> without casts. */
+type TipValue = number | string | ReadonlyArray<number | string> | undefined;
+const fmtSupplyConsLoss = (v: TipValue, n: number | string | undefined): [string, string] => [fmt(Number(v)) + (n === "target" ? "%" : " m³"), String(n)];
+const fmtM3 = (v: TipValue, n: number | string | undefined): [string, string] => [fmt(Number(v)) + " m³", String(n)];
+const fmtConsumptionM3 = (v: TipValue): [string, string] => [fmt(Number(v)) + " m³", "Consumption"];
+const fmtLossPctPlain = (v: TipValue): [string, string] => [String(v) + "%", "Loss"];
+
 /* ---------- UI atoms ---------- */
 interface KpiProps {
     icon: LucideIcon;
@@ -78,7 +87,7 @@ interface KpiProps {
 }
 function Kpi({ icon: Icon, label, value, unit, sub, bg, ic, delta }: KpiProps) {
     return (
-        <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: RADIUS.card, boxShadow: SHADOW }} className="p-4 transition-all">
+        <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: RADIUS.card, boxShadow: SHADOW }} className="p-4 transition-shadow">
             <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
                     <div className="w-10 h-10 flex items-center justify-center shrink-0" style={{ background: bg, borderRadius: RADIUS.md }}>
@@ -92,7 +101,7 @@ function Kpi({ icon: Icon, label, value, unit, sub, bg, ic, delta }: KpiProps) {
                     </div>
                 </div>
                 {delta && (
-                    <div className="flex items-center gap-1 text-xs font-semibold" style={{ color: delta.up ? "#B85C5C" : "#5E8C77" }}>
+                    <div className={`flex items-center gap-1 text-xs font-semibold ${delta.up ? "text-mb-danger-text" : "text-mb-success-text"}`}>
                         {delta.up ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}{delta.text}
                     </div>
                 )}
@@ -185,8 +194,8 @@ function LossLink({ label, v, of }: { label: string; v: number; of: number }) {
     return (
         <div className="flex flex-col items-center shrink-0 px-0.5">
             <ArrowRight className="w-4 h-4" style={{ color: C.muted }} />
-            <span className="px-1.5 py-0.5 rounded text-[11px] font-bold mt-1 whitespace-nowrap" style={{ background: "#FDECEC", color: "#D12E2E" }}>−{fmt(v)} m³</span>
-            <span className="text-[10px] mt-0.5 whitespace-nowrap font-semibold" style={{ color: "#D12E2E" }}>{label} · {p}%</span>
+            <span className="px-1.5 py-0.5 rounded text-[11px] font-bold mt-1 whitespace-nowrap bg-mb-danger-light text-mb-danger-text">−{fmt(v)} m³</span>
+            <span className="text-[10px] mt-0.5 whitespace-nowrap font-semibold text-mb-danger-text">{label} · {p}%</span>
         </div>
     );
 }
@@ -286,9 +295,9 @@ function Overview({ period: t, monthly, sel, lossDelta, periodLabel }: OverviewP
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
                 <Kpi icon={Droplet} label="Total Supply (A1)" value={fmt(t.A1)} unit="m³" bg="var(--chart-bg-blue)" ic="#3B7ED2" sub={periodLabel} />
                 <Kpi icon={Droplet} label="Distribution (A2)" value={fmt(t.A2)} unit="m³" bg="var(--chart-bg-cyan)" ic="#6B9AC4" sub="Zone bulk + direct" />
-                <Kpi icon={CheckCircle2} label="Consumption (A3)" value={fmt(t.A3)} unit="m³" bg="var(--chart-bg-green)" ic="#5E8C77" sub="Billed at end-user" />
-                <Kpi icon={Gauge} label="Efficiency" value={`${efficiency}%`} bg="var(--chart-bg-green)" ic="#5E8C77" sub={`Target ≥ ${100 - TARGET_LOSS_PCT}%`} />
-                <Kpi icon={AlertTriangle} label="Total Loss" value={fmt(t.loss)} unit="m³" bg="var(--chart-bg-red)" ic="#B85C5C" sub={`${t.lossPct}% of supply`} delta={lossDelta} />
+                <Kpi icon={CheckCircle2} label="Consumption (A3)" value={fmt(t.A3)} unit="m³" bg="var(--chart-bg-green)" ic="var(--mb-success-text)" sub="Billed at end-user" />
+                <Kpi icon={Gauge} label="Efficiency" value={`${efficiency}%`} bg="var(--chart-bg-green)" ic="var(--mb-success-text)" sub={`Target ≥ ${100 - TARGET_LOSS_PCT}%`} />
+                <Kpi icon={AlertTriangle} label="Total Loss" value={fmt(t.loss)} unit="m³" bg="var(--chart-bg-red)" ic="var(--mb-danger-text)" sub={`${t.lossPct}% of supply`} delta={lossDelta} />
                 <Kpi icon={FileSpreadsheet} label="Loss Cost Estimate" value={fmt(lossCost)} unit="OMR" bg="var(--chart-bg-orange)" ic="#B5703A" sub={`${LOSS_RATE_OMR} OMR / m³ assumption`} />
             </div>
 
@@ -302,11 +311,11 @@ function Overview({ period: t, monthly, sel, lossDelta, periodLabel }: OverviewP
                     <RingGauge frac={a3f} color={C.cons} big={fmt(t.A3)} small="m³" label="A3 · Consumption" caption="at meters" />
                 </div>
                 <div className="flex justify-center mt-3 pt-3" style={{ borderTop: `1px solid ${C.border}` }}>
-                    <div className="flex items-center gap-3 px-4 py-2 rounded-lg" style={{ background: t.lossPct > TARGET_LOSS_PCT ? "#FBE2E2" : "#EAF3EE", border: `1px solid ${t.lossPct > TARGET_LOSS_PCT ? "#EEAEAE" : "#BFE1CD"}` }}>
-                        <Target className="w-5 h-5 shrink-0" style={{ color: t.lossPct > TARGET_LOSS_PCT ? "#D12E2E" : "#5E8C77" }} />
+                    <div className={`flex items-center gap-3 px-4 py-2 rounded-lg border ${t.lossPct > TARGET_LOSS_PCT ? "bg-mb-danger-light border-mb-danger" : "bg-mb-success-light border-mb-success"}`}>
+                        <Target className={`w-5 h-5 shrink-0 ${t.lossPct > TARGET_LOSS_PCT ? "text-mb-danger-text" : "text-mb-success-text"}`} />
                         <div className="leading-tight">
-                            <p className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: "#4E4456" }}>Total System Loss vs 15% Target</p>
-                            <p className="text-lg font-bold" style={{ color: "#4E4456" }}>{fmt(t.loss)} <span className="text-xs font-medium">m³</span> · {t.lossPct}% · {t.lossPct <= TARGET_LOSS_PCT ? "Within target" : `${(t.lossPct - TARGET_LOSS_PCT).toFixed(1)} pp above target`}</p>
+                            <p className="text-[11px] font-semibold uppercase tracking-wide text-primary">Total System Loss vs 15% Target</p>
+                            <p className="text-lg font-bold text-primary">{fmt(t.loss)} <span className="text-xs font-medium">m³</span> · {t.lossPct}% · {t.lossPct <= TARGET_LOSS_PCT ? "Within target" : `${(t.lossPct - TARGET_LOSS_PCT).toFixed(1)} pp above target`}</p>
                         </div>
                     </div>
                 </div>
@@ -320,7 +329,7 @@ function Overview({ period: t, monthly, sel, lossDelta, periodLabel }: OverviewP
                                 <CartesianGrid strokeDasharray="3 3" stroke="var(--wm-track)" />
                                 <XAxis dataKey="m" tick={{ fontSize: 11, fill: C.muted }} />
                                 <YAxis tick={{ fontSize: 11, fill: C.muted }} />
-                                <Tooltip formatter={(v, n) => [fmt(Number(v)) + (n === "target" ? "%" : " m³"), n]} contentStyle={TIP} />
+                                <Tooltip formatter={fmtSupplyConsLoss} contentStyle={TIP} />
                                 <Legend wrapperStyle={{ fontSize: 11, color: "var(--wm-ink)" }} />
                                 {selectedLineMonths.map((i) => <ReferenceLine key={i} x={MONTHS[i]} stroke={C.primary} strokeDasharray="4 4" />)}
                                 <Bar dataKey="A1" name="Supply" fill={C.supply} radius={[3, 3, 0, 0]} barSize={14} />
@@ -357,7 +366,7 @@ function Overview({ period: t, monthly, sel, lossDelta, periodLabel }: OverviewP
                         <CartesianGrid strokeDasharray="3 3" stroke="var(--wm-track)" />
                         <XAxis dataKey="m" tick={{ fontSize: 11, fill: C.muted }} />
                         <YAxis tick={{ fontSize: 11, fill: C.muted }} unit="%" />
-                        <Tooltip formatter={(v) => [v + "%", "Loss"]} contentStyle={TIP} />
+                        <Tooltip formatter={fmtLossPctPlain} contentStyle={TIP} />
                         {selectedLineMonths.map((i) => <ReferenceLine key={i} x={MONTHS[i]} stroke={C.primary} strokeDasharray="4 4" />)}
                         <ReferenceLine y={TARGET_LOSS_PCT} stroke="#D12E2E" strokeDasharray="5 5" label={{ value: "15% target", position: "insideTopRight", fill: "#D12E2E", fontSize: 11 }} />
                         <Area dataKey="lossPct" stroke={C.loss} strokeWidth={2} fill="url(#wm-lg)" />
@@ -380,6 +389,12 @@ interface ZonesViewProps {
 function ZonesView({ data, period, monthly, sel, nMonths, year }: ZonesViewProps) {
     const [zoneSel, setZoneSel] = useState("all");
     const real = period.zones;
+
+    // Stable handler for zone cards — reads the zone key off the clicked button's
+    // data attribute so a single callback replaces a per-item lambda inside .map().
+    const selectZoneFromCard = useCallback((e: MouseEvent<HTMLButtonElement>) => {
+        setZoneSel(e.currentTarget.dataset.zone ?? "all");
+    }, []);
 
     const picker = (
         <div className="flex flex-wrap items-center gap-2 mb-1">
@@ -420,20 +435,20 @@ function ZonesView({ data, period, monthly, sel, nMonths, year }: ZonesViewProps
                 {picker}
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                     <Kpi icon={Droplet} label="Zone Supply" value={fmt(supply)} unit="m³" bg="var(--chart-bg-blue)" ic={C.dist} sub="L2 bulk meter" />
-                    <Kpi icon={CheckCircle2} label="Individual Use" value={fmt(cons)} unit="m³" bg="var(--chart-bg-green)" ic="#5E8C77" sub={`${z.meters} meters`} />
-                    <Kpi icon={AlertTriangle} label="Zone Loss" value={fmt(loss)} unit="m³" bg="var(--chart-bg-red)" ic="#D12E2E" sub="supply − individual" />
+                    <Kpi icon={CheckCircle2} label="Individual Use" value={fmt(cons)} unit="m³" bg="var(--chart-bg-green)" ic="var(--mb-success-text)" sub={`${z.meters} meters`} />
+                    <Kpi icon={AlertTriangle} label="Zone Loss" value={fmt(loss)} unit="m³" bg="var(--chart-bg-red)" ic="var(--mb-danger-text)" sub="supply − individual" />
                     <Kpi icon={Gauge} label="Loss %" value={`${z.lossPct}%`} bg={s.bg} ic={s.c} sub={s.label} />
                 </div>
 
                 <Panel title={`${z.name} — Supply vs Individual Consumption`} icon={Droplet}
                     note="Green is water recorded by individual meters; red is what entered the zone but no meter recorded — the loss.">
                     <div className="flex justify-between text-[11px] mb-1">
-                        <span style={{ color: "#5E8C77" }}>Consumption {fmt(cons)} m³ · {Math.round(consPct)}%</span>
-                        <span className="font-semibold" style={{ color: "#D12E2E" }}>Loss {fmt(loss)} m³ · {z.lossPct}%</span>
+                        <span className="text-mb-success-text">Consumption {fmt(cons)} m³ · {Math.round(consPct)}%</span>
+                        <span className="font-semibold text-mb-danger-text">Loss {fmt(loss)} m³ · {z.lossPct}%</span>
                     </div>
                     <div className="w-full h-8 rounded-md overflow-hidden flex" style={{ background: "var(--wm-track)" }}>
                         <div style={{ width: `${consPct}%`, background: C.cons }} title={`Consumption ${fmt(cons)} m³`} />
-                        <div style={{ width: `${lossBar}%`, background: "#D12E2E" }} title={`Loss ${fmt(loss)} m³`} />
+                        <div style={{ width: `${lossBar}%`, background: "var(--status-danger)" }} title={`Loss ${fmt(loss)} m³`} />
                     </div>
                     <div className="text-[11px] mt-1 text-right" style={{ color: C.muted }}>Zone supply (bulk) {fmt(supply)} m³ · 100%</div>
                 </Panel>
@@ -445,7 +460,7 @@ function ZonesView({ data, period, monthly, sel, nMonths, year }: ZonesViewProps
                                 <CartesianGrid strokeDasharray="3 3" stroke="var(--wm-track)" />
                                 <XAxis dataKey="m" tick={{ fontSize: 11, fill: C.muted }} />
                                 <YAxis tick={{ fontSize: 11, fill: C.muted }} />
-                                <Tooltip formatter={(v, n) => [fmt(Number(v)) + " m³", n]} contentStyle={TIP} />
+                                <Tooltip formatter={fmtM3} contentStyle={TIP} />
                                 <Legend wrapperStyle={{ fontSize: 11, color: "var(--wm-ink)" }} />
                                 {(isRangeSel(sel) ? [sel[0], sel[1]] : sel != null ? [sel] : []).map((i) => <ReferenceLine key={i} x={MONTHS[i]} stroke={C.primary} strokeDasharray="4 4" />)}
                                 <Bar dataKey="Supply" fill={C.dist} radius={[3, 3, 0, 0]} barSize={14} />
@@ -460,7 +475,7 @@ function ZonesView({ data, period, monthly, sel, nMonths, year }: ZonesViewProps
                                 <CartesianGrid strokeDasharray="3 3" stroke="var(--wm-track)" horizontal={false} />
                                 <XAxis type="number" tick={{ fontSize: 10, fill: C.muted }} />
                                 <YAxis type="category" dataKey="name" tick={{ fontSize: 9.5, fill: C.ink }} width={120} />
-                                <Tooltip formatter={(v) => [fmt(Number(v)) + " m³", "Consumption"]} contentStyle={TIP} />
+                                <Tooltip formatter={fmtConsumptionM3} contentStyle={TIP} />
                                 <Bar dataKey="val" fill={C.cons} radius={[0, 4, 4, 0]} barSize={13} />
                             </BarChart>
                         </ResponsiveContainer>
@@ -470,7 +485,7 @@ function ZonesView({ data, period, monthly, sel, nMonths, year }: ZonesViewProps
                 <Panel title={`Individual Meters in ${z.name} (${meters.length})`} icon={Layers} note="Zone supply = Σ individual consumption + loss.">
                     <div className="overflow-auto" style={{ maxHeight: 380 }}>
                         <table className="w-full text-[12px]">
-                            <thead className="sticky top-0 z-10" style={{ background: C.primary, color: "#fff" }}>
+                            <thead className="sticky top-0 z-10" style={{ background: C.primary, color: "var(--primary-foreground)" }}>
                                 <tr>
                                     <th className="text-left px-3 py-2">#</th>
                                     <th className="text-left px-2 py-2">Meter</th>
@@ -492,14 +507,14 @@ function ZonesView({ data, period, monthly, sel, nMonths, year }: ZonesViewProps
                             </tbody>
                             <tfoot>
                                 <tr style={{ borderTop: `2px solid ${C.border}` }}>
-                                    <td colSpan={3} className="px-3 py-1.5 font-semibold" style={{ color: "#5E8C77" }}>Σ Individual consumption</td>
-                                    <td className="px-2 py-1.5 text-right font-bold" style={{ color: "#5E8C77" }}>{fmt1(cons)}</td>
-                                    <td className="px-3 py-1.5 text-right font-bold" style={{ color: "#5E8C77" }}>{Math.round(consPct)}%</td>
+                                    <td colSpan={3} className="px-3 py-1.5 font-semibold text-mb-success-text">Σ Individual consumption</td>
+                                    <td className="px-2 py-1.5 text-right font-bold text-mb-success-text">{fmt1(cons)}</td>
+                                    <td className="px-3 py-1.5 text-right font-bold text-mb-success-text">{Math.round(consPct)}%</td>
                                 </tr>
                                 <tr>
-                                    <td colSpan={3} className="px-3 py-1.5 font-semibold" style={{ color: "#D12E2E" }}>Unaccounted (loss)</td>
-                                    <td className="px-2 py-1.5 text-right font-bold" style={{ color: "#D12E2E" }}>{fmt1(loss)}</td>
-                                    <td className="px-3 py-1.5 text-right font-bold" style={{ color: "#D12E2E" }}>{z.lossPct}%</td>
+                                    <td colSpan={3} className="px-3 py-1.5 font-semibold text-mb-danger-text">Unaccounted (loss)</td>
+                                    <td className="px-2 py-1.5 text-right font-bold text-mb-danger-text">{fmt1(loss)}</td>
+                                    <td className="px-3 py-1.5 text-right font-bold text-mb-danger-text">{z.lossPct}%</td>
                                 </tr>
                                 <tr style={{ borderTop: `1px solid ${C.border}` }}>
                                     <td colSpan={3} className="px-3 py-1.5 font-bold" style={{ color: C.heading }}>Zone supply (bulk)</td>
@@ -578,7 +593,7 @@ function ZonesView({ data, period, monthly, sel, nMonths, year }: ZonesViewProps
                 {real.map((z) => {
                     const s = sev(z.lossPct);
                     return (
-                        <button key={z.zone} onClick={() => setZoneSel(z.zone)} className="text-left p-4 transition-all hover:shadow-md"
+                        <button key={z.zone} data-zone={z.zone} onClick={selectZoneFromCard} className="text-left p-4 transition-shadow hover:shadow-md"
                             style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: RADIUS.card, borderLeft: `4px solid ${s.c}`, boxShadow: SHADOW }}>
                             <div className="flex items-center justify-between">
                                 <h4 className="text-sm font-semibold tracking-tight" style={{ color: C.heading }}>{z.name}</h4>
@@ -662,7 +677,7 @@ function AssetsView({ period }: { period: PeriodResult }) {
                         <CartesianGrid strokeDasharray="3 3" stroke="var(--wm-track)" horizontal={false} />
                         <XAxis type="number" tick={{ fontSize: 10, fill: C.muted }} />
                         <YAxis type="category" dataKey="name" tick={{ fontSize: 9.5, fill: C.ink }} width={140} />
-                        <Tooltip formatter={(v) => [fmt(Number(v)) + " m³", "Consumption"]} contentStyle={TIP} />
+                        <Tooltip formatter={fmtConsumptionM3} contentStyle={TIP} />
                         <Bar dataKey="total" fill={C.accent} radius={[0, 4, 4, 0]} barSize={14} />
                     </BarChart>
                 </ResponsiveContainer>
@@ -720,7 +735,7 @@ function MetersView({ data, year, sel, nMonths }: { data: WaterData; year: strin
                 <Select icon={MapPin} value={zone} setValue={setZone} options={zoneOpts} />
                 <Select icon={Filter} value={level} setValue={setLevel} options={levelOpts} />
                 <Select icon={Layers} value={typ} setValue={setTyp} options={typeOpts} />
-                <button onClick={() => downloadRows(exportData, `water-meter-explorer-${year}.csv`)} className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold" style={{ background: C.primary, color: "#fff", borderRadius: RADIUS.md }}><Download className="w-4 h-4" />Export CSV</button>
+                <button onClick={() => downloadRows(exportData, `water-meter-explorer-${year}.csv`)} className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold" style={{ background: C.primary, color: "var(--primary-foreground)", borderRadius: RADIUS.md }}><Download className="w-4 h-4" />Export CSV</button>
                 <button onClick={() => downloadRows(exportData, `water-meter-explorer-${year}-excel.csv`)} className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold" style={{ background: C.accent, color: C.primary, borderRadius: RADIUS.md }}><FileSpreadsheet className="w-4 h-4" />Excel-ready</button>
                 <span className="text-[12px] ml-auto font-medium" style={{ color: C.muted }}>
                     {rows.length} meters · {sel == null ? "period total" : isRangeSel(sel) ? `${MONTHS[sel[0]]}–${MONTHS[sel[1]]} highlighted` : `${MONTHS[sel]} highlighted`}
@@ -729,13 +744,13 @@ function MetersView({ data, year, sel, nMonths }: { data: WaterData; year: strin
             <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: RADIUS.card, boxShadow: SHADOW }} className="overflow-hidden">
                 <div className="overflow-auto" style={{ maxHeight: 600 }}>
                     <table className="text-[11px] border-collapse w-full">
-                        <thead className="sticky top-0 z-10" style={{ background: C.primary, color: "#fff" }}>
+                        <thead className="sticky top-0 z-10" style={{ background: C.primary, color: "var(--primary-foreground)" }}>
                             <tr>
                                 <th className="text-left px-3 py-2 sticky left-0" style={{ background: C.primary }}>Meter</th>
                                 <th className="px-2 py-2 text-left">Account</th>
                                 <th className="px-2 py-2 text-left">Zone</th><th className="px-2 py-2">Lvl</th><th className="px-2 py-2 text-left">Type</th>
                                 <th className="px-2 py-2 text-right">Selected</th><th className="px-2 py-2 text-left">Flag</th><th className="px-2 py-2 text-left">Last update</th>
-                                {MONTHS.slice(0, nMonths).map((m, i) => (<th key={m} className="px-2 py-2 text-right" style={{ background: monthInSelection(sel, i) ? C.accent : C.primary, color: monthInSelection(sel, i) ? C.primary : "#fff" }}>{m}</th>))}
+                                {MONTHS.slice(0, nMonths).map((m, i) => (<th key={m} className="px-2 py-2 text-right" style={{ background: monthInSelection(sel, i) ? C.accent : C.primary, color: monthInSelection(sel, i) ? C.primary : "var(--primary-foreground)" }}>{m}</th>))}
                             </tr>
                         </thead>
                         <tbody>
@@ -751,9 +766,9 @@ function MetersView({ data, year, sel, nMonths }: { data: WaterData; year: strin
                                         <td className="px-2 py-1.5 text-center"><span className="px-1.5 py-0.5 rounded text-[10px] font-bold text-white" style={{ background: lvlc }}>{m.label}</span></td>
                                         <td className="px-2 py-1.5 whitespace-nowrap" style={{ color: C.muted }}>{(m.typ || "").replace("Residential ", "")}</td>
                                         <td className="px-2 py-1.5 text-right font-bold" style={{ color: C.ink }}>{fmt1(m.shown)}</td>
-                                        <td className="px-2 py-1.5 whitespace-nowrap"><span className="px-2 py-0.5 rounded-full font-semibold" style={{ background: isAlert ? "#FDECEC" : "#EAF3EE", color: isAlert ? "#B85C5C" : "#5E8C77" }}>{m.flags}</span></td>
+                                        <td className="px-2 py-1.5 whitespace-nowrap"><span className={`px-2 py-0.5 rounded-full font-semibold ${isAlert ? "bg-mb-danger-light text-mb-danger-text" : "bg-mb-success-light text-mb-success-text"}`}>{m.flags}</span></td>
                                         <td className="px-2 py-1.5 whitespace-nowrap" style={{ color: C.muted }}>{m.lastUpdated}</td>
-                                        {m.vals.map((v, j) => (<td key={j} className="px-2 py-1.5 text-right" style={{ color: v ? C.ink : "#CBD5E1", background: monthInSelection(sel, j) ? "rgba(161,209,213,0.22)" : "transparent", fontWeight: monthInSelection(sel, j) ? 700 : 400 }}>{v ? fmt1(v) : "·"}</td>))}
+                                        {m.vals.map((v, j) => (<td key={j} className="px-2 py-1.5 text-right" style={{ color: v ? C.ink : C.muted, background: monthInSelection(sel, j) ? "var(--row-hover)" : "transparent", fontWeight: monthInSelection(sel, j) ? 700 : 400 }}>{v ? fmt1(v) : "·"}</td>))}
                                     </tr>
                                 );
                             })}
@@ -808,24 +823,24 @@ function ExceptionsView({ data, year, sel, period }: { data: WaterData; year: st
         <div className="space-y-5">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <Kpi icon={ClipboardList} label="Open Exceptions" value={rows.length} bg="var(--chart-bg-purple)" ic="#4D445D" sub="Auto-generated from selected period" />
-                <Kpi icon={XCircle} label="Critical" value={critical} bg="var(--chart-bg-red)" ic="#B85C5C" sub="Immediate validation/action" />
+                <Kpi icon={XCircle} label="Critical" value={critical} bg="var(--chart-bg-red)" ic="var(--mb-danger-text)" sub="Immediate validation/action" />
                 <Kpi icon={AlertTriangle} label="Watch" value={watch} bg="var(--chart-bg-orange)" ic="#B5703A" sub="Monitor or verify" />
             </div>
             <Panel title="Exceptions & Actions Register" icon={ClipboardList} note="Operational action queue: high-loss zones/buildings, zero readings, sudden spikes, negative values, missing readings and reconciliation mismatches.">
                 <div className="flex justify-end mb-2">
-                    <button onClick={() => downloadRows(rows, `water-exceptions-actions-${year}.csv`)} className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold" style={{ background: C.primary, color: "#fff", borderRadius: RADIUS.md }}><Download className="w-4 h-4" />Export Actions</button>
+                    <button onClick={() => downloadRows(rows, `water-exceptions-actions-${year}.csv`)} className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold" style={{ background: C.primary, color: "var(--primary-foreground)", borderRadius: RADIUS.md }}><Download className="w-4 h-4" />Export Actions</button>
                 </div>
                 <div className="overflow-auto" style={{ maxHeight: 560 }}>
                     <table className="w-full text-[12px]">
-                        <thead className="sticky top-0 z-10" style={{ background: C.primary, color: "#fff" }}>
+                        <thead className="sticky top-0 z-10" style={{ background: C.primary, color: "var(--primary-foreground)" }}>
                             <tr><th className="text-left px-3 py-2">Category</th><th className="text-left px-2 py-2">Item</th><th className="text-left px-2 py-2">Severity</th><th className="text-right px-2 py-2">Value</th><th className="text-left px-2 py-2">Owner</th><th className="text-left px-2 py-2">Status</th><th className="text-left px-3 py-2">Remarks / Suggested Action</th></tr>
                         </thead>
                         <tbody>
-                            {rows.map((r, i) => { const st = r.Severity === "Critical" ? { c: "#B85C5C", bg: "#F7E4E4" } : r.Severity === "Watch" ? { c: "#9A7B1F", bg: "#FBF3DD" } : { c: "#5E8C77", bg: "#EAF3EE" }; return (
+                            {rows.map((r, i) => { const stClass = r.Severity === "Critical" ? "bg-mb-danger-light text-mb-danger-text" : r.Severity === "Watch" ? "bg-mb-warning-light text-mb-warning-text" : "bg-mb-success-light text-mb-success-text"; return (
                                 <tr key={i} style={{ background: i % 2 ? "var(--wm-zebra)" : "var(--wm-card)" }}>
                                     <td className="px-3 py-1.5 font-semibold" style={{ color: C.ink }}>{r.Category}</td>
                                     <td className="px-2 py-1.5" style={{ color: C.ink }}>{r.Item}</td>
-                                    <td className="px-2 py-1.5"><span className="px-2 py-0.5 rounded-full text-[11px] font-bold" style={{ background: st.bg, color: st.c }}>{r.Severity}</span></td>
+                                    <td className="px-2 py-1.5"><span className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${stClass}`}>{r.Severity}</span></td>
                                     <td className="px-2 py-1.5 text-right font-mono" style={{ color: C.ink }}>{r.Value}</td>
                                     <td className="px-2 py-1.5" style={{ color: C.muted }}>{r.Owner}</td>
                                     <td className="px-2 py-1.5"><span className="px-2 py-0.5 rounded-full text-[11px] font-semibold" style={{ background: "var(--wm-comp)", color: C.heading }}>{r.Status}</span></td>
@@ -957,7 +972,7 @@ export function WaterMonthlyDashboard({ waterMeters }: { waterMeters: WaterMeter
             </p>
 
             {anomaly && (
-                <div className="flex items-center gap-2 text-xs font-medium px-3 py-2 rounded-lg" style={{ background: "#FDECEC", color: "#B23B3B", border: "1px solid #F5C2C2" }}>
+                <div className="flex items-center gap-2 text-xs font-medium px-3 py-2 rounded-lg border bg-mb-danger-light text-mb-danger-text border-mb-danger">
                     <AlertTriangle className="w-4 h-4 shrink-0" /> {MONTHS[safeStart]} {year} contains source billing adjustments (estimate/reset), so this month&apos;s balance isn&apos;t reliable — use Year-to-date for an accurate figure.
                 </div>
             )}
