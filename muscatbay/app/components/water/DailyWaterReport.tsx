@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -27,6 +27,8 @@ import { ZoneAnalyticsPanel } from "./daily-report/inline-zone-analytics";
 import { ZoneL3Table } from "./daily-report/inline-zone-l3-table";
 import { DCAnalyticsPanel, DCDailyTable } from "./daily-report/inline-dc-panel";
 import { LoadingState, ErrorState, EmptyState } from "./daily-report/inline-states";
+import { DailyBriefing } from "./daily-report/inline-briefing";
+import { computeBriefing } from "./daily-report/briefing-metrics";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -175,6 +177,14 @@ export function DailyWaterReport() {
         setReportData(computeReport(monthData, selectedDay));
         setStatus('success');
     }, [monthData, selectedDay, computeReport]);
+
+    // ── Management briefing: pure derivation from the current report, plus the
+    //    previous day recomputed from already-cached month rows (no network). ──
+    const briefing = useMemo(() => {
+        if (!reportData) return null;
+        const yesterday = selectedDay > 1 ? computeReport(monthData, selectedDay - 1) : null;
+        return computeBriefing(reportData, yesterday);
+    }, [reportData, monthData, selectedDay, computeReport]);
 
     // ── Stable slider handler — inline arrow would recreate every render and
     //    cause Radix Slider to call onValueChange in a loop (infinite updates)
@@ -338,6 +348,9 @@ export function DailyWaterReport() {
 
             {reportData && (
                 <>
+                    {briefing && (
+                        <DailyBriefing metrics={briefing} month={selectedMonth} day={selectedDay} />
+                    )}
                     {/* ── Zone / DC Selector ─────────────────────────────── */}
                     <Card className="card-elevated">
                         <CardContent className="p-4 sm:p-5">
