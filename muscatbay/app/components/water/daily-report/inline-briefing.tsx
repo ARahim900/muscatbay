@@ -52,7 +52,9 @@ export function DailyBriefing({
                     label="Distribution Loss"
                     value={lossPct === null ? `${n(lossM3)} m³` : `${n(lossM3)} m³ · ${lossPct.toFixed(1)}%`}
                     icon={<TrendingDown className="h-5 w-5" />}
-                    color="var(--status-warning)"
+                    // Calm by default: amber only when a zone is actually in alarm,
+                    // otherwise an informational water accent (no urgency on a clean day).
+                    color={isWarning ? "var(--status-warning)" : "var(--module-water, #6B9AC4)"}
                 />
                 <HierarchyStatCard
                     label="Zones in Alarm"
@@ -82,7 +84,6 @@ export function DailyBriefing({
                     borderColor: verdictColor,
                     backgroundColor: isWarning ? "var(--status-warning-bg)" : "var(--status-normal-bg)",
                 }}
-                role="status"
             >
                 <VerdictIcon className="h-4 w-4 shrink-0" aria-hidden="true" />
                 <span>{verdictText}</span>
