@@ -684,6 +684,16 @@
     background: color-mix(in srgb, var(--secondary) 12%, transparent);
   }
 
+  /* Keep the selection tint visible while a selected row is hovered. The plain
+     hover rule matches at equal specificity, and the sticky-column hover rule
+     below is *more* specific than the selected rule (0,3,3 vs 0,2,3) — so without
+     this both would otherwise paint over the selection. Slightly deeper tint
+     gives hover feedback without losing the selected state. */
+  .ops-table tbody tr[data-state="selected"]:hover td,
+  .ops-table tbody tr[data-state="selected"]:hover td.col-sticky {
+    background: color-mix(in srgb, var(--secondary) 16%, transparent);
+  }
+
   /* Density variants — applied via data-density on the <table> element */
   .ops-table[data-density="compact"] tbody td {
     padding: 10px 14px;

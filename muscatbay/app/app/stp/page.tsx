@@ -144,7 +144,7 @@ function buildAreaPath(data: STPChartDataPoint[], accessor: (point: STPChartData
 
 function formatShortValue(value: number): string {
     if (value >= 1000000) return `${(value / 1000000).toFixed(1)}m`;
-    if (value >= 1000) return `${(value / 1000).toFixed(0)}k`;
+    if (value >= 1000) return `${(value / 1000).toFixed(1)}k`;
     if (value % 1 !== 0) return value.toFixed(1);
     return String(value);
 }

@@ -257,8 +257,18 @@ export function DateRangePicker({
 
     const clampToAvailableMonth = useCallback((index: number) => {
         if (selectableMonthIndexes.length === 0) return 0;
-        return Math.max(firstSelectableIndex, Math.min(index, lastSelectableIndex));
-    }, [firstSelectableIndex, lastSelectableIndex, selectableMonthIndexes.length]);
+        const bounded = Math.max(firstSelectableIndex, Math.min(index, lastSelectableIndex));
+        // Snap to the nearest month that actually has data. Months can have gaps
+        // (e.g. a missing mid-year reading), so a bounded calendar index may still
+        // land on a non-selectable month — which would set the <select> value to an
+        // option that isn't rendered. Snapping guarantees the value always matches
+        // an entry in selectableMonthIndexes.
+        if (dataMonthsSet.has(activeTimeline[bounded])) return bounded;
+        return selectableMonthIndexes.reduce(
+            (best, i) => (Math.abs(i - bounded) < Math.abs(best - bounded) ? i : best),
+            selectableMonthIndexes[0],
+        );
+    }, [activeTimeline, dataMonthsSet, firstSelectableIndex, lastSelectableIndex, selectableMonthIndexes]);
 
     // Calculate slider indices (clamped to fixed Jan-Dec axis)
     let activeStartIndex = activeTimeline.length > 0 ? activeTimeline.indexOf(startMonth) : 0;
@@ -285,13 +295,18 @@ export function DateRangePicker({
     // (e.g. after switching years, or when initial values span multiple years)
     useEffect(() => {
         if (activeTimeline.length === 0) return;
-        const startIsSelectable = dataMonthsSet.has(startMonth);
-        const endIsSelectable = dataMonthsSet.has(endMonth);
+        // Key the check off membership in the *current* timeline, not the global
+        // data set. availableMonths can span multiple years, so dataMonthsSet.has()
+        // is true for a parent value from another year (e.g. 'Dec-23' while the axis
+        // shows 2024) even though it isn't on the displayed axis — which would skip
+        // the sync and leave the badge/label/slider diverged from the parent.
+        const startOnAxis = activeTimeline.includes(startMonth);
+        const endOnAxis = activeTimeline.includes(endMonth);
         const nextRangeChanged = displayStartMonth !== startMonth || displayEndMonth !== endMonth;
-        if ((!startIsSelectable || !endIsSelectable) && nextRangeChanged) {
+        if ((!startOnAxis || !endOnAxis) && nextRangeChanged) {
             onRangeChangeRef.current(displayStartMonth, displayEndMonth);
         }
-    }, [activeTimeline, dataMonthsSet, displayStartMonth, displayEndMonth, startMonth, endMonth]);
+    }, [activeTimeline, displayStartMonth, displayEndMonth, startMonth, endMonth]);
 
     // Format: "January 2024"
     const formatMonthWithYear = useCallback((month: string) => {
@@ -352,16 +367,16 @@ export function DateRangePicker({
                 break;
             }
             case 'last3':
-                onRangeChange(activeTimeline[Math.max(firstSelectableIndex, lastSelectableIndex - 2)], activeTimeline[lastSelectableIndex]);
+                onRangeChange(activeTimeline[clampToAvailableMonth(lastSelectableIndex - 2)], activeTimeline[lastSelectableIndex]);
                 break;
             case 'last6':
-                onRangeChange(activeTimeline[Math.max(firstSelectableIndex, lastSelectableIndex - 5)], activeTimeline[lastSelectableIndex]);
+                onRangeChange(activeTimeline[clampToAvailableMonth(lastSelectableIndex - 5)], activeTimeline[lastSelectableIndex]);
                 break;
             case 'last12':
                 onRangeChange(activeTimeline[firstSelectableIndex], activeTimeline[lastSelectableIndex]);
                 break;
         }
-    }, [activeTimeline, dataMonthsSet, firstSelectableIndex, lastSelectableIndex, onRangeChange, selectableMonthIndexes.length]);
+    }, [activeTimeline, clampToAvailableMonth, dataMonthsSet, firstSelectableIndex, lastSelectableIndex, onRangeChange, selectableMonthIndexes.length]);
 
     const presets = useMemo<{ key: PresetKey; label: string }[]>(() => [
         { key: 'last3', label: '3M' },
