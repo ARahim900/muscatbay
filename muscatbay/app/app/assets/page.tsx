@@ -324,7 +324,7 @@ export default function AssetsPage() {
     const Th = ({ label, field, right }: { label: string; field?: string; right?: boolean }) => (
         <th
             scope="col"
-            className={`py-3.5 px-4 font-semibold uppercase tracking-wider text-xs text-muted-foreground border-b-2 border-border dark:border-border whitespace-nowrap ${field ? 'hover:bg-muted dark:hover:bg-muted/60' : ''} ${right ? 'text-right' : 'text-left'}`}
+            className={`py-3 px-4 font-semibold text-xs whitespace-nowrap ${field ? 'hover:bg-white/10' : ''} ${right ? 'text-right' : 'text-left'}`}
             aria-sort={field ? (sortField === field ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none') : undefined}
         >
             {field ? (
@@ -453,7 +453,7 @@ export default function AssetsPage() {
                         {/* Desktop table */}
                         <table className="ops-table hidden md:table">
                             <thead>
-                                <tr className="bg-muted dark:bg-muted/80">
+                                <tr>
                                     <Th label="Asset Name"  field="name" />
                                     <Th label="Asset Tag"   field="tag" />
                                     <Th label="Discipline"  field="discipline" />
@@ -509,7 +509,7 @@ export default function AssetsPage() {
                         </div>
                         <table className="ops-table hidden md:table">
                             <thead>
-                                <tr className="bg-muted dark:bg-muted/80">
+                                <tr>
                                     <Th label="Asset Tag"      field="tag" />
                                     <Th label="Asset Name"     field="name" />
                                     <Th label="Discipline"     field="discipline" />
@@ -568,7 +568,7 @@ export default function AssetsPage() {
                         </div>
                         <table className="ops-table hidden md:table">
                             <thead>
-                                <tr className="bg-muted dark:bg-muted/80">
+                                <tr>
                                     <Th label="Asset Tag"          field="tag" />
                                     <Th label="Asset Name"         field="name" />
                                     <Th label="Discipline"         field="discipline" />
@@ -628,7 +628,7 @@ export default function AssetsPage() {
                         </div>
                         <table className="ops-table hidden md:table">
                             <thead>
-                                <tr className="bg-muted dark:bg-muted/80">
+                                <tr>
                                     <Th label="Asset Tag"      field="tag" />
                                     <Th label="Asset Name"     field="name" />
                                     <Th label="Discipline"     field="discipline" />
@@ -687,7 +687,7 @@ export default function AssetsPage() {
                         </div>
                         <table className="ops-table hidden md:table">
                             <thead>
-                                <tr className="bg-muted dark:bg-muted/80">
+                                <tr>
                                     <Th label="Asset Tag"           field="tag" />
                                     <Th label="Asset Name"          field="name" />
                                     <Th label="Discipline"          field="discipline" />

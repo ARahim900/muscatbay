@@ -599,7 +599,8 @@ export default function STPPage() {
         return [
             {
                 label: "Inlet Sewage",
-                value: `${totalInlet.toLocaleString('en-US', { maximumFractionDigits: 1 })} m³`,
+                value: totalInlet.toLocaleString('en-US', { maximumFractionDigits: 1 }),
+                unit: "m³",
                 subtitle: `Range: ${selectedDateRange.start} - ${selectedDateRange.end}`,
                 icon: Droplets,
                 variant: "primary" as const,
@@ -607,7 +608,8 @@ export default function STPPage() {
             },
             {
                 label: "TSE for Irrigation",
-                value: `${totalTSE.toLocaleString('en-US', { maximumFractionDigits: 1 })} m³`,
+                value: totalTSE.toLocaleString('en-US', { maximumFractionDigits: 1 }),
+                unit: "m³",
                 subtitle: "Recycled Water Output",
                 icon: Recycle,
                 variant: "secondary" as const,
@@ -623,7 +625,8 @@ export default function STPPage() {
             },
             {
                 label: "Generated Income",
-                value: `${generatedIncome.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} OMR`,
+                value: generatedIncome.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 }),
+                unit: "OMR",
                 subtitle: "from discharge fees",
                 icon: DollarSign,
                 variant: "success" as const,
@@ -631,7 +634,8 @@ export default function STPPage() {
             },
             {
                 label: "Water Savings",
-                value: `${waterSavings.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} OMR`,
+                value: waterSavings.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 }),
+                unit: "OMR",
                 subtitle: `${TSE_SAVING_RATE} OMR per m³`,
                 icon: PiggyBank,
                 variant: "primary" as const,
@@ -639,7 +643,8 @@ export default function STPPage() {
             },
             {
                 label: "Total Economic Impact",
-                value: `${totalEconomicImpact.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} OMR`,
+                value: totalEconomicImpact.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 }),
+                unit: "OMR",
                 subtitle: "Income + Savings",
                 icon: TrendingUp,
                 variant: "success" as const,
@@ -647,7 +652,8 @@ export default function STPPage() {
             },
             {
                 label: "Treatment Efficiency",
-                value: `${treatmentEfficiency.toFixed(1)}%`,
+                value: treatmentEfficiency.toFixed(1),
+                unit: "%",
                 subtitle: "TSE Output to Inlet Ratio",
                 icon: Gauge,
                 variant: "secondary" as const,
@@ -655,7 +661,8 @@ export default function STPPage() {
             },
             {
                 label: "Daily Average Inlet",
-                value: `${Math.round(dailyAverageInlet).toLocaleString('en-US', { maximumFractionDigits: 1 })} m³`,
+                value: Math.round(dailyAverageInlet).toLocaleString('en-US', { maximumFractionDigits: 1 }),
+                unit: "m³",
                 subtitle: "Average Daily Input",
                 icon: Activity,
                 variant: "primary" as const,

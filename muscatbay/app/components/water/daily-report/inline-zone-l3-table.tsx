@@ -320,7 +320,7 @@ function ZoneL3Table({
                         <TableRow className="border-b border-border dark:border-border">
                             <Th
                                 sortKey="label" sort={sort} onSort={setSort}
-                                className="sticky left-0 z-10 bg-white dark:bg-muted min-w-[150px]"
+                                className="sticky left-0 z-20 bg-[var(--primary)] min-w-[150px]"
                             >Meter</Th>
                             <Th sortKey="account" sort={sort} onSort={setSort} className="min-w-[100px]">Account</Th>
                             <TableHead scope="col" className={cn(thBase, "text-center min-w-[90px]")}>Type</TableHead>
@@ -329,7 +329,7 @@ function ZoneL3Table({
                             ))}
                             <Th
                                 sortKey="total" sort={sort} onSort={setSort}
-                                className="text-right min-w-[80px] bg-muted/80 dark:bg-muted/40"
+                                className="text-right min-w-[80px]"
                             >Total</Th>
                         </TableRow>
                     </TableHeader>

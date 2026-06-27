@@ -402,8 +402,9 @@ export default function ElectricityPage() {
 
         return [
             {
-                label: "TOTAL CONSUMPTION",
-                value: `${(totalConsumption / 1000).toFixed(1)} MWh`,
+                label: "CONSUMPTION",
+                value: (totalConsumption / 1000).toFixed(1),
+                unit: "MWh",
                 subtitle: rangeLabel,
                 icon: Zap,
                 variant: "warning" as const,
@@ -413,7 +414,8 @@ export default function ElectricityPage() {
             },
             {
                 label: "TOTAL COST",
-                value: `${totalCost.toLocaleString('en-US', { maximumFractionDigits: 1 })} OMR`,
+                value: totalCost.toLocaleString('en-US', { maximumFractionDigits: 1 }),
+                unit: "OMR",
                 subtitle: `@ ${ratePerKWh} OMR/kWh`,
                 icon: DollarSign,
                 variant: "success" as const,
@@ -431,7 +433,7 @@ export default function ElectricityPage() {
                 trendValue: '—'
             },
             {
-                label: "HIGHEST CONSUMER",
+                label: "TOP CONSUMER",
                 value: highest.name,
                 subtitle: `${Math.round(highest.val).toLocaleString('en-US', { maximumFractionDigits: 1 })} kWh`,
                 icon: TrendingUp,
@@ -629,8 +631,9 @@ export default function ElectricityPage() {
         // Stats Cards Data
         const stats = [
             {
-                label: "TOTAL CONSUMPTION",
-                value: `${(totalConsumption / 1000).toFixed(1)} MWh`,
+                label: "CONSUMPTION",
+                value: (totalConsumption / 1000).toFixed(1),
+                unit: "MWh",
                 subtitle: selectedMeterName || "in selected period",
                 icon: Zap,
                 variant: "primary" as const,
@@ -640,7 +643,8 @@ export default function ElectricityPage() {
             },
             {
                 label: "TOTAL COST",
-                value: `${totalCost.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} OMR`,
+                value: totalCost.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 }),
+                unit: "OMR",
                 subtitle: `at ${ratePerKWh} OMR/kWh`,
                 icon: DollarSign,
                 variant: "success" as const,
@@ -658,7 +662,7 @@ export default function ElectricityPage() {
                 trendValue: '—'
             },
             {
-                label: "HIGHEST CONSUMER",
+                label: "TOP CONSUMER",
                 value: highestConsumer.name,
                 subtitle: `${(highestConsumer.val / 1000).toFixed(1)} MWh`,
                 icon: TrendingUp,

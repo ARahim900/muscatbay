@@ -17,7 +17,7 @@ import { ZONE_BULK_CONFIG } from "@/lib/water-accounts";
 import type { SupabaseDailyWaterConsumption } from "@/entities/water";
 import {
     type ReportData,
-    CHART_COLORS, r2,
+    CHART_COLORS, r2, DailyLossConnector,
 } from "./inline-shared";
 
 export { ZoneAnalyticsPanel };
@@ -49,7 +49,6 @@ function ZoneAnalyticsPanel({ reportData, monthData, selectedDay, month, activeZ
 
     // Shared gauge scale (same as Zone Analysis page)
     const gaugeMax = Math.max(l2Value, l3Sum) * 1.2 || 100;
-    const lossColor = diff !== null && diff > 0 ? CHART_COLORS.loss : CHART_COLORS.success;
 
     // 31-day trend for the active zone
     const trendData = useMemo(() => {
@@ -94,8 +93,8 @@ function ZoneAnalyticsPanel({ reportData, monthData, selectedDay, month, activeZ
                 </p>
             </div>
 
-            {/* ── 3 Gauge rings — bare grid, no individual card wrappers ───── */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 md:gap-6">
+            {/* ── Two gauges with the loss written in between (supply → use) ─── */}
+            <div className="flex flex-col items-center justify-center gap-4 sm:flex-row sm:gap-6 md:gap-10">
                 <LiquidProgressRing
                     value={l2Value}
                     max={gaugeMax}
@@ -107,6 +106,7 @@ function ZoneAnalyticsPanel({ reportData, monthData, selectedDay, month, activeZ
                     unit="m³"
                     elementId="daily-gauge-1"
                 />
+                <DailyLossConnector loss={diff} of={l2Value} />
                 <LiquidProgressRing
                     value={l3Sum}
                     max={gaugeMax}
@@ -117,16 +117,6 @@ function ZoneAnalyticsPanel({ reportData, monthData, selectedDay, month, activeZ
                     showPercentage={false}
                     unit="m³"
                     elementId="daily-gauge-2"
-                />
-                <LiquidProgressRing
-                    value={Math.abs(diff ?? 0)}
-                    max={l2Value || 100}
-                    label="Water Loss / Diff"
-                    sublabel="Leakage, meter loss, etc."
-                    color={lossColor}
-                    size={160}
-                    showPercentage={true}
-                    elementId="daily-gauge-3"
                 />
             </div>
 

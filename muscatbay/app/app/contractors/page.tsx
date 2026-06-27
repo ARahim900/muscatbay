@@ -453,7 +453,8 @@ export default function ContractorsPage() {
         },
         {
             label: "TOTAL CONTRACT VALUE",
-            value: `${totalContractValue.toLocaleString('en-US', { maximumFractionDigits: 1 })} OMR`,
+            value: totalContractValue.toLocaleString('en-US', { maximumFractionDigits: 1 }),
+            unit: "OMR",
             subtitle: `Year 1 expense: ${currentYearExpense.toLocaleString('en-US', { maximumFractionDigits: 1 })} OMR`,
             icon: DollarSign,
             variant: "warning" as const,
@@ -724,14 +725,14 @@ export default function ContractorsPage() {
                             <div className="ops-table-shell hidden md:block">
                                 <table className="ops-table whitespace-nowrap">
                                     <thead>
-                                        <tr className="bg-muted dark:bg-muted/80">
-                                            <th scope="col" className="text-left py-4 px-4 font-semibold uppercase tracking-wider text-xs text-muted-foreground col-sticky z-10">Year</th>
+                                        <tr>
+                                            <th scope="col" className="text-left py-3 px-4 font-semibold text-xs col-sticky z-10">Year</th>
                                             {matrix.contractors.map(cn => (
-                                                <th key={cn} scope="col" className="text-right py-4 px-3 font-semibold uppercase tracking-wider text-xs text-muted-foreground" title={cn}>
+                                                <th key={cn} scope="col" className="text-right py-3 px-3 font-semibold text-xs" title={cn}>
                                                     {shortName(cn)}
                                                 </th>
                                             ))}
-                                            <th scope="col" className="text-right py-4 px-4 font-semibold text-sm text-foreground bg-muted/60 dark:bg-muted/30">Year Total</th>
+                                            <th scope="col" className="text-right py-3 px-4 font-semibold text-xs">Year Total</th>
                                         </tr>
                                     </thead>
                                     <tbody>

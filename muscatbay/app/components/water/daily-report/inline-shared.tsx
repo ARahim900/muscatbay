@@ -9,7 +9,7 @@
 //     would alter behavior (different chart palette tokens, toggleable legend,
 //     different layout). Do not consolidate without explicit design review.
 
-import { ArrowUpDown, ChevronUp, ChevronDown, Search } from "lucide-react";
+import { ArrowUpDown, ChevronUp, ChevronDown, Search, ArrowRight, ArrowDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CHART_PALETTE } from "@/lib/tokens";
 import {
@@ -27,6 +27,43 @@ export const CHART_COLORS = {
     amber: 'var(--chart-amber)',
     gray: 'var(--chart-gray)',
 } as const;
+
+/**
+ * Loss connector rendered *between* the two daily gauges (supply → consumption),
+ * replacing the old standalone third "loss" gauge. `loss` is L2 − ΣL3 (positive
+ * = water lost); `of` is the supply total used for the percentage. Calm by
+ * default — danger tint only when there is actual loss ("urgent only when
+ * earned"), mirroring the monthly water-balance treatment. The arrow flips to
+ * vertical when the gauges stack on narrow screens.
+ */
+export function DailyLossConnector({ loss, of }: { loss: number | null; of: number }) {
+    const v = loss ?? 0;
+    const isLoss = v > 0;
+    const tint = isLoss ? CHART_COLORS.loss : CHART_COLORS.success;
+    const pct = of > 0 ? Math.abs(Math.round((v / of) * 1000) / 10) : 0;
+    const sign = v > 0 ? '−' : v < 0 ? '+' : '';
+    const caption = v > 0 ? 'loss' : v < 0 ? 'over-read' : 'balanced';
+    return (
+        <div className="flex shrink-0 flex-col items-center justify-center">
+            <ArrowDown className="h-5 w-5 text-muted-foreground sm:hidden" aria-hidden="true" />
+            <ArrowRight className="hidden h-5 w-5 text-muted-foreground sm:block" aria-hidden="true" />
+            <div
+                className="mt-2 flex flex-col items-center rounded-lg border px-3 py-1.5"
+                style={{
+                    background: `color-mix(in srgb, ${tint} 12%, transparent)`,
+                    borderColor: `color-mix(in srgb, ${tint} 45%, transparent)`,
+                }}
+            >
+                <span className="whitespace-nowrap text-base font-bold tabular-nums sm:text-lg" style={{ color: tint }}>
+                    {sign}{n(Math.abs(v))} m³
+                </span>
+                <span className="whitespace-nowrap text-[10px] font-semibold uppercase tracking-wide sm:text-[11px]" style={{ color: tint }}>
+                    {caption} · {pct}%
+                </span>
+            </div>
+        </div>
+    );
+}
 
 // ─── Unified brand palette (Muscat Bay) ──────────────────────────────────────
 
@@ -227,8 +264,11 @@ export function HierarchyStatCard({
 // ─── Modern table primitives ─────────────────────────────────────────────────
 // Uses raw HTML table elements styled inline to avoid shadcn's double-border wrapper.
 
-export const thBase = "h-14 px-5 text-left align-middle font-semibold text-sm uppercase tracking-wider text-muted-foreground dark:text-muted-foreground whitespace-nowrap";
-export const tdBase = "px-5 py-4 align-middle text-sm font-semibold text-foreground dark:text-muted-foreground/70";
+// Header + cell styling mirror the monthly section (the standard reference):
+// a sticky solid --primary (purple) header with white text, compact 12px cells,
+// not uppercase — so daily tables read identically to the monthly ledgers.
+export const thBase = "sticky top-0 z-10 px-3 py-2 text-left align-middle font-semibold text-[12px] whitespace-nowrap bg-[var(--primary)] text-[var(--primary-foreground)]";
+export const tdBase = "px-3 py-2 align-middle text-[12px] text-foreground dark:text-muted-foreground/70";
 
 export type SortDir = 'asc' | 'desc' | null;
 export interface SortState { key: string; dir: SortDir }
@@ -255,7 +295,7 @@ export function Th({
     const sortable = sortKey && sort && onSort;
     return (
         <th scope="col"
-            className={cn(thBase, sortable && "cursor-pointer select-none group hover:text-muted-foreground dark:hover:text-muted-foreground/70 transition-colors", className)}
+            className={cn(thBase, sortable && "cursor-pointer select-none group hover:opacity-80 transition-opacity", className)}
             onClick={sortable ? () => onSort(nextSort(sort, sortKey)) : undefined}
         >
             <span className="inline-flex items-center gap-1">

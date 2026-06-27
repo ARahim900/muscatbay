@@ -200,13 +200,13 @@ export function OverviewTab({ data }: OverviewTabProps) {
         </CardHeader>
         <CardContent>
           <Table>
-            <TableHeader className="bg-muted dark:bg-muted/80">
+            <TableHeader>
               <TableRow>
-                <TableHead scope="col" className="text-left font-semibold text-sm">System</TableHead>
-                <TableHead scope="col" className="text-center font-semibold text-sm">Q1 (PPM1)</TableHead>
-                <TableHead scope="col" className="text-center font-semibold text-sm">Q2 (PPM2)</TableHead>
-                <TableHead scope="col" className="text-center font-semibold text-sm">Q3 (PPM3)</TableHead>
-                <TableHead scope="col" className="text-center font-semibold text-sm">Q4 (PPM4)</TableHead>
+                <TableHead scope="col" className="text-left">System</TableHead>
+                <TableHead scope="col" className="text-center">Q1 (PPM1)</TableHead>
+                <TableHead scope="col" className="text-center">Q2 (PPM2)</TableHead>
+                <TableHead scope="col" className="text-center">Q3 (PPM3)</TableHead>
+                <TableHead scope="col" className="text-center">Q4 (PPM4)</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -244,12 +244,12 @@ export function OverviewTab({ data }: OverviewTabProps) {
         <Card className="bg-card rounded-xl border border-border dark:border-border shadow-sm">
           <CardContent className="p-5">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/10">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[7px] bg-primary/10">
                 <Shield className="h-5 w-5 text-primary" />
               </div>
               <div>
                 <p className="text-xs font-medium text-muted-foreground dark:text-muted-foreground uppercase tracking-wide">HVAC AMC — Gulf Expert</p>
-                <p className="text-lg font-bold text-foreground tabular-nums">OMR 8,557.5</p>
+                <p className="text-xl font-semibold text-foreground tabular-nums">OMR 8,557.5</p>
               </div>
             </div>
             <div className="mt-3 space-y-2">
@@ -275,12 +275,12 @@ export function OverviewTab({ data }: OverviewTabProps) {
         <Card className="bg-card rounded-xl border border-border dark:border-border shadow-sm">
           <CardContent className="p-5">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-secondary/10">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[7px] bg-secondary/10">
                 <Shield className="h-5 w-5 text-secondary" />
               </div>
               <div>
                 <p className="text-xs font-medium text-muted-foreground dark:text-muted-foreground uppercase tracking-wide">BMS AMC — Gulf Expert</p>
-                <p className="text-lg font-bold text-foreground tabular-nums">OMR 2,205</p>
+                <p className="text-xl font-semibold text-foreground tabular-nums">OMR 2,205</p>
               </div>
             </div>
             <div className="mt-3 space-y-2">

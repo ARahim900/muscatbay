@@ -11,6 +11,10 @@ export type StatVariant = "primary" | "secondary" | "success" | "warning" | "dan
 export interface StatItem {
     label: string;
     value: string;
+    /** Optional unit rendered small + static after the value (e.g. "m³", "OMR",
+     *  "MWh") — matches the monthly Kpi tiles and keeps long numbers from
+     *  truncating. Prefer this over baking the unit into `value`. */
+    unit?: string;
     subtitle?: string;
     icon: LucideIcon;
     variant?: StatVariant;
@@ -48,6 +52,20 @@ const variantIconClass: Record<StatVariant, string> = {
     default: "text-muted-foreground",
 };
 
+// Soft tile background behind the icon, per variant — mirrors the water/monthly
+// section's Kpi tiles (a chart-bg tint behind a colored icon). The standard
+// reference for KPI cards across the app. Overridden by an explicit stat.bgColor.
+const variantTileBg: Record<StatVariant, string> = {
+    primary: "var(--chart-bg-purple)",
+    secondary: "var(--chart-bg-cyan)",
+    success: "var(--chart-bg-green)",
+    warning: "var(--chart-bg-orange)",
+    danger: "var(--chart-bg-red)",
+    info: "var(--chart-bg-blue)",
+    water: "var(--chart-bg-blue)",
+    default: "var(--muted)",
+};
+
 export function StatsGrid({ stats, className }: StatsGridProps) {
     const gridRef = useScrollAnimation<HTMLDivElement>(SCROLL_ANIMATION_CONFIG);
 
@@ -67,6 +85,7 @@ export function StatsGrid({ stats, className }: StatsGridProps) {
             {stats.map((stat, index) => {
                 const variant = stat.variant || "primary";
                 const iconClass = variantIconClass[variant];
+                const tileBg = stat.bgColor ?? variantTileBg[variant];
 
                 // Resolve whether the current trend direction is "good" or "bad".
                 // invertTrend=true  → down is good (savings: energy, water, cost)
@@ -83,23 +102,26 @@ export function StatsGrid({ stats, className }: StatsGridProps) {
 
                 const cardContent = (
                     <>
-                        <div className="flex justify-between items-start gap-2">
-                            <div className="min-w-0">
-                                {/* Label: wraps to 2 lines on mobile so "WATER PRODUC..." never happens */}
-                                <p className="text-muted-foreground text-[11px] sm:text-xs font-medium mb-0.5 sm:mb-1 uppercase tracking-[0.06em] leading-tight line-clamp-2 sm:line-clamp-1 sm:truncate min-h-[2.2em] sm:min-h-0">
-                                    {stat.label}
-                                </p>
-                                {/* Brand-purple KPI value — mono + tabular figures give the
-                                    operational, control-room read and keep the CountUp width steady. */}
-                                <h3 className="text-[1.25rem] sm:text-2xl font-mono font-semibold tabular-nums truncate text-primary dark:text-foreground leading-none">
-                                    <CountUp value={stat.value} delay={index * 0.06} />
-                                </h3>
-                            </div>
-                            <div className="p-1.5 sm:p-2 rounded-lg bg-muted flex-shrink-0 transition-transform duration-300 ease-(--ease-out-quint) motion-safe:group-hover/stat:scale-110">
+                        {/* Icon tile on the left + label/value to its right — mirrors the
+                            water/monthly Kpi tiles (the app-wide reference). */}
+                        <div className="flex items-center gap-3">
+                            <div
+                                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[7px] transition-transform duration-300 ease-(--ease-out-quint) motion-safe:group-hover/stat:scale-110"
+                                style={{ background: tileBg }}
+                            >
                                 <stat.icon
-                                    className={cn("w-4 h-4 sm:w-5 sm:h-5", !stat.color && iconClass)}
+                                    className={cn("w-5 h-5", !stat.color && iconClass)}
                                     style={stat.color ? { color: stat.color } : undefined}
                                 />
+                            </div>
+                            <div className="min-w-0">
+                                <p className="text-muted-foreground text-[11px] font-semibold mb-0.5 uppercase tracking-[0.06em] leading-tight truncate">
+                                    {stat.label}
+                                </p>
+                                <h3 className="text-xl font-semibold tabular-nums truncate text-foreground leading-tight tracking-tight">
+                                    <CountUp value={stat.value} delay={index * 0.06} />
+                                    {stat.unit && <span className="ml-1 text-xs font-medium text-muted-foreground">{stat.unit}</span>}
+                                </h3>
                             </div>
                         </div>
 
@@ -141,7 +163,7 @@ export function StatsGrid({ stats, className }: StatsGridProps) {
                     </>
                 );
 
-                const baseCardClassName = "mb-glow bg-card p-3 sm:p-4 md:p-5 rounded-lg border border-border shadow-[0_1px_2px_rgb(15_23_42_/_0.06)] dark:shadow-[0_1px_0_rgba(255,255,255,0.04)] group/stat overflow-hidden hover:shadow-[0_6px_18px_-10px_rgb(15_23_42_/_0.35)] hover:border-secondary/40 transition-[box-shadow,border-color,transform] duration-200 ease-(--ease-out-quint) motion-safe:active:scale-[0.99]";
+                const baseCardClassName = "mb-glow bg-card p-4 rounded-lg border border-border shadow-[0_1px_2px_rgb(15_23_42_/_0.06)] dark:shadow-[0_1px_0_rgba(255,255,255,0.04)] group/stat overflow-hidden hover:shadow-[0_6px_18px_-10px_rgb(15_23_42_/_0.35)] hover:border-secondary/40 transition-[box-shadow,border-color,transform] duration-200 ease-(--ease-out-quint) motion-safe:active:scale-[0.99]";
 
                 return stat.href ? (
                     <Link

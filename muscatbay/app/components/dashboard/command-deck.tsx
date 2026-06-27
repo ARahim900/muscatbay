@@ -160,12 +160,14 @@ export function CommandDeck({ title, description, actions, stats, className }: C
                                         className="w-3.5 h-3.5 flex-shrink-0 mt-px"
                                         style={{ color: stat.color || deckIconColor[variant] }}
                                     />
-                                    {/* Wraps to 2 lines on mobile so "STP ECONOMIC IMP…" never happens */}
-                                    <p className="text-[10px] sm:text-[11px] font-medium uppercase tracking-[0.08em] leading-tight text-white/55 line-clamp-2 sm:line-clamp-1 min-h-[2.1em] sm:min-h-0 print:text-(--muted-foreground)">
+                                    {/* Typography aligned to the shared StatsGrid standard
+                                        (11px semibold label, text-xl sans value); kept white
+                                        for the dark command-deck surface. */}
+                                    <p className="text-[11px] font-semibold uppercase tracking-[0.06em] leading-tight text-white/55 truncate print:text-(--muted-foreground)">
                                         {stat.label}
                                     </p>
                                 </div>
-                                <p className="mt-2 sm:mt-2.5 text-xl sm:text-2xl font-mono font-semibold tabular-nums leading-none truncate text-white print:text-(--primary)">
+                                <p className="mt-2 sm:mt-2.5 text-xl font-semibold tabular-nums leading-tight truncate text-white print:text-(--primary)">
                                     <CountUp value={stat.value} delay={0.3 + index * 0.06} />
                                 </p>
                                 {stat.trend && stat.trendValue && (

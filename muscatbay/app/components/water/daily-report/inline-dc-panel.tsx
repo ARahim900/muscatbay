@@ -18,7 +18,7 @@ import type { SupabaseDailyWaterConsumption } from "@/entities/water";
 import { cn } from "@/lib/utils";
 import {
     type ReportData, type SortState,
-    CHART_COLORS, r2, n,
+    CHART_COLORS, r2, n, DailyLossConnector,
     Th, TableSearch, StatusChip, TablePagination, thBase, tdBase,
 } from "./inline-shared";
 
@@ -43,15 +43,7 @@ function DCAnalyticsPanel({ reportData, monthData, selectedDay, month }: DCAnaly
     const l2PlusDcTotal = r2(reportData.l2Total + reportData.dcTotal);
     const l3PlusDcTotal = r2(reportData.l3Total + reportData.dcTotal);
     const connectionDifference = r2(l2PlusDcTotal - l3PlusDcTotal);
-    const connectionDifferenceMagnitude = Math.abs(connectionDifference);
     const totalGaugeMax = Math.max(l2PlusDcTotal, l3PlusDcTotal) * 1.2 || 100;
-    const differenceGaugeMax = connectionDifferenceMagnitude * 1.2 || 100;
-    const differenceColor = connectionDifference > 0 ? CHART_COLORS.loss : CHART_COLORS.success;
-    const differenceSublabel = connectionDifference === 0
-        ? "No difference between totals"
-        : connectionDifference > 0
-            ? "L2 + DC is higher"
-            : "L3 + DC is higher";
 
     // 31-day DC trend
     const trendData = useMemo(() => {
@@ -97,8 +89,8 @@ function DCAnalyticsPanel({ reportData, monthData, selectedDay, month }: DCAnaly
                 </p>
             </div>
 
-            {/* ── 3 Gauge rings ────────────────────────────────────────────── */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 md:gap-6">
+            {/* ── Two gauges with the loss written in between (supply → use) ─── */}
+            <div className="flex flex-col items-center justify-center gap-4 sm:flex-row sm:gap-6 md:gap-10">
                 <LiquidProgressRing
                     value={l2PlusDcTotal}
                     max={totalGaugeMax}
@@ -110,6 +102,7 @@ function DCAnalyticsPanel({ reportData, monthData, selectedDay, month }: DCAnaly
                     unit="m³"
                     elementId="daily-dc-gauge-1"
                 />
+                <DailyLossConnector loss={connectionDifference} of={l2PlusDcTotal} />
                 <LiquidProgressRing
                     value={l3PlusDcTotal}
                     max={totalGaugeMax}
@@ -120,18 +113,6 @@ function DCAnalyticsPanel({ reportData, monthData, selectedDay, month }: DCAnaly
                     showPercentage={false}
                     unit="m³"
                     elementId="daily-dc-gauge-2"
-                />
-                <LiquidProgressRing
-                    value={connectionDifferenceMagnitude}
-                    displayValue={connectionDifference}
-                    max={differenceGaugeMax}
-                    label="Difference"
-                    sublabel={differenceSublabel}
-                    color={differenceColor}
-                    size={160}
-                    showPercentage={false}
-                    unit="m³"
-                    elementId="daily-dc-gauge-3"
                 />
             </div>
 
@@ -368,7 +349,7 @@ function DCDailyTable({ monthData }: { monthData: SupabaseDailyWaterConsumption[
                         <TableRow className="border-b border-border dark:border-border">
                             <Th
                                 sortKey="label" sort={sort} onSort={setSort}
-                                className="sticky left-0 z-10 bg-white dark:bg-muted min-w-[180px]"
+                                className="sticky left-0 z-20 bg-[var(--primary)] min-w-[180px]"
                             >Meter</Th>
                             <Th sortKey="account" sort={sort} onSort={setSort} className="min-w-[100px]">Account</Th>
                             <TableHead scope="col" className={cn(thBase, "text-center min-w-[90px]")}>Type</TableHead>
@@ -377,7 +358,7 @@ function DCDailyTable({ monthData }: { monthData: SupabaseDailyWaterConsumption[
                             ))}
                             <Th
                                 sortKey="total" sort={sort} onSort={setSort}
-                                className="text-right min-w-[80px] bg-muted/80 dark:bg-muted/40"
+                                className="text-right min-w-[80px]"
                             >Total</Th>
                         </TableRow>
                     </TableHeader>

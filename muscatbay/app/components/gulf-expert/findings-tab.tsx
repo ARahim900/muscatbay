@@ -203,7 +203,7 @@ export function FindingsTab({ findings }: FindingsTabProps) {
       <div className="hidden md:block">
         <Table>
           <TableHeader>
-            <TableRow className="bg-muted dark:bg-muted/80">
+            <TableRow>
               {columns.map((col) => (
                 <SortableTableHead
                   key={col.field}

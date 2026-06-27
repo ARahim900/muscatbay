@@ -641,8 +641,8 @@ export default function FirefightingPage() {
                                 ].map((eq) => (
                                     <div key={eq.label} className="p-3 bg-muted dark:bg-muted/50 rounded-lg text-center">
                                         <p className="text-xl font-bold text-foreground">{eq.value}</p>
-                                        <p className="text-[10px] text-muted-foreground dark:text-muted-foreground font-semibold uppercase">{eq.label}</p>
-                                        <p className="text-[9px] text-muted-foreground">{eq.sub}</p>
+                                        <p className="text-[11px] text-muted-foreground dark:text-muted-foreground font-semibold uppercase tracking-[0.06em]">{eq.label}</p>
+                                        <p className="text-[10px] text-muted-foreground">{eq.sub}</p>
                                     </div>
                                 ))}
                             </div>

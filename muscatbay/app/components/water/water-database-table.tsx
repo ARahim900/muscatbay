@@ -594,45 +594,45 @@ export function WaterDatabaseTable({ meters, months }: WaterDatabaseTableProps) 
             >
                 <table className="ops-table">
                     <thead className="sticky top-0 z-30">
-                        <tr className="bg-muted/80">
+                        <tr>
                             <th
                                 scope="col"
-                                className="text-left py-4 px-5 font-semibold uppercase tracking-wider text-xs text-muted-foreground border-b-2 border-border cursor-pointer hover:bg-muted/60 transition-colors col-sticky z-20 w-[120px] sm:w-[180px] md:w-[200px]"
+                                className="text-left py-4 px-5 font-semibold text-xs cursor-pointer hover:bg-white/10 transition-colors col-sticky z-20 w-[120px] sm:w-[180px] md:w-[200px]"
                                 onClick={() => handleSort('label')}
                             >
                                 <div className="flex items-center gap-1.5 truncate">Label <SortIcon field="label" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
                             </th>
                             <th
                                 scope="col"
-                                className="text-left py-4 px-5 font-semibold uppercase tracking-wider text-xs text-muted-foreground border-b-2 border-border cursor-pointer hover:bg-muted/60 transition-colors col-sticky left-[120px] sm:left-[180px] md:left-[200px] z-20 min-w-[100px]"
+                                className="text-left py-4 px-5 font-semibold text-xs cursor-pointer hover:bg-white/10 transition-colors col-sticky left-[120px] sm:left-[180px] md:left-[200px] z-20 min-w-[100px]"
                                 onClick={() => handleSort('account')}
                             >
                                 <div className="flex items-center gap-1.5">Account # <SortIcon field="account" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
                             </th>
                             <th
                                 scope="col"
-                                className="text-center py-4 px-5 font-semibold uppercase tracking-wider text-xs text-muted-foreground border-b-2 border-border cursor-pointer hover:bg-muted/60 transition-colors min-w-[70px]"
+                                className="text-center py-4 px-5 font-semibold text-xs cursor-pointer hover:bg-white/10 transition-colors min-w-[70px]"
                                 onClick={() => handleSort('level')}
                             >
                                 <div className="flex items-center justify-center gap-1.5">Level <SortIcon field="level" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
                             </th>
                             <th
                                 scope="col"
-                                className="text-left py-4 px-5 font-semibold uppercase tracking-wider text-xs text-muted-foreground border-b-2 border-border cursor-pointer hover:bg-muted/60 transition-colors min-w-[100px]"
+                                className="text-left py-4 px-5 font-semibold text-xs cursor-pointer hover:bg-white/10 transition-colors min-w-[100px]"
                                 onClick={() => handleSort('zone')}
                             >
                                 <div className="flex items-center gap-1.5">Zone <SortIcon field="zone" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
                             </th>
                             <th
                                 scope="col"
-                                className="text-left py-4 px-5 font-semibold uppercase tracking-wider text-xs text-muted-foreground border-b-2 border-border cursor-pointer hover:bg-muted/60 transition-colors min-w-[150px]"
+                                className="text-left py-4 px-5 font-semibold text-xs cursor-pointer hover:bg-white/10 transition-colors min-w-[150px]"
                                 onClick={() => handleSort('parentMeter')}
                             >
                                 <div className="flex items-center gap-1.5">Parent <SortIcon field="parentMeter" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
                             </th>
                             <th
                                 scope="col"
-                                className="text-left py-4 px-5 font-semibold uppercase tracking-wider text-xs text-muted-foreground border-b-2 border-border cursor-pointer hover:bg-muted/60 transition-colors min-w-[120px]"
+                                className="text-left py-4 px-5 font-semibold text-xs cursor-pointer hover:bg-white/10 transition-colors min-w-[120px]"
                                 onClick={() => handleSort('type')}
                             >
                                 <div className="flex items-center gap-1.5">Type <SortIcon field="type" currentSortField={sortField} currentSortDirection={sortDirection} /></div>
@@ -641,7 +641,7 @@ export function WaterDatabaseTable({ meters, months }: WaterDatabaseTableProps) 
                                 <th
                                     key={month}
                                     scope="col"
-                                    className="text-right py-4 px-5 font-semibold uppercase tracking-wider text-xs text-muted-foreground border-b-2 border-border cursor-pointer hover:bg-muted/60 transition-colors min-w-[80px] whitespace-nowrap"
+                                    className="text-right py-4 px-5 font-semibold text-xs cursor-pointer hover:bg-white/10 transition-colors min-w-[80px] whitespace-nowrap"
                                     onClick={() => handleSort(month)}
                                 >
                                     <div className="flex items-center justify-end gap-1.5">{month} <SortIcon field={month} currentSortField={sortField} currentSortDirection={sortDirection} /></div>
