@@ -11,7 +11,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { PageStatusBar } from "@/components/shared/page-status-bar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableHeader, TableBody, TableRow, TableCell } from "@/components/ui/table";
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import {
     MultiSelectDropdown, SortableTableHead, TablePagination, TableToolbar,
     type PageSizeOption,
@@ -21,9 +21,14 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import {
+    ResponsiveContainer, BarChart, Bar, XAxis, YAxis,
+    CartesianGrid, Tooltip, PieChart, Pie, Cell, Legend,
+} from "recharts";
+import { CHART_PALETTE } from "@/lib/tokens";
+import {
     ShieldCheck, AlertTriangle, CheckCircle, XCircle, Clock,
-    Calendar, FileText, Info, Building2, Gauge, MapPin, Layers, Users,
-    Phone, Mail, ClipboardList, Boxes, Flame, Truck, History, Search, X,
+    Calendar, FileText, Info, Building2, LayoutGrid, MapPin, Layers, Users,
+    Phone, Mail, ClipboardList, Flame, Truck, History, Search, X,
     type LucideIcon,
 } from "lucide-react";
 
@@ -178,6 +183,24 @@ const CYCLE_OPTIONS = CYCLES.map((c) => c.label);
 const ZONE_OPTIONS = ZONES.map((z) => z.label);
 const PPM_STATUS_OPTIONS = (Object.keys(STATUS_CFG) as PpmStatus[]).map((s) => STATUS_CFG[s].label);
 
+// Equipment-status → donut slice colour (hex; SVG fill can't read CSS vars).
+const EQUIP_STATUS_CHART_COLORS: Record<string, string> = {
+    Operational: "#84B59F",        // --mb-success
+    "Needs Attention": "#E8C064",  // --mb-warning
+    "Maintenance Due": "#4E4456",  // --primary
+    Expired: "#D67A7A",            // --mb-danger
+};
+
+// Shared HVAC-matching card title style (text-sm semibold, icon + label).
+const CARD_TITLE = "text-sm font-semibold text-foreground dark:text-muted-foreground flex items-center gap-2";
+const CHART_TOOLTIP_STYLE = {
+    backgroundColor: "var(--card)",
+    border: "1px solid var(--border)",
+    borderRadius: "8px",
+    color: "var(--foreground)",
+    fontSize: "12px",
+} as const;
+
 // ── Small presentational components ─────────────────────────────────────────
 
 function ZoneBadge({ zone, withScope = false }: { zone: ZoneKey; withScope?: boolean }) {
@@ -218,6 +241,20 @@ function SystemTag({ label }: { label: string }) {
     );
 }
 
+// Section heading shared by the Overview registers (icon + title + count + blurb).
+function SectionHeading({ icon: Icon, title, count, description }: { icon: LucideIcon; title: string; count?: number; description?: string }) {
+    return (
+        <div className="mb-3">
+            <div className="flex items-center gap-2">
+                <Icon className="w-4 h-4 text-secondary" />
+                <h2 className="text-sm font-semibold text-foreground dark:text-muted-foreground">{title}</h2>
+                {count != null && <span className="text-xs text-muted-foreground tabular-nums">· {count}</span>}
+            </div>
+            {description && <p className="text-xs text-muted-foreground mt-1">{description}</p>}
+        </div>
+    );
+}
+
 function fmtDate(s: string | null | undefined): string {
     if (!s) return "—";
     const d = new Date(s);
@@ -253,7 +290,7 @@ function equipZoneKey(zone: string): ZoneKey | null {
 //  PAGE
 // ═══════════════════════════════════════════════════════════════════════════
 
-type TabKey = "overview" | "ppm" | "assets" | "contract";
+type TabKey = "overview" | "ppm" | "contract";
 
 export default function FirefightingPage() {
     const [activeTab, setActiveTab] = useState<TabKey>("overview");
@@ -321,6 +358,17 @@ export default function FirefightingPage() {
             if (k) counts[k] += 1;
         });
         return counts;
+    }, [equipment]);
+
+    // Overview charts — equipment per zone (bar) + equipment per status (donut).
+    const equipByZoneChart = useMemo(
+        () => ZONES.map((z) => ({ zone: z.short, count: equipmentByZone[z.key] })),
+        [equipmentByZone],
+    );
+    const equipByStatusChart = useMemo(() => {
+        const counts: Record<string, number> = {};
+        equipment.forEach((e) => { counts[e.status] = (counts[e.status] || 0) + 1; });
+        return Object.entries(counts).map(([status, count]) => ({ status, count }));
     }, [equipment]);
 
     const stats = useMemo(() => [
@@ -396,20 +444,6 @@ export default function FirefightingPage() {
         setCurrentPage(1);
     };
 
-    // Cell summary for the Zone × Cycle matrix
-    const cellFor = useCallback((zone: ZoneKey, cycle: Cycle) => {
-        const items = PPM_ACTIVITIES.filter((a) => a.zone === zone && a.cycle === cycle);
-        const faults = items.filter((a) => a.status === "fault" || a.status === "no_access").length;
-        const status: PpmStatus = faults > 0
-            ? "fault"
-            : items.every((a) => a.status === "done")
-                ? "done"
-                : items.some((a) => a.status === "scheduled")
-                    ? "scheduled"
-                    : "upcoming";
-        return { items: items.length, faults, status };
-    }, []);
-
     // ───────────────────────────────────────────────────────────────────────
 
     if (loading) {
@@ -437,14 +471,13 @@ export default function FirefightingPage() {
                 <PageStatusBar isConnected={connected} lastUpdated={lastUpdated} error={error} />
             </div>
 
-            {/* Tabs */}
+            {/* Tabs — mirrors the HVAC System module's 3-subsection structure */}
             <TabNavigation
                 activeTab={activeTab}
                 onTabChange={(k) => setActiveTab(k as TabKey)}
                 tabs={[
-                    { key: "overview", label: "Overview", icon: Gauge },
+                    { key: "overview", label: "Overview", icon: LayoutGrid },
                     { key: "ppm", label: "Maintenance", icon: ClipboardList },
-                    { key: "assets", label: "Assets & Issues", icon: Boxes },
                     { key: "contract", label: "Contract & Team", icon: FileText },
                 ]}
             />
@@ -454,12 +487,68 @@ export default function FirefightingPage() {
                 <div className="space-y-6 motion-safe:animate-in motion-safe:fade-in duration-200">
                     <StatsGrid stats={stats} />
 
+                    {/* Charts — equipment by zone + by status (live register) */}
+                    {equipment.length > 0 && (
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <Card>
+                                <CardHeader className="pb-2">
+                                    <CardTitle className={CARD_TITLE}><Building2 className="h-4 w-4 text-primary" /> Equipment by Zone</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="h-[260px]">
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <BarChart data={equipByZoneChart} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
+                                                <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" />
+                                                <XAxis dataKey="zone" tick={{ fontSize: 11, fill: "var(--chart-axis)" }} />
+                                                <YAxis tick={{ fontSize: 11, fill: "var(--chart-axis)" }} allowDecimals={false} />
+                                                <Tooltip contentStyle={CHART_TOOLTIP_STYLE} />
+                                                <Bar dataKey="count" fill="var(--chart-inlet)" radius={[4, 4, 0, 0]} name="Equipment" />
+                                            </BarChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                </CardContent>
+                            </Card>
+
+                            <Card>
+                                <CardHeader className="pb-2">
+                                    <CardTitle className={CARD_TITLE}><ShieldCheck className="h-4 w-4 text-secondary" /> Equipment by Status</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="h-[260px]">
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <PieChart>
+                                                <Pie
+                                                    data={equipByStatusChart}
+                                                    cx="50%"
+                                                    cy="50%"
+                                                    innerRadius={55}
+                                                    outerRadius={90}
+                                                    paddingAngle={2}
+                                                    dataKey="count"
+                                                    nameKey="status"
+                                                    label={(props) => `${props.name}: ${props.value}`}
+                                                    labelLine={{ stroke: "var(--chart-axis)", strokeWidth: 1 }}
+                                                >
+                                                    {equipByStatusChart.map((entry, index) => (
+                                                        <Cell key={`cell-${index}`} fill={EQUIP_STATUS_CHART_COLORS[entry.status] || CHART_PALETTE[index % CHART_PALETTE.length]} />
+                                                    ))}
+                                                </Pie>
+                                                <Tooltip contentStyle={CHART_TOOLTIP_STYLE} />
+                                                <Legend verticalAlign="bottom" height={36} iconSize={10} formatter={(value: string) => <span className="text-xs text-muted-foreground">{value}</span>} />
+                                            </PieChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </div>
+                    )}
+
                     {/* How the programme works */}
-                    <Card className="card-elevated">
-                        <CardHeader className="card-elevated-header">
-                            <CardTitle className="flex items-center gap-2"><Flame className="w-5 h-5 text-secondary" /> How the BEC PPM Programme Works</CardTitle>
+                    <Card>
+                        <CardHeader className="pb-2">
+                            <CardTitle className={CARD_TITLE}><Flame className="w-4 h-4 text-secondary" /> How the BEC PPM Programme Works</CardTitle>
                         </CardHeader>
-                        <CardContent className="p-4 sm:p-5">
+                        <CardContent>
                             <p className="text-sm text-muted-foreground leading-relaxed">
                                 Bahwan Engineering (BEC) services every fire-alarm and fire-fighting asset in Muscat Bay under a non-comprehensive AMC.
                                 Maintenance runs as <span className="font-semibold text-foreground">three planned cycles each year</span> (roughly every four months), and
@@ -499,7 +588,7 @@ export default function FirefightingPage() {
                                     return k === z.key && !i.status.toLowerCase().includes("resolved");
                                 }).length;
                                 return (
-                                    <Card key={z.key} className="card-elevated">
+                                    <Card key={z.key}>
                                         <CardContent className="p-4">
                                             <div className="flex items-center justify-between">
                                                 <ZoneBadge zone={z.key} withScope />
@@ -521,14 +610,129 @@ export default function FirefightingPage() {
                         </div>
                     </div>
 
+                    {/* Equipment Register */}
+                    <div>
+                        <SectionHeading icon={ShieldCheck} title="Equipment Register" count={equipment.length} description="Live from the fire-safety equipment register, grouped by designated zone." />
+                        {equipment.length === 0 ? (
+                            <div className="ops-table-shell"><EmptyState variant="no-data" title="No equipment data" description="Live equipment register is unavailable right now." /></div>
+                        ) : (
+                            <>
+                                {/* Mobile cards */}
+                                <div className="md:hidden space-y-3">
+                                    {equipment.map((e) => {
+                                        const zk = equipZoneKey(e.zone);
+                                        return (
+                                            <div key={e.id} className="rounded-xl border border-border dark:border-border bg-card p-4 space-y-2">
+                                                <div className="flex items-start justify-between gap-2">
+                                                    <div className="min-w-0">
+                                                        <p className="text-sm font-medium text-foreground dark:text-muted-foreground">{e.name}</p>
+                                                        <p className="text-xs text-muted-foreground mt-0.5">{e.type} · {e.location}</p>
+                                                    </div>
+                                                    {zk ? <ZoneBadge zone={zk} /> : null}
+                                                </div>
+                                                <div className="flex items-center justify-between">
+                                                    <span className={cn("inline-flex px-2 py-0.5 rounded-full text-[11px] font-semibold", EQUIP_STATUS_CLS[e.status] || "bg-muted text-muted-foreground")}>{e.status}</span>
+                                                    <span className="text-[11px] text-muted-foreground tabular-nums">Next: {fmtDate(e.next_maintenance)}</span>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                                {/* Desktop table */}
+                                <div className="hidden md:block">
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead scope="col">Asset</TableHead>
+                                                <TableHead scope="col">Type</TableHead>
+                                                <TableHead scope="col">Zone</TableHead>
+                                                <TableHead scope="col">Location</TableHead>
+                                                <TableHead scope="col">Status</TableHead>
+                                                <TableHead scope="col">Priority</TableHead>
+                                                <TableHead scope="col" className="whitespace-nowrap">Next PPM</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {equipment.map((e) => {
+                                                const zk = equipZoneKey(e.zone);
+                                                return (
+                                                    <TableRow key={e.id}>
+                                                        <TableCell className="font-medium text-foreground dark:text-muted-foreground">{e.name}</TableCell>
+                                                        <TableCell className="text-muted-foreground">{e.type}</TableCell>
+                                                        <TableCell>{zk ? <ZoneBadge zone={zk} /> : <span className="text-xs text-muted-foreground">{e.zone}</span>}</TableCell>
+                                                        <TableCell className="text-xs text-muted-foreground">{e.location}</TableCell>
+                                                        <TableCell><span className={cn("inline-flex px-2 py-0.5 rounded-full text-[11px] font-semibold whitespace-nowrap", EQUIP_STATUS_CLS[e.status] || "bg-muted text-muted-foreground")}>{e.status}</span></TableCell>
+                                                        <TableCell className="text-xs font-medium text-muted-foreground">{e.priority}</TableCell>
+                                                        <TableCell className="text-xs text-muted-foreground whitespace-nowrap tabular-nums">{fmtDate(e.next_maintenance)}</TableCell>
+                                                    </TableRow>
+                                                );
+                                            })}
+                                        </TableBody>
+                                    </Table>
+                                </div>
+                            </>
+                        )}
+                    </div>
+
+                    {/* Issues & Defects Register */}
+                    <div>
+                        <SectionHeading icon={AlertTriangle} title="Issues & Defects Register" count={issues.length} description="Live defect log from the BEC engagement." />
+                        {issues.length === 0 ? (
+                            <div className="ops-table-shell"><EmptyState variant="no-data" title="No issues logged" description="The issues register is empty or unavailable." /></div>
+                        ) : (
+                            <>
+                                {/* Mobile cards */}
+                                <div className="md:hidden space-y-3">
+                                    {issues.map((it) => (
+                                        <div key={it.id} className="rounded-xl border border-border dark:border-border bg-card p-4 space-y-2">
+                                            <div className="flex items-start justify-between gap-2">
+                                                <p className="text-sm font-medium text-foreground dark:text-muted-foreground">{it.issue_description}</p>
+                                                <span className={cn("inline-flex px-2 py-0.5 rounded-full text-[11px] font-semibold flex-shrink-0", issueStatusCls(it.status))}>{it.status}</span>
+                                            </div>
+                                            <p className="text-xs text-muted-foreground flex items-center gap-1"><MapPin className="w-3 h-3" />{it.location} · {fmtDate(it.date_reported)}</p>
+                                            {it.resolution && <p className="text-[11px] text-muted-foreground">{it.resolution}</p>}
+                                        </div>
+                                    ))}
+                                </div>
+                                {/* Desktop table */}
+                                <div className="hidden md:block">
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead scope="col">Issue</TableHead>
+                                                <TableHead scope="col">Location</TableHead>
+                                                <TableHead scope="col" className="whitespace-nowrap">Reported</TableHead>
+                                                <TableHead scope="col">Status</TableHead>
+                                                <TableHead scope="col">Quote Ref</TableHead>
+                                                <TableHead scope="col">Resolution</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {issues.map((it) => (
+                                                <TableRow key={it.id}>
+                                                    <TableCell className="font-medium text-foreground dark:text-muted-foreground max-w-[240px]">{it.issue_description}</TableCell>
+                                                    <TableCell className="text-xs text-muted-foreground">{it.location}</TableCell>
+                                                    <TableCell className="text-xs text-muted-foreground whitespace-nowrap tabular-nums">{fmtDate(it.date_reported)}</TableCell>
+                                                    <TableCell><span className={cn("inline-flex px-2 py-0.5 rounded-full text-[11px] font-semibold whitespace-nowrap", issueStatusCls(it.status))}>{it.status}</span></TableCell>
+                                                    <TableCell className="text-xs font-mono text-muted-foreground">{it.quote_ref || "—"}</TableCell>
+                                                    <TableCell className="text-[11px] text-muted-foreground max-w-[260px]">{it.resolution || "—"}</TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                </div>
+                            </>
+                        )}
+                    </div>
+
                     {/* Attention strip */}
                     {(openFaults.length > 0 || openIssues.length > 0) && (
-                        <Card className="card-elevated border-mb-warning/30">
+                        <Card className="border-mb-warning/30">
                             <CardContent className="p-4 flex items-start gap-3">
                                 <AlertTriangle className="w-5 h-5 text-mb-warning-text flex-shrink-0 mt-0.5" />
                                 <div className="text-sm">
                                     <p className="font-semibold text-foreground">{openFaults.length} open PPM fault{openFaults.length === 1 ? "" : "s"} · {openIssues.length} open issue{openIssues.length === 1 ? "" : "s"}</p>
-                                    <p className="text-muted-foreground mt-0.5">Review the Maintenance tab (Faults filter) and the Assets &amp; Issues tab for details and follow-up quotes.</p>
+                                    <p className="text-muted-foreground mt-0.5">Review the Maintenance tab (Faults filter) and the Issues &amp; Defects register above for details and follow-up quotes.</p>
                                 </div>
                             </CardContent>
                         </Card>
@@ -539,54 +743,6 @@ export default function FirefightingPage() {
             {/* ══════════ MAINTENANCE ══════════ */}
             {activeTab === "ppm" && (
                 <div className="space-y-5 motion-safe:animate-in motion-safe:fade-in duration-200">
-                    {/* Zone × Cycle matrix */}
-                    <Card className="card-elevated">
-                        <CardHeader className="card-elevated-header">
-                            <CardTitle className="flex items-center gap-2"><Layers className="w-5 h-5 text-secondary" /> Zone × Cycle Overview</CardTitle>
-                            <p className="text-xs text-muted-foreground mt-1">Tap any cell to filter the tracker to that zone and cycle.</p>
-                        </CardHeader>
-                        <CardContent className="p-3 sm:p-4 overflow-x-auto">
-                            <table className="w-full min-w-[520px] border-separate border-spacing-1">
-                                <thead>
-                                    <tr>
-                                        <th className="text-left text-[11px] font-semibold uppercase tracking-wide text-muted-foreground p-2">Zone</th>
-                                        {CYCLES.map((c) => (
-                                            <th key={c.key} className="p-2 text-center text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                                                {c.label}<span className="block font-normal normal-case text-[10px] text-muted-foreground/70">{c.window}</span>
-                                            </th>
-                                        ))}
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {ZONES.map((z) => (
-                                        <tr key={z.key}>
-                                            <td className="p-1.5 align-middle"><ZoneBadge zone={z.key} withScope /></td>
-                                            {CYCLES.map((c) => {
-                                                const cell = cellFor(z.key, c.key);
-                                                const cfg = STATUS_CFG[cell.status];
-                                                const Icon = cfg.icon;
-                                                const active = selectedCycles.length === 1 && selectedCycles[0] === c.label && selectedZones.length === 1 && selectedZones[0] === z.label;
-                                                return (
-                                                    <td key={c.key} className="p-1">
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => { setSelectedCycles([c.label]); setSelectedZones([z.label]); setCurrentPage(1); }}
-                                                            className={cn("w-full flex items-center justify-center gap-1.5 rounded-md px-2 py-2 text-[11px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring", cfg.cls, active && "ring-2 ring-primary")}
-                                                            aria-label={`${z.label}, ${c.label}: ${cell.faults > 0 ? `${cell.faults} faults` : cfg.label}`}
-                                                        >
-                                                            <Icon className="w-3.5 h-3.5" />
-                                                            {cell.faults > 0 ? `${cell.faults} fault${cell.faults > 1 ? "s" : ""}` : cfg.label}
-                                                        </button>
-                                                    </td>
-                                                );
-                                            })}
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </CardContent>
-                    </Card>
-
                     {/* Toolbar — search + multi-select filters (matches the HVAC Maintenance tab) */}
                     <TableToolbar>
                         <div className="relative flex-1 min-w-0 sm:min-w-[200px] max-w-md">
@@ -697,7 +853,7 @@ export default function FirefightingPage() {
                     )}
 
                     {/* Year-2 note */}
-                    <Card className="card-elevated">
+                    <Card>
                         <CardContent className="p-4 flex items-start gap-3">
                             <Info className="w-5 h-5 text-secondary flex-shrink-0 mt-0.5" />
                             <div className="text-sm">
@@ -709,134 +865,15 @@ export default function FirefightingPage() {
                 </div>
             )}
 
-            {/* ══════════ ASSETS & ISSUES ══════════ */}
-            {activeTab === "assets" && (
-                <div className="space-y-6 motion-safe:animate-in motion-safe:fade-in duration-200">
-                    {/* Equipment inventory */}
-                    <Card className="card-elevated">
-                        <CardHeader className="card-elevated-header">
-                            <CardTitle className="flex items-center gap-2"><ShieldCheck className="w-5 h-5 text-secondary" /> Equipment Register</CardTitle>
-                            <p className="text-xs text-muted-foreground mt-1">Live from the fire-safety equipment register, grouped by designated zone.</p>
-                        </CardHeader>
-                        <CardContent className="p-0">
-                            {equipment.length === 0 ? (
-                                <EmptyState variant="no-data" title="No equipment data" description="Live equipment register is unavailable right now." />
-                            ) : (
-                                <div className="overflow-x-auto">
-                                    <table className="ops-table hidden md:table w-full">
-                                        <thead>
-                                            <tr>
-                                                <th className="py-3 px-4 font-semibold text-xs text-left">Asset</th>
-                                                <th className="py-3 px-4 font-semibold text-xs text-left">Type</th>
-                                                <th className="py-3 px-4 font-semibold text-xs text-left">Zone</th>
-                                                <th className="py-3 px-4 font-semibold text-xs text-left">Location</th>
-                                                <th className="py-3 px-4 font-semibold text-xs text-left">Status</th>
-                                                <th className="py-3 px-4 font-semibold text-xs text-left">Priority</th>
-                                                <th className="py-3 px-4 font-semibold text-xs text-left whitespace-nowrap">Next PPM</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {equipment.map((e, i) => {
-                                                const zk = equipZoneKey(e.zone);
-                                                return (
-                                                    <tr key={e.id} className={cn("border-b border-border/80 hover:bg-secondary/5 dark:hover:bg-muted/40 transition-colors", i % 2 === 1 && "bg-muted/40 dark:bg-muted/20")}>
-                                                        <td className="py-3 px-4 text-sm font-medium text-foreground dark:text-muted-foreground">{e.name}</td>
-                                                        <td className="py-3 px-4 text-sm text-muted-foreground">{e.type}</td>
-                                                        <td className="py-3 px-4">{zk ? <ZoneBadge zone={zk} /> : <span className="text-xs text-muted-foreground">{e.zone}</span>}</td>
-                                                        <td className="py-3 px-4 text-xs text-muted-foreground">{e.location}</td>
-                                                        <td className="py-3 px-4"><span className={cn("inline-flex px-2 py-0.5 rounded-full text-[11px] font-semibold whitespace-nowrap", EQUIP_STATUS_CLS[e.status] || "bg-muted text-muted-foreground")}>{e.status}</span></td>
-                                                        <td className="py-3 px-4 text-xs font-medium text-muted-foreground">{e.priority}</td>
-                                                        <td className="py-3 px-4 text-xs text-muted-foreground whitespace-nowrap tabular-nums">{fmtDate(e.next_maintenance)}</td>
-                                                    </tr>
-                                                );
-                                            })}
-                                        </tbody>
-                                    </table>
-                                    <div className="md:hidden divide-y divide-border dark:divide-border">
-                                        {equipment.map((e) => {
-                                            const zk = equipZoneKey(e.zone);
-                                            return (
-                                                <div key={e.id} className="p-4 space-y-2">
-                                                    <div className="flex items-start justify-between gap-2">
-                                                        <div><p className="text-sm font-medium text-foreground">{e.name}</p><p className="text-xs text-muted-foreground mt-0.5">{e.type} · {e.location}</p></div>
-                                                        {zk ? <ZoneBadge zone={zk} /> : null}
-                                                    </div>
-                                                    <div className="flex items-center justify-between">
-                                                        <span className={cn("inline-flex px-2 py-0.5 rounded-full text-[11px] font-semibold", EQUIP_STATUS_CLS[e.status] || "bg-muted text-muted-foreground")}>{e.status}</span>
-                                                        <span className="text-[11px] text-muted-foreground tabular-nums">Next: {fmtDate(e.next_maintenance)}</span>
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
-
-                    {/* Issues register */}
-                    <Card className="card-elevated">
-                        <CardHeader className="card-elevated-header">
-                            <CardTitle className="flex items-center gap-2"><AlertTriangle className="w-5 h-5 text-secondary" /> Issues &amp; Defects Register</CardTitle>
-                            <p className="text-xs text-muted-foreground mt-1">Live defect log from the BEC engagement.</p>
-                        </CardHeader>
-                        <CardContent className="p-0">
-                            {issues.length === 0 ? (
-                                <EmptyState variant="no-data" title="No issues logged" description="The issues register is empty or unavailable." />
-                            ) : (
-                                <div className="overflow-x-auto">
-                                    <table className="ops-table hidden md:table w-full">
-                                        <thead>
-                                            <tr>
-                                                <th className="py-3 px-4 font-semibold text-xs text-left">Issue</th>
-                                                <th className="py-3 px-4 font-semibold text-xs text-left">Location</th>
-                                                <th className="py-3 px-4 font-semibold text-xs text-left whitespace-nowrap">Reported</th>
-                                                <th className="py-3 px-4 font-semibold text-xs text-left">Status</th>
-                                                <th className="py-3 px-4 font-semibold text-xs text-left">Quote Ref</th>
-                                                <th className="py-3 px-4 font-semibold text-xs text-left">Resolution</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {issues.map((it, i) => (
-                                                <tr key={it.id} className={cn("border-b border-border/80 hover:bg-secondary/5 dark:hover:bg-muted/40 transition-colors", i % 2 === 1 && "bg-muted/40 dark:bg-muted/20")}>
-                                                    <td className="py-3 px-4 text-sm font-medium text-foreground dark:text-muted-foreground max-w-[240px]">{it.issue_description}</td>
-                                                    <td className="py-3 px-4 text-xs text-muted-foreground">{it.location}</td>
-                                                    <td className="py-3 px-4 text-xs text-muted-foreground whitespace-nowrap tabular-nums">{fmtDate(it.date_reported)}</td>
-                                                    <td className="py-3 px-4"><span className={cn("inline-flex px-2 py-0.5 rounded-full text-[11px] font-semibold whitespace-nowrap", issueStatusCls(it.status))}>{it.status}</span></td>
-                                                    <td className="py-3 px-4 text-xs font-mono text-muted-foreground">{it.quote_ref || "—"}</td>
-                                                    <td className="py-3 px-4 text-[11px] text-muted-foreground max-w-[260px]">{it.resolution || "—"}</td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                    <div className="md:hidden divide-y divide-border dark:divide-border">
-                                        {issues.map((it) => (
-                                            <div key={it.id} className="p-4 space-y-2">
-                                                <div className="flex items-start justify-between gap-2">
-                                                    <p className="text-sm font-medium text-foreground">{it.issue_description}</p>
-                                                    <span className={cn("inline-flex px-2 py-0.5 rounded-full text-[11px] font-semibold flex-shrink-0", issueStatusCls(it.status))}>{it.status}</span>
-                                                </div>
-                                                <p className="text-xs text-muted-foreground flex items-center gap-1"><MapPin className="w-3 h-3" />{it.location} · {fmtDate(it.date_reported)}</p>
-                                                {it.resolution && <p className="text-[11px] text-muted-foreground">{it.resolution}</p>}
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
-                </div>
-            )}
-
             {/* ══════════ CONTRACT & TEAM ══════════ */}
             {activeTab === "contract" && (
                 <div className="space-y-6 motion-safe:animate-in motion-safe:fade-in duration-200">
                     {/* Contract summary */}
-                    <Card className="card-elevated">
-                        <CardHeader className="card-elevated-header border-b border-border dark:border-border">
-                            <CardTitle className="flex items-center gap-2"><FileText className="w-5 h-5 text-secondary" /> AMC Contract Summary</CardTitle>
+                    <Card>
+                        <CardHeader className="pb-2">
+                            <CardTitle className={CARD_TITLE}><FileText className="w-4 h-4 text-secondary" /> AMC Contract Summary</CardTitle>
                         </CardHeader>
-                        <CardContent className="p-4 sm:p-5">
+                        <CardContent>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3">
                                 {[
                                     ["Contractor", "Bahwan Engineering Co. (BEC)"],
@@ -862,11 +899,11 @@ export default function FirefightingPage() {
                     </Card>
 
                     {/* BEC team contacts (live) */}
-                    <Card className="card-elevated">
-                        <CardHeader className="card-elevated-header border-b border-border dark:border-border">
-                            <CardTitle className="flex items-center gap-2"><Users className="w-5 h-5 text-secondary" /> BEC Team Contacts</CardTitle>
+                    <Card>
+                        <CardHeader className="pb-2">
+                            <CardTitle className={CARD_TITLE}><Users className="w-4 h-4 text-secondary" /> BEC Team Contacts</CardTitle>
                         </CardHeader>
-                        <CardContent className="p-4 sm:p-5">
+                        <CardContent>
                             {contacts.length === 0 ? (
                                 <EmptyState variant="no-data" title="No contacts" description="The BEC contact list is unavailable right now." />
                             ) : (
@@ -889,12 +926,12 @@ export default function FirefightingPage() {
 
                     {/* BEC engagement timeline (live activity log) */}
                     {activityLog.length > 0 && (
-                        <Card className="card-elevated">
-                            <CardHeader className="card-elevated-header border-b border-border dark:border-border">
-                                <CardTitle className="flex items-center gap-2"><History className="w-5 h-5 text-secondary" /> BEC Engagement Timeline</CardTitle>
+                        <Card>
+                            <CardHeader className="pb-2">
+                                <CardTitle className={CARD_TITLE}><History className="w-4 h-4 text-secondary" /> BEC Engagement Timeline</CardTitle>
                                 <p className="text-xs text-muted-foreground mt-1">Live log of PPM cycles, inspections, quotes and contract milestones.</p>
                             </CardHeader>
-                            <CardContent className="p-4 sm:p-5">
+                            <CardContent>
                                 <ol className="relative border-s border-border dark:border-border/60 ms-2 space-y-4">
                                     {activityLog.map((a) => (
                                         <li key={a.id} className="ms-4">
@@ -914,9 +951,9 @@ export default function FirefightingPage() {
                     )}
 
                     {/* SLA */}
-                    <Card className="card-elevated">
-                        <CardHeader className="card-elevated-header border-b border-border dark:border-border"><CardTitle>Response-Time SLA</CardTitle></CardHeader>
-                        <CardContent className="p-4 sm:p-5">
+                    <Card>
+                        <CardHeader className="pb-2"><CardTitle className={CARD_TITLE}><Clock className="w-4 h-4 text-secondary" /> Response-Time SLA</CardTitle></CardHeader>
+                        <CardContent>
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                                 {[
                                     { p: "P1 Emergency", time: "3 Hours", desc: "Continuous alarm, pump failure, major leak", bg: "bg-mb-danger-light", dot: "bg-destructive" },
@@ -935,9 +972,9 @@ export default function FirefightingPage() {
                     </Card>
 
                     {/* Equipment under AMC */}
-                    <Card className="card-elevated">
-                        <CardHeader className="card-elevated-header border-b border-border dark:border-border"><CardTitle className="flex items-center gap-2"><Building2 className="w-5 h-5 text-secondary" /> Equipment Under AMC</CardTitle></CardHeader>
-                        <CardContent className="p-4 sm:p-5">
+                    <Card>
+                        <CardHeader className="pb-2"><CardTitle className={CARD_TITLE}><Building2 className="w-4 h-4 text-secondary" /> Equipment Under AMC</CardTitle></CardHeader>
+                        <CardContent>
                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
                                 {[
                                     { label: "FA Panels", value: "41", sub: "Menvier · Gent · Tyco" },
@@ -960,9 +997,9 @@ export default function FirefightingPage() {
                     </Card>
 
                     {/* Insurance */}
-                    <Card className="card-elevated">
-                        <CardHeader className="card-elevated-header border-b border-border dark:border-border"><CardTitle>Insurance Coverage (Contractual)</CardTitle></CardHeader>
-                        <CardContent className="p-4 sm:p-5 space-y-3">
+                    <Card>
+                        <CardHeader className="pb-2"><CardTitle className={CARD_TITLE}><ShieldCheck className="w-4 h-4 text-secondary" /> Insurance Coverage (Contractual)</CardTitle></CardHeader>
+                        <CardContent className="space-y-3">
                             {[
                                 ["Owner's property (contractor negligence)", "RO 100,000"],
                                 ["Third-party property liability", "RO 250,000"],
@@ -977,12 +1014,12 @@ export default function FirefightingPage() {
                     </Card>
 
                     {/* Sewage tanker agreements (kept from previous version — STP-related) */}
-                    <Card className="card-elevated">
-                        <CardHeader className="card-elevated-header border-b border-border dark:border-border">
-                            <CardTitle className="flex items-center gap-2"><Truck className="w-5 h-5 text-secondary" /> Sewage Tanker Discharge Agreements</CardTitle>
+                    <Card>
+                        <CardHeader className="pb-2">
+                            <CardTitle className={CARD_TITLE}><Truck className="w-4 h-4 text-secondary" /> Sewage Tanker Discharge Agreements</CardTitle>
                             <p className="text-xs text-muted-foreground mt-1">External sewage tankers discharging into Muscat Bay STP Plant (STP-related — listed here for reference).</p>
                         </CardHeader>
-                        <CardContent className="p-4 sm:p-5 space-y-5">
+                        <CardContent className="space-y-5">
                             <div className="p-3 bg-mb-success-light rounded-lg">
                                 <p className="text-xs font-bold text-mb-success-text uppercase">Discharge Rate</p>
                                 <p className="text-lg font-bold text-foreground mt-1">1 OMR per 1,000 Gallons <span className="text-sm font-normal text-muted-foreground">(5 OMR per standard 5,000-gal tanker)</span></p>
