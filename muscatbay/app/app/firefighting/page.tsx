@@ -1,169 +1,194 @@
 "use client";
 
-import { useEffect, useState, useMemo, useCallback } from "react";
-import { getFireSafetyEquipment, FireSafetyEquipment } from "@/lib/mock-data";
+import { useEffect, useMemo, useState, useCallback } from "react";
+import { fetchFireSafetyDataAction } from "@/actions/fire-safety";
+import type {
+    FireSafetyEquipment, FireIssue, FirePpmContact, FirePpmActivity,
+} from "@/entities/fire-safety";
 import { StatsGrid } from "@/components/shared/stats-grid";
 import { TabNavigation } from "@/components/shared/tab-navigation";
-import { StatsGridSkeleton, ChartSkeleton, Skeleton } from "@/components/shared/skeleton";
 import { PageHeader } from "@/components/shared/page-header";
+import { PageStatusBar } from "@/components/shared/page-status-bar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import {
-    ShieldCheck, HardHat, AlertTriangle, Wrench, Plus,
-    CheckCircle, XCircle, Clock, CircleDot, ChevronDown, ChevronRight,
-    FileText, Info, Filter, Flame, Calendar, Building2, Gauge, Truck
-} from "lucide-react";
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
-import { LiquidTooltip } from "../../components/charts/liquid-tooltip";
+import { Skeleton } from "@/components/shared/skeleton";
+import { EmptyState } from "@/components/shared/empty-state";
 import { cn } from "@/lib/utils";
+import { format } from "date-fns";
+import {
+    ShieldCheck, AlertTriangle, CheckCircle, XCircle, Clock,
+    Calendar, FileText, Info, Building2, Gauge, MapPin, Layers, Users,
+    Phone, Mail, ListChecks, Boxes, Flame, Truck, History, type LucideIcon,
+} from "lucide-react";
 
-// ═══════════════════════════════════════════════════════════════
-// TYPES
-// ═══════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════════
+//  BEC FIRE-SAFETY AMC — PPM PROGRAMME MODEL
+//  Structure: 3 PPM cycles / year × 4 designated zones × their assets.
+//  Sources: BEC PPM plan emails (Dec-2025 completion + 20–30 Apr-2026 plan,
+//  ref MIS-SBJ-25-077) and the live fire_safety_equipment register.
+// ═══════════════════════════════════════════════════════════════════════════
 
-type PPMStatus = "done" | "in_progress" | "not_started" | "fault" | "no_access";
-type StageStatus = "completed" | "in_progress" | "upcoming";
+type Cycle = 1 | 2 | 3;
+type ZoneKey = "zone1" | "zone3" | "zone5" | "vs";
+type PpmStatus = "done" | "scheduled" | "upcoming" | "fault" | "no_access";
 
-interface Building {
+interface PpmActivity {
     id: string;
+    cycle: Cycle;
+    zone: ZoneKey;
     area: string;
     systems: string[];
     date: string;
-    status: PPMStatus;
-    notes: string;
+    status: PpmStatus;
+    notes?: string;
 }
 
-interface Stage {
-    id: number;
-    name: string;
-    period: string;
-    year: string;
-    overallStatus: StageStatus;
-    buildings: Building[];
-}
+const ZONES: { key: ZoneKey; label: string; short: string; scope: string }[] = [
+    { key: "zone1", label: "Zone 1", short: "Z1", scope: "Staff Accommodation (Bldgs 1–8) + external hydrants" },
+    { key: "zone3", label: "Zone 3", short: "Z3", scope: "Residential Apartments 44–62, 74 & 75" },
+    { key: "zone5", label: "Zone 5", short: "Z5", scope: "Security, Nursery, Control Room, Taxi & ROP" },
+    { key: "vs", label: "Village Square", short: "VS", scope: "Central fire plant, pumps, FM & Experience Centre" },
+];
+const ZONE_BY_KEY: Record<ZoneKey, (typeof ZONES)[number]> = ZONES.reduce(
+    (acc, z) => { acc[z.key] = z; return acc; },
+    {} as Record<ZoneKey, (typeof ZONES)[number]>,
+);
 
-// ═══════════════════════════════════════════════════════════════
-// PPM DATABASE — Verified against BEC emails as of 28 Mar 2026
-// ═══════════════════════════════════════════════════════════════
-
-const PPM_DATABASE: Stage[] = [
-    {
-        id: 1,
-        name: "Stage 1",
-        period: "Dec 2025",
-        year: "Year 1",
-        overallStatus: "completed",
-        buildings: [
-            { id: "s1-1", area: "FM Office Building", systems: ["FA", "FF", "FE"], date: "07 Dec 2025", status: "done", notes: "Including fire pump testing" },
-            { id: "s1-2", area: "Experience Centre", systems: ["FA", "FF", "FE"], date: "07 Dec 2025", status: "done", notes: "" },
-            { id: "s1-3", area: "Staff Accom Bldg 1", systems: ["FA", "Hose Reel", "FE"], date: "08 Dec 2025", status: "done", notes: "" },
-            { id: "s1-4", area: "Staff Accom Bldg 2", systems: ["FA", "Hose Reel", "FE"], date: "08 Dec 2025", status: "done", notes: "" },
-            { id: "s1-5", area: "Staff Accom Bldg 3", systems: ["FA", "Hose Reel", "FE"], date: "08 Dec 2025", status: "done", notes: "" },
-            { id: "s1-6", area: "Staff Accom Bldg 4", systems: ["FA", "Hose Reel", "FE"], date: "08 Dec 2025", status: "done", notes: "" },
-            { id: "s1-7", area: "Staff Accom Bldg 5", systems: ["FA", "Hose Reel", "FE"], date: "09 Dec 2025", status: "done", notes: "" },
-            { id: "s1-8", area: "Staff Accom Bldg 6", systems: ["FA", "Hose Reel", "FE"], date: "09 Dec 2025", status: "done", notes: "" },
-            { id: "s1-9", area: "Staff Accom Bldg 7", systems: ["FA", "Hose Reel", "FE"], date: "09 Dec 2025", status: "done", notes: "" },
-            { id: "s1-10", area: "Staff Accom Bldg 8", systems: ["FA", "Hose Reel", "FE"], date: "09 Dec 2025", status: "done", notes: "" },
-            { id: "s1-11", area: "Security Room", systems: ["FA", "FE"], date: "10 Dec 2025", status: "done", notes: "" },
-            { id: "s1-12", area: "Nursery", systems: ["FA", "FE"], date: "10 Dec 2025", status: "done", notes: "" },
-            { id: "s1-13", area: "Control Room", systems: ["FA", "FE"], date: "10 Dec 2025", status: "done", notes: "" },
-            { id: "s1-14", area: "Taxi Building", systems: ["FA", "FE"], date: "10 Dec 2025", status: "done", notes: "" },
-            { id: "s1-15", area: "ROP Building", systems: ["FA", "FE"], date: "10 Dec 2025", status: "done", notes: "" },
-            { id: "s1-16", area: "Technical Building", systems: ["FA", "FE"], date: "11 Dec 2025", status: "done", notes: "" },
-            { id: "s1-17", area: "STP Building", systems: ["FA", "FE"], date: "11 Dec 2025", status: "done", notes: "" },
-            { id: "s1-18", area: "Village Square", systems: ["FA", "FE"], date: "11 Dec 2025", status: "done", notes: "" },
-            { id: "s1-19", area: "Apartment 44", systems: ["FA", "FE"], date: "13 Dec 2025", status: "done", notes: "" },
-            { id: "s1-20", area: "Apartment 45", systems: ["FA", "FE"], date: "13 Dec 2025", status: "done", notes: "" },
-            { id: "s1-21", area: "Apartment 46", systems: ["FA", "FE"], date: "13 Dec 2025", status: "done", notes: "" },
-            { id: "s1-22", area: "Apartment 74", systems: ["FA", "FE"], date: "13 Dec 2025", status: "done", notes: "" },
-            { id: "s1-23", area: "Apartment 75", systems: ["FA", "FE"], date: "13 Dec 2025", status: "done", notes: "" },
-            { id: "s1-24", area: "Apartment 47", systems: ["FA", "FE"], date: "15 Dec 2025", status: "done", notes: "" },
-            { id: "s1-25", area: "Apartment 48", systems: ["FA", "FE"], date: "15 Dec 2025", status: "done", notes: "" },
-            { id: "s1-26", area: "Apartment 49", systems: ["FA", "FE"], date: "15 Dec 2025", status: "done", notes: "" },
-            { id: "s1-27", area: "Apartment 50", systems: ["FA", "FE"], date: "15 Dec 2025", status: "done", notes: "" },
-            { id: "s1-28", area: "Apartment 51", systems: ["FA", "FE"], date: "15 Dec 2025", status: "done", notes: "" },
-            { id: "s1-29", area: "Apartment 52", systems: ["FA", "FE"], date: "17 Dec 2025", status: "done", notes: "" },
-            { id: "s1-30", area: "Apartment 53", systems: ["FA", "FE"], date: "17 Dec 2025", status: "done", notes: "" },
-            { id: "s1-31", area: "Apartment 54", systems: ["FA", "FE"], date: "17 Dec 2025", status: "done", notes: "" },
-            { id: "s1-32", area: "Apartment 55", systems: ["FA", "FE"], date: "17 Dec 2025", status: "done", notes: "" },
-            { id: "s1-33", area: "Apartment 56", systems: ["FA", "FE"], date: "17 Dec 2025", status: "done", notes: "" },
-            { id: "s1-34", area: "Apartment 57", systems: ["FA", "FE"], date: "20 Dec 2025", status: "done", notes: "" },
-            { id: "s1-35", area: "Apartment 58", systems: ["FA", "FE"], date: "20 Dec 2025", status: "done", notes: "" },
-            { id: "s1-36", area: "Apartment 59", systems: ["FA", "FE"], date: "20 Dec 2025", status: "done", notes: "" },
-            { id: "s1-37", area: "Apartment 60", systems: ["FA", "FE"], date: "20 Dec 2025", status: "done", notes: "" },
-            { id: "s1-38", area: "Apartment 61", systems: ["FA", "FE"], date: "20 Dec 2025", status: "done", notes: "" },
-            { id: "s1-39", area: "Apartment 62", systems: ["FA", "FE"], date: "20 Dec 2025", status: "done", notes: "" },
-            { id: "s1-40", area: "External Fire Hydrants", systems: ["Fire Hydrants"], date: "22-25 Dec 2025", status: "done", notes: "27 external + 3 staff accommodation" },
-            { id: "s1-41", area: "Bldg-1 Room-4", systems: ["FE"], date: "08 Dec 2025", status: "no_access", notes: "No access for extinguisher service — FAULT OPEN" },
-            { id: "s1-42", area: "Bldg-1 Room-7", systems: ["FE"], date: "08 Dec 2025", status: "fault", notes: "Extinguisher DCP 4.5 KG missing — FAULT OPEN" },
-            { id: "s1-43", area: "Bldg-2 GF Electrical Room", systems: ["FE"], date: "08 Dec 2025", status: "fault", notes: "CO₂ 5 KG extinguisher found empty — FAULT OPEN" },
-            { id: "s1-44", area: "Bldg-8 Smoke Detector SD-32", systems: ["FA"], date: "09 Dec 2025", status: "fault", notes: "Device defective — FAULT OPEN" },
-        ],
-    },
-    {
-        id: 2,
-        name: "Stage 2",
-        period: "~Apr 2026",
-        year: "Year 1",
-        overallStatus: "upcoming",
-        buildings: [
-            { id: "s2-1", area: "FM Office Building", systems: ["FA", "FF", "FE"], date: "TBD", status: "not_started", notes: "" },
-            { id: "s2-2", area: "Experience Centre", systems: ["FA", "FF", "FE"], date: "TBD", status: "not_started", notes: "" },
-            { id: "s2-3", area: "Staff Accom Bldgs 1-8", systems: ["FA", "Hose Reel", "FE"], date: "TBD", status: "not_started", notes: "Ensure access to Bldg-1 Rm-4 resolved before visit" },
-            { id: "s2-4", area: "Security, Nursery, Control, Taxi, ROP", systems: ["FA", "FE"], date: "TBD", status: "not_started", notes: "" },
-            { id: "s2-5", area: "Technical Bldg, STP, Village Square", systems: ["FA", "FE"], date: "TBD", status: "not_started", notes: "" },
-            { id: "s2-6", area: "Apartments 44-62, 74-75", systems: ["FA", "FE"], date: "TBD", status: "not_started", notes: "" },
-            { id: "s2-7", area: "External Fire Hydrants", systems: ["Fire Hydrants"], date: "TBD", status: "not_started", notes: "" },
-            { id: "s2-8", area: "Fire Pump Testing", systems: ["FF"], date: "TBD", status: "not_started", notes: "Electric + Diesel + Jockey" },
-        ],
-    },
-    {
-        id: 3,
-        name: "Stage 3",
-        period: "~Aug 2026",
-        year: "Year 1",
-        overallStatus: "upcoming",
-        buildings: [
-            { id: "s3-1", area: "FM Office Building", systems: ["FA", "FF", "FE"], date: "TBD", status: "not_started", notes: "" },
-            { id: "s3-2", area: "Experience Centre", systems: ["FA", "FF", "FE"], date: "TBD", status: "not_started", notes: "" },
-            { id: "s3-3", area: "Staff Accom Bldgs 1-8", systems: ["FA", "Hose Reel", "FE"], date: "TBD", status: "not_started", notes: "" },
-            { id: "s3-4", area: "Security, Nursery, Control, Taxi, ROP", systems: ["FA", "FE"], date: "TBD", status: "not_started", notes: "" },
-            { id: "s3-5", area: "Technical Bldg, STP, Village Square", systems: ["FA", "FE"], date: "TBD", status: "not_started", notes: "" },
-            { id: "s3-6", area: "Apartments 44-62, 74-75", systems: ["FA", "FE"], date: "TBD", status: "not_started", notes: "" },
-            { id: "s3-7", area: "External Fire Hydrants", systems: ["Fire Hydrants"], date: "TBD", status: "not_started", notes: "" },
-            { id: "s3-8", area: "Fire Pump Testing", systems: ["FF"], date: "TBD", status: "not_started", notes: "Electric + Diesel + Jockey" },
-        ],
-    },
+const CYCLES: { key: Cycle; label: string; window: string; status: "completed" | "upcoming" }[] = [
+    { key: 1, label: "Cycle 1", window: "07–25 Dec 2025", status: "completed" },
+    { key: 2, label: "Cycle 2", window: "20–30 Apr 2026", status: "completed" },
+    { key: 3, label: "Cycle 3", window: "~Aug 2026", status: "upcoming" },
 ];
 
-// ═══════════════════════════════════════════════════════════════
-// STATUS CONFIG
-// ═══════════════════════════════════════════════════════════════
+// The 10 BEC visit groups, mapped to the 4 designated zones.
+const AREA_GROUPS: { key: string; zone: ZoneKey; area: string; systems: string[] }[] = [
+    { key: "sa14", zone: "zone1", area: "Staff Accommodation Bldgs 1–4", systems: ["FA", "Hose Reel", "FE"] },
+    { key: "sa58", zone: "zone1", area: "Staff Accommodation Bldgs 5–8", systems: ["FA", "Hose Reel", "FE"] },
+    { key: "ext", zone: "zone1", area: "External Hydrants + Staff Accom.", systems: ["Hydrants"] },
+    { key: "ap1", zone: "zone3", area: "Apartments 44, 45, 46, 74, 75", systems: ["FA", "FE"] },
+    { key: "ap2", zone: "zone3", area: "Apartments 47, 48, 49, 50, 51", systems: ["FA", "FE"] },
+    { key: "ap3", zone: "zone3", area: "Apartments 52, 53, 54, 55, 56", systems: ["FA", "FE"] },
+    { key: "ap4", zone: "zone3", area: "Apartments 57, 58, 59, 60, 61, 62", systems: ["FA", "FE"] },
+    { key: "sec", zone: "zone5", area: "Security, Nursery, Control Room, Taxi, ROP", systems: ["FA", "FE"] },
+    { key: "tech", zone: "vs", area: "Technical Bldg, STP, Village Square", systems: ["FA", "FE"] },
+    { key: "fm", zone: "vs", area: "FM Office, Experience Centre, Pump Testing", systems: ["FA", "FF"] },
+];
 
-const STATUS_CONFIG: Record<PPMStatus, { label: string; icon: typeof CheckCircle; bg: string; text: string; dot: string }> = {
-    done: { label: "Done", icon: CheckCircle, bg: "bg-secondary/10 dark:bg-secondary/15", text: "text-secondary dark:text-secondary", dot: "bg-secondary" },
-    in_progress: { label: "In Progress", icon: Clock, bg: "bg-primary/10 dark:bg-primary/15", text: "text-primary dark:text-muted-foreground/70", dot: "bg-primary" },
-    not_started: { label: "Not Started", icon: CircleDot, bg: "bg-muted dark:bg-muted", text: "text-muted-foreground", dot: "bg-border dark:bg-muted-foreground" },
-    fault: { label: "Fault", icon: XCircle, bg: "bg-destructive/10 dark:bg-destructive/15", text: "text-destructive", dot: "bg-destructive" },
-    no_access: { label: "No Access", icon: AlertTriangle, bg: "bg-mb-warning-light", text: "text-mb-warning-text", dot: "bg-mb-warning" },
+// Per-cycle date + status + notes, keyed by area-group.
+const CYCLE_DETAIL: Record<Cycle, Record<string, { date: string; status: PpmStatus; notes?: string }>> = {
+    1: {
+        fm: { date: "07 Dec 2025", status: "done", notes: "Incl. electric, diesel & jockey fire-pump testing" },
+        sa14: { date: "08 Dec 2025", status: "fault", notes: "Bldg-1 Rm-4 no access for extinguisher service; Bldg-1 Rm-7 DCP 4.5 kg extinguisher missing; Bldg-2 GF electrical room CO₂ 5 kg found empty" },
+        sa58: { date: "09 Dec 2025", status: "fault", notes: "Bldg-8 smoke detector SD-32 defective" },
+        sec: { date: "10 Dec 2025", status: "done" },
+        tech: { date: "11 Dec 2025", status: "done" },
+        ap1: { date: "13 Dec 2025", status: "done" },
+        ap2: { date: "15 Dec 2025", status: "done" },
+        ap3: { date: "17 Dec 2025", status: "done" },
+        ap4: { date: "20 Dec 2025", status: "done" },
+        ext: { date: "22–25 Dec 2025", status: "done", notes: "27 external + 3 staff-accommodation hydrants" },
+    },
+    2: {
+        sa14: { date: "20 Apr 2026", status: "done" },
+        sa58: { date: "21 Apr 2026", status: "done" },
+        sec: { date: "22 Apr 2026", status: "done" },
+        tech: { date: "23 Apr 2026", status: "done" },
+        fm: { date: "25 Apr 2026", status: "done", notes: "Incl. fire-pump testing; follow-up spares quotes raised May–Jun 2026 (refs 223425, 222982, 220240)" },
+        ap1: { date: "26 Apr 2026", status: "done" },
+        ap2: { date: "27 Apr 2026", status: "done" },
+        ap3: { date: "28 Apr 2026", status: "done" },
+        ap4: { date: "29 Apr 2026", status: "done" },
+        ext: { date: "30 Apr 2026", status: "done" },
+    },
+    3: {
+        sa14: { date: "Planned ~Aug 2026", status: "upcoming" },
+        sa58: { date: "Planned ~Aug 2026", status: "upcoming" },
+        ext: { date: "Planned ~Aug 2026", status: "upcoming" },
+        ap1: { date: "Planned ~Aug 2026", status: "upcoming" },
+        ap2: { date: "Planned ~Aug 2026", status: "upcoming" },
+        ap3: { date: "Planned ~Aug 2026", status: "upcoming" },
+        ap4: { date: "Planned ~Aug 2026", status: "upcoming" },
+        sec: { date: "Planned ~Aug 2026", status: "upcoming" },
+        tech: { date: "Planned ~Aug 2026", status: "upcoming" },
+        fm: { date: "Planned ~Aug 2026", status: "upcoming" },
+    },
 };
 
-const STAGE_STATUS: Record<StageStatus, { label: string; color: string; border: string; bg: string }> = {
-    completed: { label: "Completed", color: "bg-secondary", border: "border-secondary/30 dark:border-secondary/20", bg: "bg-secondary/5 dark:bg-secondary/10" },
-    in_progress: { label: "In Progress", color: "bg-primary", border: "border-primary/30 dark:border-primary/20", bg: "bg-primary/5 dark:bg-primary/10" },
-    upcoming: { label: "Upcoming", color: "bg-muted-foreground dark:bg-muted", border: "border-border dark:border-border", bg: "bg-muted dark:bg-muted/50" },
+const PPM_ACTIVITIES: PpmActivity[] = ([1, 2, 3] as Cycle[]).flatMap((cycle) =>
+    AREA_GROUPS.map((g) => {
+        const d = CYCLE_DETAIL[cycle][g.key];
+        return {
+            id: `c${cycle}-${g.key}`,
+            cycle,
+            zone: g.zone,
+            area: g.area,
+            systems: g.systems,
+            date: d.date,
+            status: d.status,
+            notes: d.notes,
+        };
+    }),
+);
+
+// ── Visual config ──────────────────────────────────────────────────────────
+
+const STATUS_CFG: Record<PpmStatus, { label: string; icon: LucideIcon; cls: string; dot: string }> = {
+    done: { label: "Completed", icon: CheckCircle, cls: "bg-mb-success-light text-mb-success-text", dot: "bg-[var(--status-normal)]" },
+    scheduled: { label: "Scheduled", icon: Calendar, cls: "bg-primary/10 text-primary dark:text-muted-foreground/80", dot: "bg-primary" },
+    upcoming: { label: "Upcoming", icon: Clock, cls: "bg-muted text-muted-foreground", dot: "bg-border dark:bg-muted-foreground" },
+    fault: { label: "Fault", icon: XCircle, cls: "bg-mb-danger-light text-mb-danger-text", dot: "bg-[var(--status-danger)]" },
+    no_access: { label: "No Access", icon: AlertTriangle, cls: "bg-mb-warning-light text-mb-warning-text", dot: "bg-[var(--status-warning)]" },
 };
 
-// ═══════════════════════════════════════════════════════════════
-// SMALL COMPONENTS
-// ═══════════════════════════════════════════════════════════════
+const ZONE_TAG: Record<ZoneKey, string> = {
+    zone1: "bg-primary/10 text-primary dark:bg-primary/20 dark:text-muted-foreground/80",
+    zone3: "bg-secondary/15 text-secondary",
+    zone5: "bg-mb-info-light text-mb-info-text",
+    vs: "bg-mb-stale-light text-mb-stale-text",
+};
 
-function StatusBadge({ status }: { status: PPMStatus }) {
-    const cfg = STATUS_CONFIG[status];
-    if (!cfg) return null;
+const SYSTEM_TAG: Record<string, string> = {
+    FA: "bg-primary/10 text-primary dark:bg-primary/20 dark:text-muted-foreground/80",
+    FF: "bg-mb-danger-light text-mb-danger-text",
+    FE: "bg-mb-warning-light text-mb-warning-text",
+    "Hose Reel": "bg-secondary/15 text-secondary",
+    Hydrants: "bg-mb-info-light text-mb-info-text",
+};
+
+const SYSTEM_LEGEND: [string, string][] = [
+    ["FA", "Fire Alarm"],
+    ["FF", "Fire-Fighting (pumps / sprinkler)"],
+    ["FE", "Fire Extinguishers"],
+    ["Hose Reel", "Hose Reels"],
+    ["Hydrants", "Fire Hydrants"],
+];
+
+// ── Small presentational components ─────────────────────────────────────────
+
+function ZoneBadge({ zone, withScope = false }: { zone: ZoneKey; withScope?: boolean }) {
+    const z = ZONE_BY_KEY[zone];
+    return (
+        <span className={cn("inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold whitespace-nowrap", ZONE_TAG[zone])}>
+            <MapPin className="w-3 h-3" />
+            {withScope ? z.label : z.short}
+        </span>
+    );
+}
+
+function CycleBadge({ cycle }: { cycle: Cycle }) {
+    return (
+        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-muted text-foreground dark:text-muted-foreground/80 whitespace-nowrap">
+            <span className="flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">{cycle}</span>
+            Cycle {cycle}
+        </span>
+    );
+}
+
+function PpmStatusBadge({ status }: { status: PpmStatus }) {
+    const cfg = STATUS_CFG[status];
     const Icon = cfg.icon;
     return (
-        <span className={cn("inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold", cfg.bg, cfg.text)}>
+        <span className={cn("inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold whitespace-nowrap", cfg.cls)}>
             <Icon className="w-3 h-3" />
             {cfg.label}
         </span>
@@ -171,415 +196,559 @@ function StatusBadge({ status }: { status: PPMStatus }) {
 }
 
 function SystemTag({ label }: { label: string }) {
-    // Use muted, consistent tones — avoid bright saturated colors
-    const colors: Record<string, string> = {
-        FA: "bg-primary/10 text-primary dark:bg-primary/20 dark:text-muted-foreground/70",
-        FF: "bg-destructive/10 text-destructive dark:bg-destructive/20",
-        FE: "bg-mb-warning-light text-mb-warning-text",
-        "Hose Reel": "bg-secondary/10 text-primary dark:bg-secondary/20 dark:text-secondary",
-        "Fire Hydrants": "bg-secondary/10 text-primary dark:bg-secondary/20 dark:text-secondary",
-    };
     return (
-        <span className={cn("px-1.5 py-0.5 rounded text-[9px] font-bold uppercase", colors[label] || "bg-muted text-muted-foreground")}>
+        <span className={cn("px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wide", SYSTEM_TAG[label] || "bg-muted text-muted-foreground")}>
             {label}
         </span>
     );
 }
 
-function ProgressBar({ done, total, faults }: { done: number; total: number; faults: number }) {
-    const pctDone = Math.round((done / total) * 100);
-    const pctFault = Math.round((faults / total) * 100);
-    // Stacked absolute layers + transform: scaleX keeps the animation on the
-    // compositor (no layout / paint per frame). Faults sits underneath; done
-    // covers it from 0..pctDone, so the visible faults band runs pctDone..pctDone+pctFault.
-    return (
-        <div className="flex items-center gap-3">
-            <div className="relative flex-1 h-2.5 bg-muted dark:bg-muted rounded-full overflow-hidden">
-                {faults > 0 && (
-                    <div
-                        className="absolute inset-y-0 left-0 w-full bg-destructive/70 origin-left transition-transform duration-200"
-                        style={{ transform: `scaleX(${(pctDone + pctFault) / 100})` }}
-                    />
-                )}
-                <div
-                    className="absolute inset-y-0 left-0 w-full bg-secondary origin-left transition-transform duration-200"
-                    style={{ transform: `scaleX(${pctDone / 100})` }}
-                />
-            </div>
-            <span className="text-xs font-semibold text-muted-foreground dark:text-muted-foreground tabular-nums whitespace-nowrap">{done}/{total}</span>
-        </div>
-    );
+function fmtDate(s: string | null | undefined): string {
+    if (!s) return "—";
+    const d = new Date(s);
+    return isNaN(d.getTime()) ? s : format(d, "dd MMM yyyy");
 }
 
-function StageCard({ stage, isExpanded, onToggle, filterStatus }: { stage: Stage; isExpanded: boolean; onToggle: () => void; filterStatus: string }) {
-    const stageStyle = STAGE_STATUS[stage.overallStatus];
-    const buildings = filterStatus === "all"
-        ? stage.buildings
-        : stage.buildings.filter(b => b.status === filterStatus);
+const EQUIP_STATUS_CLS: Record<string, string> = {
+    Operational: "bg-mb-success-light text-mb-success-text",
+    "Needs Attention": "bg-mb-warning-light text-mb-warning-text",
+    "Maintenance Due": "bg-primary/10 text-primary dark:text-muted-foreground/80",
+    Expired: "bg-mb-danger-light text-mb-danger-text",
+};
 
-    const totalBuildings = stage.buildings.length;
-    const doneCount = stage.buildings.filter(b => b.status === "done").length;
-    const faultCount = stage.buildings.filter(b => b.status === "fault" || b.status === "no_access").length;
-    const inProgressCount = stage.buildings.filter(b => b.status === "in_progress").length;
-    const notStartedCount = stage.buildings.filter(b => b.status === "not_started").length;
-
-    return (
-        <Card className={cn("card-elevated overflow-hidden transition-all duration-200", stageStyle.border, isExpanded && "shadow-md")}>
-            <button
-                onClick={onToggle}
-                className={cn("w-full flex items-center gap-3 sm:gap-4 px-3 sm:px-5 py-3 sm:py-4 transition-colors text-left", stageStyle.bg)}
-            >
-                <div className={cn("w-9 h-9 sm:w-11 sm:h-11 rounded-xl text-primary-foreground flex items-center justify-center font-bold text-base sm:text-lg flex-shrink-0", stageStyle.color)}>
-                    {stage.id}
-                </div>
-                <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                        <h2 className="font-bold text-foreground text-base">{stage.name}</h2>
-                        <span className={cn("px-2 py-0.5 rounded-full text-[10px] font-bold uppercase text-primary-foreground", stageStyle.color)}>
-                            {stageStyle.label}
-                        </span>
-                        <span className="text-[10px] text-muted-foreground font-medium">{stage.year}</span>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-0.5">{stage.period}</p>
-                </div>
-
-                <div className="hidden sm:flex items-center gap-3 me-2">
-                    {doneCount > 0 && <span className="flex items-center gap-1 text-xs text-secondary font-semibold"><span className="w-2 h-2 rounded-full bg-secondary" />{doneCount}</span>}
-                    {inProgressCount > 0 && <span className="flex items-center gap-1 text-xs text-primary dark:text-muted-foreground font-semibold"><span className="w-2 h-2 rounded-full bg-primary" />{inProgressCount}</span>}
-                    {faultCount > 0 && <span className="flex items-center gap-1 text-xs text-destructive font-semibold"><span className="w-2 h-2 rounded-full bg-destructive" />{faultCount}</span>}
-                    {notStartedCount > 0 && <span className="flex items-center gap-1 text-xs text-muted-foreground font-semibold"><span className="w-2 h-2 rounded-full bg-border dark:bg-muted-foreground" />{notStartedCount}</span>}
-                </div>
-
-                <div className="w-32 hidden md:block">
-                    <ProgressBar done={doneCount} total={totalBuildings} faults={faultCount} />
-                </div>
-                {isExpanded ? <ChevronDown className="w-5 h-5 text-muted-foreground" /> : <ChevronRight className="w-5 h-5 text-muted-foreground" />}
-            </button>
-
-            {isExpanded && (
-                <div className="bg-white dark:bg-muted">
-                    <div className="md:hidden px-3 sm:px-5 pt-3">
-                        <ProgressBar done={doneCount} total={totalBuildings} faults={faultCount} />
-                    </div>
-
-                    <div className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-2 sm:py-2.5 border-b border-border dark:border-border flex-wrap">
-                        <span className="text-[10px] text-muted-foreground uppercase font-semibold me-1">Legend:</span>
-                        <span className="text-[10px] text-secondary flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Done</span>
-                        <span className="text-[10px] text-primary dark:text-muted-foreground flex items-center gap-1"><Clock className="w-3 h-3" /> In Progress</span>
-                        <span className="text-[10px] text-destructive flex items-center gap-1"><XCircle className="w-3 h-3" /> Fault</span>
-                        <span className="text-[10px] text-mb-warning-text flex items-center gap-1"><AlertTriangle className="w-3 h-3" /> No Access</span>
-                        <span className="text-[10px] text-muted-foreground flex items-center gap-1"><CircleDot className="w-3 h-3" /> Not Started</span>
-                    </div>
-
-                    <div className="divide-y divide-border dark:divide-border/50">
-                        {buildings.map((b) => (
-                            <div
-                                key={b.id}
-                                className={cn(
-                                    "flex items-start sm:items-center gap-2 sm:gap-3 px-3 sm:px-5 py-2.5 sm:py-3 hover:bg-muted/70 dark:hover:bg-muted/30 transition-colors",
-                                    b.status === "fault" && "bg-destructive/5 dark:bg-destructive/10",
-                                    b.status === "no_access" && "bg-mb-warning-light/40"
-                                )}
-                            >
-                                <span className={cn("w-2.5 h-2.5 rounded-full flex-shrink-0 mt-1.5 sm:mt-0", STATUS_CONFIG[b.status]?.dot)} />
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2 flex-wrap">
-                                        <p className={cn("text-sm font-medium", b.status === "fault" ? "text-destructive" : b.status === "no_access" ? "text-mb-warning-text" : "text-foreground")}>
-                                            {b.area}
-                                        </p>
-                                        <div className="sm:hidden flex-shrink-0">
-                                            <StatusBadge status={b.status} />
-                                        </div>
-                                    </div>
-                                    {b.notes && (
-                                        <p className={cn("text-[11px] mt-0.5", b.status === "fault" ? "text-destructive font-medium" : b.status === "no_access" ? "text-mb-warning-text font-medium" : "text-muted-foreground")}>
-                                            {b.notes}
-                                        </p>
-                                    )}
-                                    <div className="flex gap-1 mt-1 sm:hidden flex-wrap">
-                                        {b.systems.map((s) => <SystemTag key={s} label={s} />)}
-                                        {b.date !== "TBD" && <span className="text-[10px] text-muted-foreground tabular-nums">{b.date}</span>}
-                                    </div>
-                                </div>
-                                <div className="hidden sm:flex gap-1 flex-shrink-0">
-                                    {b.systems.map((s) => <SystemTag key={s} label={s} />)}
-                                </div>
-                                <span className="text-[11px] text-muted-foreground hidden sm:block w-24 text-right flex-shrink-0 tabular-nums">{b.date}</span>
-                                <div className="hidden sm:block flex-shrink-0">
-                                    <StatusBadge status={b.status} />
-                                </div>
-                            </div>
-                        ))}
-                        {buildings.length === 0 && (
-                            <div className="px-5 py-8 text-center text-sm text-muted-foreground">No items match the selected filter.</div>
-                        )}
-                    </div>
-                </div>
-            )}
-        </Card>
-    );
+function issueStatusCls(status: string): string {
+    const s = status.toLowerCase();
+    if (s.includes("resolved")) return "bg-mb-success-light text-mb-success-text";
+    if (s.includes("progress") || s.includes("ordered") || s.includes("issued")) return "bg-primary/10 text-primary dark:text-muted-foreground/80";
+    if (s.includes("flag")) return "bg-mb-danger-light text-mb-danger-text";
+    return "bg-mb-warning-light text-mb-warning-text";
 }
 
-// ═══════════════════════════════════════════════════════════════
-// MAIN PAGE COMPONENT
-// ═══════════════════════════════════════════════════════════════
+// Map the equipment register's zone string to a designated-zone key.
+function equipZoneKey(zone: string): ZoneKey | null {
+    const z = zone.toLowerCase();
+    if (z.includes("village")) return "vs";
+    if (z.includes("1")) return "zone1";
+    if (z.includes("3")) return "zone3";
+    if (z.includes("5")) return "zone5";
+    return null;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  PAGE
+// ═══════════════════════════════════════════════════════════════════════════
+
+type TabKey = "overview" | "ppm" | "assets" | "contract";
 
 export default function FirefightingPage() {
-    const [activeTab, setActiveTab] = useState("dashboard");
-    const [equipment, setEquipment] = useState<FireSafetyEquipment[]>([]);
+    const [activeTab, setActiveTab] = useState<TabKey>("overview");
     const [loading, setLoading] = useState(true);
-    const [expandedStage, setExpandedStage] = useState<number | null>(1);
-    const [filterStatus, setFilterStatus] = useState("all");
+    const [connected, setConnected] = useState(false);
+    const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+    const [error, setError] = useState<string | null>(null);
 
-    const loadData = useCallback(async () => {
-        try {
-            const result = await getFireSafetyEquipment();
-            setEquipment(result);
-        } catch {
-            // silent fallback
-        } finally {
+    const [equipment, setEquipment] = useState<FireSafetyEquipment[]>([]);
+    const [issues, setIssues] = useState<FireIssue[]>([]);
+    const [contacts, setContacts] = useState<FirePpmContact[]>([]);
+    const [activityLog, setActivityLog] = useState<FirePpmActivity[]>([]);
+
+    // PPM Tracker filters
+    const [cycleFilter, setCycleFilter] = useState<"all" | Cycle>("all");
+    const [zoneFilter, setZoneFilter] = useState<"all" | ZoneKey>("all");
+    const [statusFilter, setStatusFilter] = useState<"all" | "done" | "open" | "upcoming">("all");
+
+    useEffect(() => {
+        let active = true;
+        (async () => {
+            const res = await fetchFireSafetyDataAction();
+            if (!active) return;
+            setEquipment(res.equipment);
+            setIssues(res.issues);
+            setContacts(res.contacts);
+            setActivityLog(res.activities);
+            if (res.error) {
+                setError("Live data unavailable — showing the BEC PPM programme only.");
+                setConnected(false);
+            } else {
+                setError(null);
+                setConnected(true);
+                setLastUpdated(new Date());
+            }
             setLoading(false);
-        }
+        })();
+        return () => { active = false; };
     }, []);
 
-    useEffect(() => { loadData(); }, [loadData]);
+    // ── Derived ──
+    const openIssues = useMemo(
+        () => issues.filter((i) => !i.status.toLowerCase().includes("resolved")),
+        [issues],
+    );
+    const completedCycles = useMemo(
+        () => CYCLES.filter((c) => PPM_ACTIVITIES.filter((a) => a.cycle === c.key)
+            .every((a) => a.status !== "upcoming" && a.status !== "scheduled")).length,
+        [],
+    );
+    const openFaults = useMemo(
+        () => PPM_ACTIVITIES.filter((a) => a.status === "fault" || a.status === "no_access"),
+        [],
+    );
 
-    const handleTabChange = (key: string) => {
-        setActiveTab(key);
-    };
-
-    const stats = useMemo(() => {
-        const total = equipment.length;
-        const operational = equipment.filter(e => e.status === "Operational").length;
-        const critical = equipment.filter(e => e.priority === "Critical").length;
-        const maintenanceDue = equipment.filter(e => e.status === "Maintenance Due").length;
-
-        return [
-            { label: "TOTAL EQUIPMENT", value: total.toString(), subtitle: "All Operations", icon: HardHat, variant: "water" as const },
-            { label: "OPERATIONAL", value: operational.toString(), subtitle: "Working Properly", icon: ShieldCheck, variant: "success" as const },
-            { label: "CRITICAL ISSUES", value: critical.toString(), subtitle: "Requires Attention", icon: AlertTriangle, variant: "danger" as const },
-            { label: "MAINTENANCE DUE", value: maintenanceDue.toString(), subtitle: "Service Required", icon: Wrench, variant: "warning" as const }
-        ];
+    const equipmentByZone = useMemo(() => {
+        const counts: Record<ZoneKey, number> = { zone1: 0, zone3: 0, zone5: 0, vs: 0 };
+        equipment.forEach((e) => {
+            const k = equipZoneKey(e.zone);
+            if (k) counts[k] += 1;
+        });
+        return counts;
     }, [equipment]);
 
-    const chartData = useMemo(() => {
-        const statusCounts: Record<string, number> = {};
-        equipment.forEach(e => {
-            statusCounts[e.status] = (statusCounts[e.status] || 0) + 1;
-        });
-        const pieData = Object.entries(statusCounts).map(([name, value]) => ({ name, value }));
+    const stats = useMemo(() => [
+        { label: "DESIGNATED ZONES", value: "4", subtitle: "Z1 · Z3 · Z5 · Village Sq", icon: Layers, variant: "water" as const },
+        { label: "PPM CYCLES / YEAR", value: "3", subtitle: "BEC AMC · every ~4 months", icon: Calendar, variant: "primary" as const },
+        { label: "CYCLES COMPLETE", value: `${completedCycles} / 3`, subtitle: "Year 1 · Dec & Apr done", icon: CheckCircle, variant: "success" as const },
+        { label: "OPEN ISSUES", value: openIssues.length.toString(), subtitle: "Defects & access items", icon: AlertTriangle, variant: openIssues.length > 0 ? "danger" as const : "success" as const },
+    ], [completedCycles, openIssues.length]);
 
-        const typeCounts: Record<string, number> = {};
-        equipment.forEach(e => {
-            typeCounts[e.type] = (typeCounts[e.type] || 0) + 1;
-        });
-        const barData = Object.entries(typeCounts).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
+    // ── PPM Tracker filtering ──
+    const filteredActivities = useMemo(() => PPM_ACTIVITIES.filter((a) => {
+        if (cycleFilter !== "all" && a.cycle !== cycleFilter) return false;
+        if (zoneFilter !== "all" && a.zone !== zoneFilter) return false;
+        if (statusFilter === "done" && a.status !== "done") return false;
+        if (statusFilter === "open" && a.status !== "fault" && a.status !== "no_access") return false;
+        if (statusFilter === "upcoming" && a.status !== "upcoming" && a.status !== "scheduled") return false;
+        return true;
+    }), [cycleFilter, zoneFilter, statusFilter]);
 
-        return { pieData, barData };
-    }, [equipment]);
+    const filtersActive = cycleFilter !== "all" || zoneFilter !== "all" || statusFilter !== "all";
+    const clearFilters = () => { setCycleFilter("all"); setZoneFilter("all"); setStatusFilter("all"); };
 
-    // PPM Stats
-    const ppmStats = useMemo(() => {
-        const allBuildings = PPM_DATABASE.flatMap(s => s.buildings);
-        const totalDone = allBuildings.filter(b => b.status === "done").length;
-        const totalFaults = allBuildings.filter(b => b.status === "fault" || b.status === "no_access").length;
-        const totalNotStarted = allBuildings.filter(b => b.status === "not_started").length;
-        const totalAll = allBuildings.length;
-        return { totalAll, totalDone, totalFaults, totalNotStarted };
+    // Cell summary for the Zone × Cycle matrix
+    const cellFor = useCallback((zone: ZoneKey, cycle: Cycle) => {
+        const items = PPM_ACTIVITIES.filter((a) => a.zone === zone && a.cycle === cycle);
+        const faults = items.filter((a) => a.status === "fault" || a.status === "no_access").length;
+        const status: PpmStatus = faults > 0
+            ? "fault"
+            : items.every((a) => a.status === "done")
+                ? "done"
+                : items.some((a) => a.status === "scheduled")
+                    ? "scheduled"
+                    : "upcoming";
+        return { items: items.length, faults, status };
     }, []);
 
-    const filterOptions = [
-        { key: "all", label: "All", count: ppmStats.totalAll },
-        { key: "done", label: "Done", count: ppmStats.totalDone },
-        { key: "fault", label: "Faults", count: PPM_DATABASE.flatMap(s => s.buildings).filter(b => b.status === "fault").length },
-        { key: "no_access", label: "No Access", count: PPM_DATABASE.flatMap(s => s.buildings).filter(b => b.status === "no_access").length },
-        { key: "not_started", label: "Not Started", count: ppmStats.totalNotStarted },
-    ];
-
-    // Chart colors matching design system tokens (chart-1 through chart-5)
-    const COLORS = ["var(--chart-success)", "var(--chart-amber)", "var(--chart-loss)", "var(--chart-2)"];
+    // ───────────────────────────────────────────────────────────────────────
 
     if (loading) {
         return (
             <div className="space-y-6 sm:space-y-7 md:space-y-8 w-full motion-safe:animate-in motion-safe:fade-in duration-200">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                    <div className="space-y-2">
-                        <Skeleton className="h-9 w-64" />
-                        <Skeleton className="h-4 w-48" />
-                    </div>
-                    <Skeleton className="h-9 w-32" />
+                    <div className="space-y-2"><Skeleton className="h-9 w-72" /><Skeleton className="h-4 w-56" /></div>
+                    <Skeleton className="h-9 w-40" />
                 </div>
-                <div className="flex gap-2">
-                    <Skeleton className="h-10 w-32 rounded-lg" />
-                    <Skeleton className="h-10 w-40 rounded-lg" />
-                    <Skeleton className="h-10 w-40 rounded-lg" />
-                </div>
-                <StatsGridSkeleton />
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-                    <ChartSkeleton height="h-[250px] sm:h-[300px] md:h-80" />
-                    <ChartSkeleton height="h-[250px] sm:h-[300px] md:h-80" />
-                </div>
+                <div className="flex gap-2"><Skeleton className="h-10 w-32 rounded-lg" /><Skeleton className="h-10 w-32 rounded-lg" /><Skeleton className="h-10 w-32 rounded-lg" /></div>
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-24 w-full rounded-lg" />)}</div>
+                <Skeleton className="h-64 w-full rounded-lg" />
             </div>
         );
     }
 
     return (
         <div className="space-y-6 sm:space-y-7 md:space-y-8 w-full">
-            <PageHeader
-                title="Fire Safety Management"
-                description="BEC AMC · MIS-SBJ-25-077 · Nov 2025 – Oct 2027"
-                action={{ label: "Add Equipment", icon: Plus }}
-            />
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                <PageHeader
+                    title="Fire Safety Management"
+                    description="BEC Annual Maintenance Contract (MIS-SBJ-25-077) · PPM 3× per year across 4 zones · Nov 2025 – Oct 2027"
+                />
+                <PageStatusBar isConnected={connected} lastUpdated={lastUpdated} error={error} />
+            </div>
 
+            {/* Tabs */}
             <TabNavigation
                 activeTab={activeTab}
-                onTabChange={handleTabChange}
+                onTabChange={(k) => setActiveTab(k as TabKey)}
                 tabs={[
-                    { key: "dashboard", label: "Dashboard", icon: Gauge },
-                    { key: "ppm", label: "PPM Tracker", icon: Calendar },
-                    { key: "contract", label: "Contract", icon: FileText },
+                    { key: "overview", label: "Overview", icon: Gauge },
+                    { key: "ppm", label: "PPM Tracker", icon: ListChecks },
+                    { key: "assets", label: "Assets & Issues", icon: Boxes },
+                    { key: "contract", label: "Contract & Team", icon: FileText },
                 ]}
             />
 
-            {/* ══════════ DASHBOARD ══════════ */}
-            {activeTab === 'dashboard' && (
+            {/* ══════════ OVERVIEW ══════════ */}
+            {activeTab === "overview" && (
                 <div className="space-y-6 motion-safe:animate-in motion-safe:fade-in duration-200">
                     <StatsGrid stats={stats} />
 
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-                        <Card className="card-elevated">
-                            <CardHeader className="card-elevated-header"><CardTitle>System Status Distribution</CardTitle></CardHeader>
-                            <CardContent className="h-[250px] sm:h-[300px] md:h-80">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <PieChart>
-                                        <Pie data={chartData.pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius="40%" outerRadius="55%" paddingAngle={5}>
-                                            {chartData.pieData.map((entry, index) => (
-                                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                            ))}
-                                        </Pie>
-                                        <Tooltip content={<LiquidTooltip />} />
-                                        <text x="50%" y="50%" textAnchor="middle" dominantBaseline="middle" className="text-2xl font-bold fill-primary dark:fill-white">
-                                            {equipment.length}
-                                        </text>
-                                        <text x="50%" y="58%" textAnchor="middle" dominantBaseline="middle" className="text-sm fill-muted-foreground">
-                                            Total Units
-                                        </text>
-                                    </PieChart>
-                                </ResponsiveContainer>
-                            </CardContent>
-                        </Card>
-
-                        <Card className="card-elevated">
-                            <CardHeader className="card-elevated-header"><CardTitle>Equipment by Type</CardTitle></CardHeader>
-                            <CardContent className="h-[250px] sm:h-[300px] md:h-80">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={chartData.barData} layout="vertical" margin={{ left: 5, right: 10, top: 10, bottom: 10 }}>
-                                        <CartesianGrid strokeDasharray="3 3" horizontal={false} strokeOpacity={0.1} />
-                                        <XAxis type="number" hide />
-                                        <YAxis type="category" dataKey="name" width={100} className="text-xs" tick={{ fill: 'currentColor' }} />
-                                        <Tooltip content={<LiquidTooltip />} />
-                                        <Bar dataKey="value" fill="var(--secondary)" radius={[0, 4, 4, 0]} barSize={20} />
-                                    </BarChart>
-                                </ResponsiveContainer>
-                            </CardContent>
-                        </Card>
-                    </div>
-
-                    {/* Quick AMC Summary — matches other section stat patterns */}
+                    {/* How the programme works */}
                     <Card className="card-elevated">
                         <CardHeader className="card-elevated-header">
-                            <div className="flex items-center justify-between">
-                                <CardTitle className="flex items-center gap-2">
-                                    <Flame className="w-5 h-5 text-secondary" />
-                                    AMC Quick Status
-                                </CardTitle>
-                                <Badge variant="secondary" className="bg-secondary/10 text-secondary border-secondary/20">Active</Badge>
-                            </div>
+                            <CardTitle className="flex items-center gap-2"><Flame className="w-5 h-5 text-secondary" /> How the BEC PPM Programme Works</CardTitle>
                         </CardHeader>
-                        <CardContent>
-                            <StatsGrid stats={[
-                                { label: "TOTAL PPM ITEMS", value: ppmStats.totalAll.toString(), icon: ShieldCheck, variant: "primary" as const },
-                                { label: "COMPLETED", value: ppmStats.totalDone.toString(), icon: CheckCircle, variant: "success" as const },
-                                { label: "OPEN FAULTS", value: ppmStats.totalFaults.toString(), icon: AlertTriangle, variant: "danger" as const },
-                                { label: "NOT STARTED", value: ppmStats.totalNotStarted.toString(), icon: CircleDot, variant: "default" as const },
-                            ]} />
+                        <CardContent className="p-4 sm:p-5">
+                            <p className="text-sm text-muted-foreground leading-relaxed">
+                                Bahwan Engineering (BEC) services every fire-alarm and fire-fighting asset in Muscat Bay under a non-comprehensive AMC.
+                                Maintenance runs as <span className="font-semibold text-foreground">three planned cycles each year</span> (roughly every four months), and
+                                each cycle sweeps all <span className="font-semibold text-foreground">four designated zones</span> and their assets.
+                                Use the <span className="font-semibold text-foreground">PPM Tracker</span> tab to see exactly which cycle, zone and asset each visit covers.
+                            </p>
+                            {/* Cycle progress */}
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4">
+                                {CYCLES.map((c) => {
+                                    const done = c.status === "completed";
+                                    return (
+                                        <div key={c.key} className={cn("rounded-lg border p-3", done ? "border-secondary/30 bg-secondary/5 dark:bg-secondary/10" : "border-border bg-muted/50")}>
+                                            <div className="flex items-center justify-between">
+                                                <span className="flex items-center gap-2 text-sm font-bold text-foreground">
+                                                    <span className={cn("flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-bold text-primary-foreground", done ? "bg-secondary" : "bg-muted-foreground/60")}>{c.key}</span>
+                                                    {c.label}
+                                                </span>
+                                                {done
+                                                    ? <span className="flex items-center gap-1 text-[11px] font-semibold text-secondary"><CheckCircle className="w-3.5 h-3.5" /> Completed</span>
+                                                    : <span className="flex items-center gap-1 text-[11px] font-semibold text-muted-foreground"><Clock className="w-3.5 h-3.5" /> Upcoming</span>}
+                                            </div>
+                                            <p className="text-xs text-muted-foreground mt-2 ps-8">{c.window}</p>
+                                        </div>
+                                    );
+                                })}
+                            </div>
                         </CardContent>
                     </Card>
+
+                    {/* The four zones */}
+                    <div>
+                        <h2 className="text-sm font-semibold uppercase tracking-[0.06em] text-muted-foreground mb-3">The Four Designated Zones</h2>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                            {ZONES.map((z) => {
+                                const zoneIssues = issues.filter((i) => {
+                                    const k = equipZoneKey(i.location);
+                                    return k === z.key && !i.status.toLowerCase().includes("resolved");
+                                }).length;
+                                return (
+                                    <Card key={z.key} className="card-elevated">
+                                        <CardContent className="p-4">
+                                            <div className="flex items-center justify-between">
+                                                <ZoneBadge zone={z.key} withScope />
+                                                <Building2 className="w-4 h-4 text-muted-foreground" />
+                                            </div>
+                                            <p className="text-xs text-muted-foreground mt-2 leading-snug min-h-[2.5rem]">{z.scope}</p>
+                                            <div className="flex items-center justify-between mt-3 pt-3 border-t border-border/60 text-xs">
+                                                <span className="text-muted-foreground">Equipment</span>
+                                                <span className="font-semibold text-foreground tabular-nums">{equipmentByZone[z.key]}</span>
+                                            </div>
+                                            <div className="flex items-center justify-between mt-1 text-xs">
+                                                <span className="text-muted-foreground">Open issues</span>
+                                                <span className={cn("font-semibold tabular-nums", zoneIssues > 0 ? "text-destructive" : "text-secondary")}>{zoneIssues}</span>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    {/* Attention strip */}
+                    {(openFaults.length > 0 || openIssues.length > 0) && (
+                        <Card className="card-elevated border-mb-warning/30">
+                            <CardContent className="p-4 flex items-start gap-3">
+                                <AlertTriangle className="w-5 h-5 text-mb-warning-text flex-shrink-0 mt-0.5" />
+                                <div className="text-sm">
+                                    <p className="font-semibold text-foreground">{openFaults.length} open PPM fault{openFaults.length === 1 ? "" : "s"} · {openIssues.length} open issue{openIssues.length === 1 ? "" : "s"}</p>
+                                    <p className="text-muted-foreground mt-0.5">Review the PPM Tracker (Faults filter) and the Assets &amp; Issues tab for details and follow-up quotes.</p>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    )}
                 </div>
             )}
 
             {/* ══════════ PPM TRACKER ══════════ */}
-            {activeTab === 'ppm' && (
-                <div className="space-y-6 motion-safe:animate-in motion-safe:fade-in duration-200">
-                    {/* Summary Stats — same pattern as other sections */}
-                    <StatsGrid stats={[
-                        { label: "TOTAL ITEMS", value: ppmStats.totalAll.toString(), icon: ShieldCheck, variant: "primary" as const },
-                        { label: "COMPLETED", value: ppmStats.totalDone.toString(), icon: CheckCircle, variant: "success" as const },
-                        { label: "OPEN FAULTS", value: ppmStats.totalFaults.toString(), icon: AlertTriangle, variant: "danger" as const },
-                        { label: "NOT STARTED", value: ppmStats.totalNotStarted.toString(), icon: CircleDot, variant: "default" as const },
-                    ]} />
+            {activeTab === "ppm" && (
+                <div className="space-y-5 motion-safe:animate-in motion-safe:fade-in duration-200">
+                    {/* Zone × Cycle matrix */}
+                    <Card className="card-elevated">
+                        <CardHeader className="card-elevated-header">
+                            <CardTitle className="flex items-center gap-2"><Layers className="w-5 h-5 text-secondary" /> Zone × Cycle Overview</CardTitle>
+                            <p className="text-xs text-muted-foreground mt-1">Tap any cell to filter the tracker to that zone and cycle.</p>
+                        </CardHeader>
+                        <CardContent className="p-3 sm:p-4 overflow-x-auto">
+                            <table className="w-full min-w-[520px] border-separate border-spacing-1">
+                                <thead>
+                                    <tr>
+                                        <th className="text-left text-[11px] font-semibold uppercase tracking-wide text-muted-foreground p-2">Zone</th>
+                                        {CYCLES.map((c) => (
+                                            <th key={c.key} className="p-2 text-center text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                                                {c.label}<span className="block font-normal normal-case text-[10px] text-muted-foreground/70">{c.window}</span>
+                                            </th>
+                                        ))}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {ZONES.map((z) => (
+                                        <tr key={z.key}>
+                                            <td className="p-1.5 align-middle"><ZoneBadge zone={z.key} withScope /></td>
+                                            {CYCLES.map((c) => {
+                                                const cell = cellFor(z.key, c.key);
+                                                const cfg = STATUS_CFG[cell.status];
+                                                const Icon = cfg.icon;
+                                                const active = cycleFilter === c.key && zoneFilter === z.key;
+                                                return (
+                                                    <td key={c.key} className="p-1">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => { setCycleFilter(c.key); setZoneFilter(z.key); }}
+                                                            className={cn("w-full flex items-center justify-center gap-1.5 rounded-md px-2 py-2 text-[11px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring", cfg.cls, active && "ring-2 ring-primary")}
+                                                            aria-label={`${z.label}, ${c.label}: ${cell.faults > 0 ? `${cell.faults} faults` : cfg.label}`}
+                                                        >
+                                                            <Icon className="w-3.5 h-3.5" />
+                                                            {cell.faults > 0 ? `${cell.faults} fault${cell.faults > 1 ? "s" : ""}` : cfg.label}
+                                                        </button>
+                                                    </td>
+                                                );
+                                            })}
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </CardContent>
+                    </Card>
 
-                    {/* Filters — using shared TabNavigation pattern */}
-                    <TabNavigation
-                        activeTab={filterStatus}
-                        onTabChange={(key) => setFilterStatus(key)}
-                        variant="secondary"
-                        tabs={filterOptions.map(f => ({
-                            key: f.key,
-                            label: `${f.label} (${f.count})`,
-                            icon: f.key === 'done' ? CheckCircle : f.key === 'fault' ? XCircle : f.key === 'no_access' ? AlertTriangle : f.key === 'in_progress' ? Clock : f.key === 'not_started' ? CircleDot : Filter,
-                        }))}
-                    />
-
-                    {/* Stages */}
-                    <div className="space-y-4">
-                        {PPM_DATABASE.map(stage => (
-                            <StageCard
-                                key={stage.id}
-                                stage={stage}
-                                isExpanded={expandedStage === stage.id}
-                                onToggle={() => setExpandedStage(expandedStage === stage.id ? null : stage.id)}
-                                filterStatus={filterStatus}
-                            />
-                        ))}
+                    {/* Filters */}
+                    <div className="flex flex-col gap-3 rounded-lg border border-border bg-card p-3 sm:p-4">
+                        <FilterRow label="Cycle">
+                            <FilterChip active={cycleFilter === "all"} onClick={() => setCycleFilter("all")}>All</FilterChip>
+                            {CYCLES.map((c) => <FilterChip key={c.key} active={cycleFilter === c.key} onClick={() => setCycleFilter(c.key)}>{c.label}</FilterChip>)}
+                        </FilterRow>
+                        <FilterRow label="Zone">
+                            <FilterChip active={zoneFilter === "all"} onClick={() => setZoneFilter("all")}>All</FilterChip>
+                            {ZONES.map((z) => <FilterChip key={z.key} active={zoneFilter === z.key} onClick={() => setZoneFilter(z.key)}>{z.label}</FilterChip>)}
+                        </FilterRow>
+                        <FilterRow label="Status">
+                            <FilterChip active={statusFilter === "all"} onClick={() => setStatusFilter("all")}>All</FilterChip>
+                            <FilterChip active={statusFilter === "done"} onClick={() => setStatusFilter("done")}>Completed</FilterChip>
+                            <FilterChip active={statusFilter === "open"} onClick={() => setStatusFilter("open")}>Faults</FilterChip>
+                            <FilterChip active={statusFilter === "upcoming"} onClick={() => setStatusFilter("upcoming")}>Upcoming</FilterChip>
+                        </FilterRow>
+                        <div className="flex items-center justify-between gap-2 flex-wrap">
+                            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                                <span className="text-[10px] uppercase font-semibold text-muted-foreground">Systems:</span>
+                                {SYSTEM_LEGEND.map(([k, v]) => (
+                                    <span key={k} className="flex items-center gap-1 text-[11px] text-muted-foreground"><SystemTag label={k} />{v}</span>
+                                ))}
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <span className="text-xs text-muted-foreground"><span className="font-semibold text-foreground tabular-nums">{filteredActivities.length}</span> activities</span>
+                                {filtersActive && <button onClick={clearFilters} className="text-xs text-secondary hover:underline font-medium">Clear filters</button>}
+                            </div>
+                        </div>
                     </div>
 
-                    {/* Year 2 note */}
-                    <Card className="card-elevated border-border dark:border-border">
+                    {/* Activities table */}
+                    <div className="ops-table-shell">
+                        {/* Desktop */}
+                        <table className="ops-table hidden md:table w-full">
+                            <thead>
+                                <tr>
+                                    <th className="py-3 px-4 font-semibold text-xs text-left whitespace-nowrap">Cycle</th>
+                                    <th className="py-3 px-4 font-semibold text-xs text-left whitespace-nowrap">Zone</th>
+                                    <th className="py-3 px-4 font-semibold text-xs text-left">Area / Asset</th>
+                                    <th className="py-3 px-4 font-semibold text-xs text-left whitespace-nowrap">Systems</th>
+                                    <th className="py-3 px-4 font-semibold text-xs text-left whitespace-nowrap">Scheduled</th>
+                                    <th className="py-3 px-4 font-semibold text-xs text-left whitespace-nowrap">Status</th>
+                                    <th className="py-3 px-4 font-semibold text-xs text-left">Notes</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {filteredActivities.map((a, i) => (
+                                    <tr key={a.id} className={cn("border-b border-border/80 hover:bg-secondary/5 dark:hover:bg-muted/40 transition-colors", i % 2 === 1 && "bg-muted/40 dark:bg-muted/20", (a.status === "fault" || a.status === "no_access") && "bg-destructive/5 dark:bg-destructive/10")}>
+                                        <td className="py-3 px-4"><CycleBadge cycle={a.cycle} /></td>
+                                        <td className="py-3 px-4"><ZoneBadge zone={a.zone} /></td>
+                                        <td className="py-3 px-4 text-sm font-medium text-foreground dark:text-muted-foreground">{a.area}</td>
+                                        <td className="py-3 px-4"><div className="flex gap-1 flex-wrap">{a.systems.map((s) => <SystemTag key={s} label={s} />)}</div></td>
+                                        <td className="py-3 px-4 text-xs text-muted-foreground whitespace-nowrap tabular-nums">{a.date}</td>
+                                        <td className="py-3 px-4"><PpmStatusBadge status={a.status} /></td>
+                                        <td className="py-3 px-4 text-[11px] text-muted-foreground max-w-[280px]">{a.notes || "—"}</td>
+                                    </tr>
+                                ))}
+                                {filteredActivities.length === 0 && (
+                                    <tr><td colSpan={7}><EmptyState variant="filter-empty" title="No activities match" description="Try adjusting the cycle, zone or status filters." /></td></tr>
+                                )}
+                            </tbody>
+                        </table>
+                        {/* Mobile cards */}
+                        <div className="md:hidden divide-y divide-border dark:divide-border">
+                            {filteredActivities.length === 0 ? (
+                                <EmptyState variant="filter-empty" title="No activities match" description="Try adjusting the filters." />
+                            ) : filteredActivities.map((a) => (
+                                <div key={a.id} className={cn("p-4 space-y-2", (a.status === "fault" || a.status === "no_access") && "bg-destructive/5 dark:bg-destructive/10")}>
+                                    <div className="flex items-center justify-between gap-2">
+                                        <div className="flex items-center gap-1.5 flex-wrap"><CycleBadge cycle={a.cycle} /><ZoneBadge zone={a.zone} /></div>
+                                        <PpmStatusBadge status={a.status} />
+                                    </div>
+                                    <p className="text-sm font-medium text-foreground">{a.area}</p>
+                                    <div className="flex items-center justify-between gap-2">
+                                        <div className="flex gap-1 flex-wrap">{a.systems.map((s) => <SystemTag key={s} label={s} />)}</div>
+                                        <span className="text-[11px] text-muted-foreground tabular-nums">{a.date}</span>
+                                    </div>
+                                    {a.notes && <p className="text-[11px] text-muted-foreground">{a.notes}</p>}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Year-2 note */}
+                    <Card className="card-elevated">
                         <CardContent className="p-4 flex items-start gap-3">
                             <Info className="w-5 h-5 text-secondary flex-shrink-0 mt-0.5" />
-                            <div className="text-sm text-foreground dark:text-muted-foreground/70">
-                                <p className="font-semibold">Year 2 stages (Dec 2026, Apr 2027, Aug 2027) not yet added.</p>
-                                <p className="mt-1 text-muted-foreground">PPM visits in Apr & Aug 2025 were under the previous AMC and are not tracked here.</p>
+                            <div className="text-sm">
+                                <p className="font-semibold text-foreground">Cycle 3 (~Aug 2026) is the final Year-1 cycle.</p>
+                                <p className="mt-1 text-muted-foreground">Year-2 cycles (Dec 2026, Apr 2027, Aug 2027) will be added once BEC issues each PPM plan. Dates are confirmed per cycle via the BEC work-permission request.</p>
                             </div>
                         </CardContent>
                     </Card>
                 </div>
             )}
 
-            {/* ══════════ CONTRACT INFO ══════════ */}
-            {activeTab === 'contract' && (
+            {/* ══════════ ASSETS & ISSUES ══════════ */}
+            {activeTab === "assets" && (
                 <div className="space-y-6 motion-safe:animate-in motion-safe:fade-in duration-200">
-                    {/* Contract Summary */}
+                    {/* Equipment inventory */}
+                    <Card className="card-elevated">
+                        <CardHeader className="card-elevated-header">
+                            <CardTitle className="flex items-center gap-2"><ShieldCheck className="w-5 h-5 text-secondary" /> Equipment Register</CardTitle>
+                            <p className="text-xs text-muted-foreground mt-1">Live from the fire-safety equipment register, grouped by designated zone.</p>
+                        </CardHeader>
+                        <CardContent className="p-0">
+                            {equipment.length === 0 ? (
+                                <EmptyState variant="no-data" title="No equipment data" description="Live equipment register is unavailable right now." />
+                            ) : (
+                                <div className="overflow-x-auto">
+                                    <table className="ops-table hidden md:table w-full">
+                                        <thead>
+                                            <tr>
+                                                <th className="py-3 px-4 font-semibold text-xs text-left">Asset</th>
+                                                <th className="py-3 px-4 font-semibold text-xs text-left">Type</th>
+                                                <th className="py-3 px-4 font-semibold text-xs text-left">Zone</th>
+                                                <th className="py-3 px-4 font-semibold text-xs text-left">Location</th>
+                                                <th className="py-3 px-4 font-semibold text-xs text-left">Status</th>
+                                                <th className="py-3 px-4 font-semibold text-xs text-left">Priority</th>
+                                                <th className="py-3 px-4 font-semibold text-xs text-left whitespace-nowrap">Next PPM</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {equipment.map((e, i) => {
+                                                const zk = equipZoneKey(e.zone);
+                                                return (
+                                                    <tr key={e.id} className={cn("border-b border-border/80 hover:bg-secondary/5 dark:hover:bg-muted/40 transition-colors", i % 2 === 1 && "bg-muted/40 dark:bg-muted/20")}>
+                                                        <td className="py-3 px-4 text-sm font-medium text-foreground dark:text-muted-foreground">{e.name}</td>
+                                                        <td className="py-3 px-4 text-sm text-muted-foreground">{e.type}</td>
+                                                        <td className="py-3 px-4">{zk ? <ZoneBadge zone={zk} /> : <span className="text-xs text-muted-foreground">{e.zone}</span>}</td>
+                                                        <td className="py-3 px-4 text-xs text-muted-foreground">{e.location}</td>
+                                                        <td className="py-3 px-4"><span className={cn("inline-flex px-2 py-0.5 rounded-full text-[11px] font-semibold whitespace-nowrap", EQUIP_STATUS_CLS[e.status] || "bg-muted text-muted-foreground")}>{e.status}</span></td>
+                                                        <td className="py-3 px-4 text-xs font-medium text-muted-foreground">{e.priority}</td>
+                                                        <td className="py-3 px-4 text-xs text-muted-foreground whitespace-nowrap tabular-nums">{fmtDate(e.next_maintenance)}</td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
+                                    <div className="md:hidden divide-y divide-border dark:divide-border">
+                                        {equipment.map((e) => {
+                                            const zk = equipZoneKey(e.zone);
+                                            return (
+                                                <div key={e.id} className="p-4 space-y-2">
+                                                    <div className="flex items-start justify-between gap-2">
+                                                        <div><p className="text-sm font-medium text-foreground">{e.name}</p><p className="text-xs text-muted-foreground mt-0.5">{e.type} · {e.location}</p></div>
+                                                        {zk ? <ZoneBadge zone={zk} /> : null}
+                                                    </div>
+                                                    <div className="flex items-center justify-between">
+                                                        <span className={cn("inline-flex px-2 py-0.5 rounded-full text-[11px] font-semibold", EQUIP_STATUS_CLS[e.status] || "bg-muted text-muted-foreground")}>{e.status}</span>
+                                                        <span className="text-[11px] text-muted-foreground tabular-nums">Next: {fmtDate(e.next_maintenance)}</span>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+
+                    {/* Issues register */}
+                    <Card className="card-elevated">
+                        <CardHeader className="card-elevated-header">
+                            <CardTitle className="flex items-center gap-2"><AlertTriangle className="w-5 h-5 text-secondary" /> Issues &amp; Defects Register</CardTitle>
+                            <p className="text-xs text-muted-foreground mt-1">Live defect log from the BEC engagement.</p>
+                        </CardHeader>
+                        <CardContent className="p-0">
+                            {issues.length === 0 ? (
+                                <EmptyState variant="no-data" title="No issues logged" description="The issues register is empty or unavailable." />
+                            ) : (
+                                <div className="overflow-x-auto">
+                                    <table className="ops-table hidden md:table w-full">
+                                        <thead>
+                                            <tr>
+                                                <th className="py-3 px-4 font-semibold text-xs text-left">Issue</th>
+                                                <th className="py-3 px-4 font-semibold text-xs text-left">Location</th>
+                                                <th className="py-3 px-4 font-semibold text-xs text-left whitespace-nowrap">Reported</th>
+                                                <th className="py-3 px-4 font-semibold text-xs text-left">Status</th>
+                                                <th className="py-3 px-4 font-semibold text-xs text-left">Quote Ref</th>
+                                                <th className="py-3 px-4 font-semibold text-xs text-left">Resolution</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {issues.map((it, i) => (
+                                                <tr key={it.id} className={cn("border-b border-border/80 hover:bg-secondary/5 dark:hover:bg-muted/40 transition-colors", i % 2 === 1 && "bg-muted/40 dark:bg-muted/20")}>
+                                                    <td className="py-3 px-4 text-sm font-medium text-foreground dark:text-muted-foreground max-w-[240px]">{it.issue_description}</td>
+                                                    <td className="py-3 px-4 text-xs text-muted-foreground">{it.location}</td>
+                                                    <td className="py-3 px-4 text-xs text-muted-foreground whitespace-nowrap tabular-nums">{fmtDate(it.date_reported)}</td>
+                                                    <td className="py-3 px-4"><span className={cn("inline-flex px-2 py-0.5 rounded-full text-[11px] font-semibold whitespace-nowrap", issueStatusCls(it.status))}>{it.status}</span></td>
+                                                    <td className="py-3 px-4 text-xs font-mono text-muted-foreground">{it.quote_ref || "—"}</td>
+                                                    <td className="py-3 px-4 text-[11px] text-muted-foreground max-w-[260px]">{it.resolution || "—"}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                    <div className="md:hidden divide-y divide-border dark:divide-border">
+                                        {issues.map((it) => (
+                                            <div key={it.id} className="p-4 space-y-2">
+                                                <div className="flex items-start justify-between gap-2">
+                                                    <p className="text-sm font-medium text-foreground">{it.issue_description}</p>
+                                                    <span className={cn("inline-flex px-2 py-0.5 rounded-full text-[11px] font-semibold flex-shrink-0", issueStatusCls(it.status))}>{it.status}</span>
+                                                </div>
+                                                <p className="text-xs text-muted-foreground flex items-center gap-1"><MapPin className="w-3 h-3" />{it.location} · {fmtDate(it.date_reported)}</p>
+                                                {it.resolution && <p className="text-[11px] text-muted-foreground">{it.resolution}</p>}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+                </div>
+            )}
+
+            {/* ══════════ CONTRACT & TEAM ══════════ */}
+            {activeTab === "contract" && (
+                <div className="space-y-6 motion-safe:animate-in motion-safe:fade-in duration-200">
+                    {/* Contract summary */}
                     <Card className="card-elevated">
                         <CardHeader className="card-elevated-header border-b border-border dark:border-border">
-                            <CardTitle className="flex items-center gap-2">
-                                <FileText className="w-5 h-5 text-secondary" />
-                                Contract Summary
-                            </CardTitle>
+                            <CardTitle className="flex items-center gap-2"><FileText className="w-5 h-5 text-secondary" /> AMC Contract Summary</CardTitle>
                         </CardHeader>
                         <CardContent className="p-4 sm:p-5">
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3">
                                 {[
+                                    ["Contractor", "Bahwan Engineering Co. (BEC)"],
                                     ["Ref", "MIS-SBJ-25-077"],
                                     ["Type", "Non-Comprehensive AMC"],
                                     ["Period", "01 Nov 2025 → 31 Oct 2027 (24 months)"],
                                     ["Annual Fee", "RO 7,250 net (+ 5% VAT = RO 7,612.50)"],
                                     ["2-Year Total", "RO 15,225.00"],
-                                    ["Negotiated Saving", "12.1% off BEC revised offer of RO 8,250"],
                                     ["PPM Frequency", "4-Monthly (FA & FF) · Half-Yearly (FE)"],
-                                    ["Stages per Year", "3 (every ~4 months)"],
-                                    ["Payment", "In arrears, against invoice on PPM completion"],
+                                    ["Cycles per Year", "3 (every ~4 months) across 4 zones"],
+                                    ["Payment", "In arrears, on PPM completion"],
                                     ["Termination", "3 months written notice by either party"],
                                     ["Signed by MB", "Nouf AlHajri — Asst. Commercial Manager"],
                                     ["Signed by BEC", "Sujith Kumar Rao — Authorized Signatory"],
@@ -593,24 +762,71 @@ export default function FirefightingPage() {
                         </CardContent>
                     </Card>
 
-                    {/* SLA */}
+                    {/* BEC team contacts (live) */}
                     <Card className="card-elevated">
                         <CardHeader className="card-elevated-header border-b border-border dark:border-border">
-                            <CardTitle>Response Time SLA</CardTitle>
+                            <CardTitle className="flex items-center gap-2"><Users className="w-5 h-5 text-secondary" /> BEC Team Contacts</CardTitle>
                         </CardHeader>
+                        <CardContent className="p-4 sm:p-5">
+                            {contacts.length === 0 ? (
+                                <EmptyState variant="no-data" title="No contacts" description="The BEC contact list is unavailable right now." />
+                            ) : (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                    {contacts.map((c) => (
+                                        <div key={c.id} className="rounded-lg border border-border dark:border-border/50 bg-muted/40 dark:bg-muted/20 p-3">
+                                            <p className="text-sm font-semibold text-foreground">{c.name}</p>
+                                            <p className="text-[11px] text-muted-foreground">{c.role}</p>
+                                            <div className="mt-2 space-y-1">
+                                                {c.email && <a href={`mailto:${c.email}`} className="flex items-center gap-1.5 text-[11px] text-secondary hover:underline break-all"><Mail className="w-3 h-3 flex-shrink-0" />{c.email}</a>}
+                                                {c.phone && <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground"><Phone className="w-3 h-3 flex-shrink-0" />{c.phone}</p>}
+                                                {c.active_period && <p className="text-[10px] text-muted-foreground/70">{c.active_period}</p>}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+
+                    {/* BEC engagement timeline (live activity log) */}
+                    {activityLog.length > 0 && (
+                        <Card className="card-elevated">
+                            <CardHeader className="card-elevated-header border-b border-border dark:border-border">
+                                <CardTitle className="flex items-center gap-2"><History className="w-5 h-5 text-secondary" /> BEC Engagement Timeline</CardTitle>
+                                <p className="text-xs text-muted-foreground mt-1">Live log of PPM cycles, inspections, quotes and contract milestones.</p>
+                            </CardHeader>
+                            <CardContent className="p-4 sm:p-5">
+                                <ol className="relative border-s border-border dark:border-border/60 ms-2 space-y-4">
+                                    {activityLog.map((a) => (
+                                        <li key={a.id} className="ms-4">
+                                            <span aria-hidden="true" className="absolute -start-1.5 mt-1 h-3 w-3 rounded-full bg-secondary" />
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                                <span className="text-xs font-semibold text-foreground">{a.activity_type}</span>
+                                                <span className="text-[10px] text-muted-foreground tabular-nums">{a.ppm_period}</span>
+                                                <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-muted text-muted-foreground">{a.status}</span>
+                                            </div>
+                                            <p className="text-xs text-muted-foreground mt-0.5">{a.scope}</p>
+                                            {a.notes && <p className="text-[11px] text-muted-foreground/80 mt-0.5">{a.notes}</p>}
+                                        </li>
+                                    ))}
+                                </ol>
+                            </CardContent>
+                        </Card>
+                    )}
+
+                    {/* SLA */}
+                    <Card className="card-elevated">
+                        <CardHeader className="card-elevated-header border-b border-border dark:border-border"><CardTitle>Response-Time SLA</CardTitle></CardHeader>
                         <CardContent className="p-4 sm:p-5">
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                                 {[
                                     { p: "P1 Emergency", time: "3 Hours", desc: "Continuous alarm, pump failure, major leak", bg: "bg-mb-danger-light", dot: "bg-destructive" },
                                     { p: "P2 Urgent", time: "8 Hours", desc: "Minor leak, panel malfunction, abnormal pump noise", bg: "bg-mb-warning-light", dot: "bg-mb-warning" },
                                     { p: "P3 Normal", time: "24 Hours", desc: "Extinguisher refilling, general maintenance", bg: "bg-mb-info-light", dot: "bg-mb-info" },
-                                    { p: "P4 PPM", time: "Per schedule", desc: "Scheduled preventive maintenance", bg: "bg-muted dark:bg-muted/50", dot: "bg-muted-foreground dark:bg-muted-foreground" },
+                                    { p: "P4 PPM", time: "Per schedule", desc: "Scheduled preventive maintenance", bg: "bg-muted dark:bg-muted/50", dot: "bg-muted-foreground" },
                                 ].map((s) => (
                                     <div key={s.p} className={cn("rounded-lg px-4 py-3", s.bg)}>
-                                        <p className="text-xs font-bold text-foreground dark:text-muted-foreground flex items-center gap-1.5">
-                                            <span className={cn("w-2 h-2 rounded-full flex-shrink-0", s.dot)} />
-                                            {s.p}
-                                        </p>
+                                        <p className="text-xs font-bold text-foreground flex items-center gap-1.5"><span className={cn("w-2 h-2 rounded-full flex-shrink-0", s.dot)} />{s.p}</p>
                                         <p className="text-xl font-bold text-foreground mt-1">{s.time}</p>
                                         <p className="text-[10px] text-muted-foreground mt-1">{s.desc}</p>
                                     </div>
@@ -619,14 +835,9 @@ export default function FirefightingPage() {
                         </CardContent>
                     </Card>
 
-                    {/* Equipment Under AMC */}
+                    {/* Equipment under AMC */}
                     <Card className="card-elevated">
-                        <CardHeader className="card-elevated-header border-b border-border dark:border-border">
-                            <CardTitle className="flex items-center gap-2">
-                                <Building2 className="w-5 h-5 text-secondary" />
-                                Equipment Under AMC
-                            </CardTitle>
-                        </CardHeader>
+                        <CardHeader className="card-elevated-header border-b border-border dark:border-border"><CardTitle className="flex items-center gap-2"><Building2 className="w-5 h-5 text-secondary" /> Equipment Under AMC</CardTitle></CardHeader>
                         <CardContent className="p-4 sm:p-5">
                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
                                 {[
@@ -637,11 +848,11 @@ export default function FirefightingPage() {
                                     { label: "Electric Pumps", value: "2", sub: "500 GPM + 50 GPM" },
                                     { label: "Diesel Pumps", value: "2", sub: "500 GPM + 50 GPM" },
                                     { label: "Jockey Pump", value: "1", sub: "13.5 kW NAFFCO" },
-                                    { label: "Total Pump Make", value: "NAFFCO", sub: "All 5 pumps" },
+                                    { label: "Pump Make", value: "NAFFCO", sub: "All 5 pumps" },
                                 ].map((eq) => (
                                     <div key={eq.label} className="p-3 bg-muted dark:bg-muted/50 rounded-lg text-center">
                                         <p className="text-xl font-bold text-foreground">{eq.value}</p>
-                                        <p className="text-[11px] text-muted-foreground dark:text-muted-foreground font-semibold uppercase tracking-[0.06em]">{eq.label}</p>
+                                        <p className="text-[11px] text-muted-foreground font-semibold uppercase tracking-[0.06em]">{eq.label}</p>
                                         <p className="text-[10px] text-muted-foreground">{eq.sub}</p>
                                     </div>
                                 ))}
@@ -651,9 +862,7 @@ export default function FirefightingPage() {
 
                     {/* Insurance */}
                     <Card className="card-elevated">
-                        <CardHeader className="card-elevated-header border-b border-border dark:border-border">
-                            <CardTitle>Insurance Coverage (Contractual)</CardTitle>
-                        </CardHeader>
+                        <CardHeader className="card-elevated-header border-b border-border dark:border-border"><CardTitle>Insurance Coverage (Contractual)</CardTitle></CardHeader>
                         <CardContent className="p-4 sm:p-5 space-y-3">
                             {[
                                 ["Owner's property (contractor negligence)", "RO 100,000"],
@@ -661,93 +870,73 @@ export default function FirefightingPage() {
                                 ["Workmen's compensation", "Covered under open policy"],
                             ].map(([coverage, limit]) => (
                                 <div key={coverage} className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-0.5 sm:gap-4 py-2 border-b border-border/60 dark:border-border/50 last:border-0">
-                                    <span className="text-sm text-muted-foreground dark:text-muted-foreground">{coverage}</span>
+                                    <span className="text-sm text-muted-foreground">{coverage}</span>
                                     <span className="text-sm font-bold text-foreground flex-shrink-0">{limit}</span>
                                 </div>
                             ))}
                         </CardContent>
                     </Card>
 
-                    {/* ── Sewage Tanker Discharge Contracts ── */}
+                    {/* Sewage tanker agreements (kept from previous version — STP-related) */}
                     <Card className="card-elevated">
                         <CardHeader className="card-elevated-header border-b border-border dark:border-border">
-                            <CardTitle className="flex items-center gap-2">
-                                <Truck className="w-5 h-5 text-secondary" />
-                                Sewage Tanker Discharge Agreements
-                            </CardTitle>
-                            <p className="text-xs text-muted-foreground mt-1">
-                                External sewage tankers discharging into Muscat Bay STP Plant
-                            </p>
+                            <CardTitle className="flex items-center gap-2"><Truck className="w-5 h-5 text-secondary" /> Sewage Tanker Discharge Agreements</CardTitle>
+                            <p className="text-xs text-muted-foreground mt-1">External sewage tankers discharging into Muscat Bay STP Plant (STP-related — listed here for reference).</p>
                         </CardHeader>
                         <CardContent className="p-4 sm:p-5 space-y-5">
-                            {/* Rate Structure */}
                             <div className="p-3 bg-mb-success-light rounded-lg">
                                 <p className="text-xs font-bold text-mb-success-text uppercase">Discharge Rate</p>
-                                <p className="text-lg font-bold text-foreground mt-1">
-                                    1 OMR per 1,000 Gallons <span className="text-sm font-normal text-muted-foreground">(5 OMR per standard 5,000-gal tanker)</span>
-                                </p>
-                                <p className="text-[10px] text-muted-foreground mt-1">
-                                    Quantity based on each vehicle&apos;s marked tank capacity · Rate set by Abdullah AlNasiri (Sep 2024)
-                                </p>
+                                <p className="text-lg font-bold text-foreground mt-1">1 OMR per 1,000 Gallons <span className="text-sm font-normal text-muted-foreground">(5 OMR per standard 5,000-gal tanker)</span></p>
+                                <p className="text-[10px] text-muted-foreground mt-1">Quantity based on each vehicle&apos;s marked tank capacity · Rate set by Abdullah AlNasiri (Sep 2024)</p>
                             </div>
-
-                            {/* Company Cards */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                {/* Al Abraj */}
-                                <div className="p-4 bg-muted dark:bg-muted/50 rounded-lg border border-border dark:border-border/50">
-                                    <div className="flex items-center justify-between mb-3">
-                                        <h4 className="text-sm font-bold text-foreground">Al Abraj</h4>
-                                        <Badge className="bg-mb-success-light text-mb-success-text text-[10px]">Active</Badge>
+                                {[
+                                    { name: "Al Abraj", contact: "Thomas", email: "abraj202@gmail.com" },
+                                    { name: "Jomon's Company", contact: "Jomon", email: "joemonmaliakkal@gmail.com" },
+                                ].map((co) => (
+                                    <div key={co.name} className="p-4 bg-muted dark:bg-muted/50 rounded-lg border border-border dark:border-border/50">
+                                        <div className="flex items-center justify-between mb-3">
+                                            <h4 className="text-sm font-bold text-foreground">{co.name}</h4>
+                                            <Badge className="bg-mb-success-light text-mb-success-text text-[10px]">Active</Badge>
+                                        </div>
+                                        <div className="space-y-2">
+                                            {[["Contact", co.contact], ["Email", co.email], ["Contract", "Sewage Delivery Agreement 2026"], ["Signed/Renewed", "Feb 2026 · Revised 11 Mar 2026"]].map(([label, value]) => (
+                                                <div key={label}><p className="text-[10px] uppercase text-muted-foreground font-semibold">{label}</p><p className="text-xs text-foreground">{value}</p></div>
+                                            ))}
+                                        </div>
                                     </div>
-                                    <div className="space-y-2">
-                                        {[
-                                            ["Contact", "Thomas"],
-                                            ["Email", "abraj202@gmail.com"],
-                                            ["Contract", "Sewage Delivery Agreement 2026"],
-                                            ["Drafted", "Aug 2024 · Reviewed by Shireen AlHabib (General Counsel)"],
-                                            ["Signed/Renewed", "Feb 2026 · Distributed by Siva Kumar"],
-                                            ["Revised", "11 Mar 2026"],
-                                        ].map(([label, value]) => (
-                                            <div key={label}>
-                                                <p className="text-[10px] uppercase text-muted-foreground font-semibold">{label}</p>
-                                                <p className="text-xs text-foreground">{value}</p>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                {/* Jomon */}
-                                <div className="p-4 bg-muted dark:bg-muted/50 rounded-lg border border-border dark:border-border/50">
-                                    <div className="flex items-center justify-between mb-3">
-                                        <h4 className="text-sm font-bold text-foreground">Jomon&apos;s Company</h4>
-                                        <Badge className="bg-mb-success-light text-mb-success-text text-[10px]">Active</Badge>
-                                    </div>
-                                    <div className="space-y-2">
-                                        {[
-                                            ["Contact", "Jomon"],
-                                            ["Email", "joemonmaliakkal@gmail.com"],
-                                            ["Contract", "Sewage Delivery Agreement 2026"],
-                                            ["Drafted", "Aug 2024 · Reviewed by Shireen AlHabib (General Counsel)"],
-                                            ["Signed/Renewed", "Feb 2026 · Distributed by Siva Kumar"],
-                                            ["Revised", "11 Mar 2026"],
-                                        ].map(([label, value]) => (
-                                            <div key={label}>
-                                                <p className="text-[10px] uppercase text-muted-foreground font-semibold">{label}</p>
-                                                <p className="text-xs text-foreground">{value}</p>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
+                                ))}
                             </div>
-
-                            {/* Footer note */}
-                            <p className="text-[10px] text-muted-foreground text-center pt-2 border-t border-border dark:border-border/50">
-                                Agreements managed by Rahim · Legal review by Shireen AlHabib · Rate approved by Abdullah AlNasiri
-                            </p>
                         </CardContent>
                     </Card>
                 </div>
             )}
         </div>
+    );
+}
+
+// ── Filter UI helpers ───────────────────────────────────────────────────────
+
+function FilterRow({ label, children }: { label: string; children: React.ReactNode }) {
+    return (
+        <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-[10px] uppercase font-semibold text-muted-foreground w-12 flex-shrink-0">{label}</span>
+            <div className="flex gap-1.5 flex-wrap">{children}</div>
+        </div>
+    );
+}
+
+function FilterChip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+    return (
+        <button
+            type="button"
+            onClick={onClick}
+            className={cn(
+                "px-3 py-1.5 rounded-full text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring min-h-[34px]",
+                active ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/70 hover:text-foreground",
+            )}
+        >
+            {children}
+        </button>
     );
 }
