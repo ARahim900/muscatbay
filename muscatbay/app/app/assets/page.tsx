@@ -295,7 +295,6 @@ export default function AssetsPage() {
         const totalItems = dataSource === 'supabase' ? (summary.total || totalCount) : totalCount;
         return [
             { label: "TOTAL ASSETS",            value: totalItems.toString(),                     subtitle: "Across all disciplines",       icon: Boxes,       variant: "water"   as const },
-            { label: "DISCIPLINES",              value: (dataSource === 'supabase' ? summary.disciplines : new Set(assets.map(a => a.discipline)).size).toString(), subtitle: "Portfolio-wide",   icon: Layers,       variant: "success" as const },
             { label: "ACTIVE / WORKING",         value: (dataSource === 'supabase' ? summary.workingStatus : assets.filter(a => ['Active','Working'].includes(a.status)).length).toString(), subtitle: "Status = Working / Active", icon: ClipboardCheck, variant: "success" as const },
             { label: "HIGH CRITICALITY",         value: (dataSource === 'supabase' ? summary.criticalLifecycle : assets.filter(a => a.criticalityLevel === 'High').length).toString(), subtitle: "Requires priority attention", icon: AlertTriangle, variant: "danger"  as const },
             { label: "WITH AMC CONTRACTOR",      value: (dataSource === 'supabase' ? summary.activeFlagged  : assets.filter(a => a.amcContractor).length).toString(),   subtitle: "Contracted maintenance",       icon: Wrench,       variant: "water"   as const },
