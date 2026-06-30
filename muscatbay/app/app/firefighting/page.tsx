@@ -11,6 +11,11 @@ import { PageHeader } from "@/components/shared/page-header";
 import { PageStatusBar } from "@/components/shared/page-status-bar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Table, TableHeader, TableBody, TableRow, TableCell } from "@/components/ui/table";
+import {
+    MultiSelectDropdown, SortableTableHead, TablePagination, TableToolbar,
+    type PageSizeOption,
+} from "@/components/shared/data-table";
 import { Skeleton } from "@/components/shared/skeleton";
 import { EmptyState } from "@/components/shared/empty-state";
 import { cn } from "@/lib/utils";
@@ -18,7 +23,8 @@ import { format } from "date-fns";
 import {
     ShieldCheck, AlertTriangle, CheckCircle, XCircle, Clock,
     Calendar, FileText, Info, Building2, Gauge, MapPin, Layers, Users,
-    Phone, Mail, ListChecks, Boxes, Flame, Truck, History, type LucideIcon,
+    Phone, Mail, ClipboardList, Boxes, Flame, Truck, History, Search, X,
+    type LucideIcon,
 } from "lucide-react";
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -59,6 +65,10 @@ const CYCLES: { key: Cycle; label: string; window: string; status: "completed" |
     { key: 2, label: "Cycle 2", window: "20–30 Apr 2026", status: "completed" },
     { key: 3, label: "Cycle 3", window: "~Aug 2026", status: "upcoming" },
 ];
+const CYCLE_BY_KEY: Record<Cycle, (typeof CYCLES)[number]> = CYCLES.reduce(
+    (acc, c) => { acc[c.key] = c; return acc; },
+    {} as Record<Cycle, (typeof CYCLES)[number]>,
+);
 
 // The 10 BEC visit groups, mapped to the 4 designated zones.
 const AREA_GROUPS: { key: string; zone: ZoneKey; area: string; systems: string[] }[] = [
@@ -163,6 +173,11 @@ const SYSTEM_LEGEND: [string, string][] = [
     ["Hydrants", "Fire Hydrants"],
 ];
 
+// Maintenance tracker filter option lists (multi-select dropdowns operate on display labels).
+const CYCLE_OPTIONS = CYCLES.map((c) => c.label);
+const ZONE_OPTIONS = ZONES.map((z) => z.label);
+const PPM_STATUS_OPTIONS = (Object.keys(STATUS_CFG) as PpmStatus[]).map((s) => STATUS_CFG[s].label);
+
 // ── Small presentational components ─────────────────────────────────────────
 
 function ZoneBadge({ zone, withScope = false }: { zone: ZoneKey; withScope?: boolean }) {
@@ -252,10 +267,15 @@ export default function FirefightingPage() {
     const [contacts, setContacts] = useState<FirePpmContact[]>([]);
     const [activityLog, setActivityLog] = useState<FirePpmActivity[]>([]);
 
-    // PPM Tracker filters
-    const [cycleFilter, setCycleFilter] = useState<"all" | Cycle>("all");
-    const [zoneFilter, setZoneFilter] = useState<"all" | ZoneKey>("all");
-    const [statusFilter, setStatusFilter] = useState<"all" | "done" | "open" | "upcoming">("all");
+    // Maintenance tracker — search, multi-select filters, sort & pagination
+    const [search, setSearch] = useState("");
+    const [selectedCycles, setSelectedCycles] = useState<string[]>([]);
+    const [selectedZones, setSelectedZones] = useState<string[]>([]);
+    const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
+    const [sortField, setSortField] = useState<string | null>(null);
+    const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+    const [currentPage, setCurrentPage] = useState(1);
+    const [pageSize, setPageSize] = useState<PageSizeOption>(25);
 
     useEffect(() => {
         let active = true;
@@ -310,18 +330,71 @@ export default function FirefightingPage() {
         { label: "OPEN ISSUES", value: openIssues.length.toString(), subtitle: "Defects & access items", icon: AlertTriangle, variant: openIssues.length > 0 ? "danger" as const : "success" as const },
     ], [completedCycles, openIssues.length]);
 
-    // ── PPM Tracker filtering ──
-    const filteredActivities = useMemo(() => PPM_ACTIVITIES.filter((a) => {
-        if (cycleFilter !== "all" && a.cycle !== cycleFilter) return false;
-        if (zoneFilter !== "all" && a.zone !== zoneFilter) return false;
-        if (statusFilter === "done" && a.status !== "done") return false;
-        if (statusFilter === "open" && a.status !== "fault" && a.status !== "no_access") return false;
-        if (statusFilter === "upcoming" && a.status !== "upcoming" && a.status !== "scheduled") return false;
-        return true;
-    }), [cycleFilter, zoneFilter, statusFilter]);
+    // ── Maintenance tracker filtering, sorting & pagination ──
+    const sortValue = useCallback((a: PpmActivity, field: string): string => {
+        switch (field) {
+            case "cycle": return String(a.cycle);
+            case "zone": return ZONE_BY_KEY[a.zone].label;
+            case "area": return a.area;
+            case "systems": return a.systems.join(", ");
+            case "date": return a.date;
+            case "status": return STATUS_CFG[a.status].label;
+            case "notes": return a.notes || "";
+            default: return "";
+        }
+    }, []);
 
-    const filtersActive = cycleFilter !== "all" || zoneFilter !== "all" || statusFilter !== "all";
-    const clearFilters = () => { setCycleFilter("all"); setZoneFilter("all"); setStatusFilter("all"); };
+    const filteredActivities = useMemo(() => {
+        let result = [...PPM_ACTIVITIES];
+
+        if (search) {
+            const term = search.toLowerCase();
+            result = result.filter((a) =>
+                a.area.toLowerCase().includes(term) ||
+                ZONE_BY_KEY[a.zone].label.toLowerCase().includes(term) ||
+                a.systems.some((s) => s.toLowerCase().includes(term)) ||
+                (a.notes?.toLowerCase().includes(term) ?? false)
+            );
+        }
+        if (selectedCycles.length > 0 && selectedCycles.length < CYCLE_OPTIONS.length) {
+            result = result.filter((a) => selectedCycles.includes(CYCLE_BY_KEY[a.cycle].label));
+        }
+        if (selectedZones.length > 0 && selectedZones.length < ZONE_OPTIONS.length) {
+            result = result.filter((a) => selectedZones.includes(ZONE_BY_KEY[a.zone].label));
+        }
+        if (selectedStatuses.length > 0 && selectedStatuses.length < PPM_STATUS_OPTIONS.length) {
+            result = result.filter((a) => selectedStatuses.includes(STATUS_CFG[a.status].label));
+        }
+
+        if (sortField) {
+            result.sort((a, b) => {
+                const cmp = sortValue(a, sortField).localeCompare(sortValue(b, sortField), undefined, { numeric: true });
+                return sortDirection === "asc" ? cmp : -cmp;
+            });
+        }
+
+        return result;
+    }, [search, selectedCycles, selectedZones, selectedStatuses, sortField, sortDirection, sortValue]);
+
+    const handleSort = (field: string) => {
+        if (sortField === field) setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
+        else { setSortField(field); setSortDirection("asc"); }
+        setCurrentPage(1);
+    };
+
+    const effectivePageSize = pageSize === "All" ? filteredActivities.length : pageSize;
+    const totalPages = Math.ceil(filteredActivities.length / (effectivePageSize || 1));
+    const startIndex = (currentPage - 1) * effectivePageSize;
+    const paginatedActivities = filteredActivities.slice(startIndex, startIndex + effectivePageSize);
+
+    const filtersActive = Boolean(search) ||
+        (selectedCycles.length > 0 && selectedCycles.length < CYCLE_OPTIONS.length) ||
+        (selectedZones.length > 0 && selectedZones.length < ZONE_OPTIONS.length) ||
+        (selectedStatuses.length > 0 && selectedStatuses.length < PPM_STATUS_OPTIONS.length);
+    const clearFilters = () => {
+        setSearch(""); setSelectedCycles([]); setSelectedZones([]); setSelectedStatuses([]);
+        setCurrentPage(1);
+    };
 
     // Cell summary for the Zone × Cycle matrix
     const cellFor = useCallback((zone: ZoneKey, cycle: Cycle) => {
@@ -370,7 +443,7 @@ export default function FirefightingPage() {
                 onTabChange={(k) => setActiveTab(k as TabKey)}
                 tabs={[
                     { key: "overview", label: "Overview", icon: Gauge },
-                    { key: "ppm", label: "PPM Tracker", icon: ListChecks },
+                    { key: "ppm", label: "Maintenance", icon: ClipboardList },
                     { key: "assets", label: "Assets & Issues", icon: Boxes },
                     { key: "contract", label: "Contract & Team", icon: FileText },
                 ]}
@@ -391,7 +464,7 @@ export default function FirefightingPage() {
                                 Bahwan Engineering (BEC) services every fire-alarm and fire-fighting asset in Muscat Bay under a non-comprehensive AMC.
                                 Maintenance runs as <span className="font-semibold text-foreground">three planned cycles each year</span> (roughly every four months), and
                                 each cycle sweeps all <span className="font-semibold text-foreground">four designated zones</span> and their assets.
-                                Use the <span className="font-semibold text-foreground">PPM Tracker</span> tab to see exactly which cycle, zone and asset each visit covers.
+                                Use the <span className="font-semibold text-foreground">Maintenance</span> tab to see exactly which cycle, zone and asset each visit covers.
                             </p>
                             {/* Cycle progress */}
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4">
@@ -455,7 +528,7 @@ export default function FirefightingPage() {
                                 <AlertTriangle className="w-5 h-5 text-mb-warning-text flex-shrink-0 mt-0.5" />
                                 <div className="text-sm">
                                     <p className="font-semibold text-foreground">{openFaults.length} open PPM fault{openFaults.length === 1 ? "" : "s"} · {openIssues.length} open issue{openIssues.length === 1 ? "" : "s"}</p>
-                                    <p className="text-muted-foreground mt-0.5">Review the PPM Tracker (Faults filter) and the Assets &amp; Issues tab for details and follow-up quotes.</p>
+                                    <p className="text-muted-foreground mt-0.5">Review the Maintenance tab (Faults filter) and the Assets &amp; Issues tab for details and follow-up quotes.</p>
                                 </div>
                             </CardContent>
                         </Card>
@@ -463,7 +536,7 @@ export default function FirefightingPage() {
                 </div>
             )}
 
-            {/* ══════════ PPM TRACKER ══════════ */}
+            {/* ══════════ MAINTENANCE ══════════ */}
             {activeTab === "ppm" && (
                 <div className="space-y-5 motion-safe:animate-in motion-safe:fade-in duration-200">
                     {/* Zone × Cycle matrix */}
@@ -492,12 +565,12 @@ export default function FirefightingPage() {
                                                 const cell = cellFor(z.key, c.key);
                                                 const cfg = STATUS_CFG[cell.status];
                                                 const Icon = cfg.icon;
-                                                const active = cycleFilter === c.key && zoneFilter === z.key;
+                                                const active = selectedCycles.length === 1 && selectedCycles[0] === c.label && selectedZones.length === 1 && selectedZones[0] === z.label;
                                                 return (
                                                     <td key={c.key} className="p-1">
                                                         <button
                                                             type="button"
-                                                            onClick={() => { setCycleFilter(c.key); setZoneFilter(z.key); }}
+                                                            onClick={() => { setSelectedCycles([c.label]); setSelectedZones([z.label]); setCurrentPage(1); }}
                                                             className={cn("w-full flex items-center justify-center gap-1.5 rounded-md px-2 py-2 text-[11px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring", cfg.cls, active && "ring-2 ring-primary")}
                                                             aria-label={`${z.label}, ${c.label}: ${cell.faults > 0 ? `${cell.faults} faults` : cfg.label}`}
                                                         >
@@ -514,88 +587,114 @@ export default function FirefightingPage() {
                         </CardContent>
                     </Card>
 
-                    {/* Filters */}
-                    <div className="flex flex-col gap-3 rounded-lg border border-border bg-card p-3 sm:p-4">
-                        <FilterRow label="Cycle">
-                            <FilterChip active={cycleFilter === "all"} onClick={() => setCycleFilter("all")}>All</FilterChip>
-                            {CYCLES.map((c) => <FilterChip key={c.key} active={cycleFilter === c.key} onClick={() => setCycleFilter(c.key)}>{c.label}</FilterChip>)}
-                        </FilterRow>
-                        <FilterRow label="Zone">
-                            <FilterChip active={zoneFilter === "all"} onClick={() => setZoneFilter("all")}>All</FilterChip>
-                            {ZONES.map((z) => <FilterChip key={z.key} active={zoneFilter === z.key} onClick={() => setZoneFilter(z.key)}>{z.label}</FilterChip>)}
-                        </FilterRow>
-                        <FilterRow label="Status">
-                            <FilterChip active={statusFilter === "all"} onClick={() => setStatusFilter("all")}>All</FilterChip>
-                            <FilterChip active={statusFilter === "done"} onClick={() => setStatusFilter("done")}>Completed</FilterChip>
-                            <FilterChip active={statusFilter === "open"} onClick={() => setStatusFilter("open")}>Faults</FilterChip>
-                            <FilterChip active={statusFilter === "upcoming"} onClick={() => setStatusFilter("upcoming")}>Upcoming</FilterChip>
-                        </FilterRow>
-                        <div className="flex items-center justify-between gap-2 flex-wrap">
-                            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                                <span className="text-[10px] uppercase font-semibold text-muted-foreground">Systems:</span>
-                                {SYSTEM_LEGEND.map(([k, v]) => (
-                                    <span key={k} className="flex items-center gap-1 text-[11px] text-muted-foreground"><SystemTag label={k} />{v}</span>
-                                ))}
-                            </div>
-                            <div className="flex items-center gap-3">
-                                <span className="text-xs text-muted-foreground"><span className="font-semibold text-foreground tabular-nums">{filteredActivities.length}</span> activities</span>
-                                {filtersActive && <button onClick={clearFilters} className="text-xs text-secondary hover:underline font-medium">Clear filters</button>}
-                            </div>
+                    {/* Toolbar — search + multi-select filters (matches the HVAC Maintenance tab) */}
+                    <TableToolbar>
+                        <div className="relative flex-1 min-w-0 sm:min-w-[200px] max-w-md">
+                            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                            <input
+                                type="text"
+                                aria-label="Search maintenance activities"
+                                placeholder="Search area, zone, system, notes…"
+                                value={search}
+                                onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
+                                className="pl-10 pr-4 py-2 w-full rounded-lg border border-border/80 dark:border-border/80 bg-card text-foreground dark:text-muted-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40 shadow-sm"
+                            />
                         </div>
+                        <MultiSelectDropdown label="Cycle" options={CYCLE_OPTIONS} selected={selectedCycles} onChange={(s) => { setSelectedCycles(s); setCurrentPage(1); }} />
+                        <MultiSelectDropdown label="Zone" options={ZONE_OPTIONS} selected={selectedZones} onChange={(s) => { setSelectedZones(s); setCurrentPage(1); }} />
+                        <MultiSelectDropdown label="Status" options={PPM_STATUS_OPTIONS} selected={selectedStatuses} onChange={(s) => { setSelectedStatuses(s); setCurrentPage(1); }} />
+                        {filtersActive && (
+                            <button
+                                onClick={clearFilters}
+                                className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg text-muted-foreground hover:text-foreground dark:text-muted-foreground dark:hover:text-foreground transition-colors"
+                            >
+                                <X className="w-3.5 h-3.5" /> Clear
+                            </button>
+                        )}
+                        <div className="text-sm text-muted-foreground dark:text-muted-foreground whitespace-nowrap ml-auto">
+                            <span className="font-semibold text-foreground dark:text-muted-foreground/70">{filteredActivities.length}</span>
+                            {filteredActivities.length !== PPM_ACTIVITIES.length && <span> of {PPM_ACTIVITIES.length}</span>} activities
+                        </div>
+                    </TableToolbar>
+
+                    {/* Systems legend */}
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 px-1">
+                        <span className="text-[10px] uppercase font-semibold text-muted-foreground">Systems:</span>
+                        {SYSTEM_LEGEND.map(([k, v]) => (
+                            <span key={k} className="flex items-center gap-1 text-[11px] text-muted-foreground"><SystemTag label={k} />{v}</span>
+                        ))}
                     </div>
 
-                    {/* Activities table */}
-                    <div className="ops-table-shell">
-                        {/* Desktop */}
-                        <table className="ops-table hidden md:table w-full">
-                            <thead>
-                                <tr>
-                                    <th className="py-3 px-4 font-semibold text-xs text-left whitespace-nowrap">Cycle</th>
-                                    <th className="py-3 px-4 font-semibold text-xs text-left whitespace-nowrap">Zone</th>
-                                    <th className="py-3 px-4 font-semibold text-xs text-left">Area / Asset</th>
-                                    <th className="py-3 px-4 font-semibold text-xs text-left whitespace-nowrap">Systems</th>
-                                    <th className="py-3 px-4 font-semibold text-xs text-left whitespace-nowrap">Scheduled</th>
-                                    <th className="py-3 px-4 font-semibold text-xs text-left whitespace-nowrap">Status</th>
-                                    <th className="py-3 px-4 font-semibold text-xs text-left">Notes</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {filteredActivities.map((a, i) => (
-                                    <tr key={a.id} className={cn("border-b border-border/80 hover:bg-secondary/5 dark:hover:bg-muted/40 transition-colors", i % 2 === 1 && "bg-muted/40 dark:bg-muted/20", (a.status === "fault" || a.status === "no_access") && "bg-destructive/5 dark:bg-destructive/10")}>
-                                        <td className="py-3 px-4"><CycleBadge cycle={a.cycle} /></td>
-                                        <td className="py-3 px-4"><ZoneBadge zone={a.zone} /></td>
-                                        <td className="py-3 px-4 text-sm font-medium text-foreground dark:text-muted-foreground">{a.area}</td>
-                                        <td className="py-3 px-4"><div className="flex gap-1 flex-wrap">{a.systems.map((s) => <SystemTag key={s} label={s} />)}</div></td>
-                                        <td className="py-3 px-4 text-xs text-muted-foreground whitespace-nowrap tabular-nums">{a.date}</td>
-                                        <td className="py-3 px-4"><PpmStatusBadge status={a.status} /></td>
-                                        <td className="py-3 px-4 text-[11px] text-muted-foreground max-w-[280px]">{a.notes || "—"}</td>
-                                    </tr>
+                    {/* Mobile cards */}
+                    <div className="md:hidden space-y-3">
+                        {paginatedActivities.map((a) => (
+                            <div key={a.id} className="rounded-xl border border-border dark:border-border bg-card p-4 space-y-2">
+                                <div className="flex items-start justify-between gap-2">
+                                    <div className="flex items-center gap-1.5 flex-wrap"><CycleBadge cycle={a.cycle} /><ZoneBadge zone={a.zone} /></div>
+                                    <PpmStatusBadge status={a.status} />
+                                </div>
+                                <p className="text-sm font-medium text-foreground dark:text-muted-foreground">{a.area}</p>
+                                <div className="flex items-center justify-between gap-2">
+                                    <div className="flex gap-1 flex-wrap">{a.systems.map((s) => <SystemTag key={s} label={s} />)}</div>
+                                    <span className="text-[11px] text-muted-foreground tabular-nums whitespace-nowrap">{a.date}</span>
+                                </div>
+                                {a.notes && <p className="text-[11px] text-muted-foreground dark:text-muted-foreground">{a.notes}</p>}
+                            </div>
+                        ))}
+                        {filteredActivities.length === 0 && (
+                            <EmptyState variant="filter-empty" title="No activities match" description="Try adjusting the search or filters." />
+                        )}
+                    </div>
+
+                    {/* Desktop table */}
+                    <div className="hidden md:block">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <SortableTableHead field="cycle" currentSortField={sortField} currentSortDirection={sortDirection} onSort={handleSort}>Cycle</SortableTableHead>
+                                    <SortableTableHead field="zone" currentSortField={sortField} currentSortDirection={sortDirection} onSort={handleSort}>Zone</SortableTableHead>
+                                    <SortableTableHead field="area" currentSortField={sortField} currentSortDirection={sortDirection} onSort={handleSort}>Area / Asset</SortableTableHead>
+                                    <SortableTableHead field="systems" currentSortField={sortField} currentSortDirection={sortDirection} onSort={handleSort}>Systems</SortableTableHead>
+                                    <SortableTableHead field="date" currentSortField={sortField} currentSortDirection={sortDirection} onSort={handleSort}>Scheduled</SortableTableHead>
+                                    <SortableTableHead field="status" currentSortField={sortField} currentSortDirection={sortDirection} onSort={handleSort}>Status</SortableTableHead>
+                                    <SortableTableHead field="notes" currentSortField={sortField} currentSortDirection={sortDirection} onSort={handleSort}>Notes</SortableTableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {paginatedActivities.map((a) => (
+                                    <TableRow key={a.id}>
+                                        <TableCell><CycleBadge cycle={a.cycle} /></TableCell>
+                                        <TableCell><ZoneBadge zone={a.zone} /></TableCell>
+                                        <TableCell className="text-foreground dark:text-muted-foreground">{a.area}</TableCell>
+                                        <TableCell><div className="flex gap-1 flex-wrap">{a.systems.map((s) => <SystemTag key={s} label={s} />)}</div></TableCell>
+                                        <TableCell className="text-xs text-muted-foreground whitespace-nowrap tabular-nums">{a.date}</TableCell>
+                                        <TableCell><PpmStatusBadge status={a.status} /></TableCell>
+                                        <TableCell className="text-[11px] text-muted-foreground max-w-[280px] truncate" title={a.notes}>{a.notes || "—"}</TableCell>
+                                    </TableRow>
                                 ))}
                                 {filteredActivities.length === 0 && (
-                                    <tr><td colSpan={7}><EmptyState variant="filter-empty" title="No activities match" description="Try adjusting the cycle, zone or status filters." /></td></tr>
+                                    <TableRow>
+                                        <TableCell colSpan={7}>
+                                            <EmptyState variant="filter-empty" title="No activities match" description="Try adjusting the search or filters." />
+                                        </TableCell>
+                                    </TableRow>
                                 )}
-                            </tbody>
-                        </table>
-                        {/* Mobile cards */}
-                        <div className="md:hidden divide-y divide-border dark:divide-border">
-                            {filteredActivities.length === 0 ? (
-                                <EmptyState variant="filter-empty" title="No activities match" description="Try adjusting the filters." />
-                            ) : filteredActivities.map((a) => (
-                                <div key={a.id} className={cn("p-4 space-y-2", (a.status === "fault" || a.status === "no_access") && "bg-destructive/5 dark:bg-destructive/10")}>
-                                    <div className="flex items-center justify-between gap-2">
-                                        <div className="flex items-center gap-1.5 flex-wrap"><CycleBadge cycle={a.cycle} /><ZoneBadge zone={a.zone} /></div>
-                                        <PpmStatusBadge status={a.status} />
-                                    </div>
-                                    <p className="text-sm font-medium text-foreground">{a.area}</p>
-                                    <div className="flex items-center justify-between gap-2">
-                                        <div className="flex gap-1 flex-wrap">{a.systems.map((s) => <SystemTag key={s} label={s} />)}</div>
-                                        <span className="text-[11px] text-muted-foreground tabular-nums">{a.date}</span>
-                                    </div>
-                                    {a.notes && <p className="text-[11px] text-muted-foreground">{a.notes}</p>}
-                                </div>
-                            ))}
-                        </div>
+                            </TableBody>
+                        </Table>
                     </div>
+
+                    {filteredActivities.length > 0 && (
+                        <TablePagination
+                            currentPage={currentPage}
+                            totalPages={totalPages}
+                            totalItems={filteredActivities.length}
+                            pageSize={pageSize}
+                            startIndex={startIndex}
+                            endIndex={Math.min(startIndex + effectivePageSize, filteredActivities.length)}
+                            onPageChange={setCurrentPage}
+                            onPageSizeChange={(size) => { setPageSize(size); setCurrentPage(1); }}
+                        />
+                    )}
 
                     {/* Year-2 note */}
                     <Card className="card-elevated">
@@ -912,31 +1011,5 @@ export default function FirefightingPage() {
                 </div>
             )}
         </div>
-    );
-}
-
-// ── Filter UI helpers ───────────────────────────────────────────────────────
-
-function FilterRow({ label, children }: { label: string; children: React.ReactNode }) {
-    return (
-        <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-[10px] uppercase font-semibold text-muted-foreground w-12 flex-shrink-0">{label}</span>
-            <div className="flex gap-1.5 flex-wrap">{children}</div>
-        </div>
-    );
-}
-
-function FilterChip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
-    return (
-        <button
-            type="button"
-            onClick={onClick}
-            className={cn(
-                "px-3 py-1.5 rounded-full text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring min-h-[34px]",
-                active ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/70 hover:text-foreground",
-            )}
-        >
-            {children}
-        </button>
     );
 }
