@@ -388,7 +388,10 @@ export default function AssetsPage() {
             <TabNavigation tabs={TABS} activeTab={activeTab} onTabChange={handleTabChange} />
 
             <div className="space-y-4">
-                {/* Toolbar */}
+                {/* KPI cards — moved above the toolbar so they sit at the top of the section */}
+                {activeTab === 'overview' && <StatsGrid stats={stats} />}
+
+                {/* Toolbar — search filter now sits directly above the table */}
                 <TableToolbar>
                     <div className="relative flex-1 min-w-0 sm:min-w-[200px] max-w-md">
                         <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -426,7 +429,6 @@ export default function AssetsPage() {
                 {/* ── TAB: OVERVIEW ─────────────────────────────────────────────────────── */}
                 {activeTab === 'overview' && (
                     <div id="panel-overview" role="tabpanel" aria-labelledby="tab-overview" tabIndex={0} className="space-y-4">
-                    <StatsGrid stats={stats} />
                     <div className="ops-table-shell">
                         {/* Mobile cards */}
                         <div className="md:hidden divide-y divide-border dark:divide-border">
