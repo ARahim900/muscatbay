@@ -444,20 +444,6 @@ export default function FirefightingPage() {
         setCurrentPage(1);
     };
 
-    // Cell summary for the Zone × Cycle matrix
-    const cellFor = useCallback((zone: ZoneKey, cycle: Cycle) => {
-        const items = PPM_ACTIVITIES.filter((a) => a.zone === zone && a.cycle === cycle);
-        const faults = items.filter((a) => a.status === "fault" || a.status === "no_access").length;
-        const status: PpmStatus = faults > 0
-            ? "fault"
-            : items.every((a) => a.status === "done")
-                ? "done"
-                : items.some((a) => a.status === "scheduled")
-                    ? "scheduled"
-                    : "upcoming";
-        return { items: items.length, faults, status };
-    }, []);
-
     // ───────────────────────────────────────────────────────────────────────
 
     if (loading) {
@@ -757,54 +743,6 @@ export default function FirefightingPage() {
             {/* ══════════ MAINTENANCE ══════════ */}
             {activeTab === "ppm" && (
                 <div className="space-y-5 motion-safe:animate-in motion-safe:fade-in duration-200">
-                    {/* Zone × Cycle matrix */}
-                    <Card>
-                        <CardHeader className="pb-2">
-                            <CardTitle className={CARD_TITLE}><Layers className="w-4 h-4 text-secondary" /> Zone × Cycle Overview</CardTitle>
-                            <p className="text-xs text-muted-foreground mt-1">Tap any cell to filter the tracker to that zone and cycle.</p>
-                        </CardHeader>
-                        <CardContent className="overflow-x-auto">
-                            <table className="w-full min-w-[520px] border-separate border-spacing-1">
-                                <thead>
-                                    <tr>
-                                        <th className="text-left text-[11px] font-semibold uppercase tracking-wide text-muted-foreground p-2">Zone</th>
-                                        {CYCLES.map((c) => (
-                                            <th key={c.key} className="p-2 text-center text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                                                {c.label}<span className="block font-normal normal-case text-[10px] text-muted-foreground/70">{c.window}</span>
-                                            </th>
-                                        ))}
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {ZONES.map((z) => (
-                                        <tr key={z.key}>
-                                            <td className="p-1.5 align-middle"><ZoneBadge zone={z.key} withScope /></td>
-                                            {CYCLES.map((c) => {
-                                                const cell = cellFor(z.key, c.key);
-                                                const cfg = STATUS_CFG[cell.status];
-                                                const Icon = cfg.icon;
-                                                const active = selectedCycles.length === 1 && selectedCycles[0] === c.label && selectedZones.length === 1 && selectedZones[0] === z.label;
-                                                return (
-                                                    <td key={c.key} className="p-1">
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => { setSelectedCycles([c.label]); setSelectedZones([z.label]); setCurrentPage(1); }}
-                                                            className={cn("w-full flex items-center justify-center gap-1.5 rounded-md px-2 py-2 text-[11px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring", cfg.cls, active && "ring-2 ring-primary")}
-                                                            aria-label={`${z.label}, ${c.label}: ${cell.faults > 0 ? `${cell.faults} faults` : cfg.label}`}
-                                                        >
-                                                            <Icon className="w-3.5 h-3.5" />
-                                                            {cell.faults > 0 ? `${cell.faults} fault${cell.faults > 1 ? "s" : ""}` : cfg.label}
-                                                        </button>
-                                                    </td>
-                                                );
-                                            })}
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </CardContent>
-                    </Card>
-
                     {/* Toolbar — search + multi-select filters (matches the HVAC Maintenance tab) */}
                     <TableToolbar>
                         <div className="relative flex-1 min-w-0 sm:min-w-[200px] max-w-md">
