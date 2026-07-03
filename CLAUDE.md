@@ -1,5 +1,18 @@
 # Muscat Bay Utility Management App
 
+## Living Project Status — read this first
+
+- **[`PROJECT_STATUS.md`](./PROJECT_STATUS.md) (repo root) is the single source of
+  truth for the app's current state**: module status, data pipelines, in-flight
+  work, known gaps and a full development log. Read it BEFORE exploring the
+  codebase to understand what exists and where things stand.
+- **After completing any task** that changes features, schema, data pipelines,
+  module status or known gaps, **update the relevant curated section of
+  `PROJECT_STATUS.md` in the same commit/PR** as the change.
+- The "Development log" section of that file is appended automatically on every
+  push to `main` (`.github/workflows/project-status-log.yml`) — never hand-edit
+  log entries; curate meaning in the sections above it.
+
 ## Quick Reference
 
 | Item | Value |

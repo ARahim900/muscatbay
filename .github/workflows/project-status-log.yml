@@ -1,0 +1,110 @@
+# Appends every change pushed to main into the "Development log" section of
+# PROJECT_STATUS.md, so the project's living status file documents every
+# merged task with zero human action.
+#
+# Loop safety (three layers):
+#   1. Pushes made with the default GITHUB_TOKEN do not trigger workflows.
+#   2. The job skips entirely when the pusher is github-actions[bot].
+#   3. The bot's own commit subjects start with "docs(status):" and are
+#      filtered out of the log, and already-present lines are deduped.
+#
+# Note: the bot's docs-only commit still triggers a Vercel production build
+# of an unchanged app — harmless, and users are unaffected.
+
+name: Project status log
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: project-status-log
+  cancel-in-progress: false
+
+jobs:
+  append:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    env:
+      BEFORE: ${{ github.event.before }}
+      AFTER: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Append pushed changes to PROJECT_STATUS.md
+        run: |
+          set -euo pipefail
+          FILE="PROJECT_STATUS.md"
+          MARK='<!-- STATUS:LOG:BEGIN -->'
+
+          if [ ! -f "$FILE" ]; then
+            echo "$FILE missing — nothing to update."
+            exit 0
+          fi
+          if ! grep -qF "$MARK" "$FILE"; then
+            echo "Log marker not found in $FILE — skipping."
+            exit 0
+          fi
+
+          # Push range; fall back to the head commit alone on first/force push.
+          if [[ "$BEFORE" =~ ^0+$ ]] || ! git cat-file -e "$BEFORE" 2>/dev/null; then
+            RANGE=(-1 "$AFTER")
+          else
+            RANGE=("$BEFORE..$AFTER")
+          fi
+
+          NEW="$(mktemp)"
+          # First-parent only: a squash/merge to main logs as one entry, not
+          # one per branch commit. %cs = date the change landed on main.
+          git log --first-parent --format='%cs|%s' "${RANGE[@]}" |
+          while IFS='|' read -r day subject; do
+            case "$subject" in
+              "docs(status):"*) continue ;;
+            esac
+            line="- ${day} — ${subject}"
+            # "--" ends option parsing: log lines start with "-" and would
+            # otherwise be read by grep as options.
+            if ! grep -qxF -- "$line" "$FILE"; then
+              printf '%s\n' "$line" >> "$NEW"
+            fi
+          done
+
+          if [ ! -s "$NEW" ]; then
+            echo "No new entries to log."
+            exit 0
+          fi
+
+          awk -v marker="$MARK" -v newfile="$NEW" '
+            { print }
+            $0 == marker {
+              while ((getline l < newfile) > 0) print l
+              close(newfile)
+            }
+          ' "$FILE" > "$FILE.tmp" && mv "$FILE.tmp" "$FILE"
+
+          if git diff --quiet -- "$FILE"; then
+            echo "Log unchanged."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$FILE"
+          git commit -m "docs(status): log $(git rev-parse --short "$AFTER") in development log [skip ci]"
+
+          # Retry around racing pushes; the concurrency group already
+          # serializes runs of this workflow itself.
+          for attempt in 1 2 3; do
+            if git push origin main; then
+              exit 0
+            fi
+            git pull --rebase origin main
+          done
+          echo "Failed to push status log update after 3 attempts."
+          exit 1
