@@ -43,7 +43,10 @@ export interface RecentActivityItem {
 // Module-level constant keeps the array reference stable across renders.
 const DASHBOARD_REALTIME_TABLES = [
     'stp_operations',
-    'Water System',
+    // Base tables behind the water KPIs — "Water System" is a view and views
+    // never emit postgres_changes events.
+    'water_meters',
+    'water_monthly_consumption',
     'electricity_readings',
     'Contractor_Tracker',
     // Must match the table the asset queries actually read (the assets page
