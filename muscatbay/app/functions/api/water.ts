@@ -20,19 +20,16 @@ import {
 import type { WaterMeter } from '@/lib/water-data';
 
 // Earliest period in the seeded dataset. Acts as a floor so old backfills
-// can't accidentally inflate the response. The ceiling is derived from the
-// current month so accidental future-dated rows can't leak through.
+// can't accidentally inflate the response. There is deliberately NO ceiling:
+// deriving one from the device clock hid legitimate months from users whose
+// tablet date was set in the past (the dashboard capped at the device's
+// month), and the write path now guards against garbage periods anyway.
 const PERIOD_FLOOR = '2024-01';
 
 // Supabase / PostgREST caps every response at 1000 rows regardless of the
 // `range()` value the client passes, so we page through `consumption` rows
 // in fixed-size windows until a short page signals the end.
 const CONSUMPTION_PAGE_SIZE = 1000;
-
-function currentPeriod(): string {
-    const now = new Date();
-    return `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}`;
-}
 
 // Mirror the legacy-name translations baked into the "Water System" SQL view
 // so downstream code (lib/water-data.ts, water-database-table, etc.) keeps
@@ -126,14 +123,12 @@ export async function getWaterMetersFromSupabase(): Promise<WaterMeter[]> {
             return [];
         }
 
-        const periodCeiling = currentPeriod();
         const consumptionRows: MonthlyConsumptionRow[] = [];
         for (let from = 0; ; from += CONSUMPTION_PAGE_SIZE) {
             const { data, error } = await client
                 .from('water_monthly_consumption')
                 .select('account_number, period, consumption')
                 .gte('period', PERIOD_FLOOR)
-                .lte('period', periodCeiling)
                 .order('account_number')
                 .order('period')
                 .range(from, from + CONSUMPTION_PAGE_SIZE - 1)
