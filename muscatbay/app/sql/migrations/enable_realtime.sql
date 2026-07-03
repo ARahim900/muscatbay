@@ -9,8 +9,10 @@
 -- duplicates in the publication).
 -- =============================================================================
 
--- Monthly water meter data (Water System table)
-ALTER PUBLICATION supabase_realtime ADD TABLE "Water System";
+-- Monthly water meter data — publish the base tables ("Water System" is a
+-- view since schema v2; views cannot be published and never emit events)
+ALTER PUBLICATION supabase_realtime ADD TABLE water_meters;
+ALTER PUBLICATION supabase_realtime ADD TABLE water_monthly_consumption;
 
 -- Daily consumption readings
 ALTER PUBLICATION supabase_realtime ADD TABLE water_daily_consumption;

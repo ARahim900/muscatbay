@@ -27,6 +27,11 @@ const DailyWaterReport = dynamic(
 
 type DashboardView = "monthly" | "daily";
 
+// Base tables behind the monthly dashboard — module-level so the array
+// reference stays stable across renders (the realtime hook re-subscribes
+// when the reference changes).
+const WATER_REALTIME_TABLES = ["water_meters", "water_monthly_consumption"];
+
 export default function WaterPage() {
     const [dashboardView, setDashboardView] = useState<DashboardView>("monthly");
 
@@ -65,9 +70,12 @@ export default function WaterPage() {
         }
     }, []);
 
-    // ── Supabase real-time subscription for the Water System table ─────────
+    // ── Supabase real-time subscription for the water tables ───────────────
+    // Subscribe to the base tables the app reads ("Water System" is a view —
+    // views never emit postgres_changes events), so new monthly readings
+    // appear without a manual refresh.
     const { isLive } = useSupabaseRealtime({
-        table: "Water System",
+        table: WATER_REALTIME_TABLES,
         channelName: "water-system-rt",
         onChanged: () => fetchWaterData(true),
         enabled: dataSource === "supabase",
