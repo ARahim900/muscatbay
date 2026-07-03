@@ -108,6 +108,7 @@ Entries below the marker are appended automatically on every push to `main`.
 Do not hand-edit existing entries; curate meaning in the sections above.
 
 <!-- STATUS:LOG:BEGIN -->
+- 2026-07-03 — Add living PROJECT_STATUS.md + auto-updating development log (#31)
 - 2026-07-03 — Water Monthly: clock-proof the fetch window, flush stale client caches (#30)
 - 2026-07-03 — Water Monthly: auto-sync any backend data to the dashboard, live (#29)
 - 2026-06-30 — Align Fire Safety section with HVAC: 3 subsections, unified styling (#27)
