@@ -1,11 +1,16 @@
 // Bump this version to force every client to flush stale caches on their
 // next visit. The `activate` handler below deletes any cache whose name
 // doesn't match CACHE_NAME, so bumping invalidates everything older.
-// Last bumped 2026-06-27: unstick clients stranded on a cached app shell that
-// referenced deleted `_next/` chunk hashes — those 404'd, the bundle never
-// loaded, and the app hung on the splash screen. (The SW is also no longer
-// registered in local development; see components/pwa/register-sw.tsx.)
-const CACHE_NAME = "muscatbay-v5";
+// Last bumped 2026-07-03: flush clients still showing the pre-June water
+// data / pre-auto-sync build. The new SW takes control immediately
+// (skipWaiting + clients.claim) and register-sw.tsx reloads previously
+// controlled tabs on controllerchange, so stale sessions self-heal on
+// their next visit.
+// Previous bump 2026-06-27: unstick clients stranded on a cached app shell
+// that referenced deleted `_next/` chunk hashes — those 404'd, the bundle
+// never loaded, and the app hung on the splash screen. (The SW is also no
+// longer registered in local development; see components/pwa/register-sw.tsx.)
+const CACHE_NAME = "muscatbay-v6";
 const STATIC_ASSETS = [
   "/",
   "/manifest.json",
