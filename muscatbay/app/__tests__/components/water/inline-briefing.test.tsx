@@ -4,17 +4,19 @@ import { DailyBriefing } from '@/components/water/daily-report/inline-briefing';
 import type { BriefingMetrics } from '@/components/water/daily-report/briefing-metrics';
 
 const base: BriefingMetrics = {
-    totalSupply: 1200, lossM3: 150, lossPct: 15,
+    totalSupply: 1200, l2Total: 1000, l3Total: 850, lossM3: 150, lossPct: 15,
     alarmCount: 0, alarmZones: [], vsYesterdayPct: 10, status: 'normal',
 };
 
 describe('DailyBriefing', () => {
-    it('renders the four KPI labels', () => {
+    it('renders the six KPI labels', () => {
         render(<DailyBriefing metrics={base} month="Mar-26" day={15} />);
-        expect(screen.getByText(/Total Supply/i)).toBeInTheDocument();
-        expect(screen.getByText(/Distribution Loss/i)).toBeInTheDocument();
-        expect(screen.getByText(/Zones in Alarm/i)).toBeInTheDocument();
-        expect(screen.getByText(/vs\. Yesterday/i)).toBeInTheDocument();
+        expect(screen.getByText('Distribution Total')).toBeInTheDocument();
+        expect(screen.getByText('Zone Supply (ΣL2)')).toBeInTheDocument();
+        expect(screen.getByText('Metered at L3 (ΣL3)')).toBeInTheDocument();
+        expect(screen.getByText('Distribution Loss')).toBeInTheDocument();
+        expect(screen.getByText('Zones in Alarm')).toBeInTheDocument();
+        expect(screen.getByText('vs. Yesterday')).toBeInTheDocument();
     });
 
     it('shows the all-clear verdict when status is normal', () => {

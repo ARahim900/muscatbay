@@ -4,14 +4,17 @@ import { useState, useCallback, useEffect, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
+import { TabNavigation } from "@/components/shared/tab-navigation";
 import { getDynamicMonths, findLatestMonthWithData } from "@/lib/water-data";
 import { ZONE_BULK_CONFIG } from "@/lib/water-accounts";
 import { getSupabaseClient } from "@/lib/supabase";
 import { DAILY_WATER_CONSUMPTION_SELECT_COLUMNS, type SupabaseDailyWaterConsumption } from "@/entities/water";
 import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
+import { saveFilterPreferences, loadFilterPreferences } from "@/lib/filter-preferences";
 import {
     ChevronLeft, ChevronRight, CalendarDays,
     Clock, Loader2, RefreshCw, Radio,
+    Gauge, MapPin, Plug, Database, ClipboardList,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -27,8 +30,13 @@ import { ZoneAnalyticsPanel } from "./daily-report/inline-zone-analytics";
 import { ZoneL3Table } from "./daily-report/inline-zone-l3-table";
 import { DCAnalyticsPanel, DCDailyTable } from "./daily-report/inline-dc-panel";
 import { LoadingState, ErrorState, EmptyState } from "./daily-report/inline-states";
-import { DailyBriefing } from "./daily-report/inline-briefing";
 import { computeBriefing } from "./daily-report/briefing-metrics";
+// ─── Daily section tabs (zone-first: no L1/NAMA daily account exists, so the
+//     section is organised around the L2-vs-ΣL3 balance where leaks show up).
+import { ZoneWatch } from "./daily-report/zone-watch";
+import { ZoneMtdChart } from "./daily-report/zone-mtd-chart";
+import { DailyDatabase } from "./daily-report/daily-database";
+import { DailyExceptions } from "./daily-report/daily-exceptions";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -61,6 +69,20 @@ function getMonthsForYear(year: string): string[] {
     return getDynamicMonths().filter(m => m.endsWith(`-${year}`));
 }
 
+// ─── Section tabs (mirrors the Monthly dashboard's five-section structure) ────
+
+type DailyTab = 'watch' | 'zones' | 'dc' | 'database' | 'exceptions';
+
+const DAILY_TABS: { key: DailyTab; label: string; icon: typeof Gauge }[] = [
+    { key: 'watch', label: 'Zone Watch', icon: Gauge },
+    { key: 'zones', label: 'Zone Analysis', icon: MapPin },
+    { key: 'dc', label: 'Direct Connections', icon: Plug },
+    { key: 'database', label: 'Daily Database', icon: Database },
+    { key: 'exceptions', label: 'Exceptions & Actions', icon: ClipboardList },
+];
+
+const isDailyTab = (v: unknown): v is DailyTab => DAILY_TABS.some(t => t.key === v);
+
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export function DailyWaterReport() {
@@ -79,7 +101,25 @@ export function DailyWaterReport() {
     const [reportData, setReportData] = useState<ReportData | null>(null);
     const [errorMsg, setErrorMsg] = useState('');
     const [lastFetched, setLastFetched] = useState<Date | null>(null);
-    const [activeView, setActiveView] = useState<string>(ZONE_BULK_CONFIG[0].zoneName);
+    const [activeTab, setActiveTab] = useState<DailyTab>('watch');
+    const [activeZone, setActiveZone] = useState<string>(ZONE_BULK_CONFIG[0].zoneName);
+
+    // ── Restore / persist the selected tab & zone (client-only) ────────────────
+    useEffect(() => {
+        const prefs = loadFilterPreferences<{ tab?: string; zone?: string }>('water-daily');
+        if (isDailyTab(prefs?.tab)) setActiveTab(prefs.tab);
+        if (prefs?.zone && ZONE_BULK_CONFIG.some(z => z.zoneName === prefs.zone)) setActiveZone(prefs.zone);
+    }, []);
+    useEffect(() => {
+        saveFilterPreferences('water-daily', { tab: activeTab, zone: activeZone });
+    }, [activeTab, activeZone]);
+
+    // ── Cross-navigation: Zone Watch cards/heatmap → Zone Analysis drill-down ──
+    const inspectZone = useCallback((zone: string, day?: number) => {
+        if (day !== undefined) setSelectedDay(day);
+        setActiveZone(zone);
+        setActiveTab('zones');
+    }, []);
 
     // ── Cheap existence probe: does a month have any rows? (HEAD count, no data)
     const monthHasData = useCallback(async (month: string): Promise<boolean> => {
@@ -348,58 +388,91 @@ export function DailyWaterReport() {
 
             {reportData && (
                 <>
-                    {briefing && (
-                        <DailyBriefing metrics={briefing} month={selectedMonth} day={selectedDay} />
-                    )}
-                    {/* ── Zone / DC Selector ─────────────────────────────── */}
-                    <Card className="card-elevated">
-                        <CardContent className="p-4 sm:p-5">
-                            {/*
-                             * Mobile: label on its own line, 2-col grid of equal-width chips
-                             *         with generous tap targets.
-                             * sm+   : label inline with wrap-flex pills (matches original).
-                             */}
-                            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-2">
-                                <span className="text-sm font-medium text-muted-foreground dark:text-muted-foreground sm:mr-1">
-                                    Select Zone
-                                </span>
-                                <div className="grid grid-cols-2 gap-2 sm:contents">
-                                    {ZONE_BULK_CONFIG.map(z => {
-                                        const isActive = z.zoneName === activeView;
-                                        return (
-                                            <button
-                                                key={z.zoneName}
-                                                onClick={() => setActiveView(z.zoneName)}
-                                                className={cn(
-                                                    "w-full sm:w-auto px-4 py-2.5 sm:px-3 sm:py-1.5 rounded-full text-sm font-medium transition-design border text-center whitespace-nowrap",
-                                                    isActive
-                                                        ? "bg-primary text-primary-foreground border-primary shadow-sm dark:bg-secondary dark:text-primary-foreground dark:border-secondary"
-                                                        : "bg-white text-muted-foreground border-border dark:bg-muted dark:text-muted-foreground/70 dark:border-border hover:bg-muted dark:hover:bg-muted"
-                                                )}
-                                            >
-                                                {z.zoneName}
-                                            </button>
-                                        );
-                                    })}
-                                    <button
-                                        onClick={() => setActiveView('dc')}
-                                        className={cn(
-                                            "w-full sm:w-auto col-span-2 sm:col-span-1 px-4 py-2.5 sm:px-3 sm:py-1.5 rounded-full text-sm font-medium transition-design border text-center whitespace-nowrap",
-                                            activeView === 'dc'
-                                                ? "bg-primary text-primary-foreground border-primary shadow-sm dark:bg-secondary dark:text-primary-foreground dark:border-secondary"
-                                                : "bg-white text-muted-foreground border-border dark:bg-muted dark:text-muted-foreground/70 dark:border-border hover:bg-muted dark:hover:bg-muted"
-                                        )}
-                                    >
-                                        Direct Connection
-                                    </button>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
+                    {/* ── Section tabs (mirrors the Monthly dashboard) ────── */}
+                    <TabNavigation
+                        activeTab={activeTab}
+                        onTabChange={(key) => setActiveTab(key as DailyTab)}
+                        tabs={DAILY_TABS}
+                        ariaLabel="Water daily sections"
+                    />
 
-                    {/* ── Content based on selection ─────────────────────── */}
-                    {activeView === 'dc' ? (
-                        <>
+                    {/* ── Zone Watch — fleet view, heatmap, leak triage ───── */}
+                    {activeTab === 'watch' && (
+                        <div id="panel-watch" role="tabpanel" aria-labelledby="tab-watch" tabIndex={0} className="motion-safe:animate-in motion-safe:fade-in duration-200">
+                            <ZoneWatch
+                                briefing={briefing}
+                                monthData={monthData}
+                                selectedDay={selectedDay}
+                                month={selectedMonth}
+                                onInspectZone={inspectZone}
+                            />
+                        </div>
+                    )}
+
+                    {/* ── Zone Analysis — per-zone drill-down ─────────────── */}
+                    {activeTab === 'zones' && (
+                        <div id="panel-zones" role="tabpanel" aria-labelledby="tab-zones" tabIndex={0} className="space-y-6 motion-safe:animate-in motion-safe:fade-in duration-200">
+                            {/* Zone selector pills (DC now has its own tab) */}
+                            <Card className="card-elevated">
+                                <CardContent className="p-4 sm:p-5">
+                                    {/*
+                                     * Mobile: label on its own line, 2-col grid of equal-width chips
+                                     *         with generous tap targets.
+                                     * sm+   : label inline with wrap-flex pills (matches original).
+                                     */}
+                                    <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-2">
+                                        <span className="text-sm font-medium text-muted-foreground dark:text-muted-foreground sm:mr-1">
+                                            Select Zone
+                                        </span>
+                                        <div className="grid grid-cols-2 gap-2 sm:contents">
+                                            {ZONE_BULK_CONFIG.map(z => {
+                                                const isActive = z.zoneName === activeZone;
+                                                return (
+                                                    <button
+                                                        key={z.zoneName}
+                                                        onClick={() => setActiveZone(z.zoneName)}
+                                                        className={cn(
+                                                            "w-full sm:w-auto px-4 py-2.5 sm:px-3 sm:py-1.5 rounded-full text-sm font-medium transition-design border text-center whitespace-nowrap",
+                                                            isActive
+                                                                ? "bg-primary text-primary-foreground border-primary shadow-sm dark:bg-secondary dark:text-primary-foreground dark:border-secondary"
+                                                                : "bg-white text-muted-foreground border-border dark:bg-muted dark:text-muted-foreground/70 dark:border-border hover:bg-muted dark:hover:bg-muted"
+                                                        )}
+                                                    >
+                                                        {z.zoneName}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+
+                            <ZoneAnalyticsPanel
+                                reportData={reportData}
+                                monthData={monthData}
+                                selectedDay={selectedDay}
+                                month={selectedMonth}
+                                activeZoneName={activeZone}
+                            />
+                            <ZoneMtdChart
+                                monthData={monthData}
+                                activeZoneName={activeZone}
+                                selectedDay={selectedDay}
+                                month={selectedMonth}
+                            />
+                            <ZoneL3Table
+                                key={activeZone}
+                                zoneRow={reportData.zoneRows.find(r => r.zoneName === activeZone)!}
+                                zoneConfig={ZONE_BULK_CONFIG.find(z => z.zoneName === activeZone)!}
+                                monthData={monthData}
+                                buildingRows={reportData.buildingRows}
+                            />
+                        </div>
+                    )}
+
+                    {/* ── Direct Connections ──────────────────────────────── */}
+                    {activeTab === 'dc' && (
+                        <div id="panel-dc" role="tabpanel" aria-labelledby="tab-dc" tabIndex={0} className="space-y-6 motion-safe:animate-in motion-safe:fade-in duration-200">
                             <DCAnalyticsPanel
                                 reportData={reportData}
                                 monthData={monthData}
@@ -407,26 +480,30 @@ export function DailyWaterReport() {
                                 month={selectedMonth}
                             />
                             <DCDailyTable monthData={monthData} />
-                        </>
-                    ) : (
-                        <>
-                            <ZoneAnalyticsPanel
-                                reportData={reportData}
+                        </div>
+                    )}
+
+                    {/* ── Daily Database — meter × day ledger ─────────────── */}
+                    {activeTab === 'database' && (
+                        <div id="panel-database" role="tabpanel" aria-labelledby="tab-database" tabIndex={0} className="motion-safe:animate-in motion-safe:fade-in duration-200">
+                            <DailyDatabase
                                 monthData={monthData}
                                 selectedDay={selectedDay}
                                 month={selectedMonth}
-                                activeZoneName={activeView}
                             />
-                            <ZoneL3Table
-                                key={activeView}
-                                zoneRow={reportData.zoneRows.find(r => r.zoneName === activeView)!}
-                                zoneConfig={ZONE_BULK_CONFIG.find(z => z.zoneName === activeView)!}
-                                monthData={monthData}
-                                buildingRows={reportData.buildingRows}
-                            />
-                        </>
+                        </div>
                     )}
 
+                    {/* ── Exceptions & Actions — daily action queue ───────── */}
+                    {activeTab === 'exceptions' && (
+                        <div id="panel-exceptions" role="tabpanel" aria-labelledby="tab-exceptions" tabIndex={0} className="motion-safe:animate-in motion-safe:fade-in duration-200">
+                            <DailyExceptions
+                                monthData={monthData}
+                                selectedDay={selectedDay}
+                                month={selectedMonth}
+                            />
+                        </div>
+                    )}
                 </>
             )}
         </div>

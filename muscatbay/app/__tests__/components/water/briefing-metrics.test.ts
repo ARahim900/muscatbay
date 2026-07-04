@@ -19,6 +19,8 @@ describe('computeBriefing', () => {
         const today = report({ l2Total: 1000, l3Total: 850, dcTotal: 200, grandTotal: 1200 });
         const m = computeBriefing(today, null);
         expect(m.totalSupply).toBe(1200);
+        expect(m.l2Total).toBe(1000);
+        expect(m.l3Total).toBe(850);
         expect(m.lossM3).toBe(150);
         expect(m.lossPct).toBe(15);
     });

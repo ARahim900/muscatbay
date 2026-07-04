@@ -1,6 +1,6 @@
 "use client";
 
-import { Droplets, TrendingDown, AlertTriangle, ArrowUp, ArrowDown, type LucideIcon } from "lucide-react";
+import { Droplets, Gauge, CheckCircle2, TrendingDown, AlertTriangle, ArrowUp, ArrowDown, type LucideIcon } from "lucide-react";
 import { n } from "./inline-shared";
 import type { BriefingMetrics } from "./briefing-metrics";
 
@@ -59,7 +59,7 @@ export function DailyBriefing({
     month: string;
     day: number;
 }) {
-    const { totalSupply, lossM3, lossPct, alarmCount, alarmZones, vsYesterdayPct, status } = metrics;
+    const { totalSupply, l2Total, l3Total, lossM3, lossPct, alarmCount, alarmZones, vsYesterdayPct, status } = metrics;
 
     const isWarning = status === "warning";
     // null → neutral up arrow placeholder; otherwise points with the movement.
@@ -76,14 +76,32 @@ export function DailyBriefing({
                 </span>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+            {/* Distribution-level balance — the daily data has no L1/NAMA meter,
+                so labels say what the figures really are (L2 + DC), never "network supply". */}
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-6">
                 <BriefingCard
-                    label="Total Supply"
+                    label="Distribution Total"
                     value={n(totalSupply)}
                     unit="m³"
-                    sub="Total entering the network"
+                    sub="Zone bulk (L2) + direct connections"
                     icon={Droplets}
                     tone="water"
+                />
+                <BriefingCard
+                    label="Zone Supply (ΣL2)"
+                    value={n(l2Total)}
+                    unit="m³"
+                    sub="Total entering all zones"
+                    icon={Gauge}
+                    tone="info"
+                />
+                <BriefingCard
+                    label="Metered at L3 (ΣL3)"
+                    value={n(l3Total)}
+                    unit="m³"
+                    sub="Recorded by individual meters"
+                    icon={CheckCircle2}
+                    tone="success"
                 />
                 <BriefingCard
                     label="Distribution Loss"
@@ -104,7 +122,7 @@ export function DailyBriefing({
                 <BriefingCard
                     label="vs. Yesterday"
                     value={pct(vsYesterdayPct)}
-                    sub="Day-over-day supply"
+                    sub="Day-over-day distribution total"
                     icon={TrendIcon}
                     tone="info"
                 />
