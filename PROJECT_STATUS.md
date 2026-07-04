@@ -31,7 +31,7 @@ in one Next.js app backed by Supabase.
 | Deploys | Vercel project `muscatbay`, auto-deploy on push to `main` (root: `muscatbay/app`) |
 | Repo | `ARahim900/muscatbay`, default branch `main` |
 | Backend | Supabase project `utnlgeuqajmwibqmdmgt` (ap-northeast-1) — Postgres 17, Auth, Realtime |
-| Stack | Next.js 16 · React 19 · TypeScript 5 · Tailwind 4 · Recharts 3 · shadcn/ui · PWA (service worker `public/sw.js`, cache `muscatbay-v6`) |
+| Stack | Next.js 16 · React 19 · TypeScript 5 · Tailwind 4 · Recharts 3 · GSAP 3 (+ ScrollTrigger) · shadcn/ui · PWA (service worker `public/sw.js`, cache `muscatbay-v6`) |
 | Auth | Supabase email/password; client-side route protection (`components/auth/auth-provider.tsx`); RBAC role column (2026-05-13 migration) |
 | Tests / checks | Vitest (108 tests), ESLint, `tsc --noEmit`, `next build` — all green as of 2026-07-03 |
 
@@ -42,7 +42,7 @@ executives (dashboard KPIs). Live data — there is no demo mode.
 
 | Module | Route | State | Data source | Notes |
 |---|---|---|---|---|
-| Dashboard (command deck) | `/` | ✅ Live | aggregated from module tables | KPI deck, live ops strip, module status rail |
+| Dashboard (command deck) | `/` | ✅ Live | aggregated from module tables | KPI deck, live ops strip, module status rail; animated hero brand mark since 2026-07-04 — exact-geometry SVG (`components/brand/brand-mark.tsx`, measured from the flat brand master) with GSAP ScrollTrigger choreography (assembly on load, scroll-scrubbed teal light sweep + layer drift, reduced-motion safe); flat mark render at `public/brand/mark-frame.png` doubles as the Higgsfield video start frame |
 | Water — Monthly | `/water` (Monthly tab) | ✅ Live, fully dynamic | `water_meters` + `water_monthly_consumption` | Balance A1/A2/A3, zones, buildings, DC, exceptions; months appear automatically (see §3) |
 | Water — Daily | `/water` (Daily tab) | ✅ Live, rebuilt 2026-07-04 | `water_daily_consumption`, `water_loss_daily/summary` | Zone-first leak-detection dashboard, 5 sections mirroring Monthly: Zone Watch (looping briefing ticker, severity zone cards, zone×day loss heatmap), Zone Analysis (drill-down + MTD cumulative balance), Direct Connections, Daily Database (meter×day ledger, flags, CSV), Exceptions & Actions (auto register: high loss, negative balance, missing L2, rising-loss signature, spikes, zero-streaks). No daily L1/NAMA account exists, so all daily balances are distribution-level (L2 vs ΣL3) by design; fed by CSV upload / Grafana sync |
 | Electricity | `/electricity` | ✅ Live | `electricity_meters` / `electricity_readings` | Monthly readings through Mar-26 loads (see sql/migrations) |

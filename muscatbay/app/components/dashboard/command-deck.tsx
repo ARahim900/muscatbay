@@ -7,6 +7,7 @@ import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Breadcrumbs } from "@/components/shared/breadcrumbs";
 import { CountUp } from "@/components/motion/count-up";
+import { DeckBrandMark } from "@/components/dashboard/deck-brand-mark";
 import { MOTION, prefersReducedMotion, useIsomorphicLayoutEffect } from "@/lib/motion";
 import type { StatItem, StatVariant } from "@/components/shared/stats-grid";
 
@@ -38,8 +39,10 @@ const deckIconColor: Record<StatVariant, string> = {
 /**
  * Executive command deck — the dashboard's opening statement. One monumental
  * brand-purple panel that fuses the greeting with the cross-module KPIs as a
- * hairline-divided statistics board on a solid brand-purple surface — a calm,
- * static BMS backdrop with no decorative background motion.
+ * hairline-divided statistics board on a solid brand-purple surface. The only
+ * decorative motion is the hero brand mark (DeckBrandMark): it assembles on
+ * load and answers scroll with a scrubbed light sweep + layer drift, while
+ * the panel itself stays a calm, static BMS backdrop.
  *
  * Deliberately unlike the module pages: they keep the calm white-card
  * StatsGrid because they ARE the official per-system records; the deck is the
@@ -128,11 +131,17 @@ export function CommandDeck({ title, description, actions, stats, className }: C
                             </p>
                         )}
                     </div>
-                    {actions && (
-                        <div data-deck-item className="flex items-center gap-2 md:flex-shrink-0 md:pb-1">
-                            {actions}
-                        </div>
-                    )}
+                    {/* Brand column — the animated mark rides above the actions on
+                        md+, beside them on small screens. row-reverse keeps the
+                        mark on the right edge in both arrangements. */}
+                    <div className="flex flex-row-reverse items-end justify-between gap-4 md:flex-col md:items-end md:flex-shrink-0 print:hidden">
+                        <DeckBrandMark className="h-14 sm:h-20 md:h-24 xl:h-28" />
+                        {actions && (
+                            <div data-deck-item className="flex items-center gap-2 md:pb-1">
+                                {actions}
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 {/* KPI lattice — one board, hairline-divided cells */}
