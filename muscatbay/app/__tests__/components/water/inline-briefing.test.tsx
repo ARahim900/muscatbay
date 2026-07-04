@@ -9,14 +9,19 @@ const base: BriefingMetrics = {
 };
 
 describe('DailyBriefing', () => {
-    it('renders the six KPI labels', () => {
+    it('renders the strip labels', () => {
         render(<DailyBriefing metrics={base} month="Mar-26" day={15} />);
-        expect(screen.getByText('Distribution Total')).toBeInTheDocument();
-        expect(screen.getByText('Zone Supply (ΣL2)')).toBeInTheDocument();
-        expect(screen.getByText('Metered at L3 (ΣL3)')).toBeInTheDocument();
-        expect(screen.getByText('Distribution Loss')).toBeInTheDocument();
-        expect(screen.getByText('Zones in Alarm')).toBeInTheDocument();
-        expect(screen.getByText('vs. Yesterday')).toBeInTheDocument();
+        expect(screen.getByText('Distribution total')).toBeInTheDocument();
+        expect(screen.getByText('ΣL2 → ΣL3')).toBeInTheDocument();
+        expect(screen.getByText('Loss')).toBeInTheDocument();
+        expect(screen.getByText('Zones in alarm')).toBeInTheDocument();
+        expect(screen.getByText('vs. yesterday')).toBeInTheDocument();
+        expect(screen.getByText(/Mar-26 · Day 15/)).toBeInTheDocument();
+    });
+
+    it('shows the loss in m³ and percent', () => {
+        render(<DailyBriefing metrics={base} month="Mar-26" day={15} />);
+        expect(screen.getByText(/150\.00 m³ · 15\.0%/)).toBeInTheDocument();
     });
 
     it('shows the all-clear verdict when status is normal', () => {
@@ -24,11 +29,10 @@ describe('DailyBriefing', () => {
         expect(screen.getByText(/within tolerance/i)).toBeInTheDocument();
     });
 
-    it('names the alarm zones when status is warning', () => {
-        const m: BriefingMetrics = { ...base, alarmCount: 2, alarmZones: ['Zone_03A', 'Zone_05'], status: 'warning' };
+    it('names the alarm zones (shortened) when status is warning', () => {
+        const m: BriefingMetrics = { ...base, alarmCount: 2, alarmZones: ['Zone 3A', 'Village Square'], status: 'warning' };
         render(<DailyBriefing metrics={m} month="Mar-26" day={15} />);
-        expect(screen.getByText(/Zone_03A/)).toBeInTheDocument();
-        expect(screen.getByText(/Zone_05/)).toBeInTheDocument();
+        expect(screen.getByText(/2 · 3A, Village Square/)).toBeInTheDocument();
     });
 
     it('renders an em dash for a null vs-yesterday value', () => {

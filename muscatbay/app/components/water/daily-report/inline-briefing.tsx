@@ -1,6 +1,10 @@
 "use client";
 
-import { Droplets, Gauge, CheckCircle2, TrendingDown, AlertTriangle, ArrowUp, ArrowDown, type LucideIcon } from "lucide-react";
+import {
+    Droplets, Gauge, TrendingDown, AlertTriangle, CheckCircle2, ArrowUp, ArrowDown,
+    type LucideIcon,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 import { n } from "./inline-shared";
 import type { BriefingMetrics } from "./briefing-metrics";
 
@@ -11,47 +15,43 @@ function pct(v: number | null): string {
     return `${sign}${v.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`;
 }
 
-type Tone = "water" | "warning" | "danger" | "success" | "info";
-
-// Colored icon-tile palette mirrors the monthly section's Kpi tiles (the
-// reference): a soft chart-bg tint behind a domain/status-colored icon.
-const TONE: Record<Tone, { bg: string; ic: string }> = {
-    water: { bg: "var(--chart-bg-blue)", ic: "var(--module-water)" },
-    warning: { bg: "var(--chart-bg-orange)", ic: "var(--status-warning)" },
-    danger: { bg: "var(--chart-bg-red)", ic: "var(--status-danger)" },
-    success: { bg: "var(--chart-bg-green)", ic: "var(--status-normal)" },
-    info: { bg: "var(--chart-bg-blue)", ic: "var(--status-info)" },
-};
+/** "Zone 3A" → "3A" so the alarm list stays short; other names pass through. */
+const shortZone = (z: string) => z.replace(/^Zone\s+/i, "");
 
 /**
- * KPI tile styled to match the monthly section's Kpi card (the standard
- * reference): white card with a soft shadow, a colored icon tile on the left,
- * an 11px uppercase muted label, and a text-xl value with a small unit.
+ * One inline stat in the briefing strip: small icon, 10px uppercase label,
+ * value beneath. Deliberately tiny — the strip summarises; the zone cards
+ * below are the working surface.
  */
-function BriefingCard({
-    label, value, unit, sub, icon: Icon, tone,
+function Stat({
+    icon: Icon, label, value, valueClassName, iconColor, title,
 }: {
-    label: string; value: string; unit?: string; sub?: string; icon: LucideIcon; tone: Tone;
+    icon: LucideIcon;
+    label: string;
+    value: React.ReactNode;
+    valueClassName?: string;
+    iconColor: string;
+    title?: string;
 }) {
-    const { bg, ic } = TONE[tone];
     return (
-        <div className="rounded-[10.5px] border border-border bg-card p-4 shadow-card-standard transition-shadow">
-            <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[7px]" style={{ background: bg }}>
-                    <Icon className="h-5 w-5" style={{ color: ic }} />
-                </div>
-                <div className="min-w-0">
-                    <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{label}</p>
-                    <p className="truncate text-xl font-semibold leading-tight tracking-tight tabular-nums text-foreground">
-                        {value}{unit && <span className="ml-1 text-xs font-medium text-muted-foreground">{unit}</span>}
-                    </p>
-                </div>
+        <div className="flex min-w-0 items-center gap-2" title={title}>
+            <Icon className="h-4 w-4 shrink-0" style={{ color: iconColor }} aria-hidden="true" />
+            <div className="min-w-0 leading-tight">
+                <p className="whitespace-nowrap text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{label}</p>
+                <p className={cn("truncate text-sm font-semibold tabular-nums text-foreground", valueClassName)}>{value}</p>
             </div>
-            {sub && <p className="mt-2 truncate text-[11px] text-muted-foreground">{sub}</p>}
         </div>
     );
 }
 
+/**
+ * Daily briefing — a single compact status strip (replaces the earlier
+ * six-tile card row, which together with the zone cards read as a wall of
+ * cards). Same six facts, one line: distribution total, ΣL2 → ΣL3 balance,
+ * loss, zones in alarm, day-over-day. Labels stay distribution-level — the
+ * daily data has no L1/NAMA account, so nothing here claims to be "network
+ * supply".
+ */
 export function DailyBriefing({
     metrics, month, day,
 }: {
@@ -66,65 +66,63 @@ export function DailyBriefing({
     const TrendIcon = vsYesterdayPct !== null && vsYesterdayPct < 0 ? ArrowDown : ArrowUp;
 
     return (
-        <section aria-label="Daily briefing" className="space-y-3">
-            <div className="flex items-baseline justify-between">
-                <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                    Daily Briefing
-                </h2>
-                <span className="text-xs text-muted-foreground tabular-nums">
-                    {month} · Day {day}
-                </span>
-            </div>
+        <section
+            aria-label="Daily briefing"
+            className="rounded-[10.5px] border border-border bg-card px-4 py-3 shadow-card-standard"
+        >
+            <div className="grid grid-cols-2 gap-x-4 gap-y-3 lg:flex lg:flex-wrap lg:items-center lg:gap-x-6">
+                {/* Caption — the strip's anchor; the day itself is set in the controls above. */}
+                <p className="col-span-2 self-center whitespace-nowrap text-[10px] font-semibold uppercase tracking-wide text-muted-foreground lg:col-span-1">
+                    Briefing · {month} · Day {day}
+                </p>
 
-            {/* Distribution-level balance — the daily data has no L1/NAMA meter,
-                so labels say what the figures really are (L2 + DC), never "network supply". */}
-            <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-6">
-                <BriefingCard
-                    label="Distribution Total"
-                    value={n(totalSupply)}
-                    unit="m³"
-                    sub="Zone bulk (L2) + direct connections"
+                <Stat
                     icon={Droplets}
-                    tone="water"
+                    label="Distribution total"
+                    value={<>{n(totalSupply)} <span className="text-xs font-medium text-muted-foreground">m³</span></>}
+                    iconColor="var(--module-water)"
+                    title="Zone bulk (L2) + direct connections — the daily data has no L1/NAMA reading"
                 />
-                <BriefingCard
-                    label="Zone Supply (ΣL2)"
-                    value={n(l2Total)}
-                    unit="m³"
-                    sub="Total entering all zones"
+                <Stat
                     icon={Gauge}
-                    tone="info"
+                    label="ΣL2 → ΣL3"
+                    value={<>{n(l2Total)} <span className="text-muted-foreground">→</span> {n(l3Total)}</>}
+                    iconColor="var(--status-info)"
+                    title="Total entering all zones (L2) vs recorded by individual meters (L3)"
                 />
-                <BriefingCard
-                    label="Metered at L3 (ΣL3)"
-                    value={n(l3Total)}
-                    unit="m³"
-                    sub="Recorded by individual meters"
-                    icon={CheckCircle2}
-                    tone="success"
-                />
-                <BriefingCard
-                    label="Distribution Loss"
-                    value={lossPct === null ? n(lossM3) : `${n(lossM3)} m³ · ${lossPct.toFixed(1)}%`}
-                    unit={lossPct === null ? "m³" : undefined}
-                    // Calm by default: amber only when a zone is actually in alarm.
-                    sub="Zone bulk (L2) − sub-meters (L3)"
+                <Stat
                     icon={TrendingDown}
-                    tone={isWarning ? "warning" : "water"}
+                    label="Loss"
+                    value={lossPct === null ? `${n(lossM3)} m³` : `${n(lossM3)} m³ · ${lossPct.toFixed(1)}%`}
+                    // Calm by default: amber only when a zone is actually in alarm.
+                    valueClassName={isWarning ? "text-mb-warning-text" : undefined}
+                    iconColor={isWarning ? "var(--status-warning)" : "var(--module-water)"}
+                    title="Zone bulk (L2) − sub-meters (L3)"
                 />
-                <BriefingCard
-                    label="Zones in Alarm"
-                    value={String(alarmCount)}
-                    sub={alarmCount > 0 ? alarmZones.join(", ") : "All zones within tolerance"}
-                    icon={AlertTriangle}
-                    tone={alarmCount > 0 ? "danger" : "success"}
-                />
-                <BriefingCard
-                    label="vs. Yesterday"
-                    value={pct(vsYesterdayPct)}
-                    sub="Day-over-day distribution total"
+                {alarmCount > 0 ? (
+                    <Stat
+                        icon={AlertTriangle}
+                        label="Zones in alarm"
+                        value={`${alarmCount} · ${alarmZones.map(shortZone).join(", ")}`}
+                        valueClassName="text-mb-danger-text"
+                        iconColor="var(--status-danger)"
+                        title={alarmZones.join(", ")}
+                    />
+                ) : (
+                    <Stat
+                        icon={CheckCircle2}
+                        label="Zones in alarm"
+                        value="0 · all within tolerance"
+                        valueClassName="text-mb-success-text"
+                        iconColor="var(--status-normal)"
+                    />
+                )}
+                <Stat
                     icon={TrendIcon}
-                    tone="info"
+                    label="vs. yesterday"
+                    value={pct(vsYesterdayPct)}
+                    iconColor="var(--status-info)"
+                    title="Day-over-day distribution total"
                 />
             </div>
         </section>
