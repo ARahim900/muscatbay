@@ -1422,3 +1422,60 @@
   --wm-track: rgba(255, 255, 255, 0.12);
   --wm-zebra: #1A1820;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+ * Water → Daily briefing ticker
+ * Looping news-ticker for the daily briefing strip: the track holds two
+ * identical copies of the stat run and slides by exactly one copy's width
+ * (−50%), so the loop is seamless. Pauses on hover/focus so an operator can
+ * read a value; reduced-motion gets a static wrapped strip instead (the
+ * duplicate copy is hidden).
+ * ═══════════════════════════════════════════════════════════════════════ */
+@keyframes mb-ticker-scroll {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+.mb-ticker-viewport {
+  overflow: hidden;
+  /* Edge fades so stats glide in/out instead of popping at the borders */
+  -webkit-mask-image: linear-gradient(to right, transparent, black 28px, black calc(100% - 28px), transparent);
+  mask-image: linear-gradient(to right, transparent, black 28px, black calc(100% - 28px), transparent);
+}
+
+.mb-ticker-track {
+  display: flex;
+  width: max-content;
+  animation: mb-ticker-scroll var(--mb-ticker-duration, 36s) linear infinite;
+}
+
+/* Ticker reads with the text direction: reverse the slide in RTL */
+[dir="rtl"] .mb-ticker-track {
+  animation-direction: reverse;
+}
+
+/* Readability: freeze while the operator hovers or tabs into the strip */
+.mb-ticker-viewport:hover .mb-ticker-track,
+.mb-ticker-viewport:focus-within .mb-ticker-track {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mb-ticker-track {
+    animation: none !important;
+    width: 100%;
+  }
+  .mb-ticker-viewport {
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+  .mb-ticker-copy {
+    flex-wrap: wrap;
+    row-gap: 0.5rem;
+    width: 100%;
+    padding-inline-end: 0;
+  }
+  .mb-ticker-copy[aria-hidden="true"] {
+    display: none;
+  }
+}
