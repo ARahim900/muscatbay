@@ -108,6 +108,9 @@ Entries below the marker are appended automatically on every push to `main`.
 Do not hand-edit existing entries; curate meaning in the sections above.
 
 <!-- STATUS:LOG:BEGIN -->
+- 2026-07-04 — feat(water): animate the daily briefing strip as a looping news ticker
+- 2026-07-04 — refactor(water): collapse daily briefing tiles into one compact strip
+- 2026-07-04 — feat(water): rebuild Daily section as zone-first leak-detection dashboard
 - 2026-07-03 — Add living PROJECT_STATUS.md + auto-updating development log (#31)
 - 2026-07-03 — Water Monthly: clock-proof the fetch window, flush stale client caches (#30)
 - 2026-07-03 — Water Monthly: auto-sync any backend data to the dashboard, live (#29)
