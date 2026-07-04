@@ -108,6 +108,8 @@ Entries below the marker are appended automatically on every push to `main`.
 Do not hand-edit existing entries; curate meaning in the sections above.
 
 <!-- STATUS:LOG:BEGIN -->
+- 2026-07-04 — feat(dashboard): animated brand-mark hero with scroll-driven choreography
+- 2026-07-04 — chore(brand): add flat vector-accurate brand mark frame asset
 - 2026-07-04 — feat(water): animate the daily briefing strip as a looping news ticker
 - 2026-07-04 — refactor(water): collapse daily briefing tiles into one compact strip
 - 2026-07-04 — feat(water): rebuild Daily section as zone-first leak-detection dashboard
