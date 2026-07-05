@@ -43,6 +43,12 @@ import { PlantWatch } from "@/components/stp/plant-watch";
 // Use centralized config for rates
 const { TANKER_FEE, TSE_SAVING_RATE } = STP_RATES;
 
+// Drop rows with a null/invalid date at the source, so no downstream
+// `format(new Date(op.date))` (charts, log, Plant Watch) can throw on a bad row
+// and white-screen the page.
+const withValidDates = (ops: STPOperation[]): STPOperation[] =>
+    ops.filter((op) => op?.date != null && !Number.isNaN(new Date(op.date).getTime()));
+
 const CHART_COLORS = {
     primary: 'var(--chart-stp-primary)',
     secondary: 'var(--chart-stp-secondary)',
@@ -326,7 +332,7 @@ export default function STPPage() {
             if (isSupabaseConfigured()) {
                 const supabaseData = await getSTPOperationsFromSupabase();
                 if (supabaseData.length > 0) {
-                    setAllOperations(supabaseData);
+                    setAllOperations(withValidDates(supabaseData));
                     setIsLiveData(true);
                     setLastUpdated(new Date());
                     if (!silent) setLoading(false);
@@ -335,14 +341,14 @@ export default function STPPage() {
             }
             if (!silent) {
                 const result = await getSTPOperations();
-                setAllOperations(result);
+                setAllOperations(withValidDates(result));
                 setIsLiveData(false);
             }
         } catch {
             if (!silent) {
                 // Silent fallback to mock data
                 const result = await getSTPOperations();
-                setAllOperations(result);
+                setAllOperations(withValidDates(result));
                 setIsLiveData(false);
             }
         } finally {

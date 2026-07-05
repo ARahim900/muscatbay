@@ -66,8 +66,16 @@ function median(values: number[]): number {
 /** Build the normalized day series + baselines from a (page-filtered) operations set. */
 export function buildSTPModel(operations: STPOperation[]): STPModel {
     const days: STPDay[] = operations
-        .map((op) => {
-            const date = new Date(op.date);
+        .map((op) => ({ op, date: new Date(op.date) }))
+        // Guard null/invalid dates: date-fns `format` THROWS on an Invalid Date,
+        // which would otherwise crash the whole Plant Watch render on one bad row.
+        .filter(({ date }) => !Number.isNaN(date.getTime()))
+        .map(({ op, date }) => {
+            // Coerce numerics defensively — a string/null from Supabase would
+            // otherwise poison every downstream sum with NaN.
+            const inlet = Number(op.inlet_sewage) || 0;
+            const tse = Number(op.tse_for_irrigation) || 0;
+            const trips = Number(op.tanker_trips) || 0;
             return {
                 id: op.id,
                 date,
@@ -75,10 +83,10 @@ export function buildSTPModel(operations: STPOperation[]): STPModel {
                 dayLabel: format(date, "dd MMM"),
                 ym: format(date, "yyyy-MM"),
                 dom: date.getDate(),
-                inlet: op.inlet_sewage,
-                tse: op.tse_for_irrigation,
-                trips: op.tanker_trips,
-                eff: op.inlet_sewage > 0 ? (op.tse_for_irrigation / op.inlet_sewage) * 100 : null,
+                inlet,
+                tse,
+                trips,
+                eff: inlet > 0 ? (tse / inlet) * 100 : null,
             };
         })
         .sort((a, b) => a.date.getTime() - b.date.getTime());
