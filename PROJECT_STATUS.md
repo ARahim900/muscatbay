@@ -108,6 +108,12 @@ Entries below the marker are appended automatically on every push to `main`.
 Do not hand-edit existing entries; curate meaning in the sections above.
 
 <!-- STATUS:LOG:BEGIN -->
+- 2026-07-05 — fix(stability): guard sidebar localStorage parse against corrupt values
+- 2026-07-05 — fix(stability): add error boundaries + harden STP date parsing
+- 2026-07-05 — fix(inspection): make watch card grids fill with no trailing gaps
+- 2026-07-05 — refine(inspection): elegant compact health cards + unified briefing ticker
+- 2026-07-05 — feat(electricity): inspection-first Load Watch, consolidate to two tabs
+- 2026-07-05 — feat(stp): inspection-first Plant Watch with exceptions register
 - 2026-07-04 — feat(dashboard): animated brand-mark hero with scroll-driven choreography
 - 2026-07-04 — chore(brand): add flat vector-accurate brand mark frame asset
 - 2026-07-04 — feat(water): animate the daily briefing strip as a looping news ticker
