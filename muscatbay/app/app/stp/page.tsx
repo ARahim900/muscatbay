@@ -24,6 +24,7 @@ import {
     Database,
     Search,
     Download,
+    ChevronDown,
 } from "lucide-react";
 import { TablePagination, TableToolbar, StatusBadge, SortableTableHead, type BadgeColor, type PageSizeOption } from "@/components/shared/data-table";
 import { Table, TableHeader, TableBody, TableFooter, TableRow, TableCell } from "@/components/ui/table";
@@ -37,6 +38,7 @@ import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
 import { useAppNotifications } from "@/components/NotificationProvider";
 import { useToast } from "@/components/ui/toast-provider";
 import { cn } from "@/lib/utils";
+import { PlantWatch } from "@/components/stp/plant-watch";
 
 // Use centralized config for rates
 const { TANKER_FEE, TSE_SAVING_RATE } = STP_RATES;
@@ -293,7 +295,7 @@ const STPTankerChart = memo(function STPTankerChart({ data, view }: { data: STPC
 });
 
 export default function STPPage() {
-    const [activeTab, setActiveTab] = useState("dashboard");
+    const [activeTab, setActiveTab] = useState("watch");
     const [allOperations, setAllOperations] = useState<STPOperation[]>([]);
     const [loading, setLoading] = useState(true);
     const [isLiveData, setIsLiveData] = useState(false);
@@ -407,7 +409,8 @@ export default function STPPage() {
             selectedYear?: string;
         }>('stp');
         if (savedPrefs) {
-            if (savedPrefs.activeTab) setActiveTab(savedPrefs.activeTab);
+            // Guard against stale tab keys from the old layout ("dashboard"/"details").
+            if (savedPrefs.activeTab === "watch" || savedPrefs.activeTab === "dashboard") setActiveTab(savedPrefs.activeTab);
             if (savedPrefs.startMonth) setStartMonth(savedPrefs.startMonth);
             if (savedPrefs.endMonth) setEndMonth(savedPrefs.endMonth);
             if (savedPrefs.selectedYear) setSelectedYear(savedPrefs.selectedYear);
@@ -893,69 +896,77 @@ export default function STPPage() {
                 </PageStatusBar>
             </div>
 
-            {/* Tabs */}
+            {/* Shared period filter — drives BOTH Plant Watch and Operations & Trends,
+                so an operator never has to change tabs to re-scope the range. */}
+            {allMonths.length > 0 && (
+                <Card className="card-elevated">
+                    <CardContent className="p-4 sm:p-5 md:p-6">
+                        <div className="flex flex-col gap-4">
+                            {/* Year Selector Row */}
+                            <div className="flex items-center justify-between flex-wrap gap-3">
+                                <div className="flex items-center gap-3">
+                                    <span className="text-sm font-medium text-muted-foreground dark:text-muted-foreground">Filter by Year:</span>
+                                    <div className="flex items-center gap-2">
+                                        {availableYears.map((year) => (
+                                            <Button
+                                                key={year}
+                                                variant={selectedYear === year ? "default" : "outline"}
+                                                size="sm"
+                                                aria-label={`Filter by year ${year}`}
+                                                aria-pressed={selectedYear === year}
+                                                onClick={() => {
+                                                    setSelectedYear(year);
+                                                    const yearMonths = allMonths.filter(m => '20' + m.split('-')[1] === year);
+                                                    if (yearMonths.length > 0) {
+                                                        setStartMonth(yearMonths[0]);
+                                                        setEndMonth(yearMonths[yearMonths.length - 1]);
+                                                    }
+                                                }}
+                                                className={`rounded-full px-4 ${selectedYear === year ? "bg-secondary text-primary-foreground" : "border-border dark:border-border"}`}
+                                            >
+                                                {year}
+                                            </Button>
+                                        ))}
+                                    </div>
+                                </div>
+                                <Badge variant="outline" className="px-3 py-1.5 text-sm font-normal">
+                                    {filteredMonthsByYear.length} Months Available
+                                </Badge>
+                            </div>
+
+                            {/* Date Range Picker */}
+                            <DateRangePicker
+                                startMonth={startMonth || (filteredMonthsByYear[0] ?? allMonths[0])}
+                                endMonth={endMonth || (filteredMonthsByYear[filteredMonthsByYear.length - 1] ?? allMonths[allMonths.length - 1])}
+                                availableMonths={filteredMonthsByYear}
+                                onRangeChange={handleRangeChange}
+                                onReset={handleResetRange}
+                            />
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
+
+            {/* Tabs — inspection-first: Plant Watch leads, analytics/records follow */}
             <TabNavigation
                 activeTab={activeTab}
                 onTabChange={setActiveTab}
                 variant="secondary"
                 tabs={[
-                    { key: "dashboard", label: "Dashboard", icon: Activity },
-                    { key: "details", label: "Details Data", icon: Database },
+                    { key: "watch", label: "Plant Watch", icon: Gauge },
+                    { key: "dashboard", label: "Operations & Trends", icon: Activity },
                 ]}
             />
 
+            {/* Plant Watch — process-health cards, day heatmap, exceptions & actions */}
+            {activeTab === "watch" && (
+                <div id="panel-watch" role="tabpanel" aria-labelledby="tab-watch" tabIndex={0} className="motion-safe:animate-in motion-safe:fade-in duration-200">
+                    <PlantWatch operations={operations} />
+                </div>
+            )}
+
             {activeTab === "dashboard" && (
                 <div id="panel-dashboard" role="tabpanel" aria-labelledby="tab-dashboard" tabIndex={0} className="space-y-6 motion-safe:animate-in motion-safe:fade-in duration-200">
-                    {/* Date Range Filter Card */}
-                    {allMonths.length > 0 && (
-                        <Card className="card-elevated">
-                            <CardContent className="p-4 sm:p-5 md:p-6">
-                                <div className="flex flex-col gap-4">
-                                    {/* Year Selector Row */}
-                                    <div className="flex items-center justify-between flex-wrap gap-3">
-                                        <div className="flex items-center gap-3">
-                                            <span className="text-sm font-medium text-muted-foreground dark:text-muted-foreground">Filter by Year:</span>
-                                            <div className="flex items-center gap-2">
-                                                {availableYears.map((year) => (
-                                                    <Button
-                                                        key={year}
-                                                        variant={selectedYear === year ? "default" : "outline"}
-                                                        size="sm"
-                                                        aria-label={`Filter by year ${year}`}
-                                                        aria-pressed={selectedYear === year}
-                                                        onClick={() => {
-                                                            setSelectedYear(year);
-                                                            const yearMonths = allMonths.filter(m => '20' + m.split('-')[1] === year);
-                                                            if (yearMonths.length > 0) {
-                                                                setStartMonth(yearMonths[0]);
-                                                                setEndMonth(yearMonths[yearMonths.length - 1]);
-                                                            }
-                                                        }}
-                                                        className={`rounded-full px-4 ${selectedYear === year ? "bg-secondary text-primary-foreground" : "border-border dark:border-border"}`}
-                                                    >
-                                                        {year}
-                                                    </Button>
-                                                ))}
-                                            </div>
-                                        </div>
-                                        <Badge variant="outline" className="px-3 py-1.5 text-sm font-normal">
-                                            {filteredMonthsByYear.length} Months Available
-                                        </Badge>
-                                    </div>
-
-                                    {/* Date Range Picker */}
-                                    <DateRangePicker
-                                        startMonth={startMonth || (filteredMonthsByYear[0] ?? allMonths[0])}
-                                        endMonth={endMonth || (filteredMonthsByYear[filteredMonthsByYear.length - 1] ?? allMonths[allMonths.length - 1])}
-                                        availableMonths={filteredMonthsByYear}
-                                        onRangeChange={handleRangeChange}
-                                        onReset={handleResetRange}
-                                    />
-                                </div>
-                            </CardContent>
-                        </Card>
-                    )}
-
                     {/* Unified Stats Grid */}
                     <StatsGrid stats={stats} />
 
@@ -1268,33 +1279,29 @@ export default function STPPage() {
                             />
                         )}
                     </div>
-                </div>
-            )}
-
-            {activeTab === "details" && (
-                <div id="panel-details" role="tabpanel" aria-labelledby="tab-details" tabIndex={0}>
-                <Card className="h-[calc(100vh-12rem)] min-h-[400px] max-h-[800px] flex flex-col motion-safe:animate-in motion-safe:fade-in duration-200">
-                    <CardHeader>
-                        <div className="flex items-center gap-4">
-                            <Database className="w-6 h-6 text-primary" />
-                            <div>
-                                <CardTitle>STP Operations Database</CardTitle>
-                                <p className="text-sm text-muted-foreground">Detailed logs via Airtable</p>
+                    {/* Full operations database (Airtable) — folded in from the old
+                        standalone "Details Data" tab so the section stays at two tabs. */}
+                    <details className="group rounded-[10.5px] border border-border bg-card">
+                        <summary className="flex cursor-pointer list-none items-center gap-3 p-4 sm:p-5 [&::-webkit-details-marker]:hidden">
+                            <Database className="h-5 w-5 shrink-0 text-primary" aria-hidden="true" />
+                            <div className="flex-1 min-w-0">
+                                <p className="text-sm font-semibold text-foreground">STP Operations Database</p>
+                                <p className="text-xs text-muted-foreground">Full detailed logs via Airtable — click to expand</p>
                             </div>
+                            <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" aria-hidden="true" />
+                        </summary>
+                        <div className="border-t border-border">
+                            <iframe
+                                src="https://aitable.ai/share/shripyzrlnlQ91WRSyCLF"
+                                className="h-[70vh] w-full"
+                                style={{ border: 'none' }}
+                                loading="lazy"
+                                referrerPolicy="no-referrer-when-downgrade"
+                                allow="fullscreen"
+                                title="STP Operations Database"
+                            />
                         </div>
-                    </CardHeader>
-                    <CardContent className="flex-1 p-0 overflow-hidden">
-                        <iframe
-                            src="https://aitable.ai/share/shripyzrlnlQ91WRSyCLF"
-                            className="w-full h-full"
-                            style={{ border: 'none' }}
-                            loading="lazy"
-                            referrerPolicy="no-referrer-when-downgrade"
-                            allow="fullscreen"
-                            title="STP Operations Database"
-                        />
-                    </CardContent>
-                </Card>
+                    </details>
                 </div>
             )}
         </div>
