@@ -250,8 +250,8 @@ export function ZoneWatch({
         <div className="space-y-6">
             {briefing && <DailyBriefing metrics={briefing} month={month} day={selectedDay} />}
 
-            {/* Zone cards — severity at a glance, worst first (shared HealthCard) */}
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {/* Zone cards — severity at a glance, worst first (6 zones → 2×3 / 3×2, gap-free) */}
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {ordered.map((row) => (
                     <HealthCard key={row.zoneName} metric={zoneToMetric(row)} onInspect={onInspectZone} />
                 ))}

@@ -78,8 +78,8 @@ export function PlantWatch({ operations }: { operations: STPOperation[] }) {
             {/* Briefing ticker — same idiom as the Water Daily strip */}
             <InspectionTicker caption={`Plant briefing · ${summary.periodLabel}`} items={tickerItems} />
 
-            {/* Process-health cards — worst first */}
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {/* Process-health cards — worst first (4 cards → 2×2 / 1×4, gap-free) */}
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 {metrics.map((m) => <HealthCard key={m.key} metric={m} />)}
             </div>
 

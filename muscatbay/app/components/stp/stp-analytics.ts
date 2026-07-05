@@ -198,12 +198,6 @@ export function buildHealthMetrics(model: STPModel): HealthMetric[] {
     const tankerSev = highTankerDays === 0 ? "good" : days.some((d) => tripsSeverity(d.trips, baselineTrips) === "high") ? "high" : "watch";
     const avgTrips = days.length ? summary.totalTrips / days.length : 0;
 
-    // 5 — Data completeness
-    const missing = Math.max(0, summary.daysExpected - summary.daysLogged);
-    const zeroInlet = days.filter((d) => d.inlet <= 0).length;
-    const gaps = missing + zeroInlet;
-    const dataSev: Severity = gaps === 0 ? "good" : gaps >= 3 ? "high" : "watch";
-
     return [
         {
             key: "efficiency",
@@ -260,20 +254,6 @@ export function buildHealthMetrics(model: STPModel): HealthMetric[] {
             spark: last14.map((d) => d.trips),
             sparkNote: "14-day tanker trips",
             signal: highTankerDays >= 2 ? { label: `${highTankerDays}d busy`, tone: "warning" } : undefined,
-        },
-        {
-            key: "data",
-            title: "Data Completeness",
-            severity: dataSev,
-            headline: `${summary.daysLogged}/${summary.daysExpected}`,
-            headlineNote: "days logged in range",
-            facts: [
-                { label: "missing", value: String(missing) },
-                { label: "zero-inlet", value: String(zeroInlet) },
-            ],
-            spark: last14.map((d) => (d.inlet > 0 ? 1 : 0)),
-            sparkNote: "1 = day logged with inlet",
-            signal: gaps >= 3 ? { label: `${gaps} gaps`, tone: "warning" } : undefined,
         },
     ];
 }

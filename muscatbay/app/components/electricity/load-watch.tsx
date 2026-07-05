@@ -73,8 +73,8 @@ export function LoadWatch({
             {/* Briefing ticker — same idiom as the Water Daily strip */}
             <InspectionTicker caption={`Load briefing · ${currentMonth}`} items={tickerItems} />
 
-            {/* Category cards — worst first, tap to inspect that type */}
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {/* Category cards — worst first, tap to inspect (types → 2 or 5 cols, gap-free) */}
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
                 {metrics.map((m) => <HealthCard key={m.key} metric={m} onInspect={onInspectType} />)}
             </div>
 
