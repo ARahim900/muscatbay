@@ -183,9 +183,10 @@ export function buildCategoryMetrics(model: ElectricityModel): HealthMetric[] {
             headline: `${num(c.total)} kWh`,
             headlineNote: `${c.share.toFixed(0)}% of load · ${trendStr}`,
             subtitle: `${c.meters.length} meter${c.meters.length !== 1 ? "s" : ""} · tap to inspect`,
+            // Single fact keeps the card calm; the "N flagged" signal badge and the
+            // severity chip already carry the attention cue.
             facts: [
                 { label: "cost", value: `${num(c.total * RATE)} OMR` },
-                { label: "flagged", value: String(c.flaggedCount) },
             ],
             spark: c.monthTotals.slice(-14),
             sparkNote: `${Math.min(14, c.monthTotals.length)}-month trend`,

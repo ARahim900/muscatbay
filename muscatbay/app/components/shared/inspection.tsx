@@ -138,42 +138,45 @@ export interface HealthMetric {
 
 export function HealthCard({ metric, onInspect }: { metric: HealthMetric; onInspect?: (key: string) => void }) {
     const s = SEV_UI[metric.severity];
-    const goodTrend = metric.severity === "good" || metric.severity === "nodata";
+    const calm = metric.severity === "good" || metric.severity === "nodata";
+    // Calm by default, urgent only when earned: the headline stays foreground on
+    // healthy cards and only takes the status colour once there's something to see.
+    const headlineColor = calm ? "var(--foreground)" : s.text;
     const inner = (
         <>
             <div className="flex items-center justify-between gap-2">
-                <h4 className="text-sm font-semibold tracking-tight text-foreground">{metric.title}</h4>
+                <h4 className="truncate text-[13px] font-semibold tracking-tight text-foreground">{metric.title}</h4>
                 <SeverityChip severity={metric.severity} />
             </div>
-            {metric.subtitle && <p className="mt-0.5 text-[11px] text-muted-foreground">{metric.subtitle}</p>}
+            {metric.subtitle && <p className="mt-0.5 truncate text-[11px] text-muted-foreground">{metric.subtitle}</p>}
 
-            <div className="mt-3 flex items-end justify-between gap-2">
+            <div className="mt-2.5 flex items-end justify-between gap-3">
                 <div className="min-w-0">
-                    <p className="text-2xl font-extrabold tabular-nums leading-none" style={{ color: s.text }}>{metric.headline}</p>
-                    {metric.headlineNote && <p className="mt-1 text-[11px] text-muted-foreground">{metric.headlineNote}</p>}
+                    <p className="text-xl font-bold tracking-tight tabular-nums leading-none" style={{ color: headlineColor }}>{metric.headline}</p>
+                    {metric.headlineNote && <p className="mt-1 text-[11px] leading-snug text-muted-foreground">{metric.headlineNote}</p>}
                 </div>
                 {metric.facts && metric.facts.length > 0 && (
-                    <div className="text-right text-[11px] text-muted-foreground">
+                    <div className="shrink-0 space-y-0.5 text-right text-[11px] text-muted-foreground">
                         {metric.facts.slice(0, 2).map((f) => (
-                            <p key={f.label}>{f.label} <b className="text-foreground tabular-nums">{f.value}</b></p>
+                            <p key={f.label}>{f.label} <span className="font-semibold text-foreground tabular-nums">{f.value}</span></p>
                         ))}
                     </div>
                 )}
             </div>
 
             {metric.spark && (
-                <div className="mt-2">
-                    <Sparkline values={metric.spark} stroke={goodTrend ? "var(--chart-success)" : "var(--chart-loss)"} />
+                <div className="mt-2.5">
+                    <Sparkline values={metric.spark} stroke={calm ? "var(--chart-success)" : "var(--chart-loss)"} className="h-6 opacity-90" />
                     <div className="mt-1 flex items-center justify-between gap-2">
-                        {metric.sparkNote && <p className="text-[10px] text-muted-foreground">{metric.sparkNote}</p>}
+                        {metric.sparkNote && <p className="truncate text-[10px] text-muted-foreground">{metric.sparkNote}</p>}
                         {metric.signal && (
                             <span className={cn(
-                                "inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold",
+                                "inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold",
                                 metric.signal.tone === "danger"
                                     ? "bg-mb-danger-light text-mb-danger-text"
                                     : "bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300",
                             )}>
-                                <TrendingUp className="h-3 w-3" aria-hidden="true" />
+                                <TrendingUp className="h-2.5 w-2.5" aria-hidden="true" />
                                 {metric.signal.label}
                             </span>
                         )}
@@ -183,15 +186,15 @@ export function HealthCard({ metric, onInspect }: { metric: HealthMetric; onInsp
         </>
     );
 
-    const cls = "rounded-[10.5px] border border-border bg-card p-4 text-left shadow-card-standard";
-    const style = { borderLeft: `4px solid ${s.base}` };
+    const cls = "rounded-[10.5px] border border-border bg-card p-3.5 text-left shadow-card-standard";
+    const style = { borderInlineStart: `3px solid ${s.base}` };
     if (onInspect) {
         return (
             <button
                 type="button"
                 onClick={() => onInspect(metric.key)}
                 aria-label={`Inspect ${metric.title} — ${SEVERITY_LABEL[metric.severity]}`}
-                className={cn(cls, "transition-shadow hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary/50")}
+                className={cn(cls, "transition-[box-shadow,transform] duration-150 ease-out hover:shadow-md motion-safe:hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary/50")}
                 style={style}
             >
                 {inner}
@@ -199,6 +202,74 @@ export function HealthCard({ metric, onInspect }: { metric: HealthMetric; onInsp
         );
     }
     return <div className={cls} style={style}>{inner}</div>;
+}
+
+// ─── Inspection ticker — the compact briefing strip (matches Water Daily) ──────
+
+export interface TickerStat {
+    icon: LucideIcon;
+    label: string;
+    value: React.ReactNode;
+    tone?: "default" | "danger" | "warning" | "success" | "info";
+    title?: string;
+}
+
+const TICKER_ICON: Record<NonNullable<TickerStat["tone"]>, string> = {
+    default: "var(--secondary)",
+    danger: "var(--status-danger)",
+    warning: "var(--status-warning)",
+    success: "var(--status-normal)",
+    info: "var(--status-info)",
+};
+const TICKER_VALUE: Record<NonNullable<TickerStat["tone"]>, string> = {
+    default: "text-foreground",
+    danger: "text-mb-danger-text",
+    warning: "text-mb-warning-text",
+    success: "text-mb-success-text",
+    info: "text-foreground",
+};
+
+function TickerRun({ items, duplicate }: { items: TickerStat[]; duplicate?: boolean }) {
+    return (
+        <ul className="mb-ticker-copy flex list-none items-center gap-x-10 pr-10" aria-hidden={duplicate ? "true" : undefined}>
+            {items.map((it, i) => {
+                const tone = it.tone ?? "default";
+                return (
+                    <li key={`${it.label}-${i}`} className="flex items-center gap-2" title={it.title}>
+                        <it.icon className="h-4 w-4 shrink-0" style={{ color: TICKER_ICON[tone] }} aria-hidden="true" />
+                        <div className="leading-tight">
+                            <p className="whitespace-nowrap text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{it.label}</p>
+                            <p className={cn("whitespace-nowrap text-sm font-semibold tabular-nums", TICKER_VALUE[tone])}>{it.value}</p>
+                        </div>
+                    </li>
+                );
+            })}
+        </ul>
+    );
+}
+
+/**
+ * A compact news-ticker briefing strip: a fixed caption on the left and the
+ * stats looping continuously beside it — the same idiom as the Water Daily
+ * briefing. Hover/focus pauses the loop; reduced-motion falls back to a static
+ * wrapped strip (both handled by the shared mb-ticker-* CSS).
+ */
+export function InspectionTicker({ caption, items }: { caption: string; items: TickerStat[] }) {
+    return (
+        <section aria-label={caption} className="rounded-[10.5px] border border-border bg-card px-4 py-3 shadow-card-standard">
+            <div className="flex items-center gap-4">
+                <p className="shrink-0 whitespace-nowrap border-e border-border/60 pe-4 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    {caption}
+                </p>
+                <div className="mb-ticker-viewport min-w-0 flex-1">
+                    <div className="mb-ticker-track items-center">
+                        <TickerRun items={items} />
+                        <TickerRun items={items} duplicate />
+                    </div>
+                </div>
+            </div>
+        </section>
+    );
 }
 
 /** Order a set of metrics worst-first — the thing you must see is never below the fold. */

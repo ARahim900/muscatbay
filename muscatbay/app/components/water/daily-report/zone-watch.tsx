@@ -12,10 +12,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
     ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Cell,
 } from "recharts";
-import { AlertTriangle, Droplets, Gauge, MapPin, TrendingUp, type LucideIcon } from "lucide-react";
+import { AlertTriangle, Droplets, Gauge, MapPin, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { SupabaseDailyWaterConsumption } from "@/entities/water";
-import { StatusChip, n } from "./inline-shared";
+import { HealthCard, type HealthMetric, type Severity } from "@/components/shared/inspection";
+import { n } from "./inline-shared";
 import { DailyBriefing } from "./inline-briefing";
 import type { BriefingMetrics } from "./briefing-metrics";
 import {
@@ -84,87 +85,31 @@ function WatchPanel({
     );
 }
 
-/**
- * Minimal loss sparkline (last ≤7 days, m³). Inline SVG — no chart lib needed
- * for 6 tiny trends. Nulls (missing balance) break the line into segments.
- */
-function Sparkline({ values, stroke }: { values: (number | null)[]; stroke: string }) {
-    const nums = values.filter((v): v is number => v !== null);
-    if (nums.length < 2) {
-        return <p className="h-7 text-[10px] leading-7 text-muted-foreground">not enough trend data</p>;
-    }
-    const min = Math.min(...nums, 0);
-    const max = Math.max(...nums, 1);
-    const span = max - min || 1;
-    const W = 100;
-    const H = 28;
-    const PAD = 3;
-    const x = (i: number) => (values.length === 1 ? W / 2 : (i / (values.length - 1)) * (W - PAD * 2) + PAD);
-    const y = (v: number) => H - PAD - ((v - min) / span) * (H - PAD * 2);
-    let d = "";
-    let pen = false;
-    values.forEach((v, i) => {
-        if (v === null) { pen = false; return; }
-        d += `${pen ? "L" : "M"}${x(i).toFixed(1)},${y(v).toFixed(1)}`;
-        pen = true;
-    });
-    return (
-        <svg viewBox={`0 0 ${W} ${H}`} className="h-7 w-full" preserveAspectRatio="none" aria-hidden="true">
-            {min < 0 && <line x1={0} x2={W} y1={y(0)} y2={y(0)} stroke="var(--border)" strokeWidth={1} strokeDasharray="2 3" />}
-            <path d={d} fill="none" stroke={stroke} strokeWidth={2} vectorEffect="non-scaling-stroke" strokeLinejoin="round" strokeLinecap="round" />
-        </svg>
-    );
-}
+// ─── Zone cards → shared HealthCard (one card idiom across Water/STP/Electricity) ─
 
-// ─── Zone cards ───────────────────────────────────────────────────────────────
+/** Water's 6-level daily severity → the shared 5-level model. "check" (L2 bulk
+ *  missing, so no balance can be computed) collapses into "no data"; "moderate"
+ *  maps to "watch". The zone×day heatmap below keeps the finer 6-level palette. */
+const ZONE_SEV_MAP: Record<DailySeverity, Severity> = {
+    nodata: "nodata", check: "nodata", good: "good", moderate: "watch", high: "high", critical: "critical",
+};
 
-function ZoneCard({ row, onInspect }: { row: ZoneWatchRow; onInspect: (zone: string) => void }) {
-    const s = SEV_UI[row.severity];
-    const headline = row.lossPct !== null ? `${row.lossPct.toFixed(1)}%` : row.loss !== null ? `${n(row.loss)} m³` : "—";
-    return (
-        <button
-            type="button"
-            data-zone={row.zoneName}
-            onClick={() => onInspect(row.zoneName)}
-            aria-label={`Inspect ${row.zoneName} — ${SEVERITY_LABEL[row.severity]}, loss ${row.loss !== null ? `${n(row.loss)} cubic meters` : "not computable"}`}
-            className="rounded-[10.5px] border border-border bg-card p-4 text-left shadow-card-standard transition-shadow hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary/50"
-            style={{ borderLeft: `4px solid ${s.base}` }}
-        >
-            <div className="flex items-center justify-between gap-2">
-                <h4 className="text-sm font-semibold tracking-tight text-foreground">{row.zoneName}</h4>
-                <StatusChip label={SEVERITY_LABEL[row.severity]} color={s.chip} />
-            </div>
-            <p className="mt-0.5 text-[11px] text-muted-foreground">{row.meterCount} meters · tap to inspect</p>
-
-            <div className="mt-3 flex items-end justify-between gap-2">
-                <div>
-                    <p className="text-2xl font-extrabold tabular-nums leading-none" style={{ color: s.text }}>{headline}</p>
-                    <p className="mt-1 text-[11px] text-muted-foreground">
-                        loss {row.loss !== null ? `${n(row.loss)} m³` : "—"}
-                    </p>
-                </div>
-                <div className="text-right text-[11px] text-muted-foreground">
-                    <p>supply <b className="text-foreground tabular-nums">{row.l2 !== null ? n(row.l2) : "—"}</b></p>
-                    <p>metered <b className="text-foreground tabular-nums">{n(row.l3Sum)}</b></p>
-                </div>
-            </div>
-
-            <div className="mt-2">
-                <Sparkline values={row.spark} stroke={row.severity === "good" || row.severity === "nodata" ? "var(--chart-success)" : "var(--chart-loss)"} />
-                <div className="mt-1 flex items-center justify-between gap-2">
-                    <p className="text-[10px] text-muted-foreground">
-                        7-day loss trend · MTD {n(row.mtdLoss)} m³{row.mtdLossPct !== null ? ` (${row.mtdLossPct.toFixed(1)}%)` : ""}
-                    </p>
-                    {row.risingDays >= 3 && (
-                        <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-mb-danger-light px-2 py-0.5 text-[10px] font-bold text-mb-danger-text">
-                            <TrendingUp className="h-3 w-3" aria-hidden="true" />
-                            {row.risingDays + 1}d rising
-                        </span>
-                    )}
-                </div>
-            </div>
-        </button>
-    );
+function zoneToMetric(row: ZoneWatchRow): HealthMetric {
+    return {
+        key: row.zoneName,
+        title: row.zoneName,
+        severity: ZONE_SEV_MAP[row.severity],
+        headline: row.lossPct !== null ? `${row.lossPct.toFixed(1)}%` : row.loss !== null ? `${n(row.loss)} m³` : "—",
+        headlineNote: `loss ${row.loss !== null ? `${n(row.loss)} m³` : "—"}`,
+        subtitle: `${row.meterCount} meters · tap to inspect`,
+        facts: [
+            { label: "supply", value: row.l2 !== null ? n(row.l2) : "—" },
+            { label: "metered", value: n(row.l3Sum) },
+        ],
+        spark: row.spark,
+        sparkNote: `7-day loss · MTD ${n(row.mtdLoss)} m³${row.mtdLossPct !== null ? ` (${row.mtdLossPct.toFixed(1)}%)` : ""}`,
+        signal: row.risingDays >= 3 ? { label: `${row.risingDays + 1}d rising`, tone: "danger" } : undefined,
+    };
 }
 
 // ─── Heatmap ──────────────────────────────────────────────────────────────────
@@ -305,10 +250,10 @@ export function ZoneWatch({
         <div className="space-y-6">
             {briefing && <DailyBriefing metrics={briefing} month={month} day={selectedDay} />}
 
-            {/* Zone cards — severity at a glance, worst first */}
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {/* Zone cards — severity at a glance, worst first (shared HealthCard) */}
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {ordered.map((row) => (
-                    <ZoneCard key={row.zoneName} row={row} onInspect={onInspectZone} />
+                    <HealthCard key={row.zoneName} metric={zoneToMetric(row)} onInspect={onInspectZone} />
                 ))}
             </div>
 

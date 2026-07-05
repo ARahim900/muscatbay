@@ -11,27 +11,17 @@
  */
 
 import { useMemo } from "react";
-import { Zap, Gauge, Activity } from "lucide-react";
+import { Zap, Gauge, Activity, DollarSign, Layers, AlertTriangle, CheckCircle2, ArrowUp, ArrowDown } from "lucide-react";
 import type { MeterReading } from "@/lib/mock-data";
 import { Card, CardContent } from "@/components/ui/card";
 import {
-    HealthCard, MetricHeatmap, ExceptionsRegister, worstFirst,
+    HealthCard, MetricHeatmap, ExceptionsRegister, InspectionTicker, worstFirst, type TickerStat,
 } from "@/components/shared/inspection";
 import {
     buildElectricityModel, buildCategoryMetrics, buildCategoryHeatmap, buildElectricityExceptions,
 } from "./electricity-analytics";
 
 const num = (x: number, frac = 0) => x.toLocaleString("en-US", { maximumFractionDigits: frac });
-
-function BriefFigure({ label, value, sub }: { label: string; value: string; sub?: string }) {
-    return (
-        <div className="min-w-0">
-            <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
-            <p className="mt-0.5 text-lg font-semibold tabular-nums text-foreground">{value}</p>
-            {sub && <p className="text-[11px] text-muted-foreground">{sub}</p>}
-        </div>
-    );
-}
 
 export function LoadWatch({
     meters, allMonths, startMonth, endMonth, onInspectType,
@@ -63,37 +53,28 @@ export function LoadWatch({
     }
 
     const { summary, currentMonth } = model;
-    const trendStr = summary.trendPct === null ? "—" : `${summary.trendPct > 0 ? "+" : ""}${summary.trendPct.toFixed(1)}% vs prev month`;
+    const TrendIcon = summary.trendPct !== null && summary.trendPct < 0 ? ArrowDown : ArrowUp;
+
+    const tickerItems: TickerStat[] = [
+        { icon: Zap, label: "Consumption", value: <>{num(summary.grandTotal / 1000, 1)} <span className="text-muted-foreground">MWh</span></> },
+        { icon: DollarSign, label: "Cost", value: <>{num(summary.cost)} <span className="text-muted-foreground">OMR</span></>, title: "at 0.025 OMR/kWh" },
+        { icon: Layers, label: "Categories", value: String(model.categories.length), title: "meter types" },
+        {
+            icon: summary.flaggedCount > 0 ? AlertTriangle : CheckCircle2,
+            label: "Flagged meters",
+            value: summary.flaggedCount > 0 ? `${summary.flaggedCount} need a look` : "0 · all clear",
+            tone: summary.flaggedCount > 0 ? "danger" : "success",
+        },
+        { icon: TrendIcon, label: "vs prev month", value: summary.trendPct === null ? "—" : `${summary.trendPct > 0 ? "+" : ""}${summary.trendPct.toFixed(1)}%`, tone: "info", title: "Consumption vs the previous month" },
+    ];
 
     return (
         <div className="space-y-6">
-            {/* Briefing strip */}
-            <Card className="card-elevated">
-                <CardContent className="p-4 sm:p-5">
-                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                        <div className="flex items-center gap-3">
-                            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-secondary/15 text-secondary">
-                                <Zap className="h-5 w-5" aria-hidden="true" />
-                            </span>
-                            <div>
-                                <p className="text-sm font-semibold text-foreground">Load briefing · {currentMonth}</p>
-                                <p className="text-xs text-muted-foreground">
-                                    {summary.meterCount} meters · {summary.flaggedCount} flagged · {exceptions.length} open exception{exceptions.length !== 1 ? "s" : ""}
-                                </p>
-                            </div>
-                        </div>
-                        <div className="grid grid-cols-2 gap-x-6 gap-y-3 sm:flex sm:items-center sm:gap-6">
-                            <BriefFigure label="Consumption" value={`${num(summary.grandTotal / 1000, 1)} MWh`} sub={trendStr} />
-                            <BriefFigure label="Cost" value={`${num(summary.cost)} OMR`} sub="at 0.025 OMR/kWh" />
-                            <BriefFigure label="Categories" value={String(model.categories.length)} sub="meter types" />
-                            <BriefFigure label="Flagged" value={String(summary.flaggedCount)} sub="meters need a look" />
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
+            {/* Briefing ticker — same idiom as the Water Daily strip */}
+            <InspectionTicker caption={`Load briefing · ${currentMonth}`} items={tickerItems} />
 
             {/* Category cards — worst first, tap to inspect that type */}
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {metrics.map((m) => <HealthCard key={m.key} metric={m} onInspect={onInspectType} />)}
             </div>
 

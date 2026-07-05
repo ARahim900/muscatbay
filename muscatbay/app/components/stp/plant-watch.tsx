@@ -12,11 +12,11 @@ import { useMemo } from "react";
 import {
     ResponsiveContainer, ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ReferenceLine,
 } from "recharts";
-import { Activity, Gauge, Droplets } from "lucide-react";
+import { Activity, Gauge, Droplets, Recycle, Truck, DollarSign, AlertTriangle, CheckCircle2 } from "lucide-react";
 import type { STPOperation } from "@/lib/mock-data";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-    HealthCard, MetricHeatmap, ExceptionsRegister, SeverityChip, worstFirst,
+    HealthCard, MetricHeatmap, ExceptionsRegister, InspectionTicker, worstFirst, type TickerStat,
 } from "@/components/shared/inspection";
 import {
     buildSTPModel, buildHealthMetrics, buildHeatmap, buildSTPExceptions, effSeverity,
@@ -30,16 +30,6 @@ const TIP_STYLE = {
 type TipValue = number | string | ReadonlyArray<number | string> | undefined;
 
 const num = (x: number, frac = 0) => x.toLocaleString("en-US", { maximumFractionDigits: frac });
-
-function BriefFigure({ label, value, sub }: { label: string; value: string; sub?: string }) {
-    return (
-        <div className="min-w-0">
-            <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
-            <p className="mt-0.5 text-lg font-semibold tabular-nums text-foreground">{value}</p>
-            {sub && <p className="text-[11px] text-muted-foreground">{sub}</p>}
-        </div>
-    );
-}
 
 export function PlantWatch({ operations }: { operations: STPOperation[] }) {
     const model = useMemo(() => buildSTPModel(operations), [operations]);
@@ -67,39 +57,29 @@ export function PlantWatch({ operations }: { operations: STPOperation[] }) {
 
     const { summary } = model;
     const effSev = effSeverity(summary.avgEfficiency);
+    const effTone: TickerStat["tone"] = effSev === "good" ? "success" : effSev === "watch" ? "warning" : effSev === "nodata" ? "default" : "danger";
+
+    const tickerItems: TickerStat[] = [
+        { icon: Gauge, label: "Efficiency", value: summary.avgEfficiency !== null ? `${summary.avgEfficiency.toFixed(1)}%` : "—", tone: effTone, title: "TSE ÷ inlet" },
+        { icon: Droplets, label: "Inlet treated", value: <>{num(summary.totalInlet)} <span className="text-muted-foreground">m³</span></> },
+        { icon: Recycle, label: "TSE reused", value: <>{num(summary.totalTSE)} <span className="text-muted-foreground">m³</span></> },
+        { icon: Truck, label: "Tanker trips", value: num(summary.totalTrips) },
+        { icon: DollarSign, label: "Economic impact", value: <>{num(summary.economicImpact)} <span className="text-muted-foreground">OMR</span></> },
+        {
+            icon: exceptions.length > 0 ? AlertTriangle : CheckCircle2,
+            label: "Open exceptions",
+            value: exceptions.length > 0 ? `${exceptions.length} to action` : "0 · all clear",
+            tone: exceptions.length > 0 ? "danger" : "success",
+        },
+    ];
 
     return (
         <div className="space-y-6">
-            {/* Briefing strip */}
-            <Card className="card-elevated">
-                <CardContent className="p-4 sm:p-5">
-                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                        <div className="flex items-center gap-3">
-                            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-secondary/15 text-secondary">
-                                <Activity className="h-5 w-5" aria-hidden="true" />
-                            </span>
-                            <div>
-                                <p className="text-sm font-semibold text-foreground">Plant briefing · {summary.periodLabel}</p>
-                                <p className="text-xs text-muted-foreground">
-                                    {summary.daysLogged} day{summary.daysLogged !== 1 ? "s" : ""} logged · {exceptions.length} open exception{exceptions.length !== 1 ? "s" : ""}
-                                </p>
-                            </div>
-                        </div>
-                        <div className="grid grid-cols-2 gap-x-6 gap-y-3 sm:flex sm:items-center sm:gap-6">
-                            <div className="flex items-center gap-2">
-                                <BriefFigure label="Efficiency" value={summary.avgEfficiency !== null ? `${summary.avgEfficiency.toFixed(1)}%` : "—"} />
-                                <SeverityChip severity={effSev} />
-                            </div>
-                            <BriefFigure label="Inlet" value={`${num(summary.totalInlet)}`} sub="m³ treated" />
-                            <BriefFigure label="TSE reused" value={`${num(summary.totalTSE)}`} sub="m³ irrigation" />
-                            <BriefFigure label="Impact" value={`${num(summary.economicImpact)}`} sub="OMR income + savings" />
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
+            {/* Briefing ticker — same idiom as the Water Daily strip */}
+            <InspectionTicker caption={`Plant briefing · ${summary.periodLabel}`} items={tickerItems} />
 
             {/* Process-health cards — worst first */}
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {metrics.map((m) => <HealthCard key={m.key} metric={m} />)}
             </div>
 
