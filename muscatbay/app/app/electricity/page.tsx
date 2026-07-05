@@ -10,7 +10,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { DateRangePicker } from "@/components/water/date-range-picker";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
-import { Zap, DollarSign, MapPin, TrendingUp, BarChart3, Database, Search, Download, X, Filter } from "lucide-react";
+import { Zap, DollarSign, MapPin, TrendingUp, Database, Search, Download, X, Filter, Gauge } from "lucide-react";
 import { MultiSelectDropdown, TablePagination, ActiveFilterPills, TableToolbar, StatusBadge, SortableTableHead, type BadgeColor, type PageSizeOption } from "@/components/shared/data-table";
 import { exportToCSV, getDateForFilename } from "@/lib/export-utils";
 
@@ -25,6 +25,7 @@ import { CHART_COLORS, meterColors } from "@/components/electricity/electricity-
 import { ElectricityLoadingSkeleton } from "@/components/electricity/electricity-loading";
 import { ElectricityOverviewCharts } from "@/components/electricity/electricity-overview-charts";
 import { ElectricityAnalysisView } from "@/components/electricity/electricity-analysis-view";
+import { LoadWatch } from "@/components/electricity/load-watch";
 
 // Use centralized config for rates
 const ratePerKWh = ELECTRICITY_RATES.RATE_PER_KWH;
@@ -52,7 +53,7 @@ const monthsInRange = (allMonths: string[], start: string, end: string): string[
 };
 
 export default function ElectricityPage() {
-    const [activeTab, setActiveTab] = useState("overview");
+    const [activeTab, setActiveTab] = useState("watch");
     const [meters, setMeters] = useState<MeterReading[]>([]);
     const [loading, setLoading] = useState(true);
     const [dataSource, setDataSource] = useState<"supabase" | "mock">("mock");
@@ -146,7 +147,8 @@ export default function ElectricityPage() {
             dateRangeIndex?: [number, number];
         }>('electricity');
         if (savedPrefs) {
-            if (savedPrefs.activeTab) setActiveTab(savedPrefs.activeTab);
+            // Guard against stale tab keys from the old layout ("overview"/"analysis"/"database").
+            if (savedPrefs.activeTab === "watch" || savedPrefs.activeTab === "data") setActiveTab(savedPrefs.activeTab);
             if (savedPrefs.startMonth) setStartMonth(savedPrefs.startMonth);
             if (savedPrefs.selectedYear) {
                 setSelectedYear(savedPrefs.selectedYear);
@@ -722,18 +724,18 @@ export default function ElectricityPage() {
                 </PageStatusBar>
             </div>
 
+            {/* Inspection-first: Load Watch leads; analysis + database consolidate into one tab */}
             <TabNavigation
                 activeTab={activeTab}
                 onTabChange={setActiveTab}
                 tabs={[
-                    { key: "overview", label: "Overview", icon: BarChart3 },
-                    { key: "analysis", label: "Analysis by Type", icon: TrendingUp },
-                    { key: "database", label: "Database", icon: Database },
+                    { key: "watch", label: "Load Watch", icon: Gauge },
+                    { key: "data", label: "Meters & Data", icon: Database },
                 ]}
             />
 
-            {/* Unified Date/Filter Control Card — shared by Overview and Analysis tabs */}
-            {activeTab !== 'database' && allMonths.length > 0 && (
+            {/* Unified Date/Filter Control Card — shared by both tabs */}
+            {allMonths.length > 0 && (
                 <Card className="card-elevated">
                     <CardContent className="p-4 sm:p-5 md:p-6">
                         <div className="flex flex-col gap-4">
@@ -781,8 +783,8 @@ export default function ElectricityPage() {
                                     </div>
                                 </div>
 
-                                {/* Analysis tab: Type and Meter selectors inline */}
-                                {activeTab === 'analysis' ? (
+                                {/* Meters & Data tab: Type and Meter selectors inline */}
+                                {activeTab === 'data' ? (
                                     <div className="flex items-center gap-3 flex-wrap">
                                         {/* Type selector */}
                                         <div className="flex items-center gap-2">
@@ -843,8 +845,17 @@ export default function ElectricityPage() {
                 </Card>
             )}
 
-            {activeTab === 'overview' && (
-                <div id="panel-overview" role="tabpanel" aria-labelledby="tab-overview" tabIndex={0} className="space-y-6 motion-safe:animate-in motion-safe:fade-in duration-200">
+            {/* Load Watch — inspection-first: category cards, load heatmap, exceptions,
+                with the KPI grid and trend charts kept below as supporting context. */}
+            {activeTab === 'watch' && (
+                <div id="panel-watch" role="tabpanel" aria-labelledby="tab-watch" tabIndex={0} className="space-y-6 motion-safe:animate-in motion-safe:fade-in duration-200">
+                    <LoadWatch
+                        meters={meters}
+                        allMonths={allMonths}
+                        startMonth={startMonth || allMonths[0]}
+                        endMonth={endMonth || allMonths[allMonths.length - 1]}
+                        onInspectType={(type) => { setAnalysisType(type); setSelectedMeter("All"); setActiveTab('data'); }}
+                    />
                     <StatsGrid stats={stats} />
                     <ElectricityOverviewCharts
                         filteredMonthlyData={filteredMonthlyData}
@@ -853,7 +864,7 @@ export default function ElectricityPage() {
                 </div>
             )}
 
-            {activeTab === 'analysis' && (
+            {activeTab === 'data' && (
                 <ElectricityAnalysisView
                     analysisData={analysisData}
                     analysisType={analysisType}
@@ -863,7 +874,7 @@ export default function ElectricityPage() {
                 />
             )}
 
-            {activeTab === 'database' && (() => {
+            {activeTab === 'data' && (() => {
                 // Show last 6 months by default for anomaly detection
                 const displayMonths = allMonths.slice(-6);
 

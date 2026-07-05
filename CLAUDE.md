@@ -113,6 +113,7 @@ Pages use server actions or client-side hooks. Water and STP pages use custom ho
 - `TabNavigation` — Tab switching with icons
 - `Breadcrumbs` — Route-aware breadcrumbs
 - `PageHeader` — Consistent page headers
+- `components/shared/inspection.tsx` — the shared **inspection toolkit** (one severity model + `--mb-*` tokens, `HealthCard`, `MetricHeatmap`, `ExceptionsRegister`). This is how the Water "watch" pattern is ported to other modules — STP `Plant Watch` and Electricity `Load Watch` both render from it. Reuse it (feed a section's severity + rows) instead of rebuilding severity cards / anomaly registers per module.
 
 ### Adding a new page
 1. Create route in `app/<route>/page.tsx`
