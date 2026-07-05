@@ -28,7 +28,10 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
     const savedCollapsed = localStorage.getItem('sidebarCollapsed');
     if (savedCollapsed) {
        
-      setIsCollapsed(JSON.parse(savedCollapsed));
+      // Guard: a corrupt/legacy non-JSON value would otherwise throw in this
+      // app-wide mount effect and white-screen the whole app (a reload won't
+      // clear the bad value). Fall back to the default (expanded) on any error.
+      try { setIsCollapsed(JSON.parse(savedCollapsed) === true); } catch { /* keep default */ }
     }
   }, []);
 
