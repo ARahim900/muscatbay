@@ -2,14 +2,14 @@ import { useCallback, useEffect, useState, useRef } from "react";
 import { format } from "date-fns";
 import type { LucideIcon } from "lucide-react";
 import type { STPOperation, MeterReading } from "@/lib/mock-data";
-import { getWaterSystemData, getElectricityMeters, getSTPOperations, getContractors, getAssets } from "@/lib/mock-data";
+import { getWaterSystemData, getElectricityMeters, getSTPOperations, getContractors } from "@/lib/mock-data";
 import {
     getSTPOperationsFromSupabase,
     getElectricityMetersFromSupabase,
     getWaterMetersFromSupabase,
     isSupabaseConfigured
 } from "@/lib/supabase";
-import { getContractorCounts, getAssetsCountFromSupabase } from "@/functions";
+import { getContractorCounts } from "@/functions";
 import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
 import type { WaterMeter } from "@/lib/water-data";
 
@@ -49,13 +49,18 @@ const DASHBOARD_REALTIME_TABLES = [
     'water_monthly_consumption',
     'electricity_readings',
     'Contractor_Tracker',
-    // Must match the table the asset queries actually read (the assets page
-    // subscribes to the same one) — 'assets_register' never fired.
-    'master_assets_register',
 ];
 
 // Sort month keys like 'Jan-25', 'Feb-26' chronologically
 const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+// A calendar month needs at least this many daily records before the KPI deck
+// treats it as the "latest complete month" — a partial current month would
+// otherwise report misleadingly low inlet / TSE / economic totals. The STP chart
+// deliberately does NOT apply this: it mirrors the main STP Plant page and plots
+// every month as-is (including the in-progress one), so the dashboard reflects
+// the same reality as the module page.
+const MIN_DAYS_FOR_COMPLETE_MONTH = 25;
 
 function sortMonthKeys(keys: string[]): string[] {
     return [...keys].sort((a, b) => {
@@ -109,15 +114,13 @@ export function useDashboardData() {
             let stpData: STPOperation[] = [];
             let elecData: MeterReading[] = [];
             let contractorsCount = 0;
-            let assetsCount = 0;
             let waterMeters: WaterMeter[] = [];
 
             if (isSupabaseConfigured()) {
-                const [stpResult, elecResult, contractorsResult, assetsResult, waterResult] = await Promise.allSettled([
+                const [stpResult, elecResult, contractorsResult, waterResult] = await Promise.allSettled([
                     getSTPOperationsFromSupabase(),
                     getElectricityMetersFromSupabase(),
                     getContractorCounts(),
-                    getAssetsCountFromSupabase(),
                     getWaterMetersFromSupabase()
                 ]);
 
@@ -143,13 +146,6 @@ export function useDashboardData() {
                     console.warn("Contractors fetch from Supabase failed, using mock");
                 }
 
-                if (assetsResult.status === 'fulfilled' && assetsResult.value > 0) {
-                    assetsCount = assetsResult.value;
-                    liveDataFetched = true;
-                } else if (assetsResult.status === 'rejected') {
-                    console.warn("Assets fetch from Supabase failed, using mock");
-                }
-
                 if (waterResult.status === 'fulfilled' && waterResult.value.length > 0) {
                     waterMeters = waterResult.value;
                     liveDataFetched = true;
@@ -164,10 +160,6 @@ export function useDashboardData() {
             if (contractorsCount === 0) {
                 const contractorsMock = await getContractors();
                 contractorsCount = contractorsMock.filter(c => c.status === "Active").length;
-            }
-            if (assetsCount === 0) {
-                const assetsMock = await getAssets();
-                assetsCount = assetsMock.length;
             }
 
             setIsLiveData(liveDataFetched);
@@ -212,11 +204,11 @@ export function useDashboardData() {
             });
             const stpSortedMonths = Object.keys(stpMonthlyCalc).sort();
 
-            // Use the latest COMPLETE month for stats (>= 25 days of data)
+            // Use the latest COMPLETE month for stats (see MIN_DAYS_FOR_COMPLETE_MONTH)
             // Partial current month would show misleadingly low values
             let stpStatsMonthIdx = stpSortedMonths.length - 1;
             for (let i = stpSortedMonths.length - 1; i >= 0; i--) {
-                if (stpMonthlyCalc[stpSortedMonths[i]].days >= 25) {
+                if (stpMonthlyCalc[stpSortedMonths[i]].days >= MIN_DAYS_FOR_COMPLETE_MONTH) {
                     stpStatsMonthIdx = i;
                     break;
                 }
@@ -313,15 +305,6 @@ export function useDashboardData() {
                     trend: stpEconomicTrend.trend,
                     trendValue: stpEconomicTrend.trendValue,
                     // default: more economic impact = better = green ✓
-                },
-                {
-                    label: "TOTAL ASSETS",
-                    value: assetsCount.toLocaleString('en-US'),
-                    subtitle: "Registered Items",
-                    icon: null,
-                    variant: "water" as const,
-                    trend: 'neutral',
-                    trendValue: '—'
                 }
             ]);
 
@@ -339,24 +322,21 @@ export function useDashboardData() {
                 })));
             }
 
-            // === STP CHART (sorted chronologically, last 8 complete months) ===
-            const stpMonthlyChart: Record<string, { inlet: number; tse: number }> = {};
-            stpData.forEach(op => {
-                if (op.date) {
-                    try {
-                        const monthKey = format(new Date(op.date), "MMM-yy");
-                        if (!stpMonthlyChart[monthKey]) stpMonthlyChart[monthKey] = { inlet: 0, tse: 0 };
-                        stpMonthlyChart[monthKey].inlet += op.inlet_sewage || 0;
-                        stpMonthlyChart[monthKey].tse += op.tse_for_irrigation || 0;
-                    } catch { /* skip */ }
-                }
-            });
-            const stpChartMonthsSorted = sortMonthKeys(Object.keys(stpMonthlyChart));
-            setStpChartData(stpChartMonthsSorted.slice(-8).map(month => ({
-                month,
-                inlet: Math.round(stpMonthlyChart[month].inlet / 1000),
-                tse: Math.round(stpMonthlyChart[month].tse / 1000)
-            })));
+            // === STP CHART — last 8 months, chronological ===
+            // Mirror the main STP Plant page: plot every month as-is with no
+            // completeness filter, so the dashboard shows the same reality as the
+            // module page — including the in-progress current month. Reuses the
+            // monthly buckets already aggregated above for the KPI stats.
+            setStpChartData(stpSortedMonths.slice(-8).map(monthKey => {
+                // Build the "MMM-yy" label straight from the yyyy-MM key — no Date
+                // round-trip, so the month can't drift across a timezone boundary.
+                const [year, month] = monthKey.split('-');
+                return {
+                    month: `${MONTH_NAMES[parseInt(month, 10) - 1]}-${year.slice(2)}`,
+                    inlet: Math.round(stpMonthlyCalc[monthKey].inlet / 1000),
+                    tse: Math.round(stpMonthlyCalc[monthKey].tse / 1000)
+                };
+            }));
 
             // === GENERATE RECENT ACTIVITY from real data ===
             const trendDesc = (t: { trend: string; trendValue: string }) =>
@@ -393,11 +373,6 @@ export function useDashboardData() {
                 {
                     title: `Active Contractors`,
                     description: `${contractorsCount} service providers currently registered`,
-                    type: 'info'
-                },
-                {
-                    title: `Total Assets`,
-                    description: `${assetsCount.toLocaleString('en-US')} items tracked in the system`,
                     type: 'info'
                 }
             ];
