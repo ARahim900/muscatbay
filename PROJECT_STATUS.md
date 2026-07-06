@@ -116,6 +116,7 @@ Entries below the marker are appended automatically on every push to `main`.
 Do not hand-edit existing entries; curate meaning in the sections above.
 
 <!-- STATUS:LOG:BEGIN -->
+- 2026-07-06 — feat(dashboard, electricity): balance hero KPI deck + de-duplicate Meters & Data (#37)
 - 2026-07-06 — feat(water): rows-per-page selector for the Monthly tables (#36)
 - 2026-07-06 — Dashboard STP live-sync + asset KPI removal + Water A1→A2 trunk-loss view (#35)
 - 2026-07-05 — fix(stability): guard sidebar localStorage parse against corrupt values
