@@ -8,7 +8,7 @@ import { useAuth } from "@/components/auth/auth-provider";
 import { CommandDeck } from "@/components/dashboard/command-deck";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Activity, Droplets, Zap, AlertTriangle, ArrowUpRight, Recycle, TrendingUp, Wifi, WifiOff, Printer } from "lucide-react";
+import { Activity, Droplets, Zap, AlertTriangle, ArrowUpRight, Recycle, TrendingUp, Wifi, WifiOff, Printer, DollarSign } from "lucide-react";
 import { AnimateOnScroll } from "@/components/shared/scroll-animation";
 import Link from "next/link";
 
@@ -61,11 +61,12 @@ export default function DashboardPage() {
     // Add icons and navigation hrefs to stats (memoized to avoid recalc on every render)
     const statsWithIcons = useMemo(() => stats.map(stat => ({
         ...stat,
-        icon: stat.label.includes('WATER') ? Droplets :
-            stat.label.includes('ELECTRICITY') ? Zap :
-                stat.label.includes('STP INLET') ? Activity :
-                    stat.label.includes('TSE') ? Recycle :
-                        stat.label.includes('ECONOMIC') ? TrendingUp : Activity,
+        icon: stat.label.includes('COST') ? DollarSign :
+            stat.label.includes('WATER') ? Droplets :
+                stat.label.includes('ELECTRICITY') ? Zap :
+                    stat.label.includes('STP INLET') ? Activity :
+                        stat.label.includes('TSE') ? Recycle :
+                            stat.label.includes('ECONOMIC') ? TrendingUp : Activity,
         href: stat.label.includes('WATER') ? '/water' :
             stat.label.includes('ELECTRICITY') ? '/electricity' :
                 stat.label.includes('STP') || stat.label.includes('TSE') || stat.label.includes('ECONOMIC') ? '/stp' :
