@@ -10,6 +10,7 @@ import {
     isSupabaseConfigured
 } from "@/lib/supabase";
 import { getContractorCounts } from "@/functions";
+import { ELECTRICITY_RATES } from "@/lib/config";
 import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
 import type { WaterMeter } from "@/lib/water-data";
 
@@ -243,6 +244,10 @@ export function useDashboardData() {
 
             const waterTrend = calcTrend(waterValue, waterPrevValue);
             const elecTrend = calcTrend(elecTotal, elecPrevTotal);
+            // Electricity cost at the flat tariff — surfaces the OMR figure that
+            // executives track alongside the raw MWh usage.
+            const elecCost = elecTotal * ELECTRICITY_RATES.RATE_PER_KWH;
+            const elecCostTrend = calcTrend(elecCost, elecPrevTotal * ELECTRICITY_RATES.RATE_PER_KWH);
             const stpInletTrend = calcTrend(stpLatestData.inlet, stpPrevData.inlet);
             const stpTseTrend = calcTrend(stpLatestData.tse, stpPrevData.tse);
 
@@ -275,6 +280,16 @@ export function useDashboardData() {
                     trend: elecTrend.trend,
                     trendValue: elecTrend.trendValue,
                     invertTrend: true,   // Less electricity = saving = green ✓
+                },
+                {
+                    label: "ELECTRICITY COST",
+                    value: `${(elecCost / 1000).toFixed(1)}k OMR`,
+                    subtitle: formattedElecMonth,
+                    icon: null,
+                    variant: "warning" as const,
+                    trend: elecCostTrend.trend,
+                    trendValue: elecCostTrend.trendValue,
+                    invertTrend: true,   // Lower cost = saving = green ✓
                 },
                 {
                     label: "STP INLET FLOW",

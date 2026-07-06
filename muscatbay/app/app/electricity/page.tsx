@@ -341,12 +341,22 @@ export default function ElectricityPage() {
     }, []);
 
     const handleDbExportCSV = () => {
-        const data = dbFilteredMeters.map(m => ({
-            Name: m.name,
-            'Account #': m.account_number,
-            Type: m.type,
-            'Total (kWh)': Object.values(m.readings).reduce((a, b) => a + b, 0),
-        }));
+        // Export mirrors the on-screen table: the months in the selected range,
+        // each meter's range total, and the derived cost.
+        const rangeMonths = monthsInRange(allMonths, startMonth, endMonth);
+        const months = rangeMonths.length > 0 ? rangeMonths : allMonths.slice(-6);
+        const data = dbFilteredMeters.map(m => {
+            const total = months.reduce((s, month) => s + (m.readings[month] || 0), 0);
+            const row: Record<string, string | number> = {
+                Name: m.name,
+                'Account #': m.account_number,
+                Type: m.type,
+            };
+            months.forEach(month => { row[month] = m.readings[month] || 0; });
+            row['Total (kWh)'] = Number(total.toFixed(1));
+            row['Cost (OMR)'] = Number((total * ratePerKWh).toFixed(1));
+            return row;
+        });
         exportToCSV(data, `electricity-meters-${getDateForFilename()}`);
     };
 
@@ -523,7 +533,7 @@ export default function ElectricityPage() {
     const analysisData = useMemo(() => {
         // Always use allMonths as fallback — filteredMonthsByYear may be empty during initial render
         const monthsToUse = (selectedYear && filteredMonthsByYear.length > 0) ? filteredMonthsByYear : allMonths;
-        if (monthsToUse.length === 0) return { stats: [], chartData: [], tableData: [], dateRangeLabel: "", topConsumers: [], perMeterChartData: [], selectedMonths: [] as string[], typeAverage: 0, comparisonData: [], selectedMeterName: null };
+        if (monthsToUse.length === 0) return { stats: [], chartData: [], dateRangeLabel: "", perMeterChartData: [], selectedMonths: [] as string[], typeAverage: 0, comparisonData: [], selectedMeterName: null };
 
         // Use startMonth/endMonth from DateRangePicker. The slider can point at
         // months without data (Jan-Dec axis), so filter chronologically.
@@ -548,28 +558,23 @@ export default function ElectricityPage() {
         // Initialize chart map for selected months
         selectedMonths.forEach(m => chartMap[m] = 0);
 
-        const tableRows = filteredMeters.map(meter => {
+        // Accumulate per-meter totals for the KPI cards and the trend aggregate.
+        // The detailed per-meter rows now live in the unified table below and the
+        // ranking is drawn by the comparison chart, so we only need running
+        // totals here — not a materialised row array.
+        filteredMeters.forEach(meter => {
             let meterConsumption = 0;
-            const monthlyReadings: Record<string, number> = {};
             selectedMonths.forEach(month => {
                 const val = meter.readings[month] || 0;
                 meterConsumption += val;
                 chartMap[month] = (chartMap[month] || 0) + val;
-                monthlyReadings[month] = val;
             });
             totalConsumption += meterConsumption;
 
             if (meterConsumption > highestConsumer.val) {
                 highestConsumer = { name: meter.name, val: meterConsumption };
             }
-
-            return {
-                ...meter,
-                rangeConsumption: meterConsumption,
-                rangeCost: meterConsumption * ratePerKWh,
-                monthlyReadings
-            };
-        }).sort((a, b) => b.rangeConsumption - a.rangeConsumption);
+        });
 
         totalCost = totalConsumption * ratePerKWh;
 
@@ -597,6 +602,7 @@ export default function ElectricityPage() {
         const comparisonData = typeFilteredMeters.map((meter, idx) => {
             const total = selectedMonths.reduce((s, month) => s + (meter.readings[month] || 0), 0);
             return {
+                id: meter.id,
                 name: meter.name.length > 25 ? meter.name.substring(0, 25) + '...' : meter.name,
                 fullName: meter.name,
                 consumption: total,
@@ -678,20 +684,9 @@ export default function ElectricityPage() {
         const startMonthStr = selectedMonths[0] || startMonth;
         const endMonthStr = selectedMonths[selectedMonths.length - 1] || endMonth;
 
-        // Top consumers data for bar chart (top 10)
-        const topConsumers = tableRows.slice(0, 10).map((meter, idx) => ({
-            name: meter.name.length > 20 ? meter.name.substring(0, 20) + '...' : meter.name,
-            fullName: meter.name,
-            consumption: meter.rangeConsumption,
-            cost: meter.rangeCost,
-            color: idx === 0 ? CHART_COLORS.primary : idx === 1 ? CHART_COLORS.accent : idx === 2 ? CHART_COLORS.secondary : CHART_COLORS.gray
-        }));
-
         return {
             stats,
             chartData,
-            tableData: tableRows,
-            topConsumers,
             perMeterChartData,
             selectedMonths,
             typeAverage,
@@ -870,13 +865,19 @@ export default function ElectricityPage() {
                     analysisType={analysisType}
                     selectedMeter={selectedMeter}
                     metersOfSelectedType={metersOfSelectedType}
-                    totalMeterCount={meters.length}
                 />
             )}
 
             {activeTab === 'data' && (() => {
-                // Show last 6 months by default for anomaly detection
-                const displayMonths = allMonths.slice(-6);
+                // Month columns follow the shared date-range selector (falling back
+                // to the last 6 months when the range resolves to nothing), so this
+                // single table serves both the period breakdown and the anomaly scan.
+                const rangeMonths = monthsInRange(allMonths, startMonth, endMonth);
+                const displayMonths = rangeMonths.length > 0 ? rangeMonths : allMonths.slice(-6);
+                const grandRangeTotal = dbFilteredMeters.reduce(
+                    (s, m) => s + displayMonths.reduce((a, month) => a + (m.readings[month] || 0), 0),
+                    0,
+                );
 
                 // Helper to detect anomalies: compares value to meter's average across all months
                 const getAnomalyClass = (value: number, meter: typeof meters[0]) => {
@@ -893,6 +894,15 @@ export default function ElectricityPage() {
 
                 return (
                     <div id="panel-database" role="tabpanel" aria-labelledby="tab-database" tabIndex={0} className="space-y-4 motion-safe:animate-in motion-safe:fade-in duration-200">
+                        {/* Section heading — this single table replaces the former
+                            "Monthly Breakdown" plus the separate anomaly table. */}
+                        <div className="flex flex-col gap-0.5">
+                            <h3 className="text-lg font-semibold text-foreground">Meter Consumption &amp; Anomalies</h3>
+                            <p className="text-xs text-muted-foreground">
+                                Per-meter usage for {displayMonths[0]}{displayMonths.length > 1 ? ` – ${displayMonths[displayMonths.length - 1]}` : ''} — search, filter and sort the full meter list; cells are flagged where a reading breaks from that meter&apos;s own baseline.
+                            </p>
+                        </div>
+
                         {/* Toolbar */}
                         <TableToolbar>
                             <div className="relative flex-1 min-w-0 sm:min-w-[200px] max-w-md">
@@ -984,11 +994,14 @@ export default function ElectricityPage() {
                                         <SortableTableHead key={month} field={month} currentSortField={dbSortField} currentSortDirection={dbSortDirection} onSort={handleDbSort} align="right" className="text-right min-w-[90px]">{month}</SortableTableHead>
                                     ))}
                                     <TableHead className="num min-w-[100px]">Total (kWh)</TableHead>
+                                    <TableHead className="num min-w-[90px]">Cost (OMR)</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {dbPaginatedMeters.map((meter) => {
-                                    const sum = Object.values(meter.readings).reduce((a, b) => a + b, 0);
+                                    // Total + cost reflect the selected range (matching the KPI cards),
+                                    // not the meter's full history.
+                                    const rangeTotal = displayMonths.reduce((a, month) => a + (meter.readings[month] || 0), 0);
                                     return (
                                         <TableRow key={meter.id}>
                                             <TableCell className="col-sticky strong">{meter.name}</TableCell>
@@ -1005,15 +1018,33 @@ export default function ElectricityPage() {
                                                     </TableCell>
                                                 );
                                             })}
-                                            <TableCell className="num">{sum.toLocaleString('en-US', { maximumFractionDigits: 1 })}</TableCell>
+                                            <TableCell className="num">{rangeTotal.toLocaleString('en-US', { maximumFractionDigits: 1 })}</TableCell>
+                                            <TableCell className="num text-mb-success dark:text-mb-success-hover">{(rangeTotal * ratePerKWh).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}</TableCell>
                                         </TableRow>
                                     );
                                 })}
                                 {dbFilteredMeters.length === 0 && (
                                     <TableRow>
-                                        <TableCell colSpan={4 + displayMonths.length} className="py-12 text-center text-muted-foreground">
+                                        <TableCell colSpan={5 + displayMonths.length} className="py-12 text-center text-muted-foreground">
                                             No meters found matching your filters.
                                         </TableCell>
+                                    </TableRow>
+                                )}
+                                {dbFilteredMeters.length > 1 && (
+                                    <TableRow className="bg-muted/80 dark:bg-muted/60">
+                                        <TableCell className="col-sticky strong">Total · {dbFilteredMeters.length} meters</TableCell>
+                                        <TableCell />
+                                        <TableCell />
+                                        {displayMonths.map(month => {
+                                            const monthTotal = dbFilteredMeters.reduce((s, m) => s + (m.readings[month] || 0), 0);
+                                            return (
+                                                <TableCell key={`total-${month}`} className="num">
+                                                    {monthTotal > 0 ? monthTotal.toLocaleString('en-US', { maximumFractionDigits: 0 }) : '—'}
+                                                </TableCell>
+                                            );
+                                        })}
+                                        <TableCell className="num">{grandRangeTotal.toLocaleString('en-US', { maximumFractionDigits: 0 })}</TableCell>
+                                        <TableCell className="num text-mb-success dark:text-mb-success-hover">{(grandRangeTotal * ratePerKWh).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}</TableCell>
                                     </TableRow>
                                 )}
                             </TableBody>
