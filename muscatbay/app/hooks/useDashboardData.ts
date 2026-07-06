@@ -54,11 +54,12 @@ const DASHBOARD_REALTIME_TABLES = [
 // Sort month keys like 'Jan-25', 'Feb-26' chronologically
 const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-// A calendar month needs at least this many daily records before it counts as
-// "complete". Used for BOTH the STP KPI stats month and the dashboard STP chart
-// so a partial current month — or a stray mis-dated row — never masquerades as a
-// finished month (which would render as a misleading stub bar and push a real
-// month out of the fixed 8-month window).
+// A calendar month needs at least this many daily records before the KPI deck
+// treats it as the "latest complete month" — a partial current month would
+// otherwise report misleadingly low inlet / TSE / economic totals. The STP chart
+// deliberately does NOT apply this: it mirrors the main STP Plant page and plots
+// every month as-is (including the in-progress one), so the dashboard reflects
+// the same reality as the module page.
 const MIN_DAYS_FOR_COMPLETE_MONTH = 25;
 
 function sortMonthKeys(keys: string[]): string[] {
@@ -321,20 +322,12 @@ export function useDashboardData() {
                 })));
             }
 
-            // === STP CHART — last 8 COMPLETE months (chronological) ===
-            // Reuse the monthly buckets already aggregated for the KPI stats;
-            // each carries a per-month `days` count. Plotting only near-full
-            // months keeps a partial current month (or a stray mis-dated row
-            // such as a single future-dated entry) from rendering as a
-            // misleading stub bar and from shifting a real month out of the
-            // 8-month window — the same "complete month" rule the KPI cards use.
-            const stpCompleteMonths = stpSortedMonths.filter(
-                m => stpMonthlyCalc[m].days >= MIN_DAYS_FOR_COMPLETE_MONTH
-            );
-            // Fallback: a brand-new plant with only a few days logged has no
-            // "complete" month yet — show whatever exists rather than a blank chart.
-            const stpChartMonths = stpCompleteMonths.length > 0 ? stpCompleteMonths : stpSortedMonths;
-            setStpChartData(stpChartMonths.slice(-8).map(monthKey => {
+            // === STP CHART — last 8 months, chronological ===
+            // Mirror the main STP Plant page: plot every month as-is with no
+            // completeness filter, so the dashboard shows the same reality as the
+            // module page — including the in-progress current month. Reuses the
+            // monthly buckets already aggregated above for the KPI stats.
+            setStpChartData(stpSortedMonths.slice(-8).map(monthKey => {
                 // Build the "MMM-yy" label straight from the yyyy-MM key — no Date
                 // round-trip, so the month can't drift across a timezone boundary.
                 const [year, month] = monthKey.split('-');
