@@ -26,7 +26,7 @@ import {
     Droplet, TrendingDown, TrendingUp, AlertTriangle, Activity,
     Gauge, Building2, Plug, Search, Layers, ArrowRight, MapPin, CheckCircle2,
     Filter, Download, ClipboardList, XCircle, Target, FileSpreadsheet,
-    BarChart3, Database, type LucideIcon,
+    BarChart3, Database, List, type LucideIcon,
 } from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
@@ -150,6 +150,29 @@ function Select({ icon: Icon, value, setValue, options }: SelectProps) {
             <select value={value} onChange={(e) => setValue(e.target.value)} className="text-sm outline-none" style={{ color: C.ink, background: C.card }}>
                 {options.map((o) => <option key={o} value={o}>{o}</option>)}
             </select>
+        </div>
+    );
+}
+
+/** Row-count choices for the long tables. */
+const ROW_OPTIONS = ["10", "20", "50", "All"];
+
+/** Resolve a `ROW_OPTIONS` value to the rows actually shown. */
+function limitRows<T>(rows: T[], choice: string): T[] {
+    return choice === "All" ? rows : rows.slice(0, Number(choice));
+}
+
+/**
+ * Compact "rows shown" control for the long tables — lets an operator cap how
+ * many rows render (or show All) with a dropdown instead of scrolling a
+ * fixed-height box.
+ */
+function RowsPicker({ value, setValue, total }: { value: string; setValue: (v: string) => void; total: number }) {
+    return (
+        <div className="flex items-center gap-1.5">
+            <span className="text-[11px] font-medium" style={{ color: C.muted }}>Rows</span>
+            <Select icon={List} value={value} setValue={setValue} options={ROW_OPTIONS} />
+            <span className="text-[11px] whitespace-nowrap" style={{ color: C.muted }}>of {total}</span>
         </div>
     );
 }
@@ -392,6 +415,9 @@ interface ZonesViewProps {
 }
 function ZonesView({ data, period, monthly, sel, nMonths, year }: ZonesViewProps) {
     const [zoneSel, setZoneSel] = useState("all");
+    // Rows to show in the drill-down tables (A1 reconciliation / individual
+    // meters) — an operator picks 10/20/50/All instead of scrolling a fixed box.
+    const [rowsShown, setRowsShown] = useState("20");
     const real = period.zones;
 
     // Primary/trunk network stage (A1 → A2): the loss above every zone — water
@@ -495,8 +521,9 @@ function ZonesView({ data, period, monthly, sel, nMonths, year }: ZonesViewProps
                 </div>
 
                 <Panel title="A1 Reconciliation — Σ zone bulk + direct vs main bulk" icon={Layers}
+                    right={<RowsPicker value={rowsShown} setValue={setRowsShown} total={comp.length} />}
                     note="Main bulk (A1) = Σ zone bulk + Σ direct connections + trunk loss. Use it to spot which downstream bulk meters are missing or under-reading before blaming leakage.">
-                    <div className="overflow-auto" style={{ maxHeight: 380 }}>
+                    <div className="overflow-auto" style={{ maxHeight: rowsShown === "All" ? 480 : undefined }}>
                         <table className="w-full text-[12px]">
                             <thead className="sticky top-0 z-10" style={{ background: C.primary, color: "var(--primary-foreground)" }}>
                                 <tr>
@@ -508,7 +535,7 @@ function ZonesView({ data, period, monthly, sel, nMonths, year }: ZonesViewProps
                                 </tr>
                             </thead>
                             <tbody>
-                                {comp.map((c, i) => (
+                                {limitRows(comp, rowsShown).map((c, i) => (
                                     <tr key={c.name + i} style={{ background: i % 2 ? "var(--wm-zebra)" : "var(--wm-card)" }}>
                                         <td className="px-3 py-1.5" style={{ color: C.muted }}>{i + 1}</td>
                                         <td className="px-2 py-1.5 font-semibold whitespace-nowrap" style={{ color: C.ink }}>{c.name}</td>
@@ -627,8 +654,10 @@ function ZonesView({ data, period, monthly, sel, nMonths, year }: ZonesViewProps
                     </Panel>
                 </div>
 
-                <Panel title={`Individual Meters in ${z.name} (${meters.length})`} icon={Layers} note="Zone supply = Σ individual consumption + loss.">
-                    <div className="overflow-auto" style={{ maxHeight: 380 }}>
+                <Panel title={`Individual Meters in ${z.name} (${meters.length})`} icon={Layers}
+                    right={<RowsPicker value={rowsShown} setValue={setRowsShown} total={meters.length} />}
+                    note="Zone supply = Σ individual consumption + loss.">
+                    <div className="overflow-auto" style={{ maxHeight: rowsShown === "All" ? 480 : undefined }}>
                         <table className="w-full text-[12px]">
                             <thead className="sticky top-0 z-10" style={{ background: C.primary, color: "var(--primary-foreground)" }}>
                                 <tr>
@@ -640,7 +669,7 @@ function ZonesView({ data, period, monthly, sel, nMonths, year }: ZonesViewProps
                                 </tr>
                             </thead>
                             <tbody>
-                                {meters.map((m, i) => (
+                                {limitRows(meters, rowsShown).map((m, i) => (
                                     <tr key={m.name + i} style={{ background: i % 2 ? "var(--wm-zebra)" : "var(--wm-card)" }}>
                                         <td className="px-3 py-1.5" style={{ color: C.muted }}>{i + 1}</td>
                                         <td className="px-2 py-1.5 font-semibold whitespace-nowrap" style={{ color: C.ink }}>{m.name}</td>
@@ -864,6 +893,9 @@ function MetersView({ data, year, sel, nMonths }: { data: WaterData; year: strin
     const [zone, setZone] = useState("All");
     const [level, setLevel] = useState("All");
     const [typ, setTyp] = useState("All");
+    // Rows shown in the database grid — defaults to All (no change to existing
+    // behaviour) but lets an operator cap to 10/20/50 to avoid scrolling.
+    const [rowsShown, setRowsShown] = useState("All");
 
     const yearMeters = useMemo(() => data.meters.filter((m) => m.y[year]).map((m) => {
         const c = m.y[year];
@@ -909,12 +941,13 @@ function MetersView({ data, year, sel, nMonths }: { data: WaterData; year: strin
                 <Select icon={Layers} value={typ} setValue={setTyp} options={typeOpts} />
                 <button onClick={() => downloadRows(exportData, `water-meter-explorer-${year}.csv`)} className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold" style={{ background: C.primary, color: "var(--primary-foreground)", borderRadius: RADIUS.md }}><Download className="w-4 h-4" />Export CSV</button>
                 <button onClick={() => downloadRows(exportData, `water-meter-explorer-${year}-excel.csv`)} className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold" style={{ background: C.accent, color: C.primary, borderRadius: RADIUS.md }}><FileSpreadsheet className="w-4 h-4" />Excel-ready</button>
+                <RowsPicker value={rowsShown} setValue={setRowsShown} total={rows.length} />
                 <span className="text-[12px] ml-auto font-medium" style={{ color: C.muted }}>
                     {rows.length} meters · {sel == null ? "period total" : isRangeSel(sel) ? `${MONTHS[sel[0]]}–${MONTHS[sel[1]]} highlighted` : `${MONTHS[sel]} highlighted`}
                 </span>
             </div>
             <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: RADIUS.card, boxShadow: SHADOW }} className="overflow-hidden">
-                <div className="overflow-auto" style={{ maxHeight: 600 }}>
+                <div className="overflow-auto" style={{ maxHeight: rowsShown === "All" ? 600 : undefined }}>
                     <table className="text-[11px] border-collapse w-full">
                         <thead className="sticky top-0 z-10" style={{ background: C.primary, color: "var(--primary-foreground)" }}>
                             <tr>
@@ -926,7 +959,7 @@ function MetersView({ data, year, sel, nMonths }: { data: WaterData; year: strin
                             </tr>
                         </thead>
                         <tbody>
-                            {rows.map((m, i) => {
+                            {limitRows(rows, rowsShown).map((m, i) => {
                                 const lvlc = ({ L1: "#3B7ED2", L2: "#6B9AC4", L3: "#4D445D", L4: "#9B86A8", DC: "#DF9A5B" } as Record<string, string>)[m.label] || "#6B7280";
                                 const isAlert = m.flags !== "Normal";
                                 const bgr = i % 2 ? "var(--wm-zebra)" : "var(--wm-card)";
@@ -965,6 +998,7 @@ interface ExceptionRow {
     [key: string]: string;
 }
 function ExceptionsView({ data, year, sel, period }: { data: WaterData; year: string; sel: Sel; period: PeriodResult }) {
+    const [rowsShown, setRowsShown] = useState("20");
     const rows = useMemo<ExceptionRow[]>(() => {
         const out: ExceptionRow[] = [];
         // Primary/trunk network (A1→A2) — the loss above every zone. Flag when it
@@ -1015,16 +1049,17 @@ function ExceptionsView({ data, year, sel, period }: { data: WaterData; year: st
                 <Kpi icon={AlertTriangle} label="Watch" value={watch} bg="var(--chart-bg-orange)" ic="#B5703A" sub="Monitor or verify" />
             </div>
             <Panel title="Exceptions & Actions Register" icon={ClipboardList} note="Operational action queue: high-loss zones/buildings, zero readings, sudden spikes, negative values, missing readings and reconciliation mismatches.">
-                <div className="flex justify-end mb-2">
+                <div className="flex items-center justify-between gap-2 mb-2">
+                    <RowsPicker value={rowsShown} setValue={setRowsShown} total={rows.length} />
                     <button onClick={() => downloadRows(rows, `water-exceptions-actions-${year}.csv`)} className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold" style={{ background: C.primary, color: "var(--primary-foreground)", borderRadius: RADIUS.md }}><Download className="w-4 h-4" />Export Actions</button>
                 </div>
-                <div className="overflow-auto" style={{ maxHeight: 560 }}>
+                <div className="overflow-auto" style={{ maxHeight: rowsShown === "All" ? 560 : undefined }}>
                     <table className="w-full text-[12px]">
                         <thead className="sticky top-0 z-10" style={{ background: C.primary, color: "var(--primary-foreground)" }}>
                             <tr><th className="text-left px-3 py-2">Category</th><th className="text-left px-2 py-2">Item</th><th className="text-left px-2 py-2">Severity</th><th className="text-right px-2 py-2">Value</th><th className="text-left px-2 py-2">Owner</th><th className="text-left px-2 py-2">Status</th><th className="text-left px-3 py-2">Remarks / Suggested Action</th></tr>
                         </thead>
                         <tbody>
-                            {rows.map((r, i) => { const stClass = r.Severity === "Critical" ? "bg-mb-danger-light text-mb-danger-text" : r.Severity === "Watch" ? "bg-mb-warning-light text-mb-warning-text" : "bg-mb-success-light text-mb-success-text"; return (
+                            {limitRows(rows, rowsShown).map((r, i) => { const stClass = r.Severity === "Critical" ? "bg-mb-danger-light text-mb-danger-text" : r.Severity === "Watch" ? "bg-mb-warning-light text-mb-warning-text" : "bg-mb-success-light text-mb-success-text"; return (
                                 <tr key={i} style={{ background: i % 2 ? "var(--wm-zebra)" : "var(--wm-card)" }}>
                                     <td className="px-3 py-1.5 font-semibold" style={{ color: C.ink }}>{r.Category}</td>
                                     <td className="px-2 py-1.5" style={{ color: C.ink }}>{r.Item}</td>
