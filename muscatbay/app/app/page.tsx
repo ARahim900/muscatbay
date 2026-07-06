@@ -8,7 +8,7 @@ import { useAuth } from "@/components/auth/auth-provider";
 import { CommandDeck } from "@/components/dashboard/command-deck";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Activity, Droplets, Zap, AlertTriangle, ArrowUpRight, Boxes, Recycle, TrendingUp, Wifi, WifiOff, Printer } from "lucide-react";
+import { Activity, Droplets, Zap, AlertTriangle, ArrowUpRight, Recycle, TrendingUp, Wifi, WifiOff, Printer } from "lucide-react";
 import { AnimateOnScroll } from "@/components/shared/scroll-animation";
 import Link from "next/link";
 
@@ -65,16 +65,14 @@ export default function DashboardPage() {
             stat.label.includes('ELECTRICITY') ? Zap :
                 stat.label.includes('STP INLET') ? Activity :
                     stat.label.includes('TSE') ? Recycle :
-                        stat.label.includes('ECONOMIC') ? TrendingUp :
-                            stat.label.includes('ASSETS') ? Boxes : Activity,
+                        stat.label.includes('ECONOMIC') ? TrendingUp : Activity,
         href: stat.label.includes('WATER') ? '/water' :
             stat.label.includes('ELECTRICITY') ? '/electricity' :
                 stat.label.includes('STP') || stat.label.includes('TSE') || stat.label.includes('ECONOMIC') ? '/stp' :
-                    stat.label.includes('ASSETS') ? '/assets' :
-                        stat.label.includes('CONTRACTOR') ? '/contractors' :
-                            stat.label.includes('HVAC') ? '/hvac' :
-                                stat.label.includes('PEST') ? '/pest-control' :
-                                    stat.label.includes('FIRE') ? '/firefighting' : undefined
+                    stat.label.includes('CONTRACTOR') ? '/contractors' :
+                        stat.label.includes('HVAC') ? '/hvac' :
+                            stat.label.includes('PEST') ? '/pest-control' :
+                                stat.label.includes('FIRE') ? '/firefighting' : undefined
     })), [stats]);
 
     const handleFilterClick = useCallback((filter: 'all' | 'critical' | 'warning' | 'info') => {
@@ -88,7 +86,6 @@ export default function DashboardPage() {
         if (t.includes('electricity')) return '/electricity';
         if (t.includes('stp') || t.includes('tse') || t.includes('inlet') || t.includes('revenue')) return '/stp';
         if (t.includes('contractor')) return '/contractors';
-        if (t.includes('asset')) return '/assets';
         if (t.includes('hvac')) return '/hvac';
         if (t.includes('pest')) return '/pest-control';
         if (t.includes('fire')) return '/firefighting';

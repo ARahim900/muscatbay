@@ -15,7 +15,7 @@
 > - Deep reference detail lives in the linked docs at the bottom — this file
 >   holds the *current state*, not the full manuals.
 
-**Last curated review:** 2026-07-03
+**Last curated review:** 2026-07-06
 
 ---
 
@@ -42,11 +42,11 @@ executives (dashboard KPIs). Live data — there is no demo mode.
 
 | Module | Route | State | Data source | Notes |
 |---|---|---|---|---|
-| Dashboard (command deck) | `/` | ✅ Live | aggregated from module tables | KPI deck, live ops strip, module status rail; animated hero brand mark since 2026-07-04 — exact-geometry SVG (`components/brand/brand-mark.tsx`, measured from the flat brand master) with GSAP ScrollTrigger choreography (assembly on load, scroll-scrubbed teal light sweep + layer drift, reduced-motion safe); flat mark render at `public/brand/mark-frame.png` doubles as the Higgsfield video start frame |
+| Dashboard (command deck) | `/` | ✅ Live | aggregated from module tables | KPI deck, live ops strip, module status rail; animated hero brand mark since 2026-07-04 — exact-geometry SVG (`components/brand/brand-mark.tsx`, measured from the flat brand master) with GSAP ScrollTrigger choreography (assembly on load, scroll-scrubbed teal light sweep + layer drift, reduced-motion safe); flat mark render at `public/brand/mark-frame.png` doubles as the Higgsfield video start frame. **2026-07-06:** STP "Treatment Overview" chart now live-syncs from `stp_operations` (table added to the realtime publication — see §3) and plots complete months only (partial current month + stray future-dated rows no longer render as stub bars), matching the water chart's auto-update behaviour; the standalone asset-count KPI card + "Total Assets" activity item were removed (the deck is water/electricity/STP performance, so 5 KPIs) |
 | Water — Monthly | `/water` (Monthly tab) | ✅ Live, fully dynamic | `water_meters` + `water_monthly_consumption` | Balance A1/A2/A3, zones, buildings, DC, exceptions; months appear automatically (see §3) |
 | Water — Daily | `/water` (Daily tab) | ✅ Live, rebuilt 2026-07-04 | `water_daily_consumption`, `water_loss_daily/summary` | Zone-first leak-detection dashboard, 5 sections mirroring Monthly: Zone Watch (looping briefing ticker, severity zone cards, zone×day loss heatmap), Zone Analysis (drill-down + MTD cumulative balance), Direct Connections, Daily Database (meter×day ledger, flags, CSV), Exceptions & Actions (auto register: high loss, negative balance, missing L2, rising-loss signature, spikes, zero-streaks). No daily L1/NAMA account exists, so all daily balances are distribution-level (L2 vs ΣL3) by design; fed by CSV upload / Grafana sync |
 | Electricity | `/electricity` | ✅ Live, inspection-first redesign 2026-07-05 | `electricity_meters` / `electricity_readings` | Two tabs (down from three): **Load Watch** (default) — category (meter_type) severity cards worst-first, category×month load heatmap, auto Exceptions & Actions register (per-meter spike/dip/zero/negative/missing vs each meter's own baseline), with KPIs + trend charts kept below; **Meters & Data** merges the old Analysis + Database (type/meter filter, top-consumers, breakdown, full anomaly-tinted grid, CSV). Monthly readings through Mar-26 |
-| STP Plant | `/stp` | ✅ Live, inspection-first redesign 2026-07-05 | `stp_operations` | Two tabs: **Plant Watch** (default) — process-health cards worst-first (efficiency, hydraulic load, TSE reuse, tankers, data completeness), load-vs-recovery chart, metric×day heatmap, auto Exceptions & Actions register (data-relative severity + efficiency bands); **Operations & Trends** keeps the KPIs, charts, daily log/CSV and folds the Airtable DB into a collapsible. Daily ops through May-26; 3D plant twin exists only on unmerged PR #21 |
+| STP Plant | `/stp` | ✅ Live, inspection-first redesign 2026-07-05 | `stp_operations` | Two tabs: **Plant Watch** (default) — process-health cards worst-first (efficiency, hydraulic load, TSE reuse, tankers, data completeness), load-vs-recovery chart, metric×day heatmap, auto Exceptions & Actions register (data-relative severity + efficiency bands); **Operations & Trends** keeps the KPIs, charts, daily log/CSV and folds the Airtable DB into a collapsible. Daily ops through May-26; 3D plant twin exists only on unmerged PR #21. `stp_operations` added to the `supabase_realtime` publication 2026-07-06, so both this page and the dashboard now refresh live on data changes (the page already subscribed but the table was unpublished) |
 | Assets | `/assets` | ✅ Live | `master_assets_register` | 6-card KPI grid; register table with toolbar (PR #25) |
 | Contractors | `/contractors` | ✅ Live | `Contractor_Tracker`, contracts tables | AMC tracking, yearly costs |
 | HVAC | `/hvac` | ✅ Live | Gulf Expert tables | Findings/maintenance model — the layout template other modules align to |
@@ -91,6 +91,11 @@ stops at last month" problem is structurally closed:
   (e.g. RLS disabled on some legacy tables) — water auto-sync objects are clean.
 - Monthly loads for electricity/STP still arrive via hand-run SQL in
   `sql/migrations/` — same class of manual step water had before 2026-07-03.
+- `stp_operations` has a stray future-dated row (`2027-05-06`, single day) plus a
+  legitimately-partial current month — both previously showed as misleading stub
+  bars on the dashboard STP chart. The dashboard now filters to complete months
+  (≥25 daily records) so they no longer distort the view, but the mis-dated row
+  itself is untouched data debt; correct or delete it at source when convenient.
 
 ## 5. In-flight work (open PRs)
 

@@ -91,6 +91,7 @@ export function CommandDeck({ title, description, actions, stats, className }: C
     const count = stats.length;
     const lattice =
         count <= 4 ? "grid-cols-2 xl:grid-cols-4" :
+        count === 5 ? "grid-cols-2 sm:grid-cols-3 xl:grid-cols-5" :
         count <= 6 ? "grid-cols-2 sm:grid-cols-3 xl:grid-cols-6" :
         "grid-cols-2 sm:grid-cols-3 xl:grid-cols-4";
 
