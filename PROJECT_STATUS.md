@@ -91,11 +91,14 @@ stops at last month" problem is structurally closed:
   (e.g. RLS disabled on some legacy tables) — water auto-sync objects are clean.
 - Monthly loads for electricity/STP still arrive via hand-run SQL in
   `sql/migrations/` — same class of manual step water had before 2026-07-03.
-- `stp_operations` has a stray future-dated row (`2027-05-06`, single day). It
-  shows as a stub bar on both the STP Plant page and the dashboard chart (the
-  dashboard deliberately mirrors the module page rather than filtering it out).
-  This is data debt — correcting/deleting the row at source cleans up both views
-  at once; do it when convenient.
+- **STP future-dated row cleared (2026-07-06):** the stray `2027-05-06` row
+  (single day, created 2026-06-14) — the only future-dated row, which had made
+  the STP charts span to "May-27" — was deleted from `stp_operations`. Because
+  the table is fed by an automated Airtable→Supabase daily sync, if that
+  erroneous record still exists in the Airtable source it may re-appear; remove
+  or correct it there to prevent recurrence. The in-progress current month
+  (Jul-26) is legitimate live daily data and is kept as-is — both the dashboard
+  and STP Plant charts mirror it (it fills out as more July days are logged).
 
 ## 5. In-flight work (open PRs)
 
