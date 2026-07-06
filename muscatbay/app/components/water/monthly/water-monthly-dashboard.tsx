@@ -200,6 +200,10 @@ function LossLink({ label, v, of }: { label: string; v: number; of: number }) {
     );
 }
 
+/** Zone-dropdown key for the primary/trunk network stage (A1 → A2). Prefixed so
+ * it can never collide with a real zone code. */
+const TRUNK_KEY = "__trunk__";
+
 /** Section tabs, in display order. */
 const SECTION_TABS: { key: string; label: string; icon: LucideIcon }[] = [
     { key: "overview", label: "Overview", icon: BarChart3 },
@@ -390,6 +394,14 @@ function ZonesView({ data, period, monthly, sel, nMonths, year }: ZonesViewProps
     const [zoneSel, setZoneSel] = useState("all");
     const real = period.zones;
 
+    // Primary/trunk network stage (A1 → A2): the loss above every zone — water
+    // that left the main bulk but never reached a zone-bulk or direct-connection
+    // meter. Zones only ever show the A2 → A3 (in-zone) portion, so this is
+    // surfaced as its own first-class item here.
+    const trunkLoss = period.stage1;      // A1 − A2
+    const trunkPct = period.stage1Pct;    // % of A1
+    const ts = sev(trunkPct);
+
     // Stable handler for zone cards — reads the zone key off the clicked button's
     // data attribute so a single callback replaces a per-item lambda inside .map().
     const selectZoneFromCard = useCallback((e: MouseEvent<HTMLButtonElement>) => {
@@ -403,6 +415,7 @@ function ZonesView({ data, period, monthly, sel, nMonths, year }: ZonesViewProps
                 <MapPin className="w-4 h-4" style={{ color: C.muted }} />
                 <select value={zoneSel} onChange={(e) => setZoneSel(e.target.value)} className="text-sm font-medium outline-none cursor-pointer" style={{ color: C.ink, background: C.card }}>
                     <option value="all">All zones (overview)</option>
+                    <option value={TRUNK_KEY}>Primary network (A1 → A2)</option>
                     {real.map((z) => <option key={z.zone} value={z.zone}>{z.name}</option>)}
                 </select>
             </div>
@@ -411,6 +424,138 @@ function ZonesView({ data, period, monthly, sel, nMonths, year }: ZonesViewProps
             )}
         </div>
     );
+
+    /* ---------- primary / trunk network drill-down (A1 → A2) ---------- */
+    if (zoneSel === TRUNK_KEY) {
+        const A1 = period.A1, A2 = period.A2;
+        const reachedPct = A1 ? Math.min(100, Math.max(0, (A2 / A1) * 100)) : 0;
+        const lossBar = A1 ? Math.max(0, (trunkLoss / A1) * 100) : 0;
+        const tmonthly = monthly.map((p, i) => ({ m: MONTHS[i], a1: p.A1, a2: p.A2, loss: p.stage1 }));
+        // A2 is Σ zone-bulk (L2) + Σ direct connections — the meters A1 must
+        // reconcile against. A missing / under-reading one here inflates the gap.
+        const comp = [
+            ...real.map((z) => ({ name: z.name, kind: "Zone bulk (L2)", val: z.bulk })),
+            ...period.dcs.map((d) => ({ name: d.name, kind: "Direct connection", val: d.total })),
+        ].sort((a, b) => b.val - a.val);
+        const pctOfA1 = (v: number) => (A1 ? ((v / A1) * 100).toFixed(1) : "0.0");
+
+        return (
+            <div className="space-y-5">
+                {picker}
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                    <Kpi icon={Droplet} label="Main Bulk Supply (A1)" value={fmt(A1)} unit="m³" bg="var(--chart-bg-blue)" ic="#3B7ED2" sub="NAMA L1 — total entering" />
+                    <Kpi icon={Plug} label="Reached Distribution (A2)" value={fmt(A2)} unit="m³" bg="var(--chart-bg-cyan)" ic="#6B9AC4" sub="Σ zone bulk + direct" />
+                    <Kpi icon={AlertTriangle} label="Trunk Loss" value={fmt(trunkLoss)} unit="m³" bg="var(--chart-bg-red)" ic="var(--mb-danger-text)" sub="A1 − A2 · before any zone" />
+                    <Kpi icon={Gauge} label="Trunk Loss %" value={`${trunkPct}%`} bg={ts.bg} ic={ts.c} sub={ts.label} />
+                </div>
+
+                <Panel title="Main Bulk vs Reached Distribution" icon={Droplet}
+                    note="Green reached a zone-bulk or direct-connection meter; red left the main bulk but was never metered downstream — the trunk-main loss.">
+                    <div className="flex justify-between text-[11px] mb-1">
+                        <span className="text-mb-success-text">Reached A2 {fmt(A2)} m³ · {Math.round(reachedPct)}%</span>
+                        <span className="font-semibold text-mb-danger-text">Trunk loss {fmt(trunkLoss)} m³ · {trunkPct}%</span>
+                    </div>
+                    <div className="w-full h-8 rounded-md overflow-hidden flex" style={{ background: "var(--wm-track)" }}>
+                        <div style={{ width: `${reachedPct}%`, background: C.cons }} title={`Reached A2 ${fmt(A2)} m³`} />
+                        <div style={{ width: `${lossBar}%`, background: "var(--status-danger)" }} title={`Trunk loss ${fmt(trunkLoss)} m³`} />
+                    </div>
+                    <div className="text-[11px] mt-1 text-right" style={{ color: C.muted }}>Main bulk supply (A1) {fmt(A1)} m³ · 100%</div>
+                    {trunkLoss < 0 && (
+                        <p className="text-[11px] mt-2 font-medium text-mb-warning-text">Negative gap — Σ zone bulk + direct exceeds the main bulk (A1). Physically impossible over time; reconcile the L1 main-meter reading and check for a reading-date/timing mismatch.</p>
+                    )}
+                </Panel>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                    <Panel title="Monthly — Main Bulk vs Reached Distribution" icon={Activity} note="Gap between the bars each month is the trunk-main loss (A1 − A2). A wildly swinging or negative gap points to meter-reading timing, not real leakage.">
+                        <ResponsiveContainer width="100%" height={260}>
+                            <ComposedChart data={tmonthly} margin={{ top: 6, right: 8, left: -10, bottom: 0 }}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="var(--wm-track)" />
+                                <XAxis dataKey="m" tick={{ fontSize: 11, fill: C.muted }} />
+                                <YAxis tick={{ fontSize: 11, fill: C.muted }} />
+                                <Tooltip formatter={fmtM3} contentStyle={TIP} />
+                                <Legend wrapperStyle={{ fontSize: 11, color: "var(--wm-ink)" }} />
+                                {(isRangeSel(sel) ? [sel[0], sel[1]] : sel != null ? [sel] : []).map((i) => <ReferenceLine key={i} x={MONTHS[i]} stroke={C.primary} strokeDasharray="4 4" />)}
+                                <Bar dataKey="a1" name="Main bulk (A1)" fill={C.supply} radius={[3, 3, 0, 0]} barSize={14} />
+                                <Bar dataKey="a2" name="Reached zones (A2)" fill={C.dist} radius={[3, 3, 0, 0]} barSize={14} />
+                                <Line dataKey="loss" name="Trunk loss" stroke="#D12E2E" strokeWidth={2.5} dot={{ r: 2 }} />
+                            </ComposedChart>
+                        </ResponsiveContainer>
+                    </Panel>
+                    <Panel title="What makes up A2" icon={Layers} note="Every zone-bulk & direct-connection meter A1 must reconcile against. A missing or under-reading meter here shows up as trunk loss.">
+                        <ResponsiveContainer width="100%" height={260}>
+                            <BarChart data={comp.slice(0, 10).map((c) => ({ name: c.name.length > 18 ? c.name.slice(0, 18) + "…" : c.name, val: c.val }))} layout="vertical" margin={{ top: 4, right: 30, left: 10, bottom: 0 }}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="var(--wm-track)" horizontal={false} />
+                                <XAxis type="number" tick={{ fontSize: 10, fill: C.muted }} />
+                                <YAxis type="category" dataKey="name" tick={{ fontSize: 9.5, fill: C.ink }} width={120} />
+                                <Tooltip formatter={fmtConsumptionM3} contentStyle={TIP} />
+                                <Bar dataKey="val" fill={C.dist} radius={[0, 4, 4, 0]} barSize={13} />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </Panel>
+                </div>
+
+                <Panel title="A1 Reconciliation — Σ zone bulk + direct vs main bulk" icon={Layers}
+                    note="Main bulk (A1) = Σ zone bulk + Σ direct connections + trunk loss. Use it to spot which downstream bulk meters are missing or under-reading before blaming leakage.">
+                    <div className="overflow-auto" style={{ maxHeight: 380 }}>
+                        <table className="w-full text-[12px]">
+                            <thead className="sticky top-0 z-10" style={{ background: C.primary, color: "var(--primary-foreground)" }}>
+                                <tr>
+                                    <th className="text-left px-3 py-2">#</th>
+                                    <th className="text-left px-2 py-2">Meter</th>
+                                    <th className="text-left px-2 py-2">Kind</th>
+                                    <th className="text-right px-2 py-2">Volume (m³)</th>
+                                    <th className="text-right px-3 py-2">% of A1</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {comp.map((c, i) => (
+                                    <tr key={c.name + i} style={{ background: i % 2 ? "var(--wm-zebra)" : "var(--wm-card)" }}>
+                                        <td className="px-3 py-1.5" style={{ color: C.muted }}>{i + 1}</td>
+                                        <td className="px-2 py-1.5 font-semibold whitespace-nowrap" style={{ color: C.ink }}>{c.name}</td>
+                                        <td className="px-2 py-1.5 whitespace-nowrap" style={{ color: C.muted }}>{c.kind}</td>
+                                        <td className="px-2 py-1.5 text-right" style={{ color: C.ink }}>{fmt1(c.val)}</td>
+                                        <td className="px-3 py-1.5 text-right" style={{ color: C.muted }}>{pctOfA1(c.val)}%</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                            <tfoot>
+                                <tr style={{ borderTop: `2px solid ${C.border}` }}>
+                                    <td colSpan={3} className="px-3 py-1.5 font-semibold text-mb-success-text">Σ Reached distribution (A2)</td>
+                                    <td className="px-2 py-1.5 text-right font-bold text-mb-success-text">{fmt1(A2)}</td>
+                                    <td className="px-3 py-1.5 text-right font-bold text-mb-success-text">{Math.round(reachedPct)}%</td>
+                                </tr>
+                                <tr>
+                                    <td colSpan={3} className="px-3 py-1.5 font-semibold text-mb-danger-text">Trunk loss (unaccounted before zones)</td>
+                                    <td className="px-2 py-1.5 text-right font-bold text-mb-danger-text">{fmt1(trunkLoss)}</td>
+                                    <td className="px-3 py-1.5 text-right font-bold text-mb-danger-text">{trunkPct}%</td>
+                                </tr>
+                                <tr style={{ borderTop: `1px solid ${C.border}` }}>
+                                    <td colSpan={3} className="px-3 py-1.5 font-bold" style={{ color: C.heading }}>Main bulk supply (A1)</td>
+                                    <td className="px-2 py-1.5 text-right font-bold" style={{ color: C.heading }}>{fmt1(A1)}</td>
+                                    <td className="px-3 py-1.5 text-right font-bold" style={{ color: C.heading }}>100%</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </Panel>
+
+                <div className="flex items-start gap-3 px-4 py-3" style={{ background: C.component, border: `1px solid ${C.border}`, borderRadius: RADIUS.md }}>
+                    <Target className="w-4 h-4 shrink-0 mt-0.5" style={{ color: C.heading }} />
+                    <div className="text-[12px] leading-relaxed">
+                        <p className="font-semibold" style={{ color: C.heading }}>How to identify &amp; manage this gap</p>
+                        <p className="mt-0.5" style={{ color: C.muted }}>
+                            A high A1→A2 gap is loss on the primary / trunk mains <b>before</b> water reaches any zone, so no zone card will ever show it.
+                            Work it in order: <b>(1)</b> confirm every zone-bulk &amp; direct-connection meter above reported for the period — a missing or
+                            zero one inflates the gap; <b>(2)</b> reconcile the NAMA main-bulk (L1) reading against Σ zone bulk + direct, checking for a
+                            reading-date/timing mismatch; <b>(3)</b> only once the meters check out, dispatch a trunk-main / PRV inspection between the
+                            reservoir and the zone inlets. Track the monthly trend, not a single month — timing noise makes individual months swing
+                            (and occasionally go negative when A2 &gt; A1).
+                        </p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     /* ---------- single-zone drill-down ---------- */
     if (zoneSel !== "all") {
@@ -562,6 +707,33 @@ function ZonesView({ data, period, monthly, sel, nMonths, year }: ZonesViewProps
     return (
         <div className="space-y-5">
             {picker}
+
+            {/* Primary/trunk network (A1 → A2): the loss that sits ABOVE every zone.
+                Kept prominent at the top so it is never overlooked next to the zones. */}
+            <button onClick={() => setZoneSel(TRUNK_KEY)}
+                className="w-full text-left p-4 transition-shadow hover:shadow-md flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4"
+                style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: RADIUS.card, borderLeft: `4px solid ${ts.c}`, boxShadow: SHADOW }}>
+                <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: ts.bg, color: ts.c }}>Stage 1 · {ts.label}</span>
+                        <h4 className="text-sm font-semibold tracking-tight" style={{ color: C.heading }}>Primary network (A1 → A2)</h4>
+                    </div>
+                    <p className="text-[11px] mt-1" style={{ color: C.muted }}>
+                        Trunk-main loss <b>before</b> water reaches any zone bulk or direct connection — not attributable to a single zone. Tap to reconcile A1 vs Σ zone bulk + direct.
+                    </p>
+                </div>
+                <div className="flex items-center gap-5 shrink-0">
+                    <div className="text-right text-[11px]" style={{ color: C.muted }}>
+                        <p>A1 <b style={{ color: C.ink }}>{fmt(period.A1)}</b> → A2 <b style={{ color: C.ink }}>{fmt(period.A2)}</b></p>
+                        <p>trunk loss <b style={{ color: ts.c }}>{fmt(trunkLoss)} m³</b></p>
+                    </div>
+                    <div className="text-right">
+                        <p className="text-2xl font-extrabold" style={{ color: ts.c }}>{trunkPct}%</p>
+                        <p className="text-[11px]" style={{ color: C.muted }}>of supply · review →</p>
+                    </div>
+                </div>
+            </button>
+
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
                 <Panel title="Loss % by Zone" icon={AlertTriangle} note="Higher = more water lost inside the zone. Pick a zone above to drill in.">
                     <ResponsiveContainer width="100%" height={300}>
@@ -795,6 +967,22 @@ interface ExceptionRow {
 function ExceptionsView({ data, year, sel, period }: { data: WaterData; year: string; sel: Sel; period: PeriodResult }) {
     const rows = useMemo<ExceptionRow[]>(() => {
         const out: ExceptionRow[] = [];
+        // Primary/trunk network (A1→A2) — the loss above every zone. Flag when it
+        // breaches the loss target or goes negative (A2 > A1 → main-meter/timing issue).
+        if (period.stage1Pct > TARGET_LOSS_PCT || period.stage1Pct < 0) {
+            const neg = period.stage1Pct < 0;
+            out.push({
+                Category: "Primary network loss (A1→A2)",
+                Item: "Trunk mains — main bulk vs zone bulk + direct",
+                Severity: neg ? "Watch" : statusFromLoss(period.stage1Pct).label,
+                Value: `${period.stage1Pct}% · ${fmt(period.stage1)} m³`,
+                Owner: "O&M / NAMA reconciliation",
+                Status: "Open",
+                Remarks: neg
+                    ? "A2 exceeds A1 — reconcile the NAMA main-bulk (L1) reading and check for a reading-date/timing mismatch."
+                    : "Confirm every zone-bulk & direct meter reported this period; reconcile L1 vs Σ zone bulk + direct; inspect trunk mains / PRVs before the zones.",
+            });
+        }
         period.zones.filter((z) => z.lossPct > TARGET_LOSS_PCT).forEach((z) => out.push({
             Category: "High-loss zone", Item: z.name, Severity: statusFromLoss(z.lossPct).label, Value: `${z.lossPct}% · ${fmt(z.loss)} m³`, Owner: "O&M / FM", Status: z.lossPct > 25 ? "Open" : "Watch", Remarks: actionFromLoss(z.lossPct),
         }));
