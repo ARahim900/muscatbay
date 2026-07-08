@@ -130,7 +130,11 @@ function ZoneL3Table({
                 account,
                 isNullAsZero,
                 building,
-                label: building ? building.buildingName : account,
+                // "Meter" column: building bulks show the friendly building name
+                // (e.g. "D-44"); villas / non-building L3 meters show the meter
+                // name loaded from Supabase (`meter_name`, e.g. "Z5-17 (Villa)"),
+                // falling back to the account only if no name was ever recorded.
+                label: building ? building.buildingName : (dbRow?.meter_name || account),
                 dailyValues,
                 total: r2(total),
             };
@@ -209,7 +213,11 @@ function ZoneL3Table({
                 const total = r2(dailyValues.reduce<number>((s, v) => s + (v ?? 0), 0));
                 return {
                     account: acc,
-                    label: meta?.label ?? acc,
+                    // Prefer the curated label from BUILDING_CHILD_METERS; if the
+                    // building lookup didn't cover this account, fall back to the
+                    // meter's real name from Supabase before showing the account
+                    // number as a last resort.
+                    label: meta?.label ?? row?.meter_name ?? acc,
                     type: meta?.type ?? 'Apartment',
                     dailyValues,
                     total,
@@ -432,7 +440,7 @@ function ZoneL3Table({
                                             ) : (
                                                 <>
                                                     <Home className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                                                    {meter.account}
+                                                    {meter.label}
                                                     {meter.isNullAsZero && <StatusChip label="IRR" color="primary" />}
                                                 </>
                                             )}
