@@ -65,9 +65,9 @@ function ToastItem({ toast, onRemove }: { toast: Toast; onRemove: () => void }) 
     return (
         <div
             className={`
-        flex items-start gap-3 p-4 rounded-lg border-s-4 shadow-lg
+        pointer-events-auto flex items-start gap-3 p-4 rounded-lg border-s-4 shadow-lg
         ${config.bgClass} ${config.borderClass}
-        animate-in slide-in-from-right-full duration-200
+        motion-safe:animate-in motion-safe:slide-in-from-right-full duration-200
         max-w-sm w-full
       `}
             role="alert"
@@ -91,11 +91,19 @@ function ToastItem({ toast, onRemove }: { toast: Toast; onRemove: () => void }) 
 }
 
 // Toast Container Component
+// Anchored top-right, below the fixed 64px topbar (top-20 = 80px), so toasts
+// never cover the KPI cards that live in the bottom of the viewport. The
+// wrapper is pointer-events-none so the empty stack area never blocks clicks
+// on content behind it; each toast re-enables its own pointer events.
 function ToastContainer({ toasts, onRemove }: { toasts: Toast[]; onRemove: (id: string) => void }) {
     if (toasts.length === 0) return null;
 
     return (
-        <div className="fixed bottom-4 end-4 z-[100] flex flex-col gap-2">
+        <div
+            aria-live="polite"
+            aria-label="Notifications"
+            className="pointer-events-none fixed top-20 end-4 z-[100] flex max-w-[min(24rem,calc(100vw-2rem))] flex-col items-end gap-2"
+        >
             {toasts.map((toast) => (
                 <ToastItem
                     key={toast.id}
