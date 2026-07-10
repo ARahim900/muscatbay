@@ -33,7 +33,7 @@ in one Next.js app backed by Supabase.
 | Backend | Supabase project `utnlgeuqajmwibqmdmgt` (ap-northeast-1) — Postgres 17, Auth, Realtime |
 | Stack | Next.js 16 · React 19 · TypeScript 5 · Tailwind 4 · Recharts 3 · GSAP 3 (+ ScrollTrigger) · shadcn/ui · PWA (service worker `public/sw.js`, cache `muscatbay-v6`) |
 | Auth | Supabase email/password; client-side route protection (`components/auth/auth-provider.tsx`); RBAC role column (2026-05-13 migration) |
-| Tests / checks | Vitest (108 tests), ESLint, `tsc --noEmit`, `next build` — all green as of 2026-07-03 |
+| Tests / checks | Vitest (156 tests), ESLint, `tsc --noEmit`, `next build` — all green as of 2026-07-10 |
 
 Users are operations staff on control-room tablets (dark mode primary) and
 executives (dashboard KPIs). Live data — there is no demo mode.
@@ -47,12 +47,30 @@ executives (dashboard KPIs). Live data — there is no demo mode.
 | Water — Daily | `/water` (Daily tab) | ✅ Live, rebuilt 2026-07-04 | `water_daily_consumption`, `water_loss_daily/summary` | Zone-first leak-detection dashboard, 5 sections mirroring Monthly: Zone Watch (looping briefing ticker, severity zone cards, zone×day loss heatmap), Zone Analysis (drill-down + MTD cumulative balance), Direct Connections, Daily Database (meter×day ledger, flags, CSV), Exceptions & Actions (auto register: high loss, negative balance, missing L2, rising-loss signature, spikes, zero-streaks). No daily L1/NAMA account exists, so all daily balances are distribution-level (L2 vs ΣL3) by design; fed by CSV upload / Grafana sync. **2026-07-10:** Zone Analysis L3 meters table now shows the meter **name** (from `meter_name`, e.g. "Building FM", "Irrigation Tank (Z01_FM)") in the Meter column, with the account number kept in the Account column — previously both columns repeated the account number |
 | Electricity | `/electricity` | ✅ Live, inspection-first redesign 2026-07-05 | `electricity_meters` / `electricity_readings` | Two tabs (down from three): **Load Watch** (default) — category (meter_type) severity cards worst-first, category×month load heatmap, auto Exceptions & Actions register (per-meter spike/dip/zero/negative/missing vs each meter's own baseline), with KPIs + trend charts kept below; **Meters & Data** (Analysis + Database in one tab). **2026-07-06:** de-duplicated after review — the two near-identical horizontal bar charts (top-10 consumers + meter-vs-average) collapsed into one **Meters by Consumption** chart (ranked high→low, each bar colored above/below the group average with an "Avg" reference line, the filter-selected meter outlined); the two overlapping consumption tables (Monthly Breakdown + the separate anomaly grid) collapsed into one **Meter Consumption & Anomalies** table that follows the shared date range and keeps search + type filter + rows pagination + CSV, now with a Cost column, a Total row and the anomaly tinting on each cell. Monthly readings through Mar-26 |
 | STP Plant | `/stp` | ✅ Live, inspection-first redesign 2026-07-05 | `stp_operations` | Two tabs: **Plant Watch** (default) — process-health cards worst-first (efficiency, hydraulic load, TSE reuse, tankers, data completeness), load-vs-recovery chart, metric×day heatmap, auto Exceptions & Actions register (data-relative severity + efficiency bands); **Operations & Trends** keeps the KPIs, charts, daily log/CSV and folds the Airtable DB into a collapsible. Daily ops through May-26; 3D plant twin exists only on unmerged PR #21. `stp_operations` added to the `supabase_realtime` publication 2026-07-06, so both this page and the dashboard now refresh live on data changes (the page already subscribed but the table was unpublished) |
-| Assets | `/assets` | ✅ Live | `master_assets_register` | 6-card KPI grid; register table with toolbar (PR #25) |
-| Contractors | `/contractors` | ✅ Live | `Contractor_Tracker`, contracts tables | AMC tracking, yearly costs |
+| Assets | `/assets` | ✅ Live | `master_assets_register` | 6-card KPI grid; register table with toolbar (PR #25). **2026-07-10:** first load no longer flashes a false "Demo Data / OFFLINE / all-zero KPIs" state — the status bar shows a neutral "Connecting…" chip and the KPI grid stays skeletoned until the first fetch resolves (`PageStatusBar` gained a `loading` prop); realtime changes refresh the table silently instead of blanking it |
+| Contractors | `/contractors` | ✅ Live | `Contractor_Tracker`, contracts tables | AMC tracking, yearly costs. **2026-07-10:** contractor names wrap to two lines with the full name on hover instead of truncating with no affordance (mobile cards wrap fully — touch has no hover) |
 | HVAC | `/hvac` | ✅ Live | Gulf Expert tables | Findings/maintenance model — the layout template other modules align to |
 | Fire Safety | `/firefighting` | ✅ Live (redesigned 2026-06-30) | `fire_safety_equipment`, `fire_ppm_activities`, `fire_issues_register`, `fire_ppm_contacts` | BEC AMC: 3 PPM cycles × 4 zones; aligned with HVAC layout (PRs #26/#27) |
-| Pest Control | `/pest-control` | ✅ Live | pest tables | |
+| Pest Control | `/pest-control` | ✅ Live | pest tables | **2026-07-10:** the AITable embed (cross-origin iframe — internals can't be restyled) now follows the app's light/dark theme via its `theme` param, sits behind a card-surface loading cover until it finishes loading, and gains an "Open full view" header action |
 | Firefighting quotes, settings, auth pages | various | ✅ Live | | |
+
+**2026-07-10 — cross-module UX/perf pass** (applies to Dashboard, Water,
+Electricity, STP, Contractors, HVAC, Fire Safety, Assets):
+
+- **Instant module switching.** All module pages fetch client-side on mount;
+  previously nothing was cached, so every sidebar navigation — including
+  returning to a module visited seconds earlier — replaced the page with its
+  full skeleton until the fetch resolved (felt like a full reload; links were
+  already `next/link`). New `lib/page-cache.ts` (session-scoped
+  stale-while-revalidate Map) seeds each page's state on revisit and the mount
+  fetch refreshes silently in place. First-ever visits keep the one-time
+  skeleton; the brand splash remains initial-app-load only. Sidebar + bottom-nav
+  icons swap to a spinner while their navigation is in flight (`useLinkStatus`).
+- **Toasts moved top-right** (below the topbar, aria-live, click-through
+  wrapper) — they previously sat bottom-right where they covered the last KPI
+  card (seen on `/stp` with "STP: High Tanker Activity").
+- **KPI labels wrap instead of truncating mid-word** on narrow viewports
+  ("WATER PRODUCTI…") — command deck + shared `StatsGrid`.
 
 ## 3. Water monthly data — how it works now (important)
 
