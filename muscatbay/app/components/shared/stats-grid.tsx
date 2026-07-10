@@ -115,7 +115,9 @@ export function StatsGrid({ stats, className }: StatsGridProps) {
                                 />
                             </div>
                             <div className="min-w-0">
-                                <p className="text-muted-foreground text-[11px] font-semibold mb-0.5 uppercase tracking-[0.06em] leading-tight truncate">
+                                {/* Wrap to two lines instead of truncating mid-word on
+                                    narrow cards ("STP ECONOMIC I…"). */}
+                                <p className="text-muted-foreground text-[11px] font-semibold mb-0.5 uppercase tracking-[0.06em] leading-tight line-clamp-2 break-words">
                                     {stat.label}
                                 </p>
                                 <h3 className="text-xl font-semibold tabular-nums truncate text-foreground leading-tight tracking-tight">

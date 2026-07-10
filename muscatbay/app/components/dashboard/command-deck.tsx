@@ -172,8 +172,10 @@ export function CommandDeck({ title, description, actions, stats, className }: C
                                     />
                                     {/* Typography aligned to the shared StatsGrid standard
                                         (11px semibold label, text-xl sans value); kept white
-                                        for the dark command-deck surface. */}
-                                    <p className="text-[11px] font-semibold uppercase tracking-[0.06em] leading-tight text-white/55 truncate print:text-(--muted-foreground)">
+                                        for the dark command-deck surface. Labels wrap to two
+                                        lines on narrow cells instead of truncating mid-word
+                                        ("WATER PRODUCTI…"). */}
+                                    <p className="min-w-0 text-[11px] font-semibold uppercase tracking-[0.06em] leading-tight text-white/55 line-clamp-2 break-words print:text-(--muted-foreground)">
                                         {stat.label}
                                     </p>
                                 </div>

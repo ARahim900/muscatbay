@@ -558,7 +558,8 @@ export default function ContractorsPage() {
                             <div key={c.id} className="rounded-xl border border-border dark:border-border bg-white dark:bg-muted p-4 space-y-3">
                                 <div className="flex items-start justify-between gap-2">
                                     <div className="min-w-0">
-                                        <p className="font-semibold text-sm text-foreground dark:text-muted-foreground truncate">{c.contractor}</p>
+                                        {/* Wrap instead of truncate — touch devices have no hover tooltip */}
+                                        <p className="font-semibold text-sm text-foreground dark:text-muted-foreground break-words">{c.contractor}</p>
                                         <p className="text-xs text-muted-foreground mt-0.5">{c.service || '-'}</p>
                                     </div>
                                     <StatusBadge label={c.flow} color={getFlowDotColor(c.flow)} />
@@ -616,7 +617,9 @@ export default function ContractorsPage() {
                                     <TableRow key={c.id}>
                                         <TableCell className="text-muted-foreground">{c.id}</TableCell>
                                         <TableCell className="text-foreground dark:text-muted-foreground">
-                                            <span className="block max-w-[180px] truncate" title={c.contractor}>{c.contractor}</span>
+                                            {/* Full name stays accessible: wraps to two lines before
+                                                clamping, with the complete name on hover (title). */}
+                                            <span className="block max-w-[240px] xl:max-w-[320px] line-clamp-2 break-words" title={c.contractor}>{c.contractor}</span>
                                             {c.note && <p className="text-xs text-muted-foreground mt-0.5 max-w-[200px] truncate" title={c.note}>{c.note}</p>}
                                         </TableCell>
                                         <TableCell className="text-muted-foreground hidden lg:table-cell meter max-w-[180px] truncate" title={c.contract_ref || ''}>{c.contract_ref || '-'}</TableCell>
@@ -711,7 +714,7 @@ export default function ContractorsPage() {
                                                 if (val == null) return null;
                                                 return (
                                                     <div key={cn} className="flex justify-between">
-                                                        <span className="text-muted-foreground truncate mr-2">{shortName(cn)}</span>
+                                                        <span className="text-muted-foreground truncate mr-2" title={cn}>{shortName(cn)}</span>
                                                         <span className="font-mono text-foreground dark:text-muted-foreground/70">{fmtOMR(val)}</span>
                                                     </div>
                                                 );
@@ -843,7 +846,8 @@ export default function ContractorsPage() {
                                 <div key={`m-${rowKey}`} className="rounded-xl border border-border dark:border-border bg-white dark:bg-muted p-4 space-y-3">
                                     <div className="flex items-start justify-between gap-2">
                                         <div className="min-w-0">
-                                            <p className="font-semibold text-sm text-foreground dark:text-muted-foreground truncate">{c.Contractor || '-'}</p>
+                                            {/* Wrap instead of truncate — touch devices have no hover tooltip */}
+                                            <p className="font-semibold text-sm text-foreground dark:text-muted-foreground break-words">{c.Contractor || '-'}</p>
                                             <p className="text-xs text-muted-foreground mt-0.5">{c["Service Provided"] || '-'}</p>
                                         </div>
                                         <StatusBadge label={c.Status || 'N/A'} color={getStatusDotColor(c.Status)} />
@@ -905,7 +909,11 @@ export default function ContractorsPage() {
                                     const c = paginatedTracker[vi.index];
                                     return (
                                     <TableRow key={`${c.Contractor ?? ''}--${c["Service Provided"] ?? ''}`}>
-                                        <TableCell className="text-foreground dark:text-muted-foreground max-w-[180px] truncate" title={c.Contractor || ''}>{c.Contractor || '-'}</TableCell>
+                                        {/* line-clamp needs an inner block element — -webkit-box display
+                                            on the <td> itself would break table layout. */}
+                                        <TableCell className="text-foreground dark:text-muted-foreground">
+                                            <span className="block max-w-[240px] xl:max-w-[320px] line-clamp-2 break-words" title={c.Contractor || ''}>{c.Contractor || '-'}</span>
+                                        </TableCell>
                                         <TableCell className="text-muted-foreground dark:text-muted-foreground max-w-[180px] truncate" title={c["Service Provided"] || ''}>{c["Service Provided"] || '-'}</TableCell>
                                         <TableCell><StatusBadge label={c.Status || 'N/A'} color={getStatusDotColor(c.Status)} /></TableCell>
                                         <TableCell className="text-muted-foreground">{c["Contract Type"] || '-'}</TableCell>
