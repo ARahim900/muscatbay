@@ -228,12 +228,24 @@ export function DateRangePicker({
 
     // Determine the year the slider should display: prefer endMonth's year,
     // then startMonth's year, then the latest year present in availableMonths.
+    //
+    // Critical: the chosen year MUST have data in availableMonths. The fixed
+    // Jan–Dec axis is built for displayYear, and the Start/End <select>s only
+    // render options for months of that year that exist in availableMonths. If
+    // displayYear has none (e.g. a parent passes an endMonth outside the — often
+    // year-filtered — availableMonths, such as a stray future row driving
+    // endMonth while a year filter scopes availableMonths to another year), the
+    // <select>s render zero <option>s and show as empty boxes even though the
+    // summary/slider still fall back to that year's January. Skipping years with
+    // no data keeps the selects populated; the sync effect below then heals the
+    // parent's out-of-range range to a real month.
     const displayYear = useMemo(() => {
+        const yearsWithData = new Set(availableMonths.map(m => m.split('-')[1]));
         const fromEnd = endMonth?.split('-')[1];
-        if (fromEnd) return fromEnd;
+        if (fromEnd && yearsWithData.has(fromEnd)) return fromEnd;
         const fromStart = startMonth?.split('-')[1];
-        if (fromStart) return fromStart;
-        if (availableMonths.length === 0) return '';
+        if (fromStart && yearsWithData.has(fromStart)) return fromStart;
+        if (availableMonths.length === 0) return fromEnd || fromStart || '';
         return availableMonths[availableMonths.length - 1].split('-')[1];
     }, [startMonth, endMonth, availableMonths]);
 

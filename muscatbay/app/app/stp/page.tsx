@@ -44,11 +44,26 @@ import { PlantWatch } from "@/components/stp/plant-watch";
 // Use centralized config for rates
 const { TANKER_FEE, TSE_SAVING_RATE } = STP_RATES;
 
-// Drop rows with a null/invalid date at the source, so no downstream
-// `format(new Date(op.date))` (charts, log, Plant Watch) can throw on a bad row
-// and white-screen the page.
-const withValidDates = (ops: STPOperation[]): STPOperation[] =>
-    ops.filter((op) => op?.date != null && !Number.isNaN(new Date(op.date).getTime()));
+// Sanitize STP rows at the source so no downstream `format(new Date(op.date))`
+// (charts, log, Plant Watch, date-range picker) is fed a bad row:
+//   1. Drop null/invalid dates — a NaN date would throw and white-screen.
+//   2. Drop rows dated in the FUTURE. Operational readings can't come from the
+//      future, so a stray future-dated row (e.g. a `2027-05-06` record the
+//      Airtable→Supabase sync keeps re-introducing — see PROJECT_STATUS §4)
+//      is a data error. Left in, it becomes the newest month and gets
+//      auto-selected as the range endpoint, which surfaced as the "January
+//      2027" empty-dropdown bug. A 2-day grace absorbs timezone skew so a
+//      legitimately-today reading is never dropped; in-progress current-month
+//      data (dated ≤ today) is always kept.
+const FUTURE_GRACE_MS = 2 * 24 * 60 * 60 * 1000;
+const withValidDates = (ops: STPOperation[]): STPOperation[] => {
+    const cutoff = Date.now() + FUTURE_GRACE_MS;
+    return ops.filter((op) => {
+        if (op?.date == null) return false;
+        const t = new Date(op.date).getTime();
+        return !Number.isNaN(t) && t <= cutoff;
+    });
+};
 
 const CHART_COLORS = {
     primary: 'var(--chart-stp-primary)',
