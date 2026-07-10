@@ -37,6 +37,7 @@ import { Button } from "@/components/ui/button";
 import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
 import { useAppNotifications } from "@/components/NotificationProvider";
 import { useToast } from "@/components/ui/toast-provider";
+import { getPageCache, setPageCache } from "@/lib/page-cache";
 import { cn } from "@/lib/utils";
 import { PlantWatch } from "@/components/stp/plant-watch";
 
@@ -300,13 +301,22 @@ const STPTankerChart = memo(function STPTankerChart({ data, view }: { data: STPC
     );
 });
 
+// Session cache — see lib/page-cache.ts (stale-while-revalidate on revisit)
+const STP_CACHE_KEY = "stp:page";
+interface StpPageCache {
+    operations: STPOperation[];
+    lastUpdated: Date;
+}
+
 export default function STPPage() {
     const [activeTab, setActiveTab] = useState("watch");
-    const [allOperations, setAllOperations] = useState<STPOperation[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [isLiveData, setIsLiveData] = useState(false);
+    // Seed from the session cache so revisits render instantly (silent refresh below)
+    const [cached] = useState(() => getPageCache<StpPageCache>(STP_CACHE_KEY));
+    const [allOperations, setAllOperations] = useState<STPOperation[]>(cached?.operations ?? []);
+    const [loading, setLoading] = useState(!cached);
+    const [isLiveData, setIsLiveData] = useState(Boolean(cached));
     const [selectedMonth, setSelectedMonth] = useState<string>("");
-    const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+    const [lastUpdated, setLastUpdated] = useState<Date | null>(cached?.lastUpdated ?? null);
 
     // Date range filter state
     const [startMonth, setStartMonth] = useState<string>('');
@@ -332,9 +342,12 @@ export default function STPPage() {
             if (isSupabaseConfigured()) {
                 const supabaseData = await getSTPOperationsFromSupabase();
                 if (supabaseData.length > 0) {
-                    setAllOperations(withValidDates(supabaseData));
+                    const operations = withValidDates(supabaseData);
+                    setAllOperations(operations);
                     setIsLiveData(true);
-                    setLastUpdated(new Date());
+                    const now = new Date();
+                    setLastUpdated(now);
+                    setPageCache<StpPageCache>(STP_CACHE_KEY, { operations, lastUpdated: now });
                     if (!silent) setLoading(false);
                     return;
                 }
@@ -405,7 +418,8 @@ export default function STPPage() {
     }, [allOperations]);
 
     useEffect(() => {
-        loadData();
+        // Cache hit → already rendering last data; refresh silently in background.
+        loadData(Boolean(cached));
 
         // Load saved filter preferences (selectedMonth is auto-derived from data range)
         const savedPrefs = loadFilterPreferences<{
@@ -421,7 +435,7 @@ export default function STPPage() {
             if (savedPrefs.endMonth) setEndMonth(savedPrefs.endMonth);
             if (savedPrefs.selectedYear) setSelectedYear(savedPrefs.selectedYear);
         }
-    }, [loadData]);
+    }, [loadData, cached]);
 
     // Save filter preferences when they change
     useEffect(() => {

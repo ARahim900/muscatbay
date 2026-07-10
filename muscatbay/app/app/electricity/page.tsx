@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { saveFilterPreferences, loadFilterPreferences } from "@/lib/filter-preferences";
 import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
 import { PageStatusBar } from "@/components/shared/page-status-bar";
+import { getPageCache, setPageCache } from "@/lib/page-cache";
 
 // ─── Extracted subcomponents (pure relocation, no behavior changes) ─────────
 import { CHART_COLORS, meterColors } from "@/components/electricity/electricity-shared";
@@ -29,6 +30,14 @@ import { LoadWatch } from "@/components/electricity/load-watch";
 
 // Use centralized config for rates
 const ratePerKWh = ELECTRICITY_RATES.RATE_PER_KWH;
+
+// Session cache — see lib/page-cache.ts (stale-while-revalidate on revisit)
+const ELECTRICITY_CACHE_KEY = "electricity:page";
+interface ElectricityPageCache {
+    meters: MeterReading[];
+    readingsCount: number;
+    lastUpdated: Date;
+}
 
 // Map "Mon-YY" → numeric ordinal (year * 12 + month) for chronological compare.
 // Used so the Jan-Dec slider can point at months that have no data without
@@ -54,11 +63,14 @@ const monthsInRange = (allMonths: string[], start: string, end: string): string[
 
 export default function ElectricityPage() {
     const [activeTab, setActiveTab] = useState("watch");
-    const [meters, setMeters] = useState<MeterReading[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [dataSource, setDataSource] = useState<"supabase" | "mock">("mock");
+    // Session cache — revisits render the last data instantly and refresh
+    // silently in the background instead of re-showing the page skeleton.
+    const [cached] = useState(() => getPageCache<ElectricityPageCache>(ELECTRICITY_CACHE_KEY));
+    const [meters, setMeters] = useState<MeterReading[]>(cached?.meters ?? []);
+    const [loading, setLoading] = useState(!cached);
+    const [dataSource, setDataSource] = useState<"supabase" | "mock">(cached ? "supabase" : "mock");
     const [debugError, setDebugError] = useState<string | null>(null);
-    const [readingsCount, setReadingsCount] = useState<number>(0);
+    const [readingsCount, setReadingsCount] = useState<number>(cached?.readingsCount ?? 0);
     const getMeterTypeColor = (type: string): BadgeColor => {
         const t = type.toLowerCase();
         if (t.includes('main') || t.includes('incomer') || t.includes('bulk')) return 'blue';
@@ -69,7 +81,7 @@ export default function ElectricityPage() {
         return 'slate';
     };
 
-    const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+    const [lastUpdated, setLastUpdated] = useState<Date | null>(cached?.lastUpdated ?? null);
     const [analysisType, setAnalysisType] = useState<string>("All");
     const [selectedMeter, setSelectedMeter] = useState<string>("All");
     const [dateRangeIndex, setDateRangeIndex] = useState<[number, number]>([0, 100]);
@@ -101,9 +113,15 @@ export default function ElectricityPage() {
             if (supabaseData && supabaseData.length > 0) {
                 setMeters(supabaseData);
                 setDataSource("supabase");
-                setLastUpdated(new Date());
+                const now = new Date();
+                setLastUpdated(now);
                 const totalReadings = supabaseData.reduce((sum, m) => sum + Object.keys(m.readings).length, 0);
                 if (!silent) setReadingsCount(totalReadings);
+                setPageCache<ElectricityPageCache>(ELECTRICITY_CACHE_KEY, {
+                    meters: supabaseData,
+                    readingsCount: totalReadings,
+                    lastUpdated: now,
+                });
             } else if (!silent) {
                 throw new Error("Supabase returned empty data");
             }
@@ -134,7 +152,8 @@ export default function ElectricityPage() {
     });
 
     useEffect(() => {
-        loadData();
+        // Cache hit → the page already renders last data; refresh silently.
+        loadData(Boolean(cached));
 
         // Load saved filter preferences
         const savedPrefs = loadFilterPreferences<{
@@ -163,7 +182,7 @@ export default function ElectricityPage() {
             if (savedPrefs.selectedMeter) setSelectedMeter(savedPrefs.selectedMeter);
             if (savedPrefs.dateRangeIndex) setDateRangeIndex(savedPrefs.dateRangeIndex);
         }
-    }, [loadData]);
+    }, [loadData, cached]);
 
     // Save filter preferences when they change
     useEffect(() => {

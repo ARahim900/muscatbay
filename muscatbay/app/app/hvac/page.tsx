@@ -13,12 +13,20 @@ import { OverviewTab } from "@/components/gulf-expert/overview-tab";
 import { FindingsTab } from "@/components/gulf-expert/findings-tab";
 import { RecurringTab } from "@/components/gulf-expert/recurring-tab";
 import { PageStatusBar } from "@/components/shared/page-status-bar";
+import { getPageCache, setPageCache } from "@/lib/page-cache";
 
 const tabs = [
   { key: "overview", label: "Overview", icon: LayoutGrid },
   { key: "findings", label: "Maintenance", icon: ClipboardList },
   { key: "recurring", label: "Recurring Issues", icon: AlertTriangle },
 ];
+
+// Session cache — see lib/page-cache.ts (stale-while-revalidate on revisit)
+const HVAC_CACHE_KEY = "hvac:page";
+interface HvacPageCache {
+  data: GulfExpertData;
+  lastUpdated: Date;
+}
 
 const GULF_EXPERT_SELECT = {
   findings: "id, finding_code, equipment_id, building, system_type, equipment_label, fiscal_year, ppm_visit, description, quantity, priority, status, quotation_ref, action_required, contractor_notes, is_recurring, first_identified_ppm",
@@ -27,14 +35,16 @@ const GULF_EXPERT_SELECT = {
 
 export default function GulfExpertPage() {
   const [activeTab, setActiveTab] = useState("overview");
-  const [loading, setLoading] = useState(true);
+  // Seed from the session cache so revisits render instantly (silent refresh below)
+  const [cached] = useState(() => getPageCache<HvacPageCache>(HVAC_CACHE_KEY));
+  const [loading, setLoading] = useState(!cached);
   const [error, setError] = useState<string | null>(null);
-  const [data, setData] = useState<GulfExpertData>({
+  const [data, setData] = useState<GulfExpertData>(cached?.data ?? {
     findings: [],
     recurringIssues: [],
   });
-  const [dataSource, setDataSource] = useState<"supabase" | "none">("none");
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [dataSource, setDataSource] = useState<"supabase" | "none">(cached ? "supabase" : "none");
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(cached?.lastUpdated ?? null);
 
   const loadData = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
@@ -71,25 +81,32 @@ export default function GulfExpertPage() {
         throw new Error(`Failed to load data: ${errors.join(", ")}`);
       }
 
-      setData({
+      const next: GulfExpertData = {
         findings: findingsRes.data || [],
         recurringIssues: recurringRes.data || [],
-      });
+      };
+      setData(next);
       setDataSource("supabase");
-      setLastUpdated(new Date());
+      const now = new Date();
+      setLastUpdated(now);
+      setPageCache<HvacPageCache>(HVAC_CACHE_KEY, { data: next, lastUpdated: now });
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : "Unknown error";
       console.error("Gulf Expert data load error:", message);
-      if (!silent) setError(message);
-      setDataSource("none");
+      // A failed SILENT refresh keeps the (cached) data + status on screen.
+      if (!silent) {
+        setError(message);
+        setDataSource("none");
+      }
     } finally {
       if (!silent) setLoading(false);
     }
   }, []);
 
+  // Cache hit → already rendering last data; refresh silently in background.
   useEffect(() => {
-    loadData();
-  }, [loadData]);
+    loadData(Boolean(cached));
+  }, [loadData, cached]);
 
   if (loading) {
     return <PageSkeleton />;

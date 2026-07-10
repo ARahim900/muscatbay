@@ -12,6 +12,7 @@ import {
 import { getContractorCounts } from "@/functions";
 import { ELECTRICITY_RATES } from "@/lib/config";
 import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
+import { getPageCache, setPageCache } from "@/lib/page-cache";
 import type { WaterMeter } from "@/lib/water-data";
 
 export interface DashboardStats {
@@ -63,6 +64,16 @@ const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Se
 // the same reality as the module page.
 const MIN_DAYS_FOR_COMPLETE_MONTH = 25;
 
+// Session cache — see lib/page-cache.ts (stale-while-revalidate on revisit)
+const DASHBOARD_CACHE_KEY = "dashboard:data";
+interface DashboardCache {
+    stats: DashboardStats[];
+    chartData: ChartData[];
+    stpChartData: ChartData[];
+    recentActivity: RecentActivityItem[];
+    isLiveData: boolean;
+}
+
 function sortMonthKeys(keys: string[]): string[] {
     return [...keys].sort((a, b) => {
         const [mA, yA] = a.split('-');
@@ -94,12 +105,15 @@ function buildWaterMonthlyFromSupabase(waterMeters: WaterMeter[]): { month: stri
 }
 
 export function useDashboardData() {
-    const [stats, setStats] = useState<DashboardStats[]>([]);
-    const [chartData, setChartData] = useState<ChartData[]>([]);
-    const [stpChartData, setStpChartData] = useState<ChartData[]>([]);
-    const [recentActivity, setRecentActivity] = useState<RecentActivityItem[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [isLiveData, setIsLiveData] = useState(false);
+    // Seed from the session cache so returning to the dashboard renders the
+    // command deck instantly; the mount fetch below refreshes it in place.
+    const [cached] = useState(() => getPageCache<DashboardCache>(DASHBOARD_CACHE_KEY));
+    const [stats, setStats] = useState<DashboardStats[]>(cached?.stats ?? []);
+    const [chartData, setChartData] = useState<ChartData[]>(cached?.chartData ?? []);
+    const [stpChartData, setStpChartData] = useState<ChartData[]>(cached?.stpChartData ?? []);
+    const [recentActivity, setRecentActivity] = useState<RecentActivityItem[]>(cached?.recentActivity ?? []);
+    const [loading, setLoading] = useState(!cached);
+    const [isLiveData, setIsLiveData] = useState(cached?.isLiveData ?? false);
     const [error, setError] = useState<string | null>(null);
     const [refreshCount, setRefreshCount] = useState(0);
 
@@ -260,7 +274,7 @@ export function useDashboardData() {
             const formattedStpMonth = stpLatestMonth ? format(new Date(stpLatestMonth + "-01"), "MMM yy") : "Latest Month";
 
             // === STATS ===
-            setStats([
+            const nextStats: DashboardStats[] = [
                 {
                     label: "WATER PRODUCTION",
                     value: `${(waterValue / 1000).toFixed(1)}k m³`,
@@ -321,28 +335,28 @@ export function useDashboardData() {
                     trendValue: stpEconomicTrend.trendValue,
                     // default: more economic impact = better = green ✓
                 }
-            ]);
+            ];
+            setStats(nextStats);
 
             // === WATER CHART (Supabase L1 → fallback to mock) ===
-            if (useSupabaseWater) {
-                setChartData(waterMonthly.slice(-8).map(m => ({
+            const nextChartData: ChartData[] = useSupabaseWater
+                ? waterMonthly.slice(-8).map(m => ({
                     month: m.month,
                     water: Math.round(m.value / 1000)
-                })));
-            } else {
-                setChartData(waterMock.monthlyTrends.slice(-8).map(w => ({
+                }))
+                : waterMock.monthlyTrends.slice(-8).map(w => ({
                     month: w.month,
                     water: Math.round(w.A1 / 1000),
                     efficiency: w.efficiency
-                })));
-            }
+                }));
+            setChartData(nextChartData);
 
             // === STP CHART — last 8 months, chronological ===
             // Mirror the main STP Plant page: plot every month as-is with no
             // completeness filter, so the dashboard shows the same reality as the
             // module page — including the in-progress current month. Reuses the
             // monthly buckets already aggregated above for the KPI stats.
-            setStpChartData(stpSortedMonths.slice(-8).map(monthKey => {
+            const nextStpChartData: ChartData[] = stpSortedMonths.slice(-8).map(monthKey => {
                 // Build the "MMM-yy" label straight from the yyyy-MM key — no Date
                 // round-trip, so the month can't drift across a timezone boundary.
                 const [year, month] = monthKey.split('-');
@@ -351,7 +365,8 @@ export function useDashboardData() {
                     inlet: Math.round(stpMonthlyCalc[monthKey].inlet / 1000),
                     tse: Math.round(stpMonthlyCalc[monthKey].tse / 1000)
                 };
-            }));
+            });
+            setStpChartData(nextStpChartData);
 
             // === GENERATE RECENT ACTIVITY from real data ===
             const trendDesc = (t: { trend: string; trendValue: string }) =>
@@ -392,6 +407,18 @@ export function useDashboardData() {
                 }
             ];
             setRecentActivity(activities);
+
+            // Cache live results so returning to the dashboard is instant
+            // (mock fallbacks are not cached — they should retry next visit).
+            if (liveDataFetched) {
+                setPageCache<DashboardCache>(DASHBOARD_CACHE_KEY, {
+                    stats: nextStats,
+                    chartData: nextChartData,
+                    stpChartData: nextStpChartData,
+                    recentActivity: activities,
+                    isLiveData: liveDataFetched,
+                });
+            }
 
         } catch (error) {
             console.error("Failed to load dashboard data", error);

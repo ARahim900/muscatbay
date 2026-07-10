@@ -19,6 +19,7 @@ import {
 import { Skeleton } from "@/components/shared/skeleton";
 import { EmptyState } from "@/components/shared/empty-state";
 import { cn } from "@/lib/utils";
+import { getPageCache, setPageCache } from "@/lib/page-cache";
 import { format } from "date-fns";
 import {
     ResponsiveContainer, BarChart, Bar, XAxis, YAxis,
@@ -292,17 +293,29 @@ function equipZoneKey(zone: string): ZoneKey | null {
 
 type TabKey = "overview" | "ppm" | "contract";
 
+// Session cache — see lib/page-cache.ts (stale-while-revalidate on revisit)
+const FIREFIGHTING_CACHE_KEY = "firefighting:page";
+interface FirefightingPageCache {
+    equipment: FireSafetyEquipment[];
+    issues: FireIssue[];
+    contacts: FirePpmContact[];
+    activityLog: FirePpmActivity[];
+    lastUpdated: Date;
+}
+
 export default function FirefightingPage() {
     const [activeTab, setActiveTab] = useState<TabKey>("overview");
-    const [loading, setLoading] = useState(true);
-    const [connected, setConnected] = useState(false);
-    const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+    // Seed from the session cache so revisits render instantly (silent refresh below)
+    const [cached] = useState(() => getPageCache<FirefightingPageCache>(FIREFIGHTING_CACHE_KEY));
+    const [loading, setLoading] = useState(!cached);
+    const [connected, setConnected] = useState(Boolean(cached));
+    const [lastUpdated, setLastUpdated] = useState<Date | null>(cached?.lastUpdated ?? null);
     const [error, setError] = useState<string | null>(null);
 
-    const [equipment, setEquipment] = useState<FireSafetyEquipment[]>([]);
-    const [issues, setIssues] = useState<FireIssue[]>([]);
-    const [contacts, setContacts] = useState<FirePpmContact[]>([]);
-    const [activityLog, setActivityLog] = useState<FirePpmActivity[]>([]);
+    const [equipment, setEquipment] = useState<FireSafetyEquipment[]>(cached?.equipment ?? []);
+    const [issues, setIssues] = useState<FireIssue[]>(cached?.issues ?? []);
+    const [contacts, setContacts] = useState<FirePpmContact[]>(cached?.contacts ?? []);
+    const [activityLog, setActivityLog] = useState<FirePpmActivity[]>(cached?.activityLog ?? []);
 
     // Maintenance tracker — search, multi-select filters, sort & pagination
     const [search, setSearch] = useState("");
@@ -319,6 +332,12 @@ export default function FirefightingPage() {
         (async () => {
             const res = await fetchFireSafetyDataAction();
             if (!active) return;
+            if (res.error && cached) {
+                // Silent background refresh failed — keep showing cached data
+                // instead of wiping it with the empty error payload.
+                console.warn("Fire-safety refresh failed; keeping cached data:", res.error);
+                return;
+            }
             setEquipment(res.equipment);
             setIssues(res.issues);
             setContacts(res.contacts);
@@ -329,12 +348,20 @@ export default function FirefightingPage() {
             } else {
                 setError(null);
                 setConnected(true);
-                setLastUpdated(new Date());
+                const now = new Date();
+                setLastUpdated(now);
+                setPageCache<FirefightingPageCache>(FIREFIGHTING_CACHE_KEY, {
+                    equipment: res.equipment,
+                    issues: res.issues,
+                    contacts: res.contacts,
+                    activityLog: res.activities,
+                    lastUpdated: now,
+                });
             }
             setLoading(false);
         })();
         return () => { active = false; };
-    }, []);
+    }, [cached]);
 
     // ── Derived ──
     const openIssues = useMemo(

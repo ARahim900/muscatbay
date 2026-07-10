@@ -19,6 +19,7 @@ import { saveFilterPreferences, loadFilterPreferences } from "@/lib/filter-prefe
 
 // Monthly dashboard (Supabase-wired) + Daily report (lazy)
 import { WaterMonthlyDashboard } from "@/components/water/monthly/water-monthly-dashboard";
+import { getPageCache, setPageCache } from "@/lib/page-cache";
 import dynamic from "next/dynamic";
 const DailyWaterReport = dynamic(
     () => import("@/components/water/DailyWaterReport").then((m) => ({ default: m.DailyWaterReport })),
@@ -32,14 +33,23 @@ type DashboardView = "monthly" | "daily";
 // when the reference changes).
 const WATER_REALTIME_TABLES = ["water_meters", "water_monthly_consumption"];
 
+// Session cache — revisiting /water renders the last data instantly and
+// refreshes silently in the background instead of re-showing the skeleton.
+const WATER_CACHE_KEY = "water:page";
+interface WaterPageCache {
+    meters: WaterMeter[];
+    lastUpdated: Date;
+}
+
 export default function WaterPage() {
     const [dashboardView, setDashboardView] = useState<DashboardView>("monthly");
 
-    // Supabase data state
-    const [waterMeters, setWaterMeters] = useState<WaterMeter[]>(MOCK_WATER_METERS);
-    const [isLoading, setIsLoading] = useState(true);
-    const [dataSource, setDataSource] = useState<"supabase" | "mock">("mock");
-    const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+    // Supabase data state — seeded from the session cache when available
+    const [cached] = useState(() => getPageCache<WaterPageCache>(WATER_CACHE_KEY));
+    const [waterMeters, setWaterMeters] = useState<WaterMeter[]>(cached?.meters ?? MOCK_WATER_METERS);
+    const [isLoading, setIsLoading] = useState(!cached);
+    const [dataSource, setDataSource] = useState<"supabase" | "mock">(cached ? "supabase" : "mock");
+    const [lastUpdated, setLastUpdated] = useState<Date | null>(cached?.lastUpdated ?? null);
 
     // Stable fetch function — used both on mount and by the real-time handler
     const fetchWaterData = useCallback(async (silent = false) => {
@@ -50,7 +60,9 @@ export default function WaterPage() {
                 if (supabaseData.length > 0) {
                     setWaterMeters(supabaseData);
                     setDataSource("supabase");
-                    setLastUpdated(new Date());
+                    const now = new Date();
+                    setLastUpdated(now);
+                    setPageCache<WaterPageCache>(WATER_CACHE_KEY, { meters: supabaseData, lastUpdated: now });
                 } else if (!silent) {
                     setWaterMeters(MOCK_WATER_METERS);
                     setDataSource("mock");
@@ -81,12 +93,14 @@ export default function WaterPage() {
         enabled: dataSource === "supabase",
     });
 
-    // Fetch on mount + restore the saved view
+    // Fetch on mount + restore the saved view. When the session cache seeded
+    // the state, fetch silently — the page is already rendering last data and
+    // this call only freshens it in place (stale-while-revalidate).
     useEffect(() => {
-        fetchWaterData();
+        fetchWaterData(Boolean(cached));
         const savedPrefs = loadFilterPreferences<{ dashboardView?: DashboardView }>("water");
         if (savedPrefs?.dashboardView) setDashboardView(savedPrefs.dashboardView);
-    }, [fetchWaterData]);
+    }, [fetchWaterData, cached]);
 
     // Persist the selected view
     useEffect(() => {

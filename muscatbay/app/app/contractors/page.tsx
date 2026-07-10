@@ -33,6 +33,7 @@ import {
 import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
 import { useVirtualTableRows } from "@/hooks/useVirtualTableRows";
 import { PageStatusBar } from "@/components/shared/page-status-bar";
+import { getPageCache, setPageCache } from "@/lib/page-cache";
 
 // ─── Yearly cost matrix helpers ──────────────────────────────────────────────
 interface YearRow {
@@ -85,17 +86,28 @@ function buildYearlyMatrix(costs: ContractorYearlyCost[]): {
     return { contractors, rows, contractorTotals, grandTotal };
 }
 
+// Session cache — see lib/page-cache.ts (stale-while-revalidate on revisit)
+const CONTRACTORS_CACHE_KEY = "contractors:page";
+interface ContractorsPageCache {
+    contracts: ContractorContract[];
+    yearlyCosts: ContractorYearlyCost[];
+    trackerData: ContractorTracker[];
+    lastUpdated: Date;
+}
+
 // ─── Page Component ──────────────────────────────────────────────────────────
 export default function ContractorsPage() {
-    const [loading, setLoading] = useState(true);
+    // Seed from the session cache so revisits render instantly (silent refresh below)
+    const [cached] = useState(() => getPageCache<ContractorsPageCache>(CONTRACTORS_CACHE_KEY));
+    const [loading, setLoading] = useState(!cached);
     const [activeTab, setActiveTab] = useState("tracker");
 
     // Data
-    const [contracts, setContracts] = useState<ContractorContract[]>([]);
-    const [yearlyCosts, setYearlyCosts] = useState<ContractorYearlyCost[]>([]);
-    const [trackerData, setTrackerData] = useState<ContractorTracker[]>([]);
-    const [dataSource, setDataSource] = useState<'supabase' | 'none'>('none');
-    const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+    const [contracts, setContracts] = useState<ContractorContract[]>(cached?.contracts ?? []);
+    const [yearlyCosts, setYearlyCosts] = useState<ContractorYearlyCost[]>(cached?.yearlyCosts ?? []);
+    const [trackerData, setTrackerData] = useState<ContractorTracker[]>(cached?.trackerData ?? []);
+    const [dataSource, setDataSource] = useState<'supabase' | 'none'>(cached ? 'supabase' : 'none');
+    const [lastUpdated, setLastUpdated] = useState<Date | null>(cached?.lastUpdated ?? null);
 
     // Contracts tab: search, sort, pagination
     const [search, setSearch] = useState("");
@@ -174,7 +186,16 @@ export default function ContractorsPage() {
             setTrackerData(trackerRes);
             const hasData = contractsRes.length > 0 || trackerRes.length > 0;
             setDataSource(hasData ? 'supabase' : 'none');
-            if (hasData) setLastUpdated(new Date());
+            if (hasData) {
+                const now = new Date();
+                setLastUpdated(now);
+                setPageCache<ContractorsPageCache>(CONTRACTORS_CACHE_KEY, {
+                    contracts: contractsRes,
+                    yearlyCosts: yearlyRes,
+                    trackerData: trackerRes,
+                    lastUpdated: now,
+                });
+            }
         } catch (e) {
             if (!silent) { console.error("Failed to load contractors data", e); setDataSource('none'); }
         } finally {
@@ -189,7 +210,8 @@ export default function ContractorsPage() {
         enabled: dataSource === 'supabase',
     });
 
-    useEffect(() => { loadData(); }, [loadData]);
+    // Cache hit → already rendering last data; refresh silently in background.
+    useEffect(() => { loadData(Boolean(cached)); }, [loadData, cached]);
 
     // ── Contracts tab: derived data ──────────────────────────────────────────
     const uniqueFlows = useMemo(() =>

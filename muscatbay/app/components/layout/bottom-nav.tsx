@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
-import Link from 'next/link';
+import Link, { useLinkStatus } from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/components/auth/auth-provider';
 import { useUserRole } from '@/hooks/useUserRole';
@@ -12,6 +12,7 @@ import {
   Zap,
   Waves,
   Flame,
+  Loader2,
   MoreHorizontal,
   Users,
   Package,
@@ -47,6 +48,14 @@ const overflowItems: NavItem[] = [
 ];
 
 const allNavItems = [...primaryItems, ...overflowItems];
+
+/** In-place pending indicator: the tab icon spins while ITS navigation is in
+ *  flight (useLinkStatus must be read from inside the <Link>). */
+function NavLinkIcon({ icon: Icon, className }: { icon: React.ComponentType<{ className?: string }>; className: string }) {
+  const { pending } = useLinkStatus();
+  if (pending) return <Loader2 className={`${className} motion-safe:animate-spin`} aria-hidden="true" />;
+  return <Icon className={className} />;
+}
 
 function isRouteActive(href: string, pathname: string | null) {
   if (href === '/') return pathname === '/';
@@ -195,7 +204,7 @@ export function BottomNav() {
                     }
                   `}
                 >
-                  <Icon className="w-5 h-5 flex-shrink-0" />
+                  <NavLinkIcon icon={Icon} className="w-5 h-5 flex-shrink-0" />
                   <span className={`text-sm ${active ? 'font-semibold' : 'font-medium'}`}>{item.name}</span>
                   {active && (
                     <div className="ms-auto w-2 h-2 rounded-full bg-secondary" />
@@ -240,7 +249,7 @@ export function BottomNav() {
                   }
                 `}
               >
-                <Icon className="w-5 h-5" />
+                <NavLinkIcon icon={Icon} className="w-5 h-5" />
                 <span className={`text-[11px] leading-tight ${active ? 'font-semibold' : 'font-medium'}`}>
                   {item.name}
                 </span>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { getAssets } from "@/lib/mock-data";
 import type { Asset } from "@/entities/asset";
 import { isSupabaseConfigured } from "@/lib/supabase";
@@ -24,6 +24,7 @@ import { exportToCSV, getDateForFilename } from "@/lib/export-utils";
 import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
 import { useVirtualTableRows } from "@/hooks/useVirtualTableRows";
 import { PageStatusBar } from "@/components/shared/page-status-bar";
+import { getPageCache, setPageCache } from "@/lib/page-cache";
 import { sortAssets, type AssetSortField } from "./sort";
 
 type ActiveTab = 'overview' | 'lifecycle' | 'maintenance' | 'technical' | 'financial';
@@ -86,6 +87,18 @@ function fmtOMR(n: number | null | undefined): string {
     return n.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + ' OMR';
 }
 
+// Session cache for the default landing view — see lib/page-cache.ts
+const ASSETS_CACHE_KEY = "assets:default-view";
+interface AssetsPageCache {
+    assets: Asset[];
+    totalCount: number;
+    summary: {
+        total: number; activeFlagged: number; workingStatus: number; toVerify: number;
+        criticalLifecycle: number; disciplines: number; boqCoverage: number;
+    };
+    lastUpdated: Date;
+}
+
 function CritBadge({ level }: { level?: string }) {
     if (!level) return <span className="text-muted-foreground/70 dark:text-muted-foreground">-</span>;
     const colors: Record<string, string> = {
@@ -115,24 +128,30 @@ function PctBar({ pct }: { pct?: number | null }) {
 
 export default function AssetsPage() {
     const [activeTab, setActiveTab] = useState<ActiveTab>('overview');
-    const [summary, setSummary] = useState({
+    // Seed the DEFAULT view (page 1, name asc, no filters) from the session
+    // cache so revisits render instantly; the mount fetch refreshes silently.
+    const [cached] = useState(() => getPageCache<AssetsPageCache>(ASSETS_CACHE_KEY));
+    const [summary, setSummary] = useState(cached?.summary ?? {
         total: 0, activeFlagged: 0, workingStatus: 0, toVerify: 0,
         criticalLifecycle: 0, disciplines: 0, boqCoverage: 0,
     });
-    const [assets, setAssets] = useState<Asset[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [assets, setAssets] = useState<Asset[]>(cached?.assets ?? []);
+    const [loading, setLoading] = useState(!cached);
     const [search, setSearch] = useState("");
     const [selectedStatuses, setSelectedStatuses] = useState<string[]>([...STATUS_OPTIONS]);
     const [selectedDisciplines, setSelectedDisciplines] = useState<string[]>([...DISCIPLINE_OPTIONS]);
-    const [dataSource, setDataSource] = useState<'supabase' | 'mock'>('mock');
+    const [dataSource, setDataSource] = useState<'supabase' | 'mock'>(cached ? 'supabase' : 'mock');
     const [error, setError] = useState<string | null>(null);
-    const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+    const [lastUpdated, setLastUpdated] = useState<Date | null>(cached?.lastUpdated ?? null);
     const [sortField, setSortField] = useState<AssetSortField>('name');
     const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState<PageSizeOption>(25);
-    const [totalCount, setTotalCount] = useState(0);
+    const [totalCount, setTotalCount] = useState(cached?.totalCount ?? 0);
     const [debouncedSearch, setDebouncedSearch] = useState("");
+    // True for the first loadData() run after a cache seed — that run
+    // refreshes silently instead of re-showing skeletons.
+    const seededRef = useRef(Boolean(cached));
 
     useEffect(() => {
         const t = setTimeout(() => { setDebouncedSearch(search); setCurrentPage(1); }, 500);
@@ -146,12 +165,17 @@ export default function AssetsPage() {
         setCurrentPage(1);
     }, []);
 
-    const loadData = useCallback(async () => {
-        setLoading(true);
+    const loadData = useCallback(async (silent = false) => {
+        if (!silent) setLoading(true);
         const effectivePageSize = pageSize === 'All' ? 500 : pageSize;
         const supabaseSort = SORT_FIELD_MAP[sortField] || 'asset_name';
         const statusFilter = selectedStatuses.length < STATUS_OPTIONS.length ? selectedStatuses : undefined;
         const disciplineFilter = selectedDisciplines.length < DISCIPLINE_OPTIONS.length ? selectedDisciplines : undefined;
+        // Only the default landing view is session-cached — it's the one every
+        // sidebar navigation lands on.
+        const isDefaultView = currentPage === 1 && pageSize === 25 && !debouncedSearch
+            && supabaseSort === 'asset_name' && sortDirection === 'asc'
+            && !statusFilter && !disciplineFilter;
 
         try {
             if (!isSupabaseConfigured()) {
@@ -174,9 +198,23 @@ export default function AssetsPage() {
             setAssets(data ?? []);
             setTotalCount(count ?? 0);
             setDataSource('supabase');
-            setLastUpdated(new Date());
+            const now = new Date();
+            setLastUpdated(now);
             if (!summaryRes.error) setSummary(summaryRes);
+            if (isDefaultView && !summaryRes.error) {
+                setPageCache<AssetsPageCache>(ASSETS_CACHE_KEY, {
+                    assets: data ?? [],
+                    totalCount: count ?? 0,
+                    summary: summaryRes,
+                    lastUpdated: now,
+                });
+            }
         } catch (e) {
+            if (silent) {
+                // Background refresh failed — keep showing the cached view.
+                console.warn("Assets silent refresh failed:", e);
+                return;
+            }
             console.error("Supabase fetch failed:", e);
             setError("Unable to load live data — showing demo data.");
             const mockData = await getAssets();
@@ -184,16 +222,23 @@ export default function AssetsPage() {
             setTotalCount(mockData.length);
             setDataSource('mock');
         } finally {
-            setLoading(false);
+            if (!silent) setLoading(false);
         }
     }, [currentPage, pageSize, debouncedSearch, sortField, sortDirection, selectedStatuses, selectedDisciplines]);
 
-    useEffect(() => { loadData(); }, [loadData]);
+    // Runs on mount AND whenever a fetch param changes (loadData identity).
+    // The first run after a cache seed refreshes silently; param changes load
+    // normally (in-place table skeletons).
+    useEffect(() => {
+        loadData(seededRef.current);
+        seededRef.current = false;
+    }, [loadData]);
 
     const { isLive } = useSupabaseRealtime({
         table: 'master_assets_register',
         channelName: 'master-assets-rt',
-        onChanged: () => loadData(),
+        // Realtime rows arriving shouldn't blank the table — refresh silently.
+        onChanged: () => loadData(true),
         enabled: dataSource === 'supabase',
     });
 

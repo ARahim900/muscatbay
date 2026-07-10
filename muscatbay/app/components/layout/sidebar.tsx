@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useRef } from 'react';
-import Link from 'next/link';
+import Link, { useLinkStatus } from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import gsap from 'gsap';
@@ -21,6 +21,7 @@ import {
   Settings,
   LogOut,
   ChevronLeft,
+  Loader2,
   Waves,
   Wrench,
 } from 'lucide-react';
@@ -73,6 +74,17 @@ const navGroups: NavGroup[] = [
 
 // Flat list used for "more-specific-sibling" active detection.
 const allNavigationItems: NavigationItem[] = navGroups.flatMap((g) => g.items);
+
+/**
+ * Nav item icon that doubles as a lightweight in-place pending indicator:
+ * while THIS link's navigation is in flight (useLinkStatus), the module icon
+ * swaps to a spinner. Must be rendered inside the <Link> to read its status.
+ */
+function NavLinkIcon({ icon: Icon, className }: { icon: React.ComponentType<{ className?: string }>; className: string }) {
+  const { pending } = useLinkStatus();
+  if (pending) return <Loader2 className={`${className} motion-safe:animate-spin`} aria-hidden="true" />;
+  return <Icon className={className} />;
+}
 
 // Bottom navigation items
 const bottomNavItems: NavigationItem[] = [
@@ -279,7 +291,7 @@ export function Sidebar() {
                           aria-hidden="true"
                           className={`nav-rail-static absolute start-0 top-1.5 bottom-1.5 w-[3px] rounded-e-full bg-secondary transition-opacity duration-150 ease-out ${isActive ? 'opacity-100' : 'opacity-0'}`}
                         />
-                        <Icon className={`w-5 h-5 flex-shrink-0 transition-colors duration-150 relative z-10 ${isActive ? "text-secondary" : "text-white/80 group-hover/nav:text-white"}`} />
+                        <NavLinkIcon icon={Icon} className={`w-5 h-5 flex-shrink-0 transition-colors duration-150 relative z-10 ${isActive ? "text-secondary" : "text-white/80 group-hover/nav:text-white"}`} />
                         {!isCollapsed && (
                           <span className={`text-sm truncate flex-1 ${isActive ? "font-semibold" : "font-medium"}`}>
                             {item.name}
@@ -329,7 +341,8 @@ export function Sidebar() {
                   aria-hidden="true"
                   className={`nav-rail-static absolute start-0 top-1.5 bottom-1.5 w-[3px] rounded-e-full bg-secondary transition-opacity duration-150 ease-out ${isActive ? 'opacity-100' : 'opacity-0'}`}
                 />
-                <Icon
+                <NavLinkIcon
+                  icon={Icon}
                   className={`
                     w-5 h-5 flex-shrink-0 transition-colors duration-150 relative z-10
                     ${isActive ? "text-secondary" : "text-white/80 group-hover/nav:text-white"}
