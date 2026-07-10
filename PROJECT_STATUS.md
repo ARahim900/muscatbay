@@ -134,6 +134,13 @@ Entries below the marker are appended automatically on every push to `main`.
 Do not hand-edit existing entries; curate meaning in the sections above.
 
 <!-- STATUS:LOG:BEGIN -->
+- 2026-07-10 — feat(pest-control): frame AITable embed as a labelled, bounded external panel
+- 2026-07-10 — fix(stp): date-range Start/End dropdowns no longer render empty
+- 2026-07-10 — feat(perf): instant module switching — session data cache + link pending indicator
+- 2026-07-10 — fix(assets): hold loading state until first fetch resolves — no false OFFLINE/zero flash
+- 2026-07-10 — feat(pest-control): theme-synced, brand-framed AITable embed
+- 2026-07-10 — fix(ui): stop mid-word truncation on contractor names and KPI labels
+- 2026-07-10 — fix(ui): anchor toasts top-right below topbar so they never cover KPI cards
 - 2026-07-10 — fix(water): show meter name in Zone Analysis L3 table Meter column
 - 2026-07-06 — feat(dashboard, electricity): balance hero KPI deck + de-duplicate Meters & Data (#37)
 - 2026-07-06 — feat(water): rows-per-page selector for the Monthly tables (#36)
