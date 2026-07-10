@@ -130,7 +130,11 @@ function ZoneL3Table({
                 account,
                 isNullAsZero,
                 building,
-                label: building ? building.buildingName : account,
+                // Meter column shows the meter NAME. Buildings use their curated
+                // config name; individual meters use the DB `meter_name` (e.g.
+                // "Building FM", "Irrigation Tank (Z01_FM)"), falling back to the
+                // account number only when no name is recorded.
+                label: building ? building.buildingName : (dbRow?.meter_name || account),
                 dailyValues,
                 total: r2(total),
             };
@@ -432,7 +436,7 @@ function ZoneL3Table({
                                             ) : (
                                                 <>
                                                     <Home className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                                                    {meter.account}
+                                                    {meter.label}
                                                     {meter.isNullAsZero && <StatusChip label="IRR" color="primary" />}
                                                 </>
                                             )}

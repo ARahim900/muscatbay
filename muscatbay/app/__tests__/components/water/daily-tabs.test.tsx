@@ -3,6 +3,8 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { ZoneWatch } from '@/components/water/daily-report/zone-watch';
 import { DailyDatabase } from '@/components/water/daily-report/daily-database';
 import { DailyExceptions } from '@/components/water/daily-report/daily-exceptions';
+import { ZoneL3Table } from '@/components/water/daily-report/inline-zone-l3-table';
+import type { ZoneRow } from '@/components/water/daily-report/inline-shared';
 import { ZONE_BULK_CONFIG } from '@/lib/water-accounts';
 import type { SupabaseDailyWaterConsumption } from '@/entities/water';
 
@@ -96,5 +98,43 @@ describe('DailyExceptions', () => {
         render(<DailyExceptions monthData={monthData} selectedDay={1} month="Mar-26" />);
         // Day 1: loss 10 m³ / 10% — under the 20 m³ exception threshold.
         expect(screen.getByText(/No exceptions for Day 1/i)).toBeInTheDocument();
+    });
+});
+
+// ─── Zone Analysis — L3 meters table ──────────────────────────────────────────
+
+describe('ZoneL3Table', () => {
+    const fmZoneRow: ZoneRow = {
+        zoneName: 'Zone FM',
+        l2Account: FM.l2Account,
+        l2Value: 100,
+        l3Sum: 90,
+        diff: 10,
+        isNullL2: false,
+        isHighLoss: false,
+    };
+
+    it('shows the meter NAME in the Meter column while the Account column keeps the account number', () => {
+        render(
+            <ZoneL3Table zoneRow={fmZoneRow} zoneConfig={FM} monthData={monthData} buildingRows={[]} />,
+        );
+        // The first L3 meter carries meter_name "Building FM" (see fixture above).
+        // The Meter column must render that name, not the bare account number.
+        expect(screen.getByText('Building FM')).toBeInTheDocument();
+        // …and the account number still appears (in the Account column).
+        expect(screen.getByText(FM.l3Accounts[0])).toBeInTheDocument();
+    });
+
+    it('falls back to the account number when a meter has no recorded name', () => {
+        const namelessData: SupabaseDailyWaterConsumption[] = [
+            row(FM.l2Account, [100], { label: 'L2', meter_name: 'ZONE FM (Bulk)' }),
+            row(FM.l3Accounts[0], [90], { meter_name: '' }),
+        ];
+        render(
+            <ZoneL3Table zoneRow={fmZoneRow} zoneConfig={FM} monthData={namelessData} buildingRows={[]} />,
+        );
+        // With no name, the account number stands in for the meter label, so it
+        // appears in BOTH the Meter and Account columns (≥ 2 occurrences).
+        expect(screen.getAllByText(FM.l3Accounts[0]).length).toBeGreaterThanOrEqual(2);
     });
 });
