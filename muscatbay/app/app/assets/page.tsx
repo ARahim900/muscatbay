@@ -6,7 +6,7 @@ import type { Asset } from "@/entities/asset";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import { fetchAssetsAction, fetchAssetSummaryAction } from "@/actions/assets";
 import { StatsGrid } from "@/components/shared/stats-grid";
-import { TableBodySkeleton, Skeleton } from "@/components/shared/skeleton";
+import { TableBodySkeleton, Skeleton, StatsGridSkeleton } from "@/components/shared/skeleton";
 import { EmptyState } from "@/components/shared/empty-state";
 import { PageHeader } from "@/components/shared/page-header";
 import { TabNavigation } from "@/components/shared/tab-navigation";
@@ -230,6 +230,12 @@ export default function AssetsPage() {
 
     const hasActiveFilters = !!(search || selectedStatuses.length < STATUS_OPTIONS.length || selectedDisciplines.length < DISCIPLINE_OPTIONS.length);
 
+    // First fetch still in flight (nothing resolved yet). Used to keep the
+    // status bar neutral ("Connecting…") and the KPIs skeletoned instead of
+    // flashing a false "Demo Data / OFFLINE / all zeros" state before the
+    // live dataset arrives.
+    const firstLoad = loading && assets.length === 0 && totalCount === 0;
+
     const clearFilters = () => {
         setSearch(''); setSelectedStatuses([...STATUS_OPTIONS]);
         setSelectedDisciplines([...DISCIPLINE_OPTIONS]); setCurrentPage(1);
@@ -380,6 +386,7 @@ export default function AssetsPage() {
                     isLive={isLive}
                     lastUpdated={lastUpdated}
                     error={error}
+                    loading={firstLoad}
                 />
             </div>
 
@@ -387,8 +394,9 @@ export default function AssetsPage() {
             <TabNavigation tabs={TABS} activeTab={activeTab} onTabChange={handleTabChange} />
 
             <div className="space-y-4">
-                {/* KPI cards — moved above the toolbar so they sit at the top of the section */}
-                {activeTab === 'overview' && <StatsGrid stats={stats} />}
+                {/* KPI cards — moved above the toolbar so they sit at the top of the section.
+                    Skeleton until the first fetch resolves so we never flash all-zero KPIs. */}
+                {activeTab === 'overview' && (firstLoad ? <StatsGridSkeleton count={6} /> : <StatsGrid stats={stats} />)}
 
                 {/* Toolbar — search filter now sits directly above the table */}
                 <TableToolbar>
@@ -415,7 +423,7 @@ export default function AssetsPage() {
                         <span className="hidden sm:inline">Export CSV</span>
                     </button>
                     <div className="text-sm text-muted-foreground whitespace-nowrap">
-                        <span className="font-semibold text-foreground dark:text-muted-foreground/70">{totalCount}</span> assets
+                        <span className="font-semibold text-foreground dark:text-muted-foreground/70">{firstLoad ? '—' : totalCount}</span> assets
                     </div>
                 </TableToolbar>
 

@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { Wifi, WifiOff } from "lucide-react";
+import { Loader2, Wifi, WifiOff } from "lucide-react";
 
 interface PageStatusBarProps {
     /** Whether data is connected to Supabase */
@@ -18,6 +18,12 @@ interface PageStatusBarProps {
     children?: React.ReactNode;
     /** Error message displayed below the status badges */
     error?: string | null;
+    /**
+     * First fetch still in flight. Shows a neutral "Connecting…" chip instead
+     * of prematurely claiming Demo/OFFLINE (a false alarm while data is
+     * simply still loading), and suppresses the Live badge + error line.
+     */
+    loading?: boolean;
 }
 
 export function PageStatusBar({
@@ -29,7 +35,19 @@ export function PageStatusBar({
     disconnectedLabel = "Demo Data (Local)",
     children,
     error,
+    loading = false,
 }: PageStatusBarProps) {
+    if (loading) {
+        return (
+            <div className="flex flex-col items-end gap-1.5" role="status" aria-label="Connecting to live data">
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium bg-muted text-muted-foreground">
+                    <Loader2 className="h-3 w-3 motion-safe:animate-spin" aria-hidden="true" />
+                    Connecting…
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="flex flex-col items-end gap-1.5">
             <div
