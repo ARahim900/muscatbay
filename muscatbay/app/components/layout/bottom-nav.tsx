@@ -5,285 +5,524 @@ import Link, { useLinkStatus } from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/components/auth/auth-provider';
 import { useUserRole } from '@/hooks/useUserRole';
-import { canAccessModule, type ModuleKey } from '@/lib/rbac';
+import { useTheme } from '@/components/providers';
+import { useAppNotifications } from '@/components/NotificationProvider';
+import { canAccessModule, ROLE_LABEL, type ModuleKey } from '@/lib/rbac';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
-  LayoutDashboard,
+  LayoutGrid,
+  Building2,
+  Bell,
+  BellOff,
+  CircleUser,
   Droplets,
   Zap,
   Waves,
   Flame,
-  Loader2,
-  MoreHorizontal,
   Users,
   Package,
   Bug,
+  Wrench,
   Settings,
   LogOut,
   X,
-  Wrench,
+  Loader2,
+  Sun,
+  Moon,
+  CheckCircle2,
+  AlertTriangle,
+  XCircle,
+  Info,
+  ChevronRight,
+  type LucideIcon,
 } from 'lucide-react';
 
-interface NavItem {
+/* ────────────────────────────────────────────────────────────────────────────
+ * Mobile bottom navigation — floating "pill" dock.
+ *
+ * Four tabs, matching the reference design:
+ *   • Overview — links to the dashboard (`/`)
+ *   • Modules  — opens a sheet with every operations module (RBAC-filtered)
+ *   • Alerts   — opens a sheet with the in-app notification feed (unread badge)
+ *   • Profile  — opens a sheet with the account, appearance + sign-out controls
+ *
+ * The mobile sidebar is not reachable on phones (no trigger), so this dock is
+ * the sole navigation surface on mobile — the Modules + Profile sheets deliberately
+ * expose everything the desktop sidebar does (all modules, settings, sign out).
+ * ──────────────────────────────────────────────────────────────────────────── */
+
+interface ModuleItem {
   id: string;
   name: string;
   icon: React.ComponentType<{ className?: string }>;
   href: string;
-  module?: ModuleKey;
+  module: ModuleKey;
+  /** Tailwind text-color class from the module accent tokens (icons only). */
+  accent: string;
 }
 
-const primaryItems: NavItem[] = [
-  { id: "dashboard", name: "Dashboard", icon: LayoutDashboard, href: "/", module: "dashboard" },
-  { id: "water", name: "Water", icon: Droplets, href: "/water", module: "water" },
-  { id: "electricity", name: "Electricity", icon: Zap, href: "/electricity", module: "electricity" },
-  { id: "stp", name: "STP Plant", icon: Waves, href: "/stp", module: "stp" },
-  { id: "fire-safety", name: "Fire Safety", icon: Flame, href: "/firefighting", module: "firefighting" },
+// Every module the dashboard groups under "Modules". Dashboard itself is the
+// Overview tab, so it is intentionally omitted here. Order mirrors the sidebar.
+const moduleItems: ModuleItem[] = [
+  { id: "water", name: "Water", icon: Droplets, href: "/water", module: "water", accent: "text-module-water" },
+  { id: "electricity", name: "Electricity", icon: Zap, href: "/electricity", module: "electricity", accent: "text-module-electricity" },
+  { id: "stp", name: "STP Plant", icon: Waves, href: "/stp", module: "stp", accent: "text-module-stp" },
+  { id: "contractors", name: "Contractors", icon: Users, href: "/contractors", module: "contractors", accent: "text-module-contractors" },
+  { id: "hvac", name: "HVAC System", icon: Wrench, href: "/hvac", module: "hvac", accent: "text-module-hvac" },
+  { id: "assets", name: "Assets", icon: Package, href: "/assets", module: "assets", accent: "text-module-assets" },
+  { id: "pest-control", name: "Pest Control", icon: Bug, href: "/pest-control", module: "pest-control", accent: "text-module-pest" },
+  { id: "firefighting", name: "Fire Safety", icon: Flame, href: "/firefighting", module: "firefighting", accent: "text-module-fire" },
 ];
 
-const overflowItems: NavItem[] = [
-  { id: "contractors", name: "Contractors", icon: Users, href: "/contractors", module: "contractors" },
-  { id: "hvac-system", name: "HVAC System", icon: Wrench, href: "/hvac", module: "hvac" },
-  { id: "assets", name: "Assets", icon: Package, href: "/assets", module: "assets" },
-  { id: "pest-control", name: "Pest Control", icon: Bug, href: "/pest-control", module: "pest-control" },
-  { id: "settings", name: "Settings", icon: Settings, href: "/settings", module: "settings" },
-];
+type SheetKey = "modules" | "alerts" | "profile";
 
-const allNavItems = [...primaryItems, ...overflowItems];
+/** Notification level → icon + status token (paired icon+colour, never colour-only). */
+const LEVEL_META: Record<
+  "success" | "error" | "warning" | "info",
+  { Icon: LucideIcon; token: string; label: string }
+> = {
+  success: { Icon: CheckCircle2, token: "--status-normal", label: "Success" },
+  warning: { Icon: AlertTriangle, token: "--status-warning", label: "Warning" },
+  error: { Icon: XCircle, token: "--status-danger", label: "Error" },
+  info: { Icon: Info, token: "--status-info", label: "Info" },
+};
 
-/** In-place pending indicator: the tab icon spins while ITS navigation is in
- *  flight (useLinkStatus must be read from inside the <Link>). */
+/** Compact relative time — "just now", "5m ago", "2h ago", "3d ago". */
+function timeAgo(date: Date): string {
+  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+  if (seconds < 45) return "just now";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
+}
+
+/** In-place pending indicator: the icon spins while ITS navigation is in flight
+ *  (useLinkStatus must be read from inside the <Link>). */
 function NavLinkIcon({ icon: Icon, className }: { icon: React.ComponentType<{ className?: string }>; className: string }) {
   const { pending } = useLinkStatus();
   if (pending) return <Loader2 className={`${className} motion-safe:animate-spin`} aria-hidden="true" />;
   return <Icon className={className} />;
 }
 
-function isRouteActive(href: string, pathname: string | null) {
-  if (href === '/') return pathname === '/';
-  if (pathname === href) return true;
-  const hasMoreSpecific = allNavItems.some(
-    (other) => other.href !== href && other.href.startsWith(href + '/') && pathname?.startsWith(other.href)
-  );
-  return !hasMoreSpecific && (pathname?.startsWith(href) ?? false);
-}
-
 export function BottomNav() {
   const pathname = usePathname();
-  const { logout, isDevMode } = useAuth();
+  const { profile, user, logout, isDevMode } = useAuth();
   const role = useUserRole();
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const drawerRef = useRef<HTMLDivElement>(null);
-  const moreButtonRef = useRef<HTMLButtonElement>(null);
+  const { resolvedTheme, setTheme } = useTheme();
+  const { notifications, unreadCount, dismiss, clearAll, permission, requestPermission } = useAppNotifications();
 
-  // RBAC filter — same rule as sidebar; dev mode bypasses.
-  const visiblePrimary = isDevMode ? primaryItems : primaryItems.filter((i) => !i.module || canAccessModule(role, i.module));
-  const visibleOverflow = isDevMode ? overflowItems : overflowItems.filter((i) => !i.module || canAccessModule(role, i.module));
+  // Which sheet is open (null = dock only). `renderedSheet` holds the last
+  // opened sheet so its content stays mounted through the slide-out animation —
+  // it is set only when opening (below), so every close path leaves it intact.
+  const [openSheet, setOpenSheet] = useState<SheetKey | null>(null);
+  const [renderedSheet, setRenderedSheet] = useState<SheetKey | null>(null);
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const lastTriggerRef = useRef<HTMLButtonElement | null>(null);
 
-  const isOverflowActive = visibleOverflow.some(i => isRouteActive(i.href, pathname));
+  // RBAC filter — same rule as the sidebar; dev mode bypasses.
+  const visibleModules = isDevMode ? moduleItems : moduleItems.filter((m) => canAccessModule(role, m.module));
+  const canOpenSettings = isDevMode || canAccessModule(role, "settings");
 
-  // Close drawer on route change — canonical "close overlay on navigation"
-  // pattern. Cannot be derived from pathname at render time because it must
-  // override user-opened state.
+  // Active tab. An open sheet takes visual priority over the route so the two
+  // states never both look active at once.
+  const overviewActive = openSheet === null && pathname === "/";
+  const onModuleRoute = moduleItems.some((m) => pathname === m.href || (pathname?.startsWith(m.href + "/") ?? false));
+  const modulesActive = openSheet === "modules" || (openSheet === null && onModuleRoute);
+  const alertsActive = openSheet === "alerts";
+  const onSettingsRoute = pathname?.startsWith("/settings") ?? false;
+  const profileActive = openSheet === "profile" || (openSheet === null && onSettingsRoute);
+
+  const displayName = profile?.full_name || user?.email?.split("@")[0] || "User";
+  const initials = displayName.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
+  const roleLabel = ROLE_LABEL[role] ?? "User";
+
+  const toggleSheet = (key: SheetKey, e: React.MouseEvent<HTMLButtonElement>) => {
+    lastTriggerRef.current = e.currentTarget;
+    if (openSheet === key) {
+      setOpenSheet(null); // tapping the active tab closes; renderedSheet stays
+    } else {
+      setRenderedSheet(key); // opening/switching — mount this sheet's content
+      setOpenSheet(key);
+    }
+  };
+
+  // Close the sheet on route change — canonical "close overlay on navigation"
+  // pattern (cannot be derived from pathname at render because it must override
+  // user-opened state).
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setDrawerOpen(false);
+    setOpenSheet(null);
   }, [pathname]);
 
-  // Focus trap + Escape handler for drawer
+  // Lock background scroll while a sheet is open.
   useEffect(() => {
-    if (!drawerOpen) return;
+    if (openSheet === null) return;
+    const original = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = original;
+    };
+  }, [openSheet]);
 
-    const drawerEl = drawerRef.current;
-    if (!drawerEl) return;
+  // Focus trap + Escape handling for the open sheet.
+  useEffect(() => {
+    if (openSheet === null) return;
+    const sheetEl = sheetRef.current;
+    if (!sheetEl) return;
 
-    // Find all focusable elements within the drawer
-    const getFocusableElements = (): HTMLElement[] => {
-      const selectors = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
-      return Array.from(drawerEl.querySelectorAll<HTMLElement>(selectors));
+    const getFocusable = (): HTMLElement[] => {
+      const selectors =
+        'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+      return Array.from(sheetEl.querySelectorAll<HTMLElement>(selectors));
     };
 
-    // Set initial focus to the close button
-    const focusable = getFocusableElements();
-    if (focusable.length > 0) {
-      focusable[0].focus();
-    }
+    // Move initial focus into the sheet (the close button is first).
+    getFocusable()[0]?.focus();
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setDrawerOpen(false);
+      if (e.key === "Escape") {
+        setOpenSheet(null);
         return;
       }
-
-      if (e.key !== 'Tab') return;
-
-      const currentFocusable = getFocusableElements();
-      if (currentFocusable.length === 0) return;
-
-      const firstEl = currentFocusable[0];
-      const lastEl = currentFocusable[currentFocusable.length - 1];
-
+      if (e.key !== "Tab") return;
+      const focusable = getFocusable();
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
       if (e.shiftKey) {
-        // Shift+Tab: if on first element, wrap to last
-        if (document.activeElement === firstEl) {
+        if (document.activeElement === first) {
           e.preventDefault();
-          lastEl.focus();
+          last.focus();
         }
-      } else {
-        // Tab: if on last element, wrap to first
-        if (document.activeElement === lastEl) {
-          e.preventDefault();
-          firstEl.focus();
-        }
+      } else if (document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
       }
     };
 
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [drawerOpen]);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [openSheet]);
 
-  // Return focus to "More" button when drawer closes
-  const prevDrawerOpen = useRef(false);
+  // Return focus to the trigger tab when the sheet closes.
+  const prevOpen = useRef<SheetKey | null>(null);
   useEffect(() => {
-    if (prevDrawerOpen.current && !drawerOpen) {
-      moreButtonRef.current?.focus();
+    if (prevOpen.current !== null && openSheet === null) {
+      lastTriggerRef.current?.focus();
     }
-    prevDrawerOpen.current = drawerOpen;
-  }, [drawerOpen]);
+    prevOpen.current = openSheet;
+  }, [openSheet]);
+
+  const sheetTitle = renderedSheet ? renderedSheet.charAt(0).toUpperCase() + renderedSheet.slice(1) : "";
 
   return (
     <>
       {/* Backdrop */}
-      {drawerOpen && (
+      {openSheet !== null && (
         <div
-          className="fixed inset-0 bg-black/40 backdrop-blur-[2px] z-[90] md:hidden"
-          onClick={() => setDrawerOpen(false)}
+          className="fixed inset-0 bg-black/40 backdrop-blur-[2px] z-[95] md:hidden motion-safe:animate-in motion-safe:fade-in motion-safe:duration-200"
+          onClick={() => setOpenSheet(null)}
           aria-hidden="true"
         />
       )}
 
-      {/* Slide-up drawer */}
+      {/* ── Slide-up sheet (Modules / Alerts / Profile) ─────────────────────── */}
       <div
-        ref={drawerRef}
-        role="dialog"
-        aria-label="Navigation menu"
-        aria-modal="true"
-        style={{
-          bottom: 'calc(64px + env(safe-area-inset-bottom, 0px))',
-          transform: drawerOpen
-            ? 'translateY(0)'
-            : 'translateY(calc(100% + 64px + env(safe-area-inset-bottom, 0px)))',
-        }}
-        className="fixed left-0 right-0 z-[95] md:hidden motion-safe:transition-transform motion-safe:duration-200 motion-safe:ease-out"
+        className="fixed inset-x-0 z-[97] md:hidden flex justify-center px-3 pointer-events-none"
+        style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 5.75rem)" }}
       >
-        <div className="mx-3 mb-2 rounded-2xl bg-card dark:bg-muted shadow-2xl border border-border overflow-hidden">
-          {/* Drawer header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-border/60 dark:border-border">
-            <span className="text-sm font-semibold text-foreground/80 dark:text-foreground/90">More</span>
-            <button
-              onClick={() => setDrawerOpen(false)}
-              className="w-11 h-11 flex items-center justify-center rounded-full hover:bg-muted dark:hover:bg-muted text-muted-foreground transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-              aria-label="Close menu"
-            >
-              <X className="w-4 h-4" />
-            </button>
+        <div
+          ref={sheetRef}
+          role="dialog"
+          aria-label={sheetTitle ? `${sheetTitle} menu` : undefined}
+          aria-hidden={openSheet === null || undefined}
+          inert={openSheet === null}
+          style={{
+            transform: openSheet !== null ? "translateY(0)" : "translateY(calc(100% + 8rem))",
+          }}
+          className="w-full max-w-md max-h-[65vh] flex flex-col rounded-3xl bg-card dark:bg-muted shadow-2xl border border-border dark:border-white/10 overflow-hidden pointer-events-auto motion-safe:transition-transform motion-safe:duration-300 motion-safe:ease-out"
+        >
+          {/* Sheet header */}
+          <div className="flex items-center justify-between px-4 py-3 border-b border-border/60 dark:border-white/10 flex-shrink-0">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-semibold text-foreground">{sheetTitle}</span>
+              {renderedSheet === "alerts" && unreadCount > 0 && (
+                <span className="text-[11px] font-semibold text-secondary bg-secondary/12 rounded-full px-2 py-0.5">
+                  {unreadCount} new
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-1">
+              {renderedSheet === "alerts" && notifications.length > 0 && (
+                <button
+                  onClick={clearAll}
+                  className="text-xs font-medium text-muted-foreground hover:text-foreground px-2.5 h-9 rounded-lg hover:bg-muted/60 dark:hover:bg-white/[0.06] transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                >
+                  Clear all
+                </button>
+              )}
+              <button
+                onClick={() => setOpenSheet(null)}
+                className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-muted dark:hover:bg-white/[0.06] text-muted-foreground transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                aria-label="Close menu"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
           </div>
 
-          {/* Overflow nav items */}
-          <nav className="py-2">
-            {visibleOverflow.map((item) => {
-              const Icon = item.icon;
-              const active = isRouteActive(item.href, pathname);
-              return (
-                <Link
-                  key={item.id}
-                  href={item.href}
-                  className={`
-                    flex items-center gap-3 px-4 py-3 transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none
-                    ${active
-                      ? 'bg-secondary/10 text-secondary'
-                      : 'text-foreground/70 dark:text-foreground/85 hover:bg-muted/60 dark:hover:bg-muted/50'
-                    }
-                  `}
-                >
-                  <NavLinkIcon icon={Icon} className="w-5 h-5 flex-shrink-0" />
-                  <span className={`text-sm ${active ? 'font-semibold' : 'font-medium'}`}>{item.name}</span>
-                  {active && (
-                    <div className="ms-auto w-2 h-2 rounded-full bg-secondary" />
-                  )}
-                </Link>
-              );
-            })}
+          {/* Sheet body — scrollable */}
+          <div className="overflow-y-auto overscroll-contain p-3">
+            {/* ── Modules ── */}
+            {renderedSheet === "modules" && (
+              <div className="grid grid-cols-2 gap-2.5">
+                {visibleModules.map((item) => {
+                  const active = pathname === item.href || (pathname?.startsWith(item.href + "/") ?? false);
+                  return (
+                    <Link
+                      key={item.id}
+                      href={item.href}
+                      className={`
+                        group flex items-center gap-3 p-3 rounded-2xl border transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none
+                        ${active
+                          ? "border-secondary/45 bg-secondary/[0.07]"
+                          : "border-border dark:border-white/10 hover:bg-muted/60 dark:hover:bg-white/[0.05]"
+                        }
+                      `}
+                      aria-current={active ? "page" : undefined}
+                    >
+                      <span className="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-xl bg-muted dark:bg-white/[0.06]">
+                        <NavLinkIcon icon={item.icon} className={`w-5 h-5 ${item.accent}`} />
+                      </span>
+                      <span className={`text-sm leading-tight ${active ? "font-semibold text-foreground" : "font-medium text-foreground/85"}`}>
+                        {item.name}
+                      </span>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
 
-            {/* Sign Out */}
-            <button
-              onClick={() => { setDrawerOpen(false); logout(); }}
-              className="w-full flex items-center gap-3 px-4 py-3 text-mb-danger-text hover:bg-mb-danger-light transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-            >
-              <LogOut className="w-5 h-5 flex-shrink-0" />
-              <span className="text-sm font-medium">Sign Out</span>
-            </button>
-          </nav>
+            {/* ── Alerts ── */}
+            {renderedSheet === "alerts" && (
+              <div className="space-y-2">
+                {permission === "default" && (
+                  <div className="flex items-center gap-3 p-3 rounded-2xl bg-secondary/[0.07] border border-secondary/25">
+                    <Bell className="w-5 h-5 text-secondary flex-shrink-0" aria-hidden="true" />
+                    <p className="flex-1 text-xs text-foreground/80 leading-snug">
+                      Enable push notifications for threshold and maintenance alerts.
+                    </p>
+                    <button
+                      onClick={() => requestPermission()}
+                      className="text-xs font-semibold bg-secondary text-secondary-foreground rounded-lg px-3 h-9 hover:bg-secondary/85 transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none flex-shrink-0"
+                    >
+                      Enable
+                    </button>
+                  </div>
+                )}
+
+                {notifications.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center text-center py-10 px-4">
+                    <div className="w-12 h-12 rounded-full bg-muted dark:bg-white/[0.06] flex items-center justify-center mb-3">
+                      <BellOff className="w-5 h-5 text-muted-foreground" aria-hidden="true" />
+                    </div>
+                    <p className="text-sm font-medium text-foreground">You&apos;re all caught up</p>
+                    <p className="text-xs text-muted-foreground mt-1">New alerts will appear here as they arrive.</p>
+                  </div>
+                ) : (
+                  notifications.map((n) => {
+                    const meta = LEVEL_META[n.level];
+                    const MetaIcon = meta.Icon;
+                    return (
+                      <div
+                        key={n.id}
+                        className="flex items-start gap-3 p-3 rounded-2xl border border-border dark:border-white/10 bg-card dark:bg-white/[0.02]"
+                      >
+                        <MetaIcon
+                          className="w-5 h-5 flex-shrink-0 mt-0.5"
+                          style={{ color: `var(${meta.token})` }}
+                          aria-label={meta.label}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-foreground leading-snug">{n.title}</p>
+                          {n.message && (
+                            <p className="text-xs text-muted-foreground mt-0.5 leading-snug break-words">{n.message}</p>
+                          )}
+                          <p className="text-[11px] text-muted-foreground/80 mt-1">{timeAgo(n.timestamp)}</p>
+                        </div>
+                        <button
+                          onClick={() => dismiss(n.id)}
+                          className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-full text-muted-foreground hover:bg-muted dark:hover:bg-white/[0.06] transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                          aria-label={`Dismiss: ${n.title}`}
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            )}
+
+            {/* ── Profile ── */}
+            {renderedSheet === "profile" && (
+              <div className="space-y-3">
+                {/* Identity */}
+                <div className="flex items-center gap-3 p-3 rounded-2xl bg-muted/60 dark:bg-white/[0.04]">
+                  <Avatar className="w-11 h-11 border-2 border-border dark:border-white/10">
+                    <AvatarImage src={profile?.avatar_url || undefined} alt={displayName} />
+                    <AvatarFallback className="bg-primary text-primary-foreground text-sm font-bold">
+                      {initials}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-sm font-semibold text-foreground truncate">{displayName}</span>
+                    {user?.email && <span className="text-xs text-muted-foreground truncate">{user.email}</span>}
+                    <span className="text-[11px] text-secondary font-medium mt-0.5">{roleLabel}</span>
+                  </div>
+                </div>
+
+                {/* Appearance */}
+                <div className="flex items-center justify-between gap-3 p-3 rounded-2xl border border-border dark:border-white/10">
+                  <span className="text-sm font-medium text-foreground">Appearance</span>
+                  <div className="flex items-center gap-1 p-1 rounded-xl bg-muted dark:bg-white/[0.06]" role="group" aria-label="Theme">
+                    <button
+                      onClick={() => setTheme("light")}
+                      aria-pressed={resolvedTheme === "light"}
+                      className={`flex items-center gap-1.5 px-3 h-9 rounded-lg text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none ${
+                        resolvedTheme === "light"
+                          ? "bg-card text-foreground shadow-sm"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      <Sun className="w-4 h-4" /> Light
+                    </button>
+                    <button
+                      onClick={() => setTheme("dark")}
+                      aria-pressed={resolvedTheme === "dark"}
+                      className={`flex items-center gap-1.5 px-3 h-9 rounded-lg text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none ${
+                        resolvedTheme === "dark"
+                          ? "bg-[var(--background)] text-foreground shadow-sm"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      <Moon className="w-4 h-4" /> Dark
+                    </button>
+                  </div>
+                </div>
+
+                {/* Settings */}
+                {canOpenSettings && (
+                  <Link
+                    href="/settings"
+                    className="flex items-center gap-3 p-3 rounded-2xl border border-border dark:border-white/10 hover:bg-muted/60 dark:hover:bg-white/[0.05] transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                    aria-current={onSettingsRoute ? "page" : undefined}
+                  >
+                    <span className="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-xl bg-muted dark:bg-white/[0.06]">
+                      <Settings className="w-5 h-5 text-foreground/80" />
+                    </span>
+                    <span className="flex-1 text-sm font-medium text-foreground">Settings</span>
+                    <ChevronRight className="w-4 h-4 text-muted-foreground" aria-hidden="true" />
+                  </Link>
+                )}
+
+                {/* Sign out */}
+                <button
+                  onClick={() => {
+                    setOpenSheet(null);
+                    logout();
+                  }}
+                  className="w-full flex items-center gap-3 p-3 rounded-2xl border border-transparent text-mb-danger-text hover:bg-mb-danger-light transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                >
+                  <span className="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-xl bg-mb-danger-light">
+                    <LogOut className="w-5 h-5" />
+                  </span>
+                  <span className="flex-1 text-left text-sm font-medium">Sign Out</span>
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Bottom navigation bar — inert+aria-hidden when the More drawer is
-          open so keyboard users cannot tab into it while the dialog is modal */}
-      <nav
-        className="fixed bottom-0 left-0 right-0 z-[100] md:hidden bg-card dark:bg-muted border-t border-border dark:border-border/80 shadow-[0_-4px_16px_rgba(0,0,0,0.07)] dark:shadow-[0_-2px_10px_rgba(0,0,0,0.3)] bottom-nav-safe"
-        aria-label="Mobile navigation"
-        aria-hidden={drawerOpen || undefined}
-        inert={drawerOpen}
+      {/* ── Floating pill dock ──────────────────────────────────────────────── */}
+      <div
+        className="fixed inset-x-0 z-[100] md:hidden flex justify-center px-3"
+        style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 0.75rem)" }}
       >
-        <div className="flex items-center justify-around h-16 px-1">
-          {visiblePrimary.map((item) => {
-            const Icon = item.icon;
-            const active = isRouteActive(item.href, pathname);
-            return (
-              <Link
-                key={item.id}
-                href={item.href}
-                className={`
-                  flex flex-col items-center justify-center gap-0.5 flex-1 h-full pt-1.5 pb-1 rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none
-                  ${active
-                    ? 'text-secondary'
-                    : 'text-primary/70 dark:text-muted-foreground hover:text-primary dark:hover:text-foreground'
-                  }
-                `}
-              >
-                <NavLinkIcon icon={Icon} className="w-5 h-5" />
-                <span className={`text-[11px] leading-tight ${active ? 'font-semibold' : 'font-medium'}`}>
-                  {item.name}
-                </span>
-                {active && (
-                  <div className="w-1 h-1 rounded-full bg-secondary -mt-0.5" />
-                )}
-              </Link>
-            );
-          })}
+        <nav
+          className="w-full max-w-md rounded-[26px] bg-card/95 dark:bg-muted/90 backdrop-blur-xl border border-border/70 dark:border-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.12)] dark:shadow-[0_10px_34px_rgba(0,0,0,0.55)]"
+          aria-label="Mobile navigation"
+        >
+          <div className="flex items-stretch justify-around h-16 px-1.5">
+            {/* Overview → dashboard link */}
+            <Link
+              href="/"
+              className={`flex flex-col items-center justify-center gap-1 flex-1 rounded-[20px] transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none ${
+                overviewActive ? "text-secondary" : "text-muted-foreground hover:text-foreground"
+              }`}
+              aria-current={overviewActive ? "page" : undefined}
+            >
+              <NavLinkIcon icon={LayoutGrid} className="w-6 h-6" />
+              <span className={`text-[11px] leading-none ${overviewActive ? "font-semibold" : "font-medium"}`}>Overview</span>
+            </Link>
 
-          {/* More button */}
-          <button
-            ref={moreButtonRef}
-            onClick={() => setDrawerOpen(prev => !prev)}
-            className={`
-              flex flex-col items-center justify-center gap-0.5 flex-1 h-full pt-1.5 pb-1 rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none
-              ${drawerOpen || isOverflowActive
-                ? 'text-secondary'
-                : 'text-primary/70 dark:text-muted-foreground hover:text-primary dark:hover:text-foreground'
-              }
-            `}
-            aria-label="More navigation items"
-            aria-expanded={drawerOpen}
-          >
-            <MoreHorizontal className="w-5 h-5" />
-            <span className={`text-[11px] leading-tight ${drawerOpen || isOverflowActive ? 'font-semibold' : 'font-medium'}`}>
-              More
-            </span>
-            {isOverflowActive && !drawerOpen && (
-              <div className="w-1 h-1 rounded-full bg-secondary -mt-0.5" />
-            )}
-          </button>
-        </div>
-      </nav>
+            {/* Modules → sheet */}
+            <button
+              onClick={(e) => toggleSheet("modules", e)}
+              className={`flex flex-col items-center justify-center gap-1 flex-1 rounded-[20px] transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none ${
+                modulesActive ? "text-secondary" : "text-muted-foreground hover:text-foreground"
+              }`}
+              aria-haspopup="dialog"
+              aria-expanded={openSheet === "modules"}
+            >
+              <Building2 className="w-6 h-6" />
+              <span className={`text-[11px] leading-none ${modulesActive ? "font-semibold" : "font-medium"}`}>Modules</span>
+            </button>
+
+            {/* Alerts → sheet (with unread badge) */}
+            <button
+              onClick={(e) => toggleSheet("alerts", e)}
+              className={`relative flex flex-col items-center justify-center gap-1 flex-1 rounded-[20px] transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none ${
+                alertsActive ? "text-secondary" : "text-muted-foreground hover:text-foreground"
+              }`}
+              aria-haspopup="dialog"
+              aria-expanded={openSheet === "alerts"}
+            >
+              <span className="relative">
+                <Bell className="w-6 h-6" />
+                {unreadCount > 0 && (
+                  <span
+                    className="absolute -top-1.5 -end-2 min-w-[18px] h-[18px] px-1 flex items-center justify-center rounded-full text-[10px] font-bold text-white ring-2 ring-[var(--card)] dark:ring-[var(--muted)]"
+                    style={{ backgroundColor: "var(--status-danger)" }}
+                    aria-hidden="true"
+                  >
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
+              </span>
+              <span className={`text-[11px] leading-none ${alertsActive ? "font-semibold" : "font-medium"}`}>Alerts</span>
+              <span className="sr-only">{unreadCount > 0 ? `, ${unreadCount} unread` : ""}</span>
+            </button>
+
+            {/* Profile → sheet */}
+            <button
+              onClick={(e) => toggleSheet("profile", e)}
+              className={`flex flex-col items-center justify-center gap-1 flex-1 rounded-[20px] transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none ${
+                profileActive ? "text-secondary" : "text-muted-foreground hover:text-foreground"
+              }`}
+              aria-haspopup="dialog"
+              aria-expanded={openSheet === "profile"}
+            >
+              <CircleUser className="w-6 h-6" />
+              <span className={`text-[11px] leading-none ${profileActive ? "font-semibold" : "font-medium"}`}>Profile</span>
+            </button>
+          </div>
+        </nav>
+      </div>
     </>
   );
 }

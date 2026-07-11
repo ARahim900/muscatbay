@@ -72,6 +72,23 @@ Electricity, STP, Contractors, HVAC, Fire Safety, Assets):
 - **KPI labels wrap instead of truncating mid-word** on narrow viewports
   ("WATER PRODUCTI…") — command deck + shared `StatsGrid`.
 
+**2026-07-11 — mobile bottom navigation redesign.** The mobile dock
+(`components/layout/bottom-nav.tsx`) was rebuilt from the 5-modules-plus-"More"
+bar into a floating, rounded **pill** with four tabs — **Overview** (dashboard
+link), **Modules**, **Alerts** and **Profile**. Modules/Alerts/Profile open
+slide-up sheets rather than navigating: Modules is a 2-column grid of every
+operations module (RBAC-filtered, module-accent icons); Alerts renders the
+in-app notification feed from `useAppNotifications` with a red unread-count
+badge on the bell (plus push-enable prompt + "all caught up" empty state);
+Profile carries the account card, a light/dark appearance toggle, Settings and
+Sign Out. Because the sidebar is unreachable on phones, these sheets deliberately
+expose everything the desktop sidebar does. Theme-aware and token-only (dark
+elevated pill / light card pill, teal `--secondary` active state) with
+focus-trap + Escape + background-scroll-lock on the sheets. Page bottom padding
+(`client-layout.tsx`) was raised to clear the taller floating dock, and the
+print stylesheet's stale `nav[aria-label="Primary navigation"]` selector was
+corrected to `"Mobile navigation"` so the dock is hidden when printing.
+
 ## 3. Water monthly data — how it works now (important)
 
 Rebuilt 2026-07-03 (PRs #29/#30) so that **any monthly value present in the

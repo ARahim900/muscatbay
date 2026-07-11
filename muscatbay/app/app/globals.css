@@ -1201,11 +1201,12 @@
 
     /* Hide app chrome — sidebar, topbar, bottom-nav, mobile drawers, palette */
     aside[aria-label="Main navigation"],
-    nav[aria-label="Primary navigation"],
+    nav[aria-label="Mobile navigation"],
     header[role="banner"],
     .header-blur,
     [role="dialog"][aria-label="Command palette"],
     [role="dialog"][aria-label="Navigation menu"],
+    [role="dialog"][aria-label$="menu"],
     .print\:hidden {
       display: none !important;
     }
