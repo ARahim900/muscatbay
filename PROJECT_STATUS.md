@@ -151,6 +151,7 @@ Entries below the marker are appended automatically on every push to `main`.
 Do not hand-edit existing entries; curate meaning in the sections above.
 
 <!-- STATUS:LOG:BEGIN -->
+- 2026-07-11 — feat(mobile-nav): redesign bottom nav as a floating pill dock
 - 2026-07-10 — feat(pest-control): frame AITable embed as a labelled, bounded external panel
 - 2026-07-10 — fix(stp): date-range Start/End dropdowns no longer render empty
 - 2026-07-10 — feat(perf): instant module switching — session data cache + link pending indicator
