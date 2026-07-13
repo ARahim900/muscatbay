@@ -63,6 +63,12 @@ interface UseNotificationsReturn {
   error: (title: string, message?: string) => void;
   warning: (title: string, message?: string) => void;
   info: (title: string, message?: string) => void;
+  /**
+   * Fire ONLY a browser/OS notification without adding to the in-app list.
+   * Used by the operational alert watcher, whose alerts are already rendered
+   * as persistent feed entries — listing them again would duplicate them.
+   */
+  pushToOS: (title: string, message?: string, level?: NotificationLevel) => void;
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────────
@@ -325,5 +331,6 @@ export function useNotifications(
     error,
     warning,
     info,
+    pushToOS: sendBrowserNotification,
   };
 }

@@ -9,11 +9,11 @@ import { useTheme } from '@/components/providers';
 import { useAppNotifications } from '@/components/NotificationProvider';
 import { canAccessModule, ROLE_LABEL, type ModuleKey } from '@/lib/rbac';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { AlertsFeed } from '@/components/alerts/alerts-feed';
 import {
   LayoutGrid,
   Building2,
   Bell,
-  BellOff,
   CircleUser,
   Droplets,
   Zap,
@@ -29,12 +29,7 @@ import {
   Loader2,
   Sun,
   Moon,
-  CheckCircle2,
-  AlertTriangle,
-  XCircle,
-  Info,
   ChevronRight,
-  type LucideIcon,
 } from 'lucide-react';
 
 /* ────────────────────────────────────────────────────────────────────────────
@@ -76,29 +71,6 @@ const moduleItems: ModuleItem[] = [
 
 type SheetKey = "modules" | "alerts" | "profile";
 
-/** Notification level → icon + status token (paired icon+colour, never colour-only). */
-const LEVEL_META: Record<
-  "success" | "error" | "warning" | "info",
-  { Icon: LucideIcon; token: string; label: string }
-> = {
-  success: { Icon: CheckCircle2, token: "--status-normal", label: "Success" },
-  warning: { Icon: AlertTriangle, token: "--status-warning", label: "Warning" },
-  error: { Icon: XCircle, token: "--status-danger", label: "Error" },
-  info: { Icon: Info, token: "--status-info", label: "Info" },
-};
-
-/** Compact relative time — "just now", "5m ago", "2h ago", "3d ago". */
-function timeAgo(date: Date): string {
-  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
-  if (seconds < 45) return "just now";
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  return `${days}d ago`;
-}
-
 /** In-place pending indicator: the icon spins while ITS navigation is in flight
  *  (useLinkStatus must be read from inside the <Link>). */
 function NavLinkIcon({ icon: Icon, className }: { icon: React.ComponentType<{ className?: string }>; className: string }) {
@@ -112,7 +84,7 @@ export function BottomNav() {
   const { profile, user, logout, isDevMode } = useAuth();
   const role = useUserRole();
   const { resolvedTheme, setTheme } = useTheme();
-  const { notifications, unreadCount, dismiss, clearAll, permission, requestPermission } = useAppNotifications();
+  const { notifications, unreadCount, clearAll, permission, requestPermission, markFeedOpened } = useAppNotifications();
 
   // Which sheet is open (null = dock only). `renderedSheet` holds the last
   // opened sheet so its content stays mounted through the slide-out animation —
@@ -146,6 +118,7 @@ export function BottomNav() {
     } else {
       setRenderedSheet(key); // opening/switching — mount this sheet's content
       setOpenSheet(key);
+      if (key === "alerts") markFeedOpened(); // session notifications become "read"
     }
   };
 
@@ -313,7 +286,7 @@ export function BottomNav() {
                   <div className="flex items-center gap-3 p-3 rounded-2xl bg-secondary/[0.07] border border-secondary/25">
                     <Bell className="w-5 h-5 text-secondary flex-shrink-0" aria-hidden="true" />
                     <p className="flex-1 text-xs text-foreground/80 leading-snug">
-                      Enable push notifications for threshold and maintenance alerts.
+                      Enable push notifications for loss, contract and plant-failure alerts.
                     </p>
                     <button
                       onClick={() => requestPermission()}
@@ -324,46 +297,8 @@ export function BottomNav() {
                   </div>
                 )}
 
-                {notifications.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center text-center py-10 px-4">
-                    <div className="w-12 h-12 rounded-full bg-muted dark:bg-white/[0.06] flex items-center justify-center mb-3">
-                      <BellOff className="w-5 h-5 text-muted-foreground" aria-hidden="true" />
-                    </div>
-                    <p className="text-sm font-medium text-foreground">You&apos;re all caught up</p>
-                    <p className="text-xs text-muted-foreground mt-1">New alerts will appear here as they arrive.</p>
-                  </div>
-                ) : (
-                  notifications.map((n) => {
-                    const meta = LEVEL_META[n.level];
-                    const MetaIcon = meta.Icon;
-                    return (
-                      <div
-                        key={n.id}
-                        className="flex items-start gap-3 p-3 rounded-2xl border border-border dark:border-white/10 bg-card dark:bg-white/[0.02]"
-                      >
-                        <MetaIcon
-                          className="w-5 h-5 flex-shrink-0 mt-0.5"
-                          style={{ color: `var(${meta.token})` }}
-                          aria-label={meta.label}
-                        />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-foreground leading-snug">{n.title}</p>
-                          {n.message && (
-                            <p className="text-xs text-muted-foreground mt-0.5 leading-snug break-words">{n.message}</p>
-                          )}
-                          <p className="text-[11px] text-muted-foreground/80 mt-1">{timeAgo(n.timestamp)}</p>
-                        </div>
-                        <button
-                          onClick={() => dismiss(n.id)}
-                          className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-full text-muted-foreground hover:bg-muted dark:hover:bg-white/[0.06] transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-                          aria-label={`Dismiss: ${n.title}`}
-                        >
-                          <X className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    );
-                  })
-                )}
+                {/* Shared feed: operational alerts + session notifications */}
+                <AlertsFeed onNavigate={() => setOpenSheet(null)} />
               </div>
             )}
 

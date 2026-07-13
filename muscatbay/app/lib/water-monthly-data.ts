@@ -35,12 +35,13 @@ export const TARGET_LOSS_PCT = 15;
 export const LOSS_RATE_OMR = 1.32;
 
 /**
- * Brand chart palette for the consumption-by-type series. Mirrors the app's
- * `--chart-1..5` tokens plus a warm orange and a neutral fallback.
+ * Brand chart palette for the consumption-by-type series — the app's
+ * `--chart-*` tokens (plus the warm orange and a neutral fallback), so the
+ * series recolours with the theme instead of drifting on inline hex.
  */
 export const TYPECOL = [
-    "#6B9AC4", "#A1D1D5", "#E8C064", "#84B59F",
-    "#4D445D", "#9B86A8", "#DF9A5B", "#6B7280",
+    "var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)",
+    "var(--chart-5)", "var(--chart-gray)", "var(--chart-elec-secondary)", "var(--chart-axis)",
 ] as const;
 
 /* ------------------------------------------------------------------ */
@@ -152,10 +153,14 @@ export interface PeriodResult {
     buildings: BuildingRow[];
 }
 
-/** Loss-severity descriptor (colour + background + label). */
+/** Loss-severity descriptor (text colour + background + chart fill + label). */
 export interface Severity {
+    /** Text colour — WCAG-AA `--mb-*-text` token. */
     c: string;
+    /** Tinted background — `--mb-*-light` token (or a color-mix of the base). */
     bg: string;
+    /** Chart/bar fill — the mid-tone `--mb-*` base token. */
+    chart: string;
     label: string;
 }
 
@@ -192,23 +197,31 @@ export const periodValue = (c: YearCache, sel: Sel): number => {
 export const monthInSelection = (sel: Sel, i: number): boolean =>
     isRangeSel(sel) ? i >= sel[0] && i <= sel[1] : i === sel;
 
-/** Map a loss percentage to a severity descriptor (WCAG-AA text variants). */
+/**
+ * Map a loss percentage to a severity descriptor.
+ *
+ * Token-only — resolves the same `--mb-*` status variables the shared
+ * inspection toolkit uses (see `components/shared/inspection.tsx`), so the
+ * Water Monthly severity colours match STP Plant Watch / Electricity Load
+ * Watch and flip correctly in light and dark. Inline hex here was the one
+ * remaining rogue palette in the app.
+ */
 export function sev(p: number | null | undefined): Severity {
-    if (p == null || isNaN(p)) return { c: "#7A6F82", bg: "#F1F0F3", label: "–" };
-    if (p < 0) return { c: "#7A6F82", bg: "#F1F0F3", label: "Check" };
-    if (p < 10) return { c: "#5E8C77", bg: "#EAF3EE", label: "Good" };
-    if (p < 25) return { c: "#9A7B1F", bg: "#FBF3DD", label: "Moderate" };
-    if (p < 50) return { c: "#B5703A", bg: "#FBEDE0", label: "High" };
-    return { c: "#B85C5C", bg: "#F7E4E4", label: "Critical" };
+    if (p == null || isNaN(p)) return { c: "var(--muted-foreground)", bg: "var(--muted)", chart: "var(--status-missing)", label: "–" };
+    if (p < 0) return { c: "var(--muted-foreground)", bg: "var(--muted)", chart: "var(--status-missing)", label: "Check" };
+    if (p < 10) return { c: "var(--mb-success-text)", bg: "var(--mb-success-light)", chart: "var(--mb-success)", label: "Good" };
+    if (p < 25) return { c: "var(--mb-warning-text)", bg: "var(--mb-warning-light)", chart: "var(--mb-warning)", label: "Moderate" };
+    if (p < 50) return { c: "var(--mb-danger-text)", bg: "color-mix(in srgb, var(--mb-danger) 15%, transparent)", chart: "var(--mb-danger)", label: "High" };
+    return { c: "var(--mb-danger-text)", bg: "color-mix(in srgb, var(--mb-danger) 30%, transparent)", chart: "var(--mb-danger)", label: "Critical" };
 }
 
-/** Status label/colour for a zone or building loss percentage vs. target. */
+/** Status label/colour for a zone or building loss percentage vs. target (token-only). */
 export const statusFromLoss = (p: number): { label: string; c: string; bg: string } =>
     p <= TARGET_LOSS_PCT
-        ? { label: "Normal", c: "#5E8C77", bg: "#EAF3EE" }
+        ? { label: "Normal", c: "var(--mb-success-text)", bg: "var(--mb-success-light)" }
         : p <= 25
-            ? { label: "Watch", c: "#9A7B1F", bg: "#FBF3DD" }
-            : { label: "Critical", c: "#B85C5C", bg: "#F7E4E4" };
+            ? { label: "Watch", c: "var(--mb-warning-text)", bg: "var(--mb-warning-light)" }
+            : { label: "Critical", c: "var(--mb-danger-text)", bg: "var(--mb-danger-light)" };
 
 /** Suggested operator action for a given loss percentage. */
 export const actionFromLoss = (p: number, missing = 0): string =>

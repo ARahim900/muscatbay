@@ -15,7 +15,7 @@
 > - Deep reference detail lives in the linked docs at the bottom — this file
 >   holds the *current state*, not the full manuals.
 
-**Last curated review:** 2026-07-06
+**Last curated review:** 2026-07-13
 
 ---
 
@@ -71,6 +71,57 @@ Electricity, STP, Contractors, HVAC, Fire Safety, Assets):
   card (seen on `/stp` with "STP: High Tanker Activity").
 - **KPI labels wrap instead of truncating mid-word** on narrow viewports
   ("WATER PRODUCTI…") — command deck + shared `StatsGrid`.
+
+**2026-07-13 — alert reliability + interface consistency pass** (cross-module):
+
+- **Data-driven operational alerts.** New pure rules engine
+  `lib/operational-alerts.ts` (unit-tested) evaluates live data for the three
+  operational risk classes and is the single source of truth for "is anything
+  wrong": water system loss vs the 15% target (critical zones >25% listed;
+  months without an A1/NAMA reading are skipped, never reported as fake loss),
+  contract expiry from `Contractor_Tracker` (past End Date while still marked
+  Active = critical; within 60 days = warning; rows already marked Expired are
+  treated as closed history), and STP critical failures (zero TSE output while
+  sewage arrived, recovery under the 90/80% bands, daily log stale >3 days).
+  `hooks/useOperationalAlerts.ts` fetches sources, re-evaluates on realtime
+  changes + a 30-min clock tick, persists acknowledgements per condition
+  fingerprint (localStorage; a new month/day/set re-raises), and fires ONE
+  browser push per new warning/critical fingerprint. **Mock data is never
+  evaluated** — when live sources are unreachable the feed says monitoring is
+  offline/partial instead of pretending health. This closes the core alert
+  bug: the app could show "all caught up" while the Water page flagged losses
+  28.8 pp above target in red.
+- **Alert surfaces.** Shared feed component (`components/alerts/alerts-feed.tsx`)
+  renders active alerts (severity icon + module chip + Review link +
+  Acknowledge/Reopen) above session notifications, with honest empty/degraded
+  states. The mobile Alerts sheet now uses it, and a **new topbar bell**
+  (`components/layout/notification-bell.tsx`) gives desktop its first alert
+  surface (badge = unacked alerts + unseen session notifications; opening the
+  feed marks session items read). Dashboard "Latest Updates" now leads with
+  live alerts, so its previously-dead **critical** filter works.
+- **Monthly-change calculation standardised.** One shared `lib/trends.ts`
+  (`calcTrend`/`describeTrend`) replaced three divergent copies (dashboard
+  hook, Electricity page, STP page) that disagreed on neutral labels
+  ('0%' vs '—' vs '~0%'); no-baseline (`—`) is now distinguished from
+  stable (`~0%`) everywhere, including the dashboard chart insight lines.
+- **Dashboard chart time axes aligned.** Both hero charts plot one shared,
+  calendar-contiguous last-8-months window (ending at the newest month across
+  water + STP); months without a reading render as gaps instead of being
+  silently dropped (the missing Jun-26 NAMA month now shows as a gap), and the
+  water running-average ignores gap months. KPI subtitles standardised to the
+  app-wide `Mon-YY` month format (STP previously showed "Mon YY").
+- **Colour usage unified.** `lib/water-monthly-data.ts` was the last rogue
+  hex palette: `sev()`/`statusFromLoss()` now resolve the same `--mb-*` status
+  tokens as the shared inspection toolkit (plus a `chart` mid-tone for
+  bar/border fills), and `TYPECOL` maps to `--chart-*` tokens — Water Monthly
+  severity visuals now match STP Plant Watch / Electricity Load Watch and
+  theme correctly in light/dark.
+- **Settings corrected.** Profile card no longer claims information is
+  "public"; the Account tab's stray Save button (it saved *profile* fields) was
+  removed; the Notifications tab dropped the fictional email-digest and SMS
+  toggles and now shows the real monitored conditions plus a working,
+  persisted browser-push preference (`lib/alert-preferences.ts`) and the
+  actual browser permission state with an Enable action.
 
 **2026-07-11 — mobile bottom navigation redesign.** The mobile dock
 (`components/layout/bottom-nav.tsx`) was rebuilt from the 5-modules-plus-"More"

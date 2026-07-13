@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react"
 import { useAuth } from "@/components/auth/auth-provider"
 import { updateUserProfile, uploadAvatar } from "@/lib/auth"
+import { useAppNotifications } from "@/components/NotificationProvider"
+import { getAlertPreferences, setAlertPreferences } from "@/lib/alert-preferences"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -10,7 +12,7 @@ import { Separator } from "@/components/ui/separator"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Loader2, Upload, Save, User, Shield, Bell, Monitor, CheckCircle2 } from "lucide-react"
+import { Loader2, Upload, Save, User, Shield, Bell, Monitor, CheckCircle2, Droplets, Users, Waves } from "lucide-react"
 
 export default function SettingsPage() {
     const { user, profile, isAuthenticated, refreshProfile } = useAuth()
@@ -26,8 +28,15 @@ export default function SettingsPage() {
     const [avatarFile, setAvatarFile] = useState<File | null>(null)
     const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
     const [activeTab, setActiveTab] = useState<'profile' | 'account' | 'notifications'>('profile')
-    const [emailAlertsEnabled, setEmailAlertsEnabled] = useState(false)
-    const [criticalAlarmsEnabled, setCriticalAlarmsEnabled] = useState(true)
+    const { permission, requestPermission } = useAppNotifications()
+    // Persisted alert preference — read after mount (SSR-safe), applied immediately on toggle.
+    const [pushEnabled, setPushEnabled] = useState(true)
+    useEffect(() => {
+        setPushEnabled(getAlertPreferences().push)
+    }, [])
+    const togglePush = () => {
+        setPushEnabled(prev => setAlertPreferences({ push: !prev }).push)
+    }
 
     // Initialize form data from profile
     useEffect(() => {
@@ -207,9 +216,9 @@ export default function SettingsPage() {
                     {activeTab === 'profile' && (
                         <Card className="card-elevated">
                             <CardHeader className="card-elevated-header">
-                                <CardTitle>Public Profile</CardTitle>
+                                <CardTitle>Profile</CardTitle>
                                 <CardDescription>
-                                    This information represents you publicly on the platform.
+                                    Your name and photo as they appear across the Muscat Bay operations app.
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-6">
@@ -347,18 +356,10 @@ export default function SettingsPage() {
                                     </div>
                                 </div>
                             </CardContent>
-                            <CardFooter className="flex justify-between border-t border-sidebar/10 px-6 py-4 bg-sidebar/5">
+                            <CardFooter className="border-t border-sidebar/10 px-6 py-4 bg-sidebar/5">
                                 <p className="text-sm text-muted-foreground">
-                                    Session management options.
+                                    Need a different email? Contact your administrator.
                                 </p>
-                                <Button
-                                    onClick={updateProfile}
-                                    disabled={updating}
-                                    className="bg-sidebar hover:bg-sidebar/90 text-primary-foreground"
-                                >
-                                    {updating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                                    Save Changes
-                                </Button>
                             </CardFooter>
                         </Card>
                     )}
@@ -368,56 +369,80 @@ export default function SettingsPage() {
                             <CardHeader className="card-elevated-header">
                                 <CardTitle>Notifications</CardTitle>
                                 <CardDescription>
-                                    Configure how you receive alerts and reports.
+                                    Alerts are generated automatically from live operational data.
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-4">
-                                <div className="flex items-center justify-between space-x-2">
-                                    <div className="space-y-0.5">
-                                        <Label className="text-base">Email Alerts</Label>
-                                        <p className="text-sm text-muted-foreground">Receive daily summary reports via email.</p>
-                                    </div>
-                                    <button
-                                        role="switch"
-                                        tabIndex={0}
-                                        aria-checked={emailAlertsEnabled}
-                                        aria-label="Email Alerts"
-                                        onClick={() => setEmailAlertsEnabled(v => !v)}
-                                        className={`h-6 w-11 rounded-full relative cursor-pointer transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 ${emailAlertsEnabled ? 'bg-sidebar' : 'bg-muted dark:bg-muted'}`}
-                                    >
-                                        <div className={`absolute top-1 left-1 h-4 w-4 rounded-full bg-white dark:bg-muted shadow-sm transition-transform duration-200 ${emailAlertsEnabled ? 'translate-x-5' : 'translate-x-0'}`} />
-                                    </button>
+                                {/* What is monitored — honest, data-driven trigger list */}
+                                <div className="space-y-2">
+                                    <Label className="text-base">Monitored conditions</Label>
+                                    <p className="text-sm text-muted-foreground">
+                                        These triggers are always on and feed the alert bell and dashboard.
+                                    </p>
+                                    <ul className="mt-2 space-y-2">
+                                        <li className="flex items-start gap-2.5 text-sm text-foreground/85">
+                                            <Droplets className="w-4 h-4 mt-0.5 text-module-water flex-shrink-0" aria-hidden="true" />
+                                            Water system loss above the 15% management target (and critical zones above 25%)
+                                        </li>
+                                        <li className="flex items-start gap-2.5 text-sm text-foreground/85">
+                                            <Users className="w-4 h-4 mt-0.5 text-module-contractors flex-shrink-0" aria-hidden="true" />
+                                            Contracts past their end date while still marked active, or expiring within 60 days
+                                        </li>
+                                        <li className="flex items-start gap-2.5 text-sm text-foreground/85">
+                                            <Waves className="w-4 h-4 mt-0.5 text-module-stp flex-shrink-0" aria-hidden="true" />
+                                            STP critical failures — irrigation output stopped, low recovery, stale daily log
+                                        </li>
+                                    </ul>
                                 </div>
                                 <Separator />
+                                {/* Browser push — the real delivery channel, persisted preference */}
                                 <div className="flex items-center justify-between space-x-2">
                                     <div className="space-y-0.5">
-                                        <Label className="text-base">Critical Alarms</Label>
-                                        <p className="text-sm text-muted-foreground">Immediate notifications for critical system failures (SMS).</p>
+                                        <Label className="text-base">Browser push notifications</Label>
+                                        <p className="text-sm text-muted-foreground">
+                                            Push new warning and critical alerts to this device, even in the background.
+                                        </p>
                                     </div>
                                     <button
                                         role="switch"
                                         tabIndex={0}
-                                        aria-checked={criticalAlarmsEnabled}
-                                        aria-label="Critical Alarms"
-                                        onClick={() => setCriticalAlarmsEnabled(v => !v)}
-                                        className={`h-6 w-11 rounded-full relative cursor-pointer transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 ${criticalAlarmsEnabled ? 'bg-sidebar' : 'bg-muted dark:bg-muted'}`}
+                                        aria-checked={pushEnabled}
+                                        aria-label="Browser push notifications"
+                                        onClick={togglePush}
+                                        className={`h-6 w-11 rounded-full relative cursor-pointer transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 ${pushEnabled ? 'bg-sidebar' : 'bg-muted dark:bg-muted'}`}
                                     >
-                                        <div className={`absolute top-1 left-1 h-4 w-4 rounded-full bg-white dark:bg-muted shadow-sm transition-transform duration-200 ${criticalAlarmsEnabled ? 'translate-x-5' : 'translate-x-0'}`} />
+                                        <div className={`absolute top-1 left-1 h-4 w-4 rounded-full bg-white dark:bg-muted shadow-sm transition-transform duration-200 ${pushEnabled ? 'translate-x-5' : 'translate-x-0'}`} />
                                     </button>
                                 </div>
+                                {/* Browser permission state — push cannot work without it */}
+                                <div className="flex items-center justify-between gap-3 p-3 rounded-lg border border-border bg-card/50">
+                                    <div className="flex items-center gap-2.5 min-w-0">
+                                        <Bell className="w-4 h-4 text-muted-foreground flex-shrink-0" aria-hidden="true" />
+                                        <p className="text-sm text-muted-foreground">
+                                            {permission === 'granted' && 'Browser permission granted — push is active.'}
+                                            {permission === 'default' && 'Browser permission not yet granted.'}
+                                            {permission === 'denied' && 'Blocked by the browser — re-enable notifications for this site in your browser settings.'}
+                                            {permission === 'unsupported' && 'This browser does not support push notifications.'}
+                                        </p>
+                                    </div>
+                                    {permission === 'default' && (
+                                        <Button
+                                            size="sm"
+                                            onClick={() => requestPermission()}
+                                            className="bg-sidebar hover:bg-sidebar/90 text-primary-foreground flex-shrink-0"
+                                        >
+                                            Enable
+                                        </Button>
+                                    )}
+                                    {permission === 'granted' && (
+                                        <Badge variant="outline" className="text-mb-success bg-mb-success/10 border-mb-success/20 flex-shrink-0">Active</Badge>
+                                    )}
+                                </div>
                             </CardContent>
-                            <CardFooter className="flex justify-between border-t border-sidebar/10 px-6 py-4 bg-sidebar/5">
+                            <CardFooter className="border-t border-sidebar/10 px-6 py-4 bg-sidebar/5">
                                 <p className="text-sm text-muted-foreground">
-                                    Configure your notification preferences.
+                                    Changes apply immediately on this device.
                                 </p>
-                                <Button
-                                    onClick={updateProfile}
-                                    disabled={updating}
-                                    className="bg-sidebar hover:bg-sidebar/90 text-primary-foreground"
-                                >
-                                    {updating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                                    Save Changes
-                                </Button>
                             </CardFooter>
                         </Card>
                     )}

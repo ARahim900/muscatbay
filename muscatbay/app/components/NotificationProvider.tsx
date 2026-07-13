@@ -6,9 +6,15 @@ import React, {
   useEffect,
   useState,
   useCallback,
+  useMemo,
   type ReactNode,
 } from "react";
 import { useNotifications } from "@/hooks/useNotifications";
+import {
+  useOperationalAlerts,
+  type AckableAlert,
+  type OperationalAlertStatus,
+} from "@/hooks/useOperationalAlerts";
 import { Bell } from "lucide-react";
 
 // ─── Types ──────────────────────────────────────────────────────────────────────
@@ -52,8 +58,24 @@ interface NotificationContextValue {
   warning: (title: string, message?: string) => void;
   /** Convenience: fire an info notification */
   info: (title: string, message?: string) => void;
-  /** Number of unread notifications */
+  /** Unread badge count: un-acknowledged operational alerts + session notifications newer than the last feed open. */
   unreadCount: number;
+
+  // ── Operational alerts (data-driven — loss exceedance, contract expiry, critical failures) ──
+  /** Active operational alerts, most severe first. */
+  operationalAlerts: AckableAlert[];
+  /** loading = first evaluation in flight; unavailable = no live source reachable. */
+  alertStatus: OperationalAlertStatus;
+  /** Sources that could not be evaluated ("water" | "contractors" | "stp"). */
+  alertUnavailableSources: string[];
+  /** When the alert rules last ran. */
+  alertEvaluatedAt: Date | null;
+  /** Acknowledge an alert — keeps it listed (condition is still live) but out of the badge. */
+  acknowledgeAlert: (id: string) => void;
+  /** Undo an acknowledgement. */
+  unacknowledgeAlert: (id: string) => void;
+  /** Mark the feed as opened — session notifications up to now stop counting as unread. */
+  markFeedOpened: () => void;
 }
 
 const NotificationContext = createContext<NotificationContextValue | undefined>(
@@ -80,7 +102,7 @@ function PermissionBanner({
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
     const wasDismissed = localStorage.getItem("notif-banner-dismissed");
-     
+
     if (wasDismissed) setDismissed(true);
   }, []);
 
@@ -100,8 +122,8 @@ function PermissionBanner({
             Enable notifications?
           </p>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Get alerts for STP thresholds, pump failures, and maintenance
-            reminders.
+            Get alerts for water loss above target, expiring contracts, and
+            critical plant failures.
           </p>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
@@ -140,27 +162,34 @@ function PermissionBanner({
  *
  * Handles:
  * - Browser push notification permission + banner
- * - Notification history (for future notification bell / drawer)
+ * - Session notification history (manual notify() calls from pages)
+ * - Operational alerts derived from live data (water loss vs target,
+ *   contract expiry, STP critical failures) via `useOperationalAlerts`
  * - OS-level browser notifications via the service worker
  *
  * NOTE: In-app toast rendering is handled by the existing ToastProvider
  * in LayoutRouter. Use `useToast()` from `@/components/ui/toast-provider`
- * for in-app toasts, and `useAppNotifications()` for push + history.
- *
- * @example
- * ```tsx
- * // In any child component
- * const { warning, permission } = useAppNotifications();
- * warning("STP Alert", "Inlet sewage exceeded 500 m³");
- * ```
+ * for in-app toasts, and `useAppNotifications()` for alerts + history.
  */
 export function NotificationProvider({ children }: { children: ReactNode }) {
   const hook = useNotifications();
+  const operational = useOperationalAlerts(hook.pushToOS);
 
-  // Unread count is derived directly from notifications rather than stored
-  // in state + an effect — avoids the cascading render React 19 warns about
-  // and removes a transient out-of-sync window between props and state.
-  const unreadCount = hook.notifications.length;
+  // Session notifications are "unread" until the feed is opened.
+  const [lastFeedOpenAt, setLastFeedOpenAt] = useState<Date | null>(null);
+  const markFeedOpened = useCallback(() => {
+    setLastFeedOpenAt(new Date());
+  }, []);
+
+  const unreadSessionCount = useMemo(
+    () =>
+      hook.notifications.filter(
+        (n) => !lastFeedOpenAt || n.timestamp > lastFeedOpenAt
+      ).length,
+    [hook.notifications, lastFeedOpenAt]
+  );
+
+  const unreadCount = operational.unacknowledgedCount + unreadSessionCount;
 
   const clearAll = useCallback(() => {
     hook.clearAll();
@@ -170,6 +199,13 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     ...hook,
     clearAll,
     unreadCount,
+    operationalAlerts: operational.alerts,
+    alertStatus: operational.status,
+    alertUnavailableSources: operational.unavailableSources,
+    alertEvaluatedAt: operational.evaluatedAt,
+    acknowledgeAlert: operational.acknowledge,
+    unacknowledgeAlert: operational.unacknowledge,
+    markFeedOpened,
   };
 
   return (
@@ -193,12 +229,12 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
  * Must be used within a <NotificationProvider>.
  *
  * For in-app toasts, also use `useToast()` from `@/components/ui/toast-provider`.
- * This hook provides browser push notifications + notification history.
+ * This hook provides browser push notifications, session notification history
+ * and the data-driven operational alert feed.
  *
  * @example
  * ```tsx
- * const { success, error, warning, info, permission } = useAppNotifications();
- * warning("Pump Failure", "Pump #3 offline since 14:30");
+ * const { operationalAlerts, unreadCount, acknowledgeAlert } = useAppNotifications();
  * ```
  */
 export function useAppNotifications(): NotificationContextValue {

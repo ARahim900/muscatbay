@@ -45,7 +45,7 @@ import {
 const C = {
     primary: "var(--primary)",
     accent: "var(--secondary)",
-    accentActive: "#8AAFA5",
+    accentActive: "var(--mb-secondary-active)",
     // domain / chart colours (brand chart palette → app chart tokens)
     supply: "var(--module-water)",
     dist: "var(--chart-1)",
@@ -726,7 +726,7 @@ function ZonesView({ data, period, monthly, sel, nMonths, year }: ZonesViewProps
     }
 
     /* ---------- all-zones overview ---------- */
-    const bar = real.map((z) => ({ name: z.name, lossPct: z.lossPct, loss: z.loss, fill: sev(z.lossPct).c }));
+    const bar = real.map((z) => ({ name: z.name, lossPct: z.lossPct, loss: z.loss, fill: sev(z.lossPct).chart }));
     const heat = real.map((z) => ({
         zone: z.zone, name: z.name, yr: z.lossPct,
         months: monthly.map((p) => { const m = p.zones.find((x) => x.zone === z.zone); return m ? m.lossPct : 0; }),
@@ -741,7 +741,7 @@ function ZonesView({ data, period, monthly, sel, nMonths, year }: ZonesViewProps
                 Kept prominent at the top so it is never overlooked next to the zones. */}
             <button onClick={() => setZoneSel(TRUNK_KEY)}
                 className="w-full text-left p-4 transition-shadow hover:shadow-md flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4"
-                style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: RADIUS.card, borderLeft: `4px solid ${ts.c}`, boxShadow: SHADOW }}>
+                style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: RADIUS.card, borderLeft: `4px solid ${ts.chart}`, boxShadow: SHADOW }}>
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: ts.bg, color: ts.c }}>Stage 1 · {ts.label}</span>
@@ -795,7 +795,7 @@ function ZonesView({ data, period, monthly, sel, nMonths, year }: ZonesViewProps
                     const s = sev(z.lossPct);
                     return (
                         <button key={z.zone} data-zone={z.zone} onClick={selectZoneFromCard} className="text-left p-4 transition-shadow hover:shadow-md"
-                            style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: RADIUS.card, borderLeft: `4px solid ${s.c}`, boxShadow: SHADOW }}>
+                            style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: RADIUS.card, borderLeft: `4px solid ${s.chart}`, boxShadow: SHADOW }}>
                             <div className="flex items-center justify-between">
                                 <h4 className="text-sm font-semibold tracking-tight" style={{ color: C.heading }}>{z.name}</h4>
                                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: s.bg, color: s.c }}>{s.label}</span>
@@ -806,7 +806,7 @@ function ZonesView({ data, period, monthly, sel, nMonths, year }: ZonesViewProps
                                 <div className="text-right text-[11px]" style={{ color: C.muted }}><p>supply <b style={{ color: C.ink }}>{fmt(z.bulk)}</b></p><p>used <b style={{ color: C.ink }}>{fmt(z.end)}</b></p></div>
                             </div>
                             <div className="mt-2 h-2 rounded-full overflow-hidden" style={{ background: "var(--wm-track)" }}>
-                                <div className="h-2 rounded-full" style={{ width: `${Math.min(100, Math.max(0, z.lossPct))}%`, background: s.c }} />
+                                <div className="h-2 rounded-full" style={{ width: `${Math.min(100, Math.max(0, z.lossPct))}%`, background: s.chart }} />
                             </div>
                         </button>
                     );
