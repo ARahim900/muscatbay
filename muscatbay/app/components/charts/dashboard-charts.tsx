@@ -9,6 +9,7 @@ import { LiquidTooltip } from "./liquid-tooltip";
 import { ChartContainer } from "./chart-container";
 import { ToggleableLegendContent, useChartLegendToggle } from "./toggleable-legend";
 import { AnimateOnScroll } from "@/components/shared/scroll-animation";
+import { calcTrend } from "@/lib/trends";
 import type { ChartData } from "@/hooks/useDashboardData";
 
 const CHART_COLORS = { teal: 'var(--chart-teal)', brand: 'var(--chart-brand)' } as const;
@@ -35,13 +36,16 @@ const NOW_MARKER_LABEL = { value: 'Now', position: 'top' as const, fontSize: 10,
 
 /** Synthesise a one-line insight from the data so boards see the takeaway, not the numbers. */
 function buildWaterInsight(data: ChartData[], avg: number): string {
-    if (data.length < 2) return "";
-    const last = (data[data.length - 1]?.water as number) ?? 0;
-    const prev = (data[data.length - 2]?.water as number) ?? 0;
-    if (prev === 0) return "";
-    const delta = ((last - prev) / prev) * 100;
-    const direction = delta >= 0 ? "up" : "down";
-    return `Latest month is ${Math.abs(delta).toFixed(1)}% ${direction} vs the prior month; running average is ${avg.toFixed(1)}k m³.`;
+    // Months with no reading are gaps (null) — compare the last two REAL readings.
+    const readings = data.filter((d) => typeof d.water === "number");
+    if (readings.length < 2) return "";
+    const last = readings[readings.length - 1].water as number;
+    const prev = readings[readings.length - 2].water as number;
+    const t = calcTrend(last, prev);
+    if (t.trend === "neutral") {
+        return t.trendValue === "—" ? "" : `Latest month is level with the prior month; running average is ${avg.toFixed(1)}k m³.`;
+    }
+    return `Latest month is ${t.trendValue} ${t.trend} vs the prior month; running average is ${avg.toFixed(1)}k m³.`;
 }
 
 function buildStpInsight(data: ChartData[]): string {
@@ -55,12 +59,13 @@ function buildStpInsight(data: ChartData[]): string {
 
 function DashboardChartsInner({ chartData, stpChartData }: DashboardChartsProps) {
     const stpLegend = useChartLegendToggle();
-    const waterAvg = useMemo(() =>
-        chartData.length > 0
-            ? chartData.reduce((sum, d) => sum + ((d.water as number) || 0), 0) / chartData.length
-            : 0,
-        [chartData]
-    );
+    // Average over months that HAVE a reading — gap months must not dilute it.
+    const waterAvg = useMemo(() => {
+        const vals = chartData
+            .map((d) => d.water)
+            .filter((v): v is number => typeof v === "number");
+        return vals.length > 0 ? vals.reduce((sum, v) => sum + v, 0) / vals.length : 0;
+    }, [chartData]);
     const waterInsight = useMemo(() => buildWaterInsight(chartData, waterAvg), [chartData, waterAvg]);
     const stpInsight = useMemo(() => buildStpInsight(stpChartData), [stpChartData]);
 

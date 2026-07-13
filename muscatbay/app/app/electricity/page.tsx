@@ -20,6 +20,7 @@ import { saveFilterPreferences, loadFilterPreferences } from "@/lib/filter-prefe
 import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
 import { PageStatusBar } from "@/components/shared/page-status-bar";
 import { getPageCache, setPageCache } from "@/lib/page-cache";
+import { calcTrend } from "@/lib/trends";
 
 // ─── Extracted subcomponents (pure relocation, no behavior changes) ─────────
 import { CHART_COLORS, meterColors } from "@/components/electricity/electricity-shared";
@@ -380,17 +381,6 @@ export default function ElectricityPage() {
     };
 
     const dbHasActiveFilters = dbSearchTerm || (dbSelectedTypes.length > 0 && dbSelectedTypes.length < allMeterTypes.length);
-
-    // Helper function to calculate trend
-    const calcTrend = (current: number, previous: number): { trend: 'up' | 'down' | 'neutral'; trendValue: string } => {
-        if (previous === 0) return { trend: 'neutral', trendValue: '0%' };
-        const change = ((current - previous) / previous) * 100;
-        if (Math.abs(change) < 0.5) return { trend: 'neutral', trendValue: '0%' };
-        return {
-            trend: change > 0 ? 'up' : 'down',
-            trendValue: `${Math.abs(change).toFixed(1)}%`
-        };
-    };
 
     const stats = useMemo(() => {
         // Months within the selected (chronological) range — slider may point at

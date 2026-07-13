@@ -38,6 +38,7 @@ import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
 import { useAppNotifications } from "@/components/NotificationProvider";
 import { useToast } from "@/components/ui/toast-provider";
 import { getPageCache, setPageCache } from "@/lib/page-cache";
+import { calcTrend } from "@/lib/trends";
 import { cn } from "@/lib/utils";
 import { PlantWatch } from "@/components/stp/plant-watch";
 
@@ -97,14 +98,6 @@ const CHART_BOTTOM = 214;
 const CHART_PLOT_WIDTH = SVG_WIDTH - CHART_LEFT - CHART_RIGHT;
 const CHART_PLOT_HEIGHT = CHART_BOTTOM - CHART_TOP;
 const AXIS_TICKS = [0, 0.5, 1];
-
-// Helper: compute trend direction and formatted % change between two values
-const calcTrend = (current: number, previous: number): { trend: 'up' | 'down' | 'neutral'; trendValue: string } => {
-    if (previous === 0) return { trend: 'neutral', trendValue: '—' };
-    const change = ((current - previous) / previous) * 100;
-    if (Math.abs(change) < 0.5) return { trend: 'neutral', trendValue: '~0%' };
-    return { trend: change > 0 ? 'up' : 'down', trendValue: `${Math.abs(change).toFixed(1)}%` };
-};
 
 function ChartViewToggle({ value, onChange }: { value: 'daily' | 'monthly'; onChange: (v: 'daily' | 'monthly') => void }) {
     return (

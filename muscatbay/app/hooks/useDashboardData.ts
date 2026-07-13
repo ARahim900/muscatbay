@@ -13,6 +13,7 @@ import { getContractorCounts } from "@/functions";
 import { ELECTRICITY_RATES } from "@/lib/config";
 import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
 import { getPageCache, setPageCache } from "@/lib/page-cache";
+import { calcTrend, describeTrend } from "@/lib/trends";
 import type { WaterMeter } from "@/lib/water-data";
 
 export interface DashboardStats {
@@ -29,16 +30,19 @@ export interface DashboardStats {
 
 export interface ChartData {
     month: string;
-    water?: number;
+    /** null = month inside the shared window with no reading (renders as a gap). */
+    water?: number | null;
     efficiency?: number;
-    inlet?: number;
-    tse?: number;
+    inlet?: number | null;
+    tse?: number | null;
 }
 
 export interface RecentActivityItem {
     title: string;
     description: string;
     type: 'critical' | 'warning' | 'info';
+    /** Explicit route override (falls back to keyword matching on the title). */
+    href?: string;
 }
 
 // Tables the dashboard reacts to in realtime — all share ONE Supabase channel.
@@ -82,6 +86,36 @@ function sortMonthKeys(keys: string[]): string[] {
         if (yearDiff !== 0) return yearDiff;
         return MONTH_NAMES.indexOf(mA) - MONTH_NAMES.indexOf(mB);
     });
+}
+
+/** Convert an STP `yyyy-MM` bucket key to the app-standard `Mon-YY` label. */
+function ymToMonthKey(ym: string): string {
+    const [year, month] = ym.split('-');
+    return `${MONTH_NAMES[parseInt(month, 10) - 1]}-${year.slice(2)}`;
+}
+
+/**
+ * Shared month window for the dashboard's side-by-side charts.
+ *
+ * Both charts previously sliced the last 8 months of THEIR OWN series, so
+ * their time axes could cover different windows (and the water chart silently
+ * dropped months with no reading instead of showing a gap). This builds ONE
+ * calendar-contiguous window ending at the newest month across BOTH series;
+ * a month a series has no data for renders as a gap, not a hidden column.
+ */
+function sharedMonthWindow(waterKeys: string[], stpKeys: string[], size = 8): string[] {
+    const union = sortMonthKeys([...new Set([...waterKeys, ...stpKeys])]);
+    if (union.length === 0) return [];
+    const [lastMon, lastYY] = union[union.length - 1].split('-');
+    let monthIdx = MONTH_NAMES.indexOf(lastMon);
+    let year = parseInt('20' + lastYY, 10);
+    const window: string[] = [];
+    for (let i = 0; i < size; i++) {
+        window.unshift(`${MONTH_NAMES[monthIdx]}-${String(year).slice(2)}`);
+        monthIdx--;
+        if (monthIdx < 0) { monthIdx = 11; year--; }
+    }
+    return window;
 }
 
 /**
@@ -245,17 +279,7 @@ export function useDashboardData() {
             const elecTotal = allReadings[latestElecMonth] || 0;
             const elecPrevTotal = allReadings[prevElecMonth] || 0;
 
-            // === TREND HELPER ===
-            const calcTrend = (current: number, previous: number): { trend: 'up' | 'down' | 'neutral'; trendValue: string } => {
-                if (previous === 0) return { trend: 'neutral', trendValue: '0%' };
-                const change = ((current - previous) / previous) * 100;
-                if (Math.abs(change) < 0.5) return { trend: 'neutral', trendValue: '0%' };
-                return {
-                    trend: change > 0 ? 'up' : 'down',
-                    trendValue: `${Math.abs(change).toFixed(1)}%`
-                };
-            };
-
+            // Month-over-month changes — ONE shared calculation (lib/trends.ts)
             const waterTrend = calcTrend(waterValue, waterPrevValue);
             const elecTrend = calcTrend(elecTotal, elecPrevTotal);
             // Electricity cost at the flat tariff — surfaces the OMR figure that
@@ -270,8 +294,11 @@ export function useDashboardData() {
             const currentIncome = (Math.floor(stpLatestData.inlet / 15) * TANKER_FEE) + (stpLatestData.tse * TSE_SAVING_RATE);
             const stpEconomicTrend = calcTrend(currentIncome, prevIncome);
 
-            const formattedElecMonth = latestElecMonth ? latestElecMonth.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : "Latest Month";
-            const formattedStpMonth = stpLatestMonth ? format(new Date(stpLatestMonth + "-01"), "MMM yy") : "Latest Month";
+            // Month labels — the app-standard "Mon-YY" everywhere (electricity keys
+            // already are; STP buckets are yyyy-MM and previously rendered "Mon YY",
+            // a third format on the same KPI deck).
+            const formattedElecMonth = latestElecMonth || "Latest Month";
+            const formattedStpMonth = stpLatestMonth ? ymToMonthKey(stpLatestMonth) : "Latest Month";
 
             // === STATS ===
             const nextStats: DashboardStats[] = [
@@ -338,41 +365,40 @@ export function useDashboardData() {
             ];
             setStats(nextStats);
 
-            // === WATER CHART (Supabase L1 → fallback to mock) ===
-            const nextChartData: ChartData[] = useSupabaseWater
-                ? waterMonthly.slice(-8).map(m => ({
-                    month: m.month,
-                    water: Math.round(m.value / 1000)
-                }))
-                : waterMock.monthlyTrends.slice(-8).map(w => ({
-                    month: w.month,
-                    water: Math.round(w.A1 / 1000),
-                    efficiency: w.efficiency
-                }));
+            // === CHARTS — one shared, calendar-contiguous month window ===
+            // Both charts plot the SAME last-8-months axis (ending at the newest
+            // month across water + STP), so the side-by-side time axes always
+            // align. A month with no reading is a gap (null), never a hidden
+            // column. STP mirrors the main STP Plant page: every month as-is,
+            // no completeness filter, including the in-progress current month.
+            const waterByMonth = new Map(
+                useSupabaseWater
+                    ? waterMonthly.map(m => [m.month, m.value] as const)
+                    : waterMock.monthlyTrends.map(w => [w.month, w.A1] as const)
+            );
+            const stpByMonth = new Map(
+                stpSortedMonths.map(ym => [ymToMonthKey(ym), stpMonthlyCalc[ym]] as const)
+            );
+            const monthWindow = sharedMonthWindow([...waterByMonth.keys()], [...stpByMonth.keys()]);
+
+            const nextChartData: ChartData[] = monthWindow.map(month => {
+                const v = waterByMonth.get(month);
+                return { month, water: v != null ? Math.round(v / 1000) : null };
+            });
             setChartData(nextChartData);
 
-            // === STP CHART — last 8 months, chronological ===
-            // Mirror the main STP Plant page: plot every month as-is with no
-            // completeness filter, so the dashboard shows the same reality as the
-            // module page — including the in-progress current month. Reuses the
-            // monthly buckets already aggregated above for the KPI stats.
-            const nextStpChartData: ChartData[] = stpSortedMonths.slice(-8).map(monthKey => {
-                // Build the "MMM-yy" label straight from the yyyy-MM key — no Date
-                // round-trip, so the month can't drift across a timezone boundary.
-                const [year, month] = monthKey.split('-');
+            const nextStpChartData: ChartData[] = monthWindow.map(month => {
+                const bucket = stpByMonth.get(month);
                 return {
-                    month: `${MONTH_NAMES[parseInt(month, 10) - 1]}-${year.slice(2)}`,
-                    inlet: Math.round(stpMonthlyCalc[monthKey].inlet / 1000),
-                    tse: Math.round(stpMonthlyCalc[monthKey].tse / 1000)
+                    month,
+                    inlet: bucket ? Math.round(bucket.inlet / 1000) : null,
+                    tse: bucket ? Math.round(bucket.tse / 1000) : null,
                 };
             });
             setStpChartData(nextStpChartData);
 
             // === GENERATE RECENT ACTIVITY from real data ===
-            const trendDesc = (t: { trend: string; trendValue: string }) =>
-                t.trend === 'up' ? `Up ${t.trendValue} vs prev month`
-                    : t.trend === 'down' ? `Down ${t.trendValue} vs prev month`
-                        : 'Stable vs previous month';
+            const trendDesc = describeTrend;
 
             const activities: RecentActivityItem[] = [
                 {

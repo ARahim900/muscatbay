@@ -3,7 +3,8 @@
 import { useState, useMemo, useCallback } from "react";
 import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
-import { useDashboardData } from "@/hooks/useDashboardData";
+import { useDashboardData, type RecentActivityItem } from "@/hooks/useDashboardData";
+import { useAppNotifications } from "@/components/NotificationProvider";
 import { useAuth } from "@/components/auth/auth-provider";
 import { CommandDeck } from "@/components/dashboard/command-deck";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -30,8 +31,23 @@ function getGreeting() {
 
 export default function DashboardPage() {
     const { stats, chartData, stpChartData, recentActivity, loading, isLiveData, error } = useDashboardData();
+    const { operationalAlerts } = useAppNotifications();
     const [activityFilter, setActivityFilter] = useState<'all' | 'critical' | 'warning' | 'info'>('all');
     const greeting = useMemo(() => getGreeting(), []);
+
+    // Live operational alerts (loss exceedance, contract expiry, critical
+    // failures) lead the Latest Updates feed — previously nothing could ever
+    // produce a 'critical' item, so that filter was a dead control and the
+    // dashboard read as healthy regardless of the data.
+    const activityItems = useMemo<RecentActivityItem[]>(() => {
+        const alertItems: RecentActivityItem[] = operationalAlerts.map((a) => ({
+            title: a.title,
+            description: a.message,
+            type: a.level === 'error' ? 'critical' : a.level === 'warning' ? 'warning' : 'info',
+            href: a.href,
+        }));
+        return [...alertItems, ...recentActivity];
+    }, [operationalAlerts, recentActivity]);
     const { profile } = useAuth();
     const searchParams = useSearchParams();
     const isPresentMode = searchParams?.get("present") === "1";
@@ -185,10 +201,10 @@ export default function DashboardPage() {
                     <CardContent className="p-4 sm:p-5 md:p-6 pt-0">
                         <div aria-live="polite" aria-atomic="false">
                         <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                            {recentActivity
+                            {activityItems
                                 .filter(item => activityFilter === 'all' || item.type === activityFilter)
                                 .map((item) => {
-                                    const activityHref = getActivityHref(item.title);
+                                    const activityHref = item.href ?? getActivityHref(item.title);
                                     const content = (
                                         <>
                                             <div className={`shrink-0 rounded-full p-2 ${item.type === 'critical' ? 'bg-mb-danger/20 text-[var(--mb-danger-text)]' :
@@ -224,7 +240,7 @@ export default function DashboardPage() {
                                         </div>
                                     );
                                 })}
-                            {recentActivity.filter(item => activityFilter === 'all' || item.type === activityFilter).length === 0 && (
+                            {activityItems.filter(item => activityFilter === 'all' || item.type === activityFilter).length === 0 && (
                                 <div className="col-span-full flex flex-col items-center gap-2 py-8 text-center">
                                     <Activity className="w-8 h-8 text-muted-foreground/70 dark:text-muted-foreground" />
                                     <p className="text-sm text-muted-foreground">
