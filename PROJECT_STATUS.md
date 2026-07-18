@@ -224,6 +224,7 @@ Entries below the marker are appended automatically on every push to `main`.
 Do not hand-edit existing entries; curate meaning in the sections above.
 
 <!-- STATUS:LOG:BEGIN -->
+- 2026-07-18 — fix(security): remove leaked service_role key from scripts, fix fail-open RBAC, harden avatar uploads
 - 2026-07-13 — feat(alerts): data-driven operational alerts + interface consistency pass (#42)
 - 2026-07-11 — feat(mobile-nav): redesign bottom nav as a floating pill dock
 - 2026-07-10 — feat(pest-control): frame AITable embed as a labelled, bounded external panel
