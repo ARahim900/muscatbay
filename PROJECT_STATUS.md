@@ -190,10 +190,12 @@ stops at last month" problem is structurally closed:
   leaked-password protection; retire the `stp-debug` edge function. Automation is
   unaffected (syncs write via `service_role` / SECURITY DEFINER, bypassing RLS).
 - Supabase advisors before hardening (2026-07-18): 133 security / 150 performance.
-  After: RLS-disabled (5→0) and anon-write policies resolved; residual lower-severity
-  items remain (anon *read* on some tables via separate SELECT policies —
-  tighten after testing reads against a preview; mutable function search paths;
-  4 security-definer views; leaked-password protection still off).
+  After: RLS-disabled (5→0), and **the public anon key can no longer read or write
+  any business/PII table** (verified by simulating the anon role — all reads
+  return 0; only `professional_applications` INSERT + scoped `profiles` INSERT
+  remain anon-accessible by design). Authenticated reads/writes verified intact
+  across every module. Residual lower-severity items: mutable function search
+  paths, 4 security-definer views, leaked-password protection still off.
 - Capacity (2026-07-18): DB **28 MB / 500 MB** (5.7%), Storage **3.1 MB / 1 GB**
   (0.3%) — Free plan, ample headroom, limit not being approached.
 - Monthly loads for electricity/STP still arrive via hand-run SQL in

@@ -82,8 +82,38 @@ begin
   end loop;
 end $$;
 
--- Result: anon/public WRITE policies reduced to the 2 intended exceptions
--- (professional_applications INSERT, profiles own-row INSERT); 30 tables gained
--- an explicit mb_authenticated_all policy. Anon READ on some tables still exists
--- via separate SELECT policies — a lower-severity residual to tighten after
--- testing reads against a preview (see the OPTIONAL block in part 1).
+-- C. Remove anonymous READ access from remaining business tables --------------
+--    App is login-gated (reads happen as authenticated); nothing legitimate reads
+--    as anon except the public application form. Same safe pattern: ensure an
+--    authenticated read exists first, then drop the anon/public SELECT policies.
+do $$
+declare r record;
+begin
+  for r in
+    select distinct tablename from pg_policies
+    where schemaname='public'
+      and (roles::text[] && array['anon','public'])
+      and cmd in ('SELECT','ALL')
+      and tablename <> 'professional_applications'
+  loop
+    if not exists (select 1 from pg_policies where schemaname='public' and tablename=r.tablename
+                     and 'authenticated'=any(roles::text[]) and cmd in ('SELECT','ALL')) then
+      execute format('create policy mb_authenticated_read on public.%I for select to authenticated using (true)', r.tablename);
+    end if;
+  end loop;
+  for r in
+    select policyname, tablename from pg_policies
+    where schemaname='public'
+      and (roles::text[] && array['anon','public'])
+      and cmd = 'SELECT'
+      and tablename <> 'professional_applications'
+  loop
+    execute format('drop policy %I on public.%I', r.policyname, r.tablename);
+  end loop;
+end $$;
+
+-- Final result (verified 2026-07-18): the public anon key can no longer READ or
+-- WRITE any business/PII table. Only two anon-accessible policies remain by design
+-- — professional_applications INSERT (public contractor form) and profiles own-row
+-- INSERT. Authenticated (logged-in) users retain full read/write; the service_role
+-- syncs bypass RLS and are unaffected.
