@@ -5,8 +5,14 @@
  * (Nov-Dec 2025, Jan 2026, Feb 2026) to Supabase stp_operations table.
  */
 
-const SUPABASE_URL = 'https://utnlgeuqajmwibqmdmgt.supabase.co';
-const SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV0bmxnZXVxYWptd2licW1kbWd0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NTc4NTMwMCwiZXhwIjoyMDgxMzYxMzAwfQ.TB5XyjaJOY2BM8NWxmBULtBGwxFEa_BEj5jWGP8OpS0';
+// Credentials come from the environment — never hardcode the service_role key.
+//   SUPABASE_SERVICE_ROLE_KEY=<key> node scripts/stp-restore-missing-data.mjs
+const SUPABASE_URL = process.env.SUPABASE_URL ?? 'https://utnlgeuqajmwibqmdmgt.supabase.co';
+const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+if (!SERVICE_KEY) {
+  console.error('Missing SUPABASE_SERVICE_ROLE_KEY environment variable. Set it before running:\n  SUPABASE_SERVICE_ROLE_KEY=<key> node scripts/stp-restore-missing-data.mjs');
+  process.exit(1);
+}
 
 // Helper: convert DD/MM/YYYY → YYYY-MM-DD
 function cvt(s) {

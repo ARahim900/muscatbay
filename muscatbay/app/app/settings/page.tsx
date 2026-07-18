@@ -63,6 +63,13 @@ export default function SettingsPage() {
         }
         const file = event.target.files[0]
 
+        // Validate file type (image formats the avatars bucket accepts)
+        const ALLOWED_TYPES = ["image/png", "image/jpeg", "image/webp", "image/gif"]
+        if (!ALLOWED_TYPES.includes(file.type)) {
+            setError("Please choose a PNG, JPEG, WebP, or GIF image")
+            return
+        }
+
         // Validate file size (max 2MB)
         if (file.size > 2 * 1024 * 1024) {
             setError("Image size must be less than 2MB")
@@ -87,13 +94,16 @@ export default function SettingsPage() {
         try {
             let avatarUrl = formData.avatar_url
 
-            // Upload avatar if changed
+            // Upload avatar if changed. A failed upload must NOT be swallowed —
+            // otherwise the user sees "Profile updated" while the image never saved.
             if (avatarFile) {
                 try {
                     avatarUrl = await uploadAvatar(user.id, avatarFile)
                 } catch (uploadErr: unknown) {
                     console.error("Avatar upload error:", uploadErr)
-                    // Continue without avatar update if upload fails
+                    setError(uploadErr instanceof Error ? uploadErr.message : "Avatar upload failed — please try again")
+                    setUpdating(false)
+                    return
                 }
             }
 

@@ -173,21 +173,43 @@ stops at last month" problem is structurally closed:
   automatically once entered (any surface: view `jun_26` column or base table).
 - `Water_System` (underscore) table is an abandoned pre-v2 orphan (columns end
   Feb-26) — not read by anything; candidate for cleanup.
-- Supabase security advisors carry pre-existing findings on other tables
-  (e.g. RLS disabled on some legacy tables) — water auto-sync objects are clean.
+- **Security audit 2026-07-18 (branch `claude/app-performance-storage-audit-jnqqv7`).**
+  Findings + remediation tracked in `SECURITY_REMEDIATION.md` (repo root). Headlines:
+  a leaked **`service_role`** key was committed to the (public) repo — removed from
+  the two scripts' `HEAD` (now read from env) but **must be rotated + purged from
+  history**; RLS policies are effectively open (anon could read all data and
+  write/delete water tables) — a review-then-apply migration
+  `muscatbay/app/sql/migrations/20260718_security_hardening.sql` tightens them;
+  `normalizeRole` fixed to default to `viewer` (was `admin`, so every user was
+  treated as admin). None of these changes affect the daily/monthly automation
+  (syncs write via `service_role` / SECURITY DEFINER, bypassing RLS).
+- Supabase security advisors carry pre-existing findings (133 security / 150
+  performance as of 2026-07-18): 75× "RLS policy always true", 5× RLS disabled,
+  4× security-definer view, mutable function search paths, leaked-password
+  protection off — water auto-sync objects are clean.
+- Capacity (2026-07-18): DB **28 MB / 500 MB** (5.7%), Storage **3.1 MB / 1 GB**
+  (0.3%) — Free plan, ample headroom, limit not being approached.
 - Monthly loads for electricity/STP still arrive via hand-run SQL in
   `sql/migrations/` — same class of manual step water had before 2026-07-03.
-- **STP future-dated row cleared (2026-07-06):** the stray `2027-05-06` row
-  (single day, created 2026-06-14) — the only future-dated row, which had made
-  the STP charts span to "May-27" — was deleted from `stp_operations`. Because
-  the table is fed by an automated Airtable→Supabase daily sync, if that
-  erroneous record still exists in the Airtable source it may re-appear; remove
-  or correct it there to prevent recurrence. The in-progress current month
+- **STP future-dated row HAS RECURRED (confirmed 2026-07-18):** the stray
+  `2027-05-06` row was deleted on 2026-07-06 but re-synced from AITable on
+  2026-07-07 (now present in both `stp_operations` id 4997 and
+  `stp_daily_reports`). It again stretches STP charts to "May-27". Fix requires
+  correcting the record in the AITable source (datasheet `dsteHeHSeZ59QTougo`)
+  **and** adding a future-date guard to the STP sync — see `SECURITY_REMEDIATION.md`. The in-progress current month
   (Jul-26) is legitimate live daily data and is kept as-is — both the dashboard
   and STP Plant charts mirror it (it fills out as more July days are logged).
 
 ## 5. In-flight work (open PRs)
 
+- **Security & data-integrity hardening (Phase 1)** — branch
+  `claude/app-performance-storage-audit-jnqqv7`. Removes the hardcoded
+  `service_role` key from scripts, fixes the fail-open role default, hardens
+  avatar uploads, and ships a review-then-apply RLS migration
+  (`sql/migrations/20260718_security_hardening.sql`). Live actions (key rotation,
+  applying the migration, fixing the AITable source row) are in
+  `SECURITY_REMEDIATION.md`. UI unification (tables/fonts/colours) is a planned
+  Phase 2.
 - **#28 Senior-management water dashboard** — new default "Management" tab on
   `/water` (YTD KPIs + latest daily snapshot). Active, awaiting review/merge.
 - **#21 3D app logo + STP plant twin** — draft; new logo assets + Three.js twin.

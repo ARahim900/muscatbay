@@ -267,21 +267,46 @@ export async function updateUserProfile(userId: string, updates: Partial<UserPro
 }
 
 // Upload avatar
+const AVATAR_ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif'];
+const AVATAR_MAX_BYTES = 2 * 1024 * 1024;
+
 export async function uploadAvatar(userId: string, file: File): Promise<string> {
     const supabase = getSupabaseClient();
     if (!supabase) {
         throw new Error('Supabase not configured');
     }
 
-    const fileExt = file.name.split('.').pop();
+    // Validate before touching storage.
+    if (!AVATAR_ALLOWED_TYPES.includes(file.type)) {
+        throw new Error('Unsupported image type — use PNG, JPEG, WebP, or GIF');
+    }
+    if (file.size > AVATAR_MAX_BYTES) {
+        throw new Error('Image must be under 2MB');
+    }
+
+    const fileExt = (file.name.split('.').pop() || 'png').toLowerCase();
     const fileName = `${userId}-${Date.now()}.${fileExt}`;
     const filePath = `${userId}/${fileName}`;
 
+    // Snapshot the user's existing avatars so we can clean them up after a
+    // successful upload — otherwise every save orphans the previous file.
+    const { data: existing } = await supabase.storage.from('avatars').list(userId);
+
     const { error: uploadError } = await supabase.storage
         .from('avatars')
-        .upload(filePath, file, { upsert: true });
+        .upload(filePath, file, { upsert: true, contentType: file.type });
 
     if (uploadError) throw uploadError;
+
+    // Best-effort removal of prior avatars (never fail the upload over cleanup).
+    if (existing && existing.length > 0) {
+        const stale = existing
+            .filter((obj) => obj.name !== fileName)
+            .map((obj) => `${userId}/${obj.name}`);
+        if (stale.length > 0) {
+            await supabase.storage.from('avatars').remove(stale);
+        }
+    }
 
     const { data } = supabase.storage
         .from('avatars')

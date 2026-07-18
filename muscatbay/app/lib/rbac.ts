@@ -93,26 +93,30 @@ export function resolveModuleFromPathname(pathname: string): ModuleKey | null {
 
 /** Normalize an arbitrary string from the DB into a Role.
  *
- * Default is "admin" — chosen for backward compatibility: every existing
- * account in the database predates the RBAC migration and has either no
- * role or the legacy `'user'` value. We do NOT want to silently strip
- * their access. Once the migration in
- * `sql/migrations/20260513_rbac_role_column_and_rls.sql` is applied and
- * explicit roles are assigned, anyone NOT set to admin is restricted
- * deliberately.
+ * Safe-by-default: an absent, empty or unrecognised role resolves to the
+ * least-privileged `"viewer"`, so a new or misconfigured account can never
+ * silently inherit administrator access (the previous behaviour, which
+ * defaulted every unknown value to `"admin"`, meant all legacy `'user'`
+ * accounts were treated as admins).
  *
- * If you'd rather be safe-by-default (viewer until explicitly promoted),
- * change the fallback below — but plan to assign admin to all existing
- * users at the same time, or they will lose access.
+ * The single exception is the legacy `'user'` value: it is grandfathered to
+ * `"admin"` so the accounts that predate the RBAC migration keep their
+ * access on deploy (zero lockout). The companion migration
+ * `sql/migrations/20260718_security_hardening.sql` converts those rows to an
+ * explicit `'admin'` and sets the `profiles.role` column default to
+ * `'viewer'`, after which no `'user'` rows remain and new sign-ups are
+ * viewers until promoted — so this grandfather branch becomes inert.
  */
 export function normalizeRole(raw: string | null | undefined): Role {
-    if (!raw) return "admin";
+    if (!raw) return "viewer";
     const r = raw.toLowerCase();
     if (r === "admin" || r === "manager" || r === "operator" || r === "contractor" || r === "viewer") {
         return r;
     }
-    // Legacy values ("user", anything else) → admin until intentionally re-scoped.
-    return "admin";
+    // Legacy pre-migration accounts stored `'user'` — keep them admin so no one
+    // is locked out on deploy. Every other unknown value is least-privilege.
+    if (r === "user") return "admin";
+    return "viewer";
 }
 
 /** Does this role have access to the given module? */
