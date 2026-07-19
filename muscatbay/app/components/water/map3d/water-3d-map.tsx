@@ -26,12 +26,13 @@ import {
     NetworkKpis, ZoneSummaryPanel, ZoneDetailPanel, MeterDetailPanel, MapLegend, ProvisionalNotice,
 } from "@/components/water/map3d/map-panels";
 import {
-    ModeToggle, MonthlyDateControl, DailyDateControl, LayerToggles, MapSearch, MapFilters,
+    ModeToggle, MonthlyDateControl, DailyDateControl, LayerToggles, SceneSwitcher, MapSearch, MapFilters,
     DEFAULT_FILTERS, type MapFilterState,
 } from "@/components/water/map3d/map-controls";
 import { ZoneTable, MeterTable } from "@/components/water/map3d/map-table";
 import type { MapMode, MapSnapshot } from "@/lib/water-map-data";
 import type { MapZoneId } from "@/lib/water-map-config";
+import { WATER_MAP_SCENES, SCENE_FOR_ZONE, SCENE_ORDER, type WaterMapSceneId } from "@/lib/water-map-scenes";
 
 const PREFS_KEY = "water-map3d";
 
@@ -47,11 +48,9 @@ export function Water3DMap({ waterMeters }: { waterMeters: WaterMeter[] }) {
     const [dailyDay, setDailyDay] = useState(0); // 0 = auto → latest day of month
     const [selection, setSelection] = useState<SceneSelection>({ kind: "none", id: "" });
     const [filters, setFilters] = useState<MapFilterState>(DEFAULT_FILTERS);
-    const [animateFlow, setAnimateFlow] = useState<boolean>(raw.animateFlow !== false);
+    const [sceneId, setSceneId] = useState<WaterMapSceneId>("core");
     const [layers, setLayers] = useState<SceneLayers>({
         meters: raw.layerMeters !== false,
-        links: raw.layerLinks !== false,
-        flow: raw.layerFlow !== false,
         labels: raw.layerLabels !== false,
     });
     const [view, setView] = useState<"map" | "table">("map");
@@ -93,13 +92,10 @@ export function Water3DMap({ waterMeters }: { waterMeters: WaterMeter[] }) {
         saveFilterPreferences(PREFS_KEY, {
             mode,
             monthlyKey: monthlyKey ?? null,
-            animateFlow,
             layerMeters: layers.meters,
-            layerLinks: layers.links,
-            layerFlow: layers.flow,
             layerLabels: layers.labels,
         });
-    }, [mode, monthlyKey, animateFlow, layers]);
+    }, [mode, monthlyKey, layers]);
 
     // ── Scene lifecycle (create once) ─────────────────────────────────────────
     const containerRef = useRef<HTMLDivElement>(null);
@@ -111,7 +107,7 @@ export function Water3DMap({ waterMeters }: { waterMeters: WaterMeter[] }) {
         const scene = new Water3DScene(
             el,
             { onSelect: (s) => setSelection(s), onHover: (h) => setHover(h) },
-            { reducedMotion, animateFlow, layers },
+            { reducedMotion, layers },
         );
         sceneRef.current = scene;
         if (scene.ok) {
@@ -128,6 +124,13 @@ export function Water3DMap({ waterMeters }: { waterMeters: WaterMeter[] }) {
         // Create once; subsequent updates flow through the effects below.
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
+    // Active aerial scene.
+    useEffect(() => {
+        const s = sceneRef.current;
+        if (!s || !sceneReady) return;
+        s.setScene(sceneId);
+    }, [sceneId, sceneReady]);
 
     // Snapshot → scene geometry.
     useEffect(() => {
@@ -152,10 +155,6 @@ export function Water3DMap({ waterMeters }: { waterMeters: WaterMeter[] }) {
             s.focusZone(null);
         }
     }, [selection, sceneReady]);
-
-    useEffect(() => {
-        sceneRef.current?.setAnimateFlow(animateFlow);
-    }, [animateFlow]);
 
     useEffect(() => {
         sceneRef.current?.setLayers(layers);
@@ -183,9 +182,25 @@ export function Water3DMap({ waterMeters }: { waterMeters: WaterMeter[] }) {
         });
     }, [snapshot, filters]);
 
-    const selectZone = (id: string) =>
+    const selectZone = (id: string) => {
+        const scene = SCENE_FOR_ZONE[id as MapZoneId];
+        if (scene) setSceneId(scene);
         setSelection((prev) => (prev.kind === "zone" && prev.id === id ? { kind: "none", id: "" } : { kind: "zone", id }));
-    const selectMeter = (key: string) => setSelection({ kind: "meter", id: key });
+    };
+    const selectMeter = (key: string) => {
+        const m = snapshot?.meters.find((x) => x.key === key);
+        if (m?.zoneId && SCENE_FOR_ZONE[m.zoneId]) {
+            setSceneId(SCENE_FOR_ZONE[m.zoneId]);
+        } else if (m) {
+            for (const id of SCENE_ORDER) {
+                if (WATER_MAP_SCENES[id].meterPoints.some((p) => p.account === m.account)) {
+                    setSceneId(id);
+                    break;
+                }
+            }
+        }
+        setSelection({ kind: "meter", id: key });
+    };
     const clearSelection = () => setSelection({ kind: "none", id: "" });
 
     const detailNode = selectedMeter ? (
@@ -222,13 +237,24 @@ export function Water3DMap({ waterMeters }: { waterMeters: WaterMeter[] }) {
                     )}
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
+                    {!sceneFailed && view === "map" && (
+                        <SceneSwitcher
+                            order={SCENE_ORDER}
+                            labels={Object.fromEntries(SCENE_ORDER.map((id) => [id, WATER_MAP_SCENES[id].label]))}
+                            active={sceneId}
+                            onChange={(id) => {
+                                setSceneId(id as WaterMapSceneId);
+                                setSelection((prev) => {
+                                    if (prev.kind === "zone" && SCENE_FOR_ZONE[prev.id as MapZoneId] !== id) return { kind: "none", id: "" };
+                                    return prev;
+                                });
+                            }}
+                        />
+                    )}
                     {!sceneFailed && (
                         <LayerToggles
                             layers={layers}
                             onLayersChange={(p) => setLayers((prev) => ({ ...prev, ...p }))}
-                            animateFlow={animateFlow}
-                            onToggleFlow={() => setAnimateFlow((v) => !v)}
-                            reducedMotion={reducedMotion}
                         />
                     )}
                     <div role="group" aria-label="View" className="inline-flex rounded-[7px] border border-border bg-card p-0.5">

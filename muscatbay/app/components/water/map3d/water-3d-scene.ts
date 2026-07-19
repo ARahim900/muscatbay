@@ -1,50 +1,56 @@
 /**
- * @fileoverview Water 3D Map — the Three.js scene (framework-free class).
+ * @fileoverview Water 3D Map — the Three.js aerial scene (framework-free class).
  *
- * Renders a `MapSnapshot` as a 3D operational board: a ground plane, one
- * platform + magnitude pillar per zone (coloured by loss severity), instanced
- * meter nodes, trunk links from the main bulk to each zone, and pausable flow
- * particles. Self-contained HTML zone callouts are projected each frame.
+ * Renders one calibrated aerial image scene (see `lib/water-map-scenes.ts`) as
+ * a textured ground plane in metres, with PROGRAMMATIC markers on it:
+ *  - a pin + soft ground ring per zone bulk meter (severity-coloured, from the
+ *    live MapSnapshot — never hard-coded values);
+ *  - smaller pins for individually-verified meters (Hotel JMB, Z08 IRR);
+ *  - HTML callouts projected each frame (our own labels — the source images'
+ *    calibration ink was removed from the base layers).
+ * There are deliberately NO abstract platforms, magnitude pillars, straight
+ * network lines or illustratively-scattered meter nodes — un-surveyed meters
+ * are surfaced through the panels/search/table instead of fake positions.
  *
- * Discipline mirrors `components/three/ambient-bay.tsx`: token-resolved colours
- * that re-resolve on theme change, WebGL created in try/catch (graceful failure
- * → caller shows the table fallback), on-demand rendering that idles to zero
- * work, paused off-screen and when the tab is hidden, honours reduced-motion,
- * and fully disposes on teardown.
+ * Discipline (mirrors `components/three/ambient-bay.tsx`): token-resolved
+ * colours that re-resolve on theme change, WebGL created in try/catch (graceful
+ * failure → caller shows the table fallback), on-demand rendering that idles to
+ * zero work, paused off-screen and when the tab is hidden, honours
+ * reduced-motion (camera moves snap instead of glide), and fully disposes.
  *
  * @module components/water/map3d/water-3d-scene
  */
 
 import {
     AmbientLight,
-    BoxGeometry,
-    BufferGeometry,
+    CircleGeometry,
     Color,
     CylinderGeometry,
     DirectionalLight,
-    Float32BufferAttribute,
-    GridHelper,
-    Group,
-    HemisphereLight,
-    InstancedMesh,
-    LineBasicMaterial,
-    LineSegments,
     Mesh,
+    MeshBasicMaterial,
     MeshLambertMaterial,
-    Object3D,
     PerspectiveCamera,
     PlaneGeometry,
-    Points,
-    PointsMaterial,
     Raycaster,
     RingGeometry,
     Scene,
+    SphereGeometry,
+    SRGBColorSpace,
+    Texture,
+    TextureLoader,
     Vector2,
     Vector3,
     WebGLRenderer,
 } from "three";
-import type { MapSnapshot, MapMeterDatum, MapSeverity, MapZoneDatum } from "@/lib/water-map-data";
+import type { MapSnapshot, MapSeverity, MapZoneDatum, MapMeterDatum } from "@/lib/water-map-data";
 import type { MapZoneId } from "@/lib/water-map-config";
+import {
+    WATER_MAP_SCENES,
+    sceneGeo,
+    sceneControlPoint,
+    type WaterMapSceneId,
+} from "@/lib/water-map-scenes";
 
 export type SceneSelectionKind = "zone" | "meter" | "main" | "none";
 export interface SceneSelection {
@@ -64,13 +70,10 @@ export interface SceneCallbacks {
 }
 export interface SceneLayers {
     meters: boolean;
-    links: boolean;
-    flow: boolean;
     labels: boolean;
 }
 export interface SceneOptions {
     reducedMotion: boolean;
-    animateFlow: boolean;
     layers: SceneLayers;
 }
 
@@ -95,6 +98,23 @@ function token(name: string, fallback: string): Color {
     }
 }
 
+interface ZoneMarker {
+    zoneId: MapZoneId;
+    pos: Vector3;
+    pole: Mesh;
+    head: Mesh;
+    ring: Mesh;
+    pick: Mesh;
+}
+interface MeterMarker {
+    account: string;
+    /** Snapshot meter key when resolvable (account:role) — falls back to account. */
+    key: string;
+    pos: Vector3;
+    pole: Mesh;
+    head: Mesh;
+}
+
 export class Water3DScene {
     private container: HTMLElement;
     private cb: SceneCallbacks;
@@ -104,20 +124,21 @@ export class Water3DScene {
     private scene = new Scene();
     private camera: PerspectiveCamera;
     private labelLayer: HTMLDivElement;
+    private texLoader = new TextureLoader();
+    private textures = new Map<WaterMapSceneId, Texture>();
 
     private ok_ = false;
     private disposed = false;
 
     // Camera orbit state (spherical around `target`).
     private target = new Vector3(0, 0, 0);
-    private theta = -0.6;
-    private phi = 0.9;
-    private radius = 760;
+    private theta = 0;
+    private phi = 0.5;
+    private radius = 700;
     private targetWanted = new Vector3(0, 0, 0);
-    private radiusWanted = 760;
+    private radiusWanted = 700;
     private homeTarget = new Vector3(0, 0, 0);
-    private homeRadius = 760;
-    private framed = false;
+    private homeRadius = 700;
     private easing = false;
 
     // Interaction
@@ -126,34 +147,29 @@ export class Water3DScene {
     private raycaster = new Raycaster();
     private pointerNdc = new Vector2();
 
-    // Rendering loop control
+    // Loop control
     private running = false;
     private onScreen = true;
     private visible = true;
-    private elapsed = 0;
     private lastTime = 0;
 
-    // Colour cache (re-resolved on theme change)
+    // Colours (re-resolved on theme change)
     private severityColor = new Map<MapSeverity, Color>();
-    private accentColor = new Color(SEVERITY_FALLBACK.good);
-    private mutedColor = new Color("#64748b");
+    private accentColor = new Color("#A1D1D5");
 
-    // Scene content (rebuilt per snapshot)
-    private content = new Group();
-    private zonePillars: Mesh[] = [];
-    private zonePlatforms: Mesh[] = [];
-    private zoneById = new Map<MapZoneId, MapZoneDatum>();
-    private meterMesh: InstancedMesh | null = null;
-    private meterList: MapMeterDatum[] = [];
-    private trunkLines: LineSegments | null = null;
-    private flow: Points | null = null;
-    private flowSegments: { a: Vector3; b: Vector3; speed: number; offset: number }[] = [];
-    private mainMarker: Mesh | null = null;
+    // Current content
+    private sceneId: WaterMapSceneId = "core";
+    private snapshot: MapSnapshot | null = null;
+    private ground: Mesh | null = null;
+    private zoneMarkers: ZoneMarker[] = [];
+    private meterMarkers: MeterMarker[] = [];
     private selectionRing: Mesh | null = null;
-
+    private planeW = 800;
+    private planeD = 420;
+    private pinH = 26;
     private selection: SceneSelection = { kind: "none", id: "" };
+    private pendingFocus: MapZoneId | null = null;
 
-    // Observers / listeners kept for disposal.
     private resizeObserver: ResizeObserver | null = null;
     private intersectionObserver: IntersectionObserver | null = null;
     private themeObserver: MutationObserver | null = null;
@@ -167,9 +183,8 @@ export class Water3DScene {
         this.container = container;
         this.cb = cb;
         this.opts = opts;
-        this.camera = new PerspectiveCamera(50, 1, 1, 8000);
+        this.camera = new PerspectiveCamera(48, 1, 1, 12000);
         this.labelLayer = document.createElement("div");
-
         try {
             this.renderer = new WebGLRenderer({ alpha: true, antialias: true, powerPreference: "low-power" });
         } catch {
@@ -179,7 +194,6 @@ export class Water3DScene {
         this.init();
     }
 
-    /** Whether WebGL is available and the scene mounted. */
     get ok(): boolean {
         return this.ok_;
     }
@@ -187,7 +201,6 @@ export class Water3DScene {
     private init(): void {
         const renderer = this.renderer;
         if (!renderer) return;
-
         renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75));
         renderer.setClearColor(0x000000, 0);
         const el = renderer.domElement;
@@ -196,7 +209,6 @@ export class Water3DScene {
         el.style.width = "100%";
         el.style.height = "100%";
         el.style.touchAction = "none";
-        el.style.outline = "none";
         this.container.appendChild(el);
 
         this.labelLayer.style.position = "absolute";
@@ -207,37 +219,11 @@ export class Water3DScene {
 
         this.resolveColors();
 
-        // Lighting — soft, non-dramatic (calm by default).
-        this.scene.add(new AmbientLight(0xffffff, 0.75));
-        const hemi = new HemisphereLight(0xffffff, 0x202028, 0.55);
-        this.scene.add(hemi);
-        const dir = new DirectionalLight(0xffffff, 0.7);
-        dir.position.set(300, 600, 200);
+        this.scene.add(new AmbientLight(0xffffff, 1.05));
+        const dir = new DirectionalLight(0xffffff, 0.55);
+        dir.position.set(300, 700, 250);
         this.scene.add(dir);
 
-        // Ground grid (provisional base).
-        const grid = new GridHelper(3600, 48, this.mutedColor.getHex(), this.mutedColor.getHex());
-        const gridMat = grid.material as LineBasicMaterial | LineBasicMaterial[];
-        if (Array.isArray(gridMat)) gridMat.forEach((m) => (m.opacity = 0.14));
-        else {
-            gridMat.opacity = 0.14;
-            gridMat.transparent = true;
-        }
-        this.scene.add(grid);
-
-        const plane = new Mesh(
-            new PlaneGeometry(3600, 3600),
-            new MeshLambertMaterial({ color: this.mutedColor, transparent: true, opacity: 0.06 }),
-        );
-        plane.rotation.x = -Math.PI / 2;
-        plane.position.y = -0.5;
-        this.scene.add(plane);
-
-        this.scene.add(this.content);
-
-        this.updateCamera();
-
-        // Observers
         this.resizeObserver = new ResizeObserver(() => this.resize());
         this.resizeObserver.observe(this.container);
         this.intersectionObserver = new IntersectionObserver(
@@ -251,7 +237,7 @@ export class Water3DScene {
         this.intersectionObserver.observe(this.container);
         this.themeObserver = new MutationObserver(() => {
             this.resolveColors();
-            this.applySeverityColors();
+            this.applyColors();
             this.invalidate();
         });
         this.themeObserver.observe(document.documentElement, {
@@ -260,7 +246,6 @@ export class Water3DScene {
         });
         document.addEventListener("visibilitychange", this.onVisibility);
 
-        // Pointer interaction
         el.addEventListener("pointerdown", this.onPointerDown);
         el.addEventListener("pointermove", this.onPointerMove);
         el.addEventListener("pointerup", this.onPointerUp);
@@ -278,211 +263,204 @@ export class Water3DScene {
         this.severityColor.set("critical", token("--mb-danger", SEVERITY_FALLBACK.critical));
         this.severityColor.set("nodata", token("--mb-stale", SEVERITY_FALLBACK.nodata));
         this.accentColor = token("--secondary", "#A1D1D5");
-        this.mutedColor = token("--muted-foreground", "#64748b");
     }
 
     private colorFor(sev: MapSeverity): Color {
         return this.severityColor.get(sev) ?? new Color(SEVERITY_FALLBACK[sev]);
     }
 
-    // ── Snapshot → geometry ────────────────────────────────────────────────
+    /* ── Content ──────────────────────────────────────────────────────────── */
+
+    setScene(sceneId: WaterMapSceneId): void {
+        if (!this.ok_ || sceneId === this.sceneId) return;
+        this.sceneId = sceneId;
+        this.rebuild(true);
+    }
+
     setSnapshot(snapshot: MapSnapshot): void {
         if (!this.ok_) return;
+        this.snapshot = snapshot;
+        this.rebuild(false);
+    }
+
+    /** World position (metres) of a control point on the current scene plane. */
+    private worldFor(pixelX: number, pixelY: number, mPerPx: number, w: number, h: number): Vector3 {
+        return new Vector3((pixelX - w / 2) * mPerPx, 0, (pixelY - h / 2) * mPerPx);
+    }
+
+    private rebuild(cameraHome: boolean): void {
+        if (!this.renderer) return;
         this.clearContent();
-        this.zoneById.clear();
+        const def = WATER_MAP_SCENES[this.sceneId];
+        const geo = sceneGeo(this.sceneId);
+        const mPerPx = geo.metresPerPixel;
+        const W = def.calibration.width;
+        const H = def.calibration.height;
+        this.planeW = W * mPerPx;
+        this.planeD = H * mPerPx;
+        this.pinH = Math.min(44, Math.max(18, this.planeW * 0.032));
 
-        const maxBulk = Math.max(1, ...snapshot.zones.map((z) => z.bulk));
-
-        // Zones: platform + magnitude pillar.
-        for (const z of snapshot.zones) {
-            this.zoneById.set(z.id, z);
-            const color = this.colorFor(z.severity);
-
-            const platform = new Mesh(
-                new BoxGeometry(z.footprint.w, 4, z.footprint.d),
-                new MeshLambertMaterial({ color, transparent: true, opacity: z.hasData ? 0.28 : 0.12 }),
-            );
-            platform.position.set(z.local.x, 2, z.local.z);
-            platform.userData = { kind: "zone", id: z.id };
-            this.content.add(platform);
-            this.zonePlatforms.push(platform);
-
-            const h = 12 + (z.bulk / maxBulk) * 150;
-            const pillar = new Mesh(
-                new BoxGeometry(26, h, 26),
-                new MeshLambertMaterial({ color, emissive: new Color(0x000000) }),
-            );
-            pillar.position.set(z.local.x, h / 2 + 4, z.local.z);
-            pillar.userData = { kind: "zone", id: z.id };
-            this.content.add(pillar);
-            this.zonePillars.push(pillar);
-        }
-
-        // Meter nodes (roles meter/building/dc) — one InstancedMesh.
-        this.meterList = snapshot.meters.filter((m) => m.role === "meter" || m.role === "building" || m.role === "dc");
-        if (this.meterList.length > 0) {
-            const geo = new CylinderGeometry(4.5, 4.5, 10, 8);
-            const mat = new MeshLambertMaterial({});
-            const inst = new InstancedMesh(geo, mat, this.meterList.length);
-            const dummy = new Object3D();
-            this.meterList.forEach((m, i) => {
-                const size = m.role === "building" ? 1.7 : m.role === "dc" ? 1.3 : 1;
-                dummy.position.set(m.local.x, 6 * size, m.local.z);
-                dummy.scale.set(size, size, size);
-                dummy.updateMatrix();
-                inst.setMatrixAt(i, dummy.matrix);
-                inst.setColorAt(i, this.colorFor(m.severity));
-            });
-            inst.instanceMatrix.needsUpdate = true;
-            if (inst.instanceColor) inst.instanceColor.needsUpdate = true;
-            inst.userData = { kind: "meters" };
-            inst.visible = this.opts.layers.meters;
-            this.content.add(inst);
-            this.meterMesh = inst;
-        }
-
-        // Main bulk marker.
-        if (snapshot.mainBulk) {
-            const marker = new Mesh(
-                new CylinderGeometry(16, 20, 44, 6),
-                new MeshLambertMaterial({ color: this.accentColor }),
-            );
-            marker.position.set(snapshot.mainBulk.local.x, 22, snapshot.mainBulk.local.z);
-            marker.userData = { kind: "main", id: snapshot.mainBulk.account };
-            this.content.add(marker);
-            this.mainMarker = marker;
-        }
-
-        // Trunk links main → zone pillars.
-        const main = snapshot.mainBulk?.local ?? { x: 0, z: 0 };
-        const linkPts: number[] = [];
-        this.flowSegments = [];
-        for (const z of snapshot.zones) {
-            linkPts.push(main.x, 6, main.z, z.local.x, 6, z.local.z);
-            const intensity = Math.max(0.2, z.bulk / maxBulk);
-            this.flowSegments.push({
-                a: new Vector3(main.x, 8, main.z),
-                b: new Vector3(z.local.x, 8, z.local.z),
-                speed: 0.15 + intensity * 0.4,
-                offset: Math.abs((z.local.x + z.local.z) % 100) / 100,
+        // Ground: the clean aerial base layer.
+        const groundMat = new MeshBasicMaterial({ color: 0xffffff });
+        const tex = this.textures.get(this.sceneId);
+        if (tex) {
+            groundMat.map = tex;
+            groundMat.color = new Color(0xffffff);
+        } else {
+            groundMat.color = token("--muted", "#e5e7eb");
+            this.texLoader.load(def.calibration.imagePath, (loaded) => {
+                if (this.disposed) {
+                    loaded.dispose();
+                    return;
+                }
+                loaded.colorSpace = SRGBColorSpace;
+                loaded.anisotropy = Math.min(4, this.renderer?.capabilities.getMaxAnisotropy() ?? 1);
+                this.textures.set(def.calibration.sceneId as WaterMapSceneId, loaded);
+                if (this.sceneId === def.calibration.sceneId && this.ground) {
+                    const mat = this.ground.material as MeshBasicMaterial;
+                    mat.map = loaded;
+                    mat.color = new Color(0xffffff);
+                    mat.needsUpdate = true;
+                    this.invalidate();
+                }
             });
         }
-        if (linkPts.length > 0) {
-            const lg = new BufferGeometry();
-            lg.setAttribute("position", new Float32BufferAttribute(linkPts, 3));
-            const lines = new LineSegments(lg, new LineBasicMaterial({ color: this.mutedColor, transparent: true, opacity: 0.35 }));
-            lines.visible = this.opts.layers.links;
-            this.content.add(lines);
-            this.trunkLines = lines;
+        const ground = new Mesh(new PlaneGeometry(this.planeW, this.planeD), groundMat);
+        ground.rotation.x = -Math.PI / 2;
+        ground.userData = { kind: "ground" };
+        this.scene.add(ground);
+        this.ground = ground;
+
+        const snap = this.snapshot;
+        const zoneById = new Map<MapZoneId, MapZoneDatum>((snap?.zones ?? []).map((z) => [z.id, z]));
+        const meterByAccount = new Map<string, MapMeterDatum>();
+        for (const m of snap?.meters ?? []) if (!meterByAccount.has(m.account)) meterByAccount.set(m.account, m);
+
+        // Zone markers.
+        for (const zp of def.zonePoints) {
+            const point = sceneControlPoint(this.sceneId, zp.controlPointId);
+            if (!point) continue;
+            const z = zoneById.get(zp.zoneId);
+            const sev: MapSeverity = z?.severity ?? "nodata";
+            const color = this.colorFor(sev);
+            const pos = this.worldFor(point.pixelX, point.pixelY, mPerPx, W, H);
+            const h = this.pinH;
+
+            const pole = new Mesh(
+                new CylinderGeometry(h * 0.05, h * 0.075, h, 10),
+                new MeshLambertMaterial({ color }),
+            );
+            pole.position.set(pos.x, h / 2, pos.z);
+            const head = new Mesh(new SphereGeometry(h * 0.17, 18, 14), new MeshLambertMaterial({ color }));
+            head.position.set(pos.x, h * 1.04, pos.z);
+            const ring = new Mesh(
+                new RingGeometry(h * 0.55, h * 0.78, 40),
+                new MeshBasicMaterial({ color, transparent: true, opacity: 0.5, depthWrite: false }),
+            );
+            ring.rotation.x = -Math.PI / 2;
+            ring.position.set(pos.x, 0.4, pos.z);
+            const pick = new Mesh(
+                new CircleGeometry(h * 2.6, 24),
+                new MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }),
+            );
+            pick.rotation.x = -Math.PI / 2;
+            pick.position.set(pos.x, 0.2, pos.z);
+
+            const ud = { kind: "zone", id: zp.zoneId };
+            pole.userData = ud;
+            head.userData = ud;
+            ring.userData = ud;
+            pick.userData = ud;
+            this.scene.add(pole, head, ring, pick);
+            this.zoneMarkers.push({ zoneId: zp.zoneId, pos, pole, head, ring, pick });
         }
 
-        // Flow particles distributed across the trunk links.
-        this.buildFlow();
+        // Individually-verified meter markers.
+        for (const mp of def.meterPoints) {
+            const point = sceneControlPoint(this.sceneId, mp.controlPointId);
+            if (!point) continue;
+            const m = meterByAccount.get(mp.account);
+            const sev: MapSeverity = m?.severity ?? "nodata";
+            const color = this.colorFor(sev);
+            const pos = this.worldFor(point.pixelX, point.pixelY, mPerPx, W, H);
+            const h = this.pinH * 0.62;
+            const pole = new Mesh(
+                new CylinderGeometry(h * 0.055, h * 0.08, h, 8),
+                new MeshLambertMaterial({ color }),
+            );
+            pole.position.set(pos.x, h / 2, pos.z);
+            const head = new Mesh(new SphereGeometry(h * 0.19, 14, 10), new MeshLambertMaterial({ color }));
+            head.position.set(pos.x, h * 1.05, pos.z);
+            const key = m?.key ?? mp.account;
+            const ud = { kind: "meter", id: key, account: mp.account };
+            pole.userData = ud;
+            head.userData = ud;
+            pole.visible = this.opts.layers.meters;
+            head.visible = this.opts.layers.meters;
+            this.scene.add(pole, head);
+            this.meterMarkers.push({ account: mp.account, key, pos, pole, head });
+        }
 
-        // Zone callouts (HTML overlay).
-        this.buildLabels(snapshot);
+        this.buildLabels(def.zonePoints.map((zp) => zp.zoneId), zoneById, meterByAccount);
 
-        this.frameToContent();
+        // Camera framing — near-top-down home view that fills the frame.
+        this.homeTarget.set(0, 0, 0);
+        this.homeRadius = Math.min(2400, Math.max(160, Math.max(this.planeW * 0.44, this.planeD * 0.9)));
+        if (cameraHome || !this.easing) {
+            if (cameraHome) {
+                this.target.copy(this.homeTarget);
+                this.radius = this.homeRadius;
+                this.targetWanted.copy(this.homeTarget);
+                this.radiusWanted = this.homeRadius;
+                this.updateCamera();
+            }
+        }
+        if (this.pendingFocus) {
+            const f = this.pendingFocus;
+            this.pendingFocus = null;
+            this.focusZone(f);
+        }
         this.applySelectionVisual();
         this.invalidate();
     }
 
-    /** Fit the camera home view to the real geographic extent (once). */
-    private frameToContent(): void {
-        const pts: Vector3[] = [];
-        this.zoneById.forEach((z) => pts.push(new Vector3(z.local.x, 0, z.local.z)));
-        if (this.mainMarker) pts.push(this.mainMarker.position.clone());
-        if (pts.length === 0) return;
-        let minX = Infinity, maxX = -Infinity, minZ = Infinity, maxZ = -Infinity;
-        for (const p of pts) {
-            minX = Math.min(minX, p.x);
-            maxX = Math.max(maxX, p.x);
-            minZ = Math.min(minZ, p.z);
-            maxZ = Math.max(maxZ, p.z);
-        }
-        const span = Math.max(maxX - minX, maxZ - minZ, 200);
-        this.homeTarget.set((minX + maxX) / 2, 0, (minZ + maxZ) / 2);
-        this.homeRadius = Math.min(2600, Math.max(320, span * 1.35 + 220));
-        if (!this.framed) {
-            this.framed = true;
-            this.target.copy(this.homeTarget);
-            this.targetWanted.copy(this.homeTarget);
-            this.radius = this.homeRadius;
-            this.radiusWanted = this.homeRadius;
-            this.updateCamera();
-        }
-    }
-
-    private buildFlow(): void {
-        if (this.flowSegments.length === 0) return;
-        const perSeg = 6;
-        const total = this.flowSegments.length * perSeg;
-        const positions = new Float32Array(total * 3);
-        const geo = new BufferGeometry();
-        geo.setAttribute("position", new Float32BufferAttribute(positions, 3));
-        const mat = new PointsMaterial({
-            color: this.accentColor,
-            size: 7,
-            sizeAttenuation: true,
-            transparent: true,
-            opacity: 0.9,
-            depthWrite: false,
-        });
-        const pts = new Points(geo, mat);
-        pts.visible = this.opts.layers.flow && this.opts.animateFlow && !this.opts.reducedMotion;
-        this.content.add(pts);
-        this.flow = pts;
-        this.updateFlow(0);
-    }
-
-    private updateFlow(time: number): void {
-        if (!this.flow) return;
-        const attr = this.flow.geometry.getAttribute("position");
-        const perSeg = 6;
-        let idx = 0;
-        for (const seg of this.flowSegments) {
-            for (let k = 0; k < perSeg; k++) {
-                const base = (k / perSeg + seg.offset + time * seg.speed) % 1;
-                const x = seg.a.x + (seg.b.x - seg.a.x) * base;
-                const y = seg.a.y + (seg.b.y - seg.a.y) * base + Math.sin(base * Math.PI) * 6;
-                const z = seg.a.z + (seg.b.z - seg.a.z) * base;
-                attr.setXYZ(idx++, x, y, z);
-            }
-        }
-        attr.needsUpdate = true;
-    }
-
-    private buildLabels(snapshot: MapSnapshot): void {
+    private buildLabels(
+        zoneIds: MapZoneId[],
+        zoneById: Map<MapZoneId, MapZoneDatum>,
+        meterByAccount: Map<string, MapMeterDatum>,
+    ): void {
         this.labelLayer.replaceChildren();
-        const mk = (id: string, title: string, value: string, sev: MapSeverity) => {
+        const mk = (id: string, title: string, value: string, sev: MapSeverity, small: boolean) => {
             const el = document.createElement("div");
             el.dataset.labelId = id;
             el.style.position = "absolute";
-            el.style.transform = "translate(-50%, -120%)";
-            el.style.padding = "3px 8px";
+            el.style.transform = "translate(-50%, -130%)";
+            el.style.padding = small ? "2px 6px" : "3px 8px";
             el.style.borderRadius = "7px";
-            el.style.font = "600 11px/1.25 var(--font-sans, system-ui), sans-serif";
+            el.style.font = `600 ${small ? 10 : 11}px/1.25 var(--font-sans, system-ui), sans-serif`;
             el.style.whiteSpace = "nowrap";
             el.style.color = "var(--card-foreground, #111)";
             el.style.background = "color-mix(in srgb, var(--card, #fff) 92%, transparent)";
             el.style.border = "1px solid var(--border, #e5e7eb)";
-            el.style.boxShadow = "0 2px 8px rgba(0,0,0,0.14)";
+            el.style.boxShadow = "0 2px 8px rgba(0,0,0,0.16)";
             el.style.visibility = "hidden";
             const dot = `<span style="display:inline-block;width:7px;height:7px;border-radius:9999px;background:${this.colorFor(sev).getStyle()};margin-inline-end:5px;vertical-align:middle"></span>`;
             el.innerHTML = `${dot}<span style="vertical-align:middle">${title}</span> <span style="opacity:.7;vertical-align:middle">${value}</span>`;
             this.labelLayer.appendChild(el);
         };
-        for (const z of snapshot.zones) {
-            mk(`zone:${z.id}`, z.short, z.hasData ? `${fmt(z.bulk)} m³` : "no data", z.severity);
+        for (const id of zoneIds) {
+            const z = zoneById.get(id);
+            mk(`zone:${id}`, z?.short ?? id, z?.hasData ? `${fmt(z.bulk)} m³` : "no data", z?.severity ?? "nodata", false);
         }
-        if (snapshot.mainBulk) {
-            mk(`main:${snapshot.mainBulk.account}`, "Main Bulk", `${fmt(snapshot.mainBulk.value)} m³`, "good");
+        for (const mm of this.meterMarkers) {
+            const m = meterByAccount.get(mm.account);
+            mk(`meter:${mm.account}`, m?.name ?? mm.account, m ? `${fmt(m.value)} m³` : "–", m?.severity ?? "nodata", true);
         }
         this.labelLayer.style.display = this.opts.layers.labels ? "block" : "none";
     }
 
     private updateLabels(): void {
-        if (!this.renderer || this.opts.layers.labels === false) return;
+        if (!this.renderer) return;
         const { width, height } = this.renderer.domElement;
         const dpr = this.renderer.getPixelRatio();
         const w = width / dpr;
@@ -492,8 +470,7 @@ export class Water3DScene {
             const el = this.labelLayer.querySelector<HTMLElement>(`[data-label-id="${CSS.escape(id)}"]`);
             if (!el) return;
             v.copy(world).project(this.camera);
-            const behind = v.z > 1;
-            if (behind) {
+            if (v.z > 1) {
                 el.style.visibility = "hidden";
                 return;
             }
@@ -501,17 +478,19 @@ export class Water3DScene {
             el.style.top = `${((-v.y + 1) / 2) * h}px`;
             el.style.visibility = "visible";
         };
-        this.zoneById.forEach((z) => {
-            const hgt = 12 + (z.bulk / Math.max(1, ...[...this.zoneById.values()].map((d) => d.bulk))) * 150;
-            place(`zone:${z.id}`, new Vector3(z.local.x, hgt + 18, z.local.z));
-        });
-        if (this.mainMarker) {
-            const id = (this.mainMarker.userData as { id?: string }).id ?? "";
-            place(`main:${id}`, new Vector3(this.mainMarker.position.x, 54, this.mainMarker.position.z));
+        for (const zm of this.zoneMarkers) place(`zone:${zm.zoneId}`, new Vector3(zm.pos.x, this.pinH * 1.25, zm.pos.z));
+        if (this.opts.layers.meters) {
+            for (const mm of this.meterMarkers) place(`meter:${mm.account}`, new Vector3(mm.pos.x, this.pinH * 0.85, mm.pos.z));
+        } else {
+            for (const mm of this.meterMarkers) {
+                const el = this.labelLayer.querySelector<HTMLElement>(`[data-label-id="${CSS.escape(`meter:${mm.account}`)}"]`);
+                if (el) el.style.visibility = "hidden";
+            }
         }
     }
 
-    // ── Selection ──────────────────────────────────────────────────────────
+    /* ── Selection & colours ──────────────────────────────────────────────── */
+
     setSelection(sel: SceneSelection): void {
         this.selection = sel;
         this.applySelectionVisual();
@@ -519,65 +498,74 @@ export class Water3DScene {
     }
 
     private applySelectionVisual(): void {
-        // Zone emphasis via emissive on the pillar.
-        for (const pillar of this.zonePillars) {
-            const id = (pillar.userData as { id?: string }).id;
-            const mat = pillar.material as MeshLambertMaterial;
-            const on = this.selection.kind === "zone" && this.selection.id === id;
+        for (const zm of this.zoneMarkers) {
+            const on = this.selection.kind === "zone" && this.selection.id === zm.zoneId;
+            const mat = zm.head.material as MeshLambertMaterial;
             mat.emissive.copy(on ? this.accentColor : new Color(0x000000));
-            mat.emissiveIntensity = on ? 0.5 : 0;
+            mat.emissiveIntensity = on ? 0.55 : 0;
+            (zm.ring.material as MeshBasicMaterial).opacity = on ? 0.85 : 0.5;
         }
-        // Meter selection ring.
-        if (this.selection.kind === "meter" && this.meterMesh) {
-            const meter = this.meterList.find((m) => m.key === this.selection.id);
-            if (meter) {
-                if (!this.selectionRing) {
-                    this.selectionRing = new Mesh(
-                        new RingGeometry(9, 12, 24),
-                        new MeshLambertMaterial({ color: this.accentColor, transparent: true, opacity: 0.95 }),
-                    );
-                    this.selectionRing.rotation.x = -Math.PI / 2;
-                    this.content.add(this.selectionRing);
-                }
-                this.selectionRing.position.set(meter.local.x, 1, meter.local.z);
-                this.selectionRing.visible = true;
+        const selMeter =
+            this.selection.kind === "meter"
+                ? this.meterMarkers.find((m) => m.key === this.selection.id || m.account === this.selection.id)
+                : undefined;
+        if (selMeter) {
+            if (!this.selectionRing) {
+                this.selectionRing = new Mesh(
+                    new RingGeometry(this.pinH * 0.32, this.pinH * 0.45, 28),
+                    new MeshBasicMaterial({ color: this.accentColor, transparent: true, opacity: 0.95, depthWrite: false }),
+                );
+                this.selectionRing.rotation.x = -Math.PI / 2;
+                this.scene.add(this.selectionRing);
             }
+            this.selectionRing.position.set(selMeter.pos.x, 0.6, selMeter.pos.z);
+            this.selectionRing.visible = true;
         } else if (this.selectionRing) {
             this.selectionRing.visible = false;
         }
     }
 
-    private applySeverityColors(): void {
-        // Re-tint existing geometry after a theme change.
-        for (const pillar of this.zonePillars) {
-            const id = (pillar.userData as { id?: string }).id as MapZoneId | undefined;
-            const z = id ? this.zoneById.get(id) : undefined;
-            if (z) (pillar.material as MeshLambertMaterial).color.copy(this.colorFor(z.severity));
+    private applyColors(): void {
+        const snap = this.snapshot;
+        const zoneById = new Map<MapZoneId, MapZoneDatum>((snap?.zones ?? []).map((z) => [z.id, z]));
+        for (const zm of this.zoneMarkers) {
+            const c = this.colorFor(zoneById.get(zm.zoneId)?.severity ?? "nodata");
+            (zm.pole.material as MeshLambertMaterial).color.copy(c);
+            (zm.head.material as MeshLambertMaterial).color.copy(c);
+            (zm.ring.material as MeshBasicMaterial).color.copy(c);
         }
-        for (const platform of this.zonePlatforms) {
-            const id = (platform.userData as { id?: string }).id as MapZoneId | undefined;
-            const z = id ? this.zoneById.get(id) : undefined;
-            if (z) (platform.material as MeshLambertMaterial).color.copy(this.colorFor(z.severity));
-        }
-        if (this.meterMesh) {
-            this.meterList.forEach((m, i) => this.meterMesh?.setColorAt(i, this.colorFor(m.severity)));
-            if (this.meterMesh.instanceColor) this.meterMesh.instanceColor.needsUpdate = true;
+        const meterByAccount = new Map<string, MapMeterDatum>();
+        for (const m of snap?.meters ?? []) if (!meterByAccount.has(m.account)) meterByAccount.set(m.account, m);
+        for (const mm of this.meterMarkers) {
+            const c = this.colorFor(meterByAccount.get(mm.account)?.severity ?? "nodata");
+            (mm.pole.material as MeshLambertMaterial).color.copy(c);
+            (mm.head.material as MeshLambertMaterial).color.copy(c);
         }
     }
 
-    // ── Camera ────────────────────────────────────────────────────────────
+    /* ── Camera ───────────────────────────────────────────────────────────── */
+
     focusZone(zoneId: MapZoneId | null): void {
         if (zoneId) {
-            const z = this.zoneById.get(zoneId);
-            if (z) {
-                this.targetWanted.set(z.local.x, 0, z.local.z);
-                this.radiusWanted = 320;
+            const zm = this.zoneMarkers.find((z) => z.zoneId === zoneId);
+            if (!zm) {
+                this.pendingFocus = zoneId; // zone lives on another scene; applied after setScene rebuild
+                return;
             }
+            this.targetWanted.copy(zm.pos);
+            this.radiusWanted = Math.min(420, Math.max(110, this.planeW * 0.2));
         } else {
             this.targetWanted.copy(this.homeTarget);
             this.radiusWanted = this.homeRadius;
         }
-        this.easing = true;
+        if (this.opts.reducedMotion) {
+            this.target.copy(this.targetWanted);
+            this.radius = this.radiusWanted;
+            this.easing = false;
+            this.updateCamera();
+        } else {
+            this.easing = true;
+        }
         this.invalidate();
     }
 
@@ -589,22 +577,18 @@ export class Water3DScene {
         this.camera.lookAt(this.target);
     }
 
-    setAnimateFlow(on: boolean): void {
-        this.opts.animateFlow = on;
-        if (this.flow) this.flow.visible = on && this.opts.layers.flow && !this.opts.reducedMotion;
-        this.invalidate();
-    }
-
     setLayers(partial: Partial<SceneLayers>): void {
         this.opts.layers = { ...this.opts.layers, ...partial };
-        if (this.meterMesh) this.meterMesh.visible = this.opts.layers.meters;
-        if (this.trunkLines) this.trunkLines.visible = this.opts.layers.links;
-        if (this.flow) this.flow.visible = this.opts.layers.flow && this.opts.animateFlow && !this.opts.reducedMotion;
+        for (const mm of this.meterMarkers) {
+            mm.pole.visible = this.opts.layers.meters;
+            mm.head.visible = this.opts.layers.meters;
+        }
         this.labelLayer.style.display = this.opts.layers.labels ? "block" : "none";
         this.invalidate();
     }
 
-    // ── Pointer handlers ────────────────────────────────────────────────────
+    /* ── Pointer ──────────────────────────────────────────────────────────── */
+
     private readonly onPointerDown = (e: PointerEvent) => {
         this.dragging = true;
         this.lastPointer.set(e.clientX, e.clientY);
@@ -625,7 +609,7 @@ export class Water3DScene {
             const dy = e.clientY - this.lastPointer.y;
             this.lastPointer.set(e.clientX, e.clientY);
             this.theta -= dx * 0.005;
-            this.phi = Math.min(1.45, Math.max(0.18, this.phi - dy * 0.005));
+            this.phi = Math.min(1.22, Math.max(0.14, this.phi - dy * 0.005));
             this.easing = false;
             this.updateCamera();
             this.invalidate();
@@ -635,7 +619,8 @@ export class Water3DScene {
     };
     private readonly onWheel = (e: WheelEvent) => {
         e.preventDefault();
-        this.radius = Math.min(1500, Math.max(140, this.radius * (1 + Math.sign(e.deltaY) * 0.08)));
+        const maxR = Math.max(this.homeRadius * 1.5, 400);
+        this.radius = Math.min(maxR, Math.max(60, this.radius * (1 + Math.sign(e.deltaY) * 0.08)));
         this.easing = false;
         this.updateCamera();
         this.invalidate();
@@ -650,34 +635,28 @@ export class Water3DScene {
         );
         this.raycaster.setFromCamera(this.pointerNdc, this.camera);
 
-        // Meters first (they sit on top), then zone pillars, then main.
-        if (this.meterMesh && this.opts.layers.meters) {
-            const hit = this.raycaster.intersectObject(this.meterMesh, false)[0];
-            if (hit && hit.instanceId != null) {
-                const m = this.meterList[hit.instanceId];
-                if (m) {
-                    if (select) this.cb.onSelect?.({ kind: "meter", id: m.key });
-                    else this.cb.onHover?.({ kind: "meter", label: m.name, value: `${fmt(m.value)} m³`, x: e.clientX - rect.left, y: e.clientY - rect.top });
-                    return;
-                }
-            }
-        }
-        const zoneHit = this.raycaster.intersectObjects([...this.zonePillars, ...this.zonePlatforms], false)[0];
-        if (zoneHit) {
-            const id = (zoneHit.object.userData as { id?: string }).id;
-            const z = id ? this.zoneById.get(id as MapZoneId) : undefined;
-            if (z) {
-                if (select) this.cb.onSelect?.({ kind: "zone", id: z.id });
-                else this.cb.onHover?.({ kind: "zone", label: z.name, value: `${fmt(z.bulk)} m³ · ${z.lossPct.toFixed(1)}% loss`, x: e.clientX - rect.left, y: e.clientY - rect.top });
+        const snap = this.snapshot;
+        // Meter pins first (small, on top).
+        if (this.opts.layers.meters && this.meterMarkers.length > 0) {
+            const objs = this.meterMarkers.flatMap((m) => [m.pole, m.head]);
+            const hit = this.raycaster.intersectObjects(objs, false)[0];
+            if (hit) {
+                const ud = hit.object.userData as { id?: string; account?: string };
+                const m = snap?.meters.find((x) => x.key === ud.id || x.account === ud.account);
+                if (select) this.cb.onSelect?.({ kind: "meter", id: ud.id ?? ud.account ?? "" });
+                else if (m) this.cb.onHover?.({ kind: "meter", label: m.name, value: `${fmt(m.value)} m³`, x: e.clientX - rect.left, y: e.clientY - rect.top });
                 return;
             }
         }
-        if (this.mainMarker) {
-            const mainHit = this.raycaster.intersectObject(this.mainMarker, false)[0];
-            if (mainHit) {
-                const id = (this.mainMarker.userData as { id?: string }).id ?? "";
-                if (select) this.cb.onSelect?.({ kind: "main", id });
-                else this.cb.onHover?.(null);
+        // Zone pins + interactive discs.
+        const zoneObjs = this.zoneMarkers.flatMap((z) => [z.pole, z.head, z.pick, z.ring]);
+        const zoneHit = this.raycaster.intersectObjects(zoneObjs, false)[0];
+        if (zoneHit) {
+            const id = (zoneHit.object.userData as { id?: string }).id as MapZoneId | undefined;
+            const z = id ? snap?.zones.find((x) => x.id === id) : undefined;
+            if (id) {
+                if (select) this.cb.onSelect?.({ kind: "zone", id });
+                else if (z) this.cb.onHover?.({ kind: "zone", label: z.name, value: `${fmt(z.bulk)} m³ · ${z.lossPct.toFixed(1)}% loss`, x: e.clientX - rect.left, y: e.clientY - rect.top });
                 return;
             }
         }
@@ -685,7 +664,8 @@ export class Water3DScene {
         else this.cb.onHover?.(null);
     }
 
-    // ── Render loop (on-demand) ─────────────────────────────────────────────
+    /* ── Loop ─────────────────────────────────────────────────────────────── */
+
     private invalidate(): void {
         if (!this.ok_ || this.disposed || !this.onScreen || !this.visible) return;
         if (!this.running) {
@@ -704,27 +684,20 @@ export class Water3DScene {
         if (this.disposed || !this.renderer) return;
         const delta = Math.min((now - this.lastTime) / 1000, 0.05);
         this.lastTime = now;
-        this.elapsed += delta;
 
-        // Ease the camera toward a focus target.
         if (this.easing) {
             const damp = 1 - Math.exp(-6 * delta);
             this.target.lerp(this.targetWanted, damp);
             this.radius += (this.radiusWanted - this.radius) * damp;
             this.updateCamera();
-            if (this.target.distanceTo(this.targetWanted) < 0.5 && Math.abs(this.radius - this.radiusWanted) < 0.5) {
+            if (this.target.distanceTo(this.targetWanted) < 0.4 && Math.abs(this.radius - this.radiusWanted) < 0.4) {
                 this.easing = false;
             }
         }
 
-        const flowing = this.opts.animateFlow && !this.opts.reducedMotion && this.flow?.visible;
-        if (flowing) this.updateFlow(this.elapsed);
-
         this.updateLabels();
         this.renderer.render(this.scene, this.camera);
-
-        // Idle to zero work when nothing needs animating.
-        if (!this.easing && !flowing && !this.dragging) this.stopLoop();
+        if (!this.easing && !this.dragging) this.stopLoop();
     };
 
     resize(): void {
@@ -738,23 +711,36 @@ export class Water3DScene {
         this.invalidate();
     }
 
+    private disposeMesh(m: Mesh | null): void {
+        if (!m) return;
+        this.scene.remove(m);
+        m.geometry.dispose();
+        const mat = m.material;
+        if (Array.isArray(mat)) mat.forEach((x) => x.dispose());
+        else mat.dispose();
+    }
+
     private clearContent(): void {
-        for (const child of [...this.content.children]) {
-            this.content.remove(child);
-            if (child instanceof Mesh || child instanceof LineSegments || child instanceof Points || child instanceof InstancedMesh) {
-                child.geometry.dispose();
-                const mat = child.material;
-                if (Array.isArray(mat)) mat.forEach((m) => m.dispose());
-                else mat.dispose();
-            }
+        // Ground material is disposed but cached textures are kept for re-use.
+        if (this.ground) {
+            const mat = this.ground.material as MeshBasicMaterial;
+            mat.map = null;
+            this.disposeMesh(this.ground);
+            this.ground = null;
         }
-        this.zonePillars = [];
-        this.zonePlatforms = [];
-        this.meterMesh = null;
-        this.meterList = [];
-        this.trunkLines = null;
-        this.flow = null;
-        this.mainMarker = null;
+        for (const zm of this.zoneMarkers) {
+            this.disposeMesh(zm.pole);
+            this.disposeMesh(zm.head);
+            this.disposeMesh(zm.ring);
+            this.disposeMesh(zm.pick);
+        }
+        this.zoneMarkers = [];
+        for (const mm of this.meterMarkers) {
+            this.disposeMesh(mm.pole);
+            this.disposeMesh(mm.head);
+        }
+        this.meterMarkers = [];
+        this.disposeMesh(this.selectionRing);
         this.selectionRing = null;
     }
 
@@ -774,14 +760,8 @@ export class Water3DScene {
             el.removeEventListener("wheel", this.onWheel);
         }
         this.clearContent();
-        this.scene.traverse((obj) => {
-            if (obj instanceof Mesh || obj instanceof LineSegments || obj instanceof Points) {
-                obj.geometry?.dispose();
-                const mat = obj.material;
-                if (Array.isArray(mat)) mat.forEach((m) => m.dispose());
-                else mat?.dispose();
-            }
-        });
+        for (const tex of this.textures.values()) tex.dispose();
+        this.textures.clear();
         this.labelLayer.remove();
         this.renderer?.dispose();
         this.renderer?.domElement.remove();

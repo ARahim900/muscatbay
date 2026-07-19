@@ -265,10 +265,11 @@ export function ProvisionalNotice() {
         <div className="flex items-start gap-2 rounded-[7px] border border-border/60 bg-muted/40 px-3 py-2 text-[11px] text-muted-foreground">
             <HelpCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-secondary" aria-hidden="true" />
             <p>
-                <span className="font-semibold text-foreground">Zone positions are surveyed.</span> Zone
-                bulk meters use real coordinates; individual meters within a zone are placed illustratively
-                around their zone until per-meter survey data exists. All consumption, loss and efficiency
-                values are live from Supabase.
+                <span className="font-semibold text-foreground">Aerial scenes, verified meter points.</span>{" "}
+                Bulk meters (and the Hotel/Z08 irrigation meters) sit at their verified coordinates on real
+                site imagery; other properties are not drawn on the map until their footprints are mapped —
+                find them via search, filters and the zone panels. Values are live from Supabase; the imagery
+                itself is not survey-grade.
             </p>
         </div>
     );

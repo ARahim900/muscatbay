@@ -11,8 +11,8 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-    BarChart3, CalendarDays, ChevronLeft, ChevronRight, Play, Pause, Search, X,
-    Layers as LayersIcon, Waypoints, Droplets, Tag,
+    BarChart3, CalendarDays, ChevronLeft, ChevronRight, Search, X,
+    Layers as LayersIcon, Droplets, Tag,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { MapMode, MapSnapshot, MapMeterDatum } from "@/lib/water-map-data";
@@ -142,24 +142,17 @@ export function DailyDateControl({
     );
 }
 
-/* ── Layer + animation toggles ─────────────────────────────────────────────── */
+/* ── Layer toggles ─────────────────────────────────────────────────────────── */
 
 export function LayerToggles({
     layers,
     onLayersChange,
-    animateFlow,
-    onToggleFlow,
-    reducedMotion,
 }: {
     layers: SceneLayers;
     onLayersChange: (partial: Partial<SceneLayers>) => void;
-    animateFlow: boolean;
-    onToggleFlow: () => void;
-    reducedMotion: boolean;
 }) {
     const toggles: { key: keyof SceneLayers; label: string; icon: typeof LayersIcon }[] = [
         { key: "meters", label: "Meters", icon: Droplets },
-        { key: "links", label: "Network", icon: Waypoints },
         { key: "labels", label: "Labels", icon: Tag },
     ];
     return (
@@ -177,17 +170,39 @@ export function LayerToggles({
                     <span className="hidden sm:inline">{t.label}</span>
                 </button>
             ))}
-            <button
-                type="button"
-                aria-pressed={animateFlow && !reducedMotion}
-                onClick={onToggleFlow}
-                disabled={reducedMotion}
-                className={cn(btn, animateFlow && !reducedMotion ? "border-secondary/50 text-foreground" : "text-muted-foreground")}
-                title={reducedMotion ? "Flow disabled (reduced motion)" : "Toggle water-flow animation"}
-            >
-                {animateFlow && !reducedMotion ? <Pause className="h-3.5 w-3.5" aria-hidden="true" /> : <Play className="h-3.5 w-3.5" aria-hidden="true" />}
-                <span className="hidden sm:inline">Flow</span>
-            </button>
+        </div>
+    );
+}
+
+/* ── Scene switcher (three local aerial scenes) ────────────────────────────── */
+
+export function SceneSwitcher({
+    order,
+    labels,
+    active,
+    onChange,
+}: {
+    order: readonly string[];
+    labels: Record<string, string>;
+    active: string;
+    onChange: (sceneId: string) => void;
+}) {
+    return (
+        <div role="group" aria-label="Aerial scene" className="inline-flex rounded-[7px] border border-border bg-card p-0.5">
+            {order.map((id) => (
+                <button
+                    key={id}
+                    type="button"
+                    aria-pressed={active === id}
+                    onClick={() => onChange(id)}
+                    className={cn(
+                        "rounded-[5px] px-2.5 py-1.5 text-[12px] font-semibold whitespace-nowrap transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary/60",
+                        active === id ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground",
+                    )}
+                >
+                    {labels[id] ?? id}
+                </button>
+            ))}
         </div>
     );
 }

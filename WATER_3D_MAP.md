@@ -38,14 +38,25 @@ Google/paid map service, no separate database.
      deck.gl/MapLibre geographic layer can replace it when real coordinates +
      tile hosting exist.
 
-3. **Zone positions are surveyed; per-meter positions provisional; data always
-   real.** Operations provided real coordinates (2026-07-19) for the NAMA main
-   bulk and all six zone bulk meters (+ four landmark DC meters), wired into
-   `lib/water-map-config.ts` (`SITE_ANCHOR`, `MAP_ZONES[].geo`,
-   `KNOWN_METER_COORDS`). Each zone sits at its true location; individual meters
-   are laid out deterministically around their real zone-bulk point until
-   per-meter survey data exists. Every consumption/loss/efficiency value is the
-   real Supabase value.
+3. **Real aerial imagery + calibrated scenes (2026-07-19).** Operations supplied
+   three marked aerial reference images (`Zones Pics/`, repo root) plus verified
+   coordinates for the NAMA main bulk, all six zone bulk meters and four
+   landmark meters. The map now renders **three local image scenes** —
+   `core` (3A·3B·05·VS), `east` (Zone 08 & Hotel), `fm` (Zone FM) — as textured
+   ground planes with **programmatic** severity-coloured pins at the calibrated
+   points. Calibration lives in `lib/water-map-scenes.ts` (the
+   `ImageSceneCalibration` contract: control points with pixel + normalised +
+   lat/lon), separate from Supabase data; a least-squares similarity fit per
+   scene verifies alignment (unit-tested) and derives metres-per-pixel. The
+   marked source images are calibration references only — the visible base
+   layers (`app/public/water-map/scene-*.jpg`) are clean derivatives with the
+   blue ink/app badges patched out programmatically. Scenes are NOT merged into
+   one geographic layer (different captures; merging would distort — rules 9/10);
+   selecting a zone loads its scene and flies the camera. The old abstract board
+   (grid platforms, magnitude pillars, straight trunk lines, flow particles,
+   illustratively-scattered meters) was REMOVED per the final visual requirement
+   — un-surveyed meters surface through the panels/search/table instead of fake
+   positions. `lib/water-map-config.ts` retains zone identity/`KNOWN_METER_COORDS`.
 
 4. **Reuse the existing calc engines — no new math.** Monthly reuses
    `buildMonthlyData` → `computePeriod` (A1→A2→A3). Daily reuses
@@ -77,27 +88,48 @@ Google/paid map service, no separate database.
 
 ## Files
 **Created**
-- `lib/water-map-config.ts` — central zone identity + provisional geo layout.
+- `lib/water-map-config.ts` — central zone identity + `KNOWN_METER_COORDS`.
+- `lib/water-map-scenes.ts` — `ImageSceneCalibration` scenes, control points,
+  similarity solver, scene-per-zone assignment, placement metadata.
 - `lib/water-map-data.ts` — pure adapter → `MapSnapshot` (monthly + daily).
 - `functions/api/water-map.ts` — raw daily fetch + available-period helpers.
-- `components/water/map3d/water-3d-scene.ts` — the Three.js scene (class).
+- `components/water/map3d/water-3d-scene.ts` — Three.js aerial scene (class).
 - `components/water/map3d/use-water-map-data.ts` — data provider hook.
 - `components/water/map3d/map-panels.tsx` — KPIs, zone summary, detail panels, legend.
-- `components/water/map3d/map-controls.tsx` — toolbar, date controls, search, filters.
+- `components/water/map3d/map-controls.tsx` — toolbar, date controls, scene switcher, search, filters.
 - `components/water/map3d/map-table.tsx` — accessible table fallback.
 - `components/water/map3d/water-3d-map.tsx` — the subsection wrapper (default export).
+- `public/water-map/scene-{core,east,fm}.jpg` — clean aerial base layers
+  (annotations patched out; ~0.6 MB each).
 - `__tests__/lib/water-map-data.test.ts` — adapter unit tests (10 cases).
+- `__tests__/lib/water-map-scenes.test.ts` — calibration/alignment tests (6 cases).
 
 **Modified**
 - `app/water/page.tsx` — third "3D Map" tab (lazy, `ssr:false`).
 
+**Calibration sources (repo root, not bundled):** `Zones Pics/zone-map.png`
+(core, 2738×1403), `Zones Pics/IMG_6224.jpg` (east, HEIC 2632×1478),
+`Zones Pics/IMG_6223.jpg` (fm, HEIC 2743×1472) — the marked images the pixel
+control points were measured on.
+
 ## Geographic accuracy (honest)
-Zone placement is **surveyed** — the NAMA main bulk and all six zone bulk meters
-use real coordinates provided by operations (2026-07-19), plus four landmark DC
-meters (Hotel JMB, Al Adrak Camp/Site, Zone 08 irrigation). **Individual meter**
-positions within a zone are still illustrative (laid out around the real
-zone-bulk point) because the backend has no per-meter survey. No aerial basemap
-is shown (none available; external tiles are CSP-blocked).
+- **Verified-coordinate placement:** all six zone bulk meters, Hotel JMB
+  (account 4300334) and the Zone 08 irrigation tank (4300294) — real points on
+  real imagery. `placement: "verified-coordinate"` in the calibration metadata.
+- **Not drawn on the map:** the remaining ~340 meters/properties — the backend
+  has no footprints/coordinates for them, and placing them illustratively is
+  forbidden. They are reachable via search, filters, zone panels and the table.
+  The `properties` array in `lib/water-map-scenes.ts` is the extension point for
+  manually-mapped clickable polygons (each tagged `manually-mapped` and
+  associated to its Supabase account) as they get traced.
+- **Scene alignment:** the core scene's four control points fit one similarity
+  transform (~0.29 m/px, RMS residual within GPS noise — unit-tested); the east
+  scene solves from its two-point baseline; the FM scene has one point (anchored,
+  non-projective, nominal scale — documented). **No survey accuracy is claimed
+  for whole images**; the verified coordinates are authoritative for the listed
+  points only. Al Adrak Camp/Site coordinates are stored in
+  `KNOWN_METER_COORDS` but fall outside all three image extents, so they are not
+  drawn (no stretching/distortion — rule 10).
 
 ## Remaining external inputs (only what can't come from the repo/backend)
 - Per-meter / per-building coordinates (survey or KML/GeoJSON) to replace the
