@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { BarChart3, CalendarDays } from "lucide-react";
+import { BarChart3, CalendarDays, Boxes } from "lucide-react";
 
 // Water data
 import { WATER_METERS as MOCK_WATER_METERS, type WaterMeter } from "@/lib/water-data";
@@ -25,8 +25,12 @@ const DailyWaterReport = dynamic(
     () => import("@/components/water/DailyWaterReport").then((m) => ({ default: m.DailyWaterReport })),
     { loading: () => <Skeleton className="h-96 w-full rounded-xl" />, ssr: false },
 );
+const Water3DMap = dynamic(
+    () => import("@/components/water/map3d/water-3d-map").then((m) => ({ default: m.Water3DMap })),
+    { loading: () => <Skeleton className="h-96 w-full rounded-xl" />, ssr: false },
+);
 
-type DashboardView = "monthly" | "daily";
+type DashboardView = "monthly" | "daily" | "map3d";
 
 // Base tables behind the monthly dashboard — module-level so the array
 // reference stays stable across renders (the realtime hook re-subscribes
@@ -127,6 +131,7 @@ export default function WaterPage() {
                 <div className="flex gap-2">
                     <Skeleton className="h-10 w-36 rounded-lg" />
                     <Skeleton className="h-10 w-36 rounded-lg" />
+                    <Skeleton className="h-10 w-36 rounded-lg" />
                 </div>
                 {/* Stats + chart skeleton */}
                 <StatsGridSkeleton />
@@ -158,6 +163,7 @@ export default function WaterPage() {
                 tabs={[
                     { key: "monthly", label: "Monthly", icon: BarChart3 },
                     { key: "daily", label: "Daily", icon: CalendarDays },
+                    { key: "map3d", label: "3D Map", icon: Boxes },
                 ]}
             />
 
@@ -172,6 +178,13 @@ export default function WaterPage() {
             {dashboardView === "daily" && (
                 <div id="panel-daily" role="tabpanel" aria-labelledby="tab-daily" tabIndex={0} className="space-y-6 motion-safe:animate-in motion-safe:fade-in duration-200">
                     <DailyWaterReport />
+                </div>
+            )}
+
+            {/* 3D Map View */}
+            {dashboardView === "map3d" && (
+                <div id="panel-map3d" role="tabpanel" aria-labelledby="tab-map3d" tabIndex={0} className="motion-safe:animate-in motion-safe:fade-in duration-200">
+                    <Water3DMap waterMeters={waterMeters} />
                 </div>
             )}
         </div>
