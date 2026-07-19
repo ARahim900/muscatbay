@@ -13,7 +13,7 @@ import {
 import { LiquidProgressRing } from "@/components/charts/liquid-progress-ring";
 import { LiquidTooltip } from "@/components/charts/liquid-tooltip";
 import { Droplets, Activity, Zap } from "lucide-react";
-import { DC_METERS, NULL_AS_ZERO_ACCOUNTS } from "@/lib/water-accounts";
+import { DC_METERS, dcNullAsZero } from "@/lib/water-accounts";
 import type { SupabaseDailyWaterConsumption } from "@/entities/water";
 import { cn } from "@/lib/utils";
 import {
@@ -218,7 +218,7 @@ function DCDailyTable({ monthData }: { monthData: SupabaseDailyWaterConsumption[
     const dcMeters = useMemo(() => {
         return DC_METERS.map(dc => {
             const dbRow = accountMap.get(dc.account);
-            const isNullAsZero = dc.isIrr || NULL_AS_ZERO_ACCOUNTS.has(dc.account);
+            const isNullAsZero = dcNullAsZero(dc);
 
             const dailyValues: (number | null)[] = [];
             const rawValues: (number | null)[] = [];

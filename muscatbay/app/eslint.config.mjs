@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Supabase edge functions run on Deno (jsr: imports, Deno globals) — not
+    // part of the Next.js app's TS/lint project.
+    "supabase/**",
   ]),
   {
     files: ["**/*.tsx", "**/*.ts"],
