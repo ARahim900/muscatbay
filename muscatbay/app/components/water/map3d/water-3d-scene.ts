@@ -115,6 +115,9 @@ export class Water3DScene {
     private radius = 760;
     private targetWanted = new Vector3(0, 0, 0);
     private radiusWanted = 760;
+    private homeTarget = new Vector3(0, 0, 0);
+    private homeRadius = 760;
+    private framed = false;
     private easing = false;
 
     // Interaction
@@ -213,7 +216,7 @@ export class Water3DScene {
         this.scene.add(dir);
 
         // Ground grid (provisional base).
-        const grid = new GridHelper(1600, 32, this.mutedColor.getHex(), this.mutedColor.getHex());
+        const grid = new GridHelper(3600, 48, this.mutedColor.getHex(), this.mutedColor.getHex());
         const gridMat = grid.material as LineBasicMaterial | LineBasicMaterial[];
         if (Array.isArray(gridMat)) gridMat.forEach((m) => (m.opacity = 0.14));
         else {
@@ -223,7 +226,7 @@ export class Water3DScene {
         this.scene.add(grid);
 
         const plane = new Mesh(
-            new PlaneGeometry(1600, 1600),
+            new PlaneGeometry(3600, 3600),
             new MeshLambertMaterial({ color: this.mutedColor, transparent: true, opacity: 0.06 }),
         );
         plane.rotation.x = -Math.PI / 2;
@@ -379,8 +382,35 @@ export class Water3DScene {
         // Zone callouts (HTML overlay).
         this.buildLabels(snapshot);
 
+        this.frameToContent();
         this.applySelectionVisual();
         this.invalidate();
+    }
+
+    /** Fit the camera home view to the real geographic extent (once). */
+    private frameToContent(): void {
+        const pts: Vector3[] = [];
+        this.zoneById.forEach((z) => pts.push(new Vector3(z.local.x, 0, z.local.z)));
+        if (this.mainMarker) pts.push(this.mainMarker.position.clone());
+        if (pts.length === 0) return;
+        let minX = Infinity, maxX = -Infinity, minZ = Infinity, maxZ = -Infinity;
+        for (const p of pts) {
+            minX = Math.min(minX, p.x);
+            maxX = Math.max(maxX, p.x);
+            minZ = Math.min(minZ, p.z);
+            maxZ = Math.max(maxZ, p.z);
+        }
+        const span = Math.max(maxX - minX, maxZ - minZ, 200);
+        this.homeTarget.set((minX + maxX) / 2, 0, (minZ + maxZ) / 2);
+        this.homeRadius = Math.min(2600, Math.max(320, span * 1.35 + 220));
+        if (!this.framed) {
+            this.framed = true;
+            this.target.copy(this.homeTarget);
+            this.targetWanted.copy(this.homeTarget);
+            this.radius = this.homeRadius;
+            this.radiusWanted = this.homeRadius;
+            this.updateCamera();
+        }
     }
 
     private buildFlow(): void {
@@ -544,8 +574,8 @@ export class Water3DScene {
                 this.radiusWanted = 320;
             }
         } else {
-            this.targetWanted.set(0, 0, 0);
-            this.radiusWanted = 760;
+            this.targetWanted.copy(this.homeTarget);
+            this.radiusWanted = this.homeRadius;
         }
         this.easing = true;
         this.invalidate();

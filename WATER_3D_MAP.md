@@ -38,12 +38,14 @@ Google/paid map service, no separate database.
      deck.gl/MapLibre geographic layer can replace it when real coordinates +
      tile hosting exist.
 
-3. **Positions are provisional; data is real.** Zone/meter positions come from a
-   central, clearly-labelled provisional layout (`lib/water-map-config.ts`)
-   anchored at the one real coordinate — the NAMA main bulk `C43659`
-   (23.5432°N, 58.6296°E). Every consumption/loss/efficiency number rendered on
-   those positions is the real Supabase value. Swap the `local` offsets (or a
-   GeoJSON layer) later; nothing else changes.
+3. **Zone positions are surveyed; per-meter positions provisional; data always
+   real.** Operations provided real coordinates (2026-07-19) for the NAMA main
+   bulk and all six zone bulk meters (+ four landmark DC meters), wired into
+   `lib/water-map-config.ts` (`SITE_ANCHOR`, `MAP_ZONES[].geo`,
+   `KNOWN_METER_COORDS`). Each zone sits at its true location; individual meters
+   are laid out deterministically around their real zone-bulk point until
+   per-meter survey data exists. Every consumption/loss/efficiency value is the
+   real Supabase value.
 
 4. **Reuse the existing calc engines — no new math.** Monthly reuses
    `buildMonthlyData` → `computePeriod` (A1→A2→A3). Daily reuses
@@ -89,17 +91,20 @@ Google/paid map service, no separate database.
 **Modified**
 - `app/water/page.tsx` — third "3D Map" tab (lazy, `ssr:false`).
 
-## Geographic limitation (honest)
-No KML/GeoJSON/aerial imagery exists in the repo, and the operational meters have
-no coordinates. The map layout is **provisional/illustrative**, anchored at the
-one real point (NAMA `C43659`). It does **not** claim survey accuracy. To make it
-geographically true, provide real coordinates (see "Remaining external inputs").
+## Geographic accuracy (honest)
+Zone placement is **surveyed** — the NAMA main bulk and all six zone bulk meters
+use real coordinates provided by operations (2026-07-19), plus four landmark DC
+meters (Hotel JMB, Al Adrak Camp/Site, Zone 08 irrigation). **Individual meter**
+positions within a zone are still illustrative (laid out around the real
+zone-bulk point) because the backend has no per-meter survey. No aerial basemap
+is shown (none available; external tiles are CSP-blocked).
 
 ## Remaining external inputs (only what can't come from the repo/backend)
-- Real per-meter / per-building coordinates (survey, or a KML/GeoJSON export) to
-  replace the provisional layout.
-- (Optional) a self-hosted PMTiles/aerial basemap if a true satellite backdrop is
-  wanted — requires relaxing the CSP for that host.
+- Per-meter / per-building coordinates (survey or KML/GeoJSON) to replace the
+  within-zone provisional layout. Zone bulks + four landmark meters are already
+  surveyed; add more to `KNOWN_METER_COORDS` (or a GeoJSON layer) as they arrive.
+- (Optional) a self-hosted PMTiles/aerial basemap for a true satellite backdrop —
+  requires relaxing the CSP for that host.
 
 ## Acceptance checklist
 - [x] Water shows Monthly, Daily, 3D Map · [x] Monthly/Daily unchanged (additive tab only)

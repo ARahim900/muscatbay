@@ -44,6 +44,7 @@ import {
     MAIN_BULK_NODE,
     DIRECT_CONNECTION_NODE,
     layoutPointsInFootprint,
+    knownLocalForAccount,
     zoneByMonthlyCode,
     zoneByDailyCode,
     POSITIONS_ARE_PROVISIONAL,
@@ -330,7 +331,7 @@ export function buildMonthlyMapSnapshot(
             contributionPct: contributionFrom(value, zoneDownstream),
             flags,
             severity,
-            local,
+            local: knownLocalForAccount(m.accountNumber) ?? local,
             role,
         };
     };
@@ -513,7 +514,7 @@ export function buildDailyMapSnapshot(
             contributionPct: contributionFrom(value, zoneDownstream),
             flags,
             severity,
-            local,
+            local: knownLocalForAccount(account) ?? local,
             role,
         };
     };

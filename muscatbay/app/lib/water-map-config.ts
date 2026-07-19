@@ -8,17 +8,17 @@
  * else in the map code — always resolve through the lookups below.
  *
  * ── Geographic provenance (read before trusting a position) ──────────────────
- * The Muscat Bay backend carries NO surveyed coordinates for the operational
- * water meters. Verified against Supabase: only `water_network_meters` (a
- * partly-synthetic demo table) holds any lat/lon, and its zone taxonomy
- * ("Zone 01–08 / Block A") does not match the operational zones. The ONE real
- * anchor is the NAMA main-bulk meter (account `C43659`) at {@link SITE_ANCHOR}.
+ * REAL surveyed coordinates for the NAMA main bulk and all six zone bulk meters
+ * (plus a few landmark direct-connection meters) were provided by operations on
+ * 2026-07-19 and are used directly — see {@link SITE_ANCHOR}, `MAP_ZONES[].geo`
+ * and {@link KNOWN_METER_COORDS}. Every ZONE is therefore placed at its true
+ * location.
  *
- * Every zone/meter position below is therefore a PROVISIONAL, clearly-labelled
- * layout derived from that anchor — illustrative, not a survey. Replace the
- * `local` offsets (or swap in a GeoJSON/tiled layer) when real coordinates
- * arrive; nothing else needs to change. The consumption, loss and efficiency
- * shown ON these positions are always the REAL values from the database.
+ * INDIVIDUAL meter positions *within* a zone remain provisional: the backend has
+ * no per-meter survey, so a zone's meters are laid out deterministically around
+ * its real bulk-meter point. Swap in per-meter coordinates (or a GeoJSON layer)
+ * when they exist; nothing else needs to change. The consumption, loss and
+ * efficiency shown ON these positions are always the REAL values from the DB.
  *
  * @module lib/water-map-config
  */
@@ -40,9 +40,9 @@ export interface LocalXZ {
  * `water_network_meters` id `C43659`). The only surveyed coordinate in the
  * backend; used as the origin of the provisional local layout.
  */
-export const SITE_ANCHOR: LatLon = { lat: 23.5431822, lon: 58.629591 };
+export const SITE_ANCHOR: LatLon = { lat: 23.54339, lon: 58.62936 };
 
-/** True: every non-anchor position is provisional/illustrative, not surveyed. */
+/** True: individual meter positions within a zone are provisional (zones themselves are surveyed). */
 export const POSITIONS_ARE_PROVISIONAL = true;
 
 /** Stable internal zone identifiers (never rename — used as React keys). */
@@ -68,9 +68,11 @@ export interface MapZoneConfig {
     hasBuildings: boolean;
     /** Identity colour for legends/series — a theme `--chart-*` token (never a status colour). */
     seriesToken: string;
-    /** Provisional platform centre, local metres from the anchor. */
+    /** REAL surveyed zone bulk-meter coordinate (operations, 2026-07-19). */
+    geo: LatLon;
+    /** Zone bulk-meter centre in local metres — derived from {@link geo}. */
     local: LocalXZ;
-    /** Provisional platform footprint, metres. */
+    /** Footprint (metres) the zone's provisional meter layout spreads across. */
     footprint: { w: number; d: number };
 }
 
@@ -96,17 +98,18 @@ export function latLonToLocal({ lat, lon }: LatLon): LocalXZ {
 }
 
 /**
- * Canonical zone layout. Local offsets are PROVISIONAL (see file header) — a
- * spread, non-overlapping arrangement around the anchor, not a survey.
+ * Canonical zone layout. `geo` is the REAL surveyed zone bulk-meter coordinate
+ * (operations, 2026-07-19); `local` is derived from it. Only the per-meter
+ * spread within `footprint` is provisional.
  */
 export const MAP_ZONES: readonly MapZoneConfig[] = [
-    { id: "3A", name: "Zone 3A", short: "Zone 3A", monthlyCode: "Zone_03_(A)", dailyCode: "Zone_03A", bulkAccount: "4300343", hasBuildings: true, seriesToken: "var(--chart-1)", local: { x: -230, z: -120 }, footprint: { w: 150, d: 120 } },
-    { id: "3B", name: "Zone 3B", short: "Zone 3B", monthlyCode: "Zone_03_(B)", dailyCode: "Zone_03B", bulkAccount: "4300344", hasBuildings: true, seriesToken: "var(--chart-2)", local: { x: 15, z: -175 }, footprint: { w: 175, d: 130 } },
-    { id: "05", name: "Zone 5", short: "Zone 05", monthlyCode: "Zone_05", dailyCode: "Zone_05", bulkAccount: "4300345", hasBuildings: true, seriesToken: "var(--chart-3)", local: { x: 255, z: -110 }, footprint: { w: 150, d: 120 } },
-    { id: "08", name: "Zone 8", short: "Zone 08", monthlyCode: "Zone_08", dailyCode: "Zone_08", bulkAccount: "4300342", hasBuildings: true, seriesToken: "var(--chart-4)", local: { x: -185, z: 120 }, footprint: { w: 150, d: 120 } },
-    { id: "VS", name: "Village Square", short: "Village Sq", monthlyCode: "Zone_VS", dailyCode: "Zone_VS", bulkAccount: "4300335", hasBuildings: true, seriesToken: "var(--chart-5)", local: { x: 70, z: 150 }, footprint: { w: 160, d: 120 } },
-    { id: "FM", name: "Zone FM", short: "Zone FM", monthlyCode: "Zone_01_(FM)", dailyCode: "Zone_FM", bulkAccount: "4300346", hasBuildings: true, seriesToken: "var(--chart-gray)", local: { x: -295, z: 45 }, footprint: { w: 150, d: 120 } },
-] as const;
+    { id: "3A", name: "Zone 3A", short: "Zone 3A", monthlyCode: "Zone_03_(A)", dailyCode: "Zone_03A", bulkAccount: "4300343", hasBuildings: true, seriesToken: "var(--chart-1)", geo: { lat: 23.54899, lon: 58.6377 }, local: latLonToLocal({ lat: 23.54899, lon: 58.6377 }), footprint: { w: 110, d: 90 } },
+    { id: "3B", name: "Zone 3B", short: "Zone 3B", monthlyCode: "Zone_03_(B)", dailyCode: "Zone_03B", bulkAccount: "4300344", hasBuildings: true, seriesToken: "var(--chart-2)", geo: { lat: 23.54888, lon: 58.63742 }, local: latLonToLocal({ lat: 23.54888, lon: 58.63742 }), footprint: { w: 120, d: 95 } },
+    { id: "05", name: "Zone 5", short: "Zone 05", monthlyCode: "Zone_05", dailyCode: "Zone_05", bulkAccount: "4300345", hasBuildings: true, seriesToken: "var(--chart-3)", geo: { lat: 23.54818, lon: 58.63931 }, local: latLonToLocal({ lat: 23.54818, lon: 58.63931 }), footprint: { w: 110, d: 90 } },
+    { id: "08", name: "Zone 8", short: "Zone 08", monthlyCode: "Zone_08", dailyCode: "Zone_08", bulkAccount: "4300342", hasBuildings: true, seriesToken: "var(--chart-4)", geo: { lat: 23.54741, lon: 58.644 }, local: latLonToLocal({ lat: 23.54741, lon: 58.644 }), footprint: { w: 110, d: 90 } },
+    { id: "VS", name: "Village Square", short: "Village Sq", monthlyCode: "Zone_VS", dailyCode: "Zone_VS", bulkAccount: "4300335", hasBuildings: true, seriesToken: "var(--chart-5)", geo: { lat: 23.54729, lon: 58.636 }, local: latLonToLocal({ lat: 23.54729, lon: 58.636 }), footprint: { w: 100, d: 80 } },
+    { id: "FM", name: "Zone FM", short: "Zone FM", monthlyCode: "Zone_01_(FM)", dailyCode: "Zone_FM", bulkAccount: "4300346", hasBuildings: true, seriesToken: "var(--chart-gray)", geo: { lat: 23.54143, lon: 58.63336 }, local: latLonToLocal({ lat: 23.54143, lon: 58.63336 }), footprint: { w: 110, d: 90 } },
+];
 
 /** Main bulk (NAMA L1) node — the real anchor; sits at the local origin. */
 export const MAIN_BULK_NODE = {
@@ -115,11 +118,29 @@ export const MAIN_BULK_NODE = {
     local: { x: 0, z: 0 } as LocalXZ,
 } as const;
 
-/** Direct-connection cluster centre (provisional). */
+/** Direct-connection cluster centre for DC meters that lack a surveyed coordinate (provisional). */
 export const DIRECT_CONNECTION_NODE = {
     name: "Direct Connections",
-    local: { x: 250, z: 135 } as LocalXZ,
+    local: { x: 640, z: -150 } as LocalXZ,
 } as const;
+
+/**
+ * Real surveyed coordinates for specific individual meters (operations,
+ * 2026-07-19), keyed by account number. The adapter places these at their true
+ * location instead of the provisional zone layout. Extend as more points arrive.
+ */
+export const KNOWN_METER_COORDS: Record<string, LatLon> = {
+    "4300334": { lat: 23.55023, lon: 58.64195 }, // Hotel (JMB) main building
+    "4300348": { lat: 23.54726, lon: 58.63139 }, // Al Adrak Camp
+    "4300349": { lat: 23.54576, lon: 58.63636 }, // Al Adrak Accommodation (site)
+    "4300294": { lat: 23.54726, lon: 58.64399 }, // Zone 08 irrigation tank
+};
+
+/** Local position for an account that has a real surveyed coordinate, else undefined. */
+export function knownLocalForAccount(account: string): LocalXZ | undefined {
+    const geo = KNOWN_METER_COORDS[account];
+    return geo ? latLonToLocal(geo) : undefined;
+}
 
 /* ── Lookups (built once) ────────────────────────────────────────────────── */
 const byId = new Map<MapZoneId, MapZoneConfig>(MAP_ZONES.map((z) => [z.id, z]));
