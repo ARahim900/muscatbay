@@ -237,6 +237,7 @@ Entries below the marker are appended automatically on every push to `main`.
 Do not hand-edit existing entries; curate meaning in the sections above.
 
 <!-- STATUS:LOG:BEGIN -->
+- 2026-07-19 — Add files via upload
 - 2026-07-18 — docs(security): record anon read lockdown (app-side RLS now fully closed)
 - 2026-07-18 — docs(security): record live-applied hardening (RLS sweep + STP future-date guard)
 - 2026-07-18 — fix(security): remove leaked service_role key from scripts, fix fail-open RBAC, harden avatar uploads
