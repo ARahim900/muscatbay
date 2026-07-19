@@ -23,6 +23,13 @@ export interface DCMeterConfig {
     account: string;
     /** Irrigation meters: NULL reading is normal → display as 0, no amber flag */
     isIrr: boolean;
+    /**
+     * Overrides the default "NULL renders as 0" treatment (see `dcNullAsZero`).
+     * Defaults to `isIrr || NULL_AS_ZERO_ACCOUNTS.has(account)`. Set to `false`
+     * for irrigation-type meters that are actually active consumers, so a
+     * missing reading shows as "—" (unread) instead of a misleading 0.00.
+     */
+    nullAsZero?: boolean;
 }
 
 // Used by the API route and the component
@@ -224,8 +231,10 @@ export const DC_METERS: DCMeterConfig[] = [
     { meterName: 'Hotel Main Building',        account: '4300334', isIrr: false },
     { meterName: 'Community Mgmt / STP',       account: '4300336', isIrr: false },
     { meterName: 'Main Entrance Phase 02',     account: '4300338', isIrr: false },
-    { meterName: 'Irrigation Controller UP',   account: '4300340', isIrr: true  },
-    { meterName: 'Irrigation Controller DOWN', account: '4300341', isIrr: true  },
+    // TSE irrigation controllers are active consumers (real historical usage),
+    // so a missing reading must show as "—", not a misleading 0.00.
+    { meterName: 'Irrigation Controller UP',   account: '4300340', isIrr: true, nullAsZero: false },
+    { meterName: 'Irrigation Controller DOWN', account: '4300341', isIrr: true, nullAsZero: false },
     { meterName: 'Al Adrak Camp',              account: '4300348', isIrr: false },
     { meterName: 'Al Adrak Accommodation',     account: '4300349', isIrr: false },
     { meterName: 'Sales Center',              account: '4300295', isIrr: false },
@@ -242,6 +251,19 @@ export const NULL_AS_ZERO_ACCOUNTS = new Set([
     '4300326', // Village Square IRR
     '4300294', // IRR Tank Z08
 ]);
+
+/**
+ * Whether a DC meter's NULL / absent reading should render as 0 (rather than
+ * "—"). Defaults to true for irrigation meters and the explicit
+ * NULL_AS_ZERO_ACCOUNTS set, but a meter can force it off with
+ * `nullAsZero: false` — e.g. the TSE irrigation controllers (4300340/4300341),
+ * which are active consumers whose missing readings must surface as "—" so they
+ * are not silently masked as a real 0.00.
+ */
+export function dcNullAsZero(dc: DCMeterConfig): boolean {
+    if (dc.nullAsZero !== undefined) return dc.nullAsZero;
+    return dc.isIrr || NULL_AS_ZERO_ACCOUNTS.has(dc.account);
+}
 
 // ─── Building Child Meter Details ─────────────────────────────────────────────
 // Maps each D-Building to its child meters with labels and types.

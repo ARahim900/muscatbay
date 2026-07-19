@@ -43,6 +43,7 @@
     "**/*.test.tsx",
     "__tests__/**",
     "setupTests.ts",
-    "vitest.config.ts"
+    "vitest.config.ts",
+    "supabase/**"
   ]
 }

@@ -15,7 +15,7 @@
 > - Deep reference detail lives in the linked docs at the bottom — this file
 >   holds the *current state*, not the full manuals.
 
-**Last curated review:** 2026-07-13
+**Last curated review:** 2026-07-19
 
 ---
 
@@ -163,11 +163,37 @@ stops at last month" problem is structurally closed:
   dashboards refresh live when data lands.
 - Migration source of truth: `muscatbay/app/sql/migrations/20260703_water_monthly_auto_sync.sql`
   (applied to the live DB as `water_monthly_auto_sync` + `_hardening`).
-- Daily data path (unchanged): CSV/Grafana → `water_daily_consumption`
-  (GitHub-Actions Grafana sync exists on unmerged PR #6 only).
+- Daily data path: `water_daily_consumption` rows are **seeded at month start
+  with every `day_*` cell = 0**, then two writers overwrite them:
+  1. **Grafana sync** — Supabase edge function `sync-grafana-water`
+     (`muscatbay/app/supabase/functions/`), run by pg_cron
+     `sync-grafana-water-daily` at 02:00 UTC. It **only `.update()`s** the ~153
+     meters in its hard-coded `TRACKED_ACCOUNTS` set, for the days the Grafana
+     snapshot returns. It never inserts rows and never writes 0.
+  2. **CSV uploader** (`functions/api/csv-upload.ts`) — for meters **not on the
+     Grafana feed**: all direct connections except Sales Center (4300295) — the
+     labour camps, hotel, security, ROP, community/STP, main entrance, TSE
+     irrigation controllers — plus manual back-fills. It correctly writes `NULL`
+     for un-read days.
+  Any meter neither writer touches keeps the **0-seed**, so it renders as a real
+  `0.00` (not "—") in the Daily report — the "missing-as-zero" defect (see §4).
+  (`GRAFANA_URL` GitHub-Actions workflow on PR #6 is a superseded stub.)
 
 ## 4. Known gaps & data debt
 
+- **Daily "missing-as-zero" placeholders — identified 2026-07-19.** The daily
+  table is seeded each month with `day_*` = 0, and the Grafana sync only
+  overwrites its ~153 tracked meters (see §3). Meters off the Grafana feed keep
+  the 0-seed, so the Daily → Direct Connections tab showed **11 of 12 DC meters
+  at 0.00 for all of July** (only Sales Center 4300295 is Grafana-tracked), plus
+  the Zone 8 bulk (4300342, tracked but absent from the snapshot). Because 0 is
+  indistinguishable from a real zero reading, the report also mis-counted
+  "Active N/N" and flat-lined trends to day 31. Interim repair applied via
+  `sql/migrations/20260719_daily_missing_zero_to_null.sql` (nulls all-zero
+  bulk/DC rows + the current month's future-day placeholder zeros so the report
+  shows "—"). **Durable fix still owed:** seed un-read days as `NULL` not `0`;
+  and July readings for the off-Grafana DC meters + Zone 8 bulk still need
+  loading via the CSV uploader (operational, not code).
 - **June 2026 NAMA main-bulk reading — entered 2026-07-19: 57,932 m³**
   (`MB-L1-001`, account `C43659`). This is the NAMA-billed figure from the June
   invoice; it replaced a provisional 59,574 m³ that had been entered 2026-07-04

@@ -13,7 +13,7 @@ import { ArrowUpDown, ChevronUp, ChevronDown, Search, ArrowRight, ArrowDown } fr
 import { cn } from "@/lib/utils";
 import { CHART_PALETTE } from "@/lib/tokens";
 import {
-    ZONE_BULK_CONFIG, BUILDING_CONFIG, DC_METERS, NULL_AS_ZERO_ACCOUNTS,
+    ZONE_BULK_CONFIG, BUILDING_CONFIG, DC_METERS, dcNullAsZero,
     BUILDING_CHILD_METERS,
 } from "@/lib/water-accounts";
 
@@ -183,7 +183,7 @@ export function processReport(readings: Record<string, number | null>): ReportDa
     // TABLE 3 — DC rows
     const dcRows: DCRow[] = DC_METERS.map(dc => {
         const rawValue = get(dc.account);
-        const isNullAsZero = dc.isIrr || NULL_AS_ZERO_ACCOUNTS.has(dc.account);
+        const isNullAsZero = dcNullAsZero(dc);
         const displayValue = rawValue !== null ? r2(rawValue)
             : isNullAsZero ? 0 : null;
         return {
