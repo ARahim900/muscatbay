@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { BarChart3, CalendarDays } from "lucide-react";
+import { BarChart3, CalendarDays, LayoutDashboard } from "lucide-react";
 
 // Water data
 import { WATER_METERS as MOCK_WATER_METERS, type WaterMeter } from "@/lib/water-data";
@@ -17,7 +17,8 @@ import { TabNavigation } from "@/components/shared/tab-navigation";
 import { StatsGridSkeleton, ChartSkeleton, Skeleton } from "@/components/shared/skeleton";
 import { saveFilterPreferences, loadFilterPreferences } from "@/lib/filter-preferences";
 
-// Monthly dashboard (Supabase-wired) + Daily report (lazy)
+// Management, monthly and daily dashboards
+import { WaterManagementDashboard } from "@/components/water/WaterManagementDashboard";
 import { WaterMonthlyDashboard } from "@/components/water/monthly/water-monthly-dashboard";
 import { getPageCache, setPageCache } from "@/lib/page-cache";
 import dynamic from "next/dynamic";
@@ -26,7 +27,7 @@ const DailyWaterReport = dynamic(
     { loading: () => <Skeleton className="h-96 w-full rounded-xl" />, ssr: false },
 );
 
-type DashboardView = "monthly" | "daily";
+type DashboardView = "management" | "monthly" | "daily";
 
 // Base tables behind the monthly dashboard — module-level so the array
 // reference stays stable across renders (the realtime hook re-subscribes
@@ -42,7 +43,7 @@ interface WaterPageCache {
 }
 
 export default function WaterPage() {
-    const [dashboardView, setDashboardView] = useState<DashboardView>("monthly");
+    const [dashboardView, setDashboardView] = useState<DashboardView>("management");
 
     // Supabase data state — seeded from the session cache when available
     const [cached] = useState(() => getPageCache<WaterPageCache>(WATER_CACHE_KEY));
@@ -127,6 +128,7 @@ export default function WaterPage() {
                 <div className="flex gap-2">
                     <Skeleton className="h-10 w-36 rounded-lg" />
                     <Skeleton className="h-10 w-36 rounded-lg" />
+                    <Skeleton className="h-10 w-36 rounded-lg" />
                 </div>
                 {/* Stats + chart skeleton */}
                 <StatsGridSkeleton />
@@ -151,15 +153,23 @@ export default function WaterPage() {
                 />
             </div>
 
-            {/* View switching tabs — solid-pill (primary) style, matching the section tabs */}
+            {/* View switching tabs — management first, then detailed drill-downs */}
             <TabNavigation
                 activeTab={dashboardView}
                 onTabChange={(key) => setDashboardView(key as DashboardView)}
                 tabs={[
+                    { key: "management", label: "Management", icon: LayoutDashboard },
                     { key: "monthly", label: "Monthly", icon: BarChart3 },
                     { key: "daily", label: "Daily", icon: CalendarDays },
                 ]}
             />
+
+            {/* Senior Management Dashboard View */}
+            {dashboardView === "management" && (
+                <div id="panel-management" role="tabpanel" aria-labelledby="tab-management" tabIndex={0} className="motion-safe:animate-in motion-safe:fade-in duration-200">
+                    <WaterManagementDashboard waterMeters={waterMeters} />
+                </div>
+            )}
 
             {/* Monthly Dashboard View */}
             {dashboardView === "monthly" && (
