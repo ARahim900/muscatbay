@@ -168,9 +168,14 @@ stops at last month" problem is structurally closed:
 
 ## 4. Known gaps & data debt
 
-- **June 2026 NAMA main-bulk reading missing** (`C43659`, period `2026-06`) —
-  supply shows 0 m³ for June until the bill value is entered; it will appear
-  automatically once entered (any surface: view `jun_26` column or base table).
+- **June 2026 NAMA main-bulk reading — entered 2026-07-19: 57,932 m³**
+  (`MB-L1-001`, account `C43659`). This is the NAMA-billed figure from the June
+  invoice; it replaced a provisional 59,574 m³ that had been entered 2026-07-04
+  (before the bill arrived). Note: `C43659` is the *account number* — the meter_id
+  is `MB-L1-001`; an earlier audit query that filtered on `C43659` as the meter_id
+  wrongly reported June as "missing". The main-bulk meter is under an active
+  over-billing dispute with NAMA, so this figure is the *invoiced* volume, not
+  necessarily the true measured supply.
 - `Water_System` (underscore) table is an abandoned pre-v2 orphan (columns end
   Feb-26) — not read by anything; candidate for cleanup.
 - **Security audit + hardening 2026-07-18 — APPLIED LIVE.** Findings + the
