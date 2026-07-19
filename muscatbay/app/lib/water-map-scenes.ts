@@ -26,6 +26,7 @@
  */
 
 import type { MapZoneId } from "@/lib/water-map-config";
+import { BUILDING_CONFIG } from "@/lib/water-accounts";
 
 /** How a point's position was established (kept as metadata; not shouted in UI). */
 export type PlacementKind = "verified-coordinate" | "building-centroid" | "manually-mapped";
@@ -84,12 +85,50 @@ export interface ScenePropertyPolygon {
 
 export type WaterMapSceneId = "core" | "east" | "fm";
 
+/**
+ * A numbered building marker, manually traced on the aerial per operations'
+ * numbering rule (2026-07-19): leftmost = D-62, sequential to the far right,
+ * last two re-designated D-74 and D-75. `account` is the building's L3 bulk
+ * meter (from `BUILDING_CONFIG`) — live values come from the snapshot.
+ */
+export interface SceneBuildingPoint {
+    label: string;
+    account: string;
+    pixelX: number;
+    pixelY: number;
+    placement: PlacementKind;
+}
+
+/**
+ * A numbered villa marker, manually traced along the villa band in front of
+ * the buildings: V-1 leftmost → V-43 far right. The Supabase meter is resolved
+ * at runtime by name (`Z3-<n> …Villa…`) — see {@link resolveVillaMeter}.
+ */
+export interface SceneVillaPoint {
+    n: number;
+    pixelX: number;
+    pixelY: number;
+    placement: PlacementKind;
+}
+
+/** A pipeline route, in ORIGINAL image pixels — a provisional logical layer. */
+export interface ScenePipe {
+    id: string;
+    points: [number, number][];
+}
+
 export interface WaterMapScene {
     calibration: ImageSceneCalibration;
     label: string;
     zonePoints: SceneZonePoint[];
     meterPoints: SceneMeterPoint[];
+    buildings: SceneBuildingPoint[];
+    villas: SceneVillaPoint[];
+    /** Provisional logical pipe routes through the numbered chain (not as-built). */
+    pipes: ScenePipe[];
     properties: ScenePropertyPolygon[];
+    /** Ground colour continuing the imagery beyond its edges (sampled border avg). */
+    surroundColor: string;
     /**
      * Fallback metres-per-pixel when a scene has <2 control points (similarity
      * not solvable). Nominal, documented, affects only camera feel — never data.
@@ -118,6 +157,61 @@ const CORE_W = 2738, CORE_H = 1403;
 const EAST_W = 2632, EAST_H = 1478;
 const FM_W = 2743, FM_H = 1472;
 
+/** Building bulk account by name from the app's canonical building config. */
+function buildingAccount(label: string): string {
+    return BUILDING_CONFIG.find((b) => b.buildingName === label)?.bulkAccount ?? "";
+}
+
+/**
+ * Numbered building chain, west → east along the crescent, traced manually on
+ * the core aerial (operations' rule: D-62 first, sequential, D-74/D-75 last).
+ */
+const CORE_BUILDING_TRACE: [string, number, number][] = [
+    ["D-62", 183, 491], ["D-61", 228, 411], ["D-60", 245, 339], ["D-59", 270, 234],
+    ["D-58", 367, 151], ["D-57", 451, 111], ["D-56", 576, 94], ["D-55", 702, 111],
+    ["D-54", 801, 154], ["D-53", 818, 257], ["D-52", 953, 354], ["D-51", 979, 462],
+    ["D-50", 1086, 536], ["D-49", 1200, 576], ["D-48", 1355, 584], ["D-47", 1720, 479],
+    ["D-46", 1862, 405], ["D-45", 1982, 337], ["D-44", 2073, 270], ["D-74", 2356, 185],
+    ["D-75", 2464, 165],
+];
+
+/** Numbered villa band, V-1 west → V-43 east, traced along the front row. */
+const CORE_VILLA_TRACE: [number, number, number][] = [
+    [1, 194, 545], [2, 237, 492], [3, 274, 436], [4, 300, 372], [5, 322, 308],
+    [6, 357, 249], [7, 406, 203], [8, 465, 169], [9, 531, 151], [10, 598, 148],
+    [11, 666, 160], [12, 729, 187], [13, 777, 235], [14, 809, 294], [15, 841, 353],
+    [16, 884, 406], [17, 929, 458], [18, 976, 508], [19, 1026, 554], [20, 1079, 597],
+    [21, 1138, 631], [22, 1201, 658], [23, 1266, 677], [24, 1334, 683], [25, 1402, 678],
+    [26, 1470, 674], [27, 1532, 647], [28, 1593, 615], [29, 1653, 583], [30, 1714, 552],
+    [31, 1775, 521], [32, 1835, 489], [33, 1896, 458], [34, 1957, 426], [35, 2017, 394],
+    [36, 2077, 362], [37, 2138, 330], [38, 2198, 298], [39, 2260, 267], [40, 2321, 238],
+    [41, 2384, 210], [42, 2447, 184], [43, 2510, 157],
+];
+
+const CORE_BUILDINGS: SceneBuildingPoint[] = CORE_BUILDING_TRACE.map(([label, pixelX, pixelY]) => ({
+    label,
+    account: buildingAccount(label),
+    pixelX,
+    pixelY,
+    placement: "manually-mapped",
+}));
+
+const CORE_VILLAS: SceneVillaPoint[] = CORE_VILLA_TRACE.map(([n, pixelX, pixelY]) => ({
+    n,
+    pixelX,
+    pixelY,
+    placement: "manually-mapped",
+}));
+
+/** Provisional logical pipe routes: bulk → building chain, bulk → villa band. */
+const CORE_PIPES: ScenePipe[] = [
+    // Zone 3B bulk (1286,662) joins the chain near D-48, feeding west and east.
+    { id: "pipe-buildings", points: [[1286, 662], [1355, 584], ...[...CORE_BUILDING_TRACE].reverse().slice(7).map(([, x, y]) => [x, y] as [number, number])] },
+    { id: "pipe-buildings-east", points: [[1408, 670], [1355, 584], ...CORE_BUILDING_TRACE.slice(15).map(([, x, y]) => [x, y] as [number, number])] },
+    { id: "pipe-villas", points: [[1286, 662], ...[...CORE_VILLA_TRACE].reverse().slice(20).map(([, x, y]) => [x, y] as [number, number])] },
+    { id: "pipe-villas-east", points: [[1408, 670], ...CORE_VILLA_TRACE.slice(24).map(([, x, y]) => [x, y] as [number, number])] },
+];
+
 export const WATER_MAP_SCENES: Record<WaterMapSceneId, WaterMapScene> = {
     core: {
         label: "Zones 3A · 3B · 05 · VS",
@@ -140,7 +234,11 @@ export const WATER_MAP_SCENES: Record<WaterMapSceneId, WaterMapScene> = {
             { zoneId: "05", controlPointId: "z05-bulk", placement: "verified-coordinate" },
         ],
         meterPoints: [],
+        buildings: CORE_BUILDINGS,
+        villas: CORE_VILLAS,
+        pipes: CORE_PIPES,
         properties: [],
+        surroundColor: "#aaa28a",
         nominalMetresPerPixel: 0.29,
     },
     east: {
@@ -163,7 +261,11 @@ export const WATER_MAP_SCENES: Record<WaterMapSceneId, WaterMapScene> = {
             { account: "4300334", name: "Hotel Main Building", controlPointId: "jmb-hotel", placement: "verified-coordinate" },
             { account: "4300294", name: "IRR Tank Z08", controlPointId: "z08-irr", placement: "verified-coordinate" },
         ],
+        buildings: [],
+        villas: [],
+        pipes: [],
         properties: [],
+        surroundColor: "#939a8c",
         nominalMetresPerPixel: 0.5,
     },
     fm: {
@@ -179,10 +281,35 @@ export const WATER_MAP_SCENES: Record<WaterMapSceneId, WaterMapScene> = {
         },
         zonePoints: [{ zoneId: "FM", controlPointId: "zfm-bulk", placement: "verified-coordinate" }],
         meterPoints: [],
+        buildings: [],
+        villas: [],
+        pipes: [],
         properties: [],
+        surroundColor: "#aaa08a",
         nominalMetresPerPixel: 0.32,
     },
 };
+
+/* ── Villa meter resolution ────────────────────────────────────────────────── */
+
+/** Minimal meter shape needed to resolve a villa (avoids importing the full type). */
+export interface VillaMeterCandidate {
+    account: string;
+    name: string;
+    type: string;
+}
+
+/**
+ * Resolve villa number `n` to its Supabase meter by name — villa meters are
+ * named `Z3-<n> …` (e.g. "Z3-7 Villa"). Returns undefined when no meter
+ * matches; the marker then renders with no-data severity and no detail link.
+ */
+export function resolveVillaMeter<T extends VillaMeterCandidate>(meters: T[], n: number): T | undefined {
+    const re = new RegExp(`(^|[^0-9])Z3[-\\s]0*${n}([^0-9]|$)`, "i");
+    const hits = meters.filter((m) => re.test(m.name));
+    if (hits.length === 0) return undefined;
+    return hits.find((m) => m.type.toLowerCase().includes("villa")) ?? hits[0];
+}
 
 /** Which scene shows which zone — zone selection loads this scene. */
 export const SCENE_FOR_ZONE: Record<MapZoneId, WaterMapSceneId> = {

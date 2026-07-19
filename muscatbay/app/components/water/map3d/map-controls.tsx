@@ -12,7 +12,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
     BarChart3, CalendarDays, ChevronLeft, ChevronRight, Search, X,
-    Layers as LayersIcon, Droplets, Tag,
+    Layers as LayersIcon, Droplets, Tag, Waypoints,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { MapMode, MapSnapshot, MapMeterDatum } from "@/lib/water-map-data";
@@ -153,6 +153,7 @@ export function LayerToggles({
 }) {
     const toggles: { key: keyof SceneLayers; label: string; icon: typeof LayersIcon }[] = [
         { key: "meters", label: "Meters", icon: Droplets },
+        { key: "pipes", label: "Pipes", icon: Waypoints },
         { key: "labels", label: "Labels", icon: Tag },
     ];
     return (

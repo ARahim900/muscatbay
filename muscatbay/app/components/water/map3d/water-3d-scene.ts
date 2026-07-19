@@ -2,36 +2,50 @@
  * @fileoverview Water 3D Map — the Three.js aerial scene (framework-free class).
  *
  * Renders one calibrated aerial image scene (see `lib/water-map-scenes.ts`) as
- * a textured ground plane in metres, with PROGRAMMATIC markers on it:
- *  - a pin + soft ground ring per zone bulk meter (severity-coloured, from the
- *    live MapSnapshot — never hard-coded values);
- *  - smaller pins for individually-verified meters (Hotel JMB, Z08 IRR);
- *  - HTML callouts projected each frame (our own labels — the source images'
- *    calibration ink was removed from the base layers).
- * There are deliberately NO abstract platforms, magnitude pillars, straight
- * network lines or illustratively-scattered meter nodes — un-surveyed meters
- * are surfaced through the panels/search/table instead of fake positions.
+ * a textured ground plane in metres with PROGRAMMATIC overlays:
+ *  - zone bulk pins + soft interactive rings (severity from the live snapshot);
+ *  - numbered building markers (D-62 → D-44, D-74, D-75) and villa markers
+ *    (V-1 → V-43) traced on the imagery, each linked to its Supabase meter;
+ *  - a lightweight provisional pipeline overlay through the numbered chains,
+ *    with flow pulses (paused under reduced motion / when toggled off);
+ *  - HTML callouts/number chips projected each frame with zoom-dependent
+ *    visibility so the imagery stays readable.
+ *
+ * Camera is Google-Earth style: left-drag / one-finger PANS the ground freely,
+ * right/middle/Ctrl-drag orbits & tilts, wheel zooms toward the cursor, pinch
+ * zooms + pans, and arrow keys / + − work when the canvas has focus. The view
+ * is clamped to the imagery and the plane sits in a matching desert surround
+ * with distance fog, so there is no white void at any angle.
  *
  * Discipline (mirrors `components/three/ambient-bay.tsx`): token-resolved
- * colours that re-resolve on theme change, WebGL created in try/catch (graceful
- * failure → caller shows the table fallback), on-demand rendering that idles to
- * zero work, paused off-screen and when the tab is hidden, honours
- * reduced-motion (camera moves snap instead of glide), and fully disposes.
+ * colours re-resolved on theme change, WebGL in try/catch (graceful failure →
+ * table fallback), rendering idles to zero work when nothing animates, paused
+ * off-screen/hidden-tab, honours reduced motion, and disposes fully.
  *
  * @module components/water/map3d/water-3d-scene
  */
 
 import {
     AmbientLight,
+    BoxGeometry,
+    BufferGeometry,
+    CatmullRomCurve3,
     CircleGeometry,
     Color,
     CylinderGeometry,
     DirectionalLight,
+    Float32BufferAttribute,
+    Fog,
+    Line,
+    LineBasicMaterial,
     Mesh,
     MeshBasicMaterial,
     MeshLambertMaterial,
     PerspectiveCamera,
+    Plane,
     PlaneGeometry,
+    Points,
+    PointsMaterial,
     Raycaster,
     RingGeometry,
     Scene,
@@ -49,6 +63,7 @@ import {
     WATER_MAP_SCENES,
     sceneGeo,
     sceneControlPoint,
+    resolveVillaMeter,
     type WaterMapSceneId,
 } from "@/lib/water-map-scenes";
 
@@ -71,6 +86,7 @@ export interface SceneCallbacks {
 export interface SceneLayers {
     meters: boolean;
     labels: boolean;
+    pipes: boolean;
 }
 export interface SceneOptions {
     reducedMotion: boolean;
@@ -106,13 +122,28 @@ interface ZoneMarker {
     ring: Mesh;
     pick: Mesh;
 }
+interface PropMarker {
+    /** "building" | "villa" */
+    kind: "building" | "villa";
+    label: string;
+    account: string;
+    /** Snapshot meter key when resolved. */
+    key: string | null;
+    name: string;
+    pos: Vector3;
+    mesh: Mesh;
+}
 interface MeterMarker {
     account: string;
-    /** Snapshot meter key when resolvable (account:role) — falls back to account. */
     key: string;
     pos: Vector3;
     pole: Mesh;
     head: Mesh;
+}
+interface PipeFlow {
+    curve: CatmullRomCurve3;
+    points: Points;
+    count: number;
 }
 
 export class Water3DScene {
@@ -142,28 +173,40 @@ export class Water3DScene {
     private easing = false;
 
     // Interaction
-    private dragging = false;
-    private lastPointer = new Vector2();
+    private pointers = new Map<number, { x: number; y: number }>();
+    private gesture: "pan" | "orbit" | "pinch" | null = null;
+    private grabPoint: Vector3 | null = null;
+    private pinchDist = 0;
+    private movedSincePress = 0;
     private raycaster = new Raycaster();
     private pointerNdc = new Vector2();
+    private groundPlane = new Plane(new Vector3(0, 1, 0), 0);
 
     // Loop control
     private running = false;
     private onScreen = true;
     private visible = true;
     private lastTime = 0;
+    private elapsed = 0;
 
-    // Colours (re-resolved on theme change)
+    // Colours
     private severityColor = new Map<MapSeverity, Color>();
+    private severityMaterial = new Map<MapSeverity, MeshLambertMaterial>();
     private accentColor = new Color("#A1D1D5");
 
     // Current content
     private sceneId: WaterMapSceneId = "core";
     private snapshot: MapSnapshot | null = null;
     private ground: Mesh | null = null;
+    private surround: Mesh | null = null;
     private zoneMarkers: ZoneMarker[] = [];
     private meterMarkers: MeterMarker[] = [];
+    private propMarkers: PropMarker[] = [];
+    private pipeLines: Line[] = [];
+    private pipeFlows: PipeFlow[] = [];
     private selectionRing: Mesh | null = null;
+    private buildingGeo: BoxGeometry | null = null;
+    private villaGeo: CylinderGeometry | null = null;
     private planeW = 800;
     private planeD = 420;
     private pinH = 26;
@@ -183,10 +226,10 @@ export class Water3DScene {
         this.container = container;
         this.cb = cb;
         this.opts = opts;
-        this.camera = new PerspectiveCamera(48, 1, 1, 12000);
+        this.camera = new PerspectiveCamera(48, 1, 1, 30000);
         this.labelLayer = document.createElement("div");
         try {
-            this.renderer = new WebGLRenderer({ alpha: true, antialias: true, powerPreference: "low-power" });
+            this.renderer = new WebGLRenderer({ alpha: false, antialias: true, powerPreference: "low-power" });
         } catch {
             this.ok_ = false;
             return;
@@ -202,13 +245,18 @@ export class Water3DScene {
         const renderer = this.renderer;
         if (!renderer) return;
         renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75));
-        renderer.setClearColor(0x000000, 0);
         const el = renderer.domElement;
         el.style.position = "absolute";
         el.style.inset = "0";
         el.style.width = "100%";
         el.style.height = "100%";
         el.style.touchAction = "none";
+        el.tabIndex = 0;
+        el.setAttribute("role", "application");
+        el.setAttribute(
+            "aria-label",
+            "Interactive water map. Drag to move the view, right-drag to rotate, scroll or pinch to zoom. Arrow keys pan; plus and minus zoom.",
+        );
         this.container.appendChild(el);
 
         this.labelLayer.style.position = "absolute";
@@ -249,8 +297,12 @@ export class Water3DScene {
         el.addEventListener("pointerdown", this.onPointerDown);
         el.addEventListener("pointermove", this.onPointerMove);
         el.addEventListener("pointerup", this.onPointerUp);
+        el.addEventListener("pointercancel", this.onPointerUp);
         el.addEventListener("pointerleave", this.onPointerLeave);
         el.addEventListener("wheel", this.onWheel, { passive: false });
+        el.addEventListener("keydown", this.onKeyDown);
+        el.addEventListener("contextmenu", this.onContextMenu);
+        el.addEventListener("dblclick", this.onDblClick);
 
         this.ok_ = true;
         this.resize();
@@ -263,10 +315,20 @@ export class Water3DScene {
         this.severityColor.set("critical", token("--mb-danger", SEVERITY_FALLBACK.critical));
         this.severityColor.set("nodata", token("--mb-stale", SEVERITY_FALLBACK.nodata));
         this.accentColor = token("--secondary", "#A1D1D5");
+        for (const [sev, mat] of this.severityMaterial) mat.color.copy(this.colorFor(sev));
     }
 
     private colorFor(sev: MapSeverity): Color {
         return this.severityColor.get(sev) ?? new Color(SEVERITY_FALLBACK[sev]);
+    }
+
+    private materialFor(sev: MapSeverity): MeshLambertMaterial {
+        let m = this.severityMaterial.get(sev);
+        if (!m) {
+            m = new MeshLambertMaterial({ color: this.colorFor(sev) });
+            this.severityMaterial.set(sev, m);
+        }
+        return m;
     }
 
     /* ── Content ──────────────────────────────────────────────────────────── */
@@ -283,7 +345,6 @@ export class Water3DScene {
         this.rebuild(false);
     }
 
-    /** World position (metres) of a control point on the current scene plane. */
     private worldFor(pixelX: number, pixelY: number, mPerPx: number, w: number, h: number): Vector3 {
         return new Vector3((pixelX - w / 2) * mPerPx, 0, (pixelY - h / 2) * mPerPx);
     }
@@ -300,14 +361,26 @@ export class Water3DScene {
         this.planeD = H * mPerPx;
         this.pinH = Math.min(44, Math.max(18, this.planeW * 0.032));
 
+        // Seamless backdrop: desert-tone surround + fog + matching clear colour.
+        const surroundColor = new Color(def.surroundColor);
+        this.renderer.setClearColor(surroundColor, 1);
+        this.scene.fog = new Fog(surroundColor, this.planeW * 1.7, this.planeW * 5);
+        const surround = new Mesh(
+            new PlaneGeometry(this.planeW * 14, this.planeD * 18),
+            new MeshBasicMaterial({ color: surroundColor }),
+        );
+        surround.rotation.x = -Math.PI / 2;
+        surround.position.y = -0.6;
+        this.scene.add(surround);
+        this.surround = surround;
+
         // Ground: the clean aerial base layer.
         const groundMat = new MeshBasicMaterial({ color: 0xffffff });
         const tex = this.textures.get(this.sceneId);
         if (tex) {
             groundMat.map = tex;
-            groundMat.color = new Color(0xffffff);
         } else {
-            groundMat.color = token("--muted", "#e5e7eb");
+            groundMat.color = surroundColor.clone();
             this.texLoader.load(def.calibration.imagePath, (loaded) => {
                 if (this.disposed) {
                     loaded.dispose();
@@ -346,10 +419,7 @@ export class Water3DScene {
             const pos = this.worldFor(point.pixelX, point.pixelY, mPerPx, W, H);
             const h = this.pinH;
 
-            const pole = new Mesh(
-                new CylinderGeometry(h * 0.05, h * 0.075, h, 10),
-                new MeshLambertMaterial({ color }),
-            );
+            const pole = new Mesh(new CylinderGeometry(h * 0.05, h * 0.075, h, 10), new MeshLambertMaterial({ color }));
             pole.position.set(pos.x, h / 2, pos.z);
             const head = new Mesh(new SphereGeometry(h * 0.17, 18, 14), new MeshLambertMaterial({ color }));
             head.position.set(pos.x, h * 1.04, pos.z);
@@ -360,7 +430,7 @@ export class Water3DScene {
             ring.rotation.x = -Math.PI / 2;
             ring.position.set(pos.x, 0.4, pos.z);
             const pick = new Mesh(
-                new CircleGeometry(h * 2.6, 24),
+                new CircleGeometry(h * 2.2, 24),
                 new MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }),
             );
             pick.rotation.x = -Math.PI / 2;
@@ -384,10 +454,7 @@ export class Water3DScene {
             const color = this.colorFor(sev);
             const pos = this.worldFor(point.pixelX, point.pixelY, mPerPx, W, H);
             const h = this.pinH * 0.62;
-            const pole = new Mesh(
-                new CylinderGeometry(h * 0.055, h * 0.08, h, 8),
-                new MeshLambertMaterial({ color }),
-            );
+            const pole = new Mesh(new CylinderGeometry(h * 0.055, h * 0.08, h, 8), new MeshLambertMaterial({ color }));
             pole.position.set(pos.x, h / 2, pos.z);
             const head = new Mesh(new SphereGeometry(h * 0.19, 14, 10), new MeshLambertMaterial({ color }));
             head.position.set(pos.x, h * 1.05, pos.z);
@@ -401,19 +468,94 @@ export class Water3DScene {
             this.meterMarkers.push({ account: mp.account, key, pos, pole, head });
         }
 
+        // Numbered buildings (shared geometry, severity-shared materials).
+        const bSize = Math.max(6, this.planeW * 0.008);
+        this.buildingGeo = new BoxGeometry(bSize, bSize * 0.9, bSize);
+        for (const b of def.buildings) {
+            const m = meterByAccount.get(b.account);
+            const sev: MapSeverity = m?.severity ?? "nodata";
+            const pos = this.worldFor(b.pixelX, b.pixelY, mPerPx, W, H);
+            const mesh = new Mesh(this.buildingGeo, this.materialFor(sev));
+            mesh.position.set(pos.x, (bSize * 0.9) / 2 + 0.3, pos.z);
+            mesh.userData = { kind: "prop", account: b.account, key: m?.key ?? null };
+            this.scene.add(mesh);
+            this.propMarkers.push({
+                kind: "building",
+                label: b.label,
+                account: b.account,
+                key: m?.key ?? null,
+                name: m?.name ?? b.label,
+                pos,
+                mesh,
+            });
+        }
+
+        // Numbered villas.
+        const vR = Math.max(2.2, this.planeW * 0.0032);
+        this.villaGeo = new CylinderGeometry(vR, vR, vR * 1.1, 10);
+        for (const v of def.villas) {
+            const m = resolveVillaMeter(snap?.meters ?? [], v.n);
+            const sev: MapSeverity = m?.severity ?? "nodata";
+            const pos = this.worldFor(v.pixelX, v.pixelY, mPerPx, W, H);
+            const mesh = new Mesh(this.villaGeo, this.materialFor(sev));
+            mesh.position.set(pos.x, (vR * 1.1) / 2 + 0.3, pos.z);
+            mesh.userData = { kind: "prop", account: m?.account ?? "", key: m?.key ?? null };
+            this.scene.add(mesh);
+            this.propMarkers.push({
+                kind: "villa",
+                label: `V-${v.n}`,
+                account: m?.account ?? "",
+                key: m?.key ?? null,
+                name: m?.name ?? `Villa ${v.n}`,
+                pos,
+                mesh,
+            });
+        }
+
+        // Pipeline overlay (provisional logical routes) + flow pulses.
+        for (const pipe of def.pipes) {
+            const pts = pipe.points.map(([px, py]) => {
+                const p = this.worldFor(px, py, mPerPx, W, H);
+                return new Vector3(p.x, 1.6, p.z);
+            });
+            if (pts.length < 2) continue;
+            const lineGeo = new BufferGeometry().setFromPoints(pts);
+            const line = new Line(
+                lineGeo,
+                new LineBasicMaterial({ color: this.accentColor, transparent: true, opacity: 0.62 }),
+            );
+            line.visible = this.opts.layers.pipes;
+            this.scene.add(line);
+            this.pipeLines.push(line);
+
+            if (!this.opts.reducedMotion) {
+                const curve = new CatmullRomCurve3(pts, false, "catmullrom", 0.1);
+                const count = Math.max(4, Math.min(14, Math.round(pts.length * 0.6)));
+                const positions = new Float32Array(count * 3);
+                const pGeo = new BufferGeometry();
+                pGeo.setAttribute("position", new Float32BufferAttribute(positions, 3));
+                const pulse = new Points(
+                    pGeo,
+                    new PointsMaterial({ color: this.accentColor, size: 5, sizeAttenuation: true, transparent: true, opacity: 0.95, depthWrite: false }),
+                );
+                pulse.visible = this.opts.layers.pipes;
+                this.scene.add(pulse);
+                this.pipeFlows.push({ curve, points: pulse, count });
+            }
+        }
+        this.updateFlows(0);
+
         this.buildLabels(def.zonePoints.map((zp) => zp.zoneId), zoneById, meterByAccount);
 
-        // Camera framing — near-top-down home view that fills the frame.
+        // Camera framing.
         this.homeTarget.set(0, 0, 0);
         this.homeRadius = Math.min(2400, Math.max(160, Math.max(this.planeW * 0.44, this.planeD * 0.9)));
-        if (cameraHome || !this.easing) {
-            if (cameraHome) {
-                this.target.copy(this.homeTarget);
-                this.radius = this.homeRadius;
-                this.targetWanted.copy(this.homeTarget);
-                this.radiusWanted = this.homeRadius;
-                this.updateCamera();
-            }
+        if (cameraHome) {
+            this.target.copy(this.homeTarget);
+            this.radius = this.homeRadius;
+            this.targetWanted.copy(this.homeTarget);
+            this.radiusWanted = this.homeRadius;
+            this.updateCamera();
         }
         if (this.pendingFocus) {
             const f = this.pendingFocus;
@@ -430,31 +572,53 @@ export class Water3DScene {
         meterByAccount: Map<string, MapMeterDatum>,
     ): void {
         this.labelLayer.replaceChildren();
-        const mk = (id: string, title: string, value: string, sev: MapSeverity, small: boolean) => {
+        const chip = (id: string, html: string, cls: "callout" | "num") => {
             const el = document.createElement("div");
             el.dataset.labelId = id;
             el.style.position = "absolute";
             el.style.transform = "translate(-50%, -130%)";
-            el.style.padding = small ? "2px 6px" : "3px 8px";
-            el.style.borderRadius = "7px";
-            el.style.font = `600 ${small ? 10 : 11}px/1.25 var(--font-sans, system-ui), sans-serif`;
             el.style.whiteSpace = "nowrap";
-            el.style.color = "var(--card-foreground, #111)";
-            el.style.background = "color-mix(in srgb, var(--card, #fff) 92%, transparent)";
-            el.style.border = "1px solid var(--border, #e5e7eb)";
-            el.style.boxShadow = "0 2px 8px rgba(0,0,0,0.16)";
             el.style.visibility = "hidden";
-            const dot = `<span style="display:inline-block;width:7px;height:7px;border-radius:9999px;background:${this.colorFor(sev).getStyle()};margin-inline-end:5px;vertical-align:middle"></span>`;
-            el.innerHTML = `${dot}<span style="vertical-align:middle">${title}</span> <span style="opacity:.7;vertical-align:middle">${value}</span>`;
+            if (cls === "callout") {
+                el.style.padding = "3px 8px";
+                el.style.borderRadius = "7px";
+                el.style.font = "600 11px/1.25 var(--font-sans, system-ui), sans-serif";
+                el.style.color = "var(--card-foreground, #111)";
+                el.style.background = "color-mix(in srgb, var(--card, #fff) 92%, transparent)";
+                el.style.border = "1px solid var(--border, #e5e7eb)";
+                el.style.boxShadow = "0 2px 8px rgba(0,0,0,0.16)";
+            } else {
+                el.style.padding = "1px 5px";
+                el.style.borderRadius = "5px";
+                el.style.font = "700 9.5px/1.3 var(--font-sans, system-ui), sans-serif";
+                el.style.color = "var(--card-foreground, #111)";
+                el.style.background = "color-mix(in srgb, var(--card, #fff) 88%, transparent)";
+                el.style.border = "1px solid var(--border, #e5e7eb)";
+            }
+            el.innerHTML = html;
             this.labelLayer.appendChild(el);
         };
+        const dot = (sev: MapSeverity) =>
+            `<span style="display:inline-block;width:7px;height:7px;border-radius:9999px;background:${this.colorFor(sev).getStyle()};margin-inline-end:5px;vertical-align:middle"></span>`;
+
         for (const id of zoneIds) {
             const z = zoneById.get(id);
-            mk(`zone:${id}`, z?.short ?? id, z?.hasData ? `${fmt(z.bulk)} m³` : "no data", z?.severity ?? "nodata", false);
+            chip(
+                `zone:${id}`,
+                `${dot(z?.severity ?? "nodata")}<span style="vertical-align:middle">${z?.short ?? id}</span> <span style="opacity:.7;vertical-align:middle">${z?.hasData ? `${fmt(z.bulk)} m³` : "no data"}</span>`,
+                "callout",
+            );
         }
         for (const mm of this.meterMarkers) {
             const m = meterByAccount.get(mm.account);
-            mk(`meter:${mm.account}`, m?.name ?? mm.account, m ? `${fmt(m.value)} m³` : "–", m?.severity ?? "nodata", true);
+            chip(
+                `meter:${mm.account}`,
+                `${dot(m?.severity ?? "nodata")}<span style="vertical-align:middle">${m?.name ?? mm.account}</span> <span style="opacity:.7;vertical-align:middle">${m ? `${fmt(m.value)} m³` : "–"}</span>`,
+                "callout",
+            );
+        }
+        for (const p of this.propMarkers) {
+            chip(`prop:${p.kind}:${p.label}`, p.label, "num");
         }
         this.labelLayer.style.display = this.opts.layers.labels ? "block" : "none";
     }
@@ -466,11 +630,15 @@ export class Water3DScene {
         const w = width / dpr;
         const h = height / dpr;
         const v = new Vector3();
+        const hide = (id: string) => {
+            const el = this.labelLayer.querySelector<HTMLElement>(`[data-label-id="${CSS.escape(id)}"]`);
+            if (el) el.style.visibility = "hidden";
+        };
         const place = (id: string, world: Vector3) => {
             const el = this.labelLayer.querySelector<HTMLElement>(`[data-label-id="${CSS.escape(id)}"]`);
             if (!el) return;
             v.copy(world).project(this.camera);
-            if (v.z > 1) {
+            if (v.z > 1 || v.x < -1.05 || v.x > 1.05 || v.y < -1.05 || v.y > 1.05) {
                 el.style.visibility = "hidden";
                 return;
             }
@@ -478,14 +646,20 @@ export class Water3DScene {
             el.style.top = `${((-v.y + 1) / 2) * h}px`;
             el.style.visibility = "visible";
         };
+
         for (const zm of this.zoneMarkers) place(`zone:${zm.zoneId}`, new Vector3(zm.pos.x, this.pinH * 1.25, zm.pos.z));
-        if (this.opts.layers.meters) {
-            for (const mm of this.meterMarkers) place(`meter:${mm.account}`, new Vector3(mm.pos.x, this.pinH * 0.85, mm.pos.z));
-        } else {
-            for (const mm of this.meterMarkers) {
-                const el = this.labelLayer.querySelector<HTMLElement>(`[data-label-id="${CSS.escape(`meter:${mm.account}`)}"]`);
-                if (el) el.style.visibility = "hidden";
-            }
+        for (const mm of this.meterMarkers) {
+            if (this.opts.layers.meters) place(`meter:${mm.account}`, new Vector3(mm.pos.x, this.pinH * 0.85, mm.pos.z));
+            else hide(`meter:${mm.account}`);
+        }
+        // Numbered chips appear as you zoom in (buildings first, then villas).
+        const showBuildings = this.radius < this.homeRadius * 1.05;
+        const showVillas = this.radius < Math.max(230, this.homeRadius * 0.55);
+        for (const p of this.propMarkers) {
+            const id = `prop:${p.kind}:${p.label}`;
+            const show = p.kind === "building" ? showBuildings : showVillas;
+            if (show) place(id, new Vector3(p.pos.x, p.kind === "building" ? 14 : 8, p.pos.z));
+            else hide(id);
         }
     }
 
@@ -505,11 +679,16 @@ export class Water3DScene {
             mat.emissiveIntensity = on ? 0.55 : 0;
             (zm.ring.material as MeshBasicMaterial).opacity = on ? 0.85 : 0.5;
         }
-        const selMeter =
-            this.selection.kind === "meter"
-                ? this.meterMarkers.find((m) => m.key === this.selection.id || m.account === this.selection.id)
-                : undefined;
-        if (selMeter) {
+        let selPos: Vector3 | null = null;
+        if (this.selection.kind === "meter") {
+            const mm = this.meterMarkers.find((m) => m.key === this.selection.id || m.account === this.selection.id);
+            if (mm) selPos = mm.pos;
+            if (!selPos) {
+                const pm = this.propMarkers.find((p) => p.key === this.selection.id || (p.account && p.account === this.selection.id));
+                if (pm) selPos = pm.pos;
+            }
+        }
+        if (selPos) {
             if (!this.selectionRing) {
                 this.selectionRing = new Mesh(
                     new RingGeometry(this.pinH * 0.32, this.pinH * 0.45, 28),
@@ -518,7 +697,7 @@ export class Water3DScene {
                 this.selectionRing.rotation.x = -Math.PI / 2;
                 this.scene.add(this.selectionRing);
             }
-            this.selectionRing.position.set(selMeter.pos.x, 0.6, selMeter.pos.z);
+            this.selectionRing.position.set(selPos.x, 0.6, selPos.z);
             this.selectionRing.visible = true;
         } else if (this.selectionRing) {
             this.selectionRing.visible = false;
@@ -541,6 +720,8 @@ export class Water3DScene {
             (mm.pole.material as MeshLambertMaterial).color.copy(c);
             (mm.head.material as MeshLambertMaterial).color.copy(c);
         }
+        for (const line of this.pipeLines) (line.material as LineBasicMaterial).color.copy(this.accentColor);
+        for (const f of this.pipeFlows) (f.points.material as PointsMaterial).color.copy(this.accentColor);
     }
 
     /* ── Camera ───────────────────────────────────────────────────────────── */
@@ -549,7 +730,7 @@ export class Water3DScene {
         if (zoneId) {
             const zm = this.zoneMarkers.find((z) => z.zoneId === zoneId);
             if (!zm) {
-                this.pendingFocus = zoneId; // zone lives on another scene; applied after setScene rebuild
+                this.pendingFocus = zoneId;
                 return;
             }
             this.targetWanted.copy(zm.pos);
@@ -562,11 +743,21 @@ export class Water3DScene {
             this.target.copy(this.targetWanted);
             this.radius = this.radiusWanted;
             this.easing = false;
+            this.clampView();
             this.updateCamera();
         } else {
             this.easing = true;
         }
         this.invalidate();
+    }
+
+    private clampView(): void {
+        const mx = this.planeW * 0.6;
+        const mz = this.planeD * 0.7;
+        this.target.x = Math.min(mx, Math.max(-mx, this.target.x));
+        this.target.z = Math.min(mz, Math.max(-mz, this.target.z));
+        this.radius = Math.min(this.homeRadius * 1.45, Math.max(40, this.radius));
+        this.phi = Math.min(1.05, Math.max(0.12, this.phi));
     }
 
     private updateCamera(): void {
@@ -583,47 +774,169 @@ export class Water3DScene {
             mm.pole.visible = this.opts.layers.meters;
             mm.head.visible = this.opts.layers.meters;
         }
+        for (const line of this.pipeLines) line.visible = this.opts.layers.pipes;
+        for (const f of this.pipeFlows) f.points.visible = this.opts.layers.pipes;
         this.labelLayer.style.display = this.opts.layers.labels ? "block" : "none";
         this.invalidate();
     }
 
-    /* ── Pointer ──────────────────────────────────────────────────────────── */
+    /* ── Pointer / keyboard ───────────────────────────────────────────────── */
+
+    /** World point on the ground plane under a client position, or null. */
+    private groundAt(clientX: number, clientY: number): Vector3 | null {
+        if (!this.renderer) return null;
+        const rect = this.renderer.domElement.getBoundingClientRect();
+        this.pointerNdc.set(
+            ((clientX - rect.left) / rect.width) * 2 - 1,
+            -((clientY - rect.top) / rect.height) * 2 + 1,
+        );
+        this.raycaster.setFromCamera(this.pointerNdc, this.camera);
+        const out = new Vector3();
+        return this.raycaster.ray.intersectPlane(this.groundPlane, out) ? out : null;
+    }
+
+    private readonly onContextMenu = (e: Event) => e.preventDefault();
 
     private readonly onPointerDown = (e: PointerEvent) => {
-        this.dragging = true;
-        this.lastPointer.set(e.clientX, e.clientY);
         (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
-    };
-    private readonly onPointerUp = (e: PointerEvent) => {
-        const moved = this.lastPointer.distanceTo(new Vector2(e.clientX, e.clientY));
-        this.dragging = false;
-        if (moved < 4) this.pick(e, true);
-    };
-    private readonly onPointerLeave = () => {
-        this.dragging = false;
-        this.cb.onHover?.(null);
-    };
-    private readonly onPointerMove = (e: PointerEvent) => {
-        if (this.dragging) {
-            const dx = e.clientX - this.lastPointer.x;
-            const dy = e.clientY - this.lastPointer.y;
-            this.lastPointer.set(e.clientX, e.clientY);
-            this.theta -= dx * 0.005;
-            this.phi = Math.min(1.22, Math.max(0.14, this.phi - dy * 0.005));
-            this.easing = false;
-            this.updateCamera();
-            this.invalidate();
+        this.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        this.movedSincePress = 0;
+        if (this.pointers.size === 2) {
+            const [a, b] = [...this.pointers.values()];
+            this.gesture = "pinch";
+            this.pinchDist = Math.hypot(a.x - b.x, a.y - b.y);
+            this.grabPoint = this.groundAt((a.x + b.x) / 2, (a.y + b.y) / 2);
+        } else if (e.button === 2 || e.button === 1 || e.ctrlKey) {
+            this.gesture = "orbit";
         } else {
-            this.pick(e, false);
+            this.gesture = "pan";
+            this.grabPoint = this.groundAt(e.clientX, e.clientY);
+        }
+        this.easing = false;
+    };
+
+    private readonly onPointerUp = (e: PointerEvent) => {
+        this.pointers.delete(e.pointerId);
+        const wasTap = this.movedSincePress < 5 && this.gesture !== "pinch";
+        if (this.pointers.size === 0) {
+            const g = this.gesture;
+            this.gesture = null;
+            this.grabPoint = null;
+            if (wasTap && g === "pan") this.pick(e, true);
+        } else if (this.pointers.size === 1) {
+            const [a] = [...this.pointers.values()];
+            this.gesture = "pan";
+            this.grabPoint = this.groundAt(a.x, a.y);
         }
     };
+
+    private readonly onPointerLeave = () => {
+        this.cb.onHover?.(null);
+    };
+
+    private readonly onPointerMove = (e: PointerEvent) => {
+        const prev = this.pointers.get(e.pointerId);
+        if (prev) {
+            this.movedSincePress += Math.hypot(e.clientX - prev.x, e.clientY - prev.y);
+            this.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        }
+
+        if (this.gesture === "pinch" && this.pointers.size === 2) {
+            const [a, b] = [...this.pointers.values()];
+            const dist = Math.hypot(a.x - b.x, a.y - b.y);
+            if (this.pinchDist > 0 && dist > 0) {
+                this.radius *= this.pinchDist / dist;
+            }
+            this.pinchDist = dist;
+            const mid = this.groundAt((a.x + b.x) / 2, (a.y + b.y) / 2);
+            if (mid && this.grabPoint) {
+                this.target.add(new Vector3().subVectors(this.grabPoint, mid));
+            }
+            this.clampView();
+            this.updateCamera();
+            this.invalidate();
+            return;
+        }
+        if (this.gesture === "orbit" && prev) {
+            const mdx = e.clientX - prev.x;
+            const mdy = e.clientY - prev.y;
+            this.theta -= mdx * 0.005;
+            this.phi -= mdy * 0.005;
+            this.clampView();
+            this.updateCamera();
+            this.invalidate();
+            return;
+        }
+        if (this.gesture === "pan" && this.grabPoint) {
+            const now = this.groundAt(e.clientX, e.clientY);
+            if (now) {
+                this.target.add(new Vector3().subVectors(this.grabPoint, now));
+                this.clampView();
+                this.updateCamera();
+            }
+            this.invalidate();
+            return;
+        }
+        if (!this.gesture) this.pick(e, false);
+    };
+
     private readonly onWheel = (e: WheelEvent) => {
         e.preventDefault();
-        const maxR = Math.max(this.homeRadius * 1.5, 400);
-        this.radius = Math.min(maxR, Math.max(60, this.radius * (1 + Math.sign(e.deltaY) * 0.08)));
+        const anchor = this.groundAt(e.clientX, e.clientY);
+        const factor = 1 + Math.sign(e.deltaY) * 0.09;
+        this.radius *= factor;
+        if (anchor) {
+            // Keep the point under the cursor stationary (Google-Earth zoom).
+            this.target.copy(anchor.clone().add(this.target.clone().sub(anchor).multiplyScalar(factor)));
+        }
         this.easing = false;
+        this.clampView();
         this.updateCamera();
         this.invalidate();
+    };
+
+    private readonly onDblClick = (e: MouseEvent) => {
+        const anchor = this.groundAt(e.clientX, e.clientY);
+        if (!anchor) return;
+        this.targetWanted.copy(anchor);
+        this.radiusWanted = Math.max(60, this.radius * 0.5);
+        if (this.opts.reducedMotion) {
+            this.target.copy(this.targetWanted);
+            this.radius = this.radiusWanted;
+            this.clampView();
+            this.updateCamera();
+        } else {
+            this.easing = true;
+        }
+        this.invalidate();
+    };
+
+    private readonly onKeyDown = (e: KeyboardEvent) => {
+        const step = this.radius * 0.1;
+        // Screen-aligned ground axes.
+        const fwd = new Vector3().subVectors(this.target, this.camera.position);
+        fwd.y = 0;
+        if (fwd.lengthSq() < 1e-6) fwd.set(0, 0, -1);
+        fwd.normalize();
+        const right = new Vector3(-fwd.z, 0, fwd.x);
+        let handled = true;
+        switch (e.key) {
+            case "ArrowUp": this.target.addScaledVector(fwd, step); break;
+            case "ArrowDown": this.target.addScaledVector(fwd, -step); break;
+            case "ArrowLeft": this.target.addScaledVector(right, step); break;
+            case "ArrowRight": this.target.addScaledVector(right, -step); break;
+            case "+": case "=": this.radius *= 0.88; break;
+            case "-": case "_": this.radius *= 1.14; break;
+            case "Home": this.focusZone(null); return;
+            default: handled = false;
+        }
+        if (handled) {
+            e.preventDefault();
+            this.easing = false;
+            this.clampView();
+            this.updateCamera();
+            this.invalidate();
+        }
     };
 
     private pick(e: PointerEvent, select: boolean): void {
@@ -634,9 +947,10 @@ export class Water3DScene {
             -((e.clientY - rect.top) / rect.height) * 2 + 1,
         );
         this.raycaster.setFromCamera(this.pointerNdc, this.camera);
-
         const snap = this.snapshot;
-        // Meter pins first (small, on top).
+        const hx = e.clientX - rect.left;
+        const hy = e.clientY - rect.top;
+
         if (this.opts.layers.meters && this.meterMarkers.length > 0) {
             const objs = this.meterMarkers.flatMap((m) => [m.pole, m.head]);
             const hit = this.raycaster.intersectObjects(objs, false)[0];
@@ -644,11 +958,31 @@ export class Water3DScene {
                 const ud = hit.object.userData as { id?: string; account?: string };
                 const m = snap?.meters.find((x) => x.key === ud.id || x.account === ud.account);
                 if (select) this.cb.onSelect?.({ kind: "meter", id: ud.id ?? ud.account ?? "" });
-                else if (m) this.cb.onHover?.({ kind: "meter", label: m.name, value: `${fmt(m.value)} m³`, x: e.clientX - rect.left, y: e.clientY - rect.top });
+                else if (m) this.cb.onHover?.({ kind: "meter", label: m.name, value: `${fmt(m.value)} m³`, x: hx, y: hy });
                 return;
             }
         }
-        // Zone pins + interactive discs.
+        if (this.propMarkers.length > 0) {
+            const hit = this.raycaster.intersectObjects(this.propMarkers.map((p) => p.mesh), false)[0];
+            if (hit) {
+                const pm = this.propMarkers.find((p) => p.mesh === hit.object);
+                if (pm) {
+                    const m = snap?.meters.find((x) => (pm.key && x.key === pm.key) || (pm.account && x.account === pm.account));
+                    if (select) {
+                        if (m) this.cb.onSelect?.({ kind: "meter", id: m.key });
+                    } else {
+                        this.cb.onHover?.({
+                            kind: "meter",
+                            label: `${pm.label} · ${m?.name ?? pm.name}`,
+                            value: m ? `${fmt(m.value)} m³` : "no meter match",
+                            x: hx,
+                            y: hy,
+                        });
+                    }
+                    return;
+                }
+            }
+        }
         const zoneObjs = this.zoneMarkers.flatMap((z) => [z.pole, z.head, z.pick, z.ring]);
         const zoneHit = this.raycaster.intersectObjects(zoneObjs, false)[0];
         if (zoneHit) {
@@ -656,7 +990,7 @@ export class Water3DScene {
             const z = id ? snap?.zones.find((x) => x.id === id) : undefined;
             if (id) {
                 if (select) this.cb.onSelect?.({ kind: "zone", id });
-                else if (z) this.cb.onHover?.({ kind: "zone", label: z.name, value: `${fmt(z.bulk)} m³ · ${z.lossPct.toFixed(1)}% loss`, x: e.clientX - rect.left, y: e.clientY - rect.top });
+                else if (z) this.cb.onHover?.({ kind: "zone", label: z.name, value: `${fmt(z.bulk)} m³ · ${z.lossPct.toFixed(1)}% loss`, x: hx, y: hy });
                 return;
             }
         }
@@ -665,6 +999,24 @@ export class Water3DScene {
     }
 
     /* ── Loop ─────────────────────────────────────────────────────────────── */
+
+    private updateFlows(time: number): void {
+        for (const f of this.pipeFlows) {
+            const attr = f.points.geometry.getAttribute("position");
+            for (let i = 0; i < f.count; i++) {
+                // Positive wrap + clamp — CatmullRom getPoint reads past the
+                // array for t outside [0, 1) (negative t indexes points[-1]).
+                const cyc = ((i / f.count + time * 0.045) % 1 + 1) % 1;
+                const p = f.curve.getPoint(Math.min(0.9995, cyc));
+                attr.setXYZ(i, p.x, p.y + 0.6, p.z);
+            }
+            attr.needsUpdate = true;
+        }
+    }
+
+    private get flowing(): boolean {
+        return this.opts.layers.pipes && !this.opts.reducedMotion && this.pipeFlows.length > 0;
+    }
 
     private invalidate(): void {
         if (!this.ok_ || this.disposed || !this.onScreen || !this.visible) return;
@@ -682,22 +1034,28 @@ export class Water3DScene {
 
     private readonly tick = (now: number) => {
         if (this.disposed || !this.renderer) return;
-        const delta = Math.min((now - this.lastTime) / 1000, 0.05);
+        // rAF timestamps can be a few ms BEHIND the performance.now() captured
+        // when the loop (re)started — clamp so elapsed never goes negative.
+        const delta = Math.min(Math.max((now - this.lastTime) / 1000, 0), 0.05);
         this.lastTime = now;
+        this.elapsed += delta;
 
         if (this.easing) {
             const damp = 1 - Math.exp(-6 * delta);
             this.target.lerp(this.targetWanted, damp);
             this.radius += (this.radiusWanted - this.radius) * damp;
+            this.clampView();
             this.updateCamera();
             if (this.target.distanceTo(this.targetWanted) < 0.4 && Math.abs(this.radius - this.radiusWanted) < 0.4) {
                 this.easing = false;
             }
         }
 
+        if (this.flowing) this.updateFlows(this.elapsed);
+
         this.updateLabels();
         this.renderer.render(this.scene, this.camera);
-        if (!this.easing && !this.dragging) this.stopLoop();
+        if (!this.easing && !this.gesture && !this.flowing) this.stopLoop();
     };
 
     resize(): void {
@@ -711,23 +1069,23 @@ export class Water3DScene {
         this.invalidate();
     }
 
-    private disposeMesh(m: Mesh | null): void {
+    private disposeMesh(m: Mesh | Line | Points | null, keepGeometry = false): void {
         if (!m) return;
         this.scene.remove(m);
-        m.geometry.dispose();
+        if (!keepGeometry) m.geometry.dispose();
         const mat = m.material;
         if (Array.isArray(mat)) mat.forEach((x) => x.dispose());
         else mat.dispose();
     }
 
     private clearContent(): void {
-        // Ground material is disposed but cached textures are kept for re-use.
         if (this.ground) {
-            const mat = this.ground.material as MeshBasicMaterial;
-            mat.map = null;
+            (this.ground.material as MeshBasicMaterial).map = null;
             this.disposeMesh(this.ground);
             this.ground = null;
         }
+        this.disposeMesh(this.surround);
+        this.surround = null;
         for (const zm of this.zoneMarkers) {
             this.disposeMesh(zm.pole);
             this.disposeMesh(zm.head);
@@ -740,6 +1098,17 @@ export class Water3DScene {
             this.disposeMesh(mm.head);
         }
         this.meterMarkers = [];
+        // Prop meshes share geometry + severity materials — remove only.
+        for (const p of this.propMarkers) this.scene.remove(p.mesh);
+        this.propMarkers = [];
+        this.buildingGeo?.dispose();
+        this.buildingGeo = null;
+        this.villaGeo?.dispose();
+        this.villaGeo = null;
+        for (const line of this.pipeLines) this.disposeMesh(line);
+        this.pipeLines = [];
+        for (const f of this.pipeFlows) this.disposeMesh(f.points);
+        this.pipeFlows = [];
         this.disposeMesh(this.selectionRing);
         this.selectionRing = null;
     }
@@ -756,10 +1125,16 @@ export class Water3DScene {
             el.removeEventListener("pointerdown", this.onPointerDown);
             el.removeEventListener("pointermove", this.onPointerMove);
             el.removeEventListener("pointerup", this.onPointerUp);
+            el.removeEventListener("pointercancel", this.onPointerUp);
             el.removeEventListener("pointerleave", this.onPointerLeave);
             el.removeEventListener("wheel", this.onWheel);
+            el.removeEventListener("keydown", this.onKeyDown);
+            el.removeEventListener("contextmenu", this.onContextMenu);
+            el.removeEventListener("dblclick", this.onDblClick);
         }
         this.clearContent();
+        for (const mat of this.severityMaterial.values()) mat.dispose();
+        this.severityMaterial.clear();
         for (const tex of this.textures.values()) tex.dispose();
         this.textures.clear();
         this.labelLayer.remove();

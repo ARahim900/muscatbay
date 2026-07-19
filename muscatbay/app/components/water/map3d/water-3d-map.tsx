@@ -52,6 +52,7 @@ export function Water3DMap({ waterMeters }: { waterMeters: WaterMeter[] }) {
     const [layers, setLayers] = useState<SceneLayers>({
         meters: raw.layerMeters !== false,
         labels: raw.layerLabels !== false,
+        pipes: raw.layerPipes !== false,
     });
     const [view, setView] = useState<"map" | "table">("map");
     const [hover, setHover] = useState<SceneHover | null>(null);
@@ -94,6 +95,7 @@ export function Water3DMap({ waterMeters }: { waterMeters: WaterMeter[] }) {
             monthlyKey: monthlyKey ?? null,
             layerMeters: layers.meters,
             layerLabels: layers.labels,
+            layerPipes: layers.pipes,
         });
     }, [mode, monthlyKey, layers]);
 

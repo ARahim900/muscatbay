@@ -65,6 +65,22 @@ Google/paid map service, no separate database.
    `meterFlags`/`detectSpike`/`zeroStreak`. Target stays `TARGET_LOSS_PCT = 15`
    (i.e. the 85% efficiency target). Division-by-zero is guarded everywhere.
 
+4. **Free camera + numbered properties + pipes (2026-07-19, same day).** Per
+   operations feedback: the camera is now Google-Earth style — left-drag/one-
+   finger pans freely, right/Ctrl-drag orbits, wheel zooms toward the cursor,
+   pinch works, arrow keys/± pan and zoom, double-click dives; the view is
+   clamped to the imagery and sits in a sampled desert surround with distance
+   fog (no white void). The core scene carries **numbered buildings** (left →
+   right: D-62 … D-52, D-51 … D-44, then D-74, D-75 — operations' numbering
+   rule) each linked to its real bulk account from `BUILDING_CONFIG`, and
+   **numbered villas V-1 … V-43** along the band in front of the buildings,
+   resolved at runtime to the `Z3-<n>` villa meters. Both are `manually-mapped`
+   placements traced from the imagery (single editable arrays in
+   `lib/water-map-scenes.ts` — expect operations to fine-tune positions). A
+   **lightweight pipeline overlay** (provisional logical routes bulk → building
+   chain / villa band, with flow pulses; "Pipes" toggle; static under reduced
+   motion) illustrates water flow through each building and villa.
+
 ## Data sources (all existing, unchanged)
 | Purpose | Source | Access |
 |---|---|---|
