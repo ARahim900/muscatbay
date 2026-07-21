@@ -61,14 +61,16 @@ leaks (each copy must be RLS-hardened by hand, and the 07-20 set wasn't).
   losing 26 distinct contractors — *not* de-duplication (only 3 names duplicated)
   and *not* an expired cull (18 of 26 were Active, incl. the register's three
   biggest contracts: COSMO 562k, Nasco 389k, OWATCO LLC 389k; ~1.46M OMR/yr).
-  **RESTORED 2026-07-21** (`sql/migrations/20260721_restore_lost_contractors.sql`):
-  the **23 unambiguous deletions** were re-inserted (live 18 → **41** rows; tracked
-  value ~660k → **1,549,282 OMR/yr**). **3 ambiguous rows were withheld** as probable
-  in-place renames of surviving rows (COSMO↔live "COMO"; KONE Hiessen↔"KONE
-  Assarain"; "Future Cities S.A.O.C (Tadoom)"↔live "Tadoom") — these need an owner
-  decision before restoring (see "Still needs owner input"). Restoring the ~9 Active
-  rows with past End Dates will raise "expired-while-Active" alerts — correct, but
-  update their status if they truly ended. Keep the backups until this is settled.
+  **RESTORED 2026-07-21** — 23 unambiguous deletions re-inserted
+  (`sql/migrations/20260721_restore_lost_contractors.sql`), then **KONE Hiessen LLC**
+  after owner review (`…_restore_kone_hiessen.sql`) = **24 restored** (live 18 →
+  **42** rows; tracked value ~660k → ~**1.55M OMR/yr**). The 3 withheld ambiguities
+  were resolved by the owner: **KONE Hiessen** = distinct contract → restored;
+  **COSMO** = the COMO/COSMO contract is Expired → live "COMO" (Expired) kept
+  unchanged, the Active 562k COSMO **not** restored; **"Future Cities S.A.O.C
+  (Tadoom)"** = exact duplicate of live "Tadoom" → left out. Residual: several
+  restored rows are Active with a past End Date, so they raise "expired-while-Active"
+  alerts — update their status if they truly ended. Keep the backups until confirmed.
 - **Recommendation:** stop making in-schema `*_backup_*` copies; rely on Supabase's
   point-in-time / logical backups. If snapshots are needed, put them in a dedicated
   non-`public` schema (not exposed by PostgREST) with RLS.
@@ -123,13 +125,11 @@ owner; out of electricity scope.
 
 ## Still needs owner input
 
-1. **Contractor restore (§B)** — 23 lost contractors were restored. Decide the **3
-   withheld ambiguous rows**: (a) is live **"COMO"** (Expired, no value) the same
-   contract as backup **"COSMO"** (Active, 562k)? If so, correct the live row rather
-   than add COSMO. (b) Is **"KONE Hiessen LLC"** distinct from live **"KONE Assarain
-   LLC"**? (c) **"Future Cities S.A.O.C (Tadoom)"** is the same as live **"Tadoom"** —
-   leave withheld. Then update any restored Active-but-past-End-Date rows whose
-   contracts have genuinely ended.
+1. **Contractor restore (§B) — DONE** (24 restored; ambiguities resolved with the
+   owner). Residual housekeeping only: update any restored Active-but-past-End-Date
+   rows whose contracts have genuinely ended (they currently raise
+   "expired-while-Active" alerts), and once satisfied, the 2026-07-04 contractor
+   backups can be dropped.
 2. **Source-data items (§C)** — correct the master's Beachwell / −2 / Bank Muscat
    Dec-25 double-count entries (or confirm they're real), then re-send the master.
 3. **STP negative TSE (§F)** and the leaked-password protection setting (pre-existing).

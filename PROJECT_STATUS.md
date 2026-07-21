@@ -220,11 +220,12 @@ stops at last month" problem is structurally closed:
   key (270/27/60 rows) — switched to `security_invoker`, anon now 0
   (`…_harden_electricity_views_drop_ge_backups.sql`). **Contractor data-loss — RESTORED:**
   `Contractor_Tracker` had dropped from 47 rows to 18 (26 lost contractors — not
-  dedup; 18 Active incl. COSMO 562k, Nasco 389k, OWATCO LLC 389k). Restored the 23
-  unambiguous deletions (live 18 → **41**; value ~660k → **1,549,282 OMR/yr**) via
-  `sql/migrations/20260721_restore_lost_contractors.sql`; **3 ambiguous rows withheld**
-  (COSMO↔"COMO", KONE Hiessen↔Assarain, Tadoom dup) pending owner decision. Contractor
-  backups KEPT until settled. **Code:** `functions/api/electricity.ts`
+  dedup; 18 Active incl. COSMO 562k, Nasco 389k, OWATCO LLC 389k). Restored **24**
+  deletions (live 18 → **42**; value ~660k → ~**1.55M OMR/yr**) via
+  `…_restore_lost_contractors.sql` + `…_restore_kone_hiessen.sql`. Ambiguities resolved
+  with owner: KONE Hiessen restored (distinct); COSMO not restored (COMO/COSMO is
+  Expired); "Future Cities (Tadoom)" left out (dup). Contractor backups KEPT until
+  past-dated Active statuses are tidied. **Code:** `functions/api/electricity.ts`
   no longer coerces NULL→0 (missing ≠ zero, per the master's empty-vs-0 rule);
   188 tests pass. **Also flagged:** STP 2025 has 1 negative TSE reading;
   `v_electricity_monthly_pivot` hardcodes months.
