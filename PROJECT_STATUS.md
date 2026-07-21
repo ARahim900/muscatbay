@@ -218,10 +218,13 @@ stops at last month" problem is structurally closed:
   (295/12/4 rows anon-readable) — secured then **dropped**; and 3 of the 4
   `v_electricity_*` views were SECURITY DEFINER, leaking consumption to the anon
   key (270/27/60 rows) — switched to `security_invoker`, anon now 0
-  (`…_harden_electricity_views_drop_ge_backups.sql`). **⚠️ Probable data-loss (open):**
-  `Contractor_Tracker` live = 18 rows but its 2026-07-04 backup = 47 — **26 distinct
-  contractors in the backup are absent from live** (not dedup); the contractor
-  backups were KEPT pending owner review. **Code:** `functions/api/electricity.ts`
+  (`…_harden_electricity_views_drop_ge_backups.sql`). **Contractor data-loss — RESTORED:**
+  `Contractor_Tracker` had dropped from 47 rows to 18 (26 lost contractors — not
+  dedup; 18 Active incl. COSMO 562k, Nasco 389k, OWATCO LLC 389k). Restored the 23
+  unambiguous deletions (live 18 → **41**; value ~660k → **1,549,282 OMR/yr**) via
+  `sql/migrations/20260721_restore_lost_contractors.sql`; **3 ambiguous rows withheld**
+  (COSMO↔"COMO", KONE Hiessen↔Assarain, Tadoom dup) pending owner decision. Contractor
+  backups KEPT until settled. **Code:** `functions/api/electricity.ts`
   no longer coerces NULL→0 (missing ≠ zero, per the master's empty-vs-0 rule);
   188 tests pass. **Also flagged:** STP 2025 has 1 negative TSE reading;
   `v_electricity_monthly_pivot` hardcodes months.
