@@ -202,24 +202,29 @@ stops at last month" problem is structurally closed:
   across every module. Residual lower-severity items: mutable function search
   paths, 4 security-definer views, leaked-password protection still off.
 - **Database / backup + electricity audit 2026-07-21 — see
-  `muscatbay/app/ELECTRICITY_DATA_AUDIT.md`.** No table corruption or data loss
-  (no duplicate/orphan rows; the 77 empty electricity `(meter,month)` cells are
-  all four Retail meters onboarded late-2025). But: (1) **fixed a live security
-  regression** — three `*_backup_20260720` Gulf Expert tables created 2026-07-20
-  (after the 07-18 hardening) had **RLS disabled**, exposing 295/12/4 rows to the
-  anon public key; RLS enabled + verified
-  (`sql/migrations/20260721_secure_stale_backups.sql`). (2) **Backup hygiene:** 6
-  hand-rolled `*_backup_YYYYMMDD` copies sit in the live `public` schema (stale,
-  RLS-fragile) — recommend dropping in favour of Supabase's own backups
-  (destructive, owner sign-off). (3) **Electricity bad values** (render silently
-  in charts; scaffold in `sql/fixes/electricity_data_anomalies_20260721.sql`,
-  needs true readings): Beachwell `R51903` Jan-26 = 0 (avg ~22,794), "Bank muscat"
-  Sep-24 = **−2** (impossible), "OUA Store" `R57668` Feb-26 = **NULL**, and a
-  Dec-25 **double-count** where "Bank muscat" and "Bank Muscat ATM" both = 744.
-  (4) **Code:** `functions/api/electricity.ts` coerces NULL→0, erasing the
-  missing-read vs zero-read distinction the anomaly engine models. (5)
-  `v_electricity_monthly_pivot` hardcodes months to Jun-26; the 4 `v_electricity_*`
-  views are unused + SECURITY DEFINER (4 residual advisor ERRORs).
+  `muscatbay/app/ELECTRICITY_DATA_AUDIT.md`.** Reconciled `electricity_readings`
+  against the owner's master spreadsheet
+  (`Muscat_Bay_Coast_Electricity_Master_Apr24Apr26.xlsx`): a full row+column
+  checksum match proved **the DB already equals the master** (grand total
+  3,137,845.2 kWh; identical 60-meter roster and every month). Only 3 cells
+  differed (Helipad / Lifting Station 02 / Zone-3 light 17 May-26 `0`→`NULL` =
+  "not in service") — reconciled live
+  (`sql/migrations/20260721_reconcile_electricity_to_master.sql`). So the odd
+  electricity values (Beachwell Jan-26=0 & Mar-25=40, "Bank muscat" Sep-24=**−2**,
+  "Bank muscat"+"Bank Muscat ATM" both **744** in Dec-25) are **in the master
+  itself** — source-data items to fix at source, NOT DB corruption
+  (`sql/fixes/electricity_source_review_20260721.sql`). **Security (3 live holes,
+  all closed):** the `*_backup_20260720` Gulf Expert tables had RLS disabled
+  (295/12/4 rows anon-readable) — secured then **dropped**; and 3 of the 4
+  `v_electricity_*` views were SECURITY DEFINER, leaking consumption to the anon
+  key (270/27/60 rows) — switched to `security_invoker`, anon now 0
+  (`…_harden_electricity_views_drop_ge_backups.sql`). **⚠️ Probable data-loss (open):**
+  `Contractor_Tracker` live = 18 rows but its 2026-07-04 backup = 47 — **26 distinct
+  contractors in the backup are absent from live** (not dedup); the contractor
+  backups were KEPT pending owner review. **Code:** `functions/api/electricity.ts`
+  no longer coerces NULL→0 (missing ≠ zero, per the master's empty-vs-0 rule);
+  188 tests pass. **Also flagged:** STP 2025 has 1 negative TSE reading;
+  `v_electricity_monthly_pivot` hardcodes months.
 - Capacity (2026-07-18): DB **28 MB / 500 MB** (5.7%), Storage **3.1 MB / 1 GB**
   (0.3%) — Free plan, ample headroom, limit not being approached.
 - Monthly loads for electricity/STP still arrive via hand-run SQL in

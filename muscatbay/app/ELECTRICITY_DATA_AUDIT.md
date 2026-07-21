@@ -2,165 +2,123 @@
 
 Investigation of reported database / data-backup irregularities, focused on the
 electricity module and the live Supabase project `utnlgeuqajmwibqmdmgt`
-(ap-northeast-1). Findings are ordered by severity. One live security hole was
-closed during the audit; the data-quality items need the owner's true readings
-before correction (scaffold in `sql/fixes/electricity_data_anomalies_20260721.sql`).
+(ap-northeast-1), then reconciled against the owner-supplied master spreadsheet
+`Muscat_Bay_Coast_Electricity_Master_Apr24Apr26.xlsx`.
 
-## Scope & method
+## Bottom line
 
-Read the live database directly (no mock data): `electricity_meters` (60 meters),
-`electricity_readings` (1,543 rows, months `Apr-24`→`Jun-26`, grand total
-**3,319,702 kWh**), the four `v_electricity_*` / `v_meter_monthly_readings_unified`
-views, every `*_backup_*` table, and the security advisors. Cross-checked against
-the reader path (`functions/api/electricity.ts`) and the anomaly engine
-(`components/electricity/electricity-analytics.ts`).
+**The electricity database is sound — it faithfully mirrors your master
+spreadsheet.** A full row + column checksum comparison (every per-meter total and
+every per-month total, plus non-empty counts, across all 60 meters × 26 months
+Apr-24→May-26) matched exactly: **grand total 3,137,845.2 kWh on both sides**. The
+only differences were 3 trivial cells, now reconciled. So the odd electricity
+values you noticed while browsing are **not** DB corruption or a backup mishap —
+they are the values recorded in the master itself, i.e. source-data entries to
+review (§C), not database drift.
 
-## Headline
+The genuinely actionable problems this audit found are elsewhere: **three live
+security holes** (all now closed) and a **probable contractor data-loss event**.
 
-- **No table corruption and no data loss.** No duplicate `(meter, month)` rows,
-  no orphaned readings, no bad month formats. All 27 months load cleanly. The 77
-  "missing" `(meter, month)` cells (1,543 of a possible 60×27=1,620) belong
-  **entirely** to four Retail meters onboarded in late 2025 — no established
-  meter has a hole in its history.
-- **The real problems are (A) a live security regression in the backup tables and
-  (B) a handful of bad electricity values that render silently in the charts.**
+## What was changed live during this audit (all verified)
 
----
+| # | Change | Status |
+|---|---|---|
+| 1 | **Enabled RLS** on 3 anon-readable `*_backup_20260720` Gulf Expert tables | ✅ applied → then dropped (see 4) |
+| 2 | **Switched 4 electricity views to `security_invoker`** — they were SECURITY DEFINER and leaked consumption to the anon key | ✅ applied + verified (anon now 0 rows) |
+| 3 | **Reconciled electricity to the master**: 3 May-26 cells `0 → NULL` (Helipad, Lifting Station 02, Zone-3 landscape light 17 — "not in service") | ✅ applied + verified |
+| 4 | **Dropped 3 stale Gulf Expert backup tables** (subsets of live) | ✅ applied + verified |
+| 5 | **Code:** `functions/api/electricity.ts` no longer coerces `NULL → 0` | ✅ in this PR (188 tests pass, tsc clean) |
 
-## A. Security — LIVE HOLE, now closed ✅ (was ERROR-level)
+Migrations: `sql/migrations/20260721_secure_stale_backups.sql`,
+`…_reconcile_electricity_to_master.sql`, `…_harden_electricity_views_drop_ge_backups.sql`.
 
-Three ad-hoc backup tables created **2026-07-20** — two days *after* the
-2026-07-18 hardening that established "0 public tables lack RLS"
-(`SECURITY_REMEDIATION.md`) — were left with **RLS disabled**. Sitting in the
-`public` schema, they were exposed through PostgREST to the **anonymous public
-API key**. Verified by simulating the `anon` role:
+## A. Security — three live holes, all closed ✅
 
-| Table (created 2026-07-20) | Rows anon could read (before) |
-|---|---|
-| `ge_ppm_findings_backup_20260720` | 295 |
-| `ge_quotations_backup_20260720` | 12 |
-| `gulf_expert_contracts_backup_20260720` | 4 |
+1. **Anon-readable backup tables.** Three `*_backup_20260720` Gulf Expert tables
+   created **2026-07-20** — two days *after* the 2026-07-18 hardening that
+   established "0 public tables lack RLS" — had **RLS disabled**, exposing 295 / 12
+   / 4 rows to the **anonymous public API key** (verified by simulating `anon`).
+   Fixed (RLS enabled, then the tables dropped as stale).
+2. **SECURITY DEFINER electricity views.** `v_electricity_summary`,
+   `v_electricity_grand_totals` and `v_electricity_monthly_pivot` let the anon key
+   read electricity consumption (270 / 27 / 60 rows — including the full per-meter
+   pivot) *through the views*, bypassing the base-table RLS. Switched all four
+   electricity/unified views to `security_invoker`; anon now reads **0**.
+3. Both of the above were the exact class of exposure the 2026-07-18 hardening
+   closed — reintroduced by later ad-hoc objects. The advisor's 3
+   `rls_disabled_in_public` ERRORs and (these) `security_definer_view` ERRORs are
+   resolved.
 
-This silently reopened the exact hole the hardening had closed. **Fixed live**
-during this audit (`sql/migrations/20260721_secure_stale_backups.sql`): RLS
-enabled with no policy → anon + authenticated denied, `service_role` still
-bypasses. Re-verified: anon now reads **0 rows** from all three. Supabase security
-advisor no longer reports `rls_disabled_in_public` for them.
-
-## B. Backup hygiene — data-backup irregularity (the "data backup" concern)
+## B. Data-backup hygiene — and a probable data-loss event ⚠️
 
 "Backups" here are hand-rolled `*_backup_YYYYMMDD` **table copies inside the live
-`public` schema**, not real backups. Six exist:
+`public` schema**, not real backups. That pattern is the root cause of the §A
+leaks (each copy must be RLS-hardened by hand, and the 07-20 set wasn't).
 
-| Table | Created | RLS | Note |
+- **Dropped** (safe — live supersedes): the three 2026-07-20 Gulf Expert snapshots.
+- **KEPT for investigation — do not delete:** the three 2026-07-04 contractor
+  snapshots. **`Contractor_Tracker` live = 18 rows (17 distinct contractors) but its
+  backup = 47 rows (42 distinct).** 26 distinct contractors in the backup are
+  **absent from the live table**, and only 3 names are duplicated — so this is *not*
+  de-duplication but a **probable data-loss event** on the live contractor
+  register. The backup is currently the only copy of those 26 records. Needs owner
+  review (intentional cull vs accidental deletion) before any cleanup.
+- **Recommendation:** stop making in-schema `*_backup_*` copies; rely on Supabase's
+  point-in-time / logical backups. If snapshots are needed, put them in a dedicated
+  non-`public` schema (not exposed by PostgREST) with RLS.
+
+## C. Electricity values you noticed — they match the master (source-data items)
+
+These render as chart dips/zeros, but the DB equals the master, so they are **source
+entries to verify at the master**, not DB fixes. None were overwritten.
+
+| Meter | Month(s) | Master = DB value | Note |
 |---|---|---|---|
-| `Contractor_Tracker_backup_20260704` | 07-04 | on / no policy | stale copy |
-| `contractor_contracts_backup_20260704` | 07-04 | on / no policy | stale copy |
-| `contractor_yearly_costs_backup_20260704` | 07-04 | on / no policy | stale copy |
-| `ge_ppm_findings_backup_20260720` | 07-20 | **now on** (was off) | stale: 295 rows vs live 361 |
-| `ge_quotations_backup_20260720` | 07-20 | **now on** (was off) | — |
-| `gulf_expert_contracts_backup_20260720` | 07-20 | **now on** (was off) | — |
+| Beachwell (`R51903`) | Mar-25 / Jan-26 | 40 / 0 | vs ~23,671 baseline — recurring near-zero reads; confirm real outage vs failed read. |
+| Bank muscat | Sep-24 | −2 | Physically impossible kWh — a source data-entry artifact. |
+| Bank muscat + Bank Muscat ATM | Dec-25 | 744 **and** 744 | Both meters carry 744; 744 fits the ATM's ~700–750 profile and is a 3.8× spike for Bank muscat → likely the ATM's value duplicated onto the main meter when the ATM row was added. Retail Dec-25 is double-counted by 744. |
+| OUA Store (`R57668`) | Feb-26 | empty → NULL | Correctly "not in service" (the only NULL). |
+| Lifting Station 02 / OUA Store | most of 2025 | 0 | Plausibly genuinely offline/vacant — confirm, then annotate. |
 
-Problems: they bypass the module RLS model unless every one is hardened by hand
-(the 07-20 set proves that fails), they drift out of date, and they inflate the
-schema. **Recommendation:** drop them once confirmed unneeded and rely on
-Supabase's point-in-time / logical backups. Destructive, so left for owner sign-off.
+2025 was otherwise clean: **0 negatives, 0 NULLs** across the year; seasonal
+dips/spikes (irrigation, street lights, actuators) and constant small loads
+(Actuator DB 05 = 18) are normal, not errors.
 
-## C. Electricity data-quality anomalies (what you saw "browsing the app")
+**Fix these at the master**, then re-send it — the DB will pick up the corrections
+on the next load. Convenience scaffold: `sql/fixes/electricity_source_review_20260721.sql`.
 
-These are individual bad values, not structural damage. They render **silently**
-in the trend charts and heatmap because the Load Watch exceptions engine only
-evaluates the **latest** month in the selected range (see item D) — so historical
-bad points show as dips/zeros on the chart but never appear in the work-queue.
+## D. Code — NULL now means "not in service", not 0 ✅
 
-1. **Beachwell = 0 kWh in Jan-26** (account `R51903`) while the meter averages
-   **~22,794 kWh/month** (max 46,800). Almost certainly a failed/missing read,
-   not a true zero — it understates the whole-site Jan-26 total by ~one month of
-   Beachwell load and is the single most visible chart anomaly.
-2. **"Bank muscat" = −2 kWh in Sep-24** (Retail). A negative delivery is
-   physically impossible — meter reset/fault or data-entry error.
-3. **"OUA Store (BTU Meter)" = NULL in Feb-26** (account `R57668`). Genuinely
-   missing; the only NULL in the table. The app coerces it to `0` (item D), so it
-   currently masquerades as a real zero read.
-4. **Dec-25 double-count — "Bank muscat" vs "Bank Muscat ATM".** Both read
-   **exactly 744** in Dec-25, then diverge completely (Jan-26: 51 vs 720; the ATM
-   holds ~700/month thereafter, the main meter drops to 50–170). The ATM meter's
-   first month was seeded from the main meter, so **Retail Dec-25 is inflated by
-   744 kWh**, and the two near-identical names are easy to confuse. Confirm they
-   are distinct physical meters, fix the Dec-25 duplicate, and rename for clarity.
+`functions/api/electricity.ts` used `Number(consumption) || 0`, turning a **NULL**
+(missing / not-in-service) into a real **0**. That erased the master's empty-vs-0
+distinction and defeated the Load Watch anomaly engine, which is explicitly built
+to treat a missing read ("schedule a manual read") differently from a zero read
+("check the breaker"). Fixed: NULL readings are now omitted from the meter's map,
+so a missing month stays distinct from 0. No type/behaviour ripple — every
+consumer already treats an absent month as 0 for sums via `?? 0` / `|| 0`
+(verified across `page.tsx`, `electricity-analytics.ts`, `useDashboardData.ts`);
+`entities/electricity.ts` `consumption` is now correctly `number | null`. 188 tests
+pass, `tsc --noEmit` clean.
 
-Lower-priority / likely-legitimate (listed so they aren't re-flagged later):
+## E. View data debt (informational)
 
-5. **Always-zero meters (0 kWh in all 27 months):** `Helipad` (`R52334`) and
-   `Zone-3 landscape light 17` (`R54872`). Either dead/unused meters or never
-   metered — confirm, then either remove or annotate so they stop generating
-   noise in the register.
-6. **116 zero readings** overall. Most are plausible for low-duty assets
-   (Lifting Station 02 avg 12 kWh, small landscape lights, standby pumps) and are
-   **not** flagged here — only zeros on normally-nonzero meters (items 1, 3) matter.
-7. **Onboarding gaps (not errors):** the four Retail meters — `Sales Center - Main
-   Meter` (`R51574`), `Sales Center - Dry Kitchen`, `Sales Center - Tent`
-   (from Nov-25) and `Bank Muscat ATM` (from Dec-25) — account for **all 77** empty
-   cells. Expected, not data loss.
-8. **Messy `meter_type` taxonomy.** Singleton/near-singleton categories
-   (`Beach well` = 1 meter, `FP-Landscape Lights Z3` = 3, `DB` mixes actuators +
-   Guard House + Helipad). Load Watch groups by `meter_type`, so these surface as
-   categories of one. Cosmetic; consider consolidating.
+`v_electricity_monthly_pivot` still **hardcodes** its month columns
+(`Apr-24`…`Jun-26`); new months are silently dropped until the view is `ALTER`ed —
+the "dashboard stops at last month" class the Water module fixed structurally. All
+four `v_electricity_*` views are **unused by the app** (it reads base tables). They
+are now `security_invoker` (safe); consider dropping them if no external tool reads
+them.
 
-Correction scaffold (values intentionally left blank — need the real readings):
-`sql/fixes/electricity_data_anomalies_20260721.sql`.
+## F. Cross-module 2025 spot-check
 
-## D. Code — NULL consumption is silently turned into 0
+Water monthly 2025: **0 negatives, 0 NULLs** (4,198 rows) — clean. STP 2025: **1
+negative TSE-for-irrigation** reading (physically impossible) — flagged for the STP
+owner; out of electricity scope.
 
-`functions/api/electricity.ts` builds each reading as
-`Number(reading.consumption) || 0`, so a **NULL** consumption (a *missing* read)
-becomes **0** (a *real* zero). But `electricity-analytics.ts` is deliberately
-built to treat these differently — distinct flags and distinct operator actions:
-`missing` → "schedule a manual read" vs `zero` → "check the breaker/supply". The
-coercion erases that distinction (item C-3 is the live example). Additionally, the
-anomaly engine only inspects the **current** month, so historical bad values
-(C-1, C-2) never reach the exceptions register.
+## Still needs owner input
 
-**Recommended (not applied — needs a small typed change + regression check):**
-preserve NULL through the API (`MeterReading.readings: Record<string, number | null>`;
-all summation sites already use `?? 0`), so the "missing read" flag works and
-missing ≠ zero. Optionally let the exceptions register scan the whole selected
-range, not just the last month.
-
-## E. View / schema data debt
-
-- `v_electricity_monthly_pivot` **hardcodes month columns** `Apr-24`…`Jun-26`. New
-  months (Jul-26+) will be silently dropped until someone `ALTER`s the view — the
-  same "dashboard stops at last month" class of bug the Water module structurally
-  fixed in 2026-07-03.
-- All four `v_electricity_*` views are **unused by the app** (it reads the base
-  tables) and are **SECURITY DEFINER** (four `security_definer_view` advisor
-  ERRORs) — they can expose electricity data past RLS. Either drop them or switch
-  to `security_invoker = true`.
-
-## F. Documentation drift
-
-`PROJECT_STATUS.md` says electricity "Monthly readings through **Mar-26**", but
-the DB holds through **Jun-26** (Apr/May/Jun-26 loaded 2026-05-08 → 2026-07-04).
-Harmless, but a sign the electricity pipeline isn't being reconciled — its monthly
-loads still arrive via hand-run SQL (`sql/migrations/update_electricity_*.sql`),
-the same manual step Water eliminated. Status doc updated in this change.
-
-## Supabase advisor snapshot (2026-07-21, post-fix)
-
-129 lints. The 3 `rls_disabled_in_public` ERRORs (item A) are resolved. Residual
-(mostly pre-existing, tracked in `SECURITY_REMEDIATION.md`): 4 `security_definer_view`
-(item E), 68 `rls_policy_always_true`, 20 `function_search_path_mutable`,
-5 `rls_enabled_no_policy`, 1 `public_bucket_allows_listing`,
-`auth_leaked_password_protection` still off (owner action).
-
-## What was changed vs. what needs owner sign-off
-
-| Action | Status |
-|---|---|
-| Enable RLS on the 3 exposed 2026-07-20 backups | ✅ applied live + verified |
-| Migration file committed | ✅ `sql/migrations/20260721_secure_stale_backups.sql` |
-| Correct Beachwell Jan-26 / Bank muscat −2 / OUA Feb-26 / Bank Muscat Dec-25 dup | ⏳ needs true values (scaffold in `sql/fixes/`) |
-| Drop the 6 in-schema backup tables | ⏳ destructive — owner confirm |
-| Preserve NULL≠0 in the electricity API | ⏳ recommended code change |
-| Fix / drop the 4 SECURITY DEFINER electricity views + de-hardcode the pivot | ⏳ recommended |
+1. **Contractor data-loss (§B)** — confirm whether 26 contractors were intentionally
+   removed from `Contractor_Tracker`; restore from the kept backup if not.
+2. **Source-data items (§C)** — correct the master's Beachwell / −2 / Bank Muscat
+   Dec-25 double-count entries (or confirm they're real), then re-send the master.
+3. **STP negative TSE (§F)** and the leaked-password protection setting (pre-existing).

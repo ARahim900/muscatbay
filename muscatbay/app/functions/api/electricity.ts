@@ -74,13 +74,21 @@ export async function getElectricityMetersFromSupabase(): Promise<MeterReading[]
             return [];
         }
 
-        // Group readings by meter_id
+        // Group readings by meter_id.
+        // A NULL consumption means "closed / not in service" for that month and is
+        // intentionally left ABSENT from the meter's map (not coerced to 0), so a
+        // missing read stays distinguishable from a genuine 0 kWh. This preserves
+        // the master spreadsheet's empty-vs-0 semantics and lets the Load Watch
+        // anomaly engine flag it as "missing → schedule a manual read" rather than
+        // "zero → check the breaker". Every consumer treats an absent month as 0
+        // for summation via `?? 0` / `|| 0`, so totals are unaffected.
         const readingsByMeter: Record<string, Record<string, number>> = {};
         readings.forEach((reading: ElectricityReading) => {
+            if (reading.consumption === null || reading.consumption === undefined) return;
             if (!readingsByMeter[reading.meter_id]) {
                 readingsByMeter[reading.meter_id] = {};
             }
-            readingsByMeter[reading.meter_id][reading.month] = Number(reading.consumption) || 0;
+            readingsByMeter[reading.meter_id][reading.month] = Number(reading.consumption);
         });
 
         // Transform to MeterReading interface

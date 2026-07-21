@@ -1,6 +1,12 @@
 -- 20260721_secure_stale_backups.sql
 -- APPLIED LIVE 2026-07-21 (via Supabase MCP migration `secure_stale_gulf_expert_backups`).
 --
+-- NOTE: this was the immediate stop-gap. Later the same day these three tables
+-- were dropped entirely — see 20260721_harden_electricity_views_drop_ge_backups.sql
+-- (the live data supersedes them). This file is retained as history of the fix
+-- sequence; the ENABLE ROW LEVEL SECURITY statements below are harmless no-ops now
+-- that the tables no longer exist (they ran before the DROP).
+--
 -- Context: the database/backup investigation on 2026-07-21 found that three
 -- ad-hoc backup tables created 2026-07-20 — i.e. AFTER the 2026-07-18 hardening
 -- that established "0 public tables lack RLS" (see 20260718_security_hardening*.sql
