@@ -22,6 +22,9 @@ export interface ElectricityReading {
     id: string;
     meter_id: string;
     month: string;
-    consumption: number;
+    // Nullable in the DB: a NULL reading means "closed / not in service" for that
+    // month (distinct from a genuine 0 kWh), matching the electricity master
+    // spreadsheet's rule "leave empty if not in service; only enter 0 for a true zero".
+    consumption: number | null;
     created_at?: string;
 }
