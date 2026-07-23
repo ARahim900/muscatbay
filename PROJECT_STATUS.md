@@ -289,6 +289,8 @@ Entries below the marker are appended automatically on every push to `main`.
 Do not hand-edit existing entries; curate meaning in the sections above.
 
 <!-- STATUS:LOG:BEGIN -->
+- 2026-07-23 — feat(water): align Daily DC trend chart with the supply-chain gauges
+- 2026-07-23 — feat(water): lead Daily DC gauges with Main Bulk (C43659) vs zone bulks + DC
 - 2026-07-23 — feat(export): database CSV export on every table across all modules
 - 2026-07-21 — fix(electricity,db): reconcile to master, close 3 live security holes, restore lost contractors (#46)
 - 2026-07-19 — Add files via upload
