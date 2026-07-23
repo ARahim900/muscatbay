@@ -28,7 +28,8 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@
 import { exportToCSV, getDateForFilename } from "@/lib/export-utils";
 import {
     MultiSelectDropdown, TablePagination, ActiveFilterPills,
-    TableToolbar, StatusBadge, SortableTableHead, type PageSizeOption
+    TableToolbar, StatusBadge, SortableTableHead, ExportButton,
+    type PageSizeOption, type ExportColumn
 } from "@/components/shared/data-table";
 import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
 import { useVirtualTableRows } from "@/hooks/useVirtualTableRows";
@@ -85,6 +86,21 @@ function buildYearlyMatrix(costs: ContractorYearlyCost[]): {
 
     return { contractors, rows, contractorTotals, grandTotal };
 }
+
+// Full Contractor_Tracker column set for the AMC Tracker database export
+const TRACKER_EXPORT_COLUMNS: ExportColumn<ContractorTracker>[] = [
+    { key: 'Contractor', header: 'Contractor' },
+    { key: 'Service Provided', header: 'Service Provided' },
+    { key: 'Status', header: 'Status' },
+    { key: 'Contract Type', header: 'Contract Type' },
+    { key: 'Start Date', header: 'Start Date' },
+    { key: 'End Date', header: 'End Date' },
+    { key: 'Contract (OMR)/Month', header: 'Contract (OMR)/Month' },
+    { key: 'Contract Total (OMR)/Year', header: 'Contract Total (OMR)/Year' },
+    { key: 'Annual Value (OMR)', header: 'Annual Value (OMR)' },
+    { key: 'Renewal Plan', header: 'Renewal Plan' },
+    { key: 'Note', header: 'Note' },
+];
 
 // Session cache — see lib/page-cache.ts (stale-while-revalidate on revisit)
 const CONTRACTORS_CACHE_KEY = "contractors:page";
@@ -838,7 +854,8 @@ export default function ContractorsPage() {
                                 <X className="w-3.5 h-3.5" /> Clear
                             </button>
                         )}
-                        <div className="text-sm text-muted-foreground whitespace-nowrap ml-auto">
+                        <ExportButton rows={filteredTracker} filename="contractor-tracker" columns={TRACKER_EXPORT_COLUMNS} className="ml-auto" />
+                        <div className="text-sm text-muted-foreground whitespace-nowrap">
                             <span className="font-semibold text-foreground dark:text-muted-foreground/70">{filteredTracker.length}</span>
                             {filteredTracker.length !== trackerData.length && <span> of {trackerData.length}</span>} entries
                         </div>

@@ -10,7 +10,8 @@ function escapeCSVField(value: unknown): string {
     if (value === null || value === undefined) {
         return '';
     }
-    const stringValue = String(value);
+    // Multi-value cells (e.g. a systems list) read better joined than as "a,b,c"
+    const stringValue = Array.isArray(value) ? value.join('; ') : String(value);
     // If the value contains comma, newline, or double quote, wrap in quotes
     if (stringValue.includes(',') || stringValue.includes('\n') || stringValue.includes('"')) {
         return `"${stringValue.replace(/"/g, '""')}"`;
@@ -25,7 +26,7 @@ export function objectsToCSV<T extends Record<string, unknown>>(
     data: T[],
     columns?: { key: keyof T; header: string }[]
 ): string {
-    if (data.length === 0) {
+    if (data.length === 0 && !columns) {
         return '';
     }
 
@@ -47,7 +48,9 @@ export function objectsToCSV<T extends Record<string, unknown>>(
  * Trigger a file download in the browser
  */
 export function downloadFile(content: string, filename: string, mimeType: string = 'text/csv'): void {
-    const blob = new Blob([content], { type: `${mimeType};charset=utf-8;` });
+    // UTF-8 BOM so Excel detects the encoding (Arabic names, ₂/→ symbols)
+    const body = mimeType === 'text/csv' ? '\uFEFF' + content : content;
+    const blob = new Blob([body], { type: `${mimeType};charset=utf-8;` });
     const url = URL.createObjectURL(blob);
 
     const link = document.createElement('a');

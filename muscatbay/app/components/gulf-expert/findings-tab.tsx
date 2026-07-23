@@ -7,7 +7,9 @@ import {
   TablePagination,
   TableToolbar,
   SortableTableHead,
+  ExportButton,
   type PageSizeOption,
+  type ExportColumn,
 } from "@/components/shared/data-table";
 import { Table, TableHeader, TableBody, TableRow, TableCell } from "@/components/ui/table";
 import type { PpmFinding } from "./types";
@@ -15,6 +17,26 @@ import type { PpmFinding } from "./types";
 interface FindingsTabProps {
   findings: PpmFinding[];
 }
+
+// Full ge_ppm_findings column set for the database export
+const FINDINGS_EXPORT_COLUMNS: ExportColumn<PpmFinding>[] = [
+  { key: "finding_code", header: "Code" },
+  { key: "building", header: "Building" },
+  { key: "system_type", header: "System" },
+  { key: "equipment_id", header: "Equipment ID" },
+  { key: "equipment_label", header: "Equipment" },
+  { key: "fiscal_year", header: "Fiscal Year" },
+  { key: "ppm_visit", header: "PPM Visit" },
+  { key: "description", header: "Description" },
+  { key: "quantity", header: "Qty" },
+  { key: "priority", header: "Priority" },
+  { key: "status", header: "Status" },
+  { key: "quotation_ref", header: "Quotation Ref" },
+  { key: "action_required", header: "Action Required" },
+  { key: "contractor_notes", header: "Contractor Notes" },
+  { key: "is_recurring", header: "Recurring", format: (f) => (f.is_recurring ? "Yes" : "No") },
+  { key: "first_identified_ppm", header: "First Identified PPM" },
+];
 
 function getPriorityColor(priority: string) {
   const p = priority?.toLowerCase() || "";
@@ -159,7 +181,8 @@ export function FindingsTab({ findings }: FindingsTabProps) {
             <X className="w-3.5 h-3.5" /> Clear
           </button>
         )}
-        <div className="text-sm text-muted-foreground dark:text-muted-foreground whitespace-nowrap ml-auto">
+        <ExportButton rows={filtered} filename="hvac-ppm-findings" columns={FINDINGS_EXPORT_COLUMNS} className="ml-auto" />
+        <div className="text-sm text-muted-foreground dark:text-muted-foreground whitespace-nowrap">
           <span className="font-semibold text-foreground dark:text-muted-foreground/70">{filtered.length}</span>
           {filtered.length !== findings.length && <span> of {findings.length}</span>} findings
         </div>

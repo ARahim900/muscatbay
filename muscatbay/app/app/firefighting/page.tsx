@@ -13,8 +13,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import {
-    MultiSelectDropdown, SortableTableHead, TablePagination, TableToolbar,
-    type PageSizeOption,
+    MultiSelectDropdown, SortableTableHead, TablePagination, TableToolbar, ExportButton,
+    type PageSizeOption, type ExportColumn,
 } from "@/components/shared/data-table";
 import { Skeleton } from "@/components/shared/skeleton";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -184,6 +184,40 @@ const CYCLE_OPTIONS = CYCLES.map((c) => c.label);
 const ZONE_OPTIONS = ZONES.map((z) => z.label);
 const PPM_STATUS_OPTIONS = (Object.keys(STATUS_CFG) as PpmStatus[]).map((s) => STATUS_CFG[s].label);
 
+// Database-export column sets (full table shape, badge fields as readable labels).
+const EQUIPMENT_EXPORT_COLUMNS: ExportColumn<FireSafetyEquipment>[] = [
+    { key: "name", header: "Asset" },
+    { key: "type", header: "Type" },
+    { key: "zone", header: "Zone" },
+    { key: "location", header: "Location" },
+    { key: "status", header: "Status" },
+    { key: "priority", header: "Priority" },
+    { key: "next_maintenance", header: "Next PPM" },
+    { key: "inspector", header: "Inspector" },
+    { key: "battery", header: "Battery (%)" },
+    { key: "signal", header: "Signal (%)" },
+];
+
+const ISSUES_EXPORT_COLUMNS: ExportColumn<FireIssue>[] = [
+    { key: "issue_description", header: "Issue" },
+    { key: "location", header: "Location" },
+    { key: "date_reported", header: "Reported" },
+    { key: "reported_by", header: "Reported By" },
+    { key: "status", header: "Status" },
+    { key: "quote_ref", header: "Quote Ref" },
+    { key: "resolution", header: "Resolution" },
+];
+
+const PPM_EXPORT_COLUMNS: ExportColumn<PpmActivity>[] = [
+    { key: "cycle", header: "Cycle", format: (a) => CYCLE_BY_KEY[a.cycle].label },
+    { key: "zone", header: "Zone", format: (a) => ZONE_BY_KEY[a.zone].label },
+    { key: "area", header: "Area / Asset" },
+    { key: "systems", header: "Systems" },
+    { key: "date", header: "Scheduled" },
+    { key: "status", header: "Status", format: (a) => STATUS_CFG[a.status].label },
+    { key: "notes", header: "Notes" },
+];
+
 // Equipment-status → donut slice colour (hex; SVG fill can't read CSS vars).
 const EQUIP_STATUS_CHART_COLORS: Record<string, string> = {
     Operational: "#84B59F",        // --mb-success
@@ -243,15 +277,18 @@ function SystemTag({ label }: { label: string }) {
 }
 
 // Section heading shared by the Overview registers (icon + title + count + blurb).
-function SectionHeading({ icon: Icon, title, count, description }: { icon: LucideIcon; title: string; count?: number; description?: string }) {
+function SectionHeading({ icon: Icon, title, count, description, action }: { icon: LucideIcon; title: string; count?: number; description?: string; action?: React.ReactNode }) {
     return (
-        <div className="mb-3">
-            <div className="flex items-center gap-2">
-                <Icon className="w-4 h-4 text-secondary" />
-                <h2 className="text-sm font-semibold text-foreground dark:text-muted-foreground">{title}</h2>
-                {count != null && <span className="text-xs text-muted-foreground tabular-nums">· {count}</span>}
+        <div className="mb-3 flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
+            <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                    <Icon className="w-4 h-4 text-secondary" />
+                    <h2 className="text-sm font-semibold text-foreground dark:text-muted-foreground">{title}</h2>
+                    {count != null && <span className="text-xs text-muted-foreground tabular-nums">· {count}</span>}
+                </div>
+                {description && <p className="text-xs text-muted-foreground mt-1">{description}</p>}
             </div>
-            {description && <p className="text-xs text-muted-foreground mt-1">{description}</p>}
+            {action}
         </div>
     );
 }
@@ -639,7 +676,8 @@ export default function FirefightingPage() {
 
                     {/* Equipment Register */}
                     <div>
-                        <SectionHeading icon={ShieldCheck} title="Equipment Register" count={equipment.length} description="Live from the fire-safety equipment register, grouped by designated zone." />
+                        <SectionHeading icon={ShieldCheck} title="Equipment Register" count={equipment.length} description="Live from the fire-safety equipment register, grouped by designated zone."
+                            action={<ExportButton rows={equipment} filename="fire-safety-equipment" columns={EQUIPMENT_EXPORT_COLUMNS} />} />
                         {equipment.length === 0 ? (
                             <div className="ops-table-shell"><EmptyState variant="no-data" title="No equipment data" description="Live equipment register is unavailable right now." /></div>
                         ) : (
@@ -703,7 +741,8 @@ export default function FirefightingPage() {
 
                     {/* Issues & Defects Register */}
                     <div>
-                        <SectionHeading icon={AlertTriangle} title="Issues & Defects Register" count={issues.length} description="Live defect log from the BEC engagement." />
+                        <SectionHeading icon={AlertTriangle} title="Issues & Defects Register" count={issues.length} description="Live defect log from the BEC engagement."
+                            action={<ExportButton rows={issues} filename="fire-issues-register" columns={ISSUES_EXPORT_COLUMNS} />} />
                         {issues.length === 0 ? (
                             <div className="ops-table-shell"><EmptyState variant="no-data" title="No issues logged" description="The issues register is empty or unavailable." /></div>
                         ) : (
@@ -794,7 +833,8 @@ export default function FirefightingPage() {
                                 <X className="w-3.5 h-3.5" /> Clear
                             </button>
                         )}
-                        <div className="text-sm text-muted-foreground dark:text-muted-foreground whitespace-nowrap ml-auto">
+                        <ExportButton rows={filteredActivities} filename="fire-ppm-activities" columns={PPM_EXPORT_COLUMNS} className="ml-auto" />
+                        <div className="text-sm text-muted-foreground dark:text-muted-foreground whitespace-nowrap">
                             <span className="font-semibold text-foreground dark:text-muted-foreground/70">{filteredActivities.length}</span>
                             {filteredActivities.length !== PPM_ACTIVITIES.length && <span> of {PPM_ACTIVITIES.length}</span>} activities
                         </div>

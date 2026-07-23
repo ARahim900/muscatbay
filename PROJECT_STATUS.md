@@ -15,7 +15,7 @@
 > - Deep reference detail lives in the linked docs at the bottom — this file
 >   holds the *current state*, not the full manuals.
 
-**Last curated review:** 2026-07-13
+**Last curated review:** 2026-07-23
 
 ---
 
@@ -48,7 +48,7 @@ executives (dashboard KPIs). Live data — there is no demo mode.
 | Electricity | `/electricity` | ✅ Live, inspection-first redesign 2026-07-05 | `electricity_meters` / `electricity_readings` | Two tabs (down from three): **Load Watch** (default) — category (meter_type) severity cards worst-first, category×month load heatmap, auto Exceptions & Actions register (per-meter spike/dip/zero/negative/missing vs each meter's own baseline), with KPIs + trend charts kept below; **Meters & Data** (Analysis + Database in one tab). **2026-07-06:** de-duplicated after review — the two near-identical horizontal bar charts (top-10 consumers + meter-vs-average) collapsed into one **Meters by Consumption** chart (ranked high→low, each bar colored above/below the group average with an "Avg" reference line, the filter-selected meter outlined); the two overlapping consumption tables (Monthly Breakdown + the separate anomaly grid) collapsed into one **Meter Consumption & Anomalies** table that follows the shared date range and keeps search + type filter + rows pagination + CSV, now with a Cost column, a Total row and the anomaly tinting on each cell. Monthly readings through Jun-26 (loaded via hand-run `sql/migrations/update_electricity_*.sql`) |
 | STP Plant | `/stp` | ✅ Live, inspection-first redesign 2026-07-05 | `stp_operations` | Two tabs: **Plant Watch** (default) — process-health cards worst-first (efficiency, hydraulic load, TSE reuse, tankers, data completeness), load-vs-recovery chart, metric×day heatmap, auto Exceptions & Actions register (data-relative severity + efficiency bands); **Operations & Trends** keeps the KPIs, charts, daily log/CSV and folds the Airtable DB into a collapsible. Daily ops through May-26; 3D plant twin exists only on unmerged PR #21. `stp_operations` added to the `supabase_realtime` publication 2026-07-06, so both this page and the dashboard now refresh live on data changes (the page already subscribed but the table was unpublished) |
 | Assets | `/assets` | ✅ Live | `master_assets_register` | 6-card KPI grid; register table with toolbar (PR #25). **2026-07-10:** first load no longer flashes a false "Demo Data / OFFLINE / all-zero KPIs" state — the status bar shows a neutral "Connecting…" chip and the KPI grid stays skeletoned until the first fetch resolves (`PageStatusBar` gained a `loading` prop); realtime changes refresh the table silently instead of blanking it |
-| Contractors | `/contractors` | ✅ Live | `Contractor_Tracker`, contracts tables | AMC tracking, yearly costs. **2026-07-10:** contractor names wrap to two lines with the full name on hover instead of truncating with no affordance (mobile cards wrap fully — touch has no hover) |
+| Contractors | `/contractors` | ✅ Live | `Contractor_Tracker`, contracts tables | AMC tracking, yearly costs. **2026-07-10:** contractor names wrap to two lines with the full name on hover instead of truncating with no affordance (mobile cards wrap fully — touch has no hover). **2026-07-23:** AMC Tracker tab gained the missing database (CSV) export — all three contractor tabs now export |
 | HVAC | `/hvac` | ✅ Live | Gulf Expert tables | Findings/maintenance model — the layout template other modules align to |
 | Fire Safety | `/firefighting` | ✅ Live (redesigned 2026-06-30) | `fire_safety_equipment`, `fire_ppm_activities`, `fire_issues_register`, `fire_ppm_contacts` | BEC AMC: 3 PPM cycles × 4 zones; aligned with HVAC layout (PRs #26/#27) |
 | Pest Control | `/pest-control` | ✅ Live | pest tables | **2026-07-10:** the AITable embed (cross-origin iframe — internals can't be restyled) now follows the app's light/dark theme via its `theme` param, sits behind a card-surface loading cover until it finishes loading, and gains an "Open full view" header action |
@@ -139,6 +139,30 @@ focus-trap + Escape + background-scroll-lock on the sheets. Page bottom padding
 (`client-layout.tsx`) was raised to clear the taller floating dock, and the
 print stylesheet's stale `nav[aria-label="Primary navigation"]` selector was
 corrected to `"Mobile navigation"` so the dock is hidden when printing.
+
+**2026-07-23 — database export everywhere (cross-module).** Every data
+table/register in the app now has a CSV download. A new shared
+`ExportButton` (`components/shared/data-table/export-button.tsx`, exported
+from the data-table index) standardises the button: exports the *filtered*
+rows with the full column set of the underlying table, date-stamped
+filename, disabled state when empty, row-count hover title. Added where
+export was missing: **Contractors → AMC Tracker** (the `Contractor_Tracker`
+table itself — Contracts and Yearly Costs already exported), **HVAC →
+Maintenance** (`ge_ppm_findings`, 16 columns incl. action required /
+contractor notes / recurring flags) and **Recurring Issues**
+(`ge_recurring_issues`, via a new count-plus-export header), **Fire Safety
+→ Equipment Register, Issues & Defects Register** (export action on the
+section headings) **and the Maintenance PPM table** (toolbar button,
+cycle/zone/status exported as readable labels), and the **Water Monthly
+zone drill-downs** (A1 Reconciliation + Individual Meters panels — compact
+CSV button beside the rows picker, using the dashboard's own
+`downloadRows`). `lib/export-utils.ts` CSV downloads are now UTF-8
+BOM-prefixed so Excel renders Arabic names and symbols correctly (benefits
+all pre-existing exports), arrays export joined with `;`, and an explicit
+column spec now yields a header-only file instead of an empty one when a
+table has no rows. Pre-existing exports (water database tables,
+electricity, STP daily log, assets, exceptions registers) are unchanged;
+unit tests cover the CSV builder and the shared button (203 tests green).
 
 ## 3. Water monthly data — how it works now (important)
 

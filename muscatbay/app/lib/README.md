@@ -55,3 +55,18 @@ Use validators from `validation.ts` for all user input:
 ```typescript
 import { validateEmail, sanitizeInput } from '@/lib/validation';
 ```
+
+### Exporting a Table
+
+Every data table gets its CSV download from the shared button — don't
+hand-roll export handlers:
+```tsx
+import { ExportButton, type ExportColumn } from '@/components/shared/data-table';
+
+<ExportButton rows={filteredRows} filename="contractor-tracker" columns={COLUMNS} />
+```
+Pass the *filtered* row set (the file should match what's on screen), a
+base filename (date + `.csv` are appended), and optionally a column spec
+(`key`/`header`/`format`) for ordering, headers and readable labels.
+`exportToCSV`/`downloadFile` in `export-utils.ts` BOM-prefix CSV output so
+Excel detects UTF-8.

@@ -5,3 +5,4 @@ export { TablePagination, type PageSizeOption } from './table-pagination';
 export { ActiveFilterPills, type FilterPill } from './active-filter-pills';
 export { TableToolbar, DensityToggle, type TableDensity } from './table-toolbar';
 export { StatusBadge, DOT_COLORS, type BadgeColor } from './status-badge';
+export { ExportButton, type ExportColumn } from './export-button';

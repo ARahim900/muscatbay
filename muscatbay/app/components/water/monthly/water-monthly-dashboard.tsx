@@ -177,6 +177,17 @@ function RowsPicker({ value, setValue, total }: { value: string; setValue: (v: s
     );
 }
 
+/* compact per-panel CSV export — exports the full row set, not just the rows shown */
+function PanelExport({ onClick }: { onClick: () => void }) {
+    return (
+        <button onClick={onClick} title="Export CSV" aria-label="Export CSV"
+            className="flex items-center gap-1 px-2 py-1 text-[11px] font-semibold"
+            style={{ background: C.primary, color: "var(--primary-foreground)", borderRadius: RADIUS.md }}>
+            <Download className="w-3.5 h-3.5" />CSV
+        </button>
+    );
+}
+
 /* circular ring gauge (clean, theme-aware) */
 interface RingGaugeProps {
     frac: number;
@@ -521,7 +532,10 @@ function ZonesView({ data, period, monthly, sel, nMonths, year }: ZonesViewProps
                 </div>
 
                 <Panel title="A1 Reconciliation — Σ zone bulk + direct vs main bulk" icon={Layers}
-                    right={<RowsPicker value={rowsShown} setValue={setRowsShown} total={comp.length} />}
+                    right={<div className="flex items-center gap-2">
+                        <PanelExport onClick={() => downloadRows(comp.map((c, i) => ({ "#": i + 1, Meter: c.name, Kind: c.kind, "Volume (m3)": c.val.toFixed(1), "% of A1": pctOfA1(c.val) })), `water-a1-reconciliation-${year}.csv`)} />
+                        <RowsPicker value={rowsShown} setValue={setRowsShown} total={comp.length} />
+                    </div>}
                     note="Main bulk (A1) = Σ zone bulk + Σ direct connections + trunk loss. Use it to spot which downstream bulk meters are missing or under-reading before blaming leakage.">
                     <div className="overflow-auto" style={{ maxHeight: rowsShown === "All" ? 480 : undefined }}>
                         <table className="w-full text-[12px]">
@@ -655,7 +669,10 @@ function ZonesView({ data, period, monthly, sel, nMonths, year }: ZonesViewProps
                 </div>
 
                 <Panel title={`Individual Meters in ${z.name} (${meters.length})`} icon={Layers}
-                    right={<RowsPicker value={rowsShown} setValue={setRowsShown} total={meters.length} />}
+                    right={<div className="flex items-center gap-2">
+                        <PanelExport onClick={() => downloadRows(meters.map((m, i) => ({ "#": i + 1, Meter: m.name, Type: m.typ, "Consumption (m3)": m.val.toFixed(1), "% of supply": pctOf(m.val) })), `water-zone-${String(z.zone).replace(/\s+/g, "-").toLowerCase()}-meters-${year}.csv`)} />
+                        <RowsPicker value={rowsShown} setValue={setRowsShown} total={meters.length} />
+                    </div>}
                     note="Zone supply = Σ individual consumption + loss.">
                     <div className="overflow-auto" style={{ maxHeight: rowsShown === "All" ? 480 : undefined }}>
                         <table className="w-full text-[12px]">

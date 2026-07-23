@@ -2,11 +2,26 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { RefreshCw } from "lucide-react";
+import { ExportButton, type ExportColumn } from "@/components/shared/data-table";
 import type { RecurringIssue } from "./types";
 
 interface RecurringTabProps {
   issues: RecurringIssue[];
 }
+
+// Full ge_recurring_issues column set for the database export
+const RECURRING_EXPORT_COLUMNS: ExportColumn<RecurringIssue>[] = [
+  { key: "building", header: "Building" },
+  { key: "equipment_id", header: "Equipment ID" },
+  { key: "equipment_label", header: "Equipment" },
+  { key: "issue_type", header: "Issue Type" },
+  { key: "occurrence_count", header: "Occurrences" },
+  { key: "first_ppm", header: "First PPM" },
+  { key: "last_ppm", header: "Last PPM" },
+  { key: "still_open", header: "Status", format: (i) => (i.still_open ? "Open" : "Closed") },
+  { key: "resolved_ppm", header: "Resolved PPM" },
+  { key: "notes", header: "Notes" },
+];
 
 export function RecurringTab({ issues }: RecurringTabProps) {
   if (issues.length === 0) {
@@ -20,6 +35,12 @@ export function RecurringTab({ issues }: RecurringTabProps) {
 
   return (
     <div className="space-y-3">
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-sm text-muted-foreground dark:text-muted-foreground">
+          <span className="font-semibold text-foreground dark:text-muted-foreground/70">{issues.length}</span> recurring issue{issues.length === 1 ? "" : "s"}
+        </p>
+        <ExportButton rows={issues} filename="hvac-recurring-issues" columns={RECURRING_EXPORT_COLUMNS} />
+      </div>
       {issues.map((issue) => (
         <Card
           key={issue.id}
