@@ -31,6 +31,12 @@ export interface GrafanaReading {
     value: number | null;
 }
 
+// ─── Main bulk (NAMA L1) ──────────────────────────────────────────────────────
+// Daily readings for the NAMA main-bulk supply meter land in
+// water_daily_consumption under this account (meter MB-L1-001 in the monthly
+// registry). Present from Apr-26 onward; older months have no daily L1 rows.
+export const MAIN_BULK_ACCOUNT = 'C43659';
+
 // ─── Zone L2 vs L3 ────────────────────────────────────────────────────────────
 
 export const ZONE_BULK_CONFIG: ZoneBulkConfig[] = [

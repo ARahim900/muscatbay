@@ -12,8 +12,8 @@ import {
 } from "recharts";
 import { LiquidProgressRing } from "@/components/charts/liquid-progress-ring";
 import { LiquidTooltip } from "@/components/charts/liquid-tooltip";
-import { Droplets, Activity, Zap } from "lucide-react";
-import { DC_METERS, NULL_AS_ZERO_ACCOUNTS } from "@/lib/water-accounts";
+import { Droplets, Activity, Zap, AlertTriangle } from "lucide-react";
+import { DC_METERS, NULL_AS_ZERO_ACCOUNTS, MAIN_BULK_ACCOUNT } from "@/lib/water-accounts";
 import type { SupabaseDailyWaterConsumption } from "@/entities/water";
 import { cn } from "@/lib/utils";
 import {
@@ -43,7 +43,14 @@ function DCAnalyticsPanel({ reportData, monthData, selectedDay, month }: DCAnaly
     const l2PlusDcTotal = r2(reportData.l2Total + reportData.dcTotal);
     const l3PlusDcTotal = r2(reportData.l3Total + reportData.dcTotal);
     const connectionDifference = r2(l2PlusDcTotal - l3PlusDcTotal);
-    const totalGaugeMax = Math.max(l2PlusDcTotal, l3PlusDcTotal) * 1.2 || 100;
+
+    // Main bulk (NAMA L1, account C43659) for the selected day. Ideally it
+    // equals Σ zone bulks + Σ DC; the gap is trunk-main loss before any zone.
+    // Missing reading ≠ zero — the supply stage is simply not shown that day.
+    const mainBulkRaw = accountMap.get(MAIN_BULK_ACCOUNT)?.[`day_${selectedDay}` as keyof SupabaseDailyWaterConsumption];
+    const mainBulkDay = mainBulkRaw != null ? r2(Number(mainBulkRaw)) : null;
+    const trunkLoss = mainBulkDay != null ? r2(mainBulkDay - l2PlusDcTotal) : null;
+    const totalGaugeMax = Math.max(mainBulkDay ?? 0, l2PlusDcTotal, l3PlusDcTotal) * 1.2 || 100;
 
     // 31-day DC trend
     const trendData = useMemo(() => {
@@ -83,14 +90,32 @@ function DCAnalyticsPanel({ reportData, monthData, selectedDay, month }: DCAnaly
                     Direct Connection Analysis — Day {selectedDay}, {month}
                 </h2>
                 <p className="text-sm text-muted-foreground dark:text-muted-foreground mt-1">
+                    <span className="text-mb-primary font-medium">Main Bulk</span> = NAMA supply meter (<span className="meter">C43659</span>) — ideally equal to zone bulks + DC &bull;{" "}
                     <span className="text-mb-secondary font-medium">L2 + DC</span> = zone bulks plus direct connections &bull;{" "}
-                    <span className="text-mb-primary font-medium">L3 + DC</span> = individual meters plus the same direct connections &bull;{" "}
-                    <span className="text-mb-primary font-medium">Sales Center</span> is counted as DC
+                    <span className="font-medium">L3 + DC</span> = individual meters plus the same direct connections &bull;{" "}
+                    Sales Center is counted as DC
                 </p>
             </div>
 
-            {/* ── Two gauges with the loss written in between (supply → use) ─── */}
-            <div className="flex flex-col items-center justify-center gap-4 sm:flex-row sm:gap-6 md:gap-10">
+            {/* ── Supply → distribution chain: Main Bulk → L2+DC → L3+DC, with the
+                   loss written between each pair (mirrors the monthly A1→A2→A3) ─── */}
+            <div className="flex flex-col items-center justify-center gap-4 sm:flex-row sm:flex-wrap sm:gap-4 md:gap-6 lg:gap-8">
+                {mainBulkDay != null && (
+                    <>
+                        <LiquidProgressRing
+                            value={mainBulkDay}
+                            max={totalGaugeMax}
+                            label="Main Bulk (C43659)"
+                            sublabel="NAMA L1 supply"
+                            color={CHART_COLORS.brand}
+                            size={160}
+                            showPercentage={false}
+                            unit="m³"
+                            elementId="daily-dc-gauge-0"
+                        />
+                        <DailyLossConnector loss={trunkLoss} of={mainBulkDay} />
+                    </>
+                )}
                 <LiquidProgressRing
                     value={l2PlusDcTotal}
                     max={totalGaugeMax}
@@ -108,13 +133,19 @@ function DCAnalyticsPanel({ reportData, monthData, selectedDay, month }: DCAnaly
                     max={totalGaugeMax}
                     label="L3 + DC Total"
                     sublabel="Individual meters + DC"
-                    color={CHART_COLORS.brand}
+                    color={CHART_COLORS.gray}
                     size={160}
                     showPercentage={false}
                     unit="m³"
                     elementId="daily-dc-gauge-2"
                 />
             </div>
+            {mainBulkDay == null && (
+                <p className="flex items-center justify-center gap-1.5 text-xs text-mb-warning-text">
+                    <AlertTriangle className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                    No Main Bulk (<span className="meter">C43659</span>) reading for Day {selectedDay} — showing the distribution-level comparison only, not a zero supply.
+                </p>
+            )}
 
             {/* ── Daily trend chart ────────────────────────────────────────── */}
             <Card className="card-elevated">
