@@ -7,13 +7,13 @@ import { useState, useMemo, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import {
-    AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
+    ComposedChart, Area, Line, XAxis, YAxis, Tooltip, ResponsiveContainer,
     ReferenceLine, Legend,
 } from "recharts";
 import { LiquidProgressRing } from "@/components/charts/liquid-progress-ring";
 import { LiquidTooltip } from "@/components/charts/liquid-tooltip";
 import { Droplets, Activity, Zap, AlertTriangle } from "lucide-react";
-import { DC_METERS, NULL_AS_ZERO_ACCOUNTS, MAIN_BULK_ACCOUNT } from "@/lib/water-accounts";
+import { DC_METERS, NULL_AS_ZERO_ACCOUNTS, MAIN_BULK_ACCOUNT, ZONE_BULK_CONFIG } from "@/lib/water-accounts";
 import type { SupabaseDailyWaterConsumption } from "@/entities/water";
 import { cn } from "@/lib/utils";
 import {
@@ -52,26 +52,43 @@ function DCAnalyticsPanel({ reportData, monthData, selectedDay, month }: DCAnaly
     const trunkLoss = mainBulkDay != null ? r2(mainBulkDay - l2PlusDcTotal) : null;
     const totalGaugeMax = Math.max(mainBulkDay ?? 0, l2PlusDcTotal, l3PlusDcTotal) * 1.2 || 100;
 
-    // 31-day DC trend
+    // 31-day trend — same series as the gauges above: Main Bulk (C43659) vs
+    // Σ zone bulks + DC, with the DC share kept as context. Null zone/DC
+    // readings sum as 0 (matching processReport); a missing main-bulk reading
+    // stays null so its line gaps instead of plunging to a fake zero.
     const trendData = useMemo(() => {
-        const results: { day: string; dayNum: number; 'DC Total': number }[] = [];
+        const zoneBulkAccounts = ZONE_BULK_CONFIG.map(z => z.l2Account);
+        const mainBulkRow = accountMap.get(MAIN_BULK_ACCOUNT);
+        const results: { day: string; dayNum: number; 'DC Total': number; 'Zone Bulks + DC': number; 'Main Bulk': number | null }[] = [];
         for (let day = 1; day <= 31; day++) {
             const dayCol = `day_${day}` as keyof SupabaseDailyWaterConsumption;
-            let dayTotal = 0;
+            let dcSum = 0;
+            let zoneSum = 0;
             let hasAny = false;
             for (const dc of DC_METERS) {
-                const row = accountMap.get(dc.account);
-                const v = row?.[dayCol];
+                const v = accountMap.get(dc.account)?.[dayCol];
                 if (v != null) {
-                    dayTotal += Number(v);
+                    dcSum += Number(v);
                     hasAny = true;
                 }
             }
+            for (const acc of zoneBulkAccounts) {
+                const v = accountMap.get(acc)?.[dayCol];
+                if (v != null) {
+                    zoneSum += Number(v);
+                    hasAny = true;
+                }
+            }
+            const mbRaw = mainBulkRow?.[dayCol];
+            const mainBulk = mbRaw != null ? r2(Number(mbRaw)) : null;
+            if (mainBulk != null) hasAny = true;
             if (!hasAny) continue;
             results.push({
                 day: `D${String(day).padStart(2, '0')}`,
                 dayNum: day,
-                'DC Total': r2(dayTotal),
+                'DC Total': r2(dcSum),
+                'Zone Bulks + DC': r2(zoneSum + dcSum),
+                'Main Bulk': mainBulk,
             });
         }
         return results;
@@ -151,10 +168,11 @@ function DCAnalyticsPanel({ reportData, monthData, selectedDay, month }: DCAnaly
             <Card className="card-elevated">
                 <CardHeader className="card-elevated-header p-4 sm:p-5 md:p-6">
                     <CardTitle className="text-base sm:text-lg">
-                        Direct Connection Daily Consumption Trend
+                        Daily Trend — Main Bulk vs Zone Bulks + DC
                     </CardTitle>
                     <p className="text-xs sm:text-sm text-muted-foreground dark:text-muted-foreground mt-0.5">
-                        Day-by-day DC total across all {totalMeters} meters — {month}
+                        Same series as the gauges above, day by day: Main Bulk (<span className="meter">C43659</span>) supply against zone bulks + direct connections,
+                        with the share of the {totalMeters} DC meters alone — {month}. Days without a main-bulk reading leave a gap in its line.
                     </p>
                 </CardHeader>
                 <CardContent className="p-4 sm:p-5 md:p-6 pt-0">
@@ -165,11 +183,11 @@ function DCAnalyticsPanel({ reportData, monthData, selectedDay, month }: DCAnaly
                     ) : (
                         <div className="h-[200px] sm:h-[250px] md:h-[300px] w-full">
                             <ResponsiveContainer width="100%" height="100%">
-                                <AreaChart data={trendData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                                <ComposedChart data={trendData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                                     <defs>
                                         <linearGradient id="gradDailyDC" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor={CHART_COLORS.teal} stopOpacity={0.4} />
-                                            <stop offset="95%" stopColor={CHART_COLORS.teal} stopOpacity={0} />
+                                            <stop offset="5%" stopColor={CHART_COLORS.gray} stopOpacity={0.35} />
+                                            <stop offset="95%" stopColor={CHART_COLORS.gray} stopOpacity={0} />
                                         </linearGradient>
                                     </defs>
                                     <XAxis
@@ -197,11 +215,24 @@ function DCAnalyticsPanel({ reportData, monthData, selectedDay, month }: DCAnaly
                                     )}
                                     <Area
                                         type="monotone" name="DC Total" dataKey="DC Total"
-                                        stroke={CHART_COLORS.teal} fill="url(#gradDailyDC)" strokeWidth={3}
+                                        stroke={CHART_COLORS.gray} fill="url(#gradDailyDC)" strokeWidth={2}
+                                        activeDot={{ r: 5, stroke: 'var(--card)', strokeWidth: 2 }}
+                                        animationDuration={600}
+                                    />
+                                    <Line
+                                        type="monotone" name="Zone Bulks + DC" dataKey="Zone Bulks + DC"
+                                        stroke={CHART_COLORS.teal} strokeWidth={2.5} dot={{ r: 2 }}
                                         activeDot={{ r: 6, stroke: 'var(--card)', strokeWidth: 2 }}
                                         animationDuration={600}
                                     />
-                                </AreaChart>
+                                    <Line
+                                        type="monotone" name="Main Bulk" dataKey="Main Bulk"
+                                        stroke={CHART_COLORS.brand} strokeWidth={2.5} dot={{ r: 2 }}
+                                        connectNulls={false}
+                                        activeDot={{ r: 6, stroke: 'var(--card)', strokeWidth: 2 }}
+                                        animationDuration={600}
+                                    />
+                                </ComposedChart>
                             </ResponsiveContainer>
                         </div>
                     )}
