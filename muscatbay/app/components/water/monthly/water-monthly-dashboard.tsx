@@ -587,7 +587,7 @@ function ZonesView({ data, period, monthly, sel, nMonths, year }: ZonesViewProps
                     </div>
                     <div className="w-full h-8 rounded-md overflow-hidden flex" style={{ background: "var(--wm-track)" }}>
                         <div style={{ width: `${reachedPct}%`, background: C.cons }} title={`Reached A2 ${fmt(A2)} m³`} />
-                        <div style={{ width: `${lossBar}%`, background: "var(--status-danger)" }} title={`Trunk loss ${fmt(trunkLoss)} m³`} />
+                        <div style={{ width: `${lossBar}%`, background: C.loss }} title={`Trunk loss ${fmt(trunkLoss)} m³`} />
                     </div>
                     <div className="text-[11px] mt-1 text-right" style={{ color: C.muted }}>Main bulk supply (A1) {fmt(A1)} m³ · 100%</div>
                     {trunkLoss < 0 && (
@@ -607,7 +607,7 @@ function ZonesView({ data, period, monthly, sel, nMonths, year }: ZonesViewProps
                                 {(isRangeSel(sel) ? [sel[0], sel[1]] : sel != null ? [sel] : []).map((i) => <ReferenceLine key={i} x={MONTHS[i]} stroke={C.primary} strokeDasharray="4 4" />)}
                                 <Bar dataKey="a1" name="Main bulk (A1)" fill={C.supply} radius={[3, 3, 0, 0]} barSize={14} />
                                 <Bar dataKey="a2" name="Reached zones (A2)" fill={C.dist} radius={[3, 3, 0, 0]} barSize={14} />
-                                <Line dataKey="loss" name="Trunk loss" stroke="var(--status-danger)" strokeWidth={2.5} dot={{ r: 2 }} />
+                                <Line dataKey="loss" name="Trunk loss" stroke={C.loss} strokeWidth={2.5} dot={{ r: 2 }} />
                             </ComposedChart>
                         </ResponsiveContainer>
                     </Panel>
@@ -733,7 +733,7 @@ function ZonesView({ data, period, monthly, sel, nMonths, year }: ZonesViewProps
                     </div>
                     <div className="w-full h-8 rounded-md overflow-hidden flex" style={{ background: "var(--wm-track)" }}>
                         <div style={{ width: `${consPct}%`, background: C.cons }} title={`Consumption ${fmt(cons)} m³`} />
-                        <div style={{ width: `${lossBar}%`, background: "var(--status-danger)" }} title={`Loss ${fmt(loss)} m³`} />
+                        <div style={{ width: `${lossBar}%`, background: C.loss }} title={`Loss ${fmt(loss)} m³`} />
                     </div>
                     <div className="text-[11px] mt-1 text-right" style={{ color: C.muted }}>Zone supply (bulk) {fmt(supply)} m³ · 100%</div>
                 </Panel>
@@ -750,7 +750,7 @@ function ZonesView({ data, period, monthly, sel, nMonths, year }: ZonesViewProps
                                 {(isRangeSel(sel) ? [sel[0], sel[1]] : sel != null ? [sel] : []).map((i) => <ReferenceLine key={i} x={MONTHS[i]} stroke={C.primary} strokeDasharray="4 4" />)}
                                 <Bar dataKey="Supply" fill={C.dist} radius={[3, 3, 0, 0]} barSize={14} />
                                 <Bar dataKey="Consumption" fill={C.cons} radius={[3, 3, 0, 0]} barSize={14} />
-                                <Line dataKey="loss" name="Loss" stroke="var(--status-danger)" strokeWidth={2.5} dot={{ r: 2 }} />
+                                <Line dataKey="loss" name="Loss" stroke={C.loss} strokeWidth={2.5} dot={{ r: 2 }} />
                             </ComposedChart>
                         </ResponsiveContainer>
                     </Panel>
