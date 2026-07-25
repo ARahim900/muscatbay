@@ -97,9 +97,9 @@ function Tile({ label, value, icon: Icon, color }: { label: string; value: numbe
             <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
                     <p className="mb-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground sm:text-xs">{label}</p>
-                    <h3 className="text-xl font-semibold tabular-nums tracking-tight text-foreground sm:text-2xl">{value}</h3>
+                    <h3 className="text-lg font-semibold tabular-nums tracking-tight text-foreground sm:text-xl md:text-2xl">{value}</h3>
                 </div>
-                <div className="shrink-0 rounded-lg p-2" style={{ backgroundColor: `color-mix(in srgb, ${color} 12%, transparent)`, color }}>
+                <div className="shrink-0 rounded-lg p-2 sm:p-3" style={{ backgroundColor: `color-mix(in srgb, ${color} 12%, transparent)`, color }}>
                     <Icon className="h-4 w-4 sm:h-5 sm:w-5" aria-hidden="true" />
                 </div>
             </div>

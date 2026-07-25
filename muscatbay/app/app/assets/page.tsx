@@ -436,8 +436,8 @@ export default function AssetsPage() {
 
     const erlColor = (n: number | null | undefined) =>
         n === null || n === undefined ? 'text-muted-foreground' :
-        n <= 2  ? 'text-[var(--mb-danger-text)] dark:text-[var(--status-danger)]' :
-        n <= 5  ? 'text-[var(--mb-warning-text)] dark:text-[var(--status-warning)]' :
+        n <= 2  ? 'text-[var(--mb-danger-text)]' :
+        n <= 5  ? 'text-[var(--mb-warning-text)]' :
                   'text-secondary';
 
     // Apply client-side sort for mock/demo data (Supabase handles it server-side)

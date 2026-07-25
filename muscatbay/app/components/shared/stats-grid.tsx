@@ -55,13 +55,10 @@ const variantIconClass: Record<StatVariant, string> = {
     default: "text-muted-foreground",
 };
 
-// Soft tile background behind the icon, per variant — mirrors the water/monthly
-// section's Kpi tiles (a chart-bg tint behind a colored icon). The standard
-// reference for KPI cards across the app. Overridden by an explicit stat.bgColor.
 // Status is never carried by colour alone (WCAG 1.4.1): the tile renders a
-// shape-distinct icon + the status word next to the coloured dot. Icon choices
-// and the --status-* tokens match lib/status-colors.ts, alerts-feed and
-// module-coverage, so one status means one glyph + one hue app-wide.
+// shape-distinct icon plus the status word. Glyphs and --status-* tokens match
+// lib/status-colors.ts, alerts-feed and module-coverage, so one status means
+// one glyph + one hue app-wide.
 type StatStatus = NonNullable<StatItem["status"]>;
 const STATUS_UI: Record<StatStatus, { Icon: LucideIcon; token: string }> = {
     normal:  { Icon: CheckCircle2,  token: "var(--status-normal)" },
@@ -71,6 +68,9 @@ const STATUS_UI: Record<StatStatus, { Icon: LucideIcon; token: string }> = {
     missing: { Icon: HelpCircle,    token: "var(--status-missing)" },
 };
 
+// Soft tile background behind the icon, per variant — mirrors the water/monthly
+// section's Kpi tiles (a chart-bg tint behind a colored icon). The standard
+// reference for KPI cards across the app. Overridden by an explicit stat.bgColor.
 const variantTileBg: Record<StatVariant, string> = {
     primary: "var(--chart-bg-purple)",
     secondary: "var(--chart-bg-cyan)",
@@ -148,8 +148,8 @@ export function StatsGrid({ stats, className }: StatsGridProps) {
                             <div className="mt-2 sm:mt-3 flex items-center text-xs sm:text-sm">
                                 <span className={cn(
                                     "flex items-center font-medium",
-                                    isGoodTrend  ? "text-[var(--status-normal)]" :
-                                    isBadTrend   ? "text-[var(--status-danger)]" :
+                                    isGoodTrend  ? "text-[var(--mb-success-text)]" :
+                                    isBadTrend   ? "text-[var(--mb-danger-text)]" :
                                                    "text-muted-foreground"
                                 )}>
                                     {stat.trend === 'up'      && <TrendingUp  size={14} className="me-1" />}

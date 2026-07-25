@@ -42,15 +42,15 @@ type Freshness = "fresh" | "warning" | "stale";
 
 const FRESHNESS_STYLE: Record<Freshness, { chip: string; icon: typeof CheckCircle2 }> = {
     fresh: {
-        chip: "bg-[var(--status-normal-bg)] text-[var(--status-normal)]",
+        chip: "bg-[var(--status-normal-bg)] text-[var(--mb-success-text)]",
         icon: CheckCircle2,
     },
     warning: {
-        chip: "bg-[var(--status-warning-bg)] text-[var(--status-warning)]",
+        chip: "bg-[var(--status-warning-bg)] text-[var(--mb-warning-text)]",
         icon: AlertTriangle,
     },
     stale: {
-        chip: "bg-[var(--status-stale-bg)] text-[var(--status-stale)]",
+        chip: "bg-[var(--status-stale-bg)] text-[var(--mb-stale-text)]",
         icon: AlertTriangle,
     },
 };
@@ -126,7 +126,7 @@ export function PageStatusBar({
                         className={cn(
                             "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold uppercase tracking-[0.08em] transition-colors",
                             isLive
-                                ? "bg-[color-mix(in_oklab,var(--status-normal)_15%,transparent)] text-[var(--status-normal)]"
+                                ? "bg-[color-mix(in_oklab,var(--status-normal)_15%,transparent)] text-[var(--mb-success-text)]"
                                 : "bg-muted text-muted-foreground"
                         )}
                     >
@@ -189,6 +189,7 @@ export function PageStatusBar({
             </div>
             {error && (
                 <span role="alert" className="text-[var(--mb-warning-text)] flex items-center gap-1 text-xs">
+                    <AlertTriangle className="h-3 w-3 shrink-0" aria-hidden="true" />
                     {error}
                 </span>
             )}
