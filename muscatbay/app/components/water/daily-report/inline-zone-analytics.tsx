@@ -90,7 +90,7 @@ function ZoneAnalyticsPanel({ reportData, monthData, selectedDay, month, activeZ
                 <h2 className="text-xl font-medium text-foreground">
                     {activeZoneName} Analysis — Day {selectedDay}, {month}
                 </h2>
-                <p className="text-sm text-muted-foreground dark:text-muted-foreground mt-1">
+                <p className="text-sm text-muted-foreground mt-1">
                     <span className="text-mb-secondary font-medium">L2 Bulk</span> = zone entry meter &bull;{" "}
                     <span className="text-mb-primary font-medium">ΣL3 Total</span> = sum of all L3 meters &bull;{" "}
                     <span style={{ color: CHART_COLORS.loss }} className="font-medium">Difference</span> = L2 &minus; ΣL3
@@ -146,13 +146,13 @@ function ZoneAnalyticsPanel({ reportData, monthData, selectedDay, month, activeZ
                     <CardTitle className="text-base sm:text-lg">
                         Zone Daily Consumption Trend
                     </CardTitle>
-                    <p className="text-xs sm:text-sm text-muted-foreground dark:text-muted-foreground mt-0.5">
+                    <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
                         Day-by-day comparison of L2 Bulk vs ΣL3 totals — {activeZoneName}, {month}
                     </p>
                 </CardHeader>
                 <CardContent className="p-4 sm:p-5 md:p-6 pt-0">
                     {trendData.length === 0 ? (
-                        <div className="flex items-center justify-center h-48 text-sm text-muted-foreground dark:text-muted-foreground">
+                        <div className="flex items-center justify-center h-48 text-sm text-muted-foreground">
                             No trend data available for this zone
                         </div>
                     ) : (

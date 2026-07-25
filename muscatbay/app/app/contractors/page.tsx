@@ -660,7 +660,7 @@ export default function ContractorsPage() {
                                 placeholder="Search contracts..."
                                 value={search}
                                 onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
-                                className="pl-10 pr-4 py-2 w-full rounded-lg border border-border/80 dark:border-border/80 bg-card text-foreground dark:text-muted-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40 shadow-sm transition-shadow"
+                                className="pl-10 pr-4 py-2 w-full rounded-lg border border-border/80 bg-card text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40 shadow-sm transition-shadow"
                             />
                         </div>
 
@@ -674,7 +674,7 @@ export default function ContractorsPage() {
 
                         {hasContractFilters && (
                             <button onClick={() => { setSearch(''); setSelectedFlows([...uniqueFlows]); setCurrentPage(1); }}
-                                className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg text-muted-foreground hover:text-foreground dark:text-muted-foreground dark:hover:text-foreground transition-colors">
+                                className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg text-muted-foreground hover:text-foreground dark:hover:text-foreground transition-colors">
                                 <X className="w-3.5 h-3.5" /> Clear
                             </button>
                         )}
@@ -686,7 +686,7 @@ export default function ContractorsPage() {
                         </button>
 
                         <div className="text-sm text-muted-foreground whitespace-nowrap">
-                            <span className="font-semibold text-foreground dark:text-muted-foreground/70">{filteredContracts.length}</span>
+                            <span className="font-semibold text-foreground">{filteredContracts.length}</span>
                             {filteredContracts.length !== contracts.length && <span> of {contracts.length}</span>} contracts
                         </div>
                     </TableToolbar>
@@ -705,11 +705,11 @@ export default function ContractorsPage() {
                     {/* Mobile Cards */}
                     <div className="md:hidden space-y-3">
                         {paginatedContracts.map(c => (
-                            <div key={c.id} className="rounded-xl border border-border dark:border-border bg-card p-4 space-y-3">
+                            <div key={c.id} className="rounded-xl border border-border bg-card p-4 space-y-3">
                                 <div className="flex items-start justify-between gap-2">
                                     <div className="min-w-0">
                                         {/* Wrap instead of truncate — touch devices have no hover tooltip */}
-                                        <p className="font-semibold text-sm text-foreground dark:text-muted-foreground break-words">{c.contractor}</p>
+                                        <p className="font-semibold text-sm text-foreground break-words">{c.contractor}</p>
                                         <p className="text-xs text-muted-foreground mt-0.5">{c.service || '-'}</p>
                                     </div>
                                     <StatusBadge label={c.flow} color={getFlowDotColor(c.flow)} />
@@ -717,7 +717,7 @@ export default function ContractorsPage() {
                                 <div className="grid grid-cols-2 gap-2 text-xs">
                                     <div><span className="text-muted-foreground">Ref:</span> <span className="text-muted-foreground">{c.contract_ref || '-'}</span></div>
                                     <div><span className="text-muted-foreground">Years:</span> <span className="text-muted-foreground">{c.contract_years ?? '-'}</span></div>
-                                    <div><span className="text-muted-foreground">Annual:</span> <span className="font-mono text-foreground dark:text-muted-foreground/70">{c.annual_value_omr ? fmtOMR(c.annual_value_omr) : (c.rate_note || 'Variable')}</span></div>
+                                    <div><span className="text-muted-foreground">Annual:</span> <span className="font-mono text-foreground">{c.annual_value_omr ? fmtOMR(c.annual_value_omr) : (c.rate_note || 'Variable')}</span></div>
                                     <div><span className="text-muted-foreground">Total:</span> <span className="font-mono font-semibold text-primary">{c.total_value_omr ? fmtOMR(c.total_value_omr) : 'Variable'}</span></div>
                                 </div>
                                 {c.note && <p className="text-xs text-muted-foreground line-clamp-2">{c.note}</p>}
@@ -730,7 +730,7 @@ export default function ContractorsPage() {
                             </div>
                         ))}
                         {filteredContracts.length === 0 && (
-                            <div className="bg-card rounded-xl border border-border dark:border-border">
+                            <div className="bg-card rounded-xl border border-border">
                                 <EmptyState variant={hasContractFilters ? "filter-empty" : "no-data"}
                                     title={hasContractFilters ? "No contracts match your filters" : "No contracts yet"}
                                     description={hasContractFilters ? "Try adjusting your search or filters." : "Contracts will appear once added to the system."} />
@@ -766,14 +766,14 @@ export default function ContractorsPage() {
                                     return (
                                     <TableRow key={c.id}>
                                         <TableCell className="text-muted-foreground">{c.id}</TableCell>
-                                        <TableCell className="text-foreground dark:text-muted-foreground">
+                                        <TableCell className="text-foreground">
                                             {/* Full name stays accessible: wraps to two lines before
                                                 clamping, with the complete name on hover (title). */}
                                             <span className="block max-w-[240px] xl:max-w-[320px] line-clamp-2 break-words" title={c.contractor}>{c.contractor}</span>
                                             {c.note && <p className="text-xs text-muted-foreground mt-0.5 max-w-[200px] truncate" title={c.note}>{c.note}</p>}
                                         </TableCell>
                                         <TableCell className="text-muted-foreground hidden lg:table-cell meter max-w-[180px] truncate" title={c.contract_ref || ''}>{c.contract_ref || '-'}</TableCell>
-                                        <TableCell className="text-muted-foreground dark:text-muted-foreground max-w-[180px] truncate" title={c.service || ''}>{c.service || '-'}</TableCell>
+                                        <TableCell className="text-muted-foreground max-w-[180px] truncate" title={c.service || ''}>{c.service || '-'}</TableCell>
                                         <TableCell>
                                             <StatusBadge label={c.flow} color={getFlowDotColor(c.flow)} />
                                         </TableCell>
@@ -838,7 +838,7 @@ export default function ContractorsPage() {
                 <div className="space-y-4">
                     <div className="flex items-center justify-between">
                         <div>
-                            <h2 className="text-base font-semibold text-foreground dark:text-muted-foreground">Year-by-Year Expense Breakdown</h2>
+                            <h2 className="text-base font-semibold text-foreground">Year-by-Year Expense Breakdown</h2>
                             <p className="text-xs text-muted-foreground mt-1">All values in OMR. Blank cells indicate no cost in that year.</p>
                         </div>
                         <button onClick={handleExportYearly}
@@ -852,7 +852,7 @@ export default function ContractorsPage() {
                     <YearlyCostChart rows={matrix.rows.map(r => ({ year: r.year, label: r.label, total: r.total }))} />
 
                     {yearlyCosts.length === 0 ? (
-                        <div className="bg-card rounded-xl border border-border dark:border-border">
+                        <div className="bg-card rounded-xl border border-border">
                             <EmptyState variant="no-data" title="No yearly cost data" description="Run the contractor-contracts-data.sql script in Supabase to populate yearly costs." />
                         </div>
                     ) : (
@@ -860,10 +860,10 @@ export default function ContractorsPage() {
                             {/* Mobile: stacked cards per year */}
                             <div className="md:hidden space-y-4">
                                 {matrix.rows.map(row => (
-                                    <div key={row.year} className="rounded-xl border border-border dark:border-border bg-card p-4 space-y-3">
+                                    <div key={row.year} className="rounded-xl border border-border bg-card p-4 space-y-3">
                                         <div className="flex items-center justify-between">
                                             <div>
-                                                <p className="font-semibold text-sm text-foreground dark:text-muted-foreground">Year {row.year}</p>
+                                                <p className="font-semibold text-sm text-foreground">Year {row.year}</p>
                                                 <p className="text-xs text-muted-foreground">{row.label}</p>
                                             </div>
                                             <span className="font-mono text-sm font-bold text-primary">{fmtOMR(row.total)}</span>
@@ -875,7 +875,7 @@ export default function ContractorsPage() {
                                                 return (
                                                     <div key={cn} className="flex justify-between">
                                                         <span className="text-muted-foreground truncate mr-2" title={cn}>{shortName(cn)}</span>
-                                                        <span className="font-mono text-foreground dark:text-muted-foreground/70">{fmtOMR(val)}</span>
+                                                        <span className="font-mono text-foreground">{fmtOMR(val)}</span>
                                                     </div>
                                                 );
                                             })}
@@ -900,7 +900,7 @@ export default function ContractorsPage() {
                                     </thead>
                                     <tbody>
                                         {matrix.rows.map(row => (
-                                            <tr key={row.year} className="border-b border-border/80 dark:border-border/80 hover:bg-secondary/5 dark:hover:bg-muted/40 transition-colors even:bg-muted/40 dark:even:bg-muted/20">
+                                            <tr key={row.year} className="border-b border-border/80 hover:bg-secondary/5 dark:hover:bg-muted/40 transition-colors even:bg-muted/40 dark:even:bg-muted/20">
                                                 <td className="py-4 px-4 font-semibold col-sticky z-10">
                                                     <span className="text-xs text-muted-foreground mr-1.5">Y{row.year}</span>
                                                     {row.label}
@@ -910,7 +910,7 @@ export default function ContractorsPage() {
                                                     return (
                                                         <td key={cn} className="py-4 px-3 num font-semibold text-sm">
                                                             {val != null ? (
-                                                                <span className="text-foreground dark:text-muted-foreground/70">{fmtOMR(val)}</span>
+                                                                <span className="text-foreground">{fmtOMR(val)}</span>
                                                             ) : (
                                                                 <span className="text-muted-foreground/70 dark:text-muted-foreground">—</span>
                                                             )}
@@ -923,10 +923,10 @@ export default function ContractorsPage() {
                                             </tr>
                                         ))}
                                         {/* Totals row */}
-                                        <tr className="bg-muted/80 dark:bg-muted/50 font-semibold border-t-2 border-border dark:border-border">
+                                        <tr className="bg-muted/80 dark:bg-muted/50 font-semibold border-t-2 border-border">
                                             <td className="py-4 px-4 col-sticky z-10">Contract Total</td>
                                             {matrix.contractors.map(cn => (
-                                                <td key={cn} className="py-4 px-3 num text-sm text-foreground dark:text-muted-foreground/70">
+                                                <td key={cn} className="py-4 px-3 num text-sm text-foreground">
                                                     {fmtOMR(matrix.contractorTotals[cn])}
                                                 </td>
                                             ))}
@@ -955,7 +955,7 @@ export default function ContractorsPage() {
 
                     {/* AMC pricing schedule — amc_contractor_pricing, previously unrendered */}
                     <div className="pt-2">
-                        <h2 className="text-base font-semibold text-foreground dark:text-muted-foreground">AMC Pricing Schedule</h2>
+                        <h2 className="text-base font-semibold text-foreground">AMC Pricing Schedule</h2>
                         <p className="mb-3 mt-1 text-xs text-muted-foreground">Per-contract-year rates as recorded for each contractor.</p>
                         <PricingPanel pricing={pricing} loading={false} />
                     </div>
@@ -977,7 +977,7 @@ export default function ContractorsPage() {
                             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                             <input type="text" aria-label="Search tracker" placeholder="Search tracker..." value={trackerSearch}
                                 onChange={(e) => { setTrackerSearch(e.target.value); setTrackerPage(1); }}
-                                className="pl-10 pr-4 py-2 w-full rounded-lg border border-border/80 dark:border-border/80 bg-card text-foreground dark:text-muted-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40 shadow-sm transition-shadow" />
+                                className="pl-10 pr-4 py-2 w-full rounded-lg border border-border/80 bg-card text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40 shadow-sm transition-shadow" />
                         </div>
                         <MultiSelectDropdown label="Status" options={uniqueStatuses} selected={selectedStatuses}
                             onChange={(s) => { setSelectedStatuses(s); setTrackerPage(1); }}
@@ -986,13 +986,13 @@ export default function ContractorsPage() {
                             onChange={(s) => { setSelectedTypes(s); setTrackerPage(1); }} />
                         {hasTrackerFilters && (
                             <button onClick={() => { setTrackerSearch(''); setSelectedStatuses([...uniqueStatuses]); setSelectedTypes([...uniqueContractTypes]); setTrackerPage(1); }}
-                                className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg text-muted-foreground hover:text-foreground dark:text-muted-foreground dark:hover:text-foreground transition-colors">
+                                className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg text-muted-foreground hover:text-foreground dark:hover:text-foreground transition-colors">
                                 <X className="w-3.5 h-3.5" /> Clear
                             </button>
                         )}
                         <ExportButton rows={filteredTracker} filename="contractor-tracker" columns={TRACKER_EXPORT_COLUMNS} className="ml-auto" />
                         <div className="text-sm text-muted-foreground whitespace-nowrap">
-                            <span className="font-semibold text-foreground dark:text-muted-foreground/70">{filteredTracker.length}</span>
+                            <span className="font-semibold text-foreground">{filteredTracker.length}</span>
                             {filteredTracker.length !== trackerData.length && <span> of {trackerData.length}</span>} entries
                         </div>
                     </TableToolbar>
@@ -1016,11 +1016,11 @@ export default function ContractorsPage() {
                         {paginatedTracker.map(c => {
                             const rowKey = `${c.Contractor ?? 'unknown'}--${c["Service Provided"] ?? ''}`;
                             return (
-                                <div key={`m-${rowKey}`} className="rounded-xl border border-border dark:border-border bg-card p-4 space-y-3">
+                                <div key={`m-${rowKey}`} className="rounded-xl border border-border bg-card p-4 space-y-3">
                                     <div className="flex items-start justify-between gap-2">
                                         <div className="min-w-0">
                                             {/* Wrap instead of truncate — touch devices have no hover tooltip */}
-                                            <p className="font-semibold text-sm text-foreground dark:text-muted-foreground break-words">{c.Contractor || '-'}</p>
+                                            <p className="font-semibold text-sm text-foreground break-words">{c.Contractor || '-'}</p>
                                             <p className="text-xs text-muted-foreground mt-0.5">{c["Service Provided"] || '-'}</p>
                                         </div>
                                         <StatusBadge label={c.Status || 'N/A'} color={getStatusDotColor(c.Status)} />
@@ -1028,7 +1028,7 @@ export default function ContractorsPage() {
                                     <div className="grid grid-cols-2 gap-2 text-xs">
                                         <div><span className="text-muted-foreground">Start:</span> <span className="text-muted-foreground">{c["Start Date"] || '-'}</span></div>
                                         <div><span className="text-muted-foreground">End:</span> <span className="text-muted-foreground">{c["End Date"] || '-'}</span></div>
-                                        <div><span className="text-muted-foreground">Monthly:</span> <span className="font-mono text-foreground dark:text-muted-foreground/70">{c["Contract (OMR)/Month"] || '-'}</span></div>
+                                        <div><span className="text-muted-foreground">Monthly:</span> <span className="font-mono text-foreground">{c["Contract (OMR)/Month"] || '-'}</span></div>
                                         <div><span className="text-muted-foreground">Annual:</span> <span className="font-mono font-semibold text-primary">{c["Annual Value (OMR)"]?.toLocaleString('en-US', { maximumFractionDigits: 1 }) || '-'}</span></div>
                                     </div>
                                     <ExpiryBadge raw={c["End Date"]} showDetail />
@@ -1047,7 +1047,7 @@ export default function ContractorsPage() {
                             );
                         })}
                         {filteredTracker.length === 0 && (
-                            <div className="bg-card rounded-xl border border-border dark:border-border">
+                            <div className="bg-card rounded-xl border border-border">
                                 <EmptyState variant={hasTrackerFilters ? "filter-empty" : "no-data"}
                                     title={hasTrackerFilters ? "No entries match" : "No tracker data"}
                                     description="Adjust filters or add data to the Contractor_Tracker table." />
@@ -1086,10 +1086,10 @@ export default function ContractorsPage() {
                                     <TableRow key={`${c.Contractor ?? ''}--${c["Service Provided"] ?? ''}`}>
                                         {/* line-clamp needs an inner block element — -webkit-box display
                                             on the <td> itself would break table layout. */}
-                                        <TableCell className="text-foreground dark:text-muted-foreground">
+                                        <TableCell className="text-foreground">
                                             <span className="block max-w-[240px] xl:max-w-[320px] line-clamp-2 break-words" title={c.Contractor || ''}>{c.Contractor || '-'}</span>
                                         </TableCell>
-                                        <TableCell className="text-muted-foreground dark:text-muted-foreground max-w-[180px] truncate" title={c["Service Provided"] || ''}>{c["Service Provided"] || '-'}</TableCell>
+                                        <TableCell className="text-muted-foreground max-w-[180px] truncate" title={c["Service Provided"] || ''}>{c["Service Provided"] || '-'}</TableCell>
                                         <TableCell><StatusBadge label={c.Status || 'N/A'} color={getStatusDotColor(c.Status)} /></TableCell>
                                         <TableCell className="text-muted-foreground">{c["Contract Type"] || '-'}</TableCell>
                                         <TableCell className="text-muted-foreground hidden lg:table-cell">
@@ -1116,7 +1116,7 @@ export default function ContractorsPage() {
                                                 <FileText className="w-4 h-4" />
                                             </button>
                                         </TableCell>
-                                        <TableCell className="text-muted-foreground dark:text-muted-foreground hidden xl:table-cell">
+                                        <TableCell className="text-muted-foreground hidden xl:table-cell">
                                             {c["Renewal Plan"] ? <span className="flex items-center gap-1"><RefreshCw className="h-3 w-3 text-[var(--status-info)]" aria-hidden="true" />{c["Renewal Plan"]}</span> : '-'}
                                         </TableCell>
                                         <TableCell className="text-muted-foreground max-w-[200px] truncate hidden xl:table-cell" title={c.Note || ''}>{c.Note || '-'}</TableCell>
@@ -1154,7 +1154,7 @@ export default function ContractorsPage() {
             <Dialog open={pdfModal.isOpen} onOpenChange={(open) => { if (!open) closePdfModal(); }}>
                 <DialogContent className="sm:max-w-3xl max-h-[90vh]">
                     <DialogHeader>
-                        <DialogTitle className="text-base text-foreground dark:text-muted-foreground">
+                        <DialogTitle className="text-base text-foreground">
                             {pdfModal.contractorName}
                         </DialogTitle>
                         <DialogDescription>
@@ -1167,7 +1167,7 @@ export default function ContractorsPage() {
                     {/* PDF link editor */}
                     {pdfLinkEditing && pdfModal.contractId && (
                         <div className="flex flex-col gap-3 p-4 bg-muted dark:bg-muted/50 rounded-xl">
-                            <label className="text-sm font-medium text-foreground dark:text-muted-foreground/70 flex items-center gap-2">
+                            <label className="text-sm font-medium text-foreground flex items-center gap-2">
                                 <Link className="w-4 h-4" />
                                 {pdfModal.pdfUrl ? 'Edit PDF Link' : 'Paste Google Drive PDF Link'}
                             </label>
@@ -1177,7 +1177,7 @@ export default function ContractorsPage() {
                                 value={pdfLinkInput}
                                 onChange={(e) => setPdfLinkInput(e.target.value)}
                                 placeholder="https://drive.google.com/file/d/.../view?usp=sharing"
-                                className="w-full px-3 py-2 text-sm rounded-lg border border-border dark:border-border bg-card text-foreground dark:text-muted-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary"
+                                className="w-full px-3 py-2 text-sm rounded-lg border border-border bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary"
                             />
                             <p className="text-xs text-muted-foreground">Right-click PDF in Drive &rarr; Share &rarr; Copy link (set to &quot;Anyone with the link&quot;)</p>
                             {pdfLinkError && (
@@ -1198,7 +1198,7 @@ export default function ContractorsPage() {
                                 {pdfModal.pdfUrl && (
                                     <button
                                         onClick={() => setPdfLinkEditing(false)}
-                                        className="px-4 py-2 text-sm rounded-lg border border-border dark:border-border text-muted-foreground dark:text-muted-foreground hover:bg-muted dark:hover:bg-muted/60 transition-colors"
+                                        className="px-4 py-2 text-sm rounded-lg border border-border text-muted-foreground hover:bg-muted dark:hover:bg-muted/60 transition-colors"
                                     >
                                         Cancel
                                     </button>
@@ -1216,7 +1216,7 @@ export default function ContractorsPage() {
                         <div className="flex flex-col gap-3">
                             <iframe
                                 src={previewUrl}
-                                className="w-full h-[65vh] rounded-lg border border-border dark:border-border"
+                                className="w-full h-[65vh] rounded-lg border border-border"
                                 title="Contract PDF"
                                 allow="autoplay"
                             />
@@ -1233,7 +1233,7 @@ export default function ContractorsPage() {
                         {pdfModal.pdfUrl && !pdfLinkEditing && pdfModal.contractId && (
                             <button
                                 onClick={() => setPdfLinkEditing(true)}
-                                className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg border border-border dark:border-border text-muted-foreground dark:text-muted-foreground hover:bg-muted dark:hover:bg-muted/60 transition-colors"
+                                className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg border border-border text-muted-foreground hover:bg-muted dark:hover:bg-muted/60 transition-colors"
                             >
                                 <Pencil className="w-4 h-4" />
                                 Edit Link

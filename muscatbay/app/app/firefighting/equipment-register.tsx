@@ -165,7 +165,7 @@ export function EquipmentRegister({ equipment }: EquipmentRegisterProps) {
                         placeholder="Search asset, type, location…"
                         value={search}
                         onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
-                        className="pl-10 pr-4 py-2 w-full rounded-lg border border-border/80 dark:border-border/80 bg-card text-foreground dark:text-muted-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40 shadow-sm"
+                        className="pl-10 pr-4 py-2 w-full rounded-lg border border-border/80 bg-card text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40 shadow-sm"
                     />
                 </div>
                 <MultiSelectDropdown label="Zone" options={zoneOptions} selected={selectedZones} onChange={(s) => { setSelectedZones(s); setCurrentPage(1); }} />
@@ -174,14 +174,14 @@ export function EquipmentRegister({ equipment }: EquipmentRegisterProps) {
                 {filtersActive && (
                     <button
                         onClick={clearFilters}
-                        className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg text-muted-foreground hover:text-foreground dark:text-muted-foreground dark:hover:text-foreground transition-colors"
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg text-muted-foreground hover:text-foreground dark:hover:text-foreground transition-colors"
                     >
                         <X className="w-3.5 h-3.5" /> Clear
                     </button>
                 )}
                 <ExportButton rows={filtered} filename="fire-safety-equipment" columns={EQUIPMENT_EXPORT_COLUMNS} className="ml-auto" />
                 <div className="text-sm text-muted-foreground whitespace-nowrap">
-                    <span className="font-semibold text-foreground dark:text-muted-foreground/70">{filtered.length}</span>
+                    <span className="font-semibold text-foreground">{filtered.length}</span>
                     {filtered.length !== equipment.length && <span> of {equipment.length}</span>} assets
                 </div>
             </TableToolbar>
@@ -191,10 +191,10 @@ export function EquipmentRegister({ equipment }: EquipmentRegisterProps) {
                 {paginated.map((e) => {
                     const zk = equipZoneKey(e.zone);
                     return (
-                        <div key={e.id} className="rounded-xl border border-border dark:border-border bg-card p-4 space-y-2">
+                        <div key={e.id} className="rounded-xl border border-border bg-card p-4 space-y-2">
                             <div className="flex items-start justify-between gap-2">
                                 <div className="min-w-0">
-                                    <p className="text-sm font-medium text-foreground dark:text-muted-foreground">{e.name}</p>
+                                    <p className="text-sm font-medium text-foreground">{e.name}</p>
                                     <p className="text-xs text-muted-foreground mt-0.5">{e.type} · {e.location}</p>
                                 </div>
                                 {zk ? <ZoneBadge zone={zk} /> : null}
@@ -241,7 +241,7 @@ export function EquipmentRegister({ equipment }: EquipmentRegisterProps) {
                             const zk = equipZoneKey(e.zone);
                             return (
                                 <TableRow key={e.id}>
-                                    <TableCell className="font-medium text-foreground dark:text-muted-foreground">{e.name}</TableCell>
+                                    <TableCell className="font-medium text-foreground">{e.name}</TableCell>
                                     <TableCell className="text-muted-foreground">{e.type}</TableCell>
                                     <TableCell>{zk ? <ZoneBadge zone={zk} /> : <span className="text-xs text-muted-foreground">{e.zone}</span>}</TableCell>
                                     {/* Wraps rather than truncating — a title tooltip is unreachable on touch. */}

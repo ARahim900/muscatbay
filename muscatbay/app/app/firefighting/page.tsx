@@ -492,7 +492,7 @@ export default function FirefightingPage() {
                                     placeholder="Search area, zone, system, notes…"
                                     value={search}
                                     onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
-                                    className="pl-10 pr-4 py-2 w-full rounded-lg border border-border/80 dark:border-border/80 bg-card text-foreground dark:text-muted-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40 shadow-sm"
+                                    className="pl-10 pr-4 py-2 w-full rounded-lg border border-border/80 bg-card text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40 shadow-sm"
                                 />
                             </div>
                             <MultiSelectDropdown label="Cycle" options={CYCLE_OPTIONS} selected={selectedCycles} onChange={(s) => { setSelectedCycles(s); setCurrentPage(1); }} />
@@ -501,14 +501,14 @@ export default function FirefightingPage() {
                             {filtersActive && (
                                 <button
                                     onClick={clearFilters}
-                                    className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg text-muted-foreground hover:text-foreground dark:text-muted-foreground dark:hover:text-foreground transition-colors"
+                                    className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg text-muted-foreground hover:text-foreground dark:hover:text-foreground transition-colors"
                                 >
                                     <X className="w-3.5 h-3.5" /> Clear
                                 </button>
                             )}
                             <ExportButton rows={filteredActivities} filename="fire-ppm-activities" columns={PPM_EXPORT_COLUMNS} className="ml-auto" />
-                            <div className="text-sm text-muted-foreground dark:text-muted-foreground whitespace-nowrap">
-                                <span className="font-semibold text-foreground dark:text-muted-foreground/70">{filteredActivities.length}</span>
+                            <div className="text-sm text-muted-foreground whitespace-nowrap">
+                                <span className="font-semibold text-foreground">{filteredActivities.length}</span>
                                 {filteredActivities.length !== PPM_ACTIVITIES.length && <span> of {PPM_ACTIVITIES.length}</span>} activities
                             </div>
                         </TableToolbar>
@@ -524,17 +524,17 @@ export default function FirefightingPage() {
                         {/* Mobile cards */}
                         <div className="md:hidden space-y-3">
                             {paginatedActivities.map((a) => (
-                                <div key={a.id} className="rounded-xl border border-border dark:border-border bg-card p-4 space-y-2">
+                                <div key={a.id} className="rounded-xl border border-border bg-card p-4 space-y-2">
                                     <div className="flex items-start justify-between gap-2">
                                         <div className="flex items-center gap-1.5 flex-wrap"><CycleBadge cycle={a.cycle} /><ZoneBadge zone={a.zone} /></div>
                                         <PpmStatusBadge status={a.status} />
                                     </div>
-                                    <p className="text-sm font-medium text-foreground dark:text-muted-foreground">{a.area}</p>
+                                    <p className="text-sm font-medium text-foreground">{a.area}</p>
                                     <div className="flex items-center justify-between gap-2">
                                         <div className="flex gap-1 flex-wrap">{a.systems.map((s) => <SystemTag key={s} label={s} />)}</div>
                                         <span className="text-[11px] text-muted-foreground tabular-nums whitespace-nowrap">{a.date}</span>
                                     </div>
-                                    {a.notes && <p className="text-[11px] text-muted-foreground dark:text-muted-foreground">{a.notes}</p>}
+                                    {a.notes && <p className="text-[11px] text-muted-foreground">{a.notes}</p>}
                                 </div>
                             ))}
                             {filteredActivities.length === 0 && (
@@ -561,7 +561,7 @@ export default function FirefightingPage() {
                                         <TableRow key={a.id}>
                                             <TableCell><CycleBadge cycle={a.cycle} /></TableCell>
                                             <TableCell><ZoneBadge zone={a.zone} /></TableCell>
-                                            <TableCell className="text-foreground dark:text-muted-foreground">{a.area}</TableCell>
+                                            <TableCell className="text-foreground">{a.area}</TableCell>
                                             <TableCell><div className="flex gap-1 flex-wrap">{a.systems.map((s) => <SystemTag key={s} label={s} />)}</div></TableCell>
                                             <TableCell className="text-xs text-muted-foreground whitespace-nowrap tabular-nums">{a.date}</TableCell>
                                             <TableCell><PpmStatusBadge status={a.status} /></TableCell>

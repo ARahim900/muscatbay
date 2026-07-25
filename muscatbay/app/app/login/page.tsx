@@ -394,7 +394,7 @@ function LoginContent() {
                                 Privacy Policy
                             </Link>
                         </p>
-                        <p className="text-xs text-muted-foreground dark:text-muted-foreground mt-2">
+                        <p className="text-xs text-muted-foreground mt-2">
                             © 2026 Muscat Bay. All rights reserved.
                         </p>
                     </div>

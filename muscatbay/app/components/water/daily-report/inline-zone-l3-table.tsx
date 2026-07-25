@@ -276,7 +276,7 @@ function ZoneL3Table({
             <CardHeader className="card-elevated-header p-4 sm:p-5 md:p-6">
                 <div>
                     <CardTitle className="text-base sm:text-lg">{zoneRow.zoneName} — L3 Meters</CardTitle>
-                    <p className="text-xs sm:text-sm text-muted-foreground dark:text-muted-foreground mt-1">
+                    <p className="text-xs sm:text-sm text-muted-foreground mt-1">
                         {l3Meters.length} meters — Day 1 to Day {latestDay}
                     </p>
                 </div>
@@ -321,7 +321,7 @@ function ZoneL3Table({
                     data-density="compact"
                 >
                     <TableHeader>
-                        <TableRow className="border-b border-border dark:border-border">
+                        <TableRow className="border-b border-border">
                             <Th
                                 sortKey="label" sort={sort} onSort={setSort}
                                 className="sticky left-0 z-20 bg-[var(--primary)] min-w-[150px]"
@@ -393,7 +393,7 @@ function ZoneL3Table({
                         {/* ── Individual L3 meter rows (paginated/filtered) ── */}
                         {paginated.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={colCount} className="text-center py-10 text-[13px] text-muted-foreground dark:text-muted-foreground">
+                                <TableCell colSpan={colCount} className="text-center py-10 text-[13px] text-muted-foreground">
                                     No meters found
                                 </TableCell>
                             </TableRow>
@@ -442,7 +442,7 @@ function ZoneL3Table({
                                             )}
                                         </span>
                                     </TableCell>
-                                    <TableCell className={cn(tdBase, "font-mono text-[11px] text-muted-foreground dark:text-muted-foreground")}>{meter.account}</TableCell>
+                                    <TableCell className={cn(tdBase, "font-mono text-[11px] text-muted-foreground")}>{meter.account}</TableCell>
                                     <TableCell className={cn(tdBase, "text-center")}>
                                         <StatusChip label={meter.building ? "Building" : "Individual"} color={meter.building ? "primary" : "default"} />
                                     </TableCell>
@@ -485,7 +485,7 @@ function ZoneL3Table({
                                                     {child.label}
                                                 </span>
                                             </TableCell>
-                                            <TableCell className={cn(tdBase, "font-mono text-[11px] text-muted-foreground dark:text-muted-foreground")}>{child.account}</TableCell>
+                                            <TableCell className={cn(tdBase, "font-mono text-[11px] text-muted-foreground")}>{child.account}</TableCell>
                                             <TableCell className={cn(tdBase, "text-center")}>
                                                 <StatusChip
                                                     label={child.type === 'Common' ? 'Common' : 'Apartment'}

@@ -142,7 +142,7 @@ export function IssuesRegister({ issues }: IssuesRegisterProps) {
                         placeholder="Search issue, location, quote ref…"
                         value={search}
                         onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
-                        className="pl-10 pr-4 py-2 w-full rounded-lg border border-border/80 dark:border-border/80 bg-card text-foreground dark:text-muted-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40 shadow-sm"
+                        className="pl-10 pr-4 py-2 w-full rounded-lg border border-border/80 bg-card text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40 shadow-sm"
                     />
                 </div>
                 <MultiSelectDropdown label="Status" options={statusOptions} selected={selectedStatuses} onChange={(s) => { setSelectedStatuses(s); setCurrentPage(1); }} />
@@ -150,14 +150,14 @@ export function IssuesRegister({ issues }: IssuesRegisterProps) {
                 {filtersActive && (
                     <button
                         onClick={clearFilters}
-                        className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg text-muted-foreground hover:text-foreground dark:text-muted-foreground dark:hover:text-foreground transition-colors"
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg text-muted-foreground hover:text-foreground dark:hover:text-foreground transition-colors"
                     >
                         <X className="w-3.5 h-3.5" /> Clear
                     </button>
                 )}
                 <ExportButton rows={filtered} filename="fire-issues-register" columns={ISSUES_EXPORT_COLUMNS} className="ml-auto" />
                 <div className="text-sm text-muted-foreground whitespace-nowrap">
-                    <span className="font-semibold text-foreground dark:text-muted-foreground/70">{filtered.length}</span>
+                    <span className="font-semibold text-foreground">{filtered.length}</span>
                     {filtered.length !== issues.length && <span> of {issues.length}</span>} issues
                 </div>
             </TableToolbar>
@@ -165,9 +165,9 @@ export function IssuesRegister({ issues }: IssuesRegisterProps) {
             {/* Mobile cards */}
             <div className="md:hidden space-y-3">
                 {paginated.map((it) => (
-                    <div key={it.id} className="rounded-xl border border-border dark:border-border bg-card p-4 space-y-2">
+                    <div key={it.id} className="rounded-xl border border-border bg-card p-4 space-y-2">
                         <div className="flex items-start justify-between gap-2">
-                            <p className="text-sm font-medium text-foreground dark:text-muted-foreground">{it.issue_description}</p>
+                            <p className="text-sm font-medium text-foreground">{it.issue_description}</p>
                             <span className={cn("inline-flex px-2 py-0.5 rounded-full text-[11px] font-semibold flex-shrink-0", issueStatusCls(it.status))}>{it.status}</span>
                         </div>
                         <p className="text-xs text-muted-foreground flex items-center gap-1"><MapPin className="w-3 h-3" aria-hidden="true" />{it.location} · {fmtDate(it.date_reported)}</p>
@@ -209,7 +209,7 @@ export function IssuesRegister({ issues }: IssuesRegisterProps) {
                             <TableRow key={it.id}>
                                 {/* Long values wrap — no truncate-with-title, which is
                                     unrecoverable on a touch device. */}
-                                <TableCell className="font-medium text-foreground dark:text-muted-foreground max-w-[240px] whitespace-normal break-words">{it.issue_description}</TableCell>
+                                <TableCell className="font-medium text-foreground max-w-[240px] whitespace-normal break-words">{it.issue_description}</TableCell>
                                 <TableCell className="text-xs text-muted-foreground max-w-[160px] whitespace-normal break-words">{it.location}</TableCell>
                                 <TableCell className="text-xs text-muted-foreground whitespace-nowrap tabular-nums">{fmtDate(it.date_reported)}</TableCell>
                                 <TableCell><span className={cn("inline-flex px-2 py-0.5 rounded-full text-[11px] font-semibold whitespace-nowrap", issueStatusCls(it.status))}>{it.status}</span></TableCell>

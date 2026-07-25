@@ -90,7 +90,7 @@ withCss.resolver.resolveRequest = (context, moduleName, platform) => {
   //    shared modules resolve their internal imports unchanged).
   if (moduleName.startsWith('@/')) {
     const target = path.join(webRoot, moduleName.slice(2));
-    console.log('[DBG]', moduleName, '->', target, 'exists?', context.doesFileExist(target + '.ts'), 'origin', context.originModulePath);
+    console.log('[DBG]', moduleName, 'web?', context.doesFileExist(target + '.ts'), 'mobile?', context.doesFileExist(path.join(srcRoot, 'lib/cn.ts')), 'webRootPkg?', context.doesFileExist(path.join(webRoot, 'package.json')));
     return next(context, target, platform);
   }
 

@@ -177,9 +177,9 @@ export function OverviewTab({ data }: OverviewTabProps) {
       <SectionBoundary title="HVAC Findings Charts">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Bar chart — Open items by building */}
-          <Card className="bg-card rounded-xl border border-border dark:border-border shadow-sm">
+          <Card className="bg-card rounded-xl border border-border shadow-sm">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-semibold text-foreground dark:text-muted-foreground flex items-center gap-2">
+              <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
                 <Building2 className="h-4 w-4 text-primary" />
                 Open Items by Building
               </CardTitle>
@@ -208,9 +208,9 @@ export function OverviewTab({ data }: OverviewTabProps) {
           </Card>
 
           {/* Pie chart — Findings by status */}
-          <Card className="bg-card rounded-xl border border-border dark:border-border shadow-sm">
+          <Card className="bg-card rounded-xl border border-border shadow-sm">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-semibold text-foreground dark:text-muted-foreground flex items-center gap-2">
+              <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
                 <ClipboardList className="h-4 w-4 text-secondary" />
                 Findings by Status
               </CardTitle>
@@ -252,7 +252,7 @@ export function OverviewTab({ data }: OverviewTabProps) {
                       height={36}
                       iconSize={10}
                       formatter={(value: string) => (
-                        <span className="text-xs text-muted-foreground dark:text-muted-foreground">{value}</span>
+                        <span className="text-xs text-muted-foreground">{value}</span>
                       )}
                     />
                   </PieChart>
@@ -265,9 +265,9 @@ export function OverviewTab({ data }: OverviewTabProps) {
 
       <SectionBoundary title="FY25 PPM Schedule">
         {/* PPM Schedule Grid */}
-        <Card className="bg-card rounded-xl border border-border dark:border-border shadow-sm">
+        <Card className="bg-card rounded-xl border border-border shadow-sm">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold text-foreground dark:text-muted-foreground">
+            <CardTitle className="text-sm font-semibold text-foreground">
               FY25 PPM Schedule
             </CardTitle>
           </CardHeader>
@@ -285,7 +285,7 @@ export function OverviewTab({ data }: OverviewTabProps) {
               <TableBody>
                 {(["hvac", "bms"] as const).map((system) => (
                   <TableRow key={system}>
-                    <TableCell className="font-medium text-foreground dark:text-muted-foreground/70 uppercase">
+                    <TableCell className="font-medium text-foreground uppercase">
                       {system}
                     </TableCell>
                     {ppmSchedule[system].map((q, i) => (
@@ -317,7 +317,7 @@ export function OverviewTab({ data }: OverviewTabProps) {
       <SectionBoundary title="AMC Contracts">
         <div>
           <div className="mb-3 flex flex-wrap items-baseline gap-x-2 gap-y-1">
-            <h2 className="text-sm font-semibold text-foreground dark:text-muted-foreground">AMC Contracts</h2>
+            <h2 className="text-sm font-semibold text-foreground">AMC Contracts</h2>
             <span className="text-xs text-muted-foreground">
               Live from the Gulf Expert contract register
             </span>
@@ -333,14 +333,14 @@ export function OverviewTab({ data }: OverviewTabProps) {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {currentContracts.map((c) => (
-                <Card key={c.id} className="bg-card rounded-xl border border-border dark:border-border shadow-sm">
+                <Card key={c.id} className="bg-card rounded-xl border border-border shadow-sm">
                   <CardContent className="p-5">
                     <div className="flex items-center gap-3">
                       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[7px] bg-primary/10">
                         <Shield className="h-5 w-5 text-primary" aria-hidden="true" />
                       </div>
                       <div className="min-w-0">
-                        <p className="text-xs font-medium text-muted-foreground dark:text-muted-foreground uppercase tracking-wide">
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                           {contractTypeLabel(c)}
                         </p>
                         <p className="text-xl font-semibold text-foreground tabular-nums">
@@ -381,9 +381,9 @@ export function OverviewTab({ data }: OverviewTabProps) {
           action_required / action_status columns. Display only: no assignment,
           due dates or close-out tracking. */}
       <SectionBoundary title="Open Actions">
-        <Card className="bg-card rounded-xl border border-border dark:border-border shadow-sm">
+        <Card className="bg-card rounded-xl border border-border shadow-sm">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold text-foreground dark:text-muted-foreground flex items-center gap-2">
+            <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
               <Mailbox className="h-4 w-4 text-secondary" aria-hidden="true" />
               Open Actions from AMC Correspondence
             </CardTitle>
@@ -405,7 +405,7 @@ export function OverviewTab({ data }: OverviewTabProps) {
                     <AlertCircle className="h-4 w-4 text-mb-warning-text flex-shrink-0 mt-0.5" aria-hidden="true" />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <p className="text-xs font-semibold text-foreground dark:text-muted-foreground">{a.subject}</p>
+                        <p className="text-xs font-semibold text-foreground">{a.subject}</p>
                         <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium ${actionStatusCls(a.action_status)}`}>
                           {a.action_status || "Open"}
                         </span>
@@ -415,7 +415,7 @@ export function OverviewTab({ data }: OverviewTabProps) {
                           </span>
                         )}
                       </div>
-                      <p className="text-[10px] text-muted-foreground dark:text-muted-foreground mt-0.5 leading-relaxed">
+                      <p className="text-[10px] text-muted-foreground mt-0.5 leading-relaxed">
                         {a.action_required}
                       </p>
                       <p className="text-[10px] text-muted-foreground/80 mt-0.5 tabular-nums">

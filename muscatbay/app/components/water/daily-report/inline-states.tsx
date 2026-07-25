@@ -17,13 +17,13 @@ export function LoadingState() {
                             <div className="h-9 w-9 rounded-lg bg-border dark:bg-muted motion-safe:animate-pulse" />
                             <div className="space-y-2 flex-1">
                                 <div className="h-4 w-48 bg-border dark:bg-muted rounded motion-safe:animate-pulse" />
-                                <div className="h-3 w-72 bg-muted dark:bg-muted rounded motion-safe:animate-pulse" />
+                                <div className="h-3 w-72 bg-muted rounded motion-safe:animate-pulse" />
                             </div>
                         </div>
                     </CardHeader>
                     <CardContent className="p-4 space-y-3">
                         {Array.from({ length: 5 }).map((_, i) => (
-                            <div key={i} className="h-9 w-full rounded bg-muted dark:bg-muted motion-safe:animate-pulse" />
+                            <div key={i} className="h-9 w-full rounded bg-muted motion-safe:animate-pulse" />
                         ))}
                     </CardContent>
                 </Card>
@@ -42,7 +42,7 @@ export function ErrorState({ message, onRetry }: { message: string; onRetry: () 
             <h3 className="text-lg font-semibold text-foreground mb-2">
                 Failed to Load Report
             </h3>
-            <p className="text-sm text-muted-foreground dark:text-muted-foreground max-w-md mb-6">
+            <p className="text-sm text-muted-foreground max-w-md mb-6">
                 {message}
             </p>
             <Button onClick={onRetry} variant="outline" className="gap-2">
@@ -66,7 +66,7 @@ export function EmptyState({ month, onRetry }: { month: string; onRetry: () => v
             <h3 className="text-lg font-semibold text-foreground mb-2">
                 No readings yet for {month}
             </h3>
-            <p className="text-sm text-muted-foreground dark:text-muted-foreground max-w-md mb-6">
+            <p className="text-sm text-muted-foreground max-w-md mb-6">
                 Daily consumption for this month hasn’t been uploaded yet. Pick an
                 earlier month, or check back once the data has been loaded.
             </p>

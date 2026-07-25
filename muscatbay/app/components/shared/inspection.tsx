@@ -9,8 +9,12 @@
  * register with a suggested action on every row.
  *
  * Design contract:
- *  - Tokens only — every colour resolves from the --mb-* status variables in
- *    globals.css, so it flips correctly in light and dark.
+ *  - Tokens only, and ONE severity colour model for the whole app: the
+ *    indicator hue always comes from the --status-* family (the same tokens
+ *    StatsGrid, alerts-feed, module-coverage, PageStatusBar and
+ *    lib/status-colors.ts use), and the text sitting on a tint comes from the
+ *    WCAG-tuned --mb-*-text family. Both flip correctly in light and dark, so
+ *    "danger" is the same red on every module page.
  *  - Status is never colour-only: every severity is paired with a text label and
  *    an icon (WCAG AA in the field, per design principle #5).
  *  - Domain-agnostic: sections compute Severity + rows; these primitives render.

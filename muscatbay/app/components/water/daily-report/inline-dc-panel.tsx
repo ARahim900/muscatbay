@@ -107,7 +107,7 @@ function DCAnalyticsPanel({ reportData, monthData, selectedDay, month }: DCAnaly
                 <h2 className="text-xl font-medium text-foreground">
                     Direct Connection Analysis — Day {selectedDay}, {month}
                 </h2>
-                <p className="text-sm text-muted-foreground dark:text-muted-foreground mt-1">
+                <p className="text-sm text-muted-foreground mt-1">
                     <span className="text-mb-primary font-medium">Main Bulk</span> = NAMA supply meter (<span className="meter">C43659</span>) — ideally equal to zone bulks + DC &bull;{" "}
                     <span className="text-mb-secondary font-medium">L2 + DC</span> = zone bulks plus direct connections &bull;{" "}
                     <span className="font-medium">L3 + DC</span> = individual meters plus the same direct connections &bull;{" "}
@@ -171,14 +171,14 @@ function DCAnalyticsPanel({ reportData, monthData, selectedDay, month }: DCAnaly
                     <CardTitle className="text-base sm:text-lg">
                         Daily Trend — Main Bulk vs Zone Bulks + DC
                     </CardTitle>
-                    <p className="text-xs sm:text-sm text-muted-foreground dark:text-muted-foreground mt-0.5">
+                    <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
                         Same series as the gauges above, day by day: Main Bulk (<span className="meter">C43659</span>) supply against zone bulks + direct connections,
                         with the share of the {totalMeters} DC meters alone — {month}. Days without a main-bulk reading leave a gap in its line.
                     </p>
                 </CardHeader>
                 <CardContent className="p-4 sm:p-5 md:p-6 pt-0">
                     {trendData.length === 0 ? (
-                        <div className="flex items-center justify-center h-48 text-sm text-muted-foreground dark:text-muted-foreground">
+                        <div className="flex items-center justify-center h-48 text-sm text-muted-foreground">
                             No trend data available for direct connections
                         </div>
                     ) : (
@@ -348,7 +348,7 @@ function DCDailyTable({ monthData }: { monthData: SupabaseDailyWaterConsumption[
             <CardHeader className="card-elevated-header p-4 sm:p-5 md:p-6">
                 <div>
                     <CardTitle className="text-base sm:text-lg">Direct Connection — Meters</CardTitle>
-                    <p className="text-xs sm:text-sm text-muted-foreground dark:text-muted-foreground mt-1">
+                    <p className="text-xs sm:text-sm text-muted-foreground mt-1">
                         {dcMeters.length} meters — Day 1 to Day {latestDay}
                     </p>
                 </div>
@@ -393,7 +393,7 @@ function DCDailyTable({ monthData }: { monthData: SupabaseDailyWaterConsumption[
                     data-density="compact"
                 >
                     <TableHeader>
-                        <TableRow className="border-b border-border dark:border-border">
+                        <TableRow className="border-b border-border">
                             <Th
                                 sortKey="label" sort={sort} onSort={setSort}
                                 className="sticky left-0 z-20 bg-[var(--primary)] min-w-[180px]"
@@ -412,7 +412,7 @@ function DCDailyTable({ monthData }: { monthData: SupabaseDailyWaterConsumption[
                     <TableBody>
                         {paginated.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={colCount} className="text-center py-10 text-[13px] text-muted-foreground dark:text-muted-foreground">
+                                <TableCell colSpan={colCount} className="text-center py-10 text-[13px] text-muted-foreground">
                                     No meters found
                                 </TableCell>
                             </TableRow>
@@ -433,7 +433,7 @@ function DCDailyTable({ monthData }: { monthData: SupabaseDailyWaterConsumption[
                                         {meter.label}
                                     </span>
                                 </TableCell>
-                                <TableCell className={cn(tdBase, "font-mono text-[11px] text-muted-foreground dark:text-muted-foreground")}>{meter.account}</TableCell>
+                                <TableCell className={cn(tdBase, "font-mono text-[11px] text-muted-foreground")}>{meter.account}</TableCell>
                                 <TableCell className={cn(tdBase, "text-center")}>
                                     <StatusChip label={meter.isIrr ? "Irrigation" : "Service"} color={meter.isIrr ? "primary" : "default"} />
                                 </TableCell>
@@ -454,7 +454,7 @@ function DCDailyTable({ monthData }: { monthData: SupabaseDailyWaterConsumption[
                             </TableRow>
                         ))}
                         {/* ΣDC Footer */}
-                        <TableRow className="border-t-2 border-border dark:border-border bg-muted/60 dark:bg-muted/20">
+                        <TableRow className="border-t-2 border-border bg-muted/60 dark:bg-muted/20">
                             <TableCell className={cn(tdBase, "font-medium sticky left-0 z-10 bg-muted/60 dark:bg-muted/20")} colSpan={3}>
                                 ΣDC Total ({dcMeters.length} meters)
                             </TableCell>

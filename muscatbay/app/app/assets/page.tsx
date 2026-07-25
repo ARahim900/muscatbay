@@ -155,7 +155,7 @@ function PctBar({ pct }: { pct?: number | null }) {
             <div className="w-16 bg-border dark:bg-muted rounded-full h-1.5">
                 <div className={`h-1.5 rounded-full ${color}`} style={{ width: `${Math.min(pct, 100)}%` }} />
             </div>
-            <span className="text-xs font-mono text-muted-foreground dark:text-muted-foreground">{pct.toFixed(0)}%</span>
+            <span className="text-xs font-mono text-muted-foreground">{pct.toFixed(0)}%</span>
         </div>
     );
 }
@@ -557,13 +557,13 @@ export default function AssetsPage() {
                             placeholder="Search name, tag, zone, manufacturer…"
                             value={search}
                             onChange={e => setSearch(e.target.value)}
-                            className="pl-10 pr-4 py-2 w-full rounded-lg border border-border/80 dark:border-border/80 bg-card text-foreground dark:text-muted-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40 shadow-sm"
+                            className="pl-10 pr-4 py-2 w-full rounded-lg border border-border/80 bg-card text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40 shadow-sm"
                         />
                     </div>
                     <MultiSelectDropdown label="Status" options={STATUS_OPTIONS} selected={selectedStatuses} onChange={s => { setSelectedStatuses(s); setCurrentPage(1); }} getOptionColor={getStatusColor} />
                     <MultiSelectDropdown label="Discipline" options={DISCIPLINE_OPTIONS} selected={selectedDisciplines} onChange={s => { setSelectedDisciplines(s); setCurrentPage(1); }} icon={Layers} />
                     {hasActiveFilters && (
-                        <button onClick={clearFilters} aria-label="Clear filters" className="flex items-center gap-1.5 px-3 py-2.5 min-h-[44px] text-sm rounded-lg text-muted-foreground hover:text-foreground dark:text-muted-foreground dark:hover:text-foreground transition-colors">
+                        <button onClick={clearFilters} aria-label="Clear filters" className="flex items-center gap-1.5 px-3 py-2.5 min-h-[44px] text-sm rounded-lg text-muted-foreground hover:text-foreground dark:hover:text-foreground transition-colors">
                             <X className="w-3.5 h-3.5" /> Clear
                         </button>
                     )}
@@ -572,7 +572,7 @@ export default function AssetsPage() {
                         <span className="hidden sm:inline">Export CSV</span>
                     </button>
                     <div className="text-sm text-muted-foreground whitespace-nowrap">
-                        <span className="font-semibold text-foreground dark:text-muted-foreground/70">{firstLoad ? '—' : totalCount}</span> assets
+                        <span className="font-semibold text-foreground">{firstLoad ? '—' : totalCount}</span> assets
                     </div>
                 </TableToolbar>
 
@@ -590,7 +590,7 @@ export default function AssetsPage() {
                                 <>
                                     <div className="flex items-start justify-between gap-2">
                                         <div>
-                                            <p className="font-semibold text-sm text-foreground dark:text-muted-foreground">{a.name}</p>
+                                            <p className="font-semibold text-sm text-foreground">{a.name}</p>
                                             <p className="text-xs text-muted-foreground mt-0.5">{a.discipline} · {a.type}</p>
                                         </div>
                                         <CritBadge level={a.criticalityLevel} />
@@ -617,12 +617,12 @@ export default function AssetsPage() {
                                     </TableHeader>
                                     {tableBody(8, (a, i) => (
                                         <TableRow key={a.id} className={rowCls(i)}>
-                                            <TableCell className="col-sticky max-w-[220px] font-semibold text-foreground dark:text-muted-foreground"><span className="line-clamp-2">{a.name}</span></TableCell>
+                                            <TableCell className="col-sticky max-w-[220px] font-semibold text-foreground"><span className="line-clamp-2">{a.name}</span></TableCell>
                                             <TableCell className="meter whitespace-nowrap text-muted-foreground">{a.assetTag || '-'}</TableCell>
-                                            <TableCell className="text-muted-foreground dark:text-muted-foreground">{a.discipline || '-'}</TableCell>
-                                            <TableCell className="text-muted-foreground dark:text-muted-foreground">{a.type || '-'}</TableCell>
-                                            <TableCell className="text-muted-foreground dark:text-muted-foreground">{a.zone || '-'}</TableCell>
-                                            <TableCell className="max-w-[180px] text-muted-foreground dark:text-muted-foreground">
+                                            <TableCell className="text-muted-foreground">{a.discipline || '-'}</TableCell>
+                                            <TableCell className="text-muted-foreground">{a.type || '-'}</TableCell>
+                                            <TableCell className="text-muted-foreground">{a.zone || '-'}</TableCell>
+                                            <TableCell className="max-w-[180px] text-muted-foreground">
                                                 <TruncatedText text={a.buildingArea} label={`Building — ${a.name}`} lines={1} />
                                             </TableCell>
                                             <TableCell><StatusBadge label={a.status} color={getStatusColor(a.status)} /></TableCell>
@@ -642,7 +642,7 @@ export default function AssetsPage() {
                             {mobileList(a => (
                                 <>
                                     <div className="flex items-center justify-between"><span className="meter text-xs text-muted-foreground">{a.assetTag || '-'}</span><CritBadge level={a.criticalityLevel} /></div>
-                                    <p className="font-semibold text-sm text-foreground dark:text-muted-foreground">{a.name}</p>
+                                    <p className="font-semibold text-sm text-foreground">{a.name}</p>
                                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs text-muted-foreground">
                                         <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />Inst: {a.installYear ?? '-'}</span>
                                         <span className="flex items-center gap-1"><Clock className="w-3 h-3" />ERL: {fmtYrs(a.erlYears)}</span>
@@ -672,15 +672,15 @@ export default function AssetsPage() {
                                     {tableBody(11, (a, i) => (
                                         <TableRow key={a.id} className={rowCls(i)}>
                                             <TableCell className="col-sticky meter whitespace-nowrap text-muted-foreground">{a.assetTag || '-'}</TableCell>
-                                            <TableCell className="max-w-[200px] font-semibold text-foreground dark:text-muted-foreground"><span className="line-clamp-2">{a.name}</span></TableCell>
-                                            <TableCell className="text-muted-foreground dark:text-muted-foreground">{a.discipline || '-'}</TableCell>
+                                            <TableCell className="max-w-[200px] font-semibold text-foreground"><span className="line-clamp-2">{a.name}</span></TableCell>
+                                            <TableCell className="text-muted-foreground">{a.discipline || '-'}</TableCell>
                                             <TableCell className="num text-center">{a.installYear ?? '-'}</TableCell>
                                             <TableCell className="num text-center">{fmtYrs(a.currentAgeYears)}</TableCell>
                                             <TableCell className="num text-center">{fmtYrs(a.lifeExpectancyYears)}</TableCell>
                                             <TableCell className={`num text-center font-semibold ${erlColor(a.erlYears)}`}>{fmtYrs(a.erlYears)}</TableCell>
                                             <TableCell><PctBar pct={a.pctLifeUsed} /></TableCell>
                                             <TableCell className="whitespace-nowrap text-muted-foreground">{fmt(a.warrantyExpiryDate)}</TableCell>
-                                            <TableCell className="text-muted-foreground dark:text-muted-foreground">{a.condition || '-'}</TableCell>
+                                            <TableCell className="text-muted-foreground">{a.condition || '-'}</TableCell>
                                             <TableCell><CritBadge level={a.criticalityLevel} /></TableCell>
                                         </TableRow>
                                     ))}
@@ -697,7 +697,7 @@ export default function AssetsPage() {
                             {mobileList(a => (
                                 <>
                                     <div className="flex items-center justify-between"><span className="meter text-xs text-muted-foreground">{a.assetTag || '-'}</span>{a.ppmFrequency && <span className="text-xs font-medium text-primary">{a.ppmFrequency}</span>}</div>
-                                    <p className="font-semibold text-sm text-foreground dark:text-muted-foreground">{a.name}</p>
+                                    <p className="font-semibold text-sm text-foreground">{a.name}</p>
                                     {a.amcContractor && <div className="text-xs text-muted-foreground"><Wrench className="w-3 h-3 inline mr-1" />{a.amcContractor}</div>}
                                     <div className="flex gap-4 text-xs text-muted-foreground">
                                         {a.lastPpmDate && <span>Last: {fmt(a.lastPpmDate)}</span>}
@@ -727,12 +727,12 @@ export default function AssetsPage() {
                                     {tableBody(11, (a, i) => (
                                         <TableRow key={a.id} className={rowCls(i)}>
                                             <TableCell className="col-sticky meter whitespace-nowrap text-muted-foreground">{a.assetTag || '-'}</TableCell>
-                                            <TableCell className="max-w-[200px] font-semibold text-foreground dark:text-muted-foreground"><span className="line-clamp-2">{a.name}</span></TableCell>
-                                            <TableCell className="text-muted-foreground dark:text-muted-foreground">{a.discipline || '-'}</TableCell>
-                                            <TableCell className="text-muted-foreground dark:text-muted-foreground">{a.buildingArea || a.zone || '-'}</TableCell>
+                                            <TableCell className="max-w-[200px] font-semibold text-foreground"><span className="line-clamp-2">{a.name}</span></TableCell>
+                                            <TableCell className="text-muted-foreground">{a.discipline || '-'}</TableCell>
+                                            <TableCell className="text-muted-foreground">{a.buildingArea || a.zone || '-'}</TableCell>
                                             <TableCell className="font-medium text-primary">{a.ppmFrequency || <span className="text-muted-foreground/70 dark:text-muted-foreground">-</span>}</TableCell>
                                             <TableCell className="num text-center">{a.ppmIntervalMonths ?? '-'}</TableCell>
-                                            <TableCell className="text-foreground dark:text-muted-foreground/70">{a.amcContractor || <span className="text-muted-foreground/70 dark:text-muted-foreground">-</span>}</TableCell>
+                                            <TableCell className="text-foreground">{a.amcContractor || <span className="text-muted-foreground/70 dark:text-muted-foreground">-</span>}</TableCell>
                                             <TableCell className="whitespace-nowrap text-muted-foreground">{fmt(a.lastPpmDate)}</TableCell>
                                             <TableCell className="whitespace-nowrap text-muted-foreground">{fmt(a.nextPpmDate)}</TableCell>
                                             <TableCell className="max-w-[200px] text-muted-foreground">
@@ -756,9 +756,9 @@ export default function AssetsPage() {
                             {mobileList(a => (
                                 <>
                                     <span className="meter text-xs text-muted-foreground">{a.assetTag || '-'}</span>
-                                    <p className="font-semibold text-sm text-foreground dark:text-muted-foreground">{a.name}</p>
+                                    <p className="font-semibold text-sm text-foreground">{a.name}</p>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 text-xs text-muted-foreground">
-                                        {a.manufacturer && <span>Brand: <span className="font-medium text-foreground dark:text-muted-foreground/70">{a.manufacturer}</span></span>}
+                                        {a.manufacturer && <span>Brand: <span className="font-medium text-foreground">{a.manufacturer}</span></span>}
                                         {a.model && <span>Model: {a.model}</span>}
                                         {a.countryOfOrigin && <span>Origin: {a.countryOfOrigin}</span>}
                                         {a.powerCapacity && <span className="break-words">Cap: {a.powerCapacity}</span>}
@@ -785,12 +785,12 @@ export default function AssetsPage() {
                                     {tableBody(11, (a, i) => (
                                         <TableRow key={a.id} className={rowCls(i)}>
                                             <TableCell className="col-sticky meter whitespace-nowrap text-muted-foreground">{a.assetTag || '-'}</TableCell>
-                                            <TableCell className="max-w-[200px] font-semibold text-foreground dark:text-muted-foreground"><span className="line-clamp-2">{a.name}</span></TableCell>
-                                            <TableCell className="text-muted-foreground dark:text-muted-foreground">{a.discipline || '-'}</TableCell>
-                                            <TableCell className="text-muted-foreground dark:text-muted-foreground">{a.subcategory || '-'}</TableCell>
-                                            <TableCell className="font-medium text-foreground dark:text-muted-foreground/70">{a.manufacturer || <span className="text-muted-foreground/70 dark:text-muted-foreground">-</span>}</TableCell>
-                                            <TableCell className="text-muted-foreground dark:text-muted-foreground">{a.model || <span className="text-muted-foreground/70 dark:text-muted-foreground">-</span>}</TableCell>
-                                            <TableCell className="text-muted-foreground dark:text-muted-foreground">{a.countryOfOrigin || <span className="text-muted-foreground/70 dark:text-muted-foreground">-</span>}</TableCell>
+                                            <TableCell className="max-w-[200px] font-semibold text-foreground"><span className="line-clamp-2">{a.name}</span></TableCell>
+                                            <TableCell className="text-muted-foreground">{a.discipline || '-'}</TableCell>
+                                            <TableCell className="text-muted-foreground">{a.subcategory || '-'}</TableCell>
+                                            <TableCell className="font-medium text-foreground">{a.manufacturer || <span className="text-muted-foreground/70 dark:text-muted-foreground">-</span>}</TableCell>
+                                            <TableCell className="text-muted-foreground">{a.model || <span className="text-muted-foreground/70 dark:text-muted-foreground">-</span>}</TableCell>
+                                            <TableCell className="text-muted-foreground">{a.countryOfOrigin || <span className="text-muted-foreground/70 dark:text-muted-foreground">-</span>}</TableCell>
                                             <TableCell className="max-w-[160px] text-muted-foreground">
                                                 <TruncatedText text={a.powerCapacity} label={`Power / capacity — ${a.name}`} lines={1} />
                                             </TableCell>
@@ -814,9 +814,9 @@ export default function AssetsPage() {
                             {mobileList(a => (
                                 <>
                                     <span className="meter text-xs text-muted-foreground">{a.assetTag || '-'}</span>
-                                    <p className="font-semibold text-sm text-foreground dark:text-muted-foreground">{a.name}</p>
+                                    <p className="font-semibold text-sm text-foreground">{a.name}</p>
                                     <div className="flex justify-between text-xs">
-                                        <span className="text-muted-foreground">Original: <span className="font-mono font-semibold text-foreground dark:text-muted-foreground/70">{fmtOMR(a.boqUnitCost)}</span></span>
+                                        <span className="text-muted-foreground">Original: <span className="font-mono font-semibold text-foreground">{fmtOMR(a.boqUnitCost)}</span></span>
                                         <span className="text-muted-foreground">Replace: <span className="font-mono font-semibold text-primary">{fmtOMR(a.replacementCost)}</span></span>
                                     </div>
                                     {a.boqProjectRef && <div className="text-xs text-muted-foreground flex items-center gap-1 break-words"><FileText className="w-3 h-3 shrink-0" />{a.boqProjectRef}</div>}
@@ -842,9 +842,9 @@ export default function AssetsPage() {
                                     {tableBody(10, (a, i) => (
                                         <TableRow key={a.id} className={rowCls(i)}>
                                             <TableCell className="col-sticky meter whitespace-nowrap text-muted-foreground">{a.assetTag || '-'}</TableCell>
-                                            <TableCell className="max-w-[200px] font-semibold text-foreground dark:text-muted-foreground"><span className="line-clamp-2">{a.name}</span></TableCell>
-                                            <TableCell className="text-muted-foreground dark:text-muted-foreground">{a.discipline || '-'}</TableCell>
-                                            <TableCell className="text-muted-foreground dark:text-muted-foreground">{a.buildingArea || a.zone || '-'}</TableCell>
+                                            <TableCell className="max-w-[200px] font-semibold text-foreground"><span className="line-clamp-2">{a.name}</span></TableCell>
+                                            <TableCell className="text-muted-foreground">{a.discipline || '-'}</TableCell>
+                                            <TableCell className="text-muted-foreground">{a.buildingArea || a.zone || '-'}</TableCell>
                                             <TableCell className="num whitespace-nowrap">{fmtOMR(a.boqUnitCost)}</TableCell>
                                             <TableCell className="num whitespace-nowrap font-semibold text-primary">{fmtOMR(a.replacementCost)}</TableCell>
                                             <TableCell className="max-w-[200px] text-muted-foreground">

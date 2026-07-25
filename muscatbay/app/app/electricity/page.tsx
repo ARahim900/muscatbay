@@ -792,7 +792,7 @@ export default function ElectricityPage() {
                             {/* Year Selector Row */}
                             <div className="flex items-center justify-between flex-wrap gap-3">
                                 <div className="flex items-center gap-3">
-                                    <span className="text-sm font-medium text-muted-foreground dark:text-muted-foreground">Filter by Year:</span>
+                                    <span className="text-sm font-medium text-muted-foreground">Filter by Year:</span>
                                     <div className="flex items-center gap-2">
                                         <Button
                                             variant={selectedYear === "" ? "default" : "outline"}
@@ -806,7 +806,7 @@ export default function ElectricityPage() {
                                                     setEndMonth(allMonths[allMonths.length - 1]);
                                                 }
                                             }}
-                                            className={`rounded-full px-4 ${selectedYear === "" ? "bg-secondary text-secondary-foreground" : "border-border dark:border-border"}`}
+                                            className={`rounded-full px-4 ${selectedYear === "" ? "bg-secondary text-secondary-foreground" : "border-border"}`}
                                         >
                                             All
                                         </Button>
@@ -825,7 +825,7 @@ export default function ElectricityPage() {
                                                         setEndMonth(yearMonths[yearMonths.length - 1]);
                                                     }
                                                 }}
-                                                className={`rounded-full px-4 ${selectedYear === year ? "bg-secondary text-secondary-foreground" : "border-border dark:border-border"}`}
+                                                className={`rounded-full px-4 ${selectedYear === year ? "bg-secondary text-secondary-foreground" : "border-border"}`}
                                             >
                                                 {year}
                                             </Button>
@@ -843,7 +843,7 @@ export default function ElectricityPage() {
                                                 value={analysisType}
                                                 onChange={(e) => setAnalysisType(e.target.value)}
                                                 aria-label="Filter by meter type"
-                                                className="px-2.5 py-1.5 rounded-lg border border-border dark:border-border bg-card text-sm font-medium text-foreground dark:text-muted-foreground/70 focus:outline-none focus:ring-2 focus:ring-secondary/40"
+                                                className="px-2.5 py-1.5 rounded-lg border border-border bg-card text-sm font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-secondary/40"
                                             >
                                                 <option value="All">All ({meters.length})</option>
                                                 {meterTypes.map((t) => (
@@ -861,7 +861,7 @@ export default function ElectricityPage() {
                                                     value={selectedMeter}
                                                     onChange={(e) => setSelectedMeter(e.target.value)}
                                                     aria-label={`Select individual ${analysisType} meter`}
-                                                    className="px-2.5 py-1.5 rounded-lg border border-secondary/40 bg-card text-sm font-medium text-foreground dark:text-muted-foreground/70 focus:outline-none focus:ring-2 focus:ring-secondary/40 w-full max-w-full sm:max-w-[280px]"
+                                                    className="px-2.5 py-1.5 rounded-lg border border-secondary/40 bg-card text-sm font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-secondary/40 w-full max-w-full sm:max-w-[280px]"
                                                 >
                                                     <option value="All">All {analysisType} ({metersOfSelectedType.length})</option>
                                                     {metersOfSelectedType.map((m) => (
@@ -969,7 +969,7 @@ export default function ElectricityPage() {
                                     placeholder="Search meters..."
                                     value={dbSearchTerm}
                                     onChange={(e) => { setDbSearchTerm(e.target.value); setDbCurrentPage(1); }}
-                                    className="pl-10 pr-4 py-2 w-full rounded-lg border border-border/80 dark:border-border/80 bg-card text-foreground dark:text-muted-foreground text-sm placeholder:text-muted-foreground shadow-sm transition-shadow focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40"
+                                    className="pl-10 pr-4 py-2 w-full rounded-lg border border-border/80 bg-card text-foreground text-sm placeholder:text-muted-foreground shadow-sm transition-shadow focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40"
                                 />
                             </div>
 
@@ -984,7 +984,7 @@ export default function ElectricityPage() {
                             {dbHasActiveFilters && (
                                 <button
                                     onClick={() => { setDbSearchTerm(''); setDbSelectedTypes([...allMeterTypes]); setDbCurrentPage(1); }}
-                                    className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg text-muted-foreground hover:text-foreground dark:text-muted-foreground dark:hover:text-foreground transition-colors"
+                                    className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg text-muted-foreground hover:text-foreground dark:hover:text-foreground transition-colors"
                                 >
                                     <X className="w-3.5 h-3.5" />
                                     Clear
@@ -1000,7 +1000,7 @@ export default function ElectricityPage() {
                             </button>
 
                             <div className="text-sm text-muted-foreground whitespace-nowrap">
-                                <span className="font-semibold text-foreground dark:text-muted-foreground/70">{dbFilteredMeters.length}</span>
+                                <span className="font-semibold text-foreground">{dbFilteredMeters.length}</span>
                                 {dbFilteredMeters.length !== meters.length && (
                                     <span> of {meters.length}</span>
                                 )} meters

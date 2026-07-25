@@ -247,7 +247,7 @@ export function HierarchyStatCard({
 }) {
     return (
         <div
-            className="relative overflow-hidden bg-card p-4 sm:p-5 rounded-xl border border-border dark:border-border shadow-[0_2px_10px_-3px_rgba(15,23,42,0.08)] dark:shadow-[0_2px_10px_-3px_rgba(0,0,0,0.4)] hover:shadow-[0_8px_30px_-4px_rgba(15,23,42,0.12)] dark:hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.5)] motion-safe:hover:-translate-y-0.5 transition-[box-shadow,transform] duration-200 ease-out group/stat"
+            className="relative overflow-hidden bg-card p-4 sm:p-5 rounded-xl border border-border shadow-[0_2px_10px_-3px_rgba(15,23,42,0.08)] dark:shadow-[0_2px_10px_-3px_rgba(0,0,0,0.4)] hover:shadow-[0_8px_30px_-4px_rgba(15,23,42,0.12)] dark:hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.5)] motion-safe:hover:-translate-y-0.5 transition-[box-shadow,transform] duration-200 ease-out group/stat"
         >
             <div
                 className="absolute top-0 left-0 right-0 h-[3px]"
@@ -256,7 +256,7 @@ export function HierarchyStatCard({
             />
             <div className="flex justify-between items-start gap-2">
                 <div className="min-w-0">
-                    <p className="text-muted-foreground dark:text-muted-foreground text-[10px] sm:text-xs font-medium mb-1 uppercase tracking-wide">
+                    <p className="text-muted-foreground text-[10px] sm:text-xs font-medium mb-1 uppercase tracking-wide">
                         {label}
                     </p>
                     <h3
@@ -284,7 +284,7 @@ export function HierarchyStatCard({
 // a sticky solid --primary (purple) header with white text, compact 12px cells,
 // not uppercase — so daily tables read identically to the monthly ledgers.
 export const thBase = "sticky top-0 z-10 px-3 py-2 text-left align-middle font-semibold text-[12px] whitespace-nowrap bg-[var(--primary)] text-[var(--primary-foreground)]";
-export const tdBase = "px-3 py-2 align-middle text-[12px] text-foreground dark:text-muted-foreground/70";
+export const tdBase = "px-3 py-2 align-middle text-[12px] text-foreground";
 
 export type SortDir = 'asc' | 'desc' | null;
 export interface SortState { key: string; dir: SortDir }
@@ -378,12 +378,12 @@ export function TablePagination({
 }) {
     return (
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-1 py-2">
-            <span className="text-[12px] text-muted-foreground dark:text-muted-foreground tabular-nums">
+            <span className="text-[12px] text-muted-foreground tabular-nums">
                 {totalItems} result{totalItems !== 1 ? 's' : ''}
             </span>
             <div className="flex items-center gap-1">
                 <button
-                    className="min-h-11 px-4 text-[12px] font-medium rounded-full border border-border dark:border-border text-muted-foreground hover:bg-muted dark:hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors sm:min-h-8 sm:px-3"
+                    className="min-h-11 px-4 text-[12px] font-medium rounded-full border border-border text-muted-foreground hover:bg-muted dark:hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors sm:min-h-8 sm:px-3"
                     disabled={page <= 1}
                     onClick={() => onPageChange(page - 1)}
                 >
@@ -404,19 +404,19 @@ export function TablePagination({
                     </button>
                 ))}
                 <button
-                    className="min-h-11 px-4 text-[12px] font-medium rounded-full border border-border dark:border-border text-muted-foreground hover:bg-muted dark:hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors sm:min-h-8 sm:px-3"
+                    className="min-h-11 px-4 text-[12px] font-medium rounded-full border border-border text-muted-foreground hover:bg-muted dark:hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors sm:min-h-8 sm:px-3"
                     disabled={page >= totalPages}
                     onClick={() => onPageChange(page + 1)}
                 >
                     Next
                 </button>
             </div>
-            <label className="flex items-center gap-1.5 text-[12px] text-muted-foreground dark:text-muted-foreground">
+            <label className="flex items-center gap-1.5 text-[12px] text-muted-foreground">
                 Rows
                 <select
                     value={rowsPerPage}
                     onChange={e => onRowsPerPageChange(Number(e.target.value))}
-                    className="min-h-11 rounded-full border border-border dark:border-border bg-transparent text-[12px] px-3 focus:outline-none focus:ring-2 focus:ring-secondary/30 cursor-pointer sm:min-h-8 sm:px-2"
+                    className="min-h-11 rounded-full border border-border bg-transparent text-[12px] px-3 focus:outline-none focus:ring-2 focus:ring-secondary/30 cursor-pointer sm:min-h-8 sm:px-2"
                 >
                     {[5, 10, 15, 21].map(n => <option key={n} value={n}>{n}</option>)}
                 </select>

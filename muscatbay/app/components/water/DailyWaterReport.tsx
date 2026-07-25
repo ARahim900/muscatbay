@@ -308,7 +308,7 @@ export function DailyWaterReport() {
                                         setSelectedDay(getDefaultDay(next));
                                     }}
                                     disabled={status === 'loading'}
-                                    className="px-2 py-1.5 text-sm rounded-md border border-border dark:border-border bg-card focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
+                                    className="px-2 py-1.5 text-sm rounded-md border border-border bg-card focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
                                 >
                                     {[...getAvailableYears()].reverse().map(yr => (
                                         <option key={yr} value={yr}>20{yr}</option>
@@ -319,7 +319,7 @@ export function DailyWaterReport() {
                                     value={selectedMonth}
                                     onChange={e => { const m = e.target.value; setSelectedMonth(m); setSelectedDay(getDefaultDay(m)); }}
                                     disabled={status === 'loading'}
-                                    className="px-2 py-1.5 text-sm rounded-md border border-border dark:border-border bg-card focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
+                                    className="px-2 py-1.5 text-sm rounded-md border border-border bg-card focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
                                 >
                                     {getMonthsForYear(selectedMonth.split('-')[1]).map(m => (
                                         <option key={m} value={m}>{m.split('-')[0]}</option>
@@ -362,7 +362,7 @@ export function DailyWaterReport() {
 
                                 {/* Last fetched time */}
                                 {lastFetched && status !== 'loading' && (
-                                    <span className="flex items-center gap-1 text-[11px] text-muted-foreground dark:text-muted-foreground">
+                                    <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
                                         <Clock className="h-3 w-3" />
                                         Updated {lastFetched.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                                     </span>
@@ -451,7 +451,7 @@ export function DailyWaterReport() {
                                      * sm+   : label inline with wrap-flex pills (matches original).
                                      */}
                                     <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-2">
-                                        <span className="text-sm font-medium text-muted-foreground dark:text-muted-foreground sm:mr-1">
+                                        <span className="text-sm font-medium text-muted-foreground sm:mr-1">
                                             Select Zone
                                         </span>
                                         <div className="grid grid-cols-2 gap-2 sm:contents">

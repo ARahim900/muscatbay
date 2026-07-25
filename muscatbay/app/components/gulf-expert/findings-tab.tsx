@@ -166,7 +166,7 @@ export function FindingsTab({ findings }: FindingsTabProps) {
             placeholder="Search findings..."
             value={search}
             onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
-            className="pl-10 pr-4 py-2 w-full rounded-lg border border-border/80 dark:border-border/80 bg-card text-foreground dark:text-muted-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40 shadow-sm"
+            className="pl-10 pr-4 py-2 w-full rounded-lg border border-border/80 bg-card text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40 shadow-sm"
           />
         </div>
         <MultiSelectDropdown label="Building" options={uniqueBuildings} selected={selectedBuildings} onChange={(s) => { setSelectedBuildings(s); setCurrentPage(1); }} />
@@ -177,14 +177,14 @@ export function FindingsTab({ findings }: FindingsTabProps) {
         {hasFilters && (
           <button
             onClick={clearFilters}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg text-muted-foreground hover:text-foreground dark:text-muted-foreground dark:hover:text-foreground transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg text-muted-foreground hover:text-foreground dark:hover:text-foreground transition-colors"
           >
             <X className="w-3.5 h-3.5" /> Clear
           </button>
         )}
         <ExportButton rows={filtered} filename="hvac-ppm-findings" columns={FINDINGS_EXPORT_COLUMNS} className="ml-auto" />
-        <div className="text-sm text-muted-foreground dark:text-muted-foreground whitespace-nowrap">
-          <span className="font-semibold text-foreground dark:text-muted-foreground/70">{filtered.length}</span>
+        <div className="text-sm text-muted-foreground whitespace-nowrap">
+          <span className="font-semibold text-foreground">{filtered.length}</span>
           {filtered.length !== findings.length && <span> of {findings.length}</span>} findings
         </div>
       </TableToolbar>
@@ -192,10 +192,10 @@ export function FindingsTab({ findings }: FindingsTabProps) {
       {/* Mobile Cards */}
       <div className="md:hidden space-y-3">
         {paginated.map((f, i) => (
-          <div key={f.id || i} className="rounded-xl border border-border dark:border-border bg-card p-4 space-y-2">
+          <div key={f.id || i} className="rounded-xl border border-border bg-card p-4 space-y-2">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
-                <p className="font-semibold text-sm text-foreground dark:text-muted-foreground flex items-center gap-1">
+                <p className="font-semibold text-sm text-foreground flex items-center gap-1">
                   {f.finding_code}
                   {f.is_recurring && (
                     <span className="text-mb-warning-text">
@@ -204,13 +204,13 @@ export function FindingsTab({ findings }: FindingsTabProps) {
                     </span>
                   )}
                 </p>
-                <p className="text-xs text-muted-foreground dark:text-muted-foreground">{f.building} — {f.equipment_label}</p>
+                <p className="text-xs text-muted-foreground">{f.building} — {f.equipment_label}</p>
               </div>
               <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${getPriorityColor(f.priority)}`}>
                 {f.priority}
               </span>
             </div>
-            <p className="text-xs text-muted-foreground dark:text-muted-foreground">{f.description}</p>
+            <p className="text-xs text-muted-foreground">{f.description}</p>
             <div className="flex items-center gap-2 flex-wrap">
               <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${getStatusColor(f.status)}`}>
                 {f.status}
@@ -258,7 +258,7 @@ export function FindingsTab({ findings }: FindingsTabProps) {
           <TableBody>
             {paginated.map((f, i) => (
               <TableRow key={f.id || i}>
-                <TableCell className="font-semibold text-foreground dark:text-muted-foreground whitespace-nowrap">
+                <TableCell className="font-semibold text-foreground whitespace-nowrap">
                   {f.finding_code}
                   {f.is_recurring && (
                     <span className="ml-1 text-mb-warning-text">
@@ -267,14 +267,14 @@ export function FindingsTab({ findings }: FindingsTabProps) {
                     </span>
                   )}
                 </TableCell>
-                <TableCell className="text-muted-foreground dark:text-muted-foreground text-sm">{f.building}</TableCell>
+                <TableCell className="text-muted-foreground text-sm">{f.building}</TableCell>
                 {/* Long values wrap rather than truncate — a `title` tooltip is
                     unreachable on touch devices, so the text stays fully on screen. */}
-                <TableCell className="text-muted-foreground dark:text-muted-foreground text-sm max-w-[150px] whitespace-normal break-words">{f.equipment_label}</TableCell>
-                <TableCell className="text-muted-foreground dark:text-muted-foreground text-sm">{f.fiscal_year}</TableCell>
-                <TableCell className="text-muted-foreground dark:text-muted-foreground text-sm">{f.ppm_visit}</TableCell>
-                <TableCell className="text-muted-foreground dark:text-muted-foreground text-sm max-w-[280px] whitespace-normal break-words">{f.description}</TableCell>
-                <TableCell className="text-muted-foreground dark:text-muted-foreground text-sm text-center">{f.quantity}</TableCell>
+                <TableCell className="text-muted-foreground text-sm max-w-[150px] whitespace-normal break-words">{f.equipment_label}</TableCell>
+                <TableCell className="text-muted-foreground text-sm">{f.fiscal_year}</TableCell>
+                <TableCell className="text-muted-foreground text-sm">{f.ppm_visit}</TableCell>
+                <TableCell className="text-muted-foreground text-sm max-w-[280px] whitespace-normal break-words">{f.description}</TableCell>
+                <TableCell className="text-muted-foreground text-sm text-center">{f.quantity}</TableCell>
                 <TableCell>
                   <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${getPriorityColor(f.priority)}`}>{f.priority}</span>
                 </TableCell>

@@ -37,7 +37,7 @@ export function WelcomeCard({ userName, className }: WelcomeCardProps) {
     const greeting = userName ? `Welcome, ${userName}` : "Welcome to Muscat Bay";
 
     return (
-        <div className={cn("rounded-2xl border border-border dark:border-border bg-card p-6 sm:p-8 space-y-6", className)}>
+        <div className={cn("rounded-2xl border border-border bg-card p-6 sm:p-8 space-y-6", className)}>
             <div className="space-y-2">
                 <h2 className="text-lg sm:text-xl font-bold text-foreground">
                     {greeting}
@@ -54,7 +54,7 @@ export function WelcomeCard({ userName, className }: WelcomeCardProps) {
                         <Link
                             key={feature.href}
                             href={feature.href}
-                            className="group flex flex-col gap-3 p-4 rounded-xl border border-border dark:border-border hover:border-border dark:hover:border-border hover:shadow-sm transition-[border-color,box-shadow] duration-200"
+                            className="group flex flex-col gap-3 p-4 rounded-xl border border-border hover:border-border dark:hover:border-border hover:shadow-sm transition-[border-color,box-shadow] duration-200"
                         >
                             <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center", feature.bgColor)}>
                                 <Icon className={cn("w-5 h-5", feature.color)} />
