@@ -22,16 +22,8 @@ const config: ExpoConfig = {
   primaryColor: '#4E4456',
   assetBundlePatterns: ['**/*'],
 
-  splash: {
-    image: './assets/images/splash-icon.png',
-    resizeMode: 'contain',
-    backgroundColor: '#4E4456',
-    dark: {
-      image: './assets/images/splash-icon.png',
-      resizeMode: 'contain',
-      backgroundColor: '#0A090C',
-    },
-  },
+  // The splash screen is configured entirely through the expo-splash-screen
+  // plugin below; the top-level `splash` key was removed in SDK 57.
 
   ios: {
     bundleIdentifier: 'com.muscatbay.operations',
@@ -50,7 +42,7 @@ const config: ExpoConfig = {
       foregroundImage: './assets/images/adaptive-icon.png',
       backgroundColor: '#4E4456',
     },
-    edgeToEdgeEnabled: true,
+    // Edge-to-edge is the default and no longer configurable from SDK 56.
     permissions: ['USE_BIOMETRIC', 'USE_FINGERPRINT', 'POST_NOTIFICATIONS'],
   },
 
