@@ -486,6 +486,7 @@ Entries below the marker are appended automatically on every push to `main`.
 Do not hand-edit existing entries; curate meaning in the sections above.
 
 <!-- STATUS:LOG:BEGIN -->
+- 2026-07-25 — Front-end & O&M review remediation + Expo mobile foundation (#49)
 - 2026-07-23 — feat(water): align Daily DC trend chart with the supply-chain gauges
 - 2026-07-23 — feat(water): lead Daily DC gauges with Main Bulk (C43659) vs zone bulks + DC
 - 2026-07-23 — feat(export): database CSV export on every table across all modules
