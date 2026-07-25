@@ -22,7 +22,7 @@
 
 import type { LucideIcon } from "lucide-react";
 import {
-    AlertTriangle, CheckCircle2, ClipboardList, Download, TrendingUp, XCircle,
+    AlertTriangle, CheckCircle2, ClipboardList, Download, HelpCircle, TrendingUp, XCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { exportToCSV } from "@/lib/export-utils";
@@ -52,42 +52,56 @@ type ChipColor = "success" | "danger" | "warning" | "default";
 
 export const SEV_UI: Record<Severity, { base: string; text: string; bg: string; chip: ChipColor }> = {
     nodata: {
-        base: "var(--mb-stale)", text: "var(--mb-stale-text)",
-        bg: "color-mix(in srgb, var(--mb-stale) 12%, transparent)", chip: "default",
+        base: "var(--status-stale)", text: "var(--mb-stale-text)",
+        bg: "color-mix(in srgb, var(--status-stale) 12%, transparent)", chip: "default",
     },
     good: {
-        base: "var(--mb-success)", text: "var(--mb-success-text)",
-        bg: "color-mix(in srgb, var(--mb-success) 12%, transparent)", chip: "success",
+        base: "var(--status-normal)", text: "var(--mb-success-text)",
+        bg: "color-mix(in srgb, var(--status-normal) 12%, transparent)", chip: "success",
     },
     watch: {
-        base: "var(--mb-warning)", text: "var(--mb-warning-text)",
-        bg: "color-mix(in srgb, var(--mb-warning) 18%, transparent)", chip: "warning",
+        base: "var(--status-warning)", text: "var(--mb-warning-text)",
+        bg: "color-mix(in srgb, var(--status-warning) 18%, transparent)", chip: "warning",
     },
     high: {
-        base: "var(--mb-danger)", text: "var(--mb-danger-text)",
-        bg: "color-mix(in srgb, var(--mb-danger) 15%, transparent)", chip: "danger",
+        base: "var(--status-danger)", text: "var(--mb-danger-text)",
+        bg: "color-mix(in srgb, var(--status-danger) 15%, transparent)", chip: "danger",
     },
     critical: {
-        base: "var(--mb-danger)", text: "var(--mb-danger-text)",
-        bg: "color-mix(in srgb, var(--mb-danger) 30%, transparent)", chip: "danger",
+        base: "var(--status-danger)", text: "var(--mb-danger-text)",
+        bg: "color-mix(in srgb, var(--status-danger) 30%, transparent)", chip: "danger",
     },
 };
 
-// Token-only: --mb-*-light and --mb-*-text already flip in the .dark block, so
-// one class list is correct in both themes — no dark: variants, no raw palette.
+// Token-only: --status-*-bg is a 10% tint of the same indicator hue used for the
+// card stripe and the heatmap cell, and --mb-*-text already flips in the .dark
+// block — so one class list is correct in both themes, with no dark: variants
+// and no raw palette.
 const CHIP_STYLES: Record<ChipColor, string> = {
-    success: "bg-mb-success-light text-mb-success-text ring-mb-success/25",
-    danger: "bg-mb-danger-light text-mb-danger-text ring-mb-danger/25",
-    warning: "bg-mb-warning-light text-mb-warning-text ring-mb-warning/25",
-    default: "bg-muted text-muted-foreground ring-border/20 dark:bg-muted/40 dark:ring-border/20",
+    success: "bg-[var(--status-normal-bg)] text-mb-success-text ring-[var(--status-normal)]/30",
+    danger: "bg-[var(--status-danger-bg)] text-mb-danger-text ring-[var(--status-danger)]/30",
+    warning: "bg-[var(--status-warning-bg)] text-mb-warning-text ring-[var(--status-warning)]/30",
+    default: "bg-muted text-muted-foreground ring-border/20",
+};
+
+// Shape-distinct glyph per severity, so a chip never depends on colour alone
+// (WCAG 1.4.1). Same mapping as StatsGrid / alerts-feed / module-coverage.
+const CHIP_ICON: Record<Severity, LucideIcon> = {
+    nodata: HelpCircle,
+    good: CheckCircle2,
+    watch: AlertTriangle,
+    high: XCircle,
+    critical: XCircle,
 };
 
 export function SeverityChip({ severity, label }: { severity: Severity; label?: string }) {
+    const Icon = CHIP_ICON[severity];
     return (
         <span className={cn(
-            "inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold ring-1 ring-inset whitespace-nowrap",
+            "inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold ring-1 ring-inset whitespace-nowrap",
             CHIP_STYLES[SEV_UI[severity].chip],
         )}>
+            <Icon className="h-3 w-3 shrink-0" strokeWidth={2.5} aria-hidden="true" />
             {label ?? SEVERITY_LABEL[severity]}
         </span>
     );
@@ -179,8 +193,8 @@ export function HealthCard({ metric, onInspect }: { metric: HealthMetric; onInsp
                             <span className={cn(
                                 "inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold",
                                 metric.signal.tone === "danger"
-                                    ? "bg-mb-danger-light text-mb-danger-text"
-                                    : "bg-mb-warning-light text-mb-warning-text",
+                                    ? "bg-[var(--status-danger-bg)] text-mb-danger-text"
+                                    : "bg-[var(--status-warning-bg)] text-mb-warning-text",
                             )}>
                                 <TrendingUp className="h-2.5 w-2.5" aria-hidden="true" />
                                 {metric.signal.label}
@@ -442,8 +456,8 @@ export function ExceptionsRegister({
         <div className="space-y-6">
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
                 <SummaryStat label="Open Exceptions" value={String(rows.length)} icon={<ClipboardList className="h-4 w-4 sm:h-5 sm:w-5" />} color="var(--primary)" />
-                <SummaryStat label="Critical" value={String(critical)} icon={<XCircle className="h-4 w-4 sm:h-5 sm:w-5" />} color="var(--mb-danger)" valueColor={critical > 0 ? "var(--mb-danger-text)" : undefined} />
-                <SummaryStat label="Watch" value={String(watch)} icon={<AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5" />} color="var(--mb-warning)" />
+                <SummaryStat label="Critical" value={String(critical)} icon={<XCircle className="h-4 w-4 sm:h-5 sm:w-5" />} color="var(--status-danger)" valueColor={critical > 0 ? "var(--mb-danger-text)" : undefined} />
+                <SummaryStat label="Watch" value={String(watch)} icon={<AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5" />} color="var(--status-warning)" />
             </div>
 
             <div className="card-elevated rounded-[10.5px] border border-border bg-card">

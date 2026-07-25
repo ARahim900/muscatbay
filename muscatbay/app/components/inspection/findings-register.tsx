@@ -195,8 +195,8 @@ export function FindingsRegister({
         <div className="space-y-6">
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
                 <SummaryStat label="Findings" value={String(rows.length)} icon={<ClipboardList className="h-4 w-4 sm:h-5 sm:w-5" />} color="var(--primary)" />
-                <SummaryStat label="Critical" value={String(criticalTotal)} icon={<XCircle className="h-4 w-4 sm:h-5 sm:w-5" />} color="var(--mb-danger)" valueColor={criticalTotal > 0 ? "var(--mb-danger-text)" : undefined} />
-                <SummaryStat label="Watch" value={String(watchTotal)} icon={<AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5" />} color="var(--mb-warning)" />
+                <SummaryStat label="Critical" value={String(criticalTotal)} icon={<XCircle className="h-4 w-4 sm:h-5 sm:w-5" />} color="var(--status-danger)" valueColor={criticalTotal > 0 ? "var(--mb-danger-text)" : undefined} />
+                <SummaryStat label="Watch" value={String(watchTotal)} icon={<AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5" />} color="var(--status-warning)" />
             </div>
 
             <div className="card-elevated rounded-[10.5px] border border-border bg-card">
