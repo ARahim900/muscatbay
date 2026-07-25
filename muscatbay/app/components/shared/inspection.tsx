@@ -475,7 +475,7 @@ export function ExceptionsRegister({
                             type="button"
                             onClick={handleExport}
                             disabled={rows.length === 0}
-                            className="flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-40"
+                            className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             <Download className="h-4 w-4" aria-hidden="true" />
                             Export Actions
