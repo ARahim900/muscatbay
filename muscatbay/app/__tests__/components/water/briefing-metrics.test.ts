@@ -58,4 +58,33 @@ describe('computeBriefing', () => {
     it('returns null lossPct when l2Total is zero (no divide-by-zero)', () => {
         expect(computeBriefing(report({ l2Total: 0, l3Total: 0 }), null).lossPct).toBeNull();
     });
+
+    it('reports the zone count so the ticker can say "all N zones normal"', () => {
+        // A bare "0 zones in alarm" reads as a missing value; the denominator
+        // is what turns it into a clean result.
+        const today = report({
+            zoneRows: [zone('Zone_01', 5, false), zone('Zone_03A', 5, false), zone('Zone_05', 5, false)],
+        });
+        const m = computeBriefing(today, null);
+        expect(m.zoneCount).toBe(3);
+        expect(m.alarmCount).toBe(0);
+        expect(m.status).toBe('normal');
+    });
+
+    it('counts every reported zone, not just the healthy ones', () => {
+        const today = report({
+            zoneRows: [zone('Zone_01', 5, false), zone('Zone_03A', 90, true), zone('Zone_05', 90, true)],
+        });
+        const m = computeBriefing(today, null);
+        expect(m.zoneCount).toBe(3);
+        expect(m.alarmCount).toBe(2);
+    });
+
+    it('reports zero zones when the day has no zone rows at all', () => {
+        // Distinct from "all zones healthy" — the ticker must not claim a clean
+        // result when there is simply nothing to report.
+        const m = computeBriefing(report({}), null);
+        expect(m.zoneCount).toBe(0);
+        expect(m.alarmCount).toBe(0);
+    });
 });

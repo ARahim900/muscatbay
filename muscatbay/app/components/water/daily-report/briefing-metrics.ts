@@ -22,6 +22,12 @@ export interface BriefingMetrics {
     alarmCount: number;
     /** Names of the zones in alarm, in zone order. */
     alarmZones: string[];
+    /**
+     * Total zones reported on for the day. The ticker needs the denominator to
+     * say "all 6 zones normal" rather than a bare "0", which reads as a missing
+     * value rather than a clean result.
+     */
+    zoneCount: number;
     /** Day-over-day change in the distribution total (%); null when no comparable yesterday. */
     vsYesterdayPct: number | null;
     /** Overall verdict: 'warning' when any zone is in alarm, else 'normal'. */
@@ -49,6 +55,7 @@ export function computeBriefing(today: ReportData, yesterday: ReportData | null)
         lossPct,
         alarmCount: alarmZones.length,
         alarmZones,
+        zoneCount: today.zoneRows.length,
         vsYesterdayPct,
         status: alarmZones.length > 0 ? 'warning' : 'normal',
     };
